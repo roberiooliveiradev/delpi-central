@@ -1,21 +1,23 @@
 FROM python:3.11-slim
 
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Instala dependências do sistema
+# Dependências do sistema
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copia requirements primeiro (melhor cache de build)
+# Instala dependências Python
 COPY requirements.txt .
-
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia o restante da aplicação
+# Copia aplicação
 COPY . .
 
 EXPOSE 8000
 
-CMD ["python", "app/main.py"]
+CMD ["python", "-m", "app.main"]

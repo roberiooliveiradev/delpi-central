@@ -1,14 +1,8 @@
-from flask import Flask, jsonify
+# app/main.py
 
-app = Flask(__name__)
+from app.create_app import create_app
 
-@app.route("/health")
-def health():
-    return jsonify({"status": "ok"}), 200
-
-@app.route("/core-api/health")
-def core_health():
-    return jsonify({"core": "running"}), 200
+app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=8000, debug=True)

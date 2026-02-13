@@ -1,9 +1,22 @@
 # Python
 __pycache__/
 *.pyc
-.env
-venv/
+*.pyo
+*.pyd
+.venv/
 .mypy_cache/
+*.sqlite3
+
+# Virtualenv
+venv/
+.venv/
+.env
+
+# Flask
+instance/
+
+# Migrations
+migrations/__pycache__/
 
 # Node
 node_modules/
@@ -19,3 +32,4 @@ build/
 
 # OS
 .DS_Store
+Thumbs.db
