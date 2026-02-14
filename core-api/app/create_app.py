@@ -7,6 +7,7 @@ from app.extensions import db, migrate
 from app.interfaces.http.health_controller import health_bp
 from app.interfaces.http.auth_middleware import authenticate
 from app.interfaces.http.me_controller import me_bp
+from app.interfaces.http.plugins_controller import plugins_bp
 
 from app.infrastructure.db.models import *  # noqa: F401,F403
 
@@ -25,5 +26,6 @@ def create_app():
     # Blueprints
     app.register_blueprint(health_bp)
     app.register_blueprint(me_bp) 
+    app.register_blueprint(plugins_bp)
 
     return app
