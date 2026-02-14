@@ -21,11 +21,6 @@
       "code": "crm.leads.read",
       "description": "Listar leads",
       "module": "crm"
-    },
-    {
-      "code": "crm.leads.create",
-      "description": "Criar leads",
-      "module": "crm"
     }
   ],
   "routes": [
