@@ -47,8 +47,13 @@ services:
       - ../core-api:/app
     ports:
       - "8000:8000"
+    env_file:
+      - ../core-api/.env
+    environment:
+      - FLASK_APP=app.main
     depends_on:
       - postgres-core
+  
 
   portal:
     build: ../portal
