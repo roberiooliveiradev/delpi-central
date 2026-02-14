@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "2.0.0",
+  "id": "crm",
+  "name": "CRM DELPI",
+  "description": "Sistema de gestão comercial",
+  "version": "1.0.0",
+  "category": "business",
+  "icon": "briefcase",
+  "type": "microfrontend",
+  "basePath": "/crm",
+  "entry": "http://localhost:5173",
+  "healthcheck": "http://localhost:5173/health",
+  "dependencies": [],
+  "permissions": [
+    {
+      "code": "crm.dashboard.view",
+      "description": "Visualizar dashboard CRM",
+      "module": "crm"
+    },
+    {
+      "code": "crm.leads.read",
+      "description": "Listar leads",
+      "module": "crm"
+    },
+    {
+      "code": "crm.leads.create",
+      "description": "Criar leads",
+      "module": "crm"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/crm/dashboard",
+      "label": "Dashboard",
+      "icon": "layout-dashboard",
+      "permission": "crm.dashboard.view",
+      "showInMenu": true,
+      "order": 1
+    },
+    {
+      "path": "/crm/leads",
+      "label": "Leads",
+      "icon": "users",
+      "permission": "crm.leads.read",
+      "showInMenu": true,
+      "order": 2
+    }
+  ]
+}

@@ -1,8 +1,11 @@
+# app/infrastructure/security/jwt_service.py
+
 from authlib.jose import jwt
 from authlib.jose.errors import JoseError
 from urllib.request import urlopen
 import json
 import os
+
 
 class JWTService:
 
@@ -18,12 +21,26 @@ class JWTService:
     def verify_token(self, token: str):
         try:
             jwks = self._get_jwks()
+
+            # Decodifica e verifica assinatura
             claims = jwt.decode(token, jwks)
 
-            claims.validate(
-                iss=self.issuer,
-                aud=self.audience
-            )
+            # Valida expiração automaticamente
+            claims.validate()
+
+            # 🔐 Validação manual de issuer
+            if claims.get("iss") != self.issuer:
+                raise Exception("Invalid issuer")
+
+            # 🔐 Validação manual de audience
+            token_aud = claims.get("aud")
+
+            if isinstance(token_aud, list):
+                if self.audience not in token_aud:
+                    raise Exception("Invalid audience")
+            else:
+                if token_aud != self.audience:
+                    raise Exception("Invalid audience")
 
             return claims
 
