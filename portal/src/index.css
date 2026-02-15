@@ -130,12 +130,6 @@ a {
 	color: var(--text);
 }
 
-.sidebar a {
-	padding: 10px 14px;
-	border-radius: 8px;
-	margin-bottom: 6px;
-	color: var(--text-muted);
-}
 
 .sidebar a:hover {
 	background: var(--surface-3);
@@ -201,10 +195,12 @@ a {
 	text-overflow: ellipsis;
 }
 
-.sidebar.collapsed a {
-	text-align: center;
-	font-size: 14px;
+.sidebar-link svg {
+	flex-shrink: 0;
+	width: 18px;
+	height: 18px;
 }
+
 
 
 .sidebar a {
@@ -469,6 +465,33 @@ a {
 	border-radius: 16px;
 	border: 1px solid var(--border);
 	box-shadow: var(--shadow);
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: 0.2s;
+}
+
+.sidebar-link.active {
+  background: var(--primary);
+  color: white;
+}
+
+.sidebar.collapsed .sidebar-link {
+	justify-content: center;
+	padding: 10px 0;
+}
+
+.sidebar.collapsed .sidebar-link span {
+	display: none;
 }
 
 

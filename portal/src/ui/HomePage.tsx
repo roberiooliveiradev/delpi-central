@@ -4,7 +4,9 @@ import { useContext } from "react";
 import { AuthContext } from "../state/AuthContext";
 
 export const HomePage = () => {
-  const { user, apps } = useContext(AuthContext);
+  const { user, dashboard } = useContext(AuthContext);
+
+  if (!dashboard) return null;
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -23,32 +25,30 @@ export const HomePage = () => {
         Bem-vindo à DELPI Central.
       </p>
 
-      {/* Stats */}
       <div className="stats-grid">
         <div className="stat-card">
-          <h3>{apps.length}</h3>
+          <h3>{dashboard.appsCount}</h3>
           <span>Aplicações Disponíveis</span>
         </div>
 
         <div className="stat-card">
-          <h3>{user?.roles.length || 0}</h3>
+          <h3>{dashboard.rolesCount}</h3>
           <span>Perfis Ativos</span>
         </div>
 
         <div className="stat-card">
-          <h3>{user?.permissions.length || 0}</h3>
+          <h3>{dashboard.permissionsCount}</h3>
           <span>Permissões</span>
         </div>
       </div>
 
-      {/* Activity */}
       <div className="dashboard-section">
         <h3>Atividade Recente</h3>
 
         <div className="activity-card">
-          <p>✔ Login realizado com sucesso</p>
-          <p>✔ Permissões carregadas</p>
-          <p>✔ Sistema operacional</p>
+          {dashboard.recentActivity.map((item, index) => (
+            <p key={index}>✔ {item}</p>
+          ))}
         </div>
       </div>
     </div>

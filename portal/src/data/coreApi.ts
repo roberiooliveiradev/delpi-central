@@ -24,6 +24,14 @@ export interface RouteItem {
   permission: string;
 }
 
+export interface DashboardResponse {
+  appsCount: number;
+  rolesCount: number;
+  permissionsCount: number;
+  recentActivity: string[];
+}
+
+
 export class CoreApi {
   private client: ApiClient;
 
@@ -42,4 +50,9 @@ export class CoreApi {
   getRoutes() {
     return this.client.get<RouteItem[]>("/core-api/me/routes");
   }
+
+  getDashboard() {
+    return this.client.get<DashboardResponse>("/core-api/dashboard");
+  }
+
 }

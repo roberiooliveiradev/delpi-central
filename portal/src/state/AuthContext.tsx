@@ -4,6 +4,7 @@ import keycloak from "../data/keycloakClient";
 import { ApiClient } from "../data/apiClient";
 import { CoreApi } from "../data/coreApi";
 import type { MeResponse, AppItem, RouteItem } from "../data/coreApi";
+import type { DashboardResponse } from "../data/coreApi";
 
 
 interface AuthContextType {
@@ -12,6 +13,7 @@ interface AuthContextType {
   user?: MeResponse;
   apps: AppItem[];
   routes: RouteItem[];
+  dashboard?: DashboardResponse;
   login: () => void;
   logout: () => void;
 }
@@ -22,6 +24,7 @@ export const AuthContext = createContext<AuthContextType>({
   user: undefined,
   apps: [],
   routes: [],
+  dashboard: undefined,
   login: () => {},
   logout: () => {},
 });
@@ -32,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<MeResponse | undefined>();
   const [apps, setApps] = useState<AppItem[]>([]);
   const [routes, setRoutes] = useState<RouteItem[]>([]);
+  const [dashboard, setDashboard] = useState<DashboardResponse | undefined>();
 
   useEffect(() => {
     keycloak
@@ -60,8 +64,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const apiClient = new ApiClient("", () => keycloak.token);
     const coreApi = new CoreApi(apiClient);
-
+    
     try {
+      const dashboardData = await coreApi.getDashboard();
+      setDashboard(dashboardData);
+      
       const me = await coreApi.getMe();
       const appsResponse = await coreApi.getApps();
       const routesResponse = await coreApi.getRoutes();
@@ -100,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         apps,
         routes,
+        dashboard,
         login,
         logout,
       }}
