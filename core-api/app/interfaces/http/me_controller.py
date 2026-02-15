@@ -50,7 +50,7 @@ def me_routes():
         return jsonify({"error": "Unauthorized"}), 401
 
     from app.domain.services.permission_resolver import resolve_user_permissions
-    from app.infrastructure.db.models import AppRoute, Permission
+    from app.infrastructure.db.models import AppRoute, Permission, App
 
     permissions = resolve_user_permissions(user)
 
@@ -60,13 +60,25 @@ def me_routes():
 
     for route in routes:
 
-        if not route.permission_id:
-            allowed.append(route.path)
-            continue
+        permission_code = None
 
-        permission = Permission.query.get(route.permission_id)
+        if route.permission_id:
+            permission = Permission.query.get(route.permission_id)
 
-        if permission and permission.code in permissions:
-            allowed.append(route.path)
+            if not permission:
+                continue
+
+            permission_code = permission.code
+
+            if permission_code not in permissions:
+                continue
+
+        app = App.query.get(route.app_id)
+
+        allowed.append({
+            "app": app.id if app else None,
+            "path": route.path,
+            "permission": permission_code
+        })
 
     return jsonify(allowed)

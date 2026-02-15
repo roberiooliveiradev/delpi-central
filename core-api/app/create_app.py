@@ -24,8 +24,9 @@ def create_app():
         authenticate()
 
     # Blueprints
-    app.register_blueprint(health_bp)
-    app.register_blueprint(me_bp) 
-    app.register_blueprint(plugins_bp)
+    app.register_blueprint(health_bp, url_prefix="/core-api")
+    app.register_blueprint(me_bp, url_prefix="/core-api")
+    app.register_blueprint(plugins_bp, url_prefix="/core-api")
+
 
     return app
