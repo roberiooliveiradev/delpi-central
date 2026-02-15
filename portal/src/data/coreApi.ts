@@ -31,6 +31,15 @@ export interface DashboardResponse {
   recentActivity: string[];
 }
 
+export interface NotificationItem {
+  id: string;
+  title?: string | null;
+  message: string;
+  type: "info" | "success" | "warning" | "error";
+  read: boolean;
+  createdAt: string;
+}
+
 
 export class CoreApi {
   private client: ApiClient;
@@ -55,4 +64,16 @@ export class CoreApi {
     return this.client.get<DashboardResponse>("/core-api/dashboard");
   }
 
+  getNotifications() {
+    return this.client.get<NotificationItem[]>("/core-api/notifications");
+  }
+
+  markNotificationRead(id: string) {
+    return this.client.get<{ ok: boolean }>(`/core-api/notifications/${id}/read`); // se preferir GET
+    // melhor: client.post(...) — se você tiver post no ApiClient
+  }
+
+  markAllNotificationsRead() {
+    return this.client.get<{ ok: boolean }>(`/core-api/notifications/read-all`);
+  }
 }

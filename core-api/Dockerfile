@@ -5,17 +5,16 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Dependências do sistema
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    libffi-dev \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Instala dependências Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia aplicação
 COPY . .
 
 EXPOSE 8000

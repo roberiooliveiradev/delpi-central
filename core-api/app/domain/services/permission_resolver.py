@@ -9,7 +9,7 @@ from app.infrastructure.db.models import (
     group_roles,
     UserPermission
 )
-from app.extensions import db
+from app.extensions.db import db
 
 
 def resolve_user_permissions(user):

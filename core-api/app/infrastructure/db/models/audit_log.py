@@ -1,6 +1,6 @@
 # app/infrastructure/db/models/audit_log.py
 
-from app.extensions import db
+from app.extensions.db import db
 from app.infrastructure.db.base_model import TimestampMixin
 
 class AuditLog(db.Model, TimestampMixin):

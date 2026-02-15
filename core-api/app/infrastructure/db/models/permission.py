@@ -1,6 +1,6 @@
 # app/infrastructure/db/models/permission.py
 
-from app.extensions import db
+from app.extensions.db import db
 from app.infrastructure.db.base_model import TimestampMixin
 
 class Permission(db.Model, TimestampMixin):

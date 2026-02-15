@@ -1,6 +1,6 @@
 # app/infrastructure/db/models/app_module.py
 
-from app.extensions import db
+from app.extensions.db import db
 from app.infrastructure.db.base_model import TimestampMixin
 
 class App(db.Model, TimestampMixin):

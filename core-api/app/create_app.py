@@ -2,13 +2,18 @@
 
 from flask import Flask
 from app.infrastructure.config.settings import Config
-from app.extensions import db, migrate
+from app.extensions.db import db
+from app.extensions.migrate import migrate
+from app.extensions.socket import socketio
+import app.interfaces.socket.socket_handlers
 
 from app.interfaces.http.health_controller import health_bp
 from app.interfaces.http.auth_middleware import authenticate
 from app.interfaces.http.me_controller import me_bp
 from app.interfaces.http.plugins_controller import plugins_bp
 from app.interfaces.http.dashboard_controller import dashboard_bp
+from app.interfaces.http.notification_controller import notification_bp
+
 
 from app.infrastructure.db.models import *  # noqa: F401,F403
 
@@ -18,7 +23,9 @@ def create_app():
     app.config.from_object(Config)
 
     db.init_app(app)
+    socketio.init_app(app)
     migrate.init_app(app, db)
+
 
     @app.before_request
     def before_request():
@@ -29,6 +36,7 @@ def create_app():
     app.register_blueprint(me_bp, url_prefix="/core-api")
     app.register_blueprint(plugins_bp, url_prefix="/core-api")
     app.register_blueprint(dashboard_bp, url_prefix="/core-api")
+    app.register_blueprint(notification_bp, url_prefix="/core-api")
 
 
     return app

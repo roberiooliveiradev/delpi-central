@@ -1,6 +1,6 @@
 # app/infrastructure/db/models/user.py
 import uuid
-from app.extensions import db
+from app.extensions.db import db
 from app.infrastructure.db.base_model import TimestampMixin
 
 class User(db.Model, TimestampMixin):

@@ -1,7 +1,7 @@
 # app/domain/services/app_resolver.py
 
 from app.infrastructure.db.models import App, AppRoute, Permission
-from app.extensions import db
+from app.extensions.db import db
 
 
 def resolve_user_apps(user_permissions):
