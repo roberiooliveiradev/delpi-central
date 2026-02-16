@@ -1,11 +1,8 @@
-// src/state/AuthContext.tsx
-
 import React, { createContext, useEffect, useState, useRef } from "react";
 import keycloak from "../data/keycloakClient";
 import { ApiClient } from "../data/apiClient";
 import { CoreApi } from "../data/coreApi";
-import { io, Socket } from "socket.io-client";
-
+import { useSocket } from "../hooks/useSocket";
 
 import type {
   MeResponse,
@@ -32,11 +29,8 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   loading: true,
-  token: undefined,
-  user: undefined,
   apps: [],
   routes: [],
-  dashboard: undefined,
   notifications: [],
   login: () => {},
   logout: () => {},
@@ -56,10 +50,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const initializedRef = useRef(false);
 
-  const socketRef = useRef<Socket | null>(null);
+  // Socket isolado
+  useSocket({
+    token,
+    onNotification: (data) => {
+      setNotifications((prev) => [data, ...prev]);
+    },
+  });
 
   useEffect(() => {
     if (initializedRef.current) return;
@@ -75,31 +74,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsAuthenticated(authenticated);
         setToken(keycloak.token);
 
-        if (authenticated && keycloak.token) {
-          // 1) conecta socket ANTES
-          socketRef.current = io("/", {
-            path: "/socket.io",
-            query: { token: keycloak.token },
-            transports: ["websocket"],
-          });
-
-          socketRef.current.on("connect", () => {
-            console.log("✅ WebSocket conectado:", socketRef.current?.id);
-          });
-
-          socketRef.current.on("notification", (data) => {
-            console.log("📩 Notificação recebida:", data);
-            setNotifications((prev) => [data, ...prev]);
-          });
-
-          socketRef.current.on("disconnect", () => {
-            console.log("❌ WebSocket desconectado");
-          });
+        if (authenticated) {
+          await loadCoreData();
         }
 
         startTokenRefresh();
       })
-
       .catch((err) => {
         console.error("Erro ao inicializar Keycloak:", err);
       })
@@ -111,12 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);
       }
-
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
     };
-
   }, []);
 
   const loadCoreData = async () => {
@@ -126,7 +101,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const coreApi = new CoreApi(apiClient);
 
     try {
-      // Paralelizar chamadas
       const [
         me,
         appsResponse,
