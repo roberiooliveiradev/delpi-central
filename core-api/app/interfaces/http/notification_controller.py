@@ -1,11 +1,12 @@
 # app/interfaces/http/notification_controller.py
 
-from flask import Blueprint, jsonify, request, g
+from flask import Blueprint, jsonify, g
 from datetime import datetime
 from app.infrastructure.db.models.notification import Notification
 from app.extensions.db import db
 
-notification_bp = Blueprint("notifications", __name__, url_prefix="/core-api")
+# ✅ sem url_prefix aqui
+notification_bp = Blueprint("notifications", __name__)
 
 @notification_bp.route("/notifications", methods=["GET"])
 def list_notifications():
@@ -69,13 +70,17 @@ def mark_all_read():
 
     return jsonify({"ok": True})
 
+
 @notification_bp.route("/notifications/test", methods=["POST"])
 def test_notification():
-    user = g.current_user
+    user = getattr(g, "current_user", None)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
     from app.domain.services.notification_service import notify_user
 
     notify_user(
-        sub=user.id,
+        sub=str(user.id),
         title="Teste tempo real",
         message="Notificação disparada via endpoint",
         type="success"

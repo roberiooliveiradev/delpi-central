@@ -9,12 +9,10 @@ jwt_service = JWTService()
 
 @socketio.on("connect")
 def handle_connect():
-    print("Cliente tentando conectar...")
-
     token = request.args.get("token")
 
     if not token:
-        print("Sem token")
+        print("Socket connect sem token -> disconnect")
         disconnect()
         return
 
@@ -22,6 +20,12 @@ def handle_connect():
         claims = jwt_service.verify_token(token)
         sub = claims.get("sub")
 
+        if not sub:
+            print("Socket token sem sub -> disconnect")
+            disconnect()
+            return
+
+        print("Cliente tentando conectar...")
         print("SUB do socket:", sub)
 
         join_room(sub)
@@ -31,4 +35,3 @@ def handle_connect():
     except Exception as e:
         print("Erro no socket:", e)
         disconnect()
-

@@ -9,4 +9,12 @@ from app.extensions.socket import socketio
 app = create_app()
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=8000)
+    # ✅ MUITO IMPORTANTE:
+    # Sem reloader no Docker, senão cria 2 processos e perde eventos do socket
+    socketio.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        debug=False,
+        use_reloader=False
+    )

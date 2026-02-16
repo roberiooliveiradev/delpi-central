@@ -1,3 +1,5 @@
+// src/state/AuthContext.tsx
+
 import React, { createContext, useEffect, useState, useRef } from "react";
 import keycloak from "../data/keycloakClient";
 import { ApiClient } from "../data/apiClient";
@@ -53,8 +55,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const initializedRef = useRef(false);
 
   // Socket isolado
+  const syncNotifications = async () => {
+    if (!keycloak.token) return;
+
+    const apiClient = new ApiClient("", () => keycloak.token);
+    const coreApi = new CoreApi(apiClient);
+
+    const notificationsData = await coreApi.getNotifications();
+    setNotifications(notificationsData);
+  };
+
+
+  const [socketReady, setSocketReady] = useState(false);
+
   useSocket({
     token,
+    onConnected: async () => {
+      console.log("🔄 Sincronizando notificações...");
+      await loadCoreData(); // sincroniza ao conectar
+    },
     onNotification: (data) => {
       setNotifications((prev) => [data, ...prev]);
     },
@@ -76,6 +95,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (authenticated) {
           await loadCoreData();
+
+          // 🔥 só depois ativa o socket
+          setSocketReady(true);
         }
 
         startTokenRefresh();

@@ -1,3 +1,5 @@
+// src/hooks/useSocket.ts
+
 import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 
@@ -6,7 +8,11 @@ interface UseSocketProps {
   onNotification?: (data: any) => void;
 }
 
-export const useSocket = ({ token, onNotification }: UseSocketProps) => {
+export const useSocket = ({
+  token,
+  onNotification,
+  onConnected,
+}: UseSocketProps & { onConnected?: () => void }) => {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
@@ -20,6 +26,7 @@ export const useSocket = ({ token, onNotification }: UseSocketProps) => {
 
     socketRef.current.on("connect", () => {
       console.log("✅ WebSocket conectado:", socketRef.current?.id);
+      onConnected?.(); 
     });
 
     socketRef.current.on("notification", (data) => {

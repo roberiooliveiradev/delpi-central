@@ -15,18 +15,23 @@ def notify_user(sub: str, title: str, message: str, type: str = "info"):
     db.session.add(notification)
     db.session.commit()
 
-    # Emitir para room do usuário
+    payload = {
+        "id": str(notification.id),
+        "title": notification.title,
+        "message": notification.message,
+        "type": notification.type,
+        "createdAt": notification.created_at.isoformat() + "Z",
+        "read": False,
+    }
+
+    # ✅ namespace explícito e room do usuário
     socketio.emit(
         "notification",
-        {
-            "id": str(notification.id),
-            "title": notification.title,
-            "message": notification.message,
-            "type": notification.type,
-            "createdAt": notification.created_at.isoformat() + "Z",
-            "read": False
-        },
-        room=sub
+        payload,
+        room=sub,
+        namespace="/",
     )
+
+    print(f"✅ emitting event 'notification' to room={sub}")
 
     return notification
