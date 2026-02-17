@@ -14,3 +14,9 @@ class App(db.Model, TimestampMixin):
     type = db.Column(db.String(50), nullable=False)
     version = db.Column(db.String(20), nullable=True)
     active = db.Column(db.Boolean, default=True, nullable=False)
+
+    routes = db.relationship(
+        "AppRoute",
+        back_populates="app",
+        cascade="all, delete-orphan",
+    )

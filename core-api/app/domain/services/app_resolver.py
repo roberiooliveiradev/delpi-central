@@ -1,7 +1,6 @@
 # app/domain/services/app_resolver.py
 
 from app.infrastructure.db.models import App, AppRoute, Permission
-from app.extensions.db import db
 
 
 def resolve_user_apps(user_permissions):
@@ -12,10 +11,12 @@ def resolve_user_apps(user_permissions):
 
     for app in apps:
 
-        routes = AppRoute.query.filter_by(
-            app_id=app.id,
-            active=True
-        ).order_by(AppRoute.order_index).all()
+        routes = (
+            AppRoute.query
+            .filter_by(app_id=app.id, active=True)
+            .order_by(AppRoute.order.asc())   
+            .all()
+        )
 
         allowed_routes = []
 
@@ -43,7 +44,7 @@ def resolve_user_apps(user_permissions):
                         "label": r.label,
                         "icon": r.icon,
                         "show_in_menu": r.show_in_menu,
-                        "order": r.order_index
+                        "order": r.order   
                     }
                     for r in allowed_routes
                 ]

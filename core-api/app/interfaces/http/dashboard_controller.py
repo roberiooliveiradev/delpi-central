@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, g
 from app.domain.services.permission_resolver import resolve_user_permissions
 from app.domain.services.app_resolver import resolve_user_apps
 
-dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/core-api")
+dashboard_bp = Blueprint("dashboard", __name__)
 
 
 @dashboard_bp.route("/dashboard", methods=["GET"])

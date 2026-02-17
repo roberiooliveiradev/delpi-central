@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify, g
 from app.application.use_cases.register_plugin_use_case import register_plugin, PluginRegistrationError
 from app.domain.services.plugin_manifest_validator import ManifestValidationError
 
-plugins_bp = Blueprint("plugins", __name__, url_prefix="/core-api/plugins")
+plugins_bp = Blueprint("plugins", __name__)
 
 
 @plugins_bp.route("/register", methods=["POST"])
