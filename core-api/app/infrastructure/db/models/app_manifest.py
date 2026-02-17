@@ -1,6 +1,6 @@
 # app/infrastructure/db/models/app_manifest.py
 
-from app.extensions import db
+from app.extensions.db import db
 from app.infrastructure.db.base_model import TimestampMixin
 
 class AppManifest(db.Model, TimestampMixin):

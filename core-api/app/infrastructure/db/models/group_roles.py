@@ -1,6 +1,6 @@
 # app/infrastructure/db/models/group_roles.py
 
-from app.extensions import db
+from app.extensions.db import db
 
 group_roles = db.Table(
     "group_roles",

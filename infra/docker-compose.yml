@@ -1,3 +1,4 @@
+# infra/docker-compose.yml
 services:
 
   postgres-core:
@@ -13,6 +14,8 @@ services:
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
+    networks:
+      - delpi-network
 
   keycloak-db:
     image: postgres:15
@@ -23,11 +26,13 @@ services:
       POSTGRES_PASSWORD: keycloak123
     volumes:
       - keycloak_data:/var/lib/postgresql/data
+    networks:
+      - delpi-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
     container_name: delpi-keycloak
-    command: start-dev
+    command: start-dev --hostname-strict=false
     environment:
       KC_DB: postgres
       KC_DB_URL_HOST: keycloak-db
@@ -43,8 +48,9 @@ services:
 
     ports:
       - "8080:8080"
-    depends_on:
-      - keycloak-db
+    networks:
+      - delpi-network
+
 
   core-api:
     build: ../core-api
@@ -56,18 +62,24 @@ services:
     env_file:
       - ../core-api/.env
     environment:
-      - FLASK_APP=app.main
+      - FLASK_APP=app.create_app:create_app
+      - FLASK_ENV=development
     depends_on:
       - postgres-core
-  
+    networks:
+      - delpi-network
+
 
   portal:
     build: ../portal
     container_name: delpi-portal
+    command: npm run dev -- --host
     ports:
       - "5173:5173"
     depends_on:
       - core-api
+    networks:
+      - delpi-network
 
   gateway:
     build: ../gateway
@@ -78,6 +90,12 @@ services:
       - portal
       - core-api
       - keycloak
+    networks:
+      - delpi-network
+
+networks:
+  delpi-network:
+    driver: bridge
 
 volumes:
   postgres_core_data:

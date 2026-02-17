@@ -74,6 +74,7 @@ CREATE TABLE roles (
 CREATE TABLE permissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code VARCHAR(150) UNIQUE NOT NULL,
+    code VARCHAR(150) NOT NULL,
     description TEXT,
     module VARCHAR(100),
     created_at TIMESTAMP DEFAULT NOW()
@@ -178,7 +179,7 @@ CREATE TABLE app_routes (
     icon VARCHAR(100),
     permission_id UUID REFERENCES permissions(id),
     show_in_menu BOOLEAN DEFAULT TRUE,
-    order_index INT DEFAULT 0,
+    order INT DEFAULT 0,
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW()
 );

@@ -1,6 +1,6 @@
 # app/infrastructure/db/models/role_permissions.py
 
-from app.extensions import db
+from app.extensions.db import db
 
 role_permissions = db.Table(
     "role_permissions",

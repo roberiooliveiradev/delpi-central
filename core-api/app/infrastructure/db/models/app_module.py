@@ -1,6 +1,6 @@
 # app/infrastructure/db/models/app_module.py
 
-from app.extensions import db
+from app.extensions.db import db
 from app.infrastructure.db.base_model import TimestampMixin
 
 class App(db.Model, TimestampMixin):
@@ -14,3 +14,9 @@ class App(db.Model, TimestampMixin):
     type = db.Column(db.String(50), nullable=False)
     version = db.Column(db.String(20), nullable=True)
     active = db.Column(db.Boolean, default=True, nullable=False)
+
+    routes = db.relationship(
+        "AppRoute",
+        back_populates="app",
+        cascade="all, delete-orphan",
+    )

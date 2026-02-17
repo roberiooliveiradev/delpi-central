@@ -32,15 +32,18 @@ class JWTService:
             if claims.get("iss") != self.issuer:
                 raise Exception("Invalid issuer")
 
-            # 🔐 Validação manual de audience
-            token_aud = claims.get("aud")
+            # # 🔐 Validação manual de audience
+            # token_aud = claims.get("aud")
 
-            if isinstance(token_aud, list):
-                if self.audience not in token_aud:
-                    raise Exception("Invalid audience")
-            else:
-                if token_aud != self.audience:
-                    raise Exception("Invalid audience")
+            # if isinstance(token_aud, list):
+            #     if self.audience not in token_aud:
+            #         raise Exception("Invalid audience")
+            # else:
+            #     if token_aud != self.audience:
+            #         raise Exception("Invalid audience")
+            if claims.get("azp") != self.audience:
+                raise Exception("Invalid client")
+
 
             return claims
 

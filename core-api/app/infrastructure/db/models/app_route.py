@@ -1,20 +1,37 @@
 # app/infrastructure/db/models/app_route.py
 
-from app.extensions import db
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
+from app.extensions.db import db
 from app.infrastructure.db.base_model import TimestampMixin
+
 
 class AppRoute(db.Model, TimestampMixin):
     __tablename__ = "app_routes"
 
-    id = db.Column(db.Uuid, primary_key=True, server_default=db.text("gen_random_uuid()"))
-    app_id = db.Column(db.String(50), db.ForeignKey("apps.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    path = db.Column(db.String(200), nullable=False)
+    app_id = db.Column(
+        db.String(50),
+        db.ForeignKey("apps.id"),
+        nullable=False
+    )
+
+    path = db.Column(db.String(255), nullable=False)
+
     label = db.Column(db.String(150), nullable=True)
     icon = db.Column(db.String(100), nullable=True)
 
-    permission_id = db.Column(db.Uuid, db.ForeignKey("permissions.id"), nullable=True)
+    order = db.Column(db.Integer, nullable=True)
 
-    show_in_menu = db.Column(db.Boolean, default=True, nullable=False)
-    order_index = db.Column(db.Integer, default=0, nullable=False)
-    active = db.Column(db.Boolean, default=True, nullable=False)
+    show_in_menu = db.Column(db.Boolean, default=True)
+    active = db.Column(db.Boolean, default=True)
+
+    permission_id = db.Column(
+        UUID(as_uuid=True),
+        db.ForeignKey("permissions.id"),
+        nullable=True
+    )
+    
+    app = db.relationship("App", back_populates="routes")
+    permission = db.relationship("Permission")

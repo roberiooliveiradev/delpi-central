@@ -14,11 +14,13 @@
   "permissions": [
     {
       "code": "crm.dashboard.view",
+      "name": "Visualizar dashboard CRM",
       "description": "Visualizar dashboard CRM",
       "module": "crm"
     },
     {
       "code": "crm.leads.read",
+      "name": "Visualizar leads do CRM",
       "description": "Listar leads",
       "module": "crm"
     }

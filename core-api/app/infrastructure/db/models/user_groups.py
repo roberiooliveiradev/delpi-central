@@ -1,6 +1,6 @@
 # app/infrastructure/db/models/user_groups.py
 
-from app.extensions import db
+from app.extensions.db import db
 
 user_groups = db.Table(
     "user_groups",

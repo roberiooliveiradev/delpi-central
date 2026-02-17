@@ -1,7 +1,7 @@
 # app/infrastructure/db/base_model.py
 
 from sqlalchemy.sql import func
-from app.extensions import db
+from app.extensions.db import db
 
 class TimestampMixin:
     created_at = db.Column(
