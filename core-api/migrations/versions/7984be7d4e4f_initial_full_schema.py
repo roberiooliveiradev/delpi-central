@@ -1,8 +1,8 @@
-"""rbac schema clean
+"""initial full schema
 
-Revision ID: b775fb9efe2a
+Revision ID: 7984be7d4e4f
 Revises: 
-Create Date: 2026-02-14 21:40:40.529843
+Create Date: 2026-02-17 22:50:20.069249
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b775fb9efe2a'
+revision = '7984be7d4e4f'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -31,18 +31,6 @@ def upgrade():
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('audit_logs',
-    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
-    sa.Column('user_id', sa.Uuid(), nullable=True),
-    sa.Column('action', sa.String(length=100), nullable=False),
-    sa.Column('resource_type', sa.String(length=100), nullable=False),
-    sa.Column('resource_id', sa.String(length=100), nullable=True),
-    sa.Column('metadata', sa.JSON(), nullable=True),
-    sa.Column('ip_address', sa.String(length=50), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('groups',
     sa.Column('id', sa.Uuid(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
@@ -53,9 +41,23 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
+    op.create_table('notifications',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('user_id', sa.String(length=64), nullable=False),
+    sa.Column('title', sa.String(length=120), nullable=True),
+    sa.Column('message', sa.String(length=500), nullable=False),
+    sa.Column('type', sa.String(length=40), nullable=False),
+    sa.Column('read_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('notifications', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_notifications_user_id'), ['user_id'], unique=False)
+
     op.create_table('permissions',
     sa.Column('id', sa.Uuid(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('code', sa.String(length=150), nullable=False),
+    sa.Column('name', sa.String(length=150), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('module', sa.String(length=100), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -100,23 +102,37 @@ def upgrade():
     sa.PrimaryKeyConstraint('app_id')
     )
     op.create_table('app_routes',
-    sa.Column('id', sa.Uuid(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('app_id', sa.String(length=50), nullable=False),
-    sa.Column('path', sa.String(length=200), nullable=False),
+    sa.Column('path', sa.String(length=255), nullable=False),
     sa.Column('label', sa.String(length=150), nullable=True),
     sa.Column('icon', sa.String(length=100), nullable=True),
-    sa.Column('permission_id', sa.Uuid(), nullable=True),
-    sa.Column('show_in_menu', sa.Boolean(), nullable=False),
-    sa.Column('order_index', sa.Integer(), nullable=False),
-    sa.Column('active', sa.Boolean(), nullable=False),
+    sa.Column('order', sa.Integer(), nullable=True),
+    sa.Column('show_in_menu', sa.Boolean(), nullable=True),
+    sa.Column('active', sa.Boolean(), nullable=True),
+    sa.Column('permission_id', sa.UUID(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['app_id'], ['apps.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['app_id'], ['apps.id'], ),
     sa.ForeignKeyConstraint(['permission_id'], ['permissions.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    with op.batch_alter_table('app_routes', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_app_routes_app_id'), ['app_id'], unique=False)
+    op.create_table('audit_logs',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Uuid(), nullable=True),
+    sa.Column('action', sa.String(length=100), nullable=False),
+    sa.Column('entity_type', sa.String(length=100), nullable=True),
+    sa.Column('entity_id', sa.String(length=100), nullable=True),
+    sa.Column('payload', sa.JSON(), nullable=True),
+    sa.Column('ip_address', sa.String(length=45), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('audit_logs', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_audit_logs_action'), ['action'], unique=False)
+        batch_op.create_index(batch_op.f('ix_audit_logs_user_id'), ['user_id'], unique=False)
 
     op.create_table('group_roles',
     sa.Column('group_id', sa.Uuid(), nullable=False),
@@ -166,9 +182,11 @@ def downgrade():
     op.drop_table('user_groups')
     op.drop_table('role_permissions')
     op.drop_table('group_roles')
-    with op.batch_alter_table('app_routes', schema=None) as batch_op:
-        batch_op.drop_index(batch_op.f('ix_app_routes_app_id'))
+    with op.batch_alter_table('audit_logs', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_audit_logs_user_id'))
+        batch_op.drop_index(batch_op.f('ix_audit_logs_action'))
 
+    op.drop_table('audit_logs')
     op.drop_table('app_routes')
     op.drop_table('app_manifests')
     with op.batch_alter_table('users', schema=None) as batch_op:
@@ -180,7 +198,10 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_permissions_module'))
 
     op.drop_table('permissions')
+    with op.batch_alter_table('notifications', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_notifications_user_id'))
+
+    op.drop_table('notifications')
     op.drop_table('groups')
-    op.drop_table('audit_logs')
     op.drop_table('apps')
     # ### end Alembic commands ###
