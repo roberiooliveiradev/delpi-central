@@ -7,6 +7,7 @@ from app.extensions.db import db
 
 from app.domain.services.permission_resolver import resolve_user_permissions
 from app.extensions.permission_cache import invalidate_user_permissions
+from app.domain.services.audit_log_service import log_audit
 
 from app.infrastructure.db.models import (
     User,
@@ -114,6 +115,13 @@ def create_permission():
         db.session.rollback()
         return jsonify({"error": "permission code already exists"}), 409
 
+    log_audit(
+        action="permissions.create",
+        entity_type="permission",
+        entity_id=p.id,
+        payload={"payload": data}
+    )
+    
     return jsonify(_json_permission(p)), 201
 
 
@@ -136,6 +144,13 @@ def update_permission(permission_id: str):
     except IntegrityError:
         db.session.rollback()
         return jsonify({"error": "permission code already exists"}), 409
+
+    log_audit(
+        action="permissions.update",
+        entity_type="permission",
+        entity_id=permission_id,
+        payload={"payload": data}
+    )
 
     return jsonify(_json_permission(p))
 
@@ -178,6 +193,13 @@ def create_role():
         db.session.rollback()
         return jsonify({"error": "role name already exists"}), 409
 
+    log_audit(
+        action="roles.create",
+        entity_type="role",
+        entity_id=role.id,
+        payload={"payload": data}
+    )
+
     return jsonify(_json_role(role)), 201
 
 
@@ -198,6 +220,13 @@ def update_role(role_id: str):
     except IntegrityError:
         db.session.rollback()
         return jsonify({"error": "role name already exists"}), 409
+
+    log_audit(
+        action="roles.update",
+        entity_type="role",
+        entity_id=role_id,
+        payload={"payload": data}
+    )
 
     return jsonify(_json_role(role))
 
@@ -260,6 +289,14 @@ def create_group():
         db.session.rollback()
         return jsonify({"error": "group name already exists"}), 409
 
+
+    log_audit(
+        action="groups.create",
+        entity_type="group",
+        entity_id=gr.id,
+        payload={"payload": data}
+    )
+
     return jsonify(_json_group(gr)), 201
 
 
@@ -280,6 +317,13 @@ def update_group(group_id: str):
     except IntegrityError:
         db.session.rollback()
         return jsonify({"error": "group name already exists"}), 409
+
+    log_audit(
+        action="groups.update",
+        entity_type="group",
+        entity_id=group_id,
+        payload={"payload": data}
+    )
 
     return jsonify(_json_group(gr))
 

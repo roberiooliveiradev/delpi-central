@@ -3,6 +3,7 @@
 from flask import Blueprint, request, jsonify, g
 from app.application.use_cases.register_plugin_use_case import register_plugin, PluginRegistrationError
 from app.domain.services.plugin_manifest_validator import ManifestValidationError
+from app.domain.services.audit_log_service import log_audit
 
 plugins_bp = Blueprint("plugins", __name__)
 
@@ -23,6 +24,14 @@ def register():
             actor_user_id=str(user.id),
             ip_address=request.headers.get("X-Forwarded-For", request.remote_addr),
         )
+
+        log_audit(
+            action="plugins.register",
+            entity_type="plugin",
+            entity_id=result.app_id,
+            payload={"payload": manifest}
+        )
+
         return jsonify({
             "status": "ok",
             "appId": result.app_id,

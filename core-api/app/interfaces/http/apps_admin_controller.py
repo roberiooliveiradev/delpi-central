@@ -5,6 +5,7 @@ from datetime import datetime
 
 from app.extensions.db import db
 from app.infrastructure.db.models import App, AppRoute, Permission
+from app.domain.services.audit_log_service import log_audit
 
 
 apps_admin_bp = Blueprint("apps_admin", __name__, url_prefix="/core-api/admin/apps")
@@ -80,13 +81,20 @@ def create_app():
         description=data.get("description"),
         base_path=base_path,
         icon=icon,
-        type=type_value,   # ✅ AGORA O TYPE É SETADO
+        type=type_value,   
         version=version,
         active=active,
     )
 
     db.session.add(app)
     db.session.commit()
+
+    log_audit(
+        action="apps.create",
+        entity_type="app",
+        entity_id=app.id,
+        payload={"payload": data}
+    )
 
     return jsonify({"ok": True, "id": str(app.id)}), 201
 
@@ -119,6 +127,14 @@ def update_app(app_id: str):
         app.type = data["type"]
 
     db.session.commit()
+
+    log_audit(
+        action="apps.update",
+        entity_type="app",
+        entity_id=app_id,
+        payload={"payload": data}
+    )
+    
     return jsonify({"ok": True})
 
 @apps_admin_bp.route("/<app_id>/activate", methods=["POST"])
@@ -246,6 +262,15 @@ def create_route(app_id: str):
     db.session.add(route)
     db.session.commit()
 
+    
+    log_audit(
+        action="routes.create",
+        entity_type="route",
+        entity_id=route.id,
+        payload={"payload": data}
+    )
+    
+
     return jsonify({"ok": True, "id": str(route.id)}), 201
 
 
@@ -290,6 +315,14 @@ def update_route(route_id: str):
                 route.permission_id = str(p.id)
 
     db.session.commit()
+
+    log_audit(
+        action="routes.update",
+        entity_type="routes",
+        entity_id=route_id,
+        payload={"payload": data}
+    )
+    
     return jsonify({"ok": True})
 
 
