@@ -10,6 +10,7 @@ import { Unauthorized } from "./Unauthorized";
 import { motion } from "framer-motion";
 import { Loader } from "./Loader";
 import { HomePage } from "./HomePage";
+import { AdminPage } from "./admin/AdminPage";
 
 
 const AnimatedWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -52,6 +53,14 @@ const App = () => {
               <Route path="/" element={<HomePage />} />
               
               <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute permission="rbac.manage">
+                    <AdminPage />
+                  </ProtectedRoute>
+                }
+              />
 
               {routes.map((route) => (
                 <Route

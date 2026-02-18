@@ -5,6 +5,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { LayoutDashboard, Users, Package, ChevronDown } from "lucide-react";
 
+
 type IconType = React.ComponentType<{ size?: number }>;
 
 // Mapeamento inteligente de ícones
@@ -62,7 +63,33 @@ export const Sidebar = () => {
           marginBottom: 20,
         }}
       >
-        {!collapsed && <h2 style={{ fontWeight: 600 }}>DELPI</h2>}
+        {!collapsed && 
+          <div style={{width:"100%", display:"flex", flexDirection:"column", alignItems:"center"}}>
+
+          <div
+            style={{
+              width: "130px",
+              height: "130px",
+              borderRadius: "50%",
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            >
+            <img
+              src="/logoTransformaMaisDelpi.svg"
+              alt="Transforma mais DELPI"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+              }}
+              />
+              </div>
+          </div>
+
+        }
 
         <button
           onClick={() => setCollapsed(!collapsed)}

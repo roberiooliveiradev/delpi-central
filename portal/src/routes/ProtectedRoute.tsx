@@ -13,10 +13,21 @@ export const ProtectedRoute = ({ permission, children }: Props) => {
   const { user } = useContext(AuthContext);
 
   if (!user) {
-    return <div>Carregando...</div>;
+    return <Navigate to="/unauthorized" replace />;
   }
 
-  if (permission && !user.permissions.includes(permission)) {
+  // SUPERADMIN BYPASS
+  if ((user as any).is_superadmin) {
+    return <>{children}</>;
+  }
+
+  if (!permission) {
+    return <>{children}</>;
+  }
+
+  const hasPermission = user.permissions?.includes(permission);
+
+  if (!hasPermission) {
     return <Navigate to="/unauthorized" replace />;
   }
 

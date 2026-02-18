@@ -9,7 +9,10 @@ export class ApiClient {
     this.getToken = getToken;
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
     const token = this.getToken();
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -29,13 +32,40 @@ export class ApiClient {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(errorText);
+      throw new Error(errorText || `HTTP ${response.status}`);
     }
 
-    return response.json();
+    // 204 No Content
+    if (response.status === 204) return undefined as T;
+
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return response.json();
+    }
+
+    // fallback (caso algum endpoint retorne texto)
+    return (await response.text()) as unknown as T;
   }
 
   public get<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: "GET" });
+  }
+
+  public post<T>(endpoint: string, body?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "POST",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  public put<T>(endpoint: string, body?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "PUT",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  public delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: "DELETE" });
   }
 }

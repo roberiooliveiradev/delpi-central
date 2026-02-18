@@ -1,7 +1,7 @@
 // src/layout/Topbar.tsx
 
 import { useContext, useState, useRef, useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, NavLink} from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { AppLauncher } from "../components/AppLauncher";
@@ -12,16 +12,20 @@ import {
   Sun,
   Moon,
   Grid,
+  Shield
 } from "lucide-react";
 
 export const Topbar = () => {
-  const { user, logout, notifications } = useContext(AuthContext);
+  
+  const { user, logout, notifications, markNotificationRead, markAllNotificationsRead } = useContext(AuthContext);
+
   const location = useLocation();
   const { theme, setTheme } = useTheme();
 
   const [userOpen, setUserOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [launcherOpen, setLauncherOpen] = useState(false);
+  
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -78,6 +82,15 @@ export const Topbar = () => {
         {/* Breadcrumb */}
         <div className="breadcrumb">{breadcrumb}</div>
 
+        {/* Admin */}
+        <div>
+          {user?.is_superadmin && (
+            <NavLink to="/admin" className="menu-item"> 
+              <Shield size={18}/> Administrator
+            </NavLink>
+            )}
+        </div>
+
         <div className="topbar-actions" ref={containerRef}>
           {/* Notificações */}
           <div className="notification-wrapper">
@@ -102,18 +115,27 @@ export const Topbar = () => {
                   </div>
                 )}
 
+                {notifications.length > 0 && (
+                  <div
+                    className="notif-item mark-all"
+                    onClick={markAllNotificationsRead}
+                  >
+                    Marcar todas como lidas
+                  </div>
+                )}
+
                 {notifications.map((n) => (
                   <div
                     key={n.id}
-                    className={`notif-item ${
-                      !n.read ? "unread" : ""
-                    }`}
+                    className={`notif-item ${!n.read ? "unread" : ""}`}
+                    onClick={() => markNotificationRead(n.id)}
                   >
                     {n.message}
                   </div>
                 ))}
               </div>
             )}
+
           </div>
 
           {/* App Launcher */}

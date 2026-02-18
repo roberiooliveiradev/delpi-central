@@ -23,6 +23,8 @@ interface AuthContextType {
   routes: RouteItem[];
   dashboard?: DashboardResponse;
   notifications: NotificationItem[];
+  markNotificationRead: (id: string) => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
   login: () => void;
   logout: () => void;
   reload: () => Promise<void>;
@@ -34,6 +36,8 @@ export const AuthContext = createContext<AuthContextType>({
   apps: [],
   routes: [],
   notifications: [],
+  markNotificationRead: async () => {},
+  markAllNotificationsRead: async () => {},
   login: () => {},
   logout: () => {},
   reload: async () => {},
@@ -54,75 +58,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const initializedRef = useRef(false);
 
-  // Socket isolado
-  const syncNotifications = async () => {
-    if (!keycloak.token) return;
+  // =========================================================
+  // API HELPERS
+  // =========================================================
 
+  const buildCoreApi = () => {
     const apiClient = new ApiClient("", () => keycloak.token);
-    const coreApi = new CoreApi(apiClient);
-
-    const notificationsData = await coreApi.getNotifications();
-    setNotifications(notificationsData);
+    return new CoreApi(apiClient);
   };
-
-
-  const [socketReady, setSocketReady] = useState(false);
-
-  useSocket({
-    token,
-    onConnected: async () => {
-      console.log("🔄 Sincronizando notificações...");
-      await loadCoreData(); // sincroniza ao conectar
-    },
-    onNotification: (data) => {
-      setNotifications((prev) => [data, ...prev]);
-    },
-  });
-
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-
-    keycloak
-      .init({
-        onLoad: "login-required",
-        pkceMethod: "S256",
-        checkLoginIframe: false,
-      })
-      .then(async (authenticated) => {
-        setIsAuthenticated(authenticated);
-        setToken(keycloak.token);
-
-        if (authenticated) {
-          await loadCoreData();
-
-          // 🔥 só depois ativa o socket
-          setSocketReady(true);
-        }
-
-        startTokenRefresh();
-      })
-      .catch((err) => {
-        console.error("Erro ao inicializar Keycloak:", err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-    };
-  }, []);
 
   const loadCoreData = async () => {
     if (!keycloak.token) return;
 
-    const apiClient = new ApiClient("", () => keycloak.token);
-    const coreApi = new CoreApi(apiClient);
-
     try {
+      const coreApi = buildCoreApi();
+
       const [
         me,
         appsResponse,
@@ -146,6 +96,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("Erro ao carregar dados da Core:", error);
     }
   };
+
+  // =========================================================
+  // NOTIFICATIONS
+  // =========================================================
+
+  const markNotificationRead = async (id: string) => {
+    try {
+      const coreApi = buildCoreApi();
+      await coreApi.markNotificationRead(id);
+
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === id ? { ...n, read: true } : n
+        )
+      );
+    } catch (error) {
+      console.error("Erro ao marcar notificação:", error);
+    }
+  };
+
+  const markAllNotificationsRead = async () => {
+    try {
+      const coreApi = buildCoreApi();
+      await coreApi.markAllNotificationsRead();
+
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, read: true }))
+      );
+    } catch (error) {
+      console.error("Erro ao marcar todas notificações:", error);
+    }
+  };
+
+  // =========================================================
+  // SOCKET
+  // =========================================================
+
+  useSocket({
+    token,
+    onConnected: async () => {
+      console.log("🔄 Socket conectado → sincronizando notificações");
+      await loadCoreData();
+    },
+    onNotification: (data) => {
+      setNotifications((prev) => [data, ...prev]);
+    },
+  });
+
+  // =========================================================
+  // AUTH INIT
+  // =========================================================
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    keycloak
+      .init({
+        onLoad: "login-required",
+        pkceMethod: "S256",
+        checkLoginIframe: false,
+      })
+      .then(async (authenticated) => {
+        setIsAuthenticated(authenticated);
+        setToken(keycloak.token);
+
+        if (authenticated) {
+          await loadCoreData();
+        }
+
+        startTokenRefresh();
+      })
+      .catch((err) => {
+        console.error("Erro ao inicializar Keycloak:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+    };
+  }, []);
 
   const startTokenRefresh = () => {
     refreshIntervalRef.current = setInterval(() => {
@@ -176,6 +211,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         routes,
         dashboard,
         notifications,
+        markNotificationRead,
+        markAllNotificationsRead,
         login,
         logout,
         reload: loadCoreData,

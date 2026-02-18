@@ -9,6 +9,7 @@ export interface MeResponse {
   roles: string[];
   groups: string[];
   permissions: string[];
+  is_superadmin?: boolean;
 }
 
 export interface AppItem {
@@ -69,11 +70,11 @@ export class CoreApi {
   }
 
   markNotificationRead(id: string) {
-    return this.client.get<{ ok: boolean }>(`/core-api/notifications/${id}/read`); // se preferir GET
+    return this.client.post<{ ok: boolean }>(`/core-api/notifications/${id}/read`); // se preferir GET
     // melhor: client.post(...) — se você tiver post no ApiClient
   }
 
   markAllNotificationsRead() {
-    return this.client.get<{ ok: boolean }>(`/core-api/notifications/read-all`);
+    return this.client.post<{ ok: boolean }>(`/core-api/notifications/read-all`);
   }
 }
