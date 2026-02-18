@@ -4,7 +4,6 @@ import { useContext } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Sidebar } from "../layout/Sidebar";
-import { Topbar } from "../layout/Topbar";
 import { ProtectedRoute } from "../routes/ProtectedRoute";
 import { Unauthorized } from "./Unauthorized";
 import { motion } from "framer-motion";
@@ -46,7 +45,6 @@ const App = () => {
         <Sidebar />
 
         <div className="main-area">
-          <Topbar />
 
           <div className="content">
             <Routes>
