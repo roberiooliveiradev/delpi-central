@@ -42,9 +42,13 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
 
       KC_PROXY: edge
-      KC_HOSTNAME: localhost
       KC_HOSTNAME_STRICT: false
       KC_HTTP_ENABLED: true
+      # ✅ O que o Keycloak deve considerar como URL pública (via gateway)
+      KC_HOSTNAME_URL: "http://localhost/auth"
+
+      # ✅ (opcional, mas recomendado) mantém o Admin Console funcionando em 8080
+      KC_HOSTNAME_ADMIN_URL: "http://localhost:8080"
 
     ports:
       - "8080:8080"

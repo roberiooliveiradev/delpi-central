@@ -49,6 +49,7 @@ def create_app():
     # Admin
     app.register_blueprint(rbac_admin_bp)         # /core-api/admin/rbac
     app.register_blueprint(apps_admin_bp)         # /core-api/admin/apps
+
     with app.app_context():
         seed_initial_superadmin()
     

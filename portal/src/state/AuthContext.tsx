@@ -12,6 +12,7 @@ import type {
   RouteItem,
   DashboardResponse,
   NotificationItem,
+  FavoriteAppItem,
 } from "../data/coreApi";
 
 interface AuthContextType {
@@ -22,6 +23,7 @@ interface AuthContextType {
   apps: AppItem[];
   routes: RouteItem[];
   dashboard?: DashboardResponse;
+  favorites?: FavoriteAppItem[];
   notifications: NotificationItem[];
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
@@ -35,6 +37,7 @@ export const AuthContext = createContext<AuthContextType>({
   loading: true,
   apps: [],
   routes: [],
+  favorites: [],
   notifications: [],
   markNotificationRead: async () => {},
   markAllNotificationsRead: async () => {},
@@ -54,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [routes, setRoutes] = useState<RouteItem[]>([]);
   const [dashboard, setDashboard] = useState<DashboardResponse | undefined>();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteAppItem[]>([]);
 
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const initializedRef = useRef(false);
@@ -79,12 +83,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         routesResponse,
         dashboardData,
         notificationsData,
+        appsFav,
       ] = await Promise.all([
         coreApi.getMe(),
         coreApi.getApps(),
         coreApi.getRoutes(),
         coreApi.getDashboard(),
         coreApi.getNotifications(),
+        coreApi.getFavoriteApps(),
       ]);
 
       setUser(me);
@@ -92,6 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setRoutes(routesResponse);
       setDashboard(dashboardData);
       setNotifications(notificationsData);
+      setFavorites(appsFav);
     } catch (error) {
       console.error("Erro ao carregar dados da Core:", error);
     }
@@ -210,6 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         apps,
         routes,
         dashboard,
+        favorites,
         notifications,
         markNotificationRead,
         markAllNotificationsRead,

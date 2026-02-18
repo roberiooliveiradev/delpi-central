@@ -1,10 +1,12 @@
 // src/ui/HomePage.tsx
 
 import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 
 export const HomePage = () => {
-  const { user, dashboard } = useContext(AuthContext);
+  const { user, dashboard, favorites } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   if (!dashboard) return null;
 
@@ -22,9 +24,35 @@ export const HomePage = () => {
       </h1>
 
       <p style={{ marginBottom: 30, color: "var(--text-muted)" }}>
-        Bem-vindo à DELPI Central.
+        Bem-vindo à Central DELPI.
       </p>
 
+      {/* FAVORITOS */}
+      {favorites && favorites.length > 0 && (
+        <div className="dashboard-section">
+          <h3>Aplicações Favoritas</h3>
+
+          <div className="favorites-grid">
+            {favorites.map((app) => (
+              <div
+                key={app.id}
+                className="favorite-card"
+                onClick={() => navigate(app.base_path)}
+              >
+                {app.icon && (
+                  <div className="favorite-icon">
+                    <i className={`icon-${app.icon}`} />
+                  </div>
+                )}
+
+                <span>{app.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* STATS */}
       <div className="stats-grid">
         <div className="stat-card">
           <h3>{dashboard.appsCount}</h3>
@@ -42,6 +70,7 @@ export const HomePage = () => {
         </div>
       </div>
 
+      {/* ATIVIDADE */}
       <div className="dashboard-section">
         <h3>Atividade Recente</h3>
 

@@ -10,6 +10,7 @@ from .role_permissions import role_permissions
 from .user_groups import user_groups
 from .group_roles import group_roles
 from .user_permissions import UserPermission
+from .user_favorite_app import UserFavoriteApp
 
 from .app_module import App
 from .app_route import AppRoute

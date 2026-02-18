@@ -1,8 +1,8 @@
 """initial full schema
 
-Revision ID: 7984be7d4e4f
+Revision ID: f0a3bee812c3
 Revises: 
-Create Date: 2026-02-17 22:50:20.069249
+Create Date: 2026-02-18 18:15:20.746413
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '7984be7d4e4f'
+revision = 'f0a3bee812c3'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -148,6 +148,16 @@ def upgrade():
     sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('role_id', 'permission_id')
     )
+    op.create_table('user_favorite_apps',
+    sa.Column('user_id', sa.Uuid(), nullable=False),
+    sa.Column('app_id', sa.String(length=50), nullable=False),
+    sa.Column('order_index', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['app_id'], ['apps.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('user_id', 'app_id')
+    )
     op.create_table('user_groups',
     sa.Column('user_id', sa.Uuid(), nullable=False),
     sa.Column('group_id', sa.Uuid(), nullable=False),
@@ -180,6 +190,7 @@ def downgrade():
     op.drop_table('user_roles')
     op.drop_table('user_permissions')
     op.drop_table('user_groups')
+    op.drop_table('user_favorite_apps')
     op.drop_table('role_permissions')
     op.drop_table('group_roles')
     with op.batch_alter_table('audit_logs', schema=None) as batch_op:

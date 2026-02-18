@@ -41,6 +41,13 @@ export interface NotificationItem {
   createdAt: string;
 }
 
+export interface FavoriteAppItem {
+  id: string;
+  name: string;
+  base_path: string;
+  icon?: string;
+  order_index: number;
+}
 
 export class CoreApi {
   private client: ApiClient;
@@ -77,4 +84,9 @@ export class CoreApi {
   markAllNotificationsRead() {
     return this.client.post<{ ok: boolean }>(`/core-api/notifications/read-all`);
   }
+
+  getFavoriteApps() {
+    return this.client.get<FavoriteAppItem[]>("/core-api/me/apps/favorites");
+  }
+
 }

@@ -34,12 +34,12 @@ export const RbacTab = () => {
         <div key={u.id} className="card">
           <strong>{u.name}</strong> — {u.email}
           <div>
-            Roles: {u.roles.map((r: any) => r.name).join(", ")}
+            Resposabilidade: {u.roles.map((r: any) => r.name).join(", ")}
           </div>
         </div>
       ))}
 
-      <h2 style={{ marginTop: 30 }}>Roles</h2>
+      <h2 style={{ marginTop: 30 }}>Responsabilidades</h2>
       {roles.map((r) => (
         <div key={r.id} className="card">
           <strong>{r.name}</strong>

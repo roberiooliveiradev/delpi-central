@@ -43,11 +43,19 @@ a {
   --text-muted: rgba(17, 17, 17, 0.7);
 
   --border: #e6e6e6;
+	--border-2: #d9d9d9;
 
   --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 
   --primary: #0099dc;
   --danger: #b42318;
+
+  	/* Estados de controle */
+	--control-bg: var(--surface);
+	--control-text: var(--text);
+	--control-border: var(--border-2);
+	--control-placeholder: rgba(17, 17, 17, 0.55);
+	--focus: 0 0 0 3px rgba(100, 108, 255, 0.25);
 }
 
 /* DARK MODE */
@@ -61,9 +69,13 @@ a {
   --text-muted: rgba(255, 255, 255, 0.7);
 
   --border: rgba(255, 255, 255, 0.12);
+  --border-2: rgba(255, 255, 255, 0.16);
 
   --shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
   --danger: #ff6b6b;
+
+  --control-placeholder: rgba(255, 255, 255, 0.55);
+	--focus: 0 0 0 3px rgba(139, 147, 255, 0.3);
 }
 
 
@@ -78,10 +90,40 @@ a {
     --text-muted: rgba(255, 255, 255, 0.7);
 
     --border: rgba(255, 255, 255, 0.12);
+    --border-2: rgba(255, 255, 255, 0.16);
 
     --shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
     --danger: #ff6b6b;
+
+    --control-placeholder: rgba(255, 255, 255, 0.55);
+    --focus: 0 0 0 3px rgba(139, 147, 255, 0.3);
   }
+}
+
+/* Controles nativos (sem depender de inline style) */
+button,
+input,
+select,
+textarea {
+	color: var(--control-text);
+	background: var(--control-bg);
+	border: 1px solid var(--control-border);
+	border-radius: 10px;
+	padding: 12px;
+}
+
+input::placeholder,
+textarea::placeholder {
+	color: var(--control-placeholder);
+}
+
+/* Foco acessível */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+	outline: none;
+	box-shadow: var(--focus);
 }
 
 
@@ -268,8 +310,6 @@ a {
 /* AVATAR */
 
 .avatar {
-  width: 32px;
-  height: 32px;
   border-radius: 50%;
   background: var(--primary);
   color: #fff;
@@ -277,13 +317,12 @@ a {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 24px;
+  padding: 8px;
 }
 
 .avatar.small {
-  width: 26px;
-  height: 26px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* =========================================
@@ -454,6 +493,7 @@ a {
   background: var(--surface);
   cursor: pointer;
   transition: 0.2s;
+  color: var(--text);
 }
 
 .admin-tabs button:hover {
@@ -476,4 +516,38 @@ a {
   border: 1px solid var(--border);
   margin-bottom: 12px;
   box-shadow: var(--shadow);
+}
+
+
+/* =========================================
+   GENERIC CARD (AppsTab)
+========================================= */
+
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.favorite-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.favorite-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+}
+
+.favorite-icon {
+  font-size: 28px;
+  margin-bottom: 12px;
 }

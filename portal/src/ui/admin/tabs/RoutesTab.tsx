@@ -19,8 +19,7 @@ export const RoutesTab = () => {
 
   return (
     <div>
-      <h2>Routes</h2>
-
+      <h2>Rotas</h2>
       <input
         placeholder="App ID (ex: crm)"
         value={appId}
@@ -30,7 +29,7 @@ export const RoutesTab = () => {
       {routes.map((r) => (
         <div key={r.id} className="card">
           <strong>{r.path}</strong>
-          <div>Permission: {r.permission_code || "Pública"}</div>
+          <div>Permissões: {r.permission_code || "Pública"}</div>
           <div>Status: {r.active ? "Ativa" : "Inativa"}</div>
         </div>
       ))}

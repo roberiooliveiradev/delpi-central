@@ -1,13 +1,32 @@
 # 🔐 Tutorial Completo — Configuração do Keycloak (DEV)
-## DELPI Central
 
-Este guia recria **do zero** toda a configuração do Keycloak conforme a `.env` atual da Core API.
+## DELPI Central — Versão Atualizada (Gateway /auth)
 
-Ambiente:
-- Docker
-- Keycloak 24
-- Realm: `delpi`
-- Client: `delpi-central`
+Este guia recria **do zero** toda a configuração do Keycloak conforme a arquitetura atual da DELPI Central.
+
+⚠️ IMPORTANTE: Nesta versão o Keycloak é exposto exclusivamente via gateway em:
+
+```
+http://localhost/auth
+```
+
+Não utilizar mais `:8080` externamente para autenticação.   
+
+---
+
+# 🏗 Arquitetura Atual (DEV)
+
+Serviços expostos:
+
+- Portal → [http://localhost](http://localhost)
+- Core API → [http://localhost/core-api](http://localhost/core-api)
+- Keycloak → [http://localhost/auth](http://localhost/auth)
+
+Issuer oficial do Realm:
+
+```
+http://localhost/auth/realms/delpi
+```
 
 ---
 
@@ -19,24 +38,30 @@ No diretório `infra`:
 docker compose up -d
 ```
 
-Acesse o Keycloak:
+Aguardar todos os containers iniciarem.
+
+---
+
+# 🟢 2️⃣ Acessar Admin Console
+
+Acesse:
 
 ```
-http://localhost:8080
+http://localhost/auth
 ```
 
 Login inicial:
 
-- User: `admin`
-- Password: `admin`
+- User: admin
+- Password: admin
 
 ---
 
-# 🟢 2️⃣ Criar Realm
+# 🟢 3️⃣ Criar Realm
 
-1. No canto superior esquerdo → Clique no dropdown
+1. No canto superior esquerdo → Dropdown de realms
 2. Clique em **Create Realm**
-3. Nome do Realm:
+3. Nome:
 
 ```
 delpi
@@ -44,15 +69,11 @@ delpi
 
 Salvar.
 
-⚠️ O nome deve ser exatamente `delpi` para bater com:
-
-```
-KEYCLOAK_ISSUER=http://localhost/realms/delpi
-```
+⚠️ O nome deve ser exatamente `delpi`.
 
 ---
 
-# 🟢 3️⃣ Criar Client (Aplicação DELPI Central)
+# 🟢 4️⃣ Criar Client (Portal DELPI Central)
 
 Vá em:
 
@@ -60,48 +81,50 @@ Vá em:
 Clients → Create Client
 ```
 
-## Configuração
+## General Settings
 
-### General Settings
-
-| Campo | Valor |
-|--------|--------|
-| Client ID | delpi-central |
-| Name | DELPI Central |
+| Campo       | Valor                    |
+| ----------- | ------------------------ |
+| Client ID   | delpi-central            |
+| Name        | DELPI Central            |
 | Description | Portal Corporativo DELPI |
 
 Clique em **Next**.
 
 ---
 
-### Capability Config
+## Capability Config
 
-| Opção | Valor |
-|--------|--------|
-| Client authentication | OFF |
-| Authorization | OFF |
-| Standard flow | ON |
-| Direct access grants | OFF |
-| Implicit flow | OFF |
+| Opção                 | Valor |
+| --------------------- | ----- |
+| Client authentication | OFF   |
+| Authorization         | OFF   |
+| Standard flow         | ON    |
+| Direct access grants  | OFF   |
+| Implicit flow         | OFF   |
 
 Clique em **Next**.
 
 ---
 
-### Login Settings
+## Login Settings (Configuração Atualizada)
 
-| Campo | Valor |
-|--------|--------|
-| Root URL | http://localhost |
-| Home URL | http://localhost |
-| Valid redirect URIs | http://localhost/* |
-| Web origins | * |
+| Campo               | Valor                                                                    |
+| ------------------- | ------------------------------------------------------------------------ |
+| Root URL            | [http://localhost](http://localhost)                                     |
+| Home URL            | [http://localhost](http://localhost)                                     |
+| Valid redirect URIs | [http://localhost/](http://localhost/)\*                                 |
+|                     | [https://oauth.pstmn.io/v1/callback](https://oauth.pstmn.io/v1/callback) |
+| Web origins         | \*                                                                       |
 
 Salvar.
 
+⚠️ A entrada `http://localhost/*` é obrigatória para o login do portal.
+⚠️ A entrada do Postman é necessária para testes OAuth.
+
 ---
 
-# 🟢 4️⃣ Configurar Audience (Obrigatório)
+# 🟢 5️⃣ Configurar Audience (Obrigatório)
 
 A Core API valida:
 
@@ -113,179 +136,171 @@ Precisamos incluir essa audience no token.
 
 ---
 
-## 4.1 Criar Client Scope
-
-Vá em:
+## 5.1 Criar Client Scope
 
 ```
 Client Scopes → Create client scope
 ```
 
-| Campo | Valor |
-|--------|--------|
-| Name | audience-delpi |
-| Type | Default |
+| Campo    | Valor          |
+| -------- | -------------- |
+| Name     | audience-delpi |
+| Type     | Default        |
 | Protocol | openid-connect |
 
 Salvar.
 
 ---
 
-## 4.2 Criar Mapper dentro do Client Scope
+## 5.2 Criar Mapper
 
-Dentro de `audience-delpi`:
+Dentro do client scope criado:
 
 ```
 Mappers → Configure a new mapper
 ```
 
-Configuração:
-
-| Campo | Valor |
-|--------|--------|
-| Name | audience-delpi |
-| Mapper Type | Audience |
-| Included Client Audience | delpi-central |
-| Add to access token | ON |
-| Add to ID token | OFF |
-| Add to userinfo | OFF |
+| Campo                    | Valor          |
+| ------------------------ | -------------- |
+| Name                     | audience-delpi |
+| Mapper Type              | Audience       |
+| Included Client Audience | delpi-central  |
+| Add to access token      | ON             |
+| Add to ID token          | OFF            |
+| Add to userinfo          | OFF            |
 
 Salvar.
 
 ---
 
-## 4.3 Vincular Client Scope ao Client
-
-Vá em:
+## 5.3 Vincular ao Client
 
 ```
 Clients → delpi-central → Client Scopes
 ```
 
-Em **Assigned Default Client Scopes**:
-
-Clique em **Add client scope**
-
-Selecione:
-
-```
-audience-delpi
-```
-
-Adicionar.
+Adicionar `audience-delpi` como Default Client Scope.
 
 ---
 
-# 🟢 5️⃣ Verificar Issuer
+# 🟢 6️⃣ Verificar Issuer Oficial
 
-O token deve conter:
+Abra no navegador:
 
 ```
-"iss": "http://localhost/realms/delpi"
+http://localhost/auth/realms/delpi/.well-known/openid-configuration
 ```
 
-Isso já estará correto se:
+O campo `issuer` deve ser exatamente:
 
-- Realm = delpi
-- Acesso via http://localhost:8080
+```
+http://localhost/auth/realms/delpi
+```
+
+Se estiver diferente → a configuração está incorreta.
 
 ---
 
-# 🟢 6️⃣ Criar Usuário Administrador
-
-Vá em:
+# 🟢 7️⃣ Criar Usuário Administrador
 
 ```
 Users → Add user
 ```
 
-## Dados:
-
-| Campo | Valor |
-|--------|--------|
-| Username | rober |
-| Email | engenharia6@delpi.com.br |
-| First name | Robério |
-| Last name | Oliveira |
-| Email verified | ON |
+| Campo          | Valor                                                        |
+| -------------- | ------------------------------------------------------------ |
+| Username       | rober                                                        |
+| Email          | [engenharia6@delpi.com.br](mailto\:engenharia6@delpi.com.br) |
+| First name     | Robério                                                      |
+| Last name      | Oliveira                                                     |
+| Email verified | ON                                                           |
 
 Salvar.
 
 ---
 
-## Definir senha
+## Definir Senha
 
 Aba **Credentials**:
 
 1. Set password
-2. Defina senha
+2. Definir senha
 3. Temporary = OFF
 4. Save
 
 ---
 
-# 🟢 7️⃣ Testar Token
+# 🟢 8️⃣ Login na Aplicação
 
-Faça login no Portal.
+Acesse:
 
-Abra DevTools → Application → Local Storage
+```
+http://localhost
+```
 
-Copie o `access_token`.
+Fluxo esperado:
 
-Cole em:
+1. Portal redireciona para
+   [http://localhost/auth/realms/delpi/](http://localhost/auth/realms/delpi/)...
+2. Usuário realiza login
+3. Retorna para o portal autenticado
 
-https://jwt.io
+---
+
+# 🟢 9️⃣ Validar Token
+
+No navegador:
+
+DevTools → Application → Local Storage
+
+Copiar `access_token`.
+
+Validar em [https://jwt.io](https://jwt.io)
 
 O token deve conter:
 
 ```json
-"iss": "http://localhost/realms/delpi",
+"iss": "http://localhost/auth/realms/delpi",
 "aud": ["account", "delpi-central"],
 "azp": "delpi-central"
 ```
 
-Se isso estiver correto → a Core API aceitará.
-
 ---
 
-# 🟢 8️⃣ Validar Core API
+# 🟢 🔟 Validar Core API
 
-Teste:
+Testar:
 
 ```
 http://localhost/core-api/me
 ```
 
-Deve retornar JSON com dados do usuário.
+Deve retornar 200 com dados do usuário.
 
 ---
 
-# 🔐 Checklist Final de Segurança
+# 🔐 Checklist Final
 
 - [ ] Realm correto (`delpi`)
 - [ ] Client ID correto (`delpi-central`)
 - [ ] Audience configurada
 - [ ] Issuer correto
-- [ ] Token contém `aud=delpi-central`
+- [ ] Token contém `aud=delpi-central`
 - [ ] Usuário criado
 - [ ] Login funcionando
-- [ ] `/core-api/me` retornando 200
+- [ ] `/core-api/me` retornando 200
 
 ---
 
 # 🏁 Resultado Esperado
 
-Após esse procedimento:
+Após este procedimento:
 
-- SSO funcionando
+- SSO funcionando via gateway
 - JWT válido
 - Audience validada
 - Core API integrada
-- Base pronta para RBAC
+- Ambiente DEV estabilizado
 
----
-
-Tutorial válido para ambiente de desenvolvimento local.
-
-DELPI Central — Configuração DEV concluída.
+DELPI Central — Configuração DEV concluída (versão com /auth).
 
