@@ -5,7 +5,6 @@ from app.infrastructure.db.models import Permission
 
 
 BASE_PERMISSIONS = [
-
     # =============================
     # RBAC
     # =============================
@@ -47,25 +46,30 @@ BASE_PERMISSIONS = [
 
 
 def seed_base_permissions():
-    existing_codes = {p.code for p in Permission.query.all()}
 
     created = 0
+    updated = 0
 
     for perm_data in BASE_PERMISSIONS:
-        if perm_data["code"] in existing_codes:
-            continue
 
-        permission = Permission(
-            code=perm_data["code"],
-            name=perm_data["name"],
-            description=perm_data["description"],
-        )
+        existing = Permission.query.filter_by(code=perm_data["code"]).first()
 
-        db.session.add(permission)
-        created += 1
+        if not existing:
+            permission = Permission(
+                code=perm_data["code"],
+                name=perm_data["name"],
+                description=perm_data["description"],
+            )
+            db.session.add(permission)
+            created += 1
+        else:
+            # Atualiza nome/descrição se mudar
+            if existing.name != perm_data["name"] or existing.description != perm_data["description"]:
+                existing.name = perm_data["name"]
+                existing.description = perm_data["description"]
+                updated += 1
 
-    if created > 0:
+    if created or updated:
         db.session.commit()
-        print(f"[SEED] {created} permissões base criadas.")
-    else:
-        print("[SEED] Permissões base já existentes.")
+
+    print(f"[SEED] Permissões criadas: {created}, atualizadas: {updated}")

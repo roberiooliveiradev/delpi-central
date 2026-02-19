@@ -32,9 +32,6 @@ def create_app():
     migrate.init_app(app, db)
     socketio.init_app(app)
 
-    with app.app_context():
-        seed_base_permissions()
-
     @app.before_request
     def before_request():
         authenticate()
@@ -49,11 +46,10 @@ def create_app():
     # Admin
     app.register_blueprint(rbac_admin_bp)         # /core-api/admin/rbac
     app.register_blueprint(apps_admin_bp)         # /core-api/admin/apps
-
-    with app.app_context():
-        seed_initial_superadmin()
     
     with app.app_context():
+        seed_base_permissions()
         seed_crm_app()
+        seed_initial_superadmin()
 
     return app
