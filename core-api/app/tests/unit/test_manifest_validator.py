@@ -1,3 +1,5 @@
+# app/tests/unit/test_manifest_validator.py
+
 import json
 from pathlib import Path
 

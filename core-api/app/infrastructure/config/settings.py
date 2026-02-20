@@ -1,3 +1,5 @@
+# app/infrastructure/config/settings.py
+
 import os
 from dotenv import load_dotenv
 
@@ -18,3 +20,9 @@ class Config:
     )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = (
+        "postgresql://delpi:delpi123@postgres-core-test:5432/delpi_core_test"
+    )

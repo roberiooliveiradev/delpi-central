@@ -16,6 +16,21 @@ services:
       - "5432:5432"
     networks:
       - delpi-network
+      
+  postgres-core-test:
+    image: postgres:15
+    container_name: delpi-postgres-core-test
+    environment:
+      POSTGRES_DB: delpi_core_test
+      POSTGRES_USER: delpi
+      POSTGRES_PASSWORD: delpi123
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    volumes:
+      - postgres_core_test_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - delpi-network
 
   keycloak-db:
     image: postgres:15
@@ -103,4 +118,5 @@ networks:
 
 volumes:
   postgres_core_data:
+  postgres_core_test_data:
   keycloak_data:

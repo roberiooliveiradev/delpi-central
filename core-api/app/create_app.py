@@ -1,7 +1,7 @@
 # app/create_app.py
 
 from flask import Flask
-from app.infrastructure.config.settings import Config
+from app.infrastructure.config.settings import Config, TestingConfig
 from app.extensions.db import db
 from app.extensions.migrate import migrate
 from app.extensions.socket import socketio
@@ -24,32 +24,38 @@ from app.infrastructure.seeds.apps_seed import seed_crm_app
 from app.infrastructure.seeds.permissions_seed import seed_base_permissions
 
 
-def create_app():
+def create_app(config_name: str | None = None):
     app = Flask(__name__)
-    app.config.from_object(Config)
+
+    if config_name == "testing":
+        app.config.from_object(TestingConfig)
+    else:
+        app.config.from_object(Config)
 
     db.init_app(app)
     migrate.init_app(app, db)
     socketio.init_app(app)
 
-    @app.before_request
-    def before_request():
-        authenticate()
+    if not app.config.get("TESTING", False):
+        @app.before_request
+        def before_request():
+            authenticate()
 
-    # url_prefix centralizado aqui
+    # Blueprints
     app.register_blueprint(health_bp, url_prefix="/core-api")
     app.register_blueprint(me_bp, url_prefix="/core-api")
     app.register_blueprint(plugins_bp, url_prefix="/core-api/plugins")
     app.register_blueprint(dashboard_bp, url_prefix="/core-api")
     app.register_blueprint(notification_bp, url_prefix="/core-api")
-    
-    # Admin
-    app.register_blueprint(rbac_admin_bp)         # /core-api/admin/rbac
-    app.register_blueprint(apps_admin_bp)         # /core-api/admin/apps
-    
+    app.register_blueprint(rbac_admin_bp)
+    app.register_blueprint(apps_admin_bp)
+
     with app.app_context():
-        seed_base_permissions()
-        seed_crm_app()
-        seed_initial_superadmin()
+        db.create_all()
+
+        if not app.config.get("TESTING", False):
+            seed_base_permissions()
+            seed_crm_app()
+            seed_initial_superadmin()
 
     return app

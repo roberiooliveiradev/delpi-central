@@ -6,6 +6,8 @@ from app.infrastructure.db.models import User
 from app.extensions.db import db
 from datetime import datetime
 from app.domain.services.notification_service import notify_user
+from app.infrastructure.security.rbac_cache import rbac_cache
+from app.domain.services.permission_resolver import resolve_user_permissions
 
 jwt_service = JWTService()
 
@@ -49,6 +51,17 @@ def authenticate():
         )
 
     g.current_user = user
+
+    cached = rbac_cache.get(str(user.id))
+
+    if cached is not None:
+        permissions = cached
+    else:
+        permissions = resolve_user_permissions(user.id)
+        rbac_cache.set(str(user.id), permissions)
+
+    g.current_permissions = permissions
     g.current_sub = sub
+
 
     return user
