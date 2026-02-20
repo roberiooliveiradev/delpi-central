@@ -1,12 +1,11 @@
 # app/create_app.py
 
-from flask import Flask
+from flask import Flask, g
 from app.infrastructure.config.settings import Config, TestingConfig
 from app.extensions.db import db
 from app.extensions.migrate import migrate
 from app.extensions.socket import socketio
 
-# garante que os handlers do socket sejam registrados
 import app.interfaces.socket.socket_handlers  # noqa: F401
 
 from app.interfaces.http.health_controller import health_bp
@@ -18,7 +17,9 @@ from app.interfaces.http.notification_controller import notification_bp
 from app.interfaces.http.rbac_admin_controller import rbac_admin_bp
 from app.interfaces.http.apps_admin_controller import apps_admin_bp
 
+from app.infrastructure.db.models import User  # 👈 precisamos disso
 from app.infrastructure.db.models import *  # noqa: F401,F403
+
 from app.domain.services.bootstrap_service import seed_initial_superadmin
 from app.infrastructure.seeds.apps_seed import seed_crm_app
 from app.infrastructure.seeds.permissions_seed import seed_base_permissions
@@ -36,12 +37,31 @@ def create_app(config_name: str | None = None):
     migrate.init_app(app, db)
     socketio.init_app(app)
 
-    if not app.config.get("TESTING", False):
+    # ==========================================================
+    # AUTH HANDLING
+    # ==========================================================
+
+    if app.config.get("TESTING", False):
+
+        # 🔥 Override simples para testes
+        @app.before_request
+        def fake_auth_for_testing():
+            user = User.query.first()
+            if user:
+                g.current_user = user
+                g.current_permissions = []
+                g.current_sub = str(user.id)
+
+    else:
+
         @app.before_request
         def before_request():
             authenticate()
 
-    # Blueprints
+    # ==========================================================
+    # BLUEPRINTS
+    # ==========================================================
+
     app.register_blueprint(health_bp, url_prefix="/core-api")
     app.register_blueprint(me_bp, url_prefix="/core-api")
     app.register_blueprint(plugins_bp, url_prefix="/core-api/plugins")
@@ -49,6 +69,10 @@ def create_app(config_name: str | None = None):
     app.register_blueprint(notification_bp, url_prefix="/core-api")
     app.register_blueprint(rbac_admin_bp)
     app.register_blueprint(apps_admin_bp)
+
+    # ==========================================================
+    # DB INIT
+    # ==========================================================
 
     with app.app_context():
         db.create_all()
