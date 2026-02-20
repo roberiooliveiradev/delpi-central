@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://delpi.local/schemas/delpi.manifest.v2.schema.json",
+  "title": "DELPI Plugin Manifest v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "name", "version", "type", "basePath", "permissions", "routes"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "2.0.0" },
+    "id": { "type": "string", "minLength": 1, "maxLength": 50 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 150 },
+    "description": { "type": "string" },
+    "version": { "type": "string", "minLength": 1, "maxLength": 20 },
+    "category": { "type": "string" },
+    "icon": { "type": "string" },
+    "type": { "type": "string", "enum": ["microfrontend", "iframe", "backend-only"] },
+    "basePath": { "type": "string", "pattern": "^/[-a-z0-9/]*$" },
+    "entry": { "type": "string" },
+    "healthcheck": { "type": "string" },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "permissions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "description", "module"],
+        "properties": {
+          "code": { "type": "string", "minLength": 3, "maxLength": 150 },
+          "description": { "type": "string" },
+          "module": { "type": "string", "minLength": 1, "maxLength": 100 }
+        }
+      }
+    },
+    "routes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "label", "permission"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "label": { "type": "string", "minLength": 1, "maxLength": 150 },
+          "icon": { "type": "string" },
+          "permission": { "type": "string", "minLength": 3, "maxLength": 150 },
+          "showInMenu": { "type": "boolean" },
+          "order": { "type": "integer", "minimum": 0 },
+          "menuGroup": { "type": "string" }
+        }
+      }
+    },
+    "backend": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "validateJwt", "audience", "issuer"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "serviceName": { "type": "string" },
+        "baseUrl": { "type": "string" },
+        "validateJwt": { "type": "boolean" },
+        "audience": { "type": "string" },
+        "issuer": { "type": "string" },
+        "requiredPermissionsHeader": { "type": "string" }
+      }
+    },
+    "features": { "type": "object" },
+    "lifecycle": { "type": "object" },
+    "security": { "type": "object" },
+    "observability": { "type": "object" },
+    "ui": { "type": "object" },
+    "metadata": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "microfrontend" } } },
+      "then": { "required": ["entry"] }
+    },
+    {
+      "if": { "properties": { "type": { "const": "iframe" } } },
+      "then": { "required": ["entry"] }
+    },
+    {
+      "if": { "properties": { "type": { "const": "backend-only" } } },
+      "then": { "not": { "required": ["entry"] } }
+    }
+  ]
+}

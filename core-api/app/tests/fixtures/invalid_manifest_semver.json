@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "2.0.0",
+  "id": "crm",
+  "name": "CRM",
+  "version": "2.1", 
+  "type": "microfrontend",
+  "basePath": "/crm",
+  "entry": "/apps/crm/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "crm.access",
+      "description": "Acesso",
+      "module": "crm"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/crm",
+      "label": "Dashboard",
+      "permission": "crm.access"
+    }
+  ]
+}
