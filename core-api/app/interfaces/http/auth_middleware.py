@@ -57,7 +57,7 @@ def authenticate():
     if cached is not None:
         permissions = cached
     else:
-        permissions = resolve_user_permissions(user.id)
+        permissions = resolve_user_permissions(user)
         rbac_cache.set(str(user.id), permissions)
 
     g.current_permissions = permissions
