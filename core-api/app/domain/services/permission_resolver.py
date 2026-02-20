@@ -10,8 +10,11 @@ from app.extensions.permission_cache import (
 )
 from app.extensions.db import db
 
+from uuid import UUID
+from app.infrastructure.db.models import User
 
-def resolve_user_permissions(user,  use_cache: bool = True):
+
+def resolve_user_permissions(user_or_id,  use_cache: bool = True):
     """
     Resolve todas as permissões efetivas do usuário considerando:
     - superadmin
@@ -20,6 +23,13 @@ def resolve_user_permissions(user,  use_cache: bool = True):
     - overrides (grant / revoke)
     Utiliza cache em memória para evitar consultas repetidas.
     """
+    if isinstance(user_or_id, (str, UUID)):
+        user = User.query.get(user_or_id)
+    else:
+        user = user_or_id
+
+    if not user:
+        return []
     if use_cache:
         cached = get_cached_permissions(user.id)
         if cached is not None:
