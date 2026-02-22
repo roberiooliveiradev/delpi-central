@@ -1,6 +1,7 @@
 # app/interfaces/http/notification_controller.py
 
 from flask import Blueprint, jsonify, g
+from sqlalchemy import desc
 from datetime import datetime
 from app.infrastructure.db.models.notification import Notification
 from app.extensions.db import db
@@ -16,8 +17,11 @@ def list_notifications():
 
     rows = (
         Notification.query
-        .filter_by(user_id=str(g.current_sub))
-        .order_by(Notification.created_at.desc())
+        .filter(
+            Notification.user_id == str(g.current_sub),
+            Notification.read_at.is_(None)
+        )
+        .order_by(desc(Notification.created_at))
         .limit(50)
         .all()
     )
@@ -27,7 +31,7 @@ def list_notifications():
         "title": n.title,
         "message": n.message,
         "type": n.type,
-        "read": n.read_at is not None,
+        "read": False,
         "createdAt": n.created_at.isoformat() + "Z",
     } for n in rows])
 
