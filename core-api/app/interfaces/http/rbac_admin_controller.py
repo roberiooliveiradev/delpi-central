@@ -104,8 +104,23 @@ def invalidate_role_users(role):
 
 @rbac_admin_bp.get("/permissions")
 def list_permissions():
-    query = Permission.query.order_by(Permission.code.asc())
-    return paginate_query(query, _json_permission)
+    q = (request.args.get("q") or "").strip().lower()
+    query = Permission.query
+    if q:
+        query = query.filter(
+            or_(
+                Permission.code.ilike(f"%{q}%"),
+                Permission.name.ilike(f"%{q}%")
+            )
+        )
+
+    return paginate_query(
+        query,
+        _json_permission,
+        Permission,
+        allowed_sort_fields=["code", "name"],
+        default_sort="code",
+    )
 
 
 @rbac_admin_bp.post("/permissions")
@@ -130,14 +145,79 @@ def create_permission():
     return jsonify(_json_permission(p)), 201
 
 
+@rbac_admin_bp.put("/permissions/<permission_id>")
+def update_permission(permission_id: str):
+    p = Permission.query.get(permission_id)
+    if not p:
+        return jsonify({"error": "Not found"}), 404
+
+    data = request.get_json(force=True) or {}
+    for field in ["code", "name", "description"]:
+        if field in data:
+            setattr(p, field, data[field])
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "permission code already exists"}), 409
+
+    log_audit("permissions.update", "permission", permission_id, {"payload": data})
+    return jsonify(_json_permission(p))
+
+
+@rbac_admin_bp.delete("/permissions/<permission_id>")
+def delete_permission(permission_id: str):
+    p = Permission.query.get(permission_id)
+    if not p:
+        return jsonify({"error": "Not found"}), 404
+
+    db.session.delete(p)
+    db.session.commit()
+
+    log_audit("permissions.delete", "permission", permission_id, {})
+    return jsonify({"ok": True})
+
+
+@rbac_admin_bp.post("/permissions/bulk-delete")
+def bulk_delete_permissions():
+    data = request.get_json(force=True) or {}
+    ids = data.get("ids", [])
+    if not isinstance(ids, list) or not ids:
+        return jsonify({"error": "ids list required"}), 400
+
+    rows = Permission.query.filter(Permission.id.in_(ids)).all()
+    for r in rows:
+        db.session.delete(r)
+
+    db.session.commit()
+    log_audit("permissions.bulk_delete", "permission", None, {"ids": ids})
+    return jsonify({"ok": True, "deleted": len(rows)})
+
+
 # =========================================================
 # Roles
 # =========================================================
 
 @rbac_admin_bp.get("/roles")
 def list_roles():
-    query = Role.query.order_by(Role.name.asc())
-    return paginate_query(query, _json_role)
+    q = (request.args.get("q") or "").strip().lower()
+    query = Role.query
+    if q:
+        query = query.filter(
+            or_(
+                Role.name.ilike(f"%{q}%"),
+                Role.description.ilike(f"%{q}%")
+            )
+        )
+
+    return paginate_query(
+        query,
+        _json_role,
+        Role,
+        allowed_sort_fields=["name", "description"],
+        default_sort="name",
+    )
 
 
 @rbac_admin_bp.post("/roles")
@@ -161,14 +241,78 @@ def create_role():
     return jsonify(_json_role(role)), 201
 
 
+@rbac_admin_bp.put("/roles/<role_id>")
+def update_role(role_id: str):
+    role = Role.query.get(role_id)
+    if not role:
+        return jsonify({"error": "Not found"}), 404
+
+    data = request.get_json(force=True) or {}
+
+    if "name" in data:
+        role.name = data["name"]
+
+    if "description" in data:
+        role.description = data["description"]
+
+    db.session.commit()
+    log_audit("roles.update", "role", role_id, {"payload": data})
+    return jsonify(_json_role(role))
+
+
+@rbac_admin_bp.delete("/roles/<role_id>")
+def delete_role(role_id: str):
+    role = Role.query.get(role_id)
+    if not role:
+        return jsonify({"error": "Not found"}), 404
+
+    db.session.delete(role)
+    db.session.commit()
+
+    log_audit("roles.delete", "role", role_id, {})
+    return jsonify({"ok": True})
+
+
+@rbac_admin_bp.post("/roles/bulk-delete")
+def bulk_delete_roles():
+    data = request.get_json(force=True) or {}
+    ids = data.get("ids", [])
+
+    if not isinstance(ids, list) or not ids:
+        return jsonify({"error": "ids list required"}), 400
+
+    roles = Role.query.filter(Role.id.in_(ids)).all()
+    for role in roles:
+        db.session.delete(role)
+
+    db.session.commit()
+    log_audit("roles.bulk_delete", "role", None, {"ids": ids})
+    return jsonify({"ok": True, "deleted": len(roles)})
+
+
 # =========================================================
 # Groups
 # =========================================================
 
 @rbac_admin_bp.get("/groups")
 def list_groups():
-    query = Group.query.order_by(Group.name.asc())
-    return paginate_query(query, _json_group)
+    q = (request.args.get("q") or "").strip().lower()
+    query = Group.query
+    if q:
+        query = query.filter(
+            or_(
+                Group.name.ilike(f"%{q}%"),
+                Group.description.ilike(f"%{q}%")
+            )
+        )
+
+    return paginate_query(
+        query,
+        _json_group,
+        Group,
+        allowed_sort_fields=["name", "description"],
+        default_sort="name",
+    )
 
 
 @rbac_admin_bp.post("/groups")
@@ -192,6 +336,56 @@ def create_group():
     return jsonify(_json_group(group)), 201
 
 
+@rbac_admin_bp.put("/groups/<group_id>")
+def update_group(group_id: str):
+    group = Group.query.get(group_id)
+    if not group:
+        return jsonify({"error": "Not found"}), 404
+
+    data = request.get_json(force=True) or {}
+    for field in ["name", "description"]:
+        if field in data:
+            setattr(group, field, data[field])
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "group name already exists"}), 409
+
+    log_audit("groups.update", "group", group_id, {"payload": data})
+    return jsonify(_json_group(group))
+
+
+@rbac_admin_bp.delete("/groups/<group_id>")
+def delete_group(group_id: str):
+    group = Group.query.get(group_id)
+    if not group:
+        return jsonify({"error": "Not found"}), 404
+
+    db.session.delete(group)
+    db.session.commit()
+
+    log_audit("groups.delete", "group", group_id, {})
+    return jsonify({"ok": True})
+
+
+@rbac_admin_bp.post("/groups/bulk-delete")
+def bulk_delete_groups():
+    data = request.get_json(force=True) or {}
+    ids = data.get("ids", [])
+    if not isinstance(ids, list) or not ids:
+        return jsonify({"error": "ids list required"}), 400
+
+    rows = Group.query.filter(Group.id.in_(ids)).all()
+    for r in rows:
+        db.session.delete(r)
+
+    db.session.commit()
+    log_audit("groups.bulk_delete", "group", None, {"ids": ids})
+    return jsonify({"ok": True, "deleted": len(rows)})
+
+
 # =========================================================
 # Users
 # =========================================================
@@ -209,8 +403,13 @@ def list_users():
             )
         )
 
-    query = query.order_by(User.email.asc())
-    return paginate_query(query, _json_user)
+    return paginate_query(
+        query,
+        _json_user,
+        User,
+        allowed_sort_fields=["email", "name", "is_superadmin"],
+        default_sort="email",
+    )
 
 
 @rbac_admin_bp.get("/users/<user_id>/overrides")
@@ -231,4 +430,4 @@ def list_user_overrides(user_id: str):
             "granted": bool(up.granted),
         }
 
-    return paginate_query(query, serializer)
+    return paginate_query(query, serializer, UserPermission)

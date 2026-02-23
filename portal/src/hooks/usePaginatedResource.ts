@@ -18,7 +18,7 @@ export function usePaginatedResource<T>(
   deps: any[] = []
 ) {
   const [data, setData] = useState<T[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [pagination, setPagination] =  useState<PaginationMeta | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(initialPageSize);
   const [loading, setLoading] = useState(false);

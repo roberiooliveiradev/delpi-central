@@ -1,0 +1,230 @@
+/* =========================================
+   DATA TABLE — COMPAT (visual antigo + recursos novos)
+========================================= */
+
+.datatable-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* TOOLBAR */
+.datatable-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+
+.datatable-toolbar-left {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.datatable-toolbar-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Search (novo, mas no visual antigo) */
+.datatable-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 260px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.datatable-search input {
+  border: none;
+  outline: none;
+  padding: 0;
+  width: 100%;
+  background: transparent;
+}
+
+/* Page size (no topo, opcional) */
+.datatable-pagesize {
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+/* CONTAINER */
+.datatable-container {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* TABLE */
+.datatable {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+}
+
+/* HEADER */
+.datatable thead {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Sticky header (mantendo seu visual) */
+.datatable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface-2);
+}
+
+.datatable th {
+  text-align: left;
+  padding: 14px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  user-select: none;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+}
+
+.datatable th.sortable {
+  cursor: pointer;
+}
+
+.datatable th.sortable:hover {
+  background: var(--surface-3);
+  color: var(--primary);
+}
+
+.datatable th.active {
+  color: var(--primary);
+}
+
+.sort-indicator {
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--primary);
+}
+
+.sort-icon {
+  display: inline-flex;
+  vertical-align: middle;
+  opacity: 0.75;
+}
+
+/* BODY */
+.datatable td {
+  padding: 16px 18px;
+  font-size: 14px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.datatable tbody tr {
+  transition: background 0.2s ease;
+}
+
+.datatable tbody tr:hover {
+  background: var(--surface-2);
+}
+
+/* Selected rows (bulk) */
+.datatable tbody tr.selected {
+  background: rgba(0, 153, 220, 0.08);
+}
+
+/* Checkbox / Actions col widths */
+.datatable-th-checkbox,
+.datatable-td-checkbox {
+  width: 42px;
+}
+
+.datatable-th-actions,
+.datatable-td-actions {
+  width: 160px;
+  text-align: right;
+}
+
+/* Empty / Loading row states */
+.datatable-td-state {
+  padding: 0 !important;
+}
+
+.datatable-state {
+  padding: 22px 18px;
+  color: var(--text-muted);
+}
+
+/* Overlay (mantido) */
+.datatable-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--surface);
+  opacity: 0.86;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--primary);
+  backdrop-filter: blur(2px);
+}
+
+/* PAGINATION (mantido, com pequenos ajustes) */
+.datatable-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.datatable-pagination span {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.datatable-pagination-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.datatable-pagination button {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.datatable-pagination button:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: var(--focus-2);
+}
+
+.datatable-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

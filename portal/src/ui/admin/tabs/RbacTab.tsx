@@ -1,17 +1,30 @@
 // src/ui/admin/tabs/RbacTab.tsx
 
-
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
-import type { AdminUser, AdminRole } from "../../../data/adminApi";
+import type { AdminUser } from "../../../data/adminApi";
 
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
-import { PaginationControls } from "../../../components/PaginationControls";
+import { DataTable } from "../../../components/DataTable";
+import { ActionButtons } from "../../../components/ActionButtons";
+import { ConfirmDialog } from "../../../components/ConfirmDialog";
 
 export const RbacTab = () => {
   const { token } = useContext(AuthContext);
+
+  const [userSearch, setUserSearch] = useState("");
+  const [sort, setSort] = useState<{ sort?: string; direction?: "asc" | "desc" }>({
+    sort: "email",
+    direction: "asc",
+  });
+
+  const [selected, setSelected] = useState<string[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
+  const [toDelete, setToDelete] = useState<AdminUser | null>(null);
 
   const api = useMemo(() => {
     if (!token) return null;
@@ -20,73 +33,131 @@ export const RbacTab = () => {
 
   const usersResource = usePaginatedResource<AdminUser>(
     ({ page, pageSize }) =>
-      api!.listUsers({ page, pageSize }),
-    10
-  );
-
-  const rolesResource = usePaginatedResource<AdminRole>(
-    ({ page, pageSize }) =>
-      api!.listRoles({ page, pageSize }),
-    10
+      api!.listUsers({
+        page,
+        pageSize,
+        q: userSearch,
+        sort: sort.sort,
+        direction: sort.direction,
+      }),
+    10,
+    [userSearch, sort.sort, sort.direction]
   );
 
   if (!api) return null;
 
+  const doDeleteOne = async () => {
+    if (!toDelete) return;
+    setConfirmLoading(true);
+    try {
+      await api.deleteUser(toDelete.id);
+      setToDelete(null);
+      setConfirmOpen(false);
+      setSelected((s) => s.filter((id) => id !== toDelete.id));
+      usersResource.setPage(1);
+    } finally {
+      setConfirmLoading(false);
+    }
+  };
+
+  const doBulkDelete = async () => {
+    if (selected.length === 0) return;
+    setConfirmLoading(true);
+    try {
+      await api.bulkDeleteUsers(selected);
+      setSelected([]);
+      setConfirmOpen(false);
+      usersResource.setPage(1);
+    } finally {
+      setConfirmLoading(false);
+    }
+  };
+
   return (
     <div>
-      {/* ================= USERS ================= */}
       <h2>Usuários ({usersResource.pagination?.total ?? 0})</h2>
 
-      {usersResource.loading && <p>Carregando...</p>}
+      <DataTable
+        columns={[
+          { key: "name", header: "Nome", sortable: true },
+          { key: "email", header: "Email", sortable: true },
+          {
+            key: "roles",
+            header: "Roles",
+            render: (row) => row.roles.map((r) => r.name).join(", ") || "Nenhuma",
+          },
+          {
+            key: "is_superadmin",
+            header: "Superadmin",
+            sortable: true,
+            render: (row) => (row.is_superadmin ? "Sim" : "Não"),
+          },
+        ]}
+        data={usersResource.data}
+        loading={usersResource.loading}
+        searchValue={userSearch}
+        onSearchChange={setUserSearch}
+        sort={sort}
+        onSortChange={setSort}
+        selectable
+        getRowId={(row) => row.id}
+        selectedRows={selected}
+        onSelectionChange={setSelected}
+        toolbar={
+          selected.length > 0 ? (
+            <button
+              className="btn-danger"
+              onClick={() => {
+                setToDelete(null);
+                setConfirmOpen(true);
+              }}
+              disabled={usersResource.loading}
+            >
+              Excluir selecionados ({selected.length})
+            </button>
+          ) : (
+            <span className="dt-muted">Selecione usuários para excluir em massa</span>
+          )
+        }
+        actions={(row) => (
+          <ActionButtons
+            onEdit={() => console.log("editar user", row.id)}
+            onDelete={() => {
+              setToDelete(row);
+              setConfirmOpen(true);
+            }}
+          />
+        )}
+        pagination={
+          usersResource.pagination
+            ? {
+                page: usersResource.page,
+                totalPages: usersResource.pagination.total_pages,
+                total: usersResource.pagination.total,
+                pageSize: 10,
+              }
+            : undefined
+        }
+        onPageChange={usersResource.setPage}
+      />
 
-      <div className="table">
-        {usersResource.data.map((u) => (
-          <div key={u.id} className="card">
-            <strong>{u.name}</strong> — {u.email}
-            <div>
-              Responsabilidades:{" "}
-              {u.roles.map((r) => r.name).join(", ") || "Nenhuma"}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {usersResource.pagination && (
-        <PaginationControls
-          page={usersResource.page}
-          totalPages={usersResource.pagination.total_pages}
-          onNext={usersResource.next}
-          onPrev={usersResource.prev}
-        />
-      )}
-
-      {/* ================= ROLES ================= */}
-      <h2 style={{ marginTop: 40 }}>
-        Responsabilidades ({rolesResource.pagination?.total ?? 0})
-      </h2>
-
-      {rolesResource.loading && <p>Carregando...</p>}
-
-      <div className="table">
-        {rolesResource.data.map((r) => (
-          <div key={r.id} className="card">
-            <strong>{r.name}</strong>
-            <div>
-              Permissões:{" "}
-              {r.permissions.map((p) => p.code).join(", ") || "Nenhuma"}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {rolesResource.pagination && (
-        <PaginationControls
-          page={rolesResource.page}
-          totalPages={rolesResource.pagination.total_pages}
-          onNext={rolesResource.next}
-          onPrev={rolesResource.prev}
-        />
-      )}
+      <ConfirmDialog
+        open={confirmOpen}
+        title={toDelete ? "Excluir usuário" : "Excluir usuários"}
+        message={
+          toDelete
+            ? `Deseja excluir "${toDelete.email}"?`
+            : `Deseja excluir ${selected.length} usuários selecionados?`
+        }
+        confirmText="Excluir"
+        danger
+        loading={confirmLoading}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setToDelete(null);
+        }}
+        onConfirm={toDelete ? doDeleteOne : doBulkDelete}
+      />
     </div>
   );
 };

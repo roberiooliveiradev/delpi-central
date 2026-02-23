@@ -52,6 +52,14 @@ export type AdminGroup = {
   roles: { id: string; name: string }[];
 };
 
+export type ListQueryOptions = {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  sort?: string;
+  direction?: "asc" | "desc";
+};
+
 /* ======================================================
    Apps
 ====================================================== */
@@ -84,147 +92,97 @@ export type AdminAppRoute = {
 ====================================================== */
 
 export class AdminApi {
-  private client: ApiClient;
-
+  public client: ApiClient; // 👈 exposto (você já vinha usando)
   constructor(client: ApiClient) {
     this.client = client;
   }
 
-  /* ======================================================
-     Helpers
-  ====================================================== */
-
-  private buildPaginationQuery(
-    page?: number,
-    pageSize?: number,
-    q?: string
-  ) {
+  private buildQuery(options?: ListQueryOptions) {
     const params = new URLSearchParams();
 
-    if (page) params.append("page", String(page));
-    if (pageSize) params.append("page_size", String(pageSize));
-    if (q) params.append("q", q);
+    if (options?.page) params.append("page", String(options.page));
+    if (options?.pageSize) params.append("page_size", String(options.pageSize));
+    if (options?.q) params.append("q", options.q);
+    if (options?.sort) params.append("sort", options.sort);
+    if (options?.direction) params.append("direction", options.direction);
 
     const queryString = params.toString();
     return queryString ? `?${queryString}` : "";
   }
 
-  /* ======================================================
+  /* =========================
      RBAC
-  ====================================================== */
+  ========================= */
 
-  listUsers(options?: {
-    page?: number;
-    pageSize?: number;
-    q?: string;
-  }) {
-    const qs = this.buildPaginationQuery(
-      options?.page,
-      options?.pageSize,
-      options?.q
-    );
-
+  listUsers(options?: ListQueryOptions) {
+    const qs = this.buildQuery(options);
     return this.client.get<PaginatedResponse<AdminUser>>(
       `/core-api/admin/rbac/users${qs}`
     );
   }
 
-  getUser(userId: string) {
-    return this.client.get<AdminUser>(
+  deleteUser(userId: string) {
+    return this.client.delete<{ ok: boolean }>(
       `/core-api/admin/rbac/users/${userId}`
     );
   }
 
-  listRoles(options?: {
-    page?: number;
-    pageSize?: number;
-  }) {
-    const qs = this.buildPaginationQuery(
-      options?.page,
-      options?.pageSize
+  bulkDeleteUsers(ids: string[]) {
+    return this.client.post<{ ok: boolean; deleted: number }>(
+      `/core-api/admin/rbac/users/bulk-delete`,
+      { ids }
     );
+  }
 
+  listRoles(options?: ListQueryOptions) {
+    const qs = this.buildQuery(options);
     return this.client.get<PaginatedResponse<AdminRole>>(
       `/core-api/admin/rbac/roles${qs}`
     );
   }
 
-  listPermissions(options?: {
-    page?: number;
-    pageSize?: number;
-  }) {
-    const qs = this.buildPaginationQuery(
-      options?.page,
-      options?.pageSize
+  updateRole(roleId: string, payload: Partial<AdminRole>) {
+    return this.client.put<AdminRole>(
+      `/core-api/admin/rbac/roles/${roleId}`,
+      payload
     );
+  }
 
+  deleteRole(roleId: string) {
+    return this.client.delete<{ ok: boolean }>(
+      `/core-api/admin/rbac/roles/${roleId}`
+    );
+  }
+
+  bulkDeleteRoles(ids: string[]) {
+    return this.client.post<{ ok: boolean; deleted: number }>(
+      `/core-api/admin/rbac/roles/bulk-delete`,
+      { ids }
+    );
+  }
+
+  listPermissions(options?: ListQueryOptions) {
+    const qs = this.buildQuery(options);
     return this.client.get<PaginatedResponse<AdminPermission>>(
       `/core-api/admin/rbac/permissions${qs}`
     );
   }
 
-  listGroups(options?: {
-    page?: number;
-    pageSize?: number;
-  }) {
-    const qs = this.buildPaginationQuery(
-      options?.page,
-      options?.pageSize
-    );
-
+  listGroups(options?: ListQueryOptions) {
+    const qs = this.buildQuery(options);
     return this.client.get<PaginatedResponse<AdminGroup>>(
       `/core-api/admin/rbac/groups${qs}`
     );
   }
 
-  setUserRoles(userId: string, roleIds: string[]) {
-    return this.client.put<AdminUser>(
-      `/core-api/admin/rbac/users/${userId}/roles`,
-      { roleIds }
-    );
-  }
+  /* =========================
+     Apps
+  ========================= */
 
-  setUserGroups(userId: string, groupIds: string[]) {
-    return this.client.put<AdminUser>(
-      `/core-api/admin/rbac/users/${userId}/groups`,
-      { groupIds }
-    );
-  }
-
-  setRolePermissions(roleId: string, permissionIds: string[]) {
-    return this.client.put<AdminRole>(
-      `/core-api/admin/rbac/roles/${roleId}/permissions`,
-      { permissionIds }
-    );
-  }
-
-  setGroupRoles(groupId: string, roleIds: string[]) {
-    return this.client.put<AdminGroup>(
-      `/core-api/admin/rbac/groups/${groupId}/roles`,
-      { roleIds }
-    );
-  }
-
-  /* ======================================================
-     Apps & Routes (mantido igual)
-  ====================================================== */
-
-
-  listApps(options?: { page?: number; pageSize?: number }) {
-    const qs = this.buildPaginationQuery(
-      options?.page,
-      options?.pageSize
-  );
-
-  return this.client.get<PaginatedResponse<AdminApp>>(
-    `/core-api/admin/apps${qs}`
-  );
-}
-
-  createApp(payload: Partial<AdminApp>) {
-    return this.client.post<{ ok: boolean; id: string }>(
-      `/core-api/admin/apps`,
-      payload
+  listApps(options?: ListQueryOptions) {
+    const qs = this.buildQuery(options);
+    return this.client.get<PaginatedResponse<AdminApp>>(
+      `/core-api/admin/apps${qs}`
     );
   }
 
@@ -235,24 +193,41 @@ export class AdminApi {
     );
   }
 
-  listRoutes(
-    appId: string,
-    options?: { page?: number; pageSize?: number }
-  ) {
-    const qs = this.buildPaginationQuery(
-      options?.page,
-      options?.pageSize
-    );
-
-    return this.client.get<PaginatedResponse<AdminAppRoute>>(
-      `/core-api/admin/apps/${appId}/routes${qs}`
+  deleteApp(appId: string) {
+    return this.client.delete<{ ok: boolean }>(
+      `/core-api/admin/apps/${appId}`
     );
   }
 
-  createRoute(appId: string, payload: Partial<AdminAppRoute>) {
-    return this.client.post<{ ok: boolean; id: string }>(
-      `/core-api/admin/apps/${appId}/routes`,
-      payload
+  bulkDeleteApps(ids: string[]) {
+    return this.client.post<{ ok: boolean; deleted: number }>(
+      `/core-api/admin/apps/bulk-delete`,
+      { ids }
+    );
+  }
+
+  bulkActivateApps(ids: string[]) {
+    return this.client.post<{ ok: boolean; updated: number }>(
+      `/core-api/admin/apps/bulk-activate`,
+      { ids }
+    );
+  }
+
+  bulkDeactivateApps(ids: string[]) {
+    return this.client.post<{ ok: boolean; updated: number }>(
+      `/core-api/admin/apps/bulk-deactivate`,
+      { ids }
+    );
+  }
+
+  /* =========================
+     Routes
+  ========================= */
+
+  listRoutes(appId: string, options?: ListQueryOptions) {
+    const qs = this.buildQuery(options);
+    return this.client.get<PaginatedResponse<AdminAppRoute>>(
+      `/core-api/admin/apps/${appId}/routes${qs}`
     );
   }
 
@@ -263,27 +238,16 @@ export class AdminApi {
     );
   }
 
-  activateApp(appId: string) {
-    return this.client.post<{ ok: boolean }>(
-      `/core-api/admin/apps/${appId}/activate`
+  deleteRoute(routeId: string) {
+    return this.client.delete<{ ok: boolean }>(
+      `/core-api/admin/apps/routes/${routeId}`
     );
   }
 
-  deactivateApp(appId: string) {
-    return this.client.post<{ ok: boolean }>(
-      `/core-api/admin/apps/${appId}/deactivate`
-    );
-  }
-
-  activateRoute(routeId: string) {
-    return this.client.post<{ ok: boolean }>(
-      `/core-api/admin/apps/routes/${routeId}/activate`
-    );
-  }
-
-  deactivateRoute(routeId: string) {
-    return this.client.post<{ ok: boolean }>(
-      `/core-api/admin/apps/routes/${routeId}/deactivate`
+  bulkDeactivateRoutes(ids: string[]) {
+    return this.client.post<{ ok: boolean; updated: number }>(
+      `/core-api/admin/apps/routes/bulk-deactivate`,
+      { ids }
     );
   }
 }
