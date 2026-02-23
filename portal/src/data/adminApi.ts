@@ -1,10 +1,5 @@
 // src/data/adminApi.ts
-
 import { ApiClient } from "./apiClient";
-
-/* ======================================================
-   Tipos base
-====================================================== */
 
 export type PaginationMeta = {
   page: number;
@@ -17,10 +12,6 @@ export type PaginatedResponse<T> = {
   data: T[];
   pagination: PaginationMeta;
 };
-
-/* ======================================================
-   RBAC Types
-====================================================== */
 
 export type AdminUser = {
   id: string;
@@ -60,10 +51,6 @@ export type ListQueryOptions = {
   direction?: "asc" | "desc";
 };
 
-/* ======================================================
-   Apps
-====================================================== */
-
 export type AdminApp = {
   id: string;
   name: string;
@@ -87,19 +74,14 @@ export type AdminAppRoute = {
   permission_code?: string | null;
 };
 
-/* ======================================================
-   API
-====================================================== */
-
 export class AdminApi {
-  public client: ApiClient; // 👈 exposto (você já vinha usando)
+  public client: ApiClient;
   constructor(client: ApiClient) {
     this.client = client;
   }
 
   private buildQuery(options?: ListQueryOptions) {
     const params = new URLSearchParams();
-
     if (options?.page) params.append("page", String(options.page));
     if (options?.pageSize) params.append("page_size", String(options.pageSize));
     if (options?.q) params.append("q", options.q);
@@ -111,13 +93,41 @@ export class AdminApi {
   }
 
   /* =========================
-     RBAC
+     Plugins / Manifest
+  ========================= */
+  getPluginManifest(appId: string) {
+    return this.client.get<any>(`/core-api/plugins/${appId}/manifest`);
+  }
+  
+  registerManifest(manifest: any) {
+    return this.client.post<{ status: string; appId: string; version?: string }>(
+      "/core-api/plugins/register",
+      manifest
+    );
+  }
+
+  /* =========================
+     RBAC - Users
   ========================= */
 
   listUsers(options?: ListQueryOptions) {
     const qs = this.buildQuery(options);
     return this.client.get<PaginatedResponse<AdminUser>>(
       `/core-api/admin/rbac/users${qs}`
+    );
+  }
+
+  getUser(userId: string) {
+    return this.client.get<AdminUser>(`/core-api/admin/rbac/users/${userId}`);
+  }
+
+  updateUser(
+    userId: string,
+    payload: Partial<AdminUser> & { roleIds?: string[]; groupIds?: string[] }
+  ) {
+    return this.client.put<AdminUser>(
+      `/core-api/admin/rbac/users/${userId}`,
+      payload
     );
   }
 
@@ -134,11 +144,19 @@ export class AdminApi {
     );
   }
 
+  /* =========================
+     RBAC - Roles
+  ========================= */
+
   listRoles(options?: ListQueryOptions) {
     const qs = this.buildQuery(options);
     return this.client.get<PaginatedResponse<AdminRole>>(
       `/core-api/admin/rbac/roles${qs}`
     );
+  }
+
+  createRole(payload: { name: string; description?: string | null }) {
+    return this.client.post<AdminRole>(`/core-api/admin/rbac/roles`, payload);
   }
 
   updateRole(roleId: string, payload: Partial<AdminRole>) {
@@ -161,12 +179,27 @@ export class AdminApi {
     );
   }
 
+  setRolePermissions(roleId: string, permissionIds: string[]) {
+    return this.client.put<AdminRole>(
+      `/core-api/admin/rbac/roles/${roleId}/permissions`,
+      { permissionIds }
+    );
+  }
+
+  /* =========================
+     RBAC - Permissions
+  ========================= */
+
   listPermissions(options?: ListQueryOptions) {
     const qs = this.buildQuery(options);
     return this.client.get<PaginatedResponse<AdminPermission>>(
       `/core-api/admin/rbac/permissions${qs}`
     );
   }
+
+  /* =========================
+     RBAC - Groups
+  ========================= */
 
   listGroups(options?: ListQueryOptions) {
     const qs = this.buildQuery(options);
@@ -175,8 +208,39 @@ export class AdminApi {
     );
   }
 
+  createGroup(payload: { name: string; description?: string | null }) {
+    return this.client.post<AdminGroup>(`/core-api/admin/rbac/groups`, payload);
+  }
+
+  updateGroup(groupId: string, payload: Partial<AdminGroup>) {
+    return this.client.put<AdminGroup>(
+      `/core-api/admin/rbac/groups/${groupId}`,
+      payload
+    );
+  }
+
+  deleteGroup(groupId: string) {
+    return this.client.delete<{ ok: boolean }>(
+      `/core-api/admin/rbac/groups/${groupId}`
+    );
+  }
+
+  bulkDeleteGroups(ids: string[]) {
+    return this.client.post<{ ok: boolean; deleted: number }>(
+      `/core-api/admin/rbac/groups/bulk-delete`,
+      { ids }
+    );
+  }
+
+  setGroupRoles(groupId: string, roleIds: string[]) {
+    return this.client.put<AdminGroup>(
+      `/core-api/admin/rbac/groups/${groupId}/roles`,
+      { roleIds }
+    );
+  }
+
   /* =========================
-     Apps
+     Apps / Routes (mantém)
   ========================= */
 
   listApps(options?: ListQueryOptions) {
@@ -187,16 +251,11 @@ export class AdminApi {
   }
 
   updateApp(appId: string, payload: Partial<AdminApp>) {
-    return this.client.put<{ ok: boolean }>(
-      `/core-api/admin/apps/${appId}`,
-      payload
-    );
+    return this.client.put<{ ok: boolean }>(`/core-api/admin/apps/${appId}`, payload);
   }
 
   deleteApp(appId: string) {
-    return this.client.delete<{ ok: boolean }>(
-      `/core-api/admin/apps/${appId}`
-    );
+    return this.client.delete<{ ok: boolean }>(`/core-api/admin/apps/${appId}`);
   }
 
   bulkDeleteApps(ids: string[]) {
@@ -219,10 +278,6 @@ export class AdminApi {
       { ids }
     );
   }
-
-  /* =========================
-     Routes
-  ========================= */
 
   listRoutes(appId: string, options?: ListQueryOptions) {
     const qs = this.buildQuery(options);
@@ -247,6 +302,20 @@ export class AdminApi {
   bulkDeactivateRoutes(ids: string[]) {
     return this.client.post<{ ok: boolean; updated: number }>(
       `/core-api/admin/apps/routes/bulk-deactivate`,
+      { ids }
+    );
+  }
+
+  bulkDeleteRoutes(ids: string[]) {
+    return this.client.post<{ ok: boolean; deleted: number }>(
+      `/core-api/admin/apps/routes/bulk-delete`,
+      { ids }
+    );
+  }
+
+  bulkActivateRoutes(ids: string[]) {
+    return this.client.post<{ ok: boolean; updated: number }>(
+      `/core-api/admin/apps/routes/bulk-activate`,
       { ids }
     );
   }

@@ -1,5 +1,4 @@
 // src/ui/admin/tabs/RbacTab.tsx
-
 import { useContext, useMemo, useState } from "react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
@@ -10,6 +9,7 @@ import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { DataTable } from "../../../components/DataTable";
 import { ActionButtons } from "../../../components/ActionButtons";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
+import { UserRbacModal } from "../modals/UserRbacModal";
 
 export const RbacTab = () => {
   const { token } = useContext(AuthContext);
@@ -25,6 +25,7 @@ export const RbacTab = () => {
   const [confirmLoading, setConfirmLoading] = useState(false);
 
   const [toDelete, setToDelete] = useState<AdminUser | null>(null);
+  const [editing, setEditing] = useState<AdminUser | null>(null);
 
   const api = useMemo(() => {
     if (!token) return null;
@@ -87,6 +88,11 @@ export const RbacTab = () => {
             render: (row) => row.roles.map((r) => r.name).join(", ") || "Nenhuma",
           },
           {
+            key: "groups",
+            header: "Groups",
+            render: (row) => row.groups.map((g) => g.name).join(", ") || "Nenhum",
+          },
+          {
             key: "is_superadmin",
             header: "Superadmin",
             sortable: true,
@@ -116,12 +122,12 @@ export const RbacTab = () => {
               Excluir selecionados ({selected.length})
             </button>
           ) : (
-            <span className="dt-muted">Selecione usuários para excluir em massa</span>
+            <span className="dt-muted">Dica: edite roles/grupos via botão “Editar”</span>
           )
         }
         actions={(row) => (
           <ActionButtons
-            onEdit={() => console.log("editar user", row.id)}
+            onEdit={() => setEditing(row)}
             onDelete={() => {
               setToDelete(row);
               setConfirmOpen(true);
@@ -139,6 +145,14 @@ export const RbacTab = () => {
             : undefined
         }
         onPageChange={usersResource.setPage}
+      />
+
+      <UserRbacModal
+        open={!!editing}
+        user={editing}
+        api={api}
+        onClose={() => setEditing(null)}
+        onSaved={() => usersResource.refetch()}
       />
 
       <ConfirmDialog

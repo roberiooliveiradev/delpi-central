@@ -79,7 +79,6 @@ def create_app(config_name: str | None = None):
 
         if not app.config.get("TESTING", False):
             seed_base_permissions()
-            seed_crm_app()
             seed_initial_superadmin()
 
     return app

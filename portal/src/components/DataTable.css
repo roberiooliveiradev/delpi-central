@@ -158,6 +158,12 @@
   text-align: right;
 }
 
+.dt-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 0.25rem;
+}
+
 /* Empty / Loading row states */
 .datatable-td-state {
   padding: 0 !important;

@@ -1,0 +1,1042 @@
+// src/ui/admin/modals/ManifestRegisterModal.tsx
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Modal } from "../../../components/Modal";
+import * as LucideIcons from "lucide-react";
+import { IconPickerModal } from "./IconPickerModal";
+
+/* =========================
+   Types
+========================= */
+
+type ManifestType = "microfrontend" | "iframe" | "backend-only";
+
+type BackendErrorItem = {
+  code?: string;
+  message: string;
+  path?: string | null;
+};
+
+type ManifestPermission = {
+  code: string;
+  description?: string | null;
+  module: string;
+};
+
+type ManifestRoute = {
+  path: string;
+  label?: string | null;
+  permission?: string | null;
+  icon?: string | null; // kebab-case
+  order?: number | null;
+  showInMenu?: boolean | null;
+};
+
+type ManifestV2 = {
+  schemaVersion: "2.0.0";
+  id: string;
+  name: string;
+  version: string;
+  type: ManifestType;
+  basePath: string;
+  entry?: string | null;
+  permissions: ManifestPermission[];
+  routes: ManifestRoute[];
+};
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (manifest: any) => Promise<void>;
+  mode?: "register" | "edit";
+  initialManifest?: any;
+  title?: string;
+};
+
+type Tab = "base" | "permissions" | "routes" | "preview";
+type IconPickerState = { open: false } | { open: true; routeIndex: number };
+
+/* =========================
+   Utils (pure)
+========================= */
+
+function slugifyId(v: string) {
+  return (v || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
+function normalizeBasePath(v: string) {
+  if (!v) return "";
+  let s = v.trim();
+  if (!s.startsWith("/")) s = "/" + s;
+  if (s.length > 1 && s.endsWith("/")) s = s.slice(0, -1);
+  return s;
+}
+
+function isSemverLoose(v: string) {
+  return /^(\d+)\.(\d+)\.(\d+)(-[0-9A-Za-z.-]+)?$/.test((v || "").trim());
+}
+
+function safeJsonParse(text: string): { ok: true; value: any } | { ok: false; error: string } {
+  try {
+    const value = JSON.parse(text);
+    return { ok: true, value };
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "JSON inválido" };
+  }
+}
+
+/** "LayoutDashboard" -> "layout-dashboard" */
+function toKebabCase(pascal: string) {
+  return pascal
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .replace(/_/g, "-")
+    .toLowerCase();
+}
+
+function emptyManifestFor(type: ManifestType): ManifestV2 {
+  const base: Omit<ManifestV2, "type" | "entry" | "permissions" | "routes"> = {
+    schemaVersion: "2.0.0",
+    id: "",
+    name: "",
+    version: "1.0.0",
+    basePath: "",
+  };
+
+  const common = {
+    permissions: [{ code: ".access", description: "Acesso", module: "" }],
+  };
+
+  if (type === "microfrontend") {
+    return {
+      ...base,
+      type,
+      entry: "/apps//remoteEntry.js",
+      ...common,
+      routes: [{ path: "", label: "Dashboard", permission: ".access", icon: "layout-dashboard", showInMenu: true }],
+    };
+  }
+
+  if (type === "iframe") {
+    return {
+      ...base,
+      type,
+      entry: "https://example.com",
+      ...common,
+      routes: [{ path: "", label: "Abrir", permission: ".access", icon: "external-link", showInMenu: true }],
+    };
+  }
+
+  return {
+    ...base,
+    type: "backend-only",
+    entry: null,
+    ...common,
+    routes: [{ path: "", label: "Serviço", permission: ".access", icon: "server", showInMenu: false }],
+  };
+}
+
+function toManifestV2(input: any): ManifestV2 {
+  const schemaVersion = (input?.schemaVersion || "2.0.0") as "2.0.0";
+  const type = (input?.type || "microfrontend") as ManifestType;
+
+  const permissions = Array.isArray(input?.permissions) ? input.permissions : [];
+  const routes = Array.isArray(input?.routes) ? input.routes : [];
+
+  return {
+    schemaVersion: schemaVersion === "2.0.0" ? "2.0.0" : "2.0.0",
+    id: String(input?.id || ""),
+    name: String(input?.name || ""),
+    version: String(input?.version || "1.0.0"),
+    type,
+    basePath: String(input?.basePath || input?.base_path || ""),
+    entry: input?.entry ?? null,
+    permissions: permissions.map((p: any) => ({
+      code: String(p?.code || ""),
+      description: p?.description ?? null,
+      module: String(p?.module || ""),
+    })),
+    routes: routes.map((r: any) => ({
+      path: String(r?.path || ""),
+      label: r?.label ?? null,
+      permission: r?.permission ?? null,
+      icon: r?.icon ? (String(r.icon).includes("-") ? String(r.icon) : toKebabCase(String(r.icon))) : null,
+      order: r?.order ?? null,
+      showInMenu: r?.showInMenu ?? r?.show_in_menu ?? null,
+    })),
+  };
+}
+
+function validateManifestLocal(m: ManifestV2, lucideKebabSet: Set<string>) {
+  const errors: { path: string; message: string }[] = [];
+
+  if (m.schemaVersion !== "2.0.0") errors.push({ path: "schemaVersion", message: "schemaVersion deve ser 2.0.0" });
+
+  if (!m.id.trim()) errors.push({ path: "id", message: "id é obrigatório" });
+  if (m.id && slugifyId(m.id) !== m.id) errors.push({ path: "id", message: "id deve estar no formato slug (ex: crm, helpdesk-glpi)" });
+
+  if (!m.name.trim()) errors.push({ path: "name", message: "name é obrigatório" });
+
+  if (!m.version.trim()) errors.push({ path: "version", message: "version é obrigatório" });
+  if (m.version && !isSemverLoose(m.version)) errors.push({ path: "version", message: "version deve ser SemVer (ex: 1.0.0)" });
+
+  if (!m.basePath.trim()) errors.push({ path: "basePath", message: "basePath é obrigatório" });
+  if (m.basePath && normalizeBasePath(m.basePath) !== m.basePath) {
+    errors.push({ path: "basePath", message: "basePath deve começar com '/' e não terminar com '/'" });
+  }
+
+  if (m.type === "microfrontend") {
+    if (!m.entry || !String(m.entry).trim()) errors.push({ path: "entry", message: "entry é obrigatório para type=microfrontend" });
+  }
+
+  if (m.type === "iframe") {
+    if (!m.entry || !String(m.entry).trim()) errors.push({ path: "entry", message: "entry (URL) é obrigatório para type=iframe" });
+    const v = String(m.entry || "").trim();
+    if (v && !/^https?:\/\//i.test(v)) errors.push({ path: "entry", message: "URL do iframe deve começar com http:// ou https://" });
+  }
+
+  if (!Array.isArray(m.permissions) || m.permissions.length === 0) {
+    errors.push({ path: "permissions", message: "permissions deve ter ao menos 1 item" });
+  } else {
+    m.permissions.forEach((p, idx) => {
+      if (!p.code.trim()) errors.push({ path: `permissions[${idx}].code`, message: "code é obrigatório" });
+      if (!p.module.trim()) errors.push({ path: `permissions[${idx}].module`, message: "module é obrigatório" });
+      if (p.code && !p.code.includes(".")) errors.push({ path: `permissions[${idx}].code`, message: "code deve conter '.' (ex: crm.access)" });
+    });
+
+    const codes = m.permissions.map((p) => p.code.trim()).filter(Boolean);
+    const dup = codes.find((c, i) => codes.indexOf(c) !== i);
+    if (dup) errors.push({ path: "permissions", message: `permissions contém code duplicado: ${dup}` });
+  }
+
+  if (!Array.isArray(m.routes) || m.routes.length === 0) {
+    errors.push({ path: "routes", message: "routes deve ter ao menos 1 item" });
+  } else {
+    m.routes.forEach((r, idx) => {
+      if (!r.path.trim()) errors.push({ path: `routes[${idx}].path`, message: "path é obrigatório" });
+      if (r.path && !r.path.startsWith("/")) errors.push({ path: `routes[${idx}].path`, message: "path deve começar com '/'" });
+
+      const perm = (r.permission || "").trim();
+      if (perm) {
+        const exists = m.permissions.some((p) => p.code.trim() === perm);
+        if (!exists) errors.push({ path: `routes[${idx}].permission`, message: `permission não existe em permissions: ${perm}` });
+      }
+
+      const icon = (r.icon || "").trim();
+      if (icon && !lucideKebabSet.has(icon)) errors.push({ path: `routes[${idx}].icon`, message: `Ícone Lucide inválido: "${icon}"` });
+    });
+  }
+
+  return errors;
+}
+
+function downloadJson(filename: string, payload: any) {
+  const content = JSON.stringify(payload, null, 2);
+  const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+/* =========================
+   Main Component
+========================= */
+
+export const ManifestRegisterModal = ({
+  open,
+  onClose,
+  onSubmit,
+  mode = "register",
+  initialManifest,
+  title = "Registrar Plugin via Manifesto",
+}: Props) => {
+  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState<Tab>("base");
+
+  const [template, setTemplate] = useState<ManifestType>("microfrontend");
+  const [manifest, setManifest] = useState<ManifestV2>(() => emptyManifestFor("microfrontend"));
+
+  const [backendErrors, setBackendErrors] = useState<BackendErrorItem[]>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [iconPicker, setIconPicker] = useState<IconPickerState>({ open: false });
+
+  const isEdit = mode === "edit";
+
+  const lucideKebabSet = useMemo(() => {
+    const pascals = Object.keys(LucideIcons).filter((k) => /^[A-Z][A-Za-z0-9]*$/.test(k));
+    return new Set(pascals.map(toKebabCase));
+  }, []);
+
+  /* ---------- lifecycle / reset ---------- */
+
+  const resetToRegisterDefaults = useCallback(() => {
+    setTemplate("microfrontend");
+    setManifest(emptyManifestFor("microfrontend"));
+    setTab("base");
+    setBackendErrors([]);
+    setSubmitError(null);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    // sempre limpa erros ao abrir
+    setBackendErrors([]);
+    setSubmitError(null);
+
+    if (isEdit && initialManifest) {
+      const m = toManifestV2(initialManifest);
+      setTemplate(m.type || "microfrontend");
+      setManifest(m);
+      setTab("base");
+      return;
+    }
+
+    if (!isEdit) resetToRegisterDefaults();
+  }, [open, isEdit, initialManifest, resetToRegisterDefaults]);
+
+  /* ---------- derived ---------- */
+
+  const computed = useMemo(() => {
+    const id = slugifyId(manifest.id);
+    const basePath = normalizeBasePath(manifest.basePath || (id ? `/${id}` : ""));
+    const entry = manifest.type === "microfrontend" ? `/apps/${id || ""}/remoteEntry.js` : manifest.entry || "";
+    return { id, basePath, entry };
+  }, [manifest.id, manifest.basePath, manifest.type, manifest.entry]);
+
+  const finalManifest = useMemo<ManifestV2>(() => {
+    const id = computed.id || manifest.id;
+    const basePath = computed.basePath || manifest.basePath;
+
+    return {
+      ...manifest,
+      schemaVersion: "2.0.0",
+      id,
+      basePath,
+      entry:
+        manifest.type === "microfrontend"
+          ? computed.entry
+          : manifest.type === "backend-only"
+          ? null
+          : (manifest.entry ?? null),
+      permissions: (manifest.permissions || []).map((p) => {
+        const module = slugifyId(p.module || id);
+        let code = (p.code || "").trim();
+        if (code.startsWith(".")) code = `${id}${code}`;
+        return { ...p, module, code, description: p.description ?? null };
+      }),
+      routes: (manifest.routes || []).map((r) => {
+        let permission = r.permission ? String(r.permission).trim() : "";
+        if (permission.startsWith(".")) permission = `${id}${permission}`;
+        return {
+          ...r,
+          path: (r.path || "").trim(),
+          label: r.label ?? null,
+          permission: permission ? permission : null,
+          icon: r.icon ? String(r.icon).trim() : null,
+          order: r.order ?? null,
+          showInMenu: r.showInMenu ?? null,
+        };
+      }),
+    };
+  }, [manifest, computed]);
+
+  const localErrors = useMemo(() => validateManifestLocal(finalManifest, lucideKebabSet), [finalManifest, lucideKebabSet]);
+
+  const errorsByPath = useMemo(() => {
+    const map = new Map<string, string[]>();
+
+    for (const e of localErrors) {
+      const arr = map.get(e.path) || [];
+      arr.push(e.message);
+      map.set(e.path, arr);
+    }
+
+    for (const e of backendErrors) {
+      const path = (e.path || "_global").trim();
+      const arr = map.get(path) || [];
+      arr.push(e.message);
+      map.set(path, arr);
+    }
+
+    return map;
+  }, [localErrors, backendErrors]);
+
+  const getFieldErrors = useCallback((path: string) => errorsByPath.get(path) || [], [errorsByPath]);
+  const clearBackendErrors = useCallback(() => setBackendErrors([]), []);
+
+  const hasErrors = localErrors.length > 0 || backendErrors.length > 0;
+
+  /* ---------- state mutators ---------- */
+
+  const setBase = useCallback(
+    (patch: Partial<ManifestV2>) => {
+      clearBackendErrors();
+      setManifest((prev) => ({ ...prev, ...patch }));
+    },
+    [clearBackendErrors]
+  );
+
+  const updateRoute = useCallback(
+    (idx: number, patch: Partial<ManifestRoute>) => {
+      clearBackendErrors();
+      setManifest((prev) => {
+        const next = [...(prev.routes || [])];
+        next[idx] = { ...next[idx], ...patch };
+        return { ...prev, routes: next };
+      });
+    },
+    [clearBackendErrors]
+  );
+
+  const addRoute = useCallback(() => {
+    clearBackendErrors();
+    setManifest((prev) => ({
+      ...prev,
+      routes: [
+        ...(prev.routes || []),
+        {
+          path: computed.basePath || "/path",
+          label: "",
+          permission: prev.permissions?.[0]?.code || null,
+          icon: "layout-dashboard",
+          showInMenu: true,
+        },
+      ],
+    }));
+  }, [clearBackendErrors, computed.basePath]);
+
+  const removeRoute = useCallback(
+    (idx: number) => {
+      clearBackendErrors();
+      setManifest((prev) => {
+        const next = [...(prev.routes || [])];
+        next.splice(idx, 1);
+        return { ...prev, routes: next };
+      });
+    },
+    [clearBackendErrors]
+  );
+
+  const updatePermission = useCallback(
+    (idx: number, patch: Partial<ManifestPermission>) => {
+      clearBackendErrors();
+      setManifest((prev) => {
+        const next = [...(prev.permissions || [])];
+        next[idx] = { ...next[idx], ...patch };
+        return { ...prev, permissions: next };
+      });
+    },
+    [clearBackendErrors]
+  );
+
+  const addPermission = useCallback(() => {
+    clearBackendErrors();
+    setManifest((prev) => ({
+      ...prev,
+      permissions: [
+        ...(prev.permissions || []),
+        {
+          code: `${computed.id || "module"}.new.permission`,
+          description: "",
+          module: computed.id || "module",
+        },
+      ],
+    }));
+  }, [clearBackendErrors, computed.id]);
+
+  const removePermission = useCallback(
+    (idx: number) => {
+      clearBackendErrors();
+      setManifest((prev) => {
+        const next = [...(prev.permissions || [])];
+        const removed = next[idx]?.code?.trim();
+        next.splice(idx, 1);
+
+        const routes = (prev.routes || []).map((r) =>
+          removed && (r.permission || "").trim() === removed ? { ...r, permission: null } : r
+        );
+
+        return { ...prev, permissions: next, routes };
+      });
+    },
+    [clearBackendErrors]
+  );
+
+  /* ---------- actions ---------- */
+
+  const handleApplySuggestions = useCallback(() => {
+    clearBackendErrors();
+    setManifest((prev) => {
+      const id = slugifyId(prev.id);
+      const basePath = normalizeBasePath(prev.basePath || (id ? `/${id}` : ""));
+      const entry = prev.type === "microfrontend" ? `/apps/${id}/remoteEntry.js` : prev.entry;
+
+      const permissions = (prev.permissions || []).map((p) => {
+        const module = slugifyId(p.module || id);
+        let code = p.code || "";
+        if (code.startsWith(".")) code = `${id}${code}`;
+        if (!code.includes(".") && id) code = `${id}.${code}`;
+        return { ...p, module, code };
+      });
+
+      const firstPerm = permissions?.[0]?.code || `${id}.access`;
+      const routes = (prev.routes || []).map((r) => {
+        let permission = r.permission || "";
+        if (permission.startsWith(".")) permission = `${id}${permission}`;
+        return { ...r, path: r.path || basePath, permission: permission || firstPerm };
+      });
+
+      return { ...prev, id, basePath, entry, permissions, routes };
+    });
+  }, [clearBackendErrors]);
+
+  const setTemplateType = useCallback(
+    (t: ManifestType) => {
+      setTemplate(t);
+      clearBackendErrors();
+      setSubmitError(null);
+      setTab("base");
+      setManifest(emptyManifestFor(t));
+    },
+    [clearBackendErrors]
+  );
+
+  const importFromFile = useCallback(
+    async (file: File) => {
+      clearBackendErrors();
+      setSubmitError(null);
+
+      const text = await file.text();
+      const parsed = safeJsonParse(text);
+
+      if (!parsed.ok) {
+        setBackendErrors([{ message: `Falha ao importar JSON: ${parsed.error}`, path: "_global" }]);
+        setTab("preview");
+        return;
+      }
+
+      const m = toManifestV2(parsed.value);
+      setTemplate(m.type || "microfrontend");
+      setManifest(m);
+      setTab("base");
+    },
+    [clearBackendErrors]
+  );
+
+  const handleExport = useCallback(() => {
+    const filename = `${finalManifest.id || "manifest"}.json`;
+    downloadJson(filename, finalManifest);
+  }, [finalManifest]);
+
+  const handleSubmit = useCallback(async () => {
+    setSubmitError(null);
+    setBackendErrors([]);
+
+    const errs = validateManifestLocal(finalManifest, lucideKebabSet);
+    if (errs.length) {
+      setTab("preview");
+      setSubmitError("Corrija os erros antes de registrar.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await onSubmit(finalManifest);
+
+      onClose();
+
+      // ✅ só reseta se for register (em edit, mantém estado caso o caller reabra rapidamente)
+      if (!isEdit) resetToRegisterDefaults();
+      else setTab("base");
+    } catch (e: any) {
+      const resp = e?.response?.data || e?.data || null;
+      const errorsArr: BackendErrorItem[] | null = Array.isArray(resp?.errors) ? resp.errors : null;
+
+      if (errorsArr?.length) {
+        setBackendErrors(
+          errorsArr.map((it) => ({
+            code: it.code,
+            message: it.message || "Erro",
+            path: it.path || "_global",
+          }))
+        );
+        setSubmitError("O backend rejeitou o manifesto. Corrija os campos marcados.");
+      } else {
+        setSubmitError(e?.message || "Falha ao registrar manifesto.");
+        setBackendErrors([{ message: e?.message || "Erro desconhecido", path: "_global" }]);
+      }
+
+      setTab("preview");
+    } finally {
+      setLoading(false);
+    }
+  }, [finalManifest, lucideKebabSet, onSubmit, onClose, isEdit, resetToRegisterDefaults]);
+
+  /* ---------- icon picker ---------- */
+
+  const openIconPicker = useCallback((routeIndex: number) => setIconPicker({ open: true, routeIndex }), []);
+  const closeIconPicker = useCallback(() => setIconPicker({ open: false }), []);
+
+  /* =========================
+     Render
+  ========================= */
+
+  return (
+    <>
+      <Modal
+        open={open}
+        title={title}
+        onClose={onClose}
+        size="lg"
+        footer={
+          <>
+            <button onClick={onClose} disabled={loading}>
+              Cancelar
+            </button>
+
+            <button onClick={() => setTab("preview")} disabled={loading} className="btn-secondary">
+              Ver Preview
+            </button>
+
+            <button onClick={handleSubmit} disabled={loading || localErrors.length > 0}>
+              {loading ? (isEdit ? "Salvando..." : "Registrando...") : isEdit ? "Salvar" : "Registrar"}
+            </button>
+          </>
+        }
+      >
+        <div className="modal-content-wrapper">
+          <div className="row between">
+            <div className="row">
+              <label style={{ margin: 0 }}>
+                <span className="sr-only">Template</span>
+                <select value={template} onChange={(e) => setTemplateType(e.target.value as ManifestType)} disabled={loading}>
+                  <option value="microfrontend">Template: microfrontend</option>
+                  <option value="iframe">Template: iframe</option>
+                  <option value="backend-only">Template: backend-only</option>
+                </select>
+              </label>
+
+              <button className="btn-secondary" onClick={() => fileInputRef.current?.click()} disabled={loading}>
+                Importar JSON
+              </button>
+
+              <button className="btn-secondary" onClick={handleExport} disabled={loading}>
+                Exportar JSON
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,application/json"
+                style={{ display: "none" }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) await importFromFile(file);
+                  e.currentTarget.value = "";
+                }}
+              />
+            </div>
+
+            <button className="btn-secondary" onClick={handleApplySuggestions} disabled={loading}>
+              Aplicar sugestões (ID → basePath/entry/codes)
+            </button>
+          </div>
+
+          <div className="tabs">
+            <button className={tab === "base" ? "active" : ""} onClick={() => setTab("base")}>
+              Base
+            </button>
+            <button className={tab === "permissions" ? "active" : ""} onClick={() => setTab("permissions")}>
+              Permissões
+            </button>
+            <button className={tab === "routes" ? "active" : ""} onClick={() => setTab("routes")}>
+              Rotas
+            </button>
+            <button className={tab === "preview" ? "active" : ""} onClick={() => setTab("preview")}>
+              Preview JSON
+            </button>
+          </div>
+
+          {getFieldErrors("_global").length > 0 && (
+            <div className="alert danger">
+              <strong>Erro:</strong>
+              <ul>
+                {getFieldErrors("_global").map((msg, i) => (
+                  <li key={i}>{msg}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* BASE */}
+          {tab === "base" && (
+            <>
+              <div className="grid-2">
+                <label>
+                  ID (slug)
+                  <input
+                    value={manifest.id}
+                    onChange={(e) => setBase({ id: e.target.value })}
+                    placeholder="ex: crm, helpdesk-glpi"
+                    disabled={isEdit} // ✅ id não deve mudar em edição
+                  />
+                  <small>Sugestão: {computed.id || "-"}</small>
+                  {getFieldErrors("id").length > 0 && (
+                    <div className="field-error">
+                      {getFieldErrors("id").map((m, i) => (
+                        <div key={i}>{m}</div>
+                      ))}
+                    </div>
+                  )}
+                </label>
+
+                <label>
+                  Nome
+                  <input value={manifest.name} onChange={(e) => setBase({ name: e.target.value })} placeholder="ex: CRM" />
+                  {getFieldErrors("name").length > 0 && (
+                    <div className="field-error">
+                      {getFieldErrors("name").map((m, i) => (
+                        <div key={i}>{m}</div>
+                      ))}
+                    </div>
+                  )}
+                </label>
+
+                <label>
+                  Versão (SemVer)
+                  <input value={manifest.version} onChange={(e) => setBase({ version: e.target.value })} placeholder="ex: 1.0.0" />
+                  {getFieldErrors("version").length > 0 && (
+                    <div className="field-error">
+                      {getFieldErrors("version").map((m, i) => (
+                        <div key={i}>{m}</div>
+                      ))}
+                    </div>
+                  )}
+                </label>
+
+                <label>
+                  Tipo
+                  <select value={manifest.type} onChange={(e) => setBase({ type: e.target.value as ManifestType })} disabled={loading}>
+                    <option value="microfrontend">microfrontend</option>
+                    <option value="iframe">iframe</option>
+                    <option value="backend-only">backend-only</option>
+                  </select>
+                </label>
+
+                <label>
+                  Base Path
+                  <input value={manifest.basePath} onChange={(e) => setBase({ basePath: e.target.value })} placeholder="ex: /crm" />
+                  <small>Sugestão: {computed.basePath || "-"}</small>
+                  {getFieldErrors("basePath").length > 0 && (
+                    <div className="field-error">
+                      {getFieldErrors("basePath").map((m, i) => (
+                        <div key={i}>{m}</div>
+                      ))}
+                    </div>
+                  )}
+                </label>
+
+                <label>
+                  {manifest.type === "microfrontend" ? "Entry (auto)" : manifest.type === "iframe" ? "Entry (URL do iframe)" : "Entry"}
+                  <input
+                    value={manifest.type === "microfrontend" ? computed.entry : manifest.entry ?? ""}
+                    onChange={(e) => setBase({ entry: e.target.value })}
+                    placeholder={manifest.type === "iframe" ? "ex: https://glpi.suaempresa.com" : "ex: /apps/crm/remoteEntry.js"}
+                    disabled={manifest.type === "microfrontend" || manifest.type === "backend-only"}
+                  />
+                  {manifest.type === "microfrontend" && <small>Auto: {computed.entry}</small>}
+                  {manifest.type === "backend-only" && <small>backend-only não precisa de entry.</small>}
+                  {getFieldErrors("entry").length > 0 && (
+                    <div className="field-error">
+                      {getFieldErrors("entry").map((m, i) => (
+                        <div key={i}>{m}</div>
+                      ))}
+                    </div>
+                  )}
+                </label>
+              </div>
+
+              <div className="hint">
+                <strong>Dica:</strong> microfrontend gera <code>entry</code> automaticamente. Iframe usa URL em <code>entry</code>.
+              </div>
+            </>
+          )}
+
+          {/* PERMISSÕES */}
+          {tab === "permissions" && (
+            <>
+              <div className="row between">
+                <div className="hint">
+                  Permissões são globais. Use prefixo do módulo (ex: <code>{computed.id || "crm"}.access</code>).
+                </div>
+                <button className="btn-primary" onClick={addPermission} disabled={loading}>
+                  + Adicionar permissão
+                </button>
+              </div>
+
+              {getFieldErrors("permissions").length > 0 && (
+                <div className="alert">
+                  <strong>Permissões:</strong>
+                  <ul>
+                    {getFieldErrors("permissions").map((m, i) => (
+                      <li key={i}>{m}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="list">
+                {manifest.permissions.map((p, idx) => {
+                  const codePath = `permissions[${idx}].code`;
+                  const modulePath = `permissions[${idx}].module`;
+
+                  return (
+                    <div key={idx} className="card">
+                      <div className="grid-2">
+                        <label>
+                          Código
+                          <input value={p.code} onChange={(e) => updatePermission(idx, { code: e.target.value })} placeholder="ex: crm.access" />
+                          {getFieldErrors(codePath).length > 0 && (
+                            <div className="field-error">
+                              {getFieldErrors(codePath).map((m, i) => (
+                                <div key={i}>{m}</div>
+                              ))}
+                            </div>
+                          )}
+                        </label>
+
+                        <label>
+                          Módulo
+                          <input value={p.module} onChange={(e) => updatePermission(idx, { module: e.target.value })} placeholder={computed.id || "crm"} />
+                          {getFieldErrors(modulePath).length > 0 && (
+                            <div className="field-error">
+                              {getFieldErrors(modulePath).map((m, i) => (
+                                <div key={i}>{m}</div>
+                              ))}
+                            </div>
+                          )}
+                        </label>
+
+                        <label className="full">
+                          Descrição
+                          <input value={p.description ?? ""} onChange={(e) => updatePermission(idx, { description: e.target.value })} placeholder="ex: Acesso ao CRM" />
+                        </label>
+                      </div>
+
+                      <div className="row end">
+                        <button className="danger" onClick={() => removePermission(idx)} disabled={loading}>
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* ROTAS */}
+          {tab === "routes" && (
+            <>
+              <div className="row between">
+                <div className="hint">
+                  Rotas alimentam o menu. <code>permission</code> referencia um <code>permissions[].code</code>.
+                </div>
+                <button className="btn-primary" onClick={addRoute} disabled={loading}>
+                  + Adicionar rota
+                </button>
+              </div>
+
+              {getFieldErrors("routes").length > 0 && (
+                <div className="alert">
+                  <strong>Rotas:</strong>
+                  <ul>
+                    {getFieldErrors("routes").map((m, i) => (
+                      <li key={i}>{m}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="list">
+                {manifest.routes.map((r, idx) => {
+                  const pathPath = `routes[${idx}].path`;
+                  const permPath = `routes[${idx}].permission`;
+                  const iconPath = `routes[${idx}].icon`;
+
+                  return (
+                    <div key={idx} className="card">
+                      <div className="grid-2">
+                        <label>
+                          Path
+                          <input value={r.path} onChange={(e) => updateRoute(idx, { path: e.target.value })} placeholder="ex: /crm/leads" />
+                          {getFieldErrors(pathPath).length > 0 && (
+                            <div className="field-error">
+                              {getFieldErrors(pathPath).map((m, i) => (
+                                <div key={i}>{m}</div>
+                              ))}
+                            </div>
+                          )}
+                        </label>
+
+                        <label>
+                          Label
+                          <input value={r.label ?? ""} onChange={(e) => updateRoute(idx, { label: e.target.value })} placeholder="ex: Leads" />
+                        </label>
+
+                        <label className="full">
+                          Permissão
+                          <select value={r.permission ?? ""} onChange={(e) => updateRoute(idx, { permission: e.target.value || null })}>
+                            <option value="">(Pública / sem permissão)</option>
+                            {manifest.permissions.map((p) => (
+                              <option key={p.code} value={p.code}>
+                                {p.code}
+                              </option>
+                            ))}
+                          </select>
+                          {getFieldErrors(permPath).length > 0 && (
+                            <div className="field-error">
+                              {getFieldErrors(permPath).map((m, i) => (
+                                <div key={i}>{m}</div>
+                              ))}
+                            </div>
+                          )}
+                        </label>
+
+                        <label className="full">
+                          Ícone (Lucide)
+                          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                            <button type="button" className="btn-secondary" onClick={() => openIconPicker(idx)} disabled={loading}>
+                              Selecionar ícone
+                            </button>
+
+                            {r.icon ? (
+                              <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                                <code>{r.icon}</code>
+                              </div>
+                            ) : (
+                              <span className="dt-muted">(sem ícone)</span>
+                            )}
+                          </div>
+
+                          {getFieldErrors(iconPath).length > 0 && (
+                            <div className="field-error">
+                              {getFieldErrors(iconPath).map((m, i) => (
+                                <div key={i}>{m}</div>
+                              ))}
+                            </div>
+                          )}
+                        </label>
+
+                        <label>
+                          Mostrar no menu
+                          <select
+                            value={r.showInMenu === null || r.showInMenu === undefined ? "" : r.showInMenu ? "true" : "false"}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              updateRoute(idx, { showInMenu: v === "" ? null : v === "true" });
+                            }}
+                          >
+                            <option value="">(default)</option>
+                            <option value="true">true</option>
+                            <option value="false">false</option>
+                          </select>
+                        </label>
+
+                        <label>
+                          Ordem
+                          <input
+                            type="number"
+                            value={r.order ?? ""}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              updateRoute(idx, { order: v === "" ? null : Number(v) });
+                            }}
+                            placeholder="ex: 10"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="row end">
+                        <button className="danger" onClick={() => removeRoute(idx)} disabled={loading}>
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* PREVIEW */}
+          {tab === "preview" && (
+            <>
+              {submitError && <div className="alert danger">{submitError}</div>}
+
+              {localErrors.length > 0 && (
+                <div className="alert">
+                  <strong>Erros locais:</strong>
+                  <ul>
+                    {localErrors.slice(0, 12).map((e, i) => (
+                      <li key={i}>
+                        <code>{e.path}</code>: {e.message}
+                      </li>
+                    ))}
+                    {localErrors.length > 12 && <li>... e mais {localErrors.length - 12} erro(s)</li>}
+                  </ul>
+                </div>
+              )}
+
+              {backendErrors.length > 0 && (
+                <div className="alert danger">
+                  <strong>Erros do backend:</strong>
+                  <ul>
+                    {backendErrors.slice(0, 12).map((e, i) => (
+                      <li key={i}>
+                        {e.path ? <code>{e.path}</code> : <code>_global</code>}: {e.message}
+                        {e.code ? ` (${e.code})` : ""}
+                      </li>
+                    ))}
+                    {backendErrors.length > 12 && <li>... e mais {backendErrors.length - 12} erro(s)</li>}
+                  </ul>
+                </div>
+              )}
+
+              {!hasErrors && <div className="alert success">Manifesto válido ✅</div>}
+
+              <textarea style={{ width: "100%", height: 360, fontFamily: "monospace" }} value={JSON.stringify(finalManifest, null, 2)} readOnly />
+
+              <div className="hint">
+                Esse JSON é o payload enviado para <code>/core-api/plugins/register</code>.
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
+
+      <IconPickerModal
+        open={iconPicker.open}
+        value={iconPicker.open ? manifest.routes?.[iconPicker.routeIndex]?.icon ?? null : null}
+        onClose={closeIconPicker}
+        onPick={(iconKebab) => {
+          if (!iconPicker.open) return;
+          updateRoute(iconPicker.routeIndex, { icon: iconKebab });
+          closeIconPicker();
+        }}
+      />
+    </>
+  );
+};

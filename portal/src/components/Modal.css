@@ -8,9 +8,18 @@
   background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(3px);
   display: flex;
-  align-items: center;
+
+  /* fica mais “estável” com telas baixas */
+  align-items: flex-start;
   justify-content: center;
+
+  /* espaço no topo/baixo */
+  padding: 24px 12px;
+
   z-index: 1000;
+
+  /* permite scroll no overlay se necessário (mobile/baixa altura) */
+  overflow-y: auto;
 }
 
 .modal {
@@ -23,37 +32,146 @@
   display: flex;
   flex-direction: column;
   animation: modalFade 0.2s ease-out;
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
 }
+
+/* tamanhos */
+.modal-sm { width: 400px; }
+.modal-md { width: 500px; }
+.modal-lg { width: 860px; }
+.modal-xl { width: 1100px; }
+
+/* HEADER */
 
 .modal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
   padding: 16px 20px;
   border-bottom: 1px solid var(--border);
 }
 
-.modal-header h3 {
+.modal-title {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 1.2;
+
+  /* evita quebrar layout quando o título é grande */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+.modal-close {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* BODY (scrollável) */
 .modal-body {
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  overflow-y: auto;
+  min-height: 0;
 }
 
+/* FOOTER */
 .modal-footer {
   padding: 16px 20px;
   border-top: 1px solid var(--border);
   display: flex;
+  flex: 0 0 auto;
   justify-content: flex-end;
   gap: 10px;
+
+  /* evita footer “quebrar” em telas menores */
+  flex-wrap: wrap;
 }
 
-/* Danger button */
+/* =========================
+   Helpers p/ RBAC modal
+========================= */
+
+.superadmin-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+/* checkbox alinhado (evita centralização estranha) */
+.superadmin-row input[type="checkbox"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+}
+
+/* grid 2 colunas do RBAC */
+.rbac-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* responsivo: 1 coluna no mobile */
+@media (max-width: 720px) {
+  .rbac-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rbac-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* label padrão do seu CSS é column; aqui precisa ser row */
+.checkbox-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+
+  font-weight: 600;
+}
+
+.checkbox-item input[type="checkbox"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+}
+
+/* =========================
+   Buttons (mantém)
+========================= */
+
 button.danger {
   background: var(--danger);
   color: #fff;
@@ -62,6 +180,172 @@ button.danger {
 
 button.danger:hover {
   opacity: 0.9;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+}
+
+.btn-primary:hover {
+  opacity: 0.92;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* =========================
+   Tabs (mantém)
+========================= */
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.tabs button {
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.tabs button.active {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* =========================
+   Layout helpers (mantém)
+========================= */
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 720px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.grid-2 .full {
+  grid-column: 1 / -1;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.row.between {
+  justify-content: space-between;
+}
+
+.row.end {
+  justify-content: flex-end;
+}
+
+.hint {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.hint code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 12px;
+}
+
+/* =========================
+   Cards list / Alerts (mantém)
+========================= */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.alert {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.alert.success {
+  border-color: rgba(0, 160, 80, 0.35);
+  background: rgba(0, 160, 80, 0.08);
+}
+
+.alert.danger {
+  border-color: rgba(220, 30, 30, 0.35);
+  background: rgba(220, 30, 30, 0.08);
+}
+
+/* Inline field errors */
+.field-error {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(220, 30, 30, 0.35);
+  background: rgba(220, 30, 30, 0.08);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Inputs (mantém) */
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+
+label small {
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+input,
+select,
+textarea {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+}
+
+textarea {
+  resize: vertical;
 }
 
 /* Animation */
@@ -74,4 +358,80 @@ button.danger:hover {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Acessibilidade */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
+/* 
+- Modal icones
+*/
+
+.icon-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 920px) {
+  .icon-picker-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .icon-picker-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.icon-card {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  padding: 10px;
+  cursor: pointer;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.icon-card.active {
+  outline: 2px solid rgba(255, 255, 255, 0.18);
+}
+
+.icon-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-card__label {
+  font-size: 12px;
+  opacity: 0.9;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
