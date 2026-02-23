@@ -1,6 +1,6 @@
 // src/ui/admin/tabs/RoutesTab.tsx
 
-import { useContext, useMemo, useEffect, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
@@ -35,7 +35,7 @@ export const RoutesTab = () => {
       return api.listRoutes(appId, { page, pageSize });
     },
     10,
-    [appId] // 🔥 dependência importante
+    [appId] // dependência importante
   );
 
   if (!api) return null;
