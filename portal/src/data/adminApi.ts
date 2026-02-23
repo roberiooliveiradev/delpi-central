@@ -2,6 +2,26 @@
 
 import { ApiClient } from "./apiClient";
 
+/* ======================================================
+   Tipos base
+====================================================== */
+
+export type PaginationMeta = {
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+};
+
+export type PaginatedResponse<T> = {
+  data: T[];
+  pagination: PaginationMeta;
+};
+
+/* ======================================================
+   RBAC Types
+====================================================== */
+
 export type AdminUser = {
   id: string;
   name: string;
@@ -32,6 +52,10 @@ export type AdminGroup = {
   roles: { id: string; name: string }[];
 };
 
+/* ======================================================
+   Apps
+====================================================== */
+
 export type AdminApp = {
   id: string;
   name: string;
@@ -55,35 +79,102 @@ export type AdminAppRoute = {
   permission_code?: string | null;
 };
 
+/* ======================================================
+   API
+====================================================== */
+
 export class AdminApi {
   private client: ApiClient;
-  
+
   constructor(client: ApiClient) {
     this.client = client;
   }
-  
-  // =========================
-  // RBAC
-  // =========================
-  listUsers(q?: string) {
-    const qs = q ? `?q=${encodeURIComponent(q)}` : "";
-    return this.client.get<AdminUser[]>(`/core-api/admin/rbac/users${qs}`);
+
+  /* ======================================================
+     Helpers
+  ====================================================== */
+
+  private buildPaginationQuery(
+    page?: number,
+    pageSize?: number,
+    q?: string
+  ) {
+    const params = new URLSearchParams();
+
+    if (page) params.append("page", String(page));
+    if (pageSize) params.append("page_size", String(pageSize));
+    if (q) params.append("q", q);
+
+    const queryString = params.toString();
+    return queryString ? `?${queryString}` : "";
+  }
+
+  /* ======================================================
+     RBAC
+  ====================================================== */
+
+  listUsers(options?: {
+    page?: number;
+    pageSize?: number;
+    q?: string;
+  }) {
+    const qs = this.buildPaginationQuery(
+      options?.page,
+      options?.pageSize,
+      options?.q
+    );
+
+    return this.client.get<PaginatedResponse<AdminUser>>(
+      `/core-api/admin/rbac/users${qs}`
+    );
   }
 
   getUser(userId: string) {
-    return this.client.get<AdminUser>(`/core-api/admin/rbac/users/${userId}`);
+    return this.client.get<AdminUser>(
+      `/core-api/admin/rbac/users/${userId}`
+    );
   }
 
-  listRoles() {
-    return this.client.get<AdminRole[]>(`/core-api/admin/rbac/roles`);
+  listRoles(options?: {
+    page?: number;
+    pageSize?: number;
+  }) {
+    const qs = this.buildPaginationQuery(
+      options?.page,
+      options?.pageSize
+    );
+
+    return this.client.get<PaginatedResponse<AdminRole>>(
+      `/core-api/admin/rbac/roles${qs}`
+    );
   }
 
-  listPermissions() {
-    return this.client.get<AdminPermission[]>(`/core-api/admin/rbac/permissions`);
+  listPermissions(options?: {
+    page?: number;
+    pageSize?: number;
+  }) {
+    const qs = this.buildPaginationQuery(
+      options?.page,
+      options?.pageSize
+    );
+
+    return this.client.get<PaginatedResponse<AdminPermission>>(
+      `/core-api/admin/rbac/permissions${qs}`
+    );
   }
 
-  listGroups() {
-    return this.client.get<AdminGroup[]>(`/core-api/admin/rbac/groups`);
+  listGroups(options?: {
+    page?: number;
+    pageSize?: number;
+  }) {
+    const qs = this.buildPaginationQuery(
+      options?.page,
+      options?.pageSize
+    );
+
+    return this.client.get<PaginatedResponse<AdminGroup>>(
+      `/core-api/admin/rbac/groups${qs}`
+    );
   }
 
   setUserRoles(userId: string, roleIds: string[]) {
@@ -114,12 +205,21 @@ export class AdminApi {
     );
   }
 
-  // =========================
-  // Apps & Routes
-  // =========================
-  listApps() {
-    return this.client.get<AdminApp[]>(`/core-api/admin/apps`);
-  }
+  /* ======================================================
+     Apps & Routes (mantido igual)
+  ====================================================== */
+
+
+  listApps(options?: { page?: number; pageSize?: number }) {
+    const qs = this.buildPaginationQuery(
+      options?.page,
+      options?.pageSize
+  );
+
+  return this.client.get<PaginatedResponse<AdminApp>>(
+    `/core-api/admin/apps${qs}`
+  );
+}
 
   createApp(payload: Partial<AdminApp>) {
     return this.client.post<{ ok: boolean; id: string }>(
@@ -135,9 +235,17 @@ export class AdminApi {
     );
   }
 
-  listRoutes(appId: string) {
-    return this.client.get<AdminAppRoute[]>(
-      `/core-api/admin/apps/${appId}/routes`
+  listRoutes(
+    appId: string,
+    options?: { page?: number; pageSize?: number }
+  ) {
+    const qs = this.buildPaginationQuery(
+      options?.page,
+      options?.pageSize
+    );
+
+    return this.client.get<PaginatedResponse<AdminAppRoute>>(
+      `/core-api/admin/apps/${appId}/routes${qs}`
     );
   }
 
@@ -156,18 +264,26 @@ export class AdminApi {
   }
 
   activateApp(appId: string) {
-    return this.client.post<{ ok: boolean }>(`/core-api/admin/apps/${appId}/activate`);
+    return this.client.post<{ ok: boolean }>(
+      `/core-api/admin/apps/${appId}/activate`
+    );
   }
 
   deactivateApp(appId: string) {
-    return this.client.post<{ ok: boolean }>(`/core-api/admin/apps/${appId}/deactivate`);
+    return this.client.post<{ ok: boolean }>(
+      `/core-api/admin/apps/${appId}/deactivate`
+    );
   }
 
   activateRoute(routeId: string) {
-    return this.client.post<{ ok: boolean }>(`/core-api/admin/apps/routes/${routeId}/activate`);
+    return this.client.post<{ ok: boolean }>(
+      `/core-api/admin/apps/routes/${routeId}/activate`
+    );
   }
 
   deactivateRoute(routeId: string) {
-    return this.client.post<{ ok: boolean }>(`/core-api/admin/apps/routes/${routeId}/deactivate`);
+    return this.client.post<{ ok: boolean }>(
+      `/core-api/admin/apps/routes/${routeId}/deactivate`
+    );
   }
 }
