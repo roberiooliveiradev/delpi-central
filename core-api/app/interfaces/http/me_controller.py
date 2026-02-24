@@ -138,8 +138,6 @@ def me_delete_favorite_app():
         return jsonify({"error": str(e)}), 400
 
 
-
-
 @me_bp.route("/me/routes", methods=["GET"])
 def me_routes():
     user = getattr(g, "current_user", None)
@@ -149,7 +147,6 @@ def me_routes():
 
     permissions = set(resolve_user_permissions(user))
 
-    # Carrega routes + app + permission numa única query
     routes = (
         AppRoute.query
         .options(
@@ -179,8 +176,12 @@ def me_routes():
 
         allowed.append({
             "app": route.app.id,
+            "app_name": route.app.name,
+            "app_icon": route.app.icon,        
             "path": route.path,
             "permission": permission_code,
+            "icon": route.icon,                
+            "label": route.label,              
         })
 
     return jsonify(allowed)

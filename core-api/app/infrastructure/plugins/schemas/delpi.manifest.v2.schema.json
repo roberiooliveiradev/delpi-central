@@ -27,9 +27,10 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["code", "description", "module"],
+        "required": ["code", "name", "module"],
         "properties": {
           "code": { "type": "string", "minLength": 3, "maxLength": 150 },
+          "name": { "type": "string", "minLength": 1, "maxLength": 150 },
           "description": { "type": "string" },
           "module": { "type": "string", "minLength": 1, "maxLength": 100 }
         }

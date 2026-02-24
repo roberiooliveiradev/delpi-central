@@ -9,11 +9,13 @@
   "permissions": [
     {
       "code": "crm.access",
+      "name": "Acessar CRM",
       "description": "Permite acessar CRM",
       "module": "crm"
     },
     {
       "code": "crm.leads.read",
+      "name": "Ver leads",
       "description": "Visualizar leads",
       "module": "crm"
     }

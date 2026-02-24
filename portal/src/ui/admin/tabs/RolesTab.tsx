@@ -9,16 +9,18 @@ import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { DataTable } from "../../../components/DataTable";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { ActionButtons } from "../../../components/ActionButtons";
-
 import { RoleEditModal } from "../modals/RoleEditModal";
 
 export const RolesTab = () => {
   const { token } = useContext(AuthContext);
 
   const [search, setSearch] = useState("");
-  const [editing, setEditing] = useState<AdminRole | null>(null);
-  const [deleting, setDeleting] = useState<AdminRole | null>(null);
+  const [sort, setSort] = useState<{ sort?: string; direction?: "asc" | "desc" }>({
+    sort: "name",
+    direction: "asc",
+  });
 
+  const [editing, setEditing] = useState<AdminRole | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmBulk, setConfirmBulk] = useState(false);
 
@@ -32,39 +34,35 @@ export const RolesTab = () => {
   }, [token]);
 
   const rolesResource = usePaginatedResource<AdminRole>(
-    ({ page, pageSize }) => api!.listRoles({ page, pageSize, q: search }),
+    ({ page, pageSize }) =>
+      api!.listRoles({
+        page,
+        pageSize,
+        q: search,
+        sort: sort.sort,
+        direction: sort.direction,
+      }),
     10,
-    [search]
+    [search, sort.sort, sort.direction]
   );
 
   if (!api) return null;
 
-  const fetchPerms = async () => {
-    const permsRes = await api.listPermissions({ page: 1, pageSize: 999 });
-    setAllPerms(permsRes.data ?? []);
+  const fetchPermissions = async () => {
+    const res = await api.listPermissions({ page: 1, pageSize: 999 });
+    setAllPerms(res.data ?? []);
   };
 
   const openRole = async (role: AdminRole) => {
     setEditing(role);
     setSelectedPermIds(role.permissions.map((p) => p.id));
-    await fetchPerms();
+    await fetchPermissions();
   };
 
   const openNew = async () => {
-    setEditing({
-      id: "",
-      name: "",
-      description: "",
-      permissions: [],
-    } as any);
+    setEditing({ id: "", name: "", description: "", permissions: [] } as any);
     setSelectedPermIds([]);
-    await fetchPerms();
-  };
-
-  const onTogglePerm = (permId: string) => {
-    setSelectedPermIds((prev) =>
-      prev.includes(permId) ? prev.filter((x) => x !== permId) : [...prev, permId]
-    );
+    await fetchPermissions();
   };
 
   const save = async () => {
@@ -91,20 +89,6 @@ export const RolesTab = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!deleting) return;
-    await api.deleteRole(deleting.id);
-    setDeleting(null);
-    rolesResource.refetch();
-  };
-
-  const handleBulkDelete = async () => {
-    await api.bulkDeleteRoles(selected);
-    setSelected([]);
-    setConfirmBulk(false);
-    rolesResource.refetch();
-  };
-
   return (
     <div>
       <h2>Papéis ({rolesResource.pagination?.total ?? 0})</h2>
@@ -123,18 +107,30 @@ export const RolesTab = () => {
         loading={rolesResource.loading}
         searchValue={search}
         onSearchChange={setSearch}
+        sort={sort}
+        onSortChange={setSort}
         selectable
-        getRowId={(r) => r.id}
+        getRowId={(row) => row.id}
         selectedRows={selected}
         onSelectionChange={setSelected}
         actions={(row) => (
-          <ActionButtons onEdit={() => openRole(row)} onDelete={() => setDeleting(row)} />
+          <ActionButtons
+            onEdit={() => openRole(row)}
+            onDelete={async () => {
+              await api.deleteRole(row.id);
+              rolesResource.refetch();
+            }}
+          />
         )}
         toolbar={
           <>
             <button onClick={openNew}>Novo Papel</button>
+
             {selected.length > 0 && (
-              <button className="danger" onClick={() => setConfirmBulk(true)}>
+              <button
+                className="btn-danger"
+                onClick={() => setConfirmBulk(true)}
+              >
                 Excluir selecionados ({selected.length})
               </button>
             )}
@@ -151,6 +147,21 @@ export const RolesTab = () => {
         onPageChange={rolesResource.setPage}
       />
 
+      <ConfirmDialog
+        open={confirmBulk}
+        title="Excluir papéis"
+        message={`Deseja excluir ${selected.length} papéis?`}
+        confirmText="Excluir"
+        danger
+        onCancel={() => setConfirmBulk(false)}
+        onConfirm={async () => {
+          await api.bulkDeleteRoles(selected);
+          setSelected([]);
+          setConfirmBulk(false);
+          rolesResource.refetch();
+        }}
+      />
+
       <RoleEditModal
         open={!!editing}
         role={editing}
@@ -159,26 +170,16 @@ export const RolesTab = () => {
         saving={saving}
         onClose={() => setEditing(null)}
         onSave={save}
-        onChangeRole={(patch) => setEditing((prev) => (prev ? { ...prev, ...patch } : prev))}
-        onTogglePerm={onTogglePerm}
-      />
-
-      <ConfirmDialog
-        open={!!deleting}
-        title="Excluir papel"
-        message={`Deseja excluir "${deleting?.name}"?`}
-        onCancel={() => setDeleting(null)}
-        onConfirm={handleDelete}
-      />
-
-      <ConfirmDialog
-        open={confirmBulk}
-        title="Excluir papéis"
-        message={`Deseja excluir ${selected.length} roles?`}
-        confirmText="Excluir"
-        danger
-        onCancel={() => setConfirmBulk(false)}
-        onConfirm={handleBulkDelete}
+        onChangeRole={(patch) =>
+          setEditing((prev) => (prev ? { ...prev, ...patch } : prev))
+        }
+        onTogglePerm={(permId) =>
+          setSelectedPermIds((prev) =>
+            prev.includes(permId)
+              ? prev.filter((x) => x !== permId)
+              : [...prev, permId]
+          )
+        }
       />
     </div>
   );

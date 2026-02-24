@@ -106,6 +106,13 @@ export class AdminApi {
     );
   }
 
+  updatePluginManifest(appId: string, manifest: any) {
+    return this.client.put<{ ok: boolean }>(
+      `/core-api/plugins/${appId}/manifest`,
+      manifest
+    );
+  }
+
   /* =========================
      RBAC - Users
   ========================= */

@@ -1,4 +1,4 @@
-# app/interfaces/http/rbac_admin_controller.py
+# app/interfaces/http/admin/rbac_controller.py
 
 from __future__ import annotations
 

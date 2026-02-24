@@ -37,10 +37,10 @@
 }
 
 /* tamanhos */
-.modal-sm { width: 400px; }
-.modal-md { width: 500px; }
-.modal-lg { width: 860px; }
-.modal-xl { width: 1100px; }
+.modal-sm { width: 65dvw; }
+.modal-md { width: 75dvw; }
+.modal-lg { width: 85dvw; }
+.modal-xl { width: 90dvw; }
 
 /* HEADER */
 
@@ -254,6 +254,7 @@ button.danger:hover {
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+  margin: 8px 0px;
 }
 
 .row.between {
@@ -434,4 +435,122 @@ textarea {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* =========================================
+   FORM VALIDATION STATES (Manifest Modal)
+========================================= */
+
+/* Asterisco de campo obrigatório */
+.required {
+  color: var(--danger);
+  margin-left: 4px;
+  font-weight: 700;
+}
+
+/* Input com erro */
+input.input-error,
+select.input-error,
+textarea.input-error {
+  border-color: var(--danger);
+  background: rgba(180, 35, 24, 0.06);
+}
+
+/* Hover mantém erro */
+input.input-error:hover,
+select.input-error:hover,
+textarea.input-error:hover {
+  border-color: var(--danger);
+}
+
+/* Focus com erro (acessível e consistente com design tokens) */
+input.input-error:focus-visible,
+select.input-error:focus-visible,
+textarea.input-error:focus-visible {
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.25);
+}
+
+/* Mensagem de erro refinada (sobrescreve leve o padrão anterior) */
+.field-error {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+
+  border: 1px solid rgba(180, 35, 24, 0.35);
+  background: rgba(180, 35, 24, 0.08);
+
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--danger);
+}
+
+/* Estado válido (opcional, mas profissional) */
+input.input-valid,
+select.input-valid,
+textarea.input-valid {
+  border-color: rgba(0, 160, 80, 0.4);
+  background: rgba(0, 160, 80, 0.04);
+}
+
+input.input-valid:focus-visible,
+select.input-valid:focus-visible,
+textarea.input-valid:focus-visible {
+  box-shadow: 0 0 0 3px rgba(0, 160, 80, 0.25);
+}
+
+/* =========================================
+   FORM FIELD (Enterprise Pattern)
+========================================= */
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.form-required-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+
+  background: rgba(180, 35, 24, 0.12);
+  color: var(--danger);
+  border: 1px solid rgba(180, 35, 24, 0.25);
+
+  cursor: help;
+}
+
+/* Tooltip simples e elegante */
+.form-required-badge:hover::after {
+  content: "Campo obrigatório";
+  position: absolute;
+  margin-top: 28px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+  z-index: 20;
+}
+
+/* Estado inválido acessível */
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: var(--danger);
+  background: rgba(180, 35, 24, 0.06);
 }

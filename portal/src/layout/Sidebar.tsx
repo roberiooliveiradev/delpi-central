@@ -1,20 +1,17 @@
-// src/layout/Sidebar.tsx
-
 import {
   useContext,
   useMemo,
   useState,
   useEffect,
-  useRef
+  useRef,
 } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { AppLauncher } from "../components/AppLauncher";
+import { resolveIcon } from "../utils/iconResolver";
 
 import {
-  LayoutDashboard,
-  Users,
   Package,
   PanelLeftClose,
   PanelLeftOpen,
@@ -24,28 +21,27 @@ import {
   Grid,
   Shield,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
 } from "lucide-react";
 
-type IconType = React.ComponentType<{ size?: number }>;
-
-/* ========================================
-   MAPEAMENTO DE ÍCONES
-======================================== */
-
-const iconMap: Record<string, IconType> = {
-  dashboard: LayoutDashboard,
-  leads: Users,
-  default: Package,
-};
-
-/* ========================================
-   COMPONENTE
-======================================== */
+type GroupedRoutes = Record<
+  string,
+  {
+    appName: string;
+    appIcon?: string | null;
+    routes: any[];
+  }
+>;
 
 export const Sidebar = () => {
-  const { routes, user, logout, notifications, markNotificationRead, markAllNotificationsRead } =
-    useContext(AuthContext);
+  const {
+    routes,
+    user,
+    logout,
+    notifications,
+    markNotificationRead,
+    markAllNotificationsRead,
+  } = useContext(AuthContext);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -76,7 +72,6 @@ export const Sidebar = () => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
 
-      // Fecha dropdown usuário
       if (
         userOpen &&
         userDropdownRef.current &&
@@ -85,7 +80,6 @@ export const Sidebar = () => {
         setUserOpen(false);
       }
 
-      // Fecha notificações
       if (
         notifOpen &&
         notifDropdownRef.current &&
@@ -96,7 +90,6 @@ export const Sidebar = () => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -106,19 +99,32 @@ export const Sidebar = () => {
      AGRUPAMENTO DE ROTAS
   =============================== */
 
-  const grouped = useMemo(() => {
-    const map: Record<string, typeof routes> = {};
-    routes.forEach((route) => {
-      if (!map[route.app]) map[route.app] = [];
-      map[route.app].push(route);
+  const grouped: GroupedRoutes = useMemo(() => {
+    const map: GroupedRoutes = {};
+
+    routes.forEach((route: any) => {
+      const appId = route.app;
+      const appName = route.app_name || appId;
+      const appIcon = route.app_icon ?? null;
+
+      if (!map[appId]) {
+        map[appId] = {
+          appName,
+          appIcon,
+          routes: [],
+        };
+      }
+
+      map[appId].routes.push(route);
     });
+
     return map;
   }, [routes]);
 
-  const toggleApp = (app: string) => {
+  const toggleApp = (appId: string) => {
     setOpenApps((prev) => ({
       ...prev,
-      [app]: !prev[app],
+      [appId]: !prev[appId],
     }));
   };
 
@@ -145,7 +151,6 @@ export const Sidebar = () => {
 
   return (
     <>
-      {/* Botão flutuante quando colapsada */}
       {collapsed && (
         <button
           className="sidebar-expand-btn"
@@ -184,30 +189,51 @@ export const Sidebar = () => {
 
             {/* ================= APPS ================= */}
             <div className="sidebar-content">
-              {Object.entries(grouped).map(([app, appRoutes]) => {
-                const isOpen = openApps[app] ?? true;
+              {Object.entries(grouped).map(([appId, group]) => {
+                const isOpen = openApps[appId] ?? true;
+                const AppIcon =
+                  resolveIcon(group.appIcon) || Package;
 
                 return (
-                  <div key={app} className="sidebar-app">
+                  <div key={appId} className="sidebar-app">
                     <div
                       className="sidebar-app-title"
-                      onClick={() => toggleApp(app)}
+                      onClick={() => toggleApp(appId)}
                     >
-                      {app} {isOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <AppIcon size={16} />
+                        <span>{group.appName}</span>
+                      </div>
+
+                      {isOpen ? (
+                        <ChevronDown size={16} />
+                      ) : (
+                        <ChevronUp size={16} />
+                      )}
                     </div>
 
                     {isOpen &&
-                      appRoutes.map((route) => {
-                        const rawLabel =
-                          route.path.split("/").filter(Boolean).pop() ?? "";
-
-                        const label = rawLabel
-                          .replace(/-/g, " ")
-                          .replace(/\b\w/g, (c) => c.toUpperCase());
+                      group.routes.map((route) => {
+                        const label =
+                          route.label ||
+                          route.path
+                            .split("/")
+                            .filter(Boolean)
+                            .pop()
+                            ?.replace(/-/g, " ")
+                            .replace(/\b\w/g, (c: string) =>
+                              c.toUpperCase()
+                            ) ||
+                          route.path;
 
                         const Icon =
-                          iconMap[rawLabel.toLowerCase()] ||
-                          iconMap.default;
+                          resolveIcon(route.icon) || Package;
 
                         const isActive =
                           location.pathname === route.path;
@@ -232,7 +258,6 @@ export const Sidebar = () => {
 
             {/* ================= FOOTER ================= */}
             <div className="sidebar-footer">
-              {/* Admin */}
               {user?.is_superadmin && (
                 <NavLink
                   to="/admin"
@@ -243,7 +268,6 @@ export const Sidebar = () => {
                 </NavLink>
               )}
 
-              {/* Notificações */}
               <div
                 className="sidebar-footer-item"
                 onClick={() => setNotifOpen(!notifOpen)}
@@ -259,9 +283,9 @@ export const Sidebar = () => {
 
               {notifOpen && (
                 <div
-                    className="notif-dropdown sidebar-notif"
-                    ref={notifDropdownRef}
-                  >
+                  className="notif-dropdown sidebar-notif"
+                  ref={notifDropdownRef}
+                >
                   {notifications.length === 0 && (
                     <div className="notif-item">
                       Sem notificações
@@ -293,7 +317,6 @@ export const Sidebar = () => {
                 </div>
               )}
 
-              {/* Launcher */}
               <div
                 className="sidebar-footer-item"
                 onClick={() => setLauncherOpen(true)}
@@ -302,7 +325,6 @@ export const Sidebar = () => {
                 <span>Apps</span>
               </div>
 
-              {/* Tema */}
               <div
                 className="sidebar-footer-item"
                 onClick={toggleTheme}
@@ -315,12 +337,13 @@ export const Sidebar = () => {
                 <span>Tema</span>
               </div>
 
-              {/* Usuário */}
               <div
                 className="sidebar-footer-item"
                 onClick={() => setUserOpen(!userOpen)}
               >
-                <div className="avatar small">{initials}</div>
+                <div className="avatar small">
+                  {initials}
+                </div>
                 <span>{user?.name}</span>
                 <ChevronDown size={16} />
               </div>
@@ -349,7 +372,6 @@ export const Sidebar = () => {
         )}
       </div>
 
-      {/* ================= MODAL APPS ================= */}
       {launcherOpen && (
         <AppLauncher
           onClose={() => setLauncherOpen(false)}

@@ -15,14 +15,18 @@ export interface MeResponse {
 export interface AppItem {
   id: string;
   name: string;
-  basePath: string;
+  base_path: string;  
   icon?: string;
 }
 
 export interface RouteItem {
   app: string;
+  app_name?: string;
+  app_icon?: string | null;
   path: string;
   permission: string;
+  icon?: string | null;
+  label?: string | null;
 }
 
 export interface DashboardResponse {
@@ -77,16 +81,20 @@ export class CoreApi {
   }
 
   markNotificationRead(id: string) {
-    return this.client.post<{ ok: boolean }>(`/core-api/notifications/${id}/read`); // se preferir GET
-    // melhor: client.post(...) — se você tiver post no ApiClient
+    return this.client.post<{ ok: boolean }>(
+      `/core-api/notifications/${id}/read`
+    );
   }
 
   markAllNotificationsRead() {
-    return this.client.post<{ ok: boolean }>(`/core-api/notifications/read-all`);
+    return this.client.post<{ ok: boolean }>(
+      `/core-api/notifications/read-all`
+    );
   }
 
   getFavoriteApps() {
-    return this.client.get<FavoriteAppItem[]>("/core-api/me/apps/favorites");
+    return this.client.get<FavoriteAppItem[]>(
+      "/core-api/me/apps/favorites"
+    );
   }
-
 }

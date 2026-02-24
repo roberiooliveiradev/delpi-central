@@ -7,25 +7,22 @@ import type { AdminUser } from "../../../data/adminApi";
 
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { DataTable } from "../../../components/DataTable";
-import { ActionButtons } from "../../../components/ActionButtons";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
+import { ActionButtons } from "../../../components/ActionButtons";
 import { UserRbacModal } from "../modals/UserRbacModal";
 
 export const RbacTab = () => {
   const { token } = useContext(AuthContext);
 
-  const [userSearch, setUserSearch] = useState("");
+  const [search, setSearch] = useState("");
   const [sort, setSort] = useState<{ sort?: string; direction?: "asc" | "desc" }>({
     sort: "email",
     direction: "asc",
   });
 
   const [selected, setSelected] = useState<string[]>([]);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmLoading, setConfirmLoading] = useState(false);
-
-  const [toDelete, setToDelete] = useState<AdminUser | null>(null);
   const [editing, setEditing] = useState<AdminUser | null>(null);
+  const [confirmBulk, setConfirmBulk] = useState(false);
 
   const api = useMemo(() => {
     if (!token) return null;
@@ -37,42 +34,15 @@ export const RbacTab = () => {
       api!.listUsers({
         page,
         pageSize,
-        q: userSearch,
+        q: search,
         sort: sort.sort,
         direction: sort.direction,
       }),
     10,
-    [userSearch, sort.sort, sort.direction]
+    [search, sort.sort, sort.direction]
   );
 
   if (!api) return null;
-
-  const doDeleteOne = async () => {
-    if (!toDelete) return;
-    setConfirmLoading(true);
-    try {
-      await api.deleteUser(toDelete.id);
-      setToDelete(null);
-      setConfirmOpen(false);
-      setSelected((s) => s.filter((id) => id !== toDelete.id));
-      usersResource.setPage(1);
-    } finally {
-      setConfirmLoading(false);
-    }
-  };
-
-  const doBulkDelete = async () => {
-    if (selected.length === 0) return;
-    setConfirmLoading(true);
-    try {
-      await api.bulkDeleteUsers(selected);
-      setSelected([]);
-      setConfirmOpen(false);
-      usersResource.setPage(1);
-    } finally {
-      setConfirmLoading(false);
-    }
-  };
 
   return (
     <div>
@@ -85,12 +55,14 @@ export const RbacTab = () => {
           {
             key: "roles",
             header: "Roles",
-            render: (row) => row.roles.map((r) => r.name).join(", ") || "Nenhuma",
+            render: (row) =>
+              row.roles.map((r) => r.name).join(", ") || "Nenhuma",
           },
           {
             key: "groups",
             header: "Groups",
-            render: (row) => row.groups.map((g) => g.name).join(", ") || "Nenhum",
+            render: (row) =>
+              row.groups.map((g) => g.name).join(", ") || "Nenhum",
           },
           {
             key: "is_superadmin",
@@ -101,50 +73,57 @@ export const RbacTab = () => {
         ]}
         data={usersResource.data}
         loading={usersResource.loading}
-        searchValue={userSearch}
-        onSearchChange={setUserSearch}
+        searchValue={search}
+        onSearchChange={setSearch}
         sort={sort}
         onSortChange={setSort}
         selectable
         getRowId={(row) => row.id}
         selectedRows={selected}
         onSelectionChange={setSelected}
-        toolbar={
-          selected.length > 0 ? (
-            <button
-              className="btn-danger"
-              onClick={() => {
-                setToDelete(null);
-                setConfirmOpen(true);
-              }}
-              disabled={usersResource.loading}
-            >
-              Excluir selecionados ({selected.length})
-            </button>
-          ) : (
-            <span className="dt-muted">Dica: edite roles/grupos via botão “Editar”</span>
-          )
-        }
         actions={(row) => (
           <ActionButtons
             onEdit={() => setEditing(row)}
-            onDelete={() => {
-              setToDelete(row);
-              setConfirmOpen(true);
+            onDelete={async () => {
+              await api.deleteUser(row.id);
+              usersResource.refetch();
             }}
           />
         )}
+        toolbar={
+          selected.length > 0 && (
+            <button
+              className="btn-danger"
+              onClick={() => setConfirmBulk(true)}
+            >
+              Excluir selecionados ({selected.length})
+            </button>
+          )
+        }
         pagination={
-          usersResource.pagination
-            ? {
-                page: usersResource.page,
-                totalPages: usersResource.pagination.total_pages,
-                total: usersResource.pagination.total,
-                pageSize: 10,
-              }
-            : undefined
+          usersResource.pagination && {
+            page: usersResource.page,
+            totalPages: usersResource.pagination.total_pages,
+            total: usersResource.pagination.total,
+            pageSize: 10,
+          }
         }
         onPageChange={usersResource.setPage}
+      />
+
+      <ConfirmDialog
+        open={confirmBulk}
+        title="Excluir usuários"
+        message={`Deseja excluir ${selected.length} usuários?`}
+        confirmText="Excluir"
+        danger
+        onCancel={() => setConfirmBulk(false)}
+        onConfirm={async () => {
+          await api.bulkDeleteUsers(selected);
+          setSelected([]);
+          setConfirmBulk(false);
+          usersResource.refetch();
+        }}
       />
 
       <UserRbacModal
@@ -153,24 +132,6 @@ export const RbacTab = () => {
         api={api}
         onClose={() => setEditing(null)}
         onSaved={() => usersResource.refetch()}
-      />
-
-      <ConfirmDialog
-        open={confirmOpen}
-        title={toDelete ? "Excluir usuário" : "Excluir usuários"}
-        message={
-          toDelete
-            ? `Deseja excluir "${toDelete.email}"?`
-            : `Deseja excluir ${selected.length} usuários selecionados?`
-        }
-        confirmText="Excluir"
-        danger
-        loading={confirmLoading}
-        onCancel={() => {
-          setConfirmOpen(false);
-          setToDelete(null);
-        }}
-        onConfirm={toDelete ? doDeleteOne : doBulkDelete}
       />
     </div>
   );

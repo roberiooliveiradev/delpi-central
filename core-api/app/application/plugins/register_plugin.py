@@ -146,6 +146,7 @@ class RegisterPluginUseCase:
                 [
                     {
                         "code": p["code"],
+                        "name": p["name"],  
                         "description": p.get("description"),
                         "module": p.get("module"),
                     }

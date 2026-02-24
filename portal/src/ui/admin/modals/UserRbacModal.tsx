@@ -97,9 +97,9 @@ export const UserRbacModal = ({
       <div className="rbac-grid">
         {/* ROLES */}
         <div className="rbac-column">
-          <h4>Roles do usuário</h4>
+          <h4>Papéis do usuário</h4>
           <div className="dt-muted">
-            Roles aplicam permissões diretamente.
+            Papéis aplicam permissões diretamente.
           </div>
 
           <div className="checkbox-list">
@@ -121,9 +121,9 @@ export const UserRbacModal = ({
 
         {/* GROUPS */}
         <div className="rbac-column">
-          <h4>Groups do usuário</h4>
+          <h4>Grupos do usuário</h4>
           <div className="dt-muted">
-            Groups agregam roles (herança).
+            Grupos agregam papéis (herança).
           </div>
 
           <div className="checkbox-list">

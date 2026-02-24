@@ -51,6 +51,7 @@ def validate_manifest_rules(manifest: Dict[str, Any]) -> List[ManifestError]:
     for i, perm in enumerate(manifest.get("permissions", []) or []):
         code = (perm or {}).get("code", "")
         module = (perm or {}).get("module", "")
+        name = (perm or {}).get("name", "")
 
         if not PERMISSION_CODE_RE.match(code):
             errors.append(ManifestError(
@@ -74,7 +75,13 @@ def validate_manifest_rules(manifest: Dict[str, Any]) -> List[ManifestError]:
                 message=f"permissions[{i}].module ('{module}') deve ser igual ao plugin id ('{plugin_id}').",
                 path=f"$.permissions[{i}].module",
             ))
-
+            
+        if not name:
+            errors.append(ManifestError(
+                code="permission_name_required",
+                message="Permission name é obrigatório.",
+                path=f"$.permissions[{i}].name",
+            ))
     # routes: path inicia com basePath + permission referencia existente
     perm_lookup = set((p or {}).get("code") for p in (manifest.get("permissions", []) or []) if (p or {}).get("code"))
     seen_routes: Set[str] = set()

@@ -1,9 +1,10 @@
 // src/ui/admin/modals/ManifestRegisterModal.tsx
+
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Modal } from "../../../components/Modal";
 import * as LucideIcons from "lucide-react";
 import { IconPickerModal } from "./IconPickerModal";
-
+import { FormField } from "../../../components/FormField";
 /* =========================
    Types
 ========================= */
@@ -18,6 +19,7 @@ type BackendErrorItem = {
 
 type ManifestPermission = {
   code: string;
+  name?: string | null;
   description?: string | null;
   module: string;
 };
@@ -35,6 +37,8 @@ type ManifestV2 = {
   schemaVersion: "2.0.0";
   id: string;
   name: string;
+  description?: string | null;
+  icon?: string | null;
   version: string;
   type: ManifestType;
   basePath: string;
@@ -53,11 +57,36 @@ type Props = {
 };
 
 type Tab = "base" | "permissions" | "routes" | "preview";
-type IconPickerState = { open: false } | { open: true; routeIndex: number };
+
+type IconPickerState =
+  | { open: false }
+  | { open: true; kind: "route"; routeIndex: number }
+  | { open: true; kind: "app" };
 
 /* =========================
    Utils (pure)
 ========================= */
+
+function kebabToPascal(kebab: string) {
+  return kebab
+    .split("-")
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    .join("");
+}
+
+function renderLucideIcon(
+  kebab: string | null | undefined,
+  size = 18
+) {
+  if (!kebab) return null;
+
+  const pascal = kebabToPascal(kebab);
+  const Icon = (LucideIcons as any)[pascal];
+
+  if (!Icon) return null;
+
+  return <Icon size={size} strokeWidth={1.8} />;
+}
 
 function slugifyId(v: string) {
   return (v || "")
@@ -101,12 +130,14 @@ function emptyManifestFor(type: ManifestType): ManifestV2 {
     schemaVersion: "2.0.0",
     id: "",
     name: "",
+    description: "",
+    icon: null,
     version: "1.0.0",
     basePath: "",
   };
 
   const common = {
-    permissions: [{ code: ".access", description: "Acesso", module: "" }],
+    permissions: [{ code: ".access", name: null, description: "Acesso", module: "" }] as ManifestPermission[],
   };
 
   if (type === "microfrontend") {
@@ -149,12 +180,15 @@ function toManifestV2(input: any): ManifestV2 {
     schemaVersion: schemaVersion === "2.0.0" ? "2.0.0" : "2.0.0",
     id: String(input?.id || ""),
     name: String(input?.name || ""),
+    description: input?.description ?? null,
+    icon: input?.icon ?? null,
     version: String(input?.version || "1.0.0"),
     type,
     basePath: String(input?.basePath || input?.base_path || ""),
     entry: input?.entry ?? null,
     permissions: permissions.map((p: any) => ({
       code: String(p?.code || ""),
+      name: p?.name ?? p?.code ?? null,
       description: p?.description ?? null,
       module: String(p?.module || ""),
     })),
@@ -187,6 +221,12 @@ function validateManifestLocal(m: ManifestV2, lucideKebabSet: Set<string>) {
     errors.push({ path: "basePath", message: "basePath deve começar com '/' e não terminar com '/'" });
   }
 
+  // ✅ valida ícone do APP (se informado)
+  const appIcon = (m.icon || "").trim();
+  if (appIcon && !lucideKebabSet.has(appIcon)) {
+    errors.push({ path: "icon", message: `Ícone Lucide inválido: "${appIcon}"` });
+  }
+
   if (m.type === "microfrontend") {
     if (!m.entry || !String(m.entry).trim()) errors.push({ path: "entry", message: "entry é obrigatório para type=microfrontend" });
   }
@@ -203,6 +243,10 @@ function validateManifestLocal(m: ManifestV2, lucideKebabSet: Set<string>) {
     m.permissions.forEach((p, idx) => {
       if (!p.code.trim()) errors.push({ path: `permissions[${idx}].code`, message: "code é obrigatório" });
       if (!p.module.trim()) errors.push({ path: `permissions[${idx}].module`, message: "module é obrigatório" });
+      if (p.name !== undefined && p.name !== null && !String(p.name).trim()) {
+        errors.push({ path: `permissions[${idx}].name`, message: "name não pode ser vazio (ou remova e deixe auto)" });
+      }
+
       if (p.code && !p.code.includes(".")) errors.push({ path: `permissions[${idx}].code`, message: "code deve conter '.' (ex: crm.access)" });
     });
 
@@ -278,6 +322,19 @@ export const ManifestRegisterModal = ({
     return new Set(pascals.map(toKebabCase));
   }, []);
 
+  const [touched, setTouched] = useState<Set<string>>(new Set());
+
+  const markTouched = (path: string) => {
+    setTouched((prev) => new Set(prev).add(path));
+  };
+
+  const isTouched = (path: string) => touched.has(path);
+  
+  const isFieldInvalid = (path: string) => {
+    const errors = getFieldErrors(path);
+    return isTouched(path) && errors.length > 0;
+  };
+
   /* ---------- lifecycle / reset ---------- */
 
   const resetToRegisterDefaults = useCallback(() => {
@@ -291,7 +348,6 @@ export const ManifestRegisterModal = ({
   useEffect(() => {
     if (!open) return;
 
-    // sempre limpa erros ao abrir
     setBackendErrors([]);
     setSubmitError(null);
 
@@ -334,7 +390,17 @@ export const ManifestRegisterModal = ({
         const module = slugifyId(p.module || id);
         let code = (p.code || "").trim();
         if (code.startsWith(".")) code = `${id}${code}`;
-        return { ...p, module, code, description: p.description ?? null };
+
+        // ✅ name obrigatório no DB: fallback para code (ou para o que o usuário preencher)
+        const safeName = (p.name ?? "").trim() || code;
+
+        return {
+          ...p,
+          module,
+          code,
+          name: safeName,
+          description: p.description ?? null,
+        };
       }),
       routes: (manifest.routes || []).map((r) => {
         let permission = r.permission ? String(r.permission).trim() : "";
@@ -449,6 +515,7 @@ export const ManifestRegisterModal = ({
         ...(prev.permissions || []),
         {
           code: `${computed.id || "module"}.new.permission`,
+          name: "", 
           description: "",
           module: computed.id || "module",
         },
@@ -488,7 +555,10 @@ export const ManifestRegisterModal = ({
         let code = p.code || "";
         if (code.startsWith(".")) code = `${id}${code}`;
         if (!code.includes(".") && id) code = `${id}.${code}`;
-        return { ...p, module, code };
+
+        const safeName = (p.name ?? "").trim() || code;
+
+        return { ...p, module, code, name: safeName };
       });
 
       const firstPerm = permissions?.[0]?.code || `${id}.access`;
@@ -557,7 +627,6 @@ export const ManifestRegisterModal = ({
 
       onClose();
 
-      // ✅ só reseta se for register (em edit, mantém estado caso o caller reabra rapidamente)
       if (!isEdit) resetToRegisterDefaults();
       else setTab("base");
     } catch (e: any) {
@@ -577,7 +646,16 @@ export const ManifestRegisterModal = ({
         setSubmitError(e?.message || "Falha ao registrar manifesto.");
         setBackendErrors([{ message: e?.message || "Erro desconhecido", path: "_global" }]);
       }
+      if (errs.length) {
+        const first = errs[0].path;
 
+        if (first.startsWith("permissions")) setTab("permissions");
+        else if (first.startsWith("routes")) setTab("routes");
+        else setTab("base");
+
+        setSubmitError("Corrija os erros antes de registrar.");
+        return;
+      }
       setTab("preview");
     } finally {
       setLoading(false);
@@ -586,7 +664,8 @@ export const ManifestRegisterModal = ({
 
   /* ---------- icon picker ---------- */
 
-  const openIconPicker = useCallback((routeIndex: number) => setIconPicker({ open: true, routeIndex }), []);
+  const openRouteIconPicker = useCallback((routeIndex: number) => setIconPicker({ open: true, kind: "route", routeIndex }), []);
+  const openAppIconPicker = useCallback(() => setIconPicker({ open: true, kind: "app" }), []);
   const closeIconPicker = useCallback(() => setIconPicker({ open: false }), []);
 
   /* =========================
@@ -684,88 +763,158 @@ export const ManifestRegisterModal = ({
           {tab === "base" && (
             <>
               <div className="grid-2">
-                <label>
-                  ID (slug)
+                <FormField
+                  label="ID (slug)"
+                  required
+                  htmlFor="manifest-id"
+                  error={getFieldErrors("id")}
+                >
                   <input
                     value={manifest.id}
+                    onBlur={() => markTouched("id")}
                     onChange={(e) => setBase({ id: e.target.value })}
-                    placeholder="ex: crm, helpdesk-glpi"
-                    disabled={isEdit} // ✅ id não deve mudar em edição
                   />
-                  <small>Sugestão: {computed.id || "-"}</small>
-                  {getFieldErrors("id").length > 0 && (
-                    <div className="field-error">
-                      {getFieldErrors("id").map((m, i) => (
-                        <div key={i}>{m}</div>
-                      ))}
-                    </div>
-                  )}
-                </label>
+                </FormField>
 
-                <label>
-                  Nome
-                  <input value={manifest.name} onChange={(e) => setBase({ name: e.target.value })} placeholder="ex: CRM" />
-                  {getFieldErrors("name").length > 0 && (
-                    <div className="field-error">
-                      {getFieldErrors("name").map((m, i) => (
-                        <div key={i}>{m}</div>
-                      ))}
-                    </div>
-                  )}
-                </label>
+                <FormField
+                  label="Nome"
+                  required
+                  htmlFor="manifest-name"
+                  error={getFieldErrors("name")}
+                >
+                  <input
+                    value={manifest.name}
+                    onBlur={() => markTouched("name")}
+                    onChange={(e) => setBase({ name: e.target.value })}
+                  />
+                </FormField>
 
-                <label>
-                  Versão (SemVer)
-                  <input value={manifest.version} onChange={(e) => setBase({ version: e.target.value })} placeholder="ex: 1.0.0" />
-                  {getFieldErrors("version").length > 0 && (
-                    <div className="field-error">
-                      {getFieldErrors("version").map((m, i) => (
-                        <div key={i}>{m}</div>
-                      ))}
-                    </div>
-                  )}
-                </label>
+                <FormField
+                  label="Descrição"
+                  htmlFor="manifest-description"
+                  error={getFieldErrors("description")}
+                >
+                  <input
+                    value={manifest.description ?? ""}
+                    onChange={(e) => setBase({ description: e.target.value })}
+                    placeholder="Descrição da aplicação"
+                  />
+                </FormField>
 
-                <label>
-                  Tipo
-                  <select value={manifest.type} onChange={(e) => setBase({ type: e.target.value as ManifestType })} disabled={loading}>
+                <FormField
+                  label="Ícone do App (Lucide)"
+                  htmlFor="manifest-icon"
+                  error={getFieldErrors("icon")}
+                >
+                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={openAppIconPicker}
+                      disabled={loading}
+                    >
+                      Ícone
+                    </button>
+
+                    <input
+                      id="manifest-icon"
+                      value={manifest.icon ?? ""}
+                      onChange={(e) => setBase({ icon: e.target.value || null })}
+                      placeholder="ex: chart-line"
+                      style={{ flex: 1 }}
+                    />
+
+                    {manifest.icon ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {renderLucideIcon(manifest.icon, 20)}
+                        <code>{manifest.icon}</code>
+                      </div>
+                    ) : (
+                      <span className="dt-muted">(sem ícone)</span>
+                    )}
+                  </div>
+                </FormField>
+
+                <FormField
+                  label="Versão (SemVer)"
+                  required
+                  htmlFor="manifest-version"
+                  error={getFieldErrors("version")}
+                >
+                  <input
+                    value={manifest.version}
+                    onBlur={() => markTouched("version")}
+                    onChange={(e) => setBase({ version: e.target.value })}
+                  />
+                </FormField>
+
+                <FormField label="Tipo" htmlFor="manifest-type">
+                  <select
+                    value={manifest.type}
+                    onChange={(e) => setBase({ type: e.target.value as ManifestType })}
+                    disabled={loading}
+                  >
                     <option value="microfrontend">microfrontend</option>
                     <option value="iframe">iframe</option>
                     <option value="backend-only">backend-only</option>
                   </select>
-                </label>
+                </FormField>
 
-                <label>
-                  Base Path
-                  <input value={manifest.basePath} onChange={(e) => setBase({ basePath: e.target.value })} placeholder="ex: /crm" />
-                  <small>Sugestão: {computed.basePath || "-"}</small>
-                  {getFieldErrors("basePath").length > 0 && (
-                    <div className="field-error">
-                      {getFieldErrors("basePath").map((m, i) => (
-                        <div key={i}>{m}</div>
-                      ))}
-                    </div>
-                  )}
-                </label>
+                <FormField
+                  label="Base Path"
+                  required
+                  htmlFor="manifest-basepath"
+                  error={getFieldErrors("basePath")}
+                >
+                  <>
+                    <input
+                      value={manifest.basePath}
+                      onBlur={() => markTouched("basePath")}
+                      onChange={(e) => setBase({ basePath: e.target.value })}
+                      placeholder="ex: /crm"
+                    />
+                    <small>Sugestão: {computed.basePath || "-"}</small>
+                  </>
+                </FormField>
 
-                <label>
-                  {manifest.type === "microfrontend" ? "Entry (auto)" : manifest.type === "iframe" ? "Entry (URL do iframe)" : "Entry"}
-                  <input
-                    value={manifest.type === "microfrontend" ? computed.entry : manifest.entry ?? ""}
-                    onChange={(e) => setBase({ entry: e.target.value })}
-                    placeholder={manifest.type === "iframe" ? "ex: https://glpi.suaempresa.com" : "ex: /apps/crm/remoteEntry.js"}
-                    disabled={manifest.type === "microfrontend" || manifest.type === "backend-only"}
-                  />
-                  {manifest.type === "microfrontend" && <small>Auto: {computed.entry}</small>}
-                  {manifest.type === "backend-only" && <small>backend-only não precisa de entry.</small>}
-                  {getFieldErrors("entry").length > 0 && (
-                    <div className="field-error">
-                      {getFieldErrors("entry").map((m, i) => (
-                        <div key={i}>{m}</div>
-                      ))}
-                    </div>
-                  )}
-                </label>
+                <FormField
+                  label={
+                    manifest.type === "microfrontend"
+                      ? "Entry (auto)"
+                      : manifest.type === "iframe"
+                      ? "Entry (URL do iframe)"
+                      : "Entry"
+                  }
+                  htmlFor="manifest-entry"
+                  error={getFieldErrors("entry")}
+                >
+                  <>
+                    <input
+                      value={
+                        manifest.type === "microfrontend"
+                          ? computed.entry
+                          : manifest.entry ?? ""
+                      }
+                      onChange={(e) => setBase({ entry: e.target.value })}
+                      disabled={
+                        manifest.type === "microfrontend" ||
+                        manifest.type === "backend-only"
+                      }
+                      placeholder={
+                        manifest.type === "iframe"
+                          ? "ex: https://glpi.suaempresa.com"
+                          : "ex: /apps/crm/remoteEntry.js"
+                      }
+                    />
+
+                    {manifest.type === "microfrontend" && (
+                      <small>Auto: {computed.entry}</small>
+                    )}
+                    {manifest.type === "backend-only" && (
+                      <small>backend-only não precisa de entry.</small>
+                    )}
+                  </>
+                </FormField>
               </div>
 
               <div className="hint">
@@ -782,7 +931,7 @@ export const ManifestRegisterModal = ({
                   Permissões são globais. Use prefixo do módulo (ex: <code>{computed.id || "crm"}.access</code>).
                 </div>
                 <button className="btn-primary" onClick={addPermission} disabled={loading}>
-                  + Adicionar permissão
+                  Adicionar permissão
                 </button>
               </div>
 
@@ -800,39 +949,64 @@ export const ManifestRegisterModal = ({
               <div className="list">
                 {manifest.permissions.map((p, idx) => {
                   const codePath = `permissions[${idx}].code`;
+                  const namePath = `permissions[${idx}].name`;
                   const modulePath = `permissions[${idx}].module`;
 
                   return (
                     <div key={idx} className="card">
                       <div className="grid-2">
-                        <label>
-                          Código
-                          <input value={p.code} onChange={(e) => updatePermission(idx, { code: e.target.value })} placeholder="ex: crm.access" />
-                          {getFieldErrors(codePath).length > 0 && (
-                            <div className="field-error">
-                              {getFieldErrors(codePath).map((m, i) => (
-                                <div key={i}>{m}</div>
-                              ))}
-                            </div>
-                          )}
-                        </label>
+                        <FormField
+                          label="Código"
+                          required
+                          htmlFor={`perm-code-${idx}`}
+                          error={getFieldErrors(codePath)}
+                        >
+                          <input
+                            value={p.code}
+                            onBlur={() => markTouched(codePath)}
+                            onChange={(e) => updatePermission(idx, { code: e.target.value })}
+                            placeholder="ex: crm.access"
+                          />
+                        </FormField>
 
-                        <label>
-                          Módulo
-                          <input value={p.module} onChange={(e) => updatePermission(idx, { module: e.target.value })} placeholder={computed.id || "crm"} />
-                          {getFieldErrors(modulePath).length > 0 && (
-                            <div className="field-error">
-                              {getFieldErrors(modulePath).map((m, i) => (
-                                <div key={i}>{m}</div>
-                              ))}
-                            </div>
-                          )}
-                        </label>
+                        <FormField
+                          label="Nome (exibido)"
+                          htmlFor={`perm-name-${idx}`}
+                          error={getFieldErrors(namePath)}
+                        >
+                          <input
+                            value={p.name ?? ""}
+                            onChange={(e) => updatePermission(idx, { name: e.target.value })}
+                            placeholder="ex: Acesso ao CRM"
+                          />
+                        </FormField>
 
-                        <label className="full">
-                          Descrição
-                          <input value={p.description ?? ""} onChange={(e) => updatePermission(idx, { description: e.target.value })} placeholder="ex: Acesso ao CRM" />
-                        </label>
+                        <FormField
+                          label="Módulo"
+                          required
+                          htmlFor={`perm-module-${idx}`}
+                          error={getFieldErrors(modulePath)}
+                        >
+                          <input
+                            value={p.module}
+                            onBlur={() => markTouched(modulePath)}
+                            onChange={(e) => updatePermission(idx, { module: e.target.value })}
+                            placeholder={computed.id || "crm"}
+                          />
+                        </FormField>
+
+                        <FormField
+                          label="Descrição"
+                          htmlFor={`perm-desc-${idx}`}
+                        >
+                          <input
+                            value={p.description ?? ""}
+                            onChange={(e) =>
+                              updatePermission(idx, { description: e.target.value })
+                            }
+                            placeholder="ex: Permite acessar o módulo"
+                          />
+                        </FormField>
                       </div>
 
                       <div className="row end">
@@ -855,7 +1029,7 @@ export const ManifestRegisterModal = ({
                   Rotas alimentam o menu. <code>permission</code> referencia um <code>permissions[].code</code>.
                 </div>
                 <button className="btn-primary" onClick={addRoute} disabled={loading}>
-                  + Adicionar rota
+                  Adicionar rota
                 </button>
               </div>
 
@@ -879,26 +1053,45 @@ export const ManifestRegisterModal = ({
                   return (
                     <div key={idx} className="card">
                       <div className="grid-2">
-                        <label>
-                          Path
-                          <input value={r.path} onChange={(e) => updateRoute(idx, { path: e.target.value })} placeholder="ex: /crm/leads" />
-                          {getFieldErrors(pathPath).length > 0 && (
-                            <div className="field-error">
-                              {getFieldErrors(pathPath).map((m, i) => (
-                                <div key={i}>{m}</div>
-                              ))}
-                            </div>
-                          )}
-                        </label>
+                        <FormField
+                          label="Path"
+                          required
+                          htmlFor={`route-path-${idx}`}
+                          error={getFieldErrors(pathPath)}
+                        >
+                          <input
+                            value={r.path}
+                            onBlur={() => markTouched(pathPath)}
+                            onChange={(e) => updateRoute(idx, { path: e.target.value })}
+                            placeholder="ex: /crm/leads"
+                          />
+                        </FormField>
 
-                        <label>
-                          Label
-                          <input value={r.label ?? ""} onChange={(e) => updateRoute(idx, { label: e.target.value })} placeholder="ex: Leads" />
-                        </label>
+                        <FormField
+                          label="Label"
+                          required
+                          htmlFor={`route-label-${idx}`}
+                          error={getFieldErrors(`routes[${idx}].label`)}
+                        >
+                          <input
+                            value={r.label ?? ""}
+                            onBlur={() => markTouched(`routes[${idx}].label`)}
+                            onChange={(e) => updateRoute(idx, { label: e.target.value })}
+                            placeholder="ex: Leads"
+                          />
+                        </FormField>
 
-                        <label className="full">
-                          Permissão
-                          <select value={r.permission ?? ""} onChange={(e) => updateRoute(idx, { permission: e.target.value || null })}>
+                        <FormField
+                          label="Permissão"
+                          htmlFor={`route-perm-${idx}`}
+                          error={getFieldErrors(permPath)}
+                        >
+                          <select
+                            value={r.permission ?? ""}
+                            onChange={(e) =>
+                              updateRoute(idx, { permission: e.target.value || null })
+                            }
+                          >
                             <option value="">(Pública / sem permissão)</option>
                             {manifest.permissions.map((p) => (
                               <option key={p.code} value={p.code}>
@@ -906,44 +1099,43 @@ export const ManifestRegisterModal = ({
                               </option>
                             ))}
                           </select>
-                          {getFieldErrors(permPath).length > 0 && (
-                            <div className="field-error">
-                              {getFieldErrors(permPath).map((m, i) => (
-                                <div key={i}>{m}</div>
-                              ))}
-                            </div>
-                          )}
-                        </label>
+                        </FormField>
 
-                        <label className="full">
-                          Ícone (Lucide)
+                        <FormField
+                          label="Ícone (Lucide)"
+                          htmlFor={`route-icon-${idx}`}
+                          error={getFieldErrors(iconPath)}
+                        >
                           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                            <button type="button" className="btn-secondary" onClick={() => openIconPicker(idx)} disabled={loading}>
+                            <button
+                              type="button"
+                              className="btn-secondary"
+                              onClick={() => openRouteIconPicker(idx)}
+                              disabled={loading}
+                            >
                               Selecionar ícone
                             </button>
 
                             {r.icon ? (
-                              <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                {renderLucideIcon(r.icon, 18)}
                                 <code>{r.icon}</code>
                               </div>
                             ) : (
                               <span className="dt-muted">(sem ícone)</span>
                             )}
                           </div>
+                        </FormField>
 
-                          {getFieldErrors(iconPath).length > 0 && (
-                            <div className="field-error">
-                              {getFieldErrors(iconPath).map((m, i) => (
-                                <div key={i}>{m}</div>
-                              ))}
-                            </div>
-                          )}
-                        </label>
-
-                        <label>
-                          Mostrar no menu
+                        <FormField label="Mostrar no menu" htmlFor={`route-menu-${idx}`}>
                           <select
-                            value={r.showInMenu === null || r.showInMenu === undefined ? "" : r.showInMenu ? "true" : "false"}
+                            value={
+                              r.showInMenu === null || r.showInMenu === undefined
+                                ? ""
+                                : r.showInMenu
+                                ? "true"
+                                : "false"
+                            }
                             onChange={(e) => {
                               const v = e.target.value;
                               updateRoute(idx, { showInMenu: v === "" ? null : v === "true" });
@@ -953,10 +1145,9 @@ export const ManifestRegisterModal = ({
                             <option value="true">true</option>
                             <option value="false">false</option>
                           </select>
-                        </label>
+                        </FormField>
 
-                        <label>
-                          Ordem
+                        <FormField label="Ordem" htmlFor={`route-order-${idx}`}>
                           <input
                             type="number"
                             value={r.order ?? ""}
@@ -966,7 +1157,7 @@ export const ManifestRegisterModal = ({
                             }}
                             placeholder="ex: 10"
                           />
-                        </label>
+                        </FormField>
                       </div>
 
                       <div className="row end">
@@ -1029,10 +1220,23 @@ export const ManifestRegisterModal = ({
 
       <IconPickerModal
         open={iconPicker.open}
-        value={iconPicker.open ? manifest.routes?.[iconPicker.routeIndex]?.icon ?? null : null}
+        value={
+          iconPicker.open
+            ? iconPicker.kind === "app"
+              ? manifest.icon ?? null
+              : manifest.routes?.[iconPicker.routeIndex]?.icon ?? null
+            : null
+        }
         onClose={closeIconPicker}
         onPick={(iconKebab) => {
           if (!iconPicker.open) return;
+
+          if (iconPicker.kind === "app") {
+            setBase({ icon: iconKebab });
+            closeIconPicker();
+            return;
+          }
+
           updateRoute(iconPicker.routeIndex, { icon: iconKebab });
           closeIconPicker();
         }}
