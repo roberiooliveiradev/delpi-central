@@ -109,8 +109,6 @@ export const AppsTab = () => {
 
   return (
     <div>
-      <h2>Aplicações ({appsResource.pagination?.total ?? 0})</h2>
-
       <DataTable
         columns={[
           { key: "name", header: "Nome", sortable: true },

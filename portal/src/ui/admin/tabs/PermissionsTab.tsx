@@ -32,8 +32,6 @@ export const PermissionsTab = () => {
 
   return (
     <div>
-      <h2>Permissões ({permsResource.pagination?.total ?? 0})</h2>
-
       <DataTable
         columns={[
           { key: "module", header: "App", sortable: true, render: (row) => row.module?.toUpperCase() }, 

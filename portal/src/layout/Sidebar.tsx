@@ -38,6 +38,7 @@ type GroupedRoutes = Record<
 export const Sidebar = () => {
   const {
     routes,
+    apps,  
     user,
     logout,
     notifications,
@@ -104,24 +105,24 @@ export const Sidebar = () => {
   const grouped: GroupedRoutes = useMemo(() => {
     const map: GroupedRoutes = {};
 
+    // 1️⃣ Cria todos os apps primeiro
+    apps?.forEach((app: any) => {
+      map[app.id] = {
+        appName: app.name,
+        appIcon: app.icon ?? null,
+        routes: [],
+      };
+    });
+
+    // 2️⃣ Adiciona apenas rotas visíveis
     routes.forEach((route: any) => {
-      const appId = route.app;
-      const appName = route.app_name || appId;
-      const appIcon = route.app_icon ?? null;
+      if (!map[route.app]) return;
 
-      if (!map[appId]) {
-        map[appId] = {
-          appName,
-          appIcon,
-          routes: [],
-        };
-      }
-
-      map[appId].routes.push(route);
+      map[route.app].routes.push(route);
     });
 
     return map;
-  }, [routes]);
+  }, [apps, routes]);
 
   const toggleApp = (appId: string) => {
     setOpenApps((prev) => ({
@@ -200,7 +201,14 @@ export const Sidebar = () => {
                   <div key={appId} className="sidebar-app">
                     <div
                       className="sidebar-app-title"
-                      onClick={() => toggleApp(appId)}
+                      onClick={() => {
+                        if (group.routes.length === 0) {
+                          navigate("/");
+                          return;
+                        }
+
+                        toggleApp(appId);
+                      }}
                     >
                       <div
                         style={{

@@ -122,15 +122,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Plugins normalmente impactam catálogo (apps) e também rotas (se plugin publica rotas)
     const needsApps =
-      entities.includes("apps") || entities.includes("plugins");
-    
+      entities.includes("apps") ||
+      entities.includes("plugins") ||
+      entities.includes("rbac");
+
     const needsMe = entities.includes("rbac");
-    
+
     const needsRoutes =
       entities.includes("routes") ||
       entities.includes("apps") ||
       entities.includes("plugins") ||
-      entities.includes("rbac"); 
+      entities.includes("rbac");
 
     const needsDashboard = entities.includes("dashboard");
 

@@ -48,8 +48,9 @@ a {
   --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 
   --primary: #0099dc;
+  --success: #067647;
   --danger: #b42318;
-
+  
   	/* Estados de controle */
 	--control-bg: var(--surface);
 	--control-text: var(--text);
@@ -57,6 +58,13 @@ a {
 	--control-placeholder: rgba(17, 17, 17, 0.55);
 	--focus: 0 0 0 3px rgba(100, 108, 255, 0.25);
   --focus-2: 0 6px 18px rgba(0, 153, 220, 0.3);
+
+  /* Alert tokens */
+  --alert-success-border: color-mix(in srgb, var(--success) 35%, transparent);
+  --alert-success-bg: color-mix(in srgb, var(--success) 10%, transparent);
+
+  --alert-danger-border: color-mix(in srgb, var(--danger) 35%, transparent);
+  --alert-danger-bg: color-mix(in srgb, var(--danger) 10%, transparent);
 }
 
 /* DARK MODE */
@@ -74,9 +82,16 @@ a {
 
   --shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
   --danger: #ff6b6b;
+  --success: #2ecc71;
 
   --control-placeholder: rgba(255, 255, 255, 0.55);
 	--focus: 0 0 0 3px rgba(139, 147, 255, 0.3);
+
+  --alert-success-border: color-mix(in srgb, var(--success) 45%, transparent);
+  --alert-success-bg: color-mix(in srgb, var(--success) 15%, transparent);
+
+  --alert-danger-border: color-mix(in srgb, var(--danger) 50%, transparent);
+  --alert-danger-bg: color-mix(in srgb, var(--danger) 18%, transparent);
 }
 
 
@@ -95,9 +110,16 @@ a {
 
     --shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
     --danger: #ff6b6b;
-
+    --success: #2ecc71;
+    
     --control-placeholder: rgba(255, 255, 255, 0.55);
     --focus: 0 0 0 3px rgba(139, 147, 255, 0.3);
+
+    --alert-success-border: color-mix(in srgb, var(--success) 45%, transparent);
+    --alert-success-bg: color-mix(in srgb, var(--success) 15%, transparent);
+
+    --alert-danger-border: color-mix(in srgb, var(--danger) 50%, transparent);
+    --alert-danger-bg: color-mix(in srgb, var(--danger) 18%, transparent);
   }
 }
 
@@ -577,7 +599,7 @@ textarea:focus-visible {
 .admin-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
 .admin-header {
@@ -616,7 +638,7 @@ textarea:focus-visible {
   backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 16px;
-  box-shadow: var(--shadow);
+  /* box-shadow: var(--shadow); */
 }
 
 .admin-navbar-inner {
@@ -632,7 +654,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 10px;
 
-  border-radius: 14px;
+  border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
 

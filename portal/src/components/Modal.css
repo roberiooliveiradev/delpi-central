@@ -295,31 +295,26 @@ button.danger:hover {
 
 .alert {
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-2);
+  color: var(--text);
   padding: 10px 12px;
   border-radius: 12px;
+  margin: 5px 0px;
 }
 
 .alert.success {
-  border-color: rgba(0, 160, 80, 0.35);
-  background: rgba(0, 160, 80, 0.08);
+  border-color: var(--alert-success-border);
+  background: var(--alert-success-bg);
 }
 
 .alert.danger {
-  border-color: rgba(220, 30, 30, 0.35);
-  background: rgba(220, 30, 30, 0.08);
+  border-color: var(--alert-danger-border);
+  background: var(--alert-danger-bg);
 }
 
-/* Inline field errors */
-.field-error {
-  margin-top: 6px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(220, 30, 30, 0.35);
-  background: rgba(220, 30, 30, 0.08);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.35;
+.alert ul {
+  padding: 10px;
+  margin: 0;
 }
 
 /* Inputs (mantém) */
@@ -472,12 +467,7 @@ textarea.input-error:focus-visible {
 
 /* Mensagem de erro refinada (sobrescreve leve o padrão anterior) */
 .field-error {
-  margin-top: 6px;
-  padding: 8px 10px;
   border-radius: 10px;
-
-  border: 1px solid rgba(180, 35, 24, 0.35);
-  background: rgba(180, 35, 24, 0.08);
 
   font-size: 12px;
   font-weight: 600;

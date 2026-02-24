@@ -145,7 +145,10 @@ def me_routes():
             joinedload(AppRoute.app),
             joinedload(AppRoute.permission),
         )
-        .filter(AppRoute.active == True)
+        .filter(
+            AppRoute.active == True,
+            AppRoute.show_in_menu == True
+        )
         .order_by(AppRoute.app_id.asc(), AppRoute.order.asc())
         .all()
     )

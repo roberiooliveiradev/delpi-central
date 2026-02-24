@@ -118,8 +118,6 @@ export const RolesTab = () => {
 
   return (
     <div>
-      <h2>Papéis ({rolesResource.pagination?.total ?? 0})</h2>
-
       <DataTable
         columns={[
           { key: "name", header: "Nome", sortable: true },

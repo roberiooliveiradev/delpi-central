@@ -7,7 +7,10 @@ __pycache__/
 .mypy_cache/
 *.sqlite3
 
+# Python coverage
 .coverage
+coverage.xml
+htmlcov/
 
 # Virtualenv
 venv/

@@ -33,19 +33,6 @@ export const AdminPage = () => {
 
   return (
     <div className="admin-page">
-      <div className="admin-header">
-        <div>
-          <h1 className="admin-title">Administração do Sistema</h1>
-          <p className="admin-subtitle">
-            Gerencie RBAC, aplicações e permissões do ambiente.
-          </p>
-        </div>
-
-        <div className="admin-chip" aria-label="Seção atual">
-          {activeLabel}
-        </div>
-      </div>
-
       <nav className="admin-navbar" aria-label="Navegação de administração">
         <div className="admin-navbar-inner">
           {items.map((item) => {

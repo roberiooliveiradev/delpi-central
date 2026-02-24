@@ -46,8 +46,6 @@ export const RbacTab = () => {
 
   return (
     <div>
-      <h2>Usuários ({usersResource.pagination?.total ?? 0})</h2>
-
       <DataTable
         columns={[
           { key: "name", header: "Nome", sortable: true },

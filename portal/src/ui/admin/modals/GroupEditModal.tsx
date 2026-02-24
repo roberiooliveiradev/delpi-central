@@ -70,6 +70,7 @@ export const GroupEditModal = ({
         <hr />
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <h3>Papéis</h3>
           {roles.map((r) => (
             <label key={r.id} className="checkbox-item">
               <input

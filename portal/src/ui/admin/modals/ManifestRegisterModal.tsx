@@ -5,6 +5,7 @@ import { Modal } from "../../../components/Modal";
 import * as LucideIcons from "lucide-react";
 import { IconPickerModal } from "./IconPickerModal";
 import { FormField } from "../../../components/FormField";
+import { HttpError } from "../../../data/apiClient";
 /* =========================
    Types
 ========================= */
@@ -206,70 +207,125 @@ function toManifestV2(input: any): ManifestV2 {
 function validateManifestLocal(m: ManifestV2, lucideKebabSet: Set<string>) {
   const errors: { path: string; message: string }[] = [];
 
-  if (m.schemaVersion !== "2.0.0") errors.push({ path: "schemaVersion", message: "schemaVersion deve ser 2.0.0" });
+  if (m.schemaVersion !== "2.0.0")
+    errors.push({ path: "schemaVersion", message: "schemaVersion deve ser 2.0.0" });
 
-  if (!m.id.trim()) errors.push({ path: "id", message: "id é obrigatório" });
-  if (m.id && slugifyId(m.id) !== m.id) errors.push({ path: "id", message: "id deve estar no formato slug (ex: crm, helpdesk-glpi)" });
+  if (!m.id.trim())
+    errors.push({ path: "id", message: "id é obrigatório" });
 
-  if (!m.name.trim()) errors.push({ path: "name", message: "name é obrigatório" });
+  if (m.id && slugifyId(m.id) !== m.id)
+    errors.push({ path: "id", message: "id deve estar no formato slug (ex: crm, helpdesk-glpi)" });
 
-  if (!m.version.trim()) errors.push({ path: "version", message: "version é obrigatório" });
-  if (m.version && !isSemverLoose(m.version)) errors.push({ path: "version", message: "version deve ser SemVer (ex: 1.0.0)" });
+  if (!m.name.trim())
+    errors.push({ path: "name", message: "name é obrigatório" });
 
-  if (!m.basePath.trim()) errors.push({ path: "basePath", message: "basePath é obrigatório" });
-  if (m.basePath && normalizeBasePath(m.basePath) !== m.basePath) {
+  if (!m.version.trim())
+    errors.push({ path: "version", message: "version é obrigatório" });
+
+  if (m.version && !isSemverLoose(m.version))
+    errors.push({ path: "version", message: "version deve ser SemVer (ex: 1.0.0)" });
+
+  if (!m.basePath.trim())
+    errors.push({ path: "basePath", message: "basePath é obrigatório" });
+
+  if (m.basePath && normalizeBasePath(m.basePath) !== m.basePath)
     errors.push({ path: "basePath", message: "basePath deve começar com '/' e não terminar com '/'" });
-  }
 
-  // ✅ valida ícone do APP (se informado)
+  // 🔥 ICON OBRIGATÓRIO
   const appIcon = (m.icon || "").trim();
-  if (appIcon && !lucideKebabSet.has(appIcon)) {
+
+  if (!appIcon) {
+    errors.push({ path: "icon", message: "Ícone do app é obrigatório" });
+  } else if (!lucideKebabSet.has(appIcon)) {
     errors.push({ path: "icon", message: `Ícone Lucide inválido: "${appIcon}"` });
   }
 
   if (m.type === "microfrontend") {
-    if (!m.entry || !String(m.entry).trim()) errors.push({ path: "entry", message: "entry é obrigatório para type=microfrontend" });
+    if (!m.entry || !String(m.entry).trim())
+      errors.push({ path: "entry", message: "entry é obrigatório para type=microfrontend" });
   }
 
   if (m.type === "iframe") {
-    if (!m.entry || !String(m.entry).trim()) errors.push({ path: "entry", message: "entry (URL) é obrigatório para type=iframe" });
+    if (!m.entry || !String(m.entry).trim())
+      errors.push({ path: "entry", message: "entry (URL) é obrigatório para type=iframe" });
+
     const v = String(m.entry || "").trim();
-    if (v && !/^https?:\/\//i.test(v)) errors.push({ path: "entry", message: "URL do iframe deve começar com http:// ou https://" });
+    if (v && !/^https?:\/\//i.test(v))
+      errors.push({ path: "entry", message: "URL do iframe deve começar com http:// ou https://" });
   }
+
+  /* =========================
+     PERMISSIONS
+  ========================= */
 
   if (!Array.isArray(m.permissions) || m.permissions.length === 0) {
     errors.push({ path: "permissions", message: "permissions deve ter ao menos 1 item" });
   } else {
     m.permissions.forEach((p, idx) => {
-      if (!p.code.trim()) errors.push({ path: `permissions[${idx}].code`, message: "code é obrigatório" });
-      if (!p.module.trim()) errors.push({ path: `permissions[${idx}].module`, message: "module é obrigatório" });
-      if (p.name !== undefined && p.name !== null && !String(p.name).trim()) {
-        errors.push({ path: `permissions[${idx}].name`, message: "name não pode ser vazio (ou remova e deixe auto)" });
-      }
+      if (!p.code.trim())
+        errors.push({ path: `permissions[${idx}].code`, message: "code é obrigatório" });
 
-      if (p.code && !p.code.includes(".")) errors.push({ path: `permissions[${idx}].code`, message: "code deve conter '.' (ex: crm.access)" });
+      if (!p.module.trim())
+        errors.push({ path: `permissions[${idx}].module`, message: "module é obrigatório" });
+
+      if (!p.name || !String(p.name).trim())
+        errors.push({ path: `permissions[${idx}].name`, message: "name é obrigatório" });
+
+      if (p.code && !p.code.includes("."))
+        errors.push({ path: `permissions[${idx}].code`, message: "code deve conter '.' (ex: crm.access)" });
     });
 
     const codes = m.permissions.map((p) => p.code.trim()).filter(Boolean);
     const dup = codes.find((c, i) => codes.indexOf(c) !== i);
-    if (dup) errors.push({ path: "permissions", message: `permissions contém code duplicado: ${dup}` });
+    if (dup)
+      errors.push({ path: "permissions", message: `permissions contém code duplicado: ${dup}` });
   }
+
+  /* =========================
+     ROUTES
+  ========================= */
 
   if (!Array.isArray(m.routes) || m.routes.length === 0) {
     errors.push({ path: "routes", message: "routes deve ter ao menos 1 item" });
   } else {
     m.routes.forEach((r, idx) => {
-      if (!r.path.trim()) errors.push({ path: `routes[${idx}].path`, message: "path é obrigatório" });
-      if (r.path && !r.path.startsWith("/")) errors.push({ path: `routes[${idx}].path`, message: "path deve começar com '/'" });
+      if (!r.path.trim())
+        errors.push({ path: `routes[${idx}].path`, message: "path é obrigatório" });
+
+      if (r.path && !r.path.startsWith("/"))
+        errors.push({ path: `routes[${idx}].path`, message: "path deve começar com '/'" });
+
+      if (!r.label || !r.label.trim())
+        errors.push({ path: `routes[${idx}].label`, message: "label é obrigatório" });
+
+      if (r.order === null || r.order === undefined)
+        errors.push({ path: `routes[${idx}].order`, message: "order é obrigatório" });
+      else if (r.order < 0)
+        errors.push({ path: `routes[${idx}].order`, message: "order não pode ser negativo" });
 
       const perm = (r.permission || "").trim();
       if (perm) {
         const exists = m.permissions.some((p) => p.code.trim() === perm);
-        if (!exists) errors.push({ path: `routes[${idx}].permission`, message: `permission não existe em permissions: ${perm}` });
+        if (!exists)
+          errors.push({
+            path: `routes[${idx}].permission`,
+            message: `permission não existe em permissions: ${perm}`,
+          });
       }
 
       const icon = (r.icon || "").trim();
-      if (icon && !lucideKebabSet.has(icon)) errors.push({ path: `routes[${idx}].icon`, message: `Ícone Lucide inválido: "${icon}"` });
+
+      if (!icon) {
+        errors.push({
+          path: `routes[${idx}].icon`,
+          message: "ícone é obrigatório",
+        });
+      } else if (!lucideKebabSet.has(icon)) {
+        errors.push({
+          path: `routes[${idx}].icon`,
+          message: `Ícone Lucide inválido: "${icon}"`,
+        });
+      }
     });
   }
 
@@ -629,35 +685,46 @@ export const ManifestRegisterModal = ({
 
       if (!isEdit) resetToRegisterDefaults();
       else setTab("base");
-    } catch (e: any) {
-      const resp = e?.response?.data || e?.data || null;
-      const errorsArr: BackendErrorItem[] | null = Array.isArray(resp?.errors) ? resp.errors : null;
+    } 
+    
+    catch (e: any) {
+      if (e instanceof HttpError) {
+        if (Array.isArray(e.errors) && e.errors.length > 0) {
+          setBackendErrors(
+            e.errors.map((it) => ({
+              code: it.code,
+              message: it.message || "Erro",
+              path: it.path || "_global",
+            }))
+          );
 
-      if (errorsArr?.length) {
-        setBackendErrors(
-          errorsArr.map((it) => ({
-            code: it.code,
-            message: it.message || "Erro",
-            path: it.path || "_global",
-          }))
-        );
-        setSubmitError("O backend rejeitou o manifesto. Corrija os campos marcados.");
-      } else {
-        setSubmitError(e?.message || "Falha ao registrar manifesto.");
-        setBackendErrors([{ message: e?.message || "Erro desconhecido", path: "_global" }]);
-      }
-      if (errs.length) {
-        const first = errs[0].path;
+          // Direciona para a aba correta baseado no primeiro erro
+          const first = e.errors[0]?.path || "_global";
 
-        if (first.startsWith("permissions")) setTab("permissions");
-        else if (first.startsWith("routes")) setTab("routes");
-        else setTab("base");
+          if (first.startsWith("permissions")) setTab("permissions");
+          else if (first.startsWith("routes")) setTab("routes");
+          else if (first === "_global") setTab("preview");
+          else setTab("base");
 
-        setSubmitError("Corrija os erros antes de registrar.");
+          setSubmitError("O backend rejeitou o manifesto. Corrija os campos marcados.");
+        } else {
+          setSubmitError(e.message || "Erro ao registrar manifesto.");
+          setBackendErrors([
+            { message: e.message || "Erro desconhecido", path: "_global" },
+          ]);
+          setTab("preview");
+        }
+
         return;
       }
+
+      // fallback inesperado
+      setSubmitError("Erro inesperado.");
+      setBackendErrors([{ message: "Erro inesperado.", path: "_global" }]);
       setTab("preview");
-    } finally {
+    }
+    
+    finally {
       setLoading(false);
     }
   }, [finalManifest, lucideKebabSet, onSubmit, onClose, isEdit, resetToRegisterDefaults]);
@@ -803,34 +870,29 @@ export const ManifestRegisterModal = ({
 
                 <FormField
                   label="Ícone do App (Lucide)"
-                  htmlFor="manifest-icon"
+                  required
                   error={getFieldErrors("icon")}
                 >
-                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <button
                       type="button"
                       className="btn-secondary"
-                      onClick={openAppIconPicker}
+                      onClick={() => {
+                        markTouched("icon");
+                        openAppIconPicker();
+                      }}
                       disabled={loading}
                     >
-                      Ícone
+                      Selecionar ícone
                     </button>
 
-                    <input
-                      id="manifest-icon"
-                      value={manifest.icon ?? ""}
-                      onChange={(e) => setBase({ icon: e.target.value || null })}
-                      placeholder="ex: chart-line"
-                      style={{ flex: 1 }}
-                    />
-
                     {manifest.icon ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {renderLucideIcon(manifest.icon, 20)}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        {renderLucideIcon(manifest.icon, 22)}
                         <code>{manifest.icon}</code>
                       </div>
                     ) : (
-                      <span className="dt-muted">(sem ícone)</span>
+                      <span className="dt-muted">Nenhum ícone selecionado</span>
                     )}
                   </div>
                 </FormField>
@@ -976,6 +1038,7 @@ export const ManifestRegisterModal = ({
                         >
                           <input
                             value={p.name ?? ""}
+                            onBlur={() => markTouched(namePath)}
                             onChange={(e) => updatePermission(idx, { name: e.target.value })}
                             placeholder="ex: Acesso ao CRM"
                           />
@@ -1103,6 +1166,7 @@ export const ManifestRegisterModal = ({
 
                         <FormField
                           label="Ícone (Lucide)"
+                          required
                           htmlFor={`route-icon-${idx}`}
                           error={getFieldErrors(iconPath)}
                         >
@@ -1147,10 +1211,15 @@ export const ManifestRegisterModal = ({
                           </select>
                         </FormField>
 
-                        <FormField label="Ordem" htmlFor={`route-order-${idx}`}>
+                        <FormField
+                          label="Ordem"
+                          htmlFor={`route-order-${idx}`}
+                          error={getFieldErrors(`routes[${idx}].order`)}
+                        >
                           <input
                             type="number"
                             value={r.order ?? ""}
+                            onBlur={() => markTouched(`routes[${idx}].order`)}
                             onChange={(e) => {
                               const v = e.target.value;
                               updateRoute(idx, { order: v === "" ? null : Number(v) });
@@ -1178,7 +1247,7 @@ export const ManifestRegisterModal = ({
               {submitError && <div className="alert danger">{submitError}</div>}
 
               {localErrors.length > 0 && (
-                <div className="alert">
+                <div className="alert danger">
                   <strong>Erros locais:</strong>
                   <ul>
                     {localErrors.slice(0, 12).map((e, i) => (

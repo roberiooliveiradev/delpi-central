@@ -1,12 +1,25 @@
 // src/data/apiClient.ts
 
+export type ApiErrorItem = {
+  code: string;
+  message: string;
+  path?: string;
+};
+
 export class HttpError extends Error {
   public status: number;
+  public errors: ApiErrorItem[];
   public body?: any;
 
-  constructor(status: number, message: string, body?: any) {
+  constructor(
+    status: number,
+    message: string,
+    errors: ApiErrorItem[] = [],
+    body?: any
+  ) {
     super(message);
     this.status = status;
+    this.errors = errors;
     this.body = body;
   }
 }
@@ -45,12 +58,20 @@ export class ApiClient {
       const contentType = response.headers.get("content-type") || "";
 
       let body: any = null;
+      let errors: ApiErrorItem[] = [];
       let message = `HTTP ${response.status}`;
 
       try {
         if (contentType.includes("application/json")) {
           body = await response.json();
-          message = body?.error || body?.message || message;
+
+          if (Array.isArray(body?.errors)) {
+            errors = body.errors;
+            message =
+              errors.map((e: ApiErrorItem) => e.message).join(", ") || message;
+          } else if (body?.message) {
+            message = body.message;
+          }
         } else {
           const text = await response.text();
           message = text || message;
@@ -59,7 +80,7 @@ export class ApiClient {
         // ignore parse errors
       }
 
-      throw new HttpError(response.status, message, body);
+      throw new HttpError(response.status, message, errors, body);
     }
 
     // 204 No Content
