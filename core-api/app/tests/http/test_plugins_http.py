@@ -11,7 +11,12 @@ def test_register_plugin_http(client, superadmin_user):
         "basePath": "/crm",
         "entry": "/apps/crm/remoteEntry.js",
         "permissions": [
-            {"code": "crm.access", "description": "Acesso", "module": "crm"}
+            {
+                "code": "crm.access",
+                "name": "CRM Access",
+                "description": "Acesso",
+                "module": "crm"
+            }
         ],
         "routes": [
             {"path": "/crm", "label": "CRM", "permission": "crm.access"}

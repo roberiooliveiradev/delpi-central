@@ -9,6 +9,7 @@ from app.infrastructure.db.models import (
     AppRoute,
     AppManifest,
     AuditLog,
+    AppVersion
 )
 
 
@@ -40,6 +41,36 @@ class SqlAlchemyAppRepository:
             app.version = version
 
 
+# ==========================================================
+# App Version Repository
+# ==========================================================
+class SqlAlchemyAppVersionRepository:
+
+    def __init__(self, session):
+        self.session = session
+
+    def exists(self, app_id: str, version: str) -> bool:
+        return (
+            self.session.query(AppVersion)
+            .filter_by(app_id=app_id, version=version)
+            .first()
+            is not None
+        )
+
+    def create(self, data: dict) -> AppVersion:
+        """
+        Esperado pelo RegisterPluginUseCase
+        """
+        app_version = AppVersion(
+            app_id=data["app_id"],
+            version=data["version"],
+            manifest=data["manifest"],
+            checksum=data["checksum"],
+        )
+
+        self.session.add(app_version)
+        return app_version
+    
 # ==========================================================
 # Permission Repository
 # ==========================================================

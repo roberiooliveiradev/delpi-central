@@ -32,7 +32,7 @@ def test_rbac_full_flow(client, superadmin_user):
 
     # 4️⃣ Vincular role ao usuário
     resp = client.put(
-        f"/core-api/admin/rbac/users/{user_id}/roles",
+        f"/core-api/admin/rbac/users/{user_id}",
         json={"roleIds": [role_id]}
     )
     assert resp.status_code == 200

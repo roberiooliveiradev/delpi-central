@@ -6,7 +6,8 @@ from app.infrastructure.plugins.unit_of_work import SqlAlchemyUnitOfWork
 from app.application.plugins.register_plugin import RegisterPluginUseCase
 from app.application.plugins.update_plugin_manifest import UpdatePluginManifestUseCase
 from app.application.plugins.manifest_validator import ManifestValidator
-from app.infrastructure.db.models import AppManifest
+from app.infrastructure.db.models import AppManifest, AppVersion
+from app.application.plugins.rollback_plugin_version import RollbackPluginVersionUseCase
 from app.domain.services.admin_event_service import emit_admin_event
 
 
@@ -109,3 +110,54 @@ def update_manifest(plugin_id: str):
     })
     
     return jsonify({"ok": True}), 200
+
+
+@plugins_bp.get("/<plugin_id>/versions")
+def list_versions(plugin_id: str):
+    guard = require_apps_manage()
+    if guard:
+        return guard
+
+    rows = AppVersion.query.filter_by(app_id=plugin_id)\
+        .order_by(AppVersion.created_at.desc())\
+        .all()
+
+    return jsonify([
+        {
+            "version": r.version,
+            "checksum": r.checksum,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        }
+        for r in rows
+    ])
+
+
+@plugins_bp.post("/<plugin_id>/rollback")
+def rollback_plugin(plugin_id: str):
+    guard = require_apps_manage()
+    if guard:
+        return guard
+
+    data = request.get_json(silent=True) or {}
+    target_version = data.get("version")
+
+    if not target_version:
+        return jsonify({
+            "error": "version is required"
+        }), 400
+
+    use_case = RollbackPluginVersionUseCase()
+    result = use_case.execute(plugin_id, target_version)
+
+    if not result.success:
+        return jsonify({"errors": result.errors}), 400
+
+    emit_admin_event("plugins", "rollback", {
+        "appId": plugin_id,
+        "version": target_version,
+    })
+
+    return jsonify({
+        "status": "rolled_back",
+        "version": target_version,
+    }), 200

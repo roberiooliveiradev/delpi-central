@@ -7,8 +7,10 @@ from app.infrastructure.plugins.plugin_repository import (
     SqlAlchemyPermissionRepository,
     SqlAlchemyRouteRepository,
     SqlAlchemyManifestRepository,
-    SqlAlchemyAuditRepository
+    SqlAlchemyAuditRepository,
+    SqlAlchemyAppVersionRepository 
 )
+
 
 class SqlAlchemyUnitOfWork(UnitOfWork):
 
@@ -20,6 +22,8 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
         self.route_repo = SqlAlchemyRouteRepository(self.session)
         self.manifest_repo = SqlAlchemyManifestRepository(self.session)
         self.audit_repo = SqlAlchemyAuditRepository(self.session)
+
+        self.app_version_repo = SqlAlchemyAppVersionRepository(self.session)
 
     def commit(self) -> None:
         self.session.commit()

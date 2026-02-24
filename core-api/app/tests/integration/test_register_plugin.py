@@ -1,4 +1,7 @@
+# app/tests/integration/test_register_plugin.py
+
 import uuid
+from unittest.mock import patch
 
 from app.infrastructure.plugins.unit_of_work import SqlAlchemyUnitOfWork
 from app.application.plugins.register_plugin import RegisterPluginUseCase
@@ -11,6 +14,7 @@ from app.infrastructure.db.models import (
     AppManifest,
     AuditLog,
     User,
+    AppVersion
 )
 
 
@@ -25,13 +29,18 @@ def create_test_user(db_session):
         name="Test User"
     )
     db_session.add(user)
-    db_session.flush()  # garante persistência antes do FK
+    db_session.flush()
     return user
 
 
 def make_manifest(version="1.0.0", extra_permissions=None, extra_routes=None):
     permissions = [
-        {"code": "crm.access", "description": "Acesso", "module": "crm"}
+        {
+            "code": "crm.access",
+            "name": "CRM Access",
+            "description": "Acesso",
+            "module": "crm"
+        }
     ]
 
     routes = [
@@ -64,25 +73,20 @@ def make_manifest(version="1.0.0", extra_permissions=None, extra_routes=None):
 def test_register_plugin_success(app, db_session):
 
     user = create_test_user(db_session)
-
     manifest = make_manifest("1.0.0")
 
     uow = SqlAlchemyUnitOfWork(session=db_session)
     validator = ManifestValidator()
     use_case = RegisterPluginUseCase(uow, validator)
 
-    result = use_case.execute(
-        manifest=manifest,
-        user_id=str(user.id),
-        user_ip="127.0.0.1"
-    )
+    result = use_case.execute(manifest, str(user.id), "127.0.0.1")
 
     assert result.success is True
-
     assert db_session.query(App).count() == 1
     assert db_session.query(Permission).count() == 1
     assert db_session.query(AppRoute).count() == 1
     assert db_session.query(AppManifest).count() == 1
+    assert db_session.query(AppVersion).count() == 1
     assert db_session.query(AuditLog).count() == 1
 
 
@@ -95,7 +99,12 @@ def test_upgrade_minor_add_permission(app, db_session):
     manifest_v2 = make_manifest(
         "1.1.0",
         extra_permissions=[
-            {"code": "crm.leads.read", "description": "Leads", "module": "crm"}
+            {
+                "code": "crm.leads.read",
+                "name": "Leads Read",
+                "description": "Leads",
+                "module": "crm"
+            }
         ],
         extra_routes=[
             {"path": "/crm/leads", "label": "Leads", "permission": "crm.leads.read"}
@@ -111,6 +120,7 @@ def test_upgrade_minor_add_permission(app, db_session):
 
     assert result.success is True
     assert db_session.query(Permission).count() == 2
+    assert db_session.query(AppVersion).count() == 2
 
 
 def test_upgrade_major_blocked(app, db_session):
@@ -128,6 +138,24 @@ def test_upgrade_major_blocked(app, db_session):
     result = use_case.execute(manifest_v2, str(user.id), "127.0.0.1")
 
     assert result.success is False
+    assert db_session.query(AppVersion).count() == 1
+
+
+def test_duplicate_version_should_fail(app, db_session):
+
+    user = create_test_user(db_session)
+    manifest = make_manifest("1.0.0")
+
+    uow = SqlAlchemyUnitOfWork(session=db_session)
+    validator = ManifestValidator()
+    use_case = RegisterPluginUseCase(uow, validator)
+
+    result1 = use_case.execute(manifest, str(user.id), "127.0.0.1")
+    result2 = use_case.execute(manifest, str(user.id), "127.0.0.1")
+
+    assert result1.success is True
+    assert result2.success is False
+    assert db_session.query(AppVersion).count() == 1
 
 
 def test_route_collision_between_apps(app, db_session):
@@ -142,10 +170,15 @@ def test_route_collision_between_apps(app, db_session):
         "name": "ERP",
         "version": "1.0.0",
         "type": "microfrontend",
-        "basePath": "/crm",  # mesma base
+        "basePath": "/crm",
         "entry": "/apps/erp/remoteEntry.js",
         "permissions": [
-            {"code": "erp.access", "description": "Acesso", "module": "erp"}
+            {
+                "code": "erp.access",
+                "name": "ERP Access",
+                "description": "Acesso",
+                "module": "erp"
+            }
         ],
         "routes": [
             {"path": "/crm", "label": "ERP Dashboard", "permission": "erp.access"}
@@ -162,6 +195,7 @@ def test_route_collision_between_apps(app, db_session):
     assert result_a.success is True
     assert result_b.success is False
 
+
 def test_permission_code_collision_between_apps(app, db_session):
 
     user = create_test_user(db_session)
@@ -177,7 +211,12 @@ def test_permission_code_collision_between_apps(app, db_session):
         "basePath": "/erp",
         "entry": "/apps/erp/remoteEntry.js",
         "permissions": [
-            {"code": "crm.access", "description": "Colisão", "module": "erp"}
+            {
+                "code": "crm.access",
+                "name": "Collision",
+                "description": "Colisão",
+                "module": "erp"
+            }
         ],
         "routes": [
             {"path": "/erp", "label": "ERP", "permission": "crm.access"}
@@ -210,7 +249,12 @@ def test_register_plugin_should_rollback_on_failure(app, db_session):
         "basePath": "/crm",
         "entry": "/apps/crm2/remoteEntry.js",
         "permissions": [
-            {"code": "crm2.access", "description": "Acesso", "module": "crm2"}
+            {
+                "code": "crm2.access",
+                "name": "CRM2 Access",
+                "description": "Acesso",
+                "module": "crm2"
+            }
         ],
         "routes": [
             {"path": "/crm", "label": "Duplicado", "permission": "crm2.access"}
@@ -227,12 +271,9 @@ def test_register_plugin_should_rollback_on_failure(app, db_session):
     assert result_valid.success is True
     assert result_invalid.success is False
 
-    # Garante que CRM2 NÃO foi persistido
     assert db_session.query(App).filter_by(id="crm2").count() == 0
     assert db_session.query(Permission).filter_by(module="crm2").count() == 0
 
-
-from unittest.mock import patch
 
 def test_rbac_cache_should_be_cleared(app, db_session):
 

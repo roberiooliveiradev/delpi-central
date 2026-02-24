@@ -15,5 +15,6 @@ from .user_favorite_app import UserFavoriteApp
 from .app_module import App
 from .app_route import AppRoute
 from .app_manifest import AppManifest
+from .app_versions import AppVersion
 
 from .audit_log import AuditLog

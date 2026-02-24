@@ -33,7 +33,6 @@ class RegisterPluginUseCase:
         user_ip: str,
     ) -> RegisterPluginResult:
 
-        # 1️⃣ Validação estrutural
         validation = self._validator.validate(manifest)
 
         if not validation.is_valid:
@@ -41,6 +40,7 @@ class RegisterPluginUseCase:
 
         app_id = manifest["id"]
         version = manifest["version"]
+
         try:
             version_error = self._handle_app_version(app_id, version, manifest)
             if version_error:
@@ -57,7 +57,15 @@ class RegisterPluginUseCase:
                 self._uow.rollback()
                 return RegisterPluginResult(False, [route_error])
 
+            # 🔥 salvar snapshot atual
             self._save_manifest(app_id, manifest)
+
+            # 🔥 salvar histórico de versão
+            version_error = self._save_version_history(app_id, version, manifest)
+            if version_error:
+                self._uow.rollback()
+                return RegisterPluginResult(False, [version_error])
+
             self._audit(app_id, version, user_id, user_ip)
 
             self._uow.commit()
@@ -70,6 +78,38 @@ class RegisterPluginUseCase:
         except Exception:
             self._uow.rollback()
             raise
+
+    # ==========================================================
+    # VERSION HISTORY
+    # ==========================================================
+
+    def _save_version_history(
+        self,
+        app_id: str,
+        version: str,
+        manifest: Dict[str, Any],
+    ) -> ManifestError | None:
+
+        checksum = hashlib.sha256(
+            json.dumps(manifest, sort_keys=True).encode()
+        ).hexdigest()
+
+        # 🔒 Bloqueia duplicidade elegante
+        if self._uow.app_version_repo.exists(app_id, version):
+            return ManifestError(
+                code="version_already_registered",
+                message=f"Version '{version}' already registered for app '{app_id}'.",
+                path="$.version",
+            )
+
+        self._uow.app_version_repo.create({
+            "app_id": app_id,
+            "version": version,
+            "manifest": manifest,
+            "checksum": checksum,
+        })
+
+        return None
 
     # ==========================================================
     # APP + VERSION
@@ -91,14 +131,14 @@ class RegisterPluginUseCase:
             if not self._is_upgrade_allowed(current_version, version):
                 return ManifestError(
                     code="version_upgrade_not_allowed",
-                    message=f"Upgrade de versão não permitido: {current_version} → {version}",
+                    message=f"Upgrade not allowed: {current_version} → {version}",
                     path="$.version",
                 )
 
             self._uow.app_repo.update_version(app_id, version)
             return None
 
-        # Criar app novo
+        # Novo app
         self._uow.app_repo.create(
             {
                 "id": app_id,
@@ -137,7 +177,7 @@ class RegisterPluginUseCase:
             if existing.module != app_id:
                 return ManifestError(
                     code="permission_code_collision",
-                    message=f"Permission '{perm['code']}' já pertence ao módulo '{existing.module}'.",
+                    message=f"Permission '{perm['code']}' belongs to module '{existing.module}'.",
                     path="$.permissions",
                 )
 
@@ -146,7 +186,7 @@ class RegisterPluginUseCase:
                 [
                     {
                         "code": p["code"],
-                        "name": p["name"],  
+                        "name": p["name"],
                         "description": p.get("description"),
                         "module": p.get("module"),
                     }
@@ -177,11 +217,10 @@ class RegisterPluginUseCase:
                 if existing_route.app_id != app_id:
                     return ManifestError(
                         code="route_path_collision",
-                        message=f"Route path já existe: {route['path']}",
+                        message=f"Route path already exists: {route['path']}",
                         path="$.routes",
                     )
 
-                # pertence ao mesmo app → ignore (upgrade)
                 continue
 
             new_routes.append(route)
@@ -248,11 +287,9 @@ class RegisterPluginUseCase:
         current_parts = list(map(int, current.split(".")))
         new_parts = list(map(int, new.split(".")))
 
-        # Downgrade proibido
         if new_parts < current_parts:
             return False
 
-        # Bloqueia upgrade de MAJOR automaticamente
         if new_parts[0] > current_parts[0]:
             return False
 

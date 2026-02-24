@@ -1,3 +1,5 @@
+# app/tests/conftest.py
+
 import pytest
 from app.create_app import create_app
 from app.extensions.db import db

@@ -8,30 +8,36 @@ def test_rbac_lists_and_filters(client, superadmin_user):
     # lista permissions
     resp = client.get("/core-api/admin/rbac/permissions")
     assert resp.status_code == 200
-    assert any(p["code"] == "p.a" for p in resp.json)
+    data = resp.json["data"]
+    assert any(p["code"] == "p.a" for p in data)
 
     # cria role
     resp = client.post("/core-api/admin/rbac/roles", json={"name": "Role1"})
+    print(resp.json)
     assert resp.status_code == 201
 
     # lista roles
     resp = client.get("/core-api/admin/rbac/roles")
     assert resp.status_code == 200
-    assert any(r["name"] == "Role1" for r in resp.json)
+    data = resp.json["data"]
+    assert any(r["name"] == "Role1" for r in data)
 
     # cria group
     resp = client.post("/core-api/admin/rbac/groups", json={"name": "Group1"})
+    print(resp.json)
     assert resp.status_code == 201
 
     # lista groups
     resp = client.get("/core-api/admin/rbac/groups")
     assert resp.status_code == 200
-    assert any(g["name"] == "Group1" for g in resp.json)
+    data = resp.json["data"]
+    assert any(g["name"] == "Group1" for g in data)
 
     # lista users + filtro q
     resp = client.get("/core-api/admin/rbac/users?q=admin@test.com")
     assert resp.status_code == 200
-    assert any(u["email"] == "admin@test.com" for u in resp.json)
+    data = resp.json["data"]
+    assert any(u["email"] == "admin@test.com" for u in data)
 
 
 def test_rbac_permission_bad_requests_and_not_found(client, superadmin_user):
@@ -41,6 +47,7 @@ def test_rbac_permission_bad_requests_and_not_found(client, superadmin_user):
 
     # create ok
     resp = client.post("/core-api/admin/rbac/permissions", json={"code": "dup.x", "name": "X"})
+    print(resp.json)
     assert resp.status_code == 201
     pid = resp.json["id"]
 
@@ -67,6 +74,7 @@ def test_rbac_roles_bad_requests_and_conflict(client, superadmin_user):
 
     # create ok
     resp = client.post("/core-api/admin/rbac/roles", json={"name": "RoleDup"})
+    print(resp.json)
     assert resp.status_code == 201
     rid = resp.json["id"]
 
@@ -96,6 +104,7 @@ def test_rbac_groups_bad_requests_and_not_found(client, superadmin_user):
 
     # create ok
     resp = client.post("/core-api/admin/rbac/groups", json={"name": "Gdup"})
+    print(resp.json)
     assert resp.status_code == 201
     gid = resp.json["id"]
 

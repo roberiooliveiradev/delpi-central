@@ -56,7 +56,18 @@ class UpdatePluginManifestUseCase:
                     "path": "_global",
                 }],
             )
-
+        
+        #  4) Controle alteração de versão
+        if manifest.get("version") != app.version:
+            return UpdateResult(
+                success=False,
+                errors=[{
+                    "code": "plugin.version_change_not_allowed",
+                    "message": "Version cannot be changed via update endpoint. Use register endpoint for upgrades.",
+                    "path": "version",
+                }],
+            )
+        
         # =========================================================
         # 🔥 Atualiza metadados do App (campos mutáveis)
         # =========================================================
