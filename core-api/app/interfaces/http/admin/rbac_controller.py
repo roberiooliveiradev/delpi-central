@@ -11,6 +11,7 @@ from app.domain.services.permission_resolver import resolve_user_permissions
 from app.extensions.permission_cache import invalidate_user_permissions
 from app.domain.services.audit_log_service import log_audit
 from app.interfaces.http.utils.pagination import paginate_query
+from app.domain.services.admin_event_service import emit_admin_event
 
 from app.infrastructure.db.models import (
     User,
@@ -193,6 +194,9 @@ def create_permission():
     # _invalidate_all_users()
 
     log_audit("permissions.create", "permission", p.id, {"payload": data})
+
+    emit_admin_event("rbac", "permissions_changed", {})
+
     return jsonify(_json_permission(p)), 201
 
 
@@ -223,8 +227,11 @@ def update_permission(permission_id: str):
     else:
         # caso comum: apenas name/description (afeta UI, não resolver)
         _invalidate_users_for_permission(permission_id)
-
+    
     log_audit("permissions.update", "permission", permission_id, {"payload": data})
+    
+    emit_admin_event("rbac", "permissions_changed", {})
+
     return jsonify(_json_permission(p))
 
 
@@ -241,6 +248,9 @@ def delete_permission(permission_id: str):
     db.session.commit()
 
     log_audit("permissions.delete", "permission", permission_id, {})
+
+    emit_admin_event("rbac", "permissions_changed", {})
+
     return jsonify({"ok": True})
 
 
@@ -264,6 +274,9 @@ def bulk_delete_permissions():
 
     db.session.commit()
     log_audit("permissions.bulk_delete", "permission", None, {"ids": ids})
+
+    emit_admin_event("rbac", "permissions_changed", {})
+
     return jsonify({"ok": True, "deleted": len(rows)})
 
 
@@ -310,6 +323,9 @@ def create_role():
         return jsonify({"error": "role name already exists"}), 409
 
     log_audit("roles.create", "role", role.id, {"payload": data})
+
+    emit_admin_event("rbac", "roles_changed", {})
+
     return jsonify(_json_role(role)), 201
 
 
@@ -334,6 +350,9 @@ def update_role(role_id: str):
         return jsonify({"error": "role name already exists"}), 409
 
     log_audit("roles.update", "role", role_id, {"payload": data})
+
+    emit_admin_event("rbac", "roles_changed", {})
+
     return jsonify(_json_role(role))
 
 
@@ -353,6 +372,9 @@ def delete_role(role_id: str):
     db.session.commit()
 
     log_audit("roles.delete", "role", role_id, {})
+
+    emit_admin_event("rbac", "roles_changed", {})
+
     return jsonify({"ok": True})
 
 
@@ -383,6 +405,9 @@ def bulk_delete_roles():
 
     db.session.commit()
     log_audit("roles.bulk_delete", "role", None, {"ids": ids})
+
+    emit_admin_event("rbac", "roles_changed", {})
+
     return jsonify({"ok": True, "deleted": len(roles)})
 
 
@@ -405,6 +430,8 @@ def set_role_permissions(role_id: str):
 
     _invalidate_users_for_role(role)
     log_audit("roles.set_permissions", "role", role_id, {"permissionIds": permission_ids})
+
+    emit_admin_event("rbac", "roles_changed", {})
 
     return jsonify(_json_role(role))
 
@@ -452,6 +479,9 @@ def create_group():
         return jsonify({"error": "group name already exists"}), 409
 
     log_audit("groups.create", "group", group.id, {"payload": data})
+
+    emit_admin_event("rbac", "groups_changed", {})
+
     return jsonify(_json_group(group)), 201
 
 
@@ -473,6 +503,9 @@ def update_group(group_id: str):
         return jsonify({"error": "group name already exists"}), 409
 
     log_audit("groups.update", "group", group_id, {"payload": data})
+
+    emit_admin_event("rbac", "groups_changed", {})
+
     return jsonify(_json_group(group))
 
 
@@ -488,6 +521,9 @@ def delete_group(group_id: str):
     db.session.commit()
 
     log_audit("groups.delete", "group", group_id, {})
+
+    emit_admin_event("rbac", "groups_changed", {})
+
     return jsonify({"ok": True})
 
 
@@ -508,6 +544,9 @@ def bulk_delete_groups():
 
     db.session.commit()
     log_audit("groups.bulk_delete", "group", None, {"ids": ids})
+
+    emit_admin_event("rbac", "groups_changed", {})
+
     return jsonify({"ok": True, "deleted": len(rows)})
 
 
@@ -527,6 +566,8 @@ def set_group_roles(group_id: str):
 
     _invalidate_users_for_group(group)
     log_audit("groups.set_roles", "group", group_id, {"roleIds": role_ids})
+
+    emit_admin_event("rbac", "groups_changed", {})
 
     return jsonify(_json_group(group))
 
@@ -606,6 +647,8 @@ def update_user(user_id: str):
     invalidate_user_permissions(user.id)
     log_audit("users.update", "user", user_id, {"payload": data})
 
+    emit_admin_event("rbac", "users_changed", {"userId": user_id})
+
     return jsonify(_json_user(user))
 
 
@@ -622,6 +665,9 @@ def delete_user(user_id: str):
     invalidate_user_permissions(user_id)
 
     log_audit("users.delete", "user", user_id, {})
+
+    emit_admin_event("rbac", "users_changed", {"userId": user_id})
+
     return jsonify({"ok": True})
 
 
@@ -639,6 +685,8 @@ def bulk_delete_users():
 
     db.session.commit()
     log_audit("users.bulk_delete", "user", None, {"ids": ids})
+
+    emit_admin_event("rbac", "users_changed", {"userId": ids})
 
     return jsonify({"ok": True, "deleted": len(rows)})
 
@@ -710,5 +758,7 @@ def set_user_overrides(user_id: str):
 
     invalidate_user_permissions(user.id)
     log_audit("users.set_overrides", "user", user_id, {"count": created})
+
+    emit_admin_event("rbac", "users_changed", {"userId": user_id})
 
     return jsonify({"ok": True, "updated": created})

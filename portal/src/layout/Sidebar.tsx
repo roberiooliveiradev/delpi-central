@@ -1,3 +1,5 @@
+// src/layout/Sidebar.tsx
+
 import {
   useContext,
   useMemo,

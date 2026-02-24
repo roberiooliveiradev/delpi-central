@@ -5,7 +5,7 @@ from app.extensions.db import db
 from app.infrastructure.db.models import AppRoute
 from app.domain.services.audit_log_service import log_audit
 from app.interfaces.http.utils.pagination import paginate_query
-
+from app.domain.services.admin_event_service import emit_admin_event
 
 routes_admin_bp = Blueprint(
     "routes_admin",
@@ -75,6 +75,8 @@ def update_route(route_id: str):
     db.session.commit()
     log_audit("routes.update", "route", route_id, {"payload": data})
 
+    emit_admin_event("routes", "update", {"routeId": route_id})
+
     return jsonify({"ok": True})
 
 
@@ -95,6 +97,9 @@ def bulk_activate_routes():
         r.active = True
 
     db.session.commit()
+
+    emit_admin_event("routes", "bulk_update", {"ids": ids})
+
     return jsonify({"ok": True, "updated": len(routes)})
 
 
@@ -111,6 +116,9 @@ def bulk_deactivate_routes():
         r.active = False
 
     db.session.commit()
+
+    emit_admin_event("routes", "bulk_update", {"ids": ids})
+
     return jsonify({"ok": True, "updated": len(routes)})
 
 
@@ -127,4 +135,7 @@ def bulk_delete_routes():
         db.session.delete(r)
 
     db.session.commit()
+
+    emit_admin_event("routes", "bulk_delete", {"ids": ids})
+    
     return jsonify({"ok": True, "deleted": len(routes)})

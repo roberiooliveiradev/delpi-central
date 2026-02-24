@@ -7,7 +7,7 @@ from app.extensions.db import db
 from app.infrastructure.db.models import App, AppManifest
 from app.domain.services.audit_log_service import log_audit
 from app.interfaces.http.utils.pagination import paginate_query
-
+from app.domain.services.admin_event_service import emit_admin_event
 
 apps_admin_bp = Blueprint(
     "apps_admin",
@@ -87,8 +87,11 @@ def update_app(app_id: str):
     for field in ["active", "icon", "description"]:
         if field in data:
             setattr(app, field, data[field])
-
+    
     db.session.commit()
+
+    emit_admin_event("apps", "update", {"appId": str(app.id)})
+
     log_audit("apps.update", "app", app.id, {"payload": data})
 
     return jsonify({"ok": True})
@@ -116,6 +119,8 @@ def delete_app(app_id: str):
 
     db.session.delete(app)
     db.session.commit()
+    
+    emit_admin_event("apps", "delete", {"appId": app_id})
 
     log_audit("apps.delete", "app", app_id, {})
     return jsonify({"ok": True})
@@ -149,8 +154,12 @@ def bulk_delete_apps():
         db.session.delete(app)
 
     db.session.commit()
+    
+    emit_admin_event("apps", "bulk_delete", {"ids": ids})
+    
     log_audit("apps.bulk_delete", "app", None, {"ids": ids})
-
+    
+    
     return jsonify({"ok": True, "deleted": len(apps)})
 
 
@@ -168,6 +177,9 @@ def bulk_activate_apps():
         app.active = True
 
     db.session.commit()
+
+    emit_admin_event("apps", "bulk_update", {"ids": ids})
+
     return jsonify({"ok": True, "updated": len(apps)})
 
 
@@ -185,4 +197,7 @@ def bulk_deactivate_apps():
         app.active = False
 
     db.session.commit()
+
+    emit_admin_event("apps", "bulk_update", {"ids": ids})
+
     return jsonify({"ok": True, "updated": len(apps)})

@@ -7,6 +7,8 @@ from app.application.plugins.register_plugin import RegisterPluginUseCase
 from app.application.plugins.update_plugin_manifest import UpdatePluginManifestUseCase
 from app.application.plugins.manifest_validator import ManifestValidator
 from app.infrastructure.db.models import AppManifest
+from app.domain.services.admin_event_service import emit_admin_event
+
 
 plugins_bp = Blueprint(
     "plugins_lifecycle",
@@ -71,7 +73,12 @@ def register_plugin():
                 for e in result.errors
             ]
         }), 400
-
+    
+    emit_admin_event("plugins", "register", {
+        "appId": manifest["id"],
+        "version": manifest["version"],
+    })
+    
     return jsonify({
         "status": "registered",
         "appId": manifest["id"],
@@ -96,5 +103,9 @@ def update_manifest(plugin_id: str):
 
     if not result.success:
         return jsonify({"errors": result.errors}), 400
-
+    
+    emit_admin_event("plugins", "manifest_update", {
+        "appId": plugin_id,
+    })
+    
     return jsonify({"ok": True}), 200
