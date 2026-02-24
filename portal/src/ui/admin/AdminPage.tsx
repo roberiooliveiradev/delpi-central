@@ -29,8 +29,6 @@ export const AdminPage = () => {
     []
   );
 
-  const activeLabel = items.find((i) => i.key === tab)?.label ?? "Admin";
-
   return (
     <div className="admin-page">
       <nav className="admin-navbar" aria-label="Navegação de administração">
