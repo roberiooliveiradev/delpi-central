@@ -11,3 +11,5 @@ jsonschema==4.22.0
 pytest
 pytest-cov
 jsonschema
+
+gunicorn

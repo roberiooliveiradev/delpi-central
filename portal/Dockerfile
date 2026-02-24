@@ -1,19 +1,36 @@
-FROM node:20-alpine
+# =========================
+# BUILD STAGE
+# =========================
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copia apenas package.json primeiro
 COPY package*.json ./
+RUN npm ci
 
-# Instala dependências
-RUN npm install
-
-# Copia o restante do projeto
 COPY . .
+RUN npm run build
 
-# Garante permissão de execução
-RUN chmod -R 755 /app
 
-EXPOSE 5173
+# =========================
+# PRODUCTION STAGE
+# =========================
+FROM nginx:alpine
 
-CMD ["npm", "run", "dev", "--", "--host"]
+RUN rm -rf /etc/nginx/conf.d/*
+
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+RUN printf "server {\n\
+  listen 80;\n\
+  server_name _;\n\
+  root /usr/share/nginx/html;\n\
+  index index.html;\n\
+  location / {\n\
+    try_files \$uri \$uri/ /index.html;\n\
+  }\n\
+}\n" > /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
