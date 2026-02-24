@@ -9,6 +9,14 @@ from app.domain.services.audit_log_service import log_audit
 from app.interfaces.http.utils.pagination import paginate_query
 from app.domain.services.admin_event_service import emit_admin_event
 
+from app.interfaces.http.utils.errors import (
+    unauthorized,
+    forbidden,
+    not_found,
+    bad_request,
+    error_response,
+)
+
 apps_admin_bp = Blueprint(
     "apps_admin",
     __name__,
@@ -23,9 +31,11 @@ apps_admin_bp = Blueprint(
 def require_superadmin():
     user = getattr(g, "current_user", None)
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
+
     if not getattr(user, "is_superadmin", False):
-        return jsonify({"error": "Forbidden"}), 403
+        return forbidden("Forbidden")
+
     return None
 
 
@@ -46,7 +56,7 @@ def list_apps():
         query = query.filter(
             or_(
                 App.name.ilike(f"%{q}%"),
-                App.base_path.ilike(f"%{q}%")
+                App.base_path.ilike(f"%{q}%"),
             )
         )
 
@@ -80,18 +90,17 @@ def update_app(app_id: str):
 
     app = App.query.get(app_id)
     if not app:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     data = request.get_json(force=True) or {}
 
     for field in ["active", "icon", "description"]:
         if field in data:
             setattr(app, field, data[field])
-    
+
     db.session.commit()
 
     emit_admin_event("apps", "update", {"appId": str(app.id)})
-
     log_audit("apps.update", "app", app.id, {"payload": data})
 
     return jsonify({"ok": True})
@@ -109,20 +118,22 @@ def delete_app(app_id: str):
 
     app = App.query.get(app_id)
     if not app:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     manifest = AppManifest.query.filter_by(app_id=app_id).first()
     if manifest:
-        return jsonify({
-            "error": "App registered via manifest cannot be deleted manually."
-        }), 400
+        return error_response(
+            code="app_delete_blocked_by_manifest",
+            message="App registered via manifest cannot be deleted manually.",
+            status=400,
+        )
 
     db.session.delete(app)
     db.session.commit()
-    
-    emit_admin_event("apps", "delete", {"appId": app_id})
 
+    emit_admin_event("apps", "delete", {"appId": app_id})
     log_audit("apps.delete", "app", app_id, {})
+
     return jsonify({"ok": True})
 
 
@@ -130,36 +141,46 @@ def delete_app(app_id: str):
 # BULK ACTIONS
 # =========================================================
 
+def _parse_ids():
+    ids = (request.get_json(force=True) or {}).get("ids", [])
+    if not isinstance(ids, list) or not ids:
+        return None, bad_request(
+            "ids list required",
+            code="validation_error",
+            path="ids",
+        )
+    return ids, None
+
+
 @apps_admin_bp.post("/bulk-delete")
 def bulk_delete_apps():
     guard = require_superadmin()
     if guard:
         return guard
 
-    data = request.get_json(force=True) or {}
-    ids = data.get("ids", [])
-
-    if not isinstance(ids, list) or not ids:
-        return jsonify({"error": "ids list required"}), 400
+    ids, err = _parse_ids()
+    if err:
+        return err
 
     apps = App.query.filter(App.id.in_(ids)).all()
 
     for app in apps:
         if AppManifest.query.filter_by(app_id=app.id).first():
-            return jsonify({
-                "error": f"App {app.id} registered via manifest cannot be deleted manually."
-            }), 400
+            return error_response(
+                code="app_delete_blocked_by_manifest",
+                message=f"App {app.id} registered via manifest cannot be deleted manually.",
+                status=400,
+                extra={"appId": str(app.id)},
+            )
 
     for app in apps:
         db.session.delete(app)
 
     db.session.commit()
-    
+
     emit_admin_event("apps", "bulk_delete", {"ids": ids})
-    
     log_audit("apps.bulk_delete", "app", None, {"ids": ids})
-    
-    
+
     return jsonify({"ok": True, "deleted": len(apps)})
 
 
@@ -169,15 +190,15 @@ def bulk_activate_apps():
     if guard:
         return guard
 
-    data = request.get_json(force=True) or {}
-    ids = data.get("ids", [])
+    ids, err = _parse_ids()
+    if err:
+        return err
 
     apps = App.query.filter(App.id.in_(ids)).all()
     for app in apps:
         app.active = True
 
     db.session.commit()
-
     emit_admin_event("apps", "bulk_update", {"ids": ids})
 
     return jsonify({"ok": True, "updated": len(apps)})
@@ -189,15 +210,15 @@ def bulk_deactivate_apps():
     if guard:
         return guard
 
-    data = request.get_json(force=True) or {}
-    ids = data.get("ids", [])
+    ids, err = _parse_ids()
+    if err:
+        return err
 
     apps = App.query.filter(App.id.in_(ids)).all()
     for app in apps:
         app.active = False
 
     db.session.commit()
-
     emit_admin_event("apps", "bulk_update", {"ids": ids})
 
     return jsonify({"ok": True, "updated": len(apps)})

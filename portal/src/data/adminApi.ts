@@ -75,6 +75,23 @@ export type AdminAppRoute = {
   permission_code?: string | null;
 };
 
+export type PluginVersion = {
+  version: string;
+  checksum: string;
+  created_at: string | null;
+};
+
+export type RegisterPluginResponse = {
+  status: "registered";
+  appId: string;
+  version: string;
+};
+
+export type RollbackPluginResponse = {
+  status: "rolled_back";
+  version: string;
+};
+
 export class AdminApi {
   public client: ApiClient;
   constructor(client: ApiClient) {
@@ -111,6 +128,23 @@ export class AdminApi {
     return this.client.put<{ ok: boolean }>(
       `/core-api/plugins/${appId}/manifest`,
       manifest
+    );
+  }
+  
+  /* =========================
+    Plugin Versions / Rollback
+  ========================= */
+
+  listPluginVersions(appId: string) {
+    return this.client.get<PluginVersion[]>(
+      `/core-api/plugins/${appId}/versions`
+    );
+  }
+
+  rollbackPlugin(appId: string, version: string) {
+    return this.client.post<RollbackPluginResponse>(
+      `/core-api/plugins/${appId}/rollback`,
+      { version }
     );
   }
 

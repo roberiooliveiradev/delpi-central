@@ -1,11 +1,19 @@
 # app/interfaces/http/admin/routes_controller.py
 
 from flask import Blueprint, jsonify, request, g
+
 from app.extensions.db import db
 from app.infrastructure.db.models import AppRoute
 from app.domain.services.audit_log_service import log_audit
 from app.interfaces.http.utils.pagination import paginate_query
 from app.domain.services.admin_event_service import emit_admin_event
+
+from app.interfaces.http.utils.errors import (
+    unauthorized,
+    forbidden,
+    not_found,
+    bad_request,
+)
 
 routes_admin_bp = Blueprint(
     "routes_admin",
@@ -14,12 +22,18 @@ routes_admin_bp = Blueprint(
 )
 
 
+# =========================================================
+# AUTH
+# =========================================================
+
 def require_superadmin():
     user = getattr(g, "current_user", None)
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
+
     if not getattr(user, "is_superadmin", False):
-        return jsonify({"error": "Forbidden"}), 403
+        return forbidden("Forbidden")
+
     return None
 
 
@@ -64,7 +78,7 @@ def update_route(route_id: str):
 
     route = AppRoute.query.get(route_id)
     if not route:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     data = request.get_json(force=True) or {}
 
@@ -73,8 +87,8 @@ def update_route(route_id: str):
             setattr(route, field, data[field])
 
     db.session.commit()
-    log_audit("routes.update", "route", route_id, {"payload": data})
 
+    log_audit("routes.update", "route", route_id, {"payload": data})
     emit_admin_event("routes", "update", {"routeId": route_id})
 
     return jsonify({"ok": True})
@@ -84,20 +98,32 @@ def update_route(route_id: str):
 # BULK
 # =========================================================
 
+def _parse_ids():
+    ids = (request.get_json(force=True) or {}).get("ids", [])
+    if not isinstance(ids, list) or not ids:
+        return None, bad_request(
+            "ids list required",
+            code="validation_error",
+            path="ids",
+        )
+    return ids, None
+
+
 @routes_admin_bp.post("/routes/bulk-activate")
 def bulk_activate_routes():
     guard = require_superadmin()
     if guard:
         return guard
 
-    ids = (request.get_json(force=True) or {}).get("ids", [])
-    routes = AppRoute.query.filter(AppRoute.id.in_(ids)).all()
+    ids, err = _parse_ids()
+    if err:
+        return err
 
+    routes = AppRoute.query.filter(AppRoute.id.in_(ids)).all()
     for r in routes:
         r.active = True
 
     db.session.commit()
-
     emit_admin_event("routes", "bulk_update", {"ids": ids})
 
     return jsonify({"ok": True, "updated": len(routes)})
@@ -109,14 +135,15 @@ def bulk_deactivate_routes():
     if guard:
         return guard
 
-    ids = (request.get_json(force=True) or {}).get("ids", [])
-    routes = AppRoute.query.filter(AppRoute.id.in_(ids)).all()
+    ids, err = _parse_ids()
+    if err:
+        return err
 
+    routes = AppRoute.query.filter(AppRoute.id.in_(ids)).all()
     for r in routes:
         r.active = False
 
     db.session.commit()
-
     emit_admin_event("routes", "bulk_update", {"ids": ids})
 
     return jsonify({"ok": True, "updated": len(routes)})
@@ -128,14 +155,15 @@ def bulk_delete_routes():
     if guard:
         return guard
 
-    ids = (request.get_json(force=True) or {}).get("ids", [])
-    routes = AppRoute.query.filter(AppRoute.id.in_(ids)).all()
+    ids, err = _parse_ids()
+    if err:
+        return err
 
+    routes = AppRoute.query.filter(AppRoute.id.in_(ids)).all()
     for r in routes:
         db.session.delete(r)
 
     db.session.commit()
-
     emit_admin_event("routes", "bulk_delete", {"ids": ids})
-    
+
     return jsonify({"ok": True, "deleted": len(routes)})

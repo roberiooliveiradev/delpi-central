@@ -3,17 +3,19 @@
 from flask import Blueprint, jsonify, g
 from sqlalchemy import desc
 from datetime import datetime
+
 from app.infrastructure.db.models.notification import Notification
 from app.extensions.db import db
+from app.interfaces.http.utils.errors import unauthorized, not_found
 
-# ✅ sem url_prefix aqui
 notification_bp = Blueprint("notifications", __name__)
+
 
 @notification_bp.route("/notifications", methods=["GET"])
 def list_notifications():
     user = getattr(g, "current_user", None)
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
     rows = (
         Notification.query
@@ -40,7 +42,7 @@ def list_notifications():
 def mark_read(notification_id: str):
     user = getattr(g, "current_user", None)
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
     n = Notification.query.filter_by(
         id=notification_id,
@@ -48,7 +50,7 @@ def mark_read(notification_id: str):
     ).first()
 
     if not n:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Notification not found")
 
     if n.read_at is None:
         n.read_at = datetime.utcnow()
@@ -61,7 +63,7 @@ def mark_read(notification_id: str):
 def mark_all_read():
     user = getattr(g, "current_user", None)
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
     Notification.query.filter_by(
         user_id=str(g.current_sub),
@@ -79,7 +81,7 @@ def mark_all_read():
 def test_notification():
     user = getattr(g, "current_user", None)
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
     from app.domain.services.notification_service import notify_user
 

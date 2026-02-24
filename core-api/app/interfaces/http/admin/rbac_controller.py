@@ -13,6 +13,15 @@ from app.domain.services.audit_log_service import log_audit
 from app.interfaces.http.utils.pagination import paginate_query
 from app.domain.services.admin_event_service import emit_admin_event
 
+from app.interfaces.http.utils.errors import (
+    error_response,
+    unauthorized,
+    forbidden,
+    not_found,
+    bad_request,
+    conflict,
+)
+
 from app.infrastructure.db.models import (
     User,
     Role,
@@ -39,14 +48,14 @@ def _require_rbac_manage_or_superadmin():
     """
     user = getattr(g, "current_user", None)
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
     if getattr(user, "is_superadmin", False):
         return None
 
     perms = set(resolve_user_permissions(user))
     if "rbac.manage" not in perms:
-        return jsonify({"error": "Forbidden"}), 403
+        return forbidden("Forbidden")
 
     return None
 
@@ -68,7 +77,7 @@ def _json_permission(p: Permission):
         "code": p.code,
         "name": p.name,
         "description": getattr(p, "description", None),
-        "module": getattr(p, "module", None), 
+        "module": getattr(p, "module", None),
     }
 
 
@@ -128,9 +137,7 @@ def _invalidate_users_for_group(group: Group):
 
 def _invalidate_all_users():
     """
-    ✅ safe default (mais caro, mas correto):
-    útil quando muda code de Permission (impacta resolver),
-    ou quando bulk deletes podem afetar muitos usuários.
+    ✅ safe default (mais caro, mas correto)
     """
     for row in db.session.query(User.id).all():
         invalidate_user_permissions(row[0])
@@ -139,11 +146,25 @@ def _invalidate_all_users():
 def _invalidate_users_for_permission(permission_id: str):
     """
     Invalida usuários que possuem override para essa permissão.
-    (Bom equilíbrio: evita invalidar todo mundo em deletes pontuais.)
     """
     rows = db.session.query(UserPermission.user_id).filter_by(permission_id=permission_id).all()
     for (uid,) in rows:
         invalidate_user_permissions(uid)
+
+
+# =========================================================
+# Helpers
+# =========================================================
+
+def _parse_ids(field_name: str = "ids"):
+    ids = (request.get_json(force=True) or {}).get(field_name, [])
+    if not isinstance(ids, list) or not ids:
+        return None, bad_request(
+            f"{field_name} list required",
+            code="validation_error",
+            path=field_name,
+        )
+    return ids, None
 
 
 # =========================================================
@@ -158,7 +179,7 @@ def list_permissions():
         query = query.filter(
             or_(
                 Permission.code.ilike(f"%{q}%"),
-                Permission.name.ilike(f"%{q}%")
+                Permission.name.ilike(f"%{q}%"),
             )
         )
 
@@ -166,7 +187,7 @@ def list_permissions():
         query,
         _json_permission,
         Permission,
-        allowed_sort_fields=["module","code", "name"],
+        allowed_sort_fields=["module", "code", "name"],
         default_sort="module",
     )
 
@@ -178,7 +199,11 @@ def create_permission():
     name = (data.get("name") or "").strip()
 
     if not code or not name:
-        return jsonify({"error": "code and name are required"}), 400
+        return bad_request(
+            "code and name are required",
+            code="validation_error",
+            path="_global",
+        )
 
     p = Permission(code=code, name=name, description=data.get("description"))
     db.session.add(p)
@@ -187,15 +212,9 @@ def create_permission():
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"error": "permission code already exists"}), 409
-
-    # criar permissão não muda permissões efetivas de ninguém ainda,
-    # mas mantém consistência caso UI dependa de cache em telas admin.
-    # Se preferir performance: pode remover.
-    # _invalidate_all_users()
+        return conflict("permission code already exists", code="conflict")
 
     log_audit("permissions.create", "permission", p.id, {"payload": data})
-
     emit_admin_event("rbac", "permissions_changed", {})
 
     return jsonify(_json_permission(p)), 201
@@ -205,11 +224,10 @@ def create_permission():
 def update_permission(permission_id: str):
     p = Permission.query.get(permission_id)
     if not p:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     data = request.get_json(force=True) or {}
 
-    # ⚠️ Mudar code pode impactar resolver/caches em geral.
     code_before = p.code
 
     for field in ["code", "name", "description"]:
@@ -220,17 +238,14 @@ def update_permission(permission_id: str):
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"error": "permission code already exists"}), 409
+        return conflict("permission code already exists", code="conflict")
 
-    # Se code mudou, é mais seguro invalidar todos
     if "code" in data and (data.get("code") or "").strip() and p.code != code_before:
         _invalidate_all_users()
     else:
-        # caso comum: apenas name/description (afeta UI, não resolver)
         _invalidate_users_for_permission(permission_id)
-    
+
     log_audit("permissions.update", "permission", permission_id, {"payload": data})
-    
     emit_admin_event("rbac", "permissions_changed", {})
 
     return jsonify(_json_permission(p))
@@ -240,16 +255,14 @@ def update_permission(permission_id: str):
 def delete_permission(permission_id: str):
     p = Permission.query.get(permission_id)
     if not p:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
-    # invalida quem tem override para essa permissão
     _invalidate_users_for_permission(permission_id)
 
     db.session.delete(p)
     db.session.commit()
 
     log_audit("permissions.delete", "permission", permission_id, {})
-
     emit_admin_event("rbac", "permissions_changed", {})
 
     return jsonify({"ok": True})
@@ -257,15 +270,12 @@ def delete_permission(permission_id: str):
 
 @rbac_admin_bp.post("/permissions/bulk-delete")
 def bulk_delete_permissions():
-    data = request.get_json(force=True) or {}
-    ids = data.get("ids", [])
-    if not isinstance(ids, list) or not ids:
-        return jsonify({"error": "ids list required"}), 400
+    ids, err = _parse_ids("ids")
+    if err:
+        return err
 
     rows = Permission.query.filter(Permission.id.in_(ids)).all()
 
-    # invalida usuários com overrides (barato) e, por segurança, invalida todos
-    # pois bulk delete pode afetar roles em massa.
     for pid in ids:
         _invalidate_users_for_permission(str(pid))
     _invalidate_all_users()
@@ -275,7 +285,6 @@ def bulk_delete_permissions():
 
     db.session.commit()
     log_audit("permissions.bulk_delete", "permission", None, {"ids": ids})
-
     emit_admin_event("rbac", "permissions_changed", {})
 
     return jsonify({"ok": True, "deleted": len(rows)})
@@ -293,7 +302,7 @@ def list_roles():
         query = query.filter(
             or_(
                 Role.name.ilike(f"%{q}%"),
-                Role.description.ilike(f"%{q}%")
+                Role.description.ilike(f"%{q}%"),
             )
         )
 
@@ -312,7 +321,7 @@ def create_role():
     name = (data.get("name") or "").strip()
 
     if not name:
-        return jsonify({"error": "name is required"}), 400
+        return bad_request("name is required", code="validation_error", path="name")
 
     role = Role(name=name, description=data.get("description"))
     db.session.add(role)
@@ -321,10 +330,9 @@ def create_role():
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"error": "role name already exists"}), 409
+        return conflict("role name already exists", code="conflict")
 
     log_audit("roles.create", "role", role.id, {"payload": data})
-
     emit_admin_event("rbac", "roles_changed", {})
 
     return jsonify(_json_role(role)), 201
@@ -334,7 +342,7 @@ def create_role():
 def update_role(role_id: str):
     role = Role.query.get(role_id)
     if not role:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     data = request.get_json(force=True) or {}
 
@@ -348,10 +356,9 @@ def update_role(role_id: str):
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"error": "role name already exists"}), 409
+        return conflict("role name already exists", code="conflict")
 
     log_audit("roles.update", "role", role_id, {"payload": data})
-
     emit_admin_event("rbac", "roles_changed", {})
 
     return jsonify(_json_role(role))
@@ -361,19 +368,21 @@ def update_role(role_id: str):
 def delete_role(role_id: str):
     role = Role.query.get(role_id)
     if not role:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     if getattr(role, "system_role", False):
-        return jsonify({"error": "Cannot delete system role"}), 400
+        return error_response(
+            code="system_role_delete_blocked",
+            message="Cannot delete system role",
+            status=400,
+        )
 
-    # ✅ invalida antes de deletar (relacionamentos ainda acessíveis)
     _invalidate_users_for_role(role)
 
     db.session.delete(role)
     db.session.commit()
 
     log_audit("roles.delete", "role", role_id, {})
-
     emit_admin_event("rbac", "roles_changed", {})
 
     return jsonify({"ok": True})
@@ -381,23 +390,21 @@ def delete_role(role_id: str):
 
 @rbac_admin_bp.post("/roles/bulk-delete")
 def bulk_delete_roles():
-    data = request.get_json(force=True) or {}
-    ids = data.get("ids", [])
-
-    if not isinstance(ids, list) or not ids:
-        return jsonify({"error": "ids list required"}), 400
+    ids, err = _parse_ids("ids")
+    if err:
+        return err
 
     roles = Role.query.filter(Role.id.in_(ids)).all()
 
-    # 🔒 bloqueia system roles
     system_roles = [r for r in roles if getattr(r, "system_role", False)]
     if system_roles:
-        return jsonify({
-            "error": "Cannot delete system role(s)",
-            "ids": [str(r.id) for r in system_roles],
-        }), 400
+        return error_response(
+            code="system_role_delete_blocked",
+            message="Cannot delete system role(s)",
+            status=400,
+            extra={"ids": [str(r.id) for r in system_roles]},
+        )
 
-    # invalida usuários impactados
     for role in roles:
         _invalidate_users_for_role(role)
 
@@ -406,7 +413,6 @@ def bulk_delete_roles():
 
     db.session.commit()
     log_audit("roles.bulk_delete", "role", None, {"ids": ids})
-
     emit_admin_event("rbac", "roles_changed", {})
 
     return jsonify({"ok": True, "deleted": len(roles)})
@@ -416,22 +422,23 @@ def bulk_delete_roles():
 def set_role_permissions(role_id: str):
     role = Role.query.get(role_id)
     if not role:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     data = request.get_json(force=True) or {}
     permission_ids = data.get("permissionIds", [])
+
     if not isinstance(permission_ids, list):
-        return jsonify({"error": "permissionIds must be a list"}), 400
+        return bad_request(
+            "permissionIds must be a list",
+            code="validation_error",
+            path="permissionIds",
+        )
 
-    role.permissions = Permission.query.filter(
-        Permission.id.in_(permission_ids)
-    ).all()
-
+    role.permissions = Permission.query.filter(Permission.id.in_(permission_ids)).all()
     db.session.commit()
 
     _invalidate_users_for_role(role)
     log_audit("roles.set_permissions", "role", role_id, {"permissionIds": permission_ids})
-
     emit_admin_event("rbac", "roles_changed", {})
 
     return jsonify(_json_role(role))
@@ -449,7 +456,7 @@ def list_groups():
         query = query.filter(
             or_(
                 Group.name.ilike(f"%{q}%"),
-                Group.description.ilike(f"%{q}%")
+                Group.description.ilike(f"%{q}%"),
             )
         )
 
@@ -468,7 +475,7 @@ def create_group():
     name = (data.get("name") or "").strip()
 
     if not name:
-        return jsonify({"error": "name is required"}), 400
+        return bad_request("name is required", code="validation_error", path="name")
 
     group = Group(name=name, description=data.get("description"))
     db.session.add(group)
@@ -477,10 +484,9 @@ def create_group():
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"error": "group name already exists"}), 409
+        return conflict("group name already exists", code="conflict")
 
     log_audit("groups.create", "group", group.id, {"payload": data})
-
     emit_admin_event("rbac", "groups_changed", {})
 
     return jsonify(_json_group(group)), 201
@@ -490,7 +496,7 @@ def create_group():
 def update_group(group_id: str):
     group = Group.query.get(group_id)
     if not group:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     data = request.get_json(force=True) or {}
     for field in ["name", "description"]:
@@ -501,10 +507,9 @@ def update_group(group_id: str):
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"error": "group name already exists"}), 409
+        return conflict("group name already exists", code="conflict")
 
     log_audit("groups.update", "group", group_id, {"payload": data})
-
     emit_admin_event("rbac", "groups_changed", {})
 
     return jsonify(_json_group(group))
@@ -514,7 +519,7 @@ def update_group(group_id: str):
 def delete_group(group_id: str):
     group = Group.query.get(group_id)
     if not group:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     _invalidate_users_for_group(group)
 
@@ -522,7 +527,6 @@ def delete_group(group_id: str):
     db.session.commit()
 
     log_audit("groups.delete", "group", group_id, {})
-
     emit_admin_event("rbac", "groups_changed", {})
 
     return jsonify({"ok": True})
@@ -530,10 +534,9 @@ def delete_group(group_id: str):
 
 @rbac_admin_bp.post("/groups/bulk-delete")
 def bulk_delete_groups():
-    data = request.get_json(force=True) or {}
-    ids = data.get("ids", [])
-    if not isinstance(ids, list) or not ids:
-        return jsonify({"error": "ids list required"}), 400
+    ids, err = _parse_ids("ids")
+    if err:
+        return err
 
     rows = Group.query.filter(Group.id.in_(ids)).all()
 
@@ -545,7 +548,6 @@ def bulk_delete_groups():
 
     db.session.commit()
     log_audit("groups.bulk_delete", "group", None, {"ids": ids})
-
     emit_admin_event("rbac", "groups_changed", {})
 
     return jsonify({"ok": True, "deleted": len(rows)})
@@ -555,19 +557,19 @@ def bulk_delete_groups():
 def set_group_roles(group_id: str):
     group = Group.query.get(group_id)
     if not group:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     data = request.get_json(force=True) or {}
     role_ids = data.get("roleIds", [])
+
     if not isinstance(role_ids, list):
-        return jsonify({"error": "roleIds must be a list"}), 400
+        return bad_request("roleIds must be a list", code="validation_error", path="roleIds")
 
     group.roles = Role.query.filter(Role.id.in_(role_ids)).all()
     db.session.commit()
 
     _invalidate_users_for_group(group)
     log_audit("groups.set_roles", "group", group_id, {"roleIds": role_ids})
-
     emit_admin_event("rbac", "groups_changed", {})
 
     return jsonify(_json_group(group))
@@ -586,7 +588,7 @@ def list_users():
         query = query.filter(
             or_(
                 User.email.ilike(f"%{q}%"),
-                User.name.ilike(f"%{q}%")
+                User.name.ilike(f"%{q}%"),
             )
         )
 
@@ -603,31 +605,24 @@ def list_users():
 def get_user(user_id: str):
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
     return jsonify(_json_user(user))
 
 
 @rbac_admin_bp.put("/users/<user_id>")
 def update_user(user_id: str):
-    """
-    Atualiza atributos básicos e atribuições RBAC do usuário:
-    - roles (lista de roleIds)
-    - groups (lista de groupIds)
-    - is_superadmin (bool) (somente superadmin pode mudar)
-    """
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     data = request.get_json(force=True) or {}
 
-    for field in ["name"]:
-        if field in data:
-            setattr(user, field, data[field])
+    if "name" in data:
+        user.name = data["name"]
 
     if "is_superadmin" in data:
         if not getattr(g.current_user, "is_superadmin", False):
-            return jsonify({"error": "Only superadmin can change superadmin flag"}), 403
+            return forbidden("Only superadmin can change superadmin flag")
         user.is_superadmin = bool(data["is_superadmin"])
 
     role_ids = data.get("roleIds", None)
@@ -635,19 +630,18 @@ def update_user(user_id: str):
 
     if role_ids is not None:
         if not isinstance(role_ids, list):
-            return jsonify({"error": "roleIds must be a list"}), 400
+            return bad_request("roleIds must be a list", code="validation_error", path="roleIds")
         user.roles = Role.query.filter(Role.id.in_(role_ids)).all()
 
     if group_ids is not None:
         if not isinstance(group_ids, list):
-            return jsonify({"error": "groupIds must be a list"}), 400
+            return bad_request("groupIds must be a list", code="validation_error", path="groupIds")
         user.groups = Group.query.filter(Group.id.in_(group_ids)).all()
 
     db.session.commit()
 
     invalidate_user_permissions(user.id)
     log_audit("users.update", "user", user_id, {"payload": data})
-
     emit_admin_event("rbac", "users_changed", {"userId": user_id})
 
     return jsonify(_json_user(user))
@@ -657,16 +651,13 @@ def update_user(user_id: str):
 def delete_user(user_id: str):
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     db.session.delete(user)
     db.session.commit()
 
-    # (cache do user apagado já não importa; mas se existir, limpa por segurança)
     invalidate_user_permissions(user_id)
-
     log_audit("users.delete", "user", user_id, {})
-
     emit_admin_event("rbac", "users_changed", {"userId": user_id})
 
     return jsonify({"ok": True})
@@ -674,10 +665,9 @@ def delete_user(user_id: str):
 
 @rbac_admin_bp.post("/users/bulk-delete")
 def bulk_delete_users():
-    data = request.get_json(force=True) or {}
-    ids = data.get("ids", [])
-    if not isinstance(ids, list) or not ids:
-        return jsonify({"error": "ids list required"}), 400
+    ids, err = _parse_ids("ids")
+    if err:
+        return err
 
     rows = User.query.filter(User.id.in_(ids)).all()
     for u in rows:
@@ -686,7 +676,6 @@ def bulk_delete_users():
 
     db.session.commit()
     log_audit("users.bulk_delete", "user", None, {"ids": ids})
-
     emit_admin_event("rbac", "users_changed", {"userId": ids})
 
     return jsonify({"ok": True, "deleted": len(rows)})
@@ -700,7 +689,7 @@ def bulk_delete_users():
 def list_user_overrides(user_id: str):
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     query = UserPermission.query.filter_by(user_id=user.id)
 
@@ -719,26 +708,16 @@ def list_user_overrides(user_id: str):
 
 @rbac_admin_bp.put("/users/<user_id>/overrides")
 def set_user_overrides(user_id: str):
-    """
-    payload:
-      {
-        "items": [
-          {"permissionId": "...", "granted": true},
-          {"permissionId": "...", "granted": false}
-        ]
-      }
-    Substitui overrides do usuário (simples e idempotente).
-    """
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"error": "Not found"}), 404
+        return not_found("Not found")
 
     data = request.get_json(force=True) or {}
     items = data.get("items", [])
-    if not isinstance(items, list):
-        return jsonify({"error": "items must be a list"}), 400
 
-    # remove tudo e recria (simples)
+    if not isinstance(items, list):
+        return bad_request("items must be a list", code="validation_error", path="items")
+
     UserPermission.query.filter_by(user_id=user.id).delete(synchronize_session=False)
 
     created = 0
@@ -747,7 +726,6 @@ def set_user_overrides(user_id: str):
         if not pid:
             continue
 
-        # ✅ valida existência da permissão (evita overrides órfãos)
         if not Permission.query.get(pid):
             continue
 
@@ -759,7 +737,6 @@ def set_user_overrides(user_id: str):
 
     invalidate_user_permissions(user.id)
     log_audit("users.set_overrides", "user", user_id, {"count": created})
-
     emit_admin_event("rbac", "users_changed", {"userId": user_id})
 
     return jsonify({"ok": True, "updated": created})

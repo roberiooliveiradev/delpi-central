@@ -1,16 +1,17 @@
 # app/interfaces/http/me_controller.py
 
-
 from flask import Blueprint, jsonify, g, request
 from sqlalchemy.orm import joinedload
-from app.domain.services.favorite_app_service import FavoriteAppService
-from app.infrastructure.db.models import UserFavoriteApp
 
+from app.domain.services.favorite_app_service import FavoriteAppService
 from app.domain.services.permission_resolver import resolve_user_permissions
 from app.domain.services.app_resolver import resolve_user_apps
-from app.infrastructure.db.models import AppRoute, Permission, App
-
-
+from app.infrastructure.db.models import AppRoute
+from app.interfaces.http.utils.errors import (
+    unauthorized,
+    forbidden,
+    bad_request,
+)
 
 me_bp = Blueprint("me", __name__)
 
@@ -18,9 +19,8 @@ me_bp = Blueprint("me", __name__)
 @me_bp.route("/me", methods=["GET"])
 def me():
     user = getattr(g, "current_user", None)
-
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
     permissions = resolve_user_permissions(user)
 
@@ -31,16 +31,15 @@ def me():
         "is_superadmin": getattr(user, "is_superadmin", False),
         "roles": [{"id": str(r.id), "name": r.name} for r in user.roles],
         "groups": [{"id": str(gr.id), "name": gr.name} for gr in user.groups],
-        "permissions": permissions
+        "permissions": permissions,
     })
 
 
 @me_bp.route("/me/apps", methods=["GET"])
 def me_apps():
     user = getattr(g, "current_user", None)
-
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
     permissions = resolve_user_permissions(user)
     apps = resolve_user_apps(permissions)
@@ -51,99 +50,92 @@ def me_apps():
 @me_bp.route("/me/apps/favorites", methods=["GET"])
 def me_favorite_app():
     user = getattr(g, "current_user", None)
-
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
     favorites = FavoriteAppService.list_favorites(user)
 
-    result = [
+    return jsonify([
         {
             "app_id": f.app_id,
-            "order_index": f.order_index
+            "order_index": f.order_index,
         }
         for f in favorites
-    ]
-
-    return jsonify(result)
-
+    ])
 
 
 @me_bp.route("/me/apps/favorites", methods=["POST"])
 def me_add_favorite_app():
     user = getattr(g, "current_user", None)
-
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     app_id = data.get("app_id")
 
     if not app_id:
-        return jsonify({"error": "app_id is required"}), 400
+        # mantém seu padrão: code validation_error + path "app_id"
+        return bad_request("app_id is required", code="validation_error", path="app_id")
 
     try:
         favorite = FavoriteAppService.add_favorite(user, app_id)
 
         return jsonify({
             "app_id": favorite.app_id,
-            "order_index": favorite.order_index
+            "order_index": favorite.order_index,
         }), 201
 
     except PermissionError as e:
-        return jsonify({"error": str(e)}), 403
+        return forbidden(str(e) or "Forbidden")
 
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        return bad_request(str(e) or "Invalid request", code="validation_error")
 
 
 @me_bp.route("/me/apps/favorites", methods=["PUT"])
 def me_order_favorite_app():
     user = getattr(g, "current_user", None)
-
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
     if not isinstance(data, list):
-        return jsonify({"error": "Invalid payload format"}), 400
+        return bad_request("Invalid payload format", code="validation_error")
 
     try:
         FavoriteAppService.reorder_favorites(user, data)
-        return jsonify({"message": "Favorites reordered successfully"})
+        return jsonify({"ok": True})
 
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        return bad_request(str(e) or "Invalid request", code="validation_error")
 
 
 @me_bp.route("/me/apps/favorites", methods=["DELETE"])
 def me_delete_favorite_app():
     user = getattr(g, "current_user", None)
-
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     app_id = data.get("app_id")
 
     if not app_id:
-        return jsonify({"error": "app_id is required"}), 400
+        return bad_request("app_id is required", code="validation_error", path="app_id")
 
     try:
         FavoriteAppService.remove_favorite(user, app_id)
-        return jsonify({"message": "Favorite removed successfully"})
+        return jsonify({"ok": True})
 
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        return bad_request(str(e) or "Invalid request", code="validation_error")
 
 
 @me_bp.route("/me/routes", methods=["GET"])
 def me_routes():
     user = getattr(g, "current_user", None)
-
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+        return unauthorized()
 
     permissions = set(resolve_user_permissions(user))
 
@@ -158,30 +150,27 @@ def me_routes():
         .all()
     )
 
-    allowed = []
+    allowed: list[dict] = []
 
     for route in routes:
-
-        # Ignora app inativa
+        # ignora app inativa
         if not route.app or not route.app.active:
             continue
 
         permission_code = None
-
         if route.permission:
             permission_code = route.permission.code
-
             if permission_code not in permissions:
                 continue
 
         allowed.append({
             "app": route.app.id,
             "app_name": route.app.name,
-            "app_icon": route.app.icon,        
+            "app_icon": route.app.icon,
             "path": route.path,
             "permission": permission_code,
-            "icon": route.icon,                
-            "label": route.label,              
+            "icon": route.icon,
+            "label": route.label,
         })
 
     return jsonify(allowed)

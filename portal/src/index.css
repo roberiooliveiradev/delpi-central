@@ -568,3 +568,105 @@ textarea:focus-visible {
   font-size: 28px;
   margin-bottom: 12px;
 }
+
+
+/* =========================================
+   ADMIN NAVBAR (Top)
+========================================= */
+
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-title {
+  font-size: 26px;
+  letter-spacing: -0.2px;
+}
+
+.admin-subtitle {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.admin-chip {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.admin-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.admin-navbar-inner {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.admin-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: transparent;
+
+  padding: 10px 14px;
+  cursor: pointer;
+
+  color: var(--text-muted);
+  font-weight: 600;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+.admin-nav-item:hover {
+  background: rgba(0, 153, 220, 0.08);
+  color: var(--primary);
+}
+
+.admin-nav-item.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 18px rgba(0, 153, 220, 0.3);
+}
+
+.admin-nav-item svg {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 720px) {
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .admin-title {
+    font-size: 22px;
+  }
+}

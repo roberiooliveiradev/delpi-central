@@ -10,6 +10,12 @@ from app.infrastructure.db.models import AppManifest, AppVersion
 from app.application.plugins.rollback_plugin_version import RollbackPluginVersionUseCase
 from app.domain.services.admin_event_service import emit_admin_event
 
+from app.interfaces.http.utils.errors import (
+    unauthorized,
+    forbidden,
+    not_found,
+    bad_request,
+)
 
 plugins_bp = Blueprint(
     "plugins_lifecycle",
@@ -21,10 +27,12 @@ plugins_bp = Blueprint(
 def require_apps_manage():
     user = getattr(g, "current_user", None)
     if not user:
-        return jsonify({"error": "Unauthorized"}), 401
-    if user.is_superadmin:
+        return unauthorized()
+
+    if getattr(user, "is_superadmin", False):
         return None
-    return jsonify({"error": "Forbidden"}), 403
+
+    return forbidden("Forbidden")
 
 
 @plugins_bp.get("/<plugin_id>/manifest")
@@ -35,7 +43,7 @@ def get_manifest(plugin_id: str):
 
     row = AppManifest.query.filter_by(app_id=plugin_id).first()
     if not row:
-        return jsonify({"error": "Manifest not found"}), 404
+        return not_found("Manifest not found")
 
     return jsonify(row.manifest)
 
@@ -48,7 +56,11 @@ def register_plugin():
 
     manifest = request.get_json(silent=True)
     if not isinstance(manifest, dict):
-        return jsonify({"error": "Body deve ser JSON"}), 400
+        return bad_request(
+            "Body must be valid JSON",
+            code="validation_error",
+            path="_global",
+        )
 
     user = g.current_user
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
@@ -64,6 +76,7 @@ def register_plugin():
     )
 
     if not result.success:
+        # mantém lista de erros do validator/use case (já padronizada)
         return jsonify({
             "errors": [
                 {
@@ -74,12 +87,12 @@ def register_plugin():
                 for e in result.errors
             ]
         }), 400
-    
+
     emit_admin_event("plugins", "register", {
         "appId": manifest["id"],
         "version": manifest["version"],
     })
-    
+
     return jsonify({
         "status": "registered",
         "appId": manifest["id"],
@@ -95,7 +108,11 @@ def update_manifest(plugin_id: str):
 
     manifest = request.get_json(silent=True)
     if not isinstance(manifest, dict):
-        return jsonify({"error": "Body deve ser JSON"}), 400
+        return bad_request(
+            "Body must be valid JSON",
+            code="validation_error",
+            path="_global",
+        )
 
     validator = ManifestValidator()
     use_case = UpdatePluginManifestUseCase(validator)
@@ -103,12 +120,13 @@ def update_manifest(plugin_id: str):
     result = use_case.execute(plugin_id=plugin_id, manifest=manifest)
 
     if not result.success:
+        # padroniza: se usecase já devolve "errors" na lista, repassa
         return jsonify({"errors": result.errors}), 400
-    
+
     emit_admin_event("plugins", "manifest_update", {
         "appId": plugin_id,
     })
-    
+
     return jsonify({"ok": True}), 200
 
 
@@ -118,9 +136,12 @@ def list_versions(plugin_id: str):
     if guard:
         return guard
 
-    rows = AppVersion.query.filter_by(app_id=plugin_id)\
-        .order_by(AppVersion.created_at.desc())\
+    rows = (
+        AppVersion.query
+        .filter_by(app_id=plugin_id)
+        .order_by(AppVersion.created_at.desc())
         .all()
+    )
 
     return jsonify([
         {
@@ -142,9 +163,11 @@ def rollback_plugin(plugin_id: str):
     target_version = data.get("version")
 
     if not target_version:
-        return jsonify({
-            "error": "version is required"
-        }), 400
+        return bad_request(
+            "version is required",
+            code="validation_error",
+            path="version",
+        )
 
     use_case = RollbackPluginVersionUseCase()
     result = use_case.execute(plugin_id, target_version)
