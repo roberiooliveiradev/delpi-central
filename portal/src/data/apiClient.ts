@@ -1,5 +1,16 @@
 // src/data/apiClient.ts
 
+export class HttpError extends Error {
+  public status: number;
+  public body?: any;
+
+  constructor(status: number, message: string, body?: any) {
+    super(message);
+    this.status = status;
+    this.body = body;
+  }
+}
+
 export class ApiClient {
   private baseUrl: string;
   private getToken: () => string | undefined;
@@ -31,8 +42,24 @@ export class ApiClient {
     }
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || `HTTP ${response.status}`);
+      const contentType = response.headers.get("content-type") || "";
+
+      let body: any = null;
+      let message = `HTTP ${response.status}`;
+
+      try {
+        if (contentType.includes("application/json")) {
+          body = await response.json();
+          message = body?.error || body?.message || message;
+        } else {
+          const text = await response.text();
+          message = text || message;
+        }
+      } catch {
+        // ignore parse errors
+      }
+
+      throw new HttpError(response.status, message, body);
     }
 
     // 204 No Content

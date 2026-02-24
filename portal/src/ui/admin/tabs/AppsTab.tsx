@@ -3,7 +3,7 @@
 
 import { useContext, useMemo, useState } from "react";
 import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient } from "../../../data/apiClient";
+import { ApiClient, HttpError } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
 import type { AdminApp } from "../../../data/adminApi";
 
@@ -65,8 +65,20 @@ export const AppsTab = () => {
   const handleBulkDelete = async () => {
     if (selected.length === 0) return;
 
-    await api.bulkDeleteApps(selected);
-
+    try {
+      await api.bulkDeleteApps(selected);
+      appsResource.refetch();
+      setSelected([]);
+    } catch (err) {
+      if (err instanceof HttpError) {
+        alert(err.message);
+      } else {
+        alert("Erro inesperado ao excluir aplicações.");
+      }
+    } finally {
+      setConfirmBulkDelete(false);
+    }
+    
     setSelected([]);
     setConfirmBulkDelete(false);
     appsResource.refetch();
@@ -78,7 +90,18 @@ export const AppsTab = () => {
   const handleDeleteOne = async () => {
     if (!deleteOneId) return;
 
-    await api.deleteApp(deleteOneId);
+    try {
+      await api.deleteApp(deleteOneId);
+      appsResource.refetch();
+    } catch (err) {
+      if (err instanceof HttpError) {
+        alert(err.message); // pode trocar por toast depois
+      } else {
+        alert("Erro inesperado ao excluir aplicação.");
+      }
+    } finally {
+      setDeleteOneId(null);
+    }
 
     setDeleteOneId(null);
     appsResource.refetch();

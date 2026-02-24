@@ -63,13 +63,21 @@ export const GroupsTab = () => {
       let groupId = editing.id;
 
       if (!groupId) {
+        // CREATE
         const created = await api.createGroup({
           name: editing.name,
           description: editing.description,
         });
         groupId = created.id;
+      } else {
+        // UPDATE name/description
+        await api.updateGroup(groupId, {
+          name: editing.name,
+          description: editing.description,
+        });
       }
 
+      // UPDATE roles (sempre separado)
       await api.setGroupRoles(groupId, selectedRoleIds);
 
       setEditing(null);

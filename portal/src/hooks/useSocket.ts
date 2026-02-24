@@ -58,7 +58,6 @@ export const useSocket = ({
     });
 
     socket.on("admin.changed", (data) => {
-      console.log("📡 admin.changed recebido:", data);
       onAdminChangedRef.current?.(data);
     });
 
