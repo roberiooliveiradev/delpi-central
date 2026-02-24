@@ -386,11 +386,6 @@ export const ManifestRegisterModal = ({
 
   const isTouched = (path: string) => touched.has(path);
   
-  const isFieldInvalid = (path: string) => {
-    const errors = getFieldErrors(path);
-    return isTouched(path) && errors.length > 0;
-  };
-
   /* ---------- lifecycle / reset ---------- */
 
   const resetToRegisterDefaults = useCallback(() => {
@@ -834,7 +829,7 @@ export const ManifestRegisterModal = ({
                   label="ID (slug)"
                   required
                   htmlFor="manifest-id"
-                  error={getFieldErrors("id")}
+                  error={isTouched("id") ? getFieldErrors("id") : []}
                 >
                   <input
                     value={manifest.id}
@@ -901,7 +896,7 @@ export const ManifestRegisterModal = ({
                   label="Versão (SemVer)"
                   required
                   htmlFor="manifest-version"
-                  error={getFieldErrors("version")}
+                  error={isTouched("version") ? getFieldErrors("version") : []}
                 >
                   <input
                     value={manifest.version}
@@ -926,7 +921,7 @@ export const ManifestRegisterModal = ({
                   label="Base Path"
                   required
                   htmlFor="manifest-basepath"
-                  error={getFieldErrors("basePath")}
+                  error={isTouched("basePath") ? getFieldErrors("basePath") : []}
                 >
                   <>
                     <input
@@ -1021,7 +1016,7 @@ export const ManifestRegisterModal = ({
                           label="Código"
                           required
                           htmlFor={`perm-code-${idx}`}
-                          error={getFieldErrors(codePath)}
+                          error={isTouched(codePath) ? getFieldErrors(codePath) : []}
                         >
                           <input
                             value={p.code}
@@ -1120,7 +1115,7 @@ export const ManifestRegisterModal = ({
                           label="Path"
                           required
                           htmlFor={`route-path-${idx}`}
-                          error={getFieldErrors(pathPath)}
+                          error={isTouched(pathPath) ? getFieldErrors(pathPath) : []}
                         >
                           <input
                             value={r.path}
