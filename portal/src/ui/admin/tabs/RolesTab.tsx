@@ -1,4 +1,5 @@
 // src/ui/admin/tabs/RolesTab.tsx
+
 import { useContext, useMemo, useState } from "react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
@@ -23,6 +24,7 @@ export const RolesTab = () => {
   const [editing, setEditing] = useState<AdminRole | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmBulk, setConfirmBulk] = useState(false);
+  const [deleteOneId, setDeleteOneId] = useState<string | null>(null);
 
   const [allPerms, setAllPerms] = useState<AdminPermission[]>([]);
   const [selectedPermIds, setSelectedPermIds] = useState<string[]>([]);
@@ -89,6 +91,31 @@ export const RolesTab = () => {
     }
   };
 
+  // ================================
+  // DELETE INDIVIDUAL
+  // ================================
+  const handleDeleteOne = async () => {
+    if (!deleteOneId) return;
+
+    await api.deleteRole(deleteOneId);
+
+    setDeleteOneId(null);
+    rolesResource.refetch();
+  };
+
+  // ================================
+  // DELETE BULK
+  // ================================
+  const handleBulkDelete = async () => {
+    if (selected.length === 0) return;
+
+    await api.bulkDeleteRoles(selected);
+
+    setSelected([]);
+    setConfirmBulk(false);
+    rolesResource.refetch();
+  };
+
   return (
     <div>
       <h2>Papéis ({rolesResource.pagination?.total ?? 0})</h2>
@@ -116,10 +143,7 @@ export const RolesTab = () => {
         actions={(row) => (
           <ActionButtons
             onEdit={() => openRole(row)}
-            onDelete={async () => {
-              await api.deleteRole(row.id);
-              rolesResource.refetch();
-            }}
+            onDelete={() => setDeleteOneId(row.id)}
           />
         )}
         toolbar={
@@ -147,6 +171,18 @@ export const RolesTab = () => {
         onPageChange={rolesResource.setPage}
       />
 
+      {/* Confirmação delete individual */}
+      <ConfirmDialog
+        open={!!deleteOneId}
+        title="Excluir papel"
+        message="Deseja realmente excluir este papel?"
+        confirmText="Excluir"
+        danger
+        onCancel={() => setDeleteOneId(null)}
+        onConfirm={handleDeleteOne}
+      />
+
+      {/* Confirmação delete múltiplo */}
       <ConfirmDialog
         open={confirmBulk}
         title="Excluir papéis"
@@ -154,12 +190,7 @@ export const RolesTab = () => {
         confirmText="Excluir"
         danger
         onCancel={() => setConfirmBulk(false)}
-        onConfirm={async () => {
-          await api.bulkDeleteRoles(selected);
-          setSelected([]);
-          setConfirmBulk(false);
-          rolesResource.refetch();
-        }}
+        onConfirm={handleBulkDelete}
       />
 
       <RoleEditModal

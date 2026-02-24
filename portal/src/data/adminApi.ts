@@ -34,6 +34,7 @@ export type AdminPermission = {
   code: string;
   name?: string | null;
   description?: string | null;
+  module?: string | null;
 };
 
 export type AdminGroup = {

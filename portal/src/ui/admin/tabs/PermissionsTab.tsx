@@ -36,6 +36,7 @@ export const PermissionsTab = () => {
 
       <DataTable
         columns={[
+          { key: "module", header: "App", sortable: true, render: (row) => row.module?.toUpperCase() }, 
           { key: "code", header: "Code", sortable: true },
           { key: "name", header: "Nome", sortable: true },
           { key: "description", header: "Descrição" },

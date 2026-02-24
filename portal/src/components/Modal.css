@@ -37,9 +37,9 @@
 }
 
 /* tamanhos */
-.modal-sm { width: 65dvw; }
-.modal-md { width: 75dvw; }
-.modal-lg { width: 85dvw; }
+.modal-sm { width: 40dvw; }
+.modal-md { width: 65dvw; }
+.modal-lg { width: 75dvw; }
 .modal-xl { width: 90dvw; }
 
 /* HEADER */

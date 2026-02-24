@@ -18,6 +18,7 @@ export const GroupsTab = () => {
   const [editing, setEditing] = useState<AdminGroup | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmBulk, setConfirmBulk] = useState(false);
+  const [deleteOneId, setDeleteOneId] = useState<string | null>(null);
 
   const [roles, setRoles] = useState<AdminRole[]>([]);
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
@@ -78,6 +79,20 @@ export const GroupsTab = () => {
     }
   };
 
+  const handleDeleteOne = async () => {
+    if (!deleteOneId) return;
+    await api.deleteGroup(deleteOneId);
+    setDeleteOneId(null);
+    groupsResource.refetch();
+  };
+
+  const handleBulkDelete = async () => {
+    await api.bulkDeleteGroups(selected);
+    setSelected([]);
+    setConfirmBulk(false);
+    groupsResource.refetch();
+  };
+
   return (
     <div>
       <h2>Grupos ({groupsResource.pagination?.total ?? 0})</h2>
@@ -103,20 +118,14 @@ export const GroupsTab = () => {
         actions={(row) => (
           <ActionButtons
             onEdit={() => openGroup(row)}
-            onDelete={async () => {
-              await api.deleteGroup(row.id);
-              groupsResource.refetch();
-            }}
+            onDelete={() => setDeleteOneId(row.id)}
           />
         )}
         toolbar={
           <>
             <button onClick={openNew}>Novo Grupo</button>
             {selected.length > 0 && (
-              <button
-                className="btn-danger"
-                onClick={() => setConfirmBulk(true)}
-              >
+              <button className="btn-danger" onClick={() => setConfirmBulk(true)}>
                 Excluir selecionados ({selected.length})
               </button>
             )}
@@ -134,18 +143,23 @@ export const GroupsTab = () => {
       />
 
       <ConfirmDialog
+        open={!!deleteOneId}
+        title="Excluir grupo"
+        message="Deseja realmente excluir este grupo?"
+        confirmText="Excluir"
+        danger
+        onCancel={() => setDeleteOneId(null)}
+        onConfirm={handleDeleteOne}
+      />
+
+      <ConfirmDialog
         open={confirmBulk}
         title="Excluir grupos"
         message={`Deseja excluir ${selected.length} grupos?`}
         confirmText="Excluir"
         danger
         onCancel={() => setConfirmBulk(false)}
-        onConfirm={async () => {
-          await api.bulkDeleteGroups(selected);
-          setSelected([]);
-          setConfirmBulk(false);
-          groupsResource.refetch();
-        }}
+        onConfirm={handleBulkDelete}
       />
 
       <GroupEditModal

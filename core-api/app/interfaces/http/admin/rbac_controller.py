@@ -68,6 +68,7 @@ def _json_permission(p: Permission):
         "code": p.code,
         "name": p.name,
         "description": getattr(p, "description", None),
+        "module": getattr(p, "module", None), 
     }
 
 
@@ -165,8 +166,8 @@ def list_permissions():
         query,
         _json_permission,
         Permission,
-        allowed_sort_fields=["code", "name"],
-        default_sort="code",
+        allowed_sort_fields=["module","code", "name"],
+        default_sort="module",
     )
 
 

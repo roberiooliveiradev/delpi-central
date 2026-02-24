@@ -1,4 +1,6 @@
+
 // src/ui/admin/tabs/AppsTab.tsx
+
 import { useContext, useMemo, useState } from "react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
@@ -16,7 +18,8 @@ export const AppsTab = () => {
 
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [deleteOneId, setDeleteOneId] = useState<string | null>(null);
 
   const [manifestModal, setManifestModal] = useState<{
     open: boolean;
@@ -31,7 +34,13 @@ export const AppsTab = () => {
 
   const appsResource = usePaginatedResource<AdminApp>(
     ({ page, pageSize }) =>
-      api!.listApps({ page, pageSize, q: search, sort: "name", direction: "asc" }),
+      api!.listApps({
+        page,
+        pageSize,
+        q: search,
+        sort: "name",
+        direction: "asc",
+      }),
     10,
     [search]
   );
@@ -50,10 +59,28 @@ export const AppsTab = () => {
     });
   };
 
+  // ================================
+  // BULK DELETE
+  // ================================
   const handleBulkDelete = async () => {
+    if (selected.length === 0) return;
+
     await api.bulkDeleteApps(selected);
+
     setSelected([]);
-    setConfirmDelete(false);
+    setConfirmBulkDelete(false);
+    appsResource.refetch();
+  };
+
+  // ================================
+  // DELETE INDIVIDUAL
+  // ================================
+  const handleDeleteOne = async () => {
+    if (!deleteOneId) return;
+
+    await api.deleteApp(deleteOneId);
+
+    setDeleteOneId(null);
     appsResource.refetch();
   };
 
@@ -82,7 +109,10 @@ export const AppsTab = () => {
         selectedRows={selected}
         onSelectionChange={setSelected}
         actions={(row) => (
-          <ActionButtons onEdit={() => openEdit(row)} />
+          <ActionButtons
+            onEdit={() => openEdit(row)}
+            onDelete={() => setDeleteOneId(row.id)}
+          />
         )}
         toolbar={
           selected.length > 0 ? (
@@ -109,7 +139,7 @@ export const AppsTab = () => {
 
               <button
                 className="btn-danger"
-                onClick={() => setConfirmDelete(true)}
+                onClick={() => setConfirmBulkDelete(true)}
               >
                 Excluir ({selected.length})
               </button>
@@ -129,6 +159,9 @@ export const AppsTab = () => {
         onPageChange={appsResource.setPage}
       />
 
+      {/* ================================
+          MODAL DE REGISTRO / EDIÇÃO
+      ================================= */}
       <ManifestRegisterModal
         open={manifestModal.open}
         mode={manifestModal.mode}
@@ -147,14 +180,30 @@ export const AppsTab = () => {
         }}
       />
 
+      {/* ================================
+          CONFIRMAÇÃO BULK DELETE
+      ================================= */}
       <ConfirmDialog
-        open={confirmDelete}
+        open={confirmBulkDelete}
         title="Excluir aplicações"
         message={`Deseja excluir ${selected.length} aplicações?`}
         confirmText="Excluir"
         danger
-        onCancel={() => setConfirmDelete(false)}
+        onCancel={() => setConfirmBulkDelete(false)}
         onConfirm={handleBulkDelete}
+      />
+
+      {/* ================================
+          CONFIRMAÇÃO DELETE INDIVIDUAL
+      ================================= */}
+      <ConfirmDialog
+        open={!!deleteOneId}
+        title="Excluir aplicação"
+        message="Deseja realmente excluir esta aplicação?"
+        confirmText="Excluir"
+        danger
+        onCancel={() => setDeleteOneId(null)}
+        onConfirm={handleDeleteOne}
       />
     </div>
   );

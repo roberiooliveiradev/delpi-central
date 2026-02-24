@@ -37,18 +37,72 @@ def get_pagination_params():
     return page, page_size, sort, direction, None, None
 
 
+from sqlalchemy import asc, desc
+
+
 def apply_sorting(query, model, allowed_sort_fields=None, sort=None, direction="asc"):
+    """
+    Suporta:
+    ?sort=field
+    ?sort=field1,field2
+    ?sort=field1,-field2
+    ?sort=field1:asc,field2:desc
+    ?sort=field1,field2&direction=asc,desc
+    """
+
     if not sort:
         return query
 
-    if allowed_sort_fields and sort not in allowed_sort_fields:
-        return query
+    sort_fields = [s.strip() for s in sort.split(",") if s.strip()]
+    direction_list = []
 
-    if not hasattr(model, sort):
-        return query
+    # direction pode vir como lista: asc,desc
+    if direction and "," in direction:
+        direction_list = [d.strip().lower() for d in direction.split(",")]
+    else:
+        direction_list = [direction] * len(sort_fields)
 
-    column = getattr(model, sort)
-    return query.order_by(desc(column) if direction == "desc" else asc(column))
+    order_clauses = []
+
+    for idx, field_expr in enumerate(sort_fields):
+        field_name = field_expr
+        field_direction = None
+
+        # caso: field:desc
+        if ":" in field_expr:
+            parts = field_expr.split(":")
+            field_name = parts[0]
+            field_direction = parts[1].lower()
+
+        # caso: -field
+        elif field_expr.startswith("-"):
+            field_name = field_expr[1:]
+            field_direction = "desc"
+
+        # caso padrão
+        else:
+            if idx < len(direction_list):
+                field_direction = direction_list[idx]
+            else:
+                field_direction = "asc"
+
+        if allowed_sort_fields and field_name not in allowed_sort_fields:
+            continue
+
+        if not hasattr(model, field_name):
+            continue
+
+        column = getattr(model, field_name)
+
+        if field_direction == "desc":
+            order_clauses.append(desc(column))
+        else:
+            order_clauses.append(asc(column))
+
+    if order_clauses:
+        return query.order_by(*order_clauses)
+
+    return query
 
 
 def apply_filters(query, model, allowed_filter_fields=None):

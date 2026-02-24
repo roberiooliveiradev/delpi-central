@@ -1,5 +1,7 @@
 import { Modal } from "./Modal";
 
+type ModalSize = "sm" | "md" | "lg" | "xl";
+
 type Props = {
   open: boolean;
   title?: string;
@@ -10,6 +12,7 @@ type Props = {
   onConfirm: () => void | Promise<void>;
   onCancel: () => void;
   loading?: boolean;
+  size?: ModalSize; // ✅ NOVO
 };
 
 export const ConfirmDialog = ({
@@ -22,12 +25,14 @@ export const ConfirmDialog = ({
   onConfirm,
   onCancel,
   loading,
+  size = "sm",
 }: Props) => {
   return (
     <Modal
       open={open}
       title={title}
       onClose={onCancel}
+      size={size}
       footer={
         <>
           <button onClick={onCancel} disabled={loading}>

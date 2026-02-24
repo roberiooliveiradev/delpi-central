@@ -82,13 +82,9 @@ export const RbacTab = () => {
         selectedRows={selected}
         onSelectionChange={setSelected}
         actions={(row) => (
-          <ActionButtons
-            onEdit={() => setEditing(row)}
-            onDelete={async () => {
-              await api.deleteUser(row.id);
-              usersResource.refetch();
-            }}
-          />
+        <ActionButtons
+          onEdit={() => setEditing(row)}
+        />
         )}
         toolbar={
           selected.length > 0 && (
