@@ -18,6 +18,15 @@ from app.domain.ports.user_role_repository_port import UserRoleRepositoryPort
 from app.domain.ports.user_group_repository_port import UserGroupRepositoryPort
 from app.domain.ports.admin_app_repository_port import AdminAppRepositoryPort
 
+from app.domain.ports.plugin_repository_port import PluginRepositoryPort
+from app.domain.ports.plugin_manifest_repository_port import PluginManifestRepositoryPort
+from app.domain.ports.plugin_version_repository_port import PluginVersionRepositoryPort
+from app.domain.ports.plugin_route_repository_port import PluginRouteRepositoryPort
+from app.domain.ports.plugin_permission_repository_port import PluginPermissionRepositoryPort
+from app.domain.ports.audit_repository_port import AuditRepositoryPort
+
+from app.domain.ports.admin_route_repository_port import AdminRouteRepositoryPort
+
 class UnitOfWork(Protocol):
     session: Session
     users: UserRepository
@@ -35,6 +44,15 @@ class UnitOfWork(Protocol):
     user_roles: UserRoleRepositoryPort
     user_groups: UserGroupRepositoryPort
     admin_apps: AdminAppRepositoryPort
+    
+    plugin_repo: PluginRepositoryPort
+    manifest_repo: PluginManifestRepositoryPort
+    version_repo: PluginVersionRepositoryPort
+    route_repo: PluginRouteRepositoryPort
+    permission_repo: PluginPermissionRepositoryPort
+    audit_repo: AuditRepositoryPort
+
+    admin_routes: AdminRouteRepositoryPort
 
     def commit(self) -> None:
         ...

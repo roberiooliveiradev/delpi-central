@@ -37,6 +37,16 @@ from app.infrastructure.persistence.sqlalchemy.admin_app_repository import (
     SqlAlchemyAdminAppRepository,
 )
 
+from app.infrastructure.persistence.sqlalchemy.plugin_repository import SqlAlchemyPluginRepository
+from app.infrastructure.persistence.sqlalchemy.plugin_manifest_repository import SqlAlchemyPluginManifestRepository
+from app.infrastructure.persistence.sqlalchemy.plugin_version_repository import SqlAlchemyPluginVersionRepository
+from app.infrastructure.persistence.sqlalchemy.plugin_route_repository import SqlAlchemyPluginRouteRepository
+from app.infrastructure.persistence.sqlalchemy.plugin_permission_repository import SqlAlchemyPluginPermissionRepository
+from app.infrastructure.persistence.sqlalchemy.audit_repository import SqlAlchemyAuditRepository
+
+from app.infrastructure.persistence.sqlalchemy.admin_route_repository import SqlAlchemyAdminRouteRepository
+
+
 class SqlAlchemyUnitOfWork:
     def __init__(self):
         self.session: Session = db.session
@@ -61,7 +71,17 @@ class SqlAlchemyUnitOfWork:
         self.user_groups = SqlAlchemyUserGroupRepository(self.session)
         
         self.admin_apps = SqlAlchemyAdminAppRepository(self.session)
+
+
+        self.plugin_repo = SqlAlchemyPluginRepository(self.session)
+        self.manifest_repo = SqlAlchemyPluginManifestRepository(self.session)
+        self.version_repo = SqlAlchemyPluginVersionRepository(self.session)
+        self.route_repo = SqlAlchemyPluginRouteRepository(self.session)
+        self.permission_repo = SqlAlchemyPluginPermissionRepository(self.session)
+        self.audit_repo = SqlAlchemyAuditRepository(self.session)
         
+        self.admin_routes = SqlAlchemyAdminRouteRepository(self.session)
+
     def commit(self) -> None:
         self.session.commit()
 
