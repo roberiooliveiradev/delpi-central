@@ -1,112 +1,87 @@
 # app/domain/services/permission_resolver.py
 
+from typing import List, Set
 from uuid import UUID
-from typing import Union, List
 
-from app.infrastructure.db.models import (
-    Permission,
-    UserPermission,
-    User,
-)
-from app.extensions.permission_cache import (
-    get_cached_permissions,
-    set_cached_permissions,
-)
-from app.extensions.db import db
+from app.domain.ports.permission_query_port import PermissionQueryPort
+from app.domain.ports.cache_port import PermissionCachePort
 
 
-def resolve_user_permissions(
-    user_or_id: Union[str, UUID, User],
-    use_cache: bool = True,
-) -> List[str]:
+class PermissionResolver:
     """
-    Resolve permissões efetivas do usuário:
+    Serviço de domínio responsável por resolver permissões efetivas de um usuário.
 
-    - superadmin
-    - roles diretas
-    - roles via grupos
-    - overrides
-
-    Versão segura (sem joins duplicados).
+    Não conhece:
+    - SQLAlchemy
+    - Flask
+    - db.session
+    - cache concreto
     """
 
-    # ---------------------------------------------------------
-    # Resolve user
-    # ---------------------------------------------------------
-
-    if isinstance(user_or_id, (str, UUID)):
-        user = db.session.get(User, user_or_id)
-    else:
-        user = user_or_id
-
-    if not user:
-        return []
-
-    user_id = str(user.id)
+    def __init__(
+        self,
+        permission_query: PermissionQueryPort,
+        cache: PermissionCachePort | None = None,
+    ):
+        self.permission_query = permission_query
+        self.cache = cache
 
     # ---------------------------------------------------------
-    # Cache
+    # Public API
     # ---------------------------------------------------------
 
-    if use_cache:
-        cached = get_cached_permissions(user_id)
-        if cached is not None:
-            return cached
+    def resolve(self, user_id: UUID, is_superadmin: bool) -> List[str]:
+        """
+        Retorna lista de permission codes efetivos do usuário.
+        """
 
-    permissions = set()
+        # 1️⃣ Cache
+        if self.cache:
+            cached = self.cache.get(str(user_id))
+            if cached is not None:
+                return cached
 
-    # ---------------------------------------------------------
-    # Superadmin
-    # ---------------------------------------------------------
+        # 2️⃣ Superadmin
+        if is_superadmin:
+            permissions = self.permission_query.list_all_permission_codes()
+            self._store_cache(user_id, permissions)
+            return permissions
 
-    if getattr(user, "is_superadmin", False):
-        result = [
-            code for (code,) in db.session.query(Permission.code).all()
-        ]
-        if use_cache:
-            set_cached_permissions(user_id, result)
+        # 3️⃣ Permissões via roles diretas
+        direct_permissions = set(
+            self.permission_query.list_direct_role_permissions(user_id)
+        )
+
+        # 4️⃣ Permissões via grupos
+        group_permissions = set(
+            self.permission_query.list_group_role_permissions(user_id)
+        )
+
+        effective: Set[str] = direct_permissions | group_permissions
+
+        # 5️⃣ Overrides do usuário
+        overrides = self.permission_query.list_user_overrides(user_id)
+
+        for code, granted in overrides:
+            if granted:
+                effective.add(code)
+            else:
+                effective.discard(code)
+
+        result = sorted(effective)
+
+        self._store_cache(user_id, result)
+
         return result
 
     # ---------------------------------------------------------
-    # Roles diretas (via relacionamento já carregado)
+    # Internal
     # ---------------------------------------------------------
 
-    for role in user.roles:
-        for perm in role.permissions:
-            permissions.add(perm.code)
+    def invalidate(self, user_id: UUID) -> None:
+        if self.cache:
+            self.cache.invalidate(str(user_id))
 
-    # ---------------------------------------------------------
-    # Roles via grupos
-    # ---------------------------------------------------------
-
-    for group in user.groups:
-        for role in group.roles:
-            for perm in role.permissions:
-                permissions.add(perm.code)
-
-    # ---------------------------------------------------------
-    # Overrides
-    # ---------------------------------------------------------
-
-    overrides = (
-        db.session.query(UserPermission)
-        .filter(UserPermission.user_id == user.id)
-        .all()
-    )
-
-    for override in overrides:
-        perm = db.session.get(Permission, override.permission_id)
-        if not perm:
-            continue
-
-        if override.granted:
-            permissions.add(perm.code)
-        else:
-            permissions.discard(perm.code)
-
-    result = list(permissions)
-
-    if use_cache:
-        set_cached_permissions(user_id, result)
-
-    return result
+    def _store_cache(self, user_id: UUID, permissions: List[str]) -> None:
+        if self.cache:
+            self.cache.set(str(user_id), permissions)

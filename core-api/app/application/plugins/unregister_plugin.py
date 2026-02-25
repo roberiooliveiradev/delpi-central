@@ -12,30 +12,26 @@ class UnregisterResult:
 
 class UnregisterPluginUseCase:
 
-    def execute(self, plugin_id: str) -> UnregisterResult:
-        app = App.query.filter_by(id=plugin_id).first()
-        if not app:
-            return UnregisterResult(False, "Plugin not found")
+    def __init__(self, uow: UnitOfWork):
+        self._uow = uow
 
-        # 🔒 Verifica dependências manualmente (compatível com JSON)
-        all_manifests = AppManifest.query.all()
+    def execute(self, plugin_id: str):
 
-        dependents = []
-        for m in all_manifests:
-            deps = (m.manifest or {}).get("dependencies", [])
-            if plugin_id in deps:
-                dependents.append(m)
+        try:
+            app = self._uow.app_repo.get_by_id(plugin_id)
+            if not app:
+                return UnregisterResult(False, "Plugin not found")
 
-        if dependents:
-            return UnregisterResult(False, "Other plugins depend on this plugin")
+            self._uow.app_version_repo.delete_by_app(plugin_id)
+            self._uow.route_repo.delete_by_app(plugin_id)
+            self._uow.permission_repo.delete_by_module(plugin_id)
+            self._uow.manifest_repo.delete(plugin_id)
+            self._uow.app_repo.delete(plugin_id)
 
-        # Remove tudo
-        AppVersion.query.filter_by(app_id=plugin_id).delete()
-        AppRoute.query.filter_by(app_id=plugin_id).delete()
-        Permission.query.filter_by(module=plugin_id).delete()
-        AppManifest.query.filter_by(app_id=plugin_id).delete()
-        db.session.delete(app)
+            self._uow.commit()
 
-        db.session.commit()
+            return UnregisterResult(True)
 
-        return UnregisterResult(True)
+        except Exception:
+            self._uow.rollback()
+            raise

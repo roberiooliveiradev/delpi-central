@@ -17,4 +17,6 @@ from .app_route import AppRoute
 from .app_manifest import AppManifest
 from .app_versions import AppVersion
 
+from .notification import Notification
+
 from .audit_log import AuditLog

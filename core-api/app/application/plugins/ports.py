@@ -18,6 +18,14 @@ class AppRepository(ABC):
     def update_version(self, app_id: str, version: str) -> None:
         pass
 
+class AppVersionRepository(ABC):
+    @abstractmethod
+    def exists(self, app_id: str, version: str) -> bool:
+        pass
+
+    @abstractmethod
+    def create(self, data: Dict[str, Any]) -> None:
+        pass
 
 class PermissionRepository(ABC):
 
@@ -37,11 +45,7 @@ class PermissionRepository(ABC):
 class RouteRepository(ABC):
 
     @abstractmethod
-    def exists_by_path(self, path: str) -> bool:
-        pass
-
-    @abstractmethod
-    def exists_by_path(self, path: str) -> bool:
+    def get_by_path(self, path: str):
         pass
 
     @abstractmethod
@@ -70,6 +74,7 @@ class UnitOfWork(ABC):
     route_repo: RouteRepository
     manifest_repo: ManifestRepository
     audit_repo: AuditRepository
+    app_version_repo: AppVersionRepository
 
     @abstractmethod
     def commit(self) -> None:

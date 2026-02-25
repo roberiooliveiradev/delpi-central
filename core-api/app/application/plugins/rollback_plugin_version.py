@@ -1,104 +1,76 @@
 # app/application/plugins/rollback_plugin_version.py
 
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import List
 
-from app.infrastructure.db.models import (
-    App,
-    AppManifest,
-    AppRoute,
-    Permission,
-    AppVersion,
-)
-from app.extensions.db import db
+from app.application.plugins.ports import UnitOfWork
 
 
 @dataclass
 class RollbackResult:
     success: bool
-    errors: List[Dict[str, Any]]
+    errors: List[dict]
 
 
 class RollbackPluginVersionUseCase:
 
+    def __init__(self, uow: UnitOfWork):
+        self._uow = uow
+
     def execute(self, plugin_id: str, target_version: str) -> RollbackResult:
 
-        app = App.query.filter_by(id=plugin_id).first()
-        if not app:
-            return RollbackResult(False, [{
-                "code": "plugin.not_found",
-                "message": "Plugin not found",
-                "path": "_global",
-            }])
-
-        version_row = AppVersion.query.filter_by(
-            app_id=plugin_id,
-            version=target_version
-        ).first()
-
-        if not version_row:
-            return RollbackResult(False, [{
-                "code": "plugin.version_not_found",
-                "message": "Target version not found in history",
-                "path": "version",
-            }])
-
-        manifest = version_row.manifest
-
         try:
-            # ===============================
-            # 🔥 Atualiza versão ativa
-            # ===============================
-            app.version = target_version
+            app = self._uow.app_repo.get_by_id(plugin_id)
+            if not app:
+                return RollbackResult(False, [{
+                    "code": "plugin.not_found",
+                    "message": "Plugin not found",
+                    "path": "_global",
+                }])
 
-            # ===============================
-            # 🔥 Atualiza manifest atual
-            # ===============================
-            current_manifest = AppManifest.query.filter_by(app_id=plugin_id).first()
+            version_row = self._uow.app_version_repo.get(plugin_id, target_version)
+            if not version_row:
+                return RollbackResult(False, [{
+                    "code": "plugin.version_not_found",
+                    "message": "Target version not found in history",
+                    "path": "version",
+                }])
 
-            if not current_manifest:
-                current_manifest = AppManifest(
-                    app_id=plugin_id,
-                    manifest=manifest,
-                    checksum=version_row.checksum,
-                )
-                db.session.add(current_manifest)
-            else:
-                current_manifest.manifest = manifest
-                current_manifest.checksum = version_row.checksum
+            manifest = version_row["manifest"]
 
-            # ===============================
-            # 🔥 Sincroniza rotas
-            # ===============================
-            AppRoute.query.filter_by(app_id=plugin_id).delete()
+            # Atualiza versão ativa
+            self._uow.app_repo.update_version(plugin_id, target_version)
 
-            for route in manifest.get("routes", []):
-                db.session.add(AppRoute(
-                    app_id=plugin_id,
-                    path=route["path"],
-                    label=route.get("label"),
-                    icon=route.get("icon"),
-                    order=route.get("order"),
-                    show_in_menu=route.get("showInMenu", True),
-                ))
+            # Atualiza manifest atual
+            self._uow.manifest_repo.save(
+                plugin_id,
+                manifest,
+                version_row["checksum"],
+            )
 
-            # ===============================
-            # 🔥 Sincroniza permissões
-            # ===============================
-            Permission.query.filter_by(module=plugin_id).delete()
+            # Sincroniza rotas
+            self._uow.route_repo.delete_by_app(plugin_id)
+            self._uow.route_repo.bulk_create([
+                {
+                    "app_id": plugin_id,
+                    "path": r["path"],
+                    "label": r.get("label"),
+                    "icon": r.get("icon"),
+                    "permission": r.get("permission"),
+                    "show_in_menu": r.get("showInMenu", True),
+                    "order": r.get("order", 0),
+                }
+                for r in manifest.get("routes", [])
+            ])
 
-            for perm in manifest.get("permissions", []):
-                db.session.add(Permission(
-                    code=perm["code"],
-                    name=perm["name"],
-                    description=perm.get("description"),
-                    module=plugin_id,
-                ))
+            # Sincroniza permissões
+            self._uow.permission_repo.delete_by_module(plugin_id)
+            self._uow.permission_repo.bulk_create(manifest.get("permissions", []))
 
-            db.session.commit()
+            self._uow.commit()
 
             return RollbackResult(True, [])
 
-        except Exception as e:
-            db.session.rollback()
+        except Exception:
+            self._uow.rollback()
             raise

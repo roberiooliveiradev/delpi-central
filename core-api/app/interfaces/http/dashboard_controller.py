@@ -2,42 +2,37 @@
 
 from flask import Blueprint, jsonify, g
 
-from app.domain.services.permission_resolver import resolve_user_permissions
-from app.domain.services.app_resolver import resolve_user_apps
-from app.interfaces.http.utils.errors import unauthorized, api_error
+from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
+from app.infrastructure.cache.rbac_permission_cache_adapter import RbacCachePermissionCacheAdapter
+from app.domain.services.permission_resolver import PermissionResolver
+from app.application.use_cases.list_user_apps_use_case import ListUserAppsUseCase
+
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
-@dashboard_bp.route("/dashboard", methods=["GET"])
-def dashboard():
+@dashboard_bp.route("/dashboard/apps", methods=["GET"])
+def list_user_apps():
+
     user = getattr(g, "current_user", None)
     if not user:
-        return unauthorized()
+        return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        # Permissões efetivas do usuário
-        permissions = resolve_user_permissions(user)
+    uow = SqlAlchemyUnitOfWork()
 
-        # Apps que o usuário realmente pode acessar
-        user_apps = resolve_user_apps(permissions)
+    permission_resolver = PermissionResolver(
+        permission_query=uow.permission_queries,
+        cache=RbacCachePermissionCacheAdapter(),
+    )
 
-        return jsonify({
-            "appsCount": len(user_apps),
-            "rolesCount": len(getattr(user, "roles", []) or []),
-            "permissionsCount": len(permissions),
-            "recentActivity": [
-                "Login realizado com sucesso",
-                f"{len(permissions)} permissões carregadas",
-                f"{len(user_apps)} aplicações disponíveis"
-            ]
-        })
+    use_case = ListUserAppsUseCase(
+        app_query=uow.app_queries,
+        permission_resolver=permission_resolver,
+    )
 
-    except Exception:
-        # Não vazar detalhes internos para o cliente
-        return api_error(
-            code="internal_error",
-            message="Erro interno ao carregar dashboard",
-            status=500,
-            path="dashboard"
-        )
+    result = use_case.execute(
+        user_id=user.id,
+        is_superadmin=bool(user.is_superadmin),
+    )
+
+    return jsonify(result)

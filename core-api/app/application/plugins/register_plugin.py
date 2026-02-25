@@ -115,42 +115,46 @@ class RegisterPluginUseCase:
     # APP + VERSION
     # ==========================================================
 
-    def _handle_app_version(
+    def _handle_routes(
         self,
         app_id: str,
-        version: str,
         manifest: Dict[str, Any],
     ) -> ManifestError | None:
 
-        existing_app = self._uow.app_repo.get_by_id(app_id)
+        new_routes = []
 
-        if existing_app:
+        for route in manifest.get("routes", []):  # ✅ seguro
 
-            current_version = existing_app["version"]
+            existing_route = self._uow.route_repo.get_by_path(route["path"])
 
-            if not self._is_upgrade_allowed(current_version, version):
-                return ManifestError(
-                    code="version_upgrade_not_allowed",
-                    message=f"Upgrade not allowed: {current_version} → {version}",
-                    path="$.version",
-                )
+            if existing_route:
 
-            self._uow.app_repo.update_version(app_id, version)
-            return None
+                if existing_route.app_id != app_id:
+                    return ManifestError(
+                        code="route_path_collision",
+                        message=f"Route path already exists: {route['path']}",
+                        path="$.routes",
+                    )
 
-        # Novo app
-        self._uow.app_repo.create(
-            {
-                "id": app_id,
-                "name": manifest["name"],
-                "description": manifest.get("description"),
-                "base_path": manifest["basePath"],
-                "icon": manifest.get("icon"),
-                "type": manifest["type"],
-                "version": version,
-                "active": True,
-            }
-        )
+                continue
+
+            new_routes.append(route)
+
+        if new_routes:
+            self._uow.route_repo.bulk_create(
+                [
+                    {
+                        "app_id": app_id,
+                        "path": r["path"],
+                        "label": r.get("label"),
+                        "icon": r.get("icon"),
+                        "permission": r.get("permission"),
+                        "show_in_menu": r.get("showInMenu", True),
+                        "order": r.get("order", 0),
+                    }
+                    for r in new_routes
+                ]
+            )
 
         return None
 

@@ -122,17 +122,30 @@ def validate_manifest_rules(manifest: Dict[str, Any]) -> List[ManifestError]:
     # type/backend constraints (mínimo)
     plugin_type = manifest.get("type")
     backend = manifest.get("backend")
-    if backend is not None:
-        issuer = (backend or {}).get("issuer", "")
-        audience = (backend or {}).get("audience", "")
-        if not issuer:
-            errors.append(ManifestError("backend_missing_issuer", "backend.issuer é obrigatório quando backend existe.", "$.backend.issuer"))
-        if not audience:
-            errors.append(ManifestError("backend_missing_audience", "backend.audience é obrigatório quando backend existe.", "$.backend.audience"))
 
-    # backend-only: deve ter pelo menos uma permission de acesso? (recomendado)
+    if backend is not None:
+        validate_jwt = backend.get("validateJwt", False)
+
+        if validate_jwt:
+            issuer = backend.get("issuer", "")
+            audience = backend.get("audience", "")
+
+            if not issuer:
+                errors.append(ManifestError(
+                    code="backend_missing_issuer",
+                    message="backend.issuer é obrigatório quando validateJwt=true.",
+                    path="$.backend.issuer",
+                ))
+
+            if not audience:
+                errors.append(ManifestError(
+                    code="backend_missing_audience",
+                    message="backend.audience é obrigatório quando validateJwt=true.",
+                    path="$.backend.audience",
+                ))
+
+    # backend-only governança mínima
     if plugin_type == "backend-only":
-        # não obrigatório, mas bem útil para governança:
         if f"{plugin_id}.access" not in perm_lookup:
             errors.append(ManifestError(
                 code="missing_access_permission",

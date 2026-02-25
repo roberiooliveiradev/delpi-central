@@ -19,9 +19,11 @@ class ValidationResult:
 class ManifestValidator:
     def __init__(self, schema_path: Optional[str] = None) -> None:
         self._schema_path = schema_path or str(
-            Path(__file__).resolve().parents[2] / "infrastructure" / "plugins" / "schemas" / "delpi.manifest.v2.schema.json"
+            Path(__file__).resolve().parents[2] / "infrastructure" / "plugins" / "schemas" / "delpi.manifest.schema.json"
         )
-        self._validator = Draft202012Validator(self._load_schema())
+        schema = self._load_schema()
+        Draft202012Validator.check_schema(schema)
+        self._validator = Draft202012Validator(schema)
 
     def _load_schema(self) -> Dict[str, Any]:
         with open(self._schema_path, "r", encoding="utf-8") as f:
@@ -29,6 +31,15 @@ class ManifestValidator:
 
     def validate(self, manifest: Dict[str, Any]) -> ValidationResult:
         errors: List[ManifestError] = []
+        if not isinstance(manifest, dict):
+            return ValidationResult(
+                is_valid=False,
+                errors=[ManifestError(
+                    code="invalid_manifest_type",
+                    message="Manifest must be a JSON object",
+                    path="$"
+                )]
+            )
 
         # 1) JSON Schema
         for e in sorted(self._validator.iter_errors(manifest), key=lambda x: x.path):
