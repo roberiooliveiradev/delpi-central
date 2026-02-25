@@ -13,6 +13,10 @@ from app.domain.ports.notification_repository import NotificationRepository
 from app.domain.ports.audit_repository import AuditRepository
 from app.domain.ports.role_permission_repository_port import RolePermissionRepositoryPort
 from app.domain.ports.rbac_query_port import RbacQueryPort
+from app.domain.ports.group_role_repository_port import GroupRoleRepositoryPort
+from app.domain.ports.user_role_repository_port import UserRoleRepositoryPort
+from app.domain.ports.user_group_repository_port import UserGroupRepositoryPort
+from app.domain.ports.admin_app_repository_port import AdminAppRepositoryPort
 
 class UnitOfWork(Protocol):
     session: Session
@@ -27,6 +31,10 @@ class UnitOfWork(Protocol):
     audits: AuditRepository
     role_permissions: RolePermissionRepositoryPort
     rbac_queries: RbacQueryPort
+    group_roles: GroupRoleRepositoryPort
+    user_roles: UserRoleRepositoryPort
+    user_groups: UserGroupRepositoryPort
+    admin_apps: AdminAppRepositoryPort
 
     def commit(self) -> None:
         ...

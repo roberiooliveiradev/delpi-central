@@ -25,6 +25,18 @@ from app.infrastructure.persistence.sqlalchemy.role_permission_repository import
 
 from app.infrastructure.persistence.sqlalchemy.rbac_query_repository import SqlAlchemyRbacQueryRepository
 
+from app.infrastructure.persistence.sqlalchemy.group_role_repository import SqlAlchemyGroupRoleRepository
+
+from app.infrastructure.persistence.sqlalchemy.user_role_repository import (
+    SqlAlchemyUserRoleRepository,
+)
+
+from app.infrastructure.persistence.sqlalchemy.user_group_repository import SqlAlchemyUserGroupRepository
+
+from app.infrastructure.persistence.sqlalchemy.admin_app_repository import (
+    SqlAlchemyAdminAppRepository,
+)
+
 class SqlAlchemyUnitOfWork:
     def __init__(self):
         self.session: Session = db.session
@@ -42,6 +54,14 @@ class SqlAlchemyUnitOfWork:
         self.role_permissions = SqlAlchemyRolePermissionRepository(self.session)
         self.rbac_queries = SqlAlchemyRbacQueryRepository(self.session)
 
+        self.group_roles = SqlAlchemyGroupRoleRepository(self.session)
+
+        self.user_roles = SqlAlchemyUserRoleRepository(self.session)
+
+        self.user_groups = SqlAlchemyUserGroupRepository(self.session)
+        
+        self.admin_apps = SqlAlchemyAdminAppRepository(self.session)
+        
     def commit(self) -> None:
         self.session.commit()
 
