@@ -1,0 +1,46 @@
+{
+  "allowed_tables": [
+    "SB1010",
+    "SG1010",
+    "SG2010",
+    "SH1010",
+
+    "QP6010",
+    "QP7010",
+    "QP8010",
+
+    "SC1010",
+    "SC2010",
+    "SC7010",
+    "SF1010",
+    "SH8010",
+    "SH6010",
+
+    "SH4010",
+    
+    "SD4010",
+    "SD3010",
+    "SB2010",
+
+    "SD1010",
+    
+    "SA1010",
+    "SA2010",
+    "SA5010",
+    
+    "SC5010",
+    "SC6010",
+
+    "SX2010",
+    "SX3010",
+    "SIX010",
+    "SX9010"
+  ],
+  "_notes": {
+    "SA1010": "⚠️ Cadastro de Clientes — liberado por exceção DELPI, acesso controlado.",
+    "SA2010": "⚠️ Cadastro de Fornecedores — liberado por exceção DELPI, acesso controlado.",
+    "SD1010": "⚠️ Itens de Notas Fiscais de Entrada — contém dados fiscais.",
+    "SD2010": "⚠️ Itens de Notas Fiscais de Saída — contém dados fiscais.",
+    "_policy": "Essas tabelas são liberadas apenas sob auditoria e controle interno de segurança."
+  }
+}

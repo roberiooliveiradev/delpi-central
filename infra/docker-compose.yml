@@ -1,4 +1,3 @@
-# infra/docker-compose.yml
 services:
 
   postgres-core:
@@ -16,7 +15,7 @@ services:
       - "5432:5432"
     networks:
       - delpi-network
-      
+
   postgres-core-test:
     image: postgres:15
     container_name: delpi-postgres-core-test
@@ -59,17 +58,15 @@ services:
       KC_PROXY: edge
       KC_HOSTNAME_STRICT: false
       KC_HTTP_ENABLED: true
-      # ✅ O que o Keycloak deve considerar como URL pública (via gateway)
-      KC_HOSTNAME_URL: "http://localhost/auth"
 
-      # ✅ (opcional, mas recomendado) mantém o Admin Console funcionando em 8080
-      KC_HOSTNAME_ADMIN_URL: "http://localhost:8080"
+      # URL pública parametrizada
+      KC_HOSTNAME_URL: "${PUBLIC_BASE_URL}/auth"
+      KC_HOSTNAME_ADMIN_URL: "${PUBLIC_BASE_URL}:8080"
 
     ports:
       - "8080:8080"
     networks:
       - delpi-network
-
 
   core-api:
     build: ../core-api
@@ -81,13 +78,13 @@ services:
     env_file:
       - ../core-api/.env
     environment:
-      - FLASK_APP=app.create_app:create_app
-      - FLASK_ENV=development
+      FLASK_APP: app.create_app:create_app
+      FLASK_ENV: development
     depends_on:
       - postgres-core
+      - keycloak
     networks:
       - delpi-network
-
 
   portal:
     build: ../portal
@@ -99,9 +96,25 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - CHOKIDAR_USEPOLLING=true
+      CHOKIDAR_USEPOLLING: "true"
     depends_on:
       - core-api
+    networks:
+      - delpi-network
+
+  api-delpi:
+    build: ../api-delpi
+    container_name: delpi-api-delpi
+    environment:
+      # JWKS interno via rede Docker
+      KEYCLOAK_JWKS_URL: "http://keycloak:8080/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs"
+
+      # Issuer público (baseado no domínio configurado)
+      KEYCLOAK_ISSUER: "${PUBLIC_BASE_URL}/auth/realms/${KEYCLOAK_REALM}"
+
+      KEYCLOAK_AUDIENCE: "delpi-central"
+    depends_on:
+      - keycloak
     networks:
       - delpi-network
 
@@ -114,6 +127,7 @@ services:
       - portal
       - core-api
       - keycloak
+      - api-delpi
     networks:
       - delpi-network
 

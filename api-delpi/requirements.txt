@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+pyodbc
+pyngrok
+PyJWT
+pandas
+openpyxl
+python-jose[cryptography]
+requests
