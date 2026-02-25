@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   postgres-core:
     image: postgres:15
@@ -43,8 +45,8 @@ services:
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
 
-      KC_HOSTNAME_URL: "http://192.168.1.237/auth"
-      KC_HOSTNAME_ADMIN_URL: "http://192.168.1.237/auth"
+      KC_HOSTNAME_URL: "http://192.168.1.237:8091/auth"
+      KC_HOSTNAME_ADMIN_URL: "http://192.168.1.237:8091/auth"
 
     depends_on:
       - keycloak-db
@@ -81,7 +83,7 @@ services:
       context: ../gateway
     container_name: delpi-gateway
     ports:
-      - "127.0.0.1:8090:80"
+      - "8091:80"   
     depends_on:
       - portal
       - core-api
