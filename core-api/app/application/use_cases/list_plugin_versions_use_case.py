@@ -19,7 +19,7 @@ class ListPluginVersionsUseCase:
 
     def execute(self, plugin_id: str) -> ListPluginVersionsResult:
         try:
-            app = self._uow.plugin_repo.get_by_id(plugin_id)
+            app = self._uow.plugins.get_by_id(plugin_id)
             if not app:
                 return ListPluginVersionsResult(
                     success=False,
@@ -27,7 +27,7 @@ class ListPluginVersionsUseCase:
                     errors=[{"code": "plugin.not_found", "message": "Plugin not found", "path": "_global"}],
                 )
 
-            versions = self._uow.version_repo.list_versions(plugin_id)
+            versions = self._uow.plugin_versions.list_versions(plugin_id)
             return ListPluginVersionsResult(success=True, versions=versions, errors=None)
 
         except Exception as e:

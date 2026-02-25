@@ -54,16 +54,31 @@ def error_response(
 # Conveniências
 # =========================
 
-def unauthorized(message: str = "Unauthorized", *, extra: dict[str, Any] | None = None):
-    return api_error("unauthorized", message, status=401, extra=extra)
+def unauthorized(
+    message: str = "Unauthorized",
+    *,
+    path: str = "_global",
+    extra: dict[str, Any] | None = None,
+):
+    return api_error("unauthorized", message, status=401, path=path, extra=extra)
 
 
-def forbidden(message: str = "Forbidden", *, extra: dict[str, Any] | None = None):
-    return api_error("forbidden", message, status=403, extra=extra)
+def forbidden(
+    message: str = "Forbidden",
+    *,
+    path: str = "_global",
+    extra: dict[str, Any] | None = None,
+):
+    return api_error("forbidden", message, status=403, path=path, extra=extra)
 
 
-def not_found(message: str = "Not found", *, extra: dict[str, Any] | None = None):
-    return api_error("not_found", message, status=404, extra=extra)
+def not_found(
+    message: str = "Not found",
+    *,
+    path: str = "_global",
+    extra: dict[str, Any] | None = None,
+):
+    return api_error("not_found", message, status=404, path=path, extra=extra)
 
 
 def bad_request(
@@ -76,6 +91,17 @@ def bad_request(
     return api_error(code, message, status=400, path=path, extra=extra)
 
 
+def unprocessable(
+    message: str = "Unprocessable entity",
+    *,
+    code: str = "unprocessable_entity",
+    path: str = "_global",
+    extra: dict[str, Any] | None = None,
+):
+    # útil pra validação semântica (422)
+    return api_error(code, message, status=422, path=path, extra=extra)
+
+
 def conflict(
     message: str = "Conflict",
     *,
@@ -84,3 +110,13 @@ def conflict(
     extra: dict[str, Any] | None = None,
 ):
     return api_error(code, message, status=409, path=path, extra=extra)
+
+
+def server_error(
+    message: str = "Internal server error",
+    *,
+    code: str = "internal_error",
+    path: str = "_global",
+    extra: dict[str, Any] | None = None,
+):
+    return api_error(code, message, status=500, path=path, extra=extra)

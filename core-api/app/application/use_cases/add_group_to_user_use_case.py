@@ -2,22 +2,26 @@
 
 from uuid import UUID
 from app.application.unit_of_work import UnitOfWork
-from app.domain.ports.cache_port import PermissionCachePort
 
 
 class AddGroupToUserUseCase:
-    def __init__(self, uow: UnitOfWork, permission_cache: PermissionCachePort | None = None):
+
+    def __init__(self, uow: UnitOfWork):
         self.uow = uow
-        self.permission_cache = permission_cache
 
     def execute(self, user_id: str, group_id: str):
+
         uid = UUID(user_id)
         gid = UUID(group_id)
 
+        # Command
         self.uow.user_groups.add_group(uid, gid)
+
+        # Transação
         self.uow.commit()
 
-        if self.permission_cache:
-            self.permission_cache.invalidate(user_id)
+        # Invalidação de cache (via UoW)
+        if self.uow.cache:
+            self.uow.cache.invalidate(user_id)
 
         return {"ok": True}

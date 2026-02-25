@@ -1,10 +1,8 @@
 # app/interfaces/http/notification_controller.py
 
-
 from flask import Blueprint, jsonify, g
 
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
-from app.infrastructure.socket.socket_event_dispatcher import SocketIOEventDispatcher
 
 from app.application.use_cases.list_unread_notifications_use_case import (
     ListUnreadNotificationsUseCase,
@@ -19,8 +17,17 @@ from app.application.use_cases.notify_user_use_case import (
     NotifyUserUseCase,
 )
 
+from app.interfaces.http.utils.errors import unauthorized
+
 
 notification_bp = Blueprint("notifications", __name__)
+
+
+def require_auth():
+    user = getattr(g, "current_user", None)
+    if not user:
+        return unauthorized()
+    return None
 
 
 # ---------------------------------------------------------
@@ -29,9 +36,9 @@ notification_bp = Blueprint("notifications", __name__)
 
 @notification_bp.route("/notifications", methods=["GET"])
 def list_notifications():
-    user = getattr(g, "current_user", None)
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+    guard = require_auth()
+    if guard:
+        return guard
 
     uow = SqlAlchemyUnitOfWork()
     use_case = ListUnreadNotificationsUseCase(uow)
@@ -47,9 +54,9 @@ def list_notifications():
 
 @notification_bp.route("/notifications/<notification_id>/read", methods=["POST"])
 def mark_read(notification_id: str):
-    user = getattr(g, "current_user", None)
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+    guard = require_auth()
+    if guard:
+        return guard
 
     uow = SqlAlchemyUnitOfWork()
     use_case = MarkNotificationReadUseCase(uow)
@@ -65,9 +72,9 @@ def mark_read(notification_id: str):
 
 @notification_bp.route("/notifications/read-all", methods=["POST"])
 def mark_all_read():
-    user = getattr(g, "current_user", None)
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+    guard = require_auth()
+    if guard:
+        return guard
 
     uow = SqlAlchemyUnitOfWork()
     use_case = MarkAllNotificationsReadUseCase(uow)
@@ -83,18 +90,13 @@ def mark_all_read():
 
 @notification_bp.route("/notifications/test", methods=["POST"])
 def test_notification():
-    user = getattr(g, "current_user", None)
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+    guard = require_auth()
+    if guard:
+        return guard
 
     uow = SqlAlchemyUnitOfWork()
-    dispatcher = SocketIOEventDispatcher()
 
-    use_case = NotifyUserUseCase(
-        uow=uow,
-        notification_repo=uow.notifications,
-        event_dispatcher=dispatcher,
-    )
+    use_case = NotifyUserUseCase(uow)
 
     use_case.execute(
         user_id=g.current_sub,

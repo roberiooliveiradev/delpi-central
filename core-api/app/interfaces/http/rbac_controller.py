@@ -1,11 +1,10 @@
 # app/interfaces/http/rbac_controller.py
 
 from flask import Blueprint, request, jsonify, g
+
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
+
 from app.application.use_cases.create_role_use_case import CreateRoleUseCase
-
-from app.infrastructure.cache.rbac_permission_cache_adapter import RbacCachePermissionCacheAdapter
-
 from app.application.use_cases.list_role_permissions_use_case import ListRolePermissionsUseCase
 from app.application.use_cases.replace_role_permissions_use_case import ReplaceRolePermissionsUseCase
 from app.application.use_cases.add_permission_to_role_use_case import AddPermissionToRoleUseCase
@@ -32,27 +31,45 @@ from app.interfaces.http.utils.errors import unauthorized, api_error
 rbac_bp = Blueprint("rbac", __name__)
 
 
+def require_auth():
+    user = getattr(g, "current_user", None)
+    if not user:
+        return unauthorized()
+    return None
+
+
+# ==========================================================
+# ROLES
+# ==========================================================
+
 @rbac_bp.route("/admin/roles", methods=["POST"])
 def create_role():
+    guard = require_auth()
+    if guard:
+        return guard
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
+
+    name = (data.get("name") or "").strip()
+    if not name:
+        return api_error("validation_error", "Campo 'name' é obrigatório.", path="name")
 
     uow = SqlAlchemyUnitOfWork()
-    use_case = CreateRoleUseCase(uow)
+    uc = CreateRoleUseCase(uow)
 
-    role_id = use_case.execute(
-        name=data["name"],
-        description=data.get("description"),
-    )
-
-    return jsonify({"id": str(role_id)})
+    try:
+        role_id = uc.execute(name=name, description=data.get("description"))
+        return jsonify({"id": str(role_id)}), 201
+    except Exception as e:
+        uow.rollback()
+        return api_error("create_role_failed", str(e))
 
 
 @rbac_bp.route("/admin/roles/<role_id>/permissions", methods=["GET"])
 def list_role_permissions(role_id: str):
-    user = getattr(g, "current_user", None)
-    if not user:
-        return unauthorized()
+    guard = require_auth()
+    if guard:
+        return guard
 
     uow = SqlAlchemyUnitOfWork()
     uc = ListRolePermissionsUseCase(uow)
@@ -60,215 +77,226 @@ def list_role_permissions(role_id: str):
     try:
         return jsonify(uc.execute(role_id)), 200
     except Exception as e:
-        return api_error("list_role_permissions_failed", str(e), status=400, path="roleId")
+        return api_error("list_role_permissions_failed", str(e), path="roleId")
 
 
 @rbac_bp.route("/admin/roles/<role_id>/permissions", methods=["PUT"])
 def replace_role_permissions(role_id: str):
-    user = getattr(g, "current_user", None)
-    if not user:
-        return unauthorized()
+    guard = require_auth()
+    if guard:
+        return guard
 
     data = request.get_json(silent=True) or {}
     codes = data.get("codes")
+
     if not isinstance(codes, list):
-        return api_error("invalid_payload", "Campo 'codes' deve ser uma lista.", status=400, path="codes")
+        return api_error("validation_error", "Campo 'codes' deve ser uma lista.", path="codes")
 
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
-    uc = ReplaceRolePermissionsUseCase(uow, permission_cache=cache)
+    uc = ReplaceRolePermissionsUseCase(uow)
 
     try:
         return jsonify(uc.execute(role_id, [str(c) for c in codes])), 200
     except Exception as e:
         uow.rollback()
-        return api_error("replace_role_permissions_failed", str(e), status=400, path="codes")
+        return api_error("replace_role_permissions_failed", str(e))
 
 
 @rbac_bp.route("/admin/roles/<role_id>/permissions", methods=["POST"])
 def add_permission_to_role(role_id: str):
-    user = getattr(g, "current_user", None)
-    if not user:
-        return unauthorized()
+    guard = require_auth()
+    if guard:
+        return guard
 
     data = request.get_json(silent=True) or {}
     code = (data.get("code") or "").strip()
+
     if not code:
-        return api_error("invalid_payload", "Campo 'code' é obrigatório.", status=400, path="code")
+        return api_error("validation_error", "Campo 'code' é obrigatório.", path="code")
 
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
-    uc = AddPermissionToRoleUseCase(uow, permission_cache=cache)
+    uc = AddPermissionToRoleUseCase(uow)
 
     try:
         return jsonify(uc.execute(role_id, code)), 200
     except Exception as e:
         uow.rollback()
-        return api_error("add_permission_to_role_failed", str(e), status=400, path="code")
+        return api_error("add_permission_to_role_failed", str(e))
 
 
 @rbac_bp.route("/admin/roles/<role_id>/permissions/<permission_code>", methods=["DELETE"])
 def remove_permission_from_role(role_id: str, permission_code: str):
-    user = getattr(g, "current_user", None)
-    if not user:
-        return unauthorized()
+    guard = require_auth()
+    if guard:
+        return guard
 
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
-    uc = RemovePermissionFromRoleUseCase(uow, permission_cache=cache)
+    uc = RemovePermissionFromRoleUseCase(uow)
 
     try:
         return jsonify(uc.execute(role_id, permission_code)), 200
     except Exception as e:
         uow.rollback()
-        return api_error("remove_permission_from_role_failed", str(e), status=400, path="permission_code")
-    
+        return api_error("remove_permission_from_role_failed", str(e))
+
+
+# ==========================================================
+# GROUPS
+# ==========================================================
+
 @rbac_bp.route("/admin/groups/<group_id>/roles", methods=["GET"])
 def list_group_roles(group_id: str):
+    guard = require_auth()
+    if guard:
+        return guard
+
     uow = SqlAlchemyUnitOfWork()
     uc = ListGroupRolesUseCase(uow)
-    return jsonify(uc.execute(group_id))
+    return jsonify(uc.execute(group_id)), 200
 
 
 @rbac_bp.route("/admin/groups/<group_id>/roles", methods=["PUT"])
 def replace_group_roles(group_id: str):
+    guard = require_auth()
+    if guard:
+        return guard
+
     data = request.get_json(silent=True) or {}
     role_ids = data.get("roleIds", [])
 
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
+    uc = ReplaceGroupRolesUseCase(uow)
 
-    uc = ReplaceGroupRolesUseCase(uow, permission_cache=cache)
-
-    return jsonify(uc.execute(group_id, role_ids))
+    try:
+        return jsonify(uc.execute(group_id, role_ids)), 200
+    except Exception as e:
+        uow.rollback()
+        return api_error("replace_group_roles_failed", str(e))
 
 
 @rbac_bp.route("/admin/groups/<group_id>/roles/<role_id>", methods=["POST"])
 def add_role_to_group(group_id: str, role_id: str):
+    guard = require_auth()
+    if guard:
+        return guard
+
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
+    uc = AddRoleToGroupUseCase(uow)
 
-    uc = AddRoleToGroupUseCase(uow, permission_cache=cache)
-
-    return jsonify(uc.execute(group_id, role_id))
+    return jsonify(uc.execute(group_id, role_id)), 200
 
 
 @rbac_bp.route("/admin/groups/<group_id>/roles/<role_id>", methods=["DELETE"])
 def remove_role_from_group(group_id: str, role_id: str):
+    guard = require_auth()
+    if guard:
+        return guard
+
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
+    uc = RemoveRoleFromGroupUseCase(uow)
 
-    uc = RemoveRoleFromGroupUseCase(uow, permission_cache=cache)
+    return jsonify(uc.execute(group_id, role_id)), 200
 
-    return jsonify(uc.execute(group_id, role_id))
 
+# ==========================================================
+# USERS
+# ==========================================================
 
 @rbac_bp.route("/admin/users/<user_id>/roles", methods=["GET"])
 def list_user_roles(user_id: str):
+    guard = require_auth()
+    if guard:
+        return guard
+
     uow = SqlAlchemyUnitOfWork()
     uc = ListUserRolesUseCase(uow)
-    return jsonify(uc.execute(user_id))
+    return jsonify(uc.execute(user_id)), 200
 
 
 @rbac_bp.route("/admin/users/<user_id>/roles", methods=["PUT"])
 def replace_user_roles(user_id: str):
+    guard = require_auth()
+    if guard:
+        return guard
+
     data = request.get_json(silent=True) or {}
     role_ids = data.get("roleIds", [])
 
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
+    uc = ReplaceUserRolesUseCase(uow)
 
-    uc = ReplaceUserRolesUseCase(uow, permission_cache=cache)
-
-    return jsonify(uc.execute(user_id, role_ids))
+    return jsonify(uc.execute(user_id, role_ids)), 200
 
 
 @rbac_bp.route("/admin/users/<user_id>/roles/<role_id>", methods=["POST"])
 def add_role_to_user(user_id: str, role_id: str):
+    guard = require_auth()
+    if guard:
+        return guard
+
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
+    uc = AddRoleToUserUseCase(uow)
 
-    uc = AddRoleToUserUseCase(uow, permission_cache=cache)
-
-    return jsonify(uc.execute(user_id, role_id))
+    return jsonify(uc.execute(user_id, role_id)), 200
 
 
 @rbac_bp.route("/admin/users/<user_id>/roles/<role_id>", methods=["DELETE"])
 def remove_role_from_user(user_id: str, role_id: str):
+    guard = require_auth()
+    if guard:
+        return guard
+
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
+    uc = RemoveRoleFromUserUseCase(uow)
 
-    uc = RemoveRoleFromUserUseCase(uow, permission_cache=cache)
-
-    return jsonify(uc.execute(user_id, role_id))
+    return jsonify(uc.execute(user_id, role_id)), 200
 
 
 @rbac_bp.route("/admin/users/<user_id>/groups", methods=["GET"])
 def list_user_groups(user_id: str):
-    user = getattr(g, "current_user", None)
-    if not user:
-        return unauthorized()
+    guard = require_auth()
+    if guard:
+        return guard
 
     uow = SqlAlchemyUnitOfWork()
     uc = ListUserGroupsUseCase(uow)
-
-    try:
-        return jsonify(uc.execute(user_id)), 200
-    except Exception as e:
-        return api_error("list_user_groups_failed", str(e), status=400, path="userId")
+    return jsonify(uc.execute(user_id)), 200
 
 
 @rbac_bp.route("/admin/users/<user_id>/groups", methods=["PUT"])
 def replace_user_groups(user_id: str):
-    user = getattr(g, "current_user", None)
-    if not user:
-        return unauthorized()
+    guard = require_auth()
+    if guard:
+        return guard
 
     data = request.get_json(silent=True) or {}
-    group_ids = data.get("groupIds")
-    if not isinstance(group_ids, list):
-        return api_error("invalid_payload", "Campo 'groupIds' deve ser uma lista.", status=400, path="groupIds")
+    group_ids = data.get("groupIds", [])
 
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
-    uc = ReplaceUserGroupsUseCase(uow, permission_cache=cache)
+    uc = ReplaceUserGroupsUseCase(uow)
 
-    try:
-        return jsonify(uc.execute(user_id, [str(gid) for gid in group_ids])), 200
-    except Exception as e:
-        uow.rollback()
-        return api_error("replace_user_groups_failed", str(e), status=400, path="groupIds")
+    return jsonify(uc.execute(user_id, group_ids)), 200
 
 
 @rbac_bp.route("/admin/users/<user_id>/groups/<group_id>", methods=["POST"])
 def add_group_to_user(user_id: str, group_id: str):
-    user = getattr(g, "current_user", None)
-    if not user:
-        return unauthorized()
+    guard = require_auth()
+    if guard:
+        return guard
 
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
-    uc = AddGroupToUserUseCase(uow, permission_cache=cache)
+    uc = AddGroupToUserUseCase(uow)
 
-    try:
-        return jsonify(uc.execute(user_id, group_id)), 200
-    except Exception as e:
-        uow.rollback()
-        return api_error("add_group_to_user_failed", str(e), status=400, path="groupId")
+    return jsonify(uc.execute(user_id, group_id)), 200
 
 
 @rbac_bp.route("/admin/users/<user_id>/groups/<group_id>", methods=["DELETE"])
 def remove_group_from_user(user_id: str, group_id: str):
-    user = getattr(g, "current_user", None)
-    if not user:
-        return unauthorized()
+    guard = require_auth()
+    if guard:
+        return guard
 
     uow = SqlAlchemyUnitOfWork()
-    cache = RbacCachePermissionCacheAdapter()
-    uc = RemoveGroupFromUserUseCase(uow, permission_cache=cache)
+    uc = RemoveGroupFromUserUseCase(uow)
 
-    try:
-        return jsonify(uc.execute(user_id, group_id)), 200
-    except Exception as e:
-        uow.rollback()
-        return api_error("remove_group_from_user_failed", str(e), status=400, path="groupId")
+    return jsonify(uc.execute(user_id, group_id)), 200

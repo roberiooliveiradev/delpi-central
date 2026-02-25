@@ -19,7 +19,7 @@ class GetPluginManifestUseCase:
 
     def execute(self, plugin_id: str) -> GetPluginManifestResult:
         try:
-            manifest = self._uow.manifest_repo.get(plugin_id)
+            manifest = self._uow.plugin_manifests.get(plugin_id)
             if not manifest:
                 return GetPluginManifestResult(
                     success=False,

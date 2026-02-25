@@ -12,8 +12,8 @@ class AddFavoriteAppUseCase:
         if not any(a.id == app_id for a in apps):
             raise ValueError("App não encontrada")
 
-        if self.uow.favorite_apps.exists(user_id, app_id):
+        if self.uow.favorite.exists(user_id, app_id):
             return  # idempotente
 
-        self.uow.favorite_apps.add(user_id, app_id)
+        self.uow.favorite.add(user_id, app_id)
         self.uow.commit()

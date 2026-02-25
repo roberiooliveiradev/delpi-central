@@ -14,25 +14,40 @@ class ListAppRoutesResult:
 
 
 class ListAppRoutesUseCase:
+
     def __init__(self, uow: UnitOfWork):
         self._uow = uow
 
     def execute(self, app_id: str) -> ListAppRoutesResult:
         try:
-            app = self._uow.admin_apps.get(app_id) if hasattr(self._uow, "admin_apps") else None
+            # Garantir que o app existe
+            app = self._uow.admin_apps.get(app_id)
             if app is None:
-                # Se seu UoW não tiver admin_apps, remova esse check ou adapte.
-                pass
+                return ListAppRoutesResult(
+                    success=False,
+                    routes=[],
+                    errors=[{
+                        "code": "apps.not_found",
+                        "message": "App not found",
+                        "path": "app_id"
+                    }],
+                )
 
             routes = self._uow.admin_routes.list_by_app(app_id)
+
             return ListAppRoutesResult(
                 success=True,
                 routes=[r.__dict__ for r in routes],
                 errors=[],
             )
+
         except Exception as e:
             return ListAppRoutesResult(
                 success=False,
                 routes=[],
-                errors=[{"code": "routes.list_failed", "message": str(e), "path": "_global"}],
+                errors=[{
+                    "code": "routes.list_failed",
+                    "message": str(e),
+                    "path": "_global"
+                }],
             )
