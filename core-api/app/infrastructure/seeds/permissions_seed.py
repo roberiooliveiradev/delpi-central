@@ -1,6 +1,5 @@
 # app/infrastructure/seeds/permissions_seed.py
 
-from app.extensions.db import db
 from app.infrastructure.db.models import Permission
 
 
@@ -45,14 +44,13 @@ BASE_PERMISSIONS = [
 ]
 
 
-def seed_base_permissions():
-
+def seed_base_permissions(session):
     created = 0
     updated = 0
 
     for perm_data in BASE_PERMISSIONS:
 
-        existing = Permission.query.filter_by(code=perm_data["code"]).first()
+        existing = session.query(Permission).filter_by(code=perm_data["code"]).first()
 
         if not existing:
             permission = Permission(
@@ -60,16 +58,18 @@ def seed_base_permissions():
                 name=perm_data["name"],
                 description=perm_data["description"],
             )
-            db.session.add(permission)
+            session.add(permission)
             created += 1
         else:
-            # Atualiza nome/descrição se mudar
-            if existing.name != perm_data["name"] or existing.description != perm_data["description"]:
+            if (
+                existing.name != perm_data["name"]
+                or existing.description != perm_data["description"]
+            ):
                 existing.name = perm_data["name"]
                 existing.description = perm_data["description"]
                 updated += 1
 
     if created or updated:
-        db.session.commit()
+        session.commit()
 
     print(f"[SEED] Permissões criadas: {created}, atualizadas: {updated}")

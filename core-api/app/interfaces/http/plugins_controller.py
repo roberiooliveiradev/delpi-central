@@ -1,4 +1,4 @@
-# app/interfaces/http/admin/plugins_controller.py
+# app/interfaces/http/plugins_controller.py
 
 from flask import Blueprint, request, jsonify, g
 

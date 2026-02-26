@@ -1,7 +1,8 @@
 # app/create_app.py
 
-from flask import Flask, request
+from flask import Flask
 from app.infrastructure.config.settings import Config, TestingConfig
+from app.extensions.socket import socketio
 
 from app.extensions.db import db
 from app.extensions.migrate import migrate
@@ -49,8 +50,8 @@ def create_app(config_name: str | None = None) -> Flask:
     # ==========================================================
     @app.before_request
     def before_request():
-        # health endpoint não precisa autenticação
-        if app.url_map.is_endpoint_expecting(request.endpoint, None):
+        # Health não exige autenticação
+        if app.config.get("TESTING"):
             return
 
         authenticate()
@@ -66,11 +67,16 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(rbac_bp)
     app.register_blueprint(admin_plugins_bp)
     app.register_blueprint(admin_routes_bp)
+
     # ==========================================================
-    # DB INIT (dev only)
+    # DB INIT (DEV ONLY)
     # ==========================================================
     with app.app_context():
-        db.create_all()
-        seed_base_permissions(db.session)
+        if not app.config.get("TESTING"):
+            db.create_all()
+            seed_base_permissions(db.session)
+
+    socketio.init_app(app, async_mode="threading")
 
     return app
+    

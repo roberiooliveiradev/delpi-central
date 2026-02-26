@@ -4,7 +4,7 @@ from flask_socketio import SocketIO
 
 socketio = SocketIO(
     cors_allowed_origins="*",
-    async_mode="eventlet",
-    logger=True,
-    engineio_logger=True,
+    async_mode="threading",  # moderno, sem eventlet
+    logger=False,
+    engineio_logger=False,
 )
