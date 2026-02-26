@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.domain.ports.notification_repository import (
     NotificationRepository,
-    NotificationData,
+    NotificationDTO,
 )
 from app.infrastructure.db.models import Notification
 
@@ -18,7 +18,7 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
     def __init__(self, session: Session):
         self.session = session
 
-    def create(self, notification: NotificationData) -> UUID:
+    def create(self, notification: NotificationDTO) -> UUID:
         model = Notification(
             id=uuid.uuid4(),
             user_id=notification.user_id,
@@ -30,7 +30,7 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
         self.session.add(model)
         return model.id
 
-    def list_unread(self, user_id: str) -> List[NotificationData]:
+    def list_unread(self, user_id: str) -> List[NotificationDTO]:
         rows = (
             self.session.query(Notification)
             .filter_by(user_id=user_id, read_at=None)
@@ -39,11 +39,14 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
         )
 
         return [
-            NotificationData(
+            NotificationDTO(
+                id=row.id,
                 user_id=row.user_id,
                 title=row.title,
                 message=row.message,
                 type=row.type,
+                read=row.read_at is not None,
+                created_at=row.created_at,
             )
             for row in rows
         ]

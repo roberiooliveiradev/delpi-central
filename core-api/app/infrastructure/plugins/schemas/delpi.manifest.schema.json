@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://delpi.local/schemas/delpi.manifest.schema.json",
-  "title": "DELPI Plugin Manifest v2",
+  "title": "DELPI Plugin Manifest",
   "type": "object",
   "additionalProperties": false,
 

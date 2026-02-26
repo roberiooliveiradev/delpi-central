@@ -13,20 +13,8 @@ class SqlAlchemyPluginRepository(PluginRepositoryPort):
     def __init__(self, session: Session):
         self.session = session
 
-    def get_by_id(self, plugin_id: str) -> Optional[Dict[str, Any]]:
-        row = self.session.get(App, plugin_id)
-        if not row:
-            return None
-
-        return {
-            "id": str(row.id),
-            "name": row.name,
-            "description": row.description,
-            "icon": row.icon,
-            "type": getattr(row, "type", None),
-            "version": row.version,
-            "active": bool(getattr(row, "active", True)),
-        }
+    def get_by_id(self, plugin_id: str) -> Optional[App]:
+        return self.session.get(App, plugin_id)
 
     def create(self, data: Dict[str, Any]) -> None:
         # Espera os campos do model App

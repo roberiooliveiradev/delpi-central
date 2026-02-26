@@ -151,6 +151,14 @@ export class AdminApi {
       `/core-api/admin/plugins/${appId}`
     );
   }
+
+  bulkUnregisterPlugins(ids: string[]) {
+    return this.client.post<{ ok: boolean; deleted: number }>(
+      `/core-api/admin/plugins/bulk-unregister`,
+      { ids }
+    );
+  }
+  
   /* =========================
      RBAC - Users
   ========================= */
@@ -315,30 +323,35 @@ export class AdminApi {
     return this.client.put<{ ok: boolean }>(`/core-api/admin/apps/${appId}`, payload);
   }
 
-  deleteApp(appId: string) {
-    return this.client.delete<{ ok: boolean }>(`/core-api/admin/apps/${appId}`);
-  }
 
-  bulkDeleteApps(ids: string[]) {
-    return this.client.post<{ ok: boolean; deleted: number }>(
-      `/core-api/admin/apps/bulk-delete`,
-      { ids }
+  /* =========================
+    Plugin Activation
+  ========================= */
+
+  setPluginActive(appId: string, active: boolean) {
+    return this.client.post<{ ok: boolean }>(
+      `/core-api/admin/plugins/${appId}/active`,
+      { active }
     );
   }
 
-  bulkActivateApps(ids: string[]) {
+  bulkActivatePlugins(ids: string[]) {
     return this.client.post<{ ok: boolean; updated: number }>(
-      `/core-api/admin/apps/bulk-activate`,
+      `/core-api/admin/plugins/bulk-activate`,
       { ids }
     );
   }
 
-  bulkDeactivateApps(ids: string[]) {
+  bulkDeactivatePlugins(ids: string[]) {
     return this.client.post<{ ok: boolean; updated: number }>(
-      `/core-api/admin/apps/bulk-deactivate`,
-      { ids }
+      `/core-api/admin/plugins/bulk-activate`, // mesmo endpoint
+      { ids, active: false }
     );
   }
+
+  /* =========================
+    Routes Actions
+  ========================= */
 
   listRoutes(appId: string, options?: ListQueryOptions) {
     const qs = this.buildQuery(options);

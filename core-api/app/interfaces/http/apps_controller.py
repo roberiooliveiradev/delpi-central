@@ -5,10 +5,7 @@ from flask import Blueprint, request, jsonify, g
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 from app.application.use_cases.list_admin_apps_use_case import ListAdminAppsUseCase
 from app.application.use_cases.update_admin_app_use_case import UpdateAdminAppUseCase
-from app.application.use_cases.set_app_active_use_case import SetAppActiveUseCase
-from app.application.use_cases.delete_admin_app_use_case import DeleteAdminAppUseCase
 from app.interfaces.http.utils.errors import unauthorized, api_error
-
 
 admin_apps_bp = Blueprint("admin_apps", __name__)
 
@@ -73,38 +70,3 @@ def update_app(app_id: str):
     except Exception as e:
         uow.rollback()
         return api_error("update_app_failed", str(e))
-
-
-@admin_apps_bp.route("/admin/apps/<app_id>/active", methods=["POST"])
-def set_app_active(app_id: str):
-    user = getattr(g, "current_user", None)
-    if not user:
-        return unauthorized()
-
-    data = request.get_json(silent=True) or {}
-    active = bool(data.get("active", True))
-
-    uow = SqlAlchemyUnitOfWork()
-    use_case = SetAppActiveUseCase(uow)
-
-    try:
-        return jsonify(use_case.execute(app_id, active))
-    except Exception as e:
-        uow.rollback()
-        return api_error("set_app_active_failed", str(e))
-
-
-@admin_apps_bp.route("/admin/apps/<app_id>", methods=["DELETE"])
-def delete_app(app_id: str):
-    user = getattr(g, "current_user", None)
-    if not user:
-        return unauthorized()
-
-    uow = SqlAlchemyUnitOfWork()
-    use_case = DeleteAdminAppUseCase(uow)
-
-    try:
-        return jsonify(use_case.execute(app_id))
-    except Exception as e:
-        uow.rollback()
-        return api_error("delete_app_failed", str(e))

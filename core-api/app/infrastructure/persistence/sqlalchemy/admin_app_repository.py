@@ -83,6 +83,7 @@ class SqlAlchemyAdminAppRepository(AdminAppRepositoryPort):
             type=row.type,
             version=row.version,
             active=row.active,
+            base_path=row.base_path,
         )
 
     def update_metadata(self, app_id: str, name: str, description: str | None, icon: str | None) -> None:

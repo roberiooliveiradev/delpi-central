@@ -66,7 +66,7 @@ export const AppsTab = () => {
     if (selected.length === 0) return;
 
     try {
-      await api.bulkDeleteApps(selected);
+      await api.bulkUnregisterPlugins(selected);
       appsResource.refetch();
       setSelected([]);
     } catch (err) {
@@ -91,7 +91,7 @@ export const AppsTab = () => {
     if (!deleteOneId) return;
 
     try {
-      await api.deleteApp(deleteOneId);
+      await api.deletePlugin(deleteOneId);
       appsResource.refetch();
     } catch (err) {
       if (err instanceof HttpError) {
@@ -140,7 +140,7 @@ export const AppsTab = () => {
             <>
               <button
                 onClick={async () => {
-                  await api.bulkActivateApps(selected);
+                  await api.bulkActivatePlugins(selected);
                   setSelected([]);
                   appsResource.refetch();
                 }}
@@ -150,7 +150,7 @@ export const AppsTab = () => {
 
               <button
                 onClick={async () => {
-                  await api.bulkDeactivateApps(selected);
+                  await api.bulkDeactivatePlugins(selected);
                   setSelected([]);
                   appsResource.refetch();
                 }}

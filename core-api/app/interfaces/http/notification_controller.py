@@ -17,7 +17,7 @@ from app.application.use_cases.notify_user_use_case import (
     NotifyUserUseCase,
 )
 
-from app.interfaces.http.utils.errors import unauthorized
+from app.interfaces.http.utils.errors import unauthorized, api_error
 
 
 notification_bp = Blueprint("notifications", __name__)
@@ -45,12 +45,25 @@ def list_notifications():
 
     result = use_case.execute(user_id=g.current_sub)
 
-    return jsonify(result), 200
+    return jsonify([
+        {
+            "id": str(n.id),
+            "user_id": str(n.user_id),
+            "title": n.title,
+            "message": n.message,
+            "type": n.type,
+            "read": n.read,
+            "createdAt": n.created_at.isoformat() + "Z",
+        }
+        for n in result
+    ]), 200
 
 
 # ---------------------------------------------------------
 # Mark single as read
 # ---------------------------------------------------------
+
+from uuid import UUID
 
 @notification_bp.route("/notifications/<notification_id>/read", methods=["POST"])
 def mark_read(notification_id: str):
@@ -58,10 +71,15 @@ def mark_read(notification_id: str):
     if guard:
         return guard
 
+    try:
+        notification_uuid = UUID(notification_id)
+    except ValueError:
+        return api_error("invalid_id", "Invalid notification id", status=400)
+
     uow = SqlAlchemyUnitOfWork()
     use_case = MarkNotificationReadUseCase(uow)
 
-    use_case.execute(notification_id)
+    use_case.execute(notification_uuid)
 
     return jsonify({"ok": True}), 200
 

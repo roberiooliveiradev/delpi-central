@@ -11,6 +11,10 @@ from app.application.use_cases.unregister_plugin_use_case import UnregisterPlugi
 from app.application.use_cases.get_plugin_manifest_use_case import GetPluginManifestUseCase
 from app.application.use_cases.list_plugin_versions_use_case import ListPluginVersionsUseCase
 
+from app.application.use_cases.set_plugin_active_use_case import SetPluginActiveUseCase
+from app.application.use_cases.bulk_set_plugins_active_use_case import BulkSetPluginsActiveUseCase
+from app.application.use_cases.bulk_unregister_plugins_use_case import BulkUnregisterPluginsUseCase
+
 from app.application.validators.manifest_validator import ManifestValidator
 
 from app.interfaces.http.utils.errors import unauthorized, forbidden, bad_request, not_found
@@ -170,3 +174,63 @@ def unregister(plugin_id: str):
         return jsonify({"errors": result.errors}), 400
 
     return jsonify({"ok": True}), 200
+
+
+@admin_plugins_bp.post("/<plugin_id>/active")
+def set_plugin_active(plugin_id: str):
+    guard = require_admin()
+    if guard:
+        return guard
+
+    data = request.get_json(silent=True) or {}
+    active = bool(data.get("active", True))
+
+    uow = SqlAlchemyUnitOfWork()
+    uc = SetPluginActiveUseCase(uow)
+
+    result = uc.execute(plugin_id, active)
+
+    if not result.success:
+        return jsonify({"errors": result.errors}), 400
+
+    return jsonify({"ok": True}), 200
+
+@admin_plugins_bp.post("/bulk-activate")
+def bulk_activate_plugins():
+    guard = require_admin()
+    if guard:
+        return guard
+
+    data = request.get_json(silent=True) or {}
+    ids = data.get("ids", [])
+    active = bool(data.get("active", True))  
+
+    uow = SqlAlchemyUnitOfWork()
+    uc = BulkSetPluginsActiveUseCase(uow)
+
+    result = uc.execute(ids, active)     
+
+    if not result.success:
+        return jsonify({"errors": result.errors}), 400
+
+    return jsonify({"ok": True, "updated": result.updated})
+
+
+@admin_plugins_bp.post("/bulk-unregister")
+def bulk_unregister():
+    guard = require_admin()
+    if guard:
+        return guard
+
+    data = request.get_json(silent=True) or {}
+    ids = data.get("ids", [])
+
+    uow = SqlAlchemyUnitOfWork()
+    uc = BulkUnregisterPluginsUseCase(uow)
+
+    result = uc.execute(ids)
+
+    if not result.success:
+        return jsonify({"errors": result.errors}), 400
+
+    return jsonify({"ok": True, "deleted": result.deleted}), 200

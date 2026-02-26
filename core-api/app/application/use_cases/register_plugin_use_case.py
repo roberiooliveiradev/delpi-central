@@ -41,10 +41,20 @@ class RegisterPluginUseCase:
             }])
 
         try:
+            base_path = manifest.get("basePath") or manifest.get("base_path")
+
+            if not base_path:
+                return RegisterResult(False, [{
+                    "code": "validation_error",
+                    "message": "basePath is required",
+                    "path": "basePath"
+                }])
+
             self._uow.plugins.create({
                 "id": plugin_id,
                 "name": manifest["name"],
                 "description": manifest.get("description"),
+                "base_path": base_path,
                 "icon": manifest.get("icon"),
                 "type": manifest.get("type"),
                 "version": version,
@@ -64,7 +74,9 @@ class RegisterPluginUseCase:
                 "checksum": checksum,
             })
 
-            self._uow.plugin_permissions.bulk_create(manifest.get("permissions", []))
+            self._uow.plugin_permissions.bulk_create(
+                manifest.get("permissions", [])
+            )
 
             self._uow.plugin_routes.bulk_create([
                 {"app_id": plugin_id, **route}
@@ -73,7 +85,7 @@ class RegisterPluginUseCase:
 
             self._uow.commit()
             return RegisterResult(True, [])
-
+        
         except Exception as e:
             self._uow.rollback()
             return RegisterResult(False, [{

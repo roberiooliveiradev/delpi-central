@@ -20,3 +20,10 @@ class App(db.Model, TimestampMixin):
         back_populates="app",
         cascade="all, delete-orphan",
     )
+
+    versions = db.relationship(
+        "AppVersion",
+        back_populates="app",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )

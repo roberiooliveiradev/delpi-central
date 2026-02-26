@@ -9,6 +9,6 @@ class MarkNotificationReadUseCase:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    def execute(self, notification_id: str):
-        self.uow.notifications.mark_read(UUID(notification_id))
+    def execute(self, notification_id: UUID):
+        self.uow.notifications.mark_read(notification_id)
         self.uow.commit()

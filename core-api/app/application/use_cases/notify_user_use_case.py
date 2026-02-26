@@ -1,7 +1,7 @@
 # app/application/use_cases/notify_user_use_case.py
 
 from app.application.unit_of_work import UnitOfWork
-from app.domain.ports.notification_repository import NotificationData
+from app.domain.ports.notification_repository import NotificationDTO
 
 
 class NotifyUserUseCase:
@@ -11,7 +11,7 @@ class NotifyUserUseCase:
 
     def execute(self, user_id: str, title: str | None, message: str, type: str = "info"):
 
-        notification = NotificationData(
+        notification = NotificationDTO(
             user_id=user_id,
             title=title,
             message=message,

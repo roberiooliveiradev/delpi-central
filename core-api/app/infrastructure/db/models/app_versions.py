@@ -25,4 +25,7 @@ class AppVersion(db.Model, TimestampMixin):
         db.Index("ix_app_versions_app_id", "app_id"),
     )
 
-    app = db.relationship("App", backref="versions")
+    app = db.relationship(
+        "App",
+        back_populates="versions",
+    )

@@ -9,15 +9,6 @@ class ListUnreadNotificationsUseCase:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    def execute(self, user_id: str) -> List[dict]:
-        rows = self.uow.notifications.list_unread(user_id)
-
-        return [
-            {
-                "user_id": n.user_id,
-                "title": n.title,
-                "message": n.message,
-                "type": n.type,
-            }
-            for n in rows
-        ]
+    def execute(self, user_id: str):
+        return self.uow.notifications.list_unread(user_id)
+    
