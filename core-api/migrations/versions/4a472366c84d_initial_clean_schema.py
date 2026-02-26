@@ -1,8 +1,8 @@
-"""initial full schema
+"""initial clean schema
 
-Revision ID: f0a3bee812c3
+Revision ID: 4a472366c84d
 Revises: 
-Create Date: 2026-02-18 18:15:20.746413
+Create Date: 2026-02-26 00:38:30.744741
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'f0a3bee812c3'
+revision = '4a472366c84d'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -117,6 +117,21 @@ def upgrade():
     sa.ForeignKeyConstraint(['permission_id'], ['permissions.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('app_versions',
+    sa.Column('id', sa.BigInteger(), nullable=False),
+    sa.Column('app_id', sa.String(length=50), nullable=False),
+    sa.Column('version', sa.String(length=20), nullable=False),
+    sa.Column('manifest', sa.JSON(), nullable=False),
+    sa.Column('checksum', sa.String(length=100), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['app_id'], ['apps.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('app_id', 'version', name='uq_app_version')
+    )
+    with op.batch_alter_table('app_versions', schema=None) as batch_op:
+        batch_op.create_index('ix_app_versions_app_id', ['app_id'], unique=False)
+
     op.create_table('audit_logs',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Uuid(), nullable=True),
@@ -198,6 +213,10 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_audit_logs_action'))
 
     op.drop_table('audit_logs')
+    with op.batch_alter_table('app_versions', schema=None) as batch_op:
+        batch_op.drop_index('ix_app_versions_app_id')
+
+    op.drop_table('app_versions')
     op.drop_table('app_routes')
     op.drop_table('app_manifests')
     with op.batch_alter_table('users', schema=None) as batch_op:

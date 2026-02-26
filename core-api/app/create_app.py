@@ -20,6 +20,7 @@ from app.interfaces.http.apps_controller import admin_apps_bp
 from app.interfaces.http.rbac_controller import rbac_bp
 from app.interfaces.http.plugins_controller import admin_plugins_bp
 from app.interfaces.http.routes_controller import admin_routes_bp
+from app.interfaces.http.me_controller import me_bp
 
 from app.interfaces.http.auth_middleware import authenticate
 
@@ -43,7 +44,7 @@ def create_app(config_name: str | None = None) -> Flask:
     # ==========================================================
     db.init_app(app)
     migrate.init_app(app, db)
-    socketio.init_app(app)
+    socketio.init_app(app, async_mode="threading")
 
     # ==========================================================
     # AUTH MIDDLEWARE
@@ -67,16 +68,15 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(rbac_bp)
     app.register_blueprint(admin_plugins_bp)
     app.register_blueprint(admin_routes_bp)
+    app.register_blueprint(me_bp)
 
     # ==========================================================
     # DB INIT (DEV ONLY)
     # ==========================================================
-    with app.app_context():
-        if not app.config.get("TESTING"):
-            db.create_all()
-            seed_base_permissions(db.session)
+    # with app.app_context():
+    #     if not app.config.get("TESTING"):
+    #         seed_base_permissions(db.session)
 
-    socketio.init_app(app, async_mode="threading")
 
     return app
     

@@ -72,14 +72,17 @@ export const RolesTab = () => {
 
     setSaving(true);
     try {
-      let roleId = editing.id;
+      let roleId: string;
 
-      if (!roleId) {
+      if (!editing.id) {
         const created = await api.createRole({
           name: editing.name,
-          description: editing.description,
+          description: editing.description ?? undefined,
         });
+
         roleId = created.id;
+      } else {
+        roleId = editing.id;
       }
 
       await api.setRolePermissions(roleId, selectedPermIds);

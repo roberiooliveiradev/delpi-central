@@ -22,7 +22,7 @@ def require_auth():
 
 
 # ---------------------------------------------------------
-# List favorites
+# GET /favorites
 # ---------------------------------------------------------
 
 @favorite_bp.route("/favorites", methods=["GET"])
@@ -32,15 +32,20 @@ def list_favorites():
         return guard
 
     uow = SqlAlchemyUnitOfWork()
-    use_case = ListFavoriteAppsUseCase(uow)
 
-    result = use_case.execute(user_id=str(g.current_user.id))
+    use_case = ListFavoriteAppsUseCase(
+        favorite_repo=uow.favorites
+    )
+
+    result = use_case.execute(
+        user_id=str(g.current_user.id)
+    )
 
     return jsonify(result), 200
 
 
 # ---------------------------------------------------------
-# Add favorite
+# POST /favorites/<app_id>
 # ---------------------------------------------------------
 
 @favorite_bp.route("/favorites/<app_id>", methods=["POST"])
@@ -50,15 +55,21 @@ def add_favorite(app_id: str):
         return guard
 
     uow = SqlAlchemyUnitOfWork()
-    use_case = AddFavoriteAppUseCase(uow)
 
-    use_case.execute(str(g.current_user.id), app_id)
+    use_case = AddFavoriteAppUseCase(
+        favorite_repo=uow.favorites
+    )
+
+    use_case.execute(
+        user_id=str(g.current_user.id),
+        app_id=app_id,
+    )
 
     return jsonify({"ok": True}), 200
 
 
 # ---------------------------------------------------------
-# Remove favorite
+# DELETE /favorites/<app_id>
 # ---------------------------------------------------------
 
 @favorite_bp.route("/favorites/<app_id>", methods=["DELETE"])
@@ -68,8 +79,33 @@ def remove_favorite(app_id: str):
         return guard
 
     uow = SqlAlchemyUnitOfWork()
-    use_case = RemoveFavoriteAppUseCase(uow)
 
-    use_case.execute(str(g.current_user.id), app_id)
+    use_case = RemoveFavoriteAppUseCase(
+        favorite_repo=uow.favorites
+    )
+
+    use_case.execute(
+        user_id=str(g.current_user.id),
+        app_id=app_id,
+    )
 
     return jsonify({"ok": True}), 200
+
+
+# =========================================================
+# Compatibilidade com frontend antigo
+# =========================================================
+
+@favorite_bp.route("/me/apps/favorites", methods=["GET"])
+def list_favorites_me():
+    return list_favorites()
+
+
+@favorite_bp.route("/me/apps/favorites/<app_id>", methods=["POST"])
+def add_favorite_me(app_id: str):
+    return add_favorite(app_id)
+
+
+@favorite_bp.route("/me/apps/favorites/<app_id>", methods=["DELETE"])
+def remove_favorite_me(app_id: str):
+    return remove_favorite(app_id)
