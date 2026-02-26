@@ -18,15 +18,12 @@ export type AdminUser = {
   name: string;
   email: string;
   is_superadmin: boolean;
-  roles: { id: string; name: string }[];
-  groups: { id: string; name: string }[];
 };
 
 export type AdminRole = {
   id: string;
   name: string;
   description?: string | null;
-  permissions: { id: string; code: string; name?: string | null }[];
 };
 
 export type AdminPermission = {
@@ -41,7 +38,6 @@ export type AdminGroup = {
   id: string;
   name: string;
   description?: string | null;
-  roles: { id: string; name: string }[];
 };
 
 export type ListQueryOptions = {
@@ -114,19 +110,21 @@ export class AdminApi {
      Plugins / Manifest
   ========================= */
   getPluginManifest(appId: string) {
-    return this.client.get<any>(`/core-api/plugins/${appId}/manifest`);
+    return this.client.get<any>(
+      `/core-api/admin/plugins/${appId}/manifest`
+    );
   }
-  
+    
   registerManifest(manifest: any) {
-    return this.client.post<{ status: string; appId: string; version?: string }>(
-      "/core-api/plugins/register",
+    return this.client.post(
+      `/core-api/admin/plugins/register`,
       manifest
     );
   }
 
   updatePluginManifest(appId: string, manifest: any) {
-    return this.client.put<{ ok: boolean }>(
-      `/core-api/plugins/${appId}/manifest`,
+    return this.client.put(
+      `/core-api/admin/plugins/${appId}/manifest`,
       manifest
     );
   }
@@ -136,18 +134,23 @@ export class AdminApi {
   ========================= */
 
   listPluginVersions(appId: string) {
-    return this.client.get<PluginVersion[]>(
-      `/core-api/plugins/${appId}/versions`
+    return this.client.get(
+      `/core-api/admin/plugins/${appId}/versions`
     );
   }
 
   rollbackPlugin(appId: string, version: string) {
-    return this.client.post<RollbackPluginResponse>(
-      `/core-api/plugins/${appId}/rollback`,
+    return this.client.post(
+      `/core-api/admin/plugins/${appId}/rollback`,
       { version }
     );
   }
-
+  
+  deletePlugin(appId: string) {
+    return this.client.delete(
+      `/core-api/admin/plugins/${appId}`
+    );
+  }
   /* =========================
      RBAC - Users
   ========================= */
@@ -165,11 +168,27 @@ export class AdminApi {
 
   updateUser(
     userId: string,
-    payload: Partial<AdminUser> & { roleIds?: string[]; groupIds?: string[] }
+    payload: {
+      roleIds?: string[];
+      groupIds?: string[];
+      is_superadmin?: boolean;
+    }
   ) {
-    return this.client.put<AdminUser>(
+    return this.client.put<{ ok: boolean }>(
       `/core-api/admin/rbac/users/${userId}`,
       payload
+    );
+  }
+
+  getUserRoles(userId: string) {
+    return this.client.get<PaginatedResponse<{ id: string; name: string }>>(
+      `/core-api/admin/users/${userId}/roles`
+    );
+  }
+
+  getUserGroups(userId: string) {
+    return this.client.get<PaginatedResponse<{ id: string; name: string }>>(
+      `/core-api/admin/users/${userId}/groups`
     );
   }
 

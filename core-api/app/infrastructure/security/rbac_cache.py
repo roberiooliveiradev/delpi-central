@@ -41,6 +41,12 @@ class RBACCache:
     def clear(self):
         with self._lock:
             self._cache.clear()
+    
+    # ======================================================
+    # INVALIDATE
+    # ======================================================
+    def invalidate(self, user_id: str):
+        return self.invalidate_user(user_id)
 
 
 # Singleton global

@@ -2,7 +2,9 @@
 
 from typing import List
 from uuid import UUID
+from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
+from typing import Tuple
 
 from app.domain.ports.role_repository_port import RoleRepositoryPort, RoleDTO
 from app.infrastructure.db.models import Role
@@ -61,3 +63,55 @@ class SqlAlchemyRoleRepository(RoleRepositoryPort):
         role = self.session.get(Role, role_id)
         if role:
             self.session.delete(role)
+
+    # =========================
+    # Paginated List
+    # =========================
+    def list_paginated(
+        self,
+        *,
+        page: int,
+        page_size: int,
+        sort: str,
+        direction: str,
+    ) -> Tuple[List[RoleDTO], int]:
+
+        # =========================
+        # Segurança — whitelist de campos ordenáveis
+        # =========================
+        sortable_fields = {
+            "name": Role.name,
+            "description": Role.description,
+            "created_at": getattr(Role, "created_at", None),
+        }
+
+        sort_column = sortable_fields.get(sort, Role.name)
+
+        if direction.lower() == "desc":
+            order_clause = desc(sort_column)
+        else:
+            order_clause = asc(sort_column)
+
+        query = self.session.query(Role)
+
+        total = query.count()
+
+        rows = (
+            query
+            .order_by(order_clause)
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return (
+            [
+                RoleDTO(
+                    id=row.id,
+                    name=row.name,
+                    description=row.description,
+                )
+                for row in rows
+            ],
+            total,
+        )

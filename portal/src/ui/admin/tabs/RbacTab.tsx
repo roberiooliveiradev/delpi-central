@@ -51,18 +51,6 @@ export const RbacTab = () => {
           { key: "name", header: "Nome", sortable: true },
           { key: "email", header: "Email", sortable: true },
           {
-            key: "roles",
-            header: "Roles",
-            render: (row) =>
-              row.roles.map((r) => r.name).join(", ") || "Nenhuma",
-          },
-          {
-            key: "groups",
-            header: "Groups",
-            render: (row) =>
-              row.groups.map((g) => g.name).join(", ") || "Nenhum",
-          },
-          {
             key: "is_superadmin",
             header: "Superadmin",
             sortable: true,

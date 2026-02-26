@@ -57,7 +57,6 @@ export const RolesTab = () => {
 
   const openRole = async (role: AdminRole) => {
     setEditing(role);
-    setSelectedPermIds(role.permissions.map((p) => p.id));
     await fetchPermissions();
   };
 
@@ -125,11 +124,6 @@ export const RolesTab = () => {
         columns={[
           { key: "name", header: "Nome", sortable: true },
           { key: "description", header: "Descrição" },
-          {
-            key: "permissions",
-            header: "Permissões",
-            render: (row) => row.permissions.length,
-          },
         ]}
         data={rolesResource.data}
         loading={rolesResource.loading}

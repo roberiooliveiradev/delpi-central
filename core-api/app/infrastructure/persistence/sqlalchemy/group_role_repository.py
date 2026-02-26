@@ -62,3 +62,17 @@ class SqlAlchemyGroupRoleRepository(GroupRoleRepositoryPort):
             )
             .delete(synchronize_session=False)
         )
+    
+    def delete_by_role_id(self, role_id: UUID) -> None:
+        (
+            self.session.query(group_roles)
+            .filter(group_roles.c.role_id == role_id)
+            .delete(synchronize_session=False)
+        )
+    
+    def delete_by_group_id(self, group_id: UUID) -> None:
+        (
+            self.session.query(group_roles)
+            .filter(group_roles.c.group_id == group_id)
+            .delete(synchronize_session=False)
+        )

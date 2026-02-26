@@ -8,5 +8,18 @@ class ListAdminAppsUseCase:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    def execute(self):
-        return self.uow.admin_apps.list_all()
+    def execute(
+        self,
+        page: int,
+        page_size: int,
+        q: str | None,
+        sort: str,
+        direction: str,
+    ):
+        return self.uow.admin_apps.list_paginated(
+            page=page,
+            page_size=page_size,
+            q=q,
+            sort=sort,
+            direction=direction,
+        )

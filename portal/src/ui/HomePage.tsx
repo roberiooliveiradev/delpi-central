@@ -75,7 +75,13 @@ export const HomePage = () => {
         <h3>Atividade Recente</h3>
 
         <div className="activity-card">
-          {dashboard.recentActivity.map((item, index) => (
+          {(dashboard.recentActivity ?? []).length === 0 && (
+            <p style={{ color: "var(--text-muted)" }}>
+              Nenhuma atividade recente.
+            </p>
+          )}
+
+          {(dashboard.recentActivity ?? []).map((item, index) => (
             <p key={index}>✔ {item}</p>
           ))}
         </div>

@@ -19,10 +19,35 @@ def list_apps():
     if not user:
         return unauthorized()
 
+    # parâmetros
+    page = int(request.args.get("page", 1))
+    page_size = int(request.args.get("page_size", 10))
+    q = request.args.get("q")
+    sort = request.args.get("sort", "name")
+    direction = request.args.get("direction", "asc")
+
     uow = SqlAlchemyUnitOfWork()
     use_case = ListAdminAppsUseCase(uow)
 
-    return jsonify([a.__dict__ for a in use_case.execute()])
+    apps, total = use_case.execute(
+        page=page,
+        page_size=page_size,
+        q=q,
+        sort=sort,
+        direction=direction,
+    )
+
+    total_pages = (total + page_size - 1) // page_size
+
+    return jsonify({
+        "data": [a.__dict__ for a in apps],
+        "pagination": {
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": total_pages,
+        }
+    })
 
 
 @admin_apps_bp.route("/admin/apps/<app_id>", methods=["PUT"])

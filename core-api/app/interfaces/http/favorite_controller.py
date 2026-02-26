@@ -31,15 +31,11 @@ def list_favorites():
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-
-    use_case = ListFavoriteAppsUseCase(
-        favorite_repo=uow.favorites
-    )
-
-    result = use_case.execute(
-        user_id=str(g.current_user.id)
-    )
+    with SqlAlchemyUnitOfWork() as uow:
+        use_case = ListFavoriteAppsUseCase(uow)
+        result = use_case.execute(
+            user_id=str(g.current_user.id)
+        )
 
     return jsonify(result), 200
 

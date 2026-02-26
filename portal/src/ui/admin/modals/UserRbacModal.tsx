@@ -31,19 +31,44 @@ export const UserRbacModal = ({
   useEffect(() => {
     if (!open || !user) return;
 
-    setSelectedRoleIds(user.roles.map((r) => r.id));
-    setSelectedGroupIds(user.groups.map((g) => g.id));
-    setIsSuperadmin(!!user.is_superadmin);
+    let cancelled = false;
 
-    (async () => {
-      const [rolesRes, groupsRes] = await Promise.all([
-        api.listRoles({ page: 1, pageSize: 999 }),
-        api.listGroups({ page: 1, pageSize: 999 }),
-      ]);
+    const load = async () => {
+      setLoading(true);
+      
+      try {
+        const [
+          allRolesRes,
+          allGroupsRes,
+          userRolesRes,
+          userGroupsRes,
+        ] = await Promise.all([
+          api.listRoles({ page: 1, pageSize: 999 }),
+          api.listGroups({ page: 1, pageSize: 999 }),
+          api.getUserRoles(user.id),
+          api.getUserGroups(user.id),
+        ]);
 
-      setRoles(rolesRes.data ?? []);
-      setGroups(groupsRes.data ?? []);
-    })();
+        if (cancelled) return;
+
+        setRoles(allRolesRes.data ?? []);
+        setGroups(allGroupsRes.data ?? []);
+        setSelectedRoleIds((userRolesRes.data ?? []).map((r) => r.id));
+        setSelectedGroupIds((userGroupsRes.data ?? []).map((g) => g.id));
+
+        setIsSuperadmin(!!user.is_superadmin);
+        
+      } finally {
+        if (!cancelled) setLoading(false);
+        
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [open, user, api]);
 
   const toggle = (arr: string[], id: string) =>
@@ -53,20 +78,20 @@ export const UserRbacModal = ({
 
   const save = async () => {
     setLoading(true);
+
     try {
       await api.updateUser(user.id, {
         roleIds: selectedRoleIds,
         groupIds: selectedGroupIds,
         is_superadmin: isSuperadmin,
       });
-
       onSaved();
       onClose();
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
     <Modal
       open={open}

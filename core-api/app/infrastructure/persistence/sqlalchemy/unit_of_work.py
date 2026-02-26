@@ -4,7 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.extensions.db import db
 
+from app.infrastructure.cache.rbac_permission_cache_adapter import RbacCachePermissionCacheAdapter
+
 from app.infrastructure.persistence.sqlalchemy.user_repository import SqlAlchemyUserRepository
+from app.infrastructure.persistence.sqlalchemy.permission_repository import SqlAlchemyPermissionRepository
 from app.infrastructure.persistence.sqlalchemy.permission_query_repository import SqlAlchemyPermissionQueryRepository
 from app.infrastructure.persistence.sqlalchemy.notification_repository import SqlAlchemyNotificationRepository
 from app.infrastructure.persistence.sqlalchemy.app_query_repository import SqlAlchemyAppQueryRepository
@@ -14,6 +17,7 @@ from app.infrastructure.persistence.sqlalchemy.role_permission_repository import
 from app.infrastructure.persistence.sqlalchemy.rbac_query_repository import SqlAlchemyRbacQueryRepository
 from app.infrastructure.persistence.sqlalchemy.group_role_repository import SqlAlchemyGroupRoleRepository
 from app.infrastructure.persistence.sqlalchemy.user_role_repository import SqlAlchemyUserRoleRepository
+from app.infrastructure.persistence.sqlalchemy.group_repository import SqlAlchemyGroupRepository
 from app.infrastructure.persistence.sqlalchemy.user_group_repository import SqlAlchemyUserGroupRepository
 from app.infrastructure.persistence.sqlalchemy.admin_app_repository import SqlAlchemyAdminAppRepository
 from app.infrastructure.persistence.sqlalchemy.admin_route_repository import SqlAlchemyAdminRouteRepository
@@ -38,9 +42,13 @@ class SqlAlchemyUnitOfWork:
         # =========================
         self.users = SqlAlchemyUserRepository(self.session)
         self.roles = SqlAlchemyRoleRepository(self.session)
+        self.permissions = SqlAlchemyPermissionRepository(self.session)
+        self.cache = RbacCachePermissionCacheAdapter()
         self.role_permissions = SqlAlchemyRolePermissionRepository(self.session)
 
         self.user_roles = SqlAlchemyUserRoleRepository(self.session)
+
+        self.groups = SqlAlchemyGroupRepository(self.session)
         self.user_groups = SqlAlchemyUserGroupRepository(self.session)
         self.group_roles = SqlAlchemyGroupRoleRepository(self.session)
 

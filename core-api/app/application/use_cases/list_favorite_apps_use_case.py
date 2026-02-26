@@ -8,6 +8,5 @@ class ListFavoriteAppsUseCase:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-
     def execute(self, user_id: str) -> List[str]:
-        return self.favorite_repo.list_user_favorites(user_id)
+        return self.uow.favorites.list_user_favorites(user_id)

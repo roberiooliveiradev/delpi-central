@@ -42,7 +42,7 @@ export const AppsTab = () => {
         direction: "asc",
       }),
     10,
-    [search]
+    [search, api]
   );
 
   if (!api) return null;

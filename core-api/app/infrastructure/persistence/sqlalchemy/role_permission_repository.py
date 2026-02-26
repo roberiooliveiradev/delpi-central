@@ -51,6 +51,38 @@ class SqlAlchemyRolePermissionRepository(RolePermissionRepositoryPort):
                 role_permissions.insert().values(role_id=role_id, permission_id=perm_id)
             )
 
+    def replace_permissions_by_ids(self, role_id: UUID, permission_ids: List[str]) -> None:
+        # Normaliza UUIDs
+        ids = {UUID(pid) for pid in permission_ids if pid}
+
+        # Verifica se todas existem
+        existing = {
+            row.id for row in
+            self.session.query(Permission.id)
+            .filter(Permission.id.in_(ids))
+            .all()
+        }
+
+        missing = ids - existing
+        if missing:
+            raise ValueError(f"Permissions não existem: {', '.join(str(m) for m in missing)}")
+
+        # Remove vínculos atuais
+        (
+            self.session.query(role_permissions)
+            .filter(role_permissions.c.role_id == role_id)
+            .delete(synchronize_session=False)
+        )
+
+        # Insere novos vínculos
+        for pid in existing:
+            self.session.execute(
+                role_permissions.insert().values(
+                    role_id=role_id,
+                    permission_id=pid
+                )
+            )
+
     def add_permission_by_code(self, role_id: UUID, permission_code: str) -> None:
         code = (permission_code or "").strip()
         if not code:
@@ -77,6 +109,27 @@ class SqlAlchemyRolePermissionRepository(RolePermissionRepositoryPort):
             role_permissions.insert().values(role_id=role_id, permission_id=perm.id)
         )
 
+    def add_permission_by_id(self, role_id: UUID, permission_id: str):
+        pid = UUID(permission_id)
+
+        exists = (
+            self.session.query(role_permissions)
+            .filter(
+                role_permissions.c.role_id == role_id,
+                role_permissions.c.permission_id == pid,
+            )
+            .first()
+            is not None
+        )
+
+        if not exists:
+            self.session.execute(
+                role_permissions.insert().values(
+                    role_id=role_id,
+                    permission_id=pid
+                )
+            )
+
     def remove_permission_by_code(self, role_id: UUID, permission_code: str) -> None:
         code = (permission_code or "").strip()
         if not code:
@@ -92,5 +145,12 @@ class SqlAlchemyRolePermissionRepository(RolePermissionRepositoryPort):
                 role_permissions.c.role_id == role_id,
                 role_permissions.c.permission_id == perm.id,
             )
+            .delete(synchronize_session=False)
+        )
+    
+    def delete_by_role_id(self, role_id: UUID) -> None:
+        (
+            self.session.query(role_permissions)
+            .filter(role_permissions.c.role_id == role_id)
             .delete(synchronize_session=False)
         )

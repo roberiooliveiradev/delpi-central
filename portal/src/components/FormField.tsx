@@ -17,7 +17,23 @@ export const FormField = ({
   htmlFor,
   children,
 }: Props) => {
-  const hasError = error && error.length > 0;
+  const hasError = !!(error && error.length > 0);
+
+  const enhanceChild = () => {
+    if (!React.isValidElement(children)) return children;
+
+    // Não clona Fragment
+    if (children.type === React.Fragment) return children;
+
+    return React.cloneElement(
+      children as React.ReactElement<any>,
+      {
+        id: htmlFor,
+        "aria-required": required || undefined,
+        "aria-invalid": hasError || undefined,
+      }
+    );
+  };
 
   return (
     <div className="form-field">
@@ -34,11 +50,7 @@ export const FormField = ({
         )}
       </div>
 
-      {React.cloneElement(children as any, {
-        id: htmlFor,
-        "aria-required": required || undefined,
-        "aria-invalid": hasError ? true : undefined,
-      })}
+      {enhanceChild()}
 
       {hasError && (
         <div className="field-error">

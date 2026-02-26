@@ -45,7 +45,6 @@ export const GroupsTab = () => {
 
   const openGroup = async (g: AdminGroup) => {
     setEditing(g);
-    setSelectedRoleIds(g.roles.map((r) => r.id));
     await fetchRoles();
   };
 
@@ -107,11 +106,6 @@ export const GroupsTab = () => {
         columns={[
           { key: "name", header: "Nome", sortable: true },
           { key: "description", header: "Descrição" },
-          {
-            key: "roles",
-            header: "Roles",
-            render: (row) => row.roles.length,
-          },
         ]}
         data={groupsResource.data}
         loading={groupsResource.loading}

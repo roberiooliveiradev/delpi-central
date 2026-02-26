@@ -95,3 +95,57 @@ class SqlAlchemyUserRepository(UserRepositoryPort):
         row = self.session.get(User, user_id)
         if row:
             self.session.delete(row)
+
+    # =========================
+    # Paginated List
+    # =========================
+
+    def list_paginated(
+        self,
+        *,
+        page: int,
+        page_size: int,
+        sort: str,
+        direction: str,
+    ) -> tuple[list[UserDTO], int]:
+
+        query = self.session.query(User)
+
+        # =========================
+        # Sorting seguro
+        # =========================
+
+        sort_map = {
+            "email": User.email,
+            "name": User.name,
+            "created_at": getattr(User, "created_at", User.email),
+            "last_login_at": getattr(User, "last_login_at", User.email),
+        }
+
+        column = sort_map.get(sort, User.email)
+
+        if direction.lower() == "desc":
+            column = column.desc()
+
+        query = query.order_by(column)
+
+        # =========================
+        # Total
+        # =========================
+
+        total = query.count()
+
+        # =========================
+        # Pagination
+        # =========================
+
+        offset = (page - 1) * page_size
+
+        rows = (
+            query
+            .offset(offset)
+            .limit(page_size)
+            .all()
+        )
+
+        return [self._to_dto(r) for r in rows], total

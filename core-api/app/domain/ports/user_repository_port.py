@@ -60,3 +60,13 @@ class UserRepositoryPort(Protocol):
 
     def delete(self, user_id: UUID) -> None:
         ...
+
+    def list_paginated(
+        self,
+        *,
+        page: int,
+        page_size: int,
+        sort: str,
+        direction: str
+    ) -> tuple[list[UserDTO], int]:
+        ...

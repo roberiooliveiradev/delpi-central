@@ -44,7 +44,7 @@ def create_app(config_name: str | None = None) -> Flask:
     # ==========================================================
     db.init_app(app)
     migrate.init_app(app, db)
-    socketio.init_app(app, async_mode="threading")
+    socketio.init_app(app)
 
     # ==========================================================
     # AUTH MIDDLEWARE

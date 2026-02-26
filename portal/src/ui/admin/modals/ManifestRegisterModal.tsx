@@ -35,7 +35,7 @@ type ManifestRoute = {
 };
 
 type ManifestV2 = {
-  schemaVersion: "2.0.0";
+  schemaVersion: "1.0.0";
   id: string;
   name: string;
   description?: string | null;
@@ -128,7 +128,7 @@ function toKebabCase(pascal: string) {
 
 function emptyManifestFor(type: ManifestType): ManifestV2 {
   const base: Omit<ManifestV2, "type" | "entry" | "permissions" | "routes"> = {
-    schemaVersion: "2.0.0",
+    schemaVersion: "1.0.0",
     id: "",
     name: "",
     description: "",
@@ -171,14 +171,14 @@ function emptyManifestFor(type: ManifestType): ManifestV2 {
 }
 
 function toManifestV2(input: any): ManifestV2 {
-  const schemaVersion = (input?.schemaVersion || "2.0.0") as "2.0.0";
+  const schemaVersion = (input?.schemaVersion || "1.0.0") as "1.0.0";
   const type = (input?.type || "microfrontend") as ManifestType;
 
   const permissions = Array.isArray(input?.permissions) ? input.permissions : [];
   const routes = Array.isArray(input?.routes) ? input.routes : [];
 
   return {
-    schemaVersion: schemaVersion === "2.0.0" ? "2.0.0" : "2.0.0",
+    schemaVersion: schemaVersion === "1.0.0" ? "1.0.0" : "1.0.0",
     id: String(input?.id || ""),
     name: String(input?.name || ""),
     description: input?.description ?? null,
@@ -207,8 +207,8 @@ function toManifestV2(input: any): ManifestV2 {
 function validateManifestLocal(m: ManifestV2, lucideKebabSet: Set<string>) {
   const errors: { path: string; message: string }[] = [];
 
-  if (m.schemaVersion !== "2.0.0")
-    errors.push({ path: "schemaVersion", message: "schemaVersion deve ser 2.0.0" });
+  if (m.schemaVersion !== "1.0.0")
+    errors.push({ path: "schemaVersion", message: "schemaVersion deve ser 1.0.0" });
 
   if (!m.id.trim())
     errors.push({ path: "id", message: "id é obrigatório" });
@@ -428,7 +428,7 @@ export const ManifestRegisterModal = ({
 
     return {
       ...manifest,
-      schemaVersion: "2.0.0",
+      schemaVersion: "1.0.0",
       id,
       basePath,
       entry:

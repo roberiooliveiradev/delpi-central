@@ -60,3 +60,17 @@ class SqlAlchemyUserGroupRepository(UserGroupRepositoryPort):
             )
             .delete(synchronize_session=False)
         )
+
+    def delete_by_group_id(self, group_id: UUID) -> None:
+        (
+            self.session.query(user_groups)
+            .filter(user_groups.c.group_id == group_id)
+            .delete(synchronize_session=False)
+        )
+
+    def delete_by_user_id(self, user_id: UUID) -> None:
+        (
+            self.session.query(user_groups)
+            .filter(user_groups.c.user_id == user_id)
+            .delete(synchronize_session=False)
+        )

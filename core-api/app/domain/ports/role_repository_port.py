@@ -31,3 +31,13 @@ class RoleRepositoryPort(Protocol):
 
     def delete(self, role_id: UUID) -> None:
         ...
+        
+    def list_paginated(
+        self,
+        *,
+        page: int,
+        page_size: int,
+        sort: str,
+        direction: str
+        ) -> tuple[list[RoleDTO], int]:
+        ...

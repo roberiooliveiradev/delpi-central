@@ -1,6 +1,6 @@
 # app/domain/ports/admin_app_repository_port.py
 
-from typing import Protocol, List
+from typing import Protocol, List, Tuple
 from dataclasses import dataclass
 
 
@@ -13,11 +13,19 @@ class AdminAppDTO:
     type: str
     version: str
     active: bool
+    base_path: str | None
 
 
 class AdminAppRepositoryPort(Protocol):
 
-    def list_all(self) -> List[AdminAppDTO]:
+    def list_paginated(
+        self,
+        page: int,
+        page_size: int,
+        q: str | None,
+        sort: str,
+        direction: str,
+    ) -> Tuple[List[AdminAppDTO], int]:
         ...
 
     def get(self, app_id: str) -> AdminAppDTO | None:
