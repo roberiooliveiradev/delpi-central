@@ -6,6 +6,10 @@ import * as LucideIcons from "lucide-react";
 import { IconPickerModal } from "./IconPickerModal";
 import { FormField } from "../../../components/FormField";
 import { HttpError } from "../../../data/apiClient";
+
+import { MicrofrontendBaseFields } from "./base/MicrofoentendBaseFields";
+import { IframeBaseFields } from "./base/IframeBaseFields";
+import { BackendOnlyBaseFields } from "./base/BackendOnlyBaseFields";
 /* =========================
    Types
 ========================= */
@@ -908,7 +912,9 @@ export const ManifestRegisterModal = ({
                 <FormField label="Tipo" htmlFor="manifest-type">
                   <select
                     value={manifest.type}
-                    onChange={(e) => setBase({ type: e.target.value as ManifestType })}
+                    onChange={(e) =>
+                      setBase({ type: e.target.value as ManifestType })
+                    }
                     disabled={loading}
                   >
                     <option value="microfrontend">microfrontend</option>
@@ -934,48 +940,32 @@ export const ManifestRegisterModal = ({
                   </>
                 </FormField>
 
-                <FormField
-                  label={
-                    manifest.type === "microfrontend"
-                      ? "Entry (auto)"
-                      : manifest.type === "iframe"
-                      ? "Entry (URL do iframe)"
-                      : "Entry"
-                  }
-                  htmlFor="manifest-entry"
-                  error={getFieldErrors("entry")}
-                >
-                  <>
-                    <input
-                      value={
-                        manifest.type === "microfrontend"
-                          ? computed.entry
-                          : manifest.entry ?? ""
-                      }
-                      onChange={(e) => setBase({ entry: e.target.value })}
-                      disabled={
-                        manifest.type === "microfrontend" ||
-                        manifest.type === "backend-only"
-                      }
-                      placeholder={
-                        manifest.type === "iframe"
-                          ? "ex: https://glpi.suaempresa.com"
-                          : "ex: /apps/crm/remoteEntry.js"
-                      }
-                    />
+                {manifest.type === "microfrontend" && (
+                  <MicrofrontendBaseFields
+                    manifest={manifest}
+                    computed={computed}
+                    setBase={setBase}
+                    markTouched={markTouched}
+                    isTouched={isTouched}
+                    getFieldErrors={getFieldErrors}
+                    openAppIconPicker={openAppIconPicker}
+                    renderLucideIcon={renderLucideIcon}
+                  />
+                )}
 
-                    {manifest.type === "microfrontend" && (
-                      <small>Auto: {computed.entry}</small>
-                    )}
-                    {manifest.type === "backend-only" && (
-                      <small>backend-only não precisa de entry.</small>
-                    )}
-                  </>
-                </FormField>
-              </div>
+                {manifest.type === "iframe" && (
+                  <IframeBaseFields
+                    manifest={manifest}
+                    setBase={setBase}
+                    markTouched={markTouched}
+                    isTouched={isTouched}
+                    getFieldErrors={getFieldErrors}
+                  />
+                )}
 
-              <div className="hint">
-                <strong>Dica:</strong> microfrontend gera <code>entry</code> automaticamente. Iframe usa URL em <code>entry</code>.
+                {manifest.type === "backend-only" && (
+                  <BackendOnlyBaseFields />
+                )}
               </div>
             </>
           )}

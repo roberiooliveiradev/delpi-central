@@ -193,7 +193,10 @@
       "then": {
         "required": ["backend"],
         "properties": {
-          "routes": { "maxItems": 0 }
+          "routes": {
+            "type": "array",
+            "maxItems": 0
+          }
         }
       }
     },
