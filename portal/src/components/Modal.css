@@ -525,7 +525,7 @@ textarea.input-valid:focus-visible {
 .form-required-badge:hover::after {
   content: "Campo obrigatório";
   position: absolute;
-  margin-top: 28px;
+  margin-top: 0px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   padding: 6px 10px;

@@ -16,6 +16,7 @@
   ],
 
   "properties": {
+
     "schemaVersion": {
       "type": "string",
       "const": "1.0.0"
@@ -34,22 +35,16 @@
       "maxLength": 150
     },
 
-    "description": {
-      "type": "string"
-    },
+    "description": { "type": "string" },
 
-    "category": {
-      "type": "string"
-    },
+    "category": { "type": "string" },
 
     "version": {
       "type": "string",
       "pattern": "^(\\d+)\\.(\\d+)\\.(\\d+)(-[0-9A-Za-z.-]+)?$"
     },
 
-    "icon": {
-      "type": "string"
-    },
+    "icon": { "type": "string" },
 
     "type": {
       "type": "string",
@@ -62,12 +57,10 @@
     },
 
     "entry": {
-      "type": "string"
+      "type": ["string", "null"]
     },
 
-    "healthcheck": {
-      "type": "string"
-    },
+    "healthcheck": { "type": "string" },
 
     "dependencies": {
       "type": "array",
@@ -92,9 +85,7 @@
             "minLength": 1,
             "maxLength": 150
           },
-          "description": {
-            "type": "string"
-          },
+          "description": { "type": "string" },
           "module": {
             "type": "string",
             "minLength": 1,
@@ -121,24 +112,18 @@
             "minLength": 1,
             "maxLength": 150
           },
-          "icon": {
-            "type": "string"
-          },
+          "icon": { "type": "string" },
           "permission": {
             "type": "string",
             "minLength": 3,
             "maxLength": 150
           },
-          "showInMenu": {
-            "type": "boolean"
-          },
+          "showInMenu": { "type": "boolean" },
           "order": {
             "type": "integer",
             "minimum": 0
           },
-          "menuGroup": {
-            "type": "string"
-          }
+          "menuGroup": { "type": "string" }
         }
       }
     },
@@ -166,41 +151,41 @@
     "metadata": { "type": "object" }
   },
 
+  "oneOf": [
+
+    {
+      "title": "Microfrontend Manifest",
+      "properties": {
+        "type": { "const": "microfrontend" },
+        "entry": { "type": "string", "minLength": 1 },
+        "routes": { "type": "array", "minItems": 1 }
+      },
+      "required": ["entry", "routes"]
+    },
+
+    {
+      "title": "Iframe Manifest",
+      "properties": {
+        "type": { "const": "iframe" },
+        "entry": { "type": "string", "minLength": 1 },
+        "routes": { "type": "array", "minItems": 1 }
+      },
+      "required": ["entry", "routes"]
+    },
+
+    {
+      "title": "Backend-only Manifest",
+      "properties": {
+        "type": { "const": "backend-only" },
+        "entry": { "type": ["null"] },
+        "routes": { "type": "array", "maxItems": 0 }
+      },
+      "required": ["backend"]
+    }
+
+  ],
+
   "allOf": [
-
-    {
-      "if": { "properties": { "type": { "const": "microfrontend" } } },
-      "then": {
-        "required": ["entry", "routes"],
-        "properties": {
-          "routes": { "minItems": 1 }
-        }
-      }
-    },
-
-    {
-      "if": { "properties": { "type": { "const": "iframe" } } },
-      "then": {
-        "required": ["entry", "routes"],
-        "properties": {
-          "routes": { "minItems": 1 }
-        }
-      }
-    },
-
-    {
-      "if": { "properties": { "type": { "const": "backend-only" } } },
-      "then": {
-        "required": ["backend"],
-        "properties": {
-          "routes": {
-            "type": "array",
-            "maxItems": 0
-          }
-        }
-      }
-    },
-
     {
       "if": {
         "properties": {
@@ -219,6 +204,5 @@
         }
       }
     }
-
   ]
 }

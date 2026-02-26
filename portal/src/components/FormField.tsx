@@ -43,7 +43,7 @@ export const FormField = ({
         {required && (
           <span
             className="form-required-badge"
-            title="Campo obrigatório"
+            
           >
             REQUIRED
           </span>

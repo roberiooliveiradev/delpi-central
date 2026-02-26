@@ -1,29 +1,26 @@
 # app/application/validators/manifest_validator.py
-
 import json
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from jsonschema import Draft202012Validator
 
-from app.domain.plugins.manifest_rules import ManifestError, validate_manifest_rules
+from app.domain.plugins.manifest_rules import (
+    ManifestError,
+    validate_manifest_rules,
+)
 
-
-@dataclass(frozen=True)
-class ValidationResult:
-    is_valid: bool
-    errors: List[ManifestError]
+from app.application.validators.validation_result import ValidationResult
+from app.application.validators.manifest_version_resolver import ManifestVersionResolver
+from app.application.validators.manifest_normalizer import ManifestNormalizer
+from app.application.validators.strategies.backend_only_strategy import BackendOnlyStrategy
+from app.application.validators.strategies.microfrontend_strategy import MicrofrontendStrategy
+from app.application.validators.strategies.iframe_strategy import IframeStrategy
 
 
 class ManifestValidator:
-    """
-    Validação em 2 etapas:
-      1) JSON Schema (estrutura, tipos, required)
-      2) Business rules (coerência e convenções)
-    """
 
-    def __init__(self, schema_path: Optional[str] = None) -> None:
+    def __init__(self, schema_path: str | None = None) -> None:
         self._schema_path = schema_path or str(
             Path(__file__).resolve().parents[2]
             / "infrastructure"
@@ -41,9 +38,16 @@ class ManifestValidator:
             return json.load(f)
 
     def validate(self, manifest: Dict[str, Any]) -> ValidationResult:
+
+        # 1. Normalização automática
+        manifest = ManifestNormalizer.normalize(manifest)
+
+        # 2. Resolver versão
+        ManifestVersionResolver.resolve(manifest)
+
         errors: List[ManifestError] = []
 
-        # 1) JSON Schema
+        # 3. JSON Schema
         for e in sorted(self._validator.iter_errors(manifest), key=lambda x: list(x.path)):
             json_path = "$"
             for p in e.path:
@@ -60,11 +64,33 @@ class ManifestValidator:
                 )
             )
 
-        # evita cascata
         if errors:
-            return ValidationResult(is_valid=False, errors=errors)
+            return ValidationResult(False, errors)
 
-        # 2) Business rules
+        # 4. Strategy por tipo
+        plugin_type = manifest.get("type")
+
+        if plugin_type == "backend-only":
+            strategy = BackendOnlyStrategy()
+        elif plugin_type == "microfrontend":
+            strategy = MicrofrontendStrategy()
+        elif plugin_type == "iframe":
+            strategy = IframeStrategy()
+        else:
+            return ValidationResult(
+                False,
+                [
+                    ManifestError(
+                        code="unsupported_plugin_type",
+                        message=f"Tipo de plugin '{plugin_type}' não suportado.",
+                        path="$.type",
+                    )
+                ],
+            )
+
+        errors.extend(strategy.validate(manifest))
+
+        # 5. Regras de domínio
         errors.extend(validate_manifest_rules(manifest))
 
-        return ValidationResult(is_valid=(len(errors) == 0), errors=errors)
+        return ValidationResult(len(errors) == 0, errors)

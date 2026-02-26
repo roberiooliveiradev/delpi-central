@@ -4,38 +4,55 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Set
 
-# SemVer básico (MAJOR.MINOR.PATCH)
+
+# ============================================================
+# Regex & Constants
+# ============================================================
+
 SEMVER_RE = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
-
-# id do plugin: lowercase, hífen, sem espaços
 PLUGIN_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
-
-# permission code: module.resource.action...
-PERMISSION_CODE_RE = re.compile(r"^[a-z][a-z0-9]*\.[a-z0-9]+(?:\.[a-z0-9]+)*$")
-
-# paths do app: /crm, /crm/leads (somente [-a-z0-9/])
+PERMISSION_CODE_RE = re.compile(
+    r"^[a-z][a-z0-9-]*\.[a-z0-9-]+(?:\.[a-z0-9-]+)*$"
+)
 PATH_RE = re.compile(r"^/[-a-z0-9/]*$")
 
+
+# ============================================================
+# Error Model
+# ============================================================
 
 @dataclass(frozen=True)
 class ManifestError:
     code: str
     message: str
-    path: str  # JSONPath simplificado (ex: "$.routes[0].path")
+    path: str  # JSONPath simplificado
 
+
+# ============================================================
+# Main Validator
+# ============================================================
 
 def validate_manifest_rules(manifest: Dict[str, Any]) -> List[ManifestError]:
     """
     Regras de negócio além do JSON Schema.
-    Importante: schema valida tipos/required; aqui validamos coerência.
+    Schema valida estrutura/tipos; aqui validamos coerência semântica.
     """
+
     errors: List[ManifestError] = []
 
     plugin_id = str(manifest.get("id") or "").strip()
     version = str(manifest.get("version") or "").strip()
     base_path = str(manifest.get("basePath") or "").strip()
+    plugin_type = str(manifest.get("type") or "").strip()
 
-    # id
+    perms = manifest.get("permissions") or []
+    routes = manifest.get("routes") or []
+    backend = manifest.get("backend")
+
+    # ========================================================
+    # Core Fields
+    # ========================================================
+
     if not PLUGIN_ID_RE.match(plugin_id):
         errors.append(
             ManifestError(
@@ -45,7 +62,6 @@ def validate_manifest_rules(manifest: Dict[str, Any]) -> List[ManifestError]:
             )
         )
 
-    # version
     if not SEMVER_RE.match(version):
         errors.append(
             ManifestError(
@@ -55,7 +71,6 @@ def validate_manifest_rules(manifest: Dict[str, Any]) -> List[ManifestError]:
             )
         )
 
-    # basePath
     if not PATH_RE.match(base_path) or base_path == "/":
         errors.append(
             ManifestError(
@@ -65,9 +80,12 @@ def validate_manifest_rules(manifest: Dict[str, Any]) -> List[ManifestError]:
             )
         )
 
-    # permissions: formato + unicidade + module coerente + name obrigatório
+    # ========================================================
+    # Permissions
+    # ========================================================
+
     seen_perm_codes: Set[str] = set()
-    perms = manifest.get("permissions") or []
+
     for i, perm in enumerate(perms):
         perm = perm or {}
         code = str(perm.get("code") or "").strip()
@@ -103,7 +121,6 @@ def validate_manifest_rules(manifest: Dict[str, Any]) -> List[ManifestError]:
                 )
             )
 
-        # regra forte: module deve bater com o id do plugin
         if module and plugin_id and module != plugin_id:
             errors.append(
                 ManifestError(
@@ -113,88 +130,153 @@ def validate_manifest_rules(manifest: Dict[str, Any]) -> List[ManifestError]:
                 )
             )
 
-    # routes: path dentro do basePath + unicidade + permission existente
-    perm_lookup = {
-        str((p or {}).get("code") or "").strip()
-        for p in perms
-        if str((p or {}).get("code") or "").strip()
-    }
+    perm_lookup = {p.get("code") for p in perms if p.get("code")}
 
-    seen_routes: Set[str] = set()
-    routes = manifest.get("routes") or []
-    for i, route in enumerate(routes):
-        route = route or {}
-        path = str(route.get("path") or "").strip()
-        permission = str(route.get("permission") or "").strip()
+    # ========================================================
+    # Type-Specific Rules
+    # ========================================================
 
-        if not PATH_RE.match(path):
+    # --------------------------------------------------------
+    # MICROFRONTEND / IFRAME
+    # --------------------------------------------------------
+
+    if plugin_type in ("microfrontend", "iframe"):
+
+        # entry obrigatório semanticamente
+        entry = str(manifest.get("entry") or "").strip()
+        if not entry:
             errors.append(
                 ManifestError(
-                    code="invalid_route_path",
-                    message="Route path deve começar com '/' e conter apenas [-a-z0-9/].",
-                    path=f"$.routes[{i}].path",
+                    code="entry_required",
+                    message=f"'entry' é obrigatório para plugins do tipo '{plugin_type}'.",
+                    path="$.entry",
                 )
             )
 
-        if base_path and path and not path.startswith(base_path):
+        # routes obrigatórias
+        if not routes:
             errors.append(
                 ManifestError(
-                    code="route_outside_base_path",
-                    message=f"Route path '{path}' deve iniciar com basePath '{base_path}'.",
-                    path=f"$.routes[{i}].path",
+                    code="routes_required",
+                    message=f"Plugins do tipo '{plugin_type}' devem declarar ao menos uma route.",
+                    path="$.routes",
                 )
             )
 
-        if path and path in seen_routes:
-            errors.append(
-                ManifestError(
-                    code="duplicate_route_path_in_manifest",
-                    message=f"Route path duplicada no manifesto: '{path}'.",
-                    path=f"$.routes[{i}].path",
-                )
-            )
-        if path:
-            seen_routes.add(path)
+        seen_routes: Set[str] = set()
 
-        if permission and permission not in perm_lookup:
-            errors.append(
-                ManifestError(
-                    code="route_permission_not_declared",
-                    message=f"Route permission '{permission}' não existe em permissions[].code.",
-                    path=f"$.routes[{i}].permission",
-                )
-            )
+        for i, route in enumerate(routes):
+            route = route or {}
+            path = str(route.get("path") or "").strip()
+            permission = str(route.get("permission") or "").strip()
 
-    # backend constraints (se backend existe, issuer/audience obrigatórios)
-    backend = manifest.get("backend")
-    if backend is not None:
-        backend = backend or {}
-        issuer = str(backend.get("issuer") or "").strip()
-        audience = str(backend.get("audience") or "").strip()
-        required = backend.get("required", None)
-
-        if required is True:
-            if not issuer:
+            if not PATH_RE.match(path):
                 errors.append(
                     ManifestError(
-                        code="backend_missing_issuer",
-                        message="backend.issuer é obrigatório quando backend.required=true.",
-                        path="$.backend.issuer",
-                    )
-                )
-            if not audience:
-                errors.append(
-                    ManifestError(
-                        code="backend_missing_audience",
-                        message="backend.audience é obrigatório quando backend.required=true.",
-                        path="$.backend.audience",
+                        code="invalid_route_path",
+                        message="Route path deve começar com '/' e conter apenas [-a-z0-9/].",
+                        path=f"$.routes[{i}].path",
                     )
                 )
 
-    # recomendação para backend-only: ter {id}.access
-    plugin_type = str(manifest.get("type") or "").strip()
-    if plugin_type == "backend-only" and plugin_id:
-        if f"{plugin_id}.access" not in perm_lookup:
+            if base_path and path and not path.startswith(base_path):
+                errors.append(
+                    ManifestError(
+                        code="route_outside_base_path",
+                        message=f"Route path '{path}' deve iniciar com basePath '{base_path}'.",
+                        path=f"$.routes[{i}].path",
+                    )
+                )
+
+            if path and path in seen_routes:
+                errors.append(
+                    ManifestError(
+                        code="duplicate_route_path_in_manifest",
+                        message=f"Route path duplicada no manifesto: '{path}'.",
+                        path=f"$.routes[{i}].path",
+                    )
+                )
+            if path:
+                seen_routes.add(path)
+
+            if permission and permission not in perm_lookup:
+                errors.append(
+                    ManifestError(
+                        code="route_permission_not_declared",
+                        message=f"Route permission '{permission}' não existe em permissions[].code.",
+                        path=f"$.routes[{i}].permission",
+                    )
+                )
+
+    # --------------------------------------------------------
+    # BACKEND-ONLY
+    # --------------------------------------------------------
+
+    if plugin_type == "backend-only":
+
+        # routes não permitidas
+        if routes:
+            errors.append(
+                ManifestError(
+                    code="backend_only_cannot_have_routes",
+                    message="Plugins backend-only não podem declarar routes.",
+                    path="$.routes",
+                )
+            )
+
+        # entry não permitido
+        if manifest.get("entry") not in (None, "",):
+            errors.append(
+                ManifestError(
+                    code="backend_only_entry_not_allowed",
+                    message="Plugins backend-only não devem definir 'entry'.",
+                    path="$.entry",
+                )
+            )
+
+        # backend obrigatório
+        if backend is None:
+            errors.append(
+                ManifestError(
+                    code="backend_required",
+                    message="Plugins backend-only devem declarar objeto 'backend'.",
+                    path="$.backend",
+                )
+            )
+        else:
+            backend = backend or {}
+
+            # required deve ser True
+            if backend.get("required") is not True:
+                errors.append(
+                    ManifestError(
+                        code="backend_required_must_be_true",
+                        message="Para plugins backend-only, backend.required deve ser true.",
+                        path="$.backend.required",
+                    )
+                )
+
+            # JWT obrigatório se validateJwt=true
+            if backend.get("validateJwt") is True:
+                if not str(backend.get("issuer") or "").strip():
+                    errors.append(
+                        ManifestError(
+                            code="backend_missing_issuer",
+                            message="backend.issuer é obrigatório quando validateJwt=true.",
+                            path="$.backend.issuer",
+                        )
+                    )
+                if not str(backend.get("audience") or "").strip():
+                    errors.append(
+                        ManifestError(
+                            code="backend_missing_audience",
+                            message="backend.audience é obrigatório quando validateJwt=true.",
+                            path="$.backend.audience",
+                        )
+                    )
+
+        # recomendação forte: permission access
+        if plugin_id and f"{plugin_id}.access" not in perm_lookup:
             errors.append(
                 ManifestError(
                     code="missing_access_permission",

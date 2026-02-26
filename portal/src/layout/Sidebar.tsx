@@ -137,12 +137,16 @@ export const Sidebar = () => {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const initials =
-    user?.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || "?";
+  const initials = (() => {
+    if (!user?.name) return "?";
+
+    const parts = user.name.trim().split(" ").filter(Boolean);
+
+    const first = parts[0]?.[0] ?? "";
+    const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+
+    return (first + last).toUpperCase() || "?";
+  })();
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");

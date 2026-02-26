@@ -64,7 +64,7 @@ class UpdatePluginManifestUseCase:
                 }],
             )
 
-        if str(manifest.get("version") or "") != str(plugin.get("version") or ""):
+        if str(manifest.get("version") or "") != str(plugin.version or ""):
             return UpdatePluginManifestResult(
                 success=False,
                 errors=[{
@@ -77,7 +77,7 @@ class UpdatePluginManifestUseCase:
         try:
             self._uow.plugins.update_metadata(
                 plugin_id,
-                name=str(manifest.get("name") or plugin.get("name") or ""),
+                name=str(manifest.get("name") or plugin.name or ""),
                 description=manifest.get("description"),
                 icon=manifest.get("icon"),
             )

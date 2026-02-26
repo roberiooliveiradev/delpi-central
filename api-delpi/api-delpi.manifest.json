@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "api-delpi",
+  "name": "API DELPI TOTVS",
+  "description": "API corporativa de integrações DELPI",
+  "icon": "server",
+  "version": "1.0.0",
+  "type": "backend-only",
+  "basePath": "/apps/api-delpi",
+  "entry": null,
+  "permissions": [
+    {
+      "code": "api-delpi.access",
+      "name": "api-delpi.access",
+      "description": "Permite acesso à API DELPI",
+      "module": "api-delpi"
+    }
+  ],
+  "routes": [],
+  "backend": {
+    "audience": "delpi-central",
+    "baseUrl": "/apps/api-delpi",
+    "issuer": "https://central.delpi.com.br/auth/realms/delpi",
+    "required": true,
+    "requiredPermissionsHeader": "x-user-permissions",
+    "serviceName": "api-delpi",
+    "validateJwt": true
+  },
+  "lifecycle": {
+    "allowHotReload": false,
+    "allowVersionUpgrade": true,
+    "autoCreateRoutes": false,
+    "autoRegisterPermissions": true
+  },
+  "security": {
+    "requireHttps": true
+  },
+  "observability": {
+    "healthEndpoint": "/health",
+    "logFormat": "json"
+  },
+  "ui": {
+    "displayInAppLauncher": false
+  }
+}

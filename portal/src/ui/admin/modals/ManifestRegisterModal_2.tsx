@@ -6,10 +6,6 @@ import * as LucideIcons from "lucide-react";
 import { IconPickerModal } from "./IconPickerModal";
 import { FormField } from "../../../components/FormField";
 import { HttpError } from "../../../data/apiClient";
-
-import { MicrofrontendBaseFields } from "./base/MicrofoentendBaseFields";
-import { IframeBaseFields } from "./base/IframeBaseFields";
-import { BackendOnlyBaseFields } from "./base/BackendOnlyBaseFields";
 /* =========================
    Types
 ========================= */
@@ -38,7 +34,7 @@ type ManifestRoute = {
   showInMenu?: boolean | null;
 };
 
-type ManifestSchema = {
+type ManifestV2 = {
   schemaVersion: "1.0.0";
   id: string;
   name: string;
@@ -50,12 +46,6 @@ type ManifestSchema = {
   entry?: string | null;
   permissions: ManifestPermission[];
   routes: ManifestRoute[];
-
-  backend?: any;
-  lifecycle?: any;
-  security?: any;
-  observability?: any;
-  ui?: any;
 };
 
 type Props = {
@@ -136,8 +126,8 @@ function toKebabCase(pascal: string) {
     .toLowerCase();
 }
 
-function emptyManifestFor(type: ManifestType): ManifestSchema {
-  const base: Omit<ManifestSchema, "type" | "entry" | "permissions" | "routes"> = {
+function emptyManifestFor(type: ManifestType): ManifestV2 {
+  const base: Omit<ManifestV2, "type" | "entry" | "permissions" | "routes"> = {
     schemaVersion: "1.0.0",
     id: "",
     name: "",
@@ -180,7 +170,7 @@ function emptyManifestFor(type: ManifestType): ManifestSchema {
   };
 }
 
-function toManifest(input: any): ManifestSchema {
+function toManifestV2(input: any): ManifestV2 {
   const schemaVersion = (input?.schemaVersion || "1.0.0") as "1.0.0";
   const type = (input?.type || "microfrontend") as ManifestType;
 
@@ -211,16 +201,10 @@ function toManifest(input: any): ManifestSchema {
       order: r?.order ?? null,
       showInMenu: r?.showInMenu ?? r?.show_in_menu ?? null,
     })),
-
-    backend: input?.backend ?? undefined,
-    lifecycle: input?.lifecycle ?? undefined,
-    security: input?.security ?? undefined,
-    observability: input?.observability ?? undefined,
-    ui: input?.ui ?? undefined,
   };
 }
 
-function validateManifestLocal(m: ManifestSchema, lucideKebabSet: Set<string>) {
+function validateManifestLocal(m: ManifestV2, lucideKebabSet: Set<string>) {
   const errors: { path: string; message: string }[] = [];
 
   if (m.schemaVersion !== "1.0.0")
@@ -301,79 +285,48 @@ function validateManifestLocal(m: ManifestSchema, lucideKebabSet: Set<string>) {
      ROUTES
   ========================= */
 
-  if (m.type === "backend-only") {
-    // Backend-only NÃO deve ter routes
-    if (Array.isArray(m.routes) && m.routes.length > 0) {
-      errors.push({
-        path: "routes",
-        message: "plugins backend-only não devem declarar routes",
-      });
-    }
+  if (!Array.isArray(m.routes) || m.routes.length === 0) {
+    errors.push({ path: "routes", message: "routes deve ter ao menos 1 item" });
   } else {
-    // Microfrontend e iframe DEVEM ter routes
-    if (!Array.isArray(m.routes) || m.routes.length === 0) {
-      errors.push({
-        path: "routes",
-        message: "routes deve ter ao menos 1 item",
-      });
-    } else {
-      m.routes.forEach((r, idx) => {
-        if (!r.path.trim())
-          errors.push({
-            path: `routes[${idx}].path`,
-            message: "path é obrigatório",
-          });
+    m.routes.forEach((r, idx) => {
+      if (!r.path.trim())
+        errors.push({ path: `routes[${idx}].path`, message: "path é obrigatório" });
 
-        if (r.path && !r.path.startsWith("/"))
-          errors.push({
-            path: `routes[${idx}].path`,
-            message: "path deve começar com '/'",
-          });
+      if (r.path && !r.path.startsWith("/"))
+        errors.push({ path: `routes[${idx}].path`, message: "path deve começar com '/'" });
 
-        if (!r.label || !r.label.trim())
-          errors.push({
-            path: `routes[${idx}].label`,
-            message: "label é obrigatório",
-          });
+      if (!r.label || !r.label.trim())
+        errors.push({ path: `routes[${idx}].label`, message: "label é obrigatório" });
 
-        if (r.order === null || r.order === undefined)
-          errors.push({
-            path: `routes[${idx}].order`,
-            message: "order é obrigatório",
-          });
-        else if (r.order < 0)
-          errors.push({
-            path: `routes[${idx}].order`,
-            message: "order não pode ser negativo",
-          });
+      if (r.order === null || r.order === undefined)
+        errors.push({ path: `routes[${idx}].order`, message: "order é obrigatório" });
+      else if (r.order < 0)
+        errors.push({ path: `routes[${idx}].order`, message: "order não pode ser negativo" });
 
-        const perm = (r.permission || "").trim();
-        if (perm) {
-          const exists = m.permissions.some(
-            (p) => p.code.trim() === perm
-          );
-          if (!exists)
-            errors.push({
-              path: `routes[${idx}].permission`,
-              message: `permission não existe em permissions: ${perm}`,
-            });
-        }
-
-        const icon = (r.icon || "").trim();
-
-        if (!icon) {
+      const perm = (r.permission || "").trim();
+      if (perm) {
+        const exists = m.permissions.some((p) => p.code.trim() === perm);
+        if (!exists)
           errors.push({
-            path: `routes[${idx}].icon`,
-            message: "ícone é obrigatório",
+            path: `routes[${idx}].permission`,
+            message: `permission não existe em permissions: ${perm}`,
           });
-        } else if (!lucideKebabSet.has(icon)) {
-          errors.push({
-            path: `routes[${idx}].icon`,
-            message: `Ícone Lucide inválido: "${icon}"`,
-          });
-        }
-      });
-    }
+      }
+
+      const icon = (r.icon || "").trim();
+
+      if (!icon) {
+        errors.push({
+          path: `routes[${idx}].icon`,
+          message: "ícone é obrigatório",
+        });
+      } else if (!lucideKebabSet.has(icon)) {
+        errors.push({
+          path: `routes[${idx}].icon`,
+          message: `Ícone Lucide inválido: "${icon}"`,
+        });
+      }
+    });
   }
 
   return errors;
@@ -410,7 +363,7 @@ export const ManifestRegisterModal = ({
   const [tab, setTab] = useState<Tab>("base");
 
   const [template, setTemplate] = useState<ManifestType>("microfrontend");
-  const [manifest, setManifest] = useState<ManifestSchema>(() => emptyManifestFor("microfrontend"));
+  const [manifest, setManifest] = useState<ManifestV2>(() => emptyManifestFor("microfrontend"));
 
   const [backendErrors, setBackendErrors] = useState<BackendErrorItem[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -450,7 +403,7 @@ export const ManifestRegisterModal = ({
     setSubmitError(null);
 
     if (isEdit && initialManifest) {
-      const m = toManifest(initialManifest);
+      const m = toManifestV2(initialManifest);
       setTemplate(m.type || "microfrontend");
       setManifest(m);
       setTab("base");
@@ -469,7 +422,7 @@ export const ManifestRegisterModal = ({
     return { id, basePath, entry };
   }, [manifest.id, manifest.basePath, manifest.type, manifest.entry]);
 
-  const finalManifest = useMemo<ManifestSchema>(() => {
+  const finalManifest = useMemo<ManifestV2>(() => {
     const id = computed.id || manifest.id;
     const basePath = computed.basePath || manifest.basePath;
 
@@ -545,7 +498,7 @@ export const ManifestRegisterModal = ({
   /* ---------- state mutators ---------- */
 
   const setBase = useCallback(
-    (patch: Partial<ManifestSchema>) => {
+    (patch: Partial<ManifestV2>) => {
       clearBackendErrors();
       setManifest((prev) => ({ ...prev, ...patch }));
     },
@@ -695,7 +648,7 @@ export const ManifestRegisterModal = ({
         return;
       }
 
-      const m = toManifest(parsed.value);
+      const m = toManifestV2(parsed.value);
       setTemplate(m.type || "microfrontend");
       setManifest(m);
       setTab("base");
@@ -829,16 +782,10 @@ export const ManifestRegisterModal = ({
                 type="file"
                 accept=".json,application/json"
                 style={{ display: "none" }}
-                onChange={(e) => {
-                  const input = e.currentTarget;
-                  const file = input.files?.[0];
-
-                  if (file) {
-                    importFromFile(file);
-                  }
-
-                  // reset imediato, sem await
-                  input.value = "";
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) await importFromFile(file);
+                  e.currentTarget.value = "";
                 }}
               />
             </div>
@@ -961,9 +908,7 @@ export const ManifestRegisterModal = ({
                 <FormField label="Tipo" htmlFor="manifest-type">
                   <select
                     value={manifest.type}
-                    onChange={(e) =>
-                      setBase({ type: e.target.value as ManifestType })
-                    }
+                    onChange={(e) => setBase({ type: e.target.value as ManifestType })}
                     disabled={loading}
                   >
                     <option value="microfrontend">microfrontend</option>
@@ -989,32 +934,48 @@ export const ManifestRegisterModal = ({
                   </>
                 </FormField>
 
-                {manifest.type === "microfrontend" && (
-                  <MicrofrontendBaseFields
-                    manifest={manifest}
-                    computed={computed}
-                    setBase={setBase}
-                    markTouched={markTouched}
-                    isTouched={isTouched}
-                    getFieldErrors={getFieldErrors}
-                    openAppIconPicker={openAppIconPicker}
-                    renderLucideIcon={renderLucideIcon}
-                  />
-                )}
+                <FormField
+                  label={
+                    manifest.type === "microfrontend"
+                      ? "Entry (auto)"
+                      : manifest.type === "iframe"
+                      ? "Entry (URL do iframe)"
+                      : "Entry"
+                  }
+                  htmlFor="manifest-entry"
+                  error={getFieldErrors("entry")}
+                >
+                  <>
+                    <input
+                      value={
+                        manifest.type === "microfrontend"
+                          ? computed.entry
+                          : manifest.entry ?? ""
+                      }
+                      onChange={(e) => setBase({ entry: e.target.value })}
+                      disabled={
+                        manifest.type === "microfrontend" ||
+                        manifest.type === "backend-only"
+                      }
+                      placeholder={
+                        manifest.type === "iframe"
+                          ? "ex: https://glpi.suaempresa.com"
+                          : "ex: /apps/crm/remoteEntry.js"
+                      }
+                    />
 
-                {manifest.type === "iframe" && (
-                  <IframeBaseFields
-                    manifest={manifest}
-                    setBase={setBase}
-                    markTouched={markTouched}
-                    isTouched={isTouched}
-                    getFieldErrors={getFieldErrors}
-                  />
-                )}
+                    {manifest.type === "microfrontend" && (
+                      <small>Auto: {computed.entry}</small>
+                    )}
+                    {manifest.type === "backend-only" && (
+                      <small>backend-only não precisa de entry.</small>
+                    )}
+                  </>
+                </FormField>
+              </div>
 
-                {manifest.type === "backend-only" && (
-                  <BackendOnlyBaseFields />
-                )}
+              <div className="hint">
+                <strong>Dica:</strong> microfrontend gera <code>entry</code> automaticamente. Iframe usa URL em <code>entry</code>.
               </div>
             </>
           )}
