@@ -162,7 +162,7 @@ function emptyManifestFor(type: ManifestType): ManifestSchema {
     return {
       ...base,
       type,
-      entry: "/apps//remoteEntry.js",
+      entry: "/apps//assets/remoteEntry.js",
       ...common,
       routes: [{ path: "", label: "Dashboard", permission: ".access", icon: "layout-dashboard", showInMenu: true }],
       ui: { renderMode: "embedded" },
@@ -266,8 +266,26 @@ function validateManifestLocal(m: ManifestSchema, lucideKebabSet: Set<string>) {
   }
 
   if (m.type === "microfrontend") {
-    if (!m.entry || !String(m.entry).trim())
+    const rm = m.ui?.renderMode ?? "embedded";
+    const v = String(m.entry || "").trim();
+
+    if (!v) {
       errors.push({ path: "entry", message: "entry é obrigatório para type=microfrontend" });
+    } else if (rm === "federated") {
+      // federated precisa ser remoteEntry.js
+      if (!v.endsWith("/remoteEntry.js") && !v.includes("remoteEntry.js")) {
+        errors.push({ path: "entry", message: "Para renderMode=federated, entry deve apontar para remoteEntry.js" });
+      }
+    } else if (rm === "embedded") {
+      // embedded deve ser uma URL interna ou absoluta, mas NÃO remoteEntry
+      if (v.includes("remoteEntry.js")) {
+        errors.push({ path: "entry", message: "Para renderMode=embedded, entry deve apontar para a raiz do app (ex: /apps/app-id/)" });
+      }
+      // opcional: garantir que começa com / ou http
+      if (!/^\/|^https?:\/\//i.test(v)) {
+        errors.push({ path: "entry", message: "Para embedded, entry deve começar com '/' ou 'http(s)://'" });
+      }
+    }
   }
 
   if (m.type === "iframe") {
@@ -527,13 +545,23 @@ export const ManifestRegisterModal = ({
   const computed = useMemo(() => {
     const id = slugifyId(manifest.id);
     const basePath = normalizeBasePath(manifest.basePath || (id ? `/${id}` : ""));
-    const entry = manifest.type === "microfrontend" ? `/apps/${id || ""}/remoteEntry.js` : manifest.entry || "";
+
+  const renderMode = manifest.ui?.renderMode ?? "embedded";
+
+  const entry =
+    manifest.type === "microfrontend"
+      ? (renderMode === "federated"
+          ? `/apps/${id || ""}/assets/remoteEntry.js`
+          : `/apps/${id || ""}/`) // embedded
+      : (manifest.entry || "");
+
     return { id, basePath, entry };
   }, [manifest.id, manifest.basePath, manifest.type, manifest.entry]);
 
   const finalManifest = useMemo<ManifestSchema>(() => {
     const id = computed.id || manifest.id;
     const basePath = computed.basePath || manifest.basePath;
+    const renderMode = manifest.ui?.renderMode ?? "embedded";
 
     return {
       ...manifest,
@@ -542,7 +570,9 @@ export const ManifestRegisterModal = ({
       basePath,
       entry:
         manifest.type === "microfrontend"
-          ? computed.entry
+          ? (renderMode === "federated"
+              ? computed.entry
+              : (manifest.entry ?? computed.entry)) // embedded: respeita o que o usuário configurou
           : manifest.type === "backend-only"
           ? null
           : (manifest.entry ?? null),
@@ -712,7 +742,9 @@ export const ManifestRegisterModal = ({
     setManifest((prev) => {
       const id = slugifyId(prev.id);
       const basePath = normalizeBasePath(prev.basePath || (id ? `/${id}` : ""));
-      const entry = prev.type === "microfrontend" ? `/apps/${id}/remoteEntry.js` : prev.entry;
+      const entry = prev.type === "microfrontend"
+        ? `/apps/${id}/assets/remoteEntry.js`
+        : prev.entry;
 
       const permissions = (prev.permissions || []).map((p) => {
         const module = slugifyId(p.module || id);

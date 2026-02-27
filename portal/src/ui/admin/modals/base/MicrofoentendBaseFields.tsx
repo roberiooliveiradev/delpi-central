@@ -20,27 +20,66 @@ export const MicrofrontendBaseFields = ({
   markTouched,
   isTouched,
   getFieldErrors,
-  openAppIconPicker,
-  renderLucideIcon,
 }: Props) => {
+  const renderMode = manifest?.ui?.renderMode ?? "embedded";
+  const isFederated = renderMode === "federated";
+
+  const placeholderEmbedded = `/apps/${computed.id || "app-id"}/`;
+  const placeholderFederated = computed.entry; // /apps/{id}/assets/remoteEntry.js
+
+  const value = isFederated
+    ? computed.entry
+    : (manifest.entry ?? placeholderEmbedded);
+
   return (
     <>
       <FormField
-        label="Entry (auto)"
+        label={isFederated ? "Entry (auto - federated)" : "Entry (embedded)"}
         htmlFor="manifest-entry"
-        error={getFieldErrors("entry")}
+        error={isTouched("entry") ? getFieldErrors("entry") : []}
       >
         <>
           <input
-            value={computed.entry}
-            disabled
+            id="manifest-entry"
+            value={value}
+            readOnly={isFederated}
+            disabled={isFederated}
+            onBlur={() => markTouched("entry")}
+            onChange={(e) => {
+              if (isFederated) return;
+              setBase({ entry: e.target.value });
+            }}
+            placeholder={isFederated ? placeholderFederated : placeholderEmbedded}
           />
-          <small>Auto: {computed.entry}</small>
+
+          {isFederated ? (
+            <small>
+              Auto: <code>{computed.entry}</code>
+            </small>
+          ) : (
+            <small>
+              Embedded: aponte para a raiz do app (ex:{" "}
+              <code>{placeholderEmbedded}</code>) ou uma URL absoluta (
+              <code>http(s)://</code>).
+            </small>
+          )}
         </>
       </FormField>
 
       <div className="hint">
-        <strong>Dica:</strong> microfrontend gera <code>entry</code> automaticamente baseado no ID.
+        <strong>Dica:</strong>{" "}
+        {isFederated ? (
+          <>
+            Para <code>renderMode=federated</code>, o <code>entry</code> é gerado
+            automaticamente (<code>remoteEntry.js</code>).
+          </>
+        ) : (
+          <>
+            Para <code>renderMode=embedded</code>, o <code>entry</code> é a URL do
+            app que será aberto em iframe (recomendado usar{" "}
+            <code>/apps/{computed.id || "app-id"}/</code> via proxy no Nginx).
+          </>
+        )}
       </div>
     </>
   );

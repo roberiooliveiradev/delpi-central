@@ -1,0 +1,45 @@
+.launcher-card-header{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.launcher-card-title{
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 2px;
+}
+
+.launcher-card-subtitle{
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.launcher-card-chevron{
+  opacity: 0.8;
+}
+
+.launcher-routes{
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.launcher-route-item{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--card-bg, #fff);
+  cursor: pointer;
+  text-align: left;
+}
+
+.launcher-route-item:hover{
+  filter: brightness(0.98);
+}

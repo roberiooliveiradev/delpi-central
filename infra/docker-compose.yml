@@ -102,6 +102,14 @@ services:
     networks:
       - delpi-network
 
+  test-microfrontend:
+    build: ../test-microfrontend
+    container_name: delpi-test-microfrontend
+    ports:
+      - "5175:5175"
+    networks:
+      - delpi-network
+      
   api-delpi:
     build: ../api-delpi
     container_name: delpi-api-delpi

@@ -1,5 +1,6 @@
 // src/layout/Sidebar.tsx
 
+import "./Sidebar.css"
 import {
   useContext,
   useMemo,
@@ -25,6 +26,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+
 
 type GroupedRoutes = Record<
   string,
@@ -197,7 +199,7 @@ export const Sidebar = () => {
             {/* ================= APPS ================= */}
             <div className="sidebar-content">
               {Object.entries(grouped).map(([appId, group]) => {
-                const isOpen = openApps[appId] ?? true;
+                const isOpen = openApps[appId] ?? false;
                 const AppIcon =
                   resolveIcon(group.appIcon) || Package;
 
