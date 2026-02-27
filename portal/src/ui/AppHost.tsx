@@ -15,6 +15,7 @@ function normalize(path: string) {
  *   - container.get(exposed) -> factory -> módulo com mount/unmount
  *   - opcional: container.init(shareScope)
  */
+
 async function loadFederatedContainer(entryUrl: string) {
   const mod: any = await import(/* @vite-ignore */ entryUrl);
   // no Vite federation, o container costuma vir como exports do módulo
@@ -36,7 +37,7 @@ export const AppHost = () => {
   const { apps, token, refreshToken } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
-  const [embeddedError, setEmbeddedError] = useState<string | null>(null);
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // host do microfrontend federado
@@ -52,37 +53,6 @@ export const AppHost = () => {
       );
     });
   }, [apps, location.pathname]);
-
-  useEffect(() => {
-  if (!app) return;
-  if (app.renderMode !== "embedded") return;
-  if (!app.entryUrl) {
-    setEmbeddedError("entryUrl não definido no manifesto.");
-    return;
-  }
-
-  let cancelled = false;
-  setEmbeddedError(null);
-
-  // só funciona bem para URLs same-origin (ex: /apps/controle-mp/)
-  fetch(app.entryUrl, { method: "GET" })
-    .then((r) => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      if (!cancelled) setEmbeddedError(null);
-    })
-    .catch((e) => {
-      if (cancelled) return;
-      setEmbeddedError(
-        `Não foi possível acessar "${app.entryUrl}". ` +
-          `Provável proxy do gateway (NGINX) não configurado para o app. ` +
-          `Erro: ${e?.message || e}`
-      );
-    });
-
-  return () => {
-    cancelled = true;
-  };
-}, [app?.id, app?.renderMode, app?.entryUrl]);
 
   /**
    * 🔥 External apps → abrir nova aba (efeito controlado)
@@ -215,30 +185,6 @@ export const AppHost = () => {
 
   if (app.renderMode === "embedded") {
     if (!app.entryUrl) return <div>entryUrl não definido.</div>;
-
-    if (embeddedError) {
-      return (
-        <div style={{ padding: 12 }}>
-          <b>Falha ao carregar aplicação embedded</b>
-          <div style={{ marginTop: 8, whiteSpace: "pre-wrap" }}>{embeddedError}</div>
-
-          <div style={{ marginTop: 12 }}>
-            <b>Como corrigir</b>
-            <ul>
-              <li>Confirme que o manifesto tem <code>entry: "/apps/{app.id}/"</code></li>
-              <li>Adicione no gateway uma location <code>^~ /apps/{app.id}/</code> com proxy_pass</li>
-            </ul>
-
-            <button
-              className="btn-secondary"
-              onClick={() => window.open(app.entryUrl!, "_blank", "noopener,noreferrer")}
-            >
-              Abrir em nova aba
-            </button>
-          </div>
-        </div>
-      );
-    }
 
     return (
       <iframe
