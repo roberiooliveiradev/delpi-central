@@ -7,31 +7,36 @@ from app.infrastructure.security.jwt_service import JWTService
 
 jwt_service = JWTService()
 
+
 @socketio.on("connect")
 def handle_connect():
-    token = request.args.get("token")
+
+    token = None
+
+    # Novo padrão (socket.io v4)
+    if hasattr(request, "auth") and request.auth:
+        token = request.auth.get("token")
+
+    # 🔁 Compatibilidade antiga
+    if not token:
+        token = request.args.get("token")
 
     if not token:
-        print("Socket connect sem token -> disconnect")
-        disconnect()
-        return
+        print("❌ Socket connect sem token -> disconnect")
+        return False  # use False ao invés de disconnect()
 
     try:
         claims = jwt_service.verify_token(token)
         sub = claims.get("sub")
 
         if not sub:
-            print("Socket token sem sub -> disconnect")
-            disconnect()
-            return
+            print("❌ Token sem sub -> disconnect")
+            return False
 
-        print("Cliente tentando conectar...")
-        print("SUB do socket:", sub)
+        print("✅ Cliente conectado. SUB:", sub)
 
         join_room(sub)
 
-        print("Entrou na room:", sub)
-
     except Exception as e:
-        print("Erro no socket:", e)
-        disconnect()
+        print("❌ Token inválido no socket:", repr(e))
+        return False

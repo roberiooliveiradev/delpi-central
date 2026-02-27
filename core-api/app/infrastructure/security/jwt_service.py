@@ -41,8 +41,15 @@ class JWTService:
             # else:
             #     if token_aud != self.audience:
             #         raise Exception("Invalid audience")
-            if claims.get("azp") != self.audience:
-                raise Exception("Invalid client")
+            aud = claims.get("aud")
+
+            if isinstance(aud, list):
+                if self.audience not in aud:
+                    raise Exception("Invalid audience")
+            else:
+                if aud != self.audience:
+                    raise Exception("Invalid audience")
+
 
 
             return claims

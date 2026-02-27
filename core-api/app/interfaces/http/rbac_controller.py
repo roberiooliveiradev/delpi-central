@@ -5,6 +5,10 @@ from flask import Blueprint, request, jsonify, g
 
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 
+from app.infrastructure.events.socket_admin_event_publisher import (
+    SocketAdminEventPublisher
+)
+
 from app.application.use_cases.create_role_use_case import CreateRoleUseCase
 from app.application.use_cases.list_role_permissions_use_case import ListRolePermissionsUseCase
 from app.application.use_cases.replace_role_permissions_use_case import ReplaceRolePermissionsUseCase
@@ -315,7 +319,9 @@ def replace_user_roles(user_id: str):
     role_ids = data.get("roleIds", [])
 
     uow = SqlAlchemyUnitOfWork()
-    uc = ReplaceUserRolesUseCase(uow)
+    publisher = SocketAdminEventPublisher()
+
+    uc = ReplaceUserRolesUseCase(uow, publisher)
 
     return jsonify(uc.execute(user_id, role_ids)), 200
 
@@ -538,7 +544,14 @@ def update_user(user_id: str):
                 uow.user_groups.replace_groups(uid, gid_list)
 
             uow.commit()
-
+            from app.infrastructure.events.socket_admin_event_publisher import SocketAdminEventPublisher
+            from app.domain.ports.admin_event_publicher import AdminChangedEvent
+            publisher = SocketAdminEventPublisher()
+            publisher.publish(AdminChangedEvent(
+                entity="rbac",
+                action="update",
+                payload={"userId": user_id},
+            ))
             # invalida cache se existir
             if hasattr(uow, "cache") and uow.cache:
                 uow.cache.invalidate(user_id)
