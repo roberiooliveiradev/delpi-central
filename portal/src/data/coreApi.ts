@@ -15,8 +15,10 @@ export interface MeResponse {
 export interface AppItem {
   id: string;
   name: string;
-  base_path: string;  
-  icon?: string;
+  basePath: string;    
+  icon?: string | null;
+  type: "iframe" | "microfrontend" | "backend-only";
+  entryUrl?: string | null;
 }
 
 export interface RouteItem {

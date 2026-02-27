@@ -1,0 +1,40 @@
+.accordion-section {
+  border:1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  background: var(--card-bg);
+}
+
+.accordion-header {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 14px 16px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.accordion-header:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.accordion-content {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.accordion-section.has-error {
+  border: 1px solid var(--danger);
+}
+
+.accordion-error-badge {
+  margin-left: 8px;
+  background: var(--danger);
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 20px;
+}

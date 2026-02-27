@@ -1,0 +1,61 @@
+
+/* =========================
+   Helpers p/ RBAC modal
+========================= */
+
+.superadmin-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+/* checkbox alinhado (evita centralização estranha) */
+.superadmin-row input[type="checkbox"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+}
+
+/* grid 2 colunas do RBAC */
+.rbac-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* responsivo: 1 coluna no mobile */
+@media (max-width: 720px) {
+  .rbac-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rbac-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* label padrão do seu CSS é column; aqui precisa ser row */
+.checkbox-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+
+  font-weight: 600;
+}
+
+.checkbox-item input[type="checkbox"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+}

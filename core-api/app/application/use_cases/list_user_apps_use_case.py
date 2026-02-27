@@ -49,6 +49,7 @@ class ListUserAppsUseCase:
                     "basePath": app.base_path,
                     "icon": app.icon,
                     "type": app.type,
+                    "entryUrl": app.entry_url,
                     "routes": [
                         {
                             "path": r.path,

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "api-delpi-docs",
+  "name": "API DELPI Docs",
+  "description": "Documentação Swagger da API DELPI",
+  "icon": "book-open",
+  "version": "1.0.0",
+  "type": "iframe",
+  "basePath": "/api-delpi-docs",
+  "entry": "http://localhost/apps/api-delpi/docs",
+  "permissions": [
+    {
+      "code": "api-delpi.docs.view",
+      "name": "Visualizar Docs API DELPI",
+      "description": null,
+      "module": "api-delpi"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/api-delpi-docs",
+      "label": "API DELPI Docs",
+      "permission": "api-delpi.docs.view",
+      "icon": "book-open",
+      "order": 10,
+      "showInMenu": true
+    }
+  ]
+}

@@ -21,6 +21,7 @@ class AppDTO:
     base_path: str
     icon: str | None
     type: str
+    entry_url: str | None  
     routes: List[RouteDTO]
 
 

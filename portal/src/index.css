@@ -167,8 +167,15 @@ textarea:focus-visible {
 
 .content {
   flex: 1;
-  padding: 30px 60px;
+  padding: 0;
+  height: 100dvh;
   background: var(--bg);
+  overflow: hidden;
+  padding: 5px;
+}
+
+.content div{
+  overflow: hidden;
 }
 
 /* =========================================

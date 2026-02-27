@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.domain.ports.app_query_port import AppQueryPort, AppDTO, RouteDTO
 from app.infrastructure.db.models import App, AppRoute, Permission
-
+from app.infrastructure.db.models.app_manifest import AppManifest
 
 class SqlAlchemyAppQueryRepository(AppQueryPort):
 
@@ -23,6 +23,18 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
         result: List[AppDTO] = []
 
         for app in apps:
+
+            # Buscar manifesto
+            manifest_row = (
+                self.session.query(AppManifest)
+                .filter_by(app_id=app.id)
+                .first()
+            )
+
+            entry_url = None
+
+            if manifest_row and manifest_row.manifest:
+                entry_url = manifest_row.manifest.get("entry")
 
             routes = (
                 self.session.query(AppRoute)
@@ -55,6 +67,7 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
                     base_path=app.base_path,
                     icon=app.icon,
                     type=app.type,
+                    entry_url=entry_url,  # 🔥 AQUI
                     routes=route_dtos,
                 )
             )

@@ -35,17 +35,17 @@ class PermissionResolver:
         Retorna lista de permission codes efetivos do usuário.
         """
 
-        # 1️⃣ Cache
-        if self.cache:
-            cached = self.cache.get(str(user_id))
-            if cached is not None:
-                return cached
-
-        # 2️⃣ Superadmin
+        # 1️⃣ Superadmin SEMPRE primeiro (bypass absoluto)
         if is_superadmin:
             permissions = self.permission_query.list_all_permission_codes()
             self._store_cache(user_id, permissions)
             return permissions
+
+        # 2️⃣ Cache (apenas para usuários normais)
+        if self.cache:
+            cached = self.cache.get(str(user_id))
+            if cached is not None:
+                return cached
 
         # 3️⃣ Permissões via roles diretas
         direct_permissions = set(

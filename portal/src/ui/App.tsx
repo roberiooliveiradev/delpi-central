@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import { Loader } from "./Loader";
 import { HomePage } from "./HomePage";
 import { AdminPage } from "./admin/AdminPage";
-
+import { AppHost } from "./AppHost";
 
 const AnimatedWrapper = ({ children }: { children: React.ReactNode }) => (
   <motion.div
@@ -67,7 +67,7 @@ const App = () => {
                   element={
                   <ProtectedRoute permission={route.permission}>
                     <AnimatedWrapper>
-                      <DummyPage title={route.path} />
+                        <AppHost />
                     </AnimatedWrapper>
                   </ProtectedRoute>
 

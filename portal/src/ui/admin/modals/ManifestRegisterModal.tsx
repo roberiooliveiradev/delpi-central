@@ -1,6 +1,7 @@
 // src/ui/admin/modals/ManifestRegisterModal.tsx
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import "./ManifestRegisterModal.css"
 import { Modal } from "../../../components/Modal";
 import * as LucideIcons from "lucide-react";
 import { IconPickerModal } from "./IconPickerModal";
@@ -67,7 +68,7 @@ type Props = {
   title?: string;
 };
 
-type Tab = "base" | "permissions" | "routes" | "preview";
+type Tab = "base" | "backend" | "permissions" | "routes" | "preview";
 
 type IconPickerState =
   | { open: false }
@@ -269,6 +270,39 @@ function validateManifestLocal(m: ManifestSchema, lucideKebabSet: Set<string>) {
     if (v && !/^https?:\/\//i.test(v))
       errors.push({ path: "entry", message: "URL do iframe deve começar com http:// ou https://" });
   }
+
+  /* =========================
+     Backend-Only
+  ========================= */
+
+  if (m.type === "backend-only") {
+    if (!m.backend?.serviceName?.trim())
+      errors.push({
+        path: "backend.serviceName",
+        message: "serviceName é obrigatório para backend-only",
+      });
+
+    if (!m.backend?.baseUrl?.trim())
+      errors.push({
+        path: "backend.baseUrl",
+        message: "baseUrl é obrigatório para backend-only",
+      });
+
+    if (m.backend?.validateJwt) {
+      if (!m.backend?.issuer?.trim())
+        errors.push({
+          path: "backend.issuer",
+          message: "issuer é obrigatório quando validateJwt = true",
+        });
+
+      if (!m.backend?.audience?.trim())
+        errors.push({
+          path: "backend.audience",
+          message: "audience é obrigatório quando validateJwt = true",
+        });
+    }
+  }
+
 
   /* =========================
      PERMISSIONS
@@ -745,6 +779,15 @@ export const ManifestRegisterModal = ({
 
           if (first.startsWith("permissions")) setTab("permissions");
           else if (first.startsWith("routes")) setTab("routes");
+          else if (
+            first.startsWith("backend") ||
+            first.startsWith("lifecycle") ||
+            first.startsWith("security") ||
+            first.startsWith("observability") ||
+            first.startsWith("ui")
+          ) {
+            setTab("backend");
+          }
           else if (first === "_global") setTab("preview");
           else setTab("base");
 
@@ -852,6 +895,14 @@ export const ManifestRegisterModal = ({
             <button className={tab === "base" ? "active" : ""} onClick={() => setTab("base")}>
               Base
             </button>
+              {manifest.type === "backend-only" && (
+                <button
+                  className={tab === "backend" ? "active" : ""}
+                  onClick={() => setTab("backend")}
+                >
+                  Backend
+                </button>
+              )}
             <button className={tab === "permissions" ? "active" : ""} onClick={() => setTab("permissions")}>
               Permissões
             </button>
@@ -1011,14 +1062,18 @@ export const ManifestRegisterModal = ({
                     getFieldErrors={getFieldErrors}
                   />
                 )}
-
-                {manifest.type === "backend-only" && (
-                  <BackendOnlyBaseFields />
-                )}
               </div>
             </>
           )}
-
+          {tab === "backend" && manifest.type === "backend-only" && (
+            <>
+              <BackendOnlyBaseFields
+                manifest={manifest}
+                setBase={setBase}
+                errorsByPath={errorsByPath}
+              />
+            </>
+          )}
           {/* PERMISSÕES */}
           {tab === "permissions" && (
             <>

@@ -1,6 +1,7 @@
 // src/ui/admin/modals/IconPickerModal.tsx
 import { useMemo, useState } from "react";
 import { Modal } from "../../../components/Modal";
+import "./IconPickerModal.css"
 import * as LucideIcons from "lucide-react";
 
 type Props = {

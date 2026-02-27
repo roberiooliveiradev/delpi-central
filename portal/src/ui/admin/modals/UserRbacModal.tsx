@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import type { AdminGroup, AdminRole, AdminUser } from "../../../data/adminApi";
 import { AdminApi } from "../../../data/adminApi";
 import { Modal } from "../../../components/Modal";
-
+import "./UserRbacModal.css";
 type Props = {
   open: boolean;
   onClose: () => void;

@@ -1,0 +1,57 @@
+
+/* =========================================
+   FORM VALIDATION STATES (Manifest Modal)
+========================================= */
+
+/* Asterisco de campo obrigatório */
+.required {
+  color: var(--danger);
+  margin-left: 4px;
+  font-weight: 700;
+}
+
+/* Input com erro */
+input.input-error,
+select.input-error,
+textarea.input-error {
+  border-color: var(--danger);
+  background: rgba(180, 35, 24, 0.06);
+}
+
+/* Hover mantém erro */
+input.input-error:hover,
+select.input-error:hover,
+textarea.input-error:hover {
+  border-color: var(--danger);
+}
+
+/* Focus com erro (acessível e consistente com design tokens) */
+input.input-error:focus-visible,
+select.input-error:focus-visible,
+textarea.input-error:focus-visible {
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.25);
+}
+
+/* Mensagem de erro refinada (sobrescreve leve o padrão anterior) */
+.field-error {
+  border-radius: 10px;
+
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--danger);
+}
+
+/* Estado válido (opcional, mas profissional) */
+input.input-valid,
+select.input-valid,
+textarea.input-valid {
+  border-color: rgba(0, 160, 80, 0.4);
+  background: rgba(0, 160, 80, 0.04);
+}
+
+input.input-valid:focus-visible,
+select.input-valid:focus-visible,
+textarea.input-valid:focus-visible {
+  box-shadow: 0 0 0 3px rgba(0, 160, 80, 0.25);
+}
