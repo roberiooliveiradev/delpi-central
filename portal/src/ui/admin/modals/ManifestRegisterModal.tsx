@@ -11,6 +11,8 @@ import { HttpError } from "../../../data/apiClient";
 import { MicrofrontendBaseFields } from "./base/MicrofoentendBaseFields";
 import { IframeBaseFields } from "./base/IframeBaseFields";
 import { BackendOnlyBaseFields } from "./base/BackendOnlyBaseFields";
+import { UIBaseFields } from "./base/UIBaseFields";
+
 /* =========================
    Types
 ========================= */
@@ -39,6 +41,10 @@ type ManifestRoute = {
   showInMenu?: boolean | null;
 };
 
+type ManifestUI = {
+  renderMode?: "embedded" | "external" | "federated";
+};
+
 type ManifestSchema = {
   schemaVersion: "1.0.0";
   id: string;
@@ -56,7 +62,7 @@ type ManifestSchema = {
   lifecycle?: any;
   security?: any;
   observability?: any;
-  ui?: any;
+  ui?: ManifestUI;
 };
 
 type Props = {
@@ -68,7 +74,7 @@ type Props = {
   title?: string;
 };
 
-type Tab = "base" | "backend" | "permissions" | "routes" | "preview";
+type Tab = "base" | "ui" | "backend" | "permissions" | "routes" | "preview";
 
 type IconPickerState =
   | { open: false }
@@ -159,6 +165,7 @@ function emptyManifestFor(type: ManifestType): ManifestSchema {
       entry: "/apps//remoteEntry.js",
       ...common,
       routes: [{ path: "", label: "Dashboard", permission: ".access", icon: "layout-dashboard", showInMenu: true }],
+      ui: { renderMode: "embedded" },
     };
   }
 
@@ -169,6 +176,7 @@ function emptyManifestFor(type: ManifestType): ManifestSchema {
       entry: "https://example.com",
       ...common,
       routes: [{ path: "", label: "Abrir", permission: ".access", icon: "external-link", showInMenu: true }],
+      ui: { renderMode: "embedded" },
     };
   }
 
@@ -300,6 +308,26 @@ function validateManifestLocal(m: ManifestSchema, lucideKebabSet: Set<string>) {
           path: "backend.audience",
           message: "audience é obrigatório quando validateJwt = true",
         });
+    }
+  }
+
+  /* =========================
+     UI RENDER IFRAME | MICROFRONTEND
+  ========================= */
+  if (
+    (m.type === "iframe" || m.type === "microfrontend") &&
+    m.ui?.renderMode
+  ) {
+    const allowed =
+      m.type === "iframe"
+        ? ["embedded", "external"]
+        : ["embedded", "federated"];
+
+    if (!allowed.includes(m.ui.renderMode)) {
+      errors.push({
+        path: "ui.renderMode",
+        message: `renderMode inválido para type=${m.type}`,
+      });
     }
   }
 
@@ -547,6 +575,10 @@ export const ManifestRegisterModal = ({
           showInMenu: r.showInMenu ?? null,
         };
       }),
+      ui:
+      manifest.type === "backend-only"
+        ? undefined
+        : manifest.ui ?? { renderMode: "embedded" },
     };
   }, [manifest, computed]);
 
@@ -895,6 +927,16 @@ export const ManifestRegisterModal = ({
             <button className={tab === "base" ? "active" : ""} onClick={() => setTab("base")}>
               Base
             </button>
+             {(manifest.type === "iframe" ||
+                manifest.type === "microfrontend") && (
+                <button
+                  className={tab === "ui" ? "active" : ""}
+                  onClick={() => setTab("ui")}
+                >
+                  UI
+                </button>
+              )}
+
               {manifest.type === "backend-only" && (
                 <button
                   className={tab === "backend" ? "active" : ""}
@@ -924,7 +966,7 @@ export const ManifestRegisterModal = ({
               </ul>
             </div>
           )}
-
+          <div className="modal-content-container">
           {/* BASE */}
           {tab === "base" && (
             <>
@@ -1064,6 +1106,14 @@ export const ManifestRegisterModal = ({
                 )}
               </div>
             </>
+          )}
+          {tab === "ui" &&
+          (manifest.type === "iframe" ||
+            manifest.type === "microfrontend") && (
+            <UIBaseFields
+              manifest={manifest}
+              setBase={setBase}
+            />
           )}
           {tab === "backend" && manifest.type === "backend-only" && (
             <>
@@ -1373,6 +1423,7 @@ export const ManifestRegisterModal = ({
               </div>
             </>
           )}
+        </div>
         </div>
       </Modal>
 

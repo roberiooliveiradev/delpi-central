@@ -18,7 +18,7 @@ export const HomePage = () => {
   };
 
   return (
-    <div>
+    <div id="home-page">
       <h1 style={{ marginBottom: 8 }}>
         {greeting()}, {user?.name}
       </h1>

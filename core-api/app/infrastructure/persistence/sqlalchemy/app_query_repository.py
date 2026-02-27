@@ -32,9 +32,28 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
             )
 
             entry_url = None
+            render_mode = "embedded"
 
             if manifest_row and manifest_row.manifest:
-                entry_url = manifest_row.manifest.get("entry")
+                manifest = manifest_row.manifest
+
+                entry_url = manifest.get("entry")
+
+                render_mode = manifest.get("ui", {}).get("renderMode", "embedded")
+
+                if app.type == "iframe":
+                    allowed = {"embedded", "external"}
+                elif app.type == "microfrontend":
+                    allowed = {"embedded", "federated"}
+                else:
+                    allowed = set()
+
+                if render_mode not in allowed:
+                    render_mode = "embedded"
+
+            if app.type == "backend-only":
+                entry_url = None
+                render_mode = None
 
             routes = (
                 self.session.query(AppRoute)
@@ -67,7 +86,8 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
                     base_path=app.base_path,
                     icon=app.icon,
                     type=app.type,
-                    entry_url=entry_url,  # 🔥 AQUI
+                    entry_url=entry_url,
+                    render_mode=render_mode,  
                     routes=route_dtos,
                 )
             )

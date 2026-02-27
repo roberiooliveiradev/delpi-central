@@ -50,6 +50,7 @@ class ListUserAppsUseCase:
                     "icon": app.icon,
                     "type": app.type,
                     "entryUrl": app.entry_url,
+                    "renderMode": app.render_mode, 
                     "routes": [
                         {
                             "path": r.path,

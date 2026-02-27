@@ -147,7 +147,16 @@
     "lifecycle": { "type": "object" },
     "security": { "type": "object" },
     "observability": { "type": "object" },
-    "ui": { "type": "object" },
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "renderMode": {
+          "type": "string",
+          "enum": ["embedded", "external", "federated"]
+        }
+      }
+    },
     "metadata": { "type": "object" }
   },
 
@@ -188,19 +197,43 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "backend": {
-            "properties": {
-              "validateJwt": { "const": true }
-            }
-          }
-        }
+        "properties": { "type": { "const": "iframe" } }
       },
       "then": {
         "properties": {
-          "backend": {
-            "required": ["audience", "issuer"]
+          "ui": {
+            "properties": {
+              "renderMode": {
+                "enum": ["embedded", "external"]
+              }
+            }
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "microfrontend" } }
+      },
+      "then": {
+        "properties": {
+          "ui": {
+            "properties": {
+              "renderMode": {
+                "enum": ["embedded", "federated"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "backend-only" } }
+      },
+      "then": {
+        "properties": {
+          "ui": false
         }
       }
     }

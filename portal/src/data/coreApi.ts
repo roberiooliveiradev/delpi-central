@@ -12,6 +12,11 @@ export interface MeResponse {
   is_superadmin?: boolean;
 }
 
+export type AppRenderMode =
+  | "embedded"     // iframe interno (mesmo domínio)
+  | "external"     // abre em nova aba
+  | "federated";   // microfrontend via Module Federation
+
 export interface AppItem {
   id: string;
   name: string;
@@ -19,6 +24,7 @@ export interface AppItem {
   icon?: string | null;
   type: "iframe" | "microfrontend" | "backend-only";
   entryUrl?: string | null;
+  renderMode?: AppRenderMode;
 }
 
 export interface RouteItem {

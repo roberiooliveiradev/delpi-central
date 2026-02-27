@@ -22,6 +22,7 @@ class AppDTO:
     icon: str | None
     type: str
     entry_url: str | None  
+    render_mode: str | None
     routes: List[RouteDTO]
 
 
