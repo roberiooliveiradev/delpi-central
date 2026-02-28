@@ -105,4 +105,16 @@ export class CoreApi {
       "/core-api/me/apps/favorites"
     );
   }
+  
+  addFavoriteApp(appId: string) {
+    return this.client.post<{ ok: boolean }>(
+      `/core-api/me/apps/favorites/${appId}`
+    );
+  }
+  
+  removeFavoriteApp(appId: string) {
+    return this.client.delete<{ ok: boolean }>(
+      `/core-api/me/apps/favorites/${appId}`
+    );
+  }
 }

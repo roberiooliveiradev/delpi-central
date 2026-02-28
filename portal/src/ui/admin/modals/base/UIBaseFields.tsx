@@ -1,7 +1,8 @@
 // src/ui/admin/modals/base/UIBaseFields.tsx
 
-
 import { FormField } from "../../../../components/FormField";
+
+type RenderMode = "embedded" | "external" | "federated";
 
 type Props = {
   manifest: any;
@@ -12,9 +13,10 @@ export const UIBaseFields = ({
   manifest,
   setBase,
 }: Props) => {
-  const current = manifest.ui?.renderMode ?? "embedded";
+  const current: RenderMode =
+    manifest.ui?.renderMode ?? "embedded";
 
-  const setRenderMode = (mode: string) => {
+  const setRenderMode = (mode: RenderMode) => {
     setBase({
       ui: {
         ...(manifest.ui || {}),
@@ -28,7 +30,11 @@ export const UIBaseFields = ({
       <FormField label="Modo de Renderização">
         <select
           value={current}
-          onChange={(e) => setRenderMode(e.target.value)}
+          onChange={(e) =>
+            setRenderMode(
+              e.target.value as RenderMode
+            )
+          }
         >
           <option value="embedded">
             embedded (iframe interno)

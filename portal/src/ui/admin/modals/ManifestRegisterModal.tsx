@@ -742,9 +742,36 @@ export const ManifestRegisterModal = ({
     setManifest((prev) => {
       const id = slugifyId(prev.id);
       const basePath = normalizeBasePath(prev.basePath || (id ? `/${id}` : ""));
-      const entry = prev.type === "microfrontend"
-        ? `/apps/${id}/assets/remoteEntry.js`
-        : prev.entry;
+
+      const renderMode = prev.ui?.renderMode ?? "embedded";
+
+      const entry = (() => {
+        // backend-only não usa entry
+        if (prev.type === "backend-only") return null;
+
+        // microfrontend: embedded vs federated
+        if (prev.type === "microfrontend") {
+          if (renderMode === "federated") {
+            return `/apps/${id || ""}/assets/remoteEntry.js`;
+          }
+
+          // embedded: default para /apps/<id>/
+          // (se o usuário já digitou algo válido, respeita)
+          const current = String(prev.entry || "").trim();
+          if (current) return current;
+
+          return `/apps/${id || ""}/`;
+        }
+
+        // iframe
+        if (prev.type === "iframe") {
+          // external/embedded: URL precisa ser http/https (mas aqui só sugerimos, não inventamos)
+          // se estiver vazio, mantemos vazio pra validação acusar
+          return prev.entry ?? "";
+        }
+
+        return prev.entry ?? "";
+      })();
 
       const permissions = (prev.permissions || []).map((p) => {
         const module = slugifyId(p.module || id);
@@ -758,13 +785,30 @@ export const ManifestRegisterModal = ({
       });
 
       const firstPerm = permissions?.[0]?.code || `${id}.access`;
+
       const routes = (prev.routes || []).map((r) => {
         let permission = r.permission || "";
         if (permission.startsWith(".")) permission = `${id}${permission}`;
-        return { ...r, path: r.path || basePath, permission: permission || firstPerm };
+
+        return {
+          ...r,
+          path: r.path || basePath,
+          permission: permission || firstPerm,
+        };
       });
 
-      return { ...prev, id, basePath, entry, permissions, routes };
+      return {
+        ...prev,
+        id,
+        basePath,
+        entry,
+        permissions,
+        routes,
+        ui:
+          prev.type === "backend-only"
+            ? undefined
+            : (prev.ui ?? { renderMode: "embedded" }),
+      };
     });
   }, [clearBackendErrors]);
 

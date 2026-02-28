@@ -1,45 +1,211 @@
-.launcher-card-header{
+/* =========================================
+   APP LAUNCHER
+========================================= */
+
+/* OVERLAY */
+
+.launcher-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 24px;
+}
+
+/* MODAL */
+
+.launcher-modal.startmenu {
+  width: clamp(320px, 90vw, 760px);
+  height: clamp(480px, 85vh, 640px);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: launcherFadeIn 0.2s ease;
+}
+
+/* HEADER */
+
+.launcher-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.launcher-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0.6;
+  transition: 0.2s ease;
+}
+
+.launcher-close:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* SEARCH */
+
+.launcher-searchbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--control-border);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  transition: box-shadow 0.2s ease;
+}
+
+.launcher-searchbar:focus-within {
+  box-shadow: var(--focus-2);
+}
+
+.launcher-searchbar input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+}
+
+/* SECTIONS */
+
+.launcher-section {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
-.launcher-card-title{
+.launcher-section-header {
   display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 2px;
-}
-
-.launcher-card-subtitle{
-  font-size: 12px;
-  opacity: 0.7;
-}
-
-.launcher-card-chevron{
-  opacity: 0.8;
-}
-
-.launcher-routes{
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.launcher-route-item{
-  width: 100%;
-  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border-color, #e5e7eb);
-  background: var(--card-bg, #fff);
+  font-weight: 600;
+}
+
+.launcher-section-action {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.launcher-divider {
+  margin: 14px 0;
+  height: 1px;
+  background: var(--border);
+}
+
+/* GRID */
+
+.launcher-pinned-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+/* SEARCH RESULTS */
+
+.launcher-results {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-3) 75%, transparent);
+  overflow: auto;
+}
+
+.launcher-result-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
   cursor: pointer;
   text-align: left;
 }
 
-.launcher-route-item:hover{
-  filter: brightness(0.98);
+.launcher-result-item:hover {
+  background: color-mix(in srgb, var(--surface-2) 85%, transparent);
+}
+
+.launcher-result-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 25%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.launcher-result-title {
+  font-weight: 600;
+}
+
+.launcher-result-subtitle {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* MODAL ANIMATION */
+
+@keyframes launcherFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.launcher-result-main{
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+/* =========================================
+   LAUNCHER SCROLL AREA
+========================================= */
+
+.launcher-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  min-height: 0;
+  padding-right: 6px; /* evita cortar scrollbar */
+}
+
+/* Webkit (Chrome, Edge, Safari) */
+.launcher-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.launcher-body::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 120, 0.4);
+  border-radius: 10px;
+}
+
+.launcher-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 120, 120, 0.7);
+}
+
+/* Firefox */
+.launcher-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 120, 120, 0.5) transparent;
 }

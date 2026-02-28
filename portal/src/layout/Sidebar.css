@@ -1,41 +1,94 @@
-
 /* =========================================
-   SIDEBAR
+   SIDEBAR BASE
 ========================================= */
 
 .sidebar {
   width: 300px;
+  min-width: 300px;
+  max-width: 300px;
   background: var(--surface-2);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 20px;
-  transition: width 0.4s ease;
+  transition: all 0.35s ease;
   position: relative;
-  z-index: 20;
-  overflow: visible; /* IMPORTANTE para dropdown */
+  z-index: 40;
+  overflow: visible;
 }
 
 .sidebar.collapsed {
   width: 0;
+  min-width: 0;
+  max-width: 0;
   padding: 0;
   border: none;
+  overflow: hidden;
 }
 
-/* HEADER */
+/* =========================================
+   MOBILE DRAWER MODE
+========================================= */
+
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100dvh;
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
+    box-shadow: var(--shadow);
+    transform: translateX(0);
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+
+  .collapse-btn {
+    left: 240px;
+  }
+
+  .sidebar-expand-btn {
+    bottom: 20px;
+    top: auto;
+  }
+}
+
+/* =========================================
+   SMALL MOBILE
+========================================= */
+
+@media (max-width: 640px) {
+  .sidebar {
+    width: 85vw;
+    min-width: 85vw;
+    max-width: 85vw;
+    padding: 16px;
+  }
+
+  .collapse-btn {
+    left: calc(85vw - 40px);
+  }
+}
+
+/* =========================================
+   HEADER
+========================================= */
 
 .sidebar-header {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
 }
 
 .sidebar-logo {
-  width: 180px;
-  height: 180px;
+  width: 160px;
+  height: 160px;
   background-color: var(--surface);
   border-radius: 50%;
   padding: 10px;
@@ -48,41 +101,60 @@
   object-fit: contain;
 }
 
-.sidebar-logo:hover{
-  width: 200px;
-  height: 200px;
-  /* border: 1px solid var(--primary); */
+.sidebar-logo:hover {
+  transform: scale(1.05);
   box-shadow: var(--focus-2);
 }
 
+/* Ajusta logo em telas menores */
+@media (max-width: 768px) {
+  .sidebar-logo {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+/* =========================================
+   BOTÕES
+========================================= */
+
 .collapse-btn {
-  background: transparent;
-  border: none;
+  position: absolute;
+  top: 20px;
+  right: 5px; /* Fica metade para fora da borda */
+  
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
-  color: var(--text-muted);
-  transition: 0.2s;
-  position: fixed;
-  top: 10px;
-  left: 260px;
-  z-index: 30;
+  transition: 0.2s ease;
+  z-index: 50;
 }
 
 .collapse-btn:hover {
-  color: var(--primary);
+  transform: scale(1.1);
+  box-shadow: var(--focus-2);
 }
-
-/* BOTÃO FLUTUANTE */
 
 .sidebar-expand-btn {
   position: fixed;
-  top: 93%;
+  bottom: 20px;
   left: 20px;
-  z-index: 30;
+  z-index: 60;
   display: flex;
   align-items: center;
   background: var(--surface);
   border: 1px solid var(--border);
-  padding: 6px;
+  padding: 8px;
   border-radius: 50%;
   cursor: pointer;
   box-shadow: var(--shadow);
@@ -91,50 +163,34 @@
 }
 
 .sidebar-expand-btn:hover {
-  transition: 0.3s ease;
-  color: var(--primary);
-  transform: scale(1.20);
+  transform: scale(1.15);
   box-shadow: var(--focus-2);
 }
 
 /* =========================================
-   SIDEBAR LINKS
+   SCROLL AREA
 ========================================= */
 
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-
-  /* Melhora comportamento */
-  scrollbar-gutter: stable;
   scroll-behavior: smooth;
-  direction: rtl;
   padding: 0 10px;
 }
-.sidebar-content > * {
-  direction: ltr;
-}
-/* Largura da scrollbar */
+
+/* Scrollbar */
 .sidebar-content::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
-/* Fundo da trilha */
-.sidebar-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-/* Thumb (parte que arrasta) */
 .sidebar-content::-webkit-scrollbar-thumb {
-  background-color: rgba(120, 120, 120, 0.4);
+  background: rgba(120, 120, 120, 0.4);
   border-radius: 10px;
-  transition: background-color 0.2s ease;
 }
 
-/* Hover */
 .sidebar-content::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(120, 120, 120, 0.7);
+  background: rgba(120, 120, 120, 0.7);
 }
 
 .sidebar-content {
@@ -142,42 +198,8 @@
   scrollbar-color: rgba(120, 120, 120, 0.5) transparent;
 }
 
-.sidebar-app-title {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-  cursor: pointer;
-}
-
-.sidebar-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  margin-bottom: 6px;
-  color: var(--text-muted);
-  font-weight: 500;
-  transition: 0.2s;
-}
-
-.sidebar-link:hover {
-  background: rgba(0, 153, 220, 0.08);
-  color: var(--primary);
-}
-
-.sidebar-link.active {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(0, 153, 220, 0.3);
-}
-
 /* =========================================
-   SIDEBAR FOOTER
+   FOOTER
 ========================================= */
 
 .sidebar-footer {
@@ -186,6 +208,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  position: relative;
+  overflow: visible;
 }
 
 .sidebar-footer-item {
@@ -198,6 +222,7 @@
   color: var(--text-muted);
   transition: 0.2s;
   position: relative;
+  font-size: 14px;
 }
 
 .sidebar-footer-item:hover {
@@ -205,56 +230,56 @@
   color: var(--primary);
 }
 
-.sidebar-footer-item > svg{
-  transition: 0.2s;
-  
-}
-.sidebar-footer-item:hover > svg{
-  transform: rotate(-15deg);
-}
-
-/* AVATAR */
-
-.avatar {
-  border-radius: 50%;
-  background: var(--primary);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 24px;
-  padding: 8px;
-}
-
-.avatar.small {
-  font-size: 14px;
-}
-
 /* =========================================
-   DROPDOWNS
+   DROPDOWNS (NOTIF + USER)
 ========================================= */
 
 .dropdown,
 .notif-dropdown {
   position: absolute;
-  left: 100%;
-  bottom: 5%;
-  margin-left: 10px;
-  width: 250px;
-  background: var(--surface);
+  left: calc(100% + 12px);
+  bottom: 10px;
+
+  width: 280px;
+  max-height: 420px;
+  overflow-y: auto;
+
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
+
   box-shadow: var(--shadow);
-  overflow: hidden;
-  z-index: 200;
+  backdrop-filter: blur(12px);
+
+  padding: 8px;
+
+  z-index: 500;
+
+  animation: dropdownFade 0.18s ease;
 }
+
+/* Scroll interno */
+.dropdown::-webkit-scrollbar,
+.notif-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown::-webkit-scrollbar-thumb,
+.notif-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(120,120,120,0.4);
+  border-radius: 8px;
+}
+
+/* Items */
 
 .dropdown-item,
 .notif-item {
-  padding: 12px 14px;
+  padding: 10px 12px;
   font-size: 14px;
+  border-radius: 10px;
   cursor: pointer;
+  transition: 0.15s ease;
+  color: var(--text);
 }
 
 .dropdown-item:hover,
@@ -268,16 +293,64 @@
 
 .notif-item.unread {
   font-weight: 600;
-  background: rgba(0, 153, 220, 0.08);
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
 }
+
+/* Badge */
 
 .notif-badge {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 4px;
+  right: 4px;
   background: var(--danger);
   color: white;
   font-size: 10px;
   border-radius: 50%;
   padding: 2px 6px;
 }
+
+/* Animação */
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateX(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@media (max-width: 1024px) {
+
+  .dropdown,
+  .notif-dropdown {
+    position: relative;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+}
+
+/* =========================================
+   AVATAR RESPONSIVO
+========================================= */
+
+.avatar {
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  padding: 8px;
+}
+
+.avatar.small {
+  font-size: 14px;
+}
+

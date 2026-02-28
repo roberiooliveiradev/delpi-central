@@ -1,11 +1,9 @@
-# app/infrastructure/persistence/sqlalchemy/favorite_app_repository.py
-
-
-from typing import List
+from typing import List, Dict
 from sqlalchemy.orm import Session
+from sqlalchemy import asc
 
 from app.domain.ports.favorite_app_repository import FavoriteAppRepository
-from app.infrastructure.db.models import UserFavoriteApp
+from app.infrastructure.db.models import UserFavoriteApp, App
 
 
 class SqlAlchemyFavoriteAppRepository(FavoriteAppRepository):
@@ -13,13 +11,26 @@ class SqlAlchemyFavoriteAppRepository(FavoriteAppRepository):
     def __init__(self, session: Session):
         self.session = session
 
-    def list_user_favorites(self, user_id: str) -> List[str]:
+    def list_user_favorites(self, user_id: str) -> List[Dict]:
         rows = (
-            self.session.query(UserFavoriteApp)
-            .filter_by(user_id=user_id)
+            self.session.query(UserFavoriteApp, App)
+            .join(App, App.id == UserFavoriteApp.app_id)
+            .filter(UserFavoriteApp.user_id == user_id)
+            .order_by(asc(UserFavoriteApp.order_index))
             .all()
         )
-        return [r.app_id for r in rows]
+
+        result = []
+        for fav, app in rows:
+            result.append({
+                "id": app.id,
+                "name": app.name,
+                "base_path": app.base_path,
+                "icon": app.icon,
+                "order_index": fav.order_index,
+            })
+
+        return result
 
     def exists(self, user_id: str, app_id: str) -> bool:
         return (
@@ -30,9 +41,17 @@ class SqlAlchemyFavoriteAppRepository(FavoriteAppRepository):
         )
 
     def add(self, user_id: str, app_id: str) -> None:
+        # calcular próximo índice
+        max_index = (
+            self.session.query(UserFavoriteApp)
+            .filter_by(user_id=user_id)
+            .count()
+        )
+
         model = UserFavoriteApp(
             user_id=user_id,
             app_id=app_id,
+            order_index=max_index,
         )
         self.session.add(model)
 

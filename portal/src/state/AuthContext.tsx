@@ -1,5 +1,3 @@
-// src/state/AuthContext.tsx
-
 import React, {
   createContext,
   useEffect,
@@ -7,7 +5,7 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import keycloak from "../data/keycloakClient";
+import keycloak, { initKeycloak } from "../data/keycloakClient";
 import { ApiClient } from "../data/apiClient";
 import { CoreApi } from "../data/coreApi";
 import { useSocket } from "../hooks/useSocket";
@@ -24,15 +22,21 @@ import type {
 interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
+  initialized: boolean;
   token?: string;
   user?: MeResponse;
   apps: AppItem[];
   routes: RouteItem[];
   dashboard?: DashboardResponse;
-  favorites?: FavoriteAppItem[];
+  favorites: FavoriteAppItem[];
   notifications: NotificationItem[];
+
+  addFavorite: (appId: string) => Promise<void>;
+  removeFavorite: (appId: string) => Promise<void>;
+
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
+
   login: () => void;
   logout: () => void;
   reload: () => Promise<void>;
@@ -42,10 +46,13 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   loading: true,
+  initialized: false,
   apps: [],
   routes: [],
   favorites: [],
   notifications: [],
+  addFavorite: async () => {},
+  removeFavorite: async () => {},
   markNotificationRead: async () => {},
   markAllNotificationsRead: async () => {},
   login: () => {},
@@ -54,33 +61,27 @@ export const AuthContext = createContext<AuthContextType>({
   refreshToken: async () => {},
 });
 
-type AdminChangedEvent = {
-  entity?: "apps" | "routes" | "rbac" | "plugins" | "dashboard" | string;
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
+
   const [token, setToken] = useState<string | undefined>();
   const [user, setUser] = useState<MeResponse | undefined>();
   const [apps, setApps] = useState<AppItem[]>([]);
   const [routes, setRoutes] = useState<RouteItem[]>([]);
   const [dashboard, setDashboard] =
     useState<DashboardResponse | undefined>();
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [favorites, setFavorites] = useState<FavoriteAppItem[]>([]);
+  const [notifications, setNotifications] =
+    useState<NotificationItem[]>([]);
+  const [favorites, setFavorites] =
+    useState<FavoriteAppItem[]>([]);
 
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null
   );
-
-  const syncQueueRef = useRef<Set<string>>(new Set());
-  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isSyncingRef = useRef(false);
-  const pendingResyncRef = useRef(false);
-  const initializedRef = useRef(false);
 
   const buildCoreApi = useCallback(() => {
     const apiClient = new ApiClient("", () => keycloak.token);
@@ -88,11 +89,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   // =====================================================
-  // CORE LOAD
+  // CORE LOAD (robusto + race-safe)
   // =====================================================
 
   const loadCoreData = useCallback(async () => {
     if (!keycloak.token) return;
+
     const coreApi = buildCoreApi();
 
     const [
@@ -101,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       routesResponse,
       dashboardData,
       notificationsData,
-      appsFav,
+      favoritesData,
     ] = await Promise.all([
       coreApi.getMe(),
       coreApi.getApps(),
@@ -116,115 +118,110 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setRoutes(routesResponse);
     setDashboard(dashboardData);
     setNotifications(notificationsData);
-    setFavorites(appsFav);
+    setFavorites(favoritesData);
   }, [buildCoreApi]);
 
   // =====================================================
-  // ENTERPRISE SYNC ENGINE
+  // FAVORITES (sincronização garantida)
   // =====================================================
 
-  const runSyncBatch = useCallback(
-    async (entities: string[]) => {
-      if (!keycloak.token) return;
+  const addFavorite = useCallback(
+    async (appId: string) => {
       const coreApi = buildCoreApi();
-      const tasks: Promise<any>[] = [];
 
-      const needsApps =
-        entities.includes("apps") ||
-        entities.includes("plugins") ||
-        entities.includes("rbac");
+      // optimistic update
+      setFavorites((prev) => {
+        if (prev.find((f) => f.id === appId)) return prev;
 
-      const needsRoutes =
-        entities.includes("routes") ||
-        entities.includes("apps") ||
-        entities.includes("plugins") ||
-        entities.includes("rbac");
+        const app = apps.find((a) => a.id === appId);
+        if (!app) return prev;
 
-      const needsMe = entities.includes("rbac");
-      const needsDashboard = entities.includes("dashboard");
+        return [
+          ...prev,
+          {
+            id: app.id,
+            name: app.name,
+            base_path: app.basePath,
+            icon: app.icon ?? undefined,
+            order_index: prev.length,
+          },
+        ];
+      });
 
-      if (needsApps)
-        tasks.push(coreApi.getApps().then(setApps));
+      await coreApi.addFavoriteApp(appId);
 
-      if (needsRoutes)
-        tasks.push(coreApi.getRoutes().then(setRoutes));
+      // 🔥 sincroniza com backend
+      await loadCoreData();
+    },
+    [apps, buildCoreApi, loadCoreData]
+  );
 
-      if (needsMe)
-        tasks.push(coreApi.getMe().then(setUser));
+  const removeFavorite = useCallback(
+    async (appId: string) => {
+      const coreApi = buildCoreApi();
 
-      if (needsDashboard)
-        tasks.push(coreApi.getDashboard().then(setDashboard));
+      // optimistic update
+      setFavorites((prev) =>
+        prev.filter((f) => f.id !== appId)
+      );
 
-      await Promise.all(tasks);
+      await coreApi.removeFavoriteApp(appId);
+
+      // 🔥 sincroniza
+      await loadCoreData();
+    },
+    [buildCoreApi, loadCoreData]
+  );
+
+  // =====================================================
+  // NOTIFICATIONS
+  // =====================================================
+
+  const markNotificationRead = useCallback(
+    async (id: string) => {
+      const coreApi = buildCoreApi();
+
+      await coreApi.markNotificationRead(id);
+
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === id ? { ...n, read: true } : n
+        )
+      );
     },
     [buildCoreApi]
   );
 
-  const scheduleSync = useCallback(
-    (entity: string) => {
-      const normalized = [
-        "apps",
-        "routes",
-        "rbac",
-        "plugins",
-        "dashboard",
-      ].includes(entity)
-        ? entity
-        : "apps";
+  const markAllNotificationsRead = useCallback(
+    async () => {
+      const coreApi = buildCoreApi();
 
-      syncQueueRef.current.add(normalized);
+      await coreApi.markAllNotificationsRead();
 
-      if (syncTimeoutRef.current) return;
-
-      syncTimeoutRef.current = setTimeout(async () => {
-        syncTimeoutRef.current = null;
-
-        if (isSyncingRef.current) {
-          pendingResyncRef.current = true;
-          return;
-        }
-
-        isSyncingRef.current = true;
-
-        try {
-          const entities = Array.from(syncQueueRef.current);
-          syncQueueRef.current.clear();
-          await runSyncBatch(entities);
-        } finally {
-          isSyncingRef.current = false;
-
-          if (
-            pendingResyncRef.current ||
-            syncQueueRef.current.size > 0
-          ) {
-            pendingResyncRef.current = false;
-            const entities = Array.from(syncQueueRef.current);
-            syncQueueRef.current.clear();
-            if (entities.length > 0) {
-              isSyncingRef.current = true;
-              await runSyncBatch(entities);
-              isSyncingRef.current = false;
-            }
-          }
-        }
-      }, 120);
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, read: true }))
+      );
     },
-    [runSyncBatch]
+    [buildCoreApi]
   );
 
   // =====================================================
-  // SOCKET
+  // SOCKET (recarrega com segurança)
   // =====================================================
+
   useSocket({
-     token: !loading && isAuthenticated && token ? token : undefined,
+    token:
+      !loading && isAuthenticated && token
+        ? token
+        : undefined,
     onConnected: async () => {
       await loadCoreData();
     },
     onNotification: (data) => {
       setNotifications((prev) => [data, ...prev]);
     },
-    onAdminChanged: (event: AdminChangedEvent) => {
-      if (event?.entity) scheduleSync(event.entity);
+    onAdminChanged: async () => {
+      await loadCoreData();
     },
   });
 
@@ -241,7 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch {
       keycloak.logout();
     }
-  }, []);
+  }, [token]);
 
   const startTokenRefresh = () => {
     refreshIntervalRef.current = setInterval(
@@ -255,34 +252,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // =====================================================
 
   useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    let mounted = true;
 
-    keycloak
-      .init({
-        onLoad: "login-required",
-        pkceMethod: "S256",
-        checkLoginIframe: false,
-      })
-      .then(async (authenticated) => {
-        setIsAuthenticated(authenticated);
-        setToken(keycloak.token);
+    const init = async () => {
+      const authenticated = await initKeycloak();
 
-        if (authenticated) {
-          await loadCoreData();
-        }
+      if (!mounted) return;
 
-        startTokenRefresh();
-      })
-      .finally(() => setLoading(false));
+      setIsAuthenticated(authenticated);
+      setToken(keycloak.token);
+
+      if (authenticated) {
+        await loadCoreData();
+      }
+
+      startTokenRefresh();
+      setLoading(false);
+      setInitialized(true);
+    };
+
+    init();
 
     return () => {
+      mounted = false;
       if (refreshIntervalRef.current)
         clearInterval(refreshIntervalRef.current);
-      if (syncTimeoutRef.current)
-        clearTimeout(syncTimeoutRef.current);
     };
-  }, [loadCoreData, refreshToken]);
+  }, [loadCoreData]);
 
   const login = () => keycloak.login();
   const logout = () => keycloak.logout();
@@ -292,6 +288,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         isAuthenticated,
         loading,
+        initialized,
         token,
         user,
         apps,
@@ -299,8 +296,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         dashboard,
         favorites,
         notifications,
-        markNotificationRead: async () => {},
-        markAllNotificationsRead: async () => {},
+        addFavorite,
+        removeFavorite,
+        markNotificationRead,
+        markAllNotificationsRead,
         login,
         logout,
         reload: loadCoreData,

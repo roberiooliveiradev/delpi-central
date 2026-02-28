@@ -4,6 +4,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import type { AppItem } from "../data/coreApi";
+import { pushRecentApp } from "../utils/recentApps";
 
 function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -37,12 +38,19 @@ export const AppHost = () => {
   const { apps, token, refreshToken } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
-
+  const { routes } = useContext(AuthContext);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // host do microfrontend federado
   const federatedHostRef = useRef<HTMLDivElement>(null);
   const [federatedError, setFederatedError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const route = routes.find((r) => r.path === location.pathname);
+    if (route?.app) {
+      pushRecentApp(route.app);
+    }
+  }, [location.pathname, routes]);
 
   const app = useMemo(() => {
     return apps.find((a: AppItem) => {
@@ -199,7 +207,7 @@ export const AppHost = () => {
 
   if (app.renderMode === "federated") {
     return (
-      <div style={{ width: "100%", height: "100%" }}>
+      <div >
         {federatedError ? (
           <div style={{ padding: 12 }}>
             <b>Falha ao carregar microfrontend</b>
@@ -211,7 +219,6 @@ export const AppHost = () => {
 
         <div
           ref={federatedHostRef}
-          style={{ width: "100%", height: "100%" }}
         />
       </div>
     );

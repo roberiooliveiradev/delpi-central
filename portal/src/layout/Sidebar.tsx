@@ -1,6 +1,6 @@
 // src/layout/Sidebar.tsx
 
-import "./Sidebar.css"
+import "./Sidebar.css";
 import {
   useContext,
   useMemo,
@@ -27,6 +27,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 
+import { AppLauncherCard } from "../components/AppLauncherCard";
 
 type GroupedRoutes = Record<
   string,
@@ -40,10 +41,11 @@ type GroupedRoutes = Record<
 export const Sidebar = () => {
   const {
     routes,
-    apps,  
+    apps,
     user,
     logout,
     notifications,
+    favorites,
     markNotificationRead,
     markAllNotificationsRead,
   } = useContext(AuthContext);
@@ -57,7 +59,7 @@ export const Sidebar = () => {
   const notifDropdownRef = useRef<HTMLDivElement>(null);
 
   /* ===============================
-     ESTADO
+     ESTADOS
   =============================== */
 
   const [collapsed, setCollapsed] = useState(() => {
@@ -73,6 +75,7 @@ export const Sidebar = () => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
   }, [collapsed]);
 
+  // 🔹 Fecha dropdown ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -107,7 +110,6 @@ export const Sidebar = () => {
   const grouped: GroupedRoutes = useMemo(() => {
     const map: GroupedRoutes = {};
 
-    // 1️⃣ Cria todos os apps primeiro
     apps?.forEach((app: any) => {
       map[app.id] = {
         appName: app.name,
@@ -116,15 +118,22 @@ export const Sidebar = () => {
       };
     });
 
-    // 2️⃣ Adiciona apenas rotas visíveis
     routes.forEach((route: any) => {
       if (!map[route.app]) return;
-
       map[route.app].routes.push(route);
     });
 
     return map;
   }, [apps, routes]);
+
+  // 🔹 Apenas apps pinados, mantendo ordem do pin
+  const pinnedGroupedEntries = useMemo(() => {
+    if (!favorites?.length) return [];
+
+    return favorites
+      .map((fav) => [fav.id, grouped[fav.id]] as const)
+      .filter(([, group]) => !!group);
+  }, [favorites, grouped]);
 
   const toggleApp = (appId: string) => {
     setOpenApps((prev) => ({
@@ -134,19 +143,16 @@ export const Sidebar = () => {
   };
 
   /* ===============================
-     DADOS GLOBAIS
+     DADOS GERAIS
   =============================== */
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const initials = (() => {
     if (!user?.name) return "?";
-
     const parts = user.name.trim().split(" ").filter(Boolean);
-
     const first = parts[0]?.[0] ?? "";
     const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-
     return (first + last).toUpperCase() || "?";
   })();
 
@@ -196,78 +202,31 @@ export const Sidebar = () => {
               </button>
             </div>
 
-            {/* ================= APPS ================= */}
+            {/* ================= APPS PINADOS ================= */}
             <div className="sidebar-content">
-              {Object.entries(grouped).map(([appId, group]) => {
+              {pinnedGroupedEntries.map(([appId, group]) => {
                 const isOpen = openApps[appId] ?? false;
-                const AppIcon =
-                  resolveIcon(group.appIcon) || Package;
 
                 return (
-                  <div key={appId} className="sidebar-app">
-                    <div
-                      className="sidebar-app-title"
-                      onClick={() => {
-                        if (group.routes.length === 0) {
-                          navigate("/");
-                          return;
-                        }
-
-                        toggleApp(appId);
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <AppIcon size={16} />
-                        <span>{group.appName}</span>
-                      </div>
-
-                      {isOpen ? (
-                        <ChevronDown size={16} />
-                      ) : (
-                        <ChevronUp size={16} />
-                      )}
-                    </div>
-
-                    {isOpen &&
-                      group.routes.map((route) => {
-                        const label =
-                          route.label ||
-                          route.path
-                            .split("/")
-                            .filter(Boolean)
-                            .pop()
-                            ?.replace(/-/g, " ")
-                            .replace(/\b\w/g, (c: string) =>
-                              c.toUpperCase()
-                            ) ||
-                          route.path;
-
-                        const Icon =
-                          resolveIcon(route.icon) || Package;
-
-                        const isActive =
-                          location.pathname === route.path;
-
-                        return (
-                          <NavLink
-                            key={route.path}
-                            to={route.path}
-                            className={`sidebar-link ${
-                              isActive ? "active" : ""
-                            }`}
-                          >
-                            <Icon size={18} />
-                            <span>{label}</span>
-                          </NavLink>
-                        );
-                      })}
-                  </div>
+                  <AppLauncherCard
+                    key={appId}
+                    variant="sidebar"
+                    app={{
+                      id: appId,
+                      name: group.appName,
+                      icon: group.appIcon,
+                    }}
+                    routes={group.routes}
+                    isOpen={isOpen}
+                    onToggleOpen={(id) =>
+                      setOpenApps((prev) => ({
+                        ...prev,
+                        [id]: !prev[id],
+                      }))
+                    }
+                    onOpenSingle={() => navigate("/")}
+                    onGoToRoute={(path) => navigate(path)}
+                  />
                 );
               })}
             </div>
@@ -275,10 +234,7 @@ export const Sidebar = () => {
             {/* ================= FOOTER ================= */}
             <div className="sidebar-footer">
               {user?.is_superadmin && (
-                <NavLink
-                  to="/admin"
-                  className="sidebar-footer-item"
-                >
+                <NavLink to="/admin" className="sidebar-footer-item">
                   <Shield size={18} />
                   <span>Admin</span>
                 </NavLink>
@@ -390,6 +346,7 @@ export const Sidebar = () => {
 
       {launcherOpen && (
         <AppLauncher
+          dock="sidebar"
           onClose={() => setLauncherOpen(false)}
         />
       )}

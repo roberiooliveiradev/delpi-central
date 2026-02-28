@@ -1,0 +1,223 @@
+/* =========================================
+   APP LAUNCHER CARD
+========================================= */
+
+.launcher-app-tile {
+  position: relative;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+  border-radius: 16px;
+  padding: 14px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  min-height: 120px;
+  transition: 0.2s ease;
+  overflow: visible;
+}
+
+.launcher-app-tile:hover {
+  transform: translateY(-3px);
+  background: color-mix(in srgb, var(--surface-2) 85%, transparent);
+  box-shadow: var(--shadow);
+}
+
+.launcher-app-tile.expanded {
+  background: color-mix(in srgb, var(--surface-2) 85%, transparent);
+  box-shadow: var(--shadow);
+}
+
+/* HOME VARIANT */
+.launcher-app-tile.home-variant {
+  min-height: auto;
+  padding: 12px;
+}
+
+.launcher-app-tile.home-variant .launcher-app-name {
+  font-size: 13px;
+}
+
+/* ICON + NAME */
+
+.launcher-app-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.launcher-app-container-name{
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.launcher-app-name {
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+/* PIN */
+
+.launcher-pin {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: 0.15s ease;
+  z-index: 2;
+}
+
+.launcher-pin svg {
+  width: 12px;
+  height: 12px;
+}
+
+.launcher-app-tile:hover .launcher-pin,
+.launcher-pin.pinned {
+  opacity: 1;
+}
+
+/* CHEVRON */
+
+.launcher-chevron {
+  transition: 0.2s ease;
+  opacity: 0.6;
+}
+
+.launcher-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* DROPDOWN ROUTES */
+
+.launcher-inline-routes {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  padding: 8px;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 20;
+  animation: dropdownFade 0.18s ease;
+}
+
+.launcher-inline-route {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text);
+  transition: 0.15s ease;
+}
+
+.launcher-inline-route:hover {
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+}
+
+/* CARD ANIMATION */
+
+@keyframes dropdownFade {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* SIDEBAR VARIANT */
+.sidebar-variant{
+    transition: all 0.3s ease;
+}
+
+.launcher-app-tile.sidebar-variant {
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  min-height: auto;
+  align-items: stretch;
+}
+
+.launcher-app-tile.sidebar-variant:hover {
+  transform: none;
+  box-shadow: none;
+  background: rgba(0, 153, 220, 0.08);
+}
+
+.launcher-app-main{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+
+
+.launcher-app-tile.sidebar-variant .launcher-app-name {
+  font-size: 14px;
+  text-align: left;
+}
+
+.sidebar-inline-routes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.sidebar-inline-route {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: 0.2s;
+}
+
+.sidebar-inline-route:hover {
+  background: rgba(0, 153, 220, 0.08);
+  color: var(--primary);
+}
+
+
+.launcher-inline-route.active {
+  background: rgba(0, 153, 220, 0.15);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.sidebar-inline-route.active {
+  color: var(--primary);
+  background: rgba(0, 153, 220, 0.12);
+  padding-left: 5px;
+}

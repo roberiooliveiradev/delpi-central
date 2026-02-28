@@ -50,16 +50,13 @@ def add_favorite(app_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
+    with SqlAlchemyUnitOfWork() as uow:
+        use_case = AddFavoriteAppUseCase(uow)
 
-    use_case = AddFavoriteAppUseCase(
-        favorite_repo=uow.favorites
-    )
-
-    use_case.execute(
-        user_id=str(g.current_user.id),
-        app_id=app_id,
-    )
+        use_case.execute(
+            user_id=str(g.current_user.id),
+            app_id=app_id,
+        )
 
     return jsonify({"ok": True}), 200
 
@@ -74,16 +71,13 @@ def remove_favorite(app_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
+    with SqlAlchemyUnitOfWork() as uow:
+        use_case = RemoveFavoriteAppUseCase(uow)
 
-    use_case = RemoveFavoriteAppUseCase(
-        favorite_repo=uow.favorites
-    )
-
-    use_case.execute(
-        user_id=str(g.current_user.id),
-        app_id=app_id,
-    )
+        use_case.execute(
+            user_id=str(g.current_user.id),
+            app_id=app_id,
+        )
 
     return jsonify({"ok": True}), 200
 
