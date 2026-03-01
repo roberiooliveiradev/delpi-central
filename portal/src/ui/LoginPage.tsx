@@ -118,7 +118,7 @@ export function LoginPage() {
         <div className="login-energy-brand">
           <div className="login-energy-logo">
             <img
-              src="/logoDelpi.svg"
+              src="/logoTransformaMaisDelpi.svg"
               alt="DELPI"
             />
           </div>

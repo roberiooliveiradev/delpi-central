@@ -175,7 +175,7 @@ body > div {
   z-index: 2;
 
   width: 100%;
-  width: min(100%, 600px);
+  width: min(100%, 720px);
 
   padding: clamp(18px, 3.2vw, 28px);
 
@@ -205,6 +205,8 @@ body > div {
   .login-energy-brand {
     flex-direction: column;
     text-align: center;
+    justify-content: center;
+    align-items: center;
   }
 
   .login-energy-brand-text {
@@ -225,8 +227,8 @@ body > div {
 }
 
 .login-energy-logo {
-  width: clamp(76px, 16vw, 140px);
-  height: clamp(76px, 16vw, 140px);
+  width: clamp(76px, 16vw, 220px);
+  height: clamp(76px, 16vw, 220px);
 
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -422,6 +424,9 @@ body > div {
 
   .login-energy-brand {
     align-items: flex-start;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
   }
 
   .login-energy-logo {

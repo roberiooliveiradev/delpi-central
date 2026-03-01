@@ -12,12 +12,23 @@
 
         <div class="login-energy-brand">
             <div class="login-energy-logo">
-                <img src="${url.resourcesPath}/img/logoDelpi.svg" />
+                <img src="${url.resourcesPath}/img/logoTransformaMaisDelpi.svg" />
             </div>
 
             <div class="login-energy-brand-text">
                 <div class="login-energy-kicker">
-                    ⚡ Energia & Conectividade
+                    <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" height="16" 
+                    viewBox="0 0 24 24" fill="none" 
+                    stroke="currentColor" stroke-width="2" 
+                    stroke-linecap="round" stroke-linejoin="round" 
+                    class="lucide lucide-activity" 
+                    aria-hidden="true">
+                    <path 
+                    d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2">
+                    </path></svg>
+                     Energia & Conectividade
                 </div>
 
                 <h1 class="login-energy-title">
