@@ -1,0 +1,555 @@
+/* =====================================================
+   DELPI ENERGY LOGIN THEME — KEYCLOAK (RESPONSIVO)
+===================================================== */
+
+
+/* =========================================
+   DESIGN TOKENS
+========================================= */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f7f7f7;
+  --surface-3: #fafafa;
+
+  /* --text: #111111; */
+  --text: var(--secundary);
+  --text-muted: rgba(17, 17, 17, 0.7);
+
+  --border: #e6e6e6;
+	--border-2: #d9d9d9;
+
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+
+  --primary: #089bdb;
+  --secundary: #003866;
+  --success: #067647;
+  --danger: #b42318;
+  
+  	/* Estados de controle */
+	--control-bg: var(--surface);
+	--control-text: var(--text);
+	--control-border: var(--border-2);
+	--control-placeholder: rgba(17, 17, 17, 0.55);
+	--focus: 0 0 0 3px rgba(100, 108, 255, 0.25);
+  --focus-2: 0 6px 18px rgba(0, 153, 220, 0.3);
+
+  /* Alert tokens */
+  --alert-success-border: color-mix(in srgb, var(--success) 35%, transparent);
+  --alert-success-bg: color-mix(in srgb, var(--success) 10%, transparent);
+
+  --alert-danger-border: color-mix(in srgb, var(--danger) 35%, transparent);
+  --alert-danger-bg: color-mix(in srgb, var(--danger) 10%, transparent);
+
+  --bg-gradient: radial-gradient(circle at 18% 25%, rgba(0, 56, 102, 0.16), transparent 45%),
+    radial-gradient(circle at 82% 70%, rgba(0, 56, 102, 0.16), transparent 50%),
+    linear-gradient(135deg, color-mix(in srgb, var(--bg) 92%, #0b102b), var(--bg));
+
+  --bg-gradient-2: radial-gradient(circle at 18% 25%, rgba(0, 153, 220, 0.22), transparent 45%),
+    radial-gradient(circle at 82% 70%, rgba(0, 212, 255, 0.14), transparent 50%),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface-2) 92%, #0b1b2b), var(--surface-2));
+}
+
+/* DARK MODE */
+:root[data-theme="dark"] {
+  --bg: var(--secundary);
+  --surface: #0f1115;
+  --surface-2: #1b2030;
+  --surface-3: #111521;
+
+  --text: rgba(255, 255, 255, 0.85);
+  --text-muted: rgba(255, 255, 255, 0.7);
+
+  --border: rgba(255, 255, 255, 0.12);
+  --border-2: rgba(255, 255, 255, 0.16);
+
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+  --danger: #ff6b6b;
+  --success: #2ecc71;
+
+  --control-placeholder: rgba(255, 255, 255, 0.55);
+	--focus: 0 0 0 3px rgba(139, 147, 255, 0.3);
+
+  --alert-success-border: color-mix(in srgb, var(--success) 45%, transparent);
+  --alert-success-bg: color-mix(in srgb, var(--success) 15%, transparent);
+
+  --alert-danger-border: color-mix(in srgb, var(--danger) 50%, transparent);
+  --alert-danger-bg: color-mix(in srgb, var(--danger) 18%, transparent);
+}
+
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115;
+    --surface: #0f1115;
+    --surface-2: #1b2030;
+    --surface-3: #111521;
+
+    --text: rgba(255, 255, 255, 0.85);
+    --text-muted: rgba(255, 255, 255, 0.7);
+
+    --border: rgba(255, 255, 255, 0.12);
+    --border-2: rgba(255, 255, 255, 0.16);
+
+    --shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+    --danger: #ff6b6b;
+    --success: #2ecc71;
+    
+    --control-placeholder: rgba(255, 255, 255, 0.55);
+    --focus: 0 0 0 3px rgba(139, 147, 255, 0.3);
+
+    --alert-success-border: color-mix(in srgb, var(--success) 45%, transparent);
+    --alert-success-bg: color-mix(in srgb, var(--success) 15%, transparent);
+
+    --alert-danger-border: color-mix(in srgb, var(--danger) 50%, transparent);
+    --alert-danger-bg: color-mix(in srgb, var(--danger) 18%, transparent);
+  }
+}
+
+/* =========================
+   RESET / BASE WRAPPERS
+========================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body.login-pf {
+  background: transparent !important;
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: var(--text);
+  overflow: hidden; /* evita scroll lateral por efeitos */
+}
+
+
+/* REMOVE HEADER PADRÃO DO KEYCLOAK */
+
+#kc-header,
+#kc-header-wrapper,
+header,
+#kc-page-title {
+  display: none !important;
+}
+
+/* garante que o root ocupe a tela */
+body > div {
+  height: 100%;
+}
+
+/* =========================
+   LAYOUT — LOGIN
+========================= */
+
+.login-energy {
+  position: relative;
+  min-height: 100dvh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: clamp(20px, 5vw, 40px);
+  background: var(--bg-gradient);
+}
+/* (se você quiser o grid/glow no futuro, pode recolocar com z-index:0) */
+
+/* =========================
+   CARD
+========================= */
+
+.login-energy-card {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  width: min(100%, 720px);
+
+  padding: clamp(18px, 3.2vw, 28px);
+
+  border-radius: clamp(16px, 3vw, 22px);
+  border: 1px solid var(--border);
+
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(12px);
+
+  box-shadow: var(--shadow);
+}
+
+/* =========================
+   BRAND / LOGO
+========================= */
+
+.login-energy-brand {
+  display: flex;
+  gap: clamp(12px, 3vw, 20px);
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+
+@media (max-width: 640px) {
+  .login-energy-brand {
+    flex-direction: column;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .login-energy-brand-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (max-width: 360px) {
+  .login-energy-card {
+    padding: 16px;
+  }
+
+  #kc-form-login {
+    gap: 10px;
+  }
+}
+
+.login-energy-logo {
+  width: clamp(76px, 16vw, 220px);
+  height: clamp(76px, 16vw, 220px);
+
+  border-radius: 999px;
+  border: 1px solid var(--border);
+
+  background: var(--surface-2);
+  box-shadow: var(--shadow);
+
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.login-energy-logo img {
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+}
+
+/* =========================
+   TEXTOS
+========================= */
+
+.login-energy-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
+
+  color: var(--text-muted);
+  font-size: 12px;
+  width: fit-content;
+}
+
+.login-energy-title {
+  margin: 12px 0 0;
+  font-size: clamp(20px, 3.2vw, 26px);
+  letter-spacing: -0.02em;
+}
+
+.login-energy-subtitle {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* =========================
+   FEEDBACK (erro / aviso)
+========================= */
+
+.kc-feedback {
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-top: 14px;
+  margin-bottom: 2px;
+
+  border: 1px solid var(--alert-danger-border);
+  background: var(--alert-danger-bg);
+
+  color: color-mix(in srgb, var(--text) 90%, var(--danger));
+  font-size: 13px;
+}
+
+/* =========================
+   FORM
+========================= */
+
+#kc-form-login {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+#kc-form-login input[type="text"],
+#kc-form-login input[type="password"] {
+  width: 100%;
+  padding: 12px 12px;
+
+  border-radius: 12px;
+  border: 1px solid var(--control-border);
+
+  background: var(--control-bg);
+  color: var(--control-text);
+
+  font-size: 14px;
+}
+
+#kc-form-login input::placeholder {
+  color: var(--control-placeholder);
+}
+
+#kc-form-login input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--primary) 65%, var(--control-border));
+  box-shadow: var(--focus);
+}
+
+/* =========================
+   BUTTON
+========================= */
+
+.login-energy-action {
+  width: 100%;
+  margin-top: 6px;
+
+  padding: 13px 14px;
+  border-radius: 14px;
+
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
+
+  color: var(--text);
+  font-weight: 750;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-energy-action:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--focus-2);
+  border-color: color-mix(in srgb, var(--primary) 60%, var(--border));
+}
+
+.login-energy-action:active {
+  transform: translateY(0);
+}
+
+.login-energy-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.login-energy-footer {
+  margin-top: 16px;
+  padding-top: 14px;
+
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 12px;
+  color: var(--text-muted);
+
+  flex-wrap: wrap; /* quebra em telas pequenas */
+}
+
+.login-energy-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
+}
+
+/* =========================
+   MOBILE EXTRA (opcional)
+========================= */
+
+@media (max-width: 420px) {
+  .login-energy-kicker {
+    font-size: 11px;
+  }
+
+  .login-energy-subtitle {
+    font-size: 12.5px;
+  }
+}
+
+
+/* Responsivo */
+@media (max-width: 560px) {
+  .login-energy-card {
+    padding: 22px;
+    border-radius: 18px;
+  }
+
+  .login-energy-brand {
+    align-items: flex-start;
+        text-align: center;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .login-energy-logo {
+    width: 100px;
+    height: 100px;
+  }
+
+  .login-energy-title {
+    font-size: 22px;
+  }
+}
+
+/* =========================
+   REDUZ MOVIMENTO
+========================= */
+@media (prefers-reduced-motion: reduce) {
+  .login-energy-action {
+    transition: none;
+  }
+}
+
+
+/* =========================
+   LIGHTNING DYNAMIC
+========================= */
+
+.lightning-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lightning-line,
+.lightning-branch {
+  fill: none;
+  stroke: var(--primary);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+
+.lightning-line {
+  stroke-width: 2;
+  filter:
+    drop-shadow(0 0 4px rgba(0, 207, 255, 0.6))
+    drop-shadow(0 0 14px rgba(0, 153, 220, 0.5));
+  animation: lightningFlash 2s ease-out;
+}
+
+.lightning-branch {
+  stroke-width: 1.4;
+  filter: drop-shadow(0 0 6px rgba(0, 207, 255, 0.5));
+  animation: lightningFlash 2s ease-out;
+}
+
+@keyframes lightningFlash {
+  0% { opacity: 0; }
+  8% { opacity: 0.9; }
+  20% { opacity: 0.4; }
+  35% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.login-energy::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(0,153,220,0.25), transparent 60%);
+  opacity: 0;
+  pointer-events: none;
+  animation: bgFlash 0.5s ease-out;
+}
+
+@keyframes bgFlash {
+  0% { opacity: 0; }
+  20% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+/* =====================================
+   CARD RISE (apenas na entrada)
+===================================== */
+
+/* estado inicial: aplicado via JS */
+.login-energy-card.card-enter {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+/* ao remover a classe, faz a subida suavemente */
+.login-energy-card {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.45s ease, transform 0.45s ease, box-shadow 0.6s ease;
+}
+
+/* =====================================
+   CARD LIGHTNING REACTION — SOFT
+===================================== */
+
+.login-energy-card.lightning-hit {
+  animation: cardShockSoft 0.8s ease-out;
+}
+
+@keyframes cardShockSoft {
+  0% {
+    box-shadow: var(--shadow);
+  }
+  15% {
+    box-shadow:
+      0 0 8px rgba(0,153,220,0.35),
+      0 0 18px rgba(0,212,255,0.25),
+      var(--shadow);
+  }
+  40% {
+    box-shadow:
+      0 0 6px rgba(0,153,220,0.25),
+      0 0 12px rgba(0,212,255,0.18),
+      var(--shadow);
+  }
+  100% {
+    box-shadow: var(--shadow);
+  }
+}
