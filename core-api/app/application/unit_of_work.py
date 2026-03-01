@@ -3,6 +3,13 @@
 from typing import Protocol
 
 # =========================
+# Events
+# =========================
+from app.domain.events.admin_events import DomainEvent
+from app.domain.ports.event_dispatcher_port import EventDispatcherPort
+from app.domain.ports.cache_port import PermissionCachePort
+
+# =========================
 # User & RBAC Core
 # =========================
 
@@ -27,6 +34,7 @@ from app.domain.ports.permission_query_port import PermissionQueryPort
 from app.domain.ports.app_query_port import AppQueryPort
 from app.domain.ports.admin_route_repository_port import AdminRouteRepositoryPort
 from app.domain.ports.admin_app_repository_port import AdminAppRepositoryPort
+from app.domain.ports.route_query_port import RouteQueryPort
 
 
 # =========================
@@ -38,7 +46,6 @@ from app.domain.ports.plugin_manifest_repository_port import PluginManifestRepos
 from app.domain.ports.plugin_version_repository_port import PluginVersionRepositoryPort
 from app.domain.ports.plugin_route_repository_port import PluginRouteRepositoryPort
 from app.domain.ports.plugin_permission_repository_port import PluginPermissionRepositoryPort
-
 
 # =========================
 # Misc
@@ -77,6 +84,7 @@ class UnitOfWork(Protocol):
     app_queries: AppQueryPort
     admin_apps: AdminAppRepositoryPort
     admin_routes: AdminRouteRepositoryPort
+    route_queries: RouteQueryPort
 
     # =========================
     # Plugin System
@@ -98,6 +106,13 @@ class UnitOfWork(Protocol):
 
     cache: PermissionCachePort
     events: EventDispatcherPort
+
+    # =========================
+    # Domain Events
+    # =========================
+
+    def collect_event(self, event: DomainEvent) -> None:
+        ...
 
     # =========================
     # Transaction Control

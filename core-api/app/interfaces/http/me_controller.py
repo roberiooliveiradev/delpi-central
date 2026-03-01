@@ -80,7 +80,7 @@ def me_routes():
     uow = SqlAlchemyUnitOfWork()
 
     uc = ListUserRoutesUseCase(
-        route_query=uow.route_queries
+        route_queries=uow.route_queries
     )
 
     result = uc.execute(permissions)

@@ -27,3 +27,6 @@ class RolePermissionRepositoryPort(Protocol):
 
     def remove_permission_by_code(self, role_id: UUID, permission_code: str) -> None:
         ...
+
+    def list_permission_ids(self, role_id: UUID)-> None:
+        ...

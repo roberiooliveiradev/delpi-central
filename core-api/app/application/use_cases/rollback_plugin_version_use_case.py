@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Dict, Any, List
 
 from app.application.unit_of_work import UnitOfWork
+from app.domain.events.admin_events import AdminChangedEvent
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,7 @@ class RollbackPluginVersionUseCase:
 
     def execute(self, plugin_id: str, target_version: str) -> RollbackPluginVersionResult:
 
+        # 1️⃣ Validação
         plugin = self._uow.plugins.get_by_id(plugin_id)
         if not plugin:
             return RollbackPluginVersionResult(
@@ -61,50 +63,55 @@ class RollbackPluginVersionUseCase:
                 }],
             )
 
-        try:
-            # Atualiza versão ativa
-            self._uow.plugins.update_version(plugin_id, target_version)
+        # 2️⃣ Regra de negócio (transacional)
 
-            # Atualiza manifesto
-            self._uow.plugin_manifests.save(plugin_id, manifest, str(checksum or ""))
+        # Atualiza versão ativa
+        self._uow.plugins.update_version(plugin_id, target_version)
 
-            # Rotas: replace total
-            self._uow.plugin_routes.delete_by_app(plugin_id)
-            self._uow.plugin_routes.bulk_create([
-                {
-                    "app_id": plugin_id,
-                    "path": r.get("path"),
-                    "label": r.get("label"),
-                    "icon": r.get("icon"),
-                    "permission": r.get("permission"),
-                    "order": r.get("order", 0),
-                    "show_in_menu": r.get("showInMenu", True),
-                }
-                for r in (manifest.get("routes") or [])
-            ])
+        # Atualiza manifesto
+        self._uow.plugin_manifests.save(plugin_id, manifest, str(checksum or ""))
 
-            # Permissões: replace total
-            self._uow.plugin_permissions.delete_by_module(plugin_id)
-            self._uow.plugin_permissions.bulk_create([
-                {
-                    "code": p.get("code"),
-                    "name": p.get("name"),
-                    "description": p.get("description"),
-                    "module": plugin_id,
-                }
-                for p in (manifest.get("permissions") or [])
-            ])
+        # Rotas: replace total
+        self._uow.plugin_routes.delete_by_app(plugin_id)
+        self._uow.plugin_routes.bulk_create([
+            {
+                "app_id": plugin_id,
+                "path": r.get("path"),
+                "label": r.get("label"),
+                "icon": r.get("icon"),
+                "permission": r.get("permission"),
+                "order": r.get("order", 0),
+                "show_in_menu": r.get("showInMenu", True),
+            }
+            for r in (manifest.get("routes") or [])
+        ])
 
-            self._uow.commit()
-            return RollbackPluginVersionResult(success=True, errors=[])
+        # Permissões: replace total
+        self._uow.plugin_permissions.delete_by_module(plugin_id)
+        self._uow.plugin_permissions.bulk_create([
+            {
+                "code": p.get("code"),
+                "name": p.get("name"),
+                "description": p.get("description"),
+                "module": plugin_id,
+            }
+            for p in (manifest.get("permissions") or [])
+        ])
 
-        except Exception as e:
-            self._uow.rollback()
-            return RollbackPluginVersionResult(
-                success=False,
-                errors=[{
-                    "code": "plugin.rollback_failed",
-                    "message": str(e),
-                    "path": "_global"
-                }],
+        # 3️⃣ Evento global
+        self._uow.collect_event(
+            AdminChangedEvent(
+                entity="plugins",
+                action="plugin_version_rolled_back",
+                payload={
+                    "pluginId": plugin_id,
+                    "version": target_version,
+                },
+                target_user_id=None,  # broadcast
             )
+        )
+
+        return RollbackPluginVersionResult(
+            success=True,
+            errors=[]
+        )

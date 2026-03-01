@@ -1,4 +1,5 @@
 # app/interfaces/http/notification_controller.py
+from uuid import UUID
 
 from flask import Blueprint, jsonify, g
 
@@ -40,10 +41,9 @@ def list_notifications():
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    use_case = ListUnreadNotificationsUseCase(uow)
-
-    result = use_case.execute(user_id=g.current_sub)
+    with SqlAlchemyUnitOfWork() as uow:
+        use_case = ListUnreadNotificationsUseCase(uow)
+        result = use_case.execute(user_id=g.current_sub)
 
     return jsonify([
         {
@@ -63,8 +63,6 @@ def list_notifications():
 # Mark single as read
 # ---------------------------------------------------------
 
-from uuid import UUID
-
 @notification_bp.route("/notifications/<notification_id>/read", methods=["POST"])
 def mark_read(notification_id: str):
     guard = require_auth()
@@ -76,13 +74,15 @@ def mark_read(notification_id: str):
     except ValueError:
         return api_error("invalid_id", "Invalid notification id", status=400)
 
-    uow = SqlAlchemyUnitOfWork()
-    use_case = MarkNotificationReadUseCase(uow)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            use_case = MarkNotificationReadUseCase(uow)
+            use_case.execute(notification_uuid)
 
-    use_case.execute(notification_uuid)
+        return jsonify({"ok": True}), 200
 
-    return jsonify({"ok": True}), 200
-
+    except Exception as e:
+        return api_error("mark_failed", str(e))
 
 # ---------------------------------------------------------
 # Mark all as read
@@ -94,13 +94,15 @@ def mark_all_read():
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    use_case = MarkAllNotificationsReadUseCase(uow)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            use_case = MarkAllNotificationsReadUseCase(uow)
+            use_case.execute(user_id=g.current_sub)
 
-    use_case.execute(user_id=g.current_sub)
+        return jsonify({"ok": True}), 200
 
-    return jsonify({"ok": True}), 200
-
+    except Exception as e:
+        return api_error("mark_all_failed", str(e))
 
 # ---------------------------------------------------------
 # Test notification
@@ -112,15 +114,17 @@ def test_notification():
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            use_case = NotifyUserUseCase(uow)
+            use_case.execute(
+                user_id=g.current_sub,
+                title="Teste tempo real",
+                message="Notificação disparada via endpoint",
+                type="success",
+            )
 
-    use_case = NotifyUserUseCase(uow)
+        return jsonify({"ok": True}), 200
 
-    use_case.execute(
-        user_id=g.current_sub,
-        title="Teste tempo real",
-        message="Notificação disparada via endpoint",
-        type="success",
-    )
-
-    return jsonify({"ok": True}), 200
+    except Exception as e:
+        return api_error("notify_failed", str(e))

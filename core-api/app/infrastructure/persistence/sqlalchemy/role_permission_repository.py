@@ -154,3 +154,11 @@ class SqlAlchemyRolePermissionRepository(RolePermissionRepositoryPort):
             .filter(role_permissions.c.role_id == role_id)
             .delete(synchronize_session=False)
         )
+
+    def list_permission_ids(self, role_id: UUID):
+        rows = (
+            self.session.query(role_permissions.c.permission_id)
+            .filter(role_permissions.c.role_id == role_id)
+            .all()
+        )
+        return [pid for (pid,) in rows]

@@ -5,10 +5,7 @@ from flask import Blueprint, request, jsonify, g
 
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 
-from app.infrastructure.events.socket_admin_event_publisher import (
-    SocketAdminEventPublisher
-)
-
+from app.application.use_cases.set_user_superadmin_use_case import SetUserSuperadminUseCase
 from app.application.use_cases.create_role_use_case import CreateRoleUseCase
 from app.application.use_cases.list_role_permissions_use_case import ListRolePermissionsUseCase
 from app.application.use_cases.replace_role_permissions_use_case import ReplaceRolePermissionsUseCase
@@ -58,21 +55,28 @@ def create_role():
         return guard
 
     data = request.get_json(silent=True) or {}
-
     name = (data.get("name") or "").strip()
-    if not name:
-        return api_error("validation_error", "Campo 'name' é obrigatório.", path="name")
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = CreateRoleUseCase(uow)
+    if not name:
+        return api_error(
+            "validation_error",
+            "Campo 'name' é obrigatório.",
+            path="name"
+        )
 
     try:
-        role_id = uc.execute(name=name, description=data.get("description"))
-        return jsonify({"id": str(role_id)}), 201
-    except Exception as e:
-        uow.rollback()
-        return api_error("create_role_failed", str(e))
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = CreateRoleUseCase(uow)
+            role_id = uc.execute(
+                name=name,
+                description=data.get("description"),
+            )
 
+        return jsonify({"id": str(role_id)}), 201
+
+    except Exception as e:
+        return api_error("create_role_failed", str(e))
+    
 
 @rbac_bp.route("/admin/rbac/roles/<role_id>/permissions", methods=["GET"])
 def list_role_permissions(role_id: str):
@@ -116,16 +120,14 @@ def replace_role_permissions(role_id: str):
             path="permissionIds"
         )
 
-
-    uow = SqlAlchemyUnitOfWork()
-    uc = ReplaceRolePermissionsUseCase(uow)
-
     try:
-        return jsonify(
-            uc.execute(role_id, permission_ids)
-        ), 200
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = ReplaceRolePermissionsUseCase(uow)
+            result = uc.execute(role_id, permission_ids)
+
+        return jsonify(result), 200
+
     except Exception as e:
-        uow.rollback()
         return api_error("replace_role_permissions_failed", str(e))
 
 
@@ -136,18 +138,23 @@ def add_permission_to_role(role_id: str):
         return guard
 
     data = request.get_json(silent=True) or {}
-    id = (data.get("id") or "").strip()
+    permission_id = (data.get("id") or "").strip()
 
-    if not id:
-        return api_error("validation_error", "Campo 'id' é obrigatório.", path="id")
-
-    uow = SqlAlchemyUnitOfWork()
-    uc = AddPermissionToRoleUseCase(uow)
+    if not permission_id:
+        return api_error(
+            "validation_error",
+            "Campo 'id' é obrigatório.",
+            path="id"
+        )
 
     try:
-        return jsonify(uc.execute(role_id, id)), 200
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = AddPermissionToRoleUseCase(uow)
+            result = uc.execute(role_id, permission_id)
+
+        return jsonify(result), 200
+
     except Exception as e:
-        uow.rollback()
         return api_error("add_permission_to_role_failed", str(e))
 
 
@@ -157,13 +164,14 @@ def remove_permission_from_role(role_id: str, permission_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = RemovePermissionFromRoleUseCase(uow)
-
     try:
-        return jsonify(uc.execute(role_id, permission_id)), 200
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = RemovePermissionFromRoleUseCase(uow)
+            result = uc.execute(role_id, permission_id)
+
+        return jsonify(result), 200
+
     except Exception as e:
-        uow.rollback()
         return api_error("remove_permission_from_role_failed", str(e))
 
 
@@ -182,16 +190,14 @@ def list_group_roles(group_id: str):
 
     with SqlAlchemyUnitOfWork() as uow:
         uc = ListGroupRolesUseCase(uow)
-        roles = uc.execute(group_id)
-
-    total = len(roles)
+        role_ids = uc.execute(group_id)
 
     return jsonify({
-        "data": roles,
+        "data": role_ids,
         "pagination": {
             "page": page,
             "page_size": page_size,
-            "total": total,
+            "total": len(role_ids),
             "total_pages": 1,
         }
     }), 200
@@ -206,13 +212,21 @@ def replace_group_roles(group_id: str):
     data = request.get_json(silent=True) or {}
     role_ids = data.get("roleIds", [])
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = ReplaceGroupRolesUseCase(uow)
+    if not isinstance(role_ids, list):
+        return api_error(
+            "validation_error",
+            "Campo 'roleIds' deve ser uma lista.",
+            path="roleIds"
+        )
 
     try:
-        return jsonify(uc.execute(group_id, role_ids)), 200
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = ReplaceGroupRolesUseCase(uow)
+            result = uc.execute(group_id, role_ids)
+
+        return jsonify(result), 200
+
     except Exception as e:
-        uow.rollback()
         return api_error("replace_group_roles_failed", str(e))
 
 
@@ -222,10 +236,15 @@ def add_role_to_group(group_id: str, role_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = AddRoleToGroupUseCase(uow)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = AddRoleToGroupUseCase(uow)
+            result = uc.execute(group_id, role_id)
 
-    return jsonify(uc.execute(group_id, role_id)), 200
+        return jsonify(result), 200
+
+    except Exception as e:
+        return api_error("add_role_to_group_failed", str(e))
 
 
 @rbac_bp.route("/admin/rbac/groups/<group_id>/roles/<role_id>", methods=["DELETE"])
@@ -234,11 +253,16 @@ def remove_role_from_group(group_id: str, role_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = RemoveRoleFromGroupUseCase(uow)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = RemoveRoleFromGroupUseCase(uow)
+            result = uc.execute(group_id, role_id)
 
-    return jsonify(uc.execute(group_id, role_id)), 200
+        return jsonify(result), 200
 
+    except Exception as e:
+        return api_error("remove_role_from_group_failed", str(e))
+    
 
 # ==========================================================
 # USERS
@@ -285,16 +309,8 @@ def list_user_roles(user_id: str):
     page_size = int(request.args.get("page_size", 999))
 
     with SqlAlchemyUnitOfWork() as uow:
-        role_ids = uow.user_roles.list_role_ids(user_id)
-
-        roles = []
-        for rid in role_ids:
-            role = uow.roles.get(rid)
-            if role:
-                roles.append({
-                    "id": str(role.id),
-                    "name": role.name
-                })
+        uc = ListUserRolesUseCase(uow)
+        roles = uc.execute(user_id)
 
     total = len(roles)
 
@@ -318,12 +334,22 @@ def replace_user_roles(user_id: str):
     data = request.get_json(silent=True) or {}
     role_ids = data.get("roleIds", [])
 
-    uow = SqlAlchemyUnitOfWork()
-    publisher = SocketAdminEventPublisher()
+    if not isinstance(role_ids, list):
+        return api_error(
+            "validation_error",
+            "Campo 'roleIds' deve ser uma lista.",
+            path="roleIds"
+        )
 
-    uc = ReplaceUserRolesUseCase(uow, publisher)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = ReplaceUserRolesUseCase(uow)
+            result = uc.execute(user_id, role_ids)
 
-    return jsonify(uc.execute(user_id, role_ids)), 200
+        return jsonify(result), 200
+
+    except Exception as e:
+        return api_error("replace_user_roles_failed", str(e))
 
 
 @rbac_bp.route("/admin/users/<user_id>/roles/<role_id>", methods=["POST"])
@@ -332,10 +358,15 @@ def add_role_to_user(user_id: str, role_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = AddRoleToUserUseCase(uow)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = AddRoleToUserUseCase(uow)
+            result = uc.execute(user_id, role_id)
 
-    return jsonify(uc.execute(user_id, role_id)), 200
+        return jsonify(result), 200
+
+    except Exception as e:
+        return api_error("add_role_to_user_failed", str(e))
 
 
 @rbac_bp.route("/admin/users/<user_id>/roles/<role_id>", methods=["DELETE"])
@@ -344,10 +375,15 @@ def remove_role_from_user(user_id: str, role_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = RemoveRoleFromUserUseCase(uow)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = RemoveRoleFromUserUseCase(uow)
+            result = uc.execute(user_id, role_id)
 
-    return jsonify(uc.execute(user_id, role_id)), 200
+        return jsonify(result), 200
+
+    except Exception as e:
+        return api_error("remove_role_from_user_failed", str(e))
 
 
 @rbac_bp.route("/admin/users/<user_id>/groups", methods=["GET"])
@@ -360,16 +396,8 @@ def list_user_groups(user_id: str):
     page_size = int(request.args.get("page_size", 999))
 
     with SqlAlchemyUnitOfWork() as uow:
-        group_ids = uow.user_groups.list_group_ids(user_id)
-
-        groups = []
-        for gid in group_ids:
-            group = uow.groups.get(gid)
-            if group:
-                groups.append({
-                    "id": str(group.id),
-                    "name": group.name
-                })
+        uc = ListUserGroupsUseCase(uow)
+        groups = uc.execute(user_id)
 
     total = len(groups)
 
@@ -393,10 +421,22 @@ def replace_user_groups(user_id: str):
     data = request.get_json(silent=True) or {}
     group_ids = data.get("groupIds", [])
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = ReplaceUserGroupsUseCase(uow)
+    if not isinstance(group_ids, list):
+        return api_error(
+            "validation_error",
+            "Campo 'groupIds' deve ser uma lista.",
+            path="groupIds"
+        )
 
-    return jsonify(uc.execute(user_id, group_ids)), 200
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = ReplaceUserGroupsUseCase(uow)
+            result = uc.execute(user_id, group_ids)
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        return api_error("replace_user_groups_failed", str(e))
 
 
 @rbac_bp.route("/admin/users/<user_id>/groups/<group_id>", methods=["POST"])
@@ -405,10 +445,15 @@ def add_group_to_user(user_id: str, group_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = AddGroupToUserUseCase(uow)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = AddGroupToUserUseCase(uow)
+            result = uc.execute(user_id, group_id)
 
-    return jsonify(uc.execute(user_id, group_id)), 200
+        return jsonify(result), 200
+
+    except Exception as e:
+        return api_error("add_group_to_user_failed", str(e))
 
 
 @rbac_bp.route("/admin/users/<user_id>/groups/<group_id>", methods=["DELETE"])
@@ -417,10 +462,15 @@ def remove_group_from_user(user_id: str, group_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = RemoveGroupFromUserUseCase(uow)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = RemoveGroupFromUserUseCase(uow)
+            result = uc.execute(user_id, group_id)
 
-    return jsonify(uc.execute(user_id, group_id)), 200
+        return jsonify(result), 200
+
+    except Exception as e:
+        return api_error("remove_group_from_user_failed", str(e))
 
 # ==========================================================
 # ROLES - LIST PAGINATED
@@ -517,44 +567,23 @@ def update_user(user_id: str):
     group_ids = data.get("groupIds", None)
     is_superadmin = data.get("is_superadmin", None)
 
-    # validações
-    if role_ids is not None and not isinstance(role_ids, list):
-        return api_error("validation_error", "Campo 'roleIds' deve ser uma lista.", path="roleIds")
-
-    if group_ids is not None and not isinstance(group_ids, list):
-        return api_error("validation_error", "Campo 'groupIds' deve ser uma lista.", path="groupIds")
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            uid = UUID(user_id)
 
-            # atualiza flag superadmin se vier
+            # SUPERADMIN
             if is_superadmin is not None:
-                # precisa existir esse método no repo (ou equivalente)
-                uow.users.set_superadmin(uid, bool(is_superadmin))
+                uc = SetUserSuperadminUseCase(uow)
+                uc.execute(user_id, bool(is_superadmin))
 
-            # troca roles se vier
+            # ROLES
             if role_ids is not None:
-                rid_list = [UUID(r) for r in role_ids]
-                uow.user_roles.replace_roles(uid, rid_list)
+                uc = ReplaceUserRolesUseCase(uow)
+                uc.execute(user_id, role_ids)
 
-            # troca grupos se vier
+            # GROUPS
             if group_ids is not None:
-                gid_list = [UUID(g) for g in group_ids]
-                uow.user_groups.replace_groups(uid, gid_list)
-
-            uow.commit()
-            from app.infrastructure.events.socket_admin_event_publisher import SocketAdminEventPublisher
-            from app.domain.ports.admin_event_publicher import AdminChangedEvent
-            publisher = SocketAdminEventPublisher()
-            publisher.publish(AdminChangedEvent(
-                entity="rbac",
-                action="update",
-                payload={"userId": user_id},
-            ))
-            # invalida cache se existir
-            if hasattr(uow, "cache") and uow.cache:
-                uow.cache.invalidate(user_id)
+                uc = ReplaceUserGroupsUseCase(uow)
+                uc.execute(user_id, group_ids)
 
         return jsonify({"ok": True}), 200
 
@@ -624,7 +653,11 @@ def update_group(group_id: str):
     description = data.get("description")
 
     if not name:
-        return api_error("validation_error", "Campo 'name' é obrigatório.", path="name")
+        return api_error(
+            "validation_error",
+            "Campo 'name' é obrigatório.",
+            path="name"
+        )
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -640,13 +673,12 @@ def update_group(group_id: str):
                 description=description,
             )
 
-            uow.commit()
-
         return jsonify({"ok": True}), 200
 
     except Exception as e:
         return server_error(str(e))
     
+
 # ==========================================================
 # DELETE ROLE
 # ==========================================================
@@ -669,8 +701,6 @@ def delete_role(role_id: str):
             # remove role
             uow.roles.delete(rid)
 
-            uow.commit()
-
         return jsonify({"ok": True}), 200
 
     except Exception as e:
@@ -679,7 +709,6 @@ def delete_role(role_id: str):
 # ==========================================================
 # BULK DELETE ROLES
 # ==========================================================
-
 @rbac_bp.route("/admin/rbac/roles/bulk-delete", methods=["POST"])
 def bulk_delete_roles():
     guard = require_auth()
@@ -690,7 +719,11 @@ def bulk_delete_roles():
     ids = data.get("ids")
 
     if not isinstance(ids, list):
-        return api_error("validation_error", "Campo 'ids' deve ser uma lista.", path="ids")
+        return api_error(
+            "validation_error",
+            "Campo 'ids' deve ser uma lista.",
+            path="ids"
+        )
 
     deleted = 0
 
@@ -706,8 +739,6 @@ def bulk_delete_roles():
                 uow.role_permissions.delete_by_role_id(rid)
                 uow.roles.delete(rid)
                 deleted += 1
-
-            uow.commit()
 
         return jsonify({"ok": True, "deleted": deleted}), 200
 
@@ -732,8 +763,6 @@ def delete_group(group_id: str):
 
             uow.groups.delete(gid)
 
-            uow.commit()
-
         return jsonify({"ok": True}), 200
 
     except Exception as e:
@@ -757,8 +786,6 @@ def delete_user(user_id: str):
 
             uow.users.delete(uid)
 
-            uow.commit()
-
         return jsonify({"ok": True}), 200
 
     except Exception as e:
@@ -780,7 +807,11 @@ def create_group():
     description = data.get("description")
 
     if not name:
-        return api_error("validation_error", "Campo 'name' é obrigatório.", path="name")
+        return api_error(
+            "validation_error",
+            "Campo 'name' é obrigatório.",
+            path="name"
+        )
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -788,8 +819,6 @@ def create_group():
                 name=name,
                 description=description,
             )
-
-            uow.commit()
 
         return jsonify({"id": str(gid)}), 201
 

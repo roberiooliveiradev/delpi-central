@@ -2,24 +2,37 @@
 
 from uuid import UUID
 from app.application.unit_of_work import UnitOfWork
-from app.domain.ports.cache_port import PermissionCachePort
+from app.domain.events.admin_events import AdminChangedEvent
 
 
 class AddRoleToUserUseCase:
 
-    def __init__(self, uow: UnitOfWork, permission_cache: PermissionCachePort | None = None):
+    def __init__(self, uow: UnitOfWork):
         self.uow = uow
-        self.permission_cache = permission_cache
 
     def execute(self, user_id: str, role_id: str):
 
         uid = UUID(user_id)
         rid = UUID(role_id)
 
+        # 1️⃣ Regra de negócio
         self.uow.user_roles.add_role(uid, rid)
-        self.uow.commit()
 
-        if self.permission_cache:
-            self.permission_cache.invalidate(user_id)
+        # 2️⃣ Invalida cache via UoW
+        if self.uow.cache:
+            self.uow.cache.invalidate(user_id)
+
+        # 3️⃣ Evento direcionado
+        self.uow.collect_event(
+            AdminChangedEvent(
+                entity="rbac",
+                action="role_added_to_user",
+                payload={
+                    "userId": user_id,
+                    "roleId": role_id,
+                },
+                target_user_id=user_id,
+            )
+        )
 
         return {"ok": True}

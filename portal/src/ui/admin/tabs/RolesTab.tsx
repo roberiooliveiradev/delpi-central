@@ -57,7 +57,17 @@ export const RolesTab = () => {
 
   const openRole = async (role: AdminRole) => {
     setEditing(role);
-    await fetchPermissions();
+
+    // catálogo completo
+    const permsRes = await api.listPermissions({ page: 1, pageSize: 999 });
+    const all = permsRes.data ?? [];
+    setAllPerms(all);
+
+    // permissões do role
+    const roleRes = await api.getRolePermissions(role.id);
+    const selected = (roleRes.data ?? []).map((p) => p.id);
+
+    setSelectedPermIds(selected);
   };
 
   const openNew = async () => {

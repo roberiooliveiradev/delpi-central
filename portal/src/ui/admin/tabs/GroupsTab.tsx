@@ -45,7 +45,15 @@ export const GroupsTab = () => {
 
   const openGroup = async (g: AdminGroup) => {
     setEditing(g);
-    await fetchRoles();
+
+    const rolesRes = await api.listRoles({ page: 1, pageSize: 999 });
+    const all = rolesRes.data ?? [];
+    setRoles(all);
+
+    const groupRes = await api.getGroupRoles(g.id);
+    const selected = groupRes.data ?? [];
+
+    setSelectedRoleIds(selected);
   };
 
   const openNew = async () => {

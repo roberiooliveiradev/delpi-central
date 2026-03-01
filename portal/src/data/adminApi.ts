@@ -393,4 +393,23 @@ export class AdminApi {
       { ids }
     );
   }
+
+  // RBAC - Role Permissions (GET)
+  getRolePermissions(roleId: string) {
+    return this.client.get<{
+      data: any[]; // depende do formato do backend
+      pagination: PaginationMeta;
+    }>(`/core-api/admin/rbac/roles/${roleId}/permissions?page=1&page_size=999`);
+  }
+
+  // RBAC - Group Roles (GET)
+  getGroupRoles(groupId: string) {
+    return this.client.get<{
+      data: any[];
+      pagination: PaginationMeta;
+    }>(`/core-api/admin/rbac/groups/${groupId}/roles?page=1&page_size=999`);
+  }
+
+
 }
+

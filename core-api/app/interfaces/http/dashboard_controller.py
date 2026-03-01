@@ -29,24 +29,22 @@ def list_user_apps():
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
+    with SqlAlchemyUnitOfWork() as uow:
+        permission_resolver = PermissionResolver(
+            permission_query=uow.permission_queries
+        )
 
-    permission_resolver = PermissionResolver(
-        permission_query=uow.permission_queries
-    )
+        use_case = ListUserAppsUseCase(
+            app_query=uow.app_queries,
+            permission_resolver=permission_resolver,
+        )
 
-    use_case = ListUserAppsUseCase(
-        app_query=uow.app_queries,
-        permission_resolver=permission_resolver,
-    )
-
-    result = use_case.execute(
-        user_id=g.current_user.id,
-        is_superadmin=getattr(g.current_user, "is_superadmin", False),
-    )
+        result = use_case.execute(
+            user_id=g.current_user.id,
+            is_superadmin=getattr(g.current_user, "is_superadmin", False),
+        )
 
     return jsonify(result), 200
-
 
 # ---------------------------------------------------------
 # GET /dashboard  (compatibilidade com frontend)
@@ -58,20 +56,19 @@ def dashboard():
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
+    with SqlAlchemyUnitOfWork() as uow:
+        permission_resolver = PermissionResolver(
+            permission_query=uow.permission_queries
+        )
 
-    permission_resolver = PermissionResolver(
-        permission_query=uow.permission_queries
-    )
+        use_case = ListUserAppsUseCase(
+            app_query=uow.app_queries,
+            permission_resolver=permission_resolver,
+        )
 
-    use_case = ListUserAppsUseCase(
-        app_query=uow.app_queries,
-        permission_resolver=permission_resolver,
-    )
-
-    result = use_case.execute(
-        user_id=g.current_user.id,
-        is_superadmin=getattr(g.current_user, "is_superadmin", False),
-    )
+        result = use_case.execute(
+            user_id=g.current_user.id,
+            is_superadmin=getattr(g.current_user, "is_superadmin", False),
+        )
 
     return jsonify(result), 200

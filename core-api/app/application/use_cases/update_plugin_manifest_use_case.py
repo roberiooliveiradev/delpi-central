@@ -7,6 +7,7 @@ import json
 
 from app.application.unit_of_work import UnitOfWork
 from app.application.validators.manifest_validator import ManifestValidator
+from app.domain.events.admin_events import AdminChangedEvent
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,7 @@ class UpdatePluginManifestUseCase:
 
     def execute(self, plugin_id: str, manifest: Dict[str, Any]) -> UpdatePluginManifestResult:
 
+        # 1️⃣ Validação estrutural
         validation = self._validator.validate(manifest)
         if not validation.is_valid:
             return UpdatePluginManifestResult(
@@ -43,6 +45,7 @@ class UpdatePluginManifestUseCase:
                 } for e in validation.errors],
             )
 
+        # 2️⃣ Valida ID
         if str(manifest.get("id") or "") != plugin_id:
             return UpdatePluginManifestResult(
                 success=False,
@@ -64,6 +67,7 @@ class UpdatePluginManifestUseCase:
                 }],
             )
 
+        # 3️⃣ Não permite alterar versão
         if str(manifest.get("version") or "") != str(plugin.version or ""):
             return UpdatePluginManifestResult(
                 success=False,
@@ -74,47 +78,48 @@ class UpdatePluginManifestUseCase:
                 }],
             )
 
-        try:
-            self._uow.plugins.update_metadata(
+        # 4️⃣ Regra de negócio (transacional)
+
+        self._uow.plugins.update_metadata(
+            plugin_id,
+            name=str(manifest.get("name") or plugin.name or ""),
+            description=manifest.get("description"),
+            icon=manifest.get("icon"),
+        )
+
+        checksum = _checksum(manifest)
+        self._uow.plugin_manifests.save(plugin_id, manifest, checksum)
+
+        for route in (manifest.get("routes") or []):
+            path = (route or {}).get("path")
+            if not path:
+                continue
+
+            patch = {
+                "label": route.get("label"),
+                "icon": route.get("icon"),
+                "order": route.get("order"),
+            }
+
+            if "showInMenu" in route:
+                patch["show_in_menu"] = route.get("showInMenu")
+
+            self._uow.plugin_routes.update_by_app_and_path(
                 plugin_id,
-                name=str(manifest.get("name") or plugin.name or ""),
-                description=manifest.get("description"),
-                icon=manifest.get("icon"),
+                str(path),
+                patch
             )
 
-            checksum = _checksum(manifest)
-            self._uow.plugin_manifests.save(plugin_id, manifest, checksum)
-
-            for route in (manifest.get("routes") or []):
-                path = (route or {}).get("path")
-                if not path:
-                    continue
-
-                patch = {
-                    "label": route.get("label"),
-                    "icon": route.get("icon"),
-                    "order": route.get("order"),
-                }
-
-                if "showInMenu" in route:
-                    patch["show_in_menu"] = route.get("showInMenu")
-
-                self._uow.plugin_routes.update_by_app_and_path(
-                    plugin_id,
-                    str(path),
-                    patch
-                )
-
-            self._uow.commit()
-            return UpdatePluginManifestResult(success=True, errors=[])
-
-        except Exception as e:
-            self._uow.rollback()
-            return UpdatePluginManifestResult(
-                success=False,
-                errors=[{
-                    "code": "plugin.update_failed",
-                    "message": str(e),
-                    "path": "_global"
-                }],
+        # 5️⃣ Evento global
+        self._uow.collect_event(
+            AdminChangedEvent(
+                entity="plugins",
+                action="plugin_manifest_updated",
+                payload={
+                    "pluginId": plugin_id,
+                },
+                target_user_id=None,  # broadcast
             )
+        )
+
+        return UpdatePluginManifestResult(success=True, errors=[])

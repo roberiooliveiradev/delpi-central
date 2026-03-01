@@ -1,9 +1,9 @@
 # app/domain/ports/event_dispatcher_port.py
 
-from typing import Protocol, Optional
+from typing import Protocol
+from app.domain.events.admin_events import DomainEvent
 
 
 class EventDispatcherPort(Protocol):
-
-    def emit(self, event: str, payload: dict, room: Optional[str] = None) -> None:
+    def dispatch(self, event: DomainEvent) -> None:
         ...

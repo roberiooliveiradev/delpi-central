@@ -12,7 +12,5 @@ class ListGroupRolesUseCase:
     def execute(self, group_id: str):
         gid = UUID(group_id)
         role_ids = self.uow.group_roles.list_role_ids(gid)
-        return {
-            "groupId": group_id,
-            "roleIds": [str(r) for r in role_ids]
-        }
+
+        return [str(r) for r in role_ids]

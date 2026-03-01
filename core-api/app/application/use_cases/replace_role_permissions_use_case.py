@@ -2,6 +2,7 @@
 
 from uuid import UUID
 from app.application.unit_of_work import UnitOfWork
+from app.domain.events.admin_events import AdminChangedEvent
 
 
 class ReplaceRolePermissionsUseCase:
@@ -10,18 +11,33 @@ class ReplaceRolePermissionsUseCase:
         self.uow = uow
 
     def execute(self, role_id: str, permission_ids: list[str]):
+
         rid = UUID(role_id)
 
+        # 1️⃣ Regra de negócio
         self.uow.role_permissions.replace_permissions_by_ids(
             rid,
             permission_ids
         )
-        self.uow.commit()
 
+        # 2️⃣ Descobre usuários impactados
         user_ids = set(self.uow.rbac_queries.list_user_ids_by_role(rid))
         user_ids |= set(self.uow.rbac_queries.list_user_ids_by_group_role(rid))
 
-        for uid in user_ids:
-            self.uow.cache.invalidate(str(uid))
+        # 3️⃣ Invalida cache dos usuários afetados
+        if self.uow.cache:
+            for uid in user_ids:
+                self.uow.cache.invalidate(str(uid))
+
+        # 4️⃣ Registra evento global de RBAC
+        # (não usamos target_user_id porque pode afetar muitos usuários)
+        self.uow.collect_event(
+            AdminChangedEvent(
+                entity="rbac",
+                action="role_permissions_replaced",
+                payload={"roleId": role_id},
+                target_user_id=None,  # broadcast
+            )
+        )
 
         return {"ok": True}

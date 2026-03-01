@@ -80,3 +80,18 @@ class SqlAlchemyPermissionQueryRepository(PermissionQueryPort):
         )
 
         return [(code, granted) for code, granted in rows]
+    
+    # ---------------------------------------------------------
+    # Permissions by role_id (Admin Console)
+    # ---------------------------------------------------------
+
+    def list_permissions_by_role_id(self, role_id: UUID):
+
+        rows = (
+            self.session.query(Permission)
+            .join(role_permissions, Permission.id == role_permissions.c.permission_id)
+            .filter(role_permissions.c.role_id == role_id)
+            .all()
+        )
+
+        return rows

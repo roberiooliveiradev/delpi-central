@@ -2,7 +2,9 @@
 
 from dataclasses import dataclass
 from typing import List, Dict
+
 from app.application.unit_of_work import UnitOfWork
+from app.domain.events.admin_events import AdminChangedEvent
 
 
 @dataclass(frozen=True)
@@ -30,48 +32,46 @@ class BulkUnregisterPluginsUseCase:
                 }]
             )
 
+        # 1️⃣ Validação prévia
+        for plugin_id in ids:
+            plugin = self._uow.plugins.get_by_id(plugin_id)
+            if not plugin:
+                return BulkUnregisterPluginsResult(
+                    success=False,
+                    deleted=0,
+                    errors=[{
+                        "code": "plugin.not_found",
+                        "message": f"Plugin {plugin_id} not found",
+                        "path": "_global"
+                    }]
+                )
+
         deleted = 0
 
-        try:
-            # Verificação prévia de todos
-            for plugin_id in ids:
-                plugin = self._uow.plugins.get_by_id(plugin_id)
-                if not plugin:
-                    return BulkUnregisterPluginsResult(
-                        success=False,
-                        deleted=0,
-                        errors=[{
-                            "code": "plugin.not_found",
-                            "message": f"Plugin {plugin_id} not found",
-                            "path": "_global"
-                        }]
-                    )
+        # 2️⃣ Regra de negócio
+        for plugin_id in ids:
+            self._uow.plugin_versions.delete_by_app(plugin_id)
+            self._uow.plugin_routes.delete_by_app(plugin_id)
+            self._uow.plugin_permissions.delete_by_module(plugin_id)
+            self._uow.plugin_manifests.delete(plugin_id)
+            self._uow.plugins.delete(plugin_id)
+            deleted += 1
 
-            # Executa remoções
-            for plugin_id in ids:
-                self._uow.plugin_versions.delete_by_app(plugin_id)
-                self._uow.plugin_routes.delete_by_app(plugin_id)
-                self._uow.plugin_permissions.delete_by_module(plugin_id)
-                self._uow.plugin_manifests.delete(plugin_id)
-                self._uow.plugins.delete(plugin_id)
-                deleted += 1
-
-            self._uow.commit()
-
-            return BulkUnregisterPluginsResult(
-                success=True,
-                deleted=deleted,
-                errors=[]
+        # 3️⃣ Evento global de plugin
+        self._uow.collect_event(
+            AdminChangedEvent(
+                entity="plugins",
+                action="plugins_unregistered",
+                payload={
+                    "ids": ids,
+                    "deleted": deleted,
+                },
+                target_user_id=None,  # broadcast
             )
+        )
 
-        except Exception as e:
-            self._uow.rollback()
-            return BulkUnregisterPluginsResult(
-                success=False,
-                deleted=0,
-                errors=[{
-                    "code": "bulk_unregister_failed",
-                    "message": str(e),
-                    "path": "_global"
-                }]
-            )
+        return BulkUnregisterPluginsResult(
+            success=True,
+            deleted=deleted,
+            errors=[]
+        )

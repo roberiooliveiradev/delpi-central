@@ -3,7 +3,6 @@
 from uuid import UUID
 from app.application.unit_of_work import UnitOfWork
 
-
 class ListUserRolesUseCase:
 
     def __init__(self, uow: UnitOfWork):
@@ -11,9 +10,17 @@ class ListUserRolesUseCase:
 
     def execute(self, user_id: str):
         uid = UUID(user_id)
+
         role_ids = self.uow.user_roles.list_role_ids(uid)
 
-        return {
-            "userId": user_id,
-            "roleIds": [str(r) for r in role_ids]
-        }
+        roles = []
+        for rid in role_ids:
+            role = self.uow.roles.get(rid)
+            if role:
+                roles.append({
+                    "id": str(role.id),
+                    "name": role.name,
+                    "description": role.description,
+                })
+
+        return roles

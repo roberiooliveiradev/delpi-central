@@ -7,6 +7,7 @@ import json
 
 from app.application.unit_of_work import UnitOfWork
 from app.application.validators.manifest_validator import ManifestValidator
+from app.domain.events.admin_events import AdminChangedEvent
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,7 @@ class RegisterPluginUseCase:
 
     def execute(self, manifest: Dict[str, Any]) -> RegisterResult:
 
+        # 1️⃣ Validação estrutural
         validation = self._validator.validate(manifest)
         if not validation.is_valid:
             return RegisterResult(False, [
@@ -33,6 +35,7 @@ class RegisterPluginUseCase:
         plugin_id = manifest["id"]
         version = manifest["version"]
 
+        # 2️⃣ Regra: plugin não pode existir
         if self._uow.plugins.get_by_id(plugin_id):
             return RegisterResult(False, [{
                 "code": "plugin.already_exists",
@@ -40,56 +43,60 @@ class RegisterPluginUseCase:
                 "path": "id"
             }])
 
-        try:
-            base_path = manifest.get("basePath") or manifest.get("base_path")
-
-            if not base_path:
-                return RegisterResult(False, [{
-                    "code": "validation_error",
-                    "message": "basePath is required",
-                    "path": "basePath"
-                }])
-
-            self._uow.plugins.create({
-                "id": plugin_id,
-                "name": manifest["name"],
-                "description": manifest.get("description"),
-                "base_path": base_path,
-                "icon": manifest.get("icon"),
-                "type": manifest.get("type"),
-                "version": version,
-                "active": True,
-            })
-
-            checksum = hashlib.sha256(
-                json.dumps(manifest, sort_keys=True).encode()
-            ).hexdigest()
-
-            self._uow.plugin_manifests.save(plugin_id, manifest, checksum)
-
-            self._uow.plugin_versions.create({
-                "app_id": plugin_id,
-                "version": version,
-                "manifest": manifest,
-                "checksum": checksum,
-            })
-
-            self._uow.plugin_permissions.bulk_create(
-                manifest.get("permissions", [])
-            )
-
-            self._uow.plugin_routes.bulk_create([
-                {"app_id": plugin_id, **route}
-                for route in manifest.get("routes", [])
-            ])
-
-            self._uow.commit()
-            return RegisterResult(True, [])
-        
-        except Exception as e:
-            self._uow.rollback()
+        base_path = manifest.get("basePath") or manifest.get("base_path")
+        if not base_path:
             return RegisterResult(False, [{
-                "code": "plugin.register_failed",
-                "message": str(e),
-                "path": "_global"
+                "code": "validation_error",
+                "message": "basePath is required",
+                "path": "basePath"
             }])
+
+        # 3️⃣ Regra de negócio (transacional)
+
+        self._uow.plugins.create({
+            "id": plugin_id,
+            "name": manifest["name"],
+            "description": manifest.get("description"),
+            "base_path": base_path,
+            "icon": manifest.get("icon"),
+            "type": manifest.get("type"),
+            "version": version,
+            "active": True,
+        })
+
+        checksum = hashlib.sha256(
+            json.dumps(manifest, sort_keys=True).encode()
+        ).hexdigest()
+
+        self._uow.plugin_manifests.save(plugin_id, manifest, checksum)
+
+        self._uow.plugin_versions.create({
+            "app_id": plugin_id,
+            "version": version,
+            "manifest": manifest,
+            "checksum": checksum,
+        })
+
+        self._uow.plugin_permissions.bulk_create(
+            manifest.get("permissions", [])
+        )
+
+        self._uow.plugin_routes.bulk_create([
+            {"app_id": plugin_id, **route}
+            for route in manifest.get("routes", [])
+        ])
+
+        # 4️⃣ Evento global (após commit)
+        self._uow.collect_event(
+            AdminChangedEvent(
+                entity="plugins",
+                action="plugin_registered",
+                payload={
+                    "pluginId": plugin_id,
+                    "version": version,
+                },
+                target_user_id=None,  # broadcast
+            )
+        )
+
+        return RegisterResult(True, [])

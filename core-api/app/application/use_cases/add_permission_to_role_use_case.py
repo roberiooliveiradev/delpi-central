@@ -2,24 +2,44 @@
 
 from uuid import UUID
 from app.application.unit_of_work import UnitOfWork
-from app.domain.ports.cache_port import PermissionCachePort
+from app.domain.events.admin_events import AdminChangedEvent
 
 
 class AddPermissionToRoleUseCase:
-    def __init__(self, uow: UnitOfWork, permission_cache: PermissionCachePort | None = None):
+
+    def __init__(self, uow: UnitOfWork):
         self.uow = uow
-        self.permission_cache = permission_cache
 
     def execute(self, role_id: str, permission_code: str):
+
         rid = UUID(role_id)
 
-        self.uow.role_permissions.add_permission_by_code(rid, permission_code)
-        self.uow.commit()
+        # 1️⃣ Regra de negócio
+        self.uow.role_permissions.add_permission_by_code(
+            rid,
+            permission_code
+        )
 
-        if self.permission_cache:
-            user_ids = set(self.uow.rbac_queries.list_user_ids_by_role(rid))
-            user_ids |= set(self.uow.rbac_queries.list_user_ids_by_group_role(rid))
+        # 2️⃣ Descobre usuários impactados
+        user_ids = set(self.uow.rbac_queries.list_user_ids_by_role(rid))
+        user_ids |= set(self.uow.rbac_queries.list_user_ids_by_group_role(rid))
+
+        # 3️⃣ Invalida cache dos usuários afetados
+        if self.uow.cache:
             for uid in user_ids:
-                self.permission_cache.invalidate(uid)
+                self.uow.cache.invalidate(str(uid))
+
+        # 4️⃣ Evento global RBAC
+        self.uow.collect_event(
+            AdminChangedEvent(
+                entity="rbac",
+                action="permission_added_to_role",
+                payload={
+                    "roleId": role_id,
+                    "permissionCode": permission_code,
+                },
+                target_user_id=None,  # broadcast
+            )
+        )
 
         return {"ok": True}

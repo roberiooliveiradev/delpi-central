@@ -70,18 +70,25 @@ def register_plugin():
 
     manifest = request.get_json(silent=True)
     if not isinstance(manifest, dict):
-        return bad_request("Body must be valid JSON", code="validation_error", path="_global")
+        return bad_request(
+            "Body must be valid JSON",
+            code="validation_error",
+            path="_global"
+        )
 
-    uow = SqlAlchemyUnitOfWork()
-    validator = ManifestValidator()
-    uc = RegisterPluginUseCase(uow, validator)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            validator = ManifestValidator()
+            uc = RegisterPluginUseCase(uow, validator)
+            result = uc.execute(manifest)
 
-    result = uc.execute(manifest)
+            if not result.success:
+                return jsonify({"errors": result.errors}), 400
 
-    if not result.success:
-        return jsonify({"errors": result.errors}), 400
+        return jsonify({"ok": True}), 201
 
-    return jsonify({"ok": True}), 201
+    except Exception as e:
+        return bad_request(str(e))
 
 
 # ==========================================================
@@ -96,18 +103,25 @@ def update_manifest(plugin_id: str):
 
     manifest = request.get_json(silent=True)
     if not isinstance(manifest, dict):
-        return bad_request("Body must be valid JSON", code="validation_error", path="_global")
+        return bad_request(
+            "Body must be valid JSON",
+            code="validation_error",
+            path="_global"
+        )
 
-    uow = SqlAlchemyUnitOfWork()
-    validator = ManifestValidator()
-    uc = UpdatePluginManifestUseCase(uow, validator)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            validator = ManifestValidator()
+            uc = UpdatePluginManifestUseCase(uow, validator)
+            result = uc.execute(plugin_id, manifest)
 
-    result = uc.execute(plugin_id, manifest)
+            if not result.success:
+                return jsonify({"errors": result.errors}), 400
 
-    if not result.success:
-        return jsonify({"errors": result.errors}), 400
+        return jsonify({"ok": True}), 200
 
-    return jsonify({"ok": True}), 200
+    except Exception as e:
+        return bad_request(str(e))
 
 
 # ==========================================================
@@ -144,16 +158,24 @@ def rollback(plugin_id: str):
     version = data.get("version")
 
     if not version:
-        return bad_request("version is required", code="validation_error", path="version")
+        return bad_request(
+            "version is required",
+            code="validation_error",
+            path="version"
+        )
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = RollbackPluginVersionUseCase(uow)
-    result = uc.execute(plugin_id, version)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = RollbackPluginVersionUseCase(uow)
+            result = uc.execute(plugin_id, version)
 
-    if not result.success:
-        return jsonify({"errors": result.errors}), 400
+            if not result.success:
+                return jsonify({"errors": result.errors}), 400
 
-    return jsonify({"ok": True}), 200
+        return jsonify({"ok": True}), 200
+
+    except Exception as e:
+        return bad_request(str(e))
 
 
 # ==========================================================
@@ -166,14 +188,18 @@ def unregister(plugin_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = UnregisterPluginUseCase(uow)
-    result = uc.execute(plugin_id)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = UnregisterPluginUseCase(uow)
+            result = uc.execute(plugin_id)
 
-    if not result.success:
-        return jsonify({"errors": result.errors}), 400
+            if not result.success:
+                return jsonify({"errors": result.errors}), 400
 
-    return jsonify({"ok": True}), 200
+        return jsonify({"ok": True}), 200
+
+    except Exception as e:
+        return bad_request(str(e))
 
 
 @admin_plugins_bp.post("/<plugin_id>/active")
@@ -185,15 +211,19 @@ def set_plugin_active(plugin_id: str):
     data = request.get_json(silent=True) or {}
     active = bool(data.get("active", True))
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = SetPluginActiveUseCase(uow)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = SetPluginActiveUseCase(uow)
+            result = uc.execute(plugin_id, active)
 
-    result = uc.execute(plugin_id, active)
+            if not result.success:
+                return jsonify({"errors": result.errors}), 400
 
-    if not result.success:
-        return jsonify({"errors": result.errors}), 400
+        return jsonify({"ok": True}), 200
 
-    return jsonify({"ok": True}), 200
+    except Exception as e:
+        return bad_request(str(e))
+    
 
 @admin_plugins_bp.post("/bulk-activate")
 def bulk_activate_plugins():
@@ -203,17 +233,27 @@ def bulk_activate_plugins():
 
     data = request.get_json(silent=True) or {}
     ids = data.get("ids", [])
-    active = bool(data.get("active", True))  
+    active = bool(data.get("active", True))
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = BulkSetPluginsActiveUseCase(uow)
+    if not isinstance(ids, list):
+        return bad_request(
+            "ids must be a list",
+            code="validation_error",
+            path="ids"
+        )
 
-    result = uc.execute(ids, active)     
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = BulkSetPluginsActiveUseCase(uow)
+            result = uc.execute(ids, active)
 
-    if not result.success:
-        return jsonify({"errors": result.errors}), 400
+            if not result.success:
+                return jsonify({"errors": result.errors}), 400
 
-    return jsonify({"ok": True, "updated": result.updated})
+        return jsonify({"ok": True, "updated": result.updated}), 200
+
+    except Exception as e:
+        return bad_request(str(e))
 
 
 @admin_plugins_bp.post("/bulk-unregister")
@@ -225,12 +265,22 @@ def bulk_unregister():
     data = request.get_json(silent=True) or {}
     ids = data.get("ids", [])
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = BulkUnregisterPluginsUseCase(uow)
+    if not isinstance(ids, list):
+        return bad_request(
+            "ids must be a list",
+            code="validation_error",
+            path="ids"
+        )
 
-    result = uc.execute(ids)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = BulkUnregisterPluginsUseCase(uow)
+            result = uc.execute(ids)
 
-    if not result.success:
-        return jsonify({"errors": result.errors}), 400
+            if not result.success:
+                return jsonify({"errors": result.errors}), 400
 
-    return jsonify({"ok": True, "deleted": result.deleted}), 200
+        return jsonify({"ok": True, "deleted": result.deleted}), 200
+
+    except Exception as e:
+        return bad_request(str(e))

@@ -2,7 +2,7 @@
 
 from typing import Protocol, List, Tuple
 from uuid import UUID
-
+from app.domain.ports.permission_repository_port import PermissionDTO
 
 class PermissionQueryPort(Protocol):
     """
@@ -23,4 +23,6 @@ class PermissionQueryPort(Protocol):
         """
         Retorna lista de (permission_code, granted)
         """
+        ...
+    def list_permissions_by_role_id(self, role_id: UUID) -> List[PermissionDTO]:
         ...

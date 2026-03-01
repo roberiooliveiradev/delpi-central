@@ -1,24 +1,21 @@
 # app/application/use_cases/list_user_routes_use_case.py
 
+from app.domain.ports.route_query_port import RouteQueryPort
 from typing import List, Dict
 
 
 class ListUserRoutesUseCase:
 
-    def __init__(self, route_query):
-        self.route_query = route_query
+    def __init__(self, route_queries: RouteQueryPort):
+        self.route_queries = route_queries
 
     def execute(self, permissions: List[str]) -> List[Dict]:
 
-        routes = self.route_query.list_active_menu_routes()
+        routes = self.route_queries.list_active_menu_routes()
 
         allowed = []
 
         for route in routes:
-
-            # ignora app inativa
-            if not route.app or not route.app.active:
-                continue
 
             permission_code = None
 

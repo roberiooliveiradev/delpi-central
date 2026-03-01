@@ -3,7 +3,6 @@
 from typing import Protocol, List
 from uuid import UUID
 from dataclasses import dataclass
-from uuid import UUID
 from datetime import datetime
 
 
@@ -17,6 +16,7 @@ class NotificationDTO:
     read: bool
     created_at: datetime
 
+
 class NotificationRepository(Protocol):
 
     def create(self, notification: NotificationDTO) -> UUID:
@@ -26,4 +26,7 @@ class NotificationRepository(Protocol):
         ...
 
     def mark_read(self, notification_id: UUID) -> None:
+        ...
+
+    def mark_all_read(self, user_id: str) -> None:
         ...

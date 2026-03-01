@@ -360,6 +360,7 @@ body > div {
   transform: translateY(-2px);
   box-shadow: var(--focus-2);
   border-color: color-mix(in srgb, var(--primary) 60%, var(--border));
+  background: var(--primary);
 }
 
 .login-energy-action:active {

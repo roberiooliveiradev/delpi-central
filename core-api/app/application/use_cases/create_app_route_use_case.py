@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
 
 from app.application.unit_of_work import UnitOfWork
+from app.domain.events.admin_events import AdminChangedEvent
 
 
 @dataclass(frozen=True)
@@ -14,6 +15,7 @@ class CreateRouteResult:
 
 
 class CreateAppRouteUseCase:
+
     def __init__(self, uow: UnitOfWork):
         self._uow = uow
 
@@ -29,22 +31,46 @@ class CreateAppRouteUseCase:
         show_in_menu: bool,
         active: bool = True,
     ) -> CreateRouteResult:
-        if not path or not str(path).startswith("/"):
-            return CreateRouteResult(False, None, [{"code": "routes.invalid_path", "message": "path deve começar com '/'", "path": "path"}])
 
-        try:
-            dto = self._uow.admin_routes.create({
-                "app_id": app_id,
-                "path": path,
-                "label": label,
-                "icon": icon,
-                "permission_code": permission_code,
-                "order": order,
-                "show_in_menu": show_in_menu,
-                "active": active,
-            })
-            self._uow.commit()
-            return CreateRouteResult(True, dto.__dict__, [])
-        except Exception as e:
-            self._uow.rollback()
-            return CreateRouteResult(False, None, [{"code": "routes.create_failed", "message": str(e), "path": "_global"}])
+        # 1️⃣ Validação
+        if not path or not str(path).startswith("/"):
+            return CreateRouteResult(
+                False,
+                None,
+                [{
+                    "code": "routes.invalid_path",
+                    "message": "path deve começar com '/'",
+                    "path": "path"
+                }]
+            )
+
+        # 2️⃣ Regra de negócio
+        dto = self._uow.admin_routes.create({
+            "app_id": app_id,
+            "path": path,
+            "label": label,
+            "icon": icon,
+            "permission_code": permission_code,
+            "order": order,
+            "show_in_menu": show_in_menu,
+            "active": active,
+        })
+
+        # 3️⃣ Evento administrativo (broadcast)
+        self._uow.collect_event(
+            AdminChangedEvent(
+                entity="routes",
+                action="route_created",
+                payload={
+                    "routeId": str(dto.id) if hasattr(dto, "id") else None,
+                    "appId": app_id,
+                },
+                target_user_id=None,  # broadcast
+            )
+        )
+
+        return CreateRouteResult(
+            True,
+            dto.__dict__,
+            []
+        )

@@ -2,7 +2,9 @@
 
 from dataclasses import dataclass
 from typing import Dict, List
+
 from app.application.unit_of_work import UnitOfWork
+from app.domain.events.admin_events import AdminChangedEvent
 
 
 @dataclass(frozen=True)
@@ -29,19 +31,20 @@ class SetPluginActiveUseCase:
                 }]
             )
 
-        try:
-            plugin.active = active
-            self._uow.commit()
+        # 1️⃣ Regra de negócio
+        plugin.active = active
 
-            return SetPluginActiveResult(success=True, errors=[])
-
-        except Exception as e:
-            self._uow.rollback()
-            return SetPluginActiveResult(
-                success=False,
-                errors=[{
-                    "code": "plugin.activation_failed",
-                    "message": str(e),
-                    "path": "_global"
-                }]
+        # 2️⃣ Evento global
+        self._uow.collect_event(
+            AdminChangedEvent(
+                entity="plugins",
+                action="plugin_activated" if active else "plugin_deactivated",
+                payload={
+                    "pluginId": plugin_id,
+                    "active": active,
+                },
+                target_user_id=None,  # broadcast
             )
+        )
+
+        return SetPluginActiveResult(success=True, errors=[])

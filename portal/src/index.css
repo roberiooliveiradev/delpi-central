@@ -920,6 +920,7 @@ textarea:focus-visible {
   box-shadow: var(--focus-2);
   transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--primary) 60%, var(--border));
+  background: var(--primary);
 }
 
 .login-energy-action:disabled {

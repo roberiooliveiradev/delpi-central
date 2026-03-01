@@ -16,23 +16,22 @@ def list_apps():
     if not user:
         return unauthorized()
 
-    # parâmetros
     page = int(request.args.get("page", 1))
     page_size = int(request.args.get("page_size", 10))
     q = request.args.get("q")
     sort = request.args.get("sort", "name")
     direction = request.args.get("direction", "asc")
 
-    uow = SqlAlchemyUnitOfWork()
-    use_case = ListAdminAppsUseCase(uow)
+    with SqlAlchemyUnitOfWork() as uow:
+        use_case = ListAdminAppsUseCase(uow)
 
-    apps, total = use_case.execute(
-        page=page,
-        page_size=page_size,
-        q=q,
-        sort=sort,
-        direction=direction,
-    )
+        apps, total = use_case.execute(
+            page=page,
+            page_size=page_size,
+            q=q,
+            sort=sort,
+            direction=direction,
+        )
 
     total_pages = (total + page_size - 1) // page_size
 
@@ -46,7 +45,6 @@ def list_apps():
         }
     })
 
-
 @admin_apps_bp.route("/admin/apps/<app_id>", methods=["PUT"])
 def update_app(app_id: str):
     user = getattr(g, "current_user", None)
@@ -55,18 +53,18 @@ def update_app(app_id: str):
 
     data = request.get_json(silent=True) or {}
 
-    uow = SqlAlchemyUnitOfWork()
-    use_case = UpdateAdminAppUseCase(uow)
-
     try:
-        return jsonify(
-            use_case.execute(
+        with SqlAlchemyUnitOfWork() as uow:
+            use_case = UpdateAdminAppUseCase(uow)
+
+            result = use_case.execute(
                 app_id,
                 data.get("name"),
                 data.get("description"),
                 data.get("icon"),
             )
-        )
+
+        return jsonify(result)
+
     except Exception as e:
-        uow.rollback()
         return api_error("update_app_failed", str(e))

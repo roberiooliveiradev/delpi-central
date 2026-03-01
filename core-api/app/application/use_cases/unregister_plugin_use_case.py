@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Dict, List
 
 from app.application.unit_of_work import UnitOfWork
+from app.domain.events.admin_events import AdminChangedEvent
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,7 @@ class UnregisterPluginUseCase:
 
     def execute(self, plugin_id: str) -> UnregisterPluginResult:
 
+        # 1️⃣ Verifica existência
         plugin = self._uow.plugins.get_by_id(plugin_id)
         if not plugin:
             return UnregisterPluginResult(
@@ -38,27 +40,16 @@ class UnregisterPluginUseCase:
                 }],
             )
 
-        # Verifica dependências
-        try:
-            dependents: List[str] = []
+        # 2️⃣ Verifica dependências
+        dependents: List[str] = []
 
-            for row in self._uow.plugin_manifests.list_all():
-                mid = str(row.get("app_id") or "").strip()
-                manifest = row.get("manifest") or {}
-                deps = manifest.get("dependencies") or []
+        for row in self._uow.plugin_manifests.list_all():
+            mid = str(row.get("app_id") or "").strip()
+            manifest = row.get("manifest") or {}
+            deps = manifest.get("dependencies") or []
 
-                if isinstance(deps, list) and plugin_id in deps and mid:
-                    dependents.append(mid)
-
-        except Exception:
-            return UnregisterPluginResult(
-                success=False,
-                errors=[{
-                    "code": "plugin.dependencies_check_failed",
-                    "message": "Failed to check dependencies",
-                    "path": "_global"
-                }],
-            )
+            if isinstance(deps, list) and plugin_id in deps and mid:
+                dependents.append(mid)
 
         if dependents:
             return UnregisterPluginResult(
@@ -70,23 +61,27 @@ class UnregisterPluginUseCase:
                 }],
             )
 
-        try:
-            self._uow.plugin_versions.delete_by_app(plugin_id)
-            self._uow.plugin_routes.delete_by_app(plugin_id)
-            self._uow.plugin_permissions.delete_by_module(plugin_id)
-            self._uow.plugin_manifests.delete(plugin_id)
-            self._uow.plugins.delete(plugin_id)
+        # 3️⃣ Regra de negócio (transacional)
 
-            self._uow.commit()
-            return UnregisterPluginResult(success=True, errors=[])
+        self._uow.plugin_versions.delete_by_app(plugin_id)
+        self._uow.plugin_routes.delete_by_app(plugin_id)
+        self._uow.plugin_permissions.delete_by_module(plugin_id)
+        self._uow.plugin_manifests.delete(plugin_id)
+        self._uow.plugins.delete(plugin_id)
 
-        except Exception as e:
-            self._uow.rollback()
-            return UnregisterPluginResult(
-                success=False,
-                errors=[{
-                    "code": "plugin.unregister_failed",
-                    "message": str(e),
-                    "path": "_global"
-                }],
+        # 4️⃣ Evento global
+        self._uow.collect_event(
+            AdminChangedEvent(
+                entity="plugins",
+                action="plugin_unregistered",
+                payload={
+                    "pluginId": plugin_id,
+                },
+                target_user_id=None,  # broadcast
             )
+        )
+
+        return UnregisterPluginResult(
+            success=True,
+            errors=[]
+        )

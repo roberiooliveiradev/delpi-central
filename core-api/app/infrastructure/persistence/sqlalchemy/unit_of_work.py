@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 
 from app.extensions.db import db
 
+from app.domain.events.admin_events import DomainEvent
+from app.infrastructure.socket.socket_event_dispatcher import SocketIOEventDispatcher
 from app.infrastructure.cache.rbac_permission_cache_adapter import RbacCachePermissionCacheAdapter
 
 from app.infrastructure.persistence.sqlalchemy.user_repository import SqlAlchemyUserRepository
@@ -104,14 +106,44 @@ class SqlAlchemyUnitOfWork:
 
         self.audit_repo = self.audits
 
+        # =========================
+        # Infra Services
+        # =========================
+        self.cache = RbacCachePermissionCacheAdapter()
+        self.events = SocketIOEventDispatcher()
+
+        # =========================
+        # Domain Events buffer
+        # =========================
+        self._events: list[DomainEvent] = []
+    
+    # =========================
+    # Domain Event support
+    # =========================
+
+    def collect_event(self, event: DomainEvent) -> None:
+        self._events.append(event)
+
+    def _dispatch_events(self) -> None:
+        for event in self._events:
+            self.events.dispatch(event)
+
+        self._events.clear()
+
+    # =========================
+    # Transaction control
+    # =========================
+
     def commit(self) -> None:
         self.session.commit()
+        self._dispatch_events()
 
     def rollback(self) -> None:
         self.session.rollback()
+        self._events.clear()
 
     # =========================
-    # Context manager support
+    # Context manager
     # =========================
 
     def __enter__(self):

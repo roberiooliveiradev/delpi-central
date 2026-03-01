@@ -38,70 +38,71 @@ def authenticate():
     if not sub or not email:
         return None
 
-    # Garantimos que o ID do usuário seja UUID
     try:
         user_uuid = UUID(str(sub))
     except Exception:
         return None
 
-    uow = SqlAlchemyUnitOfWork()
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
 
-    # ======================================================
-    # 1) Carrega ou cria usuário via RepositoryPort
-    # ======================================================
+            # ==================================================
+            # 1️⃣ Carrega ou cria usuário
+            # ==================================================
 
-    user = uow.users.get_by_email(email)
-    is_new_user = False
+            user = uow.users.get_by_email(email)
+            is_new_user = False
 
-    if not user:
-        uow.users.create(
-            id=user_uuid,
-            email=email,
-            name=name,
-            is_superadmin=False,
-        )
-        uow.commit()
+            if not user:
+                uow.users.create(
+                    id=user_uuid,
+                    email=email,
+                    name=name,
+                    is_superadmin=False,
+                )
+                is_new_user = True
+                user = uow.users.get_by_email(email)
 
-        user = uow.users.get_by_email(email)
-        is_new_user = True
+            # Atualiza last login
+            uow.users.update_last_login(user_uuid, datetime.utcnow())
 
-    # Atualiza last login via port
-    uow.users.update_last_login(user_uuid, datetime.utcnow())
-    uow.commit()
+            # ==================================================
+            # 2️⃣ Notificação de boas-vindas
+            # ==================================================
 
-    # ======================================================
-    # 2) Notificação de boas-vindas
-    # ======================================================
+            if is_new_user:
+                notify_use_case = NotifyUserUseCase(uow)
+                notify_use_case.execute(
+                    user_id=str(user.id),
+                    title="Bem-vindo à DELPI Central",
+                    message="Seu usuário foi criado com sucesso",
+                    type="success",
+                )
 
-    if is_new_user:
-        notify_use_case = NotifyUserUseCase(uow)
-        notify_use_case.execute(
-            user_id=str(user.id),
-            title="Bem-vindo à DELPI Central",
-            message="Seu usuário foi criado com sucesso",
-            type="success",
-        )
+            # ==================================================
+            # 3️⃣ Resolver permissões
+            # ==================================================
 
-    # ======================================================
-    # 3) Resolver permissões via Domain Service + Ports
-    # ======================================================
+            resolver = PermissionResolver(
+                permission_query=uow.permission_queries,
+                cache=RbacCachePermissionCacheAdapter(),
+            )
 
-    resolver = PermissionResolver(
-        permission_query=uow.permission_queries,
-        cache=RbacCachePermissionCacheAdapter(),
-    )
+            permissions = resolver.resolve(
+                user_id=user.id,
+                is_superadmin=bool(user.is_superadmin),
+            )
 
-    permissions = resolver.resolve(
-        user_id=user.id,
-        is_superadmin=bool(user.is_superadmin),
-    )
+        # ==================================================
+        # 4️⃣ Fora da transação → popular contexto
+        # ==================================================
 
-    # ======================================================
-    # 4) Popular contexto do request
-    # ======================================================
+        g.current_user = user
+        g.current_permissions = permissions
+        g.current_sub = str(user.id)
 
-    g.current_user = user
-    g.current_permissions = permissions
-    g.current_sub = str(user.id)
+        return user
 
-    return user
+    except Exception:
+        # segurança: não quebra autenticação silenciosamente
+        return None

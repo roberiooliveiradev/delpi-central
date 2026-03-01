@@ -30,9 +30,9 @@ def list_routes(app_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = ListAppRoutesUseCase(uow)
-    result = uc.execute(app_id)
+    with SqlAlchemyUnitOfWork() as uow:
+        uc = ListAppRoutesUseCase(uow)
+        result = uc.execute(app_id)
 
     if not result.success:
         return jsonify({"errors": result.errors}), 400
@@ -47,29 +47,51 @@ def create_route(app_id: str):
         return guard
 
     data = request.get_json(silent=True) or {}
+
     required = ["path", "label", "icon", "order"]
     missing = [k for k in required if data.get(k) in (None, "")]
     if missing:
-        return bad_request(f"Missing fields: {', '.join(missing)}", code="validation_error", path="_global")
+        return bad_request(
+            f"Missing fields: {', '.join(missing)}",
+            code="validation_error",
+            path="_global"
+        )
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = CreateAppRouteUseCase(uow)
-    result = uc.execute(
-        app_id,
-        path=str(data.get("path")),
-        label=str(data.get("label")),
-        icon=str(data.get("icon")),
-        permission_code=(data.get("permissionCode") or data.get("permission_code") or None),
-        order=int(data.get("order")),
-        show_in_menu=bool(data.get("showInMenu", data.get("show_in_menu", True))),
-        active=bool(data.get("active", True)),
-    )
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = CreateAppRouteUseCase(uow)
 
-    if not result.success:
-        return jsonify({"errors": result.errors}), 400
+            result = uc.execute(
+                app_id,
+                path=str(data.get("path")),
+                label=str(data.get("label")),
+                icon=str(data.get("icon")),
+                permission_code=(
+                    data.get("permissionCode")
+                    or data.get("permission_code")
+                    or None
+                ),
+                order=int(data.get("order")),
+                show_in_menu=bool(
+                    data.get("showInMenu",
+                    data.get("show_in_menu", True))
+                ),
+                active=bool(data.get("active", True)),
+            )
 
-    return jsonify(result.route), 201
+        if not result.success:
+            return jsonify({"errors": result.errors}), 400
 
+        return jsonify(result.route), 201
+
+    except Exception as e:
+        return jsonify({
+            "errors": [{
+                "code": "route.create_failed",
+                "message": str(e),
+                "path": "_global"
+            }]
+        }), 400
 
 @admin_routes_bp.put("/routes/<route_id>")
 def update_route(route_id: str):
@@ -80,6 +102,7 @@ def update_route(route_id: str):
     data = request.get_json(silent=True) or {}
 
     patch = {}
+
     if "path" in data:
         patch["path"] = data["path"]
     if "label" in data:
@@ -96,16 +119,30 @@ def update_route(route_id: str):
         patch["permission_code"] = data["permissionCode"]
 
     if not patch:
-        return bad_request("No fields to update", code="validation_error", path="_global")
+        return bad_request(
+            "No fields to update",
+            code="validation_error",
+            path="_global"
+        )
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = UpdateRouteUseCase(uow)
-    result = uc.execute(route_id, patch)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = UpdateRouteUseCase(uow)
+            result = uc.execute(route_id, patch)
 
-    if not result.success:
-        return jsonify({"errors": result.errors}), 400
+        if not result.success:
+            return jsonify({"errors": result.errors}), 400
 
-    return jsonify({"ok": True}), 200
+        return jsonify({"ok": True}), 200
+
+    except Exception as e:
+        return jsonify({
+            "errors": [{
+                "code": "route.update_failed",
+                "message": str(e),
+                "path": "_global"
+            }]
+        }), 400
 
 
 @admin_routes_bp.delete("/routes/<route_id>")
@@ -114,14 +151,24 @@ def delete_route(route_id: str):
     if guard:
         return guard
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = DeleteRouteUseCase(uow)
-    result = uc.execute(route_id)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = DeleteRouteUseCase(uow)
+            result = uc.execute(route_id)
 
-    if not result.success:
-        return jsonify({"errors": result.errors}), 400
+        if not result.success:
+            return jsonify({"errors": result.errors}), 400
 
-    return jsonify({"ok": True}), 200
+        return jsonify({"ok": True}), 200
+
+    except Exception as e:
+        return jsonify({
+            "errors": [{
+                "code": "route.delete_failed",
+                "message": str(e),
+                "path": "_global"
+            }]
+        }), 400
 
 
 @admin_routes_bp.post("/routes/bulk-delete")
@@ -134,13 +181,30 @@ def bulk_delete_routes():
     ids = data.get("ids") or data.get("routeIds") or []
 
     if not isinstance(ids, list) or not ids:
-        return bad_request("ids must be a non-empty list", code="validation_error", path="ids")
+        return bad_request(
+            "ids must be a non-empty list",
+            code="validation_error",
+            path="ids"
+        )
 
-    uow = SqlAlchemyUnitOfWork()
-    uc = BulkDeleteRoutesUseCase(uow)
-    result = uc.execute([str(x) for x in ids])
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = BulkDeleteRoutesUseCase(uow)
+            result = uc.execute([str(x) for x in ids])
 
-    if not result.success:
-        return jsonify({"errors": result.errors}), 400
+        if not result.success:
+            return jsonify({"errors": result.errors}), 400
 
-    return jsonify({"ok": True, "deleted": result.deleted}), 200
+        return jsonify({
+            "ok": True,
+            "deleted": result.deleted
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "errors": [{
+                "code": "route.bulk_delete_failed",
+                "message": str(e),
+                "path": "_global"
+            }]
+        }), 400
