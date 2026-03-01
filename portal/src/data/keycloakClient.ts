@@ -14,9 +14,11 @@ let initPromise: Promise<boolean> | null = null;
 export const initKeycloak = () => {
   if (!initPromise) {
     initPromise = keycloak.init({
-      onLoad: "login-required",
+      onLoad: "check-sso",
       pkceMethod: "S256",
-      checkLoginIframe: false,
+      checkLoginIframe: true,
+      silentCheckSsoRedirectUri:
+        window.location.origin + "/silent-check-sso.html",
     });
   }
 

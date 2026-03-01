@@ -62,7 +62,8 @@ services:
       # URL pública parametrizada
       KC_HOSTNAME_URL: "${PUBLIC_BASE_URL}/auth"
       KC_HOSTNAME_ADMIN_URL: "${PUBLIC_BASE_URL}:8080"
-
+    volumes:
+      - ./keycloak/themes:/opt/keycloak/themes
     ports:
       - "8080:8080"
     networks:

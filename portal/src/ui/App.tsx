@@ -1,7 +1,6 @@
 // src/ui/App.tsx
-
 import { useContext } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Sidebar } from "../layout/Sidebar";
 import { ProtectedRoute } from "../routes/ProtectedRoute";
@@ -11,6 +10,7 @@ import { Loader } from "./Loader";
 import { HomePage } from "./HomePage";
 import { AdminPage } from "./admin/AdminPage";
 import { AppHost } from "./AppHost";
+import { LoginPage } from "./LoginPage";
 
 const AnimatedWrapper = ({ children }: { children: React.ReactNode }) => (
   <motion.div
@@ -23,64 +23,67 @@ const AnimatedWrapper = ({ children }: { children: React.ReactNode }) => (
   </motion.div>
 );
 
-
-const DummyPage = ({ title }: { title: string }) => (
-  <div>
-    <h2>{title}</h2>
-    <p>Conteúdo do módulo.</p>
-  </div>
-);
-
-const App = () => {
-  const { isAuthenticated, routes } = useContext(AuthContext);
-
-  if (!isAuthenticated) {
-    return <Loader />;
-  }
-
+function AppShell() {
+  const { routes } = useContext(AuthContext);
 
   return (
-    <BrowserRouter>
-      <div className="app-shell">
-        <Sidebar />
+    <div className="app-shell">
+      <Sidebar />
 
-        <div className="main-area">
+      <div className="main-area">
+        <div className="content">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
 
-          <div className="content">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              
-              <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {routes.map((route) => (
               <Route
-                path="/admin"
+                key={route.path}
+                path={route.path}
                 element={
-                  <ProtectedRoute permission="rbac.manage">
-                    <AdminPage />
+                  <ProtectedRoute permission={route.permission}>
+                    <AnimatedWrapper>
+                      <AppHost />
+                    </AnimatedWrapper>
                   </ProtectedRoute>
                 }
               />
+            ))}
 
-              {routes.map((route) => (
-                <Route
-                  key={route.path}
-                  path={route.path}
-                  element={
-                  <ProtectedRoute permission={route.permission}>
-                    <AnimatedWrapper>
-                        <AppHost />
-                    </AnimatedWrapper>
-                  </ProtectedRoute>
-
-                  }
-                />
-              ))}
-            </Routes>
-          </div>
+            {/* fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </div>
       </div>
-    </BrowserRouter>
+    </div>
   );
-};
+}
 
-export default App;
+export default function App() {
+  const { initialized, loading, isAuthenticated } = useContext(AuthContext);
 
+  // 1) Espera init do keycloak (evita flicker)
+  if (!initialized || loading) return <Loader />;
+
+  // 2) Público: /login
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
+  // 3) Autenticado: shell normal
+  return <AppShell />;
+}

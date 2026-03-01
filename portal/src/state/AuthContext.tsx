@@ -266,7 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         await loadCoreData();
       }
 
-      startTokenRefresh();
+      if (authenticated) startTokenRefresh();
       setLoading(false);
       setInitialized(true);
     };
@@ -280,7 +280,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [loadCoreData]);
 
-  const login = () => keycloak.login();
+  const login = () => keycloak.login({ redirectUri: window.location.origin + "/" });
   const logout = () => keycloak.logout();
 
   return (
