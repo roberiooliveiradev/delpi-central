@@ -1,28 +1,19 @@
 # app/application/use_cases/list_user_apps_use_case.py
 
-
 from typing import List, Dict
-
 from app.domain.ports.app_query_port import AppQueryPort
-from app.domain.services.permission_resolver import PermissionResolver
 
 
 class ListUserAppsUseCase:
 
-    def __init__(
-        self,
-        app_query: AppQueryPort,
-        permission_resolver: PermissionResolver,
-    ):
+    def __init__(self, app_query: AppQueryPort):
         self.app_query = app_query
-        self.permission_resolver = permission_resolver
 
-    def execute(self, user_id, is_superadmin: bool) -> List[Dict]:
-
-        permissions = self.permission_resolver.resolve(
-            user_id=user_id,
-            is_superadmin=is_superadmin,
-        )
+    def execute(
+        self,
+        permissions: list[str],
+        is_superadmin: bool,
+    ) -> List[Dict]:
 
         apps = self.app_query.list_active_apps_with_routes()
 
@@ -39,6 +30,11 @@ class ListUserAppsUseCase:
                     filtered_routes.append(route)
                     continue
 
+                # superadmin bypass
+                if is_superadmin:
+                    filtered_routes.append(route)
+                    continue
+
                 if route.permission_code in permissions:
                     filtered_routes.append(route)
 
@@ -50,7 +46,7 @@ class ListUserAppsUseCase:
                     "icon": app.icon,
                     "type": app.type,
                     "entryUrl": app.entry_url,
-                    "renderMode": app.render_mode, 
+                    "renderMode": app.render_mode,
                     "routes": [
                         {
                             "path": r.path,

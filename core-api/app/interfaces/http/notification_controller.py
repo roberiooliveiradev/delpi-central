@@ -1,49 +1,35 @@
 # app/interfaces/http/notification_controller.py
-from uuid import UUID
 
+from uuid import UUID
 from flask import Blueprint, jsonify, g
 
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
-
-from app.application.use_cases.list_unread_notifications_use_case import (
-    ListUnreadNotificationsUseCase,
-)
-from app.application.use_cases.mark_notification_read_use_case import (
-    MarkNotificationReadUseCase,
-)
-from app.application.use_cases.mark_all_notifications_read_use_case import (
-    MarkAllNotificationsReadUseCase,
-)
-from app.application.use_cases.notify_user_use_case import (
-    NotifyUserUseCase,
-)
+from app.application.use_cases.list_unread_notifications_use_case import ListUnreadNotificationsUseCase
+from app.application.use_cases.mark_notification_read_use_case import MarkNotificationReadUseCase
+from app.application.use_cases.mark_all_notifications_read_use_case import MarkAllNotificationsReadUseCase
+from app.application.use_cases.notify_user_use_case import NotifyUserUseCase
 
 from app.interfaces.http.utils.errors import unauthorized, api_error
-
 
 notification_bp = Blueprint("notifications", __name__)
 
 
-def require_auth():
+def _get_user():
     user = getattr(g, "current_user", None)
     if not user:
-        return unauthorized()
-    return None
+        return None, unauthorized()
+    return user, None
 
-
-# ---------------------------------------------------------
-# List unread
-# ---------------------------------------------------------
 
 @notification_bp.route("/notifications", methods=["GET"])
 def list_notifications():
-    guard = require_auth()
-    if guard:
-        return guard
+    user, error = _get_user()
+    if error:
+        return error
 
     with SqlAlchemyUnitOfWork() as uow:
         use_case = ListUnreadNotificationsUseCase(uow)
-        result = use_case.execute(user_id=g.current_sub)
+        result = use_case.execute(user_id=user.id)
 
     return jsonify([
         {
@@ -59,15 +45,11 @@ def list_notifications():
     ]), 200
 
 
-# ---------------------------------------------------------
-# Mark single as read
-# ---------------------------------------------------------
-
 @notification_bp.route("/notifications/<notification_id>/read", methods=["POST"])
 def mark_read(notification_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
+    user, error = _get_user()
+    if error:
+        return error
 
     try:
         notification_uuid = UUID(notification_id)
@@ -80,51 +62,42 @@ def mark_read(notification_id: str):
             use_case.execute(notification_uuid)
 
         return jsonify({"ok": True}), 200
-
     except Exception as e:
         return api_error("mark_failed", str(e))
 
-# ---------------------------------------------------------
-# Mark all as read
-# ---------------------------------------------------------
 
 @notification_bp.route("/notifications/read-all", methods=["POST"])
 def mark_all_read():
-    guard = require_auth()
-    if guard:
-        return guard
+    user, error = _get_user()
+    if error:
+        return error
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
             use_case = MarkAllNotificationsReadUseCase(uow)
-            use_case.execute(user_id=g.current_sub)
+            use_case.execute(user_id=user.id)
 
         return jsonify({"ok": True}), 200
-
     except Exception as e:
         return api_error("mark_all_failed", str(e))
 
-# ---------------------------------------------------------
-# Test notification
-# ---------------------------------------------------------
 
 @notification_bp.route("/notifications/test", methods=["POST"])
 def test_notification():
-    guard = require_auth()
-    if guard:
-        return guard
+    user, error = _get_user()
+    if error:
+        return error
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
             use_case = NotifyUserUseCase(uow)
             use_case.execute(
-                user_id=g.current_sub,
+                user_id=user.id,
                 title="Teste tempo real",
                 message="Notificação disparada via endpoint",
                 type="success",
             )
 
         return jsonify({"ok": True}), 200
-
     except Exception as e:
         return api_error("notify_failed", str(e))

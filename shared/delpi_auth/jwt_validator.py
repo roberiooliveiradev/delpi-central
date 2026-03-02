@@ -46,13 +46,8 @@ def validate_token(token: str) -> dict:
             audience=KEYCLOAK_AUDIENCE,
             issuer=KEYCLOAK_ISSUER,
         )
-
-        payload["permissions"] = _extract_permissions(payload)
-        payload["is_superadmin"] = bool(
-            payload.get("delpi_is_superadmin", False)
-        )
-
         return payload
-
-    except JWTError:
-        raise ValueError("Invalid token")
+    
+    except JWTError as e:
+        print("JWT ERROR:", e)
+        raise

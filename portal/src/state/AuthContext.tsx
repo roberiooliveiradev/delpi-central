@@ -84,16 +84,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const buildCoreApi = useCallback(() => {
-    const apiClient = new ApiClient("", () => keycloak.token);
+    const apiClient = new ApiClient("", () => token);
     return new CoreApi(apiClient);
-  }, []);
+  }, [token]);
 
   // =====================================================
   // CORE LOAD (robusto + race-safe)
   // =====================================================
 
   const loadCoreData = useCallback(async () => {
-    if (!keycloak.token) return;
+    if (!token) return;
 
     const coreApi = buildCoreApi();
 
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setDashboard(dashboardData);
     setNotifications(notificationsData);
     setFavorites(favoritesData);
-  }, [buildCoreApi]);
+  }, [buildCoreApi, token]);
 
   // =====================================================
   // FAVORITES (sincronização garantida)
@@ -260,13 +260,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!mounted) return;
 
       setIsAuthenticated(authenticated);
-      setToken(keycloak.token);
 
-      if (authenticated) {
-        await loadCoreData();
+      if (authenticated && keycloak.token) {
+        setToken(keycloak.token);
       }
 
-      if (authenticated) startTokenRefresh();
       setLoading(false);
       setInitialized(true);
     };
@@ -278,7 +276,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (refreshIntervalRef.current)
         clearInterval(refreshIntervalRef.current);
     };
-  }, [loadCoreData]);
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+
+    loadCoreData();
+    startTokenRefresh();
+  }, [token]);
 
   const login = () => keycloak.login({ redirectUri: window.location.origin + "/" });
   const logout = () => keycloak.logout();
