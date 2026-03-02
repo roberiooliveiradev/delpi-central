@@ -235,6 +235,7 @@
   transition: 0.2s;
   position: relative;
   font-size: 14px;
+  color: var(--text);
 }
 
 .sidebar-footer-item:hover {

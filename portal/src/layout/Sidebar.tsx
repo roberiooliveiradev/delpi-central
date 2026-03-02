@@ -372,7 +372,7 @@ export const Sidebar = () => {
                     className="dropdown-item danger"
                     onClick={logout}
                   >
-                    Logout
+                    Sair
                   </div>
                 </div>
               )}
