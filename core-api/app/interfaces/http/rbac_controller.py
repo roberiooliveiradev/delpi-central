@@ -16,6 +16,7 @@ from app.application.use_cases.list_group_roles_use_case import ListGroupRolesUs
 from app.application.use_cases.replace_group_roles_use_case import ReplaceGroupRolesUseCase
 from app.application.use_cases.add_group_roles_use_case import AddRoleToGroupUseCase
 from app.application.use_cases.remove_group_roles_use_case import RemoveRoleFromGroupUseCase
+from app.application.use_cases.update_role_use_case import UpdateRoleUseCase
 
 from app.application.use_cases.list_user_roles_use_case import ListUserRolesUseCase
 from app.application.use_cases.replace_user_roles_use_case import ReplaceUserRolesUseCase
@@ -695,6 +696,45 @@ def update_group(group_id: str):
     except Exception as e:
         return server_error(str(e))
     
+# ==========================================================
+# UPDATE ROLE
+# ==========================================================
+
+@rbac_bp.route("/admin/rbac/roles/<role_id>", methods=["PUT"])
+def update_role(role_id: str):
+    guard = require_auth()
+    if guard:
+        return guard
+
+    data = request.get_json(silent=True) or {}
+
+    name = (data.get("name") or "").strip()
+    description = data.get("description")
+
+    if not name:
+        return api_error(
+            "validation_error",
+            "Campo 'name' é obrigatório.",
+            path="name"
+        )
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = UpdateRoleUseCase(uow)
+            result = uc.execute(
+                role_id=role_id,
+                name=name,
+                description=description,
+            )
+
+        return jsonify(result), 200
+
+    except ValueError as e:
+        return api_error("validation_error", str(e))
+
+    except Exception as e:
+        return server_error(str(e))
+
 
 # ==========================================================
 # DELETE ROLE

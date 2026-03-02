@@ -341,59 +341,31 @@ textarea:focus-visible {
 
 
 /* =========================================
-   ADMIN NAVBAR (Top)
+   ADMIN NAVBAR RESPONSIVE PRO
 ========================================= */
 
 .admin-page {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 5px 10px;
+  gap: 12px;
+  padding: 10px 16px;
 }
 
-.admin-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.admin-title {
-  font-size: 26px;
-  letter-spacing: -0.2px;
-}
-
-.admin-subtitle {
-  margin-top: 6px;
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
-.admin-chip {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 8px 12px;
-  border-radius: 999px;
-  color: var(--text-muted);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
+/* NAVBAR BASE */
 .admin-navbar {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-  backdrop-filter: blur(10px);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  /* box-shadow: var(--shadow); */
+  border-radius: 14px;
+  padding: 8px;
 }
 
+/* DESKTOP TABS */
 .admin-navbar-inner {
   display: flex;
   gap: 8px;
-  padding: 10px;
   overflow-x: auto;
   scrollbar-width: thin;
 }
@@ -401,18 +373,18 @@ textarea:focus-visible {
 .admin-nav-item {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 
-  border-radius: 8px;
+  border-radius: 10px;
+  padding: 10px 16px;
+
   border: 1px solid transparent;
   background: transparent;
 
-  padding: 10px 14px;
   cursor: pointer;
-
-  color: var(--text-muted);
   font-weight: 600;
-  transition: 0.2s;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
@@ -423,22 +395,113 @@ textarea:focus-visible {
 
 .admin-nav-item.active {
   background: var(--primary);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.12);
+  color: white;
   box-shadow: 0 6px 18px rgba(0, 153, 220, 0.3);
 }
 
-.admin-nav-item svg {
-  flex: 0 0 auto;
+/* TABLET MODE */
+@media (max-width: 1024px) {
+  .admin-navbar-inner {
+    overflow-x: auto;
+  }
 }
 
-@media (max-width: 720px) {
-  .admin-header {
-    flex-direction: column;
-    align-items: flex-start;
+/* MOBILE COMPACT */
+@media (max-width: 768px) {
+  .admin-nav-item span {
+    font-size: 13px;
   }
-  .admin-title {
-    font-size: 22px;
+
+  .admin-nav-item {
+    padding: 8px 12px;
+  }
+}
+
+/* MOBILE DROPDOWN (≤520px) */
+.admin-mobile-select {
+  display: none;
+}
+
+@media (max-width: 520px) {
+
+  .admin-navbar-inner {
+    display: none;
+  }
+
+  .admin-mobile-select {
+    display: block;
+    position: relative;
+  }
+
+  .admin-mobile-trigger {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .admin-mobile-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .admin-mobile-menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .admin-mobile-menu button:hover {
+    background: var(--surface-2);
+  }
+}
+
+/* =========================================
+   TAB TRANSITION
+========================================= */
+
+.admin-content {
+  position: relative;
+  min-height: 200px;
+}
+
+.admin-tab-panel {
+  animation: adminTabFade 0.25s ease;
+}
+
+/* Fade + slide */
+@keyframes adminTabFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

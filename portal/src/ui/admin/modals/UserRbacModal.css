@@ -1,42 +1,119 @@
-
 /* =========================
    Helpers p/ RBAC modal
 ========================= */
 
 .superadmin-row {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   font-weight: 600;
+  padding: 14px 18px;
+  border-radius: 16px;
+
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+
+  color: var(--text);
 }
 
-/* checkbox alinhado (evita centralização estranha) */
+/* checkbox alinhado */
 .superadmin-row input[type="checkbox"] {
   margin: 0;
   width: 16px;
   height: 16px;
+  accent-color: var(--primary);
 }
 
-/* grid 2 colunas do RBAC */
+
+/* =========================
+   GRID
+========================= */
+
 .rbac-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 20px;
 }
 
-/* responsivo: 1 coluna no mobile */
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .rbac-grid {
     grid-template-columns: 1fr;
   }
 }
 
+
+/* =========================
+   COLUMN CARD
+========================= */
+
 .rbac-column {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-width: 0;
+  gap: 14px;
+
+  padding: 18px;
+  border-radius: 18px;
+
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--shadow) 20%, transparent);
 }
+
+.rbac-column h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+}
+
+.dt-muted {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+
+/* =========================
+   SEARCH
+========================= */
+
+.rbac-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 12px;
+  border-radius: 12px;
+
+  border: 1px solid var(--control-border);
+  background: var(--control-bg);
+  color: var(--control-text);
+
+  transition: all 0.15s ease;
+}
+
+.rbac-search:focus-within {
+  box-shadow: var(--focus-ring);
+  border-color: var(--primary);
+}
+
+.rbac-search input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 13px;
+  color: var(--control-text);
+}
+
+.rbac-search input::placeholder {
+  color: var(--control-placeholder);
+}
+
+
+/* =========================
+   CHECKBOX LIST (fallback se usar)
+========================= */
 
 .checkbox-list {
   display: flex;
@@ -44,18 +121,53 @@
   gap: 8px;
 }
 
-/* label padrão do seu CSS é column; aqui precisa ser row */
 .checkbox-item {
   display: flex;
-  flex-direction: row;
   align-items: center;
   gap: 10px;
 
-  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 12px;
+
+  transition: background 0.15s ease;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.checkbox-item:hover {
+  background: var(--surface-3);
 }
 
 .checkbox-item input[type="checkbox"] {
-  margin: 0;
   width: 16px;
   height: 16px;
+  accent-color: var(--primary);
+}
+
+
+/* =========================
+   EMPTY STATE
+========================= */
+
+.dt-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 8px 4px;
+}
+
+
+/* =========================
+   DataTable adjustments inside modal
+========================= */
+
+.rbac-column .datatable-wrapper {
+  margin: 0;
+}
+
+.rbac-column .datatable {
+  min-width: 100%;
+}
+
+.rbac-column .datatable-container {
+  border-radius: 14px;
 }

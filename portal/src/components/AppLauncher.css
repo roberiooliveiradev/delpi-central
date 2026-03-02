@@ -20,7 +20,7 @@
 
 .launcher-modal.startmenu {
   width: clamp(320px, 90vw, 760px);
-  height: clamp(480px, 85vh, 640px);
+  height: clamp(80vh, 85vh, 640px);
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   border: 1px solid var(--border);
   border-radius: 22px;

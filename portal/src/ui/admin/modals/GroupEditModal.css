@@ -1,0 +1,106 @@
+/* =========================
+   GROUP EDIT MODAL
+   (segue tokens do :root)
+========================= */
+
+.group-edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Inputs seguem seu Modal.css global, aqui só refinamos comportamento */
+.group-edit-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.group-edit-body input,
+.group-edit-body textarea {
+  border: 1px solid var(--control-border);
+  background: var(--control-bg);
+  color: var(--control-text);
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.group-edit-body input::placeholder,
+.group-edit-body textarea::placeholder {
+  color: var(--control-placeholder);
+}
+
+.group-edit-body input:focus,
+.group-edit-body textarea:focus {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--control-border));
+  box-shadow: var(--focus-ring);
+}
+
+.group-edit-body textarea {
+  resize: vertical;
+  min-height: 92px;
+}
+
+/* Divider */
+.group-edit-divider {
+  height: 1px;
+  width: 100%;
+  background: color-mix(in srgb, var(--border) 85%, transparent);
+  margin: 2px 0;
+}
+
+/* Ajustes específicos quando DataTable está dentro do modal */
+.group-edit-body .datatable-wrapper {
+  margin: 0;
+  gap: 12px;
+}
+
+.group-edit-body .datatable-toolbar {
+  padding: 0;
+}
+
+.group-edit-body .datatable-toolbar-left {
+  gap: 6px;
+}
+
+.group-edit-body .datatable-toolbar-left h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+
+.group-edit-body .dt-muted {
+  font-size: 13px;
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* Mantém tabela confortável no modal */
+.group-edit-body .datatable-container {
+  border-radius: 16px;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .group-edit-body {
+    gap: 14px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 720px) {
+  .group-edit-body label {
+    font-weight: 700;
+  }
+
+  .group-edit-body input,
+  .group-edit-body textarea {
+    border-radius: 12px;
+  }
+}

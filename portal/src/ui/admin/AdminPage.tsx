@@ -1,22 +1,26 @@
 // src/ui/admin/AdminPage.tsx
+
 import { useMemo, useState } from "react";
-import { RbacTab } from "./tabs/RbacTab";
-import { RolesTab } from "./tabs/RolesTab";
-import { GroupsTab } from "./tabs/GroupsTab";
-import { PermissionsTab } from "./tabs/PermissionsTab";
-import { AppsTab } from "./tabs/AppsTab";
 import {
   Users,
   LayoutGrid,
   Shield,
   UsersRound,
   KeyRound,
+  ChevronDown,
 } from "lucide-react";
+
+import { RbacTab } from "./tabs/RbacTab";
+import { RolesTab } from "./tabs/RolesTab";
+import { GroupsTab } from "./tabs/GroupsTab";
+import { PermissionsTab } from "./tabs/PermissionsTab";
+import { AppsTab } from "./tabs/AppsTab";
 
 type AdminTab = "apps" | "users" | "roles" | "groups" | "permissions";
 
 export const AdminPage = () => {
   const [tab, setTab] = useState<AdminTab>("users");
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const items = useMemo(
     () => [
@@ -29,8 +33,12 @@ export const AdminPage = () => {
     []
   );
 
+  const activeItem = items.find((i) => i.key === tab)!;
+  const ActiveIcon = activeItem.icon;
+
   return (
     <div className="admin-page">
+      {/* DESKTOP / TABLET NAV */}
       <nav className="admin-navbar" aria-label="Navegação de administração">
         <div className="admin-navbar-inner">
           {items.map((item) => {
@@ -51,14 +59,49 @@ export const AdminPage = () => {
             );
           })}
         </div>
+
+        {/* MOBILE DROPDOWN */}
+        <div className="admin-mobile-select">
+          <button
+            type="button"
+            className="admin-mobile-trigger"
+            onClick={() => setMobileOpen((p) => !p)}
+          >
+            <ActiveIcon size={18} />
+            <span>{activeItem.label}</span>
+            <ChevronDown size={16} />
+          </button>
+
+          {mobileOpen && (
+            <div className="admin-mobile-menu">
+              {items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => {
+                      setTab(item.key);
+                      setMobileOpen(false);
+                    }}
+                  >
+                    <Icon size={16} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </nav>
 
       <div className="admin-content">
-        {tab === "users" && <RbacTab />}
-        {tab === "apps" && <AppsTab />}
-        {tab === "roles" && <RolesTab />}
-        {tab === "groups" && <GroupsTab />}
-        {tab === "permissions" && <PermissionsTab />}
+        <div key={tab} className="admin-tab-panel">
+          {tab === "users" && <RbacTab />}
+          {tab === "apps" && <AppsTab />}
+          {tab === "roles" && <RolesTab />}
+          {tab === "groups" && <GroupsTab />}
+          {tab === "permissions" && <PermissionsTab />}
+        </div>
       </div>
     </div>
   );

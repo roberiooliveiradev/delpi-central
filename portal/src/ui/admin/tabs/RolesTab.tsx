@@ -1,5 +1,3 @@
-// src/ui/admin/tabs/RolesTab.tsx
-
 import { useContext, useMemo, useState } from "react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
@@ -50,40 +48,56 @@ export const RolesTab = () => {
 
   if (!api) return null;
 
+  // ============================
+  // Carregar catálogo permissões
+  // ============================
   const fetchPermissions = async () => {
     const res = await api.listPermissions({ page: 1, pageSize: 999 });
     setAllPerms(res.data ?? []);
   };
 
+  // ============================
+  // Abrir edição
+  // ============================
   const openRole = async (role: AdminRole) => {
-    setEditing(role);
+    setEditing({ ...role });
 
-    // catálogo completo
     const permsRes = await api.listPermissions({ page: 1, pageSize: 999 });
-    const all = permsRes.data ?? [];
-    setAllPerms(all);
+    setAllPerms(permsRes.data ?? []);
 
-    // permissões do role
     const roleRes = await api.getRolePermissions(role.id);
     const selected = (roleRes.data ?? []).map((p) => p.id);
 
     setSelectedPermIds(selected);
   };
 
+  // ============================
+  // Novo papel
+  // ============================
   const openNew = async () => {
-    setEditing({ id: "", name: "", description: "", permissions: [] } as any);
+    setEditing({
+      id: "",
+      name: "",
+      description: "",
+    } as AdminRole);
+
     setSelectedPermIds([]);
     await fetchPermissions();
   };
 
+  // ============================
+  // SAVE
+  // ============================
   const save = async () => {
     if (!editing) return;
 
     setSaving(true);
+
     try {
       let roleId: string;
 
       if (!editing.id) {
+        // CREATE
         const created = await api.createRole({
           name: editing.name,
           description: editing.description ?? undefined,
@@ -91,12 +105,21 @@ export const RolesTab = () => {
 
         roleId = created.id;
       } else {
+        // UPDATE
+        await api.updateRole(editing.id, {
+          name: editing.name,
+          description: editing.description ?? undefined,
+        });
+
         roleId = editing.id;
       }
 
+      // Atualiza permissões
       await api.setRolePermissions(roleId, selectedPermIds);
 
+      // 🔥 Igual ao Group
       setEditing(null);
+
       rolesResource.refetch();
     } finally {
       setSaving(false);
@@ -176,7 +199,6 @@ export const RolesTab = () => {
         onPageChange={rolesResource.setPage}
       />
 
-      {/* Confirmação delete individual */}
       <ConfirmDialog
         open={!!deleteOneId}
         title="Excluir papel"
@@ -187,7 +209,6 @@ export const RolesTab = () => {
         onConfirm={handleDeleteOne}
       />
 
-      {/* Confirmação delete múltiplo */}
       <ConfirmDialog
         open={confirmBulk}
         title="Excluir papéis"

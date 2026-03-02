@@ -30,29 +30,22 @@ export type DataTableProps<T> = {
   data: T[];
   loading?: boolean;
 
-  // Search (controlled)
   searchValue?: string;
   onSearchChange?: (value: string) => void;
 
-  // Toolbar slot
   toolbar?: ReactNode;
 
-  // Sorting (server-side)
   sort?: DataTableSort;
   onSortChange?: (next: DataTableSort) => void;
 
-  // Pagination (server-side)
   pagination?: DataTablePagination;
   onPageChange?: (page: number) => void;
 
-  // Page size selector
   pageSizeOptions?: number[];
   onPageSizeChange?: (pageSize: number) => void;
 
-  // Row actions
   actions?: (row: T) => ReactNode;
 
-  // Bulk selection
   selectable?: boolean;
   getRowId?: (row: T) => string;
   selectedRows?: string[];
@@ -104,8 +97,10 @@ export function DataTable<T>({
       return;
     }
 
-    const toAdd = rows.map((r) => getRowId(r));
-    const merged = Array.from(new Set([...selectedRows, ...toAdd]));
+    const merged = Array.from(
+      new Set([...selectedRows, ...rows.map(getRowId)])
+    );
+
     onSelectionChange(merged);
   };
 
@@ -113,6 +108,7 @@ export function DataTable<T>({
     if (!selectable || !getRowId || !onSelectionChange) return;
 
     const id = getRowId(row);
+
     if (selectedRows.includes(id)) {
       onSelectionChange(selectedRows.filter((x) => x !== id));
     } else {
@@ -148,11 +144,8 @@ export function DataTable<T>({
 
   return (
     <div className="datatable-wrapper">
-      {/* TOOLBAR (layout antigo) */}
       <div className="datatable-toolbar">
-        <div className="datatable-toolbar-left">
-          {toolbar}
-        </div>
+        <div className="datatable-toolbar-left">{toolbar}</div>
 
         <div className="datatable-toolbar-right">
           {hasSearch && (
@@ -184,18 +177,16 @@ export function DataTable<T>({
         </div>
       </div>
 
-      {/* TABLE CONTAINER (layout antigo) */}
       <div className="datatable-container">
         <table className="datatable">
           <thead>
             <tr>
               {selectable && (
-                <th className="datatable-th-checkbox">
+                <th>
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={toggleAll}
-                    aria-label="Selecionar todos"
                   />
                 </th>
               )}
@@ -208,75 +199,68 @@ export function DataTable<T>({
                 return (
                   <th
                     key={key}
+                    onClick={() => clickSort(c)}
                     className={[
                       c.sortable ? "sortable" : "",
                       active ? "active" : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
-                    style={c.width ? { width: c.width } : undefined}
-                    onClick={() => clickSort(c)}
                   >
-                    <span>{c.header}</span>
-
+                    {c.header}
                     {c.sortable && (
                       <span className="sort-indicator">
-                        {/* mostra direção apenas na coluna ativa */}
-                        {active ? (dir === "asc" ? " ▲" : " ▼") : (
-                          <span className="sort-icon">
-                            <ArrowUpDown size={14} />
-                          </span>
-                        )}
+                        {active
+                          ? dir === "asc"
+                            ? " ▲"
+                            : " ▼"
+                          : <ArrowUpDown size={14} />}
                       </span>
                     )}
                   </th>
                 );
               })}
 
-              {actions && <th className="datatable-th-actions">Ações</th>}
+              {actions && <th>Ações</th>}
             </tr>
           </thead>
 
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={colSpan} className="datatable-td-state">
+                <td colSpan={colSpan}>
                   <div className="datatable-state">Carregando...</div>
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={colSpan} className="datatable-td-state">
+                <td colSpan={colSpan}>
                   <div className="datatable-state">{emptyText}</div>
                 </td>
               </tr>
             ) : (
               rows.map((row, idx) => (
                 <tr
-                  key={selectable && getRowId ? getRowId(row) : idx}
+                  key={getRowId ? getRowId(row) : idx}
                   className={isSelected(row) ? "selected" : ""}
                 >
                   {selectable && (
-                    <td className="datatable-td-checkbox">
+                    <td>
                       <input
                         type="checkbox"
                         checked={isSelected(row)}
                         onChange={() => toggleRow(row)}
-                        aria-label="Selecionar linha"
                       />
                     </td>
                   )}
 
-                  {columns.map((c) => {
-                    const k = String(c.key);
-                    return (
-                      <td key={k}>
-                        {c.render
-                          ? c.render(row)
-                          : (row as any)[c.key as any] ?? "-"}
-                      </td>
-                    );
-                  })}
+                  {columns.map((c) => (
+                    <td key={String(c.key)} data-label={c.header}>
+                      {c.render
+                        ? c.render(row)
+                        : (row as any)[c.key as any] ?? "-"}
+                    </td>
+                  ))}
 
                   {actions && (
                     <td className="datatable-td-actions">
@@ -289,13 +273,11 @@ export function DataTable<T>({
           </tbody>
         </table>
 
-        {/* mantém overlay do visual antigo */}
         {loading && (
           <div className="datatable-overlay">Carregando...</div>
         )}
       </div>
 
-      {/* PAGINATION (layout antigo) */}
       {hasPagination && (
         <div className="datatable-pagination">
           <span>
@@ -305,26 +287,27 @@ export function DataTable<T>({
 
           <div className="datatable-pagination-actions">
             <button
-              disabled={pagination!.page <= 1 || !!loading}
+              disabled={pagination!.page <= 1}
               onClick={() =>
-                onPageChange?.(Math.max(1, pagination!.page - 1))
+                onPageChange?.(
+                  Math.max(1, pagination!.page - 1)
+                )
               }
-              aria-label="Anterior"
             >
               <ChevronLeft size={16} />
               Anterior
             </button>
 
             <button
-              disabled={
-                pagination!.page >= pagination!.totalPages || !!loading
-              }
+              disabled={pagination!.page >= pagination!.totalPages}
               onClick={() =>
                 onPageChange?.(
-                  Math.min(pagination!.totalPages, pagination!.page + 1)
+                  Math.min(
+                    pagination!.totalPages,
+                    pagination!.page + 1
+                  )
                 )
               }
-              aria-label="Próxima"
             >
               Próxima
               <ChevronRight size={16} />
