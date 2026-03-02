@@ -1,8 +1,10 @@
 # app/application/use_cases/replace_role_permissions_use_case.py
 
 from uuid import UUID
+
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
+from app.domain.services.iam_sync_service import IamSyncService
 
 
 class ReplaceRolePermissionsUseCase:
@@ -29,14 +31,13 @@ class ReplaceRolePermissionsUseCase:
             for uid in user_ids:
                 self.uow.cache.invalidate(str(uid))
 
-        # 4️⃣ Registra evento global de RBAC
-        # (não usamos target_user_id porque pode afetar muitos usuários)
+        # 4️⃣ Evento global de RBAC
         self.uow.collect_event(
             AdminChangedEvent(
                 entity="rbac",
                 action="role_permissions_replaced",
                 payload={"roleId": role_id},
-                target_user_id=None,  # broadcast
+                target_user_id=None,
             )
         )
 

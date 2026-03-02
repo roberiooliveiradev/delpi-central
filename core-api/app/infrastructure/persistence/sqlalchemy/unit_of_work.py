@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.extensions.db import db
 
 from app.domain.events.admin_events import DomainEvent
+from app.application.event_handlers.rbac_event_handler import RbacEventHandler
 from app.infrastructure.socket.socket_event_dispatcher import SocketIOEventDispatcher
 from app.infrastructure.cache.rbac_permission_cache_adapter import RbacCachePermissionCacheAdapter
 
@@ -134,9 +135,13 @@ class SqlAlchemyUnitOfWork:
     # Transaction control
     # =========================
 
-    def commit(self) -> None:
+    def commit(self) -> list[DomainEvent]:
         self.session.commit()
-        self._dispatch_events()
+
+        events = list(self._events)
+        self._events.clear()
+
+        return events
 
     def rollback(self) -> None:
         self.session.rollback()
@@ -150,7 +155,17 @@ class SqlAlchemyUnitOfWork:
         return self
 
     def __exit__(self, exc_type, exc, tb):
+
         if exc:
             self.rollback()
-        else:
-            self.commit()
+            return
+
+        events = self.commit()
+
+        from app.application.event_bus import EventBus
+
+        try:
+            EventBus(self).publish(events)
+        except Exception as e:
+            # loga erro, mas NÃO quebra request
+            print("Erro pós-commit:", e)

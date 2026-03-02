@@ -1,8 +1,9 @@
 # app/application/use_cases/remove_permission_from_role_use_case.py
-
 from uuid import UUID
+
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
+from app.domain.services.iam_sync_service import IamSyncService
 
 
 class RemovePermissionFromRoleUseCase:
@@ -38,7 +39,7 @@ class RemovePermissionFromRoleUseCase:
                     "roleId": role_id,
                     "permissionCode": permission_code,
                 },
-                target_user_id=None,  # broadcast
+                target_user_id=None,
             )
         )
 

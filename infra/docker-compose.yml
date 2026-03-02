@@ -70,7 +70,9 @@ services:
       - delpi-network
 
   core-api:
-    build: ../core-api
+    build:
+      context: ..
+      dockerfile: core-api/Dockerfile
     container_name: delpi-core-api
     volumes:
       - ../core-api:/app
@@ -112,7 +114,9 @@ services:
       - delpi-network
       
   api-delpi:
-    build: ../api-delpi
+    build:
+      context: ..
+      dockerfile: api-delpi/Dockerfile
     container_name: delpi-api-delpi
     environment:
       # JWKS interno via rede Docker

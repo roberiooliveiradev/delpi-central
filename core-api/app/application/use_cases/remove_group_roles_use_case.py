@@ -1,8 +1,10 @@
 # app/application/use_cases/remove_group_roles_use_case.py
 
 from uuid import UUID
+
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
+from app.domain.services.iam_sync_service import IamSyncService
 
 
 class RemoveRoleFromGroupUseCase:
@@ -35,7 +37,7 @@ class RemoveRoleFromGroupUseCase:
                     "groupId": group_id,
                     "roleId": role_id,
                 },
-                target_user_id=None,  # broadcast
+                target_user_id=None,
             )
         )
 

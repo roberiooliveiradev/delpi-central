@@ -1,8 +1,8 @@
 # app/application/use_cases/add_role_to_user_use_case.py
-
 from uuid import UUID
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
+from app.domain.services.iam_sync_service import IamSyncService
 
 
 class AddRoleToUserUseCase:
@@ -15,14 +15,10 @@ class AddRoleToUserUseCase:
         uid = UUID(user_id)
         rid = UUID(role_id)
 
-        # 1️⃣ Regra de negócio
+        # Regra de negócio
         self.uow.user_roles.add_role(uid, rid)
 
-        # 2️⃣ Invalida cache via UoW
-        if self.uow.cache:
-            self.uow.cache.invalidate(user_id)
-
-        # 3️⃣ Evento direcionado
+        # Evento direcionado
         self.uow.collect_event(
             AdminChangedEvent(
                 entity="rbac",

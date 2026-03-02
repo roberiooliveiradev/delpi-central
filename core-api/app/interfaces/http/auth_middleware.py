@@ -5,29 +5,21 @@ from uuid import UUID
 
 from flask import request, g
 
-from app.infrastructure.security.jwt_service import JWTService
+from delpi_auth.jwt_validator import validate_token
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
-
-from app.infrastructure.cache.rbac_permission_cache_adapter import (
-    RbacCachePermissionCacheAdapter,
-)
-
-from app.domain.services.permission_resolver import PermissionResolver
 from app.application.use_cases.notify_user_use_case import NotifyUserUseCase
-
-
-jwt_service = JWTService()
 
 
 def authenticate():
     auth_header = request.headers.get("Authorization")
+
     if not auth_header or not auth_header.startswith("Bearer "):
         return None
 
     token = auth_header.split(" ", 1)[1]
 
     try:
-        claims = jwt_service.verify_token(token)
+        claims = validate_token(token)
     except Exception:
         return None
 
@@ -43,12 +35,11 @@ def authenticate():
     except Exception:
         return None
 
+    permissions = claims.get("permissions", [])
+    is_superadmin = bool(claims.get("is_superadmin"))
+
     try:
         with SqlAlchemyUnitOfWork() as uow:
-
-            # ==================================================
-            # 1️⃣ Carrega ou cria usuário
-            # ==================================================
 
             user = uow.users.get_by_email(email)
             is_new_user = False
@@ -58,17 +49,12 @@ def authenticate():
                     id=user_uuid,
                     email=email,
                     name=name,
-                    is_superadmin=False,
+                    is_superadmin=is_superadmin,
                 )
                 is_new_user = True
                 user = uow.users.get_by_email(email)
 
-            # Atualiza last login
             uow.users.update_last_login(user_uuid, datetime.utcnow())
-
-            # ==================================================
-            # 2️⃣ Notificação de boas-vindas
-            # ==================================================
 
             if is_new_user:
                 notify_use_case = NotifyUserUseCase(uow)
@@ -79,24 +65,7 @@ def authenticate():
                     type="success",
                 )
 
-            # ==================================================
-            # 3️⃣ Resolver permissões
-            # ==================================================
-
-            resolver = PermissionResolver(
-                permission_query=uow.permission_queries,
-                cache=RbacCachePermissionCacheAdapter(),
-            )
-
-            permissions = resolver.resolve(
-                user_id=user.id,
-                is_superadmin=bool(user.is_superadmin),
-            )
-
-        # ==================================================
-        # 4️⃣ Fora da transação → popular contexto
-        # ==================================================
-
+        # 🔥 SEM PermissionResolver
         g.current_user = user
         g.current_permissions = permissions
         g.current_sub = str(user.id)
@@ -104,5 +73,4 @@ def authenticate():
         return user
 
     except Exception:
-        # segurança: não quebra autenticação silenciosamente
         return None

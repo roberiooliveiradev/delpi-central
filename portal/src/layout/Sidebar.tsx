@@ -8,14 +8,12 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { AppLauncher } from "../components/AppLauncher";
-import { resolveIcon } from "../utils/iconResolver";
 
 import {
-  Package,
   PanelLeftClose,
   PanelLeftOpen,
   Bell,
@@ -24,7 +22,6 @@ import {
   Grid,
   Shield,
   ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
@@ -50,7 +47,7 @@ export const Sidebar = () => {
     markAllNotificationsRead,
   } = useContext(AuthContext);
 
-  const location = useLocation();
+  // const location = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
 
@@ -135,13 +132,6 @@ export const Sidebar = () => {
       .filter(([, group]) => !!group);
   }, [favorites, grouped]);
 
-  const toggleApp = (appId: string) => {
-    setOpenApps((prev) => ({
-      ...prev,
-      [appId]: !prev[appId],
-    }));
-  };
-
   /* ===============================
      DADOS GERAIS
   =============================== */
@@ -159,6 +149,16 @@ export const Sidebar = () => {
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
+
+
+
+  /* ========================================
+     ADMINISTRADOR
+  ======================================== */
+  const canAccessAdmin =
+    user?.is_superadmin ||
+    user?.permissions?.includes("rbac.manage");  
+
 
   /* ========================================
      RENDER
@@ -233,12 +233,12 @@ export const Sidebar = () => {
 
             {/* ================= FOOTER ================= */}
             <div className="sidebar-footer">
-              {user?.is_superadmin && (
-                <NavLink to="/admin" className="sidebar-footer-item">
-                  <Shield size={18} />
-                  <span>Admin</span>
-                </NavLink>
-              )}
+            {canAccessAdmin && (
+              <NavLink to="/admin" className="sidebar-footer-item">
+                <Shield size={18} />
+                <span>Admin</span>
+              </NavLink>
+            )}
 
               <div
                 className="sidebar-footer-item"

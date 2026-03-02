@@ -1,3 +1,6 @@
+# -----------------
+# core-api - DOCKERFILE
+# -----------------
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -12,12 +15,18 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+# 🔧 Copiar requirements correto
+COPY core-api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# 🔥 Copiar shared
+COPY shared /shared
+RUN pip install -e /shared
 
-COPY docker-entrypoint.sh /entrypoint.sh
+# 🔧 Copiar código core-api
+COPY core-api /app
+
+COPY core-api/docker-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 8000
