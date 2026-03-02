@@ -83,6 +83,16 @@
   font-size: 14px;
 }
 
+/* REMOVE OUTILINE DO INPUT */
+
+.launcher-searchbar input:focus,
+.launcher-searchbar input:focus-visible,
+.launcher-searchbar input:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 /* SECTIONS */
 
 .launcher-section {

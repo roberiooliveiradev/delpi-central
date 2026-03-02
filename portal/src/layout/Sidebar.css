@@ -167,6 +167,18 @@
   box-shadow: var(--focus-2);
 }
 
+.dropdown-item{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+
+.dropdown-item.active {
+  font-weight: 600;
+  opacity: 1;
+}
+
 /* =========================================
    SCROLL AREA
 ========================================= */

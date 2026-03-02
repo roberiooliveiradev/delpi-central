@@ -2,46 +2,51 @@
 
 import { useEffect, useState } from "react";
 
-type Theme = "light" | "dark" | "system";
+export type Theme = "light" | "dark" | "system";
+
+const STORAGE_KEY = "theme";
+const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+function resolveSystemTheme(): "light" | "dark" {
+  return mediaQuery.matches ? "dark" : "light";
+}
+
+function applyThemeToDocument(value: Theme) {
+  const root = document.documentElement;
+
+  const resolved =
+    value === "system" ? resolveSystemTheme() : value;
+
+  root.setAttribute("data-theme", resolved);
+}
 
 export const useTheme = () => {
   const getInitialTheme = (): Theme => {
-    const saved = localStorage.getItem("theme");
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "light" || saved === "dark" || saved === "system") {
       return saved;
     }
     return "system";
   };
 
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
 
+  const setTheme = (value: Theme) => {
+    localStorage.setItem(STORAGE_KEY, value);
+    setThemeState(value);
+  };
+
+  // Aplica sempre que o theme mudar
   useEffect(() => {
-    const root = document.documentElement;
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    applyThemeToDocument(theme);
+  }, [theme]);
 
-    const applyTheme = (value: Theme) => {
-      if (value === "dark") {
-        root.setAttribute("data-theme", "dark");
-      } else if (value === "light") {
-        root.setAttribute("data-theme", "light");
-      } else {
-        // system
-        if (mediaQuery.matches) {
-          root.setAttribute("data-theme", "dark");
-        } else {
-          root.setAttribute("data-theme", "light");
-        }
-      }
-    };
+  // Escuta mudança do sistema SOMENTE se estiver em system
+  useEffect(() => {
+    if (theme !== "system") return;
 
-    applyTheme(theme);
-    localStorage.setItem("theme", theme);
-
-    // Se estiver em "system", escutar mudança do sistema
     const handleChange = () => {
-      if (theme === "system") {
-        applyTheme("system");
-      }
+      applyThemeToDocument("system");
     };
 
     mediaQuery.addEventListener("change", handleChange);

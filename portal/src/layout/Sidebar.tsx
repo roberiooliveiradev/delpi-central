@@ -22,6 +22,7 @@ import {
   Grid,
   Shield,
   ChevronDown,
+  CircleDashed,
 } from "lucide-react";
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
@@ -67,7 +68,9 @@ export const Sidebar = () => {
   const [userOpen, setUserOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [launcherOpen, setLauncherOpen] = useState(false);
-
+  const [themeOpen, setThemeOpen] = useState(false);
+  const themeDropdownRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
   }, [collapsed]);
@@ -78,11 +81,11 @@ export const Sidebar = () => {
       const target = event.target as Node;
 
       if (
-        userOpen &&
-        userDropdownRef.current &&
-        !userDropdownRef.current.contains(target)
+        themeOpen &&
+        themeDropdownRef.current &&
+        !themeDropdownRef.current.contains(target)
       ) {
-        setUserOpen(false);
+        setThemeOpen(false);
       }
 
       if (
@@ -98,7 +101,7 @@ export const Sidebar = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [userOpen, notifOpen]);
+  }, [userOpen, notifOpen, themeOpen]);
 
   /* ===============================
      AGRUPAMENTO DE ROTAS
@@ -145,11 +148,6 @@ export const Sidebar = () => {
     const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
     return (first + last).toUpperCase() || "?";
   })();
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
-
 
 
   /* ========================================
@@ -296,18 +294,57 @@ export const Sidebar = () => {
                 <Grid size={18} />
                 <span>Apps</span>
               </div>
-
               <div
                 className="sidebar-footer-item"
-                onClick={toggleTheme}
+                onClick={() => setThemeOpen(!themeOpen)}
               >
                 {theme === "dark" ? (
+                  <Moon size={18} />
+                ) : theme === "light" ? (
                   <Sun size={18} />
                 ) : (
-                  <Moon size={18} />
+                  <CircleDashed size={18} />
                 )}
                 <span>Tema</span>
+                <ChevronDown size={16} />
               </div>
+
+              {themeOpen && (
+                <div
+                  className="dropdown sidebar-user"
+                  ref={themeDropdownRef}
+                >
+                  <div
+                    className={`dropdown-item ${theme === "light" ? "active" : ""}`}
+                    onClick={() => {
+                      setTheme("light");
+                      setThemeOpen(false);
+                    }}
+                  >
+                   <Sun size={18} /> Claro
+                  </div>
+
+                  <div
+                    className={`dropdown-item ${theme === "dark" ? "active" : ""}`}
+                    onClick={() => {
+                      setTheme("dark");
+                      setThemeOpen(false);
+                    }}
+                  >
+                    <Moon size={18} /> Escuro
+                  </div>
+
+                  <div
+                    className={`dropdown-item ${theme === "system" ? "active" : ""}`}
+                    onClick={() => {
+                      setTheme("system");
+                      setThemeOpen(false);
+                    }}
+                  >
+                   <CircleDashed size={18} /> Sistema
+                  </div>
+                </div>
+              )}
 
               <div
                 className="sidebar-footer-item"

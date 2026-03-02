@@ -75,6 +75,8 @@ a {
   --bg-gradient-2: radial-gradient(circle at 18% 25%, rgba(0, 153, 220, 0.22), transparent 45%),
     radial-gradient(circle at 82% 70%, rgba(0, 212, 255, 0.14), transparent 50%),
     linear-gradient(135deg, color-mix(in srgb, var(--surface-2) 92%, #0b1b2b), var(--surface-2));
+
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 /* DARK MODE */
@@ -144,6 +146,27 @@ textarea {
 	border-radius: 10px;
 	padding: 12px;
   margin: 2px;
+}
+
+
+
+input:focus,
+input:focus-visible,
+input:active,
+button:focus,
+button:focus-visible,
+button:active,
+select:focus,
+select:focus-visible,
+select:active,
+a:focus,
+a:focus-visible,
+a:active
+{
+  transition: box-shadow 0.2s ease-in-out !important;
+  outline: none !important;
+  box-shadow: var(--focus-ring) !important;
+  border: var(--focus-ring) !important;
 }
 
 input::placeholder,
