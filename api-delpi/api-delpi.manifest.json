@@ -20,7 +20,7 @@
   "backend": {
     "audience": "delpi-central",
     "baseUrl": "/apps/api-delpi",
-    "issuer": "https://central.delpi.com.br/auth/realms/delpi",
+    "issuer": "http://localhost/auth/realms/delpi",
     "required": true,
     "requiredPermissionsHeader": "x-user-permissions",
     "serviceName": "api-delpi",
