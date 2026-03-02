@@ -18,10 +18,6 @@ class RemoveRoleFromUserUseCase:
         # 1️⃣ Regra de negócio
         self.uow.user_roles.remove_role(uid, rid)
 
-        # 2️⃣ Invalida cache do usuário afetado
-        if self.uow.cache:
-            self.uow.cache.invalidate(user_id)
-
         # 3️⃣ Registra evento direcionado ao usuário
         self.uow.collect_event(
             AdminChangedEvent(

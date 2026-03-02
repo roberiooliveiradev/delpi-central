@@ -1,9 +1,9 @@
 # app/application/use_cases/remove_permission_from_role_use_case.py
+
 from uuid import UUID
 
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
-from app.domain.services.iam_sync_service import IamSyncService
 
 
 class RemovePermissionFromRoleUseCase:
@@ -21,16 +21,7 @@ class RemovePermissionFromRoleUseCase:
             permission_code
         )
 
-        # 2️⃣ Descobre usuários impactados
-        user_ids = set(self.uow.rbac_queries.list_user_ids_by_role(rid))
-        user_ids |= set(self.uow.rbac_queries.list_user_ids_by_group_role(rid))
-
-        # 3️⃣ Invalida cache dos usuários afetados
-        if self.uow.cache:
-            for uid in user_ids:
-                self.uow.cache.invalidate(str(uid))
-
-        # 4️⃣ Evento global de RBAC
+        # 2️⃣ Evento global de RBAC
         self.uow.collect_event(
             AdminChangedEvent(
                 entity="rbac",

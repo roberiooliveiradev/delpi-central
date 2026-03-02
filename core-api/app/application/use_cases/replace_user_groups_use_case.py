@@ -17,9 +17,6 @@ class ReplaceUserGroupsUseCase:
 
         self.uow.user_groups.replace_groups(uid, gids)
 
-        if self.uow.cache:
-            self.uow.cache.invalidate(user_id)
-
         self.uow.collect_event(
             AdminChangedEvent(
                 entity="rbac",

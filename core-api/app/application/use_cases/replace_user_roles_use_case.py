@@ -4,7 +4,6 @@ from uuid import UUID
 
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
-from app.domain.services.iam_sync_service import IamSyncService
 
 
 class ReplaceUserRolesUseCase:
@@ -19,10 +18,6 @@ class ReplaceUserRolesUseCase:
 
         # 1️⃣ Regra de negócio
         self.uow.user_roles.replace_roles(uid, rid_list)
-
-        # 2️⃣ Invalida cache
-        if self.uow.cache:
-            self.uow.cache.invalidate(user_id)
 
         # 3️⃣ Registra evento
         self.uow.collect_event(

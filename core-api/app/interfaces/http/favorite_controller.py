@@ -2,11 +2,19 @@
 
 from flask import Blueprint, jsonify, g
 
-from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
+from app.infrastructure.persistence.sqlalchemy.unit_of_work import (
+    SqlAlchemyUnitOfWork,
+)
 
-from app.application.use_cases.list_favorite_apps_use_case import ListFavoriteAppsUseCase
-from app.application.use_cases.add_favorite_app_use_case import AddFavoriteAppUseCase
-from app.application.use_cases.remove_favorite_app_use_case import RemoveFavoriteAppUseCase
+from app.application.use_cases.list_favorite_apps_use_case import (
+    ListFavoriteAppsUseCase,
+)
+from app.application.use_cases.add_favorite_app_use_case import (
+    AddFavoriteAppUseCase,
+)
+from app.application.use_cases.remove_favorite_app_use_case import (
+    RemoveFavoriteAppUseCase,
+)
 
 from app.interfaces.http.utils.errors import unauthorized
 
@@ -32,9 +40,13 @@ def list_favorites():
         return guard
 
     with SqlAlchemyUnitOfWork() as uow:
+
         use_case = ListFavoriteAppsUseCase(uow)
+
         result = use_case.execute(
-            user_id=str(g.current_user.id)
+            user_id=str(g.current_user.id),
+            permissions=g.current_user.permissions,
+            is_superadmin=g.current_user.is_superadmin,
         )
 
     return jsonify(result), 200

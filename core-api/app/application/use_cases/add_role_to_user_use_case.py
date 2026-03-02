@@ -2,7 +2,6 @@
 from uuid import UUID
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
-from app.domain.services.iam_sync_service import IamSyncService
 
 
 class AddRoleToUserUseCase:
@@ -17,7 +16,7 @@ class AddRoleToUserUseCase:
 
         # Regra de negócio
         self.uow.user_roles.add_role(uid, rid)
-
+        
         # Evento direcionado
         self.uow.collect_event(
             AdminChangedEvent(

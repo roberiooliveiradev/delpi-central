@@ -149,3 +149,10 @@ class SqlAlchemyUserRepository(UserRepositoryPort):
         )
 
         return [self._to_dto(r) for r in rows], total
+    
+    def count_superadmins(self) -> int:
+        return (
+            self.session.query(User)
+            .filter_by(is_superadmin=True)
+            .count()
+        )

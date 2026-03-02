@@ -70,3 +70,6 @@ class UserRepositoryPort(Protocol):
         direction: str
     ) -> tuple[list[UserDTO], int]:
         ...
+
+    def count_superadmins(self) -> int:
+        ...

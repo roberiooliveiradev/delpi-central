@@ -570,17 +570,34 @@ def update_user(user_id: str):
     try:
         with SqlAlchemyUnitOfWork() as uow:
 
+            actor = g.current_user
+
+            # --------------------------------------------------
             # SUPERADMIN
+            # --------------------------------------------------
             if is_superadmin is not None:
                 uc = SetUserSuperadminUseCase(uow)
-                uc.execute(user_id, bool(is_superadmin))
+                result = uc.execute(
+                    actor_id=str(actor.id),
+                    target_user_id=user_id,
+                    is_superadmin=bool(is_superadmin),
+                    actor_is_superadmin=actor.is_superadmin,
+                )
 
+                # Caso use case retorne erro estruturado
+                if isinstance(result, tuple):
+                    return result
+
+            # --------------------------------------------------
             # ROLES
+            # --------------------------------------------------
             if role_ids is not None:
                 uc = ReplaceUserRolesUseCase(uow)
                 uc.execute(user_id, role_ids)
 
+            # --------------------------------------------------
             # GROUPS
+            # --------------------------------------------------
             if group_ids is not None:
                 uc = ReplaceUserGroupsUseCase(uow)
                 uc.execute(user_id, group_ids)

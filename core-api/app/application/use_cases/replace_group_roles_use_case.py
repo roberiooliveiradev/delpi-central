@@ -4,7 +4,6 @@ from uuid import UUID
 
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
-from app.domain.services.iam_sync_service import IamSyncService
 
 
 class ReplaceGroupRolesUseCase:
@@ -22,11 +21,6 @@ class ReplaceGroupRolesUseCase:
 
         # 2️⃣ Descobre usuários impactados
         user_ids = self.uow.rbac_queries.list_user_ids_by_group(gid)
-
-        # 3️⃣ Invalida cache dos usuários afetados
-        if self.uow.cache:
-            for uid in user_ids:
-                self.uow.cache.invalidate(str(uid))
 
         # 4️⃣ Evento global RBAC
         self.uow.collect_event(

@@ -18,11 +18,7 @@ class RemoveGroupFromUserUseCase:
         # 1️⃣ Regra de negócio
         self.uow.user_groups.remove_group(uid, gid)
 
-        # 2️⃣ Invalida cache do usuário afetado
-        if self.uow.cache:
-            self.uow.cache.invalidate(user_id)
-
-        # 3️⃣ Evento direcionado ao usuário
+        # 2️⃣ Evento direcionado ao usuário
         self.uow.collect_event(
             AdminChangedEvent(
                 entity="rbac",
