@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from app.services.product_service import get_product, get_structure, get_parents, get_guide, get_inspection, get_product_analyser, get_customers, get_structure_excel
 from app.services.product_service import get_suppliers, get_inbound_invoice_items, get_outbound_invoice_items, get_stock, search_products_by_description
-from app.services.product_service import get_purchases, get_products_paginated, get_sales_summary, get_sales_open_orders, get_sales_billing, get_product_pricing, get_internal_movements
+from app.services.product_service import get_purchases, get_products_paginated, search_products, get_sales_summary, get_sales_open_orders, get_sales_billing, get_product_pricing, get_internal_movements
 from app.core.responses import success_response, error_response
 from app.core.exceptions import DatabaseConnectionError
 from app.utils.logger import log_info, log_error
@@ -14,6 +14,22 @@ from fastapi.responses import JSONResponse
 from fastapi import Request
 
 router = APIRouter()
+
+
+
+@router.get("/search")
+def search_products_route(
+    code: Optional[str] = Query(None),
+    group: Optional[str] = Query(None),
+    description: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500)
+):
+    try:
+        result = search_products(code, group, description, page, page_size)
+        return success_response(data=result)
+    except Exception as e:
+        return error_response(str(e))
 
 
 @router.get(

@@ -1,6 +1,11 @@
 // src/ui/AppHost.tsx
-
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import type { AppItem } from "../data/coreApi";
@@ -10,48 +15,56 @@ function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
 }
 
-/**
- * Loader runtime para microfrontend federado (Vite + @originjs/vite-plugin-federation)
- * Espera que o remote exponha:
- *   - container.get(exposed) -> factory -> módulo com mount/unmount
- *   - opcional: container.init(shareScope)
- */
-
 async function loadFederatedContainer(entryUrl: string) {
   const mod: any = await import(/* @vite-ignore */ entryUrl);
-  // no Vite federation, o container costuma vir como exports do módulo
+
   if (mod?.get) return mod;
   if (mod?.default?.get) return mod.default;
-  throw new Error(`remoteEntry carregou, mas não expôs container.get(): ${entryUrl}`);
+
+  throw new Error(
+    `remoteEntry carregou, mas não expôs container.get(): ${entryUrl}`
+  );
 }
 
 function getViteFederationShareScope() {
   const w = window as any;
-
-  // Varia conforme versão/config: tentamos os nomes mais comuns
-  // - __federation_shared__ é usado em várias builds do @originjs
-  // - default scope costuma existir
-  return w.__federation_shared__?.default ?? w.__federation_shared__ ?? {};
+  return (
+    w.__federation_shared__?.default ??
+    w.__federation_shared__ ??
+    {}
+  );
 }
 
 export const AppHost = () => {
-  const { apps, token, refreshToken } = useContext(AuthContext);
+  const { apps, token, refreshToken, routes } =
+    useContext(AuthContext);
+
   const location = useLocation();
   const navigate = useNavigate();
-  const { routes } = useContext(AuthContext);
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // host do microfrontend federado
   const federatedHostRef = useRef<HTMLDivElement>(null);
-  const [federatedError, setFederatedError] = useState<string | null>(null);
 
+  const mountedModuleRef = useRef<any>(null);
+
+  const [federatedError, setFederatedError] =
+    useState<string | null>(null);
+
+  /**
+   * Atualiza recent apps
+   */
   useEffect(() => {
-    const route = routes.find((r) => r.path === location.pathname);
+    const route = routes.find(
+      (r) => r.path === location.pathname
+    );
     if (route?.app) {
       pushRecentApp(route.app);
     }
   }, [location.pathname, routes]);
 
+  /**
+   * Resolve app ativo
+   */
   const app = useMemo(() => {
     return apps.find((a: AppItem) => {
       const base = normalize(a.basePath);
@@ -63,7 +76,7 @@ export const AppHost = () => {
   }, [apps, location.pathname]);
 
   /**
-   * 🔥 External apps → abrir nova aba (efeito controlado)
+   * 🔥 External apps
    */
   useEffect(() => {
     if (!app) return;
@@ -75,7 +88,7 @@ export const AppHost = () => {
   }, [app, navigate]);
 
   /**
-   * 🔁 Sempre que token mudar → reenviar para iframe embutido
+   * 🔁 Token para iframe embedded
    */
   useEffect(() => {
     if (!token) return;
@@ -89,24 +102,30 @@ export const AppHost = () => {
   }, [token, app]);
 
   /**
-   * 🔁 Escuta pedido de refresh vindo do iframe
+   * 🔁 Escuta refresh request do iframe
    */
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return;
-      if (event.data?.type === "DELPI_REFRESH_REQUEST") refreshToken();
+      if (event.data?.type === "DELPI_REFRESH_REQUEST") {
+        refreshToken();
+      }
     }
 
     window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
+    return () =>
+      window.removeEventListener("message", handleMessage);
   }, [refreshToken]);
 
   /**
-   * 🧩 Federated microfrontend (Vite Federation)
+   * 🧩 FEDERATED MICROFRONTEND
+   *
+   * ⚠️ IMPORTANTE:
+   * token NÃO está nas dependências
+   * para evitar unmount/mount infinito
    */
   useEffect(() => {
     let isActive = true;
-    let cleanup: (() => void) | null = null;
 
     async function mountFederated() {
       setFederatedError(null);
@@ -119,60 +138,52 @@ export const AppHost = () => {
       }
       if (!federatedHostRef.current) return;
 
-      // const scope = (app as any).scope ?? app.id; // recomendação: scope == app.id
-      const exposedModule = (app as any).exposedModule ?? "./App"; // no manifest: "./App"
-
-      // limpa conteúdo anterior antes de montar (evita “sobras”)
       federatedHostRef.current.innerHTML = "";
 
       try {
-        const container = await loadFederatedContainer(app.entryUrl);
+        const container = await loadFederatedContainer(
+          app.entryUrl
+        );
 
-        // init do share scope (se suportado)
         if (typeof container.init === "function") {
-          const shareScope = getViteFederationShareScope();
+          const shareScope =
+            getViteFederationShareScope();
           try {
             await container.init(shareScope);
           } catch {
-            // algumas versões lançam erro se init já foi chamado — ignorar
+            // ignorar se já inicializado
           }
         }
 
         if (!isActive) return;
 
-        const factory = await container.get(exposedModule);
+        const exposedModule =
+          (app as any).exposedModule ?? "./App";
+
+        const factory =
+          await container.get(exposedModule);
         const mod = factory?.();
 
         if (!mod?.mount) {
           throw new Error(
-            `Módulo exposto "${exposedModule}" não possui função mount().`
+            `Módulo exposto "${exposedModule}" não possui mount().`
           );
         }
 
-        // props padrão que a Central entrega ao microfrontend
         const props = {
           token,
           basePath: app.basePath,
           pathname: location.pathname,
           search: location.search,
-          // você pode adicionar "user", "permissions" etc. aqui se quiser
         };
 
-        // mount
         mod.mount(federatedHostRef.current, props);
 
-        // cleanup/unmount
-        cleanup = () => {
-          try {
-            if (typeof mod.unmount === "function") mod.unmount();
-          } catch {
-            // ignore
-          } finally {
-            if (federatedHostRef.current) federatedHostRef.current.innerHTML = "";
-          }
-        };
+        mountedModuleRef.current = mod;
       } catch (e: any) {
-        setFederatedError(e?.message ?? String(e));
+        setFederatedError(
+          e?.message ?? String(e)
+        );
       }
     }
 
@@ -180,49 +191,97 @@ export const AppHost = () => {
 
     return () => {
       isActive = false;
-      if (cleanup) cleanup();
+
+      if (
+        mountedModuleRef.current?.unmount
+      ) {
+        try {
+          mountedModuleRef.current.unmount();
+        } catch {}
+      }
+
+      mountedModuleRef.current = null;
+
+      if (federatedHostRef.current) {
+        federatedHostRef.current.innerHTML = "";
+      }
     };
-    // importante: remonta ao trocar de app/rota base
-  }, [app, token, location.pathname, location.search]);
+  }, [
+    app,
+    location.pathname,
+    location.search,
+  ]); // 🚀 TOKEN REMOVIDO
+
+  /**
+   * 🔄 Atualiza token dinamicamente
+   * sem desmontar microfrontend
+   */
+  useEffect(() => {
+    if (!token) return;
+    if (!mountedModuleRef.current) return;
+
+    if (
+      typeof mountedModuleRef.current.updateToken ===
+      "function"
+    ) {
+      mountedModuleRef.current.updateToken(token);
+    } else {
+      // fallback via evento global
+      window.dispatchEvent(
+        new CustomEvent("DELPI_TOKEN_UPDATE", {
+          detail: { token },
+        })
+      );
+    }
+  }, [token]);
 
   if (!app) return <div>App não encontrado.</div>;
 
   if (app.renderMode === "external") {
-    return <div>Abrindo aplicação em nova aba...</div>;
+    return <div>Abrindo aplicação...</div>;
   }
 
   if (app.renderMode === "embedded") {
-    if (!app.entryUrl) return <div>entryUrl não definido.</div>;
+    if (!app.entryUrl)
+      return <div>entryUrl não definido.</div>;
 
     return (
       <iframe
         ref={iframeRef}
         title={app.name}
         src={app.entryUrl}
-        className="content-iframe"
-        style={{ width: "100%", height: "100%", border: "none" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          border: "none",
+        }}
       />
     );
   }
 
   if (app.renderMode === "federated") {
     return (
-      <div >
+      <div>
         {federatedError ? (
           <div style={{ padding: 12 }}>
-            <b>Falha ao carregar microfrontend</b>
-            <div style={{ marginTop: 8, whiteSpace: "pre-wrap" }}>
+            <b>
+              Falha ao carregar microfrontend
+            </b>
+            <div
+              style={{
+                marginTop: 8,
+                whiteSpace: "pre-wrap",
+              }}
+            >
               {federatedError}
             </div>
           </div>
         ) : null}
 
-        <div
-          ref={federatedHostRef}
-        />
+        <div ref={federatedHostRef} />
       </div>
     );
   }
 
-  return <div>Modo de renderização não suportado.</div>;
+  return <div>Modo não suportado.</div>;
 };

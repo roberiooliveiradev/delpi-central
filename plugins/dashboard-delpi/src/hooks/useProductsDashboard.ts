@@ -1,62 +1,77 @@
 // src/hooks/useProductsDashboard.ts
 
-import { useEffect, useRef, useState } from "react";
-import { DelpiApi } from "../data/delpiApi";
-import type { Product } from "../data/delpiApi";
+import { useEffect, useState } from "react";
+import type { DelpiApi, Product } from "../data/delpiApi";
 
-const POLLING_INTERVAL = 30000; // 30 segundos
-
-export const useProductsDashboard = (api: DelpiApi) => {
+export function useProductsDashboard(api: DelpiApi) {
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isFetchingRef = useRef(false);
-  const mountedRef = useRef(true);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [filters, setFilters] = useState({
+    code: "",
+    description: "",
+  });
 
   useEffect(() => {
-    mountedRef.current = true;
+    let cancelled = false;
 
-    const fetchData = async () => {
-      // Evita chamadas paralelas
-      if (isFetchingRef.current) return;
-
-      // Não faz polling se aba estiver oculta
-      if (document.hidden) return;
+    async function fetchProducts() {
+      setLoading(true);
 
       try {
-        isFetchingRef.current = true;
+        const hasFilter =
+          filters.code || filters.description;
 
-        const res = await api.getProducts(1, 10);
+        const res = hasFilter
+          ? await api.searchProducts({
+              code: filters.code,
+              description: filters.description,
+              page,
+              pageSize,
+            })
+          : await api.getProducts(page, pageSize);
 
-        if (!mountedRef.current) return;
+        const paginated = res.data;
 
-        setProducts(res.data.items ?? []);
-      } catch (err) {
-        console.error("Erro ao atualizar dashboard:", err);
+        if (cancelled) return;
+
+        setProducts(paginated.items);
+        setTotal(paginated.total);
+        setTotalPages(paginated.total_pages);
       } finally {
-        if (mountedRef.current) {
-          setLoading(false);
-        }
-        isFetchingRef.current = false;
+        if (!cancelled) setLoading(false);
       }
-    };
+    }
 
-    // 🔥 Primeira carga imediata
-    fetchData();
-
-    // 🔁 Polling
-    intervalRef.current = setInterval(fetchData, POLLING_INTERVAL);
+    fetchProducts();
 
     return () => {
-      mountedRef.current = false;
-
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      cancelled = true;
     };
-  }, [api]);
+  }, [
+    api,
+    page,
+    pageSize,
+    filters.code,
+    filters.description,
+  ]);
 
-  return { products, loading };
-};
+  return {
+    products,
+    loading,
+    page,
+    pageSize,
+    total,
+    totalPages,
+    setPage,
+    setPageSize,
+    filters,
+    setFilters,
+  };
+}

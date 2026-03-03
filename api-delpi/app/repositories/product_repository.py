@@ -195,7 +195,66 @@ class ProductRepository(BaseRepository):
             }
             for p in products.values()
         ]
+        
+    def search_products(
+        self,
+        code: Optional[str] = None,
+        group: Optional[str] = None,
+        description: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 50
+    ) -> dict:
 
+        offset = (page - 1) * page_size
+
+        filters = ["SB1.D_E_L_E_T_ = ''"]
+        params = []
+
+        if code:
+            filters.append("SB1.B1_COD LIKE ?")
+            params.append(f"%{code}%")
+
+        if group:
+            filters.append("SB1.B1_GRUPO LIKE ?")
+            params.append(f"%{group}%")
+
+        if description:
+            filters.append("SB1.B1_DESC COLLATE Latin1_General_CI_AI LIKE ?")
+            params.append(f"%{description}%")
+
+        where_clause = " AND ".join(filters)
+
+        count_sql = f"""
+            SELECT COUNT(*) as total
+            FROM SB1010 SB1
+            WHERE {where_clause}
+        """
+
+        total = int(self.execute_one(count_sql, tuple(params))["total"] or 0)
+
+        sql = f"""
+            SELECT
+                SB1.B1_COD   AS code,
+                SB1.B1_DESC  AS description,
+                SB1.B1_GRUPO AS group_code
+            FROM SB1010 SB1
+            WHERE {where_clause}
+            ORDER BY SB1.B1_COD
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """
+
+        rows = self.execute_query(
+            sql,
+            tuple(params + [offset, page_size])
+        )
+
+        return {
+            "items": rows,
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": (total + page_size - 1) // page_size
+        }
 
     def get_products_paginated(self, page: int, page_size: int) -> dict:
         offset = (page - 1) * page_size

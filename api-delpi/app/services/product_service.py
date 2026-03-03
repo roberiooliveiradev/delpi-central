@@ -12,6 +12,17 @@ from openpyxl.styles import Font, Border, Side, Alignment
 from openpyxl.utils import get_column_letter
 
 
+def search_products(
+    code: Optional[str],
+    group: Optional[str],
+    description: Optional[str],
+    page: int,
+    page_size: int
+):
+    repo = ProductRepository()
+    return repo.search_products(code, group, description, page, page_size)
+    
+
 def get_product(code: str) -> Product:
     """
     Busca um produto no Protheus via repositório e retorna um modelo Pydantic.

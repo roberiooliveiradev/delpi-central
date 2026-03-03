@@ -4,6 +4,7 @@ import React, {
   useState,
   useRef,
   useCallback,
+  useMemo,
 } from "react";
 import keycloak, { initKeycloak } from "../data/keycloakClient";
 import { ApiClient } from "../data/apiClient";
@@ -69,67 +70,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [initialized, setInitialized] = useState(false);
 
   const [token, setToken] = useState<string | undefined>();
+  const tokenRef = useRef<string | undefined>(undefined);
+
   const [user, setUser] = useState<MeResponse | undefined>();
   const [apps, setApps] = useState<AppItem[]>([]);
   const [routes, setRoutes] = useState<RouteItem[]>([]);
-  const [dashboard, setDashboard] =
-    useState<DashboardResponse | undefined>();
-  const [notifications, setNotifications] =
-    useState<NotificationItem[]>([]);
-  const [favorites, setFavorites] =
-    useState<FavoriteAppItem[]>([]);
+  const [dashboard, setDashboard] = useState<DashboardResponse | undefined>();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteAppItem[]>([]);
 
-  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
-    null
-  );
+  // evita criar múltiplos intervals
+  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const buildCoreApi = useCallback(() => {
-    const apiClient = new ApiClient("", () => token);
-    return new CoreApi(apiClient);
+  // evita race: se loadCoreData demorar e disparar várias vezes
+  const coreLoadInFlightRef = useRef(false);
+
+  // mantém tokenRef sempre sincronizado
+  useEffect(() => {
+    tokenRef.current = token;
   }, [token]);
 
-  // =====================================================
-  // CORE LOAD (robusto + race-safe)
-  // =====================================================
+  const buildCoreApi = useCallback(() => {
+    const apiClient = new ApiClient("", () => tokenRef.current);
+    return new CoreApi(apiClient);
+  }, []);
 
+  // =====================================================
+  // CORE LOAD (robusto + anti-race + anti-spam)
+  // =====================================================
   const loadCoreData = useCallback(async () => {
-    if (!token) return;
+    if (!tokenRef.current) return;
+    if (coreLoadInFlightRef.current) return;
 
-    const coreApi = buildCoreApi();
+    coreLoadInFlightRef.current = true;
+    try {
+      const coreApi = buildCoreApi();
 
-    const [
-      me,
-      appsResponse,
-      routesResponse,
-      dashboardData,
-      notificationsData,
-      favoritesData,
-    ] = await Promise.all([
-      coreApi.getMe(),
-      coreApi.getApps(),
-      coreApi.getRoutes(),
-      coreApi.getDashboard(),
-      coreApi.getNotifications(),
-      coreApi.getFavoriteApps(),
-    ]);
+      const [
+        me,
+        appsResponse,
+        routesResponse,
+        dashboardData,
+        notificationsData,
+        favoritesData,
+      ] = await Promise.all([
+        coreApi.getMe(),
+        coreApi.getApps(),
+        coreApi.getRoutes(),
+        coreApi.getDashboard(),
+        coreApi.getNotifications(),
+        coreApi.getFavoriteApps(),
+      ]);
 
-    setUser(me);
-    setApps(appsResponse);
-    setRoutes(routesResponse);
-    setDashboard(dashboardData);
-    setNotifications(notificationsData);
-    setFavorites(favoritesData);
-  }, [buildCoreApi, token]);
+      setUser(me);
+      setApps(appsResponse);
+      setRoutes(routesResponse);
+      setDashboard(dashboardData);
+      setNotifications(notificationsData);
+      setFavorites(favoritesData);
+    } finally {
+      coreLoadInFlightRef.current = false;
+    }
+  }, [buildCoreApi]);
 
   // =====================================================
-  // FAVORITES (sincronização garantida)
+  // FAVORITES
   // =====================================================
-
   const addFavorite = useCallback(
     async (appId: string) => {
       const coreApi = buildCoreApi();
 
-      // optimistic update
       setFavorites((prev) => {
         if (prev.find((f) => f.id === appId)) return prev;
 
@@ -149,8 +159,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       await coreApi.addFavoriteApp(appId);
-
-      // 🔥 sincroniza com backend
       await loadCoreData();
     },
     [apps, buildCoreApi, loadCoreData]
@@ -160,14 +168,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     async (appId: string) => {
       const coreApi = buildCoreApi();
 
-      // optimistic update
-      setFavorites((prev) =>
-        prev.filter((f) => f.id !== appId)
-      );
+      setFavorites((prev) => prev.filter((f) => f.id !== appId));
 
       await coreApi.removeFavoriteApp(appId);
-
-      // 🔥 sincroniza
       await loadCoreData();
     },
     [buildCoreApi, loadCoreData]
@@ -176,44 +179,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // =====================================================
   // NOTIFICATIONS
   // =====================================================
-
   const markNotificationRead = useCallback(
     async (id: string) => {
       const coreApi = buildCoreApi();
-
       await coreApi.markNotificationRead(id);
 
       setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === id ? { ...n, read: true } : n
-        )
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
       );
     },
     [buildCoreApi]
   );
 
-  const markAllNotificationsRead = useCallback(
-    async () => {
-      const coreApi = buildCoreApi();
+  const markAllNotificationsRead = useCallback(async () => {
+    const coreApi = buildCoreApi();
+    await coreApi.markAllNotificationsRead();
 
-      await coreApi.markAllNotificationsRead();
-
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, read: true }))
-      );
-    },
-    [buildCoreApi]
-  );
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, [buildCoreApi]);
 
   // =====================================================
-  // SOCKET (recarrega com segurança)
+  // TOKEN REFRESH (sem capturar "token" do state)
   // =====================================================
+  const refreshToken = useCallback(async () => {
+    try {
+      const refreshed = await keycloak.updateToken(60);
 
+      // atualiza state apenas se mudou de verdade
+      if (refreshed && keycloak.token && keycloak.token !== tokenRef.current) {
+        setToken(keycloak.token);
+      }
+    } catch {
+      keycloak.logout();
+    }
+  }, []);
+
+  const startTokenRefresh = useCallback(() => {
+    // 🔥 garante 1 único interval
+    if (refreshIntervalRef.current) return;
+
+    refreshIntervalRef.current = setInterval(refreshToken, 60000);
+  }, [refreshToken]);
+
+  const stopTokenRefresh = useCallback(() => {
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+      refreshIntervalRef.current = null;
+    }
+  }, []);
+
+  // =====================================================
+  // SOCKET
+  // =====================================================
   useSocket({
-    token:
-      !loading && isAuthenticated && token
-        ? token
-        : undefined,
+    token: !loading && isAuthenticated && token ? token : undefined,
     onConnected: async () => {
       await loadCoreData();
     },
@@ -226,37 +245,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   // =====================================================
-  // TOKEN REFRESH
-  // =====================================================
-
-  const refreshToken = useCallback(async () => {
-    try {
-      const refreshed = await keycloak.updateToken(60);
-      if (refreshed && keycloak.token && keycloak.token !== token) {
-        setToken(keycloak.token);
-      }
-    } catch {
-      keycloak.logout();
-    }
-  }, [token]);
-
-  const startTokenRefresh = () => {
-    refreshIntervalRef.current = setInterval(
-      refreshToken,
-      60000
-    );
-  };
-
-  // =====================================================
   // INIT
   // =====================================================
-
   useEffect(() => {
     let mounted = true;
 
     const init = async () => {
       const authenticated = await initKeycloak();
-
       if (!mounted) return;
 
       setIsAuthenticated(authenticated);
@@ -273,44 +268,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     return () => {
       mounted = false;
-      if (refreshIntervalRef.current)
-        clearInterval(refreshIntervalRef.current);
+      stopTokenRefresh();
     };
-  }, []);
+  }, [stopTokenRefresh]);
 
+  // =====================================================
+  // Quando token aparece (primeiro login), carrega core e inicia refresh UMA vez
+  // =====================================================
   useEffect(() => {
     if (!token) return;
 
+    // carrega dados uma vez ao obter token
     loadCoreData();
-    startTokenRefresh();
-  }, [token]);
 
-  const login = () => keycloak.login({ redirectUri: window.location.origin + "/" });
-  const logout = () => keycloak.logout();
+    // inicia interval só uma vez (sem duplicar)
+    startTokenRefresh();
+  }, [token, loadCoreData, startTokenRefresh]);
+
+  const login = () =>
+    keycloak.login({ redirectUri: window.location.origin + "/" });
+  const logout = () => {
+    stopTokenRefresh();
+    keycloak.logout();
+  };
+
+  // ✅ memoiza o value do contexto para evitar re-render “ruidoso”
+  const contextValue = useMemo<AuthContextType>(
+    () => ({
+      isAuthenticated,
+      loading,
+      initialized,
+      token,
+      user,
+      apps,
+      routes,
+      dashboard,
+      favorites,
+      notifications,
+      addFavorite,
+      removeFavorite,
+      markNotificationRead,
+      markAllNotificationsRead,
+      login,
+      logout,
+      reload: loadCoreData,
+      refreshToken,
+    }),
+    [
+      isAuthenticated,
+      loading,
+      initialized,
+      token,
+      user,
+      apps,
+      routes,
+      dashboard,
+      favorites,
+      notifications,
+      addFavorite,
+      removeFavorite,
+      markNotificationRead,
+      markAllNotificationsRead,
+      loadCoreData,
+      refreshToken,
+    ]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        isAuthenticated,
-        loading,
-        initialized,
-        token,
-        user,
-        apps,
-        routes,
-        dashboard,
-        favorites,
-        notifications,
-        addFavorite,
-        removeFavorite,
-        markNotificationRead,
-        markAllNotificationsRead,
-        login,
-        logout,
-        reload: loadCoreData,
-        refreshToken,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
