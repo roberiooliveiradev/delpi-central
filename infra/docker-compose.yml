@@ -104,6 +104,16 @@ services:
       - core-api
     networks:
       - delpi-network
+        
+  dashboard-delpi:
+    build:
+      context: ../plugins/dashboard-delpi
+      dockerfile: Dockerfile
+    container_name: delpi-dashboard-delpi
+    ports:
+      - "5176:80"
+    networks:
+      - delpi-network
 
   test-microfrontend:
     build: ../test-microfrontend

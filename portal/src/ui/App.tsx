@@ -12,6 +12,13 @@ import { AdminPage } from "./admin/AdminPage";
 import { AppHost } from "./AppHost";
 import { LoginPage } from "./LoginPage";
 
+import { ProductsPage } from "../pages/ProductsPage";
+import { DelpiHealthPage } from "../pages/DelpiHealthPage";
+
+
+
+
+
 const AnimatedWrapper = ({ children }: { children: React.ReactNode }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
@@ -33,6 +40,8 @@ function AppShell() {
       <div className="main-area">
         <div className="content">
           <Routes>
+            <Route path="/delpi/products" element={<ProductsPage />} />
+            <Route path="/delpi/health" element={<DelpiHealthPage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
 

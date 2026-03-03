@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "dashboard-delpi",
+  "name": "Dashboard DELPI",
+  "description": "Dashboards analíticos DELPI",
+  "icon": "bar-chart3-icon",
+  "version": "1.0.0",
+  "type": "microfrontend",
+  "basePath": "/apps/dashboard-delpi",
+  "entry": "/apps/dashboard-delpi/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "dashboard-delpi.view",
+      "name": "Acesso ao dashboard",
+      "description": "Acesso comum ao dashboard",
+      "module": "dashboard-delpi"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/dashboard-delpi",
+      "label": "Abrir",
+      "permission": "dashboard-delpi.view",
+      "icon": "square-arrow-out-up-right-icon",
+      "order": 1,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

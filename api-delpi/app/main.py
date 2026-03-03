@@ -81,7 +81,7 @@ app.add_middleware(
 # ROUTES
 # ==========================================================
 
-@app.get("/", tags=["Health"])
+@app.get("/health", tags=["Health"])
 def root():
     return {"status": "online"}
 

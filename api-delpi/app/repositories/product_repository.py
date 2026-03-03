@@ -197,6 +197,42 @@ class ProductRepository(BaseRepository):
         ]
 
 
+    def get_products_paginated(self, page: int, page_size: int) -> dict:
+        offset = (page - 1) * page_size
+
+        sql = f"""
+            SELECT
+                B1_COD   AS code,
+                B1_DESC  AS description,
+                B1_PRV1  AS sale_price
+            FROM SB1010
+            WHERE D_E_L_E_T_ = ''
+            ORDER BY B1_COD
+            OFFSET ? ROWS
+            FETCH NEXT ? ROWS ONLY
+        """
+
+        count_sql = """
+            SELECT COUNT(*) as total
+            FROM SB1010
+            WHERE D_E_L_E_T_ = ''
+        """
+
+        items = self.execute_query(sql, (offset, page_size))
+        total_result = self.execute_one(count_sql, ())
+
+        total = total_result["total"]
+        total_pages = math.ceil(total / page_size)
+
+        return {
+            "items": items,
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": total_pages
+        }
+
+
     # -------------------------------
     # 🔹 PRODUCT (SB1010)  
     # -------------------------------

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from app.services.product_service import get_product, get_structure, get_parents, get_guide, get_inspection, get_product_analyser, get_customers, get_structure_excel
 from app.services.product_service import get_suppliers, get_inbound_invoice_items, get_outbound_invoice_items, get_stock, search_products_by_description
-from app.services.product_service import get_purchases, get_sales_summary, get_sales_open_orders, get_sales_billing, get_product_pricing, get_internal_movements
+from app.services.product_service import get_purchases, get_products_paginated, get_sales_summary, get_sales_open_orders, get_sales_billing, get_product_pricing, get_internal_movements
 from app.core.responses import success_response, error_response
 from app.core.exceptions import DatabaseConnectionError
 from app.utils.logger import log_info, log_error
@@ -33,6 +33,26 @@ def search_products_by_description_route(
         )
     except Exception as e:
         log_error(f"Erro na busca pela descrição: {e}")
+        return error_response(f"Erro inesperado: {e}")
+
+@router.get(
+    "",
+    summary="Lista produtos paginados"
+)
+def list_products(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500)
+):
+    try:
+        result = get_products_paginated(page, page_size)
+
+        return success_response(
+            data=result,
+            message=f"Produtos retornados com sucesso (página {page}/{result['total_pages']})."
+        )
+
+    except Exception as e:
+        log_error(f"Erro ao listar produtos: {e}")
         return error_response(f"Erro inesperado: {e}")
 
 
@@ -190,28 +210,28 @@ def inbound_invoice_items(
         return error_response(f"Unexpected error: {e}")
 
 
-# @router.get("/{code}/outbound-invoice-items", summary="Consulta as notas fiscais de saída (paginadas e filtráveis)")
-# def outbound_invoice_items(
-#     code: str,
-#     page: int = Query(1, ge=1),
-#     page_size: int = Query(50, ge=1, le=500),
-#     issue_date_start: Optional[str] = Query(None),
-#     issue_date_end: Optional[str] = Query(None),
-#     customer: Optional[str] = Query(None),
-#     branch: Optional[str] = Query(None)
-# ):
-#     """
-#     Retorna as notas fiscais de saída (SD2010) com paginação e filtros opcionais.
-#     """
-#     try:
-#         result = get_outbound_invoice_items(code, page, page_size, issue_date_start, issue_date_end, customer, branch)
-#         return success_response(
-#             data=result,
-#             message=f"Outbound invoices for {code} fetched successfully (page {page}/{result['total_pages']})."
-#         )
-#     except Exception as e:
-#         log_error(f"Erro ao consultar NF-es de saída para {code}: {e}")
-#         return error_response(f"Unexpected error: {e}")
+@router.get("/{code}/outbound-invoice-items", summary="Consulta as notas fiscais de saída (paginadas e filtráveis)")
+def outbound_invoice_items(
+    code: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+    issue_date_start: Optional[str] = Query(None),
+    issue_date_end: Optional[str] = Query(None),
+    customer: Optional[str] = Query(None),
+    branch: Optional[str] = Query(None)
+):
+    """
+    Retorna as notas fiscais de saída (SD2010) com paginação e filtros opcionais.
+    """
+    try:
+        result = get_outbound_invoice_items(code, page, page_size, issue_date_start, issue_date_end, customer, branch)
+        return success_response(
+            data=result,
+            message=f"Outbound invoices for {code} fetched successfully (page {page}/{result['total_pages']})."
+        )
+    except Exception as e:
+        log_error(f"Erro ao consultar NF-es de saída para {code}: {e}")
+        return error_response(f"Unexpected error: {e}")
 
 
 @router.get(
@@ -234,65 +254,65 @@ def purchases(
         return error_response(f"Erro inesperado: {e}")
 
 
-# @router.get(
-#     "/{code}/sales",
-#     summary="Resumo consolidado de vendas do produto"
-# )
-# def product_sales_summary(code: str):
-#     """
-#     Retorna o resumo consolidado de vendas realizadas do produto.
-#     Base: SD2010
-#     """
-#     try:
-#         result = get_sales_summary(code)
-#         return success_response(
-#             data=result,
-#             message=f"Resumo de vendas do produto {code} retornado com sucesso."
-#         )
-#     except Exception as e:
-#         log_error(f"Erro ao consultar vendas do produto {code}: {e}")
-#         return error_response(f"Erro inesperado: {e}")
+@router.get(
+    "/{code}/sales",
+    summary="Resumo consolidado de vendas do produto"
+)
+def product_sales_summary(code: str):
+    """
+    Retorna o resumo consolidado de vendas realizadas do produto.
+    Base: SD2010
+    """
+    try:
+        result = get_sales_summary(code)
+        return success_response(
+            data=result,
+            message=f"Resumo de vendas do produto {code} retornado com sucesso."
+        )
+    except Exception as e:
+        log_error(f"Erro ao consultar vendas do produto {code}: {e}")
+        return error_response(f"Erro inesperado: {e}")
 
 
-# @router.get(
-#     "/{code}/sales/open-orders",
-#     summary="Carteira de pedidos de venda do produto"
-# )
-# def product_sales_open_orders(code: str):
-#     """
-#     Retorna a carteira de pedidos de venda (abertos).
-#     Base: SC5010
-#     """
-#     try:
-#         result = get_sales_open_orders(code)
-#         return success_response(
-#             data=result,
-#             message=f"Carteira de pedidos do produto {code} retornada com sucesso."
-#         )
-#     except Exception as e:
-#         log_error(f"Erro ao consultar carteira do produto {code}: {e}")
-#         return error_response(f"Erro inesperado: {e}")
+@router.get(
+    "/{code}/sales/open-orders",
+    summary="Carteira de pedidos de venda do produto"
+)
+def product_sales_open_orders(code: str):
+    """
+    Retorna a carteira de pedidos de venda (abertos).
+    Base: SC5010
+    """
+    try:
+        result = get_sales_open_orders(code)
+        return success_response(
+            data=result,
+            message=f"Carteira de pedidos do produto {code} retornada com sucesso."
+        )
+    except Exception as e:
+        log_error(f"Erro ao consultar carteira do produto {code}: {e}")
+        return error_response(f"Erro inesperado: {e}")
 
 
 
-# @router.get(
-#     "/{code}/sales/billing",
-#     summary="Resumo de faturamento do produto"
-# )
-# def product_sales_billing(code: str):
-#     """
-#     Retorna o resumo de faturamento financeiro do produto.
-#     Base: SF2010
-#     """
-#     try:
-#         result = get_sales_billing(code)
-#         return success_response(
-#             data=result,
-#             message=f"Faturamento do produto {code} retornado com sucesso."
-#         )
-#     except Exception as e:
-#         log_error(f"Erro ao consultar faturamento do produto {code}: {e}")
-#         return error_response(f"Erro inesperado: {e}")
+@router.get(
+    "/{code}/sales/billing",
+    summary="Resumo de faturamento do produto"
+)
+def product_sales_billing(code: str):
+    """
+    Retorna o resumo de faturamento financeiro do produto.
+    Base: SF2010
+    """
+    try:
+        result = get_sales_billing(code)
+        return success_response(
+            data=result,
+            message=f"Faturamento do produto {code} retornado com sucesso."
+        )
+    except Exception as e:
+        log_error(f"Erro ao consultar faturamento do produto {code}: {e}")
+        return error_response(f"Erro inesperado: {e}")
 
 
 @router.get(

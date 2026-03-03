@@ -75,6 +75,18 @@
   }
 }
 
+@media (width < 700px) {
+  .sidebar{
+    height: 100dvh;
+    overflow: auto;
+  }
+  .sidebar-logo{
+    max-height: 90px;
+    max-width: 90px;
+  }
+}
+
+
 /* =========================================
    HEADER
 ========================================= */

@@ -30,7 +30,17 @@ def get_product(code: str) -> Product:
     except Exception as e:
         log_error(f"Erro inesperado ao buscar produto {code}: {e}")
         raise DatabaseConnectionError(str(e))
+    
+def get_products_paginated(page: int, page_size: int) -> dict:
+    repo = ProductRepository()
 
+    try:
+        result = repo.get_products_paginated(page, page_size)
+        return result
+
+    except Exception as e:
+        log_error(f"Erro ao buscar produtos paginados: {e}")
+        raise DatabaseConnectionError(str(e))
 
 def search_products_by_description(
     description: str,
