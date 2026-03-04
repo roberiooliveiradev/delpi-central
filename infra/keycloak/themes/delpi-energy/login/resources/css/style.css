@@ -144,6 +144,11 @@ header,
   display: none !important;
 }
 
+.pf-m-warning > span
+{
+  display: none !important;
+}
+
 /* garante que o root ocupe a tela */
 body > div {
   height: 100%;
@@ -554,3 +559,4 @@ body > div {
     box-shadow: var(--shadow);
   }
 }
+

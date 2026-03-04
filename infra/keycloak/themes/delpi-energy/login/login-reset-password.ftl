@@ -1,13 +1,9 @@
 <#import "template.ftl" as layout>
 <@layout.registrationLayout displayInfo=false; section>
 
-<#if section = "header">
-    Central DELPI
-
-<#elseif section = "form">
+<#if section == "form">
 
 <div class="login-energy">
-
     <svg class="lightning-svg"></svg>
 
     <div class="login-energy-card">
@@ -19,20 +15,20 @@
 
             <div class="login-energy-brand-text">
                 <div class="login-energy-kicker">
-                    Energia & Conectividade
+                    Recuperação de Acesso
                 </div>
 
                 <h1 class="login-energy-title">
-                    Central DELPI
+                    Redefinir Senha
                 </h1>
 
                 <p class="login-energy-subtitle">
-                    Plataforma corporativa de governança, aplicações e integrações.
+                    Informe seu usuário ou email para receber instruções.
                 </p>
             </div>
         </div>
 
-        <form id="kc-form-login"
+        <form id="kc-reset-password-form"
               action="${url.loginAction}"
               method="post">
 
@@ -44,27 +40,19 @@
 
             <input type="text"
                    name="username"
-                   value="${(login.username!'')}"
+                   value="${(auth.attemptedUsername!'')}"
                    placeholder="Usuário ou email"
                    autofocus />
 
-            <input type="password"
-                   name="password"
-                   placeholder="Senha" />
-
-            <input type="hidden"
-                   name="credentialId"
-                   <#if auth.selectedCredential?has_content>
-                       value="${auth.selectedCredential}"
-                   </#if> />
-
-            <button class="login-energy-action"
-                    type="submit"
-                    name="login">
-                Entrar
+            <button class="login-energy-action" type="submit">
+                Enviar instruções
             </button>
 
         </form>
+
+        <div class="login-energy-footer">
+            Link temporário • Validade limitada
+        </div>
 
     </div>
 </div>

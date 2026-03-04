@@ -46,7 +46,12 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
     container_name: delpi-keycloak
-    command: start-dev --hostname-strict=false
+    command:
+      - start-dev
+      - --hostname-strict=false
+      - --spi-theme-cache-themes=false
+      - --spi-theme-cache-templates=false
+      - --spi-theme-static-max-age=-1
     environment:
       KC_DB: postgres
       KC_DB_URL_HOST: keycloak-db

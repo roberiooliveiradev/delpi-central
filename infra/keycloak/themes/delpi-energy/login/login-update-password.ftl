@@ -2,12 +2,11 @@
 <@layout.registrationLayout displayInfo=false; section>
 
 <#if section = "header">
-    Central DELPI
+    Atualizar Senha
 
 <#elseif section = "form">
 
 <div class="login-energy">
-
     <svg class="lightning-svg"></svg>
 
     <div class="login-energy-card">
@@ -19,19 +18,20 @@
 
             <div class="login-energy-brand-text">
                 <div class="login-energy-kicker">
-                    Energia & Conectividade
+                    Segurança de Conta
                 </div>
 
                 <h1 class="login-energy-title">
-                    Central DELPI
+                    Atualizar Senha
                 </h1>
 
                 <p class="login-energy-subtitle">
-                    Plataforma corporativa de governança, aplicações e integrações.
+                    Para ativar sua conta, defina uma nova senha segura.
                 </p>
             </div>
         </div>
 
+        <!-- 👇 ID alterado para reaproveitar seu CSS -->
         <form id="kc-form-login"
               action="${url.loginAction}"
               method="post">
@@ -42,29 +42,34 @@
                 </div>
             </#if>
 
-            <input type="text"
-                   name="username"
-                   value="${(login.username!'')}"
-                   placeholder="Usuário ou email"
+            <input type="password"
+                   name="password-new"
+                   placeholder="Nova senha"
                    autofocus />
 
             <input type="password"
-                   name="password"
-                   placeholder="Senha" />
+                   name="password-confirm"
+                   placeholder="Confirmar nova senha" />
 
-            <input type="hidden"
-                   name="credentialId"
-                   <#if auth.selectedCredential?has_content>
-                       value="${auth.selectedCredential}"
-                   </#if> />
+            <#if logoutOtherSessions??>
+                <label style="display:flex;gap:8px;margin:12px 0;">
+                    <input type="checkbox"
+                           name="logout-sessions"
+                           value="on"
+                           checked />
+                    Encerrar sessões ativas
+                </label>
+            </#if>
 
-            <button class="login-energy-action"
-                    type="submit"
-                    name="login">
-                Entrar
+            <button class="login-energy-action" type="submit">
+                Atualizar senha
             </button>
 
         </form>
+
+        <div class="login-energy-footer">
+            Segurança reforçada • Criptografia ativa
+        </div>
 
     </div>
 </div>
