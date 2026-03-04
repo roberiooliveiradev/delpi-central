@@ -1,11 +1,5 @@
 // src/ui/AppHost.tsx
-import {
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import type { AppItem } from "../data/coreApi";
@@ -21,23 +15,16 @@ async function loadFederatedContainer(entryUrl: string) {
   if (mod?.get) return mod;
   if (mod?.default?.get) return mod.default;
 
-  throw new Error(
-    `remoteEntry carregou, mas não expôs container.get(): ${entryUrl}`
-  );
+  throw new Error(`remoteEntry carregou, mas não expôs container.get(): ${entryUrl}`);
 }
 
 function getViteFederationShareScope() {
   const w = window as any;
-  return (
-    w.__federation_shared__?.default ??
-    w.__federation_shared__ ??
-    {}
-  );
+  return w.__federation_shared__?.default ?? w.__federation_shared__ ?? {};
 }
 
 export const AppHost = () => {
-  const { apps, token, refreshToken, routes } =
-    useContext(AuthContext);
+  const { apps, token, refreshToken, routes } = useContext(AuthContext);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -47,20 +34,7 @@ export const AppHost = () => {
 
   const mountedModuleRef = useRef<any>(null);
 
-  const [federatedError, setFederatedError] =
-    useState<string | null>(null);
-
-  /**
-   * Atualiza recent apps
-   */
-  useEffect(() => {
-    const route = routes.find(
-      (r) => r.path === location.pathname
-    );
-    if (route?.app) {
-      pushRecentApp(route.app);
-    }
-  }, [location.pathname, routes]);
+  const [federatedError, setFederatedError] = useState<string | null>(null);
 
   /**
    * Resolve app ativo
@@ -68,12 +42,39 @@ export const AppHost = () => {
   const app = useMemo(() => {
     return apps.find((a: AppItem) => {
       const base = normalize(a.basePath);
-      return (
-        location.pathname === base ||
-        location.pathname.startsWith(base + "/")
-      );
+      return location.pathname === base || location.pathname.startsWith(base + "/");
     });
   }, [apps, location.pathname]);
+
+  /**
+   * Resolve rota ativa (exata)
+   * routes do AuthContext normalmente vêm de /me/routes
+   */
+  const route = useMemo(() => {
+    return routes.find((r: any) => r.path === location.pathname) ?? null;
+  }, [routes, location.pathname]);
+
+  /**
+   * Resolve entry da rota (prioridade) com fallback no entry do app
+   * - route.entry (novo) -> usado para iframes multipage (ex: PowerBI)
+   * - app.entryUrl (legado)
+   */
+  const resolvedEntry = useMemo(() => {
+    if (!app) return null;
+
+    const routeEntry = (route as any)?.entry;
+    return (routeEntry && String(routeEntry).trim()) || app.entryUrl || null;
+  }, [app, route]);
+
+  /**
+   * Atualiza recent apps
+   */
+  useEffect(() => {
+    const r = routes.find((x: any) => x.path === location.pathname);
+    if (r?.app) {
+      pushRecentApp(r.app);
+    }
+  }, [location.pathname, routes]);
 
   /**
    * 🔥 External apps
@@ -81,11 +82,11 @@ export const AppHost = () => {
   useEffect(() => {
     if (!app) return;
     if (app.renderMode !== "external") return;
-    if (!app.entryUrl) return;
+    if (!resolvedEntry) return;
 
-    window.open(app.entryUrl, "_blank", "noopener,noreferrer");
+    window.open(resolvedEntry, "_blank", "noopener,noreferrer");
     navigate("/", { replace: true });
-  }, [app, navigate]);
+  }, [app, resolvedEntry, navigate]);
 
   /**
    * 🔁 Token para iframe embedded
@@ -113,8 +114,7 @@ export const AppHost = () => {
     }
 
     window.addEventListener("message", handleMessage);
-    return () =>
-      window.removeEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, [refreshToken]);
 
   /**
@@ -132,22 +132,21 @@ export const AppHost = () => {
 
       if (!app) return;
       if (app.renderMode !== "federated") return;
-      if (!app.entryUrl) {
+
+      if (!resolvedEntry) {
         setFederatedError("entryUrl não definido.");
         return;
       }
+
       if (!federatedHostRef.current) return;
 
       federatedHostRef.current.innerHTML = "";
 
       try {
-        const container = await loadFederatedContainer(
-          app.entryUrl
-        );
+        const container = await loadFederatedContainer(resolvedEntry);
 
         if (typeof container.init === "function") {
-          const shareScope =
-            getViteFederationShareScope();
+          const shareScope = getViteFederationShareScope();
           try {
             await container.init(shareScope);
           } catch {
@@ -157,17 +156,13 @@ export const AppHost = () => {
 
         if (!isActive) return;
 
-        const exposedModule =
-          (app as any).exposedModule ?? "./App";
+        const exposedModule = (app as any).exposedModule ?? "./App";
 
-        const factory =
-          await container.get(exposedModule);
+        const factory = await container.get(exposedModule);
         const mod = factory?.();
 
         if (!mod?.mount) {
-          throw new Error(
-            `Módulo exposto "${exposedModule}" não possui mount().`
-          );
+          throw new Error(`Módulo exposto "${exposedModule}" não possui mount().`);
         }
 
         const props = {
@@ -181,9 +176,7 @@ export const AppHost = () => {
 
         mountedModuleRef.current = mod;
       } catch (e: any) {
-        setFederatedError(
-          e?.message ?? String(e)
-        );
+        setFederatedError(e?.message ?? String(e));
       }
     }
 
@@ -192,9 +185,7 @@ export const AppHost = () => {
     return () => {
       isActive = false;
 
-      if (
-        mountedModuleRef.current?.unmount
-      ) {
+      if (mountedModuleRef.current?.unmount) {
         try {
           mountedModuleRef.current.unmount();
         } catch {}
@@ -206,11 +197,7 @@ export const AppHost = () => {
         federatedHostRef.current.innerHTML = "";
       }
     };
-  }, [
-    app,
-    location.pathname,
-    location.search,
-  ]); // 🚀 TOKEN REMOVIDO
+  }, [app, resolvedEntry, location.pathname, location.search]); // 🚀 TOKEN REMOVIDO
 
   /**
    * 🔄 Atualiza token dinamicamente
@@ -220,10 +207,7 @@ export const AppHost = () => {
     if (!token) return;
     if (!mountedModuleRef.current) return;
 
-    if (
-      typeof mountedModuleRef.current.updateToken ===
-      "function"
-    ) {
+    if (typeof mountedModuleRef.current.updateToken === "function") {
       mountedModuleRef.current.updateToken(token);
     } else {
       // fallback via evento global
@@ -242,14 +226,13 @@ export const AppHost = () => {
   }
 
   if (app.renderMode === "embedded") {
-    if (!app.entryUrl)
-      return <div>entryUrl não definido.</div>;
+    if (!resolvedEntry) return <div>entryUrl não definido.</div>;
 
     return (
       <iframe
         ref={iframeRef}
         title={app.name}
-        src={app.entryUrl}
+        src={resolvedEntry}
         style={{
           width: "100%",
           height: "100%",
@@ -264,15 +247,8 @@ export const AppHost = () => {
       <div>
         {federatedError ? (
           <div style={{ padding: 12 }}>
-            <b>
-              Falha ao carregar microfrontend
-            </b>
-            <div
-              style={{
-                marginTop: 8,
-                whiteSpace: "pre-wrap",
-              }}
-            >
+            <b>Falha ao carregar microfrontend</b>
+            <div style={{ marginTop: 8, whiteSpace: "pre-wrap" }}>
               {federatedError}
             </div>
           </div>
