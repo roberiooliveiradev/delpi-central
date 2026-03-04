@@ -10,16 +10,13 @@ class MicrofrontendStrategy(ManifestValidationStrategy):
     def validate(self, manifest: Dict) -> List[ManifestError]:
         errors: List[ManifestError] = []
 
-        if not manifest.get("entry"):
-            errors.append(
-                ManifestError(
-                    code="entry_required",
-                    message="entry é obrigatório para microfrontend.",
-                    path="$.entry",
-                )
-            )
+        entry = manifest.get("entry")
+        routes = manifest.get("routes") or []
 
-        if not manifest.get("routes"):
+        # --------------------------------------------------
+        # routes obrigatórias
+        # --------------------------------------------------
+        if not routes:
             errors.append(
                 ManifestError(
                     code="routes_required",
@@ -27,5 +24,24 @@ class MicrofrontendStrategy(ManifestValidationStrategy):
                     path="$.routes",
                 )
             )
+
+        # --------------------------------------------------
+        # entry global OU route.entry
+        # --------------------------------------------------
+        if not entry:
+            missing_entry_routes = []
+
+            for i, route in enumerate(routes):
+                if not route.get("entry"):
+                    missing_entry_routes.append(i)
+
+            if missing_entry_routes:
+                errors.append(
+                    ManifestError(
+                        code="entry_required",
+                        message="entry global ou routes[].entry é obrigatório para microfrontend.",
+                        path="$.entry",
+                    )
+                )
 
         return errors

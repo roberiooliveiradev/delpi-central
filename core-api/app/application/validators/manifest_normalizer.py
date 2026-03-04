@@ -1,5 +1,4 @@
 # app/application/validators/manifest_normalizer.py
-
 from typing import Dict
 
 
@@ -16,6 +15,23 @@ class ManifestNormalizer:
 
         if manifest.get("permissions") is None:
             manifest["permissions"] = []
+
+        # normalize entry global
+        entry = manifest.get("entry")
+        if isinstance(entry, str):
+            entry = entry.strip()
+            manifest["entry"] = entry if entry else None
+
+        # normalize route entries
+        for route in manifest.get("routes", []):
+            if not isinstance(route, dict):
+                continue
+
+            entry = route.get("entry")
+
+            if isinstance(entry, str):
+                entry = entry.strip()
+                route["entry"] = entry if entry else None
 
         backend = manifest.get("backend")
         if backend:

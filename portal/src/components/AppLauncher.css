@@ -129,6 +129,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 12px;
+  align-items: start;
 }
 
 /* SEARCH RESULTS */
@@ -137,6 +138,7 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   background: color-mix(in srgb, var(--surface-3) 75%, transparent);
+  min-height: 100%;
   overflow: auto;
 }
 

@@ -25,6 +25,9 @@ interface Props {
   isOpen?: boolean;
   isPinned?: boolean;
 
+  searchKind?: "app" | "route";
+  searchParentApp?: string;
+
   onToggleOpen?: (appId: string) => void;
   onOpenSingle: (appId: string) => void;
   onGoToRoute: (path: string) => void;
@@ -37,6 +40,8 @@ export const AppLauncherCard = ({
   variant = "launcher",
   isOpen = false,
   isPinned = false,
+  searchKind,
+  searchParentApp,
   onToggleOpen,
   onOpenSingle,
   onGoToRoute,
@@ -48,7 +53,7 @@ export const AppLauncherCard = ({
   const isHome = variant === "home";
   const isSidebar = variant === "sidebar";
   const location = useLocation();
-  const hasMultipleRoutes = routes.length > 1;
+  const hasMultipleRoutes = routes.length > 1 || searchKind === "route";
 
   const prettifyLabel = (route: RouteItem) => {
     if (route.label) return route.label;
@@ -114,26 +119,28 @@ export const AppLauncherCard = ({
           <AppIcon size={isSidebar ? 18 : isHome ? 22 : 26} />
         </span>
         <div className="launcher-app-container-name">
-        <span className="launcher-app-name">{app.name}</span>
 
-        {hasMultipleRoutes && !isHome && (
-          isSidebar ? (
-            <ChevronUp
-              size={16}
-              className={`launcher-chevron ${isOpen ? "rotated" : ""}`}
-            />
-          ) : (
-            <ChevronDown
-              size={16}
-              className={`launcher-chevron ${isOpen ? "rotated" : ""}`}
-            />
-          )
-        )}
+          <span className="launcher-app-name">{app.name}</span>
+          {searchKind === "route"}
+
+          {hasMultipleRoutes && !isHome && (
+            isSidebar ? (
+              <ChevronUp
+                size={16}
+                className={`launcher-chevron ${isOpen ? "rotated" : ""}`}
+              />
+            ) : (
+              <ChevronDown
+                size={16}
+                className={`launcher-chevron ${isOpen ? "rotated" : ""}`}
+              />
+            )
+          )}
         </div>
       </div>
 
       {/* ROUTES */}
-      {isOpen && hasMultipleRoutes && (
+      {(isOpen || searchKind === "route") && routes.length > 0 && (
         <div
           className={
             isSidebar

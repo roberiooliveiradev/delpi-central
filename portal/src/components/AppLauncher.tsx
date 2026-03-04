@@ -3,9 +3,7 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
-import { resolveIcon } from "../utils/iconResolver";
 import {
-  Package,
   Search,
 } from "lucide-react";
 import "./AppLauncher.css";
@@ -393,59 +391,50 @@ export const AppLauncher = ({
                 {searchResults.length === 0 ? (
                   <div className="launcher-empty">Nenhum resultado encontrado.</div>
                 ) : (
-                  searchResults.map((r, idx) => {
-                    if (r.kind === "app") {
-                      const AppIcon = resolveIcon(r.app.icon) || Package;
-                      const appRoutes = routesByApp[r.app.id] ?? [];
-                      const subtitle =
-                        appRoutes.length === 0
-                          ? "Sem rotas"
-                          : appRoutes.length === 1
-                            ? "Abrir"
-                            : `${appRoutes.length} rotas`;
+                <div className="launcher-pinned-grid">
+                  {searchResults.length === 0 ? (
+                    <div className="launcher-empty">Nenhum resultado encontrado.</div>
+                  ) : (
+                    searchResults.map((r, idx) => {
+
+                      if (r.kind === "app") {
+                        const isPinned = favorites.some(f => f.id === r.app.id);
+                        const appRoutes = routesByApp[r.app.id] ?? [];
+
+                        return (
+                          <AppLauncherCard
+                            key={`app:${r.app.id}:${idx}`}
+                            app={r.app}
+                            routes={appRoutes}
+                            isPinned={isPinned}
+                            searchKind="app"
+                            onOpenSingle={openAppOrDefault}
+                            onGoToRoute={goTo}
+                            onTogglePin={togglePin}
+                          />
+                        );
+                      }
+
+                      // resultado de rota
+                      const isPinned = favorites.some(f => f.id === r.app.id);
 
                       return (
-                        <button
-                          key={`app:${r.app.id}:${idx}`}
-                          type="button"
-                          className="launcher-result-item"
-                          onClick={() => openAppOrDefault(r.app.id)}
-                        >
-                          <span className="launcher-result-icon">
-                            <AppIcon size={18} />
-                          </span>
-
-                          <span className="launcher-result-main">
-                            <span className="launcher-result-title">{r.app.name}</span>
-                            <span className="launcher-result-subtitle">{subtitle}</span>
-                          </span>
-                        </button>
+                        <AppLauncherCard
+                          key={`route:${r.route.path}:${idx}`}
+                          app={r.app}
+                          routes={[r.route]}
+                          isOpen={true}
+                          isPinned={isPinned}
+                          searchKind="route"
+                          searchParentApp={r.app.name}
+                          onOpenSingle={() => goTo(r.route.path)}
+                          onGoToRoute={goTo}
+                          onTogglePin={togglePin}
+                        />
                       );
-                    }
-
-                    // route
-                    const Icon = resolveIcon(r.route.icon) || Package;
-                    return (
-                      <button
-                        key={`route:${r.route.path}:${idx}`}
-                        type="button"
-                        className="launcher-result-item"
-                        onClick={() => goTo(r.route.path)}
-                      >
-                        <span className="launcher-result-icon">
-                          <Icon size={18} />
-                        </span>
-
-                        <span className="launcher-result-main">
-                          <span className="launcher-result-title">
-                            {prettifyLabel(r.route)}{" "}
-                            <span className="launcher-result-app">· {r.app.name}</span>
-                          </span>
-                          <span className="launcher-result-subtitle">{r.route.path}</span>
-                        </span>
-                      </button>
-                    );
-                  })
+                    })
+                  )}
+                </div>
                 )}
               </div>
 

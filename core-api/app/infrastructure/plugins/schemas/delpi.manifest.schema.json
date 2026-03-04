@@ -102,27 +102,39 @@
         "additionalProperties": false,
         "required": ["path", "label", "permission"],
         "properties": {
+
           "path": {
             "type": "string",
             "minLength": 1,
             "maxLength": 200
           },
+
           "label": {
             "type": "string",
             "minLength": 1,
             "maxLength": 150
           },
+
           "icon": { "type": "string" },
+
+          "entry": {
+            "type": ["string", "null"],
+            "description": "Optional override for plugin entry when this route is opened"
+          },
+
           "permission": {
             "type": "string",
             "minLength": 3,
             "maxLength": 150
           },
+
           "showInMenu": { "type": "boolean" },
+
           "order": {
             "type": "integer",
             "minimum": 0
           },
+
           "menuGroup": { "type": "string" }
         }
       }

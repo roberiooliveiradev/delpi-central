@@ -13,6 +13,7 @@
   align-items: center;
   gap: 10px;
   min-height: 120px;
+  height: auto;
   transition: 0.2s ease;
   overflow: visible;
 }
@@ -70,9 +71,7 @@
   position: absolute;
   top: 6px;
   right: 6px;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
+  border-radius: 100%;
   border: 1px solid var(--border);
   background: color-mix(in srgb, var(--surface) 85%, transparent);
   display: flex;
@@ -84,11 +83,17 @@
 }
 
 .launcher-pin svg {
-  width: 12px;
-  height: 12px;
+  width: 1rem;
+  height: 1rem;
+  margin: 0.5rem;
 }
 
-.launcher-app-tile:hover .launcher-pin,
+/* quando NÃO está pinado */
+.launcher-app-tile:hover .launcher-pin:not(.pinned) {
+  opacity: 0.5;
+}
+
+/* quando está pinado */
 .launcher-pin.pinned {
   opacity: 1;
 }
@@ -107,10 +112,7 @@
 /* DROPDOWN ROUTES */
 
 .launcher-inline-routes {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  position: relative;
   margin-top: 8px;
   padding: 8px;
   background: color-mix(in srgb, var(--surface) 95%, transparent);
@@ -122,6 +124,10 @@
   gap: 6px;
   z-index: 20;
   animation: dropdownFade 0.18s ease;
+}
+
+.launcher-inline-routes:hover{
+  z-index: 99999;
 }
 
 .launcher-inline-route {
@@ -220,4 +226,27 @@
   color: var(--primary);
   background: rgba(0, 153, 220, 0.12);
   padding-left: 5px;
+}
+
+.launcher-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  margin-left: 6px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.launcher-route-parent {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.launcher-route-parent::before {
+  content: "↳";
+  opacity: 0.6;
 }

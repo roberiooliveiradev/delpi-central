@@ -37,6 +37,7 @@ type ManifestRoute = {
   label?: string | null;
   permission?: string | null;
   icon?: string | null; // kebab-case
+  entry?: string | null;
   order?: number | null;
   showInMenu?: boolean | null;
 };
@@ -216,7 +217,12 @@ function toManifest(input: any): ManifestSchema {
       path: String(r?.path || ""),
       label: r?.label ?? null,
       permission: r?.permission ?? null,
-      icon: r?.icon ? (String(r.icon).includes("-") ? String(r.icon) : toKebabCase(String(r.icon))) : null,
+      icon: r?.icon
+        ? (String(r.icon).includes("-")
+            ? String(r.icon)
+            : toKebabCase(String(r.icon)))
+        : null,
+      entry: r?.entry ?? null,
       order: r?.order ?? null,
       showInMenu: r?.showInMenu ?? r?.show_in_menu ?? null,
     })),
@@ -289,12 +295,17 @@ function validateManifestLocal(m: ManifestSchema, lucideKebabSet: Set<string>) {
   }
 
   if (m.type === "iframe") {
-    if (!m.entry || !String(m.entry).trim())
-      errors.push({ path: "entry", message: "entry (URL) é obrigatório para type=iframe" });
 
-    const v = String(m.entry || "").trim();
-    if (v && !/^https?:\/\//i.test(v))
-      errors.push({ path: "entry", message: "URL do iframe deve começar com http:// ou https://" });
+    const hasGlobal = !!String(m.entry || "").trim()
+
+    const hasRouteEntry =
+      (m.routes || []).some(r => String(r.entry || "").trim())
+
+    if (!hasGlobal && !hasRouteEntry)
+      errors.push({
+        path: "entry",
+        message: "entry global ou routes[].entry é obrigatório para iframe"
+      })
   }
 
   /* =========================
@@ -594,13 +605,16 @@ export const ManifestRegisterModal = ({
       }),
       routes: (manifest.routes || []).map((r) => {
         let permission = r.permission ? String(r.permission).trim() : "";
+
         if (permission.startsWith(".")) permission = `${id}${permission}`;
+
         return {
           ...r,
           path: (r.path || "").trim(),
           label: r.label ?? null,
           permission: permission ? permission : null,
           icon: r.icon ? String(r.icon).trim() : null,
+          entry: r.entry ?? null,
           order: r.order ?? null,
           showInMenu: r.showInMenu ?? null,
         };
@@ -1357,6 +1371,24 @@ export const ManifestRegisterModal = ({
                             onChange={(e) => updateRoute(idx, { label: e.target.value })}
                             placeholder="ex: Leads"
                           />
+                        </FormField>
+                        <FormField
+                          label="Entry da rota (opcional)"
+                          htmlFor={`route-entry-${idx}`}
+                        >
+                          <>
+                            <input
+                              value={r.entry ?? ""}
+                              onChange={(e) =>
+                                updateRoute(idx, { entry: e.target.value || null })
+                              }
+                              placeholder="URL específica para esta rota"
+                            />
+
+                            <small className="hint">
+                              Entry efetivo: <code>{r.entry || manifest.entry || "-"}</code>
+                            </small>
+                          </>
                         </FormField>
 
                         <FormField
