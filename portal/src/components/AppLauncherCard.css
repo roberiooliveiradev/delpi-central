@@ -145,9 +145,16 @@
 }
 
 .launcher-inline-route:hover {
-  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  background: rgba(0, 153, 220, 0.08);
+  color: var(--primary);
 }
 
+
+.launcher-inline-route.active {
+  background: rgba(0, 153, 220, 0.15);
+  color: var(--primary);
+  font-weight: 600;
+}
 /* CARD ANIMATION */
 
 @keyframes dropdownFade {
@@ -216,7 +223,7 @@
 }
 
 
-.launcher-inline-route.active {
+.siderbar-inline-route.active {
   background: rgba(0, 153, 220, 0.15);
   color: var(--primary);
   font-weight: 600;
