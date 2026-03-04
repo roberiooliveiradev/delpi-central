@@ -22,3 +22,12 @@ class PluginRouteRepositoryPort(ABC):
         patch: Dict[str, Any],
     ) -> None:
         ...
+
+    @abstractmethod
+    def list_by_app(self, plugin_id: str):
+        ...
+    
+    @abstractmethod
+    def list_paths_by_app(self, plugin_id: str) -> set[str]:
+        ...
+    

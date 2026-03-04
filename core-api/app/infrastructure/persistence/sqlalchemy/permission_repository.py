@@ -143,3 +143,26 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
             .filter(Permission.id == permission_id)
             .delete()
         )
+
+    # ==========================================================
+    # LIST BY MODULE
+    # ==========================================================
+
+    def list_by_module(self, module: str) -> List[PermissionDTO]:
+
+        rows = (
+            self.session
+            .query(Permission)
+            .filter(Permission.module == module)
+            .all()
+        )
+
+        return [
+            PermissionDTO(
+                id=row.id,
+                code=row.code,
+                name=row.description or row.code,
+                module=row.module,
+            )
+            for row in rows
+        ]

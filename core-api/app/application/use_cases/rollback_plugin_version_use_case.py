@@ -14,20 +14,12 @@ class RollbackPluginVersionResult:
 
 
 class RollbackPluginVersionUseCase:
-    """
-    Rollback troca:
-      - versão ativa do plugin
-      - manifesto
-      - rotas (replace total)
-      - permissões (replace total por module=plugin_id)
-    """
 
     def __init__(self, uow: UnitOfWork):
         self._uow = uow
 
     def execute(self, plugin_id: str, target_version: str) -> RollbackPluginVersionResult:
 
-        # 1️⃣ Validação
         plugin = self._uow.plugins.get_by_id(plugin_id)
         if not plugin:
             return RollbackPluginVersionResult(
@@ -63,16 +55,26 @@ class RollbackPluginVersionUseCase:
                 }],
             )
 
-        # 2️⃣ Regra de negócio (transacional)
-
-        # Atualiza versão ativa
+        # atualizar versão ativa
         self._uow.plugins.update_version(plugin_id, target_version)
 
-        # Atualiza manifesto
         self._uow.plugin_manifests.save(plugin_id, manifest, str(checksum or ""))
 
-        # Rotas: replace total
+        # DELETE ordem correta
         self._uow.plugin_routes.delete_by_app(plugin_id)
+        self._uow.plugin_permissions.delete_by_module(plugin_id)
+
+        # CREATE ordem correta
+        self._uow.plugin_permissions.bulk_create([
+            {
+                "code": p.get("code"),
+                "name": p.get("name"),
+                "description": p.get("description"),
+                "module": plugin_id,
+            }
+            for p in (manifest.get("permissions") or [])
+        ])
+
         self._uow.plugin_routes.bulk_create([
             {
                 "app_id": plugin_id,
@@ -86,19 +88,6 @@ class RollbackPluginVersionUseCase:
             for r in (manifest.get("routes") or [])
         ])
 
-        # Permissões: replace total
-        self._uow.plugin_permissions.delete_by_module(plugin_id)
-        self._uow.plugin_permissions.bulk_create([
-            {
-                "code": p.get("code"),
-                "name": p.get("name"),
-                "description": p.get("description"),
-                "module": plugin_id,
-            }
-            for p in (manifest.get("permissions") or [])
-        ])
-
-        # 3️⃣ Evento global
         self._uow.collect_event(
             AdminChangedEvent(
                 entity="plugins",
@@ -107,11 +96,8 @@ class RollbackPluginVersionUseCase:
                     "pluginId": plugin_id,
                     "version": target_version,
                 },
-                target_user_id=None,  # broadcast
+                target_user_id=None,
             )
         )
 
-        return RollbackPluginVersionResult(
-            success=True,
-            errors=[]
-        )
+        return RollbackPluginVersionResult(success=True, errors=[])

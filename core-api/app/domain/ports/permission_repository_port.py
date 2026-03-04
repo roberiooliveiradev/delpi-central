@@ -29,3 +29,6 @@ class PermissionRepositoryPort(Protocol):
 
     def delete(self, permission_id: UUID) -> None:
         ...
+
+    def list_by_module(self, module: str) -> List[PermissionDTO]:
+        ...

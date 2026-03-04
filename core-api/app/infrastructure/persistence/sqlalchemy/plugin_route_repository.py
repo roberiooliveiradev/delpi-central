@@ -77,3 +77,19 @@ class SqlAlchemyPluginRouteRepository(PluginRouteRepositoryPort):
             row.order = patch["order"]
         if "show_in_menu" in patch and patch["show_in_menu"] is not None:
             row.show_in_menu = patch["show_in_menu"]
+
+    def list_by_app(self, plugin_id: str) -> List[AppRoute]:
+        return (
+            self.session
+            .query(AppRoute)
+            .filter_by(app_id=plugin_id)
+            .all()
+        )
+    
+    def list_paths_by_app(self, plugin_id: str) -> set[str]:
+        rows = (
+            self.session.query(AppRoute.path)
+            .filter_by(app_id=plugin_id)
+            .all()
+        )
+        return {r[0] for r in rows}
