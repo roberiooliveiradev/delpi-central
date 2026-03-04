@@ -26,7 +26,6 @@ interface Props {
   isPinned?: boolean;
 
   searchKind?: "app" | "route";
-  searchParentApp?: string;
 
   onToggleOpen?: (appId: string) => void;
   onOpenSingle: (appId: string) => void;
@@ -41,7 +40,6 @@ export const AppLauncherCard = ({
   isOpen = false,
   isPinned = false,
   searchKind,
-  searchParentApp,
   onToggleOpen,
   onOpenSingle,
   onGoToRoute,
@@ -67,29 +65,15 @@ export const AppLauncherCard = ({
     );
   };
 
-  const handleMainClick = () => {
-    if (isHome) {
-      if (routes[0]) onGoToRoute(routes[0].path);
-      else onOpenSingle(app.id);
-      return;
-    }
+const handleMainClick = () => {
+  if (!hasMultipleRoutes) {
+    if (routes[0]) onGoToRoute(routes[0].path);
+    else onOpenSingle(app.id);
+    return;
+  }
 
-    if (isSidebar) {
-      if (!hasMultipleRoutes) {
-        if (routes[0]) onGoToRoute(routes[0].path);
-      } else {
-        onToggleOpen?.(app.id);
-      }
-      return;
-    }
-
-    // launcher padrão
-    if (!hasMultipleRoutes) {
-      onOpenSingle(app.id);
-    } else {
-      onToggleOpen?.(app.id);
-    }
-  };
+  onToggleOpen?.(app.id);
+};
 
   return (
     <div
@@ -121,9 +105,8 @@ export const AppLauncherCard = ({
         <div className="launcher-app-container-name">
 
           <span className="launcher-app-name">{app.name}</span>
-          {searchKind === "route"}
 
-          {hasMultipleRoutes && !isHome && (
+          {hasMultipleRoutes && (
             isSidebar ? (
               <ChevronUp
                 size={16}

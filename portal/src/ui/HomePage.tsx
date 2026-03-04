@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { motion } from "framer-motion";
+import { useRoutesByApp } from "../hooks/useRoutesByApp";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -32,8 +33,9 @@ const fadeUp = {
 };
 
 export const HomePage = () => {
-  const { user, favorites, notifications, apps } = useContext(AuthContext);
-  const [openAppId, setOpenAppId] = useState<string | null>(null);
+  const { user, favorites, notifications, apps} = useContext(AuthContext);
+  const [openFavoriteAppId, setOpenFavoriteAppId] = useState<string | null>(null);
+  const [openRecentAppId, setOpenRecentAppId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -47,22 +49,7 @@ export const HomePage = () => {
 
   const topNotifications = notifications.slice(0, 4);
 
-  const routesByApp = useMemo(() => {
-    const map: Record<string, any[]> = {};
-
-    apps.forEach((a) => (map[a.id] = []));
-
-    apps.forEach((app) => {
-      if (app.basePath) {
-        map[app.id].push({
-          path: app.basePath,
-          label: "Abrir",
-        });
-      }
-    });
-
-    return map;
-  }, [apps]);
+  const routesByApp = useRoutesByApp();
 
   return (
     <div id="home-page" className="home-wrap">
@@ -171,11 +158,12 @@ export const HomePage = () => {
                   key={app.id}
                   app={app}
                   routes={appRoutes}
-                  isOpen={openAppId === app.id}
+                  isOpen={openFavoriteAppId === app.id}
                   isPinned={true}
-                  onToggleOpen={(id) =>
-                    setOpenAppId((prev) => (prev === id ? null : id))
-                  }
+                  onToggleOpen={(id) => {
+                    setOpenRecentAppId(null);
+                    setOpenFavoriteAppId((prev) => (prev === id ? null : id));
+                  }}
                   onOpenSingle={(id) => {
                     const route = routesByApp[id]?.[0];
                     if (route) navigate(route.path);
@@ -215,11 +203,12 @@ export const HomePage = () => {
                   key={app.id}
                   app={app}
                   routes={appRoutes}
-                  isOpen={openAppId === app.id}
+                  isOpen={openRecentAppId === app.id}
                   isPinned={favorites.some((f) => f.id === app.id)}
-                  onToggleOpen={(id) =>
-                    setOpenAppId((prev) => (prev === id ? null : id))
-                  }
+                  onToggleOpen={(id) => {
+                    setOpenFavoriteAppId(null);
+                    setOpenRecentAppId((prev) => (prev === id ? null : id));
+                  }}
                   onOpenSingle={(id) => {
                     const route = routesByApp[id]?.[0];
                     if (route) navigate(route.path);

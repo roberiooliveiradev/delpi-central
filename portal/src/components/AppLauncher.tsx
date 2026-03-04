@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import "./AppLauncher.css";
 import { AppLauncherCard } from "./AppLauncherCard";
+import { useRoutesByApp } from "../hooks/useRoutesByApp";
 
 interface Props {
   onClose: () => void;
@@ -80,7 +81,9 @@ export const AppLauncher = ({
   
   const [openPinnedAppId, setOpenPinnedAppId] = useState<string | null>(null);
   const [openRecentAppId, setOpenRecentAppId] = useState<string | null>(null);
-  
+
+  const [openSearchAppId, setOpenSearchAppId] = useState<string | null>(null);
+
   // Autofocus + atalhos
   useEffect(() => {
     inputRef.current?.focus();
@@ -107,28 +110,7 @@ export const AppLauncher = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  const routesByApp = useMemo(() => {
-    const map: Record<string, RouteItem[]> = {};
-    (apps ?? []).forEach((a: any) => (map[a.id] = []));
-
-    (routes ?? []).forEach((r: RouteItem) => {
-      if (!r?.app || !map[r.app]) return;
-      map[r.app].push(r);
-    });
-
-    Object.keys(map).forEach((appId) => {
-      map[appId] = map[appId]
-        .slice()
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-        .sort((a, b) => {
-          const la = (a.label ?? a.path) as string;
-          const lb = (b.label ?? b.path) as string;
-          return la.localeCompare(lb);
-        });
-    });
-
-    return map;
-  }, [apps, routes]);
+  const routesByApp = useRoutesByApp();
 
   const prettifyLabel = (route: RouteItem) => {
     if (route.label) return route.label;
@@ -269,7 +251,6 @@ export const AppLauncher = ({
     <div 
       className="launcher-overlay" 
       data-dock={dock}
-      onClick={onClose}
     >
       <div className={`launcher-modal startmenu ${
           dock === "sidebar" ? "dock-sidebar" : ""
@@ -408,6 +389,10 @@ export const AppLauncher = ({
                             routes={appRoutes}
                             isPinned={isPinned}
                             searchKind="app"
+                            isOpen={openSearchAppId === r.app.id}
+                            onToggleOpen={(id) =>
+                              setOpenSearchAppId(prev => (prev === id ? null : id))
+                            }
                             onOpenSingle={openAppOrDefault}
                             onGoToRoute={goTo}
                             onTogglePin={togglePin}
@@ -426,7 +411,6 @@ export const AppLauncher = ({
                           isOpen={true}
                           isPinned={isPinned}
                           searchKind="route"
-                          searchParentApp={r.app.name}
                           onOpenSingle={() => goTo(r.route.path)}
                           onGoToRoute={goTo}
                           onTogglePin={togglePin}
