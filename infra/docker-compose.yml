@@ -3,91 +3,109 @@ services:
   postgres-core:
     image: postgres:15
     container_name: delpi-postgres-core
+    restart: unless-stopped
+
     environment:
-      POSTGRES_DB: delpi_core
-      POSTGRES_USER: delpi
-      POSTGRES_PASSWORD: delpi123
+      POSTGRES_DB: ${POSTGRES_CORE_DB}
+      POSTGRES_USER: ${POSTGRES_CORE_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_CORE_PASSWORD}
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      TZ: ${TZ}
+
     volumes:
       - postgres_core_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
     networks:
       - delpi-network
 
-  postgres-core-test:
-    image: postgres:15
-    container_name: delpi-postgres-core-test
-    environment:
-      POSTGRES_DB: delpi_core_test
-      POSTGRES_USER: delpi
-      POSTGRES_PASSWORD: delpi123
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-    volumes:
-      - postgres_core_test_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-    networks:
-      - delpi-network
+
 
   keycloak-db:
     image: postgres:15
     container_name: delpi-keycloak-db
+    restart: unless-stopped
+
     environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: keycloak123
+      POSTGRES_DB: ${POSTGRES_KC_DB}
+      POSTGRES_USER: ${POSTGRES_KC_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_KC_PASSWORD}
+      TZ: America/Sao_Paulo
+
     volumes:
       - keycloak_data:/var/lib/postgresql/data
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
     networks:
       - delpi-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
-    container_name: delpi-keycloak
-    command:
-      - start-dev
-      - --hostname-strict=false
-      - --spi-theme-cache-themes=false
-      - --spi-theme-cache-templates=false
-      - --spi-theme-static-max-age=-1
+    command: ["start"]
     environment:
       KC_DB: postgres
-      KC_DB_URL_HOST: keycloak-db
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: keycloak123
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/${POSTGRES_KC_DB}
+      KC_DB_USERNAME: ${POSTGRES_KC_USER}
+      KC_DB_PASSWORD: ${POSTGRES_KC_PASSWORD}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
 
-      KC_PROXY: edge
-      KC_HOSTNAME_STRICT: false
-      KC_HTTP_ENABLED: true
+      KC_HTTP_ENABLED: "${KC_HTTP_ENABLED}"
+      KC_HTTP_PORT: "${KC_HTTP_PORT}"
+      KC_HTTP_RELATIVE_PATH: "${KC_HTTP_RELATIVE_PATH}"
 
-      # URL pública parametrizada
-      KC_HOSTNAME_URL: "${PUBLIC_BASE_URL}/auth"
-      KC_HOSTNAME_ADMIN_URL: "${PUBLIC_BASE_URL}:8080"
-    volumes:
-      - ./keycloak/themes:/opt/keycloak/themes
-    ports:
-      - "8080:8080"
+      KC_HOSTNAME: "${KC_HOSTNAME}"
+      KC_HOSTNAME_STRICT: "${KC_HOSTNAME_STRICT}"
+      KC_HOSTNAME_STRICT_HTTPS: "${KC_HOSTNAME_STRICT_HTTPS}"
+
+      KC_PROXY: "${KC_PROXY}"
+      KC_PROXY_HEADERS: "${KC_PROXY_HEADERS}"
+    depends_on:
+      - keycloak-db
     networks:
-      - delpi-network
-
+      delpi-network:
+        aliases:
+          - keycloak   # <- ESSENCIAL pro nginx resolver SEMPRE
   core-api:
     build:
       context: ..
-      dockerfile: core-api/Dockerfile
+      dockerfile: core-api/Dockerfile.prod
     container_name: delpi-core-api
-    volumes:
-      - ../core-api:/app
-    ports:
-      - "8000:8000"
-    env_file:
-      - ../core-api/.env
+    restart: unless-stopped
     environment:
       FLASK_APP: app.create_app:create_app
-      FLASK_ENV: development
+      FLASK_ENV: production
+      TZ: ${TZ}
+
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY}
+
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+
+      INITIAL_SUPERADMIN_EMAIL: ${INITIAL_SUPERADMIN_EMAIL}
+      INITIAL_SUPERADMIN_NAME: ${INITIAL_SUPERADMIN_NAME}
+
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+      KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM}
+      KEYCLOAK_ADMIN_URL: ${KEYCLOAK_ADMIN_URL}
     depends_on:
       - postgres-core
       - keycloak
@@ -95,75 +113,114 @@ services:
       - delpi-network
 
   portal:
-    build: ../portal
+    build:
+      context: ../portal
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_KC_URL: ${VITE_KC_URL}
+        VITE_KC_REALM: ${VITE_KC_REALM}
+        VITE_KC_CLIENT_ID: ${VITE_KC_CLIENT_ID}
+        VITE_KC_REDIRECT_URI: ${VITE_KC_REDIRECT_URI}
     container_name: delpi-portal
-    command: npm run dev -- --host
-    volumes:
-      - ../portal:/app
-      - /app/node_modules
-    ports:
-      - "5173:5173"
+    restart: unless-stopped
     environment:
-      CHOKIDAR_USEPOLLING: "true"
+      TZ: ${TZ}
     depends_on:
       - core-api
     networks:
       - delpi-network
-        
+
   dashboard-delpi:
     build:
       context: ../plugins/dashboard-delpi
       dockerfile: Dockerfile
+
     container_name: delpi-dashboard-delpi
-    ports:
-      - "5176:80"
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
     networks:
       - delpi-network
 
-  test-microfrontend:
-    build: ../test-microfrontend
-    container_name: delpi-test-microfrontend
-    ports:
-      - "5175:5175"
-    networks:
-      - delpi-network
-      
+
   api-delpi:
     build:
       context: ..
       dockerfile: api-delpi/Dockerfile
     container_name: delpi-api-delpi
+    restart: unless-stopped
+
     environment:
-      # JWKS interno via rede Docker
-      KEYCLOAK_JWKS_URL: "http://keycloak:8080/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs"
+      # O CÓDIGO DA API ESPERA ESSES NOMES:
+      DB_HOST: ${TOTVS_DB_HOST}
+      DB_PORT: ${TOTVS_DB_PORT}
+      DB_USER: ${TOTVS_DB_USER}
+      DB_PASSWORD: ${TOTVS_DB_PASSWORD}
+      DB_DATABASE: ${TOTVS_DB_DATABASE}
 
-      # Issuer público (baseado no domínio configurado)
-      KEYCLOAK_ISSUER: "${PUBLIC_BASE_URL}/auth/realms/${KEYCLOAK_REALM}"
+      PORT: ${API_DELPI_PORT}
+      ENV: ${API_DELPI_ENV}
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
 
-      KEYCLOAK_AUDIENCE: "delpi-central"
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
     depends_on:
       - keycloak
+
     networks:
       - delpi-network
 
+
+
   gateway:
-    build: ../gateway
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile.prod
+
     container_name: delpi-gateway
+    restart: unless-stopped
+
     ports:
       - "80:80"
+
     depends_on:
       - portal
       - core-api
       - keycloak
       - api-delpi
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
     networks:
       - delpi-network
+
+
 
 networks:
   delpi-network:
     driver: bridge
 
+
+
 volumes:
   postgres_core_data:
-  postgres_core_test_data:
   keycloak_data:

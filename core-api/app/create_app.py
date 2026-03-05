@@ -73,9 +73,9 @@ def create_app(config_name: str | None = None) -> Flask:
     # ==========================================================
     # DB INIT (DEV ONLY)
     # ==========================================================
-    with app.app_context():
-        if not app.config.get("TESTING"):
-            seed_base_permissions(db.session)
+    # with app.app_context():
+    #     if not app.config.get("TESTING"):
+    #         seed_base_permissions(db.session)
 
 
     return app
