@@ -2,10 +2,20 @@
 
 import Keycloak from "keycloak-js";
 
+const kcUrl = import.meta.env.VITE_KC_URL as string;
+const kcRealm = import.meta.env.VITE_KC_REALM as string;
+const kcClientId = import.meta.env.VITE_KC_CLIENT_ID as string;
+
+// opcional: logs para debug (remova depois se quiser)
+if (!kcUrl || !kcRealm || !kcClientId) {
+  // eslint-disable-next-line no-console
+  console.warn("Keycloak env missing:", { kcUrl, kcRealm, kcClientId });
+}
+
 const keycloak = new Keycloak({
-  url: "http://localhost/auth",
-  realm: "delpi",
-  clientId: "delpi-central",
+  url: kcUrl,
+  realm: kcRealm,
+  clientId: kcClientId,
 });
 
 // 🔒 Controle interno para evitar init duplicado
