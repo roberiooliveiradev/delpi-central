@@ -75,8 +75,10 @@ def create_app(config_name: str | None = None) -> Flask:
     # ==========================================================
     with app.app_context():
         if not app.config.get("TESTING"):
-            seed_base_permissions(db.session)
-
+            try:
+                seed_base_permissions(db.session)
+            except:
+                pass
 
     return app
     

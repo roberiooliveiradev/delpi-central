@@ -1,8 +1,8 @@
-"""Initial clean schema
+"""Initial clean schema from current models
 
-Revision ID: 151c945f5782
+Revision ID: 7aa51b680332
 Revises: 
-Create Date: 2026-02-26 16:22:00.435118
+Create Date: 2026-03-05 18:21:30.830576
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '151c945f5782'
+revision = '7aa51b680332'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -43,7 +43,7 @@ def upgrade():
     )
     op.create_table('notifications',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('user_id', sa.String(length=64), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('title', sa.String(length=120), nullable=True),
     sa.Column('message', sa.String(length=500), nullable=False),
     sa.Column('type', sa.String(length=40), nullable=False),
