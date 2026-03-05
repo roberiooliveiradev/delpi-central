@@ -78,6 +78,9 @@ services:
       delpi-network:
         aliases:
           - keycloak   # <- ESSENCIAL pro nginx resolver SEMPRE
+    volumes:
+      - ./keycloak/themes:/opt/keycloak/themes:ro
+      
   core-api:
     build:
       context: ..
