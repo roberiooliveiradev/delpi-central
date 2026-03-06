@@ -7,8 +7,10 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY package*.json ./
-
 RUN npm install
+
+# permitir que vite veja variáveis VITE_*
+ENV NODE_ENV=development
 
 EXPOSE 5173
 
