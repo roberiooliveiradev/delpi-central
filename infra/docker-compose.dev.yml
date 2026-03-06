@@ -76,7 +76,7 @@ services:
           - keycloak
 
     volumes:
-      - ../keycloak/themes:/opt/keycloak/themes:ro
+      - ./keycloak/themes:/opt/keycloak/themes:ro
 
 
   core-api:
