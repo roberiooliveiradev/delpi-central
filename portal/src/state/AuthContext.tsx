@@ -24,6 +24,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   initialized: boolean;
+  coreLoaded: boolean;
+
   token?: string;
   user?: MeResponse;
   apps: AppItem[];
@@ -48,14 +50,18 @@ export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   loading: true,
   initialized: false,
+  coreLoaded: false,
+
   apps: [],
   routes: [],
   favorites: [],
   notifications: [],
+
   addFavorite: async () => {},
   removeFavorite: async () => {},
   markNotificationRead: async () => {},
   markAllNotificationsRead: async () => {},
+
   login: () => {},
   logout: () => {},
   reload: async () => {},
@@ -69,6 +75,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
 
+  const [coreLoaded, setCoreLoaded] = useState(false);
+
   const [token, setToken] = useState<string | undefined>();
   const tokenRef = useRef<string | undefined>(undefined);
 
@@ -79,13 +87,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [favorites, setFavorites] = useState<FavoriteAppItem[]>([]);
 
-  // evita criar múltiplos intervals
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // evita race: se loadCoreData demorar e disparar várias vezes
   const coreLoadInFlightRef = useRef(false);
 
-  // mantém tokenRef sempre sincronizado
   useEffect(() => {
     tokenRef.current = token;
   }, [token]);
@@ -96,13 +100,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   // =====================================================
-  // CORE LOAD (robusto + anti-race + anti-spam)
+  // CORE LOAD
   // =====================================================
   const loadCoreData = useCallback(async () => {
     if (!tokenRef.current) return;
     if (coreLoadInFlightRef.current) return;
 
     coreLoadInFlightRef.current = true;
+
     try {
       const coreApi = buildCoreApi();
 
@@ -128,6 +133,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setDashboard(dashboardData);
       setNotifications(notificationsData);
       setFavorites(favoritesData);
+
+      setCoreLoaded(true);
     } finally {
       coreLoadInFlightRef.current = false;
     }
@@ -199,13 +206,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [buildCoreApi]);
 
   // =====================================================
-  // TOKEN REFRESH (sem capturar "token" do state)
+  // TOKEN REFRESH
   // =====================================================
   const refreshToken = useCallback(async () => {
     try {
       const refreshed = await keycloak.updateToken(60);
 
-      // atualiza state apenas se mudou de verdade
       if (refreshed && keycloak.token && keycloak.token !== tokenRef.current) {
         setToken(keycloak.token);
       }
@@ -215,7 +221,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const startTokenRefresh = useCallback(() => {
-    // garante 1 único interval
     if (refreshIntervalRef.current) return;
 
     refreshIntervalRef.current = setInterval(refreshToken, 60000);
@@ -273,31 +278,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [stopTokenRefresh]);
 
   // =====================================================
-  // Quando token aparece (primeiro login), carrega core e inicia refresh UMA vez
+  // TOKEN READY
   // =====================================================
   useEffect(() => {
     if (!token) return;
 
-    // carrega dados uma vez ao obter token
     loadCoreData();
-
-    // inicia interval só uma vez (sem duplicar)
     startTokenRefresh();
   }, [token, loadCoreData, startTokenRefresh]);
 
   const login = () =>
     keycloak.login({ redirectUri: window.location.origin + "/" });
+
   const logout = () => {
     stopTokenRefresh();
     keycloak.logout();
   };
 
-  // ✅ memoiza o value do contexto para evitar re-render “ruidoso”
   const contextValue = useMemo<AuthContextType>(
     () => ({
       isAuthenticated,
       loading,
       initialized,
+      coreLoaded,
+
       token,
       user,
       apps,
@@ -305,10 +309,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       dashboard,
       favorites,
       notifications,
+
       addFavorite,
       removeFavorite,
       markNotificationRead,
       markAllNotificationsRead,
+
       login,
       logout,
       reload: loadCoreData,
@@ -318,6 +324,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       isAuthenticated,
       loading,
       initialized,
+      coreLoaded,
       token,
       user,
       apps,

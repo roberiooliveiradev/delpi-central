@@ -1,17 +1,21 @@
+// src/routes/ProtectedRoute.jsx
+
 import { useContext } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
+import { Loader } from "../ui/Loader";
 
 interface Props {
   permission?: string;
   children: React.ReactNode;
 }
 
-export const ProtectedRoute = ({
-  permission,
-  children,
-}: Props) => {
-  const { user } = useContext(AuthContext);
+export const ProtectedRoute = ({ permission, children }: Props) => {
+  const { user, coreLoaded } = useContext(AuthContext);
+
+  if (!coreLoaded) {
+    return <Loader />;
+  }
 
   if (!user) {
     return <Navigate to="/unauthorized" replace />;
