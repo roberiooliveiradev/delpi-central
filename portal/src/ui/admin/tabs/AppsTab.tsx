@@ -1,4 +1,3 @@
-
 // src/ui/admin/tabs/AppsTab.tsx
 
 import { useContext, useMemo, useState } from "react";
@@ -27,6 +26,11 @@ export const AppsTab = () => {
     initialManifest?: any;
   }>({ open: false, mode: "register" });
 
+  const [sortState, setSortState] = useState({
+    sort: "name",
+    direction: "asc" as "asc" | "desc",
+  });
+
   const api = useMemo(() => {
     if (!token) return null;
     return new AdminApi(new ApiClient("", () => token));
@@ -38,11 +42,11 @@ export const AppsTab = () => {
         page,
         pageSize,
         q: search,
-        sort: "name",
-        direction: "asc",
+        sort: sortState.sort,
+        direction: sortState.direction,
       }),
     10,
-    [search, api]
+    [search, sortState]
   );
 
   if (!api) return null;
@@ -52,6 +56,7 @@ export const AppsTab = () => {
 
   const openEdit = async (app: AdminApp) => {
     const manifest = await api.getPluginManifest(app.id);
+
     setManifestModal({
       open: true,
       mode: "edit",
@@ -59,16 +64,13 @@ export const AppsTab = () => {
     });
   };
 
-  // ================================
-  // BULK DELETE
-  // ================================
   const handleBulkDelete = async () => {
     if (selected.length === 0) return;
 
     try {
       await api.bulkUnregisterPlugins(selected);
-      appsResource.refetch();
       setSelected([]);
+      appsResource.refetch();
     } catch (err) {
       if (err instanceof HttpError) {
         alert(err.message);
@@ -78,15 +80,8 @@ export const AppsTab = () => {
     } finally {
       setConfirmBulkDelete(false);
     }
-    
-    setSelected([]);
-    setConfirmBulkDelete(false);
-    appsResource.refetch();
   };
 
-  // ================================
-  // DELETE INDIVIDUAL
-  // ================================
   const handleDeleteOne = async () => {
     if (!deleteOneId) return;
 
@@ -95,16 +90,13 @@ export const AppsTab = () => {
       appsResource.refetch();
     } catch (err) {
       if (err instanceof HttpError) {
-        alert(err.message); // pode trocar por toast depois
+        alert(err.message);
       } else {
         alert("Erro inesperado ao excluir aplicação.");
       }
     } finally {
       setDeleteOneId(null);
     }
-
-    setDeleteOneId(null);
-    appsResource.refetch();
   };
 
   return (
@@ -125,16 +117,27 @@ export const AppsTab = () => {
         loading={appsResource.loading}
         searchValue={search}
         onSearchChange={setSearch}
+
+        sort={sortState}
+        onSortChange={(next) =>
+          setSortState({
+            sort: next.sort ?? "name",
+            direction: next.direction ?? "asc",
+          })
+        }
+
         selectable
         getRowId={(row) => row.id}
         selectedRows={selected}
         onSelectionChange={setSelected}
+
         actions={(row) => (
           <ActionButtons
             onEdit={() => openEdit(row)}
             onDelete={() => setDeleteOneId(row.id)}
           />
         )}
+
         toolbar={
           selected.length > 0 ? (
             <>
@@ -169,6 +172,7 @@ export const AppsTab = () => {
             <button onClick={openRegister}>Adicionar Plugin</button>
           )
         }
+
         pagination={
           appsResource.pagination && {
             page: appsResource.page,
@@ -177,12 +181,10 @@ export const AppsTab = () => {
             pageSize: 10,
           }
         }
+
         onPageChange={appsResource.setPage}
       />
 
-      {/* ================================
-          MODAL DE REGISTRO / EDIÇÃO
-      ================================= */}
       <ManifestRegisterModal
         open={manifestModal.open}
         mode={manifestModal.mode}
@@ -201,9 +203,6 @@ export const AppsTab = () => {
         }}
       />
 
-      {/* ================================
-          CONFIRMAÇÃO BULK DELETE
-      ================================= */}
       <ConfirmDialog
         open={confirmBulkDelete}
         title="Excluir aplicações"
@@ -214,9 +213,6 @@ export const AppsTab = () => {
         onConfirm={handleBulkDelete}
       />
 
-      {/* ================================
-          CONFIRMAÇÃO DELETE INDIVIDUAL
-      ================================= */}
       <ConfirmDialog
         open={!!deleteOneId}
         title="Excluir aplicação"

@@ -1,4 +1,5 @@
 // src/ui/admin/tabs/GroupsTab.tsx
+
 import { useContext, useMemo, useState } from "react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
@@ -16,6 +17,7 @@ export const GroupsTab = () => {
 
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<AdminGroup | null>(null);
+
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [deleteOneId, setDeleteOneId] = useState<string | null>(null);
@@ -24,6 +26,11 @@ export const GroupsTab = () => {
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
+  const [sortState, setSortState] = useState({
+    sort: "name",
+    direction: "asc" as "asc" | "desc",
+  });
+
   const api = useMemo(() => {
     if (!token) return null;
     return new AdminApi(new ApiClient("", () => token));
@@ -31,9 +38,15 @@ export const GroupsTab = () => {
 
   const groupsResource = usePaginatedResource<AdminGroup>(
     ({ page, pageSize }) =>
-      api!.listGroups({ page, pageSize, q: search, sort: "name", direction: "asc" }),
+      api!.listGroups({
+        page,
+        pageSize,
+        q: search,
+        sort: sortState.sort,
+        direction: sortState.direction,
+      }),
     10,
-    [search]
+    [search, sortState]
   );
 
   if (!api) return null;
@@ -47,17 +60,14 @@ export const GroupsTab = () => {
     setEditing(g);
 
     const rolesRes = await api.listRoles({ page: 1, pageSize: 999 });
-    const all = rolesRes.data ?? [];
-    setRoles(all);
+    setRoles(rolesRes.data ?? []);
 
-    const groupRes = await api.getGroupRoles(g.id);
-    const selected = groupRes.data ?? [];
-
-    setSelectedRoleIds(selected);
+    const groupRoles = await api.getGroupRoles(g.id);
+    setSelectedRoleIds(groupRoles.data ?? []);
   };
 
   const openNew = async () => {
-    setEditing({ id: "", name: "", description: "", roles: [] } as any);
+    setEditing({ id: "", name: "", description: "" } as any);
     setSelectedRoleIds([]);
     await fetchRoles();
   };
@@ -66,25 +76,24 @@ export const GroupsTab = () => {
     if (!editing) return;
 
     setSaving(true);
+
     try {
       let groupId = editing.id;
 
       if (!groupId) {
-        // CREATE
         const created = await api.createGroup({
           name: editing.name,
           description: editing.description,
         });
+
         groupId = created.id;
       } else {
-        // UPDATE name/description
         await api.updateGroup(groupId, {
           name: editing.name,
           description: editing.description,
         });
       }
 
-      // UPDATE roles (sempre separado)
       await api.setGroupRoles(groupId, selectedRoleIds);
 
       setEditing(null);
@@ -96,13 +105,16 @@ export const GroupsTab = () => {
 
   const handleDeleteOne = async () => {
     if (!deleteOneId) return;
+
     await api.deleteGroup(deleteOneId);
+
     setDeleteOneId(null);
     groupsResource.refetch();
   };
 
   const handleBulkDelete = async () => {
     await api.bulkDeleteGroups(selected);
+
     setSelected([]);
     setConfirmBulk(false);
     groupsResource.refetch();
@@ -119,6 +131,13 @@ export const GroupsTab = () => {
         loading={groupsResource.loading}
         searchValue={search}
         onSearchChange={setSearch}
+        sort={sortState}
+        onSortChange={(next) =>
+          setSortState({
+            sort: next.sort ?? "name",
+            direction: next.direction ?? "asc",
+          })
+        }
         selectable
         getRowId={(row) => row.id}
         selectedRows={selected}
@@ -132,8 +151,12 @@ export const GroupsTab = () => {
         toolbar={
           <>
             <button onClick={openNew}>Novo Grupo</button>
+
             {selected.length > 0 && (
-              <button className="btn-danger" onClick={() => setConfirmBulk(true)}>
+              <button
+                className="btn-danger"
+                onClick={() => setConfirmBulk(true)}
+              >
                 Excluir selecionados ({selected.length})
               </button>
             )}
