@@ -210,12 +210,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setToken(keycloak.token);
       }
     } catch {
-      keycloak.logout();
+      keycloak.login({ redirectUri: window.location.origin + "/" });
     }
   }, []);
 
   const startTokenRefresh = useCallback(() => {
-    // 🔥 garante 1 único interval
+    // garante 1 único interval
     if (refreshIntervalRef.current) return;
 
     refreshIntervalRef.current = setInterval(refreshToken, 60000);
