@@ -27,8 +27,8 @@ export const initKeycloak = () => {
       onLoad: "check-sso",
       pkceMethod: "S256",
       checkLoginIframe: true,
-      silentCheckSsoRedirectUri:
-        window.location.origin + "/silent-check-sso.html",
+      // silentCheckSsoRedirectUri:
+      //   window.location.origin + "/silent-check-sso.html",
     });
   }
 
