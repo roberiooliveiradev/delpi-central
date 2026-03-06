@@ -16,6 +16,7 @@ class ListUsersUseCase(BaseListPaginatedUseCase[UserDTO]):
     def execute(
         self,
         *,
+        q: str | None,
         page: int,
         page_size: int,
         sort: str,
@@ -23,6 +24,7 @@ class ListUsersUseCase(BaseListPaginatedUseCase[UserDTO]):
     ) -> PaginatedResult[UserDTO]:
 
         users, total = self.uow.users.list_paginated(
+            q=q,
             page=page,
             page_size=page_size,
             sort=sort,

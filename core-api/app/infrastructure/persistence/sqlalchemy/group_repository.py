@@ -4,7 +4,7 @@ from typing import List, Tuple, Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, or_
 
 from app.domain.ports.group_repository_port import GroupRepositoryPort, GroupDTO
 from app.infrastructure.db.models import Group
@@ -37,13 +37,13 @@ class SqlAlchemyGroupRepository(GroupRepositoryPort):
     def list_paginated(
         self,
         *,
+        q: str | None,
         page: int,
         page_size: int,
         sort: str,
         direction: str,
     ) -> Tuple[List[GroupDTO], int]:
 
-        # whitelist segura
         sortable_fields = {
             "name": Group.name,
             "description": Group.description,
@@ -51,13 +51,18 @@ class SqlAlchemyGroupRepository(GroupRepositoryPort):
         }
 
         sort_column = sortable_fields.get(sort, Group.name)
-
-        if direction.lower() == "desc":
-            order_clause = desc(sort_column)
-        else:
-            order_clause = asc(sort_column)
+        order_clause = desc(sort_column) if direction == "desc" else asc(sort_column)
 
         query = self.session.query(Group)
+
+        if q:
+            search = f"%{q}%"
+            query = query.filter(
+                or_(
+                    Group.name.ilike(search),
+                    Group.description.ilike(search),
+                )
+            )
 
         total = query.count()
 

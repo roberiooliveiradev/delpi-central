@@ -17,3 +17,9 @@ class UserRoleRepositoryPort(Protocol):
 
     def remove_role(self, user_id: UUID, role_id: UUID) -> None:
         ...
+        
+    def delete_by_role_id(self, role_id: UUID) -> None:
+        ...
+
+    def delete_by_user_id(self, user_id: UUID) -> None:
+        ...

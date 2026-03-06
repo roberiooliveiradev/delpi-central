@@ -1,7 +1,7 @@
 # app/infrastructure/persistence/sqlalchemy/user_repository.py
 
 from __future__ import annotations
-
+from sqlalchemy import or_
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
@@ -103,6 +103,7 @@ class SqlAlchemyUserRepository(UserRepositoryPort):
     def list_paginated(
         self,
         *,
+        q: str | None,
         page: int,
         page_size: int,
         sort: str,
@@ -110,6 +111,20 @@ class SqlAlchemyUserRepository(UserRepositoryPort):
     ) -> tuple[list[UserDTO], int]:
 
         query = self.session.query(User)
+
+        # =========================
+        # Search
+        # =========================
+
+        if q:
+            search = f"%{q}%"
+
+            query = query.filter(
+                or_(
+                    User.email.ilike(search),
+                    User.name.ilike(search),
+                )
+            )
 
         # =========================
         # Sorting seguro

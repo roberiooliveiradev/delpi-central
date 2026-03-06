@@ -29,6 +29,9 @@ from app.application.use_cases.add_group_to_user_use_case import AddGroupToUserU
 from app.application.use_cases.remove_group_from_user_use_case import RemoveGroupFromUserUseCase
 
 from app.application.use_cases.admin.list_users_use_case import ListUsersUseCase
+from app.application.use_cases.admin.list_roles_use_case import ListRolesUseCase
+from app.application.use_cases.admin.list_groups_use_case import ListGroupsUseCase
+from app.application.use_cases.admin.list_permissions_use_case import ListPermissionsUseCase
 
 from app.interfaces.http.utils.errors import unauthorized, api_error, server_error
 
@@ -277,6 +280,8 @@ def list_users():
         return guard
 
     try:
+        q = request.args.get("q")  # ← FALTAVA ISSO
+
         page = int(request.args.get("page", 1))
         page_size = int(request.args.get("page_size", 10))
         sort = request.args.get("sort", "email")
@@ -284,7 +289,9 @@ def list_users():
 
         with SqlAlchemyUnitOfWork() as uow:
             use_case = ListUsersUseCase(uow)
+
             result = use_case.execute(
+                q=q,                 # ← PASSAR PARA O USE CASE
                 page=page,
                 page_size=page_size,
                 sort=sort,
@@ -479,34 +486,33 @@ def remove_group_from_user(user_id: str, group_id: str):
 
 @rbac_bp.route("/admin/rbac/roles", methods=["GET"])
 def list_roles():
+
     guard = require_auth()
     if guard:
         return guard
 
     try:
+
+        q = request.args.get("q")
         page = int(request.args.get("page", 1))
         page_size = int(request.args.get("page_size", 10))
         sort = request.args.get("sort", "name")
         direction = request.args.get("direction", "asc")
 
         with SqlAlchemyUnitOfWork() as uow:
-            data, total = uow.roles.list_paginated(
+            uc = ListRolesUseCase(uow)
+
+            result = uc.execute(
+                q=q,
                 page=page,
                 page_size=page_size,
                 sort=sort,
                 direction=direction,
             )
 
-        total_pages = (total + page_size - 1) // page_size
-
         return jsonify({
-            "data": [r.__dict__ for r in data],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": total_pages,
-            }
+            "data": [r.__dict__ for r in result.data],
+            "pagination": result.pagination.__dict__,
         }), 200
 
     except Exception as e:
@@ -519,34 +525,34 @@ def list_roles():
 
 @rbac_bp.route("/admin/rbac/groups", methods=["GET"])
 def list_groups():
+
     guard = require_auth()
     if guard:
         return guard
 
     try:
+
+        q = request.args.get("q")
         page = int(request.args.get("page", 1))
         page_size = int(request.args.get("page_size", 10))
         sort = request.args.get("sort", "name")
         direction = request.args.get("direction", "asc")
 
         with SqlAlchemyUnitOfWork() as uow:
-            data, total = uow.groups.list_paginated(
+
+            uc = ListGroupsUseCase(uow)
+
+            result = uc.execute(
+                q=q,
                 page=page,
                 page_size=page_size,
                 sort=sort,
                 direction=direction,
             )
 
-        total_pages = (total + page_size - 1) // page_size
-
         return jsonify({
-            "data": [g.__dict__ for g in data],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": total_pages,
-            }
+            "data": [g.__dict__ for g in result.data],
+            "pagination": result.pagination.__dict__,
         }), 200
 
     except Exception as e:
@@ -614,47 +620,40 @@ def update_user(user_id: str):
 
 @rbac_bp.route("/admin/rbac/permissions", methods=["GET"])
 def list_permissions():
+
     guard = require_auth()
     if guard:
         return guard
 
     try:
+
+        q = request.args.get("q")
         page = int(request.args.get("page", 1))
         page_size = int(request.args.get("page_size", 10))
         sort = request.args.get("sort", "code")
         direction = request.args.get("direction", "asc")
 
         with SqlAlchemyUnitOfWork() as uow:
-            data, total = uow.permissions.list_paginated(
+
+            uc = ListPermissionsUseCase(uow)
+
+            result = uc.execute(
+                q=q,
                 page=page,
                 page_size=page_size,
                 sort=sort,
                 direction=direction,
             )
 
-        total_pages = (total + page_size - 1) // page_size
-
         return jsonify({
-            "data": [
-                {
-                    "id": str(p.id),
-                    "code": p.code,
-                    "name": p.name,
-                    "module": p.module,
-                }
-                for p in data
-            ],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": total_pages,
-            }
+            "data": [p.__dict__ for p in result.data],
+            "pagination": result.pagination.__dict__,
         }), 200
 
     except Exception as e:
         return server_error(str(e))
     
+
 # ==========================================================
 # UPDATE GROUP
 # ==========================================================

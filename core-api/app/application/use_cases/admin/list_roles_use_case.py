@@ -1,4 +1,4 @@
-# list_roles_use_case.py
+# app/application/use_cases/admin/list_roles_use_case.py
 
 from app.application.use_cases.admin.base_list_paginated_use_case import (
     BaseListPaginatedUseCase,
@@ -12,8 +12,17 @@ class ListRolesUseCase(BaseListPaginatedUseCase[RoleDTO]):
     def __init__(self, uow: UnitOfWork):
         super().__init__(uow)
 
-    def execute(self, *, page: int, page_size: int, sort: str, direction: str):
+    def execute(
+        self,
+        *,
+        q: str | None,
+        page: int,
+        page_size: int,
+        sort: str,
+        direction: str,
+    ):
         roles, total = self.uow.roles.list_paginated(
+            q=q,
             page=page,
             page_size=page_size,
             sort=sort,

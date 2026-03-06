@@ -30,3 +30,6 @@ class RolePermissionRepositoryPort(Protocol):
 
     def list_permission_ids(self, role_id: UUID)-> None:
         ...
+        
+    def delete_by_role_id(self, role_id: UUID) -> None:
+        ...

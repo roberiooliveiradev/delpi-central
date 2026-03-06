@@ -17,3 +17,9 @@ class GroupRoleRepositoryPort(Protocol):
 
     def remove_role(self, group_id: UUID, role_id: UUID) -> None:
         ...
+    
+    def delete_by_role_id(self, role_id: UUID) -> None:
+        ...
+    
+    def delete_by_group_id(self, group_id: UUID) -> None:
+        ...

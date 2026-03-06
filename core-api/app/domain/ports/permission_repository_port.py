@@ -1,6 +1,6 @@
 # app/domain/ports/permission_repository_port.py
 
-from typing import Protocol, List
+from typing import Protocol, List, Tuple
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -32,3 +32,14 @@ class PermissionRepositoryPort(Protocol):
 
     def list_by_module(self, module: str) -> List[PermissionDTO]:
         ...
+    
+    def list_paginated(
+        self,
+        *,
+        q: str | None,
+        page: int,
+        page_size: int,
+        sort: str,
+        direction: str,
+    ) -> Tuple[List[PermissionDTO], int]:
+            ...

@@ -35,6 +35,7 @@ class RoleRepositoryPort(Protocol):
     def list_paginated(
         self,
         *,
+        q: str | None,
         page: int,
         page_size: int,
         sort: str,

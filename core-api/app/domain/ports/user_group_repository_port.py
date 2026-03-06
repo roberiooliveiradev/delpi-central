@@ -16,3 +16,10 @@ class UserGroupRepositoryPort(Protocol):
 
     def remove_group(self, user_id: UUID, group_id: UUID) -> None:
         ...
+
+
+    def delete_by_group_id(self, group_id: UUID) -> None:
+        ...
+
+    def delete_by_user_id(self, user_id: UUID) -> None:
+        ...

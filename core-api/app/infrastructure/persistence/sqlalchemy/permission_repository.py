@@ -2,7 +2,7 @@
 
 from typing import List, Tuple
 from uuid import UUID
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, or_
 from sqlalchemy.orm import Session
 
 from app.domain.ports.permission_repository_port import (
@@ -38,9 +38,10 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
     # ==========================================================
     # PAGINATED LIST (Admin Console)
     # ==========================================================
-
     def list_paginated(
         self,
+        *,
+        q: str | None,
         page: int,
         page_size: int,
         sort: str,
@@ -48,6 +49,16 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
     ) -> Tuple[List[PermissionDTO], int]:
 
         query = self.session.query(Permission)
+
+        if q:
+            search = f"%{q}%"
+            query = query.filter(
+                or_(
+                    Permission.code.ilike(search),
+                    Permission.description.ilike(search),
+                    Permission.module.ilike(search),
+                )
+            )
 
         total = query.count()
 

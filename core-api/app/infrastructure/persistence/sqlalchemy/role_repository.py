@@ -2,7 +2,7 @@
 
 from typing import List
 from uuid import UUID
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, or_
 from sqlalchemy.orm import Session
 from typing import Tuple
 
@@ -70,6 +70,7 @@ class SqlAlchemyRoleRepository(RoleRepositoryPort):
     def list_paginated(
         self,
         *,
+        q: str | None,
         page: int,
         page_size: int,
         sort: str,
@@ -77,7 +78,7 @@ class SqlAlchemyRoleRepository(RoleRepositoryPort):
     ) -> Tuple[List[RoleDTO], int]:
 
         # =========================
-        # Segurança — whitelist de campos ordenáveis
+        # Segurança — whitelist
         # =========================
         sortable_fields = {
             "name": Role.name,
@@ -87,13 +88,25 @@ class SqlAlchemyRoleRepository(RoleRepositoryPort):
 
         sort_column = sortable_fields.get(sort, Role.name)
 
-        if direction.lower() == "desc":
-            order_clause = desc(sort_column)
-        else:
-            order_clause = asc(sort_column)
+        order_clause = desc(sort_column) if direction.lower() == "desc" else asc(sort_column)
 
         query = self.session.query(Role)
 
+        # =========================
+        # Filtro de busca
+        # =========================
+        if q:
+            search = f"%{q}%"
+            query = query.filter(
+                or_(
+                    Role.name.ilike(search),
+                    Role.description.ilike(search),
+                )
+            )
+
+        # =========================
+        # Total após filtro
+        # =========================
         total = query.count()
 
         rows = (
