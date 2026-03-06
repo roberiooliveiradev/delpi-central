@@ -114,14 +114,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const [
         me,
         appsResponse,
-        routesResponse,
         dashboardData,
         notificationsData,
         favoritesData,
       ] = await Promise.all([
         coreApi.getMe(),
         coreApi.getApps(),
-        coreApi.getRoutes(),
         coreApi.getDashboard(),
         coreApi.getNotifications(),
         coreApi.getFavoriteApps(),
@@ -129,7 +127,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setUser(me);
       setApps(appsResponse);
-      setRoutes(routesResponse);
+
+      // 🔥 Derivar rotas diretamente dos apps
+      const derivedRoutes = appsResponse.flatMap((app) => app.routes ?? []);
+      setRoutes(derivedRoutes);
+
       setDashboard(dashboardData);
       setNotifications(notificationsData);
       setFavorites(favoritesData);

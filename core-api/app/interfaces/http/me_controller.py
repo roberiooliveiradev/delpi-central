@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, g
 from app.interfaces.http.utils.errors import unauthorized
 from app.application.use_cases.list_user_apps_use_case import ListUserAppsUseCase
-from app.application.use_cases.list_user_routes_use_case import ListUserRoutesUseCase
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 
 
@@ -40,32 +39,7 @@ def get_my_apps():
         return unauthorized()
 
     with SqlAlchemyUnitOfWork() as uow:
-        uc = ListUserAppsUseCase(
-            uow.app_queries
-        )
-
-        result = uc.execute(
-            permissions=user.permissions,
-            is_superadmin=user.is_superadmin,
-        )
-
-    return jsonify(result), 200
-
-
-# ==========================================================
-# GET /me/routes
-# ==========================================================
-@me_bp.route("/me/routes", methods=["GET"])
-def get_my_routes():
-    user = getattr(g, "current_user", None)
-
-    if not user:
-        return unauthorized()
-
-    with SqlAlchemyUnitOfWork() as uow:
-        uc = ListUserRoutesUseCase(
-            uow.route_queries
-        )
+        uc = ListUserAppsUseCase(uow.app_queries)
 
         result = uc.execute(
             permissions=user.permissions,

@@ -61,7 +61,7 @@ function AppShell() {
                 element={
                   <ProtectedRoute permission={route.permission}>
                     <AnimatedWrapper>
-                      <AppHost />
+                      <AppHost key={route.path} />
                     </AnimatedWrapper>
                   </ProtectedRoute>
                 }

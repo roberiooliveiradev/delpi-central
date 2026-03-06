@@ -4,8 +4,9 @@ from typing import List
 from sqlalchemy.orm import Session
 
 from app.domain.ports.app_query_port import AppQueryPort, AppDTO, RouteDTO
-from app.infrastructure.db.models import App, AppRoute, Permission
+from app.infrastructure.db.models import App, AppRoute
 from app.infrastructure.db.models.app_manifest import AppManifest
+
 
 class SqlAlchemyAppQueryRepository(AppQueryPort):
 
@@ -23,8 +24,6 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
         result: List[AppDTO] = []
 
         for app in apps:
-
-            # Buscar manifesto
             manifest_row = (
                 self.session.query(AppManifest)
                 .filter_by(app_id=app.id)
@@ -33,12 +32,12 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
 
             entry_url = None
             render_mode = "embedded"
+            route_entries: dict[str, str | None] = {}
 
             if manifest_row and manifest_row.manifest:
                 manifest = manifest_row.manifest
 
                 entry_url = manifest.get("entry")
-
                 render_mode = manifest.get("ui", {}).get("renderMode", "embedded")
 
                 if app.type == "iframe":
@@ -51,6 +50,13 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
                 if render_mode not in allowed:
                     render_mode = "embedded"
 
+                for route in manifest.get("routes", []):
+                    path = route.get("path")
+                    entry = route.get("entry")
+
+                    if path:
+                        route_entries[path] = entry
+
             if app.type == "backend-only":
                 entry_url = None
                 render_mode = None
@@ -58,15 +64,14 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
             routes = (
                 self.session.query(AppRoute)
                 .filter_by(app_id=app.id, active=True)
+                .order_by(AppRoute.order.asc())
                 .all()
             )
 
-            route_dtos = []
+            route_dtos: List[RouteDTO] = []
 
             for r in routes:
-                permission_code = None
-                if r.permission:
-                    permission_code = r.permission.code
+                permission_code = r.permission.code if r.permission else None
 
                 route_dtos.append(
                     RouteDTO(
@@ -76,6 +81,7 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
                         permission_code=permission_code,
                         show_in_menu=bool(r.show_in_menu),
                         order=r.order,
+                        entry=route_entries.get(r.path),
                     )
                 )
 
@@ -87,7 +93,7 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
                     icon=app.icon,
                     type=app.type,
                     entry_url=entry_url,
-                    render_mode=render_mode,  
+                    render_mode=render_mode,
                     routes=route_dtos,
                 )
             )

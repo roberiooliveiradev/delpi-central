@@ -32,9 +32,6 @@ from app.infrastructure.persistence.sqlalchemy.plugin_route_repository import Sq
 from app.infrastructure.persistence.sqlalchemy.plugin_permission_repository import SqlAlchemyPluginPermissionRepository
 
 from app.infrastructure.persistence.sqlalchemy.audit_repository import SqlAlchemyAuditRepository
-from app.infrastructure.persistence.sqlalchemy.route_query_repository import (
-    SqlAlchemyRouteQueryRepository,
-)
 
 class SqlAlchemyUnitOfWork:
     def __init__(self):
@@ -83,11 +80,6 @@ class SqlAlchemyUnitOfWork:
         self.plugin_versions = SqlAlchemyPluginVersionRepository(self.session)
         self.plugin_routes = SqlAlchemyPluginRouteRepository(self.session)
         self.plugin_permissions = SqlAlchemyPluginPermissionRepository(self.session)
-
-        # =========================
-        # Usuario
-        # =========================
-        self.route_queries = SqlAlchemyRouteQueryRepository(self.session)
 
         # =========================
         # Audits

@@ -18,7 +18,6 @@ export const useSocket = ({
 }: UseSocketProps) => {
   const socketRef = useRef<Socket | null>(null);
 
-  // 🔒 refs estáveis (evita recriação do socket)
   const onNotificationRef = useRef(onNotification);
   const onAdminChangedRef = useRef(onAdminChanged);
   const onConnectedRef = useRef(onConnected);
@@ -35,33 +34,23 @@ export const useSocket = ({
     onConnectedRef.current = onConnected;
   }, [onConnected]);
 
+  // ============================================
+  // SOCKET INIT (apenas uma vez)
+  // ============================================
+
   useEffect(() => {
-    // 🔥 Só conecta se token válido
-    if (!token || token.length < 20) {
-      return;
-    }
+    if (socketRef.current) return;
 
-    // 🔥 Garante apenas UMA conexão ativa
-    if (socketRef.current) {
-      socketRef.current.removeAllListeners();
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-
-    console.log("🔌 Iniciando WebSocket...");
+    console.log("🔌 Inicializando WebSocket...");
 
     const socket = io("/", {
       path: "/socket.io",
-      query: { token },
       transports: ["websocket"],
       reconnection: true,
+      autoConnect: false,
     });
 
     socketRef.current = socket;
-
-    // =========================
-    // EVENT HANDLERS
-    // =========================
 
     const handleConnect = () => {
       console.log("✅ WebSocket conectado:", socket.id);
@@ -91,24 +80,35 @@ export const useSocket = ({
     socket.on("disconnect", handleDisconnect);
     socket.on("connect_error", handleError);
 
-    // =========================
-    // CLEANUP
-    // =========================
-
     return () => {
-      if (!socketRef.current) return;
-
-      socketRef.current.off("connect", handleConnect);
-      socketRef.current.off("notification", handleNotification);
-      socketRef.current.off("admin.changed", handleAdminChanged);
-      socketRef.current.off("disconnect", handleDisconnect);
-      socketRef.current.off("connect_error", handleError);
-
-      socketRef.current.disconnect();
-      socketRef.current = null;
-
       console.log("🧹 WebSocket finalizado");
+
+      socket.removeAllListeners();
+      socket.disconnect();
+      socketRef.current = null;
     };
+  }, []);
+
+  // ============================================
+  // AUTH UPDATE (quando token muda)
+  // ============================================
+
+  useEffect(() => {
+    const socket = socketRef.current;
+
+    if (!socket) return;
+    if (!token || token.length < 20) return;
+
+    console.log("🔑 Atualizando token WebSocket");
+
+    socket.auth = { token };
+
+    if (!socket.connected) {
+      socket.connect();
+    } else {
+      // reautentica sem recriar conexão
+      socket.emit("auth.refresh", { token });
+    }
   }, [token]);
 
   return socketRef;

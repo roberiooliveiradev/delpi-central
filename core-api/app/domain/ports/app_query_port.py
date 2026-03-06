@@ -12,7 +12,7 @@ class RouteDTO:
     permission_code: str | None
     show_in_menu: bool
     order: int | None
-
+    entry: str | None
 
 @dataclass
 class AppDTO:
@@ -21,12 +21,11 @@ class AppDTO:
     base_path: str
     icon: str | None
     type: str
-    entry_url: str | None  
+    entry_url: str | None
     render_mode: str | None
     routes: List[RouteDTO]
 
 
 class AppQueryPort(Protocol):
-
     def list_active_apps_with_routes(self) -> List[AppDTO]:
         ...

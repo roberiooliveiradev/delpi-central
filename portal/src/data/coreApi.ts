@@ -1,5 +1,3 @@
-// src/data/coreApi.ts
-
 import { ApiClient } from "./apiClient";
 
 export interface MeResponse {
@@ -13,28 +11,38 @@ export interface MeResponse {
 }
 
 export type AppRenderMode =
-  | "embedded"     // iframe interno (mesmo domínio)
-  | "external"     // abre em nova aba
-  | "federated";   // microfrontend via Module Federation
-
-export interface AppItem {
-  id: string;
-  name: string;
-  basePath: string;    
-  icon?: string | null;
-  type: "iframe" | "microfrontend" | "backend-only";
-  entryUrl?: string | null;
-  renderMode?: AppRenderMode;
-}
+  | "embedded"
+  | "external"
+  | "federated";
 
 export interface RouteItem {
   app: string;
   app_name?: string;
-  app_icon?: string | null;
+  app_icon?: string;
+
   path: string;
-  permission: string;
-  icon?: string | null;
-  label?: string | null;
+  permission?: string;
+
+  icon?: string;
+  label?: string;
+
+  entry?: string;  
+  showInMenu?: boolean;
+  order?: number;
+}
+
+export interface AppItem {
+  id: string;
+  name: string;
+  basePath: string;
+  icon?: string;
+
+  type: "iframe" | "microfrontend" | "backend-only";
+
+  entryUrl?: string;
+  renderMode?: AppRenderMode;
+
+  routes?: RouteItem[]; 
 }
 
 export interface DashboardResponse {
@@ -61,6 +69,18 @@ export interface FavoriteAppItem {
   order_index: number;
 }
 
+function normalizeArray<T>(data: unknown): T[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (data && typeof data === "object") {
+    return Object.values(data as Record<string, T>);
+  }
+
+  return [];
+}
+
 export class CoreApi {
   private client: ApiClient;
 
@@ -72,12 +92,9 @@ export class CoreApi {
     return this.client.get<MeResponse>("/core-api/me");
   }
 
-  getApps() {
-    return this.client.get<AppItem[]>("/core-api/me/apps");
-  }
-
-  getRoutes() {
-    return this.client.get<RouteItem[]>("/core-api/me/routes");
+  async getApps(): Promise<AppItem[]> {
+    const data = await this.client.get<unknown>("/core-api/me/apps");
+    return normalizeArray<AppItem>(data);
   }
 
   getDashboard() {
@@ -100,18 +117,19 @@ export class CoreApi {
     );
   }
 
-  getFavoriteApps() {
-    return this.client.get<FavoriteAppItem[]>(
+  async getFavoriteApps(): Promise<FavoriteAppItem[]> {
+    const data = await this.client.get<unknown>(
       "/core-api/me/apps/favorites"
     );
+    return normalizeArray<FavoriteAppItem>(data);
   }
-  
+
   addFavoriteApp(appId: string) {
     return this.client.post<{ ok: boolean }>(
       `/core-api/me/apps/favorites/${appId}`
     );
   }
-  
+
   removeFavoriteApp(appId: string) {
     return this.client.delete<{ ok: boolean }>(
       `/core-api/me/apps/favorites/${appId}`

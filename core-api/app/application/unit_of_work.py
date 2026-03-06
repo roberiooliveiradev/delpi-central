@@ -34,7 +34,6 @@ from app.domain.ports.permission_query_port import PermissionQueryPort
 from app.domain.ports.app_query_port import AppQueryPort
 from app.domain.ports.admin_route_repository_port import AdminRouteRepositoryPort
 from app.domain.ports.admin_app_repository_port import AdminAppRepositoryPort
-from app.domain.ports.route_query_port import RouteQueryPort
 
 
 # =========================
@@ -84,7 +83,6 @@ class UnitOfWork(Protocol):
     app_queries: AppQueryPort
     admin_apps: AdminAppRepositoryPort
     admin_routes: AdminRouteRepositoryPort
-    route_queries: RouteQueryPort
 
     # =========================
     # Plugin System

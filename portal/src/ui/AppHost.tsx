@@ -2,7 +2,7 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
-import type { AppItem } from "../data/coreApi";
+import type { AppItem, RouteItem } from "../data/coreApi";
 import { pushRecentApp } from "../utils/recentApps";
 
 function normalize(path: string) {
@@ -24,61 +24,46 @@ function getViteFederationShareScope() {
 }
 
 export const AppHost = () => {
-  const { apps, token, refreshToken, routes } = useContext(AuthContext);
+  const { apps, token, refreshToken } = useContext(AuthContext);
 
   const location = useLocation();
   const navigate = useNavigate();
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const federatedHostRef = useRef<HTMLDivElement>(null);
-
   const mountedModuleRef = useRef<any>(null);
 
   const [federatedError, setFederatedError] = useState<string | null>(null);
 
-  /**
-   * Resolve app ativo
-   */
   const app = useMemo(() => {
     return apps.find((a: AppItem) => {
       const base = normalize(a.basePath);
       return location.pathname === base || location.pathname.startsWith(base + "/");
-    });
+    }) ?? null;
   }, [apps, location.pathname]);
 
-  /**
-   * Resolve rota ativa (exata)
-   * routes do AuthContext normalmente vêm de /me/routes
-   */
-  const route = useMemo(() => {
-    return routes.find((r: any) => r.path === location.pathname) ?? null;
-  }, [routes, location.pathname]);
-
-  /**
-   * Resolve entry da rota (prioridade) com fallback no entry do app
-   * - route.entry (novo) -> usado para iframes multipage (ex: PowerBI)
-   * - app.entryUrl (legado)
-   */
-  const resolvedEntry = useMemo(() => {
+  const route = useMemo<RouteItem | null>(() => {
     if (!app) return null;
+    return app.routes?.find((r) => r.path === location.pathname) ?? null;
+  }, [app, location.pathname]);
 
-    const routeEntry = (route as any)?.entry;
-    return (routeEntry && String(routeEntry).trim()) || app.entryUrl || null;
+  const resolvedEntry = useMemo<string | undefined>(() => {
+    if (!app) return undefined;
+
+    const routeEntry = route?.entry?.trim();
+
+    if (routeEntry) return routeEntry;
+    if (app.entryUrl?.trim()) return app.entryUrl.trim();
+
+    return undefined;
   }, [app, route]);
 
-  /**
-   * Atualiza recent apps
-   */
   useEffect(() => {
-    const r = routes.find((x: any) => x.path === location.pathname);
-    if (r?.app) {
-      pushRecentApp(r.app);
+    if (app?.id) {
+      pushRecentApp(app.id);
     }
-  }, [location.pathname, routes]);
+  }, [app]);
 
-  /**
-   * 🔥 External apps
-   */
   useEffect(() => {
     if (!app) return;
     if (app.renderMode !== "external") return;
@@ -88,9 +73,6 @@ export const AppHost = () => {
     navigate("/", { replace: true });
   }, [app, resolvedEntry, navigate]);
 
-  /**
-   * 🔁 Token para iframe embedded
-   */
   useEffect(() => {
     if (!token) return;
     if (!iframeRef.current) return;
@@ -100,14 +82,12 @@ export const AppHost = () => {
       { type: "DELPI_AUTH", token },
       window.location.origin
     );
-  }, [token, app]);
+  }, [token, app, location.pathname]);
 
-  /**
-   * 🔁 Escuta refresh request do iframe
-   */
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return;
+
       if (event.data?.type === "DELPI_REFRESH_REQUEST") {
         refreshToken();
       }
@@ -117,13 +97,6 @@ export const AppHost = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, [refreshToken]);
 
-  /**
-   * 🧩 FEDERATED MICROFRONTEND
-   *
-   * ⚠️ IMPORTANTE:
-   * token NÃO está nas dependências
-   * para evitar unmount/mount infinito
-   */
   useEffect(() => {
     let isActive = true;
 
@@ -150,7 +123,7 @@ export const AppHost = () => {
           try {
             await container.init(shareScope);
           } catch {
-            // ignorar se já inicializado
+            //
           }
         }
 
@@ -173,7 +146,6 @@ export const AppHost = () => {
         };
 
         mod.mount(federatedHostRef.current, props);
-
         mountedModuleRef.current = mod;
       } catch (e: any) {
         setFederatedError(e?.message ?? String(e));
@@ -188,7 +160,9 @@ export const AppHost = () => {
       if (mountedModuleRef.current?.unmount) {
         try {
           mountedModuleRef.current.unmount();
-        } catch {}
+        } catch {
+          //
+        }
       }
 
       mountedModuleRef.current = null;
@@ -197,12 +171,8 @@ export const AppHost = () => {
         federatedHostRef.current.innerHTML = "";
       }
     };
-  }, [app, resolvedEntry, location.pathname, location.search]); // 🚀 TOKEN REMOVIDO
+  }, [app, resolvedEntry, location.pathname, location.search, token]);
 
-  /**
-   * 🔄 Atualiza token dinamicamente
-   * sem desmontar microfrontend
-   */
   useEffect(() => {
     if (!token) return;
     if (!mountedModuleRef.current) return;
@@ -210,7 +180,6 @@ export const AppHost = () => {
     if (typeof mountedModuleRef.current.updateToken === "function") {
       mountedModuleRef.current.updateToken(token);
     } else {
-      // fallback via evento global
       window.dispatchEvent(
         new CustomEvent("DELPI_TOKEN_UPDATE", {
           detail: { token },
@@ -230,8 +199,9 @@ export const AppHost = () => {
 
     return (
       <iframe
+        key={location.pathname}
         ref={iframeRef}
-        title={app.name}
+        title={route?.label || app.name}
         src={resolvedEntry}
         style={{
           width: "100%",
