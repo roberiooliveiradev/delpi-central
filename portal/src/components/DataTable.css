@@ -83,7 +83,6 @@
 .datatable {
   width: 100%;
   border-collapse: collapse;
-  min-width: 720px; /* evita esmagamento */
 }
 
 .datatable thead {
@@ -219,16 +218,6 @@
 }
 
 /* =========================================
-   TABLET
-========================================= */
-
-@media (max-width: 1024px) {
-  .datatable {
-    min-width: 800px;
-  }
-}
-
-/* =========================================
    MOBILE CARD MODE
 ========================================= */
 
@@ -237,7 +226,9 @@
   .datatable {
     min-width: 100%;
   }
-
+  .datatable-container {
+    border: none;
+  }
   .datatable thead {
     display: none;
   }

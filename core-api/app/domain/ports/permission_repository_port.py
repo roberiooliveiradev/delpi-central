@@ -10,7 +10,8 @@ class PermissionDTO:
     id: UUID
     code: str
     name: str
-    module: str
+    description: str | None
+    module: str | None
 
 
 class PermissionRepositoryPort(Protocol):

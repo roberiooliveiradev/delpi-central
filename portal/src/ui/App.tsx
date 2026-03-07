@@ -15,7 +15,7 @@ import { LoginPage } from "./LoginPage";
 import { ProductsPage } from "../pages/ProductsPage";
 import { DelpiHealthPage } from "../pages/DelpiHealthPage";
 
-
+import { MyProfile } from "./MyProfile";
 
 
 
@@ -43,6 +43,7 @@ function AppShell() {
             <Route path="/delpi/products" element={<ProductsPage />} />
             <Route path="/delpi/health" element={<DelpiHealthPage />} />
             <Route path="/" element={<HomePage />} />
+            <Route path="/profile" element={<MyProfile />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
 
             <Route

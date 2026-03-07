@@ -23,6 +23,8 @@ import {
   Shield,
   ChevronDown,
   CircleDashed,
+  User,
+  LogOut,
 } from "lucide-react";
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
@@ -362,16 +364,21 @@ export const Sidebar = () => {
                   className="dropdown sidebar-user"
                   ref={userDropdownRef}
                 >
-                  <div className="dropdown-item">
-                    Meu Perfil
-                  </div>
-                  <div className="dropdown-item">
-                    Configurações
-                  </div>
+                <div
+                  className="dropdown-item"
+                  onClick={() => {
+                    navigate("/profile");
+                    setUserOpen(false);
+                  }}
+                >
+                  <User size={16}/>
+                  Meu Perfil
+                </div>
                   <div
                     className="dropdown-item danger"
                     onClick={logout}
                   >
+                    <LogOut />
                     Sair
                   </div>
                 </div>

@@ -130,48 +130,48 @@
    BOTÕES
 ========================================= */
 
-.collapse-btn {
-  position: absolute;
-  top: 20px;
-  right: 5px; /* Fica metade para fora da borda */
-  
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-
+.collapse-btn,
+.sidebar-expand-btn {
   display: flex;
   align-items: center;
   justify-content: center;
 
+  background: var(--surface);
+  border: 1px solid var(--border);
+
+  width: 36px;
+  height: 36px;
+
+  padding: 8px;
+  border-radius: 50%;
+
   cursor: pointer;
-  transition: 0.2s ease;
-  z-index: 50;
+
+  box-shadow: var(--shadow);
+  transition: all 0.2s ease;
+
+  color: var(--primary);
 }
 
-.collapse-btn:hover {
-  transform: scale(1.1);
-  box-shadow: var(--focus-2);
-}
-
+/* botão que aparece quando sidebar está fechada */
 .sidebar-expand-btn {
   position: fixed;
   bottom: 20px;
   left: 20px;
   z-index: 60;
-  display: flex;
-  align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 8px;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: var(--shadow);
-  transition: 0.3s;
-  color: var(--primary);
+}
+
+/* botão dentro da sidebar */
+.collapse-btn {
+  position: absolute;
+  top: 20px;
+  right: 5px;
+}
+
+
+.collapse-btn:hover {
+  transform: scale(1.1);
+  box-shadow: var(--focus-2);
 }
 
 .sidebar-expand-btn:hover {

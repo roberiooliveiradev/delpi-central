@@ -65,7 +65,7 @@ export function DataTable<T>({
   onSortChange,
   pagination,
   onPageChange,
-  pageSizeOptions = [10, 20, 50, 100],
+  pageSizeOptions = [5, 10, 20, 50, 100],
   onPageSizeChange,
   actions,
   selectable,

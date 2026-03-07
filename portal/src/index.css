@@ -561,9 +561,9 @@ textarea:focus-visible {
 }
 
 .status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  min-width: 10px;
+  min-height: 10px;
+  border-radius: 100%;
   background: var(--success);
 }
 
@@ -1213,4 +1213,59 @@ textarea:focus-visible {
   100% {
     box-shadow: var(--shadow);
   }
+}
+
+
+/* =====================================
+   MY PROFILE
+===================================== */
+.profile-info{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.profile-item{
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  border-radius:10px;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+}
+
+.profile-label{
+  color:var(--text-muted);
+  font-size:13px;
+}
+
+.profile-value{
+  font-weight:600;
+}
+
+
+.apps-search{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  margin-bottom:16px;
+  background:var(--surface);
+}
+
+.apps-search input{
+  border:none;
+  outline:none;
+  background:transparent;
+  width:100%;
+  font-size:14px;
+}
+
+.apps-empty{
+  grid-column:1/-1;
+  padding:24px;
+  text-align:center;
+  opacity:.6;
 }

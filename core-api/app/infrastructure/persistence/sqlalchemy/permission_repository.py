@@ -29,7 +29,8 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
             PermissionDTO(
                 id=row.id,
                 code=row.code,
-                name=row.description or row.code,
+                name=row.name,
+                description=row.description,
                 module=row.module,
             )
             for row in rows
@@ -77,7 +78,8 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
             PermissionDTO(
                 id=row.id,
                 code=row.code,
-                name=row.description or row.code,
+                name=row.name,
+                description=row.description,
                 module=row.module,
             )
             for row in rows
@@ -103,7 +105,8 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
         return PermissionDTO(
             id=row.id,
             code=row.code,
-            name=row.description or row.code,
+            name=row.name,
+            description=row.description,
             module=row.module,
         )
 
@@ -134,7 +137,8 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
 
         permission = Permission(
             code=code,
-            description=description or name,
+            name=name,
+            description=description,
             module=module,
         )
 
@@ -172,7 +176,8 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
             PermissionDTO(
                 id=row.id,
                 code=row.code,
-                name=row.description or row.code,
+                name=row.name,
+                description=row.description,
                 module=row.module,
             )
             for row in rows
