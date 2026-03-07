@@ -1,6 +1,5 @@
 # app/interfaces/socket/socket_handlers.py
 
-from flask import request
 from flask_socketio import join_room
 from app.extensions.socket import socketio
 
@@ -8,16 +7,17 @@ from delpi_auth.jwt_validator import validate_token
 
 
 @socketio.on("connect")
-def handle_connect():
+def handle_connect(auth):
 
     token = None
 
-    # Socket.IO v4
-    if hasattr(request, "auth") and request.auth:
-        token = request.auth.get("token")
+    # Socket.IO v4 padrão
+    if auth and "token" in auth:
+        token = auth["token"]
 
-    # Compatibilidade antiga
+    # compatibilidade fallback
     if not token:
+        from flask import request
         token = request.args.get("token")
 
     if not token:
@@ -26,6 +26,7 @@ def handle_connect():
 
     try:
         claims = validate_token(token)
+
         sub = claims.get("sub")
 
         if not sub:
