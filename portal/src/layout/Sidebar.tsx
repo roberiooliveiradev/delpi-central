@@ -187,7 +187,7 @@ export const Sidebar = () => {
                 style={{ cursor: "pointer" }}
               >
                 <img
-                  src="/logoTransformaMaisDelpi.svg"
+                  src="/logoMinhaDelpi.svg"
                   alt="Transforma mais DELPI"
                 />
               </div>

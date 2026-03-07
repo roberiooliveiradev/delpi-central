@@ -64,7 +64,7 @@ export const HomePage = () => {
           <h1 className="home-title">
             {greeting()}, <span className="home-name">{user?.name}</span>
           </h1>
-          <p className="home-subtitle">Bem-vindo à Central DELPI.</p>
+          <p className="home-subtitle">Bem-vindo à Minha DELPI.</p>
         </div>
 
         <div className="home-header-right">

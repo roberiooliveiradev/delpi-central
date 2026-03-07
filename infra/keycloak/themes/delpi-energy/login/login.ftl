@@ -2,7 +2,7 @@
 <@layout.registrationLayout displayInfo=false; section>
 
 <#if section = "header">
-    Central DELPI
+    Minha DELPI
 
 <#elseif section = "form">
 
@@ -14,21 +14,22 @@
 
         <div class="login-energy-brand">
             <div class="login-energy-logo">
-                <img src="${url.resourcesPath}/img/logoTransformaMaisDelpi.svg" />
+                <img 
+                alt="Minha DELPI"
+                src="${url.resourcesPath}/img/logoMinhaDelpi.svg" />
             </div>
 
             <div class="login-energy-brand-text">
                 <div class="login-energy-kicker">
-                    Energia & Conectividade
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                    width="16" height="16" viewBox="0 0 24 24" 
+                    fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" 
+                    stroke-linejoin="round" class="lucide lucide-activity" 
+                    aria-hidden="true">
+                    <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg>
+                    Faça login para acessar a plataforma
                 </div>
-
-                <h1 class="login-energy-title">
-                    Central DELPI
-                </h1>
-
-                <p class="login-energy-subtitle">
-                    Plataforma corporativa de governança, aplicações e integrações.
-                </p>
             </div>
         </div>
 
@@ -65,6 +66,9 @@
             </button>
 
         </form>
+        <p class="login-energy-subtitle">
+            Plataforma corporativa de governança, aplicações e integrações.
+        </p>
 
     </div>
 </div>

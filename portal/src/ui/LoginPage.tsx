@@ -118,8 +118,8 @@ export function LoginPage() {
         <div className="login-energy-brand">
           <div className="login-energy-logo">
             <img
-              src="/logoTransformaMaisDelpi.svg"
-              alt="DELPI"
+              src="/logoMinhaDelpi.svg"
+              alt="Minha DELPI"
             />
           </div>
 
@@ -128,11 +128,6 @@ export function LoginPage() {
               <Activity size={16} />
               <span>Energia & Conectividade</span>
             </div>
-
-            <h1 className="login-energy-title">
-              Central DELPI
-            </h1>
-
             <p className="login-energy-subtitle">
               Plataforma corporativa de governança,
               aplicações e integrações.

@@ -10,7 +10,7 @@
 
         <div class="login-energy-brand">
             <div class="login-energy-logo">
-                <img src="${url.resourcesPath}/img/logoTransformaMaisDelpi.svg" />
+                <img src="${url.resourcesPath}/img/logoMinhaDelpi.svg" />
             </div>
 
             <div class="login-energy-brand-text">
