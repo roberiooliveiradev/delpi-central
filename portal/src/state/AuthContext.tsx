@@ -1,3 +1,4 @@
+// src/state/AuthContext.tsx
 import React, {
   createContext,
   useEffect,
