@@ -1,8 +1,9 @@
 # app/create_app.py
 
 from flask import Flask
+import logging
+
 from app.infrastructure.config.settings import Config, TestingConfig
-from app.extensions.socket import socketio
 
 from app.extensions.db import db
 from app.extensions.migrate import migrate
@@ -13,13 +14,8 @@ import app.interfaces.socket.socket_handlers  # noqa
 
 # Blueprints
 from app.interfaces.http.health_controller import health_bp
-from app.interfaces.http.dashboard_controller import dashboard_bp
-from app.interfaces.http.notification_controller import notification_bp
-from app.interfaces.http.favorite_controller import favorite_bp
-from app.interfaces.http.apps_controller import admin_apps_bp
 from app.interfaces.http.rbac_controller import rbac_bp
-from app.interfaces.http.plugins_controller import admin_plugins_bp
-from app.interfaces.http.routes_controller import admin_routes_bp
+from app.interfaces.http.apps_controller import admin_apps_bp
 from app.interfaces.http.me_controller import me_bp
 
 from app.interfaces.http.auth_middleware import authenticate
@@ -27,8 +23,12 @@ from app.interfaces.http.auth_middleware import authenticate
 from app.infrastructure.db.models import *  # noqa
 from app.infrastructure.seeds.permissions_seed import seed_base_permissions
 
+# IMPORTANT: registra policies
+import app.interfaces.http.security.policies
+
 
 def create_app(config_name: str | None = None) -> Flask:
+
     app = Flask(__name__)
 
     # ==========================================================
@@ -51,34 +51,32 @@ def create_app(config_name: str | None = None) -> Flask:
     # ==========================================================
     @app.before_request
     def before_request():
-        # Health não exige autenticação
+
         if app.config.get("TESTING"):
             return
 
-        authenticate()
+        result = authenticate()
+
+        if result:
+            return result
 
     # ==========================================================
     # BLUEPRINTS
     # ==========================================================
     app.register_blueprint(health_bp)
-    app.register_blueprint(dashboard_bp)
-    app.register_blueprint(notification_bp)
-    app.register_blueprint(favorite_bp)
-    app.register_blueprint(admin_apps_bp)
     app.register_blueprint(rbac_bp)
-    app.register_blueprint(admin_plugins_bp)
-    app.register_blueprint(admin_routes_bp)
+    app.register_blueprint(admin_apps_bp)
     app.register_blueprint(me_bp)
 
     # ==========================================================
-    # DB INIT (DEV ONLY)
+    # DB INIT
     # ==========================================================
     with app.app_context():
+
         if not app.config.get("TESTING"):
             try:
                 seed_base_permissions(db.session)
-            except:
-                pass
+            except Exception as e:
+                logging.warning(f"Permission seed failed: {e}")
 
     return app
-    

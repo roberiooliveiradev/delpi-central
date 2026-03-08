@@ -67,7 +67,6 @@ def authenticate():
         groups = uow.rbac_queries.list_group_codes_by_user(user.id)
         permissions = uow.rbac_queries.list_permission_codes_by_user(user.id)
 
-    # ✅ CORREÇÃO AQUI
     g.current_user = SimpleNamespace(
         id=str(user.id),
         email=user.email,

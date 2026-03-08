@@ -1,3 +1,5 @@
+// src/data/coreApi.ts
+
 import { ApiClient } from "./apiClient";
 
 export interface MeResponse {
@@ -26,7 +28,7 @@ export interface RouteItem {
   icon?: string;
   label?: string;
 
-  entry?: string;  
+  entry?: string;
   showInMenu?: boolean;
   order?: number;
 }
@@ -42,7 +44,7 @@ export interface AppItem {
   entryUrl?: string;
   renderMode?: AppRenderMode;
 
-  routes?: RouteItem[]; 
+  routes?: RouteItem[];
 }
 
 export interface DashboardResponse {
@@ -69,10 +71,12 @@ export interface FavoriteAppItem {
   order_index: number;
 }
 
+/**
+ * Backend às vezes retorna objeto indexado
+ * convertemos para array
+ */
 function normalizeArray<T>(data: unknown): T[] {
-  if (Array.isArray(data)) {
-    return data;
-  }
+  if (Array.isArray(data)) return data;
 
   if (data && typeof data === "object") {
     return Object.values(data as Record<string, T>);
@@ -88,6 +92,10 @@ export class CoreApi {
     this.client = client;
   }
 
+  // -------------------------------------------------------
+  // USER CONTEXT
+  // -------------------------------------------------------
+
   getMe() {
     return this.client.get<MeResponse>("/core-api/me");
   }
@@ -97,30 +105,15 @@ export class CoreApi {
     return normalizeArray<AppItem>(data);
   }
 
-  getDashboard() {
-    return this.client.get<DashboardResponse>("/core-api/dashboard");
-  }
-
-  getNotifications() {
-    return this.client.get<NotificationItem[]>("/core-api/notifications");
-  }
-
-  markNotificationRead(id: string) {
-    return this.client.post<{ ok: boolean }>(
-      `/core-api/notifications/${id}/read`
-    );
-  }
-
-  markAllNotificationsRead() {
-    return this.client.post<{ ok: boolean }>(
-      `/core-api/notifications/read-all`
-    );
-  }
+  // -------------------------------------------------------
+  // FAVORITES
+  // -------------------------------------------------------
 
   async getFavoriteApps(): Promise<FavoriteAppItem[]> {
     const data = await this.client.get<unknown>(
       "/core-api/me/apps/favorites"
     );
+
     return normalizeArray<FavoriteAppItem>(data);
   }
 
@@ -133,6 +126,36 @@ export class CoreApi {
   removeFavoriteApp(appId: string) {
     return this.client.delete<{ ok: boolean }>(
       `/core-api/me/apps/favorites/${appId}`
+    );
+  }
+
+  // -------------------------------------------------------
+  // DASHBOARD
+  // -------------------------------------------------------
+
+  getDashboard() {
+    return this.client.get<DashboardResponse>("/core-api/me/dashboard");
+  }
+
+  // -------------------------------------------------------
+  // NOTIFICATIONS
+  // -------------------------------------------------------
+
+  getNotifications() {
+    return this.client.get<NotificationItem[]>(
+      "/core-api/me/notifications"
+    );
+  }
+
+  markNotificationRead(id: string) {
+    return this.client.post<{ ok: boolean }>(
+      `/core-api/me/notifications/${id}/read`
+    );
+  }
+
+  markAllNotificationsRead() {
+    return this.client.post<{ ok: boolean }>(
+      "/core-api/me/notifications/read-all"
     );
   }
 }

@@ -1,4 +1,5 @@
 // src/data/adminApi.ts
+
 import { ApiClient } from "./apiClient";
 
 export type PaginationMeta = {
@@ -90,88 +91,94 @@ export type RollbackPluginResponse = {
 
 export class AdminApi {
   public client: ApiClient;
+
   constructor(client: ApiClient) {
     this.client = client;
   }
 
   private buildQuery(options?: ListQueryOptions) {
     const params = new URLSearchParams();
+
     if (options?.page) params.append("page", String(options.page));
     if (options?.pageSize) params.append("page_size", String(options.pageSize));
     if (options?.q) params.append("q", options.q);
     if (options?.sort) params.append("sort", options.sort);
     if (options?.direction) params.append("direction", options.direction);
 
-    const queryString = params.toString();
-    return queryString ? `?${queryString}` : "";
+    const qs = params.toString();
+    return qs ? `?${qs}` : "";
   }
 
   /* =========================
      Plugins / Manifest
   ========================= */
+
   getPluginManifest(appId: string) {
     return this.client.get<any>(
-      `/core-api/admin/plugins/${appId}/manifest`
+      `/core-api/admin/apps/${appId}/manifest`
     );
   }
-    
+
   registerManifest(manifest: any) {
     return this.client.post(
-      `/core-api/admin/plugins/register`,
+      `/core-api/admin/apps/register`,
       manifest
     );
   }
 
   updatePluginManifest(appId: string, manifest: any) {
     return this.client.put(
-      `/core-api/admin/plugins/${appId}/manifest`,
+      `/core-api/admin/apps/${appId}/manifest`,
       manifest
     );
   }
-  
+
   /* =========================
-    Plugin Versions / Rollback
+     Plugin Versions / Rollback
   ========================= */
 
   listPluginVersions(appId: string) {
-    return this.client.get(
-      `/core-api/admin/plugins/${appId}/versions`
+    return this.client.get<PluginVersion[]>(
+      `/core-api/admin/apps/${appId}/versions`
     );
   }
 
   rollbackPlugin(appId: string, version: string) {
-    return this.client.post(
-      `/core-api/admin/plugins/${appId}/rollback`,
+    return this.client.post<RollbackPluginResponse>(
+      `/core-api/admin/apps/${appId}/rollback`,
       { version }
     );
   }
-  
+
   deletePlugin(appId: string) {
-    return this.client.delete(
-      `/core-api/admin/plugins/${appId}`
+    return this.client.delete<{ ok: boolean }>(
+      `/core-api/admin/apps/${appId}`
     );
   }
 
   bulkUnregisterPlugins(ids: string[]) {
     return this.client.post<{ ok: boolean; deleted: number }>(
-      `/core-api/admin/plugins/bulk-unregister`,
+      `/core-api/admin/apps/bulk-unregister`,
       { ids }
     );
   }
-  
+
   /* =========================
-     RBAC - Users
+     RBAC - USERS
   ========================= */
 
   listUsers(options?: ListQueryOptions) {
     const qs = this.buildQuery(options);
+
     return this.client.get<PaginatedResponse<AdminUser>>(
       `/core-api/admin/rbac/users${qs}`
     );
   }
 
   getUser(userId: string) {
-    return this.client.get<AdminUser>(`/core-api/admin/rbac/users/${userId}`);
+    return this.client.get<AdminUser>(
+      `/core-api/admin/rbac/users/${userId}`
+    );
   }
 
   updateUser(
@@ -214,18 +221,22 @@ export class AdminApi {
   }
 
   /* =========================
-     RBAC - Roles
+     RBAC - ROLES
   ========================= */
 
   listRoles(options?: ListQueryOptions) {
     const qs = this.buildQuery(options);
+
     return this.client.get<PaginatedResponse<AdminRole>>(
       `/core-api/admin/rbac/roles${qs}`
     );
   }
 
   createRole(payload: { name: string; description?: string | null }) {
-    return this.client.post<AdminRole>(`/core-api/admin/rbac/roles`, payload);
+    return this.client.post<AdminRole>(
+      `/core-api/admin/rbac/roles`,
+      payload
+    );
   }
 
   updateRole(roleId: string, payload: Partial<AdminRole>) {
@@ -256,29 +267,34 @@ export class AdminApi {
   }
 
   /* =========================
-     RBAC - Permissions
+     RBAC - PERMISSIONS
   ========================= */
 
   listPermissions(options?: ListQueryOptions) {
     const qs = this.buildQuery(options);
+
     return this.client.get<PaginatedResponse<AdminPermission>>(
       `/core-api/admin/rbac/permissions${qs}`
     );
   }
 
   /* =========================
-     RBAC - Groups
+     RBAC - GROUPS
   ========================= */
 
   listGroups(options?: ListQueryOptions) {
     const qs = this.buildQuery(options);
+
     return this.client.get<PaginatedResponse<AdminGroup>>(
       `/core-api/admin/rbac/groups${qs}`
     );
   }
 
   createGroup(payload: { name: string; description?: string | null }) {
-    return this.client.post<AdminGroup>(`/core-api/admin/rbac/groups`, payload);
+    return this.client.post<AdminGroup>(
+      `/core-api/admin/rbac/groups`,
+      payload
+    );
   }
 
   updateGroup(groupId: string, payload: Partial<AdminGroup>) {
@@ -309,53 +325,57 @@ export class AdminApi {
   }
 
   /* =========================
-     Apps / Routes (mantém)
+     APPS
   ========================= */
 
   listApps(options?: ListQueryOptions) {
     const qs = this.buildQuery(options);
+
     return this.client.get<PaginatedResponse<AdminApp>>(
       `/core-api/admin/apps${qs}`
     );
   }
 
   updateApp(appId: string, payload: Partial<AdminApp>) {
-    return this.client.put<{ ok: boolean }>(`/core-api/admin/apps/${appId}`, payload);
+    return this.client.put<{ ok: boolean }>(
+      `/core-api/admin/apps/${appId}`,
+      payload
+    );
   }
 
-
   /* =========================
-    Plugin Activation
+     Plugin Activation
   ========================= */
 
   setPluginActive(appId: string, active: boolean) {
     return this.client.post<{ ok: boolean }>(
-      `/core-api/admin/plugins/${appId}/active`,
+      `/core-api/admin/apps/${appId}/active`,
       { active }
     );
   }
 
   bulkActivatePlugins(ids: string[]) {
     return this.client.post<{ ok: boolean; updated: number }>(
-      `/core-api/admin/plugins/bulk-activate`,
+      `/core-api/admin/apps/bulk-activate`,
       { ids }
     );
   }
 
   bulkDeactivatePlugins(ids: string[]) {
     return this.client.post<{ ok: boolean; updated: number }>(
-      `/core-api/admin/plugins/bulk-activate`, // mesmo endpoint
+      `/core-api/admin/apps/bulk-activate`,
       { ids, active: false }
     );
   }
 
   /* =========================
-    Routes Actions
+     ROUTES
   ========================= */
 
   listRoutes(appId: string, options?: ListQueryOptions) {
     const qs = this.buildQuery(options);
-    return this.client.get<PaginatedResponse<AdminAppRoute>>(
+
+    return this.client.get<AdminAppRoute[]>(
       `/core-api/admin/apps/${appId}/routes${qs}`
     );
   }
@@ -373,13 +393,6 @@ export class AdminApi {
     );
   }
 
-  bulkDeactivateRoutes(ids: string[]) {
-    return this.client.post<{ ok: boolean; updated: number }>(
-      `/core-api/admin/apps/routes/bulk-deactivate`,
-      { ids }
-    );
-  }
-
   bulkDeleteRoutes(ids: string[]) {
     return this.client.post<{ ok: boolean; deleted: number }>(
       `/core-api/admin/apps/routes/bulk-delete`,
@@ -387,29 +400,25 @@ export class AdminApi {
     );
   }
 
-  bulkActivateRoutes(ids: string[]) {
-    return this.client.post<{ ok: boolean; updated: number }>(
-      `/core-api/admin/apps/routes/bulk-activate`,
-      { ids }
+  /* =========================
+     RELATIONSHIPS
+  ========================= */
+
+  getRolePermissions(roleId: string) {
+    return this.client.get<{
+      data: any[];
+      pagination: PaginationMeta;
+    }>(
+      `/core-api/admin/rbac/roles/${roleId}/permissions?page=1&page_size=999`
     );
   }
 
-  // RBAC - Role Permissions (GET)
-  getRolePermissions(roleId: string) {
-    return this.client.get<{
-      data: any[]; // depende do formato do backend
-      pagination: PaginationMeta;
-    }>(`/core-api/admin/rbac/roles/${roleId}/permissions?page=1&page_size=999`);
-  }
-
-  // RBAC - Group Roles (GET)
   getGroupRoles(groupId: string) {
     return this.client.get<{
       data: any[];
       pagination: PaginationMeta;
-    }>(`/core-api/admin/rbac/groups/${groupId}/roles?page=1&page_size=999`);
+    }>(
+      `/core-api/admin/rbac/groups/${groupId}/roles?page=1&page_size=999`
+    );
   }
-
-
 }
-

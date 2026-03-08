@@ -34,30 +34,24 @@ from app.application.use_cases.admin.list_groups_use_case import ListGroupsUseCa
 from app.application.use_cases.admin.list_permissions_use_case import ListPermissionsUseCase
 
 from app.interfaces.http.utils.errors import unauthorized, api_error, server_error
+from app.interfaces.http.security.authorization import (
+    require_permission,
+    require_any_permission,
+    require_all_permissions,
+    require_superadmin
+)
 
+from app.interfaces.http.security.decorators import policy
 
 rbac_bp = Blueprint("rbac", __name__)
-
-
-def require_auth():
-    user = getattr(g, "current_user", None)
-    if not user:
-        return unauthorized()
-    return None
-
-
-
 
 # ==========================================================
 # ROLES
 # ==========================================================
 
 @rbac_bp.route("/admin/rbac/roles", methods=["POST"])
+@require_all_permissions(["rbac.manage", "roles.manage"])
 def create_role():
-    guard = require_auth()
-    if guard:
-        return guard
-
     data = request.get_json(silent=True) or {}
     name = (data.get("name") or "").strip()
 
@@ -83,11 +77,8 @@ def create_role():
     
 
 @rbac_bp.route("/admin/rbac/roles/<role_id>/permissions", methods=["GET"])
+@require_permission("rbac.manage")
 def list_role_permissions(role_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     page = int(request.args.get("page", 1))
     page_size = int(request.args.get("page_size", 999))
 
@@ -109,11 +100,8 @@ def list_role_permissions(role_id: str):
 
 
 @rbac_bp.route("/admin/rbac/roles/<role_id>/permissions", methods=["PUT"])
+@require_all_permissions(["rbac.manage", "roles.manage"])
 def replace_role_permissions(role_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     data = request.get_json(silent=True) or {}
     permission_ids = data.get("permissionIds")
 
@@ -136,11 +124,8 @@ def replace_role_permissions(role_id: str):
 
 
 @rbac_bp.route("/admin/rbac/roles/<role_id>/permissions", methods=["POST"])
+@require_all_permissions(["rbac.manage", "roles.manage"])
 def add_permission_to_role(role_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     data = request.get_json(silent=True) or {}
     permission_id = (data.get("id") or "").strip()
 
@@ -163,11 +148,8 @@ def add_permission_to_role(role_id: str):
 
 
 @rbac_bp.route("/admin/rbac/roles/<role_id>/permissions/<permission_id>", methods=["DELETE"])
+@require_all_permissions(["rbac.manage", "roles.manage"])
 def remove_permission_from_role(role_id: str, permission_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = RemovePermissionFromRoleUseCase(uow)
@@ -184,11 +166,8 @@ def remove_permission_from_role(role_id: str, permission_id: str):
 # ==========================================================
 
 @rbac_bp.route("/admin/rbac/groups/<group_id>/roles", methods=["GET"])
+@require_permission("rbac.manage")
 def list_group_roles(group_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     page = int(request.args.get("page", 1))
     page_size = int(request.args.get("page_size", 999))
 
@@ -208,11 +187,8 @@ def list_group_roles(group_id: str):
 
 
 @rbac_bp.route("/admin/rbac/groups/<group_id>/roles", methods=["PUT"])
+@require_all_permissions(["rbac.manage", "groups.manage"])
 def replace_group_roles(group_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     data = request.get_json(silent=True) or {}
     role_ids = data.get("roleIds", [])
 
@@ -235,11 +211,8 @@ def replace_group_roles(group_id: str):
 
 
 @rbac_bp.route("/admin/rbac/groups/<group_id>/roles/<role_id>", methods=["POST"])
+@require_all_permissions(["rbac.manage", "groups.manage"])
 def add_role_to_group(group_id: str, role_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = AddRoleToGroupUseCase(uow)
@@ -252,11 +225,8 @@ def add_role_to_group(group_id: str, role_id: str):
 
 
 @rbac_bp.route("/admin/rbac/groups/<group_id>/roles/<role_id>", methods=["DELETE"])
+@require_all_permissions(["rbac.manage", "groups.manage"])
 def remove_role_from_group(group_id: str, role_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = RemoveRoleFromGroupUseCase(uow)
@@ -273,15 +243,10 @@ def remove_role_from_group(group_id: str, role_id: str):
 # ==========================================================
 
 @rbac_bp.route("/admin/rbac/users", methods=["GET"])
+@require_all_permissions(["rbac.manage", "users.view"])
 def list_users():
-
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
-        q = request.args.get("q")  # ← FALTAVA ISSO
-
+        q = request.args.get("q") 
         page = int(request.args.get("page", 1))
         page_size = int(request.args.get("page_size", 10))
         sort = request.args.get("sort", "email")
@@ -291,7 +256,7 @@ def list_users():
             use_case = ListUsersUseCase(uow)
 
             result = use_case.execute(
-                q=q,                 # ← PASSAR PARA O USE CASE
+                q=q,           
                 page=page,
                 page_size=page_size,
                 sort=sort,
@@ -308,11 +273,8 @@ def list_users():
 
 
 @rbac_bp.route("/admin/users/<user_id>/roles", methods=["GET"])
+@require_permission("rbac.manage")
 def list_user_roles(user_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     page = int(request.args.get("page", 1))
     page_size = int(request.args.get("page_size", 999))
 
@@ -334,11 +296,8 @@ def list_user_roles(user_id: str):
 
 
 @rbac_bp.route("/admin/users/<user_id>/roles", methods=["PUT"])
+@require_all_permissions(["rbac.manage", "users.manage"])
 def replace_user_roles(user_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     data = request.get_json(silent=True) or {}
     role_ids = data.get("roleIds", [])
 
@@ -361,11 +320,8 @@ def replace_user_roles(user_id: str):
 
 
 @rbac_bp.route("/admin/users/<user_id>/roles/<role_id>", methods=["POST"])
+@require_all_permissions(["rbac.manage", "users.manage"])
 def add_role_to_user(user_id: str, role_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = AddRoleToUserUseCase(uow)
@@ -378,11 +334,8 @@ def add_role_to_user(user_id: str, role_id: str):
 
 
 @rbac_bp.route("/admin/users/<user_id>/roles/<role_id>", methods=["DELETE"])
+@require_all_permissions(["rbac.manage", "users.manage"])
 def remove_role_from_user(user_id: str, role_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = RemoveRoleFromUserUseCase(uow)
@@ -395,11 +348,8 @@ def remove_role_from_user(user_id: str, role_id: str):
 
 
 @rbac_bp.route("/admin/users/<user_id>/groups", methods=["GET"])
+@require_all_permissions(["rbac.manage", "users.view"])
 def list_user_groups(user_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     page = int(request.args.get("page", 1))
     page_size = int(request.args.get("page_size", 999))
 
@@ -421,11 +371,8 @@ def list_user_groups(user_id: str):
 
 
 @rbac_bp.route("/admin/users/<user_id>/groups", methods=["PUT"])
+@require_all_permissions(["rbac.manage", "users.manage"])
 def replace_user_groups(user_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     data = request.get_json(silent=True) or {}
     group_ids = data.get("groupIds", [])
 
@@ -448,11 +395,8 @@ def replace_user_groups(user_id: str):
 
 
 @rbac_bp.route("/admin/users/<user_id>/groups/<group_id>", methods=["POST"])
+@require_all_permissions(["rbac.manage", "users.manage"])
 def add_group_to_user(user_id: str, group_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = AddGroupToUserUseCase(uow)
@@ -465,11 +409,8 @@ def add_group_to_user(user_id: str, group_id: str):
 
 
 @rbac_bp.route("/admin/users/<user_id>/groups/<group_id>", methods=["DELETE"])
+@require_all_permissions(["rbac.manage", "users.manage"])
 def remove_group_from_user(user_id: str, group_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = RemoveGroupFromUserUseCase(uow)
@@ -485,14 +426,9 @@ def remove_group_from_user(user_id: str, group_id: str):
 # ==========================================================
 
 @rbac_bp.route("/admin/rbac/roles", methods=["GET"])
+@require_permission("rbac.manage")
 def list_roles():
-
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
-
         q = request.args.get("q")
         page = int(request.args.get("page", 1))
         page_size = int(request.args.get("page_size", 10))
@@ -524,12 +460,8 @@ def list_roles():
 # ==========================================================
 
 @rbac_bp.route("/admin/rbac/groups", methods=["GET"])
+@require_permission("rbac.manage")
 def list_groups():
-
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
 
         q = request.args.get("q")
@@ -563,11 +495,8 @@ def list_groups():
 # ==========================================================
 
 @rbac_bp.route("/admin/rbac/users/<user_id>", methods=["PUT"])
+@require_all_permissions(["rbac.manage", "users.manage"])
 def update_user(user_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     data = request.get_json(silent=True) or {}
 
     role_ids = data.get("roleIds", None)
@@ -619,14 +548,9 @@ def update_user(user_id: str):
 # ==========================================================
 
 @rbac_bp.route("/admin/rbac/permissions", methods=["GET"])
+@require_permission("rbac.manage")
 def list_permissions():
-
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
-
         q = request.args.get("q")
         page = int(request.args.get("page", 1))
         page_size = int(request.args.get("page_size", 10))
@@ -659,11 +583,8 @@ def list_permissions():
 # ==========================================================
 
 @rbac_bp.route("/admin/rbac/groups/<group_id>", methods=["PUT"])
+@require_all_permissions(["rbac.manage","groups.manage"])
 def update_group(group_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     data = request.get_json(silent=True) or {}
 
     name = (data.get("name") or "").strip()
@@ -700,11 +621,8 @@ def update_group(group_id: str):
 # ==========================================================
 
 @rbac_bp.route("/admin/rbac/roles/<role_id>", methods=["PUT"])
+@require_all_permissions(["rbac.manage","roles.manage"])
 def update_role(role_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     data = request.get_json(silent=True) or {}
 
     name = (data.get("name") or "").strip()
@@ -740,11 +658,8 @@ def update_role(role_id: str):
 # ==========================================================
 
 @rbac_bp.route("/admin/rbac/roles/<role_id>", methods=["DELETE"])
+@require_all_permissions(["rbac.manage","roles.manage"])
 def delete_role(role_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
             rid = UUID(role_id)
@@ -766,11 +681,8 @@ def delete_role(role_id: str):
 # BULK DELETE ROLES
 # ==========================================================
 @rbac_bp.route("/admin/rbac/roles/bulk-delete", methods=["POST"])
+@require_all_permissions(["rbac.manage","roles.manage"])
 def bulk_delete_roles():
-    guard = require_auth()
-    if guard:
-        return guard
-
     data = request.get_json(silent=True) or {}
     ids = data.get("ids")
 
@@ -805,11 +717,8 @@ def bulk_delete_roles():
 # DELETE GROUP
 # ==========================================================
 @rbac_bp.route("/admin/rbac/groups/<group_id>", methods=["DELETE"])
+@require_all_permissions(["rbac.manage","groups.manage"])
 def delete_group(group_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
             gid = UUID(group_id)
@@ -825,38 +734,12 @@ def delete_group(group_id: str):
         return server_error(str(e))
 
 # ==========================================================
-# DELETE GROUP
-# ==========================================================
-@rbac_bp.route("/admin/rbac/users/<user_id>", methods=["DELETE"])
-def delete_user(user_id: str):
-    guard = require_auth()
-    if guard:
-        return guard
-
-    try:
-        with SqlAlchemyUnitOfWork() as uow:
-            uid = UUID(user_id)
-
-            uow.user_roles.delete_by_user_id(uid)
-            uow.user_groups.delete_by_user_id(uid)
-
-            uow.users.delete(uid)
-
-        return jsonify({"ok": True}), 200
-
-    except Exception as e:
-        return server_error(str(e))
-    
-# ==========================================================
 # CREATE GROUP
 # ==========================================================
 
 @rbac_bp.route("/admin/rbac/groups", methods=["POST"])
+@require_all_permissions(["rbac.manage","groups.manage"])
 def create_group():
-    guard = require_auth()
-    if guard:
-        return guard
-
     data = request.get_json(silent=True) or {}
 
     name = (data.get("name") or "").strip()
@@ -877,6 +760,26 @@ def create_group():
             )
 
         return jsonify({"id": str(gid)}), 201
+
+    except Exception as e:
+        return server_error(str(e))
+
+# ==========================================================
+# DELETE USER
+# ==========================================================
+@rbac_bp.route("/admin/rbac/users/<user_id>", methods=["DELETE"])
+@require_superadmin()
+def delete_user(user_id: str):
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uid = UUID(user_id)
+
+            uow.user_roles.delete_by_user_id(uid)
+            uow.user_groups.delete_by_user_id(uid)
+
+            uow.users.delete(uid)
+
+        return jsonify({"ok": True}), 200
 
     except Exception as e:
         return server_error(str(e))
