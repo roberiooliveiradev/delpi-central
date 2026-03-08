@@ -1,16 +1,40 @@
 [project]
 name = "delpi-auth"
 version = "0.1.0"
-description = "DELPI Central shared security module"
+description = "DELPI Central shared security and authorization module"
+readme = "README.md"
 requires-python = ">=3.10"
+
+authors = [
+  { name = "DELPI Engenharia" }
+]
+
 dependencies = [
-    "python-jose",
-    "requests",
+  "python-jose[cryptography]>=3.3.0",
+  "requests>=2.31.0"
+]
+
+# dependências opcionais por framework
+[project.optional-dependencies]
+
+flask = [
+  "flask>=2.3"
+]
+
+fastapi = [
+  "fastapi>=0.110",
+  "starlette>=0.36"
+]
+
+dev = [
+  "pytest",
+  "ruff",
+  "mypy"
 ]
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["delpi_auth"]
+[tool.setuptools.packages.find]
+include = ["delpi_auth*"]

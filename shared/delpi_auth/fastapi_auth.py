@@ -1,9 +1,14 @@
-# shared/delpi_auth/authorization.py
+from functools import wraps
 from fastapi import Request, HTTPException
+
+from .authz_core import has_permission
 
 
 def require_permission(permission_code: str):
+
     def decorator(func):
+
+        @wraps(func)
         async def wrapper(request: Request, *args, **kwargs):
 
             user = getattr(request.state, "user", None)
@@ -11,15 +16,11 @@ def require_permission(permission_code: str):
             if not user:
                 raise HTTPException(status_code=401, detail="Unauthorized")
 
-            if user.get("is_superadmin"):
-                return await func(request, *args, **kwargs)
-
-            permissions = user.get("permissions", [])
-
-            if permission_code not in permissions:
+            if not has_permission(user, permission_code):
                 raise HTTPException(status_code=403, detail="Forbidden")
 
             return await func(request, *args, **kwargs)
 
         return wrapper
+
     return decorator

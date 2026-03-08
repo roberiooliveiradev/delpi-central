@@ -1,9 +1,14 @@
-# shared/delpi_auth/authorization.py
+from functools import wraps
 from fastapi import Request, HTTPException
 
+from .policy_engine import evaluate_policy
 
-def require_permission(permission_code: str):
+
+def policy(name: str):
+
     def decorator(func):
+
+        @wraps(func)
         async def wrapper(request: Request, *args, **kwargs):
 
             user = getattr(request.state, "user", None)
@@ -14,12 +19,13 @@ def require_permission(permission_code: str):
             if user.get("is_superadmin"):
                 return await func(request, *args, **kwargs)
 
-            permissions = user.get("permissions", [])
+            allowed = evaluate_policy(name, user, **kwargs)
 
-            if permission_code not in permissions:
+            if not allowed:
                 raise HTTPException(status_code=403, detail="Forbidden")
 
             return await func(request, *args, **kwargs)
 
         return wrapper
+
     return decorator
