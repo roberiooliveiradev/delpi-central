@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "helpdesk",
+  "name": "Helpdesk DELPI",
+  "description": "Portal de atendimento GLPI",
+  "icon": "lucide-message-circle-warning",
+  "version": "1.0.1",
+  "type": "iframe",
+
+  "basePath": "/helpdesk",
+  "entry": "https://centraldelpi.com.br/helpdesk/",
+
+  "permissions": [
+    {
+      "code": "helpdesk.access",
+      "name": "helpdesk.access",
+      "description": "Acesso ao helpdesk",
+      "module": "helpdesk"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/helpdesk",
+      "label": "Abrir",
+      "permission": "helpdesk.access",
+      "icon": "external-link",
+      "entry": null,
+      "order": 1,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "embedded"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "dash-lmps",
+  "name": "Acompanhamento de LMP's",
+  "description": "",
+  "icon": "lucide-line-chart",
+  "version": "1.0.0",
+  "type": "iframe",
+  "basePath": "/dash-lmps",
+  "entry": "https://app.powerbi.com/reportEmbed?reportId=cbb9ee2b-7ca5-438b-b222-4e47ca4233c6&autoAuth=true&ctid=2bce8388-5bf7-45f6-a58f-273fb028799f",
+  "permissions": [
+    {
+      "code": "dash-lmps.access",
+      "name": "Acesso ao Dashboard",
+      "description": "Acesso",
+      "module": "dash-lmps"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/dash-lmps",
+      "label": "Abrir",
+      "permission": "dash-lmps.access",
+      "icon": "external-link",
+      "entry": null,
+      "order": 1,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "embedded"
+  }
+}
