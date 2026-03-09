@@ -28,18 +28,38 @@ RUN echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://package
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql18 \
     && rm -rf /var/lib/apt/lists/*
 
-# 🔧 Copiar requirements da api-delpi (não do core!)
+
+# -----------------
+# Python deps
+# -----------------
+
+# copiar requirements da API
 COPY api-delpi/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 🔥 Copiar shared (sem barra inicial!)
-COPY shared /shared
-RUN pip install -e /shared
 
-# 🔧 Copiar código da api-delpi
+# -----------------
+# DELPI SDK
+# -----------------
+
+# copiar shared SDK
+COPY shared /shared
+
+# instalar pacote
+RUN pip install --no-cache-dir -e /shared[fastapi]
+
+
+# -----------------
+# código da API
+# -----------------
+
 COPY api-delpi /app
 
 EXPOSE 8000
 
-# 🔥 Melhor forma de executar
+
+# -----------------
+# execução
+# -----------------
+
 CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--root-path", "/apps/api-delpi"]

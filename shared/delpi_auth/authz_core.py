@@ -1,39 +1,27 @@
-# shared/delpi_auth/athz_core.py
+# shared/delpi_auth/authz_core.py
 
-def has_permission(user: dict, permission_code: str) -> bool:
-
-    if not user:
-        return False
-
-    if user.get("is_superadmin"):
+def has_permission(user, permission_code: str) -> bool:
+    if getattr(user, "is_superadmin", False):
         return True
 
-    permissions = user.get("permissions") or []
+    permissions = getattr(user, "permissions", [])
 
     return permission_code in permissions
 
 
-def has_any_permission(user: dict, permissions: list[str]) -> bool:
-
-    if not user:
-        return False
-
-    if user.get("is_superadmin"):
+def has_any_permission(user, permission_codes) -> bool:
+    if getattr(user, "is_superadmin", False):
         return True
 
-    user_permissions = set(user.get("permissions") or [])
+    permissions = getattr(user, "permissions", [])
 
-    return any(p in user_permissions for p in permissions)
+    return any(code in permissions for code in permission_codes)
 
 
-def has_all_permissions(user: dict, permissions: list[str]) -> bool:
-
-    if not user:
-        return False
-
-    if user.get("is_superadmin"):
+def has_all_permissions(user, permission_codes) -> bool:
+    if getattr(user, "is_superadmin", False):
         return True
 
-    user_permissions = set(user.get("permissions") or [])
+    permissions = getattr(user, "permissions", [])
 
-    return all(p in user_permissions for p in permissions)
+    return all(code in permissions for code in permission_codes)

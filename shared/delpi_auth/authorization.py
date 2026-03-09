@@ -1,25 +1,125 @@
 # shared/delpi_auth/authorization.py
-from fastapi import Request, HTTPException
+
+from functools import wraps
+
+from .context_resolver import resolve_user_context
+from .authz_core import has_permission, has_any_permission, has_all_permissions
+
+
+def require_auth():
+
+    def decorator(fn):
+
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+
+            user = resolve_user_context()
+
+            if not user:
+                raise Exception("Unauthorized")
+
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def require_permission(permission_code: str):
-    def decorator(func):
-        async def wrapper(request: Request, *args, **kwargs):
 
-            user = getattr(request.state, "user", None)
+    def decorator(fn):
+
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+
+            user = resolve_user_context()
 
             if not user:
-                raise HTTPException(status_code=401, detail="Unauthorized")
+                raise Exception("Unauthorized")
 
-            if user.get("is_superadmin"):
-                return await func(request, *args, **kwargs)
+            # SUPERADMIN BYPASS
+            if getattr(user, "is_superadmin", False):
+                return fn(*args, **kwargs)
 
-            permissions = user.get("permissions", [])
+            if not has_permission(user, permission_code):
+                raise Exception("Forbidden")
 
-            if permission_code not in permissions:
-                raise HTTPException(status_code=403, detail="Forbidden")
-
-            return await func(request, *args, **kwargs)
+            return fn(*args, **kwargs)
 
         return wrapper
+
+    return decorator
+
+
+def require_any_permission(permission_codes):
+
+    def decorator(fn):
+
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+
+            user = resolve_user_context()
+
+            if not user:
+                raise Exception("Unauthorized")
+
+            # SUPERADMIN BYPASS
+            if getattr(user, "is_superadmin", False):
+                return fn(*args, **kwargs)
+
+            if not has_any_permission(user, permission_codes):
+                raise Exception("Forbidden")
+
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def require_all_permissions(permission_codes):
+
+    def decorator(fn):
+
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+
+            user = resolve_user_context()
+
+            if not user:
+                raise Exception("Unauthorized")
+
+            # SUPERADMIN BYPASS
+            if getattr(user, "is_superadmin", False):
+                return fn(*args, **kwargs)
+
+            if not has_all_permissions(user, permission_codes):
+                raise Exception("Forbidden")
+
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def require_superadmin():
+
+    def decorator(fn):
+
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+
+            user = resolve_user_context()
+
+            if not user:
+                raise Exception("Unauthorized")
+
+            if not getattr(user, "is_superadmin", False):
+                raise Exception("Forbidden")
+
+            return fn(*args, **kwargs)
+
+        return wrapper
+
     return decorator

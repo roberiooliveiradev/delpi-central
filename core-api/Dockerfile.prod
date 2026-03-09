@@ -10,20 +10,39 @@ ENV PYTHONPATH=/app
 
 WORKDIR /app
 
+# -----------------
+# System deps
+# -----------------
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
+
+# -----------------
+# Python deps
+# -----------------
 COPY core-api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY shared /shared
-RUN pip install -e /shared
 
+# -----------------
+# DELPI SDK
+# -----------------
+COPY shared /shared
+RUN pip install --no-cache-dir -e /shared[flask]
+
+
+# -----------------
+# Core API code
+# -----------------
 COPY core-api /app
 
+
+# -----------------
+# Entrypoint
+# -----------------
 COPY core-api/docker-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

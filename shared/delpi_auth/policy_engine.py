@@ -1,11 +1,27 @@
+# shared/delpi_auth/policy_engine.py
+
 from .policy_registry import PolicyRegistry
 
 
-def evaluate_policy(name: str, user: dict, **kwargs):
+class PolicyEngine:
 
-    policy = PolicyRegistry.get(name)
+    @staticmethod
+    def evaluate(name, user=None, **context):
 
-    if not policy:
-        raise Exception(f"Policy '{name}' not registered")
+        if not user:
+            raise Exception("Unauthorized")
 
-    return policy(user=user, **kwargs)
+        if getattr(user, "is_superadmin", False):
+            return True
+
+        policy = PolicyRegistry.get(name)
+
+        if not policy:
+            raise RuntimeError(f"Policy '{name}' not registered")
+
+        allowed = policy(user=user, **context)
+
+        if not allowed:
+            raise Exception("Forbidden")
+
+        return True

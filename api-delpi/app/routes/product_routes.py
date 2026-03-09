@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from app.services.product_service import get_product, get_structure, get_parents, get_guide, get_inspection, get_product_analyser, get_customers, get_structure_excel
 from app.services.product_service import get_suppliers, get_inbound_invoice_items, get_outbound_invoice_items, get_stock, search_products_by_description
 from app.services.product_service import get_purchases, get_products_paginated, search_products, get_sales_summary, get_sales_open_orders, get_sales_billing, get_product_pricing, get_internal_movements
@@ -11,9 +11,9 @@ from typing import Optional
 from app.models.product_model import ProductSearchRequest
 from fastapi.responses import StreamingResponse
 from fastapi.responses import JSONResponse
-from fastapi import Request
 
-from delpi_auth.fastapi_auth import require_permission
+from delpi_auth.authorization import require_permission
+
 
 router = APIRouter()
 

@@ -8,3 +8,4 @@ pandas
 openpyxl
 python-jose[cryptography]
 requests
+httpx

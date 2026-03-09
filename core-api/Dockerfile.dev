@@ -15,15 +15,26 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# 🔧 Copiar requirements correto
+# -----------------
+# Python deps
+# -----------------
+
 COPY core-api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 🔥 Copiar shared
-COPY shared /shared
-RUN pip install -e /shared
 
-# 🔧 Copiar código core-api
+# -----------------
+# DELPI SDK
+# -----------------
+
+COPY shared /shared
+RUN pip install --no-cache-dir -e /shared[flask]
+
+
+# -----------------
+# código da core-api
+# -----------------
+
 COPY core-api /app
 
 COPY core-api/docker-entrypoint.sh /entrypoint.sh
