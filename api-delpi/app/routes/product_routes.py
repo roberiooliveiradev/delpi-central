@@ -20,7 +20,7 @@ router = APIRouter()
 
 
 @router.get("/search")
-@require_permission("products.read")
+@require_permission("api-delpi.access")
 def search_products_route(
     code: Optional[str] = Query(None),
     group: Optional[str] = Query(None),
@@ -39,7 +39,7 @@ def search_products_route(
     "/search/description",
     summary="Busca específica por descrição, com paginação e score"
 )
-@require_permission("products.read")
+@require_permission("api-delpi.access")
 def search_products_by_description_route(
     description: str = Query(..., description="Descrição ou termos"),
     page: int = Query(1, ge=1),
@@ -60,7 +60,7 @@ def search_products_by_description_route(
     "",
     summary="Lista produtos paginados"
 )
-@require_permission("products.read")
+@require_permission("api-delpi.access")
 def list_products(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500)
