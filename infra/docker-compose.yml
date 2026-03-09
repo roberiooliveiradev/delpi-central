@@ -200,6 +200,7 @@ services:
       - --client-secret=${OAUTH2_PROXY_CLIENT_SECRET}
       - --redirect-url=https://helpdesk.centraldelpi.com.br/oauth2/callback
       - --oidc-issuer-url=https://centraldelpi.com.br/auth/realms/delpi
+      - --scope=openid email profile
       - --email-domain=*
       - --reverse-proxy=true
       - --cookie-secret=${OAUTH2_PROXY_COOKIE_SECRET}
@@ -209,11 +210,7 @@ services:
       - --whitelist-domain=.centraldelpi.com.br
       - --set-xauthrequest=true
       - --pass-user-headers=true
-      - --pass-authorization-header=false
       - --skip-provider-button=true
-      - --upstream=static://202
-      - --cookie-refresh=1h
-      - --scope=openid email profile
     networks:
       - delpi-network
 
