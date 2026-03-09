@@ -15,7 +15,7 @@ export default defineConfig({
     }),
   ],
 
-  base: "/",
+  base: "/apps/dashboard-delpi/",
 
   build: {
     target: "esnext",
