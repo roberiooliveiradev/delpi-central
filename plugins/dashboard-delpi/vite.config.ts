@@ -3,8 +3,6 @@ import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
 
 export default defineConfig({
-  base: "/apps/dashboard-delpi/",
-
   plugins: [
     react(),
     federation({
@@ -16,6 +14,8 @@ export default defineConfig({
       shared: ["react", "react-dom"],
     }),
   ],
+
+  base: "/",
 
   build: {
     target: "esnext",
