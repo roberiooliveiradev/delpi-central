@@ -196,11 +196,12 @@ services:
     command:
       - --http-address=0.0.0.0:4180
       - --provider=keycloak-oidc
-      - --client-id=oauth2-proxy-helpdesk
+      - --client-id=${OAUTH2_PROXY_CLIENT_ID}
       - --client-secret=${OAUTH2_PROXY_CLIENT_SECRET}
-      - --redirect-url=https://helpdesk.centraldelpi.com.br/oauth2/callback
-      - --oidc-issuer-url=https://centraldelpi.com.br/auth/realms/delpi
+      - --redirect-url=${HELPDESK_URL}/oauth2/callback
+      - --oidc-issuer-url=${KEYCLOAK_ISSUER}
       - --scope=openid email profile
+      - --code-challenge-method=S256
       - --email-domain=*
       - --reverse-proxy=true
       - --cookie-secret=${OAUTH2_PROXY_COOKIE_SECRET}
@@ -230,6 +231,7 @@ services:
       - core-api
       - keycloak
       - api-delpi
+      - oauth2-proxy-helpdesk
 
     logging:
       driver: "json-file"
