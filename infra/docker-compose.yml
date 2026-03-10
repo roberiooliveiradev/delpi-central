@@ -208,6 +208,8 @@ services:
       - --cookie-secure=true
       - --cookie-samesite=lax
       - --cookie-domain=.centraldelpi.com.br
+      - --cookie-samesite=lax
+      - --cookie-domain=.centraldelpi.com.br
       - --whitelist-domain=.centraldelpi.com.br
       - --set-xauthrequest=true
       - --pass-user-headers=true
