@@ -199,7 +199,7 @@ services:
       - --client-id=${OAUTH2_PROXY_CLIENT_ID}
       - --client-secret=${OAUTH2_PROXY_CLIENT_SECRET}
       - --redirect-url=${HELPDESK_URL}/oauth2/callback
-      - --oidc-issuer-url=${KEYCLOAK_ISSUER_INTERNAL}
+      - --oidc-issuer-url=${KEYCLOAK_ISSUER}
       - --scope=openid email profile
       - --code-challenge-method=S256
       - --email-domain=*
