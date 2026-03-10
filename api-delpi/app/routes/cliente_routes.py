@@ -4,9 +4,13 @@ from app.services.clientes_service import get_clientes
 from app.core.responses import success_response, error_response
 from app.core.exceptions import DatabaseConnectionError
 
+
+from delpi_auth.authorization import (require_permission, require_any_permission)
+
 router = APIRouter()
 
 @router.get("/clientes")
+@require_any_permission(["api-delpi.access.full", "api-delpi.acess"])
 def listar_clientes(limite: int = 10):
     try:
         clientes = get_clientes(limite)

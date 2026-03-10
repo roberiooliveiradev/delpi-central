@@ -5,6 +5,8 @@ from app.models.data_query_model import DataQueryRequestOpenAPI, RawSqlRequest
 from app.core.responses import success_response, error_response
 from app.utils.logger import log_info, log_error
 
+from delpi_auth.authorization import (require_permission, require_any_permission)
+
 router = APIRouter()
 
 @router.post(
@@ -40,6 +42,7 @@ router = APIRouter()
         }
     },
 )
+@require_any_permission(["api-delpi.access.full", "api-delpi.data"])
 async def execute_sql_raw(request: Request):
     """
     Executa SQL puro, aceitando `application/json` (campo 'sql') ou `text/plain`.

@@ -1,0 +1,15 @@
+python-jose[cryptography]>=3.3.0
+requests>=2.31.0
+
+[dev]
+pytest>=7
+ruff>=0.4
+mypy>=1.8
+
+[fastapi]
+fastapi>=0.110
+starlette>=0.36
+httpx>=0.27
+
+[flask]
+flask>=2.3

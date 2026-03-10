@@ -21,6 +21,8 @@ from app.config import settings
 
 from app.models.system_model import LoginRequest
 
+from delpi_auth.authorization import (require_permission, require_any_permission)
+
 router = APIRouter()
 
 
@@ -28,7 +30,9 @@ router = APIRouter()
 # ----------------------------
 # 🔍 4️⃣ Busca de tabelas por descrição (nova rota)
 # ----------------------------
+
 @router.get("/tables/search", summary="Busca tabelas por descrição (SX2)")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
 def search_tables(
     description: str = Query(..., min_length=2, description="Descrição parcial ou completa da tabela"),
     page: int = Query(1, ge=1, description="Número da página"),
@@ -60,6 +64,7 @@ def search_tables(
 # Busca de tabela por nome
 # ----------------------------
 @router.get("/tables/{tableName}", summary="Consulta informações de tabela")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
 def table(tableName: str):
     try:
         result = get_table(tableName)
@@ -76,6 +81,7 @@ def table(tableName: str):
 # Consulta colunas de tabela
 # ----------------------------
 @router.get("/tables/{tableName}/columns", summary="Consulta colunas de tabela com paginação")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
 def table_columns(
     tableName: str,
     page: int = Query(1, ge=1, description="Número da página"),
@@ -102,6 +108,7 @@ def table_columns(
 # Consulta indices
 # ----------------------------
 @router.get("/tables/{tableName}/indexes", summary="Consulta índices (SIX010)")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
 def table_indexes(tableName: str):
     try:
         result = get_table_indexes(tableName)
@@ -113,6 +120,7 @@ def table_indexes(tableName: str):
 # Consulta relacionamentos
 # ----------------------------
 @router.get("/tables/{tableName}/relations", summary="Consulta relacionamentos (SX9010)")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
 def table_relations(tableName: str):
     try:
         result = get_table_relations(tableName)
@@ -124,6 +132,7 @@ def table_relations(tableName: str):
 # Consulta schema
 # ----------------------------
 @router.get("/tables/{tableName}/schema", summary="Schema completo da tabela (SX2, SX3, SIX, SX9)")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
 def table_schema(tableName: str):
     try:
         result = get_table_schema(tableName)
@@ -135,6 +144,7 @@ def table_schema(tableName: str):
 # Consulta schema
 # ----------------------------
 @router.get("/tables/{tableName}/columns/search", summary="Buscar colunas por texto")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
 def search_columns(tableName: str, q: str = Query(..., min_length=2)):
     try:
         result = search_columns_in_table(tableName, q)
@@ -149,6 +159,7 @@ def search_columns(tableName: str, q: str = Query(..., min_length=2)):
     "/columns/search",
     summary="Busca colunas por descrição (SX3010 + ranking semântico)"
 )
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
 def search_columns_global(
     description: str = Query(
         ...,
@@ -188,28 +199,3 @@ def search_columns_global(
     except Exception as e:
         log_error(f"Erro inesperado ao buscar colunas: {e}")
         return error_response(f"Erro inesperado: {e}")
-
-# ----------------------------
-# Login simples
-# ----------------------------
-VALID_USER = settings.DB_USER
-VALID_PASS = settings.DB_PASSWORD
-
-@router.post("/login", summary="Autenticação simples (gera token JWT)")
-def login(data: LoginRequest):
-    if data.username != VALID_USER or data.password != VALID_PASS:
-        raise HTTPException(status_code=401, detail="Credenciais inválidas")
-
-    payload = {
-        "sub": data.username,
-        "exp": datetime.utcnow() + timedelta(hours=8760),
-        "iat": datetime.utcnow()
-    }
-
-    token = jwt.encode(payload, settings.JWT_SECRET, algorithm="HS256")
-
-    return {
-        "success": True,
-        "message": "Login efetuado com sucesso.",
-        "token": token
-    }
