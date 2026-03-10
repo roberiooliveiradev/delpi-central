@@ -199,7 +199,7 @@ services:
       - --client-id=oauth2-proxy-helpdesk
       - --client-secret=${OAUTH2_PROXY_CLIENT_SECRET}
       - --redirect-url=https://helpdesk.centraldelpi.com.br/oauth2/callback
-      - --oidc-issuer-url=http://keycloak:8080/realms/delpi
+      - --oidc-issuer-url=http://keycloak:8080/auth/realms/delpi
       - --scope=openid email profile
       - --email-domain=*
       - --reverse-proxy=true
