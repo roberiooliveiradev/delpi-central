@@ -1,17 +1,25 @@
 // src/App.tsx
-
-import { useMemo, useState } from "react";
-import { DelpiApi } from "./data/delpiApi";
-import { useProductsDashboard } from "./hooks/useProductsDashboard";
-import { ProductsTable } from "./components/ProductTable";
-import { Modal } from "./components/Modal";
+import { useMemo, useState } from "react"
+import { DelpiApi } from "./data/delpiApi"
+import { useProductsDashboard } from "./hooks/useProductsDashboard"
+import { ProductsTable } from "./components/ProductTable"
+import { Modal } from "./components/Modal"
 
 interface Props {
-  token: string;
+  token: string
+}
+
+function formatLabel(key: string) {
+
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, l => l.toUpperCase())
+
 }
 
 function App({ token }: Props) {
-  const api = useMemo(() => new DelpiApi(token), [token]);
+
+  const api = useMemo(() => new DelpiApi(token), [token])
 
   const {
     products,
@@ -28,23 +36,34 @@ function App({ token }: Props) {
     setSort
   } = useProductsDashboard(api)
 
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [loadingProduct, setLoadingProduct] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [loadingProduct, setLoadingProduct] = useState(false)
 
   const handleRowClick = async (code: string) => {
+
     try {
-      setLoadingProduct(true);
-      const res = await api.getProduct(code);
-      setSelectedProduct(res.data.produto);
+
+      setLoadingProduct(true)
+
+      const res = await api.getProduct(code)
+
+      setSelectedProduct(res.data.produto)
+
     } catch (err) {
-      console.error(err);
+
+      console.error(err)
+
     } finally {
-      setLoadingProduct(false);
+
+      setLoadingProduct(false)
+
     }
-  };
+  }
 
   return (
+
     <div style={{ padding: 24 }}>
+
       <h1>Dashboard DELPI</h1>
 
       <ProductsTable
@@ -70,41 +89,45 @@ function App({ token }: Props) {
       <Modal
         open={!!selectedProduct || loadingProduct}
         title="Detalhes do Produto"
-        size="md"
+        size="lg"
         onClose={() => setSelectedProduct(null)}
       >
+
         {loadingProduct ? (
+
           <div>Carregando produto...</div>
+
         ) : selectedProduct ? (
-          <div style={{ display: "grid", gap: 12 }}>
-            <div>
-              <strong>Código:</strong> {selectedProduct.code}
-            </div>
 
-            <div>
-              <strong>Descrição:</strong> {selectedProduct.description}
-            </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2,1fr)",
+              gap: 12
+            }}
+          >
 
-            <div>
-              <strong>Grupo:</strong> {selectedProduct.group_code}
-            </div>
+            {Object.entries(selectedProduct)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([key, value]) => {
 
-            {selectedProduct.type && (
-              <div>
-                <strong>Tipo:</strong> {selectedProduct.type}
-              </div>
-            )}
+                if (value === "" || value === null) return null
 
-            {selectedProduct.unit && (
-              <div>
-                <strong>Unidade:</strong> {selectedProduct.unit}
-              </div>
-            )}
+                return (
+                  <div key={key}>
+                    <strong>{formatLabel(key)}:</strong> {String(value)}
+                  </div>
+                )
+              })}
+
           </div>
+
         ) : null}
+
       </Modal>
+
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

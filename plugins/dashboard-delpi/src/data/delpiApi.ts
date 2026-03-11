@@ -7,11 +7,13 @@ export interface Product {
 }
 
 export interface ProductDetails {
-  code: string;
-  description: string;
-  group_code: string;
-  type?: string;
-  unit?: string;
+  code: string
+  description: string
+  group_code: string
+  type?: string
+  unit?: string
+
+  [key: string]: any
 }
 
 export interface PaginatedResult<T> {
@@ -106,23 +108,28 @@ export class DelpiApi {
   }
 
   async getProduct(code: string) {
+
+    const query = new URLSearchParams()
+
+    query.append("code", code)
+    query.append("page", "1")
+    query.append("page_size", "1")
+
     const response = await this.get<
-      ApiSuccessResponse<ProductDetails | { produto: ProductDetails }>
-    >(`/apps/api-delpi/products/${code}`);
+      ApiSuccessResponse<PaginatedResult<ProductDetails>>
+    >(`/apps/api-delpi/products/search?${query.toString()}`)
 
-    const data = response.data as any;
+    const product = response.data.items?.[0]
 
-    // Compatibilidade com formato antigo
-    if (data?.produto) {
-      return response as ApiSuccessResponse<{ produto: ProductDetails }>;
+    if (!product) {
+      throw new Error("Produto não encontrado")
     }
 
-    // Novo formato da API
     return {
       ...response,
       data: {
-        produto: data as ProductDetails,
-      },
-    };
+        produto: product
+      }
+    }
   }
 }

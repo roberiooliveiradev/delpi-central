@@ -1,28 +1,63 @@
+// src/components/ProductModal.tsx
 interface Props {
-  product: any;
-  onClose: () => void;
+  product: any
+  onClose: () => void
+}
+
+function formatLabel(key: string) {
+
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, l => l.toUpperCase())
+
 }
 
 export const ProductModal: React.FC<Props> = ({
   product,
-  onClose,
+  onClose
 }) => {
-  if (!product) return null;
+
+  if (!product) return null
 
   return (
+
     <div style={overlayStyle}>
+
       <div style={modalStyle}>
+
         <h2>{product.description}</h2>
-        <p><strong>Código:</strong> {product.code}</p>
-        <p><strong>Grupo:</strong> {product.group_code}</p>
-        <p><strong>Tipo:</strong> {product.type}</p>
-        <p><strong>Unidade:</strong> {product.unit}</p>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2,1fr)",
+            gap: 12
+          }}
+        >
+
+          {Object.entries(product)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([key, value]) => {
+
+              if (!value) return null
+
+              return (
+                <div key={key}>
+                  <strong>{formatLabel(key)}:</strong> {String(value)}
+                </div>
+              )
+
+            })}
+
+        </div>
 
         <button onClick={onClose}>Fechar</button>
+
       </div>
+
     </div>
-  );
-};
+  )
+}
 
 const overlayStyle = {
   position: "fixed" as const,
@@ -30,12 +65,14 @@ const overlayStyle = {
   background: "rgba(0,0,0,0.5)",
   display: "flex",
   alignItems: "center",
-  justifyContent: "center",
-};
+  justifyContent: "center"
+}
 
 const modalStyle = {
   background: "#fff",
   padding: 24,
   borderRadius: 8,
-  width: 500,
-};
+  width: 700,
+  maxHeight: "80vh",
+  overflow: "auto"
+}

@@ -118,6 +118,124 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             SB1.B1_COD AS code,
             SB1.B1_DESC AS description,
             SB1.B1_GRUPO AS group_code,
+
+            -- =====================
+            -- IDENTIFICAÇÃO
+            -- =====================
+            SB1.B1_GRUPO     AS group_code,
+            SB1.B1_COD       AS code,
+            SB1.B1_DESC      AS description,
+            SB1.B1_TIPO      AS type,
+            SB1.B1_SUBGRUP   AS subgroup,
+            SB1.B1_CODANT    AS previous_code,
+            SB1.B1_ATIVO     AS active,
+            SB1.B1_MSBLQL   AS blocked,
+
+            -- =====================
+            -- COMERCIAL
+            -- =====================
+            SB1.B1_REFEREN   AS customer_reference,
+            SB1.B1_REFCANT   AS customer_reference_old,
+            SB1.B1_PRV1      AS sale_price,
+            SB1.B1_CONTRAT   AS contractual_product,
+            SB1.B1_CLASSVE   AS sales_class,
+
+            -- =====================
+            -- ENGENHARIA / PRODUÇÃO
+            -- =====================
+            SB1.B1_CODDES    AS drawing_code,
+            SB1.B1_UM        AS unit,
+            SB1.B1_SEGUM     AS secondary_unit,
+            SB1.B1_CONV      AS conversion_factor,
+            SB1.B1_TIPCONV   AS conversion_type,
+            SB1.B1_TPMAT     AS material_type,
+            SB1.B1_LINHA     AS production_line,
+            SB1.B1_TIPODEC   AS operation_decimal_type,
+            SB1.B1_REVATU    AS current_revision,
+            SB1.B1_UREV      AS last_revision_date,
+            SB1.B1_PESO      AS net_weight,
+
+            -- =====================
+            -- ESTOQUE / LOGÍSTICA
+            -- =====================
+            SB1.B1_LOCPAD    AS default_warehouse,
+            SB1.B1_QE        AS package_quantity,
+            SB1.B1_CODBAR    AS barcode,
+            SB1.B1_EMBDELP   AS customer_packaging,
+            SB1.B1_PRODSBP   AS make_or_buy,
+
+            -- =====================
+            -- COMPRAS
+            -- =====================
+            SB1.B1_UCOM      AS last_purchase_date,
+            SB1.B1_UPRC      AS last_purchase_price,
+            SB1.B1_TIPE      AS lead_time_type,
+            SB1.B1_SOLICIT   AS requester_restriction,
+
+            -- =====================
+            -- CUSTOS
+            -- =====================
+            SB1.B1_CUSTD     AS standard_cost,
+            SB1.B1_UCALSTD   AS standard_cost_date,
+            SB1.B1_MCUSTD   AS cost_currency,
+            SB1.B1_DATREF   AS cost_reference_date,
+            SB1.B1_DESPIMP  AS import_expense,
+
+            -- =====================
+            -- FISCAL / TRIBUTÁRIO
+            -- =====================
+            SB1.B1_POSIPI   AS ncm_ipi_position,
+            SB1.B1_ORIGEM   AS origin,
+            SB1.B1_IMPORT   AS imported_product,
+            SB1.B1_GRTRIB   AS tax_group,
+            SB1.B1_TE       AS entry_tes,
+            SB1.B1_TS       AS exit_tes,
+            SB1.B1_PICM     AS icms_rate,
+            SB1.B1_IPI      AS ipi_rate,
+            SB1.B1_PIS      AS pis_incidence,
+            SB1.B1_PPIS     AS pis_percent,
+            SB1.B1_COFINS   AS cofins_incidence,
+            SB1.B1_PCOFINS  AS cofins_percent,
+            SB1.B1_CSLL     AS csll_incidence,
+            SB1.B1_INSS     AS inss_incidence,
+            SB1.B1_RETOPER  AS retention_by_operation,
+            SB1.B1_ANUENTE  AS customs_authority,
+            SB1.B1_MIDIA    AS media_product,
+            SB1.B1_QTMIDIA  AS media_quantity,
+            SB1.B1_GRPTI    AS intelligent_tes_group,
+
+            -- =====================
+            -- QUALIDADE / PCP
+            -- =====================
+            SB1.B1_YHOHS    AS rohs_indicator,
+            SB1.B1_RASTRO   AS traceability,
+            SB1.B1_GARANT   AS warranty_product,
+            SB1.B1_MRP      AS mrp_considered,
+            SB1.B1_FLAGSUG  AS suggestion_flag,
+            SB1.B1_CPOTENC  AS power_control,
+
+            -- =====================
+            -- CONTÁBIL
+            -- =====================
+            SB1.B1_CONTA    AS accounting_account,
+            SB1.B1_CC       AS cost_center,
+            SB1.B1_APROPRI  AS appropriation_type,
+
+            -- =====================
+            -- SISTEMA / CONTROLES DELPI
+            -- =====================
+            SB1.B1_CONINI   AS initial_consumption_date,
+            SB1.B1_USERLGI  AS created_by,
+            SB1.B1_USERLGA  AS updated_by,
+            SB1.B1_YSC      AS mandatory_cc_sc,
+            SB1.B1_YPC      AS mandatory_cc_pc,
+            SB1.B1_YPV      AS mandatory_cc_pv,
+            SB1.B1_YMI      AS mandatory_cc_mi,
+            SB1.B1_YNFE     AS mandatory_cc_nfe,
+            SB1.B1_YVLPC    AS approval_validation,
+            SB1.B1_YCAT     AS delpi_category,
+            SB1.B1_ZDLPSEG  AS delpi_segment,
+
             ({score_sql}) AS relevance_score
         FROM SB1010 SB1
         WHERE {where_clause}
@@ -140,11 +258,7 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             )
 
         products = [
-            Product(
-                code=row["code"],
-                description=row["description"],
-                group_code=row["group_code"]
-            )
+            Product(**{k: v for k, v in row.items() if k != "relevance_score"})
             for row in rows
         ]
 
