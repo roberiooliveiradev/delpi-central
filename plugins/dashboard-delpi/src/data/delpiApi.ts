@@ -69,32 +69,35 @@ export class DelpiApi {
   }
 
   async searchProducts(params: {
-    code?: string;
-    group?: string;
-    description?: string;
-    page?: number;
-    pageSize?: number;
+    code?: string
+    group?: string
+    description?: string
+    page?: number
+    pageSize?: number
+    sort?: string
+    direction?: "asc" | "desc"
   }) {
-    const query = new URLSearchParams();
 
-    if (params.code) query.append("code", params.code);
-    if (params.group) query.append("group_code", params.group);
-    if (params.description)
-      query.append("description", params.description);
+    const query = new URLSearchParams()
 
-    const page = params.page ?? 1;
-    const pageSize = params.pageSize ?? 20;
+    if (params.code) query.append("code", params.code)
+    if (params.group) query.append("group_code", params.group)
+    if (params.description) query.append("description", params.description)
 
-    query.append("page", String(page));
-    query.append("page_size", String(pageSize));
+    if (params.sort) query.append("sort", params.sort)
+    if (params.direction) query.append("direction", params.direction)
+
+    const page = params.page ?? 1
+    const pageSize = params.pageSize ?? 20
+
+    query.append("page", String(page))
+    query.append("page_size", String(pageSize))
 
     return this.get<
       ApiSuccessResponse<PaginatedResult<Product>>
-    >(
-      `/apps/api-delpi/products/search?${query.toString()}`
-    );
+    >(`/apps/api-delpi/products/search?${query.toString()}`)
   }
-
+  
   async getProducts(page = 1, pageSize = 20) {
     return this.searchProducts({
       page,

@@ -18,6 +18,8 @@ def search_products_route(
     description: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
+    sort: Optional[str]=Query(None),
+    direction: Optional[str] = Query(None)
 ):
     try:
 
@@ -26,7 +28,9 @@ def search_products_route(
             group_code=group_code,
             description=description,
             page=page,
-            page_size=page_size
+            page_size=page_size,
+            sort=sort,
+            direction=direction,
         )
 
         use_case = build_search_products_use_case()

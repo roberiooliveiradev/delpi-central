@@ -19,6 +19,8 @@ class SearchProductsUseCase:
            group=request.group_code,
            page = request.page,
            page_size = request.page_size,
+           sort=request.sort,
+           direction=request.direction,
         )
     
 

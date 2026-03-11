@@ -1,77 +1,90 @@
 // src/hooks/useProductsDashboard.ts
 
-import { useEffect, useState } from "react";
-import type { DelpiApi, Product } from "../data/delpiApi";
+import { useEffect, useState } from "react"
+import { DelpiApi } from "../data/delpiApi"
+import type { Product } from "../data/delpiApi"
 
 export function useProductsDashboard(api: DelpiApi) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(false)
 
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
 
   const [filters, setFilters] = useState({
     code: "",
-    description: "",
-  });
+    group: "",
+    description: ""
+  })
+
+  const [sort, setSort] = useState<{
+    sort?: string
+    direction?: "asc" | "desc"
+  }>({
+    sort: "code",
+    direction: "asc"
+  })
 
   useEffect(() => {
-    let cancelled = false;
 
-    async function fetchProducts() {
-      setLoading(true);
+    const load = async () => {
 
       try {
-        const hasFilter =
-          filters.code || filters.description;
 
-        const res = hasFilter
-          ? await api.searchProducts({
-              code: filters.code,
-              description: filters.description,
-              page,
-              pageSize,
-            })
-          : await api.getProducts(page, pageSize);
+        setLoading(true)
 
-        const paginated = res.data;
+        const res = await api.searchProducts({
+          page,
+          pageSize,
+          code: filters.code || undefined,
+          group: filters.group || undefined,
+          description: filters.description || undefined,
+          sort: sort.sort,
+          direction: sort.direction
+        })
 
-        if (cancelled) return;
+        const data = res.data
 
-        setProducts(paginated.items);
-        setTotal(paginated.total);
-        setTotalPages(paginated.total_pages);
+        setProducts(data.items)
+        setTotal(data.total)
+        setTotalPages(data.total_pages)
+
+      } catch (err) {
+
+        console.error(err)
+
       } finally {
-        if (!cancelled) setLoading(false);
+
+        setLoading(false)
+
       }
+
     }
 
-    fetchProducts();
+    load()
 
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    api,
-    page,
-    pageSize,
-    filters.code,
-    filters.description,
-  ]);
+  }, [page, pageSize, filters, sort])
 
   return {
     products,
     loading,
+
     page,
     pageSize,
     total,
     totalPages,
+
     setPage,
     setPageSize,
+
     filters,
     setFilters,
-  };
+
+    sort,
+    setSort
+  }
 }

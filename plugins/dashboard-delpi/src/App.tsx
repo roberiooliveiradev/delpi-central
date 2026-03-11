@@ -24,7 +24,9 @@ function App({ token }: Props) {
     setPageSize,
     filters,
     setFilters,
-  } = useProductsDashboard(api);
+    sort,
+    setSort
+  } = useProductsDashboard(api)
 
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [loadingProduct, setLoadingProduct] = useState(false);
@@ -52,10 +54,16 @@ function App({ token }: Props) {
         total={total}
         pageSize={pageSize}
         loading={loading}
-        setPage={setPage}
-        setPageSize={setPageSize}
+
         filters={filters}
         setFilters={setFilters}
+
+        sort={sort}
+        setSort={setSort}
+
+        setPage={setPage}
+        setPageSize={setPageSize}
+
         onRowClick={handleRowClick}
       />
 

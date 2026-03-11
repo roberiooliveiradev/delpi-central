@@ -15,7 +15,9 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
         group=None,
         description=None,
         page=1,
-        page_size=50
+        page_size=50,
+        sort=None,
+        direction="asc"
     ) -> Page[Product]:
 
         paging = paginate(page, page_size)
@@ -24,7 +26,7 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
         where_params = []
 
         # -----------------------------
-        # CODE FILTER
+        # CODE
         # -----------------------------
 
         if code:
@@ -32,7 +34,7 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             where_params.append(f"{code}%")
 
         # -----------------------------
-        # GROUP FILTER
+        # GROUP
         # -----------------------------
 
         if group:
@@ -63,13 +65,11 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
 
             score_parts = []
 
-            # frase completa
             score_parts.append(
                 "CASE WHEN SB1.B1_DESC COLLATE Latin1_General_CI_AI LIKE ? THEN 100 ELSE 0 END"
             )
             score_params.append(f"{desc_clean}%")
 
-            # palavras individuais
             for t in terms:
                 score_parts.append(
                     "CASE WHEN SB1.B1_DESC COLLATE Latin1_General_CI_AI LIKE ? THEN 20 ELSE 0 END"
@@ -79,6 +79,25 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             score_sql = " + ".join(score_parts)
 
         where_clause = " AND ".join(where_clauses)
+
+        # -----------------------------
+        # SORT
+        # -----------------------------
+
+        sortable_fields = {
+            "code": "SB1.B1_COD",
+            "description": "SB1.B1_DESC",
+            "group_code": "SB1.B1_GRUPO"
+        }
+
+        sort_column = sortable_fields.get(sort, None)
+
+        direction = "DESC" if str(direction).lower() == "desc" else "ASC"
+
+        if sort_column:
+            order_clause = f"{sort_column} {direction}"
+        else:
+            order_clause = "relevance_score DESC, SB1.B1_DESC, SB1.B1_COD"
 
         # -----------------------------
         # COUNT
@@ -102,7 +121,7 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             ({score_sql}) AS relevance_score
         FROM SB1010 SB1
         WHERE {where_clause}
-        ORDER BY relevance_score DESC, SB1.B1_DESC, SB1.B1_COD
+        ORDER BY {order_clause}
         OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """
 

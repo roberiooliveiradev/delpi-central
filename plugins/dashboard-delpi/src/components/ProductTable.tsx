@@ -1,93 +1,146 @@
 // src/components/ProductsTable.tsx
 
-import { DataTable, type DataTableColumn } from "./DataTable";
-import type { Product } from "../data/delpiApi";
+import { DataTable } from "./DataTable"
+import type { Product } from "../data/delpiApi"
 
-interface Props {
-  products: Product[];
-  page: number;
-  totalPages: number;
-  total: number;
-  pageSize: number;
-  loading?: boolean;
-  setPage: (p: number) => void;
-  setPageSize: (n: number) => void;
+type Props = {
+  products: Product[]
+  loading: boolean
+  page: number
+  totalPages: number
+  total: number
+  pageSize: number
+
   filters: {
-    code: string;
-    description: string;
-  };
-  setFilters: React.Dispatch<
-    React.SetStateAction<{
-      code: string;
-      description: string;
-    }>
-  >;
-  onRowClick: (code: string) => void;
+    code?: string
+    group?: string
+    description?: string
+  }
+
+  setFilters: (f: any) => void
+
+  setPage: (p: number) => void
+  setPageSize: (n: number) => void
+
+  sort?: {
+    sort?: string
+    direction?: "asc" | "desc"
+  }
+
+  setSort?: (s: any) => void
+
+  onRowClick: (code: string) => void
 }
 
-export const ProductsTable: React.FC<Props> = ({
+export function ProductsTable({
   products,
+  loading,
   page,
   totalPages,
   total,
   pageSize,
-  loading,
-  setPage,
-  setPageSize,
   filters,
   setFilters,
-  onRowClick,
-}) => {
-  const columns: DataTableColumn<Product>[] = [
-    { key: "code", header: "Código" },
-    { key: "description", header: "Descrição" },
-    { key: "group_code", header: "Grupo" },
-  ];
+  setPage,
+  setPageSize,
+  sort,
+  setSort,
+  onRowClick
+}: Props) {
+
+  const columns = [
+    {
+      key: "code",
+      header: "Código",
+      sortable: true
+    },
+    {
+      key: "description",
+      header: "Descrição",
+      sortable: true
+    },
+    {
+      key: "group_code",
+      header: "Grupo",
+      sortable: true
+    }
+  ]
 
   return (
-    <DataTable<Product>
-      columns={columns}
-      data={products}
-      loading={loading}
-      pagination={{
-        page,
-        totalPages,
-        total,
-        pageSize,
-      }}
-      pageSizeOptions={[10, 20, 50, 100]}
-      onPageChange={(p) => setPage(p)}
-      onPageSizeChange={(size) => {
-        setPageSize(size);
-        setPage(1);
-      }}
-      searchValue={filters.description}
-      onSearchChange={(value) => {
-        setFilters((prev) => ({
-          ...prev,
-          description: value,
-        }));
-        setPage(1);
-      }}
-      toolbar={
+    <div>
+
+      {/* 🔎 FILTROS */}
+
+      <div style={{
+        display: "flex",
+        gap: 12,
+        marginBottom: 12
+      }}>
+
         <input
-          placeholder="Buscar por código..."
-          value={filters.code}
-          onChange={(e) => {
-            setFilters((prev) => ({
-              ...prev,
-              code: e.target.value,
-            }));
-            setPage(1);
-          }}
+          placeholder="Código"
+          value={filters.code ?? ""}
+          onChange={(e) =>
+            setFilters({
+              ...filters,
+              code: e.target.value
+            })
+          }
         />
-      }
-      getRowId={(row) => row.code}
-      actions={(row) => (
-        <button onClick={() => onRowClick(row.code)}>
-          Detalhes
-        </button>
-      )}
-    />
-  );
-};
+
+        <input
+          placeholder="Descrição"
+          value={filters.description ?? ""}
+          onChange={(e) =>
+            setFilters({
+              ...filters,
+              description: e.target.value
+            })
+          }
+        />
+
+        <input
+          placeholder="Grupo"
+          value={filters.group ?? ""}
+          onChange={(e) =>
+            setFilters({
+              ...filters,
+              group: e.target.value
+            })
+          }
+        />
+
+      </div>
+
+      <DataTable<Product>
+        columns={columns}
+        data={products}
+        loading={loading}
+
+        sort={sort}
+        onSortChange={(s) => {
+          setSort?.(s)
+        }}
+
+        pagination={{
+          page,
+          totalPages,
+          total,
+          pageSize
+        }}
+
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+
+        getRowId={(p) => p.code}
+
+        actions={(row) => (
+          <button onClick={() => onRowClick(row.code)}>
+            Ver
+          </button>
+        )}
+      />
+
+    </div>
+  )
+}

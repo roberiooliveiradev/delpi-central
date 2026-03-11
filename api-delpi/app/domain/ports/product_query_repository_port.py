@@ -13,5 +13,7 @@ class ProductQueryRepositoryPort(ABC):
         description: Optional[str],
         page: int,
         page_size: int,
+        sort=Optional[str],
+        direction=Optional[str]
     ) -> Page[Product]:
         raise NotImplementedError
