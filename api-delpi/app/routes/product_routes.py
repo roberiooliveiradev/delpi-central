@@ -114,78 +114,78 @@ router = APIRouter()
 #         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get(
-    "/{code}/structure/excel",
-    summary="Exporta a estrutura formatada em planilha Excel (público)",
-    include_in_schema=True
-)
-async def structure_excel_public(
-    request: Request,
-    code: str,
-    format: str = Query("json", description="Use 'xlsx' para baixar o arquivo Excel")
-):
-    """
-    Se format=xlsx → retorna StreamingResponse (arquivo)
-    Caso contrário → retorna JSON com link para download.
-    """
-    try:
-        # Sempre gera o arquivo (caso o usuário clique no link)
-        excel_file = get_structure_excel(code)
-        filename = f"Estrutura_{code}.xlsx"
+# @router.get(
+#     "/{code}/structure/excel",
+#     summary="Exporta a estrutura formatada em planilha Excel (público)",
+#     include_in_schema=True
+# )
+# async def structure_excel_public(
+#     request: Request,
+#     code: str,
+#     format: str = Query("json", description="Use 'xlsx' para baixar o arquivo Excel")
+# ):
+#     """
+#     Se format=xlsx → retorna StreamingResponse (arquivo)
+#     Caso contrário → retorna JSON com link para download.
+#     """
+#     try:
+#         # Sempre gera o arquivo (caso o usuário clique no link)
+#         excel_file = get_structure_excel(code)
+#         filename = f"Estrutura_{code}.xlsx"
 
-        # ------------------------------
-        # Se pediu Excel → baixa arquivo
-        # ------------------------------
-        if format.lower() == "xlsx":
-            return StreamingResponse(
-                excel_file,
-                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                headers={
-                    "Content-Disposition": f"attachment; filename={filename}",
-                    "Cache-Control": "no-cache, no-store, must-revalidate",
-                    "Pragma": "no-cache",
-                    "Expires": "0",
-                }
-            )
+#         # ------------------------------
+#         # Se pediu Excel → baixa arquivo
+#         # ------------------------------
+#         if format.lower() == "xlsx":
+#             return StreamingResponse(
+#                 excel_file,
+#                 media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+#                 headers={
+#                     "Content-Disposition": f"attachment; filename={filename}",
+#                     "Cache-Control": "no-cache, no-store, must-revalidate",
+#                     "Pragma": "no-cache",
+#                     "Expires": "0",
+#                 }
+#             )
 
-        # ------------------------------
-        # Retorna JSON com link dinâmico
-        # ------------------------------
-        public_url = str(request.url.replace(query="format=xlsx"))
-        html_link = f'<a href="{public_url}" target="_blank">📂 Baixar Estrutura {code}</a>'
+#         # ------------------------------
+#         # Retorna JSON com link dinâmico
+#         # ------------------------------
+#         public_url = str(request.url.replace(query="format=xlsx"))
+#         html_link = f'<a href="{public_url}" target="_blank">📂 Baixar Estrutura {code}</a>'
 
-        return JSONResponse(
-            content={
-                "message": "Arquivo Excel gerado com sucesso!",
-                "download_url": public_url,
-                "html_link": html_link
-            }
-        )
+#         return JSONResponse(
+#             content={
+#                 "message": "Arquivo Excel gerado com sucesso!",
+#                 "download_url": public_url,
+#                 "html_link": html_link
+#             }
+#         )
 
-    except Exception as e:
-        log_error(f"Erro ao gerar planilha Excel pública de {code}: {e}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+#     except Exception as e:
+#         log_error(f"Erro ao gerar planilha Excel pública de {code}: {e}")
+#         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
-@router.get("/{code}/parents", summary="Consulta produtos pai (Where Used) paginada via CTE")
-def parents(
-    code: str,
-    max_depth: int = Query(10, ge=1, le=15),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(100, ge=1, le=500)
-):
-    """
-    Retorna produtos pai (Where Used) via CTE com paginação.
-    """
-    try:
-        result = get_parents(code, max_depth, page, page_size)
-        return success_response(
-            data=result,
-            message=f"Produtos pai de {code} retornados com sucesso (página {page}/{result['total_pages']})."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar pais do item {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get("/{code}/parents", summary="Consulta produtos pai (Where Used) paginada via CTE")
+# def parents(
+#     code: str,
+#     max_depth: int = Query(10, ge=1, le=15),
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(100, ge=1, le=500)
+# ):
+#     """
+#     Retorna produtos pai (Where Used) via CTE com paginação.
+#     """
+#     try:
+#         result = get_parents(code, max_depth, page, page_size)
+#         return success_response(
+#             data=result,
+#             message=f"Produtos pai de {code} retornados com sucesso (página {page}/{result['total_pages']})."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar pais do item {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 @router.get("/{code}/suppliers", summary="Consulta os fornecedores de um produto com paginação")

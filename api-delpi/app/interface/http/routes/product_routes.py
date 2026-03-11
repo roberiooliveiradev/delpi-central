@@ -9,6 +9,7 @@ from app.utils.logger import log_error
 
 from app.application.dto.list_products_requests import ListProductsRequest
 from app.application.dto.list_product_structured_request import ListProductStructureRequest
+from app.application.dto.list_product_parents_request import ListProductParentsRequest
 from app.application.dto.export_structure_excel_request import ExportStructureExcelRequest
 
 
@@ -16,6 +17,7 @@ from app.composition.product_composer import (
     build_search_products_use_case,
     build_list_structure_use_case,
     build_export_structure_excel_use_case,
+    build_list_parents_use_case,
     )
 
 
@@ -128,3 +130,38 @@ async def structure_excel_public(
             content={"error": str(e)},
             status_code=500
         )
+    
+@router.get("/{code}/parents")
+@require_permission("api-delpi.access")
+def parents(
+    code: str,
+    max_depth: Optional[int] = None,
+    page: Optional[int] = None,
+    page_size: Optional[int] = None
+):
+
+    try:
+
+        dto = ListProductParentsRequest(
+            code=code,
+            max_depth=max_depth,
+            page=page,
+            page_size=page_size
+        )
+
+        use_case = build_list_parents_use_case()
+
+        result = use_case.execute(dto)
+
+        data = {
+            "structure": result["structure"],
+            "pagination": result["pagination"].to_dict() if result["pagination"] else None
+        }
+
+        return success_response(data=data)
+
+    except Exception as e:
+
+        log_error(f"Erro ao consultar pais do item {code}: {e}")
+
+        return error_response(str(e))
