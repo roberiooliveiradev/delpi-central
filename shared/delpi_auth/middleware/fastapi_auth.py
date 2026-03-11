@@ -1,7 +1,6 @@
 # shared/delpi_auth/middleware/fastapi_auth.py
 
 from types import SimpleNamespace
-
 import httpx
 
 from fastapi import Request
@@ -14,28 +13,39 @@ from ..request_context import set_current_user
 CORE_API_URL = "http://core-api:8000"
 
 
+PUBLIC_PATHS = [
+    "/docs",
+    "/redoc",
+    "/openapi.json",
+    "/health",
+]
+
+
 async def load_user_rbac(token: str):
 
-    try:
+    async with httpx.AsyncClient(timeout=5) as client:
 
-        async with httpx.AsyncClient(timeout=5) as client:
+        resp = await client.get(
+            f"{CORE_API_URL}/me",
+            headers={"Authorization": f"Bearer {token}"}
+        )
 
-            resp = await client.get(
-                f"{CORE_API_URL}/me",
-                headers={"Authorization": f"Bearer {token}"}
-            )
-
-        if resp.status_code != 200:
-            raise Exception("RBAC lookup failed")
-
-        return resp.json()
-
-    except Exception:
-
+    if resp.status_code != 200:
         raise Exception("RBAC lookup failed")
+
+    return resp.json()
 
 
 async def jwt_middleware(request: Request, call_next):
+
+    path = request.url.path
+
+    # --------------------------------
+    # liberar docs
+    # --------------------------------
+
+    if path.split("?")[0].endswith(tuple(PUBLIC_PATHS)):
+        return await call_next(request)
 
     auth_header = request.headers.get("Authorization")
 
