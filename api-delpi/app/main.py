@@ -8,7 +8,8 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi import Request
 
 from app.config import settings
-from app.routes import product_routes
+# from app.routes import product_routes
+from app.interface.http.routes import product_routes
 from app.routes import system_routes
 from app.routes import data_routes
 from app.middleware.auth_middleware import jwt_middleware

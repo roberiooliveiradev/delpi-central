@@ -78,30 +78,48 @@ export class DelpiApi {
     const query = new URLSearchParams();
 
     if (params.code) query.append("code", params.code);
-    if (params.group) query.append("group", params.group);
+    if (params.group) query.append("group_code", params.group);
     if (params.description)
       query.append("description", params.description);
 
-    query.append("page", String(params.page ?? 1));
-    query.append("page_size", String(params.pageSize ?? 20));
+    const page = params.page ?? 1;
+    const pageSize = params.pageSize ?? 20;
 
-    return this.get<ApiSuccessResponse<PaginatedResult<Product>>>(
+    query.append("page", String(page));
+    query.append("page_size", String(pageSize));
+
+    return this.get<
+      ApiSuccessResponse<PaginatedResult<Product>>
+    >(
       `/apps/api-delpi/products/search?${query.toString()}`
     );
   }
 
   async getProducts(page = 1, pageSize = 20) {
-    return this.get<
-      ApiSuccessResponse<PaginatedResult<Product>>
-    >(
-      `/apps/api-delpi/products?page=${page}&page_size=${pageSize}`,
-      30000
-    );
+    return this.searchProducts({
+      page,
+      pageSize,
+    });
   }
 
   async getProduct(code: string) {
-    return this.get<ApiSuccessResponse<{ produto: ProductDetails }>>(
-      `/apps/api-delpi/products/${code}`
-    );
+    const response = await this.get<
+      ApiSuccessResponse<ProductDetails | { produto: ProductDetails }>
+    >(`/apps/api-delpi/products/${code}`);
+
+    const data = response.data as any;
+
+    // Compatibilidade com formato antigo
+    if (data?.produto) {
+      return response as ApiSuccessResponse<{ produto: ProductDetails }>;
+    }
+
+    // Novo formato da API
+    return {
+      ...response,
+      data: {
+        produto: data as ProductDetails,
+      },
+    };
   }
 }
