@@ -19,20 +19,20 @@ router = APIRouter()
 
 
 
-@router.get("/search")
-@require_permission("api-delpi.access")
-def search_products_route(
-    code: Optional[str] = Query(None),
-    group: Optional[str] = Query(None),
-    description: Optional[str] = Query(None),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500)
-):
-    try:
-        result = search_products(code, group, description, page, page_size)
-        return success_response(data=result)
-    except Exception as e:
-        return error_response(str(e))
+# @router.get("/search")
+# @require_permission("api-delpi.access")
+# def search_products_route(
+#     code: Optional[str] = Query(None),
+#     group: Optional[str] = Query(None),
+#     description: Optional[str] = Query(None),
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500)
+# ):
+#     try:
+#         result = search_products(code, group, description, page, page_size)
+#         return success_response(data=result)
+#     except Exception as e:
+#         return error_response(str(e))
 
 
 @router.get(
@@ -56,26 +56,26 @@ def search_products_by_description_route(
         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get(
-    "",
-    summary="Lista produtos paginados"
-)
-@require_permission("api-delpi.access")
-def list_products(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500)
-):
-    try:
-        result = get_products_paginated(page, page_size)
+# @router.get(
+#     "",
+#     summary="Lista produtos paginados"
+# )
+# @require_permission("api-delpi.access")
+# def list_products(
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500)
+# ):
+#     try:
+#         result = get_products_paginated(page, page_size)
 
-        return success_response(
-            data=result,
-            message=f"Produtos retornados com sucesso (página {page}/{result['total_pages']})."
-        )
+#         return success_response(
+#             data=result,
+#             message=f"Produtos retornados com sucesso (página {page}/{result['total_pages']})."
+#         )
 
-    except Exception as e:
-        log_error(f"Erro ao listar produtos: {e}")
-        return error_response(f"Erro inesperado: {e}")
+#     except Exception as e:
+#         log_error(f"Erro ao listar produtos: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 @router.get("/{code}", summary="Consulta produto por código")
