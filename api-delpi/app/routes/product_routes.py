@@ -188,24 +188,24 @@ router = APIRouter()
 #         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get("/{code}/suppliers", summary="Consulta os fornecedores de um produto com paginação")
-def suppliers(
-    code: str,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500)
-):
-    """
-    Retorna os fornecedores de um produto com suporte a paginação.
-    """
-    try:
-        result = get_suppliers(code, page, page_size)
-        return success_response(
-            data=result,
-            message=f"Fornecedores de {code} retornados com sucesso (página {page}/{result['total_pages']})."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar fornecedores do item {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get("/{code}/suppliers", summary="Consulta os fornecedores de um produto com paginação")
+# def suppliers(
+#     code: str,
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500)
+# ):
+#     """
+#     Retorna os fornecedores de um produto com suporte a paginação.
+#     """
+#     try:
+#         result = get_suppliers(code, page, page_size)
+#         return success_response(
+#             data=result,
+#             message=f"Fornecedores de {code} retornados com sucesso (página {page}/{result['total_pages']})."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar fornecedores do item {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 @router.get("/{code}/inbound-invoice-items", summary="Consulta as notas fiscais de entrada (paginadas e filtráveis)")

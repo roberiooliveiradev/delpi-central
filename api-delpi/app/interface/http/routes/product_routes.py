@@ -11,6 +11,7 @@ from app.application.dto.list_products_requests import ListProductsRequest
 from app.application.dto.list_product_structured_request import ListProductStructureRequest
 from app.application.dto.list_product_parents_request import ListProductParentsRequest
 from app.application.dto.export_structure_excel_request import ExportStructureExcelRequest
+from app.application.dto.list_product_suppliers_request import ListProductSuppliersRequest
 
 
 from app.composition.product_composer import (
@@ -18,6 +19,7 @@ from app.composition.product_composer import (
     build_list_structure_use_case,
     build_export_structure_excel_use_case,
     build_list_parents_use_case,
+    build_list_product_suppliers_use_case,
     )
 
 
@@ -163,5 +165,33 @@ def parents(
     except Exception as e:
 
         log_error(f"Erro ao consultar pais do item {code}: {e}")
+
+        return error_response(str(e))
+
+@router.get("/{code}/suppliers")
+@require_permission("api-delpi.access")
+def suppliers(
+    code: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500)
+):
+
+    try:
+
+        dto = ListProductSuppliersRequest(
+            code=code,
+            page=page,
+            page_size=page_size
+        )
+
+        use_case = build_list_product_suppliers_use_case()
+
+        result = use_case.execute(dto)
+
+        return success_response(data=result.to_dict())
+
+    except Exception as e:
+
+        log_error(f"Erro ao consultar fornecedores do item {code}: {e}")
 
         return error_response(str(e))
