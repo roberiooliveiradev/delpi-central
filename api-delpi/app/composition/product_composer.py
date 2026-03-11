@@ -4,6 +4,7 @@ from app.application.use_cases.products.list_product_struture_use_case import Li
 
 from app.infrastructure.persistence.totvs.product_repositories.product_repository import ProductRepository
 from app.infrastructure.persistence.totvs.product_repositories.product_structure_repository import ProductStructureRepository
+from app.application.use_cases.products.export_product_structure_excel_use_case import ExportProductStructureExcelUseCase
 
 
 def build_search_products_use_case() -> SearchProductsUseCase:
@@ -14,3 +15,8 @@ def build_search_products_use_case() -> SearchProductsUseCase:
 def build_list_structure_use_case() -> ListProductStructureUseCase:
     repository = ProductStructureRepository()
     return ListProductStructureUseCase(repository)
+
+
+def build_export_structure_excel_use_case():
+    repository = ProductStructureRepository()
+    return ExportProductStructureExcelUseCase(repository)

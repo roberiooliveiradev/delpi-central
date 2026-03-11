@@ -1,16 +1,24 @@
 # app/interface/http/routes/product_routes.py
-from fastapi import APIRouter, Query
-from typing import Optional
-from app.application.dto.list_products_requests import ListProductsRequest
-from app.application.dto.list_product_structured_request import ListProductStructureRequest
+from fastapi import APIRouter, Query, Request
+from fastapi.responses import StreamingResponse, JSONResponse
 
+from typing import Optional
+from delpi_auth.authorization import require_permission
 from app.core.responses import success_response, error_response
 from app.utils.logger import log_error
+
+from app.application.dto.list_products_requests import ListProductsRequest
+from app.application.dto.list_product_structured_request import ListProductStructureRequest
+from app.application.dto.export_structure_excel_request import ExportStructureExcelRequest
+
+
 from app.composition.product_composer import (
     build_search_products_use_case,
     build_list_structure_use_case,
+    build_export_structure_excel_use_case,
     )
-from delpi_auth.authorization import require_permission
+
+
 
 router = APIRouter()
 
@@ -74,3 +82,49 @@ def get_structure(
     except Exception as e:
         log_error(f"Erro ao buscar estrutura do produto {code}: {e}")
         return error_response(str(e))
+
+@router.get("/{code}/structure/excel")
+@require_permission("api-delpi.access")
+async def structure_excel_public(
+    request: Request,
+    code: str,
+    format: str = Query("json")
+):
+
+    try:
+
+        dto = ExportStructureExcelRequest(code=code)
+
+        use_case = build_export_structure_excel_use_case()
+
+        excel_stream = use_case.execute(dto)
+
+        filename = f"Estrutura_{code}.xlsx"
+
+        if format.lower() == "xlsx":
+
+            return StreamingResponse(
+                excel_stream,
+                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                headers={
+                    "Content-Disposition": f"attachment; filename={filename}"
+                }
+            )
+
+        public_url = str(request.url.replace(query="format=xlsx"))
+
+        return JSONResponse(
+            content={
+                "message": "Arquivo Excel gerado com sucesso!",
+                "download_url": public_url
+            }
+        )
+
+    except Exception as e:
+
+        log_error(f"Erro ao gerar planilha Excel pública de {code}: {e}")
+
+        return JSONResponse(
+            content={"error": str(e)},
+            status_code=500
+        )
