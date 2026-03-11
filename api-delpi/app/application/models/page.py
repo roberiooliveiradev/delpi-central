@@ -1,3 +1,4 @@
+# app/application/models/page.py
 from dataclasses import dataclass
 from typing import Generic, List, TypeVar
 
@@ -18,7 +19,10 @@ class Page(Generic[T]):
 
     def to_dict(self):
         return {
-            "items": [vars(i) for i in self.items],
+            "items": [
+                i.to_dict() if hasattr(i, "to_dict") else vars(i)
+                for i in self.items
+            ],
             "page": self.page,
             "page_size": self.page_size,
             "total": self.total,

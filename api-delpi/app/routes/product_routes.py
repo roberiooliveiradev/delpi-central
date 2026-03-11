@@ -35,25 +35,25 @@ router = APIRouter()
 #         return error_response(str(e))
 
 
-@router.get(
-    "/search/description",
-    summary="Busca específica por descrição, com paginação e score"
-)
-@require_permission("api-delpi.access")
-def search_products_by_description_route(
-    description: str = Query(..., description="Descrição ou termos"),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
-):
-    try:
-        result = search_products_by_description(description, page, page_size)
-        return success_response(
-            data=result,
-            message=f"Busca por descrição realizada com sucesso (página {page}/{result['total_pages']})."
-        )
-    except Exception as e:
-        log_error(f"Erro na busca pela descrição: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get(
+#     "/search/description",
+#     summary="Busca específica por descrição, com paginação e score"
+# )
+# @require_permission("api-delpi.access")
+# def search_products_by_description_route(
+#     description: str = Query(..., description="Descrição ou termos"),
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500),
+# ):
+#     try:
+#         result = search_products_by_description(description, page, page_size)
+#         return success_response(
+#             data=result,
+#             message=f"Busca por descrição realizada com sucesso (página {page}/{result['total_pages']})."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro na busca pela descrição: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 # @router.get(
@@ -78,40 +78,40 @@ def search_products_by_description_route(
 #         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get("/{code}", summary="Consulta produto por código")
-def product(code: str):
-    try:
-        product = get_product(code)
+# @router.get("/{code}", summary="Consulta produto por código")
+# def product(code: str):
+#     try:
+#         product = get_product(code)
 
-        return success_response(
-            data={"produto": product.model_dump()},  
-            message="Produto localizado com sucesso!"
-        )
+#         return success_response(
+#             data={"produto": product.model_dump()},  
+#             message="Produto localizado com sucesso!"
+#         )
 
-    except Exception as e:
-        log_error(f"Erro ao consultar produto {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+#     except Exception as e:
+#         log_error(f"Erro ao consultar produto {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get("/{code}/structure", summary="Consulta estrutura (BOM) paginada via CTE")
-def structure(
-    code: str,
-    max_depth: int = Query(10, ge=1, le=15),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(100, ge=1, le=500)
-):
-    """
-    Retorna a estrutura (BOM) via CTE com suporte a paginação.
-    """
-    try:
-        result = get_structure(code, max_depth, page, page_size)
-        return success_response(
-            data=result,
-            message=f"Estrutura do produto {code} retornada com sucesso (página {page}/{result['total_pages']})."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar estrutura do produto {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get("/{code}/structure", summary="Consulta estrutura (BOM) paginada via CTE")
+# def structure(
+#     code: str,
+#     max_depth: int = Query(10, ge=1, le=15),
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(100, ge=1, le=500)
+# ):
+#     """
+#     Retorna a estrutura (BOM) via CTE com suporte a paginação.
+#     """
+#     try:
+#         result = get_structure(code, max_depth, page, page_size)
+#         return success_response(
+#             data=result,
+#             message=f"Estrutura do produto {code} retornada com sucesso (página {page}/{result['total_pages']})."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar estrutura do produto {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 @router.get(
