@@ -29,6 +29,8 @@ from app.infrastructure.persistence.totvs.product_repositories.product_sales_ope
 from app.application.use_cases.products.get_product_sales_open_orders_use_case import GetProductSalesOpenOrdersUseCase
 from app.infrastructure.persistence.totvs.product_repositories.product_sales_billing_repository import ProductSalesBillingRepository
 from app.application.use_cases.products.get_product_sales_billing_use_case import GetProductSalesBillingUseCase
+from app.infrastructure.persistence.totvs.product_repositories.product_pricing_repository import ProductPricingRepository
+from app.application.use_cases.products.get_product_pricing_use_case import GetProductPricingUseCase
 
 
 
@@ -95,3 +97,7 @@ def build_get_product_sales_open_orders():
 def build_get_product_sales_billing():
     repository = ProductSalesBillingRepository()
     return GetProductSalesBillingUseCase(repository=repository)
+
+def build_get_product_pricing():
+    repository = ProductPricingRepository()
+    return GetProductPricingUseCase(repository=repository)

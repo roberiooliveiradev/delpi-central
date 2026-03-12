@@ -337,24 +337,24 @@ router = APIRouter()
 #         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get(
-    "/{code}/pricing",
-    summary="Preços comerciais do produto"
-)
-def product_pricing(code: str):
-    """
-    Retorna os preços do produto conforme tabelas comerciais.
-    Base: DA1010
-    """
-    try:
-        result = get_product_pricing(code)
-        return success_response(
-            data=result,
-            message=f"Preços do produto {code} retornados com sucesso."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar preços do produto {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get(
+#     "/{code}/pricing",
+#     summary="Preços comerciais do produto"
+# )
+# def product_pricing(code: str):
+#     """
+#     Retorna os preços do produto conforme tabelas comerciais.
+#     Base: DA1010
+#     """
+#     try:
+#         result = get_product_pricing(code)
+#         return success_response(
+#             data=result,
+#             message=f"Preços do produto {code} retornados com sucesso."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar preços do produto {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 # @router.get("/{code}/stock", summary="Consulta o estoque de um produto com filtros e paginação")

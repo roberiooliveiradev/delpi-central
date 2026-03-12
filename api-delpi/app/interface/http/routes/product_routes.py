@@ -23,6 +23,7 @@ from app.application.dto.list_product_purchases_request import ListProductPurcha
 from app.application.dto.get_product_sales_summary_request import GetProductSalesSummaryRequest
 from app.application.dto.get_product_sales_open_orders_request import GetProductSalesOpenOrdersRequest
 from app.application.dto.get_product_sales_billing_request import GetProductSalesBillingRequest
+from app.application.dto.get_product_pricing_request import GetProductPricingRequest
 
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -41,6 +42,7 @@ from app.composition.product_composer import (
     build_get_product_sales_summary,
     build_get_product_sales_open_orders,
     build_get_product_sales_billing,
+    build_get_product_pricing,
     )
 
 
@@ -508,6 +510,7 @@ def product_sales_summary(code: str):
     "/{code}/sales/open-orders",
     summary="Open sales orders portfolio"
 )
+@require_permission("api-delpi.access")
 def product_sales_open_orders(code: str):
 
     try:
@@ -533,6 +536,7 @@ def product_sales_open_orders(code: str):
     "/{code}/sales/billing",
     summary="Product billing summary"
 )
+@require_permission("api-delpi.access")
 def product_sales_billing(code: str):
 
     try:
@@ -551,5 +555,31 @@ def product_sales_billing(code: str):
     except Exception as e:
 
         log_error(f"Erro ao consultar faturamento do produto {code}: {e}")
+
+        return error_response(f"Unexpected error: {e}")
+    
+@router.get(
+    "/{code}/pricing",
+    summary="Product commercial pricing"
+)
+@require_permission("api-delpi.access")
+def product_pricing(code: str):
+
+    try:
+
+        use_case = build_get_product_pricing()
+
+        result = use_case.execute(
+            GetProductPricingRequest(code=code)
+        )
+
+        return success_response(
+            data=result,
+            message=f"Product pricing for {code} fetched successfully."
+        )
+
+    except Exception as e:
+
+        log_error(f"Erro ao consultar preços do produto {code}: {e}")
 
         return error_response(f"Unexpected error: {e}")
