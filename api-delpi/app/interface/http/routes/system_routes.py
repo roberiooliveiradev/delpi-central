@@ -1,0 +1,231 @@
+# app/interface/http/routes/system_routes.py
+
+from fastapi import APIRouter, Query
+
+from app.application.dto.system_requests import (
+    GetTableRequest,
+    ListTableColumnsRequest,
+    SearchTablesByDescriptionRequest,
+    GetTableIndexesRequest,
+    GetTableRelationsRequest,
+    GetTableSchemaRequest,
+    SearchColumnsInTableRequest,
+    SearchColumnsByDescriptionRequest,
+)
+from app.composition.system_composer import (
+    build_get_table_use_case,
+    build_list_table_columns_use_case,
+    build_search_tables_by_description_use_case,
+    build_get_table_indexes_use_case,
+    build_get_table_relations_use_case,
+    build_get_table_schema_use_case,
+    build_search_columns_in_table_use_case,
+    build_search_columns_by_description_use_case,
+)
+from app.core.responses import success_response, error_response
+from app.core.exceptions import DatabaseConnectionError, BusinessLogicError
+from app.utils.logger import log_info, log_error
+
+from delpi_auth.authorization import require_any_permission
+
+router = APIRouter()
+
+
+@router.get("/tables/search", summary="Busca tabelas por descrição (SX2)")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+def search_tables(
+    description: str = Query(..., min_length=2, description="Descrição parcial ou completa da tabela"),
+    page: int = Query(1, ge=1, description="Número da página"),
+    limit: int = Query(20, ge=1, le=200, description="Quantidade de registros por página"),
+):
+    log_info(
+        f"Iniciando busca de tabelas com descrição semelhante a "
+        f"'{description}' (página {page}, limite {limit})"
+    )
+
+    try:
+        dto = SearchTablesByDescriptionRequest(
+            description=description,
+            page=page,
+            limit=limit,
+        )
+
+        use_case = build_search_tables_by_description_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(
+            data=result,
+            message="Busca de tabelas realizada com sucesso!"
+        )
+
+    except BusinessLogicError as e:
+        log_error(f"Nenhuma tabela encontrada para '{description}': {e}")
+        return error_response(str(e))
+    except DatabaseConnectionError as e:
+        log_error(f"Erro de conexão ao buscar tabelas: {e}")
+        return error_response(f"Erro de conexão com o banco de dados: {e}")
+    except Exception as e:
+        log_error(f"Erro inesperado ao buscar tabelas com descrição '{description}': {e}")
+        return error_response(f"Erro inesperado: {e}")
+
+
+@router.get("/tables/{tableName}", summary="Consulta informações de tabela")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+def table(tableName: str):
+    try:
+        dto = GetTableRequest(table_name=tableName)
+        use_case = build_get_table_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(
+            data=result,
+            message="Tabela localizada com sucesso!"
+        )
+
+    except Exception as e:
+        log_error(f"Erro ao consultar informações da tabela {tableName}: {e}")
+        return error_response(f"Erro inesperado: {e}")
+
+
+@router.get("/tables/{tableName}/columns", summary="Consulta colunas de tabela com paginação")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+def table_columns(
+    tableName: str,
+    page: int = Query(1, ge=1, description="Número da página"),
+    limit: int = Query(50, ge=1, le=200, description="Quantidade de registros por página"),
+):
+    log_info(
+        f"Consultando colunas da tabela {tableName} "
+        f"(página {page}, limite {limit})"
+    )
+
+    try:
+        dto = ListTableColumnsRequest(
+            table_name=tableName,
+            page=page,
+            limit=limit,
+        )
+
+        use_case = build_list_table_columns_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(
+            data=result,
+            message=f"Colunas da tabela {tableName} retornadas com sucesso!"
+        )
+
+    except BusinessLogicError as e:
+        log_error(f"Nenhuma coluna encontrada para '{tableName}': {e}")
+        return error_response(str(e))
+    except Exception as e:
+        log_error(f"Erro ao consultar colunas da tabela {tableName}: {e}")
+        return error_response(f"Erro inesperado: {e}")
+
+
+@router.get("/tables/{tableName}/indexes", summary="Consulta índices (SIX010)")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+def table_indexes(tableName: str):
+    try:
+        dto = GetTableIndexesRequest(table_name=tableName)
+        use_case = build_get_table_indexes_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(result, "Índices retornados com sucesso!")
+
+    except Exception as e:
+        log_error(f"Erro ao consultar índices da tabela {tableName}: {e}")
+        return error_response(str(e))
+
+
+@router.get("/tables/{tableName}/relations", summary="Consulta relacionamentos (SX9010)")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+def table_relations(tableName: str):
+    try:
+        dto = GetTableRelationsRequest(table_name=tableName)
+        use_case = build_get_table_relations_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(result, "Relacionamentos retornados com sucesso!")
+
+    except Exception as e:
+        log_error(f"Erro ao consultar relacionamentos da tabela {tableName}: {e}")
+        return error_response(str(e))
+
+
+@router.get("/tables/{tableName}/schema", summary="Schema completo da tabela (SX2, SX3, SIX, SX9)")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+def table_schema(tableName: str):
+    try:
+        dto = GetTableSchemaRequest(table_name=tableName)
+        use_case = build_get_table_schema_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(result, "Schema completo retornado!")
+
+    except Exception as e:
+        log_error(f"Erro ao consultar schema da tabela {tableName}: {e}")
+        return error_response(str(e))
+
+
+@router.get("/tables/{tableName}/columns/search", summary="Buscar colunas por texto")
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+def search_columns(tableName: str, q: str = Query(..., min_length=2)):
+    try:
+        dto = SearchColumnsInTableRequest(
+            table_name=tableName,
+            text=q,
+        )
+
+        use_case = build_search_columns_in_table_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(result, f"Colunas contendo '{q}' retornadas!")
+
+    except Exception as e:
+        log_error(f"Erro ao buscar colunas por texto na tabela {tableName}: {e}")
+        return error_response(str(e))
+
+
+@router.get(
+    "/columns/search",
+    summary="Busca colunas por descrição (SX3010 + ranking semântico)"
+)
+@require_any_permission(["api-delpi.access.full", "api-delpi.system"])
+def search_columns_global(
+    description: str = Query(
+        ...,
+        min_length=2,
+        description="Texto descritivo da coluna (ex: 'Amarração produto fornecedor')"
+    ),
+    page: int = Query(1, ge=1, description="Número da página"),
+    limit: int = Query(20, ge=1, le=200, description="Quantidade de registros por página"),
+):
+    log_info(
+        f"Iniciando busca global de colunas por descrição '{description}' "
+        f"(página {page}, limite {limit})"
+    )
+
+    try:
+        dto = SearchColumnsByDescriptionRequest(
+            description=description,
+            page=page,
+            limit=limit,
+        )
+
+        use_case = build_search_columns_by_description_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(
+            data=result,
+            message="Busca de colunas realizada com sucesso!"
+        )
+
+    except BusinessLogicError as e:
+        log_error(f"Nenhuma coluna encontrada: {e}")
+        return error_response(str(e))
+    except DatabaseConnectionError as e:
+        log_error(f"Erro de conexão ao buscar colunas: {e}")
+        return error_response(f"Erro de conexão com o banco de dados: {e}")
+    except Exception as e:
+        log_error(f"Erro inesperado ao buscar colunas: {e}")
+        return error_response(f"Erro inesperado: {e}")

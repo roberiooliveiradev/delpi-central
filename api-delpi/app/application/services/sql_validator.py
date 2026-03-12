@@ -1,4 +1,4 @@
-# app/utils/sql_validator.py
+# app/application/services/sql_validator.py
 import re
 import json
 from pathlib import Path
