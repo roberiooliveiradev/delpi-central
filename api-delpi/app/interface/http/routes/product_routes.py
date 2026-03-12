@@ -13,6 +13,7 @@ from app.application.dto.list_product_parents_request import ListProductParentsR
 from app.application.dto.export_structure_excel_request import ExportStructureExcelRequest
 from app.application.dto.list_product_suppliers_request import ListProductSuppliersRequest
 from app.application.dto.list_product_customers_request import ListProductCustomersRequest
+from app.application.dto.list_product_inspection_request import ListProductInspectionRequest
 
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -20,7 +21,8 @@ from app.composition.product_composer import (
     build_export_structure_excel_use_case,
     build_list_parents_use_case,
     build_list_product_suppliers_use_case,
-    build_list_customers_use_case
+    build_list_customers_use_case,
+    build_list_product_inspection_use_case,
     )
 
 
@@ -60,7 +62,7 @@ def search_products_route(
         log_error(f"Erro ao buscar produtos: {e}")
         return error_response(str(e))
 
-@router.get("/structure/{code}")
+@router.get("{code}/structure")
 @require_permission("api-delpi.access")
 def get_structure(
     code: str,
@@ -217,5 +219,31 @@ def customers(
     except Exception as e:
 
         log_error(f"Erro ao consultar clientes do item {code}: {e}")
+
+        return error_response(str(e))
+    
+@router.get("/{code}/inspection")
+@require_permission("api-delpi.access")
+def inspection(
+    code: str,
+    max_depth: int = Query(10, ge=1, le=15)
+):
+
+    try:
+
+        dto = ListProductInspectionRequest(
+            code=code,
+            max_depth=max_depth
+        )
+
+        use_case = build_list_product_inspection_use_case()
+
+        result = use_case.execute(dto)
+
+        return success_response(data=result)
+
+    except Exception as e:
+
+        log_error(f"Erro ao consultar inspeção do item {code}: {e}")
 
         return error_response(str(e))

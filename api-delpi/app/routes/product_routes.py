@@ -441,27 +441,27 @@ def guide(
         return error_response(f"Erro inesperado: {e}")
     
 
-@router.get(
-    "/{code}/inspection",
-    summary="Consulta a inspeção de processos do produto e seus componentes"
-)
-def inspection(
-    code: str,
-    max_depth: int = Query(10, ge=1, le=15)
-):
-    """
-    Retorna a inspeção do produto consultando QP6, QP7 e QP8,
-    incluindo inspeções dos componentes (via SG1010).
-    """
-    try:
-        result = get_inspection(code, max_depth)
-        return success_response(
-            data=result,
-            message=f"Inspeção de {code} retornada com sucesso."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar inspeção do item {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get(
+#     "/{code}/inspection",
+#     summary="Consulta a inspeção de processos do produto e seus componentes"
+# )
+# def inspection(
+#     code: str,
+#     max_depth: int = Query(10, ge=1, le=15)
+# ):
+#     """
+#     Retorna a inspeção do produto consultando QP6, QP7 e QP8,
+#     incluindo inspeções dos componentes (via SG1010).
+#     """
+#     try:
+#         result = get_inspection(code, max_depth)
+#         return success_response(
+#             data=result,
+#             message=f"Inspeção de {code} retornada com sucesso."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar inspeção do item {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 @router.get(
@@ -492,23 +492,23 @@ def product_analyser(
         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get("/{code}/customers", summary="Consulta os clientes amarrados a um produto com paginação")
-def customers(
-    code: str,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500)
-):
-    """
-    Retorna os clientes vinculados a um produto (SA7010 — Amarração Produto x Cliente)
-    com suporte a paginação.
-    """
-    try:
-        result = get_customers(code, page, page_size)
-        return success_response(
-            data=result,
-            message=f"Clientes vinculados ao produto {code} retornados com sucesso (página {page}/{result['total_pages']})."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar clientes do item {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get("/{code}/customers", summary="Consulta os clientes amarrados a um produto com paginação")
+# def customers(
+#     code: str,
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500)
+# ):
+#     """
+#     Retorna os clientes vinculados a um produto (SA7010 — Amarração Produto x Cliente)
+#     com suporte a paginação.
+#     """
+#     try:
+#         result = get_customers(code, page, page_size)
+#         return success_response(
+#             data=result,
+#             message=f"Clientes vinculados ao produto {code} retornados com sucesso (página {page}/{result['total_pages']})."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar clientes do item {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
