@@ -10,20 +10,24 @@
   "entry": "http://localhost/apps/api-delpi/docs",
   "permissions": [
     {
-      "code": "api-delpi.docs.view",
-      "name": "Visualizar Docs API DELPI",
-      "description": null,
-      "module": "api-delpi"
+      "code": "api-delpi-docs.view",
+      "name": "Visualizar Docs",
+      "description": "Visualizar Docs API DELPI",
+      "module": "api-delpi-docs"
     }
   ],
   "routes": [
     {
       "path": "/api-delpi-docs",
       "label": "API DELPI Docs",
-      "permission": "api-delpi.docs.view",
+      "permission": "api-delpi-docs.view",
       "icon": "book-open",
+      "entry": null,
       "order": 10,
       "showInMenu": true
     }
-  ]
+  ],
+  "ui": {
+    "renderMode": "embedded"
+  }
 }
