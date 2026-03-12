@@ -19,6 +19,7 @@ from app.application.dto.list_product_internal_movements_request import ListProd
 from app.application.dto.list_product_stock_request import ListProductStockRequest
 from app.application.dto.list_product_inbound_invoice_items_request import ListProductInboundInvoiceItemsRequest
 from app.application.dto.list_product_outbound_invoice_items_request import ListProductOutboundInvoiceItemsRequest
+from app.application.dto.list_product_purchases_request import ListProductPurchasesRequest
 
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -32,7 +33,8 @@ from app.composition.product_composer import (
     build_list_product_internal_movements_use_case,
     build_list_product_stock_use_case,
     build_list_product_inbound_invoice_items_use_case,
-    build_list_product_outbound_invoice_items_use_case
+    build_list_product_outbound_invoice_items_use_case,
+    build_list_product_purchases,
     )
 
 
@@ -434,4 +436,38 @@ def outbound_invoice_items(
 
     except Exception as e:
         log_error(f"Erro ao consultar NF-es de saída para {code}: {e}")
+        return error_response(f"Unexpected error: {e}")
+    
+@router.get(
+    "/{code}/purchases",
+    summary="Purchase history for product"
+)
+@require_permission("api-delpi.access")
+def purchases(
+    code: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500)
+):
+
+    try:
+
+        use_case = build_list_product_purchases()
+
+        result = use_case.execute(
+            ListProductPurchasesRequest(
+                code=code,
+                page=page,
+                page_size=page_size
+            )
+        )
+
+        return success_response(
+            data=result,
+            message=f"Purchases for {code} fetched successfully (page {page}/{result['total_pages']})."
+        )
+
+    except Exception as e:
+
+        log_error(f"Erro ao consultar compras do item {code}: {e}")
+
         return error_response(f"Unexpected error: {e}")

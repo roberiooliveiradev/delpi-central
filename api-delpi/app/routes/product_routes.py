@@ -256,24 +256,24 @@ router = APIRouter()
 #         return error_response(f"Unexpected error: {e}")
 
 
-@router.get(
-    "/{code}/purchases",
-    summary="Histórico resumido de compras do produto"
-)
-def purchases(
-    code: str,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500)
-):
-    try:
-        result = get_purchases(code, page, page_size)
-        return success_response(
-            data=result,
-            message=f"Histórico de compras de {code} retornado com sucesso (página {page}/{result['total_pages']})."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar compras do item {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get(
+#     "/{code}/purchases",
+#     summary="Histórico resumido de compras do produto"
+# )
+# def purchases(
+#     code: str,
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500)
+# ):
+#     try:
+#         result = get_purchases(code, page, page_size)
+#         return success_response(
+#             data=result,
+#             message=f"Histórico de compras de {code} retornado com sucesso (página {page}/{result['total_pages']})."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar compras do item {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 @router.get(

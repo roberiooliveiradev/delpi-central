@@ -22,6 +22,8 @@ from app.application.use_cases.products.list_product_stock_use_case import ListP
 from app.infrastructure.persistence.totvs.product_repositories.product_invoice_items_repository import ProductInvoiceItemsRepository
 from app.application.use_cases.products.list_product_inbound_invoice_items_use_case import ListProductInboundInvoiceItemsUseCase
 from app.application.use_cases.products.list_product_outbound_invoice_items_use_case import ListProductOutboundInvoiceItemsUseCase
+from app.infrastructure.persistence.totvs.product_repositories.product_purchases_repository import ProductPurchasesRepository
+from app.application.use_cases.products.list_product_purchases_use_case import ListProductPurchasesUseCase
 
 
 
@@ -72,3 +74,7 @@ def build_list_product_inbound_invoice_items_use_case():
 def build_list_product_outbound_invoice_items_use_case():
     repository = ProductInvoiceItemsRepository()
     return ListProductOutboundInvoiceItemsUseCase(repository)
+
+def build_list_product_purchases():
+    repository = ProductPurchasesRepository()
+    return ListProductPurchasesUseCase(repository=repository)
