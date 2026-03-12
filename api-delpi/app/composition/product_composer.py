@@ -19,6 +19,9 @@ from app.infrastructure.persistence.totvs.product_repositories.product_internal_
 from app.application.use_cases.products.list_product_internal_movements_use_case import ListProductInternalMovementsUseCase
 from app.infrastructure.persistence.totvs.product_repositories.product_stock_repository import ProductStockRepository
 from app.application.use_cases.products.list_product_stock_use_case import ListProductStockUseCase
+from app.infrastructure.persistence.totvs.product_repositories.product_invoice_items_repository import ProductInvoiceItemsRepository
+from app.application.use_cases.products.list_product_inbound_invoice_items_use_case import ListProductInboundInvoiceItemsUseCase
+from app.application.use_cases.products.list_product_outbound_invoice_items_use_case import ListProductOutboundInvoiceItemsUseCase
 
 
 
@@ -61,3 +64,11 @@ def build_list_product_internal_movements_use_case():
 def build_list_product_stock_use_case():
     repo = ProductStockRepository()
     return ListProductStockUseCase(repo)
+
+def build_list_product_inbound_invoice_items_use_case():
+    repository = ProductInvoiceItemsRepository()
+    return ListProductInboundInvoiceItemsUseCase(repository)
+
+def build_list_product_outbound_invoice_items_use_case():
+    repository = ProductInvoiceItemsRepository()
+    return ListProductOutboundInvoiceItemsUseCase(repository)

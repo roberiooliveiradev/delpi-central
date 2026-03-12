@@ -1,6 +1,8 @@
 # app/domain/ports/product_internal_movements_repository_port.py
+
 from abc import ABC, abstractmethod
-from typing import Tuple, List, Optional
+from typing import Optional
+from app.application.models.page import Page
 from app.domain.entities.internal_movement import InternalMovement
 
 
@@ -18,5 +20,5 @@ class ProductInternalMovementsRepositoryPort(ABC):
         location: Optional[str],
         tm: Optional[str],
         op: Optional[str]
-    ) -> Tuple[int, List[InternalMovement]]:
+    ) -> Page[InternalMovement]:
         pass

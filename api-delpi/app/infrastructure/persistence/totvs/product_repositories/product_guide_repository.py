@@ -1,11 +1,12 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_guide_repository.py
 
-from typing import Optional, Tuple, List
+from typing import Optional
 
 from app.infrastructure.persistence.base_repository import BaseRepository
 from app.infrastructure.persistence.pagination import paginate
 from app.infrastructure.persistence.query_builder import QueryBuilder
 
+from app.application.models.page import Page
 from app.domain.entities.guide_operation import GuideOperation
 from app.domain.ports.product_guide_repository_port import ProductGuideRepositoryPort
 
@@ -19,24 +20,16 @@ class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):
         page_size: int,
         branch: Optional[str],
         max_depth: int
-    ) -> Tuple[int, List[GuideOperation]]:
+    ) -> Page[GuideOperation]:
 
         paging = paginate(page, page_size)
 
         qb = QueryBuilder()
 
-        # ----------------------------
-        # filtros
-        # ----------------------------
-
         qb.raw("SG2.D_E_L_E_T_ = ''")
         qb.eq("SG2.G2_FILIAL", branch)
 
         where_clause, params = qb.build()
-
-        # ----------------------------
-        # COUNT
-        # ----------------------------
 
         count_sql = f"""  
         WITH RECURSIVE_BOM AS (
@@ -71,10 +64,6 @@ class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):
             ON CODES.product_code = SG2.G2_PRODUTO
         WHERE {where_clause}
         """
-
-        # ----------------------------
-        # DATA
-        # ----------------------------
 
         data_sql = f"""  
         WITH RECURSIVE_BOM AS (
@@ -155,7 +144,6 @@ class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):
         OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """
 
-        # parâmetros base da CTE
         base_params = (code, max_depth, code)
 
         with self as repo:
@@ -177,33 +165,29 @@ class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):
                 branch=r["branch"],
                 route_code=r["route_code"],
                 product_code=r["product_code"],
-
                 operation_code=r["operation_code"],
                 operation_description=r["operation_description"],
-
                 resource_code=r["resource_code"],
                 work_center=r["work_center"],
-
                 setup_hours=r["setup_hours"],
-
                 standard_time_hour_mil=r["standard_time_hour_mil"],
                 standard_time_hours_piece=r["standard_time_hours_piece"],
                 standard_time_minutes_piece=r["standard_time_minutes_piece"],
-
                 operation_type=r["operation_type"],
-
                 mandatory_operation=r["mandatory_operation"],
                 mandatory_sequence=r["mandatory_sequence"],
                 mandatory_report=r["mandatory_report"],
-
                 component_code=r["component_code"],
                 component_description=r["component_description"],
-
                 component_sequence=r["component_sequence"],
-
                 bom_level=r["bom_level"],
             )
             for r in rows
         ]
 
-        return total, items
+        return Page(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size
+        )

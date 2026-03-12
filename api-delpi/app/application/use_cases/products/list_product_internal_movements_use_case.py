@@ -1,13 +1,7 @@
 # app/application/use_cases/products/list_product_internal_movements_use_case.py
-from app.domain.ports.product_internal_movements_repository_port import (
-    ProductInternalMovementsRepositoryPort
-)
 
-from app.application.dto.list_product_internal_movements_request import (
-    ListProductInternalMovementsRequest
-)
-
-from app.infrastructure.persistence.pagination import build_page_response
+from app.domain.ports.product_internal_movements_repository_port import ProductInternalMovementsRepositoryPort
+from app.application.dto.list_product_internal_movements_request import ListProductInternalMovementsRequest
 
 
 class ListProductInternalMovementsUseCase:
@@ -17,7 +11,7 @@ class ListProductInternalMovementsUseCase:
 
     def execute(self, dto: ListProductInternalMovementsRequest):
 
-        total, items = self.repository.list_internal_movements(
+        page = self.repository.list_internal_movements(
             code=dto.code,
             page=dto.page,
             page_size=dto.page_size,
@@ -29,14 +23,4 @@ class ListProductInternalMovementsUseCase:
             op=dto.op
         )
 
-        data = [
-            i.__dict__
-            for i in items
-        ]
-
-        return build_page_response(
-            data,
-            total,
-            dto.page,
-            dto.page_size
-        )
+        return page.to_dict()

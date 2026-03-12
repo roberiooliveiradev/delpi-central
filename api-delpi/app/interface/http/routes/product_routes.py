@@ -17,6 +17,8 @@ from app.application.dto.list_product_inspection_request import ListProductInspe
 from app.application.dto.list_product_guide_request import ListProductGuideRequest
 from app.application.dto.list_product_internal_movements_request import ListProductInternalMovementsRequest
 from app.application.dto.list_product_stock_request import ListProductStockRequest
+from app.application.dto.list_product_inbound_invoice_items_request import ListProductInboundInvoiceItemsRequest
+from app.application.dto.list_product_outbound_invoice_items_request import ListProductOutboundInvoiceItemsRequest
 
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -29,6 +31,8 @@ from app.composition.product_composer import (
     build_list_product_guide_use_case,
     build_list_product_internal_movements_use_case,
     build_list_product_stock_use_case,
+    build_list_product_inbound_invoice_items_use_case,
+    build_list_product_outbound_invoice_items_use_case
     )
 
 
@@ -357,3 +361,77 @@ def stock(
         log_error(f"Erro ao consultar estoque do item {code}: {e}")
 
         return error_response(str(e))
+    
+@router.get("/{code}/inbound-invoice-items")
+@require_permission("api-delpi.access")
+def inbound_invoice_items(
+    code: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+    issue_date_start: Optional[str] = Query(None),
+    issue_date_end: Optional[str] = Query(None),
+    supplier: Optional[str] = Query(None),
+    branch: Optional[str] = Query(None)
+):
+
+    try:
+
+        dto = ListProductInboundInvoiceItemsRequest(
+            code=code,
+            page=page,
+            page_size=page_size,
+            issue_date_start=issue_date_start,
+            issue_date_end=issue_date_end,
+            supplier=supplier,
+            branch=branch
+        )
+
+        use_case = build_list_product_inbound_invoice_items_use_case()
+
+        result = use_case.execute(dto)
+
+        return success_response(
+            data=result,
+            message=f"Inbound invoices for {code} fetched successfully."
+        )
+
+    except Exception as e:
+        log_error(f"Erro ao consultar NF-es de entrada para {code}: {e}")
+        return error_response(f"Unexpected error: {e}")
+    
+@router.get("/{code}/outbound-invoice-items")
+@require_permission("api-delpi.access")
+def outbound_invoice_items(
+    code: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+    issue_date_start: Optional[str] = Query(None),
+    issue_date_end: Optional[str] = Query(None),
+    customer: Optional[str] = Query(None),
+    branch: Optional[str] = Query(None)
+):
+
+    try:
+
+        dto = ListProductOutboundInvoiceItemsRequest(
+            code=code,
+            page=page,
+            page_size=page_size,
+            issue_date_start=issue_date_start,
+            issue_date_end=issue_date_end,
+            customer=customer,
+            branch=branch
+        )
+
+        use_case = build_list_product_outbound_invoice_items_use_case()
+
+        result = use_case.execute(dto)
+
+        return success_response(
+            data=result,
+            message=f"Outbound invoices for {code} fetched successfully."
+        )
+
+    except Exception as e:
+        log_error(f"Erro ao consultar NF-es de saída para {code}: {e}")
+        return error_response(f"Unexpected error: {e}")

@@ -1,11 +1,12 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_internal_movements_repository.py
 
-from typing import Optional, Tuple, List
+from typing import Optional
 
 from app.infrastructure.persistence.base_repository import BaseRepository
 from app.infrastructure.persistence.pagination import paginate
 from app.infrastructure.persistence.query_builder import QueryBuilder
 
+from app.application.models.page import Page
 from app.domain.entities.internal_movement import InternalMovement
 from app.domain.ports.product_internal_movements_repository_port import ProductInternalMovementsRepositoryPort
 
@@ -26,22 +27,14 @@ class ProductInternalMovementsRepository(
         location: Optional[str],
         tm: Optional[str],
         op: Optional[str],
-    ) -> Tuple[int, List[InternalMovement]]:
+    ) -> Page[InternalMovement]:
 
         paging = paginate(page, page_size)
 
         qb = QueryBuilder()
 
-        # ----------------------------------
-        # filtros obrigatórios
-        # ----------------------------------
-
         qb.raw("SD3.D_E_L_E_T_ = ''")
         qb.eq("SD3.D3_COD", code)
-
-        # ----------------------------------
-        # filtros opcionais
-        # ----------------------------------
 
         qb.date_range("SD3.D3_EMISSAO", date_start, date_end)
 
@@ -52,19 +45,11 @@ class ProductInternalMovementsRepository(
 
         where_clause, params = qb.build()
 
-        # ----------------------------------
-        # COUNT
-        # ----------------------------------
-
         count_sql = f"""
         SELECT COUNT(*) AS total
         FROM SD3010 SD3
         WHERE {where_clause}
         """
-
-        # ----------------------------------
-        # DATA
-        # ----------------------------------
 
         data_sql = f"""
         SELECT
@@ -117,4 +102,9 @@ class ProductInternalMovementsRepository(
             for r in rows
         ]
 
-        return total, items
+        return Page(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size
+        )

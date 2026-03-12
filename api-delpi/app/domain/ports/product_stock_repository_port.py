@@ -1,7 +1,8 @@
 # app/domain/ports/product_stock_repository_port.py
 
 from abc import ABC, abstractmethod
-from typing import Tuple, List, Optional
+from typing import Optional
+from app.application.models.page import Page
 from app.domain.entities.stock import Stock
 
 
@@ -15,5 +16,5 @@ class ProductStockRepositoryPort(ABC):
         page_size: int,
         branch: Optional[str],
         location: Optional[str]
-    ) -> Tuple[int, List[Stock]]:
+    ) -> Page[Stock]:
         pass

@@ -208,52 +208,52 @@ router = APIRouter()
 #         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get("/{code}/inbound-invoice-items", summary="Consulta as notas fiscais de entrada (paginadas e filtráveis)")
-def inbound_invoice_items(
-    code: str,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
-    issue_date_start: Optional[str] = Query(None),
-    issue_date_end: Optional[str] = Query(None),
-    supplier: Optional[str] = Query(None),
-    branch: Optional[str] = Query(None)
-):
-    """
-    Retorna as notas fiscais de entrada (SD1010) com paginação e filtros opcionais.
-    """
-    try:
-        result = get_inbound_invoice_items(code, page, page_size, issue_date_start, issue_date_end, supplier, branch)
-        return success_response(
-            data=result,
-            message=f"Inbound invoices for {code} fetched successfully (page {page}/{result['total_pages']})."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar NF-es de entrada para {code}: {e}")
-        return error_response(f"Unexpected error: {e}")
+# @router.get("/{code}/inbound-invoice-items", summary="Consulta as notas fiscais de entrada (paginadas e filtráveis)")
+# def inbound_invoice_items(
+#     code: str,
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500),
+#     issue_date_start: Optional[str] = Query(None),
+#     issue_date_end: Optional[str] = Query(None),
+#     supplier: Optional[str] = Query(None),
+#     branch: Optional[str] = Query(None)
+# ):
+#     """
+#     Retorna as notas fiscais de entrada (SD1010) com paginação e filtros opcionais.
+#     """
+#     try:
+#         result = get_inbound_invoice_items(code, page, page_size, issue_date_start, issue_date_end, supplier, branch)
+#         return success_response(
+#             data=result,
+#             message=f"Inbound invoices for {code} fetched successfully (page {page}/{result['total_pages']})."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar NF-es de entrada para {code}: {e}")
+#         return error_response(f"Unexpected error: {e}")
 
 
-@router.get("/{code}/outbound-invoice-items", summary="Consulta as notas fiscais de saída (paginadas e filtráveis)")
-def outbound_invoice_items(
-    code: str,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
-    issue_date_start: Optional[str] = Query(None),
-    issue_date_end: Optional[str] = Query(None),
-    customer: Optional[str] = Query(None),
-    branch: Optional[str] = Query(None)
-):
-    """
-    Retorna as notas fiscais de saída (SD2010) com paginação e filtros opcionais.
-    """
-    try:
-        result = get_outbound_invoice_items(code, page, page_size, issue_date_start, issue_date_end, customer, branch)
-        return success_response(
-            data=result,
-            message=f"Outbound invoices for {code} fetched successfully (page {page}/{result['total_pages']})."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar NF-es de saída para {code}: {e}")
-        return error_response(f"Unexpected error: {e}")
+# @router.get("/{code}/outbound-invoice-items", summary="Consulta as notas fiscais de saída (paginadas e filtráveis)")
+# def outbound_invoice_items(
+#     code: str,
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500),
+#     issue_date_start: Optional[str] = Query(None),
+#     issue_date_end: Optional[str] = Query(None),
+#     customer: Optional[str] = Query(None),
+#     branch: Optional[str] = Query(None)
+# ):
+#     """
+#     Retorna as notas fiscais de saída (SD2010) com paginação e filtros opcionais.
+#     """
+#     try:
+#         result = get_outbound_invoice_items(code, page, page_size, issue_date_start, issue_date_end, customer, branch)
+#         return success_response(
+#             data=result,
+#             message=f"Outbound invoices for {code} fetched successfully (page {page}/{result['total_pages']})."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar NF-es de saída para {code}: {e}")
+#         return error_response(f"Unexpected error: {e}")
 
 
 @router.get(

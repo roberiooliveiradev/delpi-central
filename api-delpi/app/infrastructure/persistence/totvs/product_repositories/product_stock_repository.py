@@ -1,10 +1,12 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_stock_repository.py
-from typing import Optional, Tuple, List
+
+from typing import Optional
 
 from app.infrastructure.persistence.base_repository import BaseRepository
 from app.infrastructure.persistence.pagination import paginate
 from app.infrastructure.persistence.query_builder import QueryBuilder
 
+from app.application.models.page import Page
 from app.domain.entities.stock import Stock
 from app.domain.ports.product_stock_repository_port import ProductStockRepositoryPort
 
@@ -21,7 +23,7 @@ class ProductStockRepository(
         page_size: int,
         branch: Optional[str],
         location: Optional[str]
-    ) -> Tuple[int, List[Stock]]:
+    ) -> Page[Stock]:
 
         paging = paginate(page, page_size)
 
@@ -99,4 +101,9 @@ class ProductStockRepository(
             for r in rows
         ]
 
-        return total, items
+        return Page(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size
+        )

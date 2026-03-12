@@ -1,6 +1,7 @@
 # app/domain/ports/product_guide_repository_port.py
+
 from abc import ABC, abstractmethod
-from typing import Tuple, List
+from app.application.models.page import Page
 from app.domain.entities.guide_operation import GuideOperation
 
 
@@ -14,5 +15,5 @@ class ProductGuideRepositoryPort(ABC):
         page_size: int,
         branch: str | None,
         max_depth: int
-    ) -> Tuple[int, List[GuideOperation]]:
+    ) -> Page[GuideOperation]:
         pass
