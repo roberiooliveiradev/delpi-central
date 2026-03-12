@@ -418,27 +418,27 @@ def internal_movements(
         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get("/{code}/guide", summary="Consulta o roteiro de um produto e seus componentes com filtros e paginação")
-def guide(
-    code: str,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
-    branch: Optional[str] = Query(None, description="Filial (G2_FILIAL)"),
-    max_depth: int = Query(10, ge=1, le=15)
-):
-    """
-    Retorna o roteiro do produto consultando a tabela SG2010.
-    Possui filtros opcionais para filial e local, além de paginação.
-    """
-    try:
-        result = get_guide(code, page, page_size, branch, max_depth)
-        return success_response(
-            data=result,
-            message=f"Roteiro de {code} retornado com sucesso (página {page}/{result['total_pages']})."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar roteiro do item {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get("/{code}/guide", summary="Consulta o roteiro de um produto e seus componentes com filtros e paginação")
+# def guide(
+#     code: str,
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500),
+#     branch: Optional[str] = Query(None, description="Filial (G2_FILIAL)"),
+#     max_depth: int = Query(10, ge=1, le=15)
+# ):
+#     """
+#     Retorna o roteiro do produto consultando a tabela SG2010.
+#     Possui filtros opcionais para filial e local, além de paginação.
+#     """
+#     try:
+#         result = get_guide(code, page, page_size, branch, max_depth)
+#         return success_response(
+#             data=result,
+#             message=f"Roteiro de {code} retornado com sucesso (página {page}/{result['total_pages']})."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar roteiro do item {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
     
 
 # @router.get(

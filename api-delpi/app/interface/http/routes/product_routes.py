@@ -14,6 +14,7 @@ from app.application.dto.export_structure_excel_request import ExportStructureEx
 from app.application.dto.list_product_suppliers_request import ListProductSuppliersRequest
 from app.application.dto.list_product_customers_request import ListProductCustomersRequest
 from app.application.dto.list_product_inspection_request import ListProductInspectionRequest
+from app.application.dto.list_product_guide_request import ListProductGuideRequest
 
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -23,6 +24,7 @@ from app.composition.product_composer import (
     build_list_product_suppliers_use_case,
     build_list_customers_use_case,
     build_list_product_inspection_use_case,
+    build_list_product_guide_use_case,
     )
 
 
@@ -245,5 +247,37 @@ def inspection(
     except Exception as e:
 
         log_error(f"Erro ao consultar inspeção do item {code}: {e}")
+
+        return error_response(str(e))
+    
+@router.get("/{code}/guide")
+@require_permission("api-delpi.access")
+def guide(
+    code: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+    branch: Optional[str] = Query(None),
+    max_depth: int = Query(10, ge=1, le=15)
+):
+
+    try:
+
+        dto = ListProductGuideRequest(
+            code=code,
+            page=page,
+            page_size=page_size,
+            branch=branch,
+            max_depth=max_depth
+        )
+
+        use_case = build_list_product_guide_use_case()
+
+        result = use_case.execute(dto)
+
+        return success_response(data=result)
+
+    except Exception as e:
+
+        log_error(f"Erro ao consultar roteiro do item {code}: {e}")
 
         return error_response(str(e))

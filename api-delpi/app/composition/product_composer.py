@@ -13,6 +13,9 @@ from app.infrastructure.persistence.totvs.product_repositories.product_customers
 from app.application.use_cases.products.list_product_customers_use_case import ListProductCustomersUseCase
 from app.infrastructure.persistence.totvs.product_repositories.product_inspection_repository import ProductInspectionRepository
 from app.application.use_cases.products.list_product_inspection_use_case import ListProductInspectionUseCase
+from app.infrastructure.persistence.totvs.product_repositories.product_guide_repository import ProductGuideRepository
+from app.application.use_cases.products.list_product_guide_use_case import ListProductGuideUseCase
+
 
 
 def build_search_products_use_case() -> SearchProductsUseCase:
@@ -42,3 +45,8 @@ def build_list_customers_use_case():
 def build_list_product_inspection_use_case():
     repo = ProductInspectionRepository()
     return ListProductInspectionUseCase(repo)
+
+
+def build_list_product_guide_use_case():
+    repo = ProductGuideRepository()
+    return ListProductGuideUseCase(repo)
