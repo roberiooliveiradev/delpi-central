@@ -15,6 +15,7 @@ from app.application.dto.list_product_suppliers_request import ListProductSuppli
 from app.application.dto.list_product_customers_request import ListProductCustomersRequest
 from app.application.dto.list_product_inspection_request import ListProductInspectionRequest
 from app.application.dto.list_product_guide_request import ListProductGuideRequest
+from app.application.dto.list_product_internal_movements_request import ListProductInternalMovementsRequest
 
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -25,6 +26,7 @@ from app.composition.product_composer import (
     build_list_customers_use_case,
     build_list_product_inspection_use_case,
     build_list_product_guide_use_case,
+    build_list_product_internal_movements_use_case,
     )
 
 
@@ -279,5 +281,45 @@ def guide(
     except Exception as e:
 
         log_error(f"Erro ao consultar roteiro do item {code}: {e}")
+
+        return error_response(str(e))
+
+@router.get("/{code}/internal-movements")
+@require_permission("api-delpi.access")
+def internal_movements(
+    code: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+    date_start: Optional[str] = Query(None),
+    date_end: Optional[str] = Query(None),
+    branch: Optional[str] = Query(None),
+    location: Optional[str] = Query(None),
+    tm: Optional[str] = Query(None),
+    op: Optional[str] = Query(None)
+):
+
+    try:
+
+        dto = ListProductInternalMovementsRequest(
+            code=code,
+            page=page,
+            page_size=page_size,
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+            location=location,
+            tm=tm,
+            op=op
+        )
+
+        use_case = build_list_product_internal_movements_use_case()
+
+        result = use_case.execute(dto)
+
+        return success_response(data=result)
+
+    except Exception as e:
+
+        log_error(f"Erro ao consultar movimentações internas de {code}: {e}")
 
         return error_response(str(e))
