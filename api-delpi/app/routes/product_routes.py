@@ -296,45 +296,45 @@ router = APIRouter()
 #         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get(
-    "/{code}/sales/open-orders",
-    summary="Carteira de pedidos de venda do produto"
-)
-def product_sales_open_orders(code: str):
-    """
-    Retorna a carteira de pedidos de venda (abertos).
-    Base: SC5010
-    """
-    try:
-        result = get_sales_open_orders(code)
-        return success_response(
-            data=result,
-            message=f"Carteira de pedidos do produto {code} retornada com sucesso."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar carteira do produto {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get(
+#     "/{code}/sales/open-orders",
+#     summary="Carteira de pedidos de venda do produto"
+# )
+# def product_sales_open_orders(code: str):
+#     """
+#     Retorna a carteira de pedidos de venda (abertos).
+#     Base: SC5010
+#     """
+#     try:
+#         result = get_sales_open_orders(code)
+#         return success_response(
+#             data=result,
+#             message=f"Carteira de pedidos do produto {code} retornada com sucesso."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar carteira do produto {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 
-@router.get(
-    "/{code}/sales/billing",
-    summary="Resumo de faturamento do produto"
-)
-def product_sales_billing(code: str):
-    """
-    Retorna o resumo de faturamento financeiro do produto.
-    Base: SF2010
-    """
-    try:
-        result = get_sales_billing(code)
-        return success_response(
-            data=result,
-            message=f"Faturamento do produto {code} retornado com sucesso."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar faturamento do produto {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get(
+#     "/{code}/sales/billing",
+#     summary="Resumo de faturamento do produto"
+# )
+# def product_sales_billing(code: str):
+#     """
+#     Retorna o resumo de faturamento financeiro do produto.
+#     Base: SF2010
+#     """
+#     try:
+#         result = get_sales_billing(code)
+#         return success_response(
+#             data=result,
+#             message=f"Faturamento do produto {code} retornado com sucesso."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar faturamento do produto {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 @router.get(

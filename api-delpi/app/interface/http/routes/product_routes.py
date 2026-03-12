@@ -22,6 +22,7 @@ from app.application.dto.list_product_outbound_invoice_items_request import List
 from app.application.dto.list_product_purchases_request import ListProductPurchasesRequest
 from app.application.dto.get_product_sales_summary_request import GetProductSalesSummaryRequest
 from app.application.dto.get_product_sales_open_orders_request import GetProductSalesOpenOrdersRequest
+from app.application.dto.get_product_sales_billing_request import GetProductSalesBillingRequest
 
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -39,6 +40,7 @@ from app.composition.product_composer import (
     build_list_product_purchases,
     build_get_product_sales_summary,
     build_get_product_sales_open_orders,
+    build_get_product_sales_billing,
     )
 
 
@@ -524,5 +526,30 @@ def product_sales_open_orders(code: str):
     except Exception as e:
 
         log_error(f"Erro ao consultar carteira do produto {code}: {e}")
+
+        return error_response(f"Unexpected error: {e}")
+    
+@router.get(
+    "/{code}/sales/billing",
+    summary="Product billing summary"
+)
+def product_sales_billing(code: str):
+
+    try:
+
+        use_case = build_get_product_sales_billing()
+
+        result = use_case.execute(
+            GetProductSalesBillingRequest(code=code)
+        )
+
+        return success_response(
+            data=result,
+            message=f"Billing summary for product {code} fetched successfully."
+        )
+
+    except Exception as e:
+
+        log_error(f"Erro ao consultar faturamento do produto {code}: {e}")
 
         return error_response(f"Unexpected error: {e}")
