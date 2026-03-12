@@ -276,24 +276,24 @@ router = APIRouter()
 #         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get(
-    "/{code}/sales",
-    summary="Resumo consolidado de vendas do produto"
-)
-def product_sales_summary(code: str):
-    """
-    Retorna o resumo consolidado de vendas realizadas do produto.
-    Base: SD2010
-    """
-    try:
-        result = get_sales_summary(code)
-        return success_response(
-            data=result,
-            message=f"Resumo de vendas do produto {code} retornado com sucesso."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar vendas do produto {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get(
+#     "/{code}/sales",
+#     summary="Resumo consolidado de vendas do produto"
+# )
+# def product_sales_summary(code: str):
+#     """
+#     Retorna o resumo consolidado de vendas realizadas do produto.
+#     Base: SD2010
+#     """
+#     try:
+#         result = get_sales_summary(code)
+#         return success_response(
+#             data=result,
+#             message=f"Resumo de vendas do produto {code} retornado com sucesso."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar vendas do produto {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 @router.get(

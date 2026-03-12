@@ -20,6 +20,7 @@ from app.application.dto.list_product_stock_request import ListProductStockReque
 from app.application.dto.list_product_inbound_invoice_items_request import ListProductInboundInvoiceItemsRequest
 from app.application.dto.list_product_outbound_invoice_items_request import ListProductOutboundInvoiceItemsRequest
 from app.application.dto.list_product_purchases_request import ListProductPurchasesRequest
+from app.application.dto.get_product_sales_summary_request import GetProductSalesSummaryRequest
 
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -35,6 +36,7 @@ from app.composition.product_composer import (
     build_list_product_inbound_invoice_items_use_case,
     build_list_product_outbound_invoice_items_use_case,
     build_list_product_purchases,
+    build_get_product_sales_summary,
     )
 
 
@@ -469,5 +471,31 @@ def purchases(
     except Exception as e:
 
         log_error(f"Erro ao consultar compras do item {code}: {e}")
+
+        return error_response(f"Unexpected error: {e}")
+    
+@router.get(
+    "/{code}/sales",
+    summary="Product sales summary"
+)
+@require_permission("api-delpi.access")
+def product_sales_summary(code: str):
+
+    try:
+
+        use_case = build_get_product_sales_summary()
+
+        result = use_case.execute(
+            GetProductSalesSummaryRequest(code=code)
+        )
+
+        return success_response(
+            data=result,
+            message=f"Sales summary for product {code} fetched successfully."
+        )
+
+    except Exception as e:
+
+        log_error(f"Erro ao consultar vendas do produto {code}: {e}")
 
         return error_response(f"Unexpected error: {e}")
