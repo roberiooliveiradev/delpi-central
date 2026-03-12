@@ -7,7 +7,7 @@ from typing import Optional
 class ListProductGuideRequest:
 
     code: str
-    page: int = 1
-    page_size: int = 50
     branch: Optional[str] = None
-    max_depth: int = 10
+    page: Optional[int] = None
+    page_size: Optional[int] = None
+    max_depth: Optional[int] = None

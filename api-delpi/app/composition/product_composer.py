@@ -2,7 +2,7 @@
 from app.application.use_cases.products.search_products_use_case import SearchProductsUseCase
 from app.infrastructure.persistence.totvs.product_repositories.product_repository import ProductRepository
 from app.infrastructure.persistence.totvs.product_repositories.product_structure_repository import ProductStructureRepository
-from app.application.use_cases.products.list_product_struture_use_case import ListProductStructureUseCase
+from app.application.use_cases.products.list_product_structure_use_case import ListProductStructureUseCase
 from app.application.use_cases.products.export_product_structure_excel_use_case import ExportProductStructureExcelUseCase
 from app.infrastructure.persistence.totvs.product_repositories.product_parents_repository import ProductParentsRepository
 from app.application.use_cases.products.list_product_parents_use_case import ListProductParentsUseCase
@@ -31,6 +31,7 @@ from app.infrastructure.persistence.totvs.product_repositories.product_sales_bil
 from app.application.use_cases.products.get_product_sales_billing_use_case import GetProductSalesBillingUseCase
 from app.infrastructure.persistence.totvs.product_repositories.product_pricing_repository import ProductPricingRepository
 from app.application.use_cases.products.get_product_pricing_use_case import GetProductPricingUseCase
+from app.application.use_cases.products.product_analyser_use_case import ProductAnalyserUseCase
 
 
 
@@ -101,3 +102,12 @@ def build_get_product_sales_billing():
 def build_get_product_pricing():
     repository = ProductPricingRepository()
     return GetProductPricingUseCase(repository=repository)
+
+def build_product_analyser_use_case():
+
+    return ProductAnalyserUseCase(
+        build_search_products_use_case(),
+        build_list_structure_use_case(),
+        build_list_product_guide_use_case(),
+        build_list_product_inspection_use_case()
+    )

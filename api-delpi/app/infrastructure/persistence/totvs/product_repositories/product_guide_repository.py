@@ -3,26 +3,20 @@
 from typing import Optional
 
 from app.infrastructure.persistence.base_repository import BaseRepository
-from app.infrastructure.persistence.pagination import paginate
 from app.infrastructure.persistence.query_builder import QueryBuilder
 
-from app.application.models.page import Page
 from app.domain.entities.guide_operation import GuideOperation
 from app.domain.ports.product_guide_repository_port import ProductGuideRepositoryPort
 
 
 class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):
 
-    def list_guide(
+    def fetch_guide_rows(
         self,
         code: str,
-        page: int,
-        page_size: int,
         branch: Optional[str],
         max_depth: int
-    ) -> Page[GuideOperation]:
-
-        paging = paginate(page, page_size)
+    ):
 
         qb = QueryBuilder()
 
@@ -31,41 +25,7 @@ class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):
 
         where_clause, params = qb.build()
 
-        count_sql = f"""  
-        WITH RECURSIVE_BOM AS (
-            SELECT
-                G1_COD  AS parent_code,
-                G1_COMP AS product_code,
-                1       AS bom_level
-            FROM SG1010
-            WHERE D_E_L_E_T_ = ''
-            AND G1_COD = ?
-
-            UNION ALL
-
-            SELECT
-                C.G1_COD,
-                C.G1_COMP,
-                B.bom_level + 1
-            FROM SG1010 C
-            INNER JOIN RECURSIVE_BOM B
-                ON B.product_code = C.G1_COD
-            WHERE C.D_E_L_E_T_ = ''
-            AND B.bom_level < ?
-        ),
-        CODES AS (
-            SELECT ? AS product_code, 0 AS bom_level
-            UNION
-            SELECT DISTINCT product_code, bom_level FROM RECURSIVE_BOM
-        )
-        SELECT COUNT(*) AS total
-        FROM SG2010 SG2
-        INNER JOIN CODES
-            ON CODES.product_code = SG2.G2_PRODUTO
-        WHERE {where_clause}
-        """
-
-        data_sql = f"""  
+        sql = f"""  
         WITH RECURSIVE_BOM AS (
             SELECT
                 G1_COD  AS parent_code,
@@ -140,27 +100,18 @@ class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):
             SG2.G2_PRODUTO,
             SG2.G2_OPERAC,
             SGF.GF_TRT
-
-        OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """
 
         base_params = (code, max_depth, code)
 
         with self as repo:
 
-            total_row = repo.execute_one(
-                count_sql,
+            rows = repo.execute_query(
+                sql,
                 base_params + params
             )
 
-            total = int(total_row["total"]) if total_row else 0
-
-            rows = repo.execute_query(
-                data_sql,
-                base_params + params + (paging["offset"], paging["page_size"])
-            )
-
-        items = [
+        return [
             GuideOperation(
                 branch=r["branch"],
                 route_code=r["route_code"],
@@ -184,10 +135,3 @@ class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):
             )
             for r in rows
         ]
-
-        return Page(
-            items=items,
-            total=total,
-            page=page,
-            page_size=page_size
-        )

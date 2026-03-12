@@ -6,7 +6,7 @@ from app.domain.entities.inspection import Inspection
 
 class ProductInspectionRepository(BaseRepository, ProductInspectionRepositoryPort):
 
-    def list_inspections(self, code: str, max_depth: int):
+    def fetch_inspection_rows(self, code: str, max_depth: int):
 
         sql = """   
         DECLARE

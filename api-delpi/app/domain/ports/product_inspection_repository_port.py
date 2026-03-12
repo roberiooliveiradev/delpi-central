@@ -7,5 +7,5 @@ from app.domain.entities.inspection import Inspection
 class ProductInspectionRepositoryPort(ABC):
 
     @abstractmethod
-    def list_inspections(self, code: str, max_depth: int) -> List[Inspection]:
+    def fetch_inspection_rows(self, code: str, max_depth: int) -> List[Inspection]:
         pass

@@ -464,32 +464,32 @@ router = APIRouter()
 #         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get(
-    "/{code}/analyser",
-    summary="Análise completa do produto (genérico + BOM + roteiro + inspeções)"
-)
-def product_analyser(
-    code: str,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
-    max_depth: int = Query(10, ge=1, le=15)
-):
-    """
-    Retorna:
-    - Dados gerais do produto
-    - Estrutura completa (produto + componentes)
-    - Roteiro completo
-    - Inspeções QP6/QP7/QP8 de produto e componentes
-    """
-    try:
-        result = get_product_analyser(code, page, page_size, max_depth)
-        return success_response(
-            data=result,
-            message=f"Análise completa de {code} retornada com sucesso."
-        )
-    except Exception as e:
-        log_error(f"Erro ao analisar completamente o produto {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get(
+#     "/{code}/analyser",
+#     summary="Análise completa do produto (genérico + BOM + roteiro + inspeções)"
+# )
+# def product_analyser(
+#     code: str,
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500),
+#     max_depth: int = Query(10, ge=1, le=15)
+# ):
+#     """
+#     Retorna:
+#     - Dados gerais do produto
+#     - Estrutura completa (produto + componentes)
+#     - Roteiro completo
+#     - Inspeções QP6/QP7/QP8 de produto e componentes
+#     """
+#     try:
+#         result = get_product_analyser(code, page, page_size, max_depth)
+#         return success_response(
+#             data=result,
+#             message=f"Análise completa de {code} retornada com sucesso."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao analisar completamente o produto {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 # @router.get("/{code}/customers", summary="Consulta os clientes amarrados a um produto com paginação")

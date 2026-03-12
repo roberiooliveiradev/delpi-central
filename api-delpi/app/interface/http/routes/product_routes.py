@@ -24,6 +24,7 @@ from app.application.dto.get_product_sales_summary_request import GetProductSale
 from app.application.dto.get_product_sales_open_orders_request import GetProductSalesOpenOrdersRequest
 from app.application.dto.get_product_sales_billing_request import GetProductSalesBillingRequest
 from app.application.dto.get_product_pricing_request import GetProductPricingRequest
+from app.application.dto.product_analyser_request import ProductAnalyserRequest
 
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -43,6 +44,7 @@ from app.composition.product_composer import (
     build_get_product_sales_open_orders,
     build_get_product_sales_billing,
     build_get_product_pricing,
+    build_product_analyser_use_case
     )
 
 
@@ -246,13 +248,17 @@ def customers(
 @require_permission("api-delpi.access")
 def inspection(
     code: str,
-    max_depth: int = Query(10, ge=1, le=15)
+    page: int | None = Query(None, ge=1),
+    page_size: int | None = Query(None, ge=1, le=500),
+    max_depth: int | None = Query(None, ge=1, le=15)
 ):
 
     try:
 
         dto = ListProductInspectionRequest(
             code=code,
+            page=page,
+            page_size=page_size,
             max_depth=max_depth
         )
 
@@ -272,10 +278,10 @@ def inspection(
 @require_permission("api-delpi.access")
 def guide(
     code: str,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
     branch: Optional[str] = Query(None),
-    max_depth: int = Query(10, ge=1, le=15)
+    page: int | None = Query(None, ge=1),
+    page_size: int | None = Query(None, ge=1, le=500),
+    max_depth: int | None = Query(None, ge=1, le=15)
 ):
 
     try:
@@ -583,3 +589,23 @@ def product_pricing(code: str):
         log_error(f"Erro ao consultar preços do produto {code}: {e}")
 
         return error_response(f"Unexpected error: {e}")
+
+@router.get("/{code}/analyser")
+@require_permission("api-delpi.access")
+def product_analyser(code: str):
+
+    try:
+
+        dto = ProductAnalyserRequest(code=code)
+
+        use_case = build_product_analyser_use_case()
+
+        result = use_case.execute(dto)
+
+        return success_response(data=result)
+
+    except Exception as e:
+
+        log_error(f"Erro ao analisar completamente o produto {code}: {e}")
+
+        return error_response(str(e))
