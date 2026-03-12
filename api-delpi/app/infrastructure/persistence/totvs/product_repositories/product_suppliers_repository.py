@@ -1,15 +1,17 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_suppliers_repository.py
+
 from app.infrastructure.persistence.base_repository import BaseRepository
 from app.domain.ports.product_suppliers_repository_port import ProductSuppliersRepositoryPort
 from app.application.models.page import Page
 from app.domain.entities.supplier import Supplier
+from app.infrastructure.persistence.pagination import paginate
 
 
 class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort):
 
-    def list_suppliers(self, code: str, page: int, page_size: int):
+    def list_suppliers(self, code: str, page: int, page_size: int) -> Page[Supplier]:
 
-        offset = (page - 1) * page_size
+        paging = paginate(page, page_size)
 
         count_sql = """
         SELECT COUNT(*) AS total
@@ -20,7 +22,12 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
 
         with self as repo:
 
-            total = int(repo.execute_one(count_sql, (code,))["total"] or 0)
+            total_row = repo.execute_one(
+                count_sql,
+                (code,)
+            )
+
+            total = int(total_row["total"]) if total_row else 0
 
             sql = """
             WITH LAST_PURCHASE AS (
@@ -56,10 +63,10 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
                 FROM SC7010 C7
                 INNER JOIN SD1010 SD1
                     ON SD1.D1_PEDIDO  = C7.C7_NUM
-                AND SD1.D1_FORNECE = C7.C7_FORNECE
-                AND SD1.D1_LOJA    = C7.C7_LOJA
-                AND SD1.D1_COD     = C7.C7_PRODUTO
-                AND SD1.D_E_L_E_T_ = ''
+                    AND SD1.D1_FORNECE = C7.C7_FORNECE
+                    AND SD1.D1_LOJA    = C7.C7_LOJA
+                    AND SD1.D1_COD     = C7.C7_PRODUTO
+                    AND SD1.D_E_L_E_T_ = ''
                 WHERE
                     C7.D_E_L_E_T_ = ''
                     AND C7.C7_PRODUTO = ?
@@ -97,25 +104,26 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
                 LP.last_price_date      AS last_price_date
 
             FROM SA5010 SA5
+
             INNER JOIN SB1010 SB1
                 ON SB1.B1_COD = SA5.A5_PRODUTO
-            AND SB1.D_E_L_E_T_ = ''
+                AND SB1.D_E_L_E_T_ = ''
 
             LEFT JOIN SA2010 SA2
                 ON SA2.A2_COD = SA5.A5_FORNECE
-            AND SA2.A2_LOJA = SA5.A5_LOJA
-            AND SA2.D_E_L_E_T_ = ''
+                AND SA2.A2_LOJA = SA5.A5_LOJA
+                AND SA2.D_E_L_E_T_ = ''
 
             LEFT JOIN LAST_PURCHASE LP
                 ON LP.product_code = SA5.A5_PRODUTO
-            AND LP.supplier_code = SA5.A5_FORNECE
-            AND LP.supplier_store = SA5.A5_LOJA
-            AND LP.rn = 1
+                AND LP.supplier_code = SA5.A5_FORNECE
+                AND LP.supplier_store = SA5.A5_LOJA
+                AND LP.rn = 1
 
             LEFT JOIN REAL_LEAD_TIME RLT
                 ON RLT.product_code = SA5.A5_PRODUTO
-            AND RLT.supplier_code = SA5.A5_FORNECE
-            AND RLT.supplier_store = SA5.A5_LOJA
+                AND RLT.supplier_code = SA5.A5_FORNECE
+                AND RLT.supplier_store = SA5.A5_LOJA
 
             WHERE
                 SA5.D_E_L_E_T_ = ''
@@ -127,11 +135,16 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
 
             rows = repo.execute_query(
                 sql,
-                (code, code, code, offset, page_size)
+                (
+                    code,
+                    code,
+                    code,
+                    paging["offset"],
+                    paging["page_size"]
+                )
             )
 
         suppliers = [
-
             Supplier(
                 product_code=r["product_code"],
                 product_description=r["product_description"],
@@ -154,13 +167,12 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
                 last_price=r["last_price"],
                 last_price_date=r["last_price_date"],
             )
-
             for r in rows
         ]
 
         return Page(
             items=suppliers,
             total=total,
-            page=page,
-            page_size=page_size
+            page=paging["page"],
+            page_size=paging["page_size"]
         )
