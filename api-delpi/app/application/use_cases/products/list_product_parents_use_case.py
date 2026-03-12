@@ -1,4 +1,5 @@
 # app/application/use_cases/products/list_product_parents_use_case.py
+
 from app.domain.ports.product_parents_repository_port import ProductParentsRepositoryPort
 from app.application.services.parents_tree_builder import ParentsTreeBuilder
 from app.application.dto.list_product_parents_request import ListProductParentsRequest
@@ -9,7 +10,6 @@ class ListProductParentsUseCase:
 
     def __init__(self, repository: ProductParentsRepositoryPort):
         self._repository = repository
-
 
     def execute(self, request: ListProductParentsRequest):
 
@@ -23,19 +23,31 @@ class ListProductParentsUseCase:
         root = ParentsTreeBuilder.build(rows, request.code)
 
         if not root:
-
             return {
-                "structure": None,
-                "pagination": None
+                "root": None,
+                "items": [],
+                "page": None,
+                "page_size": None,
+                "total": 0,
+                "total_pages": 0
             }
 
         # FULL MODE
-
-        if not request.page or not request.page_size:
+        if request.page is None or request.page_size is None:
 
             return {
-                "structure": root.to_dict(),
-                "pagination": None
+                "root": {
+                    "code": root.code,
+                    "description": root.description,
+                    "type": root.type,
+                    "unit": root.unit,
+                    "quantity": root.quantity
+                },
+                "items": [p.to_dict() for p in root.parents],
+                "page": None,
+                "page_size": None,
+                "total": len(root.parents),
+                "total_pages": None
             }
 
         parents = root.parents
@@ -48,9 +60,14 @@ class ListProductParentsUseCase:
             total=len(parents),
             page=request.page,
             page_size=request.page_size
-        )
+        ).to_dict()
 
-        return {
-            "structure": root.to_dict(),
-            "pagination": page
+        page["root"] = {
+            "code": root.code,
+            "description": root.description,
+            "type": root.type,
+            "unit": root.unit,
+            "quantity": root.quantity
         }
+
+        return page

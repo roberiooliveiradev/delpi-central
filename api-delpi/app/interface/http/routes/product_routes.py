@@ -155,12 +155,7 @@ def parents(
 
         result = use_case.execute(dto)
 
-        data = {
-            "structure": result["structure"],
-            "pagination": result["pagination"].to_dict() if result["pagination"] else None
-        }
-
-        return success_response(data=data)
+        return success_response(data=result)
 
     except Exception as e:
 
