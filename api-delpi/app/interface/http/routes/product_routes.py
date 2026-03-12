@@ -21,6 +21,7 @@ from app.application.dto.list_product_inbound_invoice_items_request import ListP
 from app.application.dto.list_product_outbound_invoice_items_request import ListProductOutboundInvoiceItemsRequest
 from app.application.dto.list_product_purchases_request import ListProductPurchasesRequest
 from app.application.dto.get_product_sales_summary_request import GetProductSalesSummaryRequest
+from app.application.dto.get_product_sales_open_orders_request import GetProductSalesOpenOrdersRequest
 
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -37,6 +38,7 @@ from app.composition.product_composer import (
     build_list_product_outbound_invoice_items_use_case,
     build_list_product_purchases,
     build_get_product_sales_summary,
+    build_get_product_sales_open_orders,
     )
 
 
@@ -497,5 +499,30 @@ def product_sales_summary(code: str):
     except Exception as e:
 
         log_error(f"Erro ao consultar vendas do produto {code}: {e}")
+
+        return error_response(f"Unexpected error: {e}")
+    
+@router.get(
+    "/{code}/sales/open-orders",
+    summary="Open sales orders portfolio"
+)
+def product_sales_open_orders(code: str):
+
+    try:
+
+        use_case = build_get_product_sales_open_orders()
+
+        result = use_case.execute(
+            GetProductSalesOpenOrdersRequest(code=code)
+        )
+
+        return success_response(
+            data=result,
+            message=f"Open sales orders for product {code} fetched successfully."
+        )
+
+    except Exception as e:
+
+        log_error(f"Erro ao consultar carteira do produto {code}: {e}")
 
         return error_response(f"Unexpected error: {e}")

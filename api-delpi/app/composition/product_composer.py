@@ -1,9 +1,8 @@
 # app/composition/product_composition.py
 from app.application.use_cases.products.search_products_use_case import SearchProductsUseCase
-from app.application.use_cases.products.list_product_struture_use_case import ListProductStructureUseCase
-
 from app.infrastructure.persistence.totvs.product_repositories.product_repository import ProductRepository
 from app.infrastructure.persistence.totvs.product_repositories.product_structure_repository import ProductStructureRepository
+from app.application.use_cases.products.list_product_struture_use_case import ListProductStructureUseCase
 from app.application.use_cases.products.export_product_structure_excel_use_case import ExportProductStructureExcelUseCase
 from app.infrastructure.persistence.totvs.product_repositories.product_parents_repository import ProductParentsRepository
 from app.application.use_cases.products.list_product_parents_use_case import ListProductParentsUseCase
@@ -26,6 +25,8 @@ from app.infrastructure.persistence.totvs.product_repositories.product_purchases
 from app.application.use_cases.products.list_product_purchases_use_case import ListProductPurchasesUseCase
 from app.infrastructure.persistence.totvs.product_repositories.product_sales_repository import ProductSalesRepository
 from app.application.use_cases.products.get_product_sales_summary_use_case import GetProductSalesSummaryUseCase
+from app.infrastructure.persistence.totvs.product_repositories.product_sales_open_orders_repository import ProductSalesOpenOrdersRepository
+from app.application.use_cases.products.get_product_sales_open_orders_use_case import GetProductSalesOpenOrdersUseCase
 
 
 
@@ -84,3 +85,7 @@ def build_list_product_purchases():
 def build_get_product_sales_summary():
     repository = ProductSalesRepository()
     return GetProductSalesSummaryUseCase(repository=repository)
+
+def build_get_product_sales_open_orders():
+    repository = ProductSalesOpenOrdersRepository()
+    return GetProductSalesOpenOrdersUseCase(repository=repository)
