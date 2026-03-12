@@ -17,6 +17,8 @@ from app.infrastructure.persistence.totvs.product_repositories.product_guide_rep
 from app.application.use_cases.products.list_product_guide_use_case import ListProductGuideUseCase
 from app.infrastructure.persistence.totvs.product_repositories.product_internal_movements_repository import ProductInternalMovementsRepository
 from app.application.use_cases.products.list_product_internal_movements_use_case import ListProductInternalMovementsUseCase
+from app.infrastructure.persistence.totvs.product_repositories.product_stock_repository import ProductStockRepository
+from app.application.use_cases.products.list_product_stock_use_case import ListProductStockUseCase
 
 
 
@@ -48,7 +50,6 @@ def build_list_product_inspection_use_case():
     repo = ProductInspectionRepository()
     return ListProductInspectionUseCase(repo)
 
-
 def build_list_product_guide_use_case():
     repo = ProductGuideRepository()
     return ListProductGuideUseCase(repo)
@@ -57,4 +58,6 @@ def build_list_product_internal_movements_use_case():
     repo = ProductInternalMovementsRepository()
     return ListProductInternalMovementsUseCase(repo)
 
-
+def build_list_product_stock_use_case():
+    repo = ProductStockRepository()
+    return ListProductStockUseCase(repo)

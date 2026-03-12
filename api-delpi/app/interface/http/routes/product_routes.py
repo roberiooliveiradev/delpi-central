@@ -16,6 +16,7 @@ from app.application.dto.list_product_customers_request import ListProductCustom
 from app.application.dto.list_product_inspection_request import ListProductInspectionRequest
 from app.application.dto.list_product_guide_request import ListProductGuideRequest
 from app.application.dto.list_product_internal_movements_request import ListProductInternalMovementsRequest
+from app.application.dto.list_product_stock_request import ListProductStockRequest
 
 from app.composition.product_composer import (
     build_search_products_use_case,
@@ -27,6 +28,7 @@ from app.composition.product_composer import (
     build_list_product_inspection_use_case,
     build_list_product_guide_use_case,
     build_list_product_internal_movements_use_case,
+    build_list_product_stock_use_case,
     )
 
 
@@ -321,5 +323,37 @@ def internal_movements(
     except Exception as e:
 
         log_error(f"Erro ao consultar movimentações internas de {code}: {e}")
+
+        return error_response(str(e))
+    
+@router.get("/{code}/stock")
+@require_permission("api-delpi.access")
+def stock(
+    code: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+    branch: Optional[str] = Query(None),
+    location: Optional[str] = Query(None)
+):
+
+    try:
+
+        dto = ListProductStockRequest(
+            code=code,
+            page=page,
+            page_size=page_size,
+            branch=branch,
+            location=location
+        )
+
+        use_case = build_list_product_stock_use_case()
+
+        result = use_case.execute(dto)
+
+        return success_response(data=result)
+
+    except Exception as e:
+
+        log_error(f"Erro ao consultar estoque do item {code}: {e}")
 
         return error_response(str(e))

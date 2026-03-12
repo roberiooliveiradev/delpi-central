@@ -357,65 +357,65 @@ def product_pricing(code: str):
         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get("/{code}/stock", summary="Consulta o estoque de um produto com filtros e paginação")
-def stock(
-    code: str,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
-    branch: Optional[str] = Query(None, description="Filial (B2_FILIAL)"),
-    location: Optional[str] = Query(None, description="Local (B2_LOCAL)")
-):
-    """
-    Retorna o estoque do produto consultando a tabela SB2010.
-    Possui filtros opcionais para filial e local, além de paginação.
-    """
-    try:
-        result = get_stock(code, page, page_size, branch, location)
-        return success_response(
-            data=result,
-            message=f"Estoque de {code} retornado com sucesso (página {page}/{result['total_pages']})."
-        )
-    except Exception as e:
-        log_error(f"Erro ao consultar estoque do item {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+# @router.get("/{code}/stock", summary="Consulta o estoque de um produto com filtros e paginação")
+# def stock(
+#     code: str,
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500),
+#     branch: Optional[str] = Query(None, description="Filial (B2_FILIAL)"),
+#     location: Optional[str] = Query(None, description="Local (B2_LOCAL)")
+# ):
+#     """
+#     Retorna o estoque do produto consultando a tabela SB2010.
+#     Possui filtros opcionais para filial e local, além de paginação.
+#     """
+#     try:
+#         result = get_stock(code, page, page_size, branch, location)
+#         return success_response(
+#             data=result,
+#             message=f"Estoque de {code} retornado com sucesso (página {page}/{result['total_pages']})."
+#         )
+#     except Exception as e:
+#         log_error(f"Erro ao consultar estoque do item {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get(
-    "/{code}/internal-movements",
-    summary="Histórico de movimentações internas do produto"
-)
-def internal_movements(
-    code: str,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
-    date_start: Optional[str] = Query(None),
-    date_end: Optional[str] = Query(None),
-    branch: Optional[str] = Query(None),
-    location: Optional[str] = Query(None),
-    tm: Optional[str] = Query(None, description="Tipo de movimento (D3_TM)"),
-    op: Optional[str] = Query(None, description="Ordem de produção")
-):
-    try:
-        result = get_internal_movements(
-            code,
-            page,
-            page_size,
-            date_start,
-            date_end,
-            branch,
-            location,
-            tm,
-            op
-        )
+# @router.get(
+#     "/{code}/internal-movements",
+#     summary="Histórico de movimentações internas do produto"
+# )
+# def internal_movements(
+#     code: str,
+#     page: int = Query(1, ge=1),
+#     page_size: int = Query(50, ge=1, le=500),
+#     date_start: Optional[str] = Query(None),
+#     date_end: Optional[str] = Query(None),
+#     branch: Optional[str] = Query(None),
+#     location: Optional[str] = Query(None),
+#     tm: Optional[str] = Query(None, description="Tipo de movimento (D3_TM)"),
+#     op: Optional[str] = Query(None, description="Ordem de produção")
+# ):
+#     try:
+#         result = get_internal_movements(
+#             code,
+#             page,
+#             page_size,
+#             date_start,
+#             date_end,
+#             branch,
+#             location,
+#             tm,
+#             op
+#         )
 
-        return success_response(
-            data=result,
-            message=f"Movimentações internas do produto {code} retornadas com sucesso."
-        )
+#         return success_response(
+#             data=result,
+#             message=f"Movimentações internas do produto {code} retornadas com sucesso."
+#         )
 
-    except Exception as e:
-        log_error(f"Erro ao consultar movimentações internas de {code}: {e}")
-        return error_response(f"Erro inesperado: {e}")
+#     except Exception as e:
+#         log_error(f"Erro ao consultar movimentações internas de {code}: {e}")
+#         return error_response(f"Erro inesperado: {e}")
 
 
 # @router.get("/{code}/guide", summary="Consulta o roteiro de um produto e seus componentes com filtros e paginação")
