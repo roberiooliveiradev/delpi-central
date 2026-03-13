@@ -11,6 +11,8 @@ from app.config import settings
 from app.interface.http.routes import product_routes
 from app.interface.http.routes import system_routes
 from app.interface.http.routes import data_routes
+from app.interface.http.routes import sale_routes
+from app.interface.http.routes import lmp_routes
 from app.middleware.auth_middleware import jwt_middleware
 
 # ==========================================================
@@ -85,6 +87,8 @@ def root():
     return {"status": "online"}
 
 app.include_router(product_routes.router, prefix="/products", tags=["products"])
+app.include_router(sale_routes.router, prefix="/sales", tags=["sales"])
+app.include_router(lmp_routes.router, prefix="/lmps", tags=["lmps"])
 app.include_router(system_routes.router, prefix="/system", tags=["system"])
 app.include_router(data_routes.router, prefix="/data", tags=["data"])
 

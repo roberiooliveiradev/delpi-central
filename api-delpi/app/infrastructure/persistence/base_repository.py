@@ -100,6 +100,18 @@ class BaseRepository:
         except Exception as e:
             log_error(f"Erro ao executar query única: {e}")
             raise DatabaseConnectionError(str(e))
+        
+    def execute_scalar(self, query: str, params: tuple = ()) -> int | float | None:
+        """
+        Executa query que retorna um valor escalar (COUNT, SUM, etc).
+        """
+
+        result = self.execute_one(query, params)
+
+        if not result:
+            return None
+
+        return next(iter(result.values()))
 
     # --------------------------------------
     # SQL Server JSON
