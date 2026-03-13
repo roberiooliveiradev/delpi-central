@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "dashboard-lmps",
+  "name": "Dashboard LMPs",
+  "description": "Dashboard analítico de LMPs",
+  "icon": "bar-chart3-icon",
+  "version": "1.0.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/dashboard-lmps",
+  "entry": "/apps/dashboard-lmps/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "dashboard-lmps.view",
+      "name": "Acesso ao dashboard LMPs",
+      "description": "Permite acessar o dashboard",
+      "module": "dashboard-lmps"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/dashboard-lmps",
+      "label": "Dashboard LMPs",
+      "permission": "dashboard-lmps.view",
+      "icon": "bar-chart3-icon",
+      "order": 1,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

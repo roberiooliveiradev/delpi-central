@@ -168,6 +168,23 @@ services:
     networks:
       - delpi-network
 
+  dashboard-lmps:
+    build:
+      context: ../plugins/dashboard-lmps
+      dockerfile: Dockerfile
+
+    container_name: delpi-dashboard-lmps
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/dashboard-lmps:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
 
   api-delpi:
     build:
@@ -226,6 +243,7 @@ services:
       - core-api
       - keycloak
       - api-delpi
+      - dashboard-lmps
 
     networks:
       - delpi-network
