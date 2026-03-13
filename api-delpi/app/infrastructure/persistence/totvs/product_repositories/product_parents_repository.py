@@ -1,6 +1,6 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_parents_repository.py
 from app.infrastructure.persistence.base_repository import BaseRepository
-from app.domain.ports.product_parents_repository_port import ProductParentsRepositoryPort
+from app.domain.ports.product.product_parents_repository_port import ProductParentsRepositoryPort
 
 
 class ProductParentsRepository(BaseRepository, ProductParentsRepositoryPort):

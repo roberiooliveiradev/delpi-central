@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from app.application.dto.run_sql_request import RunSqlRequest
+from app.application.dto.data.run_sql_request import RunSqlRequest
 from app.composition.data_composer import build_run_sql_use_case
 
 from app.core.responses import success_response, error_response

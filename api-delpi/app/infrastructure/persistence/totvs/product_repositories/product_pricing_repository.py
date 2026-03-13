@@ -1,11 +1,11 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_pricing_repository.py
 from app.infrastructure.persistence.base_repository import BaseRepository
 
-from app.domain.entities.product_pricing import (
+from app.domain.entities.product.product_pricing import (
     ProductPricing,
     ProductPricingItem
 )
-from app.domain.ports.product_pricing_repository_port import ProductPricingRepositoryPort
+from app.domain.ports.product.product_pricing_repository_port import ProductPricingRepositoryPort
 
 
 class ProductPricingRepository(

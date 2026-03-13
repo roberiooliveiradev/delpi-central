@@ -1,7 +1,7 @@
 # app/application/use_cases/system/search_columns_by_description_use_case.py
 
-from app.application.dto.system_requests import SearchColumnsByDescriptionRequest
-from app.domain.ports.system_repository_port import SystemRepositoryPort
+from app.application.dto.system.system_requests import SearchColumnsByDescriptionRequest
+from app.domain.ports.system.system_repository_port import SystemRepositoryPort
 from app.core.exceptions import BusinessLogicError
 
 

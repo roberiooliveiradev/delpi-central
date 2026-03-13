@@ -7,8 +7,8 @@ from app.infrastructure.persistence.pagination import paginate
 from app.infrastructure.persistence.query_builder import QueryBuilder
 
 from app.application.models.page import Page
-from app.domain.entities.stock import Stock
-from app.domain.ports.product_stock_repository_port import ProductStockRepositoryPort
+from app.domain.entities.product.stock import Stock
+from app.domain.ports.product.product_stock_repository_port import ProductStockRepositoryPort
 
 
 class ProductStockRepository(

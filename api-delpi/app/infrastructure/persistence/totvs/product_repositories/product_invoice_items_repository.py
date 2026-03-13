@@ -7,9 +7,9 @@ from app.infrastructure.persistence.pagination import paginate
 from app.infrastructure.persistence.query_builder import QueryBuilder
 
 from app.application.models.page import Page
-from app.domain.entities.inbound_invoice_item import InboundInvoiceItem
-from app.domain.entities.outbound_invoice_item import OutboundInvoiceItem
-from app.domain.ports.product_invoice_items_repository_port import ProductInvoiceItemsRepositoryPort
+from app.domain.entities.product.inbound_invoice_item import InboundInvoiceItem
+from app.domain.entities.product.outbound_invoice_item import OutboundInvoiceItem
+from app.domain.ports.product.product_invoice_items_repository_port import ProductInvoiceItemsRepositoryPort
 
 
 class ProductInvoiceItemsRepository(

@@ -1,10 +1,10 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_repository.py
 
 from app.infrastructure.persistence.base_repository import BaseRepository
-from app.domain.entities.product import Product
+from app.domain.entities.product.product import Product
 from app.application.models.page import Page
 from app.infrastructure.persistence.pagination import paginate
-from app.domain.ports.product_query_repository_port import ProductQueryRepositoryPort
+from app.domain.ports.product.product_query_repository_port import ProductQueryRepositoryPort
 
 
 class ProductRepository(BaseRepository, ProductQueryRepositoryPort):

@@ -1,6 +1,6 @@
 # app/application/services/bom_tree_builder.py
 
-from app.domain.entities.bom_node import BomNode
+from app.domain.entities.product.bom_node import BomNode
 
 
 class BomTreeBuilder:

@@ -7,8 +7,8 @@ from app.infrastructure.persistence.pagination import paginate
 from app.infrastructure.persistence.query_builder import QueryBuilder
 
 from app.application.models.page import Page
-from app.domain.entities.internal_movement import InternalMovement
-from app.domain.ports.product_internal_movements_repository_port import ProductInternalMovementsRepositoryPort
+from app.domain.entities.product.internal_movement import InternalMovement
+from app.domain.ports.product.product_internal_movements_repository_port import ProductInternalMovementsRepositoryPort
 
 
 class ProductInternalMovementsRepository(

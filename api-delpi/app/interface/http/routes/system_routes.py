@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Query
 
-from app.application.dto.system_requests import (
+from app.application.dto.system.system_requests import (
     GetTableRequest,
     ListTableColumnsRequest,
     SearchTablesByDescriptionRequest,

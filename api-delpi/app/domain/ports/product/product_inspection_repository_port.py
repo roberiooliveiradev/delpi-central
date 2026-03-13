@@ -1,0 +1,11 @@
+# app/domain/ports/product_inspection_repository_port.py
+from abc import ABC, abstractmethod
+from typing import List
+from app.domain.entities.product.inspection import Inspection
+
+
+class ProductInspectionRepositoryPort(ABC):
+
+    @abstractmethod
+    def fetch_inspection_rows(self, code: str, max_depth: int) -> List[Inspection]:
+        pass

@@ -1,8 +1,8 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_sales_open_orders_repository.py
 from app.infrastructure.persistence.base_repository import BaseRepository
 
-from app.domain.entities.product_sales_open_orders import ProductSalesOpenOrders
-from app.domain.ports.product_sales_open_orders_repository_port import ProductSalesOpenOrdersRepositoryPort
+from app.domain.entities.product.product_sales_open_orders import ProductSalesOpenOrders
+from app.domain.ports.product.product_sales_open_orders_repository_port import ProductSalesOpenOrdersRepositoryPort
 
 
 class ProductSalesOpenOrdersRepository(

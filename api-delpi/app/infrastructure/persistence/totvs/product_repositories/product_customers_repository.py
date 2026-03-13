@@ -1,8 +1,8 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_customers_repository.py
 
 from app.infrastructure.persistence.base_repository import BaseRepository
-from app.domain.ports.product_customers_repository_port import ProductCustomersRepositoryPort
-from app.domain.entities.customer import Customer
+from app.domain.ports.product.product_customers_repository_port import ProductCustomersRepositoryPort
+from app.domain.entities.product.customer import Customer
 from app.application.models.page import Page
 from app.infrastructure.persistence.pagination import paginate
 

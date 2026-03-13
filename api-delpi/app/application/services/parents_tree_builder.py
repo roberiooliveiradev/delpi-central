@@ -1,5 +1,5 @@
 # app/application/services/parents_tree_builder.py
-from app.domain.entities.parent_node import ParentNode
+from app.domain.entities.product.parent_node import ParentNode
 
 
 class ParentsTreeBuilder:

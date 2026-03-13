@@ -4,7 +4,7 @@ from difflib import SequenceMatcher
 import re
 
 from app.infrastructure.persistence.base_repository import BaseRepository
-from app.domain.ports.system_repository_port import SystemRepositoryPort
+from app.domain.ports.system.system_repository_port import SystemRepositoryPort
 from app.core.exceptions import BusinessLogicError
 from app.utils.logger import log_info
 

@@ -1,9 +1,9 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_suppliers_repository.py
 
 from app.infrastructure.persistence.base_repository import BaseRepository
-from app.domain.ports.product_suppliers_repository_port import ProductSuppliersRepositoryPort
+from app.domain.ports.product.product_suppliers_repository_port import ProductSuppliersRepositoryPort
 from app.application.models.page import Page
-from app.domain.entities.supplier import Supplier
+from app.domain.entities.product.supplier import Supplier
 from app.infrastructure.persistence.pagination import paginate
 
 

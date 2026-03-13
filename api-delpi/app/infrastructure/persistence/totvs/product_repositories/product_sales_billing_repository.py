@@ -1,8 +1,8 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_sales_billing_repository.py
 from app.infrastructure.persistence.base_repository import BaseRepository
 
-from app.domain.entities.product_sales_billing import ProductSalesBilling
-from app.domain.ports.product_sales_billing_repository_port import ProductSalesBillingRepositoryPort
+from app.domain.entities.product.product_sales_billing import ProductSalesBilling
+from app.domain.ports.product.product_sales_billing_repository_port import ProductSalesBillingRepositoryPort
 
 
 class ProductSalesBillingRepository(

@@ -5,8 +5,8 @@ from typing import Optional
 from app.infrastructure.persistence.base_repository import BaseRepository
 from app.infrastructure.persistence.query_builder import QueryBuilder
 
-from app.domain.entities.guide_operation import GuideOperation
-from app.domain.ports.product_guide_repository_port import ProductGuideRepositoryPort
+from app.domain.entities.product.guide_operation import GuideOperation
+from app.domain.ports.product.product_guide_repository_port import ProductGuideRepositoryPort
 
 
 class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):

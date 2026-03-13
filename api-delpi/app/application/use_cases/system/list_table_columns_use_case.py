@@ -1,7 +1,7 @@
 # app/application/use_cases/system/list_table_columns_use_case.py
 
-from app.application.dto.system_requests import ListTableColumnsRequest
-from app.domain.ports.system_repository_port import SystemRepositoryPort
+from app.application.dto.system.system_requests import ListTableColumnsRequest
+from app.domain.ports.system.system_repository_port import SystemRepositoryPort
 
 
 class ListTableColumnsUseCase:

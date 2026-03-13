@@ -1,8 +1,8 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_sales_repository.py
 from app.infrastructure.persistence.base_repository import BaseRepository
 
-from app.domain.entities.product_sales_summary import ProductSalesSummary
-from app.domain.ports.product_sales_repository_port import ProductSalesRepositoryPort
+from app.domain.entities.product.product_sales_summary import ProductSalesSummary
+from app.domain.ports.product.product_sales_repository_port import ProductSalesRepositoryPort
 
 
 class ProductSalesRepository(

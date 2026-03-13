@@ -1,7 +1,7 @@
 # app/application/use_cases/system/get_table_indexes_use_case.py
 
-from app.application.dto.system_requests import GetTableIndexesRequest
-from app.domain.ports.system_repository_port import SystemRepositoryPort
+from app.application.dto.system.system_requests import GetTableIndexesRequest
+from app.domain.ports.system.system_repository_port import SystemRepositoryPort
 
 
 class GetTableIndexesUseCase:

@@ -3,8 +3,8 @@ from app.infrastructure.persistence.base_repository import BaseRepository
 from app.infrastructure.persistence.pagination import paginate
 
 from app.application.models.page import Page
-from app.domain.entities.purchase import Purchase
-from app.domain.ports.product_purchases_repository_port import ProductPurchasesRepositoryPort
+from app.domain.entities.product.purchase import Purchase
+from app.domain.ports.product.product_purchases_repository_port import ProductPurchasesRepositoryPort
 
 
 class ProductPurchasesRepository(

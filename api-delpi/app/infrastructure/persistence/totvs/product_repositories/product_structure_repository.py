@@ -1,7 +1,7 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_structure_repository.py
 
 from app.infrastructure.persistence.base_repository import BaseRepository
-from app.domain.ports.product_structure_repository_port import ProductStructureRepositoryPort
+from app.domain.ports.product.product_structure_repository_port import ProductStructureRepositoryPort
 
 
 class ProductStructureRepository(BaseRepository, ProductStructureRepositoryPort):

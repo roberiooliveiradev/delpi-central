@@ -7,7 +7,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-from app.domain.entities.bom_node import BomNode
+from app.domain.entities.product.bom_node import BomNode
 
 
 class ExcelStructureBuilder:
