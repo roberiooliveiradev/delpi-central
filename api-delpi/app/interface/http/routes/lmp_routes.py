@@ -9,8 +9,10 @@ from app.core.responses import success_response, error_response
 from app.utils.logger import log_error
 
 from app.application.dto.lmp.list_lmp_request import ListLMPRequest
+from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.composition.lmp_composer import (
     build_list_lmp_use_case,
+    build_get_lmp_use_case,
     )
 
 
@@ -41,4 +43,25 @@ def list_lmps_route(
 
     except Exception as e:
         log_error(f"Erro ao listar LMP's: {e}")
+        return error_response(str(e))
+    
+@router.get("/{code}")
+@require_permission("api-delpi.access")
+def get_lmp_route(
+    sale_number: str
+):
+    try:
+        dto = GetLMPRequest(
+            sale_number=sale_number
+        )
+        use_case = build_get_lmp_use_case()
+
+        result = use_case.execute(dto)
+
+        return success_response(
+            data=result,
+            message=f"LMP in sale order {sale_number} fetched successfully."
+        )
+    except Exception as e:
+        log_error(f"Erro ao buscar LMP: {e}")
         return error_response(str(e))

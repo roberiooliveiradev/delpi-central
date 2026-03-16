@@ -1,5 +1,5 @@
 # app/domain/entities/product.py
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Optional
 
 
@@ -122,3 +122,12 @@ class Product:
     approval_validation: Optional[str] = None
     delpi_category: Optional[str] = None
     delpi_segment: Optional[str] = None
+    
+    # =====================
+    # STRUCTURE
+    # =====================
+    qtd_pi: Optional[int] = None
+
+
+    def to_dict(self)->dict:
+        return asdict(self)

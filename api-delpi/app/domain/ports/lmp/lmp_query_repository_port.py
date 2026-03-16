@@ -4,6 +4,7 @@ from typing import List
 
 from app.domain.entities.lmp.lmp import LMP
 from app.application.dto.lmp.list_lmp_request import ListLMPRequest
+from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 
 
 class LMPQueryRepositoryPort(ABC):
@@ -14,3 +15,11 @@ class LMPQueryRepositoryPort(ABC):
         request: ListLMPRequest
     ) -> List[LMP]:
         raise NotImplementedError
+    
+    @abstractmethod
+    def get_lmp(
+        self,
+        request: GetLMPRequest
+    ) -> LMP:
+        raise NotImplementedError
+    
