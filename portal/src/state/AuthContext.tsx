@@ -89,188 +89,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [favorites, setFavorites] = useState<FavoriteAppItem[]>([]);
 
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const refreshPromiseRef = useRef<Promise<boolean> | null>(null);
+  const coreLoadInFlightRef = useRef(false);
 
-  const identityLoadInFlightRef = useRef(false);
-  const dashboardLoadInFlightRef = useRef(false);
-  const notificationsLoadInFlightRef = useRef(false);
-  const favoritesLoadInFlightRef = useRef(false);
-  const unauthorizedHandledRef = useRef(false);
-
-  const getCurrentRedirectUri = () => window.location.href;
-  
   useEffect(() => {
     tokenRef.current = token;
   }, [token]);
 
-  const clearSessionState = useCallback(() => {
-    setIsAuthenticated(false);
-    setCoreLoaded(false);
-
-    setToken(undefined);
-    tokenRef.current = undefined;
-
-    setUser(undefined);
-    setApps([]);
-    setRoutes([]);
-    setDashboard(undefined);
-    setNotifications([]);
-    setFavorites([]);
-  }, []);
-
-  const stopTokenRefresh = useCallback(() => {
-    if (refreshIntervalRef.current) {
-      clearInterval(refreshIntervalRef.current);
-      refreshIntervalRef.current = null;
-    }
-  }, []);
-
-  const handleUnauthorized = useCallback(async () => {
-    if (unauthorizedHandledRef.current) return;
-    unauthorizedHandledRef.current = true;
-
-    stopTokenRefresh();
-
-    try {
-      await keycloak.login({ redirectUri: getCurrentRedirectUri() });
-    } finally {
-      unauthorizedHandledRef.current = false;
-    }
-  }, [stopTokenRefresh]);
-
-  const refreshTokenSilently = useCallback(async (): Promise<boolean> => {
-    if (refreshPromiseRef.current) {
-      return refreshPromiseRef.current;
-    }
-
-    refreshPromiseRef.current = (async () => {
-      try {
-        const currentToken = tokenRef.current;
-        const refreshed = await keycloak.updateToken(60);
-        const nextToken = keycloak.token;
-
-        if (nextToken && nextToken !== currentToken) {
-          tokenRef.current = nextToken;
-          setToken(nextToken);
-        }
-
-        return refreshed || !!nextToken;
-      } catch {
-        return false;
-      } finally {
-        refreshPromiseRef.current = null;
-      }
-    })();
-
-    return refreshPromiseRef.current;
-  }, []);
-
-  const refreshToken = useCallback(async () => {
-    const refreshed = await refreshTokenSilently();
-
-    if (!refreshed) {
-      await handleUnauthorized();
-    }
-  }, [refreshTokenSilently, handleUnauthorized]);
-
   const buildCoreApi = useCallback(() => {
-    const apiClient = new ApiClient("", () => tokenRef.current, {
-      refreshToken: refreshTokenSilently,
-      onUnauthorized: handleUnauthorized,
-    });
-
+    const apiClient = new ApiClient("", () => tokenRef.current);
     return new CoreApi(apiClient);
-  }, [refreshTokenSilently, handleUnauthorized]);
+  }, []);
 
   // =====================================================
-  // LOADERS PARCIAIS
+  // CORE LOAD
   // =====================================================
-  const loadIdentityAndNavigation = useCallback(async () => {
+  const loadCoreData = useCallback(async () => {
     if (!tokenRef.current) return;
-    if (identityLoadInFlightRef.current) return;
+    if (coreLoadInFlightRef.current) return;
 
-    identityLoadInFlightRef.current = true;
+    coreLoadInFlightRef.current = true;
 
     try {
       const coreApi = buildCoreApi();
 
-      const [me, appsResponse] = await Promise.all([
+      const [
+        me,
+        appsResponse,
+        dashboardData,
+        notificationsData,
+        favoritesData,
+      ] = await Promise.all([
         coreApi.getMe(),
         coreApi.getApps(),
+        coreApi.getDashboard(),
+        coreApi.getNotifications(),
+        coreApi.getFavoriteApps(),
       ]);
 
       setUser(me);
       setApps(appsResponse);
 
+      // 🔥 Derivar rotas diretamente dos apps
       const derivedRoutes = appsResponse.flatMap((app) => app.routes ?? []);
       setRoutes(derivedRoutes);
-    } finally {
-      identityLoadInFlightRef.current = false;
-    }
-  }, [buildCoreApi]);
 
-  const loadDashboardData = useCallback(async () => {
-    if (!tokenRef.current) return;
-    if (dashboardLoadInFlightRef.current) return;
-
-    dashboardLoadInFlightRef.current = true;
-
-    try {
-      const coreApi = buildCoreApi();
-      const dashboardData = await coreApi.getDashboard();
       setDashboard(dashboardData);
-    } finally {
-      dashboardLoadInFlightRef.current = false;
-    }
-  }, [buildCoreApi]);
-
-  const loadNotificationsData = useCallback(async () => {
-    if (!tokenRef.current) return;
-    if (notificationsLoadInFlightRef.current) return;
-
-    notificationsLoadInFlightRef.current = true;
-
-    try {
-      const coreApi = buildCoreApi();
-      const notificationsData = await coreApi.getNotifications();
       setNotifications(notificationsData);
-    } finally {
-      notificationsLoadInFlightRef.current = false;
-    }
-  }, [buildCoreApi]);
-
-  const loadFavoritesData = useCallback(async () => {
-    if (!tokenRef.current) return;
-    if (favoritesLoadInFlightRef.current) return;
-
-    favoritesLoadInFlightRef.current = true;
-
-    try {
-      const coreApi = buildCoreApi();
-      const favoritesData = await coreApi.getFavoriteApps();
       setFavorites(favoritesData);
+
+      setCoreLoaded(true);
     } finally {
-      favoritesLoadInFlightRef.current = false;
+      coreLoadInFlightRef.current = false;
     }
   }, [buildCoreApi]);
-
-  const loadCoreData = useCallback(async () => {
-    if (!tokenRef.current) return;
-
-    await Promise.all([
-      loadIdentityAndNavigation(),
-      loadDashboardData(),
-      loadNotificationsData(),
-      loadFavoritesData(),
-    ]);
-
-    setCoreLoaded(true);
-  }, [
-    loadIdentityAndNavigation,
-    loadDashboardData,
-    loadNotificationsData,
-    loadFavoritesData,
-  ]);
 
   // =====================================================
   // FAVORITES
@@ -298,9 +169,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       await coreApi.addFavoriteApp(appId);
-      await loadFavoritesData();
+      await loadCoreData();
     },
-    [apps, buildCoreApi, loadFavoritesData]
+    [apps, buildCoreApi, loadCoreData]
   );
 
   const removeFavorite = useCallback(
@@ -310,9 +181,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setFavorites((prev) => prev.filter((f) => f.id !== appId));
 
       await coreApi.removeFavoriteApp(appId);
-      await loadFavoritesData();
+      await loadCoreData();
     },
-    [buildCoreApi, loadFavoritesData]
+    [buildCoreApi, loadCoreData]
   );
 
   // =====================================================
@@ -340,13 +211,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // =====================================================
   // TOKEN REFRESH
   // =====================================================
+  const refreshToken = useCallback(async () => {
+    try {
+      const refreshed = await keycloak.updateToken(60);
+
+      if (refreshed && keycloak.token && keycloak.token !== tokenRef.current) {
+        setToken(keycloak.token);
+      }
+    } catch {
+      keycloak.login({ redirectUri: window.location.origin + "/" });
+    }
+  }, []);
+
   const startTokenRefresh = useCallback(() => {
     if (refreshIntervalRef.current) return;
 
-    refreshIntervalRef.current = setInterval(() => {
-      void refreshToken();
-    }, 60000);
+    refreshIntervalRef.current = setInterval(refreshToken, 60000);
   }, [refreshToken]);
+
+  const stopTokenRefresh = useCallback(() => {
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+      refreshIntervalRef.current = null;
+    }
+  }, []);
 
   // =====================================================
   // SOCKET
@@ -354,16 +242,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useSocket({
     token: !loading && isAuthenticated && token ? token : undefined,
     onConnected: async () => {
-      await Promise.all([
-        loadIdentityAndNavigation(),
-        loadNotificationsData(),
-      ]);
+      await loadCoreData();
     },
     onNotification: (data) => {
       setNotifications((prev) => [data, ...prev]);
     },
     onAdminChanged: async () => {
-      await loadIdentityAndNavigation();
+      await loadCoreData();
     },
   });
 
@@ -374,48 +259,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     let mounted = true;
 
     const init = async () => {
-      try {
-        const authenticated = await initKeycloak();
-        if (!mounted) return;
+      const authenticated = await initKeycloak();
+      if (!mounted) return;
 
-        setIsAuthenticated(authenticated);
+      setIsAuthenticated(authenticated);
 
-        if (authenticated && keycloak.token) {
-          tokenRef.current = keycloak.token;
-          setToken(keycloak.token);
-
-          await loadCoreData();
-          startTokenRefresh();
-        }
-
-        setLoading(false);
-        setInitialized(true);
-      } catch {
-        if (!mounted) return;
-
-        clearSessionState();
-        setLoading(false);
-        setInitialized(true);
+      if (authenticated && keycloak.token) {
+        setToken(keycloak.token);
       }
+
+      setLoading(false);
+      setInitialized(true);
     };
 
-    void init();
+    init();
 
     return () => {
       mounted = false;
       stopTokenRefresh();
     };
-  }, [clearSessionState, loadCoreData, startTokenRefresh, stopTokenRefresh]);
+  }, [stopTokenRefresh]);
 
-  const login = useCallback(() => {
-    void keycloak.login({ redirectUri: getCurrentRedirectUri() });
-  }, []);
+  // =====================================================
+  // TOKEN READY
+  // =====================================================
+  useEffect(() => {
+    if (!token) return;
 
-  const logout = useCallback(() => {
+    loadCoreData();
+    startTokenRefresh();
+  }, [token, loadCoreData, startTokenRefresh]);
+
+  const login = () =>
+    keycloak.login({ redirectUri: window.location.origin + "/" });
+
+  const logout = () => {
     stopTokenRefresh();
-    clearSessionState();
-    void keycloak.logout({ redirectUri: window.location.origin + "/" });
-  }, [clearSessionState, stopTokenRefresh]);
+    keycloak.logout();
+  };
 
   const contextValue = useMemo<AuthContextType>(
     () => ({
