@@ -47,6 +47,7 @@ export function FilterBar({
           <label>Data inicial</label>
           <input
             type="date"
+            alt="Data inicial"
             value={dateStart}
             onChange={(e) => onDateStartChange(e.target.value)}
           />
@@ -56,6 +57,7 @@ export function FilterBar({
           <label>Data final</label>
           <input
             type="date"
+            alt="Data final"
             value={dateEnd}
             onChange={(e) => onDateEndChange(e.target.value)}
           />

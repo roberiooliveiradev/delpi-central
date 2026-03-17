@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BarChart3, CircleGauge, Clock3 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -40,6 +40,32 @@ function formatDate(value?: string | null): string {
   return `${day}/${month}/${year}`;
 }
 
+function formatDateToInput(value?: string | null): string {
+  if (!value || value.length !== 8) return "";
+  const year = value.slice(0, 4);
+  const month = value.slice(4, 6);
+  const day = value.slice(6, 8);
+  return `${year}-${month}-${day}`;
+}
+
+function getTodayInputValue(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateNumber(value?: string | null): number {
+  if (!value) return 0;
+
+  const normalized = value.replaceAll("-", "");
+  if (normalized.length !== 8) return 0;
+
+  const parsed = Number(normalized);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
 function getPeriodo(dateValue?: string | null): string | null {
   if (!dateValue || dateValue.length !== 8) return null;
 
@@ -58,9 +84,10 @@ function getPeriodo(dateValue?: string | null): string | null {
 }
 
 export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
-  const [dateStart, setDateStart] = useState("2025-07-16");
-  const [dateEnd, setDateEnd] = useState("2026-03-13");
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState(getTodayInputValue());
   const [status, setStatus] = useState("Todos");
+  const [didInitializeDateStart, setDidInitializeDateStart] = useState(false);
 
   const { items, summary, charts, loading, refreshing, error, reload } =
     useLmpsDashboard({
@@ -72,6 +99,28 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
 
   const dashboardItems = items as LmpDashboardItem[];
   const hasData = dashboardItems.length > 0;
+
+  useEffect(() => {
+    if (didInitializeDateStart) return;
+    if (dashboardItems.length === 0) return;
+
+    const validStartDates = dashboardItems
+      .map((item) => item.start_date)
+      .filter((value): value is string => Boolean(value && value.length === 8))
+      .sort((a, b) => parseDateNumber(a) - parseDateNumber(b));
+
+    const oldestStartDate = validStartDates[0];
+    if (!oldestStartDate) return;
+
+    setDateStart(formatDateToInput(oldestStartDate));
+    setDidInitializeDateStart(true);
+  }, [dashboardItems, didInitializeDateStart]);
+
+  const sortedDashboardItems = useMemo(() => {
+    return [...dashboardItems].sort(
+      (a, b) => parseDateNumber(b.start_date) - parseDateNumber(a.start_date)
+    );
+  }, [dashboardItems]);
 
   const fallbackCharts = useMemo(() => {
     const levelOrder = ["Nível 1", "Nível 2", "Nível 3"];
@@ -106,14 +155,24 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
 
     const evolutionMap = new Map<
       string,
-      { totalLead: number; leadCount: number; propostas: number }
+      {
+        periodo: string;
+        sortKey: number;
+        totalLead: number;
+        leadCount: number;
+        propostas: number;
+      }
     >();
 
     for (const item of dashboardItems) {
       const periodo = getPeriodo(item.start_date);
-      if (!periodo) continue;
+      const sortKey = parseDateNumber(item.start_date);
+
+      if (!periodo || !sortKey) continue;
 
       const current = evolutionMap.get(periodo) ?? {
+        periodo,
+        sortKey,
         totalLead: 0,
         leadCount: 0,
         propostas: 0
@@ -126,16 +185,20 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
         current.leadCount += 1;
       }
 
+      if (sortKey < current.sortKey) {
+        current.sortKey = sortKey;
+      }
+
       evolutionMap.set(periodo, current);
     }
 
-    const evolutionData = Array.from(evolutionMap.entries()).map(([periodo, value]) => ({
-      periodo,
-      mediaLead: value.leadCount
-        ? Number((value.totalLead / value.leadCount).toFixed(2))
-        : 0,
-      propostas: value.propostas
-    }));
+    const evolutionData = Array.from(evolutionMap.values())
+      .sort((a, b) => a.sortKey - b.sortKey)
+      .map(({ periodo, totalLead, leadCount, propostas }) => ({
+        periodo,
+        mediaLead: leadCount ? Number((totalLead / leadCount).toFixed(2)) : 0,
+        propostas
+      }));
 
     return {
       levelData,
@@ -149,7 +212,12 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
     levelData: charts?.levelData ?? fallbackCharts.levelData,
     statusData: charts?.statusData ?? fallbackCharts.statusData,
     leadByLevel: charts?.leadByLevel ?? fallbackCharts.leadByLevel,
-    evolutionData: charts?.evolutionData ?? fallbackCharts.evolutionData
+    evolutionData:
+      charts?.evolutionData != null
+        ? [...charts.evolutionData].sort(
+            (a, b) => parseDateNumber(a.periodo) - parseDateNumber(b.periodo)
+          )
+        : fallbackCharts.evolutionData
   };
 
   return (
@@ -338,12 +406,12 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {dashboardItems.length === 0 ? (
+                    {sortedDashboardItems.length === 0 ? (
                       <tr>
                         <td colSpan={11}>Nenhuma LMP encontrada para os filtros informados.</td>
                       </tr>
                     ) : (
-                      dashboardItems.map((item) => (
+                      sortedDashboardItems.map((item) => (
                         <tr key={item.sale_number}>
                           <td>{item.sale_number}</td>
                           <td>{item.sale_description}</td>

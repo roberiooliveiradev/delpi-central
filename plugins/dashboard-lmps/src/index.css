@@ -471,3 +471,14 @@
   top: 0;
   z-index: 1;
 }
+
+.lmps-filter-box input[type="date"] {
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+
+.lmps-filter-box input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  display: block;
+  cursor: pointer;
+}
