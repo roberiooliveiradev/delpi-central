@@ -1,5 +1,6 @@
 # app/infrastructure/persistence/totvs/lmp_repositories/lmp_query_repository.py
 from typing import List, Tuple
+
 from app.infrastructure.persistence.base_repository import BaseRepository
 from app.domain.entities.lmp.lmp import LMP
 from app.domain.entities.lmp.lmp_product import LMPProduct
@@ -38,7 +39,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
     def _pi_product_type_filter(self, qb: QueryBuilder, field: str):
         qb.in_list(field, self.settings.pi_product_types)
-    
+
     def _engineering_status_in_progress_label(self) -> str:
         return self.settings.engineering_status_labels["in_progress"]
 
@@ -71,14 +72,33 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
         return "(" + " OR ".join(clauses) + ")", tuple(params)
 
-    def _sql_lmp_process_stage_condition(self, process_field: str, stage_field: str) -> Tuple[str, tuple]:
+    def _sql_lmp_anchor_process_stage_condition(
+        self,
+        process_field: str,
+        stage_field: str,
+    ) -> Tuple[str, tuple]:
         return self._sql_process_stage_condition(
             process_field=process_field,
             stage_field=stage_field,
-            process_stages=self.settings.lmp_process_stages,
+            process_stages=self.settings.lmp_anchor_process_stages,
         )
 
-    def _sql_engineering_support_process_stage_condition(self, process_field: str, stage_field: str) -> Tuple[str, tuple]:
+    def _sql_lmp_followup_process_stage_condition(
+        self,
+        process_field: str,
+        stage_field: str,
+    ) -> Tuple[str, tuple]:
+        return self._sql_process_stage_condition(
+            process_field=process_field,
+            stage_field=stage_field,
+            process_stages=self.settings.lmp_followup_process_stages,
+        )
+
+    def _sql_engineering_support_process_stage_condition(
+        self,
+        process_field: str,
+        stage_field: str,
+    ) -> Tuple[str, tuple]:
         return self._sql_process_stage_condition(
             process_field=process_field,
             stage_field=stage_field,
@@ -90,8 +110,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         for values in self.settings.engineering_support_process_stages.values():
             stages.update(values)
         return sorted(stages)
-
-
 
     # =========================
     # SQL FILTER BLOCKS
@@ -185,10 +203,18 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     LEAD(A.AIJ_STAGE) OVER (
                         PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR, A.AIJ_REVISA, A.AIJ_PROVEN
                         ORDER BY A.AIJ_DTINIC, A.AIJ_HRINIC, A.AIJ_STAGE, A.R_E_C_N_O_
-                    ) AS PROXIMO_STAGE
+                    ) AS PROXIMO_STAGE,
+                    LEAD(A.AIJ_DTINIC) OVER (
+                        PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR, A.AIJ_REVISA, A.AIJ_PROVEN
+                        ORDER BY A.AIJ_DTINIC, A.AIJ_HRINIC, A.AIJ_STAGE, A.R_E_C_N_O_
+                    ) AS PROXIMO_DTINIC,
+                    LEAD(A.AIJ_HRINIC) OVER (
+                        PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR, A.AIJ_REVISA, A.AIJ_PROVEN
+                        ORDER BY A.AIJ_DTINIC, A.AIJ_HRINIC, A.AIJ_STAGE, A.R_E_C_N_O_
+                    ) AS PROXIMO_HRINIC
                 FROM AIJ010 A
                 WHERE {where_aij_base}
-                AND {where_eng_support}
+                  AND {where_eng_support}
             ),
 
             UltimaRevisaoEngenharia AS (
@@ -196,8 +222,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     E.AIJ_NROPOR,
                     MAX(E.AIJ_REVISA) AS ULTIMA_REVISA
                 FROM EngenhariaEventos E
-                GROUP BY
-                    E.AIJ_NROPOR
+                GROUP BY E.AIJ_NROPOR
             ),
 
             StatusUltimaRevisaoEngenharia AS (
@@ -206,12 +231,16 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     CASE
                         WHEN SUM(
                             CASE
-                                WHEN ISNULL(E.AIJ_DTENCE, '') = '' THEN 1 ELSE 0
+                                WHEN ISNULL(E.AIJ_DTENCE, '') = ''
+                                 AND ISNULL(E.PROXIMO_DTINIC, '') = ''
+                                THEN 1 ELSE 0
                             END
                         ) > 0 THEN ?
                         WHEN COUNT(*) = SUM(
                             CASE
-                                WHEN ISNULL(E.AIJ_DTENCE, '') <> '' THEN 1 ELSE 0
+                                WHEN ISNULL(E.AIJ_DTENCE, '') <> ''
+                                  OR ISNULL(E.PROXIMO_DTINIC, '') <> ''
+                                THEN 1 ELSE 0
                             END
                         ) THEN ?
                         ELSE ?
@@ -219,29 +248,26 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 FROM EngenhariaEventos E
                 INNER JOIN UltimaRevisaoEngenharia U
                     ON U.AIJ_NROPOR = E.AIJ_NROPOR
-                AND U.ULTIMA_REVISA = E.AIJ_REVISA
-                GROUP BY
-                    E.AIJ_NROPOR
+                   AND U.ULTIMA_REVISA = E.AIJ_REVISA
+                GROUP BY E.AIJ_NROPOR
             ),
 
-            EngenhariaResumo AS (
+            EngenhariaResumoHistorico AS (
                 SELECT
                     E.AIJ_NROPOR,
-                    MIN(E.AIJ_DTINIC) AS START_DATE,
-                    MAX(E.AIJ_DTENCE) AS END_DATE,
-                    COUNT(*) AS QTD_PASSAGENS_ENG,
+                    COUNT(*) AS QTD_PASSAGENS_ENG_HIST,
                     SUM(
                         CASE
                             WHEN ISNULL(E.AIJ_DTENCE, '') <> ''
-                            AND ISNULL(E.AIJ_HRENCE, '') <> ''
+                              OR ISNULL(E.PROXIMO_DTINIC, '') <> ''
                             THEN 1
                             ELSE 0
                         END
-                    ) AS QTD_PASSAGENS_ENCERRADAS,
+                    ) AS QTD_PASSAGENS_ENCERRADAS_HIST,
                     SUM(
                         CASE
                             WHEN ISNULL(E.AIJ_DTINIC, '') <> ''
-                            AND ISNULL(E.AIJ_HRINIC, '') <> ''
+                             AND ISNULL(E.AIJ_HRINIC, '') <> ''
                             THEN DATEDIFF(
                                 MINUTE,
                                 CAST(
@@ -254,13 +280,88 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                                 ),
                                 CASE
                                     WHEN ISNULL(E.AIJ_DTENCE, '') <> ''
-                                    AND ISNULL(E.AIJ_HRENCE, '') <> ''
+                                     AND ISNULL(E.AIJ_HRENCE, '') <> ''
                                     THEN CAST(
                                         CONCAT(
                                             SUBSTRING(E.AIJ_DTENCE,1,4), '-',
                                             SUBSTRING(E.AIJ_DTENCE,5,2), '-',
                                             SUBSTRING(E.AIJ_DTENCE,7,2), ' ',
                                             E.AIJ_HRENCE, ':00'
+                                        ) AS DATETIME
+                                    )
+                                    WHEN ISNULL(E.PROXIMO_DTINIC, '') <> ''
+                                     AND ISNULL(E.PROXIMO_HRINIC, '') <> ''
+                                    THEN CAST(
+                                        CONCAT(
+                                            SUBSTRING(E.PROXIMO_DTINIC,1,4), '-',
+                                            SUBSTRING(E.PROXIMO_DTINIC,5,2), '-',
+                                            SUBSTRING(E.PROXIMO_DTINIC,7,2), ' ',
+                                            E.PROXIMO_HRINIC, ':00'
+                                        ) AS DATETIME
+                                    )
+                                    ELSE GETDATE()
+                                END
+                            )
+                            ELSE 0
+                        END
+                    ) AS TEMPO_TOTAL_MINUTOS_ENG_HIST
+                FROM EngenhariaEventos E
+                GROUP BY E.AIJ_NROPOR
+            ),
+
+            EngenhariaResumoUltimaRevisao AS (
+                SELECT
+                    E.AIJ_NROPOR,
+                    MIN(E.AIJ_DTINIC) AS START_DATE,
+                    MAX(
+                        CASE
+                            WHEN ISNULL(E.AIJ_DTENCE, '') <> '' THEN E.AIJ_DTENCE
+                            WHEN ISNULL(E.PROXIMO_DTINIC, '') <> '' THEN E.PROXIMO_DTINIC
+                            ELSE NULL
+                        END
+                    ) AS END_DATE,
+                    COUNT(*) AS QTD_PASSAGENS_ENG,
+                    SUM(
+                        CASE
+                            WHEN ISNULL(E.AIJ_DTENCE, '') <> ''
+                              OR ISNULL(E.PROXIMO_DTINIC, '') <> ''
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) AS QTD_PASSAGENS_ENCERRADAS,
+                    SUM(
+                        CASE
+                            WHEN ISNULL(E.AIJ_DTINIC, '') <> ''
+                             AND ISNULL(E.AIJ_HRINIC, '') <> ''
+                            THEN DATEDIFF(
+                                MINUTE,
+                                CAST(
+                                    CONCAT(
+                                        SUBSTRING(E.AIJ_DTINIC,1,4), '-',
+                                        SUBSTRING(E.AIJ_DTINIC,5,2), '-',
+                                        SUBSTRING(E.AIJ_DTINIC,7,2), ' ',
+                                        E.AIJ_HRINIC, ':00'
+                                    ) AS DATETIME
+                                ),
+                                CASE
+                                    WHEN ISNULL(E.AIJ_DTENCE, '') <> ''
+                                     AND ISNULL(E.AIJ_HRENCE, '') <> ''
+                                    THEN CAST(
+                                        CONCAT(
+                                            SUBSTRING(E.AIJ_DTENCE,1,4), '-',
+                                            SUBSTRING(E.AIJ_DTENCE,5,2), '-',
+                                            SUBSTRING(E.AIJ_DTENCE,7,2), ' ',
+                                            E.AIJ_HRENCE, ':00'
+                                        ) AS DATETIME
+                                    )
+                                    WHEN ISNULL(E.PROXIMO_DTINIC, '') <> ''
+                                     AND ISNULL(E.PROXIMO_HRINIC, '') <> ''
+                                    THEN CAST(
+                                        CONCAT(
+                                            SUBSTRING(E.PROXIMO_DTINIC,1,4), '-',
+                                            SUBSTRING(E.PROXIMO_DTINIC,5,2), '-',
+                                            SUBSTRING(E.PROXIMO_DTINIC,7,2), ' ',
+                                            E.PROXIMO_HRINIC, ':00'
                                         ) AS DATETIME
                                     )
                                     ELSE GETDATE()
@@ -271,7 +372,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ) AS TEMPO_TOTAL_MINUTOS_ENG,
                     SUM(
                         CASE
-                            WHEN ISNULL(E.AIJ_DTENCE, '') <> ''
+                            WHEN (
+                                ISNULL(E.AIJ_DTENCE, '') <> ''
+                                OR ISNULL(E.PROXIMO_DTINIC, '') <> ''
+                            )
                             AND E.PROXIMO_STAGE IS NOT NULL
                             AND E.PROXIMO_STAGE NOT IN ({not_in_support_placeholders})
                             AND E.PROXIMO_STAGE > E.AIJ_STAGE
@@ -281,7 +385,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ) AS QTD_AVANCOU_ENG,
                     SUM(
                         CASE
-                            WHEN ISNULL(E.AIJ_DTENCE, '') <> ''
+                            WHEN (
+                                ISNULL(E.AIJ_DTENCE, '') <> ''
+                                OR ISNULL(E.PROXIMO_DTINIC, '') <> ''
+                            )
                             AND E.PROXIMO_STAGE IS NOT NULL
                             AND E.PROXIMO_STAGE NOT IN ({not_in_support_placeholders})
                             AND E.PROXIMO_STAGE < E.AIJ_STAGE
@@ -291,6 +398,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ) AS QTD_RETORNOU_ENG,
                     S.ENGINEERING_STATUS AS ENGINEERING_STATUS
                 FROM EngenhariaEventos E
+                INNER JOIN UltimaRevisaoEngenharia U
+                    ON U.AIJ_NROPOR = E.AIJ_NROPOR
+                   AND U.ULTIMA_REVISA = E.AIJ_REVISA
                 INNER JOIN StatusUltimaRevisaoEngenharia S
                     ON S.AIJ_NROPOR = E.AIJ_NROPOR
                 GROUP BY
@@ -318,34 +428,119 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             )
         )
 
-        where_lmp, params_lmp = self._sql_lmp_process_stage_condition(
+        where_lmp_anchor, params_lmp_anchor = self._sql_lmp_anchor_process_stage_condition(
             "A.AIJ_PROVEN",
             "A.AIJ_STAGE",
         )
 
+        where_lmp_followup_x, params_lmp_followup_x = self._sql_lmp_followup_process_stage_condition(
+            "X.AIJ_PROVEN",
+            "X.AIJ_STAGE",
+        )
+
+        where_lmp_anchor_x, params_lmp_anchor_x = self._sql_lmp_anchor_process_stage_condition(
+            "X.AIJ_PROVEN",
+            "X.AIJ_STAGE",
+        )
+
         sql = f"""
+            LMPAnchorEventos AS (
+                SELECT
+                    A.AIJ_FILIAL,
+                    A.AIJ_NROPOR,
+                    A.AIJ_REVISA,
+                    A.AIJ_PROVEN,
+                    A.AIJ_STAGE,
+                    A.AIJ_DTINIC,
+                    A.AIJ_HRINIC,
+                    A.AIJ_DTENCE,
+                    A.AIJ_HRENCE,
+                    A.R_E_C_N_O_,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY A.AIJ_NROPOR
+                        ORDER BY
+                            A.AIJ_REVISA DESC,
+                            A.AIJ_DTINIC DESC,
+                            A.AIJ_HRINIC DESC,
+                            A.R_E_C_N_O_ DESC
+                    ) AS RN_DESC
+                FROM AIJ010 A
+                WHERE {where_aij_base}
+                  AND {where_lmp_anchor}
+            ),
+
+            LMPAnchorResolvido AS (
+                SELECT
+                    A.AIJ_NROPOR,
+                    A.AIJ_REVISA,
+                    A.AIJ_PROVEN,
+                    A.AIJ_STAGE,
+                    A.AIJ_DTINIC AS LMP_START_DATE,
+                    COALESCE(
+                        NULLIF(A.AIJ_DTENCE, ''),
+                        NEXT_EVT.NEXT_DATE
+                    ) AS LMP_END_DATE,
+                    A.RN_DESC
+                FROM LMPAnchorEventos A
+                OUTER APPLY (
+                    SELECT TOP 1
+                        COALESCE(
+                            NULLIF(X.AIJ_DTENCE, ''),
+                            NULLIF(X.AIJ_DTINIC, '')
+                        ) AS NEXT_DATE
+                    FROM AIJ010 X
+                    WHERE X.D_E_L_E_T_ = ''
+                      AND X.AIJ_FILIAL = A.AIJ_FILIAL
+                      AND X.AIJ_NROPOR = A.AIJ_NROPOR
+                      AND (
+                            X.AIJ_REVISA > A.AIJ_REVISA
+                            OR (
+                                X.AIJ_REVISA = A.AIJ_REVISA
+                                AND (
+                                    X.AIJ_DTINIC > A.AIJ_DTINIC
+                                    OR (
+                                        X.AIJ_DTINIC = A.AIJ_DTINIC
+                                        AND ISNULL(X.AIJ_HRINIC, '') > ISNULL(A.AIJ_HRINIC, '')
+                                    )
+                                    OR (
+                                        X.AIJ_DTINIC = A.AIJ_DTINIC
+                                        AND ISNULL(X.AIJ_HRINIC, '') = ISNULL(A.AIJ_HRINIC, '')
+                                        AND X.R_E_C_N_O_ > A.R_E_C_N_O_
+                                    )
+                                )
+                            )
+                      )
+                      AND ({where_lmp_followup_x} OR {where_lmp_anchor_x})
+                    ORDER BY
+                        X.AIJ_REVISA ASC,
+                        X.AIJ_DTINIC ASC,
+                        X.AIJ_HRINIC ASC,
+                        X.R_E_C_N_O_ ASC
+                ) NEXT_EVT
+            ),
+
             LMPEventos AS (
                 SELECT
                     A.AIJ_NROPOR,
-                    MIN(A.AIJ_DTINIC) AS LMP_START_DATE,
-                    MAX(A.AIJ_DTENCE) AS LMP_END_DATE,
-                    COUNT(*) AS QTD_PASSAGENS_LMP,
-                    SUM(
-                        CASE
-                            WHEN ISNULL(A.AIJ_DTENCE, '') <> ''
-                             AND ISNULL(A.AIJ_HRENCE, '') <> ''
-                            THEN 1
-                            ELSE 0
-                        END
-                    ) AS QTD_PASSAGENS_LMP_ENCERRADAS
-                FROM AIJ010 A
-                WHERE {where_aij_base}
-                  AND {where_lmp}
-                GROUP BY
-                    A.AIJ_NROPOR
+                    A.LMP_START_DATE,
+                    A.LMP_END_DATE,
+                    1 AS QTD_PASSAGENS_LMP,
+                    CASE
+                        WHEN ISNULL(A.LMP_END_DATE, '') <> '' THEN 1
+                        ELSE 0
+                    END AS QTD_PASSAGENS_LMP_ENCERRADAS
+                FROM LMPAnchorResolvido A
+                WHERE A.RN_DESC = 1
             )
         """
-        return sql, (*params_aij_base, *params_lmp)
+
+        params = (
+            *params_aij_base,
+            *params_lmp_anchor,
+            *params_lmp_followup_x,
+            *params_lmp_anchor_x,
+        )
+        return sql, params
 
     def _sql_produtos_lmp_cte(self) -> Tuple[str, tuple]:
         where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1")
@@ -498,7 +693,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             FROM AD1010 AD1
             INNER JOIN LMPEventos L
                 ON L.AIJ_NROPOR = AD1.AD1_NROPOR
-            LEFT JOIN EngenhariaResumo H
+            LEFT JOIN EngenhariaResumoUltimaRevisao H
                 ON H.AIJ_NROPOR = AD1.AD1_NROPOR
             LEFT JOIN SA1010 SA1
                 ON SA1.A1_COD = AD1.AD1_CODCLI
@@ -575,11 +770,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     # PUBLIC METHODS
     # =========================
 
-    def list_lmps(
-        self,
-        request: ListLMPRequest
-    ) -> List[LMP]:
-
+    def list_lmps(self, request: ListLMPRequest) -> List[LMP]:
         qb = QueryBuilder()
         qb.date_range(
             field="L.LMP_START_DATE",
@@ -624,7 +815,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             FROM CabecalhoOV C
             INNER JOIN LMPEventos L
                 ON L.AIJ_NROPOR = C.AD1_NROPOR
-            LEFT JOIN EngenhariaResumo H
+            LEFT JOIN EngenhariaResumoUltimaRevisao H
                 ON H.AIJ_NROPOR = C.AD1_NROPOR
             LEFT JOIN PI_COUNT_BY_OV PI
                 ON PI.ADJ_NROPOR = C.AD1_NROPOR
@@ -642,7 +833,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 H.QTD_RETORNOU_ENG,
                 H.TEMPO_TOTAL_MINUTOS_ENG,
                 PI.QTD_PI
-            ORDER BY  L.LMP_START_DATE DESC, C.AD1_NROPOR DESC
+            ORDER BY L.LMP_START_DATE DESC, C.AD1_NROPOR DESC
         """
 
         params = (
@@ -658,11 +849,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             rows = repo.execute_query(sql, params)
             return [LMP(**row) for row in rows]
 
-    def get_lmp(
-        self,
-        request: GetLMPRequest
-    ) -> LMP:
-
+    def get_lmp(self, request: GetLMPRequest) -> LMP:
         sql_header, params_header = self._sql_header_lmp()
         sql_products, params_products = self._sql_products_lmp()
         sql_qtd_pi, params_qtd_pi = self._sql_qtd_pi_lmp_total()
@@ -705,5 +892,5 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             costumer_name=header_row.get("costumer_name"),
             seller_code=header_row.get("seller_code"),
             seller_name=header_row.get("seller_name"),
-            list_products=products
+            list_products=products,
         )

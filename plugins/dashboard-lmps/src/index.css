@@ -226,7 +226,7 @@
   margin: 0;
   font-size: clamp(26px, 3vw, 32px);
   line-height: 1.05;
-  color: var(--secundary);
+  color: var(--primary);
 }
 
 .dashboard-lmps .lmps-kpi-subtitle {
@@ -275,7 +275,7 @@
 .dashboard-lmps .lmps-card-header h3 {
   margin: 0;
   font-size: 16px;
-  color: var(--secundary);
+  color: var(--primary);
 }
 
 .dashboard-lmps .lmps-card-body {
@@ -457,4 +457,17 @@
   background: var(--surface);
   color: var(--text-muted);
   box-shadow: var(--shadow);
+}
+
+.dashboard-lmps .lmps-table-wrapper {
+  width: 100%;
+  overflow: auto;
+  max-height: 420px;
+  border-radius: 16px;
+}
+
+.dashboard-lmps .lmps-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
