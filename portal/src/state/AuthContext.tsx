@@ -97,6 +97,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const favoritesLoadInFlightRef = useRef(false);
   const unauthorizedHandledRef = useRef(false);
 
+  const getCurrentRedirectUri = () => window.location.href;
+  
   useEffect(() => {
     tokenRef.current = token;
   }, [token]);
@@ -128,14 +130,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     unauthorizedHandledRef.current = true;
 
     stopTokenRefresh();
-    clearSessionState();
 
     try {
-      await keycloak.login({ redirectUri: window.location.origin + "/" });
+      await keycloak.login({ redirectUri: getCurrentRedirectUri() });
     } finally {
       unauthorizedHandledRef.current = false;
     }
-  }, [clearSessionState, stopTokenRefresh]);
+  }, [stopTokenRefresh]);
 
   const refreshTokenSilently = useCallback(async (): Promise<boolean> => {
     if (refreshPromiseRef.current) {
@@ -406,14 +407,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [clearSessionState, loadCoreData, startTokenRefresh, stopTokenRefresh]);
 
-  const login = () =>
-    keycloak.login({ redirectUri: window.location.origin + "/" });
+  const login = useCallback(() => {
+    void keycloak.login({ redirectUri: getCurrentRedirectUri() });
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     stopTokenRefresh();
     clearSessionState();
-    keycloak.logout({ redirectUri: window.location.origin + "/" });
-  };
+    void keycloak.logout({ redirectUri: window.location.origin + "/" });
+  }, [clearSessionState, stopTokenRefresh]);
 
   const contextValue = useMemo<AuthContextType>(
     () => ({
