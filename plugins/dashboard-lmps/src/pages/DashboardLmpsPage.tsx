@@ -111,6 +111,7 @@ export function DashboardLmpsPage() {
       date_start: dateStart || undefined,
       date_end: dateEnd || undefined,
       status,
+      autoRefreshMs: 2 * 60 * 1000,
     });
 
   const dashboardItems = items as LmpDashboardItem[];

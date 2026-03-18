@@ -7,6 +7,7 @@ type UseLmpsDashboardParams = {
   status?: string;
   page?: number;
   page_size?: number;
+  autoRefreshMs?: number;
 };
 
 type UseLmpsDashboardResult = {
@@ -93,6 +94,20 @@ export function useLmpsDashboard(
 
     return () => controller.abort();
   }, [stableParams, reloadKey]);
+
+  useEffect(() => {
+    if (!params.autoRefreshMs || params.autoRefreshMs <= 0) return;
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+
+      setReloadKey((prev) => prev + 1);
+    }, params.autoRefreshMs);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [params.autoRefreshMs]);
 
   const reload = useCallback(() => {
     setReloadKey((prev) => prev + 1);
