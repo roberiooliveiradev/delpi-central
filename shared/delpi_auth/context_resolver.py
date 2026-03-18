@@ -4,12 +4,11 @@ from .request_context import get_current_user
 
 
 def resolve_user_context():
-
     # Flask
     try:
         from flask import g
 
-        user = getattr(g, "current_user", None)
+        user = getattr(g, "current_user", None) or getattr(g, "user", None)
 
         if user:
             return user

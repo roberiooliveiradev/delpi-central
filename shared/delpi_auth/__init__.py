@@ -22,6 +22,8 @@ from .authorization import (
     require_auth,
     require_superadmin,
     require_permission,
+    require_any_permission,
+    require_all_permissions,
 )
 
 # Policies

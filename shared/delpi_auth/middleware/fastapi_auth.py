@@ -6,7 +6,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 
 from ..jwt_validator import validate_token
-from ..request_context import set_current_user
+from ..request_context import set_current_user, reset_current_user, clear_current_user
 
 
 CORE_API_URL = "http://core-api:8000"
@@ -60,11 +60,10 @@ async def load_user_rbac(token: str):
 
 
 async def jwt_middleware(request: Request, call_next):
+    clear_current_user()
+
     path = request.url.path
 
-    # --------------------------------
-    # liberar docs e endpoints públicos
-    # --------------------------------
     if is_public_path(path):
         return await call_next(request)
 
@@ -77,6 +76,8 @@ async def jwt_middleware(request: Request, call_next):
         )
 
     token = auth_header.split(" ", 1)[1]
+
+    context_token = None
 
     try:
         claims = validate_token(token)
@@ -94,9 +95,9 @@ async def jwt_middleware(request: Request, call_next):
         rbac = await load_user_rbac(token)
 
         user = SimpleNamespace(
-            id=rbac.get("id"),
-            email=rbac.get("email"),
-            name=name,
+            id=rbac.get("id") or sub,
+            email=rbac.get("email") or email,
+            name=rbac.get("name") or name,
             roles=rbac.get("roles", []),
             groups=rbac.get("groups", []),
             permissions=rbac.get("permissions", []),
@@ -104,7 +105,10 @@ async def jwt_middleware(request: Request, call_next):
         )
 
         request.state.user = user
-        set_current_user(user)
+        context_token = set_current_user(user)
+
+        response = await call_next(request)
+        return response
 
     except Exception:
         return JSONResponse(
@@ -112,4 +116,8 @@ async def jwt_middleware(request: Request, call_next):
             content={"detail": "Invalid token"},
         )
 
-    return await call_next(request)
+    finally:
+        if context_token is not None:
+            reset_current_user(context_token)
+        else:
+            clear_current_user()
