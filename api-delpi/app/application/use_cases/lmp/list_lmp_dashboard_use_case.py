@@ -52,7 +52,7 @@ class ListLMPDashboardUseCase:
         total = len(enriched)
 
         lead_items = [item for item in enriched if item.lead_time_util is not None]
-        pontuais = len([item for item in enriched if item.status == "Pontual"])
+        pontuais = len([item for item in enriched if item.status != "Atrasado"])
 
         percent_dentro_prazo = (pontuais / total * 100) if total else 0
         avg_lead_time = (
