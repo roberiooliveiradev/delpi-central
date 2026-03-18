@@ -30,6 +30,16 @@ type DashboardLmpsPageProps = {
 const PRIMARY_CHART_COLOR = "#089bdb";
 const SECONDARY_CHART_COLOR = "#003866";
 
+const PIE_CHART_HEIGHT = 320;
+const PIE_OUTER_RADIUS = 110;
+const BAR_CHART_HEIGHT = 320;
+const LINE_CHART_HEIGHT = 380;
+const CHART_FONT_SIZE = 14;
+
+const AXIS_TICK_PROPS = { fontSize: CHART_FONT_SIZE };
+const TOOLTIP_STYLE = { fontSize: CHART_FONT_SIZE };
+const LEGEND_STYLE = { fontSize: CHART_FONT_SIZE };
+
 function formatDate(value?: string | null): string {
   if (!value || value.length !== 8) return "-";
 
@@ -81,6 +91,17 @@ function getPeriodo(dateValue?: string | null): string | null {
     month: "short",
     year: "2-digit"
   });
+}
+
+function renderPieLabel({
+  name,
+  percent
+}: {
+  name?: string;
+  percent?: number;
+}) {
+  if (!name || percent == null) return "";
+  return `${name} ${(percent * 100).toFixed(0)}%`;
 }
 
 export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
@@ -289,16 +310,16 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
 
           <section className="lmps-charts-grid lmps-charts-grid-top">
             <ChartCard title="Contagem por Nível">
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
                 <PieChart>
                   <Pie
                     data={resolvedCharts.levelData}
                     cx="50%"
                     cy="50%"
-                    outerRadius={90}
+                    outerRadius={PIE_OUTER_RADIUS}
                     dataKey="value"
                     nameKey="name"
-                    label
+                    label={renderPieLabel}
                   >
                     {resolvedCharts.levelData.map((entry, index) => (
                       <Cell
@@ -307,23 +328,23 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Legend wrapperStyle={LEGEND_STYLE} />
                 </PieChart>
               </ResponsiveContainer>
             </ChartCard>
 
             <ChartCard title="Contagem por Status">
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
                 <PieChart>
                   <Pie
                     data={resolvedCharts.statusData}
                     cx="50%"
                     cy="50%"
-                    outerRadius={90}
+                    outerRadius={PIE_OUTER_RADIUS}
                     dataKey="value"
                     nameKey="name"
-                    label
+                    label={renderPieLabel}
                   >
                     {resolvedCharts.statusData.map((entry, index) => (
                       <Cell
@@ -332,19 +353,19 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Legend wrapperStyle={LEGEND_STYLE} />
                 </PieChart>
               </ResponsiveContainer>
             </ChartCard>
 
             <ChartCard title="Média de Lead Time Útil por Nível">
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={BAR_CHART_HEIGHT}>
                 <BarChart data={resolvedCharts.leadByLevel}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="nivel" />
-                  <YAxis />
-                  <Tooltip />
+                  <XAxis dataKey="nivel" tick={AXIS_TICK_PROPS} />
+                  <YAxis tick={AXIS_TICK_PROPS} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
                   <Bar dataKey="valor" radius={[8, 8, 0, 0]} fill={PRIMARY_CHART_COLOR} />
                 </BarChart>
               </ResponsiveContainer>
@@ -353,14 +374,14 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
 
           <section className="lmps-charts-grid">
             <ChartCard title="Evolução de Lead Time Útil e Quantidade de Propostas">
-              <ResponsiveContainer width="100%" height={340}>
+              <ResponsiveContainer width="100%" height={LINE_CHART_HEIGHT}>
                 <LineChart data={resolvedCharts.evolutionData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="periodo" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
+                  <XAxis dataKey="periodo" tick={AXIS_TICK_PROPS} />
+                  <YAxis yAxisId="left" tick={AXIS_TICK_PROPS} />
+                  <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_PROPS} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Legend wrapperStyle={LEGEND_STYLE} />
                   <Line
                     yAxisId="left"
                     type="monotone"
@@ -399,10 +420,10 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
                       <th>Status Engenharia</th>
                       <th>Qtd PI</th>
                       <th>Nível</th>
-                      <th>SLA</th>
+                      <th>Dias úteis</th>
                       <th>Data Limite</th>
                       <th>Lead Time Útil</th>
-                      <th>Status</th>
+                      <th>Status Classificação</th>
                     </tr>
                   </thead>
                   <tbody>

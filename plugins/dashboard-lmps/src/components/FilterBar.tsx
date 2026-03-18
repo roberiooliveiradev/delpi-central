@@ -24,7 +24,7 @@ export function FilterBar({
       <header className="lmps-page-header">
         <div>
           <p className="lmps-eyebrow">DELPI • Analytics</p>
-          <h1>Dashboard LMPs</h1>
+          <h1>Acompanhamento de LMPs</h1>
           <span className="lmps-page-subtitle">
             Indicadores de prazo, nível, status e lead time útil
           </span>
