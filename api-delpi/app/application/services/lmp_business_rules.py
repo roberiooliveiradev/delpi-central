@@ -17,6 +17,12 @@ class LMPBusinessRules:
     ENGINEERING_STATUS_FINISHED = "FINALIZADA"
     ENGINEERING_STATUS_IN_PROGRESS = "EM_ANDAMENTO"
     ENGINEERING_STATUS_PARTIAL = "PARCIAL"
+    ENGINEERING_STATUS_RETURNED = "RETORNADA"
+
+    DASHBOARD_STATUS_ON_TIME = "Pontual"
+    DASHBOARD_STATUS_LATE = "Atrasado"
+    DASHBOARD_STATUS_IN_PROGRESS = "Andamento"
+    DASHBOARD_STATUS_RETURNED = "Retornada"
 
     @staticmethod
     def normalize_string(value: Optional[str]) -> Optional[str]:
@@ -118,6 +124,35 @@ class LMPBusinessRules:
         return normalized == cls.ENGINEERING_STATUS_FINISHED
 
     @classmethod
+    def is_engineering_returned(cls, engineering_status: Optional[str]) -> bool:
+        normalized = cls.normalize_string(engineering_status)
+        return normalized == cls.ENGINEERING_STATUS_RETURNED
+
+    @classmethod
+    def is_engineering_in_progress(cls, engineering_status: Optional[str]) -> bool:
+        normalized = cls.normalize_string(engineering_status)
+        return normalized == cls.ENGINEERING_STATUS_IN_PROGRESS
+
+    @classmethod
+    def is_engineering_partial(cls, engineering_status: Optional[str]) -> bool:
+        normalized = cls.normalize_string(engineering_status)
+        return normalized == cls.ENGINEERING_STATUS_PARTIAL
+
+    @classmethod
+    def matches_engineering_status_filter(
+        cls,
+        engineering_status: Optional[str],
+        filter_status: Optional[str],
+    ) -> bool:
+        normalized_status = cls.normalize_string(engineering_status)
+        normalized_filter = cls.normalize_string(filter_status)
+
+        if not normalized_filter:
+            return True
+
+        return normalized_status == normalized_filter
+
+    @classmethod
     def get_dashboard_status(
         cls,
         start_date_str: Optional[str],
@@ -148,8 +183,12 @@ class LMPBusinessRules:
 
         total_minutes = int(engineering_total_minutes or 0)
         finished = cls.is_engineering_finished(engineering_status)
+        returned = cls.is_engineering_returned(engineering_status)
 
-        if finished:
+        if returned:
+            status = cls.DASHBOARD_STATUS_RETURNED
+
+        elif finished:
             within_date_limit = (
                 end_date is not None
                 and data_limite_com_tolerancia is not None
@@ -158,7 +197,11 @@ class LMPBusinessRules:
 
             within_minutes_limit = total_minutes <= sla_limit_minutes
 
-            status = "Pontual" if (within_date_limit or within_minutes_limit) else "Atrasado"
+            status = (
+                cls.DASHBOARD_STATUS_ON_TIME
+                if (within_date_limit or within_minutes_limit)
+                else cls.DASHBOARD_STATUS_LATE
+            )
         else:
             over_date_limit = (
                 data_limite_com_tolerancia is not None
@@ -166,7 +209,11 @@ class LMPBusinessRules:
             )
             over_minutes_limit = total_minutes > sla_limit_minutes
 
-            status = "Atrasado" if (over_date_limit and over_minutes_limit) else "Andamento"
+            status = (
+                cls.DASHBOARD_STATUS_LATE
+                if (over_date_limit and over_minutes_limit)
+                else cls.DASHBOARD_STATUS_IN_PROGRESS
+            )
 
         return (
             nivel,
