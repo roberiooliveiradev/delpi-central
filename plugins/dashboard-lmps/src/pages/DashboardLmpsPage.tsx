@@ -141,7 +141,7 @@ export function DashboardLmpsPage() {
 
   const fallbackCharts = useMemo(() => {
     const levelOrder = ["Nível 1", "Nível 2", "Nível 3"];
-    const statusOrder = ["Pontual", "Atrasado", "Andamento"];
+    const statusOrder = ["Pontual", "Atrasado", "Andamento", "Retornada"];
 
     const levelData = levelOrder.map((name) => ({
       name,

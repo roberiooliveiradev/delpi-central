@@ -73,6 +73,7 @@ export function FilterBar({
             <option value="Pontual">Pontual</option>
             <option value="Atrasado">Atrasado</option>
             <option value="Andamento">Andamento</option>
+            <option value="Retornada">Retornada</option>
           </select>
         </div>
 
