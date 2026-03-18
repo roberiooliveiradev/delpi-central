@@ -2,15 +2,15 @@
 
 ## Objetivo
 
-Documentar a implementação atual da rota de **LMPs (Lançamento ou Modificação do Produto)** no ecossistema DELPI/TOTVS, contemplando:
+Documentar a implementação **atual** da rota de **LMPs (Lançamento ou Modificação do Produto)** no ecossistema DELPI/TOTVS, contemplando:
 
 - entendimento funcional da LMP;
 - tabelas e estruturas envolvidas;
 - regras de negócio consolidadas;
 - arquitetura atual no backend e frontend;
 - lógica de cálculo de status para dashboard;
-- critérios de identificação de atraso/pontualidade;
-- queries de auditoria para validação;
+- critérios de identificação de atraso, pontualidade e retorno;
+- queries e regras de auditoria;
 - pontos de atenção para evolução.
 
 ---
@@ -26,7 +26,7 @@ Durante a evolução da análise, ficou claro que:
 - a engenharia participa de vários pontos do fluxo;
 - porém, nem toda passagem na engenharia define uma LMP;
 - a identificação correta depende da combinação **processo + estágio**;
-- o dashboard não deve mais depender de regras de negócio no frontend;
+- o dashboard não deve depender de regra de negócio no frontend;
 - a regra final deve estar centralizada no backend.
 
 ---
@@ -127,10 +127,10 @@ Exemplos relevantes:
 ### Processo `000003`
 
 - `000003` = engenharia
-- `000012` = etapa relevante para LMP
-- `000013` = etapa posterior / follow-up da LMP
+- `000012` = etapa relevante em históricos antigos / alternativos
+- `000013` = etapa posterior / follow-up
 
-Essa constatação motivou a parametrização por processo + estágio no repository.
+**Ajuste consolidado:** na operação atual, a engenharia do processo `000003` usa o estágio `000003` como estágio de entrada real. Por isso, a configuração do repository passou a aceitar `000003` como estágio âncora de LMP para esse processo, mantendo `000012` por compatibilidade histórica quando necessário.
 
 ---
 
@@ -267,7 +267,27 @@ Conclusão:
 
 ---
 
-## 5. O frontend não deve decidir regra de negócio
+## 5. Tempo efetivo nem sempre está na mesma revisão do status
+
+Problema encontrado:
+
+- alguns casos, como OVs alteradas e reenfileiradas, tinham a última revisão correta para status, mas não para medir o tempo real de engenharia;
+- isso gerava `engineering_total_minutes = 0` mesmo em OVs corretamente classificadas como finalizadas.
+
+Conclusão:
+
+- a implementação atual usa uma abordagem **híbrida**:
+  - **última revisão** para o status atual;
+  - **revisão de medição** para calcular tempo, avanço, retorno e encerramento implícito.
+
+Regra prática:
+
+- a revisão de medição prioriza a revisão mais nova que contenha a etapa âncora relevante da engenharia/LMP;
+- se não existir, usa a maior revisão disponível no conjunto de eventos de engenharia.
+
+---
+
+## 6. O frontend não deve decidir regra de negócio
 
 Antes:
 
@@ -298,7 +318,7 @@ class LMPQuerySettings:
     lmp_anchor_process_stages: Dict[str, List[str]] = field(
         default_factory=lambda: {
             "000002": ["000012"],
-            "000003": ["000012"],
+            "000003": ["000003", "000012"],
         }
     )
 
@@ -321,13 +341,14 @@ class LMPQuerySettings:
             "in_progress": "EM_ANDAMENTO",
             "finished": "FINALIZADA",
             "partial": "PARCIAL",
+            "returned": "RETORNADA",
         }
     )
 
     root_product_types: List[str] = field(default_factory=lambda: ["PA"])
     pi_product_types: List[str] = field(default_factory=lambda: ["PI"])
     active_delete_flag: str = ""
-    max_bom_level: int = 999
+    max_bom_level: int = 10
 ```
 
 ---
@@ -342,15 +363,18 @@ Define o ponto principal que caracteriza a LMP.
 
 Define etapas posteriores que ajudam a encerrar logicamente a LMP quando a etapa âncora não recebeu data final explícita.
 
-Essa configuração foi importante para corrigir casos de histórico em que:
-
-- `000012` ficava sem `AIJ_DTENCE`;
-- a OV seguia adiante para `000013`;
-- o repository precisava inferir o encerramento real.
-
 ### `engineering_support_process_stages`
 
 Define todos os estágios que contam como tempo efetivo de engenharia.
+
+### `engineering_status_labels`
+
+Define os estados operacionais consolidados aceitos pela aplicação:
+
+- `EM_ANDAMENTO`
+- `FINALIZADA`
+- `PARCIAL`
+- `RETORNADA`
 
 ---
 
@@ -371,6 +395,28 @@ Responsável por:
 - montar produtos e quantidade de PI;
 - devolver dados crus já corretos para os use cases.
 
+### Estratégia atual do repository
+
+A implementação atual é **híbrida**:
+
+- `LMPEventos` define quais OVs entram na rota;
+- `StatusUltimaRevisaoEngenharia` define o estado atual usando a **última revisão**;
+- `UltimaRevisaoMedicaoEngenharia` escolhe a melhor revisão para medir tempo e encerramento implícito;
+- `EngenhariaResumoUltimaRevisao` consolida:
+  - `start_date`
+  - `end_date`
+  - `engineering_total_minutes`
+  - `qtd_advanced_from_engineering`
+  - `qtd_returned_from_engineering`
+  - `engineering_status`
+
+Essa separação foi necessária para corrigir ao mesmo tempo:
+
+- status errados em revisões antigas;
+- tempos zerados em revisões novas com reencaminhamento;
+- retornos indevidamente tratados como andamento;
+- dashboards que listavam ou excluíam OVs erradas por depender de âncora incorreta.
+
 ### `lmp_business_rules.py`
 
 Responsável por regras de negócio do dashboard:
@@ -380,7 +426,7 @@ Responsável por regras de negócio do dashboard:
 - SLA em minutos;
 - data limite;
 - lead time útil;
-- status final (`Pontual`, `Atrasado`, `Andamento`).
+- status final (`Pontual`, `Atrasado`, `Andamento`, `Retornada`).
 
 ### `list_lmp_dashboard_use_case.py`
 
@@ -389,6 +435,7 @@ Responsável por:
 - buscar LMPs no repository;
 - enriquecer itens com as regras de negócio;
 - aplicar filtro por status;
+- aplicar filtro por status de engenharia, quando necessário;
 - calcular resumo do dashboard;
 - devolver paginação e payload pronto para o frontend.
 
@@ -432,7 +479,7 @@ Agora:
 
 - o plugin consome a rota `/lmps/dashboard` já enriquecida;
 - o hook `useLmpsDashboard` trabalha com a estrutura devolvida pelo backend;
-- o `lmpApi.ts` passou a refletir o novo contrato.
+- o `lmpApi.ts` reflete o contrato consolidado.
 
 Benefício:
 
@@ -464,7 +511,7 @@ else:
 
 ## 3. SLA em minutos
 
-O dashboard passou a usar também SLA em minutos, com base em dia cheio:
+O dashboard usa SLA em minutos, com base em dia cheio:
 
 - 1 dia = 24 horas
 - 1 dia = 1440 minutos
@@ -483,18 +530,26 @@ Essa margem influencia:
 
 - comparação por minutos;
 - comparação por data;
-- especialmente cenários como o da OV `003263`.
+- especialmente cenários limítrofes de revisão e reentrada.
 
 ## 5. Critério de status
 
 ### Item finalizado
 
-Para OVs com `engineering_status = FINALIZADA`, o comportamento desejado é:
+Para OVs com `engineering_status = FINALIZADA`:
 
 - considerar pontual se estiver dentro da janela aceitável;
 - considerar atrasado quando extrapolar o SLA efetivo.
 
-### Item em andamento
+### Item retornado
+
+Para OVs com `engineering_status = RETORNADA`:
+
+- o dashboard devolve status **`Retornada`**;
+- esse status não é tratado como `Pontual` nem como `Atrasado`;
+- ele representa exceção operacional, não conclusão normal do SLA.
+
+### Item em andamento / parcial
 
 Para OVs não finalizadas:
 
@@ -505,7 +560,7 @@ Para OVs não finalizadas:
 
 ## Regra consolidada sobre tempo efetivo
 
-A principal conclusão mais recente foi:
+A principal conclusão foi:
 
 > **não basta subtrair `end_date - start_date` para medir atraso.**
 
@@ -545,129 +600,92 @@ Representa:
 
 ---
 
-## Ajuste importante no repository
+## Ajustes importantes consolidados
+
+### 1. Encerramento lógico da LMP
 
 Foi necessário melhorar o cálculo de `start_date` e `end_date` em cenários de revisão.
 
 Problema encontrado:
 
-- algumas revisões deixavam a etapa `000012` sem `AIJ_DTENCE`;
-- depois a OV reaparecia em nova revisão ou em estágio de follow-up;
+- algumas revisões deixavam a etapa âncora sem `AIJ_DTENCE`;
+- depois a OV reaparecia em nova revisão ou em estágio posterior;
 - o repository acabava tratando a passagem como aberta indefinidamente.
 
 Correção conceitual:
 
-- usar follow-up para inferir encerramento lógico;
+- usar próxima movimentação relevante para inferir encerramento lógico;
 - considerar próxima revisão / próxima movimentação relevante;
 - separar claramente:
   - âncora da LMP;
   - follow-up da LMP;
   - apoio da engenharia.
 
-Isso reduziu fortemente falsos atrasos e corrigiu casos como:
+### 2. Status atual pela última revisão
 
-- `003181`
-- `003211`
-- parte dos itens que antes apareciam em atraso por cadastro incompleto.
+Essa regra foi preservada para evitar regressões em massa no dashboard.
+
+### 3. Revisão de medição para tempo
+
+Foi adicionada para corrigir casos em que a última revisão era boa para status, mas ruim para medir o tempo real.
+
+### 4. Filtro de retornadas na camada de negócio
+
+A camada `lmp_business_rules.py` passou a reconhecer explicitamente:
+
+- `RETORNADA`
+
+Isso permite:
+
+- classificar o item como `Retornada` no dashboard;
+- filtrar retornadas na camada de use case/regra de negócio;
+- manter o repository focado em estado técnico e o service focado em interpretação de negócio.
 
 ---
 
 ## Casos reais de análise
 
-## Caso `003211`
+## Caso `003528`
 
 Situação observada:
 
-- `engineering_status = FINALIZADA`
-- `end_date` da LMP vinha vazia
-- havia linha no histórico sem `AIJ_DTENCE`
-- porém a OV já não estava mais na engenharia
+- a OV passou pela engenharia;
+- depois foi devolvida a estágios anteriores;
+- a API retornava como se ainda estivesse em andamento na engenharia.
 
 Conclusão:
 
-- o repository estava coerente com o histórico bruto;
-- o cadastro possuía etapa sem encerramento explícito;
-- o service precisou respeitar o fato de que a OV já estava finalizada na engenharia e não poderia ser classificada como item aberto.
+- faltava reconhecer o cenário de retorno;
+- a rota passou a devolver `engineering_status = RETORNADA`.
 
 ---
 
-## Caso `003181`
+## Caso `003362`
 
 Situação observada:
 
-- várias revisões ao longo do tempo;
-- reentrada em engenharia;
-- `000012` em revisões diferentes, algumas sem fechamento;
-- diferença entre histórico consolidado e última revisão.
+- a OV foi alterada e passada adiante;
+- o status final estava correto, mas `engineering_total_minutes` ficava zerado.
 
 Conclusão:
 
-- usar apenas subtração de datas levava a erro;
-- foi necessário separar:
-  - histórico completo;
-  - última revisão;
-  - follow-up;
-  - tempo efetivo sob posse da engenharia.
+- a última revisão era correta para status;
+- mas a revisão usada para medição precisava priorizar a revisão âncora da passagem efetiva;
+- isso motivou a criação da **revisão de medição**.
 
 ---
 
-## Caso `003263`
+## Caso `003529`
 
 Situação observada:
 
-- no frontend visualmente deveria ser pontual;
-- no backend ainda aparecia como atrasado.
+- a OV existia na engenharia, mas não aparecia no dashboard.
 
 Conclusão:
 
-- o caso é limítrofe;
-- justificou a criação da tolerância de 1 dia;
-- serviu para refinar a regra e evitar atraso indevido em cenário muito próximo do SLA.
-
----
-
-## Query de auditoria do histórico
-
-Abaixo está o modelo de query usado para validar eventos, revisão e consolidação.
-
-## 1. Detalhe dos eventos que contam como engenharia
-
-Usada para inspecionar:
-
-- início real do evento;
-- fim real usado;
-- regra de encerramento aplicada;
-- minutos do evento;
-- próxima movimentação.
-
-Estrutura lógica:
-
-- filtrar por processo + estágio de engenharia;
-- calcular próxima movimentação com `LEAD(...)`;
-- montar `DT_INICIO_REAL`;
-- montar `DT_FIM_REAL_USADO`;
-- registrar a regra de fechamento usada;
-- calcular `TEMPO_MINUTOS_EVENTO`.
-
-## 2. Total por revisão
-
-Usado para verificar:
-
-- quantos eventos relevantes houve na revisão;
-- quanto tempo total aquela revisão consumiu.
-
-## 3. Total da última revisão
-
-Usado para comparar:
-
-- esforço real da revisão corrente;
-- divergência com histórico consolidado.
-
-## 4. Total histórico
-
-Usado para validar:
-
-- soma total de esforço em engenharia ao longo da vida da OV.
+- a regra de âncora para o processo `000003` estava desalinhada com a operação real;
+- a engenharia usa o estágio `000003`;
+- a configuração de `lmp_anchor_process_stages` foi ampliada para incluir `000003` nesse processo.
 
 ---
 
@@ -708,13 +726,15 @@ Parâmetros:
 - `status`
 - `page`
 - `page_size`
+- filtro opcional por status de engenharia, quando exposto pelo use case
 
 Comportamento:
 
 - busca LMPs no repository;
 - aplica regras de negócio no use case;
 - devolve itens enriquecidos;
-- permite filtrar por status.
+- permite filtrar por status;
+- permite tratar `RETORNADA` como categoria própria.
 
 ---
 
@@ -724,30 +744,15 @@ Comportamento:
 
 A data limite continua sendo útil para leitura humana.
 
-Mas o atraso real do dashboard agora depende principalmente de:
+Mas o atraso real do dashboard depende principalmente de:
 
 - `engineering_total_minutes`
 - SLA em minutos
 - tolerância configurada
 
-Isso significa que alguns casos podem parecer “dentro da data” visualmente e ainda precisarem auditoria pelo histórico real.
-
----
-
 ## 2. Casos limítrofes ainda exigem validação manual
 
 Os itens remanescentes classificados como atrasados precisam ser auditados caso a caso.
-
-Na fase atual, isso é esperado.
-
-A regra já foi muito refinada, mas alguns cenários ainda dependem de confirmar:
-
-- se o histórico representa esforço real;
-- se existe erro de cadastro;
-- se houve etapa sem encerramento explícito;
-- se uma nova revisão deveria encerrar logicamente a anterior.
-
----
 
 ## 3. Histórico bruto pode conter inconsistência operacional
 
@@ -759,8 +764,6 @@ Podem ser:
 - revisão aberta sem baixa;
 - etapa concluída operacionalmente sem data final gravada;
 - retorno tardio com reaproveitamento do fluxo anterior.
-
-Por isso, o repository foi evoluído para ser o mais aderente possível ao histórico, mas ainda assim a análise de alguns casos precisa de auditoria funcional.
 
 ---
 
@@ -790,8 +793,10 @@ As decisões mais importantes foram:
 - o frontend não deve mais calcular regra de negócio;
 - o dashboard deve consumir dados enriquecidos do backend;
 - o status atual deve refletir a **última revisão**;
-- o atraso deve considerar **tempo efetivo em engenharia**;
-- follow-up da LMP passou a ser necessário para corrigir encerramentos implícitos;
+- o tempo de SLA deve considerar **tempo efetivo em engenharia**;
+- a medição pode usar revisão diferente da revisão de status quando necessário;
+- `RETORNADA` passou a ser um estado oficial do fluxo;
+- o processo `000003` passou a aceitar `000003` como âncora operacional de engenharia/LMP;
 - margem de tolerância foi adicionada para reduzir falsos atrasos em casos limítrofes.
 
 Com isso, a rota passou a ser uma base mais confiável para:
