@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { configureHttpClient } from "./api/httpClient";
 import { DashboardLmpsPage } from "./pages/DashboardLmpsPage";
 
@@ -7,9 +6,7 @@ export type AppProps = {
 };
 
 export default function App({ getAccessToken }: AppProps) {
-  useEffect(() => {
-    configureHttpClient(() => getAccessToken?.());
-  }, [getAccessToken]);
+  configureHttpClient(() => getAccessToken?.());
 
   return <DashboardLmpsPage />;
 }
