@@ -13,7 +13,7 @@ import { ManifestRegisterModal } from "../modals/ManifestRegisterModal";
 import { ActionButtons } from "../../../components/ActionButtons";
 
 export const AppsTab = () => {
-  const { token } = useContext(AuthContext);
+  const { getAccessToken } = useContext(AuthContext);
 
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
@@ -32,9 +32,8 @@ export const AppsTab = () => {
   });
 
   const api = useMemo(() => {
-    if (!token) return null;
-    return new AdminApi(new ApiClient("", () => token));
-  }, [token]);
+    return new AdminApi(new ApiClient("", getAccessToken));
+  }, [getAccessToken]);
 
   const appsResource = usePaginatedResource<AdminApp>(
     ({ page, pageSize }) =>

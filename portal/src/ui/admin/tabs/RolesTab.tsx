@@ -11,7 +11,7 @@ import { ActionButtons } from "../../../components/ActionButtons";
 import { RoleEditModal } from "../modals/RoleEditModal";
 
 export const RolesTab = () => {
-  const { token } = useContext(AuthContext);
+  const { getAccessToken } = useContext(AuthContext);
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<{ sort?: string; direction?: "asc" | "desc" }>({
@@ -29,9 +29,8 @@ export const RolesTab = () => {
   const [saving, setSaving] = useState(false);
 
   const api = useMemo(() => {
-    if (!token) return null;
-    return new AdminApi(new ApiClient("", () => token));
-  }, [token]);
+    return new AdminApi(new ApiClient("", getAccessToken));
+  }, [getAccessToken]);
 
   const rolesResource = usePaginatedResource<AdminRole>(
     ({ page, pageSize }) =>

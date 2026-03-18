@@ -5,11 +5,16 @@ import { ApiClient } from "../data/apiClient";
 import { DelpiApi } from "../data/delpiApi";
 
 export const useDelpiApi = () => {
-  const { token } = useContext(AuthContext);
+  const { getAccessToken, refreshToken } = useContext(AuthContext);
 
   return useMemo(() => {
-    if (!token) return undefined;
-    const client = new ApiClient("", () => token);
+    const client = new ApiClient("", getAccessToken, {
+      refreshToken: async () => {
+        await refreshToken();
+        return Boolean(getAccessToken());
+      },
+    });
+
     return new DelpiApi(client);
-  }, [token]);
+  }, [getAccessToken, refreshToken]);
 };

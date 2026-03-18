@@ -9,7 +9,7 @@ import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { DataTable } from "../../../components/DataTable";
 
 export const PermissionsTab = () => {
-  const { token } = useContext(AuthContext);
+  const { getAccessToken } = useContext(AuthContext);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<{ sort?: string; direction?: "asc" | "desc" }>({
     sort: "code",
@@ -17,9 +17,8 @@ export const PermissionsTab = () => {
   });
 
   const api = useMemo(() => {
-    if (!token) return null;
-    return new AdminApi(new ApiClient("", () => token));
-  }, [token]);
+    return new AdminApi(new ApiClient("", getAccessToken));
+  }, [getAccessToken]);
 
   const permsResource = usePaginatedResource<AdminPermission>(
     ({ page, pageSize }) =>

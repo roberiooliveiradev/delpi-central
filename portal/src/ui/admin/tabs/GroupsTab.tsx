@@ -13,7 +13,7 @@ import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { GroupEditModal } from "../modals/GroupEditModal";
 
 export const GroupsTab = () => {
-  const { token } = useContext(AuthContext);
+  const { getAccessToken } = useContext(AuthContext);
 
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<AdminGroup | null>(null);
@@ -32,9 +32,8 @@ export const GroupsTab = () => {
   });
 
   const api = useMemo(() => {
-    if (!token) return null;
-    return new AdminApi(new ApiClient("", () => token));
-  }, [token]);
+    return new AdminApi(new ApiClient("", getAccessToken));
+  }, [getAccessToken]);
 
   const groupsResource = usePaginatedResource<AdminGroup>(
     ({ page, pageSize }) =>

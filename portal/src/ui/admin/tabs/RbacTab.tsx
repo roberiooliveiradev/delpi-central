@@ -12,7 +12,7 @@ import { ActionButtons } from "../../../components/ActionButtons";
 import { UserRbacModal } from "../modals/UserRbacModal";
 
 export const RbacTab = () => {
-  const { token } = useContext(AuthContext);
+  const { getAccessToken } = useContext(AuthContext);
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<{ sort?: string; direction?: "asc" | "desc" }>({
@@ -25,9 +25,8 @@ export const RbacTab = () => {
   const [confirmBulk, setConfirmBulk] = useState(false);
 
   const api = useMemo(() => {
-    if (!token) return null;
-    return new AdminApi(new ApiClient("", () => token));
-  }, [token]);
+    return new AdminApi(new ApiClient("", getAccessToken));
+  }, [getAccessToken]);
 
   const usersResource = usePaginatedResource<AdminUser>(
     ({ page, pageSize }) =>
