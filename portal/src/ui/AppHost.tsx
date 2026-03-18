@@ -24,7 +24,7 @@ function getViteFederationShareScope() {
 }
 
 export const AppHost = () => {
-  const { apps, token, refreshToken } = useContext(AuthContext);
+  const { apps, getAccessToken, refreshToken } = useContext(AuthContext);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -36,10 +36,12 @@ export const AppHost = () => {
   const [federatedError, setFederatedError] = useState<string | null>(null);
 
   const app = useMemo(() => {
-    return apps.find((a: AppItem) => {
-      const base = normalize(a.basePath);
-      return location.pathname === base || location.pathname.startsWith(base + "/");
-    }) ?? null;
+    return (
+      apps.find((a: AppItem) => {
+        const base = normalize(a.basePath);
+        return location.pathname === base || location.pathname.startsWith(base + "/");
+      }) ?? null
+    );
   }, [apps, location.pathname]);
 
   const route = useMemo<RouteItem | null>(() => {
@@ -74,22 +76,24 @@ export const AppHost = () => {
   }, [app, resolvedEntry, navigate]);
 
   useEffect(() => {
-    if (!token) return;
     if (!iframeRef.current) return;
     if (!app || app.renderMode !== "embedded") return;
+
+    const token = getAccessToken();
+    if (!token) return;
 
     iframeRef.current.contentWindow?.postMessage(
       { type: "DELPI_AUTH", token },
       window.location.origin
     );
-  }, [token, app, location.pathname]);
+  }, [app, location.pathname, getAccessToken]);
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return;
 
       if (event.data?.type === "DELPI_REFRESH_REQUEST") {
-        refreshToken();
+        void refreshToken();
       }
     }
 
@@ -139,7 +143,7 @@ export const AppHost = () => {
         }
 
         const props = {
-          token,
+          getAccessToken,
           basePath: app.basePath,
           pathname: location.pathname,
           search: location.search,
@@ -152,14 +156,14 @@ export const AppHost = () => {
       }
     }
 
-    mountFederated();
+    void mountFederated();
 
     return () => {
       isActive = false;
 
       if (mountedModuleRef.current?.unmount) {
         try {
-          mountedModuleRef.current.unmount();
+          mountedModuleRef.current.unmount(federatedHostRef.current ?? undefined);
         } catch {
           //
         }
@@ -171,22 +175,32 @@ export const AppHost = () => {
         federatedHostRef.current.innerHTML = "";
       }
     };
-  }, [app, resolvedEntry, location.pathname, location.search, token]);
+  }, [app, resolvedEntry, location.pathname, location.search, getAccessToken]);
 
   useEffect(() => {
-    if (!token) return;
-    if (!mountedModuleRef.current) return;
+    const forwardTokenUpdate = async () => {
+      const token = getAccessToken();
+      if (!token) return;
+      if (!mountedModuleRef.current) return;
 
-    if (typeof mountedModuleRef.current.updateToken === "function") {
-      mountedModuleRef.current.updateToken(token);
-    } else {
-      window.dispatchEvent(
-        new CustomEvent("DELPI_TOKEN_UPDATE", {
-          detail: { token },
-        })
-      );
-    }
-  }, [token]);
+      if (typeof mountedModuleRef.current.updateToken === "function") {
+        mountedModuleRef.current.updateToken(token);
+      } else {
+        window.dispatchEvent(
+          new CustomEvent("DELPI_TOKEN_UPDATE", {
+            detail: { token },
+          })
+        );
+      }
+    };
+
+    const onFocus = () => {
+      void forwardTokenUpdate();
+    };
+
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [getAccessToken]);
 
   if (!app) return <div>App não encontrado.</div>;
 

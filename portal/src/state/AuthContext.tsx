@@ -27,7 +27,8 @@ interface AuthContextType {
   initialized: boolean;
   coreLoaded: boolean;
 
-  token?: string;
+  getAccessToken: () => string | undefined;
+
   user?: MeResponse;
   apps: AppItem[];
   routes: RouteItem[];
@@ -53,6 +54,8 @@ export const AuthContext = createContext<AuthContextType>({
   initialized: false,
   coreLoaded: false,
 
+  getAccessToken: () => undefined,
+
   apps: [],
   routes: [],
   favorites: [],
@@ -75,10 +78,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
-
   const [coreLoaded, setCoreLoaded] = useState(false);
 
-  const [token, setToken] = useState<string | undefined>();
   const tokenRef = useRef<string | undefined>(undefined);
 
   const [user, setUser] = useState<MeResponse | undefined>();
@@ -98,16 +99,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const unauthorizedHandledRef = useRef(false);
 
   const getCurrentRedirectUri = () => window.location.href;
-  
-  useEffect(() => {
-    tokenRef.current = token;
-  }, [token]);
+
+  const getAccessToken = useCallback(() => tokenRef.current, []);
 
   const clearSessionState = useCallback(() => {
     setIsAuthenticated(false);
     setCoreLoaded(false);
 
-    setToken(undefined);
     tokenRef.current = undefined;
 
     setUser(undefined);
@@ -151,7 +149,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (nextToken && nextToken !== currentToken) {
           tokenRef.current = nextToken;
-          setToken(nextToken);
         }
 
         return refreshed || !!nextToken;
@@ -182,9 +179,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return new CoreApi(apiClient);
   }, [refreshTokenSilently, handleUnauthorized]);
 
-  // =====================================================
-  // LOADERS PARCIAIS
-  // =====================================================
   const loadIdentityAndNavigation = useCallback(async () => {
     if (!tokenRef.current) return;
     if (identityLoadInFlightRef.current) return;
@@ -272,9 +266,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     loadFavoritesData,
   ]);
 
-  // =====================================================
-  // FAVORITES
-  // =====================================================
   const addFavorite = useCallback(
     async (appId: string) => {
       const coreApi = buildCoreApi();
@@ -315,9 +306,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     [buildCoreApi, loadFavoritesData]
   );
 
-  // =====================================================
-  // NOTIFICATIONS
-  // =====================================================
   const markNotificationRead = useCallback(
     async (id: string) => {
       const coreApi = buildCoreApi();
@@ -337,9 +325,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }, [buildCoreApi]);
 
-  // =====================================================
-  // TOKEN REFRESH
-  // =====================================================
   const startTokenRefresh = useCallback(() => {
     if (refreshIntervalRef.current) return;
 
@@ -348,11 +333,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }, 60000);
   }, [refreshToken]);
 
-  // =====================================================
-  // SOCKET
-  // =====================================================
   useSocket({
-    token: !loading && isAuthenticated && token ? token : undefined,
+    token: !loading && isAuthenticated ? tokenRef.current : undefined,
     onConnected: async () => {
       await Promise.all([
         loadIdentityAndNavigation(),
@@ -367,9 +349,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     },
   });
 
-  // =====================================================
-  // INIT
-  // =====================================================
   useEffect(() => {
     let mounted = true;
 
@@ -382,7 +361,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (authenticated && keycloak.token) {
           tokenRef.current = keycloak.token;
-          setToken(keycloak.token);
 
           await loadCoreData();
           startTokenRefresh();
@@ -424,7 +402,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       initialized,
       coreLoaded,
 
-      token,
+      getAccessToken,
       user,
       apps,
       routes,
@@ -447,7 +425,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       loading,
       initialized,
       coreLoaded,
-      token,
+      getAccessToken,
       user,
       apps,
       routes,

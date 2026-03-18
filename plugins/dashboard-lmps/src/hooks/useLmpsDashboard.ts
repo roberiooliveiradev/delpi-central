@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getLmpsDashboard, type LmpsDashboardResponse } from "../api/lmpApi";
 
 type UseLmpsDashboardParams = {
-  token?: string;
   date_start?: string;
   date_end?: string;
   status?: string;
@@ -37,7 +36,6 @@ export function useLmpsDashboard(
       status: params.status,
       page: params.page,
       page_size: params.page_size,
-      token: params.token
     }),
     [
       params.date_start,
@@ -45,7 +43,6 @@ export function useLmpsDashboard(
       params.status,
       params.page,
       params.page_size,
-      params.token
     ]
   );
 
@@ -70,16 +67,20 @@ export function useLmpsDashboard(
             date_end: stableParams.date_end,
             status: stableParams.status,
             page: stableParams.page,
-            page_size: stableParams.page_size
+            page_size: stableParams.page_size,
           },
-          stableParams.token,
           controller.signal
         );
 
         setData(result);
       } catch (err) {
         if (controller.signal.aborted) return;
-        setError(err instanceof Error ? err.message : "Erro ao carregar dashboard de LMPs");
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro ao carregar dashboard de LMPs"
+        );
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
@@ -88,7 +89,7 @@ export function useLmpsDashboard(
       }
     }
 
-    run();
+    void run();
 
     return () => controller.abort();
   }, [stableParams, reloadKey]);
@@ -105,6 +106,6 @@ export function useLmpsDashboard(
     loading,
     refreshing,
     error,
-    reload
+    reload,
   };
 }

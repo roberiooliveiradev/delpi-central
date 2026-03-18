@@ -1,28 +1,36 @@
 type RequestOptions = {
-  token?: string;
   signal?: AbortSignal;
 };
+
+let accessTokenGetter: (() => string | undefined) | null = null;
+
+export function configureHttpClient(getAccessToken: () => string | undefined) {
+  accessTokenGetter = getAccessToken;
+}
 
 export async function httpGet<T>(
   url: string,
   options: RequestOptions = {}
 ): Promise<T> {
   const headers: Record<string, string> = {
-    Accept: "application/json"
+    Accept: "application/json",
   };
 
-  if (options.token) {
-    headers.Authorization = `Bearer ${options.token}`;
+  const token = accessTokenGetter?.();
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
   const response = await fetch(url, {
     method: "GET",
     headers,
-    signal: options.signal
+    signal: options.signal,
   });
 
   if (!response.ok) {
     let message = `Erro HTTP ${response.status}`;
+
     try {
       const errorBody = await response.json();
       message =
@@ -33,6 +41,7 @@ export async function httpGet<T>(
     } catch {
       // mantém mensagem padrão
     }
+
     throw new Error(message);
   }
 

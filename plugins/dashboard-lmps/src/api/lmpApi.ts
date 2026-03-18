@@ -4,7 +4,7 @@ import type {
   ListLmpsParams,
   LmpItem,
   LmpDashboardItem,
-  Page
+  Page,
 } from "../types/lmp";
 
 export type LmpsDashboardSummary = {
@@ -64,14 +64,13 @@ function buildQuery(params: ListLmpsParams & { status?: string }): string {
 
 export async function listLmps(
   params: ListLmpsParams,
-  token?: string,
   signal?: AbortSignal
 ): Promise<Page<LmpItem>> {
   const query = buildQuery(params);
 
   const response = await httpGet<ApiSuccessResponse<Page<LmpItem>>>(
     `/apps/api-delpi/lmps/${query}`,
-    { token, signal }
+    { signal }
   );
 
   return response.data;
@@ -79,14 +78,13 @@ export async function listLmps(
 
 export async function getLmpsDashboard(
   params: LmpsDashboardParams,
-  token?: string,
   signal?: AbortSignal
 ): Promise<LmpsDashboardResponse> {
   const query = buildQuery(params);
 
   const response = await httpGet<ApiSuccessResponse<LmpsDashboardResponse>>(
     `/apps/api-delpi/lmps/dashboard${query}`,
-    { token, signal }
+    { signal }
   );
 
   return response.data;

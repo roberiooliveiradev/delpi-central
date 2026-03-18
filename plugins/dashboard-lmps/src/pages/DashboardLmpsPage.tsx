@@ -13,7 +13,7 @@ import {
   Tooltip,
   LineChart,
   Line,
-  Legend
+  Legend,
 } from "recharts";
 
 import { KpiCard } from "../components/KpiCard";
@@ -22,10 +22,6 @@ import { FilterBar } from "../components/FilterBar";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
 import type { LmpDashboardItem } from "../types/lmp";
-
-type DashboardLmpsPageProps = {
-  token?: string;
-};
 
 const PRIMARY_CHART_COLOR = "#089bdb";
 const SECONDARY_CHART_COLOR = "#003866";
@@ -89,13 +85,13 @@ function getPeriodo(dateValue?: string | null): string | null {
 
   return date.toLocaleDateString("pt-BR", {
     month: "short",
-    year: "2-digit"
+    year: "2-digit",
   });
 }
 
 function renderPieLabel({
   name,
-  percent
+  percent,
 }: {
   name?: string;
   percent?: number;
@@ -104,7 +100,7 @@ function renderPieLabel({
   return `${name} ${(percent * 100).toFixed(0)}%`;
 }
 
-export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
+export function DashboardLmpsPage() {
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState(getTodayInputValue());
   const [status, setStatus] = useState("Todos");
@@ -112,10 +108,9 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
 
   const { items, summary, charts, loading, refreshing, error, reload } =
     useLmpsDashboard({
-      token,
       date_start: dateStart || undefined,
       date_end: dateEnd || undefined,
-      status
+      status,
     });
 
   const dashboardItems = items as LmpDashboardItem[];
@@ -149,12 +144,12 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
 
     const levelData = levelOrder.map((name) => ({
       name,
-      value: dashboardItems.filter((item) => item.nivel === name).length
+      value: dashboardItems.filter((item) => item.nivel === name).length,
     }));
 
     const statusData = statusOrder.map((name) => ({
       name,
-      value: dashboardItems.filter((item) => item.status === name).length
+      value: dashboardItems.filter((item) => item.status === name).length,
     }));
 
     const leadByLevel = levelOrder.map((nivel) => {
@@ -164,13 +159,15 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
 
       const avg =
         itemsByLevel.length > 0
-          ? itemsByLevel.reduce((acc, item) => acc + (item.lead_time_util ?? 0), 0) /
-            itemsByLevel.length
+          ? itemsByLevel.reduce(
+              (acc, item) => acc + (item.lead_time_util ?? 0),
+              0
+            ) / itemsByLevel.length
           : 0;
 
       return {
         nivel,
-        valor: Number(avg.toFixed(2))
+        valor: Number(avg.toFixed(2)),
       };
     });
 
@@ -196,7 +193,7 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
         sortKey,
         totalLead: 0,
         leadCount: 0,
-        propostas: 0
+        propostas: 0,
       };
 
       current.propostas += 1;
@@ -218,14 +215,14 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
       .map(({ periodo, totalLead, leadCount, propostas }) => ({
         periodo,
         mediaLead: leadCount ? Number((totalLead / leadCount).toFixed(2)) : 0,
-        propostas
+        propostas,
       }));
 
     return {
       levelData,
       statusData,
       leadByLevel,
-      evolutionData
+      evolutionData,
     };
   }, [dashboardItems]);
 
@@ -238,7 +235,7 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
         ? [...charts.evolutionData].sort(
             (a, b) => parseDateNumber(a.periodo) - parseDateNumber(b.periodo)
           )
-        : fallbackCharts.evolutionData
+        : fallbackCharts.evolutionData,
   };
 
   return (
@@ -262,10 +259,13 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
       <section className="lmps-kpi-grid">
         <KpiCard
           title="% LMP Dentro do Prazo"
-          value={`${(summary?.percent_dentro_prazo ?? 0).toLocaleString("pt-BR", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          })}%`}
+          value={`${(summary?.percent_dentro_prazo ?? 0).toLocaleString(
+            "pt-BR",
+            {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }
+          )}%`}
           subtitle="Percentual consolidado"
           icon={<CircleGauge size={22} />}
         />
@@ -273,7 +273,7 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
           title="Lead Time Médio Útil"
           value={`${(summary?.avg_lead_time ?? 0).toLocaleString("pt-BR", {
             minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+            maximumFractionDigits: 2,
           })} dias`}
           subtitle="Média geral"
           icon={<Clock3 size={22} />}
@@ -303,7 +303,8 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
           {error && hasData && (
             <section className="lmps-charts-grid">
               <div className="lmps-state-box lmps-state-box-error">
-                Não foi possível atualizar os dados. Exibindo última carga válida. {error}
+                Não foi possível atualizar os dados. Exibindo última carga válida.{" "}
+                {error}
               </div>
             </section>
           )}
@@ -366,7 +367,11 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
                   <XAxis dataKey="nivel" tick={AXIS_TICK_PROPS} />
                   <YAxis tick={AXIS_TICK_PROPS} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Bar dataKey="valor" radius={[8, 8, 0, 0]} fill={PRIMARY_CHART_COLOR} />
+                  <Bar
+                    dataKey="valor"
+                    radius={[8, 8, 0, 0]}
+                    fill={PRIMARY_CHART_COLOR}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -379,7 +384,11 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="periodo" tick={AXIS_TICK_PROPS} />
                   <YAxis yAxisId="left" tick={AXIS_TICK_PROPS} />
-                  <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_PROPS} />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    tick={AXIS_TICK_PROPS}
+                  />
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
                   <Legend wrapperStyle={LEGEND_STYLE} />
                   <Line
@@ -429,7 +438,9 @@ export function DashboardLmpsPage({ token }: DashboardLmpsPageProps) {
                   <tbody>
                     {sortedDashboardItems.length === 0 ? (
                       <tr>
-                        <td colSpan={11}>Nenhuma LMP encontrada para os filtros informados.</td>
+                        <td colSpan={11}>
+                          Nenhuma LMP encontrada para os filtros informados.
+                        </td>
                       </tr>
                     ) : (
                       sortedDashboardItems.map((item) => (
