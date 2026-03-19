@@ -10,7 +10,7 @@ from app.composition.kaizen_composer import kaizen_get_summary_composer
 router = APIRouter()
 
 
-@router.get("/kaizens/summary")
+@router.get("/summary")
 @require_permission("api-delpi.access")
 def get_kaizen_summary(
     title: str | None = Query(default=None),
