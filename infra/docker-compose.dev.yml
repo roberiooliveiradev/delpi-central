@@ -222,7 +222,21 @@ services:
 
     networks:
       - delpi-network
-
+      
+  postgres-plugins:
+    image: postgres:15
+    container_name: delpi-postgres-plugins
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_PLUGINS_DB}
+      POSTGRES_USER: ${POSTGRES_PLUGINS_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PLUGINS_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - postgres_plugins_data:/var/lib/postgresql/data
+      - ./docker/postgres/plugins-init.sql:/docker-entrypoint-initdb.d/plugins-init.sql
+    networks:
+      - delpi-network
 
   gateway:
     build:
@@ -257,3 +271,4 @@ networks:
 volumes:
   postgres_core_data:
   keycloak_data:
+  postgres_plugins_data:
