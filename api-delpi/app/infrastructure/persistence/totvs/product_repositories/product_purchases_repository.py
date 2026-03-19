@@ -1,6 +1,6 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_purchases_repository.py
-from app.infrastructure.persistence.base_repository import BaseRepository
-from app.infrastructure.persistence.pagination import paginate
+from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.pagination import paginate
 
 from app.application.models.page import Page
 from app.domain.entities.product.purchase import Purchase

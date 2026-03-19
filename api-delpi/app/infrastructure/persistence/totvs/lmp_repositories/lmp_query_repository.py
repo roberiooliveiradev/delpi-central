@@ -1,13 +1,13 @@
 # app/infrastructure/persistence/totvs/lmp_repositories/lmp_query_repository.py
 from typing import List, Tuple
 
-from app.infrastructure.persistence.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.domain.entities.lmp.lmp import LMP
 from app.domain.entities.lmp.lmp_product import LMPProduct
 from app.application.dto.lmp.list_lmp_request import ListLMPRequest
 from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.domain.ports.lmp.lmp_query_repository_port import LMPQueryRepositoryPort
-from app.infrastructure.persistence.query_builder import QueryBuilder
+from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.infrastructure.persistence.totvs.lmp_repositories.lmp_query_settings import (
     LMPQuerySettings,
 )

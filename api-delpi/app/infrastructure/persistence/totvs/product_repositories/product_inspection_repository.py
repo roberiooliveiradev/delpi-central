@@ -1,5 +1,5 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_inspection_repository.py
-from app.infrastructure.persistence.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.domain.ports.product.product_inspection_repository_port import ProductInspectionRepositoryPort
 from app.domain.entities.product.inspection import Inspection
 

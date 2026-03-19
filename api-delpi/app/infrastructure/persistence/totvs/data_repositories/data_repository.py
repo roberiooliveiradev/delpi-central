@@ -1,5 +1,5 @@
 # app/infrastructure/persistence/totvs/data_repository.py
-from app.infrastructure.persistence.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.domain.ports.data.data_repository_port import DataRepositoryPort
 
 

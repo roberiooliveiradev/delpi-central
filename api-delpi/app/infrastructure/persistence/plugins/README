@@ -1,0 +1,67 @@
+# Plugins Persistence Infrastructure
+
+Infraestrutura de persistência PostgreSQL para os módulos plugáveis da DELPI Central.
+
+## Objetivo
+
+Este pacote existe para isolar o acesso ao banco `postgres-plugins` dentro da `api-delpi`.
+
+Ele é a base técnica para os contextos do produto **Qualidade DELPI**, mantendo separação explícita entre:
+
+- contexto legado TOTVS / SQL Server
+- contexto novo de plugins / PostgreSQL
+
+## Regra obrigatória
+
+**Não reutilizar a `BaseRepository` do TOTVS/SQL Server neste contexto.**
+
+Também não é permitido misturar query SQL Server com query PostgreSQL no mesmo repository base.
+
+## Arquivos
+
+- `plugin_postgres_connection.py`
+  - leitura e validação das variáveis `PLUGINS_DB_*`
+  - criação da conexão PostgreSQL
+  - healthcheck simples
+  - fechamento da conexão cacheada
+
+- `plugin_base_repository.py`
+  - base para os repositórios concretos do contexto plugins
+  - execução segura de SQL parametrizado
+  - helpers de leitura e escrita
+  - controle básico de transação
+
+- `plugin_healthcheck.py`
+  - payload padronizado de saúde do datasource
+
+- `__init__.py`
+  - exports públicos do pacote
+
+## Variáveis obrigatórias
+
+- `PLUGINS_DB_HOST`
+- `PLUGINS_DB_PORT`
+- `PLUGINS_DB_NAME`
+- `PLUGINS_DB_USER`
+- `PLUGINS_DB_PASSWORD`
+
+## Variáveis opcionais
+
+- `PLUGINS_DB_CONNECT_TIMEOUT` (default: `5`)
+- `PLUGINS_DB_SSLMODE` (default: `prefer`)
+
+## Exemplo de uso
+
+```python
+from app.infrastructure.persistence.plugins import PluginBaseRepository
+
+
+class ExternalNcRepository(PluginBaseRepository):
+    def list_cases(self) -> list[dict]:
+        return self.fetch_all(
+            \"\"\"
+            SELECT id, code, title, current_status
+            FROM quality.external_nonconformities
+            ORDER BY created_at DESC
+            \"\"\"
+        )

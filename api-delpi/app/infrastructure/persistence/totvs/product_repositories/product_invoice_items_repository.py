@@ -2,9 +2,9 @@
 
 from typing import Optional
 
-from app.infrastructure.persistence.base_repository import BaseRepository
-from app.infrastructure.persistence.pagination import paginate
-from app.infrastructure.persistence.query_builder import QueryBuilder
+from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.pagination import paginate
+from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 from app.application.models.page import Page
 from app.domain.entities.product.inbound_invoice_item import InboundInvoiceItem

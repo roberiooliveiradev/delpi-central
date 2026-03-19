@@ -1,6 +1,6 @@
-# app/infrastructure/persistence/base_repository.py
+# app/infrastructure/providers/totvs/base_repository.py
 
-from app.database import get_connection
+from app.infrastructure.providers.totvs.database import get_connection
 from app.utils.logger import log_error
 from app.core.exceptions import DatabaseConnectionError
 

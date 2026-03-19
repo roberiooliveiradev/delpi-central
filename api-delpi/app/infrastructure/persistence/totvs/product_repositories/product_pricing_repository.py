@@ -1,5 +1,5 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_pricing_repository.py
-from app.infrastructure.persistence.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 
 from app.domain.entities.product.product_pricing import (
     ProductPricing,

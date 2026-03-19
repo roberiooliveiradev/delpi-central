@@ -1,9 +1,9 @@
 # app/infrastructure/persistence/totvs/sale_orders_repositories/sale_orders_query_repository.py
-from app.infrastructure.persistence.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.domain.entities.sale.sale_order import SaleOrder
 from app.application.dto.sale_order.list_sale_order_request import ListSaleOrderRequest
 from app.domain.ports.sale.sale_order_query_repository_port import SaleOrderQueryRepositoryPort
-from app.infrastructure.persistence.query_builder import QueryBuilder
+from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.application.models.page import Page
 
 

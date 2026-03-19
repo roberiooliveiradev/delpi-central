@@ -9,3 +9,4 @@ openpyxl
 python-jose[cryptography]
 requests
 httpx
+psycopg[binary]

@@ -1,4 +1,4 @@
-# app/database.py
+# app/infrastructure/providers/totvs/database.py
 import pyodbc
 from app.config import settings
 

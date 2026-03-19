@@ -214,11 +214,20 @@ services:
       LOG_LEVEL: ${LOG_LEVEL}
       TZ: ${TZ}
 
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
     volumes:
       - ../api-delpi:/app
 
     depends_on:
       - keycloak
+      - postgres-plugins
 
     networks:
       - delpi-network
@@ -227,14 +236,20 @@ services:
     image: postgres:15
     container_name: delpi-postgres-plugins
     restart: unless-stopped
+
     environment:
-      POSTGRES_DB: ${POSTGRES_PLUGINS_DB}
-      POSTGRES_USER: ${POSTGRES_PLUGINS_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PLUGINS_PASSWORD}
+      POSTGRES_DB: ${PLUGINS_DB_NAME}
+      POSTGRES_USER: ${PLUGINS_DB_USER}
+      POSTGRES_PASSWORD: ${PLUGINS_DB_PASSWORD}
       TZ: ${TZ}
+
+    ports:
+      - "5433:5432"
+
     volumes:
       - postgres_plugins_data:/var/lib/postgresql/data
       - ./docker/postgres/plugins-init.sql:/docker-entrypoint-initdb.d/plugins-init.sql
+
     networks:
       - delpi-network
 

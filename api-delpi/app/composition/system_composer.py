@@ -1,6 +1,6 @@
 # app/composition/system_composer.py
 
-from app.infrastructure.persistence.totvs.system_repository import SystemRepository
+from app.infrastructure.persistence.totvs.system_repositories.system_repository import SystemRepository
 
 from app.application.use_cases.system.get_table_use_case import GetTableUseCase
 from app.application.use_cases.system.list_table_columns_use_case import ListTableColumnsUseCase
