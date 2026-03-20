@@ -22,3 +22,10 @@ class ExternalNonconformityRootCauseRepositoryPort(ABC):
         nonconformity_id: str,
     ) -> list[ExternalNonconformityRootCause]:
         raise NotImplementedError
+    
+    @abstractmethod
+    def exists_for_nonconformity_id(
+        self,
+        nonconformity_id: str,
+    ) -> bool:
+        raise NotImplementedError

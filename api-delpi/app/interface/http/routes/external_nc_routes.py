@@ -38,6 +38,15 @@ from app.application.dto.external_nc.complete_external_nc_action_request import 
 from app.application.dto.external_nc.register_external_nc_effectiveness_check_request import (
     RegisterExternalNcEffectivenessCheckRequest,
 )
+from app.application.dto.external_nc.upload_external_nc_action_attachment_request import (
+    UploadExternalNcActionAttachmentRequest,
+)
+from app.application.dto.external_nc.add_external_nc_team_member_request import (
+    AddExternalNcTeamMemberRequest,
+)
+from app.application.dto.external_nc.remove_external_nc_team_member_request import (
+    RemoveExternalNcTeamMemberRequest,
+)
 from app.composition.external_nc_composer import (
     build_create_external_nonconformity_use_case,
     build_get_external_nonconformity_details_use_case,
@@ -55,6 +64,10 @@ from app.composition.external_nc_composer import (
     build_list_external_nc_actions_use_case,
     build_list_external_nc_effectiveness_checks_use_case,
     build_register_external_nc_effectiveness_check_use_case,
+    build_upload_external_nc_action_attachment_use_case,
+    build_add_external_nc_team_member_use_case,
+    build_list_external_nc_team_members_use_case,
+    build_remove_external_nc_team_member_use_case,
 )
 from app.domain.entities.external_nc.external_nonconformity import (
     ExternalNonconformity,
@@ -74,6 +87,9 @@ from app.domain.entities.external_nc.external_nonconformity_action import (
 from app.domain.entities.external_nc.external_nonconformity_effectiveness_check import (
     ExternalNonconformityEffectivenessCheck,
 )
+from app.domain.entities.external_nc.external_nc_team_member import (
+    ExternalNcTeamMember,
+)
 from app.interface.http.schemas.external_nc_schemas import (
     CreateExternalNonconformityBody,
     ExternalNonconformityResponse,
@@ -92,6 +108,9 @@ from app.interface.http.schemas.external_nc_schemas import (
     ExternalNcActionResponse,
     ExternalNcEffectivenessCheckResponse,
     RegisterExternalNcEffectivenessCheckBody,
+    UploadExternalNcActionAttachmentBody,
+    AddExternalNcTeamMemberBody,
+    ExternalNcTeamMemberResponse,
 )
 
 
@@ -276,7 +295,6 @@ def transition_external_nonconformity_status(
                 target_status=body.target_status,
                 actor_user_id=body.actor_user_id,
                 justification=body.justification,
-                effectiveness_approved=body.effectiveness_approved,
             )
         )
         return _to_response(result)
@@ -284,7 +302,7 @@ def transition_external_nonconformity_status(
         detail = str(exc)
         status_code = 404 if "não encontrada" in detail.lower() else 400
         raise HTTPException(status_code=status_code, detail=detail) from exc
-
+    
 
 @router.get(
     "/nonconformities/{nonconformity_id}/comments",
@@ -558,6 +576,105 @@ def register_external_nc_effectiveness_check(
         raise HTTPException(status_code=status_code, detail=detail) from exc
 
 
+@router.post(
+    "/actions/{action_id}/attachments",
+    response_model=ExternalNcAttachmentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@require_permission("quality-nc.manage")
+def upload_external_nc_action_attachment(
+    action_id: str,
+    body: UploadExternalNcActionAttachmentBody,
+):
+    try:
+        use_case = build_upload_external_nc_action_attachment_use_case()
+        result = use_case.execute(
+            UploadExternalNcActionAttachmentRequest(
+                action_id=action_id,
+                file_name=body.file_name,
+                original_name=body.original_name,
+                mime_type=body.mime_type,
+                size_bytes=body.size_bytes,
+                storage_provider=body.storage_provider,
+                storage_path=body.storage_path,
+                checksum=body.checksum,
+                uploaded_by_user_id=body.uploaded_by_user_id,
+            )
+        )
+        return _to_attachment_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+@router.get(
+    "/nonconformities/{nonconformity_id}/team-members",
+    response_model=list[ExternalNcTeamMemberResponse],
+)
+@require_permission("quality-nc.manage")
+def list_external_nc_team_members(nonconformity_id: str):
+    try:
+        use_case = build_list_external_nc_team_members_use_case()
+        result = use_case.execute(nonconformity_id)
+        return [_to_team_member_response(item) for item in result]
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/nonconformities/{nonconformity_id}/team-members",
+    response_model=ExternalNcTeamMemberResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@require_permission("quality-nc.manage")
+def add_external_nc_team_member(
+    nonconformity_id: str,
+    body: AddExternalNcTeamMemberBody,
+):
+    try:
+        use_case = build_add_external_nc_team_member_use_case()
+        result = use_case.execute(
+            AddExternalNcTeamMemberRequest(
+                nonconformity_id=nonconformity_id,
+                user_id=body.user_id,
+                role_in_case=body.role_in_case,
+                actor_user_id=body.actor_user_id,
+            )
+        )
+        return _to_team_member_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.delete(
+    "/nonconformities/{nonconformity_id}/team-members/{member_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+@require_permission("quality-nc.manage")
+def remove_external_nc_team_member(
+    nonconformity_id: str,
+    member_id: str,
+    actor_user_id: str = Query(...),
+):
+    try:
+        use_case = build_remove_external_nc_team_member_use_case()
+        use_case.execute(
+            RemoveExternalNcTeamMemberRequest(
+                nonconformity_id=nonconformity_id,
+                member_id=member_id,
+                actor_user_id=actor_user_id,
+            )
+        )
+        return None
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
 
 def _to_comment_response(comment: NonconformityComment) -> ExternalNcCommentResponse:
     return ExternalNcCommentResponse(
@@ -696,4 +813,16 @@ def _to_effectiveness_check_response(
         notes=entity.notes,
         next_action=entity.next_action,
         created_at=entity.created_at,
+    )
+
+
+def _to_team_member_response(
+    entity: ExternalNcTeamMember,
+) -> ExternalNcTeamMemberResponse:
+    return ExternalNcTeamMemberResponse(
+        id=entity.id,
+        nonconformity_id=entity.nonconformity_id,
+        user_id=entity.user_id,
+        role_in_case=entity.role_in_case,
+        joined_at=entity.joined_at,
     )

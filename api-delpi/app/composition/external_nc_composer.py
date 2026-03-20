@@ -72,6 +72,21 @@ from app.application.use_cases.external_nc.register_external_nc_effectiveness_ch
 from app.infrastructure.persistence.plugins.repositories.external_nc.postgres_external_nonconformity_effectiveness_repository import (
     PostgresExternalNonconformityEffectivenessRepository,
 )
+from app.application.use_cases.external_nc.upload_external_nc_action_attachment_use_case import (
+    UploadExternalNcActionAttachmentUseCase,
+)
+from app.application.use_cases.external_nc.add_external_nc_team_member_use_case import (
+    AddExternalNcTeamMemberUseCase,
+)
+from app.application.use_cases.external_nc.list_external_nc_team_members_use_case import (
+    ListExternalNcTeamMembersUseCase,
+)
+from app.application.use_cases.external_nc.remove_external_nc_team_member_use_case import (
+    RemoveExternalNcTeamMemberUseCase,
+)
+from app.infrastructure.persistence.plugins.repositories.external_nc.postgres_external_nc_team_member_repository import (
+    PostgresExternalNcTeamMemberRepository,
+)
 
 
 def build_create_external_nonconformity_use_case() -> CreateExternalNonconformityUseCase:
@@ -102,10 +117,14 @@ def build_update_external_nonconformity_use_case() -> UpdateExternalNonconformit
 def build_transition_external_nonconformity_status_use_case() -> TransitionExternalNonconformityStatusUseCase:
     repository = PostgresExternalNonconformityRepository()
     audit_event_repository = PostgresAuditEventRepository()
+    effectiveness_repository = PostgresExternalNonconformityEffectivenessRepository()
+    root_cause_repository = PostgresExternalNonconformityRootCauseRepository()
 
     return TransitionExternalNonconformityStatusUseCase(
         repository=repository,
         audit_event_repository=audit_event_repository,
+        effectiveness_repository=effectiveness_repository,
+        root_cause_repository=root_cause_repository,
     )
 
 
@@ -207,4 +226,35 @@ def build_list_external_nc_effectiveness_checks_use_case() -> ListExternalNcEffe
     return ListExternalNcEffectivenessChecksUseCase(
         nonconformity_repository=PostgresExternalNonconformityRepository(),
         effectiveness_repository=PostgresExternalNonconformityEffectivenessRepository(),
+    )
+
+
+def build_upload_external_nc_action_attachment_use_case() -> UploadExternalNcActionAttachmentUseCase:
+    return UploadExternalNcActionAttachmentUseCase(
+        action_repository=PostgresExternalNonconformityActionRepository(),
+        attachment_repository=PostgresAttachmentRepository(),
+        audit_event_repository=PostgresAuditEventRepository(),
+    )
+
+
+def build_add_external_nc_team_member_use_case() -> AddExternalNcTeamMemberUseCase:
+    return AddExternalNcTeamMemberUseCase(
+        nonconformity_repository=PostgresExternalNonconformityRepository(),
+        team_member_repository=PostgresExternalNcTeamMemberRepository(),
+        audit_event_repository=PostgresAuditEventRepository(),
+    )
+
+
+def build_list_external_nc_team_members_use_case() -> ListExternalNcTeamMembersUseCase:
+    return ListExternalNcTeamMembersUseCase(
+        nonconformity_repository=PostgresExternalNonconformityRepository(),
+        team_member_repository=PostgresExternalNcTeamMemberRepository(),
+    )
+
+
+def build_remove_external_nc_team_member_use_case() -> RemoveExternalNcTeamMemberUseCase:
+    return RemoveExternalNcTeamMemberUseCase(
+        nonconformity_repository=PostgresExternalNonconformityRepository(),
+        team_member_repository=PostgresExternalNcTeamMemberRepository(),
+        audit_event_repository=PostgresAuditEventRepository(),
     )

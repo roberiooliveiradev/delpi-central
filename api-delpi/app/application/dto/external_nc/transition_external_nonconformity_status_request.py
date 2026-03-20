@@ -11,4 +11,3 @@ class TransitionExternalNonconformityStatusRequest:
     target_status: str
     actor_user_id: str
     justification: Optional[str] = None
-    effectiveness_approved: bool = False

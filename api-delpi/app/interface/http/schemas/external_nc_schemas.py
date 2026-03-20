@@ -147,7 +147,6 @@ class TransitionExternalNonconformityStatusBody(BaseModel):
     target_status: str
     actor_user_id: str
     justification: Optional[str] = None
-    effectiveness_approved: bool = False
 
 
 class AddExternalNcCommentBody(BaseModel):
@@ -296,3 +295,28 @@ class ExternalNcEffectivenessCheckResponse(BaseModel):
     notes: Optional[str]
     next_action: Optional[str]
     created_at: datetime
+
+
+class UploadExternalNcActionAttachmentBody(BaseModel):
+    file_name: str
+    original_name: str
+    mime_type: Optional[str] = None
+    size_bytes: int
+    storage_provider: str
+    storage_path: str
+    checksum: Optional[str] = None
+    uploaded_by_user_id: str
+
+
+class AddExternalNcTeamMemberBody(BaseModel):
+    user_id: str
+    role_in_case: str
+    actor_user_id: str
+
+
+class ExternalNcTeamMemberResponse(BaseModel):
+    id: str
+    nonconformity_id: str
+    user_id: str
+    role_in_case: str
+    joined_at: datetime

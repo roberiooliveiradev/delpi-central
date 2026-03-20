@@ -10,11 +10,17 @@ from app.application.dto.external_nc.transition_external_nonconformity_status_re
 from app.domain.entities.shared_quality.nonconformity_audit_event import (
     NonconformityAuditEvent,
 )
+from app.domain.ports.external_nc.external_nonconformity_effectiveness_repository import (
+    ExternalNonconformityEffectivenessRepositoryPort,
+)
 from app.domain.ports.external_nc.external_nonconformity_repository import (
     ExternalNonconformityRepositoryPort,
 )
 from app.domain.ports.shared_quality.audit_event_repository import (
     AuditEventRepositoryPort,
+)
+from app.domain.ports.external_nc.external_nonconformity_root_cause_repository import (
+    ExternalNonconformityRootCauseRepositoryPort,
 )
 
 
@@ -37,9 +43,13 @@ class TransitionExternalNonconformityStatusUseCase:
         self,
         repository: ExternalNonconformityRepositoryPort,
         audit_event_repository: AuditEventRepositoryPort,
+        effectiveness_repository: ExternalNonconformityEffectivenessRepositoryPort,
+        root_cause_repository: ExternalNonconformityRootCauseRepositoryPort,
     ) -> None:
         self._repository = repository
         self._audit_event_repository = audit_event_repository
+        self._effectiveness_repository = effectiveness_repository
+        self._root_cause_repository = root_cause_repository
 
     def execute(
         self,
@@ -55,10 +65,10 @@ class TransitionExternalNonconformityStatusUseCase:
         target_status = request.target_status.strip()
 
         self._validate_transition(
+            nonconformity_id=entity.id,
             current_status=current_status,
             target_status=target_status,
             justification=request.justification,
-            effectiveness_approved=request.effectiveness_approved,
         )
 
         entity.current_status = target_status
@@ -77,6 +87,12 @@ class TransitionExternalNonconformityStatusUseCase:
 
         updated = self._repository.update(entity)
 
+        latest_approved = None
+        if target_status == "closed":
+            latest_approved = self._effectiveness_repository.get_latest_approved_by_nonconformity_id(
+                updated.id
+            )
+
         self._audit_event_repository.create(
             NonconformityAuditEvent(
                 id=str(uuid4()),
@@ -88,7 +104,7 @@ class TransitionExternalNonconformityStatusUseCase:
                     "from_status": current_status,
                     "to_status": target_status,
                     "justification": self._normalize_optional_str(request.justification),
-                    "effectiveness_approved": request.effectiveness_approved,
+                    "effectiveness_check_id": latest_approved.id if latest_approved else None,
                 },
                 created_at=datetime.now(timezone.utc),
             )
@@ -112,10 +128,10 @@ class TransitionExternalNonconformityStatusUseCase:
     def _validate_transition(
         self,
         *,
+        nonconformity_id: str,
         current_status: str,
         target_status: str,
         justification: str | None,
-        effectiveness_approved: bool,
     ) -> None:
         allowed = self._ALLOWED_TRANSITIONS.get(current_status, set())
         if target_status not in allowed:
@@ -123,10 +139,23 @@ class TransitionExternalNonconformityStatusUseCase:
                 f"Transição inválida: {current_status} -> {target_status}."
             )
 
-        if target_status == "closed" and not effectiveness_approved:
-            raise ValueError(
-                "Não é permitido encerrar sem validação de eficácia aprovada."
+        if target_status == "action-plan-approved":
+            has_root_cause = self._root_cause_repository.exists_for_nonconformity_id(
+                nonconformity_id
             )
+            if not has_root_cause:
+                raise ValueError(
+                    "Não é permitido aprovar plano sem causa raiz registrada."
+                )
+
+        if target_status == "closed":
+            latest_approved = self._effectiveness_repository.get_latest_approved_by_nonconformity_id(
+                nonconformity_id
+            )
+            if latest_approved is None:
+                raise ValueError(
+                    "Não é permitido encerrar sem validação de eficácia aprovada."
+                )
 
         if target_status == "reopened":
             normalized = self._normalize_optional_str(justification)

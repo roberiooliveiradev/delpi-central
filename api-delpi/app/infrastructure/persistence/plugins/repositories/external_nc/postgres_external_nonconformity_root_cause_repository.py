@@ -91,6 +91,22 @@ class PostgresExternalNonconformityRootCauseRepository(
         )
         return [self._to_entity(row) for row in rows]
 
+    def exists_for_nonconformity_id(
+        self,
+        nonconformity_id: str,
+    ) -> bool:
+        row = self.fetch_one(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM quality.external_nc_root_causes
+                WHERE nonconformity_id = %s
+            ) AS exists_flag
+            """,
+            (nonconformity_id,),
+        )
+        return bool(row and row["exists_flag"])
+
     def _to_entity(
         self,
         row: dict[str, Any],

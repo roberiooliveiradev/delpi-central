@@ -90,6 +90,34 @@ class RegisterExternalNcEffectivenessCheckUseCase:
             )
         )
 
+        if created.result == "rejected":
+            previous_status = nc.current_status
+
+            nc.current_status = "reopened"
+            nc.closed_at = None
+
+            if created.next_action:
+                nc.cancellation_reason = created.next_action
+
+            self._nonconformity_repository.update(nc)
+
+            self._audit_event_repository.create(
+                NonconformityAuditEvent(
+                    id=str(uuid4()),
+                    entity_type="external_nonconformity",
+                    entity_id=nc.id,
+                    event_type="reopened_by_effectiveness_rejection",
+                    actor_user_id=request.checked_by_user_id.strip(),
+                    payload_json={
+                        "effectiveness_check_id": created.id,
+                        "from_status": previous_status,
+                        "to_status": "reopened",
+                        "result": created.result,
+                    },
+                    created_at=datetime.now(timezone.utc),
+                )
+            )
+
         return created
 
     def _validate_request(
@@ -98,14 +126,19 @@ class RegisterExternalNcEffectivenessCheckUseCase:
     ) -> None:
         if not request.nonconformity_id or not request.nonconformity_id.strip():
             raise ValueError("nonconformity_id é obrigatório.")
+
         if not request.checked_by_user_id or not request.checked_by_user_id.strip():
             raise ValueError("checked_by_user_id é obrigatório.")
+
         if not request.criteria or not request.criteria.strip():
             raise ValueError("criteria é obrigatório.")
+
         if not request.result or not request.result.strip():
             raise ValueError("result é obrigatório.")
+
         if request.result.strip() not in self._ALLOWED_RESULTS:
             raise ValueError("result inválido.")
+
         if request.checked_at is None:
             raise ValueError("checked_at é obrigatório.")
 
