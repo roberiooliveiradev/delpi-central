@@ -15,6 +15,7 @@ from app.interface.http.routes import lmp_routes
 from app.interface.http.routes import transforma_mais_routes
 from app.interface.http.routes import kaizen_routes
 from app.interface.http.routes import audit_5s_routes
+from app.interface.http.routes import external_nc_routes
 from app.middleware.auth_middleware import jwt_middleware
 
 
@@ -128,7 +129,7 @@ app.include_router(kaizen_routes.router, prefix="/kaizen", tags=["kaizen"])
 app.include_router(audit_5s_routes.router, prefix="/audit-5s", tags=["auditoria 5s"])
 app.include_router(system_routes.router, prefix="/system", tags=["system"])
 app.include_router(data_routes.router, prefix="/data", tags=["data"])
-
+app.include_router(external_nc_routes.router, prefix="/quality/external-nc", tags=["quality external nc"])
 
 # ==========================================================
 # CUSTOM SWAGGER (COM POSTMESSAGE + REFRESH)
