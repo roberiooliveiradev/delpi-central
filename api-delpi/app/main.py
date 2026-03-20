@@ -1,10 +1,15 @@
 # app/main.py
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_html
+
+from app.startup.run_plugins_migrations_on_startup import (
+    run_plugins_migrations_on_startup,
+)
 
 from app.config import settings
 from app.interface.http.routes import product_routes
@@ -16,6 +21,7 @@ from app.interface.http.routes import transforma_mais_routes
 from app.interface.http.routes import kaizen_routes
 from app.interface.http.routes import audit_5s_routes
 from app.interface.http.routes import external_nc_routes
+from app.interface.http.routes import internal_nc_routes
 from app.middleware.auth_middleware import jwt_middleware
 
 
@@ -50,6 +56,11 @@ ALLOWED_ORIGINS = build_allowed_origins()
 # FASTAPI CONFIG
 # ==========================================================
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    run_plugins_migrations_on_startup()
+    yield
+
 app = FastAPI(
     title="API DELPI",
     description="API RESTful para integração com o TOTVS Protheus.",
@@ -57,6 +68,7 @@ app = FastAPI(
     root_path="/apps/api-delpi",
     docs_url=None,
     redoc_url=None,
+    lifespan=lifespan,
 )
 
 
@@ -129,6 +141,7 @@ app.include_router(kaizen_routes.router, prefix="/kaizen", tags=["kaizen"])
 app.include_router(audit_5s_routes.router, prefix="/audit-5s", tags=["auditoria 5s"])
 app.include_router(system_routes.router, prefix="/system", tags=["system"])
 app.include_router(data_routes.router, prefix="/data", tags=["data"])
+app.include_router(internal_nc_routes.router, prefix="/quality/internal-nc", tags=["quality internal nc"])
 app.include_router(external_nc_routes.router, prefix="/quality/external-nc", tags=["quality external nc"])
 
 # ==========================================================
