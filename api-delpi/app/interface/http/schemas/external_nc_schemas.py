@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Any
 
 from pydantic import BaseModel, Field
 
@@ -326,3 +326,51 @@ class UpdateExternalSupplierStatusBody(BaseModel):
     supplier_status: str
     actor_user_id: str
     justification: Optional[str] = None
+
+
+class ExternalNcDashboardSummaryResponse(BaseModel):
+    total_cases: int = 0
+    open_cases: int = 0
+    overdue_cases: int = 0
+    avg_closure_days: Optional[float] = None
+    avg_supplier_response_days: Optional[float] = None
+    reopened_cases: int = 0
+    first_pass_effectiveness: int = 0
+
+
+class ExternalNcDashboardBySupplierResponse(BaseModel):
+    supplier_id: str
+    supplier_name: str
+    total_cases: int
+    open_cases: int
+    overdue_cases: int
+    avg_closure_days: Optional[float] = None
+
+
+class ExternalNcDashboardByCauseResponse(BaseModel):
+    cause_category: str
+    total_root_causes: int
+    affected_cases: int
+
+
+class ExternalNcDashboardOverdueActionResponse(BaseModel):
+    id: str
+    nonconformity_id: str
+    nonconformity_code: str
+    nonconformity_title: str
+    supplier_name: str
+    action_type: str
+    title: str
+    description: str
+    responsible_user_id: Optional[str] = None
+    responsible_external_name: Optional[str] = None
+    due_date: str
+    status: str
+    overdue_days: int
+
+
+class ExternalNcExportResponse(BaseModel):
+    report_type: str
+    generated_format: str
+    generated_at: Optional[datetime] = None
+    data: dict[str, Any]

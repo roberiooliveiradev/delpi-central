@@ -90,6 +90,27 @@ from app.infrastructure.persistence.plugins.repositories.external_nc.postgres_ex
 from app.application.use_cases.external_nc.update_external_supplier_status_use_case import (
     UpdateExternalSupplierStatusUseCase,
 )
+from app.application.use_cases.external_nc.get_external_nc_dashboard_by_cause_use_case import (
+    GetExternalNcDashboardByCauseUseCase,
+)
+from app.application.use_cases.external_nc.get_external_nc_dashboard_by_supplier_use_case import (
+    GetExternalNcDashboardBySupplierUseCase,
+)
+from app.application.use_cases.external_nc.get_external_nc_dashboard_overdue_actions_use_case import (
+    GetExternalNcDashboardOverdueActionsUseCase,
+)
+from app.application.use_cases.external_nc.get_external_nc_dashboard_summary_use_case import (
+    GetExternalNcDashboardSummaryUseCase,
+)
+from app.infrastructure.persistence.plugins.repositories.external_nc.postgres_external_nc_dashboard_repository import (
+    PostgresExternalNcDashboardRepository,
+)
+from app.application.use_cases.external_nc.export_nonconformity_report_use_case import (
+    ExportNonconformityReportUseCase,
+)
+from app.infrastructure.persistence.plugins.repositories.external_nc.postgres_external_nc_export_repository import (
+    PostgresExternalNcExportRepository,
+)
 
 def build_create_external_nonconformity_use_case() -> CreateExternalNonconformityUseCase:
     repository = PostgresExternalNonconformityRepository()
@@ -266,4 +287,34 @@ def build_update_external_supplier_status_use_case() -> UpdateExternalSupplierSt
     return UpdateExternalSupplierStatusUseCase(
         nonconformity_repository=PostgresExternalNonconformityRepository(),
         audit_event_repository=PostgresAuditEventRepository(),
+    )
+
+
+def build_get_external_nc_dashboard_summary_use_case() -> GetExternalNcDashboardSummaryUseCase:
+    return GetExternalNcDashboardSummaryUseCase(
+        dashboard_repository=PostgresExternalNcDashboardRepository(),
+    )
+
+
+def build_get_external_nc_dashboard_by_supplier_use_case() -> GetExternalNcDashboardBySupplierUseCase:
+    return GetExternalNcDashboardBySupplierUseCase(
+        dashboard_repository=PostgresExternalNcDashboardRepository(),
+    )
+
+
+def build_get_external_nc_dashboard_by_cause_use_case() -> GetExternalNcDashboardByCauseUseCase:
+    return GetExternalNcDashboardByCauseUseCase(
+        dashboard_repository=PostgresExternalNcDashboardRepository(),
+    )
+
+
+def build_get_external_nc_dashboard_overdue_actions_use_case() -> GetExternalNcDashboardOverdueActionsUseCase:
+    return GetExternalNcDashboardOverdueActionsUseCase(
+        dashboard_repository=PostgresExternalNcDashboardRepository(),
+    )
+
+
+def build_export_nonconformity_report_use_case() -> ExportNonconformityReportUseCase:
+    return ExportNonconformityReportUseCase(
+        export_repository=PostgresExternalNcExportRepository(),
     )

@@ -72,6 +72,11 @@ from app.composition.external_nc_composer import (
     build_list_external_nc_team_members_use_case,
     build_remove_external_nc_team_member_use_case,
     build_update_external_supplier_status_use_case,
+    build_get_external_nc_dashboard_by_cause_use_case,
+    build_get_external_nc_dashboard_by_supplier_use_case,
+    build_get_external_nc_dashboard_overdue_actions_use_case,
+    build_get_external_nc_dashboard_summary_use_case,
+    build_export_nonconformity_report_use_case,
 )
 from app.domain.entities.external_nc.external_nonconformity import (
     ExternalNonconformity,
@@ -116,6 +121,11 @@ from app.interface.http.schemas.external_nc_schemas import (
     AddExternalNcTeamMemberBody,
     ExternalNcTeamMemberResponse,
     UpdateExternalSupplierStatusBody,
+    ExternalNcDashboardByCauseResponse,
+    ExternalNcDashboardBySupplierResponse,
+    ExternalNcDashboardOverdueActionResponse,
+    ExternalNcDashboardSummaryResponse,
+    ExternalNcExportResponse,
 )
 
 
@@ -706,6 +716,60 @@ def update_external_supplier_status(
         status_code = 404 if "não encontrada" in detail.lower() else 400
         raise HTTPException(status_code=status_code, detail=detail) from exc
 
+
+@router.get(
+    "/dashboard/summary",
+    response_model=ExternalNcDashboardSummaryResponse,
+)
+@require_permission("api-delpi.access")
+def get_external_nc_dashboard_summary():
+    use_case = build_get_external_nc_dashboard_summary_use_case()
+    return use_case.execute()
+
+
+@router.get(
+    "/dashboard/by-supplier",
+    response_model=list[ExternalNcDashboardBySupplierResponse],
+)
+@require_permission("api-delpi.access")
+def get_external_nc_dashboard_by_supplier():
+    use_case = build_get_external_nc_dashboard_by_supplier_use_case()
+    return use_case.execute()
+
+
+@router.get(
+    "/dashboard/by-cause",
+    response_model=list[ExternalNcDashboardByCauseResponse],
+)
+@require_permission("api-delpi.access")
+def get_external_nc_dashboard_by_cause():
+    use_case = build_get_external_nc_dashboard_by_cause_use_case()
+    return use_case.execute()
+
+
+@router.get(
+    "/dashboard/overdue-actions",
+    response_model=list[ExternalNcDashboardOverdueActionResponse],
+)
+@require_permission("api-delpi.access")
+def get_external_nc_dashboard_overdue_actions():
+    use_case = build_get_external_nc_dashboard_overdue_actions_use_case()
+    return use_case.execute()
+
+@router.get(
+    "/nonconformities/{nonconformity_id}/export",
+    response_model=ExternalNcExportResponse,
+)
+@require_permission("api-delpi.access")
+def export_external_nonconformity_report(nonconformity_id: str):
+    try:
+        use_case = build_export_nonconformity_report_use_case()
+        return use_case.execute(nonconformity_id)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+    
 
 def _to_comment_response(comment: NonconformityComment) -> ExternalNcCommentResponse:
     return ExternalNcCommentResponse(
