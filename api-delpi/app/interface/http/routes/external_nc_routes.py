@@ -23,6 +23,18 @@ from app.application.dto.external_nc.add_external_nc_comment_request import (
 from app.application.dto.external_nc.upload_external_nc_attachment_request import (
     UploadExternalNcAttachmentRequest,
 )
+from app.application.dto.external_nc.add_external_nc_root_cause_request import (
+    AddExternalNcRootCauseRequest,
+)
+from app.application.dto.external_nc.create_external_nc_action_request import (
+    CreateExternalNcActionRequest,
+)
+from app.application.dto.external_nc.update_external_nc_action_request import (
+    UpdateExternalNcActionRequest,
+)
+from app.application.dto.external_nc.complete_external_nc_action_request import (
+    CompleteExternalNcActionRequest,
+)
 from app.composition.external_nc_composer import (
     build_create_external_nonconformity_use_case,
     build_get_external_nonconformity_details_use_case,
@@ -32,6 +44,12 @@ from app.composition.external_nc_composer import (
     build_add_external_nc_comment_use_case,
     build_list_external_nc_comments_use_case,
     build_upload_external_nc_attachment_use_case,
+    build_add_external_nc_root_cause_use_case,
+    build_list_external_nc_root_causes_use_case,
+    build_create_external_nc_action_use_case,
+    build_update_external_nc_action_use_case,
+    build_complete_external_nc_action_use_case,
+    build_list_external_nc_actions_use_case,
 )
 from app.domain.entities.external_nc.external_nonconformity import (
     ExternalNonconformity,
@@ -41,6 +59,12 @@ from app.domain.entities.shared_quality.nonconformity_attachment import (
 )
 from app.domain.entities.shared_quality.nonconformity_comment import (
     NonconformityComment,
+)
+from app.domain.entities.external_nc.external_nonconformity_root_cause import (
+    ExternalNonconformityRootCause,
+)
+from app.domain.entities.external_nc.external_nonconformity_action import (
+    ExternalNonconformityAction,
 )
 from app.interface.http.schemas.external_nc_schemas import (
     CreateExternalNonconformityBody,
@@ -52,6 +76,12 @@ from app.interface.http.schemas.external_nc_schemas import (
     ExternalNcAttachmentResponse,
     ExternalNcCommentResponse,
     UploadExternalNcAttachmentBody,
+    AddExternalNcRootCauseBody,
+    ExternalNcRootCauseResponse,
+    CreateExternalNcActionBody,
+    UpdateExternalNcActionBody,
+    CompleteExternalNcActionBody,
+    ExternalNcActionResponse,
 )
 
 
@@ -250,6 +280,7 @@ def transition_external_nonconformity_status(
     "/nonconformities/{nonconformity_id}/comments",
     response_model=list[ExternalNcCommentResponse],
 )
+@require_any_permission(["api-delpi.access","quality-nc.manage"])
 def list_external_nc_comments(nonconformity_id: str):
     try:
         use_case = build_list_external_nc_comments_use_case()
@@ -266,6 +297,7 @@ def list_external_nc_comments(nonconformity_id: str):
     response_model=ExternalNcCommentResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@require_permission("quality-nc.manage")
 def add_external_nc_comment(
     nonconformity_id: str,
     body: AddExternalNcCommentBody,
@@ -293,6 +325,7 @@ def add_external_nc_comment(
     response_model=ExternalNcAttachmentResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@require_permission("quality-nc.manage")
 def upload_external_nc_attachment(
     nonconformity_id: str,
     body: UploadExternalNcAttachmentBody,
@@ -313,6 +346,155 @@ def upload_external_nc_attachment(
             )
         )
         return _to_attachment_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.get(
+    "/nonconformities/{nonconformity_id}/root-causes",
+    response_model=list[ExternalNcRootCauseResponse],
+)
+@require_any_permission(["api-delpi.access","quality-nc.manage"])
+def list_external_nc_root_causes(nonconformity_id: str):
+    try:
+        use_case = build_list_external_nc_root_causes_use_case()
+        result = use_case.execute(nonconformity_id)
+        return [_to_root_cause_response(item) for item in result]
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/nonconformities/{nonconformity_id}/root-causes",
+    response_model=ExternalNcRootCauseResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@require_permission("quality-nc.manage")
+def add_external_nc_root_cause(
+    nonconformity_id: str,
+    body: AddExternalNcRootCauseBody,
+):
+    try:
+        use_case = build_add_external_nc_root_cause_use_case()
+        result = use_case.execute(
+            AddExternalNcRootCauseRequest(
+                nonconformity_id=nonconformity_id,
+                analysis_method=body.analysis_method,
+                cause_dimension=body.cause_dimension,
+                category=body.category,
+                why_level=body.why_level,
+                description=body.description,
+                is_root_cause=body.is_root_cause,
+                created_by_user_id=body.created_by_user_id,
+            )
+        )
+        return _to_root_cause_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.get(
+    "/nonconformities/{nonconformity_id}/actions",
+    response_model=list[ExternalNcActionResponse],
+)
+@require_any_permission(["api-delpi.access","quality-nc.manage"])
+def list_external_nc_actions(nonconformity_id: str):
+    try:
+        use_case = build_list_external_nc_actions_use_case()
+        result = use_case.execute(nonconformity_id)
+        return [_to_action_response(item) for item in result]
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/nonconformities/{nonconformity_id}/actions",
+    response_model=ExternalNcActionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@require_permission("quality-nc.manage")
+def create_external_nc_action(nonconformity_id: str, body: CreateExternalNcActionBody):
+    try:
+        use_case = build_create_external_nc_action_use_case()
+        result = use_case.execute(
+            CreateExternalNcActionRequest(
+                nonconformity_id=nonconformity_id,
+                root_cause_id=body.root_cause_id,
+                action_type=body.action_type,
+                title=body.title,
+                description=body.description,
+                responsible_user_id=body.responsible_user_id,
+                responsible_external_name=body.responsible_external_name,
+                responsible_external_email=body.responsible_external_email,
+                start_date=body.start_date,
+                due_date=body.due_date,
+                verification_required=body.verification_required,
+                effectiveness_due_date=body.effectiveness_due_date,
+                created_by_user_id=body.created_by_user_id,
+            )
+        )
+        return _to_action_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.patch(
+    "/actions/{action_id}",
+    response_model=ExternalNcActionResponse,
+)
+@require_permission("quality-nc.manage")
+def update_external_nc_action(action_id: str, body: UpdateExternalNcActionBody):
+    try:
+        use_case = build_update_external_nc_action_use_case()
+        result = use_case.execute(
+            UpdateExternalNcActionRequest(
+                action_id=action_id,
+                root_cause_id=body.root_cause_id,
+                action_type=body.action_type,
+                title=body.title,
+                description=body.description,
+                responsible_user_id=body.responsible_user_id,
+                responsible_external_name=body.responsible_external_name,
+                responsible_external_email=body.responsible_external_email,
+                start_date=body.start_date,
+                due_date=body.due_date,
+                verification_required=body.verification_required,
+                effectiveness_due_date=body.effectiveness_due_date,
+            )
+        )
+        return _to_action_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/actions/{action_id}/complete",
+    response_model=ExternalNcActionResponse,
+)
+@require_permission("quality-nc.manage")
+def complete_external_nc_action(action_id: str, body: CompleteExternalNcActionBody):
+    try:
+        use_case = build_complete_external_nc_action_use_case()
+        result = use_case.execute(
+            CompleteExternalNcActionRequest(
+                action_id=action_id,
+                actor_user_id=body.actor_user_id,
+                completion_notes=body.completion_notes,
+            )
+        )
+        return _to_action_response(result)
     except ValueError as exc:
         detail = str(exc)
         status_code = 404 if "não encontrada" in detail.lower() else 400
@@ -395,6 +577,49 @@ def _to_response(entity: ExternalNonconformity) -> ExternalNonconformityResponse
         due_date=entity.due_date,
         closed_at=entity.closed_at,
         cancellation_reason=entity.cancellation_reason,
+        created_at=entity.created_at,
+        updated_at=entity.updated_at,
+    )
+
+
+def _to_root_cause_response(
+    entity: ExternalNonconformityRootCause,
+) -> ExternalNcRootCauseResponse:
+    return ExternalNcRootCauseResponse(
+        id=entity.id,
+        nonconformity_id=entity.nonconformity_id,
+        analysis_method=entity.analysis_method,
+        cause_dimension=entity.cause_dimension,
+        category=entity.category,
+        why_level=entity.why_level,
+        description=entity.description,
+        is_root_cause=entity.is_root_cause,
+        created_by_user_id=entity.created_by_user_id,
+        created_at=entity.created_at,
+    )
+
+
+def _to_action_response(
+    entity: ExternalNonconformityAction,
+) -> ExternalNcActionResponse:
+    return ExternalNcActionResponse(
+        id=entity.id,
+        nonconformity_id=entity.nonconformity_id,
+        root_cause_id=entity.root_cause_id,
+        action_type=entity.action_type,
+        title=entity.title,
+        description=entity.description,
+        responsible_user_id=entity.responsible_user_id,
+        responsible_external_name=entity.responsible_external_name,
+        responsible_external_email=entity.responsible_external_email,
+        start_date=entity.start_date,
+        due_date=entity.due_date,
+        completed_at=entity.completed_at,
+        status=entity.status,
+        verification_required=entity.verification_required,
+        effectiveness_due_date=entity.effectiveness_due_date,
+        completion_notes=entity.completion_notes,
+        created_by_user_id=entity.created_by_user_id,
         created_at=entity.created_at,
         updated_at=entity.updated_at,
     )
