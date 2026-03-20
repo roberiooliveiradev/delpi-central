@@ -273,3 +273,26 @@ class ExternalNcActionResponse(BaseModel):
     created_by_user_id: str
     created_at: datetime
     updated_at: datetime
+
+
+class RegisterExternalNcEffectivenessCheckBody(BaseModel):
+    action_id: Optional[str] = None
+    checked_by_user_id: str
+    checked_at: datetime
+    criteria: str
+    result: str
+    notes: Optional[str] = None
+    next_action: Optional[str] = None
+
+
+class ExternalNcEffectivenessCheckResponse(BaseModel):
+    id: str
+    nonconformity_id: str
+    action_id: Optional[str]
+    checked_by_user_id: str
+    checked_at: datetime
+    criteria: str
+    result: str
+    notes: Optional[str]
+    next_action: Optional[str]
+    created_at: datetime

@@ -35,6 +35,9 @@ from app.application.dto.external_nc.update_external_nc_action_request import (
 from app.application.dto.external_nc.complete_external_nc_action_request import (
     CompleteExternalNcActionRequest,
 )
+from app.application.dto.external_nc.register_external_nc_effectiveness_check_request import (
+    RegisterExternalNcEffectivenessCheckRequest,
+)
 from app.composition.external_nc_composer import (
     build_create_external_nonconformity_use_case,
     build_get_external_nonconformity_details_use_case,
@@ -50,6 +53,8 @@ from app.composition.external_nc_composer import (
     build_update_external_nc_action_use_case,
     build_complete_external_nc_action_use_case,
     build_list_external_nc_actions_use_case,
+    build_list_external_nc_effectiveness_checks_use_case,
+    build_register_external_nc_effectiveness_check_use_case,
 )
 from app.domain.entities.external_nc.external_nonconformity import (
     ExternalNonconformity,
@@ -65,6 +70,9 @@ from app.domain.entities.external_nc.external_nonconformity_root_cause import (
 )
 from app.domain.entities.external_nc.external_nonconformity_action import (
     ExternalNonconformityAction,
+)
+from app.domain.entities.external_nc.external_nonconformity_effectiveness_check import (
+    ExternalNonconformityEffectivenessCheck,
 )
 from app.interface.http.schemas.external_nc_schemas import (
     CreateExternalNonconformityBody,
@@ -82,6 +90,8 @@ from app.interface.http.schemas.external_nc_schemas import (
     UpdateExternalNcActionBody,
     CompleteExternalNcActionBody,
     ExternalNcActionResponse,
+    ExternalNcEffectivenessCheckResponse,
+    RegisterExternalNcEffectivenessCheckBody,
 )
 
 
@@ -501,6 +511,53 @@ def complete_external_nc_action(action_id: str, body: CompleteExternalNcActionBo
         raise HTTPException(status_code=status_code, detail=detail) from exc
 
 
+@router.get(
+    "/nonconformities/{nonconformity_id}/effectiveness-checks",
+    response_model=list[ExternalNcEffectivenessCheckResponse],
+)
+@require_any_permission(["api-delpi.access","quality-nc.manage"])
+def list_external_nc_effectiveness_checks(nonconformity_id: str):
+    try:
+        use_case = build_list_external_nc_effectiveness_checks_use_case()
+        result = use_case.execute(nonconformity_id)
+        return [_to_effectiveness_check_response(item) for item in result]
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/nonconformities/{nonconformity_id}/effectiveness-checks",
+    response_model=ExternalNcEffectivenessCheckResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@require_permission("quality-nc.manage")
+def register_external_nc_effectiveness_check(
+    nonconformity_id: str,
+    body: RegisterExternalNcEffectivenessCheckBody,
+):
+    try:
+        use_case = build_register_external_nc_effectiveness_check_use_case()
+        result = use_case.execute(
+            RegisterExternalNcEffectivenessCheckRequest(
+                nonconformity_id=nonconformity_id,
+                action_id=body.action_id,
+                checked_by_user_id=body.checked_by_user_id,
+                checked_at=body.checked_at,
+                criteria=body.criteria,
+                result=body.result,
+                notes=body.notes,
+                next_action=body.next_action,
+            )
+        )
+        return _to_effectiveness_check_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
 
 def _to_comment_response(comment: NonconformityComment) -> ExternalNcCommentResponse:
     return ExternalNcCommentResponse(
@@ -622,4 +679,21 @@ def _to_action_response(
         created_by_user_id=entity.created_by_user_id,
         created_at=entity.created_at,
         updated_at=entity.updated_at,
+    )
+
+
+def _to_effectiveness_check_response(
+    entity: ExternalNonconformityEffectivenessCheck,
+) -> ExternalNcEffectivenessCheckResponse:
+    return ExternalNcEffectivenessCheckResponse(
+        id=entity.id,
+        nonconformity_id=entity.nonconformity_id,
+        action_id=entity.action_id,
+        checked_by_user_id=entity.checked_by_user_id,
+        checked_at=entity.checked_at,
+        criteria=entity.criteria,
+        result=entity.result,
+        notes=entity.notes,
+        next_action=entity.next_action,
+        created_at=entity.created_at,
     )
