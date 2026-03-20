@@ -374,3 +374,14 @@ class ExternalNcExportResponse(BaseModel):
     generated_format: str
     generated_at: Optional[datetime] = None
     data: dict[str, Any]
+
+
+class ExternalNcFullDetailsResponse(BaseModel):
+    nonconformity: dict[str, Any]
+    root_causes: list[dict[str, Any]]
+    actions: list[dict[str, Any]]
+    effectiveness_checks: list[dict[str, Any]]
+    comments: list[dict[str, Any]]
+    attachments: list[dict[str, Any]]
+    team_members: list[dict[str, Any]]
+    audit_events: list[dict[str, Any]]

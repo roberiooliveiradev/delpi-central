@@ -111,6 +111,13 @@ from app.application.use_cases.external_nc.export_nonconformity_report_use_case 
 from app.infrastructure.persistence.plugins.repositories.external_nc.postgres_external_nc_export_repository import (
     PostgresExternalNcExportRepository,
 )
+from app.application.use_cases.external_nc.get_external_nonconformity_full_details_use_case import (
+    GetExternalNonconformityFullDetailsUseCase,
+)
+from app.infrastructure.persistence.plugins.repositories.external_nc.postgres_external_nc_details_repository import (
+    PostgresExternalNcDetailsRepository,
+)
+
 
 def build_create_external_nonconformity_use_case() -> CreateExternalNonconformityUseCase:
     repository = PostgresExternalNonconformityRepository()
@@ -317,4 +324,10 @@ def build_get_external_nc_dashboard_overdue_actions_use_case() -> GetExternalNcD
 def build_export_nonconformity_report_use_case() -> ExportNonconformityReportUseCase:
     return ExportNonconformityReportUseCase(
         export_repository=PostgresExternalNcExportRepository(),
+    )
+
+
+def build_get_external_nonconformity_full_details_use_case() -> GetExternalNonconformityFullDetailsUseCase:
+    return GetExternalNonconformityFullDetailsUseCase(
+        details_repository=PostgresExternalNcDetailsRepository(),
     )

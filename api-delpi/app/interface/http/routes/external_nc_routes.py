@@ -77,6 +77,7 @@ from app.composition.external_nc_composer import (
     build_get_external_nc_dashboard_overdue_actions_use_case,
     build_get_external_nc_dashboard_summary_use_case,
     build_export_nonconformity_report_use_case,
+    build_get_external_nonconformity_full_details_use_case,
 )
 from app.domain.entities.external_nc.external_nonconformity import (
     ExternalNonconformity,
@@ -126,6 +127,7 @@ from app.interface.http.schemas.external_nc_schemas import (
     ExternalNcDashboardOverdueActionResponse,
     ExternalNcDashboardSummaryResponse,
     ExternalNcExportResponse,
+    ExternalNcFullDetailsResponse,
 )
 
 
@@ -770,6 +772,21 @@ def export_external_nonconformity_report(nonconformity_id: str):
         status_code = 404 if "não encontrada" in detail.lower() else 400
         raise HTTPException(status_code=status_code, detail=detail) from exc
     
+
+@router.get(
+    "/nonconformities/{nonconformity_id}/full-details",
+    response_model=ExternalNcFullDetailsResponse,
+)
+@require_permission("api-delpi.access")
+def get_external_nonconformity_full_details(nonconformity_id: str):
+    try:
+        use_case = build_get_external_nonconformity_full_details_use_case()
+        return use_case.execute(nonconformity_id)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
 
 def _to_comment_response(comment: NonconformityComment) -> ExternalNcCommentResponse:
     return ExternalNcCommentResponse(
