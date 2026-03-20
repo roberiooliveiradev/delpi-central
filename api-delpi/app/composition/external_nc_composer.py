@@ -87,7 +87,9 @@ from app.application.use_cases.external_nc.remove_external_nc_team_member_use_ca
 from app.infrastructure.persistence.plugins.repositories.external_nc.postgres_external_nc_team_member_repository import (
     PostgresExternalNcTeamMemberRepository,
 )
-
+from app.application.use_cases.external_nc.update_external_supplier_status_use_case import (
+    UpdateExternalSupplierStatusUseCase,
+)
 
 def build_create_external_nonconformity_use_case() -> CreateExternalNonconformityUseCase:
     repository = PostgresExternalNonconformityRepository()
@@ -256,5 +258,12 @@ def build_remove_external_nc_team_member_use_case() -> RemoveExternalNcTeamMembe
     return RemoveExternalNcTeamMemberUseCase(
         nonconformity_repository=PostgresExternalNonconformityRepository(),
         team_member_repository=PostgresExternalNcTeamMemberRepository(),
+        audit_event_repository=PostgresAuditEventRepository(),
+    )
+
+
+def build_update_external_supplier_status_use_case() -> UpdateExternalSupplierStatusUseCase:
+    return UpdateExternalSupplierStatusUseCase(
+        nonconformity_repository=PostgresExternalNonconformityRepository(),
         audit_event_repository=PostgresAuditEventRepository(),
     )

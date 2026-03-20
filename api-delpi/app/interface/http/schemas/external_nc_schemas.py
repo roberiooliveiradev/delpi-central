@@ -320,3 +320,9 @@ class ExternalNcTeamMemberResponse(BaseModel):
     user_id: str
     role_in_case: str
     joined_at: datetime
+
+
+class UpdateExternalSupplierStatusBody(BaseModel):
+    supplier_status: str
+    actor_user_id: str
+    justification: Optional[str] = None

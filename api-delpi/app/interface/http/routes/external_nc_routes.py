@@ -47,6 +47,9 @@ from app.application.dto.external_nc.add_external_nc_team_member_request import 
 from app.application.dto.external_nc.remove_external_nc_team_member_request import (
     RemoveExternalNcTeamMemberRequest,
 )
+from app.application.dto.external_nc.update_external_supplier_status_request import (
+    UpdateExternalSupplierStatusRequest,
+)
 from app.composition.external_nc_composer import (
     build_create_external_nonconformity_use_case,
     build_get_external_nonconformity_details_use_case,
@@ -68,6 +71,7 @@ from app.composition.external_nc_composer import (
     build_add_external_nc_team_member_use_case,
     build_list_external_nc_team_members_use_case,
     build_remove_external_nc_team_member_use_case,
+    build_update_external_supplier_status_use_case,
 )
 from app.domain.entities.external_nc.external_nonconformity import (
     ExternalNonconformity,
@@ -111,6 +115,7 @@ from app.interface.http.schemas.external_nc_schemas import (
     UploadExternalNcActionAttachmentBody,
     AddExternalNcTeamMemberBody,
     ExternalNcTeamMemberResponse,
+    UpdateExternalSupplierStatusBody,
 )
 
 
@@ -670,6 +675,32 @@ def remove_external_nc_team_member(
             )
         )
         return None
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/nonconformities/{nonconformity_id}/supplier-status",
+    response_model=ExternalNonconformityResponse,
+)
+@require_permission("quality-nc.manage")
+def update_external_supplier_status(
+    nonconformity_id: str,
+    body: UpdateExternalSupplierStatusBody,
+):
+    try:
+        use_case = build_update_external_supplier_status_use_case()
+        result = use_case.execute(
+            UpdateExternalSupplierStatusRequest(
+                nonconformity_id=nonconformity_id,
+                supplier_status=body.supplier_status,
+                actor_user_id=body.actor_user_id,
+                justification=body.justification,
+            )
+        )
+        return _to_response(result)
     except ValueError as exc:
         detail = str(exc)
         status_code = 404 if "não encontrada" in detail.lower() else 400
