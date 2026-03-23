@@ -139,3 +139,59 @@ class InternalNcRootCauseResponse(BaseModel):
     is_root_cause: bool
     created_by_user_id: str
     created_at: datetime
+
+
+class CreateInternalNcActionBody(BaseModel):
+    root_cause_id: Optional[str] = None
+    action_type: str
+    title: str
+    description: str
+    responsible_user_id: Optional[str] = None
+    responsible_external_name: Optional[str] = None
+    responsible_external_email: Optional[str] = None
+    start_date: Optional[date] = None
+    due_date: date
+    verification_required: bool = False
+    effectiveness_due_date: Optional[date] = None
+    created_by_user_id: str
+
+
+class UpdateInternalNcActionBody(BaseModel):
+    root_cause_id: Optional[str] = None
+    action_type: str
+    title: str
+    description: str
+    responsible_user_id: Optional[str] = None
+    responsible_external_name: Optional[str] = None
+    responsible_external_email: Optional[str] = None
+    start_date: Optional[date] = None
+    due_date: date
+    verification_required: bool = False
+    effectiveness_due_date: Optional[date] = None
+
+
+class CompleteInternalNcActionBody(BaseModel):
+    actor_user_id: str
+    completion_notes: Optional[str] = None
+
+
+class InternalNcActionResponse(BaseModel):
+    id: str
+    nonconformity_id: str
+    root_cause_id: Optional[str]
+    action_type: str
+    title: str
+    description: str
+    responsible_user_id: Optional[str]
+    responsible_external_name: Optional[str]
+    responsible_external_email: Optional[str]
+    start_date: Optional[date]
+    due_date: date
+    completed_at: Optional[datetime]
+    status: str
+    verification_required: bool
+    effectiveness_due_date: Optional[date]
+    completion_notes: Optional[str]
+    created_by_user_id: str
+    created_at: datetime
+    updated_at: datetime

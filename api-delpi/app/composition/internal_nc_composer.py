@@ -33,8 +33,20 @@ from app.application.use_cases.internal_nc.list_internal_nc_root_causes_use_case
 from app.infrastructure.persistence.plugins.repositories.internal_nc.postgres_internal_nonconformity_root_cause_repository import (
     PostgresInternalNonconformityRootCauseRepository,
 )
-from app.infrastructure.persistence.plugins.repositories.shared_quality.postgres_audit_event_repository import (
-    PostgresAuditEventRepository,
+from app.application.use_cases.internal_nc.create_internal_nc_action_use_case import (
+    CreateInternalNcActionUseCase,
+)
+from app.application.use_cases.internal_nc.update_internal_nc_action_use_case import (
+    UpdateInternalNcActionUseCase,
+)
+from app.application.use_cases.internal_nc.complete_internal_nc_action_use_case import (
+    CompleteInternalNcActionUseCase,
+)
+from app.application.use_cases.internal_nc.list_internal_nc_actions_use_case import (
+    ListInternalNcActionsUseCase,
+)
+from app.infrastructure.persistence.plugins.repositories.internal_nc.postgres_internal_nonconformity_action_repository import (
+    PostgresInternalNonconformityActionRepository,
 )
 
 
@@ -82,4 +94,33 @@ def build_list_internal_nc_root_causes_use_case() -> ListInternalNcRootCausesUse
     return ListInternalNcRootCausesUseCase(
         nonconformity_repository=PostgresInternalNonconformityRepository(),
         root_cause_repository=PostgresInternalNonconformityRootCauseRepository(),
+    )
+
+
+def build_create_internal_nc_action_use_case() -> CreateInternalNcActionUseCase:
+    return CreateInternalNcActionUseCase(
+        nonconformity_repository=PostgresInternalNonconformityRepository(),
+        action_repository=PostgresInternalNonconformityActionRepository(),
+        audit_event_repository=PostgresAuditEventRepository(),
+    )
+
+
+def build_update_internal_nc_action_use_case() -> UpdateInternalNcActionUseCase:
+    return UpdateInternalNcActionUseCase(
+        action_repository=PostgresInternalNonconformityActionRepository(),
+        audit_event_repository=PostgresAuditEventRepository(),
+    )
+
+
+def build_complete_internal_nc_action_use_case() -> CompleteInternalNcActionUseCase:
+    return CompleteInternalNcActionUseCase(
+        action_repository=PostgresInternalNonconformityActionRepository(),
+        audit_event_repository=PostgresAuditEventRepository(),
+    )
+
+
+def build_list_internal_nc_actions_use_case() -> ListInternalNcActionsUseCase:
+    return ListInternalNcActionsUseCase(
+        nonconformity_repository=PostgresInternalNonconformityRepository(),
+        action_repository=PostgresInternalNonconformityActionRepository(),
     )

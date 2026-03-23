@@ -20,6 +20,15 @@ from app.application.dto.internal_nc.transition_internal_nonconformity_status_re
 from app.application.dto.internal_nc.add_internal_nc_root_cause_request import (
     AddInternalNcRootCauseRequest,
 )
+from app.application.dto.internal_nc.create_internal_nc_action_request import (
+    CreateInternalNcActionRequest,
+)
+from app.application.dto.internal_nc.update_internal_nc_action_request import (
+    UpdateInternalNcActionRequest,
+)
+from app.application.dto.internal_nc.complete_internal_nc_action_request import (
+    CompleteInternalNcActionRequest,
+)
 from app.composition.internal_nc_composer import (
     build_create_internal_nonconformity_use_case,
     build_get_internal_nonconformity_details_use_case,
@@ -28,12 +37,19 @@ from app.composition.internal_nc_composer import (
     build_transition_internal_nonconformity_status_use_case,
     build_add_internal_nc_root_cause_use_case,
     build_list_internal_nc_root_causes_use_case,
+    build_create_internal_nc_action_use_case,
+    build_update_internal_nc_action_use_case,
+    build_complete_internal_nc_action_use_case,
+    build_list_internal_nc_actions_use_case,
 )
 from app.domain.entities.internal_nc.internal_nonconformity import (
     InternalNonconformity,
 )
 from app.domain.entities.internal_nc.internal_nonconformity_root_cause import (
     InternalNonconformityRootCause,
+)
+from app.domain.entities.internal_nc.internal_nonconformity_action import (
+    InternalNonconformityAction,
 )
 from app.interface.http.schemas.internal_nc_schemas import (
     CreateInternalNonconformityBody,
@@ -43,6 +59,10 @@ from app.interface.http.schemas.internal_nc_schemas import (
     TransitionInternalNonconformityStatusBody,
     AddInternalNcRootCauseBody,
     InternalNcRootCauseResponse,
+    CreateInternalNcActionBody,
+    UpdateInternalNcActionBody,
+    CompleteInternalNcActionBody,
+    InternalNcActionResponse,
 )
 
 router = APIRouter()
@@ -93,7 +113,7 @@ def create_internal_nonconformity(body: CreateInternalNonconformityBody):
     "/nonconformities",
     response_model=PaginatedInternalNonconformityResponse,
 )
-@require_permission("quality-nc.manage")
+@require_any_permission(["quality-nc.view"])
 def list_internal_nonconformities(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -127,7 +147,7 @@ def list_internal_nonconformities(
     "/nonconformities/{nonconformity_id}",
     response_model=InternalNonconformityResponse,
 )
-@require_permission("quality-nc.manage")
+@require_permission("quality-nc.view")
 def get_internal_nonconformity_details(nonconformity_id: str):
     try:
         use_case = build_get_internal_nonconformity_details_use_case()
@@ -217,6 +237,7 @@ def transition_internal_nonconformity_status(
     "/nonconformities/{nonconformity_id}/root-causes",
     response_model=list[InternalNcRootCauseResponse],
 )
+@require_any_permission(["quality-nc.view"])
 def list_internal_nc_root_causes(nonconformity_id: str):
     try:
         use_case = build_list_internal_nc_root_causes_use_case()
@@ -233,6 +254,7 @@ def list_internal_nc_root_causes(nonconformity_id: str):
     response_model=InternalNcRootCauseResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@require_any_permission(["quality-nc.manage"])
 def add_internal_nc_root_cause(
     nonconformity_id: str,
     body: AddInternalNcRootCauseBody,
@@ -257,6 +279,133 @@ def add_internal_nc_root_cause(
         status_code = 404 if "não encontrada" in detail.lower() else 400
         raise HTTPException(status_code=status_code, detail=detail) from exc
 
+
+@router.get(
+    "/nonconformities/{nonconformity_id}/actions",
+    response_model=list[InternalNcActionResponse],
+)
+@require_any_permission(["quality-nc.view"])
+def list_internal_nc_actions(nonconformity_id: str):
+    try:
+        use_case = build_list_internal_nc_actions_use_case()
+        result = use_case.execute(nonconformity_id)
+        return [_to_action_response(item) for item in result]
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/nonconformities/{nonconformity_id}/actions",
+    response_model=InternalNcActionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@require_any_permission(["quality-nc.manage"])
+def create_internal_nc_action(nonconformity_id: str, body: CreateInternalNcActionBody):
+    try:
+        use_case = build_create_internal_nc_action_use_case()
+        result = use_case.execute(
+            CreateInternalNcActionRequest(
+                nonconformity_id=nonconformity_id,
+                root_cause_id=body.root_cause_id,
+                action_type=body.action_type,
+                title=body.title,
+                description=body.description,
+                responsible_user_id=body.responsible_user_id,
+                responsible_external_name=body.responsible_external_name,
+                responsible_external_email=body.responsible_external_email,
+                start_date=body.start_date,
+                due_date=body.due_date,
+                verification_required=body.verification_required,
+                effectiveness_due_date=body.effectiveness_due_date,
+                created_by_user_id=body.created_by_user_id,
+            )
+        )
+        return _to_action_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.patch(
+    "/actions/{action_id}",
+    response_model=InternalNcActionResponse,
+)
+@require_any_permission(["quality-nc.manage"])
+def update_internal_nc_action(action_id: str, body: UpdateInternalNcActionBody):
+    try:
+        use_case = build_update_internal_nc_action_use_case()
+        result = use_case.execute(
+            UpdateInternalNcActionRequest(
+                action_id=action_id,
+                root_cause_id=body.root_cause_id,
+                action_type=body.action_type,
+                title=body.title,
+                description=body.description,
+                responsible_user_id=body.responsible_user_id,
+                responsible_external_name=body.responsible_external_name,
+                responsible_external_email=body.responsible_external_email,
+                start_date=body.start_date,
+                due_date=body.due_date,
+                verification_required=body.verification_required,
+                effectiveness_due_date=body.effectiveness_due_date,
+            )
+        )
+        return _to_action_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/actions/{action_id}/complete",
+    response_model=InternalNcActionResponse,
+)
+@require_any_permission(["quality-nc.manage"])
+def complete_internal_nc_action(action_id: str, body: CompleteInternalNcActionBody):
+    try:
+        use_case = build_complete_internal_nc_action_use_case()
+        result = use_case.execute(
+            CompleteInternalNcActionRequest(
+                action_id=action_id,
+                actor_user_id=body.actor_user_id,
+                completion_notes=body.completion_notes,
+            )
+        )
+        return _to_action_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+def _to_action_response(
+    entity: InternalNonconformityAction,
+) -> InternalNcActionResponse:
+    return InternalNcActionResponse(
+        id=entity.id,
+        nonconformity_id=entity.nonconformity_id,
+        root_cause_id=entity.root_cause_id,
+        action_type=entity.action_type,
+        title=entity.title,
+        description=entity.description,
+        responsible_user_id=entity.responsible_user_id,
+        responsible_external_name=entity.responsible_external_name,
+        responsible_external_email=entity.responsible_external_email,
+        start_date=entity.start_date,
+        due_date=entity.due_date,
+        completed_at=entity.completed_at,
+        status=entity.status,
+        verification_required=entity.verification_required,
+        effectiveness_due_date=entity.effectiveness_due_date,
+        completion_notes=entity.completion_notes,
+        created_by_user_id=entity.created_by_user_id,
+        created_at=entity.created_at,
+        updated_at=entity.updated_at,
+    )
 
 
 def _to_response(entity: InternalNonconformity) -> InternalNonconformityResponse:

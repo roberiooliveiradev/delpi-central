@@ -190,7 +190,7 @@ def create_external_nonconformity(body: CreateExternalNonconformityBody):
     "/nonconformities",
     response_model=PaginatedExternalNonconformityResponse,
 )
-@require_any_permission(["api-delpi.access", "quality-nc.manage"])
+@require_any_permission(["quality-nc.view"])
 def list_external_nonconformities(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -225,7 +225,7 @@ def list_external_nonconformities(
     "/nonconformities/{nonconformity_id}",
     response_model=ExternalNonconformityResponse,
 )
-@require_any_permission(["api-delpi.access", "quality-nc.manage"])
+@require_any_permission(["quality-nc.view"])
 def get_external_nonconformity_details(nonconformity_id: str):
     try:
         use_case = build_get_external_nonconformity_details_use_case()
@@ -325,7 +325,7 @@ def transition_external_nonconformity_status(
     "/nonconformities/{nonconformity_id}/comments",
     response_model=list[ExternalNcCommentResponse],
 )
-@require_any_permission(["api-delpi.access","quality-nc.manage"])
+@require_any_permission(["quality-nc.view","quality-nc.manage"])
 def list_external_nc_comments(nonconformity_id: str):
     try:
         use_case = build_list_external_nc_comments_use_case()
@@ -401,7 +401,7 @@ def upload_external_nc_attachment(
     "/nonconformities/{nonconformity_id}/root-causes",
     response_model=list[ExternalNcRootCauseResponse],
 )
-@require_any_permission(["api-delpi.access","quality-nc.manage"])
+@require_any_permission(["quality-nc.view","quality-nc.manage"])
 def list_external_nc_root_causes(nonconformity_id: str):
     try:
         use_case = build_list_external_nc_root_causes_use_case()
@@ -448,7 +448,7 @@ def add_external_nc_root_cause(
     "/nonconformities/{nonconformity_id}/actions",
     response_model=list[ExternalNcActionResponse],
 )
-@require_any_permission(["api-delpi.access","quality-nc.manage"])
+@require_any_permission(["quality-nc.view","quality-nc.manage"])
 def list_external_nc_actions(nonconformity_id: str):
     try:
         use_case = build_list_external_nc_actions_use_case()
@@ -550,7 +550,7 @@ def complete_external_nc_action(action_id: str, body: CompleteExternalNcActionBo
     "/nonconformities/{nonconformity_id}/effectiveness-checks",
     response_model=list[ExternalNcEffectivenessCheckResponse],
 )
-@require_any_permission(["api-delpi.access","quality-nc.manage"])
+@require_any_permission(["quality-nc.view","quality-nc.manage"])
 def list_external_nc_effectiveness_checks(nonconformity_id: str):
     try:
         use_case = build_list_external_nc_effectiveness_checks_use_case()
@@ -723,7 +723,7 @@ def update_external_supplier_status(
     "/dashboard/summary",
     response_model=ExternalNcDashboardSummaryResponse,
 )
-@require_permission("api-delpi.access")
+@require_permission("quality-nc.view")
 def get_external_nc_dashboard_summary():
     use_case = build_get_external_nc_dashboard_summary_use_case()
     return use_case.execute()
@@ -733,7 +733,7 @@ def get_external_nc_dashboard_summary():
     "/dashboard/by-supplier",
     response_model=list[ExternalNcDashboardBySupplierResponse],
 )
-@require_permission("api-delpi.access")
+@require_permission("quality-nc.view")
 def get_external_nc_dashboard_by_supplier():
     use_case = build_get_external_nc_dashboard_by_supplier_use_case()
     return use_case.execute()
@@ -743,7 +743,7 @@ def get_external_nc_dashboard_by_supplier():
     "/dashboard/by-cause",
     response_model=list[ExternalNcDashboardByCauseResponse],
 )
-@require_permission("api-delpi.access")
+@require_permission("quality-nc.view")
 def get_external_nc_dashboard_by_cause():
     use_case = build_get_external_nc_dashboard_by_cause_use_case()
     return use_case.execute()
@@ -753,7 +753,7 @@ def get_external_nc_dashboard_by_cause():
     "/dashboard/overdue-actions",
     response_model=list[ExternalNcDashboardOverdueActionResponse],
 )
-@require_permission("api-delpi.access")
+@require_permission("quality-nc.view")
 def get_external_nc_dashboard_overdue_actions():
     use_case = build_get_external_nc_dashboard_overdue_actions_use_case()
     return use_case.execute()
@@ -762,7 +762,7 @@ def get_external_nc_dashboard_overdue_actions():
     "/nonconformities/{nonconformity_id}/export",
     response_model=ExternalNcExportResponse,
 )
-@require_permission("api-delpi.access")
+@require_permission("quality-nc.view")
 def export_external_nonconformity_report(nonconformity_id: str):
     try:
         use_case = build_export_nonconformity_report_use_case()
@@ -777,7 +777,7 @@ def export_external_nonconformity_report(nonconformity_id: str):
     "/nonconformities/{nonconformity_id}/full-details",
     response_model=ExternalNcFullDetailsResponse,
 )
-@require_permission("api-delpi.access")
+@require_permission("quality-nc.view")
 def get_external_nonconformity_full_details(nonconformity_id: str):
     try:
         use_case = build_get_external_nonconformity_full_details_use_case()
