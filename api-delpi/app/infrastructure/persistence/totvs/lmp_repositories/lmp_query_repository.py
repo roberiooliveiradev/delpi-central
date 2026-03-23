@@ -31,8 +31,18 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def _active_filter(self, qb: QueryBuilder, field: str):
         qb.eq(field, self.settings.active_delete_flag)
 
-    def _branch_filter(self, qb: QueryBuilder, field: str):
-        qb.in_list(field, self.settings.branches)
+    def _resolve_branches(self, requested_branch: str | None = None) -> list[str]:
+        if requested_branch:
+            return [requested_branch]
+        return self.settings.branches
+
+    def _branch_filter(
+        self,
+        qb: QueryBuilder,
+        field: str,
+        requested_branch: str | None = None,
+    ):
+        qb.in_list(field, self._resolve_branches(requested_branch))
 
     def _root_product_type_filter(self, qb: QueryBuilder, field: str):
         qb.in_list(field, self.settings.root_product_types)
@@ -112,19 +122,27 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     # SQL FILTER BLOCKS
     # =========================
 
-    def _sql_filter_ad1_active_branch(self, alias: str = "AD1") -> Tuple[str, tuple]:
+    def _sql_filter_ad1_active_branch(
+        self,
+        alias: str = "AD1",
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
         return self._build_filter_sql(
             lambda qb: (
                 self._active_filter(qb, f"{alias}.D_E_L_E_T_"),
-                self._branch_filter(qb, f"{alias}.AD1_FILIAL"),
+                self._branch_filter(qb, f"{alias}.AD1_FILIAL", requested_branch),
             )
         )
 
-    def _sql_filter_adj_active_branch(self, alias: str = "ADJ") -> Tuple[str, tuple]:
+    def _sql_filter_adj_active_branch(
+        self,
+        alias: str = "ADJ",
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
         return self._build_filter_sql(
             lambda qb: (
                 self._active_filter(qb, f"{alias}.D_E_L_E_T_"),
-                self._branch_filter(qb, f"{alias}.ADJ_FILIAL"),
+                self._branch_filter(qb, f"{alias}.ADJ_FILIAL", requested_branch),
             )
         )
 
@@ -177,8 +195,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         where_period, params_period = qb.build()
 
-        cte_lmp, params_lmp = self._sql_lmp_marker_cte()
-        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1")
+        cte_lmp, params_lmp = self._sql_lmp_marker_cte(request.branch)
+        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", request.branch)
 
         sql = f"""
             {cte_lmp},
@@ -206,16 +224,20 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         return sql, params
 
-    def _sql_historico_ov_cte(self, scope_cte_name: str | None = None) -> Tuple[str, tuple]:
+    def _sql_historico_ov_cte(
+        self,
+        scope_cte_name: str | None = None,
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
         where_aij_base_a, params_aij_base_a = self._build_filter_sql(
             lambda qb: (
                 self._active_filter(qb, "A.D_E_L_E_T_"),
-                self._branch_filter(qb, "A.AIJ_FILIAL"),
+                self._branch_filter(qb, "A.AIJ_FILIAL", requested_branch),
             )
         )
 
         where_evento_global_x, params_evento_global_x = self._build_filter_sql(
-            lambda qb: self._branch_filter(qb, "X.AIJ_FILIAL")
+            lambda qb: self._branch_filter(qb, "X.AIJ_FILIAL", requested_branch)
         )
 
         where_eng_support_e, params_eng_support_e = self._sql_engineering_support_process_stage_condition(
@@ -528,11 +550,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         return sql, params
 
-    def _sql_lmp_marker_cte(self) -> Tuple[str, tuple]:
+    def _sql_lmp_marker_cte(
+        self,
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
         where_aij_base, params_aij_base = self._build_filter_sql(
             lambda qb: (
                 self._active_filter(qb, "A.D_E_L_E_T_"),
-                self._branch_filter(qb, "A.AIJ_FILIAL"),
+                self._branch_filter(qb, "A.AIJ_FILIAL", requested_branch),
             )
         )
 
@@ -637,9 +662,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         return sql, params
 
-    def _sql_produtos_lmp_cte(self, scope_cte_name: str | None = None) -> Tuple[str, tuple]:
-        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1")
-        where_adj, params_adj = self._sql_filter_adj_active_branch("ADJ")
+    def _sql_produtos_lmp_cte(
+        self,
+        scope_cte_name: str | None = None,
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
+        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", requested_branch)
+        where_adj, params_adj = self._sql_filter_adj_active_branch("ADJ", requested_branch)
 
         scope_join = ""
         if scope_cte_name:
@@ -766,10 +795,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         return sql, params
 
-    def _sql_header_lmp(self) -> Tuple[str, tuple]:
-        cte_lmp, params_lmp = self._sql_lmp_marker_cte()
-        cte_hist, params_hist = self._sql_historico_ov_cte()
-        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1")
+    def _sql_header_lmp(
+        self,
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
+        cte_lmp, params_lmp = self._sql_lmp_marker_cte(requested_branch)
+        cte_hist, params_hist = self._sql_historico_ov_cte(requested_branch=requested_branch)
+        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", requested_branch)
         where_sa1, params_sa1 = self._sql_filter_sa1_active("SA1")
         where_sa3, params_sa3 = self._sql_filter_sa3_active("SA3")
 
@@ -778,6 +810,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             {cte_lmp},
             {cte_hist}
             SELECT TOP 1
+                AD1.AD1_FILIAL AS branch,
                 AD1.AD1_NROPOR AS sale_number,
                 AD1.AD1_DESCRI AS sale_description,
                 L.LMP_START_DATE AS start_date,
@@ -819,8 +852,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         return sql, params
 
-    def _sql_products_lmp(self) -> Tuple[str, tuple]:
-        cte_prod, params_prod = self._sql_produtos_lmp_cte()
+    def _sql_products_lmp(
+        self,
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
+        cte_prod, params_prod = self._sql_produtos_lmp_cte(requested_branch=requested_branch)
         cte_pi, params_pi = self._sql_pi_por_referencia_ctes_from_produtos_lmp()
         where_sb1, params_sb1 = self._sql_filter_sb1_active("SB1")
 
@@ -849,8 +885,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         params = (*params_prod, *params_pi, *params_sb1)
         return sql, params
 
-    def _sql_qtd_pi_lmp_total(self) -> Tuple[str, tuple]:
-        cte_prod, params_prod = self._sql_produtos_lmp_cte()
+    def _sql_qtd_pi_lmp_total(
+        self,
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
+        cte_prod, params_prod = self._sql_produtos_lmp_cte(requested_branch=requested_branch)
         cte_pi, params_pi = self._sql_pi_por_referencia_ctes_from_produtos_lmp()
 
         sql = f"""
@@ -874,8 +913,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     # =========================
     def list_lmps(self, request: ListLMPRequest) -> List[LMP]:
         cte_candidates, params_candidates = self._sql_candidate_lmps_cte(request)
-        cte_hist, params_hist = self._sql_historico_ov_cte(scope_cte_name="CandidateLMPs")
-        cte_prod, params_prod = self._sql_produtos_lmp_cte(scope_cte_name="CandidateLMPs")
+        cte_hist, params_hist = self._sql_historico_ov_cte(
+            scope_cte_name="CandidateLMPs",
+            requested_branch=request.branch,
+        )
+        cte_prod, params_prod = self._sql_produtos_lmp_cte(
+            scope_cte_name="CandidateLMPs",
+            requested_branch=request.branch,
+        )
         cte_pi, params_pi = self._sql_pi_por_referencia_ctes_from_produtos_lmp()
 
         sql = f"""
@@ -885,6 +930,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             {cte_prod},
             {cte_pi}
             SELECT
+                C.AD1_FILIAL AS branch,
                 C.AD1_NROPOR AS sale_number,
                 C.AD1_DESCRI AS sale_description,
                 C.LMP_START_DATE AS start_date,
@@ -903,6 +949,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 ON PI.ADJ_NROPOR = C.AD1_NROPOR
             AND PI.ADJ_REVISA = C.AD1_REVISA
             GROUP BY
+                C.AD1_FILIAL,
                 C.AD1_NROPOR,
                 C.AD1_DESCRI,
                 C.LMP_START_DATE,
@@ -959,6 +1006,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         products = [LMPProduct(**row) for row in product_rows]
 
         return LMP(
+            branch=header_row.get("branch"),
             sale_number=header_row["sale_number"],
             sale_description=header_row["sale_description"],
             start_date=header_row.get("start_date"),

@@ -5,6 +5,7 @@ from typing import Optional
 
 @dataclass
 class LMPDashboardItem:
+    branch: Optional[str]
     sale_number: str
     sale_description: str
     start_date: Optional[str]

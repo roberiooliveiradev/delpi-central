@@ -103,6 +103,7 @@ function renderPieLabel({
 export function DashboardLmpsPage() {
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState(getTodayInputValue());
+  const [branch, setBranch] = useState("");
   const [status, setStatus] = useState("Todos");
   const [didInitializeDateStart, setDidInitializeDateStart] = useState(false);
 
@@ -110,6 +111,7 @@ export function DashboardLmpsPage() {
     useLmpsDashboard({
       date_start: dateStart || undefined,
       date_end: dateEnd || undefined,
+      branch: branch || undefined,
       status,
       autoRefreshMs: 2 * 60 * 1000,
     });
@@ -244,9 +246,11 @@ export function DashboardLmpsPage() {
       <FilterBar
         dateStart={dateStart}
         dateEnd={dateEnd}
+        branch={branch}
         status={status}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
+        onBranchChange={setBranch}
         onStatusChange={setStatus}
         onRefresh={reload}
       />
@@ -423,6 +427,7 @@ export function DashboardLmpsPage() {
                 <table className="lmps-table">
                   <thead>
                     <tr>
+                      <th>Filial</th>
                       <th>Nº Proposta</th>
                       <th>Descrição</th>
                       <th>Data Início</th>
@@ -439,13 +444,14 @@ export function DashboardLmpsPage() {
                   <tbody>
                     {sortedDashboardItems.length === 0 ? (
                       <tr>
-                        <td colSpan={11}>
+                        <td colSpan={12}>
                           Nenhuma LMP encontrada para os filtros informados.
                         </td>
                       </tr>
                     ) : (
                       sortedDashboardItems.map((item) => (
-                        <tr key={item.sale_number}>
+                        <tr key={`${item.branch ?? "sem-filial"}-${item.sale_number}`}>
+                          <td>{item.branch ?? "-"}</td>
                           <td>{item.sale_number}</td>
                           <td>{item.sale_description}</td>
                           <td>{formatDate(item.start_date)}</td>

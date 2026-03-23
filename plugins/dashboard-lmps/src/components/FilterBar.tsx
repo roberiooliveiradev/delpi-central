@@ -3,9 +3,11 @@ import { Filter, ListFilter } from "lucide-react";
 type FilterBarProps = {
   dateStart: string;
   dateEnd: string;
+  branch: string;
   status: string;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
+  onBranchChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onRefresh: () => void;
 };
@@ -13,9 +15,11 @@ type FilterBarProps = {
 export function FilterBar({
   dateStart,
   dateEnd,
+  branch,
   status,
   onDateStartChange,
   onDateEndChange,
+  onBranchChange,
   onStatusChange,
   onRefresh
 }: FilterBarProps) {
@@ -64,6 +68,18 @@ export function FilterBar({
         </div>
 
         <div className="lmps-filter-box">
+          <label>Filial</label>
+          <select
+            value={branch}
+            onChange={(e) => onBranchChange(e.target.value)}
+          >
+            <option value="">Todas</option>
+            <option value="01">01</option>
+            <option value="02">02</option>
+          </select>
+        </div>
+
+        <div className="lmps-filter-box">
           <label>Status</label>
           <select
             value={status}
@@ -75,11 +91,6 @@ export function FilterBar({
             <option value="Andamento">Andamento</option>
             <option value="Retornada">Retornada</option>
           </select>
-        </div>
-
-        <div className="lmps-filter-box">
-          <label>Critério</label>
-          <input type="text" value="SLA por nível e dias úteis" readOnly />
         </div>
       </section>
     </>

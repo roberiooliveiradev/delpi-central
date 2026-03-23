@@ -1,4 +1,4 @@
-export type LmpStatus = "Pontual" | "Atrasado" | "Andamento";
+export type LmpStatus = "Pontual" | "Atrasado" | "Andamento" | "Retornada";
 export type LmpNivel = "Nível 1" | "Nível 2" | "Nível 3";
 
 export type LmpProduct = {
@@ -10,6 +10,7 @@ export type LmpProduct = {
 };
 
 export type LmpItem = {
+  branch?: string | null;
   sale_number: string;
   sale_description: string;
   start_date?: string | null;
@@ -48,6 +49,7 @@ export type Page<T> = {
 export type ListLmpsParams = {
   date_start?: string;
   date_end?: string;
+  branch?: string;
   page?: number;
   page_size?: number;
 };

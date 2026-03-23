@@ -5,7 +5,7 @@ from typing import Dict, List
 
 @dataclass(frozen=True)
 class LMPQuerySettings:
-    branches: List[str] = field(default_factory=lambda: ["01"])
+    branches: List[str] = field(default_factory=lambda: ["01", "02"])
 
     lmp_anchor_process_stages: Dict[str, List[str]] = field(
         default_factory=lambda: {

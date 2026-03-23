@@ -6,8 +6,9 @@ from .lmp_product import LMPProduct
 
 @dataclass
 class LMP:
-    sale_number: str
-    sale_description: str
+    branch: Optional[str] = None
+    sale_number: str = ""
+    sale_description: str = ""
 
     # Engineering summary
     start_date: Optional[str] = None

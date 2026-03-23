@@ -2,15 +2,16 @@
 
 ## Objetivo
 
-Documentar a implementação **atual** da rota de **LMPs (Lançamento ou Modificação do Produto)** no ecossistema DELPI/TOTVS, contemplando:
+Documentar a implementação **atualizada** da rota de **LMPs (Lançamento ou Modificação do Produto)** no ecossistema DELPI/TOTVS, contemplando:
 
 - entendimento funcional da LMP;
 - tabelas e estruturas envolvidas;
 - regras de negócio consolidadas;
 - arquitetura atual no backend e frontend;
 - lógica de cálculo de status para dashboard;
-- critérios de identificação de atraso, pontualidade e retorno;
-- queries e regras de auditoria;
+- critérios de identificação de atraso, pontualidade, andamento e retorno;
+- filtro por filial;
+- contrato atual do payload;
 - pontos de atenção para evolução.
 
 ---
@@ -27,7 +28,8 @@ Durante a evolução da análise, ficou claro que:
 - porém, nem toda passagem na engenharia define uma LMP;
 - a identificação correta depende da combinação **processo + estágio**;
 - o dashboard não deve depender de regra de negócio no frontend;
-- a regra final deve estar centralizada no backend.
+- a regra final deve estar centralizada no backend;
+- o filtro por filial também deve ser centralizado no backend.
 
 ---
 
@@ -130,7 +132,10 @@ Exemplos relevantes:
 - `000012` = etapa relevante em históricos antigos / alternativos
 - `000013` = etapa posterior / follow-up
 
-**Ajuste consolidado:** na operação atual, a engenharia do processo `000003` usa o estágio `000003` como estágio de entrada real. Por isso, a configuração do repository passou a aceitar `000003` como estágio âncora de LMP para esse processo, mantendo `000012` por compatibilidade histórica quando necessário.
+Ajuste consolidado:
+
+- na operação atual, a engenharia do processo `000003` usa o estágio `000003` como estágio de entrada real;
+- por isso, a configuração passou a aceitar `000003` como estágio âncora de LMP para esse processo, mantendo `000012` por compatibilidade histórica quando necessário.
 
 ---
 
@@ -271,7 +276,7 @@ Conclusão:
 
 Problema encontrado:
 
-- alguns casos, como OVs alteradas e reenfileiradas, tinham a última revisão correta para status, mas não para medir o tempo real de engenharia;
+- alguns casos tinham a última revisão correta para status, mas não para medir o tempo real de engenharia;
 - isso gerava `engineering_total_minutes = 0` mesmo em OVs corretamente classificadas como finalizadas.
 
 Conclusão:
@@ -302,6 +307,27 @@ Agora:
 
 ---
 
+## 7. O filtro de filial deve ser resolvido no backend
+
+Antes:
+
+- a request podia até carregar `branch`, mas o repository ainda dependia apenas de `settings.branches`;
+- isso fazia o filtro ser inconsistente ou inexistente em partes da query.
+
+Agora:
+
+- o repository resolve a filial efetiva a partir de duas possibilidades:
+  - se `request.branch` vier preenchida, filtra apenas a filial informada;
+  - se `request.branch` vier `None`, usa todas as filiais configuradas em `LMPQuerySettings.branches`.
+
+Consequência:
+
+- a regra fica centralizada no repository;
+- CTEs, histórico, produtos e consolidações passam a usar a mesma resolução de filial;
+- o frontend apenas informa a filial desejada, sem decidir o fallback.
+
+---
+
 ## Configuração consolidada do repository
 
 Arquivo: `app/infrastructure/persistence/totvs/lmp_repositories/lmp_query_settings.py`
@@ -313,7 +339,7 @@ from typing import Dict, List
 
 @dataclass(frozen=True)
 class LMPQuerySettings:
-    branches: List[str] = field(default_factory=lambda: ["01"])
+    branches: List[str] = field(default_factory=lambda: ["01", "02"])
 
     lmp_anchor_process_stages: Dict[str, List[str]] = field(
         default_factory=lambda: {
@@ -338,7 +364,7 @@ class LMPQuerySettings:
 
     engineering_status_labels: Dict[str, str] = field(
         default_factory=lambda: {
-            "in_progress": "EM_ANDAMENTO",
+            "in_progress": "ABERTA",
             "finished": "FINALIZADA",
             "partial": "PARCIAL",
             "returned": "RETORNADA",
@@ -354,6 +380,10 @@ class LMPQuerySettings:
 ---
 
 ## Interpretação da configuração
+
+### `branches`
+
+Define as filiais padrão da rota quando a request não informa uma filial específica.
 
 ### `lmp_anchor_process_stages`
 
@@ -371,7 +401,7 @@ Define todos os estágios que contam como tempo efetivo de engenharia.
 
 Define os estados operacionais consolidados aceitos pela aplicação:
 
-- `EM_ANDAMENTO`
+- `ABERTA`
 - `FINALIZADA`
 - `PARCIAL`
 - `RETORNADA`
@@ -435,21 +465,71 @@ Responsável por:
 - buscar LMPs no repository;
 - enriquecer itens com as regras de negócio;
 - aplicar filtro por status;
-- aplicar filtro por status de engenharia, quando necessário;
 - calcular resumo do dashboard;
 - devolver paginação e payload pronto para o frontend.
+
+Atenção importante:
+
+- como o dashboard serializa um DTO próprio (`LMPDashboardItem`), qualquer campo novo que venha do repository precisa ser explicitamente copiado para esse DTO;
+- isso vale especialmente para `branch`.
 
 ### `get_lmp_use_case.py`
 
 Responsável por:
 
 - buscar uma OV específica;
-- aplicar regras de dashboard no detalhe;
-- devolver campos enriquecidos no endpoint individual.
+- devolver a entidade serializada;
+- preservar os campos vindos da entidade `LMP`, incluindo `branch`.
+
+### `list_lmp_use_case.py`
+
+Responsável por:
+
+- listar LMPs em formato paginado;
+- devolver a entidade `LMP` serializada.
 
 ### `lmp_dashboard_item.py`
 
 DTO específico do dashboard, com os campos já enriquecidos.
+
+Na versão consolidada, ele deve expor também:
+
+- `branch`
+- `sale_number`
+- `sale_description`
+- `start_date`
+- `end_date`
+- `engineering_status`
+- `qtd_pi`
+- `nivel`
+- `dias_uteis_sla`
+- `sla_minutos`
+- `engineering_total_minutes`
+- `data_limite`
+- `lead_time_util`
+- `status`
+
+### `lmp.py`
+
+Entidade de domínio da LMP.
+
+Campos atuais relevantes:
+
+- `branch`
+- `sale_number`
+- `sale_description`
+- `start_date`
+- `end_date`
+- `engineering_status`
+- `qtd_engineering_entries`
+- `qtd_engineering_closed`
+- `qtd_advanced_from_engineering`
+- `qtd_returned_from_engineering`
+- `engineering_total_minutes`
+- `qtd_pi`
+- cliente
+- vendedor
+- lista de produtos
 
 ### `lmp_routes.py`
 
@@ -481,10 +561,29 @@ Agora:
 - o hook `useLmpsDashboard` trabalha com a estrutura devolvida pelo backend;
 - o `lmpApi.ts` reflete o contrato consolidado.
 
-Benefício:
+### Filtro por filial no frontend
 
-- backend e frontend passam a falar a mesma linguagem de negócio;
-- elimina divergência entre tela, regra e detalhe da OV.
+A barra de filtros passou a considerar a filial como filtro funcional da tela.
+
+Comportamento esperado:
+
+- no lugar do antigo campo estático de critério, a tela deve exibir um seletor de filial;
+- ao selecionar uma filial, o frontend envia `branch` para o backend;
+- ao não selecionar nenhuma filial, o frontend envia ausência de `branch`, deixando o backend cair no default de `settings.branches`.
+
+### Coluna de filial na tabela
+
+A tabela do dashboard passou a precisar do campo `branch` no payload.
+
+Consequência arquitetural:
+
+- não basta o repository filtrar por filial;
+- o repository também precisa projetar `branch` no `SELECT` final;
+- a entidade `LMP` precisa carregar `branch`;
+- o `LMPDashboardItem` precisa expor `branch`;
+- o `ListLMPDashboardUseCase` precisa copiar `item.branch` para o DTO final.
+
+Sem isso, a coluna de filial no frontend permanece vazia mesmo com o filtro funcionando no backend.
 
 ---
 
@@ -549,7 +648,7 @@ Para OVs com `engineering_status = RETORNADA`:
 - esse status não é tratado como `Pontual` nem como `Atrasado`;
 - ele representa exceção operacional, não conclusão normal do SLA.
 
-### Item em andamento / parcial
+### Item em andamento / parcial / aberta
 
 Para OVs não finalizadas:
 
@@ -641,6 +740,20 @@ Isso permite:
 - filtrar retornadas na camada de use case/regra de negócio;
 - manter o repository focado em estado técnico e o service focado em interpretação de negócio.
 
+### 5. Projeção e serialização de filial
+
+A evolução recente mostrou que **filtrar filial** e **retornar filial** são preocupações diferentes.
+
+Para a filial aparecer no payload final do dashboard, o fluxo completo precisa estar alinhado:
+
+1. o repository precisa projetar `AD1_FILIAL AS branch` no `SELECT` final;
+2. a entidade `LMP` precisa ter o campo `branch`;
+3. o `LMPDashboardItem` precisa declarar `branch`;
+4. o `ListLMPDashboardUseCase` precisa copiar `item.branch` ao montar o DTO;
+5. a serialização final precisa usar esse DTO já enriquecido.
+
+Sem essa cadeia completa, a API pode filtrar corretamente, mas ainda assim devolver `branch` ausente no JSON do dashboard.
+
 ---
 
 ## Casos reais de análise
@@ -689,10 +802,39 @@ Conclusão:
 
 ---
 
-## Campos atualmente expostos no dashboard
+## Campos atualmente expostos
 
-Cada item do dashboard retorna:
+## Listagem base (`GET /lmps/`)
 
+Cada item da listagem deve retornar ao menos:
+
+- `branch`
+- `sale_number`
+- `sale_description`
+- `start_date`
+- `end_date`
+- `engineering_status`
+- `qtd_engineering_entries`
+- `qtd_engineering_closed`
+- `qtd_advanced_from_engineering`
+- `qtd_returned_from_engineering`
+- `engineering_total_minutes`
+- `qtd_pi`
+
+## Detalhe (`GET /lmps/{sale_number}`)
+
+Além dos campos base, deve retornar:
+
+- cliente
+- vendedor
+- produtos relacionados
+- `branch`
+
+## Dashboard (`GET /lmps/dashboard`)
+
+Cada item do dashboard deve retornar:
+
+- `branch`
 - `sale_number`
 - `sale_description`
 - `start_date`
@@ -715,18 +857,46 @@ Resumo agregado:
 
 ---
 
-## Endpoint oficial de dashboard
+## Endpoints oficiais
+
+## `GET /lmps/`
+
+Objetivo:
+
+- listar LMPs em formato paginado.
+
+Parâmetros atuais:
+
+- `date_start`
+- `date_end`
+- `page`
+- `page_size`
+
+Observação:
+
+- na consolidação funcional da rota, o filtro por filial existe como necessidade de negócio;
+- quando esse endpoint também precisar respeitar filial explicitamente pela borda HTTP, ele deve expor `branch` assim como o dashboard.
+
+## `GET /lmps/{sale_number}`
+
+Objetivo:
+
+- obter o detalhe completo de uma OV/LMP.
 
 ## `GET /lmps/dashboard`
+
+Objetivo:
+
+- listar LMPs já enriquecidas para consumo do dashboard.
 
 Parâmetros:
 
 - `date_start`
 - `date_end`
 - `status`
+- `branch`
 - `page`
 - `page_size`
-- filtro opcional por status de engenharia, quando exposto pelo use case
 
 Comportamento:
 
@@ -734,7 +904,72 @@ Comportamento:
 - aplica regras de negócio no use case;
 - devolve itens enriquecidos;
 - permite filtrar por status;
-- permite tratar `RETORNADA` como categoria própria.
+- permite tratar `RETORNADA` como categoria própria;
+- permite filtrar por filial;
+- quando `branch` vier ausente, usa as filiais padrão do settings.
+
+---
+
+## Exemplo de comportamento do filtro de filial
+
+### Request sem filial
+
+```http
+GET /lmps/dashboard?date_start=2026-03-02&date_end=2026-03-23&status=Todos
+```
+
+Comportamento esperado:
+
+- usar todas as filiais configuradas em `LMPQuerySettings.branches`.
+
+### Request com filial específica
+
+```http
+GET /lmps/dashboard?date_start=2026-03-02&date_end=2026-03-23&status=Todos&branch=01
+```
+
+Comportamento esperado:
+
+- restringir o resultado à filial `01`.
+
+---
+
+## Exemplo de payload esperado do dashboard
+
+```json
+{
+  "success": true,
+  "message": "LMP dashboard data fetched successfully.",
+  "data": {
+    "items": [
+      {
+        "branch": "01",
+        "sale_number": "003482",
+        "sale_description": "BRASELIO REAJUSTE 2026",
+        "start_date": "20260323",
+        "end_date": "20260323",
+        "engineering_status": "FINALIZADA",
+        "qtd_pi": 274,
+        "nivel": "Nível 3",
+        "dias_uteis_sla": 20,
+        "sla_minutos": 28800,
+        "engineering_total_minutes": 0,
+        "data_limite": "20260420",
+        "lead_time_util": 1,
+        "status": "Pontual"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "page_size": 1,
+    "summary": {
+      "total_lmps": 1,
+      "percent_dentro_prazo": 100.0,
+      "avg_lead_time": 1.0
+    }
+  }
+}
+```
 
 ---
 
@@ -765,6 +1000,15 @@ Podem ser:
 - etapa concluída operacionalmente sem data final gravada;
 - retorno tardio com reaproveitamento do fluxo anterior.
 
+## 4. O dashboard exige alinhamento entre repository, entity, DTO e use case
+
+A presença de um campo no SQL não garante sua presença no payload final.
+
+Exemplo crítico:
+
+- `branch` pode existir no `SELECT` do repository;
+- mas, se o DTO do dashboard não tiver `branch`, o JSON final continuará sem o campo.
+
 ---
 
 ## Melhorias futuras recomendadas
@@ -778,7 +1022,8 @@ Podem ser:
 - criar flag de “cadastro inconsistente” quando houver etapa âncora sem encerramento explícito e sem follow-up claro;
 - permitir filtros por cliente, vendedor e faixa de PI;
 - paginação SQL nativa no dashboard;
-- incluir endpoint de indicadores agregados por período.
+- incluir endpoint de indicadores agregados por período;
+- consolidar `branch` também na rota base `GET /lmps/`, caso o filtro de filial deva existir igualmente na listagem simples.
 
 ---
 
@@ -797,6 +1042,8 @@ As decisões mais importantes foram:
 - a medição pode usar revisão diferente da revisão de status quando necessário;
 - `RETORNADA` passou a ser um estado oficial do fluxo;
 - o processo `000003` passou a aceitar `000003` como âncora operacional de engenharia/LMP;
+- o filtro por filial passou a ter fallback oficial em `settings.branches`;
+- a serialização de `branch` no dashboard depende do alinhamento completo entre repository, entity, DTO e use case;
 - margem de tolerância foi adicionada para reduzir falsos atrasos em casos limítrofes.
 
 Com isso, a rota passou a ser uma base mais confiável para:
@@ -804,5 +1051,5 @@ Com isso, a rota passou a ser uma base mais confiável para:
 - análise operacional;
 - dashboard executivo;
 - auditoria de SLA;
-- investigação de inconsistências no histórico.
-
+- investigação de inconsistências no histórico;
+- leitura por filial com comportamento previsível.

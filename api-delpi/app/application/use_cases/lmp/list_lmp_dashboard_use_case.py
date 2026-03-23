@@ -26,6 +26,7 @@ class ListLMPDashboardUseCase:
         )
 
         return LMPDashboardItem(
+            branch=item.branch,
             sale_number=item.sale_number,
             sale_description=item.sale_description,
             start_date=item.start_date,
