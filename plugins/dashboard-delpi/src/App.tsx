@@ -52,7 +52,7 @@ function App({ getAccessToken }: Props) {
 
   return (
     <div style={{ padding: 24 }}>
-      <h1>Dashboard DELPI</h1>
+      <h1>Dashboard DELPI  - PROVANDO QUE O FRONTEND NÃO ATUALIZA NA PRODUÇÃO! DEMORA HORAS!</h1>
 
       <ProductsTable
         products={products}
