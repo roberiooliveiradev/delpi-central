@@ -6,18 +6,17 @@ import { ProductsTable } from "./components/ProductTable"
 import { Modal } from "./components/Modal"
 
 interface Props {
-  token: string
+  getAccessToken?: () => string | undefined
 }
 
 function formatLabel(key: string) {
-
   return key
     .replace(/_/g, " ")
     .replace(/\b\w/g, l => l.toUpperCase())
-
 }
 
-function App({ token }: Props) {
+function App({ getAccessToken }: Props) {
+  const token = getAccessToken?.() ?? ""
 
   const api = useMemo(() => new DelpiApi(token), [token])
 
@@ -40,30 +39,19 @@ function App({ token }: Props) {
   const [loadingProduct, setLoadingProduct] = useState(false)
 
   const handleRowClick = async (code: string) => {
-
     try {
-
       setLoadingProduct(true)
-
       const res = await api.getProduct(code)
-
       setSelectedProduct(res.data.produto)
-
     } catch (err) {
-
       console.error(err)
-
     } finally {
-
       setLoadingProduct(false)
-
     }
   }
 
   return (
-
     <div style={{ padding: 24 }}>
-
       <h1>Dashboard DELPI</h1>
 
       <ProductsTable
@@ -73,16 +61,12 @@ function App({ token }: Props) {
         total={total}
         pageSize={pageSize}
         loading={loading}
-
         filters={filters}
         setFilters={setFilters}
-
         sort={sort}
         setSort={setSort}
-
         setPage={setPage}
         setPageSize={setPageSize}
-
         onRowClick={handleRowClick}
       />
 
@@ -92,13 +76,9 @@ function App({ token }: Props) {
         size="lg"
         onClose={() => setSelectedProduct(null)}
       >
-
         {loadingProduct ? (
-
           <div>Carregando produto...</div>
-
         ) : selectedProduct ? (
-
           <div
             style={{
               display: "grid",
@@ -106,11 +86,9 @@ function App({ token }: Props) {
               gap: 12
             }}
           >
-
             {Object.entries(selectedProduct)
               .sort(([a], [b]) => a.localeCompare(b))
               .map(([key, value]) => {
-
                 if (value === "" || value === null) return null
 
                 return (
@@ -119,13 +97,9 @@ function App({ token }: Props) {
                   </div>
                 )
               })}
-
           </div>
-
         ) : null}
-
       </Modal>
-
     </div>
   )
 }

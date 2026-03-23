@@ -34,6 +34,9 @@ export class DelpiApi {
   private token: string;
 
   constructor(token: string) {
+    if (!token) {
+      throw new Error("Token de acesso ausente no plugin")
+    }
     this.token = token;
   }
 
