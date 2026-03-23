@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Any
 
 from pydantic import BaseModel, Field
 
@@ -195,3 +195,145 @@ class InternalNcActionResponse(BaseModel):
     created_by_user_id: str
     created_at: datetime
     updated_at: datetime
+
+
+class RegisterInternalNcEffectivenessCheckBody(BaseModel):
+    action_id: Optional[str] = None
+    checked_by_user_id: str
+    checked_at: datetime
+    criteria: str
+    result: str
+    notes: Optional[str] = None
+    next_action: Optional[str] = None
+
+
+class InternalNcEffectivenessCheckResponse(BaseModel):
+    id: str
+    nonconformity_id: str
+    action_id: Optional[str]
+    checked_by_user_id: str
+    checked_at: datetime
+    criteria: str
+    result: str
+    notes: Optional[str]
+    next_action: Optional[str]
+    created_at: datetime
+
+
+class AddInternalNcTeamMemberBody(BaseModel):
+    user_id: str
+    role_in_case: str
+    actor_user_id: str
+
+
+class InternalNcTeamMemberResponse(BaseModel):
+    id: str
+    nonconformity_id: str
+    user_id: str
+    role_in_case: str
+    joined_at: datetime
+
+
+class AddInternalNcCommentBody(BaseModel):
+    comment_type: str = "general"
+    content: str
+    is_internal: bool = True
+    created_by_user_id: str
+
+
+class InternalNcCommentResponse(BaseModel):
+    id: str
+    nc_type: str
+    nc_id: str
+    comment_type: str
+    content: str
+    is_internal: bool
+    created_by_user_id: str
+    created_at: datetime
+
+class UploadInternalNcAttachmentBody(BaseModel):
+    file_name: str
+    original_name: str
+    mime_type: Optional[str] = None
+    size_bytes: int
+    storage_provider: str
+    storage_path: str
+    checksum: Optional[str] = None
+    uploaded_by_user_id: str
+
+
+class UploadInternalNcActionAttachmentBody(BaseModel):
+    file_name: str
+    original_name: str
+    mime_type: Optional[str] = None
+    size_bytes: int
+    storage_provider: str
+    storage_path: str
+    checksum: Optional[str] = None
+    uploaded_by_user_id: str
+
+
+class InternalNcAttachmentResponse(BaseModel):
+    id: str
+    nc_type: Optional[str]
+    nc_id: Optional[str]
+    action_id: Optional[str]
+    effectiveness_check_id: Optional[str]
+    file_name: str
+    original_name: str
+    mime_type: Optional[str]
+    size_bytes: int
+    storage_provider: str
+    storage_path: str
+    checksum: Optional[str]
+    uploaded_by_user_id: str
+    uploaded_at: datetime
+
+
+class InternalNcFullDetailsResponse(BaseModel):
+    nonconformity: dict[str, Any]
+    root_causes: list[dict[str, Any]]
+    actions: list[dict[str, Any]]
+    effectiveness_checks: list[dict[str, Any]]
+    comments: list[dict[str, Any]]
+    attachments: list[dict[str, Any]]
+    team_members: list[dict[str, Any]]
+    audit_events: list[dict[str, Any]]
+
+class UploadInternalNcAttachmentBody(BaseModel):
+    file_name: str
+    original_name: str
+    mime_type: Optional[str] = None
+    size_bytes: int
+    storage_provider: str
+    storage_path: str
+    checksum: Optional[str] = None
+    uploaded_by_user_id: str
+
+
+class UploadInternalNcActionAttachmentBody(BaseModel):
+    file_name: str
+    original_name: str
+    mime_type: Optional[str] = None
+    size_bytes: int
+    storage_provider: str
+    storage_path: str
+    checksum: Optional[str] = None
+    uploaded_by_user_id: str
+
+
+class InternalNcAttachmentResponse(BaseModel):
+    id: str
+    nc_type: Optional[str]
+    nc_id: Optional[str]
+    action_id: Optional[str]
+    effectiveness_check_id: Optional[str]
+    file_name: str
+    original_name: str
+    mime_type: Optional[str]
+    size_bytes: int
+    storage_provider: str
+    storage_path: str
+    checksum: Optional[str]
+    uploaded_by_user_id: str
+    uploaded_at: datetime

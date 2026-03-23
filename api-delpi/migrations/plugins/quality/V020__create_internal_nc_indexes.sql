@@ -48,3 +48,15 @@ CREATE INDEX IF NOT EXISTS idx_internal_nc_team_members_nonconformity_id
 
 CREATE INDEX IF NOT EXISTS idx_internal_nc_team_members_user_id
     ON quality.internal_nc_team_members (user_id);
+
+CREATE INDEX IF NOT EXISTS idx_internal_nc_comments_nonconformity_id
+    ON quality.internal_nc_comments (nonconformity_id);
+
+CREATE INDEX IF NOT EXISTS idx_internal_nc_audit_events_nonconformity_id
+    ON quality.internal_nc_audit_events (nonconformity_id);
+
+CREATE INDEX IF NOT EXISTS idx_internal_nc_audit_events_event_type
+    ON quality.internal_nc_audit_events (event_type);
+
+CREATE INDEX IF NOT EXISTS idx_internal_nc_audit_events_created_at
+    ON quality.internal_nc_audit_events (created_at);

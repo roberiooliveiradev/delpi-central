@@ -29,6 +29,24 @@ from app.application.dto.internal_nc.update_internal_nc_action_request import (
 from app.application.dto.internal_nc.complete_internal_nc_action_request import (
     CompleteInternalNcActionRequest,
 )
+from app.application.dto.internal_nc.register_internal_nc_effectiveness_check_request import (
+    RegisterInternalNcEffectivenessCheckRequest,
+)
+from app.application.dto.internal_nc.add_internal_nc_team_member_request import (
+    AddInternalNcTeamMemberRequest,
+)
+from app.application.dto.internal_nc.remove_internal_nc_team_member_request import (
+    RemoveInternalNcTeamMemberRequest,
+)
+from app.application.dto.internal_nc.add_internal_nc_comment_request import (
+    AddInternalNcCommentRequest,
+)
+from app.application.dto.internal_nc.upload_internal_nc_attachment_request import (
+    UploadInternalNcAttachmentRequest,
+)
+from app.application.dto.internal_nc.upload_internal_nc_action_attachment_request import (
+    UploadInternalNcActionAttachmentRequest,
+)
 from app.composition.internal_nc_composer import (
     build_create_internal_nonconformity_use_case,
     build_get_internal_nonconformity_details_use_case,
@@ -41,6 +59,16 @@ from app.composition.internal_nc_composer import (
     build_update_internal_nc_action_use_case,
     build_complete_internal_nc_action_use_case,
     build_list_internal_nc_actions_use_case,
+    build_list_internal_nc_effectiveness_checks_use_case,
+    build_register_internal_nc_effectiveness_check_use_case,
+    build_add_internal_nc_team_member_use_case,
+    build_list_internal_nc_team_members_use_case,
+    build_remove_internal_nc_team_member_use_case,
+    build_add_internal_nc_comment_use_case,
+    build_list_internal_nc_comments_use_case,
+    build_upload_internal_nc_attachment_use_case,
+    build_upload_internal_nc_action_attachment_use_case,
+    build_get_internal_nonconformity_full_details_use_case,
 )
 from app.domain.entities.internal_nc.internal_nonconformity import (
     InternalNonconformity,
@@ -50,6 +78,18 @@ from app.domain.entities.internal_nc.internal_nonconformity_root_cause import (
 )
 from app.domain.entities.internal_nc.internal_nonconformity_action import (
     InternalNonconformityAction,
+)
+from app.domain.entities.internal_nc.internal_nonconformity_effectiveness_check import (
+    InternalNonconformityEffectivenessCheck,
+)
+from app.domain.entities.internal_nc.internal_nc_team_member import (
+    InternalNcTeamMember,
+)
+from app.domain.entities.shared_quality.nonconformity_comment import (
+    NonconformityComment,
+)
+from app.domain.entities.shared_quality.nonconformity_attachment import (
+    NonconformityAttachment,
 )
 from app.interface.http.schemas.internal_nc_schemas import (
     CreateInternalNonconformityBody,
@@ -63,6 +103,16 @@ from app.interface.http.schemas.internal_nc_schemas import (
     UpdateInternalNcActionBody,
     CompleteInternalNcActionBody,
     InternalNcActionResponse,
+    InternalNcEffectivenessCheckResponse,
+    RegisterInternalNcEffectivenessCheckBody,
+    AddInternalNcTeamMemberBody,
+    InternalNcTeamMemberResponse,
+    AddInternalNcCommentBody,
+    InternalNcCommentResponse,
+    InternalNcAttachmentResponse,
+    UploadInternalNcActionAttachmentBody,
+    UploadInternalNcAttachmentBody,
+    InternalNcFullDetailsResponse,
 )
 
 router = APIRouter()
@@ -381,6 +431,260 @@ def complete_internal_nc_action(action_id: str, body: CompleteInternalNcActionBo
         status_code = 404 if "não encontrada" in detail.lower() else 400
         raise HTTPException(status_code=status_code, detail=detail) from exc
 
+@router.get(
+    "/nonconformities/{nonconformity_id}/effectiveness-checks",
+    response_model=list[InternalNcEffectivenessCheckResponse],
+)
+@require_any_permission(["quality-nc.view"])
+def list_internal_nc_effectiveness_checks(nonconformity_id: str):
+    try:
+        use_case = build_list_internal_nc_effectiveness_checks_use_case()
+        result = use_case.execute(nonconformity_id)
+        return [_to_effectiveness_check_response(item) for item in result]
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/nonconformities/{nonconformity_id}/effectiveness-checks",
+    response_model=InternalNcEffectivenessCheckResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@require_any_permission(["quality-nc.manage"])
+def register_internal_nc_effectiveness_check(
+    nonconformity_id: str,
+    body: RegisterInternalNcEffectivenessCheckBody,
+):
+    try:
+        use_case = build_register_internal_nc_effectiveness_check_use_case()
+        result = use_case.execute(
+            RegisterInternalNcEffectivenessCheckRequest(
+                nonconformity_id=nonconformity_id,
+                action_id=body.action_id,
+                checked_by_user_id=body.checked_by_user_id,
+                checked_at=body.checked_at,
+                criteria=body.criteria,
+                result=body.result,
+                notes=body.notes,
+                next_action=body.next_action,
+            )
+        )
+        return _to_effectiveness_check_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+def _to_effectiveness_check_response(
+    entity: InternalNonconformityEffectivenessCheck,
+) -> InternalNcEffectivenessCheckResponse:
+    return InternalNcEffectivenessCheckResponse(
+        id=entity.id,
+        nonconformity_id=entity.nonconformity_id,
+        action_id=entity.action_id,
+        checked_by_user_id=entity.checked_by_user_id,
+        checked_at=entity.checked_at,
+        criteria=entity.criteria,
+        result=entity.result,
+        notes=entity.notes,
+        next_action=entity.next_action,
+        created_at=entity.created_at,
+    )
+
+
+@router.get(
+    "/nonconformities/{nonconformity_id}/team-members",
+    response_model=list[InternalNcTeamMemberResponse],
+)
+def list_internal_nc_team_members(nonconformity_id: str):
+    try:
+        use_case = build_list_internal_nc_team_members_use_case()
+        result = use_case.execute(nonconformity_id)
+        return [_to_team_member_response(item) for item in result]
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/nonconformities/{nonconformity_id}/team-members",
+    response_model=InternalNcTeamMemberResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_internal_nc_team_member(nonconformity_id: str, body: AddInternalNcTeamMemberBody):
+    try:
+        use_case = build_add_internal_nc_team_member_use_case()
+        result = use_case.execute(
+            AddInternalNcTeamMemberRequest(
+                nonconformity_id=nonconformity_id,
+                user_id=body.user_id,
+                role_in_case=body.role_in_case,
+                actor_user_id=body.actor_user_id,
+            )
+        )
+        return _to_team_member_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.delete(
+    "/nonconformities/{nonconformity_id}/team-members/{member_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remove_internal_nc_team_member(
+    nonconformity_id: str,
+    member_id: str,
+    actor_user_id: str = Query(...),
+):
+    try:
+        use_case = build_remove_internal_nc_team_member_use_case()
+        use_case.execute(
+            RemoveInternalNcTeamMemberRequest(
+                nonconformity_id=nonconformity_id,
+                member_id=member_id,
+                actor_user_id=actor_user_id,
+            )
+        )
+        return None
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+def _to_team_member_response(entity: InternalNcTeamMember) -> InternalNcTeamMemberResponse:
+    return InternalNcTeamMemberResponse(
+        id=entity.id,
+        nonconformity_id=entity.nonconformity_id,
+        user_id=entity.user_id,
+        role_in_case=entity.role_in_case,
+        joined_at=entity.joined_at,
+    )
+
+
+@router.get(
+    "/nonconformities/{nonconformity_id}/comments",
+    response_model=list[InternalNcCommentResponse],
+)
+def list_internal_nc_comments(nonconformity_id: str):
+    try:
+        use_case = build_list_internal_nc_comments_use_case()
+        result = use_case.execute(nonconformity_id)
+        return [_to_comment_response(item) for item in result]
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/nonconformities/{nonconformity_id}/comments",
+    response_model=InternalNcCommentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_internal_nc_comment(
+    nonconformity_id: str,
+    body: AddInternalNcCommentBody,
+):
+    try:
+        use_case = build_add_internal_nc_comment_use_case()
+        result = use_case.execute(
+            AddInternalNcCommentRequest(
+                nonconformity_id=nonconformity_id,
+                comment_type=body.comment_type,
+                content=body.content,
+                is_internal=body.is_internal,
+                created_by_user_id=body.created_by_user_id,
+            )
+        )
+        return _to_comment_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/nonconformities/{nonconformity_id}/attachments",
+    response_model=InternalNcAttachmentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def upload_internal_nc_attachment(
+    nonconformity_id: str,
+    body: UploadInternalNcAttachmentBody,
+):
+    try:
+        use_case = build_upload_internal_nc_attachment_use_case()
+        result = use_case.execute(
+            UploadInternalNcAttachmentRequest(
+                nonconformity_id=nonconformity_id,
+                file_name=body.file_name,
+                original_name=body.original_name,
+                mime_type=body.mime_type,
+                size_bytes=body.size_bytes,
+                storage_provider=body.storage_provider,
+                storage_path=body.storage_path,
+                checksum=body.checksum,
+                uploaded_by_user_id=body.uploaded_by_user_id,
+            )
+        )
+        return _to_attachment_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.post(
+    "/actions/{action_id}/attachments",
+    response_model=InternalNcAttachmentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def upload_internal_nc_action_attachment(
+    action_id: str,
+    body: UploadInternalNcActionAttachmentBody,
+):
+    try:
+        use_case = build_upload_internal_nc_action_attachment_use_case()
+        result = use_case.execute(
+            UploadInternalNcActionAttachmentRequest(
+                action_id=action_id,
+                file_name=body.file_name,
+                original_name=body.original_name,
+                mime_type=body.mime_type,
+                size_bytes=body.size_bytes,
+                storage_provider=body.storage_provider,
+                storage_path=body.storage_path,
+                checksum=body.checksum,
+                uploaded_by_user_id=body.uploaded_by_user_id,
+            )
+        )
+        return _to_attachment_response(result)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
+
+@router.get(
+    "/nonconformities/{nonconformity_id}/full-details",
+    response_model=InternalNcFullDetailsResponse,
+)
+def get_internal_nonconformity_full_details(nonconformity_id: str):
+    try:
+        use_case = build_get_internal_nonconformity_full_details_use_case()
+        return use_case.execute(nonconformity_id)
+    except ValueError as exc:
+        detail = str(exc)
+        status_code = 404 if "não encontrada" in detail.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail) from exc
+
 
 def _to_action_response(
     entity: InternalNonconformityAction,
@@ -457,4 +761,37 @@ def _to_root_cause_response(
         is_root_cause=entity.is_root_cause,
         created_by_user_id=entity.created_by_user_id,
         created_at=entity.created_at,
+    )
+
+def _to_comment_response(comment: NonconformityComment) -> InternalNcCommentResponse:
+    return InternalNcCommentResponse(
+        id=comment.id,
+        nc_type=comment.nc_type,
+        nc_id=comment.nc_id,
+        comment_type=comment.comment_type,
+        content=comment.content,
+        is_internal=comment.is_internal,
+        created_by_user_id=comment.created_by_user_id,
+        created_at=comment.created_at,
+    )
+
+
+def _to_attachment_response(
+    attachment: NonconformityAttachment,
+) -> InternalNcAttachmentResponse:
+    return InternalNcAttachmentResponse(
+        id=attachment.id,
+        nc_type=attachment.nc_type,
+        nc_id=attachment.nc_id,
+        action_id=attachment.action_id,
+        effectiveness_check_id=attachment.effectiveness_check_id,
+        file_name=attachment.file_name,
+        original_name=attachment.original_name,
+        mime_type=attachment.mime_type,
+        size_bytes=attachment.size_bytes,
+        storage_provider=attachment.storage_provider,
+        storage_path=attachment.storage_path,
+        checksum=attachment.checksum,
+        uploaded_by_user_id=attachment.uploaded_by_user_id,
+        uploaded_at=attachment.uploaded_at,
     )

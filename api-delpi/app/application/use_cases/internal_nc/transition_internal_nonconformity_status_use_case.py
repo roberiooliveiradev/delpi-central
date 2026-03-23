@@ -16,6 +16,9 @@ from app.domain.ports.internal_nc.internal_nonconformity_repository import (
 from app.domain.ports.shared_quality.audit_event_repository import (
     AuditEventRepositoryPort,
 )
+from app.domain.ports.internal_nc.internal_nonconformity_effectiveness_repository import (
+    InternalNonconformityEffectivenessRepositoryPort,
+)
 
 
 class TransitionInternalNonconformityStatusUseCase:
@@ -37,9 +40,11 @@ class TransitionInternalNonconformityStatusUseCase:
         self,
         repository: InternalNonconformityRepositoryPort,
         audit_event_repository: AuditEventRepositoryPort,
+        effectiveness_repository: InternalNonconformityEffectivenessRepositoryPort,
     ) -> None:
         self._repository = repository
         self._audit_event_repository = audit_event_repository
+        self._effectiveness_repository = effectiveness_repository
 
     def execute(
         self,
@@ -55,6 +60,7 @@ class TransitionInternalNonconformityStatusUseCase:
         target_status = request.target_status.strip()
 
         self._validate_transition(
+            nonconformity_id=entity.id,
             current_status=current_status,
             target_status=target_status,
             justification=request.justification,
@@ -108,15 +114,23 @@ class TransitionInternalNonconformityStatusUseCase:
     def _validate_transition(
         self,
         *,
+        nonconformity_id: str,
         current_status: str,
         target_status: str,
         justification: str | None,
     ) -> None:
         allowed = self._ALLOWED_TRANSITIONS.get(current_status, set())
         if target_status not in allowed:
-            raise ValueError(
-                f"Transição inválida: {current_status} -> {target_status}."
+            raise ValueError(f"Transição inválida: {current_status} -> {target_status}.")
+
+        if target_status == "closed":
+            latest_approved = self._effectiveness_repository.get_latest_approved_by_nonconformity_id(
+                nonconformity_id
             )
+            if latest_approved is None:
+                raise ValueError(
+                    "Não é permitido encerrar sem validação de eficácia aprovada."
+                )
 
         if target_status == "reopened":
             normalized = self._normalize_optional_str(justification)
