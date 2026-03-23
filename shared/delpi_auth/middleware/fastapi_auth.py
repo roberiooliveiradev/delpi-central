@@ -63,34 +63,24 @@ async def jwt_middleware(request: Request, call_next):
     clear_current_user()
 
     path = request.url.path
-
     if is_public_path(path):
         return await call_next(request)
 
     auth_header = request.headers.get("Authorization")
-
     if not auth_header or not auth_header.startswith("Bearer "):
-        return JSONResponse(
-            status_code=401,
-            content={"detail": "Unauthorized"},
-        )
+        return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
 
     token = auth_header.split(" ", 1)[1]
-
     context_token = None
 
     try:
         claims = validate_token(token)
-
         sub = claims.get("sub")
         email = claims.get("email")
         name = claims.get("name") or email or "Usuário"
 
         if not sub or not email:
-            return JSONResponse(
-                status_code=401,
-                content={"detail": "Invalid token claims"},
-            )
+            return JSONResponse(status_code=401, content={"detail": "Invalid token claims"})
 
         rbac = await load_user_rbac(token)
 
@@ -107,15 +97,13 @@ async def jwt_middleware(request: Request, call_next):
         request.state.user = user
         context_token = set_current_user(user)
 
-        response = await call_next(request)
-        return response
+    except Exception as exc:
+        return JSONResponse(status_code=401, content={"detail": f"Invalid token: {exc}"})
 
-    except Exception:
-        return JSONResponse(
-            status_code=401,
-            content={"detail": "Invalid token"},
-        )
-
+    try:
+        return await call_next(request)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail":f"Error: {e}"})
     finally:
         if context_token is not None:
             reset_current_user(context_token)
