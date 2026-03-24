@@ -1,5 +1,4 @@
 # app/interface/http/routes/quality/ppm_routes.py
-
 from fastapi import APIRouter, Query
 from typing import Optional
 
@@ -18,7 +17,7 @@ router = APIRouter()
 
 
 @router.get("/internal/summary")
-@require_permission("api-delpi.access")
+@require_permission("api-delpi.quality.access")
 def get_internal_ppm_summary(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
@@ -37,13 +36,17 @@ def get_internal_ppm_summary(
 
         return success_response(data=result.to_dict())
 
+    except ValueError as e:
+        log_error(f"Erro de validação ao buscar resumo de PPM interno: {e}")
+        return error_response(str(e), status_code=400)
+
     except Exception as e:
         log_error(f"Erro ao buscar resumo de PPM interno: {e}")
-        return error_response(str(e))
+        return error_response("Erro interno ao buscar resumo de PPM interno.", status_code=500)
 
 
 @router.get("/external/summary")
-@require_permission("api-delpi.access")
+@require_permission("api-delpi.quality.access")
 def get_external_ppm_summary(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
@@ -62,13 +65,17 @@ def get_external_ppm_summary(
 
         return success_response(data=result.to_dict())
 
+    except ValueError as e:
+        log_error(f"Erro de validação ao buscar resumo de PPM externo: {e}")
+        return error_response(str(e), status_code=400)
+
     except Exception as e:
         log_error(f"Erro ao buscar resumo de PPM externo: {e}")
-        return error_response(str(e))
+        return error_response("Erro interno ao buscar resumo de PPM externo.", status_code=500)
 
 
 @router.get("/internal")
-@require_permission("api-delpi.access")
+@require_permission("api-delpi.quality.access")
 def list_internal_ppm(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
@@ -91,13 +98,17 @@ def list_internal_ppm(
 
         return success_response(data=result.to_dict())
 
+    except ValueError as e:
+        log_error(f"Erro de validação ao listar PPM interno: {e}")
+        return error_response(str(e), status_code=400)
+
     except Exception as e:
         log_error(f"Erro ao listar PPM interno: {e}")
-        return error_response(str(e))
+        return error_response("Erro interno ao listar PPM interno.", status_code=500)
 
 
 @router.get("/external")
-@require_permission("api-delpi.access")
+@require_permission("api-delpi.quality.access")
 def list_external_ppm(
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
@@ -120,6 +131,10 @@ def list_external_ppm(
 
         return success_response(data=result.to_dict())
 
+    except ValueError as e:
+        log_error(f"Erro de validação ao listar PPM externo: {e}")
+        return error_response(str(e), status_code=400)
+
     except Exception as e:
         log_error(f"Erro ao listar PPM externo: {e}")
-        return error_response(str(e))
+        return error_response("Erro interno ao listar PPM externo.", status_code=500)
