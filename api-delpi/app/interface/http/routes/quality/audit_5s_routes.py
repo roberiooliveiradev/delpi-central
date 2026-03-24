@@ -1,4 +1,4 @@
-# app/interface/http/routes/audit_5s_routes.py
+# app/interface/http/routes/quality/audit_5s_routes.py
 from fastapi import APIRouter, HTTPException, Query
 
 from delpi_auth.authorization import require_permission

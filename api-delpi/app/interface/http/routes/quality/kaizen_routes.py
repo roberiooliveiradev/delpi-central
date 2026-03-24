@@ -1,4 +1,4 @@
-# app/interface/http/routes/kaizen_routes.py
+# app/interface/http/routes/quality/kaizen_routes.py
 
 from fastapi import APIRouter, HTTPException, Query
 
