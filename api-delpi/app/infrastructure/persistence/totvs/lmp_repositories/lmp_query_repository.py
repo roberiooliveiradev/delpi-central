@@ -62,6 +62,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def _engineering_status_returned_label(self) -> str:
         return self.settings.engineering_status_labels["returned"]
 
+    def _get_request_branch(self, request) -> str | None:
+        return getattr(request, "branch", None)
+
     def _sql_process_stage_condition(
         self,
         process_field: str,
@@ -202,7 +205,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             {cte_lmp},
 
             CandidateLMPs AS (
-                SELECT
+                SELECT DISTINCT
                     AD1.AD1_FILIAL,
                     AD1.AD1_NROPOR,
                     AD1.AD1_REVISA,
@@ -211,7 +214,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     L.LMP_END_DATE
                 FROM AD1010 AD1
                 INNER JOIN LMPEventos L
-                    ON L.AIJ_NROPOR = AD1.AD1_NROPOR
+                    ON L.AIJ_FILIAL = AD1.AD1_FILIAL
+                   AND L.AIJ_NROPOR = AD1.AD1_NROPOR
                 WHERE {where_ad1}
                   AND {where_period}
             )
@@ -259,7 +263,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         if scope_cte_name:
             scope_join_a = f"""
                 INNER JOIN {scope_cte_name} SCOPE_A
-                    ON SCOPE_A.AD1_NROPOR = A.AIJ_NROPOR
+                    ON SCOPE_A.AD1_FILIAL = A.AIJ_FILIAL
+                   AND SCOPE_A.AD1_NROPOR = A.AIJ_NROPOR
             """
 
         sql = f"""
@@ -354,17 +359,20 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 WHERE {where_eng_support_e}
             ),
 
-            -- regra oficial: STATUS ATUAL pela ultima revisao
             UltimaRevisaoEngenharia AS (
                 SELECT
+                    E.AIJ_FILIAL,
                     E.AIJ_NROPOR,
                     MAX(E.AIJ_REVISA) AS ULTIMA_REVISA
                 FROM EngenhariaEventos E
-                GROUP BY E.AIJ_NROPOR
+                GROUP BY
+                    E.AIJ_FILIAL,
+                    E.AIJ_NROPOR
             ),
 
             StatusUltimaRevisaoEngenharia AS (
                 SELECT
+                    E.AIJ_FILIAL,
                     E.AIJ_NROPOR,
                     CASE
                         WHEN SUM(
@@ -400,22 +408,26 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     END AS ENGINEERING_STATUS
                 FROM EngenhariaEventos E
                 INNER JOIN UltimaRevisaoEngenharia U
-                    ON U.AIJ_NROPOR = E.AIJ_NROPOR
+                    ON U.AIJ_FILIAL = E.AIJ_FILIAL
+                   AND U.AIJ_NROPOR = E.AIJ_NROPOR
                    AND U.ULTIMA_REVISA = E.AIJ_REVISA
-                GROUP BY E.AIJ_NROPOR
+                GROUP BY
+                    E.AIJ_FILIAL,
+                    E.AIJ_NROPOR
             ),
 
-            -- regra de medicao: prioriza revisao mais nova com ancora 000012
             UltimaRevisaoMedicaoEngenharia AS (
                 SELECT
+                    T.AIJ_FILIAL,
                     T.AIJ_NROPOR,
                     T.AIJ_REVISA AS ULTIMA_REVISA_MEDICAO
                 FROM (
                     SELECT
+                        R.AIJ_FILIAL,
                         R.AIJ_NROPOR,
                         R.AIJ_REVISA,
                         ROW_NUMBER() OVER (
-                            PARTITION BY R.AIJ_NROPOR
+                            PARTITION BY R.AIJ_FILIAL, R.AIJ_NROPOR
                             ORDER BY
                                 CASE
                                     WHEN {where_lmp_anchor_rank_e} THEN 2
@@ -425,6 +437,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                         ) AS RN
                     FROM EngenhariaEventos R
                     GROUP BY
+                        R.AIJ_FILIAL,
                         R.AIJ_NROPOR,
                         R.AIJ_REVISA,
                         R.AIJ_PROVEN,
@@ -435,6 +448,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
             EngenhariaResumoUltimaRevisao AS (
                 SELECT
+                    E.AIJ_FILIAL,
                     E.AIJ_NROPOR,
                     MIN(E.AIJ_DTINIC) AS START_DATE,
                     MAX(
@@ -527,11 +541,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     S.ENGINEERING_STATUS AS ENGINEERING_STATUS
                 FROM EngenhariaEventos E
                 INNER JOIN UltimaRevisaoMedicaoEngenharia M
-                    ON M.AIJ_NROPOR = E.AIJ_NROPOR
+                    ON M.AIJ_FILIAL = E.AIJ_FILIAL
+                   AND M.AIJ_NROPOR = E.AIJ_NROPOR
                    AND M.ULTIMA_REVISA_MEDICAO = E.AIJ_REVISA
                 INNER JOIN StatusUltimaRevisaoEngenharia S
-                    ON S.AIJ_NROPOR = E.AIJ_NROPOR
+                    ON S.AIJ_FILIAL = E.AIJ_FILIAL
+                   AND S.AIJ_NROPOR = E.AIJ_NROPOR
                 GROUP BY
+                    E.AIJ_FILIAL,
                     E.AIJ_NROPOR,
                     S.ENGINEERING_STATUS
             )
@@ -580,7 +597,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     A.AIJ_HRENCE,
                     A.R_E_C_N_O_,
                     ROW_NUMBER() OVER (
-                        PARTITION BY A.AIJ_NROPOR
+                        PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR
                         ORDER BY
                             A.AIJ_REVISA DESC,
                             A.AIJ_DTINIC DESC,
@@ -594,6 +611,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
             LMPAnchorResolvido AS (
                 SELECT
+                    A.AIJ_FILIAL,
                     A.AIJ_NROPOR,
                     A.AIJ_REVISA,
                     A.AIJ_PROVEN,
@@ -643,6 +661,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
             LMPEventos AS (
                 SELECT
+                    A.AIJ_FILIAL,
                     A.AIJ_NROPOR,
                     A.LMP_START_DATE,
                     A.LMP_END_DATE,
@@ -674,19 +693,23 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         if scope_cte_name:
             scope_join = f"""
                 INNER JOIN {scope_cte_name} SCOPE_P
-                    ON SCOPE_P.AD1_NROPOR = ADJ.ADJ_NROPOR
+                    ON SCOPE_P.AD1_FILIAL = ADJ.ADJ_FILIAL
+                   AND SCOPE_P.AD1_NROPOR = ADJ.ADJ_NROPOR
+                   AND SCOPE_P.AD1_REVISA = ADJ.ADJ_REVISA
             """
 
         sql = f"""
             ProdutosLMP AS (
                 SELECT DISTINCT
+                    ADJ.ADJ_FILIAL,
                     ADJ.ADJ_NROPOR,
                     ADJ.ADJ_REVISA,
                     ADJ.ADJ_PROD
                 FROM ADJ010 ADJ
                 {scope_join}
                 INNER JOIN AD1010 AD1
-                    ON AD1.AD1_NROPOR = ADJ.ADJ_NROPOR
+                    ON AD1.AD1_FILIAL = ADJ.ADJ_FILIAL
+                   AND AD1.AD1_NROPOR = ADJ.ADJ_NROPOR
                    AND AD1.AD1_REVISA = ADJ.ADJ_REVISA
                 WHERE {where_adj}
                   AND {where_ad1}
@@ -703,6 +726,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         sql = f"""
             ProdutosLMPRef AS (
                 SELECT
+                    P.ADJ_FILIAL,
                     P.ADJ_NROPOR,
                     P.ADJ_REVISA,
                     P.ADJ_PROD,
@@ -716,6 +740,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
             ProdutosBase AS (
                 SELECT DISTINCT
+                    R.ADJ_FILIAL,
                     R.ADJ_NROPOR,
                     R.ADJ_REVISA,
                     R.ADJ_PROD,
@@ -729,6 +754,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
             Recursive_BOM AS (
                 SELECT
+                    B.ADJ_FILIAL,
                     B.ADJ_NROPOR,
                     B.ADJ_REVISA,
                     B.ADJ_PROD,
@@ -744,6 +770,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 UNION ALL
 
                 SELECT
+                    R.ADJ_FILIAL,
                     R.ADJ_NROPOR,
                     R.ADJ_REVISA,
                     R.ADJ_PROD,
@@ -760,6 +787,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
             PI_COUNT_BY_PRODUCT AS (
                 SELECT
+                    R.ADJ_FILIAL,
                     R.ADJ_NROPOR,
                     R.ADJ_REVISA,
                     R.ADJ_PROD,
@@ -769,6 +797,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ON SB.B1_COD = R.COMPONENT
                 WHERE {where_sb_pi}
                 GROUP BY
+                    R.ADJ_FILIAL,
                     R.ADJ_NROPOR,
                     R.ADJ_REVISA,
                     R.ADJ_PROD
@@ -776,11 +805,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
             PI_COUNT_BY_OV AS (
                 SELECT
+                    P.ADJ_FILIAL,
                     P.ADJ_NROPOR,
                     P.ADJ_REVISA,
                     SUM(P.QTD_PI) AS QTD_PI
                 FROM PI_COUNT_BY_PRODUCT P
                 GROUP BY
+                    P.ADJ_FILIAL,
                     P.ADJ_NROPOR,
                     P.ADJ_REVISA
             )
@@ -828,9 +859,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 SA3.A3_NOME AS seller_name
             FROM AD1010 AD1
             INNER JOIN LMPEventos L
-                ON L.AIJ_NROPOR = AD1.AD1_NROPOR
+                ON L.AIJ_FILIAL = AD1.AD1_FILIAL
+               AND L.AIJ_NROPOR = AD1.AD1_NROPOR
             LEFT JOIN EngenhariaResumoUltimaRevisao H
-                ON H.AIJ_NROPOR = AD1.AD1_NROPOR
+                ON H.AIJ_FILIAL = AD1.AD1_FILIAL
+               AND H.AIJ_NROPOR = AD1.AD1_NROPOR
             LEFT JOIN SA1010 SA1
                 ON SA1.A1_COD = AD1.AD1_CODCLI
                AND SA1.A1_LOJA = AD1.AD1_LOJCLI
@@ -875,7 +908,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 ON SB1.B1_COD = P.ADJ_PROD
                AND {where_sb1}
             LEFT JOIN PI_COUNT_BY_PRODUCT PI
-                ON PI.ADJ_NROPOR = P.ADJ_NROPOR
+                ON PI.ADJ_FILIAL = P.ADJ_FILIAL
+               AND PI.ADJ_NROPOR = P.ADJ_NROPOR
                AND PI.ADJ_REVISA = P.ADJ_REVISA
                AND PI.ADJ_PROD = P.ADJ_PROD
             WHERE P.ADJ_NROPOR = ?
@@ -899,6 +933,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             SELECT ISNULL(SUM(PI.QTD_PI), 0) AS qtd_pi
             FROM (
                 SELECT DISTINCT
+                    ADJ_FILIAL,
                     ADJ_NROPOR,
                     ADJ_REVISA,
                     QTD_PI
@@ -944,10 +979,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 ISNULL(PI.QTD_PI, 0) AS qtd_pi
             FROM CandidateLMPs C
             LEFT JOIN EngenhariaResumoUltimaRevisao H
-                ON H.AIJ_NROPOR = C.AD1_NROPOR
+                ON H.AIJ_FILIAL = C.AD1_FILIAL
+               AND H.AIJ_NROPOR = C.AD1_NROPOR
             LEFT JOIN PI_COUNT_BY_OV PI
-                ON PI.ADJ_NROPOR = C.AD1_NROPOR
-            AND PI.ADJ_REVISA = C.AD1_REVISA
+                ON PI.ADJ_FILIAL = C.AD1_FILIAL
+               AND PI.ADJ_NROPOR = C.AD1_NROPOR
+               AND PI.ADJ_REVISA = C.AD1_REVISA
             GROUP BY
                 C.AD1_FILIAL,
                 C.AD1_NROPOR,
@@ -977,12 +1014,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             rows = repo.execute_query(sql, params)
             return [LMP(**row) for row in rows]
 
-
-
     def get_lmp(self, request: GetLMPRequest) -> LMP:
-        sql_header, params_header = self._sql_header_lmp()
-        sql_products, params_products = self._sql_products_lmp()
-        sql_qtd_pi, params_qtd_pi = self._sql_qtd_pi_lmp_total()
+        requested_branch = self._get_request_branch(request)
+
+        sql_header, params_header = self._sql_header_lmp(requested_branch=requested_branch)
+        sql_products, params_products = self._sql_products_lmp(requested_branch=requested_branch)
+        sql_qtd_pi, params_qtd_pi = self._sql_qtd_pi_lmp_total(requested_branch=requested_branch)
 
         with self as repo:
             header_row = repo.execute_one(
