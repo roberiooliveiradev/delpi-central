@@ -70,7 +70,7 @@ export async function listLmps(
   const query = buildQuery(params);
 
   const response = await httpGet<ApiSuccessResponse<Page<LmpItem>>>(
-    `/apps/api-delpi/lmps/${query}`,
+    `/apps/api-delpi/engineering/lmps/${query}`,
     { signal }
   );
 
@@ -84,7 +84,7 @@ export async function getLmpsDashboard(
   const query = buildQuery(params);
 
   const response = await httpGet<ApiSuccessResponse<LmpsDashboardResponse>>(
-    `/apps/api-delpi/lmps/dashboard${query}`,
+    `/apps/api-delpi/engineering/lmps/dashboard${query}`,
     { signal }
   );
 

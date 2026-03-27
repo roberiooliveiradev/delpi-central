@@ -1,7 +1,9 @@
-# app/interface/http/routes/transforma_mais_routes.py
-from fastapi import APIRouter, HTTPException, Query
+# app/interface/http/routes/engineering/transforma_mais_routes.py
+from fastapi import APIRouter, Query
 
 from delpi_auth.authorization import require_permission
+from app.core.responses import success_response, error_response
+from app.utils.logger import log_error
 
 from app.application.dto.transforma_mais.process_request import ProcessRequest
 from app.application.dto.transforma_mais.process_summary_request import ProcessSummaryRequest
@@ -37,19 +39,23 @@ def list_processes(
 
         processes = use_case.execute(request)
 
-        return {
-            "success": True,
-            "total": len(processes),
-            "items": [process.to_dict() for process in processes],
-        }
+        return success_response(
+            data={
+                "total": len(processes),
+                "items": [process.to_dict() for process in processes],
+            },
+            message="Processos do Transforma Mais listados com sucesso."
+        )
 
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        log_error(f"Erro de validação ao listar processos do Transforma Mais: {exc}")
+        return error_response(str(exc), status_code=400)
 
     except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao listar processos da planilha: {str(exc)}"
+        log_error(f"Erro ao listar processos do Transforma Mais: {exc}")
+        return error_response(
+            "Erro interno ao listar processos do Transforma Mais.",
+            status_code=500
         )
 
 
@@ -69,16 +75,18 @@ def get_process_summary(
 
         summary = use_case.execute(request)
 
-        return {
-            "success": True,
-            "data": summary.to_dict(),
-        }
+        return success_response(
+            data=summary.to_dict(),
+            message="Resumo dos processos do Transforma Mais carregado com sucesso."
+        )
 
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        log_error(f"Erro de validação ao gerar resumo do Transforma Mais: {exc}")
+        return error_response(str(exc), status_code=400)
 
     except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao gerar resumo dos processos da planilha: {str(exc)}"
+        log_error(f"Erro ao gerar resumo do Transforma Mais: {exc}")
+        return error_response(
+            "Erro interno ao gerar resumo dos processos do Transforma Mais.",
+            status_code=500
         )

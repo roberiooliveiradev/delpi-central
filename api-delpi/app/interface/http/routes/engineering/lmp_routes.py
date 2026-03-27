@@ -1,4 +1,4 @@
-# app/interface/http/routes/lmp_routes.py
+# app/interface/http/routes/engineering/lmp_routes.py
 from typing import Optional
 
 from fastapi import APIRouter, Query
@@ -40,12 +40,16 @@ def list_lmps_route(
 
         return success_response(
             data=result.to_dict(),
-            message="LMPs listed successfully."
+            message="LMPs listadas com sucesso."
         )
+
+    except ValueError as e:
+        log_error(f"Erro de validação ao listar LMPs: {e}")
+        return error_response(str(e), status_code=400)
 
     except Exception as e:
         log_error(f"Erro ao listar LMPs: {e}")
-        return error_response(str(e))
+        return error_response("Erro interno ao listar LMPs.", status_code=500)
 
 
 @router.get("/dashboard")
@@ -72,12 +76,16 @@ def list_lmps_dashboard_route(
 
         return success_response(
             data=result,
-            message="LMP dashboard data fetched successfully."
+            message="Dashboard de LMPs carregado com sucesso."
         )
+
+    except ValueError as e:
+        log_error(f"Erro de validação ao listar dashboard de LMPs: {e}")
+        return error_response(str(e), status_code=400)
 
     except Exception as e:
         log_error(f"Erro ao listar dashboard de LMPs: {e}")
-        return error_response(str(e))
+        return error_response("Erro interno ao listar dashboard de LMPs.", status_code=500)
 
 
 @router.get("/{sale_number}")
@@ -91,9 +99,13 @@ def get_lmp_route(sale_number: str):
 
         return success_response(
             data=result,
-            message=f"LMP in sale order {sale_number} fetched successfully."
+            message=f"LMP da ordem de venda {sale_number} carregada com sucesso."
         )
+
+    except ValueError as e:
+        log_error(f"Erro de validação ao buscar LMP {sale_number}: {e}")
+        return error_response(str(e), status_code=400)
 
     except Exception as e:
         log_error(f"Erro ao buscar LMP {sale_number}: {e}")
-        return error_response(str(e))
+        return error_response("Erro interno ao buscar LMP.", status_code=500)
