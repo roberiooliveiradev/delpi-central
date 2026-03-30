@@ -5,5 +5,6 @@ from typing import Optional
 
 @dataclass
 class ProcessSummaryRequest:
+    filial_id: Optional[str]
     start_date: Optional[str]
     end_date: Optional[str]

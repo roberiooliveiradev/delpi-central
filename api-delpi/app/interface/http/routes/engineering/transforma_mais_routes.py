@@ -20,6 +20,7 @@ router = APIRouter()
 def list_processes(
     id: str | None = Query(default=None),
     name_process: str | None = Query(default=None),
+    filial_id: str | None = Query(default=None),
     sector_name: str | None = Query(default=None),
     status: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -31,6 +32,7 @@ def list_processes(
         request = ProcessRequest(
             id=id,
             name_process=name_process,
+            filial_id=filial_id,
             sector_name=sector_name,
             status=status,
             start_date=start_date,
@@ -44,7 +46,7 @@ def list_processes(
                 "total": len(processes),
                 "items": [process.to_dict() for process in processes],
             },
-            message="Processos do Transforma Mais listados com sucesso."
+            message="Processos do Transforma Mais listados com sucesso.",
         )
 
     except ValueError as exc:
@@ -55,13 +57,14 @@ def list_processes(
         log_error(f"Erro ao listar processos do Transforma Mais: {exc}")
         return error_response(
             "Erro interno ao listar processos do Transforma Mais.",
-            status_code=500
+            status_code=500,
         )
 
 
 @router.get("/processes/summary")
 @require_permission("api-delpi.access")
 def get_process_summary(
+    filial_id: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -69,6 +72,7 @@ def get_process_summary(
         use_case = transforma_mais_get_process_summary_composer()
 
         request = ProcessSummaryRequest(
+            filial_id=filial_id,
             start_date=start_date,
             end_date=end_date,
         )
@@ -77,7 +81,7 @@ def get_process_summary(
 
         return success_response(
             data=summary.to_dict(),
-            message="Resumo dos processos do Transforma Mais carregado com sucesso."
+            message="Resumo dos processos do Transforma Mais carregado com sucesso.",
         )
 
     except ValueError as exc:
@@ -88,5 +92,5 @@ def get_process_summary(
         log_error(f"Erro ao gerar resumo do Transforma Mais: {exc}")
         return error_response(
             "Erro interno ao gerar resumo dos processos do Transforma Mais.",
-            status_code=500
+            status_code=500,
         )

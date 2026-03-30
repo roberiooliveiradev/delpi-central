@@ -2,432 +2,444 @@
 
 ## Visão geral
 
-A feature **Transforma Mais** consulta uma planilha pública do Google Sheets, normaliza os dados e expõe dois endpoints HTTP:
+A feature **Transforma Mais** expõe duas rotas HTTP para consulta de processos e geração de resumo consolidado:
 
-- `GET /transforma-mais/processes`
-- `GET /transforma-mais/processes/summary`
+* `GET /apps/api-delpi/engineering/transforma-mais/processes`
+* `GET /apps/api-delpi/engineering/transforma-mais/processes/summary`
 
-No contexto da aplicação, considerando o `root_path` configurado em `main.py`, os caminhos efetivos ficam sob:
-
-- `/apps/api-delpi/transforma-mais/processes`
-- `/apps/api-delpi/transforma-mais/processes/summary`
-
-A fonte de dados é uma planilha Google Sheets lida como CSV por um client dedicado.
+A feature trabalha com dados brutos de processos, revisões, medições, investimentos e recursos compartilhados, aplicando regras de cálculo para economia bruta, custos brutos, economia líquida, horas economizadas, payback e ROI.
 
 ---
 
-## Arquitetura da feature
+## Endpoints
 
-### Router
-Responsável por:
+## 1. Listagem de processos
 
-- receber os parâmetros HTTP
-- criar os DTOs de entrada
-- chamar os use cases
-- traduzir erros para respostas HTTP
-
-### Use cases
-Existem dois casos de uso:
-
-- `ListProcessUseCase`: listagem de processos
-- `GetProcessSummaryUseCase`: resumo consolidado
-
-### Port
-O contrato do repositório é definido por `ProcessQueryRepositoryPort`, com os métodos:
-
-- `list_process(request)`
-- `get_process_summary(request)`
-
-### Repository
-A implementação concreta está em `ProcessRepository`, responsável por:
-
-- ler a planilha
-- mapear linhas para entidade/modelo interno
-- aplicar filtros
-- calcular indicadores e série mensal
-
-### Provider
-A integração com Google Sheets fica em `GoogleSheetsClient`, que:
-
-- monta a URL de exportação CSV
-- baixa o conteúdo
-- lê as linhas
-- normaliza os nomes das colunas
-
-### Composer
-A composição injeta:
-
-- `sheet_id`
-- `gid`
-- `timeout`
-
-com suporte a variáveis de ambiente e fallback default.
-
----
-
-## Configuração
-
-### Variáveis de ambiente
-
-- `GOOGLE_SHEETS_TIMEOUT`
-- `TRANSFORMA_MAIS_SHEET_ID`
-- `TRANSFORMA_MAIS_SHEET_GID`
-
-Se não forem definidas, o composer usa valores padrão.
-
-Exemplo:
-
-```env
-GOOGLE_SHEETS_TIMEOUT=10
-TRANSFORMA_MAIS_SHEET_ID=1pqXRoXjSS91TxVqHioCPWKQVfY2ZAg-w
-TRANSFORMA_MAIS_SHEET_GID=127374664
-```
-
----
-
-## Entidade de domínio
-
-A entidade retornada na listagem é `Process`.
-
-### Campos
-
-- `id`
-- `name_process`
-- `sector_name`
-- `daily_savings`
-- `payback_months`
-- `status`
-- `implementetion_date`
-
----
-
-# Endpoint 1 — Listar processos
-
-## URL
+### URL
 
 ```http
-GET /apps/api-delpi/transforma-mais/processes
+GET /apps/api-delpi/engineering/transforma-mais/processes
 ```
 
-## Objetivo
+### Objetivo
 
-Retornar os processos da planilha com filtros opcionais.
+Retornar os processos do Transforma Mais com filtros opcionais.
 
-## Query params
+### Query params suportados
 
-- `id`
-- `name_process`
-- `sector_name`
-- `status`
-- `start_date`
-- `end_date`
+* `id`
+* `name_process`
+* `filial_id`
+* `sector_name`
+* `status`
+* `start_date`
+* `end_date`
 
-## Descrição dos filtros
+### Descrição dos filtros
 
-### `id`
+#### `id`
+
 Filtra por ocorrência parcial no identificador do processo.
 
-### `name_process`
+#### `name_process`
+
 Filtra por ocorrência parcial no nome do processo.
 
-### `sector_name`
+#### `filial_id`
+
+Filtra os processos por filial.
+
+#### `sector_name`
+
 Filtra por ocorrência parcial no setor.
 
-### `status`
-Filtra por ocorrência parcial no status.
+#### `status`
 
-### `start_date`
-Filtra pela data mínima de implementação.
+Filtra por ocorrência parcial no status do processo.
 
-### `end_date`
-Filtra pela data máxima de implementação.
+#### `start_date`
 
-## Regra de filtro por datas
+Filtra pela data mínima de implementação exibida no processo.
 
-O filtro de datas é aplicado sobre a **data de implementação** do processo.
+#### `end_date`
 
-### Formatos aceitos
+Filtra pela data máxima de implementação exibida no processo.
 
-- `YYYY-MM-DD`
-- `DD/MM/YYYY`
-- `DD-MM-YYYY`
-- `YYYY/MM/DD`
-- `MM/DD/YYYY`
-- `MM-DD-YYYY`
-
-## Exemplo de chamada
-
-```http
-GET /apps/api-delpi/transforma-mais/processes?sector_name=Engenharia&status=Concluído&start_date=2025-11-01&end_date=2025-11-30
-Authorization: Bearer <token>
-```
-
-## Exemplo de resposta
+### Estrutura de resposta
 
 ```json
 {
   "success": true,
-  "total": 2,
-  "items": [
-    {
-      "id": "12",
-      "name_process": "Controle de LMP's",
-      "sector_name": "Engenharia",
-      "daily_savings": 2.04,
-      "payback_months": 32.83,
-      "status": "Concluído",
-      "implementetion_date": "13/01/2026"
-    }
-  ]
+  "message": "Processos do Transforma Mais listados com sucesso.",
+  "data": {
+    "total": 2,
+    "items": [
+      {
+        "id": "be4e59cd-1373-45bc-9a83-d202102e69cb",
+        "name_process": "Acompanhamento de refugo",
+        "filial_id": "01",
+        "sector_name": "qualidade",
+        "daily_savings": 7.21,
+        "payback_months": 1.0,
+        "status": "ativo",
+        "implementetion_date": "26/09/2025"
+      }
+    ]
+  }
 }
 ```
 
-## Respostas de erro
+### Significado dos campos retornados
 
-### 400
-Retornada quando:
-
-- `start_date` é inválida
-- `end_date` é inválida
-- `start_date > end_date`
-
-Exemplo:
-
-```json
-{
-  "detail": "start_date inválida. Use formatos como YYYY-MM-DD ou DD/MM/YYYY."
-}
-```
-
-### 500
-Retornada em falhas inesperadas no processamento.
-
-```json
-{
-  "detail": "Erro ao listar processos da planilha: ..."
-}
-```
+* `id`: identificador do processo.
+* `name_process`: nome do processo.
+* `filial_id`: filial vinculada ao processo.
+* `sector_name`: setor do processo.
+* `daily_savings`: economia líquida diária estimada do processo.
+* `payback_months`: quantidade estimada de meses para retorno do investimento único.
+* `status`: status do processo.
+* `implementetion_date`: data de implantação ou início de vigência da revisão exibida.
 
 ---
 
-# Endpoint 2 — Resumo consolidado
+## 2. Resumo consolidado
 
-## URL
+### URL
 
 ```http
-GET /apps/api-delpi/transforma-mais/processes/summary
+GET /apps/api-delpi/engineering/transforma-mais/processes/summary
 ```
 
-## Objetivo
+### Objetivo
 
-Retornar indicadores consolidados dos processos concluídos e uma série mensal de economia operacional.
+Retornar o resumo consolidado dos processos com indicadores acumulados e breakdown mensal.
 
-## Query params
+### Query params suportados
 
-- `start_date`
-- `end_date`
+* `filial_id`
+* `start_date`
+* `end_date`
+
+### Comportamento do filtro `filial_id`
+
+Quando informado, o sistema filtra toda a base antes do cálculo do resumo:
+
+* processos
+* revisões
+* medições
+* investimentos
+* vínculos de recursos compartilhados
+* recursos compartilhados vinculados
+
+Ou seja, o resumo passa a refletir apenas os dados da filial solicitada.
+
+---
 
 ## Estrutura da resposta
 
-A resposta contém:
-
-- `implemented_solutions`
-- `total_savings_until_now`
-- `total_hours_saved_until_now`
-- `total_investment_until_now`
-- `average_roi_percent`
-- `monthly_description`
-- `range`
-
-### `monthly_description`
-Cada item possui:
-
-- `month`
-- `total_savings_month`
-
-### `range`
-Possui:
-
-- `start_date`
-- `end_date`
-- `accumulated_savings`
-
----
-
-## Regras de cálculo
-
-### `implemented_solutions`
-Quantidade de processos com status concluído.
-
-### `total_savings_until_now`
-Soma da coluna **Economia até agora** dos processos concluídos.
-
-### `total_hours_saved_until_now`
-Calculado com base em:
-
-- tempo atual por execução
-- tempo após melhoria
-- execuções por mês
-- dias implantados
-
-Fórmula:
-
-```text
-minutes_saved_per_execution = max(time_before - time_after, 0)
-monthly_minutes_saved = minutes_saved_per_execution * executions_per_month
-proportional_minutes_saved = monthly_minutes_saved * (days_implanted / 30)
-hours = proportional_minutes_saved / 60
-```
-
-### `total_investment_until_now`
-Soma direta da coluna de investimento total.
-
-> Observação: este indicador agregado ainda é provisório. O detalhamento mensal de investimento foi removido porque a modelagem financeira ainda será refinada.
-
-### `average_roi_percent`
-Média simples da coluna **ROI anual (%)** dos processos concluídos.
-
-### `monthly_description`
-A série mensal retorna a **economia operacional total do mês**, sem acumular os meses anteriores.
-
-A regra é:
-
-1. Para cada processo concluído, identificar a data de implementação.
-2. Para cada mês da série, calcular quantos dias o processo ficou ativo dentro daquele mês.
-3. Multiplicar os dias ativos pela **economia por dia** do processo.
-4. Somar todos os processos para obter `total_savings_month`.
-
-Fórmula por processo:
-
-```text
-economia_do_processo_no_mes = dias_ativos_no_mes * economia_por_dia
-```
-
-Fórmula do mês:
-
-```text
-total_savings_month = soma da economia_do_processo_no_mes de todos os processos ativos no mês
-```
-
-### `range.accumulated_savings`
-Soma de **Economia até agora** dos processos cuja data de implementação está dentro do intervalo informado.
-
----
-
-## Exemplo de chamada
-
-```http
-GET /apps/api-delpi/transforma-mais/processes/summary?start_date=2025-09-01&end_date=2025-11-30
-Authorization: Bearer <token>
-```
-
-## Exemplo de resposta
-
 ```json
 {
   "success": true,
+  "message": "Resumo dos processos do Transforma Mais carregado com sucesso.",
   "data": {
-    "implemented_solutions": 21,
-    "total_savings_until_now": 75681.16,
-    "total_hours_saved_until_now": 2752.62,
-    "total_investment_until_now": 44722.47,
-    "average_roi_percent": 4.53,
-    "monthly_description": [
+    "implemented_solutions_count": 4,
+    "total_net_savings_until_now": 5792.25,
+    "total_hours_saved_until_now": 162.42,
+    "total_gross_costs_until_now": 1135.2,
+    "average_roi": 15.5,
+    "monthly_breakdown": [
       {
         "month": "2025-09",
-        "total_savings_month": 2487.12
-      },
-      {
-        "month": "2025-10",
-        "total_savings_month": 4686.53
-      },
-      {
-        "month": "2025-11",
-        "total_savings_month": 16006.65
+        "gross_savings_month": 479.85,
+        "gross_costs_month": 300.1,
+        "gross_investment_month": 193.1,
+        "gross_recurring_investment_month": 0,
+        "shared_resource_cost_month": 107,
+        "net_savings_month": 179.75
       }
     ],
-    "range": {
-      "start_date": "2025-09-01",
-      "end_date": "2025-11-30",
-      "accumulated_savings": 75550.71
+    "range_summary": {
+      "start_date": null,
+      "end_date": null,
+      "accumulated_net_savings_until_now": 5792.25
     }
   }
 }
 ```
 
+---
+
+## Significado dos campos do resumo
+
+### `implemented_solutions_count`
+
+Quantidade de revisões comparáveis consideradas no cálculo.
+
+São consideradas comparáveis as revisões com cenário:
+
+* `melhoria`
+* `automacao`
+* `correcao`
+
+### `total_net_savings_until_now`
+
+Economia líquida acumulada de todo o período retornado.
+
+Fórmula conceitual:
+
+```text
+total_net_savings_until_now = soma do net_savings_month
+```
+
+### `total_hours_saved_until_now`
+
+Total acumulado de horas economizadas com base na redução de tempo operacional entre baseline e revisão atual.
+
+### `total_gross_costs_until_now`
+
+Total acumulado de custos brutos do período.
+
+Esse total soma, mês a mês:
+
+* investimentos únicos
+* investimentos recorrentes
+* custos de recursos compartilhados
+
+Fórmula conceitual:
+
+```text
+total_gross_costs_until_now = soma do gross_costs_month
+```
+
+### `average_roi`
+
+ROI médio das revisões calculadas.
+
+No cálculo atual, o ROI é tratado como razão de retorno sobre investimento único, e não como percentual já multiplicado por 100.
+
+---
+
+## Significado dos campos de `monthly_breakdown`
+
+### `month`
+
+Mês de competência no formato `YYYY-MM`.
+
+### `gross_savings_month`
+
+Economia bruta operacional do mês.
+
+Esse valor considera apenas ganhos operacionais, como:
+
+* redução de tempo
+* redução de retrabalho
+* redução de erros
+* redução de outros desperdícios
+
+Não desconta investimentos nem recursos compartilhados.
+
+### `gross_costs_month`
+
+Custo bruto total do mês.
+
+Fórmula:
+
+```text
+gross_costs_month = gross_investment_month + gross_recurring_investment_month + shared_resource_cost_month
+```
+
+### `gross_investment_month`
+
+Soma dos investimentos únicos lançados no mês.
+
+### `gross_recurring_investment_month`
+
+Soma dos investimentos recorrentes válidos no mês.
+
+Atualmente o cálculo aceita recorrências como:
+
+* `mensal`
+* `trimestral`
+* `semestral`
+* `anual`
+
+com rateio proporcional por mês quando aplicável.
+
+### `shared_resource_cost_month`
+
+Custo total de recursos compartilhados rateados no mês.
+
+O cálculo considera apenas recursos elegíveis no mês, respeitando:
+
+* status do recurso
+* vigência do recurso
+* vínculo ativo
+* vigência do vínculo
+* critério de rateio
+
+### `net_savings_month`
+
+Economia líquida do mês.
+
+Fórmula:
+
+```text
+net_savings_month = gross_savings_month - gross_costs_month
+```
+
+Esse valor pode ser positivo ou negativo.
+
+---
+
+## Significado dos campos de `range_summary`
+
+### `start_date`
+
+Data inicial informada no filtro.
+
+### `end_date`
+
+Data final informada no filtro.
+
+### `accumulated_net_savings_until_now`
+
+Soma do `net_savings_month` dentro do intervalo retornado.
+
+Se não houver filtro de datas, representa o acumulado de todo o período calculado.
+
+---
+
+## Regras de cálculo
+
+## 1. Economia bruta
+
+A economia bruta é calculada comparando a baseline com a revisão atual.
+
+Entram nessa conta apenas diferenças operacionais:
+
+* custo de tempo
+* custo de retrabalho
+* custo de erros
+* outros desperdícios
+
+Fórmula conceitual:
+
+```text
+gross_savings =
+    (baseline_time_cost - current_time_cost)
+  + (baseline_rework_cost - current_rework_cost)
+  + (baseline_error_cost - current_error_cost)
+  + (baseline_other_cost - current_other_cost)
+```
+
+## 2. Custos brutos
+
+Os custos brutos do mês são compostos por:
+
+* investimento único do mês
+* investimento recorrente do mês
+* custo rateado de recurso compartilhado do mês
+
+## 3. Economia líquida
+
+```text
+net_savings = gross_savings - gross_costs
+```
+
+## 4. Recursos compartilhados
+
+O custo de recurso compartilhado por revisão é calculado conforme o critério de rateio do recurso.
+
+Critérios suportados:
+
+### `igualitario`
+
+Divide o valor do recurso igualmente entre os vínculos elegíveis.
+
+### `por_revisoes_ativas`
+
+Divide o valor do recurso pelo número de revisões elegíveis no mês.
+
+### `por_peso`
+
+Divide o valor proporcionalmente ao `peso_rateio` de cada vínculo.
+
+## 5. Payback
+
+O payback do processo é calculado por:
+
+```text
+payback_months = total_unique_investment / net_savings_month
+```
+
+Se a economia líquida mensal for menor ou igual a zero, o payback não é retornado.
+
+## 6. Horas economizadas
+
+As horas economizadas são calculadas a partir da diferença entre o tempo baseline e o tempo atual, multiplicada pelo volume mensal e ajustada pela fração ativa no mês.
+
+---
+
+## Exemplo de uso
+
+### Listagem por filial
+
+```http
+GET /apps/api-delpi/engineering/transforma-mais/processes?filial_id=01
+```
+
+### Resumo por filial
+
+```http
+GET /apps/api-delpi/engineering/transforma-mais/processes/summary?filial_id=01
+```
+
+### Resumo por filial e período
+
+```http
+GET /apps/api-delpi/engineering/transforma-mais/processes/summary?filial_id=01&start_date=2025-09-01&end_date=2026-03-31
+```
+
+---
+
 ## Respostas de erro
 
 ### 400
-Retornada quando o range de datas é inválido.
+
+Usada para erros de validação, como datas inválidas.
 
 ### 500
-Retornada em falhas inesperadas durante a geração do resumo.
+
+Usada para falhas inesperadas de processamento.
 
 ---
 
-## Normalização de colunas da planilha
+## Observações
 
-O `GoogleSheetsClient` normaliza as colunas antes do repository consumir os dados.
-
-Exemplos de transformação:
-
-- espaços viram `_`
-- `%` vira `percent`
-- acentos são removidos
-- `/` e `-` viram `_`
-
-Isso permite acessar campos como:
-
-- `nome_do_processo`
-- `economia_por_dia`
-- `roi_anual_percent`
-- `data_da_implementacao`
-
----
-
-## Segurança
-
-A aplicação usa autenticação Bearer JWT global.
-
-Exemplo de header:
-
-```http
-Authorization: Bearer <token>
-```
+* O resumo mensal considera meses corridos.
+* O cálculo usa apenas revisões comparáveis.
+* Recursos compartilhados inativos não entram no cálculo.
+* Vínculos de recursos compartilhados também precisam estar ativos e elegíveis no mês.
+* Os valores são arredondados apenas no resultado final exibido.
 
 ---
 
 ## Resumo funcional
 
-### `GET /transforma-mais/processes`
+### `GET /processes`
+
 Use para:
 
-- listar processos
-- aplicar filtros textuais
-- filtrar por data de implementação
+* listar processos
+* filtrar por filial
+* filtrar por nome, setor e status
+* consultar economia diária e payback estimado
 
-### `GET /transforma-mais/processes/summary`
+### `GET /processes/summary`
+
 Use para:
 
-- obter indicadores consolidados
-- visualizar economia operacional por mês
-- consultar economia acumulada por range de implantação
-
----
-
-## Limitações atuais
-
-- `total_investment_until_now` ainda é uma soma simples da coluna de investimento.
-- o detalhamento mensal de investimento não é retornado.
-- o cálculo mensal usa dias corridos, não dias úteis.
-- o mês atual ainda pode precisar de ajuste futuro caso a regra mude para considerar apenas até a data corrente.
-
----
-
-## Evoluções futuras sugeridas
-
-- refinar a modelagem financeira de investimentos
-- separar custos fixos, variáveis e de implantação
-- revisar o cálculo agregado de investimento
-- adicionar descrições e exemplos diretamente no Swagger
-
+* obter visão consolidada por filial
+* analisar economia bruta, custo bruto e economia líquida por mês
+* consultar horas economizadas
+* avaliar custos compartilhados e ROI

@@ -7,6 +7,7 @@ from typing import Optional
 class ProcessRequest:
     id: Optional[str]
     name_process: Optional[str]
+    filial_id: Optional[str]
     sector_name: Optional[str]
     status: Optional[str]
     start_date: Optional[str]

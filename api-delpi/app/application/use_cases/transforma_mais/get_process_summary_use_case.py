@@ -2,11 +2,26 @@
 from app.application.dto.transforma_mais.process_summary_request import ProcessSummaryRequest
 from app.application.dto.transforma_mais.process_summary_response import ProcessSummaryResponse
 from app.domain.ports.transforma_mais.process_query_port import ProcessQueryRepositoryPort
+from app.domain.services.transforma_mais.process_summary_calculator import (
+    ProcessSummaryCalculator,
+)
 
 
 class GetProcessSummaryUseCase:
-    def __init__(self, repository: ProcessQueryRepositoryPort):
+    def __init__(
+        self,
+        repository: ProcessQueryRepositoryPort,
+        calculator: ProcessSummaryCalculator,
+    ):
         self.repository = repository
+        self.calculator = calculator
 
     def execute(self, request: ProcessSummaryRequest) -> ProcessSummaryResponse:
-        return self.repository.get_process_summary(request)
+        raw = self.repository.load_raw_data()
+
+        return self.calculator.build_summary(
+            raw=raw,
+            filial_id=request.filial_id,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
