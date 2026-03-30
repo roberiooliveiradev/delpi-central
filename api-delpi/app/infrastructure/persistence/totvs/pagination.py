@@ -1,4 +1,4 @@
-# app/infrastructure/persistence/pagination.py
+# app/infrastructure/persistence/totvs/pagination.py
 
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 1000

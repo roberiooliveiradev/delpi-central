@@ -1,4 +1,4 @@
-# app/infrastructure/persistence/query_builder.py
+# app/infrastructure/persistence/totvs/query_builder.py
 from typing import Optional, Union, Iterable
 from datetime import datetime
 
