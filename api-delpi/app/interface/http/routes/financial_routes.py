@@ -17,14 +17,14 @@ router = APIRouter()
 @require_permission("api-delpi.access")
 def get_rol(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
-    date_start: Optional[str] = Query(None, min_length=8, max_length=8),
-    date_end: Optional[str] = Query(None, min_length=8, max_length=8),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
 ):
     try:
         dto = GetRolRequest(
             branch=branch,
-            date_start=date_start,
-            date_end=date_end,
+            start_date=start_date,
+            end_date=end_date,
         )
 
         use_case = build_get_rol_use_case()

@@ -6,5 +6,5 @@ from typing import Optional
 @dataclass
 class GetRolRequest:
     branch: Optional[str] = None
-    date_start: Optional[str] = None
-    date_end: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None

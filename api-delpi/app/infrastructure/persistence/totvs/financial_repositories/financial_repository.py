@@ -11,7 +11,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
         qb = QueryBuilder()
         qb.raw("D2.D_E_L_E_T_ = ''")
         qb.eq("D2.D2_FILIAL", request.branch)
-        qb.date_range("D2.D2_EMISSAO", request.date_start, request.date_end)
+        qb.date_range("D2.D2_EMISSAO", request.start_date, request.end_date)
 
         where_clause, where_params = qb.build()
 
@@ -46,7 +46,6 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
 
                 ISNULL(D2.D2_TOTAL, 0) AS VALOR_ITEM,
                 ISNULL(D2.D2_VALDEV, 0) AS VALOR_DEVOLUCAO,
-                ISNULL(D2.D2_DESCON, 0) + ISNULL(D2.D2_DESC, 0) AS VALOR_DESCONTO,
 
                 ISNULL(D2.D2_VALICM, 0) AS VALOR_ICMS,
                 ISNULL(D2.D2_VALISS, 0) AS VALOR_ISS,
@@ -55,20 +54,29 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                 ISNULL(D2.D2_VALIPI, 0) AS VALOR_IPI,
 
                 CASE
-                    WHEN ISNULL(F4.F4_DUPLIC, '') = 'S' THEN ISNULL(D2.D2_TOTAL, 0)
+                    WHEN ISNULL(F4.F4_DUPLIC, '') = 'S'
+                    THEN ISNULL(D2.D2_TOTAL, 0)
                     ELSE 0
                 END AS VALOR_FATURAMENTO,
 
                 CASE
                     WHEN F4.F4_CODIGO IS NOT NULL
-                     AND ISNULL(F4.F4_DUPLIC, '') <> 'S' THEN ISNULL(D2.D2_TOTAL, 0)
+                     AND ISNULL(F4.F4_DUPLIC, '') <> 'S'
+                    THEN ISNULL(D2.D2_TOTAL, 0)
                     ELSE 0
                 END AS VALOR_OUTROS,
 
                 CASE
-                    WHEN F4.F4_CODIGO IS NULL THEN ISNULL(D2.D2_TOTAL, 0)
+                    WHEN F4.F4_CODIGO IS NULL
+                    THEN ISNULL(D2.D2_TOTAL, 0)
                     ELSE 0
-                END AS VALOR_SEM_TES
+                END AS VALOR_SEM_TES,
+
+                CASE
+                    WHEN ISNULL(F4.F4_DUPLIC, '') = 'S'
+                    THEN ISNULL(D2.D2_DESCON, 0) + ISNULL(D2.D2_DESC, 0)
+                    ELSE 0
+                END AS VALOR_DESCONTO
 
             FROM SD2010 D2
 
@@ -112,8 +120,8 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
         )
         SELECT
             ? AS branch,
-            ISNULL(MIN(B.D2_EMISSAO), '') AS date_start,
-            ISNULL(MAX(B.D2_EMISSAO), '') AS date_end,
+            ISNULL(MIN(B.D2_EMISSAO), '') AS start_date,
+            ISNULL(MAX(B.D2_EMISSAO), '') AS end_date,
 
             ISNULL(SUM(B.VALOR_FATURAMENTO), 0) AS gross_revenue,
             ISNULL(SUM(B.VALOR_OUTROS), 0) AS other_values,
@@ -159,8 +167,8 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
 
         return result or {
             "branch": branch_label,
-            "date_start": request.date_start or "",
-            "date_end": request.date_end or "",
+            "start_date": request.start_date or "",
+            "end_date": request.end_date or "",
             "gross_revenue": 0,
             "other_values": 0,
             "items_without_tes": 0,
