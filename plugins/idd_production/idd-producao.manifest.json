@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "idd-producao",
+  "name": "Indicadores da Produção",
+  "description": "Preenchimento de indicadores da produção como custo de mão de obra direta, custod e produção e depreciação.",
+  "icon": "lucide-table",
+  "version": "1.0.0",
+  "type": "iframe",
+  "basePath": "/idd-producao",
+  "entry": "https://docs.google.com/spreadsheets/d/1UM3g5QPixVJitlryNg8xaa34syjYTzT6ydaVVon5_Lw/edit?usp=sharing",
+  "permissions": [
+    {
+      "code": "idd-producao.access",
+      "name": "Prencher indicadores",
+      "description": "Acesso",
+      "module": "idd-producao"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/idd-producao",
+      "label": "Abrir",
+      "permission": "idd-producao.access",
+      "icon": "external-link",
+      "entry": null,
+      "order": 1,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "external"
+  }
+}

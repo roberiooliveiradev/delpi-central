@@ -5,6 +5,7 @@ from app.utils.logger import log_error
 from app.core.exceptions import DatabaseConnectionError
 
 from datetime import datetime, date
+from decimal import Decimal
 import json
 
 
@@ -100,7 +101,7 @@ class BaseRepository:
         except Exception as e:
             log_error(f"Erro ao executar query única: {e}")
             raise DatabaseConnectionError(str(e))
-        
+
     def execute_scalar(self, query: str, params: tuple = ()) -> int | float | None:
         """
         Executa query que retorna um valor escalar (COUNT, SUM, etc).
@@ -151,9 +152,7 @@ class BaseRepository:
             index = 1
 
             while True:
-
                 if self.cursor.description:
-
                     columns = [desc[0] for desc in self.cursor.description]
                     rows = self.cursor.fetchall()
 
@@ -185,11 +184,12 @@ class BaseRepository:
     # --------------------------------------
 
     def _normalize_row(self, row: dict) -> dict:
-
         for key, value in row.items():
-
             if isinstance(value, (datetime, date)):
                 row[key] = value.isoformat()
+
+            elif isinstance(value, Decimal):
+                row[key] = float(value)
 
             elif isinstance(value, str):
                 row[key] = value.strip()
@@ -199,23 +199,15 @@ class BaseRepository:
 
         return row
 
-    # --------------------------------------
-    # Limpeza JSON SQL Server
-    # --------------------------------------
-
     def _clean_json_data(self, data):
-
         if isinstance(data, list):
             return [self._clean_json_data(item) for item in data]
 
         elif isinstance(data, dict):
-
             cleaned = {}
 
             for key, value in data.items():
-
                 if isinstance(value, str):
-
                     value = value.strip()
 
                     if value.startswith("{") or value.startswith("["):
