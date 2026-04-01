@@ -160,7 +160,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
         """
 
         branch_label = request.branch or "all"
-        params = (branch_label,) + where_params + financeiro_where_params
+        params = where_params + financeiro_where_params + (branch_label,)
 
         with self as repo:
             result = repo.execute_one(sql, params)
