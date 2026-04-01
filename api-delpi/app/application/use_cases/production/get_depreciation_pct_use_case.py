@@ -20,7 +20,7 @@ class GetDepreciationPctUseCase:
         )
 
         rol_object = self._financial_query_repository.get_rol(rol_request)
-        rol = rol_object.get("rol", 0)
+        rol = rol_object.get("rol_with_ipi", 0)
 
         depreciation_pct = (average_depreciation_cost / rol) * 100 if rol else None
 

@@ -17,6 +17,7 @@ from app.interface.http.routes import system_routes
 from app.interface.http.routes import data_routes
 from app.interface.http.routes import sale_routes
 from app.interface.http.routes import financial_routes
+from app.interface.http.routes.commercial import commercial_router
 from app.interface.http.routes.production import production_router
 from app.interface.http.routes.engineering import engineering_router
 from app.interface.http.routes.quality import quality_router
@@ -132,6 +133,7 @@ def root():
 
 
 app.include_router(financial_routes.router, prefix="/finacial", tags=["Financeiro"])
+app.include_router(commercial_router.router)
 app.include_router(production_router.router)
 app.include_router(engineering_router.router)
 app.include_router(quality_router.router)

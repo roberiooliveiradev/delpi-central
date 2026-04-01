@@ -23,7 +23,7 @@ class GetDirectLaborCostPctUseCase:
         average_direct_labor_cost = sum(valid_costs) / len(valid_costs) if valid_costs else 0
 
         rol_object = self._financial_query_repository.get_rol(rol_request)
-        rol = rol_object.get("rol", 0)
+        rol = rol_object.get("rol_with_ipi", 0)
 
         direct_labor_cost_pct = (average_direct_labor_cost / rol) * 100 if rol else None
 
