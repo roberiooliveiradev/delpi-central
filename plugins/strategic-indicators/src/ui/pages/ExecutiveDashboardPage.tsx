@@ -1,89 +1,116 @@
+import { executiveDashboardMock } from "../../data/mocks/executiveDashboardMock";
 import { Card } from "../components/Card";
-import { InfoState } from "../components/InfoState";
+import { ClassificationBand } from "../components/ClassificationBand";
+import { ContributionRanking } from "../components/ContributionRanking";
+import { DepartmentSummaryGrid } from "../components/DepartmentSummaryGrid";
+import { ExecutiveMethodCard } from "../components/ExecutiveMethodCard";
+import { IgdHeroCard } from "../components/IgdHeroCard";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
 
 export function ExecutiveDashboardPage() {
+  const data = executiveDashboardMock;
+
+  const strongestDepartment = [...data.departments].sort(
+    (a, b) => b.score - a.score
+  )[0];
+
+  const watchDepartment = [...data.departments].sort(
+    (a, b) => a.score - b.score
+  )[0];
+
+  const totalContribution = data.departments.reduce(
+    (sum, department) => sum + department.contribution,
+    0
+  );
+
   return (
     <div className="si-page">
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Strategic Indicators"
-        description="Base visual do módulo preparada para evoluir para a visão executiva do IGD, dos IDDs departamentais e dos indicadores estratégicos."
-        badge={<StatusBadge label="Fundação visual" variant="info" />}
+        description="Painel executivo inicial do IGD e dos IDDs departamentais, estruturado para evoluir com tendências, alertas e análise detalhada."
+        badge={<StatusBadge label="MVP Executivo" variant="info" />}
       />
 
-      <SectionBlock
-        title="Estado atual do módulo"
-        description="Esta etapa consolida a fundação visual do plugin e prepara a interface para a próxima fase do roadmap."
-      >
-        <div className="si-grid si-grid--hero">
-          <Card
-            title="Microfrontend validado"
-            description="A integração federada com a MinhaDelpi foi concluída com sucesso."
-            headerRight={<StatusBadge label="Operacional" variant="success" />}
-          >
-            <InfoState
-              title="Plugin carregado com sucesso"
-              description="A casca visual do Strategic Indicators já está pronta. O próximo passo será construir a visão executiva do dashboard."
-            />
-          </Card>
+      <div className="si-executive-grid">
+        <IgdHeroCard
+          igd={data.igd}
+          igdExact={data.igdExact}
+          classification={data.classification}
+          strongestDepartment={`${strongestDepartment.name} (${strongestDepartment.score.toFixed(1)})`}
+          watchDepartment={`${watchDepartment.name} (${watchDepartment.score.toFixed(1)})`}
+        />
 
-          <Card
-            title="Próxima evolução"
-            description="Na Fase 3, esta área receberá os blocos reais da visão executiva."
-            headerRight={<StatusBadge label="Próxima etapa" variant="warning" />}
-          >
-            <ul className="si-list">
-              <li>Hero do IGD</li>
-              <li>Faixa de classificação</li>
-              <li>Cards dos departamentos</li>
-              <li>Tendência do IGD</li>
-              <li>Contribuição por área</li>
-            </ul>
-          </Card>
-        </div>
+        <Card
+          title="Leitura executiva"
+          description="O índice resume, em uma nota única, a performance integrada das áreas estratégicas da empresa."
+          headerRight={<StatusBadge label="Mensal" variant="neutral" />}
+        >
+          <p className="si-muted">
+            O valor exibido neste MVP usa o exemplo oficial do documento-base e
+            já respeita a lógica de consolidação executiva do índice global.
+          </p>
+
+          <div className="si-executive-note">
+            <div className="si-executive-note__item">
+              <span className="si-executive-note__label">Faixa atual</span>
+              <strong className="si-executive-note__value">
+                {data.classification}
+              </strong>
+            </div>
+
+            <div className="si-executive-note__item">
+              <span className="si-executive-note__label">Melhor IDD</span>
+              <strong className="si-executive-note__value">
+                {strongestDepartment.name}
+              </strong>
+            </div>
+
+            <div className="si-executive-note__item">
+              <span className="si-executive-note__label">Atenção prioritária</span>
+              <strong className="si-executive-note__value">
+                {watchDepartment.name}
+              </strong>
+            </div>
+
+            <div className="si-executive-note__item">
+              <span className="si-executive-note__label">Soma ponderada</span>
+              <strong className="si-executive-note__value">
+                {totalContribution.toFixed(3)}
+              </strong>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <SectionBlock
+        title="Faixa interpretativa do IGD"
+        description="A régua abaixo traduz a nota do índice em leitura gerencial objetiva."
+      >
+        <ClassificationBand value={data.igd} />
       </SectionBlock>
 
       <SectionBlock
-        title="Estrutura preparada"
-        description="A linguagem visual abaixo estabelece o padrão dos blocos que serão reutilizados no restante do plugin."
+        title="Metodologia do índice"
+        description="Resumo visual de como o índice global é consolidado no painel estratégico."
       >
-        <div className="si-grid si-grid--cards">
-          <Card
-            title="Cards base"
-            description="Estrutura reutilizável para KPIs, indicadores e agrupamentos visuais."
-          >
-            <p className="si-muted">
-              O componente Card será reutilizado em resumos, agrupamentos e
-              blocos analíticos do dashboard.
-            </p>
-          </Card>
+        <ExecutiveMethodCard igdExact={data.igdExact} />
+      </SectionBlock>
 
-          <Card
-            title="Badges semânticos"
-            description="Estados visuais padronizados para informação, sucesso, alerta e risco."
-            headerRight={<StatusBadge label="Padrão ativo" variant="neutral" />}
-          >
-            <div className="si-badge-row">
-              <StatusBadge label="Info" variant="info" />
-              <StatusBadge label="Sucesso" variant="success" />
-              <StatusBadge label="Alerta" variant="warning" />
-              <StatusBadge label="Risco" variant="danger" />
-            </div>
-          </Card>
+      <SectionBlock
+        title="Contribuição por departamentos"
+        description="O ranking abaixo mostra como cada área participa da composição ponderada do IGD."
+      >
+        <ContributionRanking departments={data.departments} />
+      </SectionBlock>
 
-          <Card
-            title="Seções escaláveis"
-            description="Organização visual pronta para crescer com o roadmap."
-          >
-            <p className="si-muted">
-              A página já está estruturada para receber blocos executivos,
-              tendências, indicadores e alertas sem retrabalho estrutural.
-            </p>
-          </Card>
-        </div>
+      <SectionBlock
+        title="Composição por departamentos"
+        description="Os cards abaixo mostram os departamentos que compõem o IGD, com seus pesos oficiais, nota resumida, foco estratégico e metas de referência do modelo 2026."
+      >
+        <DepartmentSummaryGrid departments={data.departments} />
       </SectionBlock>
     </div>
   );
