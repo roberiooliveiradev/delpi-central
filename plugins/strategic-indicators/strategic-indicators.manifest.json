@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "strategic-indicators",
+  "name": "Strategic Indicators",
+  "description": "Painel estratégico corporativo com IGD, IDDs, tendências e alertas.",
+  "category": "analytics",
+  "version": "1.0.0",
+  "icon": "bar-chart-3",
+  "type": "microfrontend",
+  "basePath": "/apps/strategic-indicators",
+  "entry": "/apps/strategic-indicators/assets/remoteEntry.js",
+  "healthcheck": "/apps/strategic-indicators/health",
+  "permissions": [
+    {
+      "code": "strategic-indicators.view",
+      "name": "Acessar painel estratégico",
+      "description": "Permite acessar a visão executiva do painel estratégico.",
+      "module": "strategic-indicators"
+    },
+    {
+      "code": "strategic-indicators.departments.view",
+      "name": "Visualizar departamentos",
+      "description": "Permite acessar a visão comparativa dos departamentos.",
+      "module": "strategic-indicators"
+    },
+    {
+      "code": "strategic-indicators.indicators.view",
+      "name": "Visualizar indicadores",
+      "description": "Permite acessar a visão analítica dos indicadores.",
+      "module": "strategic-indicators"
+    },
+    {
+      "code": "strategic-indicators.trends.view",
+      "name": "Visualizar tendências",
+      "description": "Permite acessar a visão histórica e temporal.",
+      "module": "strategic-indicators"
+    },
+    {
+      "code": "strategic-indicators.alerts.view",
+      "name": "Visualizar alertas",
+      "description": "Permite acessar a visão de alertas e priorizações.",
+      "module": "strategic-indicators"
+    },
+    {
+      "code": "strategic-indicators.presentation.view",
+      "name": "Visualizar modo apresentação",
+      "description": "Permite acessar o modo apresentação do painel.",
+      "module": "strategic-indicators"
+    },
+    {
+      "code": "strategic-indicators.settings.manage",
+      "name": "Gerenciar configurações do painel",
+      "description": "Permite alterar pesos, metas e parâmetros do painel.",
+      "module": "strategic-indicators"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/strategic-indicators",
+      "label": "Painel Estratégico",
+      "permission": "strategic-indicators.view",
+      "icon": "bar-chart-3",
+      "showInMenu": true,
+      "order": 10,
+      "menuGroup": "Analytics"
+    },
+    {
+      "path": "/apps/strategic-indicators/departments",
+      "label": "Departamentos",
+      "permission": "strategic-indicators.departments.view",
+      "icon": "building-2",
+      "showInMenu": true,
+      "order": 11,
+      "menuGroup": "Analytics"
+    },
+    {
+      "path": "/apps/strategic-indicators/indicators",
+      "label": "Indicadores",
+      "permission": "strategic-indicators.indicators.view",
+      "icon": "table-properties",
+      "showInMenu": true,
+      "order": 12,
+      "menuGroup": "Analytics"
+    },
+    {
+      "path": "/apps/strategic-indicators/trends",
+      "label": "Tendências",
+      "permission": "strategic-indicators.trends.view",
+      "icon": "line-chart",
+      "showInMenu": true,
+      "order": 13,
+      "menuGroup": "Analytics"
+    },
+    {
+      "path": "/apps/strategic-indicators/alerts",
+      "label": "Alertas",
+      "permission": "strategic-indicators.alerts.view",
+      "icon": "triangle-alert",
+      "showInMenu": true,
+      "order": 14,
+      "menuGroup": "Analytics"
+    },
+    {
+      "path": "/apps/strategic-indicators/presentation",
+      "label": "Modo Apresentação",
+      "permission": "strategic-indicators.presentation.view",
+      "icon": "presentation",
+      "showInMenu": false,
+      "order": 15,
+      "menuGroup": "Analytics"
+    },
+    {
+      "path": "/apps/strategic-indicators/settings",
+      "label": "Configurações",
+      "permission": "strategic-indicators.settings.manage",
+      "icon": "settings",
+      "showInMenu": false,
+      "order": 16,
+      "menuGroup": "Analytics"
+    }
+  ],
+  "backend": {
+    "required": true,
+    "validateJwt": true,
+    "serviceName": "api-delpi",
+    "baseUrl": "/apps/api-delpi/strategic-indicators",
+    "issuer": "https://www.minhadelpi.com.br/auth",
+    "audience": "delpi-central"
+  },
+  "ui": {
+    "renderMode": "federated"
+  },
+  "metadata": {
+    "owner": "Equipe DELPI",
+    "domain": "analytics",
+    "product": "strategic-indicators"
+  }
+}

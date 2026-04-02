@@ -154,6 +154,24 @@ services:
     networks:
       - delpi-network
 
+  strategic-indicators:
+    build:
+      context: ../plugins/strategic-indicators
+      dockerfile: Dockerfile
+
+    container_name: delpi-strategic-indicators
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/strategic-indicators:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   dashboard-lmps:
     build:
       context: ../plugins/dashboard-lmps
@@ -246,6 +264,7 @@ services:
       - core-api
       - keycloak
       - api-delpi
+      - strategic-indicators
       - dashboard-lmps
 
     logging:
