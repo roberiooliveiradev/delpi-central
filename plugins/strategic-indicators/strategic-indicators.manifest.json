@@ -1,15 +1,13 @@
 {
   "schemaVersion": "1.0.0",
   "id": "strategic-indicators",
-  "name": "Strategic Indicators",
+  "name": "DELPI Indicadores",
   "description": "Painel estratégico corporativo com IGD, IDDs, tendências e alertas.",
-  "category": "analytics",
-  "version": "1.0.0",
-  "icon": "bar-chart-3",
+  "icon": "activity",
+  "version": "1.1.0",
   "type": "microfrontend",
   "basePath": "/apps/strategic-indicators",
   "entry": "/apps/strategic-indicators/assets/remoteEntry.js",
-  "healthcheck": "/apps/strategic-indicators/health",
   "permissions": [
     {
       "code": "strategic-indicators.view",
@@ -59,80 +57,138 @@
       "path": "/apps/strategic-indicators",
       "label": "Painel Estratégico",
       "permission": "strategic-indicators.view",
-      "icon": "bar-chart-3",
-      "showInMenu": true,
+      "icon": "bar-chart3",
+      "entry": null,
       "order": 10,
-      "menuGroup": "Analytics"
+      "showInMenu": true
     },
     {
       "path": "/apps/strategic-indicators/departments",
       "label": "Departamentos",
       "permission": "strategic-indicators.departments.view",
-      "icon": "building-2",
-      "showInMenu": true,
+      "icon": "building2",
+      "entry": null,
       "order": 11,
-      "menuGroup": "Analytics"
+      "showInMenu": true
     },
     {
       "path": "/apps/strategic-indicators/indicators",
       "label": "Indicadores",
       "permission": "strategic-indicators.indicators.view",
       "icon": "table-properties",
-      "showInMenu": true,
+      "entry": null,
       "order": 12,
-      "menuGroup": "Analytics"
+      "showInMenu": true
     },
     {
       "path": "/apps/strategic-indicators/trends",
       "label": "Tendências",
       "permission": "strategic-indicators.trends.view",
       "icon": "line-chart",
-      "showInMenu": true,
+      "entry": null,
       "order": 13,
-      "menuGroup": "Analytics"
+      "showInMenu": true
     },
     {
       "path": "/apps/strategic-indicators/alerts",
       "label": "Alertas",
       "permission": "strategic-indicators.alerts.view",
       "icon": "triangle-alert",
-      "showInMenu": true,
+      "entry": null,
       "order": 14,
-      "menuGroup": "Analytics"
+      "showInMenu": true
     },
     {
       "path": "/apps/strategic-indicators/presentation",
       "label": "Modo Apresentação",
       "permission": "strategic-indicators.presentation.view",
       "icon": "presentation",
-      "showInMenu": false,
+      "entry": null,
       "order": 15,
-      "menuGroup": "Analytics"
+      "showInMenu": false
     },
     {
       "path": "/apps/strategic-indicators/settings",
       "label": "Configurações",
       "permission": "strategic-indicators.settings.manage",
       "icon": "settings",
-      "showInMenu": false,
+      "entry": null,
       "order": 16,
-      "menuGroup": "Analytics"
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/strategic-indicators/departments/financial",
+      "label": "Financeiro",
+      "permission": "strategic-indicators.departments.view",
+      "icon": "landmark-icon",
+      "entry": null,
+      "order": 111,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/strategic-indicators/departments/hr",
+      "label": "RH",
+      "permission": "strategic-indicators.departments.view",
+      "icon": "file-user",
+      "entry": null,
+      "order": 112,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/strategic-indicators/departments/commercial",
+      "label": "Comercial",
+      "permission": "strategic-indicators.departments.view",
+      "icon": "hand-coins",
+      "entry": null,
+      "order": 113,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/strategic-indicators/departments/production",
+      "label": "Produção",
+      "permission": "strategic-indicators.departments.view",
+      "icon": "factory-icon",
+      "entry": null,
+      "order": 114,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/strategic-indicators/departments/quality",
+      "label": "Qualidade",
+      "permission": "strategic-indicators.departments.view",
+      "icon": "award",
+      "entry": null,
+      "order": 115,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/strategic-indicators/departments/supplies",
+      "label": "Suprimentos",
+      "permission": "strategic-indicators.departments.view",
+      "icon": "boxes",
+      "entry": null,
+      "order": 116,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/strategic-indicators/departments/engineering",
+      "label": "Engenharia",
+      "permission": "strategic-indicators.departments.view",
+      "icon": "hard-hat",
+      "entry": null,
+      "order": 117,
+      "showInMenu": false
     }
   ],
   "backend": {
-    "required": true,
-    "validateJwt": true,
-    "serviceName": "api-delpi",
+    "audience": "delpi-central",
     "baseUrl": "/apps/api-delpi/strategic-indicators",
     "issuer": "https://www.minhadelpi.com.br/auth",
-    "audience": "delpi-central"
+    "required": true,
+    "serviceName": "api-delpi",
+    "validateJwt": true
   },
   "ui": {
     "renderMode": "federated"
-  },
-  "metadata": {
-    "owner": "Equipe DELPI",
-    "domain": "analytics",
-    "product": "strategic-indicators"
   }
 }
