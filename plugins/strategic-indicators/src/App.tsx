@@ -1,6 +1,7 @@
 import { ExecutiveDashboardPage } from "./ui/pages/ExecutiveDashboardPage";
 import { DepartmentDetailsPage } from "./ui/pages/DepartmentDetailsPage";
 import { DepartmentsPage } from "./ui/pages/DepartmentsPage";
+import { IndicatorsPage } from "./ui/pages/IndicatorsPage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -16,6 +17,10 @@ export default function App({ getAccessToken, pathname }: AppProps) {
 
   if (pathname?.startsWith("/apps/strategic-indicators/departments/")) {
     return <DepartmentDetailsPage pathname={pathname} />;
+  }
+
+  if (pathname === "/apps/strategic-indicators/indicators") {
+    return <IndicatorsPage />;
   }
 
   return <ExecutiveDashboardPage />;
