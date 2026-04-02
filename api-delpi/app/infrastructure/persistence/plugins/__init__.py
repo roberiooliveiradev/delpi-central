@@ -10,7 +10,7 @@ from .plugin_base_repository import (
     PluginsRepositoryError,
 )
 from .plugin_healthcheck import get_plugins_db_health
-from app.infrastructure.providers.databse.plugins_postgres_connection import (
+from app.infrastructure.providers.database.plugins_postgres_connection import (
     PluginsDatabaseConfigError,
     PluginsDatabaseConnectionError,
     check_plugins_connection,

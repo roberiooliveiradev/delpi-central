@@ -21,6 +21,9 @@ from app.interface.http.routes.commercial import commercial_router
 from app.interface.http.routes.production import production_router
 from app.interface.http.routes.engineering import engineering_router
 from app.interface.http.routes.quality import quality_router
+from app.interface.http.routes.strategic_indicators_routes import (
+    router as strategic_indicators_router,
+)
 from app.middleware.auth_middleware import jwt_middleware
 
 
@@ -131,7 +134,7 @@ app.add_middleware(
 def root():
     return {"status": "online"}
 
-
+app.include_router(strategic_indicators_router)
 app.include_router(financial_routes.router, prefix="/finacial", tags=["Financeiro"])
 app.include_router(commercial_router.router)
 app.include_router(production_router.router)

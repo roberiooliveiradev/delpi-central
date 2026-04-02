@@ -40,7 +40,7 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   }
 
   if (pathname === "/apps/strategic-indicators/settings") {
-    return <SettingsPage />;
+    return <SettingsPage getAccessToken={getAccessToken} />;
   }
 
   return <ExecutiveDashboardPage />;

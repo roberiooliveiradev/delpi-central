@@ -1,9 +1,9 @@
-# scripts/run_plugins_migrations.py
 from __future__ import annotations
 
 import argparse
 import hashlib
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -13,7 +13,7 @@ from psycopg.rows import dict_row
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-MIGRATIONS_DIR = ROOT_DIR / "migrations" / "plugins" / "quality"
+PLUGINS_MIGRATIONS_ROOT = ROOT_DIR / "migrations" / "plugins"
 
 
 class MigrationError(RuntimeError):
@@ -71,13 +71,25 @@ def get_connection():
     )
 
 
-def ensure_migrations_table(conn: Any) -> None:
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            CREATE SCHEMA IF NOT EXISTS quality;
+def slug_to_schema(plugin_slug: str) -> str:
+    schema = plugin_slug.strip().lower().replace("-", "_")
+    if not re.fullmatch(r"[a-z_][a-z0-9_]*", schema):
+        raise MigrationError(
+            f"Slug de plugin inválido para schema PostgreSQL: {plugin_slug}"
+        )
+    return schema
 
-            CREATE TABLE IF NOT EXISTS quality.schema_migrations (
+
+def get_migrations_dir(plugin_slug: str) -> Path:
+    return PLUGINS_MIGRATIONS_ROOT / plugin_slug
+
+
+def ensure_migrations_table(conn: Any, schema_name: str) -> None:
+    with conn.cursor() as cur:
+        cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{schema_name}";')
+        cur.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS "{schema_name}".schema_migrations (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 version VARCHAR(50) NOT NULL UNIQUE,
                 name VARCHAR(255) NOT NULL,
@@ -89,17 +101,19 @@ def ensure_migrations_table(conn: Any) -> None:
     conn.commit()
 
 
-def list_migration_files() -> list[Path]:
-    if not MIGRATIONS_DIR.exists():
-        raise MigrationError(f"Pasta de migrations não encontrada: {MIGRATIONS_DIR}")
+def list_migration_files(plugin_slug: str) -> list[Path]:
+    migrations_dir = get_migrations_dir(plugin_slug)
+
+    if not migrations_dir.exists():
+        raise MigrationError(f"Pasta de migrations não encontrada: {migrations_dir}")
 
     files = sorted(
-        p for p in MIGRATIONS_DIR.iterdir()
+        p for p in migrations_dir.iterdir()
         if p.is_file() and p.suffix.lower() == ".sql" and p.name.startswith("V")
     )
 
     if not files:
-        raise MigrationError(f"Nenhuma migration encontrada em: {MIGRATIONS_DIR}")
+        raise MigrationError(f"Nenhuma migration encontrada em: {migrations_dir}")
 
     return files
 
@@ -116,16 +130,15 @@ def parse_version_and_name(path: Path) -> tuple[str, str]:
 
 
 def calculate_checksum(path: Path) -> str:
-    content = path.read_bytes()
-    return hashlib.sha256(content).hexdigest()
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def get_applied_migrations(conn: Any) -> dict[str, dict[str, Any]]:
+def get_applied_migrations(conn: Any, schema_name: str) -> dict[str, dict[str, Any]]:
     with conn.cursor() as cur:
         cur.execute(
-            """
+            f"""
             SELECT version, name, checksum, executed_at
-            FROM quality.schema_migrations
+            FROM "{schema_name}".schema_migrations
             ORDER BY version ASC
             """
         )
@@ -134,7 +147,7 @@ def get_applied_migrations(conn: Any) -> dict[str, dict[str, Any]]:
     return {row["version"]: row for row in rows}
 
 
-def apply_migration(conn: Any, path: Path) -> None:
+def apply_migration(conn: Any, schema_name: str, path: Path) -> None:
     version, name = parse_version_and_name(path)
     checksum = calculate_checksum(path)
     sql = path.read_text(encoding="utf-8")
@@ -145,8 +158,8 @@ def apply_migration(conn: Any, path: Path) -> None:
         with conn.cursor() as cur:
             cur.execute(sql)
             cur.execute(
-                """
-                INSERT INTO quality.schema_migrations (version, name, checksum)
+                f"""
+                INSERT INTO "{schema_name}".schema_migrations (version, name, checksum)
                 VALUES (%s, %s, %s)
                 """,
                 (version, name, checksum),
@@ -158,8 +171,8 @@ def apply_migration(conn: Any, path: Path) -> None:
         raise MigrationError(f"Falha ao aplicar migration {path.name}: {exc}") from exc
 
 
-def validate_migration_history(conn: Any, files: list[Path]) -> None:
-    applied = get_applied_migrations(conn)
+def validate_migration_history(conn: Any, schema_name: str, files: list[Path]) -> None:
+    applied = get_applied_migrations(conn, schema_name)
 
     for path in files:
         version, _ = parse_version_and_name(path)
@@ -174,65 +187,120 @@ def validate_migration_history(conn: Any, files: list[Path]) -> None:
                 )
 
 
-def run_migrations() -> None:
-    files = list_migration_files()
+def run_plugin_migrations(plugin_slug: str) -> None:
+    schema_name = slug_to_schema(plugin_slug)
+    files = list_migration_files(plugin_slug)
 
     with get_connection() as conn:
-        ensure_migrations_table(conn)
-        validate_migration_history(conn, files)
+        ensure_migrations_table(conn, schema_name)
+        validate_migration_history(conn, schema_name, files)
 
-        applied = get_applied_migrations(conn)
-
+        applied = get_applied_migrations(conn, schema_name)
         pending = []
+
         for path in files:
             version, _ = parse_version_and_name(path)
             if version not in applied:
                 pending.append(path)
 
         if not pending:
-            print("Nenhuma migration pendente.")
+            print(f"[{plugin_slug}] Nenhuma migration pendente.")
             return
 
+        print(f"[{plugin_slug}] Executando migrations...")
         for path in pending:
-            apply_migration(conn, path)
+            apply_migration(conn, schema_name, path)
 
-        print("Migrations aplicadas com sucesso.")
+        print(f"[{plugin_slug}] Migrations aplicadas com sucesso.")
 
 
-def show_status() -> None:
-    files = list_migration_files()
+def show_plugin_status(plugin_slug: str) -> None:
+    schema_name = slug_to_schema(plugin_slug)
+    files = list_migration_files(plugin_slug)
 
     with get_connection() as conn:
-        ensure_migrations_table(conn)
-        validate_migration_history(conn, files)
+        ensure_migrations_table(conn, schema_name)
+        validate_migration_history(conn, schema_name, files)
 
-        applied = get_applied_migrations(conn)
+        applied = get_applied_migrations(conn, schema_name)
 
-        print("Status das migrations:")
+        print(f"Status das migrations do plugin [{plugin_slug}]:")
         for path in files:
             version, name = parse_version_and_name(path)
             status = "APLICADA" if version in applied else "PENDENTE"
             print(f"- {version} | {name} | {status}")
 
 
+def list_plugin_slugs() -> list[str]:
+    if not PLUGINS_MIGRATIONS_ROOT.exists():
+        raise MigrationError(
+            f"Pasta raiz de migrations de plugins não encontrada: {PLUGINS_MIGRATIONS_ROOT}"
+        )
+
+    slugs = sorted(
+        p.name for p in PLUGINS_MIGRATIONS_ROOT.iterdir()
+        if p.is_dir()
+    )
+
+    if not slugs:
+        raise MigrationError(
+            f"Nenhum diretório de plugin encontrado em: {PLUGINS_MIGRATIONS_ROOT}"
+        )
+
+    return slugs
+
+
+def run_all_plugins_migrations() -> None:
+    for plugin_slug in list_plugin_slugs():
+        try:
+            run_plugin_migrations(plugin_slug)
+        except MigrationError as exc:
+            if "Nenhuma migration encontrada" in str(exc):
+                print(f"[{plugin_slug}] Sem migrations ainda. Ignorando.")
+                continue
+            raise
+
+
+def show_all_plugins_status() -> None:
+    for plugin_slug in list_plugin_slugs():
+        try:
+            show_plugin_status(plugin_slug)
+        except MigrationError as exc:
+            if "Nenhuma migration encontrada" in str(exc):
+                print(f"[{plugin_slug}] Sem migrations ainda. Ignorando.")
+                continue
+            raise
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Runner de migrations do contexto plugins/quality."
+        description="Runner de migrations do contexto plugins."
     )
     parser.add_argument(
         "command",
         choices=["up", "status"],
         help="up: aplica migrations pendentes | status: mostra status",
     )
+    parser.add_argument(
+        "--plugin",
+        help="Slug do plugin. Ex.: quality, strategic-indicators. Se omitido, executa todos.",
+        default=None,
+    )
 
     args = parser.parse_args()
 
     if args.command == "up":
-        run_migrations()
+        if args.plugin:
+            run_plugin_migrations(args.plugin)
+        else:
+            run_all_plugins_migrations()
         return
 
     if args.command == "status":
-        show_status()
+        if args.plugin:
+            show_plugin_status(args.plugin)
+        else:
+            show_all_plugins_status()
         return
 
 

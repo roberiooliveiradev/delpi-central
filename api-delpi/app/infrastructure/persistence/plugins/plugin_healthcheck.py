@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.infrastructure.providers.databse.plugins_postgres_connection import (
+from app.infrastructure.providers.database.plugins_postgres_connection import (
     PluginsDatabaseConfigError,
     PluginsDatabaseConnectionError,
     check_plugins_connection,

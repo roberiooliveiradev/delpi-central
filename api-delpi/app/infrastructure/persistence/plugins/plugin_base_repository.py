@@ -6,7 +6,7 @@ from typing import Any, Iterable
 
 from psycopg import Connection
 
-from app.infrastructure.providers.databse.plugins_postgres_connection import get_plugins_connection
+from app.infrastructure.providers.database.plugins_postgres_connection import get_plugins_connection
 
 logger = logging.getLogger(__name__)
 
