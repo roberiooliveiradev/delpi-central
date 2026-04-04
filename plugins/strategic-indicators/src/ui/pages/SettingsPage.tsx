@@ -1,7 +1,7 @@
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { SettingsActionPanel } from "../components/SettingsActionPanel";
-import { SettingsEditorPanel } from "../components/SettingsEditorPanel";
+import { SettingsStructuredEditor } from "../components/SettingsStructuredEditor";
 import { SettingsExecutiveHighlight } from "../components/SettingsExecutiveHighlight";
 import { SettingsGoalsPanel } from "../components/SettingsGoalsPanel";
 import { SettingsGovernancePanel } from "../components/SettingsGovernancePanel";
@@ -12,6 +12,8 @@ import { SettingsSummaryCards } from "../components/SettingsSummaryCards";
 import { SettingsWeightsPanel } from "../components/SettingsWeightsPanel";
 import { StatusBadge } from "../components/StatusBadge";
 import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
+import { AuditTimelinePanel } from "../components/AuditTimelinePanel";
+import { useStrategicIndicatorsSettingsAudit } from "../../state/hooks/useStrategicIndicatorsSettingsAudit";
 
 import type {
   SettingsDashboardData,
@@ -63,6 +65,8 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
     save,
     reload,
   } = useStrategicIndicatorsSettings({ getAccessToken });
+
+  const audit = useStrategicIndicatorsSettingsAudit({ getAccessToken });
 
   const settingsDashboardData: SettingsDashboardData | null = data
     ? {
@@ -190,13 +194,25 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
           </SectionBlock>
 
           <SectionBlock
-            title="Edição inicial"
-            description="Primeira camada de edição real conectada ao backend do módulo."
+            title="Edição administrativa"
+            description="Camada estruturada de edição real conectada ao backend do módulo."
           >
-            <SettingsEditorPanel
+            <SettingsStructuredEditor
               data={data}
               saving={saving}
               onSave={save}
+            />
+          </SectionBlock>
+
+          <SectionBlock
+            title="Auditoria administrativa"
+            description="Trilha mínima das alterações realizadas na configuração do módulo."
+          >
+            <AuditTimelinePanel
+              items={audit.items}
+              loading={audit.loading}
+              error={audit.error}
+              onReload={() => void audit.reload()}
             />
           </SectionBlock>
         </>

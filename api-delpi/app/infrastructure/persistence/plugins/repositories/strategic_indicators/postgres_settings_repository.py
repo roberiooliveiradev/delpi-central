@@ -69,7 +69,7 @@ class PostgresStrategicIndicatorsSettingsRepository(
                 "updated_by_email": latest_updated_by_email,
             },
         }
-
+    
     def update_settings(
         self,
         *,
@@ -80,7 +80,18 @@ class PostgresStrategicIndicatorsSettingsRepository(
         actor_user_id: str | None,
         actor_email: str | None,
     ) -> dict:
-        query = """
+        from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
+            PostgresStrategicIndicatorsSettingsAuditRepository,
+        )
+
+        select_query = """
+            SELECT setting_key, payload_json
+            FROM strategic_indicators.module_settings
+            WHERE setting_key = %s
+            LIMIT 1
+        """
+
+        update_query = """
             UPDATE strategic_indicators.module_settings
             SET
                 payload_json = %s::jsonb,
@@ -90,43 +101,37 @@ class PostgresStrategicIndicatorsSettingsRepository(
             WHERE setting_key = %s
         """
 
+        blocks = [
+            ("weights.departments", weights),
+            ("goals.summary", goals),
+            ("parameters.global", parameters),
+            ("governance.notes", governance),
+        ]
+
+        audit_repository = PostgresStrategicIndicatorsSettingsAuditRepository(self.connection)
+
         try:
-            self.execute(
-                query,
-                (
-                    json.dumps(weights, ensure_ascii=False),
-                    actor_user_id,
-                    actor_email,
-                    "weights.departments",
-                ),
-            )
-            self.execute(
-                query,
-                (
-                    json.dumps(goals, ensure_ascii=False),
-                    actor_user_id,
-                    actor_email,
-                    "goals.summary",
-                ),
-            )
-            self.execute(
-                query,
-                (
-                    json.dumps(parameters, ensure_ascii=False),
-                    actor_user_id,
-                    actor_email,
-                    "parameters.global",
-                ),
-            )
-            self.execute(
-                query,
-                (
-                    json.dumps(governance, ensure_ascii=False),
-                    actor_user_id,
-                    actor_email,
-                    "governance.notes",
-                ),
-            )
+            for setting_key, payload_after in blocks:
+                row_before = self.fetch_one(select_query, (setting_key,))
+                payload_before = row_before["payload_json"] if row_before else None
+
+                self.execute(
+                    update_query,
+                    (
+                        json.dumps(payload_after, ensure_ascii=False),
+                        actor_user_id,
+                        actor_email,
+                        setting_key,
+                    ),
+                )
+
+                audit_repository.insert_audit_event(
+                    entity_key=setting_key,
+                    payload_before=payload_before,
+                    payload_after=payload_after,
+                    changed_by_user_id=actor_user_id,
+                    changed_by_email=actor_email,
+                )
 
             self.commit()
 
@@ -136,3 +141,21 @@ class PostgresStrategicIndicatorsSettingsRepository(
         except Exception:
             self.rollback()
             raise
+
+
+    def list_recent_events(self, limit: int = 20) -> list[dict]:
+        query = """
+            SELECT
+                id,
+                event_type,
+                entity_key,
+                payload_before,
+                payload_after,
+                changed_by_user_id,
+                changed_by_email,
+                created_at
+            FROM strategic_indicators.settings_audit
+            ORDER BY created_at DESC
+            LIMIT %s
+        """
+        return self.fetch_all(query, (limit,))

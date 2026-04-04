@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 
+from delpi_auth.authorization import require_permission
+
 from app.interface.http.schemas.strategic_indicators_settings_schema import (
     UpdateStrategicIndicatorsSettingsBodySchema,
 )
@@ -10,6 +12,10 @@ from app.application.dto.strategic_indicators.update_settings_request import (
 
 from app.application.use_cases.strategic_indicators.update_settings_use_case import (
     StrategicIndicatorsSettingsValidationError,
+)
+
+from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
+    PostgresStrategicIndicatorsSettingsAuditRepository,
 )
 
 from app.composition.strategic_indicators_composer import (
@@ -32,6 +38,7 @@ def strategic_indicators_health():
 
 
 @router.get("/settings")
+@require_permission("strategic-indicators.settings.manage")
 def get_strategic_indicators_settings():
     try:
         use_case = build_get_strategic_indicators_settings_use_case()
@@ -56,6 +63,7 @@ def get_strategic_indicators_settings():
     
 
 @router.put("/settings")
+@require_permission("strategic-indicators.settings.manage")
 async def update_strategic_indicators_settings(
     body: UpdateStrategicIndicatorsSettingsBodySchema,
     request: Request,
@@ -65,9 +73,9 @@ async def update_strategic_indicators_settings(
         actor_user_id = None
         actor_email = None
 
-        if isinstance(user_context, dict):
-            actor_user_id = user_context.get("sub")
-            actor_email = user_context.get("email")
+        if user_context is not None:
+            actor_user_id = getattr(user_context, "id", None) or getattr(user_context, "sub", None)
+            actor_email = getattr(user_context, "email", None)
 
         dto = UpdateStrategicIndicatorsSettingsRequest(
             weights=body.weights.model_dump(),
@@ -89,4 +97,20 @@ async def update_strategic_indicators_settings(
         raise HTTPException(
             status_code=500,
             detail=f"Falha ao atualizar configurações do Strategic Indicators: {exc}",
+        ) from exc
+    
+
+@router.get("/settings/audit")
+@require_permission("strategic-indicators.settings.manage")
+def get_strategic_indicators_settings_audit():
+    try:
+        repository = PostgresStrategicIndicatorsSettingsAuditRepository()
+        rows = repository.list_recent_events(limit=20)
+        return {
+            "items": rows,
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar auditoria do Strategic Indicators: {exc}",
         ) from exc
