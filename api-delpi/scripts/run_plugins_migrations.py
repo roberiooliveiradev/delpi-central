@@ -187,6 +187,24 @@ def validate_migration_history(conn: Any, schema_name: str, files: list[Path]) -
                 )
 
 
+def reset_plugin_migrations(plugin_slug: str) -> None:
+    schema_name = slug_to_schema(plugin_slug)
+
+    with get_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE;')
+            conn.commit()
+            print(
+                f'[{plugin_slug}] Schema "{schema_name}" removido com sucesso.'
+            )
+        except Exception as exc:
+            conn.rollback()
+            raise MigrationError(
+                f'Falha ao remover o schema "{schema_name}": {exc}'
+            ) from exc
+
+
 def run_plugin_migrations(plugin_slug: str) -> None:
     schema_name = slug_to_schema(plugin_slug)
     files = list_migration_files(plugin_slug)
@@ -278,12 +296,12 @@ def main() -> None:
     )
     parser.add_argument(
         "command",
-        choices=["up", "status"],
-        help="up: aplica migrations pendentes | status: mostra status",
+        choices=["up", "status", "reset"],
+        help="up: aplica migrations pendentes | status: mostra status | reset: remove o schema do plugin",
     )
     parser.add_argument(
         "--plugin",
-        help="Slug do plugin. Ex.: quality, strategic-indicators. Se omitido, executa todos.",
+        help="Slug do plugin. Ex.: quality, strategic-indicators.",
         default=None,
     )
 
@@ -301,6 +319,14 @@ def main() -> None:
             show_plugin_status(args.plugin)
         else:
             show_all_plugins_status()
+        return
+
+    if args.command == "reset":
+        if not args.plugin:
+            raise MigrationError(
+                "O comando reset exige --plugin para evitar remoção acidental de todos os schemas."
+            )
+        reset_plugin_migrations(args.plugin)
         return
 
 
