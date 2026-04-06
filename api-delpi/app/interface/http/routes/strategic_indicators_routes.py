@@ -4,6 +4,8 @@ from delpi_auth.authorization import require_permission
 
 from app.interface.http.schemas.strategic_indicators_settings_schema import (
     UpdateStrategicIndicatorsSettingsBodySchema,
+    CreateChangeRequestBody,
+    AddCommentBody,
 )
 
 from app.application.dto.strategic_indicators.update_settings_request import (
@@ -18,15 +20,40 @@ from app.infrastructure.persistence.plugins.repositories.strategic_indicators.po
     PostgresStrategicIndicatorsSettingsAuditRepository,
 )
 
+from app.application.dto.strategic_indicators.add_change_request_comment_request import (
+    AddStrategicIndicatorsChangeRequestCommentRequest,
+)
+from app.application.dto.strategic_indicators.create_change_request_request import (
+    CreateStrategicIndicatorsChangeRequestRequest,
+)
+
 from app.composition.strategic_indicators_composer import (
     build_get_strategic_indicators_settings_use_case,
     build_update_strategic_indicators_settings_use_case,
+    build_add_strategic_indicators_change_request_comment_use_case,
+    build_create_strategic_indicators_change_request_use_case,
+    build_list_strategic_indicators_change_requests_use_case,
+    build_submit_strategic_indicators_change_request_use_case,
 )
 
 router = APIRouter(
     prefix="/strategic-indicators",
     tags=["Strategic Indicators"],
 )
+
+
+def _extract_actor(request: Request) -> tuple[str | None, str | None]:
+    user_context = getattr(request.state, "user", None)
+    actor_user_id = None
+    actor_email = None
+
+    if user_context is not None:
+        actor_user_id = getattr(user_context, "id", None) or getattr(
+            user_context, "sub", None
+        )
+        actor_email = getattr(user_context, "email", None)
+
+    return actor_user_id, actor_email
 
 
 @router.get("/health")
@@ -60,7 +87,7 @@ def get_strategic_indicators_settings():
             status_code=500,
             detail=f"Falha ao carregar configurações do Strategic Indicators: {exc}",
         ) from exc
-    
+
 
 @router.put("/settings")
 @require_permission("strategic-indicators.settings.manage")
@@ -69,13 +96,7 @@ async def update_strategic_indicators_settings(
     request: Request,
 ):
     try:
-        user_context = getattr(request.state, "user", None)
-        actor_user_id = None
-        actor_email = None
-
-        if user_context is not None:
-            actor_user_id = getattr(user_context, "id", None) or getattr(user_context, "sub", None)
-            actor_email = getattr(user_context, "email", None)
+        actor_user_id, actor_email = _extract_actor(request)
 
         dto = UpdateStrategicIndicatorsSettingsRequest(
             weights=body.weights.model_dump(),
@@ -98,7 +119,7 @@ async def update_strategic_indicators_settings(
             status_code=500,
             detail=f"Falha ao atualizar configurações do Strategic Indicators: {exc}",
         ) from exc
-    
+
 
 @router.get("/settings/audit")
 @require_permission("strategic-indicators.settings.manage")
@@ -120,3 +141,72 @@ def get_strategic_indicators_settings_audit(
             status_code=500,
             detail=f"Falha ao carregar auditoria do Strategic Indicators: {exc}",
         ) from exc
+
+
+@router.get("/change-requests")
+@require_permission("strategic-indicators.settings.manage")
+def list_change_requests():
+    try:
+        use_case = build_list_strategic_indicators_change_requests_use_case()
+        return {"items": use_case.execute()}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/change-requests")
+@require_permission("strategic-indicators.settings.manage")
+def create_change_request(body: CreateChangeRequestBody, request: Request):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+
+        use_case = build_create_strategic_indicators_change_request_use_case()
+        result = use_case.execute(
+            CreateStrategicIndicatorsChangeRequestRequest(
+                title=body.title,
+                description=body.description,
+                target_block=body.target_block,
+                proposed_payload=body.proposed_payload,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
+        )
+        return result
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/change-requests/{change_request_id}/comments")
+@require_permission("strategic-indicators.settings.manage")
+def add_comment(change_request_id: str, body: AddCommentBody, request: Request):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+
+        use_case = build_add_strategic_indicators_change_request_comment_use_case()
+        result = use_case.execute(
+            AddStrategicIndicatorsChangeRequestCommentRequest(
+                change_request_id=change_request_id,
+                comment_text=body.comment_text,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
+        )
+        return result
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/change-requests/{change_request_id}/submit")
+@require_permission("strategic-indicators.settings.manage")
+def submit_change_request(change_request_id: str, request: Request):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+
+        use_case = build_submit_strategic_indicators_change_request_use_case()
+        result = use_case.execute(change_request_id, actor_user_id, actor_email)
+        return result
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

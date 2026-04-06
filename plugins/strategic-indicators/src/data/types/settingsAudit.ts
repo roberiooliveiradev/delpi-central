@@ -18,3 +18,24 @@ export type StrategicIndicatorsSettingsAuditItem = {
 export type StrategicIndicatorsSettingsAuditResponse = {
   items: StrategicIndicatorsSettingsAuditItem[];
 };
+
+export type StrategicIndicatorsChangeRequest = {
+  id: string;
+  request_code: string;
+  title: string;
+  description: string;
+  target_block: string;
+  proposed_payload: Record<string, unknown>;
+  status: "draft" | "submitted";
+  created_by_user_id: string | null;
+  created_by_email: string | null;
+  submitted_by_user_id: string | null;
+  submitted_by_email: string | null;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StrategicIndicatorsChangeRequestListResponse = {
+  items: StrategicIndicatorsChangeRequest[];
+};

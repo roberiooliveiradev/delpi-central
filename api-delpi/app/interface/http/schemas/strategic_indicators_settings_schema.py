@@ -49,3 +49,13 @@ class UpdateStrategicIndicatorsSettingsBodySchema(BaseModel):
     goals: GoalsPayloadSchema
     parameters: ParametersPayloadSchema
     governance: GovernancePayloadSchema
+
+class CreateChangeRequestBody(BaseModel):
+    title: str
+    description: str
+    target_block: str
+    proposed_payload: dict
+
+
+class AddCommentBody(BaseModel):
+    comment_text: str
