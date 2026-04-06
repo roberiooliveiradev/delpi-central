@@ -8,6 +8,22 @@ from app.infrastructure.persistence.plugins.repositories.strategic_indicators.po
     PostgresStrategicIndicatorsSettingsRepository,
 )
 
+from app.application.use_cases.strategic_indicators.add_change_request_comment_use_case import (
+    AddStrategicIndicatorsChangeRequestCommentUseCase,
+)
+from app.application.use_cases.strategic_indicators.create_change_request_use_case import (
+    CreateStrategicIndicatorsChangeRequestUseCase,
+)
+from app.application.use_cases.strategic_indicators.list_change_requests_use_case import (
+    ListStrategicIndicatorsChangeRequestsUseCase,
+)
+from app.application.use_cases.strategic_indicators.submit_change_request_use_case import (
+    SubmitStrategicIndicatorsChangeRequestUseCase,
+)
+from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_change_request_repository import (
+    PostgresStrategicIndicatorsChangeRequestRepository,
+)
+
 
 def build_get_strategic_indicators_settings_use_case() -> GetStrategicIndicatorsSettingsUseCase:
     repository = PostgresStrategicIndicatorsSettingsRepository()
@@ -17,3 +33,23 @@ def build_get_strategic_indicators_settings_use_case() -> GetStrategicIndicators
 def build_update_strategic_indicators_settings_use_case() -> UpdateStrategicIndicatorsSettingsUseCase:
     repository = PostgresStrategicIndicatorsSettingsRepository()
     return UpdateStrategicIndicatorsSettingsUseCase(repository)
+
+
+def build_list_strategic_indicators_change_requests_use_case():
+    repository = PostgresStrategicIndicatorsChangeRequestRepository()
+    return ListStrategicIndicatorsChangeRequestsUseCase(repository)
+
+
+def build_create_strategic_indicators_change_request_use_case():
+    repository = PostgresStrategicIndicatorsChangeRequestRepository()
+    return CreateStrategicIndicatorsChangeRequestUseCase(repository)
+
+
+def build_add_strategic_indicators_change_request_comment_use_case():
+    repository = PostgresStrategicIndicatorsChangeRequestRepository()
+    return AddStrategicIndicatorsChangeRequestCommentUseCase(repository)
+
+
+def build_submit_strategic_indicators_change_request_use_case():
+    repository = PostgresStrategicIndicatorsChangeRequestRepository()
+    return SubmitStrategicIndicatorsChangeRequestUseCase(repository)

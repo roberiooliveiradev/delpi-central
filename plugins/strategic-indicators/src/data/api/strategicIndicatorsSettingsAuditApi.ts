@@ -1,4 +1,4 @@
-import type { StrategicIndicatorsSettingsAuditResponse } from "../types/settingsAudit";
+import type { StrategicIndicatorsChangeRequestListResponse, StrategicIndicatorsSettingsAuditResponse } from "../types/settingsAudit";
 
 const BASE_URL = "/apps/api-delpi/strategic-indicators";
 
@@ -17,6 +17,7 @@ function buildHeaders(getAccessToken?: GetToken): HeadersInit {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
+
 
 export async function fetchStrategicIndicatorsSettingsAudit(
   getAccessToken?: GetToken,
@@ -57,4 +58,43 @@ async function safeReadError(response: Response): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+
+export async function fetchStrategicIndicatorsChangeRequests(
+  getAccessToken?: GetToken,
+): Promise<StrategicIndicatorsChangeRequestListResponse> {
+  const response = await fetch(BASE_URL, {
+    method: "GET",
+    headers: buildHeaders(getAccessToken),
+  });
+
+  if (!response.ok) {
+    throw new Error("Falha ao carregar solicitações administrativas.");
+  }
+
+  return response.json();
+}
+
+export async function createStrategicIndicatorsChangeRequest(
+  payload: {
+    title: string;
+    description: string;
+    target_block: string;
+    proposed_payload: Record<string, unknown>;
+  },
+  getAccessToken?: GetToken,
+) {
+  const response = await fetch(BASE_URL, {
+    method: "POST",
+    headers: buildHeaders(getAccessToken),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail || "Falha ao criar solicitação.");
+  }
+
+  return response.json();
 }

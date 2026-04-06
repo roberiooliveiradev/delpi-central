@@ -5,6 +5,7 @@ import { SectionBlock } from "./SectionBlock";
 import { AuditSummaryPanel } from "./AuditSummaryPanel";
 import { AuditLatestByEntityPanel } from "./AuditLatestByEntityPanel";
 import { AuditTimelinePanel } from "./AuditTimelinePanel";
+import { ChangeRequestsWorkspacePanel } from "./ChangeRequestsWorkspacePanel";
 
 type AuditWorkspacePanelProps = {
   getAccessToken?: () => string | undefined;
@@ -73,6 +74,12 @@ export function AuditWorkspacePanel({
           />
         </SectionBlock>
       </div>
+      <SectionBlock
+        title="Solicitações administrativas"
+        description="Camada preparatória para futuros workflows de aprovação, mantendo a governança do módulo sem abrir o workflow completo ainda."
+      >
+        <ChangeRequestsWorkspacePanel getAccessToken={getAccessToken} />
+      </SectionBlock>
     </>
   );
 }
