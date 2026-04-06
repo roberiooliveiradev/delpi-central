@@ -12,6 +12,8 @@ import { SettingsSummaryCards } from "../components/SettingsSummaryCards";
 import { SettingsWeightsPanel } from "../components/SettingsWeightsPanel";
 import { StatusBadge } from "../components/StatusBadge";
 import { AuditWorkspacePanel } from "../components/AuditWorkspacePanel";
+import { SettingsWorkspaceNav } from "../components/SettingsWorkspaceNav";
+import { SettingsStatusStrip } from "../components/SettingsStatusStrip";
 import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
 
 import type {
@@ -52,6 +54,18 @@ const readinessItems: SettingsReadinessItem[] = [
     description:
       "Ainda não entra nesta fase para manter o escopo disciplinado.",
   },
+];
+
+const settingsNavItems = [
+  { id: "settings-overview", label: "Visão geral" },
+  { id: "settings-parameters", label: "Parâmetros" },
+  { id: "settings-weights", label: "Pesos" },
+  { id: "settings-goals", label: "Metas" },
+  { id: "settings-governance", label: "Governança" },
+  { id: "settings-readiness", label: "Prontidão" },
+  { id: "settings-next-action", label: "Próxima ação" },
+  { id: "settings-editor", label: "Edição" },
+  { id: "settings-audit", label: "Auditoria" },
 ];
 
 export function SettingsPage({ getAccessToken }: SettingsPageProps) {
@@ -101,8 +115,8 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Configurações"
-        description="Camada administrativa inicial do módulo, organizada para futura persistência real de pesos, metas e parâmetros."
-        badge={<StatusBadge label="MVP Governança" variant="neutral" />}
+        description="Workspace administrativo do módulo, consolidando governança, persistência real, auditoria e preparação para futuras evoluções controladas."
+        badge={<StatusBadge label="Admin Workspace" variant="neutral" />}
       />
 
       <SettingsHero
@@ -110,122 +124,106 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
         permissionCode="strategic-indicators.settings.manage"
       />
 
-      {loading ? (
-        <div className="si-settings-feedback">
-          Carregando configurações reais...
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="si-settings-feedback si-settings-feedback--error">
-          {error}
-          <button
-            type="button"
-            className="si-settings-feedback__button"
-            onClick={() => void reload()}
-          >
-            Tentar novamente
-          </button>
-        </div>
-      ) : null}
-
-      {successMessage ? (
-        <div className="si-settings-feedback si-settings-feedback--success">
-          <span>{successMessage}</span>
-          <button
-            type="button"
-            className="si-settings-feedback__button si-settings-feedback__button--ghost"
-            onClick={clearSuccessMessage}
-          >
-            Fechar
-          </button>
-        </div>
-      ) : null}
-
-      {data?.meta?.updated_at ? (
-        <div className="si-settings-feedback">
-          Última atualização registrada em{" "}
-          <strong>
-            {new Date(data.meta.updated_at).toLocaleString("pt-BR")}
-          </strong>
-          {data.meta.updated_by_email ? (
-            <>
-              {" "}por <strong>{data.meta.updated_by_email}</strong>
-            </>
-          ) : null}
-        </div>
-      ) : null}
+      <SettingsStatusStrip
+        loading={loading}
+        error={error}
+        successMessage={successMessage}
+        updatedAt={data?.meta?.updated_at ?? null}
+        updatedByEmail={data?.meta?.updated_by_email ?? null}
+        onRetry={() => void reload()}
+        onDismissSuccess={clearSuccessMessage}
+      />
 
       {!loading && data && settingsDashboardData ? (
         <>
-          <SectionBlock
-            title="Destaque administrativo"
-            description="Síntese executiva da governança estrutural do módulo."
-          >
-            <SettingsExecutiveHighlight data={settingsDashboardData} />
-          </SectionBlock>
+          <SettingsWorkspaceNav items={settingsNavItems} />
 
-          <SectionBlock
-            title="Síntese administrativa"
-            description="Resumo rápido do estado de governança do módulo nesta fase."
-          >
-            <SettingsSummaryCards data={settingsDashboardData} />
-          </SectionBlock>
+          <div id="settings-overview">
+            <SectionBlock
+              title="Destaque administrativo"
+              description="Síntese executiva da governança estrutural do módulo."
+            >
+              <SettingsExecutiveHighlight data={settingsDashboardData} />
+            </SectionBlock>
 
-          <SectionBlock
-            title="Parâmetros globais"
-            description="Elementos estruturais do módulo que definem a leitura oficial do painel."
-          >
-            <SettingsParametersPanel items={settingsDashboardData.parameters} />
-          </SectionBlock>
+            <SectionBlock
+              title="Síntese administrativa"
+              description="Resumo rápido do estado de governança do módulo nesta fase."
+            >
+              <SettingsSummaryCards data={settingsDashboardData} />
+            </SectionBlock>
+          </div>
 
-          <SectionBlock
-            title="Pesos oficiais"
-            description="Composição governada do IGD conforme o documento consolidado."
-          >
-            <SettingsWeightsPanel items={settingsDashboardData.weights} />
-          </SectionBlock>
+          <div id="settings-parameters">
+            <SectionBlock
+              title="Parâmetros globais"
+              description="Elementos estruturais do módulo que definem a leitura oficial do painel."
+            >
+              <SettingsParametersPanel items={settingsDashboardData.parameters} />
+            </SectionBlock>
+          </div>
 
-          <SectionBlock
-            title="Metas resumidas"
-            description="Referências executivas das metas mais importantes por área."
-          >
-            <SettingsGoalsPanel items={settingsDashboardData.goals} />
-          </SectionBlock>
+          <div id="settings-weights">
+            <SectionBlock
+              title="Pesos oficiais"
+              description="Composição governada do IGD conforme o documento consolidado."
+            >
+              <SettingsWeightsPanel items={settingsDashboardData.weights} />
+            </SectionBlock>
+          </div>
 
-          <SectionBlock
-            title="Governança do módulo"
-            description="Parâmetros administrativos e observações da fase atual do painel."
-          >
-            <SettingsGovernancePanel items={settingsDashboardData.governance} />
-          </SectionBlock>
+          <div id="settings-goals">
+            <SectionBlock
+              title="Metas resumidas"
+              description="Referências executivas das metas mais importantes por área."
+            >
+              <SettingsGoalsPanel items={settingsDashboardData.goals} />
+            </SectionBlock>
+          </div>
 
-          <SectionBlock
-            title="Prontidão administrativa"
-            description="Leitura do que já está pronto e do que ainda evoluirá para persistência real."
-          >
-            <SettingsReadinessPanel items={readinessItems} />
-          </SectionBlock>
+          <div id="settings-governance">
+            <SectionBlock
+              title="Governança do módulo"
+              description="Parâmetros administrativos e observações da fase atual do painel."
+            >
+              <SettingsGovernancePanel items={settingsDashboardData.governance} />
+            </SectionBlock>
+          </div>
 
-          <SectionBlock
-            title="Próxima ação"
-            description="Resumo do próximo passo administrativo mais natural do módulo."
-          >
-            <SettingsActionPanel data={settingsDashboardData} />
-          </SectionBlock>
+          <div id="settings-readiness">
+            <SectionBlock
+              title="Prontidão administrativa"
+              description="Leitura do que já está pronto e do que ainda evoluirá para persistência real."
+            >
+              <SettingsReadinessPanel items={readinessItems} />
+            </SectionBlock>
+          </div>
 
-          <SectionBlock
-            title="Edição administrativa"
-            description="Camada estruturada de edição real conectada ao backend do módulo."
-          >
-            <SettingsStructuredEditor
-              data={data}
-              saving={saving}
-              onSave={save}
-            />
-          </SectionBlock>
+          <div id="settings-next-action">
+            <SectionBlock
+              title="Próxima ação"
+              description="Resumo do próximo passo administrativo mais natural do módulo."
+            >
+              <SettingsActionPanel data={settingsDashboardData} />
+            </SectionBlock>
+          </div>
 
-          <AuditWorkspacePanel getAccessToken={getAccessToken} />
+          <div id="settings-editor">
+            <SectionBlock
+              title="Edição administrativa"
+              description="Camada estruturada de edição real conectada ao backend do módulo."
+            >
+              <SettingsStructuredEditor
+                data={data}
+                saving={saving}
+                onSave={save}
+              />
+            </SectionBlock>
+          </div>
+
+          <div id="settings-audit">
+            <AuditWorkspacePanel getAccessToken={getAccessToken} />
+          </div>
         </>
       ) : null}
     </div>
