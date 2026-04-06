@@ -1,13 +1,14 @@
-import { executiveDashboardMock } from "../../data/mocks/executiveDashboardMock";
 import { Card } from "../components/Card";
 import { ClassificationBand } from "../components/ClassificationBand";
 import { ContributionRanking } from "../components/ContributionRanking";
 import { DepartmentSummaryGrid } from "../components/DepartmentSummaryGrid";
 import { ExecutiveMethodCard } from "../components/ExecutiveMethodCard";
 import { IgdHeroCard } from "../components/IgdHeroCard";
+import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { useStrategicIndicatorsExecutiveSummary } from "../../state/hooks/useStrategicIndicatorsExecutiveSummary";
 
 type ExecutiveDashboardPageProps = {
   getAccessToken?: () => string | undefined;
@@ -16,9 +17,48 @@ type ExecutiveDashboardPageProps = {
 export function ExecutiveDashboardPage({
   getAccessToken,
 }: ExecutiveDashboardPageProps) {
-  void getAccessToken;
+  const { data, loading, error, reload } =
+    useStrategicIndicatorsExecutiveSummary({
+      getAccessToken,
+    });
 
-  const data = executiveDashboardMock;
+  if (loading) {
+    return (
+      <div className="si-page">
+        <PageHeader
+          eyebrow="MinhaDelpi"
+          title="Strategic Indicators"
+          description="Carregando visão executiva do IGD e dos IDDs departamentais."
+          badge={<StatusBadge label="Carregando" variant="neutral" />}
+        />
+
+        <InfoState
+          title="Carregando painel executivo"
+          description="Aguarde enquanto o resumo executivo é carregado."
+        />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="si-page">
+        <PageHeader
+          eyebrow="MinhaDelpi"
+          title="Strategic Indicators"
+          description="Não foi possível carregar a visão executiva do painel."
+          badge={<StatusBadge label="Erro" variant="warning" />}
+        />
+
+        <InfoState
+          title="Falha ao carregar resumo executivo"
+          description={error ?? "O resumo executivo não retornou dados válidos."}
+          actionLabel="Tentar novamente"
+          onAction={() => void reload()}
+        />
+      </div>
+    );
+  }
 
   const strongestDepartment = [...data.departments].sort(
     (a, b) => b.score - a.score,
@@ -38,8 +78,8 @@ export function ExecutiveDashboardPage({
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Strategic Indicators"
-        description="Painel executivo inicial do IGD e dos IDDs departamentais, estruturado para evoluir com tendências, alertas e análise detalhada."
-        badge={<StatusBadge label="MVP Executivo" variant="info" />}
+        description={`Painel executivo do IGD e dos IDDs departamentais. Competência ${data.competence}.`}
+        badge={<StatusBadge label="API Real" variant="success" />}
       />
 
       <div className="si-executive-grid">
@@ -57,8 +97,8 @@ export function ExecutiveDashboardPage({
           headerRight={<StatusBadge label="Mensal" variant="neutral" />}
         >
           <p className="si-muted">
-            O valor exibido neste MVP usa o exemplo oficial do documento-base e
-            já respeita a lógica de consolidação executiva do índice global.
+            A visão executiva agora é servida por API real do módulo, mantendo o
+            shape da home preparado para evoluções futuras do painel.
           </p>
 
           <div className="si-executive-note">
@@ -87,6 +127,14 @@ export function ExecutiveDashboardPage({
               <span className="si-executive-note__label">Soma ponderada</span>
               <strong className="si-executive-note__value">
                 {totalContribution.toFixed(3)}
+              </strong>
+            </div>
+
+            <div className="si-executive-note__item">
+              <span className="si-executive-note__label">Variação</span>
+              <strong className="si-executive-note__value">
+                {data.variation.value > 0 ? "+" : ""}
+                {data.variation.value.toFixed(1)} {data.variation.vsLabel}
               </strong>
             </div>
           </div>

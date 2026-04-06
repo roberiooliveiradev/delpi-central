@@ -1,3 +1,6 @@
+from app.application.use_cases.strategic_indicators.get_executive_summary_use_case import (
+    GetStrategicIndicatorsExecutiveSummaryUseCase,
+)
 from app.application.use_cases.strategic_indicators.get_settings_use_case import (
     GetStrategicIndicatorsSettingsUseCase,
 )
@@ -6,6 +9,9 @@ from app.application.use_cases.strategic_indicators.list_settings_audit_use_case
 )
 from app.application.use_cases.strategic_indicators.update_settings_use_case import (
     UpdateStrategicIndicatorsSettingsUseCase,
+)
+from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_executive_summary_repository import (
+    PostgresStrategicIndicatorsExecutiveSummaryRepository,
 )
 from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_repository import (
     PostgresStrategicIndicatorsSettingsRepository,
@@ -29,6 +35,11 @@ from app.infrastructure.persistence.plugins.repositories.strategic_indicators.po
 from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
     PostgresStrategicIndicatorsSettingsAuditRepository,
 )
+
+
+def build_get_strategic_indicators_executive_summary_use_case() -> GetStrategicIndicatorsExecutiveSummaryUseCase:
+    repository = PostgresStrategicIndicatorsExecutiveSummaryRepository()
+    return GetStrategicIndicatorsExecutiveSummaryUseCase(repository)
 
 
 def build_get_strategic_indicators_settings_use_case() -> GetStrategicIndicatorsSettingsUseCase:
