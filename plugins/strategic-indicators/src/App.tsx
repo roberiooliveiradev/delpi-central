@@ -13,8 +13,6 @@ export type AppProps = {
 };
 
 export default function App({ getAccessToken, pathname }: AppProps) {
-  void getAccessToken;
-
   if (pathname === "/apps/strategic-indicators/departments") {
     return <DepartmentsPage />;
   }
@@ -43,5 +41,5 @@ export default function App({ getAccessToken, pathname }: AppProps) {
     return <SettingsPage getAccessToken={getAccessToken} />;
   }
 
-  return <ExecutiveDashboardPage />;
+  return <ExecutiveDashboardPage getAccessToken={getAccessToken} />;
 }

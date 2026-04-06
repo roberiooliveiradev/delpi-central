@@ -69,7 +69,7 @@ class PostgresStrategicIndicatorsSettingsRepository(
                 "updated_by_email": latest_updated_by_email,
             },
         }
-    
+
     def update_settings(
         self,
         *,
@@ -141,21 +141,3 @@ class PostgresStrategicIndicatorsSettingsRepository(
         except Exception:
             self.rollback()
             raise
-
-
-    def list_recent_events(self, limit: int = 20) -> list[dict]:
-        query = """
-            SELECT
-                id,
-                event_type,
-                entity_key,
-                payload_before,
-                payload_after,
-                changed_by_user_id,
-                changed_by_email,
-                created_at
-            FROM strategic_indicators.settings_audit
-            ORDER BY created_at DESC
-            LIMIT %s
-        """
-        return self.fetch_all(query, (limit,))

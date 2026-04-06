@@ -1,6 +1,9 @@
 from app.application.use_cases.strategic_indicators.get_settings_use_case import (
     GetStrategicIndicatorsSettingsUseCase,
 )
+from app.application.use_cases.strategic_indicators.list_settings_audit_use_case import (
+    ListStrategicIndicatorsSettingsAuditUseCase,
+)
 from app.application.use_cases.strategic_indicators.update_settings_use_case import (
     UpdateStrategicIndicatorsSettingsUseCase,
 )
@@ -23,11 +26,19 @@ from app.application.use_cases.strategic_indicators.submit_change_request_use_ca
 from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_change_request_repository import (
     PostgresStrategicIndicatorsChangeRequestRepository,
 )
+from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
+    PostgresStrategicIndicatorsSettingsAuditRepository,
+)
 
 
 def build_get_strategic_indicators_settings_use_case() -> GetStrategicIndicatorsSettingsUseCase:
     repository = PostgresStrategicIndicatorsSettingsRepository()
     return GetStrategicIndicatorsSettingsUseCase(repository)
+
+
+def build_list_strategic_indicators_settings_audit_use_case() -> ListStrategicIndicatorsSettingsAuditUseCase:
+    repository = PostgresStrategicIndicatorsSettingsAuditRepository()
+    return ListStrategicIndicatorsSettingsAuditUseCase(repository)
 
 
 def build_update_strategic_indicators_settings_use_case() -> UpdateStrategicIndicatorsSettingsUseCase:
