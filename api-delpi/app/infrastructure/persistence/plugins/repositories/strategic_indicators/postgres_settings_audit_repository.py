@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import json
 
+from app.domain.ports.strategic_indicators.settings_audit_repository_port import (
+    StrategicIndicatorsSettingsAuditRepositoryPort,
+)
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
 )
 
 
-class PostgresStrategicIndicatorsSettingsAuditRepository(PluginBaseRepository):
+class PostgresStrategicIndicatorsSettingsAuditRepository(
+    PluginBaseRepository,
+    StrategicIndicatorsSettingsAuditRepositoryPort,
+):
     def insert_audit_event(
         self,
         *,
@@ -34,28 +40,17 @@ class PostgresStrategicIndicatorsSettingsAuditRepository(PluginBaseRepository):
             (
                 "settings.updated",
                 entity_key,
-                json.dumps(payload_before, ensure_ascii=False) if payload_before is not None else None,
-                json.dumps(payload_after, ensure_ascii=False) if payload_after is not None else None,
+                json.dumps(payload_before, ensure_ascii=False)
+                if payload_before is not None
+                else None,
+                json.dumps(payload_after, ensure_ascii=False)
+                if payload_after is not None
+                else None,
                 changed_by_user_id,
                 changed_by_email,
             ),
         )
 
-    def list_recent_events(self, limit: int = 20) -> list[dict]:
-        query = """
-            SELECT
-                id,
-                event_type,
-                entity_key,
-                changed_by_user_id,
-                changed_by_email,
-                created_at
-            FROM strategic_indicators.settings_audit
-            ORDER BY created_at DESC
-            LIMIT %s
-        """
-        return self.fetch_all(query, (limit,))
-    
     def list_recent_events(
         self,
         limit: int = 20,

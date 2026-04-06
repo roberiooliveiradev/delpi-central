@@ -16,10 +16,6 @@ from app.application.use_cases.strategic_indicators.update_settings_use_case imp
     StrategicIndicatorsSettingsValidationError,
 )
 
-from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
-    PostgresStrategicIndicatorsSettingsAuditRepository,
-)
-
 from app.application.dto.strategic_indicators.add_change_request_comment_request import (
     AddStrategicIndicatorsChangeRequestCommentRequest,
 )
@@ -29,6 +25,7 @@ from app.application.dto.strategic_indicators.create_change_request_request impo
 
 from app.composition.strategic_indicators_composer import (
     build_get_strategic_indicators_settings_use_case,
+    build_list_strategic_indicators_settings_audit_use_case,
     build_update_strategic_indicators_settings_use_case,
     build_add_strategic_indicators_change_request_comment_use_case,
     build_create_strategic_indicators_change_request_use_case,
@@ -128,8 +125,8 @@ def get_strategic_indicators_settings_audit(
     entity_key: str | None = Query(None),
 ):
     try:
-        repository = PostgresStrategicIndicatorsSettingsAuditRepository()
-        rows = repository.list_recent_events(
+        use_case = build_list_strategic_indicators_settings_audit_use_case()
+        rows = use_case.execute(
             limit=limit,
             entity_key=entity_key,
         )

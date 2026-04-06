@@ -1,4 +1,7 @@
-import type { StrategicIndicatorsChangeRequestListResponse, StrategicIndicatorsSettingsAuditResponse } from "../types/settingsAudit";
+import type {
+  StrategicIndicatorsChangeRequestListResponse,
+  StrategicIndicatorsSettingsAuditResponse,
+} from "../types/settingsAudit";
 
 const BASE_URL = "/apps/api-delpi/strategic-indicators";
 
@@ -17,7 +20,6 @@ function buildHeaders(getAccessToken?: GetToken): HeadersInit {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
-
 
 export async function fetchStrategicIndicatorsSettingsAudit(
   getAccessToken?: GetToken,
@@ -49,28 +51,17 @@ export async function fetchStrategicIndicatorsSettingsAudit(
   return response.json();
 }
 
-async function safeReadError(response: Response): Promise<string | null> {
-  try {
-    const data = await response.json();
-    if (typeof data?.detail === "string") return data.detail;
-    if (typeof data?.message === "string") return data.message;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-
 export async function fetchStrategicIndicatorsChangeRequests(
   getAccessToken?: GetToken,
 ): Promise<StrategicIndicatorsChangeRequestListResponse> {
-  const response = await fetch(BASE_URL, {
+  const response = await fetch(`${BASE_URL}/change-requests`, {
     method: "GET",
     headers: buildHeaders(getAccessToken),
   });
 
   if (!response.ok) {
-    throw new Error("Falha ao carregar solicitações administrativas.");
+    const message = await safeReadError(response);
+    throw new Error(message || "Falha ao carregar solicitações administrativas.");
   }
 
   return response.json();
@@ -85,16 +76,27 @@ export async function createStrategicIndicatorsChangeRequest(
   },
   getAccessToken?: GetToken,
 ) {
-  const response = await fetch(BASE_URL, {
+  const response = await fetch(`${BASE_URL}/change-requests`, {
     method: "POST",
     headers: buildHeaders(getAccessToken),
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    const data = await response.json().catch(() => null);
-    throw new Error(data?.detail || "Falha ao criar solicitação.");
+    const message = await safeReadError(response);
+    throw new Error(message || "Falha ao criar solicitação.");
   }
 
   return response.json();
+}
+
+async function safeReadError(response: Response): Promise<string | null> {
+  try {
+    const data = await response.json();
+    if (typeof data?.detail === "string") return data.detail;
+    if (typeof data?.message === "string") return data.message;
+    return null;
+  } catch {
+    return null;
+  }
 }

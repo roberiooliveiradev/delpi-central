@@ -9,20 +9,28 @@ import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
 
-export function ExecutiveDashboardPage() {
+type ExecutiveDashboardPageProps = {
+  getAccessToken?: () => string | undefined;
+};
+
+export function ExecutiveDashboardPage({
+  getAccessToken,
+}: ExecutiveDashboardPageProps) {
+  void getAccessToken;
+
   const data = executiveDashboardMock;
 
   const strongestDepartment = [...data.departments].sort(
-    (a, b) => b.score - a.score
+    (a, b) => b.score - a.score,
   )[0];
 
   const watchDepartment = [...data.departments].sort(
-    (a, b) => a.score - b.score
+    (a, b) => a.score - b.score,
   )[0];
 
   const totalContribution = data.departments.reduce(
     (sum, department) => sum + department.contribution,
-    0
+    0,
   );
 
   return (
