@@ -24,6 +24,7 @@ from app.application.dto.strategic_indicators.create_change_request_request impo
 )
 
 from app.composition.strategic_indicators_composer import (
+    build_get_strategic_indicators_executive_summary_use_case,
     build_get_strategic_indicators_settings_use_case,
     build_list_strategic_indicators_settings_audit_use_case,
     build_update_strategic_indicators_settings_use_case,
@@ -59,6 +60,55 @@ def strategic_indicators_health():
         "status": "online",
         "module": "strategic-indicators",
     }
+
+
+@router.get("/executive-summary")
+@require_permission("strategic-indicators.view")
+def get_strategic_indicators_executive_summary():
+    try:
+        use_case = build_get_strategic_indicators_executive_summary_use_case()
+        result = use_case.execute()
+
+        return {
+            "competence": result.competence,
+            "igd": result.igd,
+            "igd_exact": result.igd_exact,
+            "classification": result.classification,
+            "variation": {
+                "value": result.variation.value,
+                "direction": result.variation.direction,
+                "vs_label": result.variation.vs_label,
+            },
+            "departments": [
+                {
+                    "id": item.id,
+                    "name": item.name,
+                    "short_name": item.short_name,
+                    "weight_pct": item.weight_pct,
+                    "score": item.score,
+                    "contribution": item.contribution,
+                    "trend": item.trend,
+                    "strategic_summary": item.strategic_summary,
+                    "key_indicators": item.key_indicators,
+                    "executive_goal": item.executive_goal,
+                }
+                for item in result.departments
+            ],
+            "alerts_summary": [
+                {
+                    "title": item.title,
+                    "severity": item.severity,
+                    "impact": item.impact,
+                    "recommendation": item.recommendation,
+                }
+                for item in result.alerts_summary
+            ],
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar resumo executivo do Strategic Indicators: {exc}",
+        ) from exc
 
 
 @router.get("/settings")
