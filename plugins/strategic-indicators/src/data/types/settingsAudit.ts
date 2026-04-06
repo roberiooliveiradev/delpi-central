@@ -1,3 +1,9 @@
+export type StrategicIndicatorsAuditEntityKey =
+  | "weights.departments"
+  | "goals.summary"
+  | "parameters.global"
+  | "governance.notes";
+
 export type StrategicIndicatorsSettingsAuditItem = {
   id: string;
   event_type: string;

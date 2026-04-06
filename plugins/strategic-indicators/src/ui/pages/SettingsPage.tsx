@@ -11,9 +11,8 @@ import { SettingsReadinessPanel } from "../components/SettingsReadinessPanel";
 import { SettingsSummaryCards } from "../components/SettingsSummaryCards";
 import { SettingsWeightsPanel } from "../components/SettingsWeightsPanel";
 import { StatusBadge } from "../components/StatusBadge";
+import { AuditWorkspacePanel } from "../components/AuditWorkspacePanel";
 import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
-import { AuditTimelinePanel } from "../components/AuditTimelinePanel";
-import { useStrategicIndicatorsSettingsAudit } from "../../state/hooks/useStrategicIndicatorsSettingsAudit";
 
 import type {
   SettingsDashboardData,
@@ -64,9 +63,8 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
     successMessage,
     save,
     reload,
+    clearSuccessMessage,
   } = useStrategicIndicatorsSettings({ getAccessToken });
-
-  const audit = useStrategicIndicatorsSettingsAudit({ getAccessToken });
 
   const settingsDashboardData: SettingsDashboardData | null = data
     ? {
@@ -113,7 +111,9 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
       />
 
       {loading ? (
-        <div className="si-settings-feedback">Carregando configurações reais...</div>
+        <div className="si-settings-feedback">
+          Carregando configurações reais...
+        </div>
       ) : null}
 
       {error ? (
@@ -131,7 +131,28 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
 
       {successMessage ? (
         <div className="si-settings-feedback si-settings-feedback--success">
-          {successMessage}
+          <span>{successMessage}</span>
+          <button
+            type="button"
+            className="si-settings-feedback__button si-settings-feedback__button--ghost"
+            onClick={clearSuccessMessage}
+          >
+            Fechar
+          </button>
+        </div>
+      ) : null}
+
+      {data?.meta?.updated_at ? (
+        <div className="si-settings-feedback">
+          Última atualização registrada em{" "}
+          <strong>
+            {new Date(data.meta.updated_at).toLocaleString("pt-BR")}
+          </strong>
+          {data.meta.updated_by_email ? (
+            <>
+              {" "}por <strong>{data.meta.updated_by_email}</strong>
+            </>
+          ) : null}
         </div>
       ) : null}
 
@@ -204,17 +225,7 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
             />
           </SectionBlock>
 
-          <SectionBlock
-            title="Auditoria administrativa"
-            description="Trilha mínima das alterações realizadas na configuração do módulo."
-          >
-            <AuditTimelinePanel
-              items={audit.items}
-              loading={audit.loading}
-              error={audit.error}
-              onReload={() => void audit.reload()}
-            />
-          </SectionBlock>
+          <AuditWorkspacePanel getAccessToken={getAccessToken} />
         </>
       ) : null}
     </div>

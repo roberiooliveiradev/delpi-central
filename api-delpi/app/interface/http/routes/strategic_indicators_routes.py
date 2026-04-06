@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Query
 
 from delpi_auth.authorization import require_permission
 
@@ -102,10 +102,16 @@ async def update_strategic_indicators_settings(
 
 @router.get("/settings/audit")
 @require_permission("strategic-indicators.settings.manage")
-def get_strategic_indicators_settings_audit():
+def get_strategic_indicators_settings_audit(
+    limit: int = Query(20, ge=1, le=200),
+    entity_key: str | None = Query(None),
+):
     try:
         repository = PostgresStrategicIndicatorsSettingsAuditRepository()
-        rows = repository.list_recent_events(limit=20)
+        rows = repository.list_recent_events(
+            limit=limit,
+            entity_key=entity_key,
+        )
         return {
             "items": rows,
         }

@@ -7,6 +7,10 @@ import type {
   StrategicIndicatorsSettingsResponse,
   StrategicIndicatorsSettingsUpdateRequest,
 } from "../../data/types/settings";
+import {
+  buildSettingsPayloadFromResponse,
+  hasSettingsChanged,
+} from "../../utils/settingsComparison";
 import { SettingsGoalsForm } from "./SettingsGoalsForm";
 import { SettingsGovernanceForm } from "./SettingsGovernanceForm";
 import { SettingsParametersForm } from "./SettingsParametersForm";
@@ -34,12 +38,41 @@ export function SettingsStructuredEditor({
     setGoals(data.goals.items);
     setParameters(data.parameters.items);
     setGovernance(data.governance.items);
+    setLocalError(null);
   }, [data]);
 
   const totalWeight = useMemo(
     () => weights.reduce((sum, item) => sum + Number(item.weight_pct || 0), 0),
     [weights],
   );
+
+  const currentPayload = useMemo<StrategicIndicatorsSettingsUpdateRequest>(
+    () => ({
+      weights: { items: weights },
+      goals: { items: goals },
+      parameters: { items: parameters },
+      governance: { items: governance },
+    }),
+    [weights, goals, parameters, governance],
+  );
+
+  const originalPayload = useMemo(
+    () => buildSettingsPayloadFromResponse(data),
+    [data],
+  );
+
+  const dirty = useMemo(
+    () => hasSettingsChanged(originalPayload, currentPayload),
+    [originalPayload, currentPayload],
+  );
+
+  function handleReset() {
+    setWeights(data.weights.items);
+    setGoals(data.goals.items);
+    setParameters(data.parameters.items);
+    setGovernance(data.governance.items);
+    setLocalError(null);
+  }
 
   async function handleSave() {
     setLocalError(null);
@@ -49,12 +82,12 @@ export function SettingsStructuredEditor({
       return;
     }
 
-    await onSave({
-      weights: { items: weights },
-      goals: { items: goals },
-      parameters: { items: parameters },
-      governance: { items: governance },
-    });
+    if (!dirty) {
+      setLocalError("Nenhuma alteração pendente para salvar.");
+      return;
+    }
+
+    await onSave(currentPayload);
   }
 
   return (
@@ -63,13 +96,23 @@ export function SettingsStructuredEditor({
         <div>
           <h3 className="si-settings-editor__title">Edição administrativa</h3>
           <span className="si-settings-editor__subtitle">
-            integração real inicial com a API do módulo
+            integração real com a API do módulo
           </span>
         </div>
 
-        <div className="si-settings-editor__summary">
-          <span>Peso total atual</span>
-          <strong>{totalWeight}%</strong>
+        <div className="si-settings-editor__meta-group">
+          <div className="si-settings-editor__summary">
+            <span>Peso total atual</span>
+            <strong>{totalWeight}%</strong>
+          </div>
+
+          <div
+            className={`si-settings-editor__status ${
+              dirty ? "si-settings-editor__status--warning" : "si-settings-editor__status--ok"
+            }`}
+          >
+            {dirty ? "Alterações pendentes" : "Sem alterações pendentes"}
+          </div>
         </div>
       </div>
 
@@ -118,9 +161,18 @@ export function SettingsStructuredEditor({
       <div className="si-settings-editor__actions">
         <button
           type="button"
+          className="si-settings-editor__button si-settings-editor__button--secondary"
+          onClick={handleReset}
+          disabled={saving || !dirty}
+        >
+          Resetar alterações
+        </button>
+
+        <button
+          type="button"
           className="si-settings-editor__button"
           onClick={() => void handleSave()}
-          disabled={saving}
+          disabled={saving || !dirty}
         >
           {saving ? "Salvando..." : "Salvar configurações"}
         </button>

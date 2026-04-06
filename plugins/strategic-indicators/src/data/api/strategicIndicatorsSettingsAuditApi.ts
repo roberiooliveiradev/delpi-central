@@ -4,6 +4,11 @@ const BASE_URL = "/apps/api-delpi/strategic-indicators";
 
 type GetToken = (() => string | undefined) | undefined;
 
+export type FetchAuditParams = {
+  limit?: number;
+  entityKey?: string;
+};
+
 function buildHeaders(getAccessToken?: GetToken): HeadersInit {
   const token = getAccessToken?.();
 
@@ -15,8 +20,22 @@ function buildHeaders(getAccessToken?: GetToken): HeadersInit {
 
 export async function fetchStrategicIndicatorsSettingsAudit(
   getAccessToken?: GetToken,
+  params?: FetchAuditParams,
 ): Promise<StrategicIndicatorsSettingsAuditResponse> {
-  const response = await fetch(`${BASE_URL}/settings/audit`, {
+  const searchParams = new URLSearchParams();
+
+  if (params?.limit) {
+    searchParams.set("limit", String(params.limit));
+  }
+
+  if (params?.entityKey) {
+    searchParams.set("entity_key", params.entityKey);
+  }
+
+  const queryString = searchParams.toString();
+  const url = `${BASE_URL}/settings/audit${queryString ? `?${queryString}` : ""}`;
+
+  const response = await fetch(url, {
     method: "GET",
     headers: buildHeaders(getAccessToken),
   });
