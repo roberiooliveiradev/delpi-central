@@ -3738,3 +3738,84 @@ body {
   background: var(--surface-2, #f7f7f7);
   border-color: var(--si-card-border);
 }
+
+
+.si-settings-workspace-nav {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  margin-bottom: 20px;
+}
+
+.si-settings-workspace-nav__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-settings-workspace-nav__item {
+  border: 1px solid var(--si-card-border);
+  background: var(--surface-2, #f7f7f7);
+  color: var(--si-title);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.si-settings-status-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  border-radius: 16px;
+  border: 1px solid var(--si-card-border);
+  background: var(--si-card-bg);
+  color: var(--si-title);
+}
+
+.si-settings-status-strip--error {
+  border-color: color-mix(in srgb, var(--danger, #b42318) 35%, transparent);
+  background: color-mix(in srgb, var(--danger, #b42318) 10%, transparent);
+}
+
+.si-settings-status-strip--success {
+  border-color: color-mix(in srgb, var(--success, #067647) 35%, transparent);
+  background: color-mix(in srgb, var(--success, #067647) 10%, transparent);
+}
+
+.si-settings-status-strip--neutral {
+  background: var(--si-card-bg);
+}
+
+.si-settings-status-strip__button {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: var(--primary, #089bdb);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.si-settings-status-strip__button--ghost {
+  background: transparent;
+  color: var(--si-title);
+  border: 1px solid var(--si-card-border);
+}
+
+@media (max-width: 900px) {
+  .si-settings-workspace-nav {
+    position: static;
+  }
+}
