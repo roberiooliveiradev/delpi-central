@@ -92,6 +92,20 @@ from app.composition.production_composer import (
 )
 
 
+from app.composition.commercial_composer import (
+    build_get_branch_rol_target_pct_use_case,
+    build_get_head_office_rol_target_pct_use_case,
+    build_get_new_clients_average_use_case,
+    build_get_new_clients_rol_pct_use_case,
+    build_get_sales_conversion_rate_use_case,
+)
+from app.domain.ports.strategic_indicators.commercial_indicators_snapshot_port import (
+    StrategicIndicatorsCommercialIndicatorsSnapshotPort,
+)
+from app.infrastructure.providers.strategic_indicators.commercial_indicators_snapshot_provider import (
+    CommercialIndicatorsSnapshotProvider,
+)
+
 
 def build_get_strategic_indicators_executive_summary_use_case() -> GetStrategicIndicatorsExecutiveSummaryUseCase:
     settings_port = PostgresStrategicIndicatorsSummarySettingsRepository()
@@ -176,7 +190,16 @@ def build_get_strategic_indicators_use_case() -> GetStrategicIndicatorsUseCase:
         otd_use_case=build_get_on_time_delivery_pct_use_case(),
     )
 
+    commercial_snapshot_port = CommercialIndicatorsSnapshotProvider(
+        head_office_rol_target_use_case=build_get_head_office_rol_target_pct_use_case(),
+        branch_rol_target_use_case=build_get_branch_rol_target_pct_use_case(),
+        sales_conversion_rate_use_case=build_get_sales_conversion_rate_use_case(),
+        new_clients_average_use_case=build_get_new_clients_average_use_case(),
+        new_clients_rol_pct_use_case=build_get_new_clients_rol_pct_use_case(),
+    )
+
     return GetStrategicIndicatorsUseCase(
         engineering_snapshot_port=engineering_snapshot_port,
         production_snapshot_port=production_snapshot_port,
+        commercial_snapshot_port=commercial_snapshot_port,
     )
