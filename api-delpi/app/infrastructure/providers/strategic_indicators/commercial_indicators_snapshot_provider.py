@@ -44,29 +44,89 @@ class CommercialIndicatorsSnapshotProvider(
         *,
         start_date: str | None = None,
         end_date: str | None = None,
-    ) -> list[dict]:
-        return [
-            self._build_head_office_rol_target_indicator(
+    ) -> dict:
+        items: list[dict] = []
+        errors: list[dict] = []
+
+        self._collect_indicator(
+            builder=lambda: self._build_head_office_rol_target_indicator(
                 start_date=start_date,
                 end_date=end_date,
             ),
-            self._build_branch_rol_target_indicator(
+            department_id="commercial",
+            source="commercial_head_office_rol_target",
+            items=items,
+            errors=errors,
+        )
+
+        self._collect_indicator(
+            builder=lambda: self._build_branch_rol_target_indicator(
                 start_date=start_date,
                 end_date=end_date,
             ),
-            self._build_sales_conversion_rate_indicator(
+            department_id="commercial",
+            source="commercial_branch_rol_target",
+            items=items,
+            errors=errors,
+        )
+
+        self._collect_indicator(
+            builder=lambda: self._build_sales_conversion_rate_indicator(
                 start_date=start_date,
                 end_date=end_date,
             ),
-            self._build_new_clients_average_indicator(
+            department_id="commercial",
+            source="commercial_sales_conversion_rate",
+            items=items,
+            errors=errors,
+        )
+
+        self._collect_indicator(
+            builder=lambda: self._build_new_clients_average_indicator(
                 start_date=start_date,
                 end_date=end_date,
             ),
-            self._build_new_clients_rol_pct_indicator(
+            department_id="commercial",
+            source="commercial_new_clients_average",
+            items=items,
+            errors=errors,
+        )
+
+        self._collect_indicator(
+            builder=lambda: self._build_new_clients_rol_pct_indicator(
                 start_date=start_date,
                 end_date=end_date,
             ),
-        ]
+            department_id="commercial",
+            source="commercial_new_clients_rol_pct",
+            items=items,
+            errors=errors,
+        )
+
+        return {
+            "items": items,
+            "errors": errors,
+        }
+
+    def _collect_indicator(
+        self,
+        *,
+        builder,
+        department_id: str,
+        source: str,
+        items: list[dict],
+        errors: list[dict],
+    ) -> None:
+        try:
+            items.append(builder())
+        except Exception as exc:
+            errors.append(
+                {
+                    "department_id": department_id,
+                    "source": source,
+                    "message": str(exc),
+                }
+            )
 
     def _build_head_office_rol_target_indicator(
         self,

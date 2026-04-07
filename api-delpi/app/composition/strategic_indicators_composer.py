@@ -107,6 +107,17 @@ from app.infrastructure.providers.strategic_indicators.commercial_indicators_sna
 )
 
 
+from app.composition.audit_5s_composer import audit_5s_get_summary_composer
+from app.composition.kaizen_composer import kaizen_get_summary_composer
+from app.composition.ppm_composer import build_get_ppm_summary_use_case
+from app.domain.ports.strategic_indicators.quality_indicators_snapshot_port import (
+    StrategicIndicatorsQualityIndicatorsSnapshotPort,
+)
+from app.infrastructure.providers.strategic_indicators.quality_indicators_snapshot_provider import (
+    QualityIndicatorsSnapshotProvider,
+)
+
+
 def build_get_strategic_indicators_executive_summary_use_case() -> GetStrategicIndicatorsExecutiveSummaryUseCase:
     settings_port = PostgresStrategicIndicatorsSummarySettingsRepository()
     department_snapshot_port = StaticStrategicIndicatorsDepartmentSnapshotProvider()
@@ -198,8 +209,16 @@ def build_get_strategic_indicators_use_case() -> GetStrategicIndicatorsUseCase:
         new_clients_rol_pct_use_case=build_get_new_clients_rol_pct_use_case(),
     )
 
+    quality_snapshot_port = QualityIndicatorsSnapshotProvider(
+        internal_ppm_use_case=build_get_ppm_summary_use_case(),
+        external_ppm_use_case=build_get_ppm_summary_use_case(),
+        kaizen_summary_use_case=kaizen_get_summary_composer(),
+        audit_5s_summary_use_case=audit_5s_get_summary_composer(),
+    )
+
     return GetStrategicIndicatorsUseCase(
         engineering_snapshot_port=engineering_snapshot_port,
         production_snapshot_port=production_snapshot_port,
         commercial_snapshot_port=commercial_snapshot_port,
+        quality_snapshot_port=quality_snapshot_port,
     )

@@ -14,7 +14,7 @@ from app.infrastructure.providers.google_sheets.google_sheets_client import (
 
 
 DEFAULT_AUDIT_5S_SHEET_ID = "1s6orCcQ_ntXKlHEOoZWXHhlnTiP6RQXX"
-DEFAULT_AUDIT_5S_SHEET_GID = "211579643"
+DEFAULT_AUDIT_5S_SHEET_GID = "882327936"
 DEFAULT_GOOGLE_SHEETS_TIMEOUT = 10
 
 

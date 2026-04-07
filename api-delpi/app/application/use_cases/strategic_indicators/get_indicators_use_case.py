@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.application.dto.strategic_indicators.get_indicators_response import (
     GetStrategicIndicatorsResponse,
+    IndicatorFetchErrorResponse,
     IndicatorItemResponse,
 )
 from app.domain.ports.strategic_indicators.commercial_indicators_snapshot_port import (
@@ -13,6 +14,9 @@ from app.domain.ports.strategic_indicators.engineering_indicators_snapshot_port 
 from app.domain.ports.strategic_indicators.production_indicators_snapshot_port import (
     StrategicIndicatorsProductionIndicatorsSnapshotPort,
 )
+from app.domain.ports.strategic_indicators.quality_indicators_snapshot_port import (
+    StrategicIndicatorsQualityIndicatorsSnapshotPort,
+)
 
 
 class GetStrategicIndicatorsUseCase:
@@ -21,10 +25,12 @@ class GetStrategicIndicatorsUseCase:
         engineering_snapshot_port: StrategicIndicatorsEngineeringIndicatorsSnapshotPort,
         production_snapshot_port: StrategicIndicatorsProductionIndicatorsSnapshotPort,
         commercial_snapshot_port: StrategicIndicatorsCommercialIndicatorsSnapshotPort,
+        quality_snapshot_port: StrategicIndicatorsQualityIndicatorsSnapshotPort,
     ) -> None:
         self._engineering_snapshot_port = engineering_snapshot_port
         self._production_snapshot_port = production_snapshot_port
         self._commercial_snapshot_port = commercial_snapshot_port
+        self._quality_snapshot_port = quality_snapshot_port
 
     def execute(
         self,
@@ -33,31 +39,56 @@ class GetStrategicIndicatorsUseCase:
         end_date: str | None = None,
         department_id: str | None = None,
     ) -> GetStrategicIndicatorsResponse:
-        items: list[dict] = []
+        raw_items: list[dict] = []
+        errors: list[IndicatorFetchErrorResponse] = []
 
-        if department_id in (None, "", "engineering"):
-            items.extend(
-                self._engineering_snapshot_port.get_engineering_indicators_snapshot(
-                    start_date=start_date,
-                    end_date=end_date,
-                )
-            )
+        self._collect_department_items(
+            should_collect=department_id in (None, "", "engineering"),
+            department_id="engineering",
+            source="engineering_provider",
+            fetcher=lambda: self._engineering_snapshot_port.get_engineering_indicators_snapshot(
+                start_date=start_date,
+                end_date=end_date,
+            ),
+            items=raw_items,
+            errors=errors,
+        )
 
-        if department_id in (None, "", "production"):
-            items.extend(
-                self._production_snapshot_port.get_production_indicators_snapshot(
-                    start_date=start_date,
-                    end_date=end_date,
-                )
-            )
+        self._collect_department_items(
+            should_collect=department_id in (None, "", "production"),
+            department_id="production",
+            source="production_provider",
+            fetcher=lambda: self._production_snapshot_port.get_production_indicators_snapshot(
+                start_date=start_date,
+                end_date=end_date,
+            ),
+            items=raw_items,
+            errors=errors,
+        )
 
-        if department_id in (None, "", "commercial"):
-            items.extend(
-                self._commercial_snapshot_port.get_commercial_indicators_snapshot(
-                    start_date=start_date,
-                    end_date=end_date,
-                )
-            )
+        self._collect_department_items(
+            should_collect=department_id in (None, "", "commercial"),
+            department_id="commercial",
+            source="commercial_provider",
+            fetcher=lambda: self._commercial_snapshot_port.get_commercial_indicators_snapshot(
+                start_date=start_date,
+                end_date=end_date,
+            ),
+            items=raw_items,
+            errors=errors,
+        )
+
+        self._collect_department_items(
+            should_collect=department_id in (None, "", "quality"),
+            department_id="quality",
+            source="quality_provider",
+            fetcher=lambda: self._quality_snapshot_port.get_quality_indicators_snapshot(
+                start_date=start_date,
+                end_date=end_date,
+            ),
+            items=raw_items,
+            errors=errors,
+        )
 
         return GetStrategicIndicatorsResponse(
             items=[
@@ -76,6 +107,48 @@ class GetStrategicIndicatorsUseCase:
                     classification=item["classification"],
                     source=item["source"],
                 )
-                for item in items
-            ]
+                for item in raw_items
+            ],
+            errors=errors,
         )
+
+    def _collect_department_items(
+        self,
+        *,
+        should_collect: bool,
+        department_id: str,
+        source: str,
+        fetcher,
+        items: list[dict],
+        errors: list[IndicatorFetchErrorResponse],
+    ) -> None:
+        if not should_collect:
+            return
+
+        try:
+            result = fetcher()
+
+            if isinstance(result, dict):
+                for item in result.get("items", []):
+                    items.append(item)
+
+                for error in result.get("errors", []):
+                    errors.append(
+                        IndicatorFetchErrorResponse(
+                            department_id=error["department_id"],
+                            source=error["source"],
+                            message=error["message"],
+                        )
+                    )
+                return
+
+            items.extend(result)
+
+        except Exception as exc:
+            errors.append(
+                IndicatorFetchErrorResponse(
+                    department_id=department_id,
+                    source=source,
+                    message=str(exc),
+                )
+            )

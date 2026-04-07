@@ -264,7 +264,7 @@ def submit_change_request(change_request_id: str, request: Request):
         return result
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
-    
+
 
 @router.get("/departments")
 @require_permission("strategic-indicators.view")
@@ -353,7 +353,7 @@ def get_strategic_indicators_department_details(department_id: str):
             status_code=500,
             detail=f"Falha ao carregar detalhe do departamento: {exc}",
         ) from exc
-    
+
 
 @router.get("/indicators")
 @require_permission("strategic-indicators.view")
@@ -388,7 +388,16 @@ def get_strategic_indicators(
                     "source": item.source,
                 }
                 for item in result.items
-            ]
+            ],
+            "errors": [
+                {
+                    "department_id": error.department_id,
+                    "source": error.source,
+                    "message": error.message,
+                }
+                for error in result.errors
+            ],
+            "partial_success": result.partial_success,
         }
     except Exception as exc:
         raise HTTPException(

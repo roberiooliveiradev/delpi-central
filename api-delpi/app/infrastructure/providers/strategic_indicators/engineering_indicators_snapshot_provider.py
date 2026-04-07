@@ -28,18 +28,56 @@ class EngineeringIndicatorsSnapshotProvider(
         *,
         start_date: str | None = None,
         end_date: str | None = None,
-    ) -> list[dict]:
-        lmp_indicator = self._build_lmp_projects_on_time_indicator(
-            start_date=start_date,
-            end_date=end_date,
+    ) -> dict:
+        items: list[dict] = []
+        errors: list[dict] = []
+
+        self._collect_indicator(
+            builder=lambda: self._build_lmp_projects_on_time_indicator(
+                start_date=start_date,
+                end_date=end_date,
+            ),
+            department_id="engineering",
+            source="lmp",
+            items=items,
+            errors=errors,
         )
 
-        transforma_indicator = self._build_transforma_mais_financial_gain_indicator(
-            start_date=start_date,
-            end_date=end_date,
+        self._collect_indicator(
+            builder=lambda: self._build_transforma_mais_financial_gain_indicator(
+                start_date=start_date,
+                end_date=end_date,
+            ),
+            department_id="engineering",
+            source="transforma_mais",
+            items=items,
+            errors=errors,
         )
 
-        return [lmp_indicator, transforma_indicator]
+        return {
+            "items": items,
+            "errors": errors,
+        }
+
+    def _collect_indicator(
+        self,
+        *,
+        builder,
+        department_id: str,
+        source: str,
+        items: list[dict],
+        errors: list[dict],
+    ) -> None:
+        try:
+            items.append(builder())
+        except Exception as exc:
+            errors.append(
+                {
+                    "department_id": department_id,
+                    "source": source,
+                    "message": str(exc),
+                }
+            )
 
     def _build_lmp_projects_on_time_indicator(
         self,
@@ -116,12 +154,6 @@ class EngineeringIndicatorsSnapshotProvider(
         }
 
     def _extract_financial_gain_value(self, payload: dict) -> float:
-        """
-        Usa explicitamente o novo campo do summary:
-        - total_gross_savings_in_period
-
-        Mantém fallbacks defensivos para compatibilidade.
-        """
         data = payload.get("data", payload)
 
         value = data.get("total_gross_savings_in_period")

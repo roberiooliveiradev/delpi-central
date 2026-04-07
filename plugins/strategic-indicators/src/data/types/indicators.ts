@@ -14,8 +14,16 @@ export type StrategicIndicatorItemApi = {
   source: string;
 };
 
+export type StrategicIndicatorFetchErrorApi = {
+  department_id: string;
+  source: string;
+  message: string;
+};
+
 export type StrategicIndicatorsResponse = {
   items: StrategicIndicatorItemApi[];
+  errors: StrategicIndicatorFetchErrorApi[];
+  partial_success: boolean;
 };
 
 export type IndicatorViewItem = {
@@ -31,4 +39,10 @@ export type IndicatorViewItem = {
   trend: "up" | "down" | "stable";
   classification: string;
   source: string;
+};
+
+export type IndicatorFetchErrorViewItem = {
+  departmentId: string;
+  source: string;
+  message: string;
 };

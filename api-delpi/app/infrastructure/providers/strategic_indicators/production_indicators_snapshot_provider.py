@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from app.application.dto.production.production_request import ProductionRequest
 from app.application.dto.financial.get_rol_request import GetRolRequest
+from app.application.dto.production.production_request import ProductionRequest
 from app.application.use_cases.production.get_depreciation_pct_use_case import (
     GetDepreciationPctUseCase,
 )
@@ -45,7 +45,10 @@ class ProductionIndicatorsSnapshotProvider(
         *,
         start_date: str | None = None,
         end_date: str | None = None,
-    ) -> list[dict]:
+    ) -> dict:
+        items: list[dict] = []
+        errors: list[dict] = []
+
         matrix_request = self._build_production_request(
             branch="01",
             start_date=start_date,
@@ -68,34 +71,91 @@ class ProductionIndicatorsSnapshotProvider(
             end_date=end_date,
         )
 
-        return [
-            self._build_direct_labor_indicator(
+        self._collect_indicator(
+            builder=lambda: self._build_direct_labor_indicator(
                 matrix_request=matrix_request,
                 branch_request=branch_request,
                 matrix_rol_request=matrix_rol_request,
                 branch_rol_request=branch_rol_request,
             ),
-            self._build_production_cost_indicator(
+            department_id="production",
+            source="production_direct_labor",
+            items=items,
+            errors=errors,
+        )
+
+        self._collect_indicator(
+            builder=lambda: self._build_production_cost_indicator(
                 matrix_request=matrix_request,
                 branch_request=branch_request,
                 matrix_rol_request=matrix_rol_request,
                 branch_rol_request=branch_rol_request,
             ),
-            self._build_depreciation_indicator(
+            department_id="production",
+            source="production_cost",
+            items=items,
+            errors=errors,
+        )
+
+        self._collect_indicator(
+            builder=lambda: self._build_depreciation_indicator(
                 matrix_request=matrix_request,
                 branch_request=branch_request,
                 matrix_rol_request=matrix_rol_request,
                 branch_rol_request=branch_rol_request,
             ),
-            self._build_oee_indicator(
+            department_id="production",
+            source="production_depreciation",
+            items=items,
+            errors=errors,
+        )
+
+        self._collect_indicator(
+            builder=lambda: self._build_oee_indicator(
                 matrix_request=matrix_request,
                 branch_request=branch_request,
             ),
-            self._build_otd_indicator(
+            department_id="production",
+            source="production_oee",
+            items=items,
+            errors=errors,
+        )
+
+        self._collect_indicator(
+            builder=lambda: self._build_otd_indicator(
                 matrix_request=matrix_request,
                 branch_request=branch_request,
             ),
-        ]
+            department_id="production",
+            source="production_otd",
+            items=items,
+            errors=errors,
+        )
+
+        return {
+            "items": items,
+            "errors": errors,
+        }
+
+    def _collect_indicator(
+        self,
+        *,
+        builder,
+        department_id: str,
+        source: str,
+        items: list[dict],
+        errors: list[dict],
+    ) -> None:
+        try:
+            items.append(builder())
+        except Exception as exc:
+            errors.append(
+                {
+                    "department_id": department_id,
+                    "source": source,
+                    "message": str(exc),
+                }
+            )
 
     def _build_direct_labor_indicator(
         self,

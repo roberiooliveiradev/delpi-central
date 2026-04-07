@@ -4,7 +4,10 @@ import {
   fetchStrategicIndicators,
   type FetchStrategicIndicatorsParams,
 } from "../../data/api/strategicIndicatorsApi";
-import type { IndicatorViewItem } from "../../data/types/indicators";
+import type {
+  IndicatorFetchErrorViewItem,
+  IndicatorViewItem,
+} from "../../data/types/indicators";
 
 type UseStrategicIndicatorsParams = {
   departmentId?: string;
@@ -20,6 +23,8 @@ export function useStrategicIndicators({
   getAccessToken,
 }: UseStrategicIndicatorsParams) {
   const [items, setItems] = useState<IndicatorViewItem[]>([]);
+  const [fetchErrors, setFetchErrors] = useState<IndicatorFetchErrorViewItem[]>([]);
+  const [partialSuccess, setPartialSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +65,14 @@ export function useStrategicIndicators({
       }
 
       setItems(adaptIndicatorsToView(response));
+      setFetchErrors(
+        (response.errors ?? []).map((item) => ({
+          departmentId: item.department_id,
+          source: item.source,
+          message: item.message,
+        })),
+      );
+      setPartialSuccess(Boolean(response.partial_success));
     } catch (err) {
       if (controller.signal.aborted || requestId !== requestIdRef.current) {
         return;
@@ -89,11 +102,13 @@ export function useStrategicIndicators({
   return useMemo(
     () => ({
       items,
+      fetchErrors,
+      partialSuccess,
       loading,
       refreshing,
       error,
       reload: load,
     }),
-    [items, loading, refreshing, error, load],
+    [items, fetchErrors, partialSuccess, loading, refreshing, error, load],
   );
 }

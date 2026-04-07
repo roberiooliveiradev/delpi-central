@@ -90,6 +90,17 @@ const indicatorStatuses = [
   { value: "danger", label: "Crítico" },
 ];
 
+function buildPartialErrorDescription(
+  errors: Array<{ departmentId: string; source: string; message: string }>,
+) {
+  return errors
+    .map(
+      (item) =>
+        `Departamento: ${item.departmentId} • Fonte: ${item.source} • Erro: ${item.message}`,
+    )
+    .join("\n");
+}
+
 export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("all");
@@ -103,7 +114,15 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
 
   const departmentIdForApi = department === "all" ? undefined : department;
 
-  const { items, loading, refreshing, error, reload } = useStrategicIndicators({
+  const {
+    items,
+    fetchErrors,
+    partialSuccess,
+    loading,
+    refreshing,
+    error,
+    reload,
+  } = useStrategicIndicators({
     departmentId: departmentIdForApi,
     startDate,
     endDate,
@@ -226,6 +245,15 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
             <InfoState
               title="Falha ao atualizar indicadores"
               description={error}
+              actionLabel="Tentar novamente"
+              onAction={() => void reload()}
+            />
+          ) : null}
+
+          {partialSuccess && fetchErrors.length > 0 ? (
+            <InfoState
+              title="Alguns indicadores não puderam ser carregados"
+              description={buildPartialErrorDescription(fetchErrors)}
               actionLabel="Tentar novamente"
               onAction={() => void reload()}
             />
