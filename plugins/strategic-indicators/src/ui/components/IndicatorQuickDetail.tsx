@@ -1,11 +1,11 @@
-import type { IndicatorAnalyticsItem } from "../../data/mocks/indicatorsMock";
+import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
 
 type IndicatorQuickDetailProps = {
-  indicator: IndicatorAnalyticsItem | null;
+  indicator: IndicatorAnalyticsViewItem | null;
 };
 
-function getStatusLabel(status: IndicatorAnalyticsItem["status"]) {
+function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
   if (status === "success") return "Alto desempenho";
   if (status === "info") return "Satisfatório";
   if (status === "warning") return "Exige atenção";
@@ -58,8 +58,18 @@ export function IndicatorQuickDetail({
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">
-          <span>Nota simulada</span>
-          <strong>{indicator.simulatedScore.toFixed(1)}</strong>
+          <span>Nota atual</span>
+          <strong>{indicator.score.toFixed(1)}</strong>
+        </div>
+
+        <div className="si-indicator-quick-detail__meta-item">
+          <span>Valor atual</span>
+          <strong>{indicator.currentValue.toFixed(2)}</strong>
+        </div>
+
+        <div className="si-indicator-quick-detail__meta-item">
+          <span>Gap</span>
+          <strong>{indicator.gap.toFixed(2)}</strong>
         </div>
       </div>
 

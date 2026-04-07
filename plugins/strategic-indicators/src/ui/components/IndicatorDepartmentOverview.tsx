@@ -1,8 +1,8 @@
-import type { IndicatorAnalyticsItem } from "../../data/mocks/indicatorsMock";
+import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
 
 type IndicatorDepartmentOverviewProps = {
-  indicators: IndicatorAnalyticsItem[];
+  indicators: IndicatorAnalyticsViewItem[];
 };
 
 type DepartmentBucket = {
@@ -16,9 +16,9 @@ type DepartmentBucket = {
 };
 
 function buildDepartmentBuckets(
-  indicators: IndicatorAnalyticsItem[]
+  indicators: IndicatorAnalyticsViewItem[]
 ): DepartmentBucket[] {
-  const grouped = new Map<string, IndicatorAnalyticsItem[]>();
+  const grouped = new Map<string, IndicatorAnalyticsViewItem[]>();
 
   for (const indicator of indicators) {
     const list = grouped.get(indicator.departmentId) ?? [];
@@ -30,7 +30,7 @@ function buildDepartmentBuckets(
     .map(([departmentId, items]) => {
       const totalIndicators = items.length;
       const totalScore = items.reduce(
-        (sum, item) => sum + item.simulatedScore,
+        (sum, item) => sum + item.score,
         0
       );
       const averageScore = totalIndicators ? totalScore / totalIndicators : 0;
@@ -42,7 +42,7 @@ function buildDepartmentBuckets(
       ).length;
 
       const topFocus =
-        [...items].sort((a, b) => a.simulatedScore - b.simulatedScore)[0]
+        [...items].sort((a, b) => a.score - b.score)[0]
           ?.indicatorName ?? "Sem indicador";
 
       return {

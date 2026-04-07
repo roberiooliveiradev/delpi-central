@@ -101,6 +101,9 @@ class ProcessSummaryCalculator:
         total_net_savings_until_now = sum(item.net_savings_month for item in monthly_breakdown)
         total_hours_saved_until_now = sum(row["hours_saved_month"] for row in calculation_rows)
         total_gross_costs_until_now = sum(row["gross_costs_month"] for row in calculation_rows)
+        total_gross_savings_in_period = sum(
+            item.gross_savings_month for item in monthly_breakdown
+        )
         average_roi = self._calculate_average_roi(calculation_rows)
 
         range_summary = self._build_range_summary(
@@ -114,6 +117,7 @@ class ProcessSummaryCalculator:
             total_net_savings_until_now=self._round_final(total_net_savings_until_now),
             total_hours_saved_until_now=self._round_final(total_hours_saved_until_now),
             total_gross_costs_until_now=self._round_final(total_gross_costs_until_now),
+            total_gross_savings_in_period=self._round_final(total_gross_savings_in_period),
             average_roi=self._round_final(average_roi),
             monthly_breakdown=monthly_breakdown,
             range_summary=range_summary,

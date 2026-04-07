@@ -1,13 +1,13 @@
-import type { IndicatorAnalyticsItem } from "../../data/mocks/indicatorsMock";
+import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
 
 type IndicatorAnalyticsTableProps = {
-  indicators: IndicatorAnalyticsItem[];
+  indicators: IndicatorAnalyticsViewItem[];
   selectedIndicatorId?: string;
-  onSelectIndicator: (indicator: IndicatorAnalyticsItem) => void;
+  onSelectIndicator: (indicator: IndicatorAnalyticsViewItem) => void;
 };
 
-function getStatusLabel(status: IndicatorAnalyticsItem["status"]) {
+function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
   if (status === "success") return "Alto desempenho";
   if (status === "info") return "Satisfatório";
   if (status === "warning") return "Exige atenção";
@@ -59,7 +59,7 @@ export function IndicatorAnalyticsTable({
             <span>{indicator.weightPct}%</span>
             <span>{indicator.goal2026}</span>
             <strong className="si-indicator-table__score">
-              {indicator.simulatedScore.toFixed(1)}
+              {indicator.score.toFixed(1)}
             </strong>
             <StatusBadge
               label={getStatusLabel(indicator.status)}

@@ -1,11 +1,11 @@
-import type { IndicatorAnalyticsItem } from "../../data/mocks/indicatorsMock";
+import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
 
 type IndicatorPriorityListProps = {
-  indicators: IndicatorAnalyticsItem[];
+  indicators: IndicatorAnalyticsViewItem[];
 };
 
-function getStatusLabel(status: IndicatorAnalyticsItem["status"]) {
+function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
   if (status === "success") return "Alto desempenho";
   if (status === "info") return "Satisfatório";
   if (status === "warning") return "Exige atenção";
@@ -17,7 +17,7 @@ export function IndicatorPriorityList({
 }: IndicatorPriorityListProps) {
   const prioritized = [...indicators]
     .filter((item) => item.status === "warning" || item.status === "danger")
-    .sort((a, b) => a.simulatedScore - b.simulatedScore)
+    .sort((a, b) => a.score - b.score)
     .slice(0, 5);
 
   if (!prioritized.length) {
@@ -51,7 +51,7 @@ export function IndicatorPriorityList({
           <div className="si-indicator-priority-item__meta">
             <span>Peso interno: {indicator.weightPct}%</span>
             <span>Meta 2026: {indicator.goal2026}</span>
-            <span>Nota: {indicator.simulatedScore.toFixed(1)}</span>
+            <span>Nota: {indicator.score.toFixed(1)}</span>
           </div>
 
           <p className="si-indicator-priority-item__description">

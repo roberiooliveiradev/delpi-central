@@ -38,6 +38,7 @@ from app.composition.strategic_indicators_composer import (
     build_submit_strategic_indicators_change_request_use_case,
     build_get_strategic_indicators_departments_use_case,
     build_get_strategic_indicators_department_details_use_case,
+    build_get_strategic_indicators_use_case,
 )
 
 router = APIRouter(
@@ -351,4 +352,46 @@ def get_strategic_indicators_department_details(department_id: str):
         raise HTTPException(
             status_code=500,
             detail=f"Falha ao carregar detalhe do departamento: {exc}",
+        ) from exc
+    
+
+@router.get("/indicators")
+@require_permission("strategic-indicators.view")
+def get_strategic_indicators(
+    department_id: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+):
+    try:
+        use_case = build_get_strategic_indicators_use_case()
+        result = use_case.execute(
+            department_id=department_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        return {
+            "items": [
+                {
+                    "department_id": item.department_id,
+                    "department_name": item.department_name,
+                    "indicator_id": item.indicator_id,
+                    "indicator_name": item.indicator_name,
+                    "weight_pct": item.weight_pct,
+                    "goal_2026": item.goal_2026,
+                    "scope_type": item.scope_type,
+                    "value": item.value,
+                    "score": item.score,
+                    "gap": item.gap,
+                    "trend": item.trend,
+                    "classification": item.classification,
+                    "source": item.source,
+                }
+                for item in result.items
+            ]
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar indicadores do Strategic Indicators: {exc}",
         ) from exc

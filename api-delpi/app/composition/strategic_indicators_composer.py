@@ -61,6 +61,20 @@ from app.infrastructure.providers.strategic_indicators.static_departments_snapsh
     StaticStrategicIndicatorsDepartmentsSnapshotProvider,
 )
 
+from app.application.use_cases.strategic_indicators.get_indicators_use_case import (
+    GetStrategicIndicatorsUseCase,
+)
+from app.infrastructure.providers.strategic_indicators.engineering_indicators_snapshot_provider import (
+    EngineeringIndicatorsSnapshotProvider,
+)
+
+from app.composition.lmp_composer import (
+    build_list_lmp_dashboard_use_case,
+)
+from app.composition.transforma_mais_composer import (
+    transforma_mais_get_process_summary_composer,
+)
+
 
 def build_get_strategic_indicators_executive_summary_use_case() -> GetStrategicIndicatorsExecutiveSummaryUseCase:
     settings_port = PostgresStrategicIndicatorsSummarySettingsRepository()
@@ -128,4 +142,15 @@ def build_get_strategic_indicators_department_details_use_case() -> GetStrategic
     return GetStrategicIndicatorsDepartmentDetailsUseCase(
         catalog_port=catalog_port,
         details_snapshot_port=details_snapshot_port,
+    )
+
+
+def build_get_strategic_indicators_use_case() -> GetStrategicIndicatorsUseCase:
+    engineering_snapshot_port = EngineeringIndicatorsSnapshotProvider(
+        lmp_dashboard_use_case=build_list_lmp_dashboard_use_case(),
+        transforma_mais_summary_use_case=transforma_mais_get_process_summary_composer(),
+    )
+
+    return GetStrategicIndicatorsUseCase(
+        engineering_snapshot_port=engineering_snapshot_port,
     )

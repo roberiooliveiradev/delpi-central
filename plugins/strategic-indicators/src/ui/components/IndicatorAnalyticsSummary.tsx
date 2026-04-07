@@ -1,14 +1,14 @@
-import type { IndicatorAnalyticsItem } from "../../data/mocks/indicatorsMock";
+import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
 
 type IndicatorAnalyticsSummaryProps = {
-  indicators: IndicatorAnalyticsItem[];
+  indicators: IndicatorAnalyticsViewItem[];
 };
 
-function averageScore(items: IndicatorAnalyticsItem[]) {
+function averageScore(items: IndicatorAnalyticsViewItem[]) {
   if (!items.length) return 0;
 
-  const total = items.reduce((sum, item) => sum + item.simulatedScore, 0);
+  const total = items.reduce((sum, item) => sum + item.score, 0);
   return total / items.length;
 }
 
@@ -40,7 +40,7 @@ export function IndicatorAnalyticsSummary({
           {avg.toFixed(1)}
         </strong>
         <p className="si-indicator-summary-card__text">
-          Média simulada das notas analíticas exibidas na tabela.
+          Média atual das notas analíticas exibidas na tabela.
         </p>
       </article>
 
