@@ -4,6 +4,14 @@ const BASE_URL = "/apps/api-delpi/strategic-indicators";
 
 type GetToken = (() => string | undefined) | undefined;
 
+export type FetchStrategicIndicatorsExecutiveSummaryParams = {
+  competence?: string;
+  startDate?: string;
+  endDate?: string;
+  getAccessToken?: GetToken;
+  signal?: AbortSignal;
+};
+
 function buildHeaders(getAccessToken?: GetToken): HeadersInit {
   const token = getAccessToken?.();
 
@@ -13,13 +21,40 @@ function buildHeaders(getAccessToken?: GetToken): HeadersInit {
   };
 }
 
-export async function fetchStrategicIndicatorsExecutiveSummary(
-  getAccessToken?: GetToken,
-): Promise<StrategicIndicatorsExecutiveSummaryResponse> {
-  const response = await fetch(`${BASE_URL}/executive-summary`, {
-    method: "GET",
-    headers: buildHeaders(getAccessToken),
-  });
+function buildQuery(params: {
+  competence?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  const query = new URLSearchParams();
+
+  if (params.competence) query.set("competence", params.competence);
+  if (params.startDate) query.set("start_date", params.startDate);
+  if (params.endDate) query.set("end_date", params.endDate);
+
+  const queryString = query.toString();
+  return queryString ? `?${queryString}` : "";
+}
+
+export async function fetchStrategicIndicatorsExecutiveSummary({
+  competence,
+  startDate,
+  endDate,
+  getAccessToken,
+  signal,
+}: FetchStrategicIndicatorsExecutiveSummaryParams): Promise<StrategicIndicatorsExecutiveSummaryResponse> {
+  const response = await fetch(
+    `${BASE_URL}/executive-summary${buildQuery({
+      competence,
+      startDate,
+      endDate,
+    })}`,
+    {
+      method: "GET",
+      headers: buildHeaders(getAccessToken),
+      signal,
+    },
+  );
 
   if (!response.ok) {
     const message = await safeReadError(response);

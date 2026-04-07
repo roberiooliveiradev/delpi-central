@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { Card } from "../components/Card";
 import { ClassificationBand } from "../components/ClassificationBand";
 import { ContributionRanking } from "../components/ContributionRanking";
@@ -14,15 +15,63 @@ type ExecutiveDashboardPageProps = {
   getAccessToken?: () => string | undefined;
 };
 
+function getCurrentMonthValue() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function buildMonthRange(monthValue: string) {
+  if (!monthValue) {
+    return {
+      startDate: undefined,
+      endDate: undefined,
+    };
+  }
+
+  const [yearStr, monthStr] = monthValue.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+
+  if (!year || !month) {
+    return {
+      startDate: undefined,
+      endDate: undefined,
+    };
+  }
+
+  const firstDay = `01-${String(month).padStart(2, "0")}-${year}`;
+  const lastDayDate = new Date(year, month, 0);
+  const lastDay = `${String(lastDayDate.getDate()).padStart(2, "0")}-${String(
+    month,
+  ).padStart(2, "0")}-${year}`;
+
+  return {
+    startDate: firstDay,
+    endDate: lastDay,
+  };
+}
+
 export function ExecutiveDashboardPage({
   getAccessToken,
 }: ExecutiveDashboardPageProps) {
-  const { data, loading, error, reload } =
+  const [referenceMonth, setReferenceMonth] = useState(getCurrentMonthValue());
+
+  const { startDate, endDate } = useMemo(
+    () => buildMonthRange(referenceMonth),
+    [referenceMonth],
+  );
+
+  const { data, loading, refreshing, error, reload } =
     useStrategicIndicatorsExecutiveSummary({
+      competence: referenceMonth,
+      startDate,
+      endDate,
       getAccessToken,
     });
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="si-page">
         <PageHeader
@@ -32,6 +81,23 @@ export function ExecutiveDashboardPage({
           badge={<StatusBadge label="Carregando" variant="neutral" />}
         />
 
+        <SectionBlock
+          title="Filtro de referência"
+          description="Selecione o mês de referência do fechamento executivo."
+        >
+          <div className="si-form-grid">
+            <label className="si-field">
+              <span className="si-field__label">Mês de referência</span>
+              <input
+                type="month"
+                className="si-input"
+                value={referenceMonth}
+                onChange={(event) => setReferenceMonth(event.target.value)}
+              />
+            </label>
+          </div>
+        </SectionBlock>
+
         <InfoState
           title="Carregando painel executivo"
           description="Aguarde enquanto o resumo executivo é carregado."
@@ -40,7 +106,7 @@ export function ExecutiveDashboardPage({
     );
   }
 
-  if (error || !data) {
+  if (error && !data) {
     return (
       <div className="si-page">
         <PageHeader
@@ -50,6 +116,23 @@ export function ExecutiveDashboardPage({
           badge={<StatusBadge label="Erro" variant="warning" />}
         />
 
+        <SectionBlock
+          title="Filtro de referência"
+          description="Selecione o mês de referência do fechamento executivo."
+        >
+          <div className="si-form-grid">
+            <label className="si-field">
+              <span className="si-field__label">Mês de referência</span>
+              <input
+                type="month"
+                className="si-input"
+                value={referenceMonth}
+                onChange={(event) => setReferenceMonth(event.target.value)}
+              />
+            </label>
+          </div>
+        </SectionBlock>
+
         <InfoState
           title="Falha ao carregar resumo executivo"
           description={error ?? "O resumo executivo não retornou dados válidos."}
@@ -58,6 +141,10 @@ export function ExecutiveDashboardPage({
         />
       </div>
     );
+  }
+
+  if (!data) {
+    return null;
   }
 
   const strongestDepartment = [...data.departments].sort(
@@ -79,8 +166,46 @@ export function ExecutiveDashboardPage({
         eyebrow="MinhaDelpi"
         title="Strategic Indicators"
         description={`Painel executivo do IGD e dos IDDs departamentais. Competência ${data.competence}.`}
-        badge={<StatusBadge label="API Real" variant="success" />}
+        badge={
+          <StatusBadge
+            label={loading || refreshing ? "Atualizando" : "API Real"}
+            variant={loading || refreshing ? "neutral" : "success"}
+          />
+        }
       />
+
+      <SectionBlock
+        title="Filtro de referência"
+        description="Selecione o mês de referência do fechamento executivo."
+      >
+        <div className="si-form-grid">
+          <label className="si-field">
+            <span className="si-field__label">Mês de referência</span>
+            <input
+              type="month"
+              className="si-input"
+              value={referenceMonth}
+              onChange={(event) => setReferenceMonth(event.target.value)}
+            />
+          </label>
+        </div>
+      </SectionBlock>
+
+      {refreshing ? (
+        <InfoState
+          title="Atualizando resumo executivo"
+          description="Os dados exibidos estão sendo atualizados para o novo período."
+        />
+      ) : null}
+
+      {error && data ? (
+        <InfoState
+          title="Falha ao atualizar resumo executivo"
+          description={error}
+          actionLabel="Tentar novamente"
+          onAction={() => void reload()}
+        />
+      ) : null}
 
       <div className="si-executive-grid">
         <IgdHeroCard
@@ -97,8 +222,8 @@ export function ExecutiveDashboardPage({
           headerRight={<StatusBadge label="Mensal" variant="neutral" />}
         >
           <p className="si-muted">
-            A visão executiva agora é servida por API real do módulo, mantendo o
-            shape da home preparado para evoluções futuras do painel.
+            A visão executiva agora é servida por API real do módulo, considerando
+            o período selecionado no filtro de referência.
           </p>
 
           <div className="si-executive-note">
@@ -152,7 +277,7 @@ export function ExecutiveDashboardPage({
         title="Metodologia do índice"
         description="Resumo visual de como o índice global é consolidado no painel estratégico."
       >
-        <ExecutiveMethodCard igdExact={data.igdExact} />
+        <ExecutiveMethodCard igd={data.igd} igdExact={data.igdExact} />
       </SectionBlock>
 
       <SectionBlock

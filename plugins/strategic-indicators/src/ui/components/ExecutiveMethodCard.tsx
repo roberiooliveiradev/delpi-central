@@ -1,8 +1,10 @@
 type ExecutiveMethodCardProps = {
+  igd: number;
   igdExact: number;
 };
 
 export function ExecutiveMethodCard({
+  igd,
   igdExact,
 }: ExecutiveMethodCardProps) {
   return (
@@ -25,7 +27,7 @@ export function ExecutiveMethodCard({
 
       <div className="si-method-card__footer">
         <div className="si-method-card__pill">
-          <span className="si-method-card__pill-label">Resultado do exemplo</span>
+          <span className="si-method-card__pill-label">Resultado exato</span>
           <strong className="si-method-card__pill-value">
             {igdExact.toFixed(3)}
           </strong>
@@ -33,7 +35,9 @@ export function ExecutiveMethodCard({
 
         <div className="si-method-card__pill">
           <span className="si-method-card__pill-label">Exibição no painel</span>
-          <strong className="si-method-card__pill-value">7.8</strong>
+          <strong className="si-method-card__pill-value">
+            {igd.toFixed(1)}
+          </strong>
         </div>
       </div>
     </section>
