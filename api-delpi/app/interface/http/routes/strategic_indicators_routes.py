@@ -11,18 +11,19 @@ from app.interface.http.schemas.strategic_indicators_settings_schema import (
 from app.application.dto.strategic_indicators.update_settings_request import (
     UpdateStrategicIndicatorsSettingsRequest,
 )
-
-from app.application.use_cases.strategic_indicators.update_settings_use_case import (
-    StrategicIndicatorsSettingsValidationError,
-)
-
 from app.application.dto.strategic_indicators.add_change_request_comment_request import (
     AddStrategicIndicatorsChangeRequestCommentRequest,
 )
 from app.application.dto.strategic_indicators.create_change_request_request import (
     CreateStrategicIndicatorsChangeRequestRequest,
 )
+from app.application.dto.strategic_indicators.get_executive_summary_real_request import (
+    GetExecutiveSummaryRealRequest
+)
 
+from app.application.use_cases.strategic_indicators.update_settings_use_case import (
+    StrategicIndicatorsSettingsValidationError,
+)
 from app.application.use_cases.strategic_indicators.get_department_details_use_case import (
     DepartmentNotFoundError,
 )
@@ -71,46 +72,21 @@ def strategic_indicators_health():
 
 @router.get("/executive-summary")
 @require_permission("strategic-indicators.view")
-def get_strategic_indicators_executive_summary():
+def get_strategic_indicators_executive_summary(
+    competence: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+):
     try:
         use_case = build_get_strategic_indicators_executive_summary_use_case()
-        result = use_case.execute()
-
-        return {
-            "competence": result.competence,
-            "igd": result.igd,
-            "igd_exact": result.igd_exact,
-            "classification": result.classification,
-            "variation": {
-                "value": result.variation.value,
-                "direction": result.variation.direction,
-                "vs_label": result.variation.vs_label,
-            },
-            "departments": [
-                {
-                    "id": item.id,
-                    "name": item.name,
-                    "short_name": item.short_name,
-                    "weight_pct": item.weight_pct,
-                    "score": item.score,
-                    "contribution": item.contribution,
-                    "trend": item.trend,
-                    "strategic_summary": item.strategic_summary,
-                    "key_indicators": item.key_indicators,
-                    "executive_goal": item.executive_goal,
-                }
-                for item in result.departments
-            ],
-            "alerts_summary": [
-                {
-                    "title": item.title,
-                    "severity": item.severity,
-                    "impact": item.impact,
-                    "recommendation": item.recommendation,
-                }
-                for item in result.alerts_summary
-            ],
-        }
+        result = use_case.execute(
+            GetExecutiveSummaryRealRequest(
+                competence=competence,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        )
+        return result
     except Exception as exc:
         raise HTTPException(
             status_code=500,
