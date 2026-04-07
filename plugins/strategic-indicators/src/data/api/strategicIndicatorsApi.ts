@@ -9,6 +9,7 @@ export type FetchStrategicIndicatorsParams = {
   startDate?: string;
   endDate?: string;
   getAccessToken?: GetToken;
+  signal?: AbortSignal;
 };
 
 function buildHeaders(getAccessToken?: GetToken): HeadersInit {
@@ -40,6 +41,7 @@ export async function fetchStrategicIndicators({
   startDate,
   endDate,
   getAccessToken,
+  signal,
 }: FetchStrategicIndicatorsParams): Promise<StrategicIndicatorsResponse> {
   const response = await fetch(
     `${BASE_URL}/indicators${buildQuery({
@@ -50,6 +52,7 @@ export async function fetchStrategicIndicators({
     {
       method: "GET",
       headers: buildHeaders(getAccessToken),
+      signal,
     },
   );
 

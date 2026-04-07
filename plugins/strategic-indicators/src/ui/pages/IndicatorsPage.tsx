@@ -54,7 +54,9 @@ function buildMonthRange(monthValue: string) {
   };
 }
 
-function mapClassificationToStatus(classification: string): IndicatorAnalyticsViewItem["status"] {
+function mapClassificationToStatus(
+  classification: string,
+): IndicatorAnalyticsViewItem["status"] {
   const normalized = classification.toLowerCase();
 
   if (normalized.includes("excel")) return "success";
@@ -93,13 +95,16 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
   const [department, setDepartment] = useState("all");
   const [status, setStatus] = useState("all");
   const [referenceMonth, setReferenceMonth] = useState(getCurrentMonthValue());
+
   const { startDate, endDate } = useMemo(
     () => buildMonthRange(referenceMonth),
     [referenceMonth],
   );
 
-  const { items, loading, error, reload } = useStrategicIndicators({
-    departmentId: undefined,
+  const departmentIdForApi = department === "all" ? undefined : department;
+
+  const { items, loading, refreshing, error, reload } = useStrategicIndicators({
+    departmentId: departmentIdForApi,
     startDate,
     endDate,
     getAccessToken,
@@ -135,19 +140,19 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
       const matchesSearch =
         !search.trim() ||
         indicator.indicatorName.toLowerCase().includes(search.toLowerCase()) ||
-        indicator.strategicDescription.toLowerCase().includes(search.toLowerCase());
+        indicator.strategicDescription
+          .toLowerCase()
+          .includes(search.toLowerCase());
 
-      const matchesDepartment =
-        department === "all" || indicator.departmentId === department;
+      const matchesStatus = status === "all" || indicator.status === status;
 
-      const matchesStatus =
-        status === "all" || indicator.status === status;
-
-      return matchesSearch && matchesDepartment && matchesStatus;
+      return matchesSearch && matchesStatus;
     });
-  }, [analyticsItems, search, department, status]);
+  }, [analyticsItems, search, status]);
 
-  const [selectedIndicatorId, setSelectedIndicatorId] = useState<string | null>(null);
+  const [selectedIndicatorId, setSelectedIndicatorId] = useState<string | null>(
+    null,
+  );
 
   const resolvedSelectedIndicator = useMemo(() => {
     if (!filteredIndicators.length) return null;
@@ -156,7 +161,10 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
       selectedIndicatorId &&
       filteredIndicators.some((item) => item.id === selectedIndicatorId)
     ) {
-      return filteredIndicators.find((item) => item.id === selectedIndicatorId) ?? null;
+      return (
+        filteredIndicators.find((item) => item.id === selectedIndicatorId) ??
+        null
+      );
     }
 
     return filteredIndicators[0];
@@ -170,8 +178,8 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         description="Visão analítica inicial dos indicadores que compõem os IDDs departamentais, com filtros, busca, período de referência e leitura cruzada entre áreas."
         badge={
           <StatusBadge
-            label={loading ? "Carregando" : "API Real"}
-            variant={loading ? "neutral" : "success"}
+            label={loading || refreshing ? "Carregando" : "API Real"}
+            variant={loading || refreshing ? "neutral" : "success"}
           />
         }
       />
@@ -193,12 +201,12 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         </div>
       </SectionBlock>
 
-      {loading ? (
+      {loading && items.length === 0 ? (
         <InfoState
           title="Carregando indicadores"
           description="Aguarde enquanto os indicadores reais são carregados."
         />
-      ) : error ? (
+      ) : error && items.length === 0 ? (
         <InfoState
           title="Falha ao carregar indicadores"
           description={error}
@@ -207,6 +215,22 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         />
       ) : (
         <>
+          {refreshing ? (
+            <InfoState
+              title="Atualizando indicadores"
+              description="Os dados exibidos estão sendo atualizados com o novo filtro."
+            />
+          ) : null}
+
+          {error && items.length > 0 ? (
+            <InfoState
+              title="Falha ao atualizar indicadores"
+              description={error}
+              actionLabel="Tentar novamente"
+              onAction={() => void reload()}
+            />
+          ) : null}
+
           <SectionBlock
             title="Síntese analítica"
             description="Leitura rápida da cobertura e da distribuição dos indicadores no cenário atual."
@@ -252,7 +276,9 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
               <IndicatorAnalyticsTable
                 indicators={filteredIndicators}
                 selectedIndicatorId={resolvedSelectedIndicator?.id}
-                onSelectIndicator={(indicator) => setSelectedIndicatorId(indicator.id)}
+                onSelectIndicator={(indicator) =>
+                  setSelectedIndicatorId(indicator.id)
+                }
               />
 
               <IndicatorQuickDetail indicator={resolvedSelectedIndicator} />

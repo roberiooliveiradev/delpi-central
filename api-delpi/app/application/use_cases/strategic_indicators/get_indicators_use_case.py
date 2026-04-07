@@ -7,14 +7,19 @@ from app.application.dto.strategic_indicators.get_indicators_response import (
 from app.domain.ports.strategic_indicators.engineering_indicators_snapshot_port import (
     StrategicIndicatorsEngineeringIndicatorsSnapshotPort,
 )
+from app.domain.ports.strategic_indicators.production_indicators_snapshot_port import (
+    StrategicIndicatorsProductionIndicatorsSnapshotPort,
+)
 
 
 class GetStrategicIndicatorsUseCase:
     def __init__(
         self,
         engineering_snapshot_port: StrategicIndicatorsEngineeringIndicatorsSnapshotPort,
+        production_snapshot_port: StrategicIndicatorsProductionIndicatorsSnapshotPort,
     ) -> None:
         self._engineering_snapshot_port = engineering_snapshot_port
+        self._production_snapshot_port = production_snapshot_port
 
     def execute(
         self,
@@ -26,11 +31,22 @@ class GetStrategicIndicatorsUseCase:
         items: list[dict] = []
 
         if department_id in (None, "", "engineering"):
-            engineering_items = self._engineering_snapshot_port.get_engineering_indicators_snapshot(
-                start_date=start_date,
-                end_date=end_date,
+            engineering_items = (
+                self._engineering_snapshot_port.get_engineering_indicators_snapshot(
+                    start_date=start_date,
+                    end_date=end_date,
+                )
             )
             items.extend(engineering_items)
+
+        if department_id in (None, "", "production"):
+            production_items = (
+                self._production_snapshot_port.get_production_indicators_snapshot(
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            )
+            items.extend(production_items)
 
         return GetStrategicIndicatorsResponse(
             items=[

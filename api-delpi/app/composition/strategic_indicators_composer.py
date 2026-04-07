@@ -76,6 +76,23 @@ from app.composition.transforma_mais_composer import (
 )
 
 
+from app.domain.ports.strategic_indicators.production_indicators_snapshot_port import (
+    StrategicIndicatorsProductionIndicatorsSnapshotPort,
+)
+from app.infrastructure.providers.strategic_indicators.production_indicators_snapshot_provider import (
+    ProductionIndicatorsSnapshotProvider,
+)
+
+from app.composition.production_composer import (
+    build_get_depreciation_pct_use_case,
+    build_get_direct_labor_cost_pct_use_case,
+    build_get_on_time_delivery_pct_use_case,
+    build_get_overall_equipment_effectiveness_pct_use_case,
+    build_get_production_cost_pct_use_case,
+)
+
+
+
 def build_get_strategic_indicators_executive_summary_use_case() -> GetStrategicIndicatorsExecutiveSummaryUseCase:
     settings_port = PostgresStrategicIndicatorsSummarySettingsRepository()
     department_snapshot_port = StaticStrategicIndicatorsDepartmentSnapshotProvider()
@@ -151,6 +168,15 @@ def build_get_strategic_indicators_use_case() -> GetStrategicIndicatorsUseCase:
         transforma_mais_summary_use_case=transforma_mais_get_process_summary_composer(),
     )
 
+    production_snapshot_port = ProductionIndicatorsSnapshotProvider(
+        direct_labor_use_case=build_get_direct_labor_cost_pct_use_case(),
+        production_cost_use_case=build_get_production_cost_pct_use_case(),
+        depreciation_use_case=build_get_depreciation_pct_use_case(),
+        oee_use_case=build_get_overall_equipment_effectiveness_pct_use_case(),
+        otd_use_case=build_get_on_time_delivery_pct_use_case(),
+    )
+
     return GetStrategicIndicatorsUseCase(
         engineering_snapshot_port=engineering_snapshot_port,
+        production_snapshot_port=production_snapshot_port,
     )

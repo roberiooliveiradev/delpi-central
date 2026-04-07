@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { adaptIndicatorsToView } from "../../data/adapters/indicatorsAdapter";
 import {
   fetchStrategicIndicators,
@@ -21,10 +21,27 @@ export function useStrategicIndicators({
 }: UseStrategicIndicatorsParams) {
   const [items, setItems] = useState<IndicatorViewItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
+
   const load = useCallback(async () => {
-    setLoading(true);
+    const requestId = ++requestIdRef.current;
+
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    const hasPreviousData = items.length > 0;
+
+    if (hasPreviousData) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
     setError(null);
 
     try {
@@ -33,32 +50,50 @@ export function useStrategicIndicators({
         startDate,
         endDate,
         getAccessToken,
+        signal: controller.signal,
       };
 
       const response = await fetchStrategicIndicators(params);
+
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
       setItems(adaptIndicatorsToView(response));
     } catch (err) {
+      if (controller.signal.aborted || requestId !== requestIdRef.current) {
+        return;
+      }
+
       setError(
         err instanceof Error
           ? err.message
           : "Erro inesperado ao carregar indicadores.",
       );
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current && !controller.signal.aborted) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  }, [departmentId, startDate, endDate, getAccessToken]);
+  }, [departmentId, startDate, endDate, getAccessToken, items.length]);
 
   useEffect(() => {
     void load();
+
+    return () => {
+      abortControllerRef.current?.abort();
+    };
   }, [load]);
 
   return useMemo(
     () => ({
       items,
       loading,
+      refreshing,
       error,
       reload: load,
     }),
-    [items, loading, error, load],
+    [items, loading, refreshing, error, load],
   );
 }
