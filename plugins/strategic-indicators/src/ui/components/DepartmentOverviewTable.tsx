@@ -1,8 +1,8 @@
-import type { DepartmentDetails } from "../../data/mocks/departmentsMock";
+import type { DepartmentOverviewViewItem } from "../../data/types/departments";
 import { StatusBadge } from "./StatusBadge";
 
 type DepartmentOverviewTableProps = {
-  departments: DepartmentDetails[];
+  departments: DepartmentOverviewViewItem[];
 };
 
 function getVariant(score: number): "success" | "warning" | "danger" | "info" {

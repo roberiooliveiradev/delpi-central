@@ -45,6 +45,22 @@ from app.infrastructure.providers.strategic_indicators.static_igd_snapshot_provi
     StaticStrategicIndicatorsIgdSnapshotProvider,
 )
 
+from app.application.use_cases.strategic_indicators.get_department_details_use_case import (
+    GetStrategicIndicatorsDepartmentDetailsUseCase,
+)
+from app.application.use_cases.strategic_indicators.get_departments_use_case import (
+    GetStrategicIndicatorsDepartmentsUseCase,
+)
+from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_departments_catalog_repository import (
+    PostgresStrategicIndicatorsDepartmentsCatalogRepository,
+)
+from app.infrastructure.providers.strategic_indicators.static_department_details_snapshot_provider import (
+    StaticStrategicIndicatorsDepartmentDetailsSnapshotProvider,
+)
+from app.infrastructure.providers.strategic_indicators.static_departments_snapshot_provider import (
+    StaticStrategicIndicatorsDepartmentsSnapshotProvider,
+)
+
 
 def build_get_strategic_indicators_executive_summary_use_case() -> GetStrategicIndicatorsExecutiveSummaryUseCase:
     settings_port = PostgresStrategicIndicatorsSummarySettingsRepository()
@@ -93,3 +109,23 @@ def build_add_strategic_indicators_change_request_comment_use_case():
 def build_submit_strategic_indicators_change_request_use_case():
     repository = PostgresStrategicIndicatorsChangeRequestRepository()
     return SubmitStrategicIndicatorsChangeRequestUseCase(repository)
+
+
+def build_get_strategic_indicators_departments_use_case() -> GetStrategicIndicatorsDepartmentsUseCase:
+    catalog_port = PostgresStrategicIndicatorsDepartmentsCatalogRepository()
+    snapshot_port = StaticStrategicIndicatorsDepartmentsSnapshotProvider()
+
+    return GetStrategicIndicatorsDepartmentsUseCase(
+        catalog_port=catalog_port,
+        snapshot_port=snapshot_port,
+    )
+
+
+def build_get_strategic_indicators_department_details_use_case() -> GetStrategicIndicatorsDepartmentDetailsUseCase:
+    catalog_port = PostgresStrategicIndicatorsDepartmentsCatalogRepository()
+    details_snapshot_port = StaticStrategicIndicatorsDepartmentDetailsSnapshotProvider()
+
+    return GetStrategicIndicatorsDepartmentDetailsUseCase(
+        catalog_port=catalog_port,
+        details_snapshot_port=details_snapshot_port,
+    )

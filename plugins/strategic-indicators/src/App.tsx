@@ -14,11 +14,16 @@ export type AppProps = {
 
 export default function App({ getAccessToken, pathname }: AppProps) {
   if (pathname === "/apps/strategic-indicators/departments") {
-    return <DepartmentsPage />;
+    return <DepartmentsPage getAccessToken={getAccessToken} />;
   }
 
   if (pathname?.startsWith("/apps/strategic-indicators/departments/")) {
-    return <DepartmentDetailsPage pathname={pathname} />;
+    return (
+      <DepartmentDetailsPage
+        pathname={pathname}
+        getAccessToken={getAccessToken}
+      />
+    );
   }
 
   if (pathname === "/apps/strategic-indicators/indicators") {

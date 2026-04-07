@@ -23,6 +23,10 @@ from app.application.dto.strategic_indicators.create_change_request_request impo
     CreateStrategicIndicatorsChangeRequestRequest,
 )
 
+from app.application.use_cases.strategic_indicators.get_department_details_use_case import (
+    DepartmentNotFoundError,
+)
+
 from app.composition.strategic_indicators_composer import (
     build_get_strategic_indicators_executive_summary_use_case,
     build_get_strategic_indicators_settings_use_case,
@@ -32,6 +36,8 @@ from app.composition.strategic_indicators_composer import (
     build_create_strategic_indicators_change_request_use_case,
     build_list_strategic_indicators_change_requests_use_case,
     build_submit_strategic_indicators_change_request_use_case,
+    build_get_strategic_indicators_departments_use_case,
+    build_get_strategic_indicators_department_details_use_case,
 )
 
 router = APIRouter(
@@ -257,3 +263,92 @@ def submit_change_request(change_request_id: str, request: Request):
         return result
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+    
+
+@router.get("/departments")
+@require_permission("strategic-indicators.view")
+def get_strategic_indicators_departments():
+    try:
+        use_case = build_get_strategic_indicators_departments_use_case()
+        result = use_case.execute()
+
+        return {
+            "items": [
+                {
+                    "id": item.id,
+                    "name": item.name,
+                    "short_name": item.short_name,
+                    "weight_pct": item.weight_pct,
+                    "score": item.score,
+                    "classification": item.classification,
+                    "contribution": item.contribution,
+                    "aggregation_mode": item.aggregation_mode,
+                    "strategic_summary": item.strategic_summary,
+                    "variation": {
+                        "value": item.variation.value,
+                        "direction": item.variation.direction,
+                    },
+                }
+                for item in result.items
+            ]
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar departamentos do Strategic Indicators: {exc}",
+        ) from exc
+
+
+@router.get("/departments/{department_id}")
+@require_permission("strategic-indicators.view")
+def get_strategic_indicators_department_details(department_id: str):
+    try:
+        use_case = build_get_strategic_indicators_department_details_use_case()
+        result = use_case.execute(department_id)
+
+        return {
+            "id": result.id,
+            "name": result.name,
+            "short_name": result.short_name,
+            "weight_pct": result.weight_pct,
+            "score": result.score,
+            "classification": result.classification,
+            "contribution": result.contribution,
+            "aggregation_mode": result.aggregation_mode,
+            "strategic_summary": result.strategic_summary,
+            "variation": {
+                "value": result.variation.value,
+                "direction": result.variation.direction,
+            },
+            "units": [
+                {
+                    "unit_id": unit.unit_id,
+                    "unit_name": unit.unit_name,
+                    "score": unit.score,
+                    "classification": unit.classification,
+                }
+                for unit in result.units
+            ],
+            "indicators": [
+                {
+                    "id": indicator.id,
+                    "name": indicator.name,
+                    "weight_pct": indicator.weight_pct,
+                    "goal_2026": indicator.goal_2026,
+                    "strategic_description": indicator.strategic_description,
+                    "scope_type": indicator.scope_type,
+                    "realized": indicator.realized,
+                    "score": indicator.score,
+                    "gap": indicator.gap,
+                    "trend": indicator.trend,
+                }
+                for indicator in result.indicators
+            ],
+        }
+    except DepartmentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar detalhe do departamento: {exc}",
+        ) from exc

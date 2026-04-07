@@ -1,14 +1,15 @@
 import { useMemo } from "react";
-import { getDepartmentById } from "../../data/mocks/departmentsMock";
 import { DepartmentDetailHero } from "../components/DepartmentDetailHero";
 import { IndicatorDetailGrid } from "../components/IndicatorDetailGrid";
 import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { useStrategicIndicatorsDepartmentDetails } from "../../state/hooks/useStrategicIndicatorsDepartmentDetails";
 
 type DepartmentDetailsPageProps = {
   pathname: string;
+  getAccessToken?: () => string | undefined;
 };
 
 function extractDepartmentId(pathname: string) {
@@ -18,23 +19,52 @@ function extractDepartmentId(pathname: string) {
 
 export function DepartmentDetailsPage({
   pathname,
+  getAccessToken,
 }: DepartmentDetailsPageProps) {
   const departmentId = useMemo(() => extractDepartmentId(pathname), [pathname]);
-  const department = useMemo(() => getDepartmentById(departmentId), [departmentId]);
 
-  if (!department) {
+  const { data, loading, error, reload } =
+    useStrategicIndicatorsDepartmentDetails({
+      departmentId,
+      getAccessToken,
+    });
+
+  if (loading) {
+    return (
+      <div className="si-page">
+        <PageHeader
+          eyebrow="MinhaDelpi"
+          title="Departamento"
+          description="Carregando visão detalhada da área."
+          badge={<StatusBadge label="Carregando" variant="neutral" />}
+        />
+
+        <InfoState
+          title="Carregando departamento"
+          description="Aguarde enquanto a visão detalhada é carregada."
+        />
+      </div>
+    );
+  }
+
+  if (error || !data) {
     return (
       <div className="si-page">
         <PageHeader
           eyebrow="MinhaDelpi"
           title="Departamento não encontrado"
-          description="Não foi possível localizar a área solicitada neste MVP."
+          description="Não foi possível localizar a área solicitada."
           badge={<StatusBadge label="Indisponível" variant="warning" />}
         />
 
         <InfoState
           title="Área não localizada"
-          description="Verifique a rota informada ou retorne para a visão de departamentos."
+          description={
+            error ??
+            "Verifique a rota informada ou retorne para a visão de departamentos."
+          }
+          actionLabel="Tentar novamente"
+          onAction={() => void reload()}
         />
       </div>
     );
@@ -44,18 +74,18 @@ export function DepartmentDetailsPage({
     <div className="si-page">
       <PageHeader
         eyebrow="MinhaDelpi"
-        title={`Departamento — ${department.name}`}
-        description="Visão inicial do IDD departamental com indicadores, metas 2026 e descrição estratégica."
-        badge={<StatusBadge label="Drill-down inicial" variant="info" />}
+        title={`Departamento — ${data.name}`}
+        description="Visão detalhada do IDD departamental com indicadores, metas 2026 e descrição estratégica."
+        badge={<StatusBadge label="Drill-down real" variant="success" />}
       />
 
-      <DepartmentDetailHero department={department} />
+      <DepartmentDetailHero department={data} />
 
       <SectionBlock
         title="Indicadores que compõem o IDD"
         description="Os cards abaixo mostram os indicadores oficiais da área, com peso interno, meta 2026 e descrição estratégica."
       >
-        <IndicatorDetailGrid indicators={department.indicators} />
+        <IndicatorDetailGrid indicators={data.indicators} />
       </SectionBlock>
     </div>
   );
