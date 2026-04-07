@@ -190,6 +190,8 @@ Base técnica:
 - providers departamentais ajustados para tolerância a falha por indicador
 - rota `/indicators` agora agrega Engenharia + Produção + Comercial + Qualidade
 - a rota passou a devolver `items`, `errors` e `partial_success`
+- rota `/executive-summary` passou a aceitar `competence`, `start_date` e `end_date`
+- início da substituição do resumo executivo estático por cálculo central baseado em catálogo do plugin + measurements reais
 
 ### Backend do Transforma Mais
 - identificado problema de mapeamento do ganho financeiro
@@ -211,6 +213,11 @@ Base técnica:
 - mantido card de carregamento/atualização sem desmontar a tela
 - front adaptado para sucesso parcial, exibindo indicadores válidos mesmo quando parte das fontes falha
 - a tela passou a mostrar aviso de fontes/indicadores com erro sem travar a aplicação
+- página principal (`ExecutiveDashboardPage`) evoluída para consumir resumo executivo por competência/período
+- adicionado filtro de mês de referência na home executiva
+- removido valor fixo de nota exibida na metodologia da home
+- corrigido o loop de atualização do resumo executivo causado por instabilidade do `getAccessToken` no hook
+- home agora mantém os dados em tela durante refresh e remove corretamente o card de atualização ao concluir
 
 ---
 
@@ -253,6 +260,8 @@ Entrega, nesta fase parcial, itens com:
 - os 5 indicadores de Comercial já conectados na rota agregadora
 - rota `/apps/api-delpi/strategic-indicators/indicators` passou a suportar sucesso parcial (`items` + `errors` + `partial_success`)
 - falhas de uma fonte não derrubam mais toda a rota agregadora
+- página principal passou a filtrar por mês de referência e consultar a API executiva com período real
+- correção validada do estado de atualização preso na home executiva
 
 ### Exemplo funcional já validado
 Para março/2026:
@@ -323,8 +332,8 @@ A Fase 5 só estará concluída quando:
 
 ## Próximos passos imediatos
 1. validar os payloads reais de Qualidade e refinar os campos lidos pelo provider quando necessário
-2. validar a `IndicatorsPage` com sucesso parcial em cenários de falha de fonte
-3. confirmar estabilização completa da tela com Engenharia, Produção, Comercial e Qualidade
+2. confirmar estabilização completa da home executiva com cálculo real e filtro por competência
+3. seguir removendo snapshots estáticos do resumo executivo, departamentos e detalhes
 4. seguir o desenvolvimento do módulo e retornar depois para integrar `financial`, `hr` e `supplies` na rota agregadora e no cálculo real
 1. concluir os ajustes dos componentes analíticos para o tipo próprio da tela
 2. validar a `IndicatorsPage` com os dados reais de Engenharia
