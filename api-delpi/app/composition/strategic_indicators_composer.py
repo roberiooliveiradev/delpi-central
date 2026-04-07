@@ -10,11 +10,11 @@ from app.application.use_cases.strategic_indicators.list_settings_audit_use_case
 from app.application.use_cases.strategic_indicators.update_settings_use_case import (
     UpdateStrategicIndicatorsSettingsUseCase,
 )
-from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_executive_summary_repository import (
-    PostgresStrategicIndicatorsExecutiveSummaryRepository,
-)
 from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_repository import (
     PostgresStrategicIndicatorsSettingsRepository,
+)
+from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_summary_settings_repository import (
+    PostgresStrategicIndicatorsSummarySettingsRepository,
 )
 
 from app.application.use_cases.strategic_indicators.add_change_request_comment_use_case import (
@@ -35,11 +35,29 @@ from app.infrastructure.persistence.plugins.repositories.strategic_indicators.po
 from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
     PostgresStrategicIndicatorsSettingsAuditRepository,
 )
+from app.infrastructure.providers.strategic_indicators.static_alerts_summary_provider import (
+    StaticStrategicIndicatorsAlertsSummaryProvider,
+)
+from app.infrastructure.providers.strategic_indicators.static_department_snapshot_provider import (
+    StaticStrategicIndicatorsDepartmentSnapshotProvider,
+)
+from app.infrastructure.providers.strategic_indicators.static_igd_snapshot_provider import (
+    StaticStrategicIndicatorsIgdSnapshotProvider,
+)
 
 
 def build_get_strategic_indicators_executive_summary_use_case() -> GetStrategicIndicatorsExecutiveSummaryUseCase:
-    repository = PostgresStrategicIndicatorsExecutiveSummaryRepository()
-    return GetStrategicIndicatorsExecutiveSummaryUseCase(repository)
+    settings_port = PostgresStrategicIndicatorsSummarySettingsRepository()
+    department_snapshot_port = StaticStrategicIndicatorsDepartmentSnapshotProvider()
+    igd_snapshot_port = StaticStrategicIndicatorsIgdSnapshotProvider()
+    alerts_summary_port = StaticStrategicIndicatorsAlertsSummaryProvider()
+
+    return GetStrategicIndicatorsExecutiveSummaryUseCase(
+        settings_port=settings_port,
+        department_snapshot_port=department_snapshot_port,
+        igd_snapshot_port=igd_snapshot_port,
+        alerts_summary_port=alerts_summary_port,
+    )
 
 
 def build_get_strategic_indicators_settings_use_case() -> GetStrategicIndicatorsSettingsUseCase:

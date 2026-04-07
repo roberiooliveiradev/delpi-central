@@ -186,18 +186,30 @@ def validate_migration_history(conn: Any, schema_name: str, files: list[Path]) -
                     f"A migration já aplicada foi alterada."
                 )
 
-
 def reset_plugin_migrations(plugin_slug: str) -> None:
     schema_name = slug_to_schema(plugin_slug)
 
     with get_connection() as conn:
         try:
             with conn.cursor() as cur:
+                # Falha rápido se houver lock
+                cur.execute("SET lock_timeout = '5s';")
+                cur.execute("SET statement_timeout = '30s';")
+
+                # Encerra outras conexões do banco, exceto a atual
+                cur.execute(
+                    """
+                    SELECT pg_terminate_backend(pid)
+                    FROM pg_stat_activity
+                    WHERE datname = current_database()
+                      AND pid <> pg_backend_pid();
+                    """
+                )
+
                 cur.execute(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE;')
+
             conn.commit()
-            print(
-                f'[{plugin_slug}] Schema "{schema_name}" removido com sucesso.'
-            )
+            print(f'[{plugin_slug}] Schema "{schema_name}" removido com sucesso.')
         except Exception as exc:
             conn.rollback()
             raise MigrationError(
