@@ -131,7 +131,9 @@ const handleMainClick = () => {
               : "launcher-inline-routes"
           }
         >
-          {routes.map((route) => {
+          {routes
+            .filter((route: any) => route.showInMenu !== false)
+            .map((route) => {
             const Icon = resolveIcon(route.icon) || Package;
 
             const isActive = location.pathname === route.path;

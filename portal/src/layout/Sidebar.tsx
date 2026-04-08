@@ -122,6 +122,8 @@ export const Sidebar = () => {
 
     routes.forEach((route: any) => {
       if (!map[route.app]) return;
+      if (route.showInMenu === false) return;
+
       map[route.app].routes.push(route);
     });
 

@@ -14,6 +14,7 @@ export function useRoutesByApp() {
 
     routes.forEach((r) => {
       if (!r.app) return;
+      if (r.showInMenu === false) return;
 
       if (!map[r.app]) {
         map[r.app] = [];
