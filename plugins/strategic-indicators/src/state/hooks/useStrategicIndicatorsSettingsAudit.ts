@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchStrategicIndicatorsSettingsAudit,
   type FetchAuditParams,
@@ -79,13 +79,17 @@ export function useStrategicIndicatorsSettingsAudit({
     };
   }, []);
 
+  const reload = useCallback((params?: FetchAuditParams) => {
+    return loadRef.current(params ?? lastParamsRef.current);
+  }, []);
+
   useEffect(() => {
-    void loadRef.current();
+    void reload();
 
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, []);
+  }, [reload]);
 
   return useMemo(
     () => ({
@@ -93,9 +97,8 @@ export function useStrategicIndicatorsSettingsAudit({
       loading,
       refreshing,
       error,
-      reload: (params?: FetchAuditParams) =>
-        loadRef.current(params ?? lastParamsRef.current),
+      reload,
     }),
-    [items, loading, refreshing, error],
+    [items, loading, refreshing, error, reload],
   );
 }

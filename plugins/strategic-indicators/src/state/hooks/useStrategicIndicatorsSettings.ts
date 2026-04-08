@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchStrategicIndicatorsSettings,
   updateStrategicIndicatorsSettings,
@@ -80,33 +80,44 @@ export function useStrategicIndicatorsSettings({
     };
   }, []);
 
+  const reload = useCallback(() => {
+    return loadRef.current();
+  }, []);
+
   useEffect(() => {
-    void loadRef.current();
+    void reload();
 
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, []);
+  }, [reload]);
 
-  async function save(payload: StrategicIndicatorsSettingsUpdateRequest) {
-    setSaving(true);
-    setError(null);
+  const save = useCallback(
+    async (payload: StrategicIndicatorsSettingsUpdateRequest) => {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        const response = await updateStrategicIndicatorsSettings(
+          payload,
+          getAccessTokenRef.current,
+        );
+        setSuccessMessage(response.message);
+        await loadRef.current();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro inesperado ao salvar.");
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [],
+  );
+
+  const clearSuccessMessage = useCallback(() => {
     setSuccessMessage(null);
-
-    try {
-      const response = await updateStrategicIndicatorsSettings(
-        payload,
-        getAccessTokenRef.current,
-      );
-      setSuccessMessage(response.message);
-      await loadRef.current();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro inesperado ao salvar.");
-      throw err;
-    } finally {
-      setSaving(false);
-    }
-  }
+  }, []);
 
   return useMemo(
     () => ({
@@ -116,10 +127,10 @@ export function useStrategicIndicatorsSettings({
       saving,
       error,
       successMessage,
-      reload: () => loadRef.current(),
+      reload,
       save,
-      clearSuccessMessage: () => setSuccessMessage(null),
+      clearSuccessMessage,
     }),
-    [data, loading, refreshing, saving, error, successMessage],
+    [data, loading, refreshing, saving, error, successMessage, reload, save, clearSuccessMessage],
   );
 }
