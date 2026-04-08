@@ -5,11 +5,17 @@ import type { DepartmentDetailsViewData } from "../../data/types/departmentDetai
 
 type UseStrategicIndicatorsDepartmentDetailsParams = {
   departmentId: string;
+  competence?: string;
+  startDate?: string;
+  endDate?: string;
   getAccessToken?: () => string | undefined;
 };
 
 export function useStrategicIndicatorsDepartmentDetails({
   departmentId,
+  competence,
+  startDate,
+  endDate,
   getAccessToken,
 }: UseStrategicIndicatorsDepartmentDetailsParams) {
   const [data, setData] = useState<DepartmentDetailsViewData | null>(null);
@@ -53,11 +59,14 @@ export function useStrategicIndicatorsDepartmentDetails({
       setError(null);
 
       try {
-        const response = await fetchStrategicIndicatorsDepartmentDetails(
+        const response = await fetchStrategicIndicatorsDepartmentDetails({
           departmentId,
-          getAccessTokenRef.current,
-          controller.signal,
-        );
+          competence,
+          startDate,
+          endDate,
+          getAccessToken: getAccessTokenRef.current,
+          signal: controller.signal,
+        });
 
         if (requestId !== requestIdRef.current || controller.signal.aborted) {
           return;
@@ -82,7 +91,7 @@ export function useStrategicIndicatorsDepartmentDetails({
         }
       }
     };
-  }, [departmentId]);
+  }, [departmentId, competence, startDate, endDate]);
 
   useEffect(() => {
     void loadRef.current();
@@ -90,7 +99,7 @@ export function useStrategicIndicatorsDepartmentDetails({
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [departmentId]);
+  }, [departmentId, competence, startDate, endDate]);
 
   return useMemo(
     () => ({

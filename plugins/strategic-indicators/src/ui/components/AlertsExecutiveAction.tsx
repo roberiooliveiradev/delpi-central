@@ -1,11 +1,11 @@
-import type { AlertsDashboardData } from "../../data/mocks/alertsMock";
+import type { AlertsDashboardViewData } from "../../data/types/alerts";
 import { StatusBadge } from "./StatusBadge";
 
 type AlertsExecutiveActionProps = {
-  data: AlertsDashboardData;
+  data: AlertsDashboardViewData;
 };
 
-function getTopExecutiveAction(data: AlertsDashboardData) {
+function getTopExecutiveAction(data: AlertsDashboardViewData) {
   const firstExecutive = data.executiveAlerts[0];
   const firstDepartment = data.departmentAlerts[0];
   const firstIndicator = data.indicatorAlerts[0];

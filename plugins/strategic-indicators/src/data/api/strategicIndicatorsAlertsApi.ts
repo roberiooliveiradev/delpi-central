@@ -1,11 +1,10 @@
-import type { StrategicIndicatorsDepartmentDetailsResponse } from "../types/departmentDetails";
+import type { StrategicIndicatorsAlertsResponse } from "../types/alerts";
 
 const BASE_URL = "/apps/api-delpi/strategic-indicators";
 
 type GetToken = (() => string | undefined) | undefined;
 
-export type FetchStrategicIndicatorsDepartmentDetailsParams = {
-  departmentId: string;
+export type FetchStrategicIndicatorsAlertsParams = {
   competence?: string;
   startDate?: string;
   endDate?: string;
@@ -37,16 +36,15 @@ function buildQuery(params: {
   return queryString ? `?${queryString}` : "";
 }
 
-export async function fetchStrategicIndicatorsDepartmentDetails({
-  departmentId,
+export async function fetchStrategicIndicatorsAlerts({
   competence,
   startDate,
   endDate,
   getAccessToken,
   signal,
-}: FetchStrategicIndicatorsDepartmentDetailsParams): Promise<StrategicIndicatorsDepartmentDetailsResponse> {
+}: FetchStrategicIndicatorsAlertsParams): Promise<StrategicIndicatorsAlertsResponse> {
   const response = await fetch(
-    `${BASE_URL}/departments/${departmentId}${buildQuery({
+    `${BASE_URL}/alerts${buildQuery({
       competence,
       startDate,
       endDate,
@@ -60,7 +58,7 @@ export async function fetchStrategicIndicatorsDepartmentDetails({
 
   if (!response.ok) {
     const message = await safeReadError(response);
-    throw new Error(message || "Falha ao carregar detalhe do departamento.");
+    throw new Error(message || "Falha ao carregar alertas do módulo.");
   }
 
   return response.json();

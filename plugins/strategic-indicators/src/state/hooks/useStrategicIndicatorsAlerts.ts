@@ -1,22 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { adaptDepartmentsToView } from "../../data/adapters/departmentsAdapter";
-import { fetchStrategicIndicatorsDepartments } from "../../data/api/strategicIndicatorsDepartmentsApi";
-import type { DepartmentOverviewViewItem } from "../../data/types/departments";
+import { adaptAlertsToView } from "../../data/adapters/alertsAdapter";
+import { fetchStrategicIndicatorsAlerts } from "../../data/api/strategicIndicatorsAlertsApi";
+import type { AlertsDashboardViewData } from "../../data/types/alerts";
 
-type UseStrategicIndicatorsDepartmentsParams = {
+type UseStrategicIndicatorsAlertsParams = {
   competence?: string;
   startDate?: string;
   endDate?: string;
   getAccessToken?: () => string | undefined;
 };
 
-export function useStrategicIndicatorsDepartments({
+export function useStrategicIndicatorsAlerts({
   competence,
   startDate,
   endDate,
   getAccessToken,
-}: UseStrategicIndicatorsDepartmentsParams) {
-  const [items, setItems] = useState<DepartmentOverviewViewItem[]>([]);
+}: UseStrategicIndicatorsAlertsParams) {
+  const [data, setData] = useState<AlertsDashboardViewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export function useStrategicIndicatorsDepartments({
       setError(null);
 
       try {
-        const response = await fetchStrategicIndicatorsDepartments({
+        const response = await fetchStrategicIndicatorsAlerts({
           competence,
           startDate,
           endDate,
@@ -61,7 +61,7 @@ export function useStrategicIndicatorsDepartments({
           return;
         }
 
-        setItems(adaptDepartmentsToView(response));
+        setData(adaptAlertsToView(response));
         hasLoadedOnceRef.current = true;
       } catch (err) {
         if (requestId !== requestIdRef.current || controller.signal.aborted) {
@@ -71,7 +71,7 @@ export function useStrategicIndicatorsDepartments({
         setError(
           err instanceof Error
             ? err.message
-            : "Erro inesperado ao carregar departamentos.",
+            : "Erro inesperado ao carregar alertas.",
         );
       } finally {
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
@@ -92,12 +92,12 @@ export function useStrategicIndicatorsDepartments({
 
   return useMemo(
     () => ({
-      items,
+      data,
       loading,
       refreshing,
       error,
       reload: () => loadRef.current(),
     }),
-    [items, loading, refreshing, error],
+    [data, loading, refreshing, error],
   );
 }

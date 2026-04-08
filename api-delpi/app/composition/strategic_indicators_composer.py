@@ -47,8 +47,8 @@ from app.infrastructure.persistence.plugins.repositories.strategic_indicators.po
     PostgresStrategicIndicatorsCatalogRepository,
 )
 
-from app.infrastructure.providers.strategic_indicators.static_alerts_summary_provider import (
-    StaticStrategicIndicatorsAlertsSummaryProvider,
+from app.infrastructure.providers.strategic_indicators.calculated_alerts_summary_provider import (
+    CalculatedStrategicIndicatorsAlertsSummaryProvider,
 )
 
 from app.infrastructure.providers.strategic_indicators.real_indicator_measurements_provider import (
@@ -71,6 +71,9 @@ from app.application.use_cases.strategic_indicators.get_departments_real_use_cas
 )
 from app.application.use_cases.strategic_indicators.get_department_details_real_use_case import (
     GetStrategicIndicatorsDepartmentDetailsRealUseCase,
+)
+from app.application.use_cases.strategic_indicators.get_alerts_real_use_case import (
+    GetStrategicIndicatorsAlertsRealUseCase,
 )
 
 from app.composition.lmp_composer import (
@@ -155,7 +158,7 @@ def build_get_strategic_indicators_executive_summary_use_case(
         departments_catalog_repository=catalog_repository,
         indicators_catalog_repository=catalog_repository,
         measurements_port=measurements_provider,
-        alerts_summary_port=StaticStrategicIndicatorsAlertsSummaryProvider(),
+        alerts_summary_port=CalculatedStrategicIndicatorsAlertsSummaryProvider(),
         calculator=StrategicIndicatorsCalculator(),
     )
 
@@ -246,5 +249,24 @@ def build_get_strategic_indicators_use_case() -> GetStrategicIndicatorsUseCase:
         departments_catalog_repository=catalog_repository,
         indicators_catalog_repository=catalog_repository,
         measurements_port=measurements_provider,
+        calculator=StrategicIndicatorsCalculator(),
+    )
+
+
+def build_get_strategic_indicators_alerts_use_case() -> GetStrategicIndicatorsAlertsRealUseCase:
+    catalog_repository = PostgresStrategicIndicatorsCatalogRepository()
+
+    measurements_provider = RealStrategicIndicatorsMeasurementsProvider(
+        engineering_snapshot_port=build_get_engineering_indicators_snapshot_port(),
+        production_snapshot_port=build_get_production_indicators_snapshot_port(),
+        commercial_snapshot_port=build_get_commercial_indicators_snapshot_port(),
+        quality_snapshot_port=build_get_quality_indicators_snapshot_port(),
+    )
+
+    return GetStrategicIndicatorsAlertsRealUseCase(
+        departments_catalog_repository=catalog_repository,
+        indicators_catalog_repository=catalog_repository,
+        measurements_port=measurements_provider,
+        alerts_summary_port=CalculatedStrategicIndicatorsAlertsSummaryProvider(),
         calculator=StrategicIndicatorsCalculator(),
     )

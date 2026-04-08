@@ -1,17 +1,17 @@
-import type { DepartmentAlert } from "../../data/mocks/alertsMock";
+import type { DepartmentAlertViewItem } from "../../data/types/alerts";
 import { StatusBadge } from "./StatusBadge";
 
 type CriticalDepartmentListProps = {
-  alerts: DepartmentAlert[];
+  alerts: DepartmentAlertViewItem[];
 };
 
-function getVariant(severity: DepartmentAlert["severity"]) {
+function getVariant(severity: DepartmentAlertViewItem["severity"]) {
   if (severity === "high") return "danger";
   if (severity === "medium") return "warning";
   return "neutral";
 }
 
-function getLabel(severity: DepartmentAlert["severity"]) {
+function getLabel(severity: DepartmentAlertViewItem["severity"]) {
   if (severity === "high") return "Alta criticidade";
   if (severity === "medium") return "Média criticidade";
   return "Baixa criticidade";

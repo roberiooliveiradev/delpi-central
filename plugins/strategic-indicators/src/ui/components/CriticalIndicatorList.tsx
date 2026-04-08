@@ -1,17 +1,17 @@
-import type { IndicatorAlert } from "../../data/mocks/alertsMock";
+import type { IndicatorAlertViewItem } from "../../data/types/alerts";
 import { StatusBadge } from "./StatusBadge";
 
 type CriticalIndicatorListProps = {
-  alerts: IndicatorAlert[];
+  alerts: IndicatorAlertViewItem[];
 };
 
-function getVariant(severity: IndicatorAlert["severity"]) {
+function getVariant(severity: IndicatorAlertViewItem["severity"]) {
   if (severity === "high") return "danger";
   if (severity === "medium") return "warning";
   return "neutral";
 }
 
-function getLabel(severity: IndicatorAlert["severity"]) {
+function getLabel(severity: IndicatorAlertViewItem["severity"]) {
   if (severity === "high") return "Alta criticidade";
   if (severity === "medium") return "Média criticidade";
   return "Baixa criticidade";

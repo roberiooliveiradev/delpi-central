@@ -37,6 +37,7 @@ from app.composition.strategic_indicators_composer import (
     build_get_strategic_indicators_departments_use_case,
     build_get_strategic_indicators_department_details_use_case,
     build_get_strategic_indicators_use_case,
+    build_get_strategic_indicators_alerts_use_case,
 )
 
 router = APIRouter(
@@ -349,4 +350,32 @@ def get_strategic_indicators(
         raise HTTPException(
             status_code=500,
             detail=f"Falha ao carregar indicadores do Strategic Indicators: {exc}",
+        ) from exc
+    
+
+@router.get("/alerts")
+@require_permission("strategic-indicators.view")
+def get_strategic_indicators_alerts(
+    competence: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+):
+    try:
+        from app.application.use_cases.strategic_indicators.get_alerts_real_use_case import (
+            GetStrategicIndicatorsAlertsRealRequest,
+        )
+
+        use_case = build_get_strategic_indicators_alerts_use_case()
+        result = use_case.execute(
+            GetStrategicIndicatorsAlertsRealRequest(
+                competence=competence,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        )
+        return result
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar alertas do Strategic Indicators: {exc}",
         ) from exc

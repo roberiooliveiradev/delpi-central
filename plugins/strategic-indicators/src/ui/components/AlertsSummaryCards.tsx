@@ -1,8 +1,8 @@
-import type { AlertsDashboardData } from "../../data/mocks/alertsMock";
+import type { AlertsDashboardViewData } from "../../data/types/alerts";
 import { StatusBadge } from "./StatusBadge";
 
 type AlertsSummaryCardsProps = {
-  data: AlertsDashboardData;
+  data: AlertsDashboardViewData;
 };
 
 function countBySeverity(

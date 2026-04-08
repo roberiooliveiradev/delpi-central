@@ -80,7 +80,10 @@ class GetStrategicIndicatorsExecutiveSummaryRealUseCase:
                 self._map_department(item, goals_by_department)
                 for item in calculated_departments
             ],
-            "alerts_summary": self._alerts_summary_port.get_alerts_summary(),
+            "alerts_summary": self._alerts_summary_port.get_alerts_summary(
+                departments=calculated_departments,
+                measurement_errors=measurement_errors,
+            ),
             "errors": measurement_errors,
             "partial_success": len(measurement_errors) > 0,
         }

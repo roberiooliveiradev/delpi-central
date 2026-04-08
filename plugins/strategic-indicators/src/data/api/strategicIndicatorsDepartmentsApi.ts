@@ -4,6 +4,14 @@ const BASE_URL = "/apps/api-delpi/strategic-indicators";
 
 type GetToken = (() => string | undefined) | undefined;
 
+export type FetchStrategicIndicatorsDepartmentsParams = {
+  competence?: string;
+  startDate?: string;
+  endDate?: string;
+  getAccessToken?: GetToken;
+  signal?: AbortSignal;
+};
+
 function buildHeaders(getAccessToken?: GetToken): HeadersInit {
   const token = getAccessToken?.();
 
@@ -13,15 +21,40 @@ function buildHeaders(getAccessToken?: GetToken): HeadersInit {
   };
 }
 
-export async function fetchStrategicIndicatorsDepartments(
-  getAccessToken?: GetToken,
-  signal?: AbortSignal,
-): Promise<StrategicIndicatorsDepartmentsResponse> {
-  const response = await fetch(`${BASE_URL}/departments`, {
-    method: "GET",
-    headers: buildHeaders(getAccessToken),
-    signal,
-  });
+function buildQuery(params: {
+  competence?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  const query = new URLSearchParams();
+
+  if (params.competence) query.set("competence", params.competence);
+  if (params.startDate) query.set("start_date", params.startDate);
+  if (params.endDate) query.set("end_date", params.endDate);
+
+  const queryString = query.toString();
+  return queryString ? `?${queryString}` : "";
+}
+
+export async function fetchStrategicIndicatorsDepartments({
+  competence,
+  startDate,
+  endDate,
+  getAccessToken,
+  signal,
+}: FetchStrategicIndicatorsDepartmentsParams): Promise<StrategicIndicatorsDepartmentsResponse> {
+  const response = await fetch(
+    `${BASE_URL}/departments${buildQuery({
+      competence,
+      startDate,
+      endDate,
+    })}`,
+    {
+      method: "GET",
+      headers: buildHeaders(getAccessToken),
+      signal,
+    },
+  );
 
   if (!response.ok) {
     const message = await safeReadError(response);

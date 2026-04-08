@@ -35,7 +35,7 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   }
 
   if (pathname === "/apps/strategic-indicators/alerts") {
-    return <AlertsPage />;
+    return <AlertsPage getAccessToken={getAccessToken} />;
   }
 
   if (pathname === "/apps/strategic-indicators/presentation") {

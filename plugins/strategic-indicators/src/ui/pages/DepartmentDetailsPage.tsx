@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { DepartmentDetailHero } from "../components/DepartmentDetailHero";
 import { IndicatorDetailGrid } from "../components/IndicatorDetailGrid";
 import { InfoState } from "../components/InfoState";
@@ -17,15 +17,62 @@ function extractDepartmentId(pathname: string) {
   return parts[parts.length - 1] ?? "";
 }
 
+function getCurrentMonthValue() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function buildMonthRange(monthValue: string) {
+  if (!monthValue) {
+    return {
+      startDate: undefined,
+      endDate: undefined,
+    };
+  }
+
+  const [yearStr, monthStr] = monthValue.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+
+  if (!year || !month) {
+    return {
+      startDate: undefined,
+      endDate: undefined,
+    };
+  }
+
+  const firstDay = `01-${String(month).padStart(2, "0")}-${year}`;
+  const lastDayDate = new Date(year, month, 0);
+  const lastDay = `${String(lastDayDate.getDate()).padStart(2, "0")}-${String(
+    month,
+  ).padStart(2, "0")}-${year}`;
+
+  return {
+    startDate: firstDay,
+    endDate: lastDay,
+  };
+}
+
 export function DepartmentDetailsPage({
   pathname,
   getAccessToken,
 }: DepartmentDetailsPageProps) {
   const departmentId = useMemo(() => extractDepartmentId(pathname), [pathname]);
+  const [referenceMonth, setReferenceMonth] = useState(getCurrentMonthValue());
+
+  const { startDate, endDate } = useMemo(
+    () => buildMonthRange(referenceMonth),
+    [referenceMonth],
+  );
 
   const { data, loading, refreshing, error, reload } =
     useStrategicIndicatorsDepartmentDetails({
       departmentId,
+      competence: referenceMonth,
+      startDate,
+      endDate,
       getAccessToken,
     });
 
@@ -38,6 +85,23 @@ export function DepartmentDetailsPage({
           description="Carregando visão detalhada da área."
           badge={<StatusBadge label="Carregando" variant="neutral" />}
         />
+
+        <SectionBlock
+          title="Filtro de referência"
+          description="Selecione o mês de referência para consultar o detalhe do departamento."
+        >
+          <div className="si-form-grid">
+            <label className="si-field">
+              <span className="si-field__label">Mês de referência</span>
+              <input
+                type="month"
+                className="si-input"
+                value={referenceMonth}
+                onChange={(event) => setReferenceMonth(event.target.value)}
+              />
+            </label>
+          </div>
+        </SectionBlock>
 
         <InfoState
           title="Carregando departamento"
@@ -56,6 +120,23 @@ export function DepartmentDetailsPage({
           description="Não foi possível localizar a área solicitada."
           badge={<StatusBadge label="Indisponível" variant="warning" />}
         />
+
+        <SectionBlock
+          title="Filtro de referência"
+          description="Selecione o mês de referência para consultar o detalhe do departamento."
+        >
+          <div className="si-form-grid">
+            <label className="si-field">
+              <span className="si-field__label">Mês de referência</span>
+              <input
+                type="month"
+                className="si-input"
+                value={referenceMonth}
+                onChange={(event) => setReferenceMonth(event.target.value)}
+              />
+            </label>
+          </div>
+        </SectionBlock>
 
         <InfoState
           title="Área não localizada"
@@ -79,7 +160,7 @@ export function DepartmentDetailsPage({
       <PageHeader
         eyebrow="MinhaDelpi"
         title={`Departamento — ${data.name}`}
-        description="Visão detalhada do IDD departamental com indicadores, metas 2026 e descrição estratégica."
+        description={`Visão detalhada do IDD departamental no período ${referenceMonth}.`}
         badge={
           <StatusBadge
             label={loading || refreshing ? "Atualizando" : "Drill-down real"}
@@ -88,10 +169,27 @@ export function DepartmentDetailsPage({
         }
       />
 
+      <SectionBlock
+        title="Filtro de referência"
+        description="Selecione o mês de referência para consultar o detalhe do departamento."
+      >
+        <div className="si-form-grid">
+          <label className="si-field">
+            <span className="si-field__label">Mês de referência</span>
+            <input
+              type="month"
+              className="si-input"
+              value={referenceMonth}
+              onChange={(event) => setReferenceMonth(event.target.value)}
+            />
+          </label>
+        </div>
+      </SectionBlock>
+
       {refreshing ? (
         <InfoState
           title="Atualizando departamento"
-          description="Os dados exibidos estão sendo atualizados."
+          description="Os dados exibidos estão sendo atualizados para o novo período."
         />
       ) : null}
 
