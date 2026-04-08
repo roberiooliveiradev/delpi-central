@@ -33,7 +33,6 @@ class OverallEquipmentEffectivenessRepository(BaseRepository, OverallEquipmentEf
                 {where_clause}
         """
 
-        print(sql, where_params)
         with self:
             result = self.execute_query(sql, where_params)
 
