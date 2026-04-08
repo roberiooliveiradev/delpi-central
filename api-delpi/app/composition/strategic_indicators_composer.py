@@ -75,6 +75,9 @@ from app.application.use_cases.strategic_indicators.get_department_details_real_
 from app.application.use_cases.strategic_indicators.get_alerts_real_use_case import (
     GetStrategicIndicatorsAlertsRealUseCase,
 )
+from app.application.use_cases.strategic_indicators.get_trends_real_use_case import (
+    GetStrategicIndicatorsTrendsRealUseCase,
+)
 
 from app.composition.lmp_composer import (
     build_list_lmp_dashboard_use_case,
@@ -268,5 +271,23 @@ def build_get_strategic_indicators_alerts_use_case() -> GetStrategicIndicatorsAl
         indicators_catalog_repository=catalog_repository,
         measurements_port=measurements_provider,
         alerts_summary_port=CalculatedStrategicIndicatorsAlertsSummaryProvider(),
+        calculator=StrategicIndicatorsCalculator(),
+    )
+
+
+def build_get_strategic_indicators_trends_use_case() -> GetStrategicIndicatorsTrendsRealUseCase:
+    catalog_repository = PostgresStrategicIndicatorsCatalogRepository()
+
+    measurements_provider = RealStrategicIndicatorsMeasurementsProvider(
+        engineering_snapshot_port=build_get_engineering_indicators_snapshot_port(),
+        production_snapshot_port=build_get_production_indicators_snapshot_port(),
+        commercial_snapshot_port=build_get_commercial_indicators_snapshot_port(),
+        quality_snapshot_port=build_get_quality_indicators_snapshot_port(),
+    )
+
+    return GetStrategicIndicatorsTrendsRealUseCase(
+        departments_catalog_repository=catalog_repository,
+        indicators_catalog_repository=catalog_repository,
+        measurements_port=measurements_provider,
         calculator=StrategicIndicatorsCalculator(),
     )

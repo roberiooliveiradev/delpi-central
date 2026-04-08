@@ -1,4 +1,4 @@
-import type { DepartmentTrendItem } from "../../data/mocks/trendsMock";
+import type { DepartmentTrendItem } from "../../data/types/trends";
 import { DepartmentTrendCard } from "./DepartmentTrendCard";
 
 type DepartmentTrendGridProps = {

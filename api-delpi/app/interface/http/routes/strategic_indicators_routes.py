@@ -25,6 +25,10 @@ from app.application.use_cases.strategic_indicators.update_settings_use_case imp
     StrategicIndicatorsSettingsValidationError,
 )
 
+from app.application.dto.strategic_indicators.get_trends_real_request import (
+    GetStrategicIndicatorsTrendsRealRequest,
+)
+
 from app.composition.strategic_indicators_composer import (
     build_get_strategic_indicators_executive_summary_use_case,
     build_get_strategic_indicators_settings_use_case,
@@ -38,6 +42,7 @@ from app.composition.strategic_indicators_composer import (
     build_get_strategic_indicators_department_details_use_case,
     build_get_strategic_indicators_use_case,
     build_get_strategic_indicators_alerts_use_case,
+    build_get_strategic_indicators_trends_use_case,
 )
 
 router = APIRouter(
@@ -378,4 +383,26 @@ def get_strategic_indicators_alerts(
         raise HTTPException(
             status_code=500,
             detail=f"Falha ao carregar alertas do Strategic Indicators: {exc}",
+        ) from exc
+    
+
+@router.get("/trends")
+@require_permission("strategic-indicators.trends.view")
+def get_strategic_indicators_trends(
+    competence: str | None = Query(None),
+    months: int = Query(6, ge=2, le=12),
+):
+    try:
+        use_case = build_get_strategic_indicators_trends_use_case()
+        result = use_case.execute(
+            GetStrategicIndicatorsTrendsRealRequest(
+                competence=competence,
+                months=months,
+            )
+        )
+        return result
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar tendências do Strategic Indicators: {exc}",
         ) from exc

@@ -1,4 +1,4 @@
-import type { DepartmentTrendItem } from "../../data/mocks/trendsMock";
+import type { DepartmentTrendItem } from "../../data/types/trends";
 import { StatusBadge } from "./StatusBadge";
 
 type TrendHighlightsProps = {
@@ -36,7 +36,8 @@ export function TrendHighlights({
               {best.previous.toFixed(1)} → {best.current.toFixed(1)}
             </p>
             <p className="si-trend-highlight-card__delta">
-              +{getDelta(best).toFixed(1)} no período
+              {getDelta(best) > 0 ? "+" : ""}
+              {getDelta(best).toFixed(1)} no período
             </p>
           </>
         ) : null}

@@ -1,4 +1,4 @@
-import type { DepartmentTrendItem } from "../../data/mocks/trendsMock";
+import type { DepartmentTrendItem } from "../../data/types/trends";
 import { StatusBadge } from "./StatusBadge";
 
 type TrendPriorityListProps = {

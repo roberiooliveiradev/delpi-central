@@ -1,4 +1,4 @@
-import type { IgdTrendPoint } from "../../data/mocks/trendsMock";
+import type { IgdTrendPoint } from "../../data/types/trends";
 
 type IgdTrendTimelineProps = {
   series: IgdTrendPoint[];
@@ -19,7 +19,7 @@ export function IgdTrendTimeline({
       <div className="si-igd-timeline__header">
         <h3 className="si-igd-timeline__title">Linha temporal do IGD</h3>
         <span className="si-igd-timeline__subtitle">
-          evolução mensal do índice global
+          evolução histórica do índice global
         </span>
       </div>
 

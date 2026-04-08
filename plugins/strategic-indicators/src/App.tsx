@@ -31,7 +31,7 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   }
 
   if (pathname === "/apps/strategic-indicators/trends") {
-    return <TrendsPage />;
+    return <TrendsPage getAccessToken={getAccessToken} />;
   }
 
   if (pathname === "/apps/strategic-indicators/alerts") {
