@@ -10,8 +10,12 @@ class StrategicIndicatorsQualityIndicatorsSnapshotPort(ABC):
         *,
         start_date: str | None = None,
         end_date: str | None = None,
-    ) -> list[dict]:
+    ) -> dict:
         """
-        Retorna os indicadores da Qualidade já normalizados para a fase 5.
+        Retorna measurements da Qualidade no formato:
+        {
+            "items": [...],
+            "errors": [...]
+        }
         """
         raise NotImplementedError

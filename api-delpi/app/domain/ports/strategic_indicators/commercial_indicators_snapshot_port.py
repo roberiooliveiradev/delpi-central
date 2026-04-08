@@ -10,8 +10,12 @@ class StrategicIndicatorsCommercialIndicatorsSnapshotPort(ABC):
         *,
         start_date: str | None = None,
         end_date: str | None = None,
-    ) -> list[dict]:
+    ) -> dict:
         """
-        Retorna os indicadores do Comercial já normalizados para a fase 5.
+        Retorna measurements do Comercial no formato:
+        {
+            "items": [...],
+            "errors": [...]
+        }
         """
         raise NotImplementedError

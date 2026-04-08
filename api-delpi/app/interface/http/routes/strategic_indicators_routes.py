@@ -24,9 +24,6 @@ from app.application.dto.strategic_indicators.get_executive_summary_real_request
 from app.application.use_cases.strategic_indicators.update_settings_use_case import (
     StrategicIndicatorsSettingsValidationError,
 )
-from app.application.use_cases.strategic_indicators.get_department_details_use_case import (
-    DepartmentNotFoundError,
-)
 
 from app.composition.strategic_indicators_composer import (
     build_get_strategic_indicators_executive_summary_use_case,
@@ -244,31 +241,26 @@ def submit_change_request(change_request_id: str, request: Request):
 
 @router.get("/departments")
 @require_permission("strategic-indicators.view")
-def get_strategic_indicators_departments():
+def get_strategic_indicators_departments(
+    competence: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+):
     try:
-        use_case = build_get_strategic_indicators_departments_use_case()
-        result = use_case.execute()
+        from app.application.use_cases.strategic_indicators.get_departments_real_use_case import (
+            GetStrategicIndicatorsDepartmentsRealRequest,
+        )
 
-        return {
-            "items": [
-                {
-                    "id": item.id,
-                    "name": item.name,
-                    "short_name": item.short_name,
-                    "weight_pct": item.weight_pct,
-                    "score": item.score,
-                    "classification": item.classification,
-                    "contribution": item.contribution,
-                    "aggregation_mode": item.aggregation_mode,
-                    "strategic_summary": item.strategic_summary,
-                    "variation": {
-                        "value": item.variation.value,
-                        "direction": item.variation.direction,
-                    },
-                }
-                for item in result.items
-            ]
-        }
+        use_case = build_get_strategic_indicators_departments_use_case()
+        result = use_case.execute(
+            GetStrategicIndicatorsDepartmentsRealRequest(
+                competence=competence,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        )
+
+        return result
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -278,50 +270,28 @@ def get_strategic_indicators_departments():
 
 @router.get("/departments/{department_id}")
 @require_permission("strategic-indicators.view")
-def get_strategic_indicators_department_details(department_id: str):
+def get_strategic_indicators_department_details(
+    department_id: str,
+    competence: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+):
     try:
-        use_case = build_get_strategic_indicators_department_details_use_case()
-        result = use_case.execute(department_id)
+        from app.application.use_cases.strategic_indicators.get_department_details_real_use_case import (
+            DepartmentNotFoundError,
+            GetStrategicIndicatorsDepartmentDetailsRealRequest,
+        )
 
-        return {
-            "id": result.id,
-            "name": result.name,
-            "short_name": result.short_name,
-            "weight_pct": result.weight_pct,
-            "score": result.score,
-            "classification": result.classification,
-            "contribution": result.contribution,
-            "aggregation_mode": result.aggregation_mode,
-            "strategic_summary": result.strategic_summary,
-            "variation": {
-                "value": result.variation.value,
-                "direction": result.variation.direction,
-            },
-            "units": [
-                {
-                    "unit_id": unit.unit_id,
-                    "unit_name": unit.unit_name,
-                    "score": unit.score,
-                    "classification": unit.classification,
-                }
-                for unit in result.units
-            ],
-            "indicators": [
-                {
-                    "id": indicator.id,
-                    "name": indicator.name,
-                    "weight_pct": indicator.weight_pct,
-                    "goal_2026": indicator.goal_2026,
-                    "strategic_description": indicator.strategic_description,
-                    "scope_type": indicator.scope_type,
-                    "realized": indicator.realized,
-                    "score": indicator.score,
-                    "gap": indicator.gap,
-                    "trend": indicator.trend,
-                }
-                for indicator in result.indicators
-            ],
-        }
+        use_case = build_get_strategic_indicators_department_details_use_case()
+        result = use_case.execute(
+            GetStrategicIndicatorsDepartmentDetailsRealRequest(
+                department_id=department_id,
+                competence=competence,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        )
+        return result
     except DepartmentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:

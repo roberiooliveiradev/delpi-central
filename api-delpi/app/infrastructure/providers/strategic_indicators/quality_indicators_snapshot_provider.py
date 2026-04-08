@@ -45,7 +45,7 @@ class QualityIndicatorsSnapshotProvider(
         errors: list[dict] = []
 
         self._collect_indicator(
-            builder=lambda: self._build_internal_ppm_indicator(
+            builder=lambda: self._build_internal_ppm_measurement(
                 start_date=start_date,
                 end_date=end_date,
             ),
@@ -56,7 +56,7 @@ class QualityIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_external_ppm_indicator(
+            builder=lambda: self._build_external_ppm_measurement(
                 start_date=start_date,
                 end_date=end_date,
             ),
@@ -67,7 +67,7 @@ class QualityIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_kaizen_ideas_indicator(
+            builder=lambda: self._build_kaizen_ideas_measurement(
                 start_date=start_date,
                 end_date=end_date,
             ),
@@ -78,7 +78,7 @@ class QualityIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_audit_5s_indicator(
+            builder=lambda: self._build_audit_5s_measurement(
                 start_date=start_date,
                 end_date=end_date,
             ),
@@ -89,7 +89,7 @@ class QualityIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_kaizen_financial_gain_indicator(
+            builder=lambda: self._build_kaizen_financial_gain_measurement(
                 start_date=start_date,
                 end_date=end_date,
             ),
@@ -124,7 +124,7 @@ class QualityIndicatorsSnapshotProvider(
                 }
             )
 
-    def _build_internal_ppm_indicator(
+    def _build_internal_ppm_measurement(
         self,
         *,
         start_date: str | None,
@@ -150,28 +150,19 @@ class QualityIndicatorsSnapshotProvider(
                 "total_ppm",
                 "ppm_summary",
             ],
-        )
-        goal = 1400.0
-        gap = round(value - goal, 2) if value is not None else 0.0
-        score = self._score_lower_is_better(value=value, goal=goal)
+        ) or 0.0
 
         return {
             "department_id": "quality",
-            "department_name": "Qualidade",
             "indicator_id": "quality-ppm-internal",
-            "indicator_name": "PPM Interno",
-            "weight_pct": 20,
-            "goal_2026": "1.400 PPM",
-            "scope_type": "consolidated",
-            "value": value or 0.0,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value is not None and value <= goal else "stable",
-            "classification": self._classify_score(score),
+            "value": value,
             "source": "quality_ppm_internal",
+            "unit_values": {
+                "consolidated": value,
+            },
         }
 
-    def _build_external_ppm_indicator(
+    def _build_external_ppm_measurement(
         self,
         *,
         start_date: str | None,
@@ -197,28 +188,19 @@ class QualityIndicatorsSnapshotProvider(
                 "total_ppm",
                 "ppm_summary",
             ],
-        )
-        goal = 1100.0
-        gap = round(value - goal, 2) if value is not None else 0.0
-        score = self._score_lower_is_better(value=value, goal=goal)
+        ) or 0.0
 
         return {
             "department_id": "quality",
-            "department_name": "Qualidade",
             "indicator_id": "quality-ppm-external",
-            "indicator_name": "PPM Externo",
-            "weight_pct": 30,
-            "goal_2026": "1.100 PPM",
-            "scope_type": "consolidated",
-            "value": value or 0.0,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value is not None and value <= goal else "stable",
-            "classification": self._classify_score(score),
+            "value": value,
             "source": "quality_ppm_external",
+            "unit_values": {
+                "consolidated": value,
+            },
         }
 
-    def _build_kaizen_ideas_indicator(
+    def _build_kaizen_ideas_measurement(
         self,
         *,
         start_date: str | None,
@@ -250,30 +232,20 @@ class QualityIndicatorsSnapshotProvider(
         value = (
             round(total_ideas / qtd_months, 2)
             if total_ideas is not None and qtd_months > 0
-            else total_ideas
+            else (total_ideas or 0.0)
         )
-
-        goal = 8.0
-        gap = round(goal - value, 2) if value is not None else 0.0
-        score = self._score_higher_is_better(value=value, goal=goal)
 
         return {
             "department_id": "quality",
-            "department_name": "Qualidade",
             "indicator_id": "quality-kaizen-ideas",
-            "indicator_name": "Ideias Aprovadas para Kaizen/mês",
-            "weight_pct": 15,
-            "goal_2026": "8 ideias/mês",
-            "scope_type": "consolidated",
-            "value": value or 0.0,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value is not None and value >= goal else "stable",
-            "classification": self._classify_score(score),
+            "value": value,
             "source": "quality_kaizen_ideas",
+            "unit_values": {
+                "consolidated": value,
+            },
         }
 
-    def _build_audit_5s_indicator(
+    def _build_audit_5s_measurement(
         self,
         *,
         start_date: str | None,
@@ -298,28 +270,19 @@ class QualityIndicatorsSnapshotProvider(
                 "media",
                 "average",
             ],
-        )
-        goal = 80.0
-        gap = round(goal - value, 2) if value is not None else 0.0
-        score = self._score_higher_is_better(value=value, goal=goal)
+        ) or 0.0
 
         return {
             "department_id": "quality",
-            "department_name": "Qualidade",
             "indicator_id": "quality-audit-5s",
-            "indicator_name": "Nota Auditoria 5S",
-            "weight_pct": 15,
-            "goal_2026": "80%",
-            "scope_type": "consolidated",
-            "value": value or 0.0,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value is not None and value >= goal else "stable",
-            "classification": self._classify_score(score),
+            "value": value,
             "source": "quality_audit_5s",
+            "unit_values": {
+                "consolidated": value,
+            },
         }
 
-    def _build_kaizen_financial_gain_indicator(
+    def _build_kaizen_financial_gain_measurement(
         self,
         *,
         start_date: str | None,
@@ -347,26 +310,16 @@ class QualityIndicatorsSnapshotProvider(
                 "ganho_financeiro",
                 "ganhos_financeiros",
             ],
-        )
-
-        goal = 4500.0
-        gap = round(goal - value, 2) if value is not None else 0.0
-        score = self._score_higher_is_better(value=value, goal=goal)
+        ) or 0.0
 
         return {
             "department_id": "quality",
-            "department_name": "Qualidade",
             "indicator_id": "quality-kaizen-financial",
-            "indicator_name": "Ganhos Financeiros Kaizen/mês",
-            "weight_pct": 20,
-            "goal_2026": "R$ 4.500/mês",
-            "scope_type": "consolidated",
-            "value": value or 0.0,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value is not None and value >= goal else "stable",
-            "classification": self._classify_score(score),
+            "value": value,
             "source": "quality_kaizen_financial",
+            "unit_values": {
+                "consolidated": value,
+            },
         }
 
     def _resolve_month_count(
@@ -459,30 +412,3 @@ class QualityIndicatorsSnapshotProvider(
             return float(raw)
         except ValueError:
             return None
-
-    def _score_higher_is_better(self, *, value: float | None, goal: float) -> float:
-        if value is None or goal <= 0:
-            return 0.0
-
-        ratio = value / goal
-        score = ratio * 10
-        return round(min(score, 10.0), 2)
-
-    def _score_lower_is_better(self, *, value: float | None, goal: float) -> float:
-        if value is None or goal <= 0:
-            return 0.0
-
-        ratio = goal / value if value > 0 else 10.0
-        score = ratio * 10
-        return round(min(score, 10.0), 2)
-
-    def _classify_score(self, score: float) -> str:
-        if score >= 9:
-            return "Excelência Integrada"
-        if score >= 8:
-            return "Alto Desempenho"
-        if score >= 7:
-            return "Satisfatório com Alertas"
-        if score >= 6:
-            return "Regular, Exige Ação"
-        return "Crítico"

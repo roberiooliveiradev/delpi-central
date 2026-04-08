@@ -10,8 +10,12 @@ class StrategicIndicatorsEngineeringIndicatorsSnapshotPort(ABC):
         *,
         start_date: str | None = None,
         end_date: str | None = None,
-    ) -> list[dict]:
+    ) -> dict:
         """
-        Retorna os indicadores da Engenharia já normalizados para a fase 5.
+        Retorna measurements da Engenharia no formato:
+        {
+            "items": [...],
+            "errors": [...]
+        }
         """
         raise NotImplementedError

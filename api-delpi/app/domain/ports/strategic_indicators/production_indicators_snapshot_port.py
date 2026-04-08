@@ -10,8 +10,12 @@ class StrategicIndicatorsProductionIndicatorsSnapshotPort(ABC):
         *,
         start_date: str | None = None,
         end_date: str | None = None,
-    ) -> list[dict]:
+    ) -> dict:
         """
-        Retorna os indicadores da Produção já normalizados para a fase 5.
+        Retorna measurements da Produção no formato:
+        {
+            "items": [...],
+            "errors": [...]
+        }
         """
         raise NotImplementedError

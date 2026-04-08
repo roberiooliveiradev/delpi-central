@@ -33,7 +33,7 @@ class EngineeringIndicatorsSnapshotProvider(
         errors: list[dict] = []
 
         self._collect_indicator(
-            builder=lambda: self._build_lmp_projects_on_time_indicator(
+            builder=lambda: self._build_lmp_projects_on_time_measurement(
                 start_date=start_date,
                 end_date=end_date,
             ),
@@ -44,7 +44,7 @@ class EngineeringIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_transforma_mais_financial_gain_indicator(
+            builder=lambda: self._build_transforma_mais_financial_gain_measurement(
                 start_date=start_date,
                 end_date=end_date,
             ),
@@ -79,7 +79,7 @@ class EngineeringIndicatorsSnapshotProvider(
                 }
             )
 
-    def _build_lmp_projects_on_time_indicator(
+    def _build_lmp_projects_on_time_measurement(
         self,
         *,
         start_date: str | None,
@@ -95,29 +95,17 @@ class EngineeringIndicatorsSnapshotProvider(
 
         result = self._lmp_dashboard_use_case.execute(request, status_filter="Todos")
         summary = result.get("summary", {})
-
         value = float(summary.get("percent_dentro_prazo", 0))
-        goal = 95.0
-        gap = round(goal - value, 2)
-        score = self._score_higher_is_better(value=value, goal=goal)
 
         return {
             "department_id": "engineering",
-            "department_name": "Engenharia",
             "indicator_id": "engineering-projects-on-time",
-            "indicator_name": "% de Projetos Concluídos no Prazo",
-            "weight_pct": 60,
-            "goal_2026": "95%",
-            "scope_type": "per_unit",
             "value": value,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value >= goal else "stable",
-            "classification": self._classify_score(score),
             "source": "lmp",
+            "unit_values": None,
         }
 
-    def _build_transforma_mais_financial_gain_indicator(
+    def _build_transforma_mais_financial_gain_measurement(
         self,
         *,
         start_date: str | None,
@@ -131,26 +119,14 @@ class EngineeringIndicatorsSnapshotProvider(
 
         summary = self._transforma_mais_summary_use_case.execute(request)
         payload = summary.to_dict() if hasattr(summary, "to_dict") else summary
-
         value = self._extract_financial_gain_value(payload)
-        goal = 15000.0
-        gap = round(goal - value, 2)
-        score = self._score_higher_is_better(value=value, goal=goal)
 
         return {
             "department_id": "engineering",
-            "department_name": "Engenharia",
             "indicator_id": "engineering-transforma-plus",
-            "indicator_name": "Ganhos Financeiros do TRANSFORMA+ DELPI",
-            "weight_pct": 40,
-            "goal_2026": "R$ 15.000/mês",
-            "scope_type": "per_unit",
             "value": value,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value >= goal else "stable",
-            "classification": self._classify_score(score),
             "source": "transforma_mais",
+            "unit_values": None,
         }
 
     def _extract_financial_gain_value(self, payload: dict) -> float:
@@ -170,22 +146,3 @@ class EngineeringIndicatorsSnapshotProvider(
             return total
 
         return 0.0
-
-    def _score_higher_is_better(self, *, value: float, goal: float) -> float:
-        if goal <= 0:
-            return 0.0
-
-        ratio = value / goal
-        score = ratio * 10
-        return round(min(score, 10.0), 2)
-
-    def _classify_score(self, score: float) -> str:
-        if score >= 9:
-            return "Excelência Integrada"
-        if score >= 8:
-            return "Alto Desempenho"
-        if score >= 7:
-            return "Satisfatório com Alertas"
-        if score >= 6:
-            return "Regular, Exige Ação"
-        return "Crítico"

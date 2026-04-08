@@ -72,7 +72,7 @@ class ProductionIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_direct_labor_indicator(
+            builder=lambda: self._build_direct_labor_measurement(
                 matrix_request=matrix_request,
                 branch_request=branch_request,
                 matrix_rol_request=matrix_rol_request,
@@ -85,7 +85,7 @@ class ProductionIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_production_cost_indicator(
+            builder=lambda: self._build_production_cost_measurement(
                 matrix_request=matrix_request,
                 branch_request=branch_request,
                 matrix_rol_request=matrix_rol_request,
@@ -98,7 +98,7 @@ class ProductionIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_depreciation_indicator(
+            builder=lambda: self._build_depreciation_measurement(
                 matrix_request=matrix_request,
                 branch_request=branch_request,
                 matrix_rol_request=matrix_rol_request,
@@ -111,7 +111,7 @@ class ProductionIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_oee_indicator(
+            builder=lambda: self._build_oee_measurement(
                 matrix_request=matrix_request,
                 branch_request=branch_request,
             ),
@@ -122,7 +122,7 @@ class ProductionIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_otd_indicator(
+            builder=lambda: self._build_otd_measurement(
                 matrix_request=matrix_request,
                 branch_request=branch_request,
             ),
@@ -157,7 +157,7 @@ class ProductionIndicatorsSnapshotProvider(
                 }
             )
 
-    def _build_direct_labor_indicator(
+    def _build_direct_labor_measurement(
         self,
         *,
         matrix_request: ProductionRequest,
@@ -174,31 +174,22 @@ class ProductionIndicatorsSnapshotProvider(
             branch_rol_request,
         )
 
-        matrix_value = self._to_float(matrix_result.get("direct_labor_cost_pct"))
-        branch_value = self._to_float(branch_result.get("direct_labor_cost_pct"))
-        value = self._average_values(matrix_value, branch_value)
-
-        goal = 10.0
-        gap = round(value - goal, 2) if value is not None else 0.0
-        score = self._score_lower_is_better(value=value, goal=goal)
+        matrix_value = self._to_float(matrix_result.get("direct_labor_cost_pct")) or 0.0
+        branch_value = self._to_float(branch_result.get("direct_labor_cost_pct")) or 0.0
+        value = self._average_values(matrix_value, branch_value) or 0.0
 
         return {
             "department_id": "production",
-            "department_name": "Produção",
             "indicator_id": "production-direct-labor",
-            "indicator_name": "Custo Mão de Obra Direta / ROL",
-            "weight_pct": 25,
-            "goal_2026": "10,0%",
-            "scope_type": "per_unit",
-            "value": value or 0.0,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value is not None and value <= goal else "stable",
-            "classification": self._classify_score(score),
+            "value": value,
             "source": "production_direct_labor",
+            "unit_values": {
+                "matrix": matrix_value,
+                "branch": branch_value,
+            },
         }
 
-    def _build_production_cost_indicator(
+    def _build_production_cost_measurement(
         self,
         *,
         matrix_request: ProductionRequest,
@@ -215,31 +206,22 @@ class ProductionIndicatorsSnapshotProvider(
             branch_rol_request,
         )
 
-        matrix_value = self._to_float(matrix_result.get("production_cost_pct"))
-        branch_value = self._to_float(branch_result.get("production_cost_pct"))
-        value = self._average_values(matrix_value, branch_value)
-
-        goal = 32.0
-        gap = round(value - goal, 2) if value is not None else 0.0
-        score = self._score_lower_is_better(value=value, goal=goal)
+        matrix_value = self._to_float(matrix_result.get("production_cost_pct")) or 0.0
+        branch_value = self._to_float(branch_result.get("production_cost_pct")) or 0.0
+        value = self._average_values(matrix_value, branch_value) or 0.0
 
         return {
             "department_id": "production",
-            "department_name": "Produção",
             "indicator_id": "production-costs",
-            "indicator_name": "Custos de Produção / ROL",
-            "weight_pct": 20,
-            "goal_2026": "32,0%",
-            "scope_type": "per_unit",
-            "value": value or 0.0,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value is not None and value <= goal else "stable",
-            "classification": self._classify_score(score),
+            "value": value,
             "source": "production_cost",
+            "unit_values": {
+                "matrix": matrix_value,
+                "branch": branch_value,
+            },
         }
 
-    def _build_depreciation_indicator(
+    def _build_depreciation_measurement(
         self,
         *,
         matrix_request: ProductionRequest,
@@ -256,31 +238,22 @@ class ProductionIndicatorsSnapshotProvider(
             branch_rol_request,
         )
 
-        matrix_value = self._to_float(matrix_result.get("depreciation_pct"))
-        branch_value = self._to_float(branch_result.get("depreciation_pct"))
-        value = self._average_values(matrix_value, branch_value)
-
-        goal = 1.5
-        gap = round(value - goal, 2) if value is not None else 0.0
-        score = self._score_lower_is_better(value=value, goal=goal)
+        matrix_value = self._to_float(matrix_result.get("depreciation_pct")) or 0.0
+        branch_value = self._to_float(branch_result.get("depreciation_pct")) or 0.0
+        value = self._average_values(matrix_value, branch_value) or 0.0
 
         return {
             "department_id": "production",
-            "department_name": "Produção",
             "indicator_id": "production-depreciation",
-            "indicator_name": "Depreciação / ROL",
-            "weight_pct": 10,
-            "goal_2026": "1,5%",
-            "scope_type": "per_unit",
-            "value": value or 0.0,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value is not None and value <= goal else "stable",
-            "classification": self._classify_score(score),
+            "value": value,
             "source": "production_depreciation",
+            "unit_values": {
+                "matrix": matrix_value,
+                "branch": branch_value,
+            },
         }
 
-    def _build_oee_indicator(
+    def _build_oee_measurement(
         self,
         *,
         matrix_request: ProductionRequest,
@@ -289,35 +262,26 @@ class ProductionIndicatorsSnapshotProvider(
         matrix_result = self._oee_use_case.execute(matrix_request)
         branch_result = self._oee_use_case.execute(branch_request)
 
-        matrix_value = self._to_float(
-            matrix_result.get("overall_equipment_effectiveness_pct")
+        matrix_value = (
+            self._to_float(matrix_result.get("overall_equipment_effectiveness_pct")) or 0.0
         )
-        branch_value = self._to_float(
-            branch_result.get("overall_equipment_effectiveness_pct")
+        branch_value = (
+            self._to_float(branch_result.get("overall_equipment_effectiveness_pct")) or 0.0
         )
-        value = self._average_values(matrix_value, branch_value)
-
-        goal = 70.0
-        gap = round(goal - value, 2) if value is not None else 0.0
-        score = self._score_higher_is_better(value=value, goal=goal)
+        value = self._average_values(matrix_value, branch_value) or 0.0
 
         return {
             "department_id": "production",
-            "department_name": "Produção",
             "indicator_id": "production-oee",
-            "indicator_name": "OEE (Eficiência Global dos Equip.)",
-            "weight_pct": 20,
-            "goal_2026": "70%",
-            "scope_type": "per_unit",
-            "value": value or 0.0,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value is not None and value >= goal else "stable",
-            "classification": self._classify_score(score),
+            "value": value,
             "source": "production_oee",
+            "unit_values": {
+                "matrix": matrix_value,
+                "branch": branch_value,
+            },
         }
 
-    def _build_otd_indicator(
+    def _build_otd_measurement(
         self,
         *,
         matrix_request: ProductionRequest,
@@ -326,28 +290,19 @@ class ProductionIndicatorsSnapshotProvider(
         matrix_result = self._otd_use_case.execute(matrix_request)
         branch_result = self._otd_use_case.execute(branch_request)
 
-        matrix_value = self._to_float(matrix_result.get("on_time_delivery_pct"))
-        branch_value = self._to_float(branch_result.get("on_time_delivery_pct"))
-        value = self._average_values(matrix_value, branch_value)
-
-        goal = 92.0
-        gap = round(goal - value, 2) if value is not None else 0.0
-        score = self._score_higher_is_better(value=value, goal=goal)
+        matrix_value = self._to_float(matrix_result.get("on_time_delivery_pct")) or 0.0
+        branch_value = self._to_float(branch_result.get("on_time_delivery_pct")) or 0.0
+        value = self._average_values(matrix_value, branch_value) or 0.0
 
         return {
             "department_id": "production",
-            "department_name": "Produção",
             "indicator_id": "production-otd",
-            "indicator_name": "OTD (Entrega no Prazo)",
-            "weight_pct": 25,
-            "goal_2026": "92%",
-            "scope_type": "per_unit",
-            "value": value or 0.0,
-            "score": score,
-            "gap": gap,
-            "trend": "up" if value is not None and value >= goal else "stable",
-            "classification": self._classify_score(score),
+            "value": value,
             "source": "production_otd",
+            "unit_values": {
+                "matrix": matrix_value,
+                "branch": branch_value,
+            },
         }
 
     def _build_production_request(
@@ -393,30 +348,3 @@ class ProductionIndicatorsSnapshotProvider(
             return float(value)
         except (TypeError, ValueError):
             return None
-
-    def _score_higher_is_better(self, *, value: float | None, goal: float) -> float:
-        if value is None or goal <= 0:
-            return 0.0
-
-        ratio = value / goal
-        score = ratio * 10
-        return round(min(score, 10.0), 2)
-
-    def _score_lower_is_better(self, *, value: float | None, goal: float) -> float:
-        if value is None or goal <= 0:
-            return 0.0
-
-        ratio = goal / value if value > 0 else 10.0
-        score = ratio * 10
-        return round(min(score, 10.0), 2)
-
-    def _classify_score(self, score: float) -> str:
-        if score >= 9:
-            return "Excelência Integrada"
-        if score >= 8:
-            return "Alto Desempenho"
-        if score >= 7:
-            return "Satisfatório com Alertas"
-        if score >= 6:
-            return "Regular, Exige Ação"
-        return "Crítico"
