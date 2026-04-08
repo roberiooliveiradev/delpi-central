@@ -1,10 +1,10 @@
-import type { DepartmentTrendItem } from "../../data/mocks/trendsMock";
+import type { PresentationDepartmentBoardItem } from "../../data/types/presentation";
 
 type PresentationDepartmentBoardProps = {
-  departments: DepartmentTrendItem[];
+  departments: PresentationDepartmentBoardItem[];
 };
 
-function getDirectionLabel(direction: DepartmentTrendItem["direction"]) {
+function getDirectionLabel(direction: PresentationDepartmentBoardItem["direction"]) {
   if (direction === "up") return "Melhora";
   if (direction === "down") return "Queda";
   return "Estável";

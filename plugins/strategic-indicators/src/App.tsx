@@ -39,7 +39,7 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   }
 
   if (pathname === "/apps/strategic-indicators/presentation") {
-    return <PresentationPage />;
+    return <PresentationPage getAccessToken={getAccessToken} />;
   }
 
   if (pathname === "/apps/strategic-indicators/settings") {

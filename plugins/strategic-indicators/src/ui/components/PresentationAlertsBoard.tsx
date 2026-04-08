@@ -1,7 +1,7 @@
-import type { ExecutiveAlert } from "../../data/mocks/alertsMock";
+import type { ExecutiveAlertViewItem } from "../../data/types/alerts";
 
 type PresentationAlertsBoardProps = {
-  alerts: ExecutiveAlert[];
+  alerts: ExecutiveAlertViewItem[];
 };
 
 export function PresentationAlertsBoard({
