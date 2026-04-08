@@ -16,11 +16,10 @@ import { SettingsWorkspaceNav } from "../components/SettingsWorkspaceNav";
 import { SettingsStatusStrip } from "../components/SettingsStatusStrip";
 import { InfoState } from "../components/InfoState";
 import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
-
 import type {
   SettingsDashboardData,
   SettingsReadinessItem,
-} from "../../data/mocks/settingsMock";
+} from "../../data/types/settingsDashboard";
 
 type SettingsPageProps = {
   getAccessToken?: () => string | undefined;

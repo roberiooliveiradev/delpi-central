@@ -1,7 +1,7 @@
-import type { SettingsWeightItem } from "../../data/mocks/settingsMock";
+import type { SettingsDashboardWeightItem } from "../../data/types/settingsDashboard";
 
 type SettingsWeightsPanelProps = {
-  items: SettingsWeightItem[];
+  items: SettingsDashboardWeightItem[];
 };
 
 export function SettingsWeightsPanel({

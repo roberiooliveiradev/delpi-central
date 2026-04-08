@@ -1,7 +1,7 @@
-import type { SettingsGovernanceItem } from "../../data/mocks/settingsMock";
+import type { SettingsDashboardGovernanceItem } from "../../data/types/settingsDashboard";
 
 type SettingsGovernancePanelProps = {
-  items: SettingsGovernanceItem[];
+  items: SettingsDashboardGovernanceItem[];
 };
 
 export function SettingsGovernancePanel({

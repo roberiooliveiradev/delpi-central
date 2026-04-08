@@ -52,7 +52,9 @@ class PostgresStrategicIndicatorsCatalogRepository(
                         department_id=department_id,
                         indicator_name=indicator["name"],
                         weight_pct=float(indicator["weight_pct"]),
-                        goal_2026=indicator["goal_2026"],
+                        goal_label=indicator["goal_label"],
+                        goal_value=float(indicator["goal_value"]),
+                        goal_periodicity=indicator.get("goal_periodicity", "monthly"),
                         scope_type=indicator.get("scope_type", "consolidated"),
                         strategic_description=indicator.get(
                             "strategic_description",

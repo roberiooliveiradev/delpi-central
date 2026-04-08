@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from app.application.dto.strategic_indicators.catalog_models import (
     StrategicDepartmentCalculatedValue,
     StrategicDepartmentCatalogItem,
@@ -16,6 +18,9 @@ class StrategicIndicatorsCalculator:
         indicators_catalog: list[StrategicIndicatorCatalogItem],
         measurements: list[StrategicIndicatorMeasuredValue],
         department_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        competence: str | None = None,
     ) -> list[StrategicIndicatorCalculatedValue]:
         measurements_by_indicator = {
             item.indicator_id: item for item in measurements
@@ -31,14 +36,22 @@ class StrategicIndicatorsCalculator:
             if measurement is None:
                 continue
 
+            comparable_goal = self.calculate_comparable_goal(
+                goal_value=indicator.goal_value,
+                goal_periodicity=indicator.goal_periodicity,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+
             score = self.calculate_indicator_score(
                 indicator_id=indicator.indicator_id,
-                goal_text=indicator.goal_2026,
+                comparable_goal=comparable_goal,
                 value=measurement.value,
             )
             gap = self.calculate_indicator_gap(
                 indicator_id=indicator.indicator_id,
-                goal_text=indicator.goal_2026,
+                comparable_goal=comparable_goal,
                 value=measurement.value,
             )
 
@@ -48,7 +61,9 @@ class StrategicIndicatorsCalculator:
                     department_id=indicator.department_id,
                     indicator_name=indicator.indicator_name,
                     weight_pct=indicator.weight_pct,
-                    goal_2026=indicator.goal_2026,
+                    goal_label=indicator.goal_label,
+                    goal_value=indicator.goal_value,
+                    goal_periodicity=indicator.goal_periodicity,
                     scope_type=indicator.scope_type,
                     strategic_description=indicator.strategic_description,
                     source=measurement.source,
@@ -69,12 +84,18 @@ class StrategicIndicatorsCalculator:
         departments_catalog: list[StrategicDepartmentCatalogItem],
         indicators_catalog: list[StrategicIndicatorCatalogItem],
         measurements: list[StrategicIndicatorMeasuredValue],
+        start_date: str | None = None,
+        end_date: str | None = None,
+        competence: str | None = None,
     ) -> list[StrategicDepartmentCalculatedValue]:
         indicators_by_department: dict[str, list[StrategicIndicatorCalculatedValue]] = {}
 
         for item in self.calculate_indicators(
             indicators_catalog=indicators_catalog,
             measurements=measurements,
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
         ):
             indicators_by_department.setdefault(item.department_id, []).append(item)
 
@@ -113,43 +134,74 @@ class StrategicIndicatorsCalculator:
         classification = self.classify_score(igd)
         return igd, igd_exact, classification
 
+    def calculate_comparable_goal(
+        self,
+        *,
+        goal_value: float,
+        goal_periodicity: str,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        competence: str | None = None,
+    ) -> float:
+        if goal_value <= 0:
+            return 0.0
+
+        periodicity = (goal_periodicity or "monthly").strip().lower()
+        months = self._resolve_period_months(
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+
+        if periodicity == "monthly":
+            return round(goal_value * months, 2)
+
+        if periodicity == "annual":
+            return round((goal_value / 12.0) * months, 2)
+
+        if periodicity == "quarterly":
+            return round((goal_value / 3.0) * months, 2)
+
+        if periodicity == "semiannual":
+            return round((goal_value / 6.0) * months, 2)
+
+        return round(goal_value, 2)
+
     def calculate_indicator_score(
         self,
         *,
         indicator_id: str,
-        goal_text: str,
+        comparable_goal: float,
         value: float,
     ) -> float:
-        goal = self._extract_numeric_goal(goal_text)
         lower_is_better = self._is_lower_better(indicator_id)
 
-        if goal <= 0:
+        if comparable_goal <= 0:
             return 0.0
 
         if lower_is_better:
-            ratio = goal / value if value > 0 else 10.0
+            ratio = comparable_goal / value if value > 0 else 10.0
             return round(min(ratio * 10.0, 10.0), 2)
 
-        ratio = value / goal
+        ratio = value / comparable_goal
         return round(min(ratio * 10.0, 10.0), 2)
 
     def calculate_indicator_gap(
         self,
         *,
         indicator_id: str,
-        goal_text: str,
+        comparable_goal: float,
         value: float,
     ) -> float:
-        goal = self._extract_numeric_goal(goal_text)
         lower_is_better = self._is_lower_better(indicator_id)
 
-        if goal <= 0:
+        if comparable_goal <= 0:
             return 0.0
 
         if lower_is_better:
-            return round(value - goal, 2)
+            return round(value - comparable_goal, 2)
 
-        return round(goal - value, 2)
+        return round(comparable_goal - value, 2)
 
     def classify_score(self, score: float) -> str:
         if score >= 9:
@@ -176,26 +228,48 @@ class StrategicIndicatorsCalculator:
         weighted_sum = sum(item.score * item.weight_pct for item in indicators)
         return round(weighted_sum / total_weight, 3)
 
-    def _extract_numeric_goal(self, goal_text: str) -> float:
-        cleaned = (
-            goal_text.replace("R$", "")
-            .replace("%", "")
-            .replace("PPM", "")
-            .replace("dias", "")
-            .replace("mês", "")
-            .replace("mes", "")
-            .replace("ideias", "")
-            .replace("novos", "")
-            .strip()
-        )
+    def _resolve_period_months(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> int:
+        if competence and len(competence) == 7:
+            return 1
 
-        cleaned = cleaned.split()[0] if cleaned else ""
-        cleaned = cleaned.replace(".", "").replace(",", ".")
+        start = self._parse_date(start_date)
+        end = self._parse_date(end_date)
+
+        if start is None or end is None:
+            return 1
+
+        months = ((end.year - start.year) * 12) + (end.month - start.month) + 1
+        return max(1, months)
+
+    def _parse_date(self, value: str | None):
+        if not value:
+            return None
+
+        known_formats = [
+            "%d-%m-%Y",
+            "%Y-%m-%d",
+            "%d/%m/%Y",
+            "%Y/%m/%d",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%dT%H:%M:%S",
+        ]
+
+        for fmt in known_formats:
+            try:
+                return datetime.strptime(value.strip(), fmt)
+            except ValueError:
+                continue
 
         try:
-            return float(cleaned)
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
         except Exception:
-            return 0.0
+            return None
 
     def _is_lower_better(self, indicator_id: str) -> bool:
         negative_patterns = [

@@ -3,6 +3,13 @@ import type {
   StrategicIndicatorsDepartmentDetailsResponse,
 } from "../types/departmentDetails";
 
+function normalizeTrend(value: string): "up" | "down" | "stable" {
+  if (value === "up" || value === "down" || value === "stable") {
+    return value;
+  }
+  return "stable";
+}
+
 export function adaptDepartmentDetailsToView(
   response: StrategicIndicatorsDepartmentDetailsResponse,
 ): DepartmentDetailsViewData {
@@ -13,9 +20,9 @@ export function adaptDepartmentDetailsToView(
     weightInIgd: response.weight_pct,
     score: response.score,
     classification: response.classification,
-    strategicSummary: response.strategic_summary,
-    aggregationMode: response.aggregation_mode,
     contribution: response.contribution,
+    aggregationMode: response.aggregation_mode,
+    strategicSummary: response.strategic_summary,
     variation: {
       value: response.variation.value,
       direction: response.variation.direction,
@@ -26,12 +33,19 @@ export function adaptDepartmentDetailsToView(
       score: unit.score,
       classification: unit.classification,
     })),
-    indicators: response.indicators.map((item) => ({
-      id: item.id,
-      name: item.name,
-      weightPct: item.weight_pct,
-      goal2026: item.goal_2026,
-      strategicDescription: item.strategic_description,
+    indicators: response.indicators.map((indicator) => ({
+      id: indicator.id,
+      name: indicator.name,
+      weightPct: indicator.weight_pct,
+      goalLabel: indicator.goal_label,
+      goalValue: indicator.goal_value,
+      goalPeriodicity: indicator.goal_periodicity,
+      strategicDescription: indicator.strategic_description,
+      scopeType: indicator.scope_type,
+      realized: indicator.realized,
+      score: indicator.score,
+      gap: indicator.gap,
+      trend: normalizeTrend(indicator.trend),
     })),
   };
 }

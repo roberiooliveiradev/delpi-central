@@ -1,17 +1,17 @@
-import type { ExecutiveAlert } from "../../data/mocks/alertsMock";
+import type { ExecutiveAlertViewItem } from "../../data/types/alerts";
 import { StatusBadge } from "./StatusBadge";
 
 type TopAlertHighlightProps = {
-  alert: ExecutiveAlert | null;
+  alert: ExecutiveAlertViewItem | null;
 };
 
-function getVariant(severity: ExecutiveAlert["severity"]) {
+function getVariant(severity: ExecutiveAlertViewItem["severity"]) {
   if (severity === "high") return "danger";
   if (severity === "medium") return "warning";
   return "neutral";
 }
 
-function getLabel(severity: ExecutiveAlert["severity"]) {
+function getLabel(severity: ExecutiveAlertViewItem["severity"]) {
   if (severity === "high") return "Alta criticidade";
   if (severity === "medium") return "Média criticidade";
   return "Baixa criticidade";

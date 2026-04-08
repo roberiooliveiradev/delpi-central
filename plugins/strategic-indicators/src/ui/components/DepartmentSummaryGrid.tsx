@@ -1,8 +1,8 @@
-import type { DepartmentSummary } from "../../data/mocks/executiveDashboardMock";
+import type { ExecutiveDepartmentSummary } from "../../data/types/executiveSummaryView";
 import { DepartmentSummaryCard } from "./DepartmentSummaryCard";
 
 type DepartmentSummaryGridProps = {
-  departments: DepartmentSummary[];
+  departments: ExecutiveDepartmentSummary[];
 };
 
 export function DepartmentSummaryGrid({

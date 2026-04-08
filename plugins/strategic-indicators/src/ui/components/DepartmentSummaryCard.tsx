@@ -1,8 +1,8 @@
-import type { DepartmentSummary } from "../../data/mocks/executiveDashboardMock";
+import type { ExecutiveDepartmentSummary } from "../../data/types/executiveSummaryView";
 import { StatusBadge } from "./StatusBadge";
 
 type DepartmentSummaryCardProps = {
-  department: DepartmentSummary;
+  department: ExecutiveDepartmentSummary;
 };
 
 function getVariant(score: number): "success" | "warning" | "danger" | "info" {

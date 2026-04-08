@@ -57,6 +57,9 @@ class GetStrategicIndicatorsDepartmentsRealUseCase:
             departments_catalog=departments_catalog,
             indicators_catalog=indicators_catalog,
             measurements=measurements,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            competence=request.competence,
         )
 
         return {

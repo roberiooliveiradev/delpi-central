@@ -10,7 +10,9 @@ class IndicatorItemResponse:
     indicator_id: str
     indicator_name: str
     weight_pct: int
-    goal_2026: str
+    goal_label: str
+    goal_value: float
+    goal_periodicity: str
     scope_type: str
     value: float
     score: float

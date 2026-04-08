@@ -1,4 +1,4 @@
-import type { SettingsReadinessItem } from "../../data/mocks/settingsMock";
+import type { SettingsReadinessItem } from "../../data/types/settingsDashboard";
 import { StatusBadge } from "./StatusBadge";
 
 type SettingsReadinessPanelProps = {

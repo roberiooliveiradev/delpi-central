@@ -53,8 +53,13 @@ export function IndicatorQuickDetail({
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">
-          <span>Meta 2026</span>
-          <strong>{indicator.goal2026}</strong>
+          <span>Meta</span>
+          <strong>{indicator.goalLabel}</strong>
+        </div>
+
+        <div className="si-indicator-quick-detail__meta-item">
+          <span>Periodicidade</span>
+          <strong>{indicator.goalPeriodicity}</strong>
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">

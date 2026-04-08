@@ -57,6 +57,9 @@ class GetStrategicIndicatorsExecutiveSummaryRealUseCase:
             departments_catalog=departments_catalog,
             indicators_catalog=indicators_catalog,
             measurements=measurements,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            competence=request.competence,
         )
 
         igd, igd_exact, classification = self._calculator.calculate_igd(

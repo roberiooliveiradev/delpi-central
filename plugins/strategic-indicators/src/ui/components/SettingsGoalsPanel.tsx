@@ -1,7 +1,7 @@
-import type { SettingsGoalItem } from "../../data/mocks/settingsMock";
+import type { SettingsDashboardGoalItem } from "../../data/types/settingsDashboard";
 
 type SettingsGoalsPanelProps = {
-  items: SettingsGoalItem[];
+  items: SettingsDashboardGoalItem[];
 };
 
 export function SettingsGoalsPanel({
@@ -12,7 +12,7 @@ export function SettingsGoalsPanel({
       <div className="si-settings-panel__header">
         <h3 className="si-settings-panel__title">Metas executivas resumidas</h3>
         <span className="si-settings-panel__subtitle">
-          referência de metas 2026 por área
+          referência de metas por área
         </span>
       </div>
 

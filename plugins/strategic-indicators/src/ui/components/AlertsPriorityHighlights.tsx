@@ -53,7 +53,7 @@ export function AlertsPriorityHighlights({
             </p>
             <p className="si-alert-highlight-card__meta">
               Nota: {topIndicator.simulatedScore.toFixed(1)} · Meta:{" "}
-              {topIndicator.goal2026}
+              {topIndicator.goalLabel}
             </p>
           </>
         ) : null}

@@ -71,6 +71,9 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             departments_catalog=[department_catalog],
             indicators_catalog=indicators_catalog,
             measurements=measurements,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            competence=request.competence,
         )
 
         if not calculated_departments:
@@ -94,13 +97,20 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
                 "value": 0.0,
                 "direction": department.trend,
             },
-            "units": self._build_units(department),
+            "units": self._build_units(
+                department,
+                start_date=request.start_date,
+                end_date=request.end_date,
+                competence=request.competence,
+            ),
             "indicators": [
                 {
                     "id": indicator.indicator_id,
                     "name": indicator.indicator_name,
                     "weight_pct": indicator.weight_pct,
-                    "goal_2026": indicator.goal_2026,
+                    "goal_label": indicator.goal_label,
+                    "goal_value": indicator.goal_value,
+                    "goal_periodicity": indicator.goal_periodicity,
                     "strategic_description": indicator.strategic_description,
                     "scope_type": indicator.scope_type,
                     "realized": indicator.unit_values or {"consolidated": indicator.value},
@@ -114,17 +124,32 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             "partial_success": len(errors) > 0,
         }
 
-    def _build_units(self, department) -> list[dict]:
+    def _build_units(
+        self,
+        department,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> list[dict]:
         unit_scores: dict[str, list[float]] = {}
 
         for indicator in department.indicators:
             if not indicator.unit_values:
                 continue
 
+            comparable_goal = self._calculator.calculate_comparable_goal(
+                goal_value=indicator.goal_value,
+                goal_periodicity=indicator.goal_periodicity,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+
             for unit_id, raw_value in indicator.unit_values.items():
-                unit_score = self._calculator._calculate_score(  # temporary reuse
+                unit_score = self._calculator.calculate_indicator_score(
                     indicator_id=indicator.indicator_id,
-                    goal_text=indicator.goal_2026,
+                    comparable_goal=comparable_goal,
                     value=float(raw_value),
                 )
                 unit_scores.setdefault(unit_id, []).append(unit_score)
@@ -140,7 +165,7 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
                     "unit_id": unit_id,
                     "unit_name": self._resolve_unit_name(unit_id),
                     "score": avg_score,
-                    "classification": self._calculator._classify_score(avg_score),
+                    "classification": self._calculator.classify_score(avg_score),
                 }
             )
 

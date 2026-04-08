@@ -311,6 +311,7 @@ def get_strategic_indicators_department_details(
 @require_permission("strategic-indicators.view")
 def get_strategic_indicators(
     department_id: str | None = Query(None),
+    competence: str | None = Query(None),
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
 ):
@@ -318,6 +319,7 @@ def get_strategic_indicators(
         use_case = build_get_strategic_indicators_use_case()
         result = use_case.execute(
             department_id=department_id,
+            competence=competence,
             start_date=start_date,
             end_date=end_date,
         )
@@ -330,7 +332,9 @@ def get_strategic_indicators(
                     "indicator_id": item.indicator_id,
                     "indicator_name": item.indicator_name,
                     "weight_pct": item.weight_pct,
-                    "goal_2026": item.goal_2026,
+                    "goal_label": item.goal_label,
+                    "goal_value": item.goal_value,
+                    "goal_periodicity": item.goal_periodicity,
                     "scope_type": item.scope_type,
                     "value": item.value,
                     "score": item.score,

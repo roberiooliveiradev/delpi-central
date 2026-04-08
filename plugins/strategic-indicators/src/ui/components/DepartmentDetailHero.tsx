@@ -1,4 +1,4 @@
-import type { DepartmentDetails } from "../../data/mocks/departmentsMock";
+import type { DepartmentDetails } from "../../data/types/departmentDetails";
 import { StatusBadge } from "./StatusBadge";
 
 type DepartmentDetailHeroProps = {

@@ -1,8 +1,14 @@
-import type { DepartmentIndicator } from "../../data/mocks/departmentsMock";
+import type { DepartmentIndicator } from "../../data/types/departmentDetails";
 
 type IndicatorDetailCardProps = {
   indicator: DepartmentIndicator;
 };
+
+function formatRealized(realized: Record<string, number>) {
+  return Object.entries(realized)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(" · ");
+}
 
 export function IndicatorDetailCard({
   indicator,
@@ -17,9 +23,37 @@ export function IndicatorDetailCard({
       </div>
 
       <div className="si-indicator-card__goal">
-        <span className="si-indicator-card__goal-label">Meta 2026</span>
+        <span className="si-indicator-card__goal-label">Meta</span>
         <strong className="si-indicator-card__goal-value">
-          {indicator.goal2026}
+          {indicator.goalLabel}
+        </strong>
+      </div>
+
+      <div className="si-indicator-card__goal">
+        <span className="si-indicator-card__goal-label">Periodicidade</span>
+        <strong className="si-indicator-card__goal-value">
+          {indicator.goalPeriodicity}
+        </strong>
+      </div>
+
+      <div className="si-indicator-card__goal">
+        <span className="si-indicator-card__goal-label">Realizado</span>
+        <strong className="si-indicator-card__goal-value">
+          {formatRealized(indicator.realized)}
+        </strong>
+      </div>
+
+      <div className="si-indicator-card__goal">
+        <span className="si-indicator-card__goal-label">Score</span>
+        <strong className="si-indicator-card__goal-value">
+          {indicator.score.toFixed(2)}
+        </strong>
+      </div>
+
+      <div className="si-indicator-card__goal">
+        <span className="si-indicator-card__goal-label">Gap</span>
+        <strong className="si-indicator-card__goal-value">
+          {indicator.gap.toFixed(2)}
         </strong>
       </div>
 

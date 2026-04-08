@@ -33,7 +33,7 @@ export function IndicatorAnalyticsTable({
         <span>Indicador</span>
         <span>Departamento</span>
         <span>Peso</span>
-        <span>Meta 2026</span>
+        <span>Meta</span>
         <span>Nota</span>
         <span>Status</span>
       </div>
@@ -57,7 +57,7 @@ export function IndicatorAnalyticsTable({
 
             <span>{indicator.departmentName}</span>
             <span>{indicator.weightPct}%</span>
-            <span>{indicator.goal2026}</span>
+            <span>{indicator.goalLabel}</span>
             <strong className="si-indicator-table__score">
               {indicator.score.toFixed(1)}
             </strong>

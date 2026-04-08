@@ -1,7 +1,7 @@
-import type { DepartmentSummary } from "../../data/mocks/executiveDashboardMock";
+import type { ExecutiveDepartmentSummary } from "../../data/types/executiveSummaryView";
 
 type ContributionRankingProps = {
-  departments: DepartmentSummary[];
+  departments: ExecutiveDepartmentSummary[];
 };
 
 export function ContributionRanking({

@@ -1,4 +1,4 @@
-import type { DepartmentIndicator } from "../../data/mocks/departmentsMock";
+import type { DepartmentIndicator } from "../../data/types/departmentDetails";
 import { IndicatorDetailCard } from "./IndicatorDetailCard";
 
 type IndicatorDetailGridProps = {

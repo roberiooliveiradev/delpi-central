@@ -65,6 +65,9 @@ class GetStrategicIndicatorsTrendsRealUseCase:
                 departments_catalog=departments_catalog,
                 indicators_catalog=indicators_catalog,
                 measurements=measurements,
+                start_date=start_date,
+                end_date=end_date,
+                competence=period["competence"],
             )
 
             igd, _igd_exact, classification = self._calculator.calculate_igd(

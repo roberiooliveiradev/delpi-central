@@ -1,4 +1,4 @@
-import type { SettingsDashboardData } from "../../data/mocks/settingsMock";
+import type { SettingsDashboardData } from "../../data/types/settingsDashboard";
 
 type SettingsActionPanelProps = {
   data: SettingsDashboardData;

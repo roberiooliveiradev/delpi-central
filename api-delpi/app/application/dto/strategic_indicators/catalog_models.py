@@ -9,7 +9,9 @@ class StrategicIndicatorCatalogItem:
     department_id: str
     indicator_name: str
     weight_pct: float
-    goal_2026: str
+    goal_label: str
+    goal_value: float
+    goal_periodicity: str
     scope_type: str
     strategic_description: str
     source_key: str | None = None
@@ -40,7 +42,9 @@ class StrategicIndicatorCalculatedValue:
     department_id: str
     indicator_name: str
     weight_pct: float
-    goal_2026: str
+    goal_label: str
+    goal_value: float
+    goal_periodicity: str
     scope_type: str
     strategic_description: str
     source: str

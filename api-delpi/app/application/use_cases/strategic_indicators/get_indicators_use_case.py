@@ -39,6 +39,7 @@ class GetStrategicIndicatorsUseCase:
         start_date: str | None = None,
         end_date: str | None = None,
         department_id: str | None = None,
+        competence: str | None = None,
     ) -> GetStrategicIndicatorsResponse:
         departments_catalog = self._departments_catalog_repository.list_departments_catalog()
         departments_by_id = {
@@ -56,6 +57,9 @@ class GetStrategicIndicatorsUseCase:
             indicators_catalog=indicators_catalog,
             measurements=measurements,
             department_id=department_id,
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
         )
 
         return GetStrategicIndicatorsResponse(
@@ -66,7 +70,9 @@ class GetStrategicIndicatorsUseCase:
                     indicator_id=item.indicator_id,
                     indicator_name=item.indicator_name,
                     weight_pct=int(item.weight_pct),
-                    goal_2026=item.goal_2026,
+                    goal_label=item.goal_label,
+                    goal_value=float(item.goal_value),
+                    goal_periodicity=item.goal_periodicity,
                     scope_type=item.scope_type,
                     value=float(item.value),
                     score=float(item.score),

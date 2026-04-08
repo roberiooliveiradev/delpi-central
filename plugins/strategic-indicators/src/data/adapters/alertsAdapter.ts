@@ -31,7 +31,7 @@ export function adaptAlertsToView(
       departmentName: item.department_name,
       indicatorName: item.indicator_name,
       simulatedScore: item.score,
-      goal2026: "-", // pode ser enriquecido depois se a rota passar a devolver meta
+      goalLabel: item.goal_label ?? "-",
       severity: item.severity,
       reason: item.message,
       recommendation:

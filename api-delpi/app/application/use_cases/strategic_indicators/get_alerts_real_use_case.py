@@ -60,6 +60,9 @@ class GetStrategicIndicatorsAlertsRealUseCase:
             departments_catalog=departments_catalog,
             indicators_catalog=indicators_catalog,
             measurements=measurements,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            competence=request.competence,
         )
 
         executive_alerts = self._alerts_summary_port.get_alerts_summary(

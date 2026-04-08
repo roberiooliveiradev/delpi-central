@@ -50,7 +50,7 @@ export function IndicatorPriorityList({
 
           <div className="si-indicator-priority-item__meta">
             <span>Peso interno: {indicator.weightPct}%</span>
-            <span>Meta 2026: {indicator.goal2026}</span>
+            <span>Meta: {indicator.goalLabel}</span>
             <span>Nota: {indicator.score.toFixed(1)}</span>
           </div>
 

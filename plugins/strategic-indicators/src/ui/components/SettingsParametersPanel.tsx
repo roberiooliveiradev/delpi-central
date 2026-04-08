@@ -1,7 +1,7 @@
-import type { SettingsParameterItem } from "../../data/mocks/settingsMock";
+import type { SettingsDashboardParameterItem } from "../../data/types/settingsDashboard";
 
 type SettingsParametersPanelProps = {
-  items: SettingsParameterItem[];
+  items: SettingsDashboardParameterItem[];
 };
 
 export function SettingsParametersPanel({

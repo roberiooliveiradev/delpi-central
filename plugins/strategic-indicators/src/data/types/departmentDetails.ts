@@ -1,26 +1,41 @@
-export type DepartmentDetailsVariationApi = {
-  value: number;
-  direction: "up" | "down" | "stable";
-};
-
-export type DepartmentUnitScoreApi = {
-  unit_id: string;
-  unit_name: string;
-  score: number;
-  classification: string;
-};
-
-export type DepartmentIndicatorDetailsApi = {
+export type DepartmentIndicator = {
   id: string;
   name: string;
-  weight_pct: number;
-  goal_2026: string;
-  strategic_description: string;
-  scope_type: "per_unit" | "consolidated" | "matrix_only" | "branch_only";
+  weightPct: number;
+  goalLabel: string;
+  goalValue: number;
+  goalPeriodicity: string;
+  strategicDescription: string;
+  scopeType: string;
   realized: Record<string, number>;
   score: number;
   gap: number;
   trend: "up" | "down" | "stable";
+};
+
+export type DepartmentUnit = {
+  unitId: string;
+  unitName: string;
+  score: number;
+  classification: string;
+};
+
+export type DepartmentDetails = {
+  id: string;
+  name: string;
+  shortName: string;
+  weightInIgd: number;
+  score: number;
+  classification: string;
+  contribution: number;
+  aggregationMode: string;
+  strategicSummary: string;
+  variation: {
+    value: number;
+    direction: string;
+  };
+  units: DepartmentUnit[];
+  indicators: DepartmentIndicator[];
 };
 
 export type StrategicIndicatorsDepartmentDetailsResponse = {
@@ -31,40 +46,38 @@ export type StrategicIndicatorsDepartmentDetailsResponse = {
   score: number;
   classification: string;
   contribution: number;
-  aggregation_mode: "average_of_units" | "consolidated" | "mixed_scope";
+  aggregation_mode: string;
   strategic_summary: string;
-  variation: DepartmentDetailsVariationApi;
-  units: DepartmentUnitScoreApi[];
-  indicators: DepartmentIndicatorDetailsApi[];
-};
-
-export type DepartmentIndicatorViewItem = {
-  id: string;
-  name: string;
-  weightPct: number;
-  goal2026: string;
-  strategicDescription: string;
-};
-
-export type DepartmentDetailsViewData = {
-  id: string;
-  name: string;
-  shortName: string;
-  weightInIgd: number;
-  score: number;
-  classification: string;
-  strategicSummary: string;
-  aggregationMode: "average_of_units" | "consolidated" | "mixed_scope";
-  contribution: number;
   variation: {
     value: number;
-    direction: "up" | "down" | "stable";
+    direction: string;
   };
-  units: {
-    unitId: string;
-    unitName: string;
+  units: Array<{
+    unit_id: string;
+    unit_name: string;
     score: number;
     classification: string;
-  }[];
-  indicators: DepartmentIndicatorViewItem[];
+  }>;
+  indicators: Array<{
+    id: string;
+    name: string;
+    weight_pct: number;
+    goal_label: string;
+    goal_value: number;
+    goal_periodicity: string;
+    strategic_description: string;
+    scope_type: string;
+    realized: Record<string, number>;
+    score: number;
+    gap: number;
+    trend: string;
+  }>;
+  errors?: Array<{
+    department_id: string;
+    source: string;
+    message: string;
+  }>;
+  partial_success?: boolean;
 };
+
+export type DepartmentDetailsViewData = DepartmentDetails;

@@ -3,20 +3,29 @@ import type {
   StrategicIndicatorsResponse,
 } from "../types/indicators";
 
+function normalizeTrend(value: string): "up" | "down" | "stable" {
+  if (value === "up" || value === "down" || value === "stable") {
+    return value;
+  }
+  return "stable";
+}
+
 export function adaptIndicatorsToView(
   response: StrategicIndicatorsResponse,
 ): IndicatorViewItem[] {
   return response.items.map((item) => ({
     id: item.indicator_id,
+    name: item.indicator_name,
     departmentId: item.department_id,
     departmentName: item.department_name,
-    name: item.indicator_name,
     weightPct: item.weight_pct,
-    goal2026: item.goal_2026,
+    goalLabel: item.goal_label,
+    goalValue: item.goal_value,
+    goalPeriodicity: item.goal_periodicity,
     value: item.value,
     score: item.score,
     gap: item.gap,
-    trend: item.trend,
+    trend: normalizeTrend(item.trend),
     classification: item.classification,
     source: item.source,
   }));

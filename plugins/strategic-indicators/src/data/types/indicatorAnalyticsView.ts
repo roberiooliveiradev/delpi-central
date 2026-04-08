@@ -11,7 +11,9 @@ export type IndicatorAnalyticsViewItem = {
   indicatorName: string;
   strategicDescription: string;
   weightPct: number;
-  goal2026: string;
+  goalLabel: string;
+  goalValue: number;
+  goalPeriodicity: string;
   currentValue: number;
   score: number;
   gap: number;

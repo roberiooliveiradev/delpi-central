@@ -48,7 +48,7 @@ export function CriticalIndicatorList({
 
           <div className="si-critical-item__metrics">
             <span>Nota: {alert.simulatedScore.toFixed(1)}</span>
-            <span>Meta 2026: {alert.goal2026}</span>
+            <span>Meta: {alert.goalLabel}</span>
           </div>
 
           <p className="si-critical-item__recommendation">
