@@ -1171,7 +1171,7 @@ body {
 
 .si-indicator-table__row {
   display: grid;
-  grid-template-columns: minmax(120px, 2fr) 140px 90px 140px 80px minmax(110px, 1fr);
+  grid-template-columns: minmax(100px, 2fr) 120px 90px 120px 80px minmax(100px, 1fr);
   gap: 16px;
   align-items: center;
   padding: 16px 18px;
