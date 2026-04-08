@@ -18,10 +18,12 @@ function buildHeaders(getAccessToken?: GetToken): HeadersInit {
 
 export async function fetchStrategicIndicatorsSettings(
   getAccessToken?: GetToken,
+  signal?: AbortSignal,
 ): Promise<StrategicIndicatorsSettingsResponse> {
   const response = await fetch(`${BASE_URL}/settings`, {
     method: "GET",
     headers: buildHeaders(getAccessToken),
+    signal,
   });
 
   if (!response.ok) {

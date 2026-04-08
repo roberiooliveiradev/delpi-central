@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchStrategicIndicatorsSettings,
   updateStrategicIndicatorsSettings,
@@ -17,62 +17,109 @@ export function useStrategicIndicatorsSettings({
 }: UseStrategicIndicatorsSettingsParams) {
   const [data, setData] = useState<StrategicIndicatorsSettingsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetchStrategicIndicatorsSettings(getAccessToken);
-      setData(response);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro inesperado ao carregar.");
-    } finally {
-      setLoading(false);
-    }
-  }, [getAccessToken]);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
+  const hasLoadedOnceRef = useRef(false);
+  const getAccessTokenRef = useRef(getAccessToken);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    getAccessTokenRef.current = getAccessToken;
+  }, [getAccessToken]);
 
-  const save = useCallback(
-    async (payload: StrategicIndicatorsSettingsUpdateRequest) => {
-      setSaving(true);
+  const loadRef = useRef<() => Promise<void>>(async () => {});
+
+  useEffect(() => {
+    loadRef.current = async () => {
+      const requestId = ++requestIdRef.current;
+
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      if (hasLoadedOnceRef.current) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
       setError(null);
-      setSuccessMessage(null);
 
       try {
-        const response = await updateStrategicIndicatorsSettings(
-          payload,
-          getAccessToken,
+        const response = await fetchStrategicIndicatorsSettings(
+          getAccessTokenRef.current,
+          controller.signal,
         );
-        setSuccessMessage(response.message);
-        await load();
+
+        if (requestId !== requestIdRef.current || controller.signal.aborted) {
+          return;
+        }
+
+        setData(response);
+        hasLoadedOnceRef.current = true;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro inesperado ao salvar.");
-        throw err;
+        if (requestId !== requestIdRef.current || controller.signal.aborted) {
+          return;
+        }
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao carregar.",
+        );
       } finally {
-        setSaving(false);
+        if (requestId === requestIdRef.current && !controller.signal.aborted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
-    },
-    [getAccessToken, load],
-  );
+    };
+  }, []);
+
+  useEffect(() => {
+    void loadRef.current();
+
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
+  async function save(payload: StrategicIndicatorsSettingsUpdateRequest) {
+    setSaving(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const response = await updateStrategicIndicatorsSettings(
+        payload,
+        getAccessTokenRef.current,
+      );
+      setSuccessMessage(response.message);
+      await loadRef.current();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro inesperado ao salvar.");
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return useMemo(
     () => ({
       data,
       loading,
+      refreshing,
       saving,
       error,
       successMessage,
-      reload: load,
+      reload: () => loadRef.current(),
       save,
       clearSuccessMessage: () => setSuccessMessage(null),
     }),
-    [data, loading, saving, error, successMessage, load, save],
+    [data, loading, refreshing, saving, error, successMessage],
   );
 }

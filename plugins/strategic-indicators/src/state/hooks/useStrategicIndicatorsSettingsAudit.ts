@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchStrategicIndicatorsSettingsAudit,
   type FetchAuditParams,
@@ -14,43 +14,88 @@ export function useStrategicIndicatorsSettingsAudit({
 }: UseStrategicIndicatorsSettingsAuditParams) {
   const [items, setItems] = useState<StrategicIndicatorsSettingsAuditItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(
-    async (params?: FetchAuditParams) => {
-      setLoading(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
+  const hasLoadedOnceRef = useRef(false);
+  const getAccessTokenRef = useRef(getAccessToken);
+  const lastParamsRef = useRef<FetchAuditParams | undefined>(undefined);
+
+  useEffect(() => {
+    getAccessTokenRef.current = getAccessToken;
+  }, [getAccessToken]);
+
+  const loadRef = useRef<(params?: FetchAuditParams) => Promise<void>>(async () => {});
+
+  useEffect(() => {
+    loadRef.current = async (params?: FetchAuditParams) => {
+      lastParamsRef.current = params;
+
+      const requestId = ++requestIdRef.current;
+
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      if (hasLoadedOnceRef.current) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
       setError(null);
 
       try {
         const response = await fetchStrategicIndicatorsSettingsAudit(
-          getAccessToken,
+          getAccessTokenRef.current,
           params,
+          controller.signal,
         );
+
+        if (requestId !== requestIdRef.current || controller.signal.aborted) {
+          return;
+        }
+
         setItems(response.items);
+        hasLoadedOnceRef.current = true;
       } catch (err) {
+        if (requestId !== requestIdRef.current || controller.signal.aborted) {
+          return;
+        }
+
         setError(
           err instanceof Error
             ? err.message
             : "Erro inesperado ao carregar auditoria.",
         );
       } finally {
-        setLoading(false);
+        if (requestId === requestIdRef.current && !controller.signal.aborted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
-    },
-    [getAccessToken],
-  );
+    };
+  }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void loadRef.current();
+
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   return useMemo(
     () => ({
       items,
       loading,
+      refreshing,
       error,
-      reload: load,
+      reload: (params?: FetchAuditParams) =>
+        loadRef.current(params ?? lastParamsRef.current),
     }),
-    [items, loading, error, load],
+    [items, loading, refreshing, error],
   );
 }

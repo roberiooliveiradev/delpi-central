@@ -16,10 +16,12 @@ function buildHeaders(getAccessToken?: GetToken): HeadersInit {
 export async function fetchStrategicIndicatorsDepartmentDetails(
   departmentId: string,
   getAccessToken?: GetToken,
+  signal?: AbortSignal,
 ): Promise<StrategicIndicatorsDepartmentDetailsResponse> {
   const response = await fetch(`${BASE_URL}/departments/${departmentId}`, {
     method: "GET",
     headers: buildHeaders(getAccessToken),
+    signal,
   });
 
   if (!response.ok) {

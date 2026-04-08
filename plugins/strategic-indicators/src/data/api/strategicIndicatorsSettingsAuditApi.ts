@@ -24,6 +24,7 @@ function buildHeaders(getAccessToken?: GetToken): HeadersInit {
 export async function fetchStrategicIndicatorsSettingsAudit(
   getAccessToken?: GetToken,
   params?: FetchAuditParams,
+  signal?: AbortSignal,
 ): Promise<StrategicIndicatorsSettingsAuditResponse> {
   const searchParams = new URLSearchParams();
 
@@ -41,6 +42,7 @@ export async function fetchStrategicIndicatorsSettingsAudit(
   const response = await fetch(url, {
     method: "GET",
     headers: buildHeaders(getAccessToken),
+    signal,
   });
 
   if (!response.ok) {

@@ -14,6 +14,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { AuditWorkspacePanel } from "../components/AuditWorkspacePanel";
 import { SettingsWorkspaceNav } from "../components/SettingsWorkspaceNav";
 import { SettingsStatusStrip } from "../components/SettingsStatusStrip";
+import { InfoState } from "../components/InfoState";
 import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
 
 import type {
@@ -72,6 +73,7 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
   const {
     data,
     loading,
+    refreshing,
     saving,
     error,
     successMessage,
@@ -116,7 +118,12 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
         eyebrow="MinhaDelpi"
         title="Configurações"
         description="Workspace administrativo do módulo, consolidando governança, persistência real, auditoria e preparação para futuras evoluções controladas."
-        badge={<StatusBadge label="Admin Workspace" variant="neutral" />}
+        badge={
+          <StatusBadge
+            label={loading || refreshing ? "Atualizando" : "Admin Workspace"}
+            variant={loading || refreshing ? "neutral" : "success"}
+          />
+        }
       />
 
       <SettingsHero
@@ -133,6 +140,13 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
         onRetry={() => void reload()}
         onDismissSuccess={clearSuccessMessage}
       />
+
+      {refreshing && data ? (
+        <InfoState
+          title="Atualizando configurações"
+          description="Os dados exibidos estão sendo atualizados sem desmontar a tela."
+        />
+      ) : null}
 
       {!loading && data && settingsDashboardData ? (
         <>
@@ -225,6 +239,15 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
             <AuditWorkspacePanel getAccessToken={getAccessToken} />
           </div>
         </>
+      ) : null}
+
+      {!loading && !data && error ? (
+        <InfoState
+          title="Falha ao carregar configurações"
+          description={error}
+          actionLabel="Tentar novamente"
+          onAction={() => void reload()}
+        />
       ) : null}
     </div>
   );

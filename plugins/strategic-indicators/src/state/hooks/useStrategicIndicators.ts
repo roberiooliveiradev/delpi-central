@@ -1,9 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { adaptIndicatorsToView } from "../../data/adapters/indicatorsAdapter";
-import {
-  fetchStrategicIndicators,
-  type FetchStrategicIndicatorsParams,
-} from "../../data/api/strategicIndicatorsApi";
+import { fetchStrategicIndicators } from "../../data/api/strategicIndicatorsApi";
 import type {
   IndicatorFetchErrorViewItem,
   IndicatorViewItem,
@@ -31,73 +28,80 @@ export function useStrategicIndicators({
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
-
-  const load = useCallback(async () => {
-    const requestId = ++requestIdRef.current;
-
-    abortControllerRef.current?.abort();
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    const hasPreviousData = items.length > 0;
-
-    if (hasPreviousData) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-
-    setError(null);
-
-    try {
-      const params: FetchStrategicIndicatorsParams = {
-        departmentId,
-        startDate,
-        endDate,
-        getAccessToken,
-        signal: controller.signal,
-      };
-
-      const response = await fetchStrategicIndicators(params);
-
-      if (requestId !== requestIdRef.current) {
-        return;
-      }
-
-      setItems(adaptIndicatorsToView(response));
-      setFetchErrors(
-        (response.errors ?? []).map((item) => ({
-          departmentId: item.department_id,
-          source: item.source,
-          message: item.message,
-        })),
-      );
-      setPartialSuccess(Boolean(response.partial_success));
-    } catch (err) {
-      if (controller.signal.aborted || requestId !== requestIdRef.current) {
-        return;
-      }
-
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erro inesperado ao carregar indicadores.",
-      );
-    } finally {
-      if (requestId === requestIdRef.current && !controller.signal.aborted) {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    }
-  }, [departmentId, startDate, endDate, getAccessToken, items.length]);
+  const hasLoadedOnceRef = useRef(false);
+  const getAccessTokenRef = useRef(getAccessToken);
 
   useEffect(() => {
-    void load();
+    getAccessTokenRef.current = getAccessToken;
+  }, [getAccessToken]);
+
+  const loadRef = useRef<() => Promise<void>>(async () => {});
+
+  useEffect(() => {
+    loadRef.current = async () => {
+      const requestId = ++requestIdRef.current;
+
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      if (hasLoadedOnceRef.current) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      setError(null);
+
+      try {
+        const response = await fetchStrategicIndicators({
+          departmentId,
+          startDate,
+          endDate,
+          getAccessToken: getAccessTokenRef.current,
+          signal: controller.signal,
+        });
+
+        if (requestId !== requestIdRef.current || controller.signal.aborted) {
+          return;
+        }
+
+        setItems(adaptIndicatorsToView(response));
+        setFetchErrors(
+          (response.errors ?? []).map((item) => ({
+            departmentId: item.department_id,
+            source: item.source,
+            message: item.message,
+          })),
+        );
+        setPartialSuccess(Boolean(response.partial_success));
+        hasLoadedOnceRef.current = true;
+      } catch (err) {
+        if (requestId !== requestIdRef.current || controller.signal.aborted) {
+          return;
+        }
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao carregar indicadores.",
+        );
+      } finally {
+        if (requestId === requestIdRef.current && !controller.signal.aborted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      }
+    };
+  }, [departmentId, startDate, endDate]);
+
+  useEffect(() => {
+    void loadRef.current();
 
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [load]);
+  }, [departmentId, startDate, endDate]);
 
   return useMemo(
     () => ({
@@ -107,8 +111,8 @@ export function useStrategicIndicators({
       loading,
       refreshing,
       error,
-      reload: load,
+      reload: () => loadRef.current(),
     }),
-    [items, fetchErrors, partialSuccess, loading, refreshing, error, load],
+    [items, fetchErrors, partialSuccess, loading, refreshing, error],
   );
 }

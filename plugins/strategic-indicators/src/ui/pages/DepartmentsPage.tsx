@@ -10,9 +10,10 @@ type DepartmentsPageProps = {
 };
 
 export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
-  const { items, loading, error, reload } = useStrategicIndicatorsDepartments({
-    getAccessToken,
-  });
+  const { items, loading, refreshing, error, reload } =
+    useStrategicIndicatorsDepartments({
+      getAccessToken,
+    });
 
   return (
     <div className="si-page">
@@ -22,8 +23,8 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
         description="Visão comparativa inicial dos departamentos que compõem o IGD, com peso oficial, nota resumida e acesso ao drill-down por área."
         badge={
           <StatusBadge
-            label={loading ? "Carregando" : "API Real"}
-            variant={loading ? "neutral" : "success"}
+            label={loading || refreshing ? "Atualizando" : "API Real"}
+            variant={loading || refreshing ? "neutral" : "success"}
           />
         }
       />
@@ -32,12 +33,12 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
         title="Comparativo departamental"
         description="Cada linha representa um departamento oficial do IGD, com acesso à visão específica do seu IDD."
       >
-        {loading ? (
+        {loading && items.length === 0 ? (
           <InfoState
             title="Carregando departamentos"
             description="Aguarde enquanto a visão comparativa é carregada."
           />
-        ) : error ? (
+        ) : error && items.length === 0 ? (
           <InfoState
             title="Falha ao carregar departamentos"
             description={error}
@@ -45,7 +46,25 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
             onAction={() => void reload()}
           />
         ) : (
-          <DepartmentOverviewTable departments={items} />
+          <>
+            {refreshing ? (
+              <InfoState
+                title="Atualizando departamentos"
+                description="Os dados exibidos estão sendo atualizados."
+              />
+            ) : null}
+
+            {error && items.length > 0 ? (
+              <InfoState
+                title="Falha ao atualizar departamentos"
+                description={error}
+                actionLabel="Tentar novamente"
+                onAction={() => void reload()}
+              />
+            ) : null}
+
+            <DepartmentOverviewTable departments={items} />
+          </>
         )}
       </SectionBlock>
     </div>

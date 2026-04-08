@@ -23,13 +23,13 @@ export function DepartmentDetailsPage({
 }: DepartmentDetailsPageProps) {
   const departmentId = useMemo(() => extractDepartmentId(pathname), [pathname]);
 
-  const { data, loading, error, reload } =
+  const { data, loading, refreshing, error, reload } =
     useStrategicIndicatorsDepartmentDetails({
       departmentId,
       getAccessToken,
     });
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="si-page">
         <PageHeader
@@ -47,7 +47,7 @@ export function DepartmentDetailsPage({
     );
   }
 
-  if (error || !data) {
+  if (error && !data) {
     return (
       <div className="si-page">
         <PageHeader
@@ -70,14 +70,39 @@ export function DepartmentDetailsPage({
     );
   }
 
+  if (!data) {
+    return null;
+  }
+
   return (
     <div className="si-page">
       <PageHeader
         eyebrow="MinhaDelpi"
         title={`Departamento — ${data.name}`}
         description="Visão detalhada do IDD departamental com indicadores, metas 2026 e descrição estratégica."
-        badge={<StatusBadge label="Drill-down real" variant="success" />}
+        badge={
+          <StatusBadge
+            label={loading || refreshing ? "Atualizando" : "Drill-down real"}
+            variant={loading || refreshing ? "neutral" : "success"}
+          />
+        }
       />
+
+      {refreshing ? (
+        <InfoState
+          title="Atualizando departamento"
+          description="Os dados exibidos estão sendo atualizados."
+        />
+      ) : null}
+
+      {error && data ? (
+        <InfoState
+          title="Falha ao atualizar departamento"
+          description={error}
+          actionLabel="Tentar novamente"
+          onAction={() => void reload()}
+        />
+      ) : null}
 
       <DepartmentDetailHero department={data} />
 
