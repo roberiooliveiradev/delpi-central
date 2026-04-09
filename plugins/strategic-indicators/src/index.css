@@ -921,13 +921,104 @@ body {
 
 .si-department-overview__row {
   display: grid;
-  grid-template-columns: minmax(240px, 2fr) 90px 90px minmax(180px, 1.1fr) 120px;
+  grid-template-columns:
+    minmax(320px, 2.2fr)
+    90px
+    90px
+    130px
+    minmax(180px, 1fr)
+    160px;
   gap: 16px;
   align-items: center;
   padding: 16px 18px;
   border-radius: 18px;
   background: var(--si-card-bg);
   border: 1px solid var(--si-card-border);
+}
+
+.si-department-overview__row--head {
+  background: transparent;
+  border: none;
+  padding: 0 18px 6px;
+  color: var(--si-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.si-department-overview__department {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.si-department-overview__department strong {
+  font-size: 16px;
+  color: var(--si-title);
+}
+
+.si-department-overview__department span {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--si-text-muted);
+}
+
+.si-department-overview__cell {
+  font-size: 15px;
+  color: var(--si-title);
+}
+
+.si-department-overview__score {
+  font-size: 16px;
+  color: var(--si-title);
+}
+
+.si-department-overview__variation {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.si-department-overview__variation strong {
+  font-size: 16px;
+  color: var(--si-title);
+}
+
+.si-department-overview__variation span {
+  font-size: 13px;
+  color: var(--si-text-muted);
+}
+
+.si-department-overview__status {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.si-department-overview__action {
+  display: flex;
+  align-items: center;
+}
+
+.si-department-overview__action .si-link-button {
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .si-department-overview__row {
+    grid-template-columns: 1fr;
+  }
+
+  .si-department-overview__row--head {
+    display: none;
+  }
+
+  .si-department-overview__action .si-link-button {
+    width: auto;
+  }
 }
 
 .si-department-overview__row--head {
@@ -1109,14 +1200,6 @@ body {
 }
 
 @media (max-width: 1200px) {
-  .si-department-overview__row {
-    grid-template-columns: 1fr;
-  }
-
-  .si-department-overview__row--head {
-    display: none;
-  }
-
   .si-department-hero,
   .si-indicator-grid {
     grid-template-columns: 1fr;
