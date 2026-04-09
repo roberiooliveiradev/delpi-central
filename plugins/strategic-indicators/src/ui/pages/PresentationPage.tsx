@@ -234,6 +234,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
       <PresentationExecutiveStrip
         currentIgd={data.currentIgd}
         previousIgd={data.previousIgd}
+        variationValue={data.variationValue}
         topDepartment={data.topDepartment}
         topRisk={data.topRisk}
       />

@@ -28,4 +28,8 @@ export type DepartmentOverviewViewItem = {
   score: number;
   classification: string;
   strategicSummary: string;
+  variation: {
+    value: number;
+    direction: "up" | "down" | "stable";
+  };
 };

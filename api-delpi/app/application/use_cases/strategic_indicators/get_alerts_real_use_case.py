@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    resolve_period,
+)
 from app.domain.ports.strategic_indicators.alerts_summary_port import (
     StrategicIndicatorsAlertsSummaryPort,
 )
@@ -46,6 +49,12 @@ class GetStrategicIndicatorsAlertsRealUseCase:
         self,
         request: GetStrategicIndicatorsAlertsRealRequest,
     ) -> dict:
+        period = resolve_period(
+            competence=request.competence,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
+
         departments_catalog = (
             self._departments_catalog_repository.list_departments_catalog()
         )
@@ -56,17 +65,17 @@ class GetStrategicIndicatorsAlertsRealUseCase:
         }
 
         measurements, measurement_errors = self._measurements_port.get_indicator_measurements(
-            start_date=request.start_date,
-            end_date=request.end_date,
+            start_date=period.start_date,
+            end_date=period.end_date,
         )
 
         calculated_departments = self._calculator.calculate_departments(
             departments_catalog=departments_catalog,
             indicators_catalog=indicators_catalog,
             measurements=measurements,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            competence=request.competence,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            competence=period.competence,
         )
 
         executive_alerts = self._alerts_summary_port.get_alerts_summary(
@@ -81,10 +90,7 @@ class GetStrategicIndicatorsAlertsRealUseCase:
         )
 
         return {
-            "competence": request.competence or self._resolve_competence(
-                request.start_date,
-                request.end_date,
-            ),
+            "competence": period.competence,
             "executive_alerts": executive_alerts,
             "department_alerts": department_alerts,
             "indicator_alerts": indicator_alerts,
@@ -159,17 +165,3 @@ class GetStrategicIndicatorsAlertsRealUseCase:
 
         candidates.sort(key=lambda item: item["score"])
         return candidates[:8]
-
-    def _resolve_competence(
-        self,
-        start_date: str | None,
-        end_date: str | None,
-    ) -> str:
-        if end_date and len(end_date) >= 10:
-            _day, month, year = end_date.split("-")
-            return f"{year}-{month}"
-        if start_date and len(start_date) >= 10:
-            _day, month, year = start_date.split("-")
-            return f"{year}-{month}"
-        from datetime import date
-        return date.today().strftime("%Y-%m")

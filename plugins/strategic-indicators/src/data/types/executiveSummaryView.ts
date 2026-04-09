@@ -5,8 +5,12 @@ export type ExecutiveDepartmentSummary = {
   weightPct: number;
   score: number;
   contribution: number;
-  trend: string;
+  trend: "up" | "down" | "stable";
   strategicSummary: string;
   keyIndicators: string[];
   executiveGoal: string;
+  variation: {
+    value: number;
+    direction: "up" | "down" | "stable";
+  };
 };

@@ -12,9 +12,18 @@ function getVariant(score: number): "success" | "warning" | "danger" | "info" {
   return "danger";
 }
 
+function getDirectionLabel(direction: string) {
+  if (direction === "up") return "Alta";
+  if (direction === "down") return "Queda";
+  return "Estável";
+}
+
 export function DepartmentDetailHero({
   department,
 }: DepartmentDetailHeroProps) {
+  const variationValue = department.variation.value;
+  const variationPrefix = variationValue > 0 ? "+" : "";
+
   return (
     <section className="si-department-hero">
       <div className="si-department-hero__left">
@@ -45,6 +54,17 @@ export function DepartmentDetailHero({
           <strong className="si-department-hero__metric-value">
             {department.score.toFixed(1)}
           </strong>
+        </div>
+
+        <div className="si-department-hero__metric">
+          <span className="si-department-hero__metric-label">Variação</span>
+          <strong className="si-department-hero__metric-value">
+            {variationPrefix}
+            {variationValue.toFixed(1)}
+          </strong>
+          <span className="si-department-hero__metric-helper">
+            {getDirectionLabel(department.variation.direction)}
+          </span>
         </div>
 
         <div className="si-department-hero__metric">

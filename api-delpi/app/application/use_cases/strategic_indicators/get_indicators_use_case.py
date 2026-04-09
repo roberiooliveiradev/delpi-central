@@ -5,6 +5,9 @@ from app.application.dto.strategic_indicators.get_indicators_response import (
     IndicatorFetchErrorResponse,
     IndicatorItemResponse,
 )
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    resolve_period,
+)
 from app.domain.ports.strategic_indicators.departments_catalog_repository_port import (
     StrategicIndicatorsDepartmentsCatalogRepositoryPort,
 )
@@ -41,15 +44,23 @@ class GetStrategicIndicatorsUseCase:
         department_id: str | None = None,
         competence: str | None = None,
     ) -> GetStrategicIndicatorsResponse:
-        departments_catalog = self._departments_catalog_repository.list_departments_catalog()
+        period = resolve_period(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        departments_catalog = (
+            self._departments_catalog_repository.list_departments_catalog()
+        )
         departments_by_id = {
             item.department_id: item for item in departments_catalog
         }
 
         indicators_catalog = self._indicators_catalog_repository.list_indicators_catalog()
         measurements, raw_errors = self._measurements_port.get_indicator_measurements(
-            start_date=start_date,
-            end_date=end_date,
+            start_date=period.start_date,
+            end_date=period.end_date,
             department_id=department_id,
         )
 
@@ -57,9 +68,9 @@ class GetStrategicIndicatorsUseCase:
             indicators_catalog=indicators_catalog,
             measurements=measurements,
             department_id=department_id,
-            start_date=start_date,
-            end_date=end_date,
-            competence=competence,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            competence=period.competence,
         )
 
         return GetStrategicIndicatorsResponse(

@@ -102,7 +102,9 @@ class StrategicIndicatorsCalculator:
         calculated_departments: list[StrategicDepartmentCalculatedValue] = []
 
         for department in departments_catalog:
-            calculated_indicators = indicators_by_department.get(department.department_id, [])
+            calculated_indicators = indicators_by_department.get(
+                department.department_id, []
+            )
 
             department_score = self._calculate_department_score(calculated_indicators)
             contribution = round((department_score * department.weight_pct) / 100.0, 3)
@@ -202,6 +204,39 @@ class StrategicIndicatorsCalculator:
             return round(value - comparable_goal, 2)
 
         return round(comparable_goal - value, 2)
+
+    def calculate_variation(
+        self,
+        current: float,
+        previous: float,
+        *,
+        decimals: int = 3,
+        tolerance: float = 0.09,
+    ) -> dict[str, float | str]:
+        delta = round(current - previous, decimals)
+        return {
+            "value": delta,
+            "direction": self.resolve_trend_direction(
+                current=current,
+                previous=previous,
+                tolerance=tolerance,
+            ),
+        }
+
+    def resolve_trend_direction(
+        self,
+        *,
+        current: float,
+        previous: float,
+        tolerance: float = 0.09,
+    ) -> str:
+        delta = current - previous
+
+        if delta > tolerance:
+            return "up"
+        if delta < -tolerance:
+            return "down"
+        return "stable"
 
     def classify_score(self, score: float) -> str:
         if score >= 9:

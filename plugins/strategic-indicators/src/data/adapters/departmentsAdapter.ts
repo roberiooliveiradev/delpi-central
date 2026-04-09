@@ -14,5 +14,9 @@ export function adaptDepartmentsToView(
     score: item.score,
     classification: item.classification,
     strategicSummary: item.strategic_summary,
+    variation: {
+      value: item.variation.value,
+      direction: item.variation.direction,
+    },
   }));
 }

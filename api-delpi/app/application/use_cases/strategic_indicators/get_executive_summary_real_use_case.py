@@ -3,6 +3,13 @@ from __future__ import annotations
 from app.application.dto.strategic_indicators.catalog_models import (
     StrategicDepartmentCalculatedValue,
 )
+from app.application.dto.strategic_indicators.get_executive_summary_real_request import (
+    GetExecutiveSummaryRealRequest,
+)
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    previous_period,
+    resolve_period,
+)
 from app.domain.ports.strategic_indicators.alerts_summary_port import (
     StrategicIndicatorsAlertsSummaryPort,
 )
@@ -18,8 +25,6 @@ from app.domain.ports.strategic_indicators.indicators_catalog_repository_port im
 from app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
-
-from app.application.dto.strategic_indicators.get_executive_summary_real_request import GetExecutiveSummaryRealRequest
 
 
 class GetStrategicIndicatorsExecutiveSummaryRealUseCase:
@@ -42,49 +47,86 @@ class GetStrategicIndicatorsExecutiveSummaryRealUseCase:
         self,
         request: GetExecutiveSummaryRealRequest,
     ) -> dict:
+        current_period = resolve_period(
+            competence=request.competence,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
+        prev_period = previous_period(current_period)
+
         departments_catalog = (
             self._departments_catalog_repository.list_departments_catalog()
         )
         indicators_catalog = self._indicators_catalog_repository.list_indicators_catalog()
-        goals_by_department = self._departments_catalog_repository.get_department_goal_summary()
-
-        measurements, measurement_errors = self._measurements_port.get_indicator_measurements(
-            start_date=request.start_date,
-            end_date=request.end_date,
+        goals_by_department = (
+            self._departments_catalog_repository.get_department_goal_summary()
         )
 
-        calculated_departments = self._calculator.calculate_departments(
+        current_measurements, measurement_errors = (
+            self._measurements_port.get_indicator_measurements(
+                start_date=current_period.start_date,
+                end_date=current_period.end_date,
+            )
+        )
+        previous_measurements, _ = self._measurements_port.get_indicator_measurements(
+            start_date=prev_period.start_date,
+            end_date=prev_period.end_date,
+        )
+
+        current_departments = self._calculator.calculate_departments(
             departments_catalog=departments_catalog,
             indicators_catalog=indicators_catalog,
-            measurements=measurements,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            competence=request.competence,
+            measurements=current_measurements,
+            start_date=current_period.start_date,
+            end_date=current_period.end_date,
+            competence=current_period.competence,
+        )
+        previous_departments = self._calculator.calculate_departments(
+            departments_catalog=departments_catalog,
+            indicators_catalog=indicators_catalog,
+            measurements=previous_measurements,
+            start_date=prev_period.start_date,
+            end_date=prev_period.end_date,
+            competence=prev_period.competence,
         )
 
+        previous_departments_by_id = {
+            item.department_id: item for item in previous_departments
+        }
+
         igd, igd_exact, classification = self._calculator.calculate_igd(
-            calculated_departments
+            current_departments
+        )
+        _previous_igd, previous_igd_exact, _ = self._calculator.calculate_igd(
+            previous_departments
+        )
+
+        variation = self._calculator.calculate_variation(
+            igd_exact,
+            previous_igd_exact,
+            decimals=3,
         )
 
         return {
-            "competence": request.competence or self._resolve_competence(
-                request.start_date,
-                request.end_date,
-            ),
+            "competence": current_period.competence,
             "igd": igd,
             "igd_exact": igd_exact,
             "classification": classification,
             "variation": {
-                "value": 0.0,
-                "direction": "stable",
+                "value": round(float(variation["value"]), 1),
+                "direction": variation["direction"],
                 "vs_label": "vs período anterior",
             },
             "departments": [
-                self._map_department(item, goals_by_department)
-                for item in calculated_departments
+                self._map_department(
+                    current=item,
+                    previous=previous_departments_by_id.get(item.department_id),
+                    goals_by_department=goals_by_department,
+                )
+                for item in current_departments
             ],
             "alerts_summary": self._alerts_summary_port.get_alerts_summary(
-                departments=calculated_departments,
+                departments=current_departments,
                 measurement_errors=measurement_errors,
             ),
             "errors": measurement_errors,
@@ -93,34 +135,37 @@ class GetStrategicIndicatorsExecutiveSummaryRealUseCase:
 
     def _map_department(
         self,
-        department: StrategicDepartmentCalculatedValue,
+        *,
+        current: StrategicDepartmentCalculatedValue,
+        previous: StrategicDepartmentCalculatedValue | None,
         goals_by_department: dict[str, str],
     ) -> dict:
-        return {
-            "id": department.department_id,
-            "name": department.department_name,
-            "short_name": department.short_name,
-            "weight_pct": department.weight_pct,
-            "score": department.score,
-            "contribution": department.contribution,
-            "trend": department.trend,
-            "strategic_summary": department.strategic_summary,
-            "key_indicators": [
-                indicator.indicator_name for indicator in department.indicators[:3]
-            ],
-            "executive_goal": goals_by_department.get(department.department_id, ""),
-        }
+        previous_score = previous.score if previous is not None else current.score
+        trend = self._calculator.resolve_trend_direction(
+            current=current.score,
+            previous=previous_score,
+        )
+        variation = self._calculator.calculate_variation(
+            current.score,
+            previous_score,
+            decimals=3,
+        )
 
-    def _resolve_competence(
-        self,
-        start_date: str | None,
-        end_date: str | None,
-    ) -> str:
-        if end_date and len(end_date) >= 10:
-            day, month, year = end_date.split("-")
-            return f"{year}-{month}"
-        if start_date and len(start_date) >= 10:
-            day, month, year = start_date.split("-")
-            return f"{year}-{month}"
-        from datetime import date
-        return date.today().strftime("%Y-%m")
+        return {
+            "id": current.department_id,
+            "name": current.department_name,
+            "short_name": current.short_name,
+            "weight_pct": current.weight_pct,
+            "score": current.score,
+            "contribution": current.contribution,
+            "trend": trend,
+            "strategic_summary": current.strategic_summary,
+            "key_indicators": [
+                indicator.indicator_name for indicator in current.indicators[:3]
+            ],
+            "executive_goal": goals_by_department.get(current.department_id, ""),
+            "variation": {
+                "value": float(variation["value"]),
+                "direction": variation["direction"],
+            },
+        }

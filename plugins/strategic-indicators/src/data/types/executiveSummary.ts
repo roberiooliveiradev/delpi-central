@@ -15,6 +15,10 @@ export type ExecutiveSummaryApiDepartment = {
   strategic_summary: string;
   key_indicators: string[];
   executive_goal: string;
+  variation: {
+    value: number;
+    direction: "up" | "down" | "stable";
+  };
 };
 
 export type ExecutiveSummaryApiAlert = {
@@ -45,6 +49,10 @@ export type ExecutiveDashboardDepartment = {
   strategicSummary: string;
   keyIndicators: string[];
   executiveGoal: string;
+  variation: {
+    value: number;
+    direction: "up" | "down" | "stable";
+  };
 };
 
 export type ExecutiveDashboardViewData = {

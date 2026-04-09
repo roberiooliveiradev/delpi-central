@@ -206,7 +206,7 @@ export function DepartmentDetailsPage({
 
       <SectionBlock
         title="Indicadores que compõem o IDD"
-        description="Os cards abaixo mostram os indicadores oficiais da área, com peso interno, meta 2026 e descrição estratégica."
+        description="Os cards abaixo mostram os indicadores oficiais da área, com peso interno, meta estruturada e descrição estratégica."
       >
         <IndicatorDetailGrid indicators={data.indicators} />
       </SectionBlock>

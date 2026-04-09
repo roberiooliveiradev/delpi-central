@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    previous_period,
+    resolve_period,
+)
 from app.domain.ports.strategic_indicators.departments_catalog_repository_port import (
     StrategicIndicatorsDepartmentsCatalogRepositoryPort,
 )
@@ -42,45 +46,78 @@ class GetStrategicIndicatorsDepartmentsRealUseCase:
         request: GetStrategicIndicatorsDepartmentsRealRequest | None = None,
     ) -> dict:
         request = request or GetStrategicIndicatorsDepartmentsRealRequest()
+        current_period = resolve_period(
+            competence=request.competence,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
+        prev_period = previous_period(current_period)
 
         departments_catalog = (
             self._departments_catalog_repository.list_departments_catalog()
         )
         indicators_catalog = self._indicators_catalog_repository.list_indicators_catalog()
 
-        measurements, errors = self._measurements_port.get_indicator_measurements(
-            start_date=request.start_date,
-            end_date=request.end_date,
+        current_measurements, errors = self._measurements_port.get_indicator_measurements(
+            start_date=current_period.start_date,
+            end_date=current_period.end_date,
+        )
+        previous_measurements, _ = self._measurements_port.get_indicator_measurements(
+            start_date=prev_period.start_date,
+            end_date=prev_period.end_date,
         )
 
-        calculated_departments = self._calculator.calculate_departments(
+        current_departments = self._calculator.calculate_departments(
             departments_catalog=departments_catalog,
             indicators_catalog=indicators_catalog,
-            measurements=measurements,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            competence=request.competence,
+            measurements=current_measurements,
+            start_date=current_period.start_date,
+            end_date=current_period.end_date,
+            competence=current_period.competence,
         )
+        previous_departments = self._calculator.calculate_departments(
+            departments_catalog=departments_catalog,
+            indicators_catalog=indicators_catalog,
+            measurements=previous_measurements,
+            start_date=prev_period.start_date,
+            end_date=prev_period.end_date,
+            competence=prev_period.competence,
+        )
+
+        previous_by_id = {item.department_id: item for item in previous_departments}
 
         return {
             "items": [
-                {
-                    "id": item.department_id,
-                    "name": item.department_name,
-                    "short_name": item.short_name,
-                    "weight_pct": item.weight_pct,
-                    "score": item.score,
-                    "classification": item.classification,
-                    "contribution": item.contribution,
-                    "aggregation_mode": item.aggregation_mode,
-                    "strategic_summary": item.strategic_summary,
-                    "variation": {
-                        "value": 0.0,
-                        "direction": item.trend,
-                    },
-                }
-                for item in calculated_departments
+                self._map_department(
+                    current=item,
+                    previous=previous_by_id.get(item.department_id),
+                )
+                for item in current_departments
             ],
             "errors": errors,
             "partial_success": len(errors) > 0,
+        }
+
+    def _map_department(self, *, current, previous) -> dict:
+        previous_score = previous.score if previous is not None else current.score
+        variation = self._calculator.calculate_variation(
+            current.score,
+            previous_score,
+            decimals=3,
+        )
+
+        return {
+            "id": current.department_id,
+            "name": current.department_name,
+            "short_name": current.short_name,
+            "weight_pct": current.weight_pct,
+            "score": current.score,
+            "classification": current.classification,
+            "contribution": current.contribution,
+            "aggregation_mode": current.aggregation_mode,
+            "strategic_summary": current.strategic_summary,
+            "variation": {
+                "value": float(variation["value"]),
+                "direction": variation["direction"],
+            },
         }

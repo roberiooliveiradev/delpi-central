@@ -27,6 +27,10 @@ export function adaptExecutiveSummaryToView(
       strategicSummary: item.strategic_summary,
       keyIndicators: item.key_indicators,
       executiveGoal: item.executive_goal,
+      variation: {
+        value: item.variation.value,
+        direction: item.variation.direction,
+      },
     })),
     alertsSummary: response.alerts_summary,
   };

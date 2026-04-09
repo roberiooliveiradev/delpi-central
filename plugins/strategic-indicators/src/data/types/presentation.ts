@@ -16,6 +16,8 @@ export type PresentationViewData = {
   trendLabel: string;
   currentIgd: number;
   previousIgd: number;
+  variationValue: number;
+  variationDirection: "up" | "down" | "stable";
   topDepartment: string;
   topRisk: string;
   currentPeriod: string;
@@ -24,53 +26,59 @@ export type PresentationViewData = {
   executiveAlerts: ExecutiveAlertViewItem[];
 };
 
-export function getDirection(
-  current: number,
-  previous: number,
+function getDirectionFromVariation(
+  value: number,
 ): "up" | "down" | "stable" {
-  const diff = current - previous;
-
-  if (diff > 0.09) return "up";
-  if (diff < -0.09) return "down";
+  if (value > 0.09) return "up";
+  if (value < -0.09) return "down";
   return "stable";
+}
+
+function getTrendLabel(direction: "up" | "down" | "stable"): string {
+  if (direction === "up") return "Melhora no período";
+  if (direction === "down") return "Queda no período";
+  return "Estabilidade no período";
+}
+
+function buildPreviousCompetence(competence: string): string {
+  const [yearStr, monthStr] = competence.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+
+  if (month === 1) {
+    return `${year - 1}-12`;
+  }
+
+  return `${year}-${String(month - 1).padStart(2, "0")}`;
 }
 
 export function buildPresentationViewData(params: {
   executiveSummary: ExecutiveDashboardViewData;
   executiveAlerts: ExecutiveAlertViewItem[];
-}) : PresentationViewData {
+}): PresentationViewData {
   const { executiveSummary, executiveAlerts } = params;
 
   const departmentsSorted = [...executiveSummary.departments].sort(
     (a, b) => b.score - a.score,
   );
   const bestDepartment = departmentsSorted[0];
-
   const topRiskAlert = executiveAlerts[0] ?? null;
 
-  const previousIgd = Math.max(0, executiveSummary.igd - 0.1);
-  const trendLabel =
-    executiveSummary.igd > previousIgd
-      ? "Melhora no período"
-      : executiveSummary.igd < previousIgd
-        ? "Queda no período"
-        : "Estabilidade no período";
+  const variationValue = executiveSummary.variation.value;
+  const variationDirection = getDirectionFromVariation(variationValue);
+  const trendLabel = getTrendLabel(variationDirection);
 
-  const [year, month] = executiveSummary.competence.split("-");
-  const previousDate = new Date(Number(year), Number(month) - 2, 1);
-  const previousPeriod = `${previousDate.getFullYear()}-${String(
-    previousDate.getMonth() + 1,
-  ).padStart(2, "0")}`;
+  const previousIgd = Math.max(0, executiveSummary.igd - variationValue);
 
   const departments = executiveSummary.departments.map((department) => {
-    const previous = Math.max(0, department.score - 0.1);
+    const previous = Math.max(0, department.score - department.variation.value);
 
     return {
       id: department.id,
       name: department.name,
       current: department.score,
       previous,
-      direction: getDirection(department.score, previous),
+      direction: department.variation.direction,
     };
   });
 
@@ -81,10 +89,12 @@ export function buildPresentationViewData(params: {
     trendLabel,
     currentIgd: executiveSummary.igd,
     previousIgd,
+    variationValue,
+    variationDirection,
     topDepartment: bestDepartment?.name ?? "—",
     topRisk: topRiskAlert?.title ?? "—",
     currentPeriod: executiveSummary.competence,
-    previousPeriod,
+    previousPeriod: buildPreviousCompetence(executiveSummary.competence),
     departments,
     executiveAlerts,
   };

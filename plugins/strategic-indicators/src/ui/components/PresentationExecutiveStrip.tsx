@@ -1,6 +1,7 @@
 type PresentationExecutiveStripProps = {
   currentIgd: number;
   previousIgd: number;
+  variationValue: number;
   topDepartment: string;
   topRisk: string;
 };
@@ -8,11 +9,10 @@ type PresentationExecutiveStripProps = {
 export function PresentationExecutiveStrip({
   currentIgd,
   previousIgd,
+  variationValue,
   topDepartment,
   topRisk,
 }: PresentationExecutiveStripProps) {
-  const variation = currentIgd - previousIgd;
-
   return (
     <section className="si-presentation-strip">
       <div className="si-presentation-strip__item">
@@ -21,10 +21,15 @@ export function PresentationExecutiveStrip({
       </div>
 
       <div className="si-presentation-strip__item">
+        <span>IGD anterior</span>
+        <strong>{previousIgd.toFixed(1)}</strong>
+      </div>
+
+      <div className="si-presentation-strip__item">
         <span>Variação</span>
         <strong>
-          {variation > 0 ? "+" : ""}
-          {variation.toFixed(1)}
+          {variationValue > 0 ? "+" : ""}
+          {variationValue.toFixed(1)}
         </strong>
       </div>
 
