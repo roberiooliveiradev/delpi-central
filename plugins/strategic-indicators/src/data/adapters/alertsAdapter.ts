@@ -32,6 +32,8 @@ export function adaptAlertsToView(
       indicatorName: item.indicator_name,
       simulatedScore: item.score,
       goalLabel: item.goal_label ?? "-",
+      goalValue: item.goal_value ?? null,
+      goalPeriodicity: item.goal_periodicity ?? null,
       severity: item.severity,
       reason: item.message,
       recommendation:

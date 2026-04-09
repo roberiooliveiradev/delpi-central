@@ -51,6 +51,10 @@ class GetStrategicIndicatorsAlertsRealUseCase:
         )
         indicators_catalog = self._indicators_catalog_repository.list_indicators_catalog()
 
+        catalog_by_indicator_id = {
+            item.indicator_id: item for item in indicators_catalog
+        }
+
         measurements, measurement_errors = self._measurements_port.get_indicator_measurements(
             start_date=request.start_date,
             end_date=request.end_date,
@@ -71,7 +75,10 @@ class GetStrategicIndicatorsAlertsRealUseCase:
         )
 
         department_alerts = self._build_department_alerts(calculated_departments)
-        indicator_alerts = self._build_indicator_alerts(calculated_departments)
+        indicator_alerts = self._build_indicator_alerts(
+            calculated_departments,
+            catalog_by_indicator_id,
+        )
 
         return {
             "competence": request.competence or self._resolve_competence(
@@ -112,7 +119,11 @@ class GetStrategicIndicatorsAlertsRealUseCase:
 
         return alerts
 
-    def _build_indicator_alerts(self, departments) -> list[dict]:
+    def _build_indicator_alerts(
+        self,
+        departments,
+        catalog_by_indicator_id: dict,
+    ) -> list[dict]:
         candidates: list[dict] = []
 
         for department in departments:
@@ -121,6 +132,7 @@ class GetStrategicIndicatorsAlertsRealUseCase:
                     continue
 
                 severity = "high" if indicator.score < 7 else "medium"
+                catalog_item = catalog_by_indicator_id.get(indicator.indicator_id)
 
                 candidates.append(
                     {
@@ -133,6 +145,11 @@ class GetStrategicIndicatorsAlertsRealUseCase:
                         "gap": indicator.gap,
                         "classification": indicator.classification,
                         "source": indicator.source,
+                        "goal_label": catalog_item.goal_label if catalog_item else None,
+                        "goal_value": catalog_item.goal_value if catalog_item else None,
+                        "goal_periodicity": (
+                            catalog_item.goal_periodicity if catalog_item else None
+                        ),
                         "message": (
                             f"{indicator.indicator_name} está abaixo do esperado em "
                             f"{department.department_name}."

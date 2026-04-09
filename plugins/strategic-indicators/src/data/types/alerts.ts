@@ -24,6 +24,8 @@ export type IndicatorAlertViewItem = {
   indicatorName: string;
   simulatedScore: number;
   goalLabel: string;
+  goalValue: number | null;
+  goalPeriodicity: string | null;
   severity: AlertSeverity;
   reason: string;
   recommendation: string;
@@ -71,7 +73,9 @@ export type StrategicIndicatorsAlertsResponse = {
     classification: string;
     source: string;
     message: string;
-    goal_label?: string;
+    goal_label?: string | null;
+    goal_value?: number | null;
+    goal_periodicity?: string | null;
   }>;
   errors?: Array<{
     department_id: string;
