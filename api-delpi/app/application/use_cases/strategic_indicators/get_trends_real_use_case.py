@@ -1,23 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from calendar import monthrange
 from datetime import date
 
-from app.domain.ports.strategic_indicators.departments_catalog_repository_port import (
-    StrategicIndicatorsDepartmentsCatalogRepositoryPort,
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
 )
-from app.domain.ports.strategic_indicators.indicator_measurements_port import (
-    StrategicIndicatorsIndicatorMeasurementsPort,
-)
-from app.domain.ports.strategic_indicators.indicators_catalog_repository_port import (
-    StrategicIndicatorsIndicatorsCatalogRepositoryPort,
-)
-from app.domain.services.strategic_indicators_calculator import (
-    StrategicIndicatorsCalculator,
-)
-
 from app.application.dto.strategic_indicators.get_trends_real_request import (
     GetStrategicIndicatorsTrendsRealRequest,
+)
+from app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
+    StrategicIndicatorsSnapshotService,
 )
 
 
@@ -25,15 +18,9 @@ class GetStrategicIndicatorsTrendsRealUseCase:
     def __init__(
         self,
         *,
-        departments_catalog_repository: StrategicIndicatorsDepartmentsCatalogRepositoryPort,
-        indicators_catalog_repository: StrategicIndicatorsIndicatorsCatalogRepositoryPort,
-        measurements_port: StrategicIndicatorsIndicatorMeasurementsPort,
-        calculator: StrategicIndicatorsCalculator,
+        snapshot_service: StrategicIndicatorsSnapshotService,
     ) -> None:
-        self._departments_catalog_repository = departments_catalog_repository
-        self._indicators_catalog_repository = indicators_catalog_repository
-        self._measurements_port = measurements_port
-        self._calculator = calculator
+        self._snapshot_service = snapshot_service
 
     def execute(
         self,
@@ -41,60 +28,36 @@ class GetStrategicIndicatorsTrendsRealUseCase:
     ) -> dict:
         months = max(2, min(request.months, 12))
         reference = self._parse_competence(request.competence)
+        periods = self._build_periods(reference, months)
 
-        departments_catalog = (
-            self._departments_catalog_repository.list_departments_catalog()
-        )
-        indicators_catalog = self._indicators_catalog_repository.list_indicators_catalog()
+        snapshots = self._snapshot_service.get_series_snapshot(periods=periods)
 
         monthly_points: list[dict] = []
         monthly_departments: dict[str, list[dict]] = {}
         errors: list[dict] = []
 
-        periods = self._build_periods(reference, months)
-
-        for period in periods:
-            start_date, end_date = self._build_month_range(period["year"], period["month"])
-
-            measurements, measurement_errors = self._measurements_port.get_indicator_measurements(
-                start_date=start_date,
-                end_date=end_date,
-            )
-
-            calculated_departments = self._calculator.calculate_departments(
-                departments_catalog=departments_catalog,
-                indicators_catalog=indicators_catalog,
-                measurements=measurements,
-                start_date=start_date,
-                end_date=end_date,
-                competence=period["competence"],
-            )
-
-            igd, _igd_exact, classification = self._calculator.calculate_igd(
-                calculated_departments
-            )
-
+        for snapshot in snapshots:
             monthly_points.append(
                 {
-                    "period": period["competence"],
-                    "value": igd,
-                    "classification": classification,
+                    "period": snapshot.period.competence,
+                    "value": snapshot.igd,
+                    "classification": snapshot.classification,
                 }
             )
 
-            for department in calculated_departments:
+            for department in snapshot.calculated_departments:
                 monthly_departments.setdefault(department.department_id, []).append(
                     {
-                        "period": period["competence"],
+                        "period": snapshot.period.competence,
                         "score": department.score,
                         "name": department.department_name,
                     }
                 )
 
-            for error in measurement_errors:
+            for error in snapshot.measurement_errors:
                 errors.append(
                     {
-                        "competence": period["competence"],
+                        "competence": snapshot.period.competence,
                         "department_id": error["department_id"],
                         "source": error["source"],
                         "message": error["message"],
@@ -141,8 +104,8 @@ class GetStrategicIndicatorsTrendsRealUseCase:
         today = date.today()
         return date(today.year, today.month, 1)
 
-    def _build_periods(self, reference: date, months: int) -> list[dict]:
-        periods: list[dict] = []
+    def _build_periods(self, reference: date, months: int) -> list[ResolvedPeriod]:
+        periods: list[ResolvedPeriod] = []
 
         year = reference.year
         month = reference.month
@@ -159,23 +122,20 @@ class GetStrategicIndicatorsTrendsRealUseCase:
                 current_month -= 12
                 current_year += 1
 
+            competence = f"{current_year}-{str(current_month).zfill(2)}"
+            first_day = f"01-{str(current_month).zfill(2)}-{current_year}"
+            last_day = monthrange(current_year, current_month)[1]
+            last_date = f"{str(last_day).zfill(2)}-{str(current_month).zfill(2)}-{current_year}"
+
             periods.append(
-                {
-                    "year": current_year,
-                    "month": current_month,
-                    "competence": f"{current_year}-{str(current_month).zfill(2)}",
-                }
+                ResolvedPeriod(
+                    competence=competence,
+                    start_date=first_day,
+                    end_date=last_date,
+                )
             )
 
         return periods
-
-    def _build_month_range(self, year: int, month: int) -> tuple[str, str]:
-        from calendar import monthrange
-
-        first_day = f"01-{str(month).zfill(2)}-{year}"
-        last_day = monthrange(year, month)[1]
-        last_date = f"{str(last_day).zfill(2)}-{str(month).zfill(2)}-{year}"
-        return first_day, last_date
 
     def _resolve_direction(self, current: float, previous: float) -> str:
         delta = current - previous

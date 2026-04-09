@@ -66,16 +66,34 @@ class QualityIndicatorsSnapshotProvider(
             errors=errors,
         )
 
-        self._collect_indicator(
-            builder=lambda: self._build_kaizen_ideas_measurement(
+        kaizen_payload = None
+        try:
+            kaizen_payload = self._load_kaizen_payload(
                 start_date=start_date,
                 end_date=end_date,
-            ),
-            department_id="quality",
-            source="quality_kaizen_ideas",
-            items=items,
-            errors=errors,
-        )
+            )
+        except Exception as exc:
+            errors.append(
+                {
+                    "department_id": "quality",
+                    "source": "quality_kaizen",
+                    "message": str(exc),
+                }
+            )
+
+        if kaizen_payload is not None:
+            items.append(
+                self._build_kaizen_ideas_measurement_from_payload(
+                    payload=kaizen_payload,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            )
+            items.append(
+                self._build_kaizen_financial_gain_measurement_from_payload(
+                    payload=kaizen_payload,
+                )
+            )
 
         self._collect_indicator(
             builder=lambda: self._build_audit_5s_measurement(
@@ -88,21 +106,26 @@ class QualityIndicatorsSnapshotProvider(
             errors=errors,
         )
 
-        self._collect_indicator(
-            builder=lambda: self._build_kaizen_financial_gain_measurement(
-                start_date=start_date,
-                end_date=end_date,
-            ),
-            department_id="quality",
-            source="quality_kaizen_financial",
-            items=items,
-            errors=errors,
-        )
-
         return {
             "items": items,
             "errors": errors,
         }
+
+    def _load_kaizen_payload(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict:
+        request = KaizenSummaryRequest(
+            title=None,
+            status=None,
+            date_start=start_date,
+            date_end=end_date,
+        )
+
+        result = self._kaizen_summary_use_case.execute(request)
+        return result.to_dict() if hasattr(result, "to_dict") else result
 
     def _collect_indicator(
         self,
@@ -142,14 +165,7 @@ class QualityIndicatorsSnapshotProvider(
 
         value = self._extract_first_number(
             payload,
-            [
-                "ppm",
-                "ppm_value",
-                "ppm_internal",
-                "internal_ppm",
-                "total_ppm",
-                "ppm_summary",
-            ],
+            ["ppm", "ppm_value", "ppm_internal", "internal_ppm", "total_ppm", "ppm_summary"],
         ) or 0.0
 
         return {
@@ -157,9 +173,7 @@ class QualityIndicatorsSnapshotProvider(
             "indicator_id": "quality-ppm-internal",
             "value": value,
             "source": "quality_ppm_internal",
-            "unit_values": {
-                "consolidated": value,
-            },
+            "unit_values": {"consolidated": value},
         }
 
     def _build_external_ppm_measurement(
@@ -180,14 +194,7 @@ class QualityIndicatorsSnapshotProvider(
 
         value = self._extract_first_number(
             payload,
-            [
-                "ppm",
-                "ppm_value",
-                "ppm_external",
-                "external_ppm",
-                "total_ppm",
-                "ppm_summary",
-            ],
+            ["ppm", "ppm_value", "ppm_external", "external_ppm", "total_ppm", "ppm_summary"],
         ) or 0.0
 
         return {
@@ -195,27 +202,16 @@ class QualityIndicatorsSnapshotProvider(
             "indicator_id": "quality-ppm-external",
             "value": value,
             "source": "quality_ppm_external",
-            "unit_values": {
-                "consolidated": value,
-            },
+            "unit_values": {"consolidated": value},
         }
 
-    def _build_kaizen_ideas_measurement(
+    def _build_kaizen_ideas_measurement_from_payload(
         self,
         *,
+        payload: dict,
         start_date: str | None,
         end_date: str | None,
     ) -> dict:
-        request = KaizenSummaryRequest(
-            title=None,
-            status=None,
-            date_start=start_date,
-            date_end=end_date,
-        )
-
-        result = self._kaizen_summary_use_case.execute(request)
-        payload = result.to_dict() if hasattr(result, "to_dict") else result
-
         total_ideas = self._extract_first_number(
             payload,
             [
@@ -240,9 +236,34 @@ class QualityIndicatorsSnapshotProvider(
             "indicator_id": "quality-kaizen-ideas",
             "value": value,
             "source": "quality_kaizen_ideas",
-            "unit_values": {
-                "consolidated": value,
-            },
+            "unit_values": {"consolidated": value},
+        }
+
+    def _build_kaizen_financial_gain_measurement_from_payload(
+        self,
+        *,
+        payload: dict,
+    ) -> dict:
+        value = self._extract_first_number(
+            payload,
+            [
+                "financial_gain",
+                "financial_gains",
+                "total_financial_gain",
+                "total_financial_gains",
+                "approved_financial_gain",
+                "approved_financial_gains",
+                "ganho_financeiro",
+                "ganhos_financeiros",
+            ],
+        ) or 0.0
+
+        return {
+            "department_id": "quality",
+            "indicator_id": "quality-kaizen-financial",
+            "value": value,
+            "source": "quality_kaizen_financial",
+            "unit_values": {"consolidated": value},
         }
 
     def _build_audit_5s_measurement(
@@ -277,49 +298,7 @@ class QualityIndicatorsSnapshotProvider(
             "indicator_id": "quality-audit-5s",
             "value": value,
             "source": "quality_audit_5s",
-            "unit_values": {
-                "consolidated": value,
-            },
-        }
-
-    def _build_kaizen_financial_gain_measurement(
-        self,
-        *,
-        start_date: str | None,
-        end_date: str | None,
-    ) -> dict:
-        request = KaizenSummaryRequest(
-            title=None,
-            status=None,
-            date_start=start_date,
-            date_end=end_date,
-        )
-
-        result = self._kaizen_summary_use_case.execute(request)
-        payload = result.to_dict() if hasattr(result, "to_dict") else result
-
-        value = self._extract_first_number(
-            payload,
-            [
-                "financial_gain",
-                "financial_gains",
-                "total_financial_gain",
-                "total_financial_gains",
-                "approved_financial_gain",
-                "approved_financial_gains",
-                "ganho_financeiro",
-                "ganhos_financeiros",
-            ],
-        ) or 0.0
-
-        return {
-            "department_id": "quality",
-            "indicator_id": "quality-kaizen-financial",
-            "value": value,
-            "source": "quality_kaizen_financial",
-            "unit_values": {
-                "consolidated": value,
-            },
+            "unit_values": {"consolidated": value},
         }
 
     def _resolve_month_count(

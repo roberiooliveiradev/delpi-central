@@ -2,23 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.application.use_cases.strategic_indicators.period_resolution import (
-    resolve_period,
+from app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
+    StrategicIndicatorsSnapshotService,
 )
 from app.domain.ports.strategic_indicators.alerts_summary_port import (
     StrategicIndicatorsAlertsSummaryPort,
-)
-from app.domain.ports.strategic_indicators.departments_catalog_repository_port import (
-    StrategicIndicatorsDepartmentsCatalogRepositoryPort,
-)
-from app.domain.ports.strategic_indicators.indicator_measurements_port import (
-    StrategicIndicatorsIndicatorMeasurementsPort,
-)
-from app.domain.ports.strategic_indicators.indicators_catalog_repository_port import (
-    StrategicIndicatorsIndicatorsCatalogRepositoryPort,
-)
-from app.domain.services.strategic_indicators_calculator import (
-    StrategicIndicatorsCalculator,
 )
 
 
@@ -33,69 +21,45 @@ class GetStrategicIndicatorsAlertsRealUseCase:
     def __init__(
         self,
         *,
-        departments_catalog_repository: StrategicIndicatorsDepartmentsCatalogRepositoryPort,
-        indicators_catalog_repository: StrategicIndicatorsIndicatorsCatalogRepositoryPort,
-        measurements_port: StrategicIndicatorsIndicatorMeasurementsPort,
+        snapshot_service: StrategicIndicatorsSnapshotService,
         alerts_summary_port: StrategicIndicatorsAlertsSummaryPort,
-        calculator: StrategicIndicatorsCalculator,
     ) -> None:
-        self._departments_catalog_repository = departments_catalog_repository
-        self._indicators_catalog_repository = indicators_catalog_repository
-        self._measurements_port = measurements_port
+        self._snapshot_service = snapshot_service
         self._alerts_summary_port = alerts_summary_port
-        self._calculator = calculator
 
     def execute(
         self,
         request: GetStrategicIndicatorsAlertsRealRequest,
     ) -> dict:
-        period = resolve_period(
+        snapshot = self._snapshot_service.get_period_snapshot(
             competence=request.competence,
             start_date=request.start_date,
             end_date=request.end_date,
         )
 
-        departments_catalog = (
-            self._departments_catalog_repository.list_departments_catalog()
-        )
-        indicators_catalog = self._indicators_catalog_repository.list_indicators_catalog()
-
         catalog_by_indicator_id = {
-            item.indicator_id: item for item in indicators_catalog
+            item.indicator_id: item
+            for item in self._snapshot_service.get_catalog_snapshot().indicators_catalog
         }
 
-        measurements, measurement_errors = self._measurements_port.get_indicator_measurements(
-            start_date=period.start_date,
-            end_date=period.end_date,
-        )
-
-        calculated_departments = self._calculator.calculate_departments(
-            departments_catalog=departments_catalog,
-            indicators_catalog=indicators_catalog,
-            measurements=measurements,
-            start_date=period.start_date,
-            end_date=period.end_date,
-            competence=period.competence,
-        )
-
         executive_alerts = self._alerts_summary_port.get_alerts_summary(
-            departments=calculated_departments,
-            measurement_errors=measurement_errors,
+            departments=snapshot.calculated_departments,
+            measurement_errors=snapshot.measurement_errors,
         )
 
-        department_alerts = self._build_department_alerts(calculated_departments)
+        department_alerts = self._build_department_alerts(snapshot.calculated_departments)
         indicator_alerts = self._build_indicator_alerts(
-            calculated_departments,
+            snapshot.calculated_departments,
             catalog_by_indicator_id,
         )
 
         return {
-            "competence": period.competence,
+            "competence": snapshot.period.competence,
             "executive_alerts": executive_alerts,
             "department_alerts": department_alerts,
             "indicator_alerts": indicator_alerts,
-            "errors": measurement_errors,
-            "partial_success": len(measurement_errors) > 0,
+            "errors": snapshot.measurement_errors,
+            "partial_success": len(snapshot.measurement_errors) > 0,
         }
 
     def _build_department_alerts(self, departments) -> list[dict]:

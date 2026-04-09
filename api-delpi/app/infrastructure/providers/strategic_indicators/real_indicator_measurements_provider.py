@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from app.application.dto.strategic_indicators.catalog_models import (
     StrategicIndicatorMeasuredValue,
 )
@@ -35,6 +37,10 @@ class RealStrategicIndicatorsMeasurementsProvider(
         self._production_snapshot_port = production_snapshot_port
         self._commercial_snapshot_port = commercial_snapshot_port
         self._quality_snapshot_port = quality_snapshot_port
+        self._cache: dict[
+            tuple[str | None, str | None, str | None],
+            tuple[list[StrategicIndicatorMeasuredValue], list[dict]],
+        ] = {}
 
     def get_indicator_measurements(
         self,
@@ -43,63 +49,136 @@ class RealStrategicIndicatorsMeasurementsProvider(
         end_date: str | None = None,
         department_id: str | None = None,
     ) -> tuple[list[StrategicIndicatorMeasuredValue], list[dict]]:
+        cache_key = (start_date, end_date, department_id)
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        collectors = self._build_collectors(
+            start_date=start_date,
+            end_date=end_date,
+            department_id=department_id,
+        )
+
+        raw_results = self._collect_parallel(collectors)
+
         items: list[StrategicIndicatorMeasuredValue] = []
         errors: list[dict] = []
 
-        self._collect(
-            should_collect=department_id in (None, "", "engineering"),
-            fetcher=lambda: self._engineering_snapshot_port.get_engineering_indicators_snapshot(
-                start_date=start_date,
-                end_date=end_date,
-            ),
-            items=items,
-            errors=errors,
-        )
+        for result in raw_results:
+            self._append_result(
+                result=result,
+                items=items,
+                errors=errors,
+            )
 
-        self._collect(
-            should_collect=department_id in (None, "", "production"),
-            fetcher=lambda: self._production_snapshot_port.get_production_indicators_snapshot(
-                start_date=start_date,
-                end_date=end_date,
-            ),
-            items=items,
-            errors=errors,
-        )
+        final_result = (items, errors)
+        self._cache[cache_key] = final_result
+        return final_result
 
-        self._collect(
-            should_collect=department_id in (None, "", "commercial"),
-            fetcher=lambda: self._commercial_snapshot_port.get_commercial_indicators_snapshot(
-                start_date=start_date,
-                end_date=end_date,
-            ),
-            items=items,
-            errors=errors,
-        )
-
-        self._collect(
-            should_collect=department_id in (None, "", "quality"),
-            fetcher=lambda: self._quality_snapshot_port.get_quality_indicators_snapshot(
-                start_date=start_date,
-                end_date=end_date,
-            ),
-            items=items,
-            errors=errors,
-        )
-
-        return items, errors
-
-    def _collect(
+    def _build_collectors(
         self,
         *,
-        should_collect: bool,
-        fetcher,
+        start_date: str | None,
+        end_date: str | None,
+        department_id: str | None,
+    ) -> list[tuple[str, callable]]:
+        collectors: list[tuple[str, callable]] = []
+
+        if department_id in (None, "", "engineering"):
+            collectors.append(
+                (
+                    "engineering",
+                    lambda: self._engineering_snapshot_port.get_engineering_indicators_snapshot(
+                        start_date=start_date,
+                        end_date=end_date,
+                    ),
+                )
+            )
+
+        if department_id in (None, "", "production"):
+            collectors.append(
+                (
+                    "production",
+                    lambda: self._production_snapshot_port.get_production_indicators_snapshot(
+                        start_date=start_date,
+                        end_date=end_date,
+                    ),
+                )
+            )
+
+        if department_id in (None, "", "commercial"):
+            collectors.append(
+                (
+                    "commercial",
+                    lambda: self._commercial_snapshot_port.get_commercial_indicators_snapshot(
+                        start_date=start_date,
+                        end_date=end_date,
+                    ),
+                )
+            )
+
+        if department_id in (None, "", "quality"):
+            collectors.append(
+                (
+                    "quality",
+                    lambda: self._quality_snapshot_port.get_quality_indicators_snapshot(
+                        start_date=start_date,
+                        end_date=end_date,
+                    ),
+                )
+            )
+
+        return collectors
+
+    def _collect_parallel(
+        self,
+        collectors: list[tuple[str, callable]],
+    ) -> list[dict]:
+        if not collectors:
+            return []
+
+        if len(collectors) == 1:
+            _name, fetcher = collectors[0]
+            return [fetcher()]
+
+        results_by_name: dict[str, dict] = {}
+
+        with ThreadPoolExecutor(max_workers=len(collectors)) as executor:
+            future_map = {
+                executor.submit(fetcher): name
+                for name, fetcher in collectors
+            }
+
+            for future in as_completed(future_map):
+                name = future_map[future]
+                try:
+                    results_by_name[name] = future.result()
+                except Exception as exc:
+                    results_by_name[name] = {
+                        "items": [],
+                        "errors": [
+                            {
+                                "department_id": name,
+                                "source": f"{name}_snapshot",
+                                "message": str(exc),
+                            }
+                        ],
+                    }
+
+        ordered_results: list[dict] = []
+        for name, _fetcher in collectors:
+            ordered_results.append(results_by_name.get(name, {"items": [], "errors": []}))
+
+        return ordered_results
+
+    def _append_result(
+        self,
+        *,
+        result: dict,
         items: list[StrategicIndicatorMeasuredValue],
         errors: list[dict],
     ) -> None:
-        if not should_collect:
-            return
-
-        result = fetcher()
         for raw in result.get("items", []):
             items.append(
                 StrategicIndicatorMeasuredValue(

@@ -5,20 +5,8 @@ from app.application.dto.strategic_indicators.get_indicators_response import (
     IndicatorFetchErrorResponse,
     IndicatorItemResponse,
 )
-from app.application.use_cases.strategic_indicators.period_resolution import (
-    resolve_period,
-)
-from app.domain.ports.strategic_indicators.departments_catalog_repository_port import (
-    StrategicIndicatorsDepartmentsCatalogRepositoryPort,
-)
-from app.domain.ports.strategic_indicators.indicator_measurements_port import (
-    StrategicIndicatorsIndicatorMeasurementsPort,
-)
-from app.domain.ports.strategic_indicators.indicators_catalog_repository_port import (
-    StrategicIndicatorsIndicatorsCatalogRepositoryPort,
-)
-from app.domain.services.strategic_indicators_calculator import (
-    StrategicIndicatorsCalculator,
+from app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
+    StrategicIndicatorsSnapshotService,
 )
 
 
@@ -26,15 +14,9 @@ class GetStrategicIndicatorsUseCase:
     def __init__(
         self,
         *,
-        departments_catalog_repository: StrategicIndicatorsDepartmentsCatalogRepositoryPort,
-        indicators_catalog_repository: StrategicIndicatorsIndicatorsCatalogRepositoryPort,
-        measurements_port: StrategicIndicatorsIndicatorMeasurementsPort,
-        calculator: StrategicIndicatorsCalculator,
+        snapshot_service: StrategicIndicatorsSnapshotService,
     ) -> None:
-        self._departments_catalog_repository = departments_catalog_repository
-        self._indicators_catalog_repository = indicators_catalog_repository
-        self._measurements_port = measurements_port
-        self._calculator = calculator
+        self._snapshot_service = snapshot_service
 
     def execute(
         self,
@@ -44,34 +26,17 @@ class GetStrategicIndicatorsUseCase:
         department_id: str | None = None,
         competence: str | None = None,
     ) -> GetStrategicIndicatorsResponse:
-        period = resolve_period(
+        snapshot = self._snapshot_service.get_period_snapshot(
             competence=competence,
             start_date=start_date,
             end_date=end_date,
+            department_id=department_id,
         )
 
-        departments_catalog = (
-            self._departments_catalog_repository.list_departments_catalog()
-        )
         departments_by_id = {
-            item.department_id: item for item in departments_catalog
+            item.department_id: item
+            for item in snapshot.calculated_departments
         }
-
-        indicators_catalog = self._indicators_catalog_repository.list_indicators_catalog()
-        measurements, raw_errors = self._measurements_port.get_indicator_measurements(
-            start_date=period.start_date,
-            end_date=period.end_date,
-            department_id=department_id,
-        )
-
-        calculated_items = self._calculator.calculate_indicators(
-            indicators_catalog=indicators_catalog,
-            measurements=measurements,
-            department_id=department_id,
-            start_date=period.start_date,
-            end_date=period.end_date,
-            competence=period.competence,
-        )
 
         return GetStrategicIndicatorsResponse(
             items=[
@@ -92,7 +57,7 @@ class GetStrategicIndicatorsUseCase:
                     classification=item.classification,
                     source=item.source,
                 )
-                for item in calculated_items
+                for item in snapshot.calculated_indicators
             ],
             errors=[
                 IndicatorFetchErrorResponse(
@@ -100,6 +65,6 @@ class GetStrategicIndicatorsUseCase:
                     source=error["source"],
                     message=error["message"],
                 )
-                for error in raw_errors
+                for error in snapshot.measurement_errors
             ],
         )

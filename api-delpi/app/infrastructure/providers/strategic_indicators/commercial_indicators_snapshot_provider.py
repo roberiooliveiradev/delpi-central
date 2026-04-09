@@ -1,20 +1,7 @@
 from __future__ import annotations
 
-from app.application.dto.commercial.commercial_target_request import CommercialTargetRequest
-from app.application.dto.commercial.new_clients_average_request import NewClientsAverageRequest
-from app.application.dto.commercial.new_clients_rol_pct_request import NewClientsRolPctRequest
-from app.application.dto.commercial.sales_conversion_rate_request import SalesConversionRateRequest
-from app.application.use_cases.commercial.get_new_clients_average_use_case import (
-    GetNewClientsAverageUseCase,
-)
-from app.application.use_cases.commercial.get_new_clients_rol_pct_use_case import (
-    GetNewClientsRolPctUseCase,
-)
-from app.application.use_cases.commercial.get_rol_target_pct_use_case import (
-    GetRolTargetPctUseCase,
-)
-from app.application.use_cases.commercial.get_sales_conversion_rate_use_case import (
-    GetSalesConversionRateUseCase,
+from app.application.services.commercial.commercial_metrics_snapshot_service import (
+    CommercialMetricsSnapshotService,
 )
 from app.domain.ports.strategic_indicators.commercial_indicators_snapshot_port import (
     StrategicIndicatorsCommercialIndicatorsSnapshotPort,
@@ -27,17 +14,9 @@ class CommercialIndicatorsSnapshotProvider(
     def __init__(
         self,
         *,
-        head_office_rol_target_use_case: GetRolTargetPctUseCase,
-        branch_rol_target_use_case: GetRolTargetPctUseCase,
-        sales_conversion_rate_use_case: GetSalesConversionRateUseCase,
-        new_clients_average_use_case: GetNewClientsAverageUseCase,
-        new_clients_rol_pct_use_case: GetNewClientsRolPctUseCase,
+        commercial_metrics_snapshot_service: CommercialMetricsSnapshotService,
     ) -> None:
-        self._head_office_rol_target_use_case = head_office_rol_target_use_case
-        self._branch_rol_target_use_case = branch_rol_target_use_case
-        self._sales_conversion_rate_use_case = sales_conversion_rate_use_case
-        self._new_clients_average_use_case = new_clients_average_use_case
-        self._new_clients_rol_pct_use_case = new_clients_rol_pct_use_case
+        self._commercial_metrics_snapshot_service = commercial_metrics_snapshot_service
 
     def get_commercial_indicators_snapshot(
         self,
@@ -48,10 +27,29 @@ class CommercialIndicatorsSnapshotProvider(
         items: list[dict] = []
         errors: list[dict] = []
 
-        self._collect_indicator(
-            builder=lambda: self._build_head_office_rol_target_measurement(
+        try:
+            snapshot = self._commercial_metrics_snapshot_service.get_snapshot(
                 start_date=start_date,
                 end_date=end_date,
+            )
+        except Exception as exc:
+            return {
+                "items": [],
+                "errors": [
+                    {
+                        "department_id": "commercial",
+                        "source": "commercial_snapshot",
+                        "message": str(exc),
+                    }
+                ],
+            }
+
+        self._collect_indicator(
+            builder=lambda: self._build_measurement(
+                indicator_id="commercial-rol-matrix",
+                source="commercial_head_office_rol_target",
+                value=snapshot.matrix_rol_target_pct,
+                unit_values={"matrix": snapshot.matrix_rol_target_pct},
             ),
             department_id="commercial",
             source="commercial_head_office_rol_target",
@@ -60,9 +58,11 @@ class CommercialIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_branch_rol_target_measurement(
-                start_date=start_date,
-                end_date=end_date,
+            builder=lambda: self._build_measurement(
+                indicator_id="commercial-rol-branch",
+                source="commercial_branch_rol_target",
+                value=snapshot.branch_rol_target_pct,
+                unit_values={"branch": snapshot.branch_rol_target_pct},
             ),
             department_id="commercial",
             source="commercial_branch_rol_target",
@@ -71,9 +71,11 @@ class CommercialIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_sales_conversion_rate_measurement(
-                start_date=start_date,
-                end_date=end_date,
+            builder=lambda: self._build_measurement(
+                indicator_id="commercial-closing-rate",
+                source="commercial_sales_conversion_rate",
+                value=snapshot.sales_conversion_rate_pct,
+                unit_values={"consolidated": snapshot.sales_conversion_rate_pct},
             ),
             department_id="commercial",
             source="commercial_sales_conversion_rate",
@@ -82,9 +84,11 @@ class CommercialIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_new_clients_average_measurement(
-                start_date=start_date,
-                end_date=end_date,
+            builder=lambda: self._build_measurement(
+                indicator_id="commercial-new-clients",
+                source="commercial_new_clients_average",
+                value=snapshot.monthly_average_new_clients,
+                unit_values={"consolidated": snapshot.monthly_average_new_clients},
             ),
             department_id="commercial",
             source="commercial_new_clients_average",
@@ -93,9 +97,11 @@ class CommercialIndicatorsSnapshotProvider(
         )
 
         self._collect_indicator(
-            builder=lambda: self._build_new_clients_rol_pct_measurement(
-                start_date=start_date,
-                end_date=end_date,
+            builder=lambda: self._build_measurement(
+                indicator_id="commercial-new-rol",
+                source="commercial_new_clients_rol_pct",
+                value=snapshot.new_clients_rol_pct,
+                unit_values={"consolidated": snapshot.new_clients_rol_pct},
             ),
             department_id="commercial",
             source="commercial_new_clients_rol_pct",
@@ -128,135 +134,18 @@ class CommercialIndicatorsSnapshotProvider(
                 }
             )
 
-    def _build_head_office_rol_target_measurement(
+    def _build_measurement(
         self,
         *,
-        start_date: str | None,
-        end_date: str | None,
+        indicator_id: str,
+        source: str,
+        value: float,
+        unit_values: dict[str, float],
     ) -> dict:
-        request = CommercialTargetRequest(
-            branch="01",
-            start_date=start_date,
-            end_date=end_date,
-        )
-
-        result = self._head_office_rol_target_use_case.execute(request)
-        value = self._to_float(result.get("rol_target_pct")) or 0.0
-
         return {
             "department_id": "commercial",
-            "indicator_id": "commercial-rol-matrix",
+            "indicator_id": indicator_id,
             "value": value,
-            "source": "commercial_head_office_rol_target",
-            "unit_values": {
-                "matrix": value,
-            },
+            "source": source,
+            "unit_values": unit_values,
         }
-
-    def _build_branch_rol_target_measurement(
-        self,
-        *,
-        start_date: str | None,
-        end_date: str | None,
-    ) -> dict:
-        request = CommercialTargetRequest(
-            branch="02",
-            start_date=start_date,
-            end_date=end_date,
-        )
-
-        result = self._branch_rol_target_use_case.execute(request)
-        value = self._to_float(result.get("rol_target_pct")) or 0.0
-
-        return {
-            "department_id": "commercial",
-            "indicator_id": "commercial-rol-branch",
-            "value": value,
-            "source": "commercial_branch_rol_target",
-            "unit_values": {
-                "branch": value,
-            },
-        }
-
-    def _build_sales_conversion_rate_measurement(
-        self,
-        *,
-        start_date: str | None,
-        end_date: str | None,
-    ) -> dict:
-        request = SalesConversionRateRequest(
-            branch=None,
-            start_date=start_date,
-            end_date=end_date,
-        )
-
-        result = self._sales_conversion_rate_use_case.execute(request)
-        value = self._to_float(result.get("sales_conversion_rate_pct")) or 0.0
-
-        return {
-            "department_id": "commercial",
-            "indicator_id": "commercial-closing-rate",
-            "value": value,
-            "source": "commercial_sales_conversion_rate",
-            "unit_values": {
-                "consolidated": value,
-            },
-        }
-
-    def _build_new_clients_average_measurement(
-        self,
-        *,
-        start_date: str | None,
-        end_date: str | None,
-    ) -> dict:
-        request = NewClientsAverageRequest(
-            branch=None,
-            start_date=start_date,
-            end_date=end_date,
-        )
-
-        result = self._new_clients_average_use_case.execute(request)
-        value = self._to_float(result.get("monthly_average")) or 0.0
-
-        return {
-            "department_id": "commercial",
-            "indicator_id": "commercial-new-clients",
-            "value": value,
-            "source": "commercial_new_clients_average",
-            "unit_values": {
-                "consolidated": value,
-            },
-        }
-
-    def _build_new_clients_rol_pct_measurement(
-        self,
-        *,
-        start_date: str | None,
-        end_date: str | None,
-    ) -> dict:
-        request = NewClientsRolPctRequest(
-            branch=None,
-            start_date=start_date,
-            end_date=end_date,
-        )
-
-        result = self._new_clients_rol_pct_use_case.execute(request)
-        value = self._to_float(result.get("new_clients_rol_pct")) or 0.0
-
-        return {
-            "department_id": "commercial",
-            "indicator_id": "commercial-new-rol",
-            "value": value,
-            "source": "commercial_new_clients_rol_pct",
-            "unit_values": {
-                "consolidated": value,
-            },
-        }
-
-    def _to_float(self, value) -> float | None:
-        if value is None:
-            return None
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            return None

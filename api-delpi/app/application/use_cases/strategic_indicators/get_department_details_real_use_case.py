@@ -2,18 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.application.use_cases.strategic_indicators.period_resolution import (
-    previous_period,
-    resolve_period,
-)
-from app.domain.ports.strategic_indicators.departments_catalog_repository_port import (
-    StrategicIndicatorsDepartmentsCatalogRepositoryPort,
-)
-from app.domain.ports.strategic_indicators.indicator_measurements_port import (
-    StrategicIndicatorsIndicatorMeasurementsPort,
-)
-from app.domain.ports.strategic_indicators.indicators_catalog_repository_port import (
-    StrategicIndicatorsIndicatorsCatalogRepositoryPort,
+from app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
+    StrategicIndicatorsSnapshotService,
 )
 from app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
@@ -36,81 +26,34 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
     def __init__(
         self,
         *,
-        departments_catalog_repository: StrategicIndicatorsDepartmentsCatalogRepositoryPort,
-        indicators_catalog_repository: StrategicIndicatorsIndicatorsCatalogRepositoryPort,
-        measurements_port: StrategicIndicatorsIndicatorMeasurementsPort,
+        snapshot_service: StrategicIndicatorsSnapshotService,
         calculator: StrategicIndicatorsCalculator,
     ) -> None:
-        self._departments_catalog_repository = departments_catalog_repository
-        self._indicators_catalog_repository = indicators_catalog_repository
-        self._measurements_port = measurements_port
+        self._snapshot_service = snapshot_service
         self._calculator = calculator
 
     def execute(
         self,
         request: GetStrategicIndicatorsDepartmentDetailsRealRequest,
     ) -> dict:
-        current_period = resolve_period(
+        snapshot = self._snapshot_service.get_current_and_previous_snapshot(
             competence=request.competence,
             start_date=request.start_date,
             end_date=request.end_date,
-        )
-        prev_period = previous_period(current_period)
-
-        departments_catalog = (
-            self._departments_catalog_repository.list_departments_catalog()
-        )
-        department_catalog = next(
-            (
-                item
-                for item in departments_catalog
-                if item.department_id == request.department_id
-            ),
-            None,
+            department_id=request.department_id,
         )
 
-        if department_catalog is None:
+        if not snapshot.current.calculated_departments:
             raise DepartmentNotFoundError(
                 f"Departamento '{request.department_id}' não encontrado."
             )
 
-        indicators_catalog = self._indicators_catalog_repository.list_indicators_catalog()
-
-        current_measurements, errors = self._measurements_port.get_indicator_measurements(
-            start_date=current_period.start_date,
-            end_date=current_period.end_date,
-            department_id=request.department_id,
+        current_department = snapshot.current.calculated_departments[0]
+        previous_department = (
+            snapshot.previous.calculated_departments[0]
+            if snapshot.previous.calculated_departments
+            else None
         )
-        previous_measurements, _ = self._measurements_port.get_indicator_measurements(
-            start_date=prev_period.start_date,
-            end_date=prev_period.end_date,
-            department_id=request.department_id,
-        )
-
-        current_departments = self._calculator.calculate_departments(
-            departments_catalog=[department_catalog],
-            indicators_catalog=indicators_catalog,
-            measurements=current_measurements,
-            start_date=current_period.start_date,
-            end_date=current_period.end_date,
-            competence=current_period.competence,
-        )
-        previous_departments = self._calculator.calculate_departments(
-            departments_catalog=[department_catalog],
-            indicators_catalog=indicators_catalog,
-            measurements=previous_measurements,
-            start_date=prev_period.start_date,
-            end_date=prev_period.end_date,
-            competence=prev_period.competence,
-        )
-
-        if not current_departments:
-            raise DepartmentNotFoundError(
-                f"Departamento '{request.department_id}' não encontrado."
-            )
-
-        current_department = current_departments[0]
-        previous_department = previous_departments[0] if previous_departments else None
 
         previous_indicators_by_id = {
             item.indicator_id: item
@@ -142,9 +85,9 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             },
             "units": self._build_units(
                 current_department,
-                start_date=current_period.start_date,
-                end_date=current_period.end_date,
-                competence=current_period.competence,
+                start_date=snapshot.current.period.start_date,
+                end_date=snapshot.current.period.end_date,
+                competence=snapshot.current.period.competence,
             ),
             "indicators": [
                 self._map_indicator(
@@ -153,8 +96,8 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
                 )
                 for indicator in current_department.indicators
             ],
-            "errors": errors,
-            "partial_success": len(errors) > 0,
+            "errors": snapshot.current.measurement_errors,
+            "partial_success": len(snapshot.current.measurement_errors) > 0,
         }
 
     def _map_indicator(self, *, current, previous) -> dict:
