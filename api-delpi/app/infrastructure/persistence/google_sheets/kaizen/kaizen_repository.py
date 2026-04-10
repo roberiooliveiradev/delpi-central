@@ -1,6 +1,5 @@
-# app/infrastructure/persistence/google_sheets/kaizen_repository.py
 from datetime import date
-from typing import Optional, List
+from typing import Optional
 
 from app.infrastructure.providers.google_sheets.google_sheets_client import GoogleSheetsClient
 from app.domain.ports.kaizen.kaizen_query_port import KaizenQueryRepositoryPort
@@ -8,6 +7,7 @@ from app.domain.entities.kaizen.kaizen import Kaizen
 from app.application.dto.kaizen.kaizen_summary_request import KaizenSummaryRequest
 from app.application.dto.kaizen.kaizen_summary_response import KaizenSummaryResponse
 from app.infrastructure.persistence.google_sheets.utils import Utils
+from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
 
 
 class KaizenRepository(KaizenQueryRepositoryPort):
@@ -76,12 +76,12 @@ class KaizenRepository(KaizenQueryRepositoryPort):
         date_start: Optional[str],
         date_end: Optional[str],
     ) -> bool:
-        parsed = self.utils.parse_date(date_value)
+        parsed = parse_spreadsheet_date(date_value)
         if parsed is None:
             return False
 
-        start = self.utils.parse_date(date_start) if date_start else None
-        end = self.utils.parse_date(date_end) if date_end else None
+        start = parse_spreadsheet_date(date_start) if date_start else None
+        end = parse_spreadsheet_date(date_end) if date_end else None
 
         if start and parsed < start:
             return False
@@ -92,8 +92,7 @@ class KaizenRepository(KaizenQueryRepositoryPort):
         return True
 
     def _parse_date_safe(self, value: Optional[str]) -> Optional[date]:
-        return self.utils.parse_date(value)
-
+        return parse_spreadsheet_date(value)
 
     def _days_active_in_range(
         self,
@@ -117,7 +116,6 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             return 0
 
         return (end - effective_start).days + 1
-
 
     def _calculate_kaizen_total_savings(
         self,
@@ -159,6 +157,11 @@ class KaizenRepository(KaizenQueryRepositoryPort):
         for row in concluded_rows:
             title_ok = True
             status_ok = True
+            period_ok = self._is_in_period(
+                row.get("date_implemented"),
+                request.date_start,
+                request.date_end,
+            )
 
             if request.title:
                 title_ok = request.title.strip().lower() in (row.get("title") or "").strip().lower()
@@ -166,7 +169,7 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             if request.status:
                 status_ok = (row.get("status") or "").strip().lower() == request.status.strip().lower()
 
-            if title_ok and status_ok:
+            if title_ok and status_ok and period_ok:
                 filtered_rows.append(row)
 
         kaizens = [Kaizen(**row) for row in filtered_rows]

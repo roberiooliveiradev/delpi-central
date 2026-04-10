@@ -23,6 +23,9 @@ from app.domain.ports.strategic_indicators.quality_indicators_snapshot_port impo
 from app.domain.ports.strategic_indicators.hr_indicators_snapshot_port import (
     StrategicIndicatorsHrIndicatorsSnapshotPort,
 )
+from app.domain.ports.strategic_indicators.financial_indicators_snapshot_port import (
+    StrategicIndicatorsFinancialIndicatorsSnapshotPort,
+)
 
 
 class RealStrategicIndicatorsMeasurementsProvider(
@@ -36,12 +39,14 @@ class RealStrategicIndicatorsMeasurementsProvider(
         commercial_snapshot_port: StrategicIndicatorsCommercialIndicatorsSnapshotPort,
         quality_snapshot_port: StrategicIndicatorsQualityIndicatorsSnapshotPort,
         hr_snapshot_port: StrategicIndicatorsHrIndicatorsSnapshotPort,
+        financial_snapshot_port: StrategicIndicatorsFinancialIndicatorsSnapshotPort,
     ) -> None:
         self._engineering_snapshot_port = engineering_snapshot_port
         self._production_snapshot_port = production_snapshot_port
         self._commercial_snapshot_port = commercial_snapshot_port
         self._quality_snapshot_port = quality_snapshot_port
         self._hr_snapshot_port = hr_snapshot_port
+        self._financial_snapshot_port = financial_snapshot_port
         self._cache: dict[
             tuple[str | None, str | None, str | None],
             tuple[list[StrategicIndicatorMeasuredValue], list[dict]],
@@ -144,6 +149,18 @@ class RealStrategicIndicatorsMeasurementsProvider(
                     ),
                 )
             )
+        
+        if department_id in (None, "", "financial"):
+            collectors.append(
+                (
+                    "financial",
+                    lambda: self._financial_snapshot_port.get_financial_indicators_snapshot(
+                        start_date=start_date,
+                        end_date=end_date,
+                    ),
+                )
+            )
+
         return collectors
 
     def _collect_parallel(

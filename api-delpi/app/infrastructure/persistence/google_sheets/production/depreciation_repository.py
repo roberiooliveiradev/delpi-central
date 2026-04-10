@@ -4,6 +4,8 @@ from app.infrastructure.providers.google_sheets.google_sheets_client import Goog
 from app.domain.ports.production.depreciation_repository_port import DepreciationRepositoryPort
 from app.application.dto.production.production_request import ProductionRequest
 from app.domain.entities.production.depreciation_cost import DepreciationCost
+from app.shared.utils.spreadsheet_date import spreadsheet_date_in_range
+
 
 class DepreciationRepository(DepreciationRepositoryPort):
     def __init__(self, client: GoogleSheetsClient, sheet_id: str, gid: str):
@@ -32,8 +34,9 @@ class DepreciationRepository(DepreciationRepositoryPort):
     def _matches_request(self, row: dict, request: ProductionRequest) -> bool:
         if request.branch and row.get("filial") != request.branch:
             return False
-        if request.start_date and row.get("data") < request.start_date:
-            return False
-        if request.end_date and row.get("data") > request.end_date:
-            return False
-        return True
+
+        return spreadsheet_date_in_range(
+            row.get("data"),
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )

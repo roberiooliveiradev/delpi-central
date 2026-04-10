@@ -100,6 +100,9 @@ from app.composition.ppm_composer import (
 from app.composition.hr_composer import (
     build_get_hr_indicators_snapshot_port,
 )
+from app.composition.financial_composer import (
+    build_get_financial_indicators_snapshot_port,
+)
 
 
 def build_get_engineering_indicators_snapshot_port():
@@ -138,6 +141,7 @@ def build_real_indicator_measurements_provider():
         commercial_snapshot_port=build_get_commercial_indicators_snapshot_port(),
         quality_snapshot_port=build_get_quality_indicators_snapshot_port(),
         hr_snapshot_port=build_get_hr_indicators_snapshot_port(),
+        financial_snapshot_port=build_get_financial_indicators_snapshot_port(),
     )
 
 

@@ -1,5 +1,3 @@
-# app/infrastructure/persistence/google_sheets/auditoria_5s/audit_5s_repository.py
-from datetime import datetime
 from typing import Optional
 
 from app.application.dto.auditoria_5s.audit_5s_summary_request import (
@@ -15,6 +13,10 @@ from app.domain.ports.audit_5s.audit_5s_query_port import (
 from app.infrastructure.persistence.google_sheets.utils import Utils
 from app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
+)
+from app.shared.utils.spreadsheet_date import (
+    format_date_ddmmyyyy,
+    parse_spreadsheet_date,
 )
 
 
@@ -32,29 +34,7 @@ class Audit5SRepository(Audit5SQueryRepositoryPort):
         self.utils = utils
 
     def _format_date_pt_br(self, value: Optional[str]) -> Optional[str]:
-        if not value:
-            return None
-
-        raw = str(value).strip()
-
-        patterns = [
-            "%d/%m/%Y",
-            "%m/%d/%Y",
-            "%Y-%m-%d",
-        ]
-
-        for pattern in patterns:
-            try:
-                parsed = datetime.strptime(raw, pattern)
-                return parsed.strftime("%d/%m/%Y")
-            except ValueError:
-                continue
-
-        parsed_by_utils = self.utils.parse_date(raw)
-        if parsed_by_utils:
-            return parsed_by_utils.strftime("%d/%m/%Y")
-
-        return raw
+        return format_date_ddmmyyyy(value) or (str(value).strip() if value else None)
 
     def _map_row_to_model(self, row: dict) -> Optional[dict]:
         audit_id = self.utils.first_non_empty(row, ["id"])
@@ -81,12 +61,12 @@ class Audit5SRepository(Audit5SQueryRepositoryPort):
         start_date: Optional[str],
         end_date: Optional[str],
     ) -> bool:
-        parsed_value = self.utils.parse_date(value)
+        parsed_value = parse_spreadsheet_date(value)
         if parsed_value is None:
             return False
 
-        parsed_start = self.utils.parse_date(start_date) if start_date else None
-        parsed_end = self.utils.parse_date(end_date) if end_date else None
+        parsed_start = parse_spreadsheet_date(start_date) if start_date else None
+        parsed_end = parse_spreadsheet_date(end_date) if end_date else None
 
         if parsed_start and parsed_value < parsed_start:
             return False
@@ -141,9 +121,6 @@ class Audit5SRepository(Audit5SQueryRepositoryPort):
             average_score=average_score,
             list_audits=audits,
         )
-    
+
     def _format_filter_date(self, value: Optional[str]) -> Optional[str]:
-        if not value:
-            return None
-        parsed = self.utils.parse_date(value)
-        return parsed.strftime("%d/%m/%Y") if parsed else value
+        return format_date_ddmmyyyy(value) or value
