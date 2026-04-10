@@ -40,6 +40,10 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 ig.created_at,
                 ig.updated_at
             FROM strategic_indicators.indicator_goals ig
+            INNER JOIN strategic_indicators.department_indicators di
+                ON di.indicator_id = ig.indicator_id
+            INNER JOIN strategic_indicators.departments d
+                ON d.department_id = di.department_id
             WHERE 1 = 1
         """
         params: list = []
@@ -56,22 +60,15 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             query += " AND ig.is_active = TRUE"
 
         if department_id:
-            query += """
-                AND EXISTS (
-                    SELECT 1
-                    FROM strategic_indicators.module_settings ms,
-                         jsonb_array_elements(ms.payload_json->'items') AS dep,
-                         jsonb_array_elements(dep->'indicators') AS ind
-                    WHERE ms.setting_key = 'indicators.catalog'
-                      AND ms.is_active = TRUE
-                      AND dep->>'department_id' = %s
-                      AND ind->>'id' = ig.indicator_id
-                )
-            """
+            query += " AND di.department_id = %s"
             params.append(department_id)
 
         query += """
-            ORDER BY ig.indicator_id, ig.goal_year DESC, ig.version DESC
+            ORDER BY
+                d.display_order ASC,
+                di.display_order ASC,
+                ig.goal_year DESC,
+                ig.version DESC
         """
 
         return self.fetch_all(query, tuple(params))
@@ -359,3 +356,287 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     return int(parts[2])
 
         raise ValueError("Não foi possível resolver o ano da meta.")
+
+
+    def bulk_create_indicator_goals(
+        self,
+        *,
+        goal_year: int,
+        items: list[dict],
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        created_items: list[dict] = []
+
+        for item in items:
+            created_items.append(
+                self.create_indicator_goal(
+                    indicator_id=item["indicator_id"],
+                    goal_year=goal_year,
+                    goal_label=item["goal_label"],
+                    goal_value=float(item["goal_value"]),
+                    goal_periodicity=item["goal_periodicity"],
+                    valid_from=item.get("valid_from"),
+                    valid_to=item.get("valid_to"),
+                    notes=item.get("notes"),
+                    actor_user_id=actor_user_id,
+                    actor_email=actor_email,
+                )
+            )
+
+        return {
+            "message": "Metas analíticas criadas em lote com sucesso.",
+            "items": created_items,
+        }
+
+    def duplicate_goals_year(
+        self,
+        *,
+        source_year: int,
+        target_year: int,
+        indicator_ids: list[str] | None,
+        overwrite_existing: bool,
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        source_query = """
+            SELECT
+                id,
+                indicator_id,
+                goal_label,
+                goal_value,
+                goal_periodicity,
+                valid_from,
+                valid_to,
+                notes
+            FROM strategic_indicators.indicator_goals
+            WHERE goal_year = %s
+              AND is_active = TRUE
+        """
+        params: list = [source_year]
+
+        if indicator_ids:
+            placeholders = ", ".join(["%s"] * len(indicator_ids))
+            source_query += f" AND indicator_id IN ({placeholders})"
+            params.extend(indicator_ids)
+
+        source_query += " ORDER BY indicator_id ASC"
+
+        source_rows = self.fetch_all(source_query, tuple(params))
+
+        created_items: list[dict] = []
+
+        for row in source_rows:
+            existing = self.fetch_one(
+                """
+                SELECT id
+                FROM strategic_indicators.indicator_goals
+                WHERE indicator_id = %s
+                  AND goal_year = %s
+                  AND is_active = TRUE
+                LIMIT 1
+                """,
+                (row["indicator_id"], target_year),
+            )
+
+            if existing and not overwrite_existing:
+                continue
+
+            if existing and overwrite_existing:
+                self.execute(
+                    """
+                    UPDATE strategic_indicators.indicator_goals
+                    SET
+                        is_active = FALSE,
+                        updated_by_user_id = %s,
+                        updated_by_email = %s,
+                        updated_at = NOW()
+                    WHERE indicator_id = %s
+                      AND goal_year = %s
+                    """,
+                    (
+                        actor_user_id,
+                        actor_email,
+                        row["indicator_id"],
+                        target_year,
+                    ),
+                )
+
+            version_row = self.fetch_one(
+                """
+                SELECT COALESCE(MAX(version), 0) AS max_version
+                FROM strategic_indicators.indicator_goals
+                WHERE indicator_id = %s
+                  AND goal_year = %s
+                """,
+                (row["indicator_id"], target_year),
+            )
+            next_version = int((version_row or {}).get("max_version") or 0) + 1
+
+            created = self.execute_returning_one(
+                """
+                INSERT INTO strategic_indicators.indicator_goals (
+                    indicator_id,
+                    goal_year,
+                    goal_label,
+                    goal_value,
+                    goal_periodicity,
+                    version,
+                    is_active,
+                    valid_from,
+                    valid_to,
+                    notes,
+                    copied_from_goal_id,
+                    copied_from_year,
+                    created_by_user_id,
+                    created_by_email,
+                    updated_by_user_id,
+                    updated_by_email
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING *
+                """,
+                (
+                    row["indicator_id"],
+                    target_year,
+                    row["goal_label"],
+                    row["goal_value"],
+                    row["goal_periodicity"],
+                    next_version,
+                    row.get("valid_from"),
+                    row.get("valid_to"),
+                    row.get("notes"),
+                    row["id"],
+                    source_year,
+                    actor_user_id,
+                    actor_email,
+                    actor_user_id,
+                    actor_email,
+                ),
+            )
+            created_items.append(created)
+
+        return {
+            "message": "Duplicação de metas concluída com sucesso.",
+            "items": created_items,
+        }
+
+    def fill_missing_goals(
+        self,
+        *,
+        goal_year: int,
+        indicator_ids: list[str],
+        copy_from_year: int | None,
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        created_items: list[dict] = []
+
+        for indicator_id in indicator_ids:
+            existing = self.fetch_one(
+                """
+                SELECT id
+                FROM strategic_indicators.indicator_goals
+                WHERE indicator_id = %s
+                  AND goal_year = %s
+                  AND is_active = TRUE
+                LIMIT 1
+                """,
+                (indicator_id, goal_year),
+            )
+            if existing:
+                continue
+
+            if copy_from_year is not None:
+                source = self.fetch_one(
+                    """
+                    SELECT
+                        id,
+                        goal_label,
+                        goal_value,
+                        goal_periodicity,
+                        valid_from,
+                        valid_to,
+                        notes
+                    FROM strategic_indicators.indicator_goals
+                    WHERE indicator_id = %s
+                      AND goal_year = %s
+                      AND is_active = TRUE
+                    ORDER BY version DESC, updated_at DESC
+                    LIMIT 1
+                    """,
+                    (indicator_id, copy_from_year),
+                )
+                if source:
+                    version_row = self.fetch_one(
+                        """
+                        SELECT COALESCE(MAX(version), 0) AS max_version
+                        FROM strategic_indicators.indicator_goals
+                        WHERE indicator_id = %s
+                          AND goal_year = %s
+                        """,
+                        (indicator_id, goal_year),
+                    )
+                    next_version = int((version_row or {}).get("max_version") or 0) + 1
+
+                    created = self.execute_returning_one(
+                        """
+                        INSERT INTO strategic_indicators.indicator_goals (
+                            indicator_id,
+                            goal_year,
+                            goal_label,
+                            goal_value,
+                            goal_periodicity,
+                            version,
+                            is_active,
+                            valid_from,
+                            valid_to,
+                            notes,
+                            copied_from_goal_id,
+                            copied_from_year,
+                            created_by_user_id,
+                            created_by_email,
+                            updated_by_user_id,
+                            updated_by_email
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING *
+                        """,
+                        (
+                            indicator_id,
+                            goal_year,
+                            source["goal_label"],
+                            source["goal_value"],
+                            source["goal_periodicity"],
+                            next_version,
+                            source.get("valid_from"),
+                            source.get("valid_to"),
+                            source.get("notes"),
+                            source["id"],
+                            copy_from_year,
+                            actor_user_id,
+                            actor_email,
+                            actor_user_id,
+                            actor_email,
+                        ),
+                    )
+                    created_items.append(created)
+                    continue
+
+        return {
+            "message": "Preenchimento de metas faltantes concluído com sucesso.",
+            "items": created_items,
+        }
+
+    def list_goal_years_overview(self) -> list[dict]:
+        query = """
+            SELECT
+                ig.goal_year,
+                COUNT(*) AS total_versions,
+                COUNT(*) FILTER (WHERE ig.is_active = TRUE) AS total_active_versions,
+                COUNT(DISTINCT ig.indicator_id) FILTER (WHERE ig.is_active = TRUE) AS total_active_indicators
+            FROM strategic_indicators.indicator_goals ig
+            GROUP BY ig.goal_year
+            ORDER BY ig.goal_year DESC
+        """
+        return self.fetch_all(query)

@@ -21,19 +21,30 @@ class PostgresStrategicIndicatorsCatalogRepository(
     StrategicIndicatorsIndicatorsCatalogRepositoryPort,
 ):
     def list_departments_catalog(self) -> list[StrategicDepartmentCatalogItem]:
-        catalog = self._load_indicators_catalog_payload()
-        items = catalog.get("items", [])
+        sql = """
+            SELECT
+                department_id,
+                department_name,
+                short_name,
+                weight_pct,
+                strategic_summary,
+                aggregation_mode
+            FROM strategic_indicators.departments
+            WHERE is_active = TRUE
+            ORDER BY display_order ASC, department_name ASC
+        """
+        rows = self.fetch_all(sql)
 
         return [
             StrategicDepartmentCatalogItem(
-                department_id=item["department_id"],
-                department_name=item["department_name"],
-                short_name=item.get("short_name", item["department_name"][:3].upper()),
-                weight_pct=float(item.get("department_weight_pct", 0)),
-                strategic_summary=item.get("strategic_summary", ""),
-                aggregation_mode=item.get("aggregation_mode", "consolidated"),
+                department_id=row["department_id"],
+                department_name=row["department_name"],
+                short_name=row["short_name"],
+                weight_pct=float(row.get("weight_pct") or 0),
+                strategic_summary=row.get("strategic_summary") or "",
+                aggregation_mode=row.get("aggregation_mode") or "consolidated",
             )
-            for item in items
+            for row in rows
         ]
 
     def list_indicators_catalog(self) -> list[StrategicIndicatorCatalogItem]:
@@ -44,37 +55,51 @@ class PostgresStrategicIndicatorsCatalogRepository(
         *,
         department_id: str | None = None,
     ) -> list[StrategicIndicatorCatalogItem]:
-        catalog = self._load_indicators_catalog_payload()
-        items = catalog.get("items", [])
+        sql = """
+            SELECT
+                di.indicator_id,
+                di.department_id,
+                di.indicator_name,
+                di.weight_pct,
+                di.scope_type,
+                di.strategic_description,
+                di.source_key
+            FROM strategic_indicators.department_indicators di
+            INNER JOIN strategic_indicators.departments d
+                ON d.department_id = di.department_id
+            WHERE di.is_active = TRUE
+              AND d.is_active = TRUE
+        """
+        params: list = []
 
-        flattened: list[StrategicIndicatorCatalogItem] = []
+        if department_id:
+            sql += " AND di.department_id = %s"
+            params.append(department_id)
 
-        for department in items:
-            current_department_id = department["department_id"]
+        sql += """
+            ORDER BY
+                d.display_order ASC,
+                di.display_order ASC,
+                di.indicator_name ASC
+        """
 
-            if department_id and current_department_id != department_id:
-                continue
+        rows = self.fetch_all(sql, tuple(params))
 
-            for indicator in department.get("indicators", []):
-                flattened.append(
-                    StrategicIndicatorCatalogItem(
-                        indicator_id=indicator["id"],
-                        department_id=current_department_id,
-                        indicator_name=indicator["name"],
-                        weight_pct=float(indicator["weight_pct"]),
-                        goal_label="",
-                        goal_value=0.0,
-                        goal_periodicity="monthly",
-                        scope_type=indicator.get("scope_type", "consolidated"),
-                        strategic_description=indicator.get(
-                            "strategic_description",
-                            "",
-                        ),
-                        source_key=indicator.get("source_key"),
-                    )
-                )
-
-        return flattened
+        return [
+            StrategicIndicatorCatalogItem(
+                indicator_id=row["indicator_id"],
+                department_id=row["department_id"],
+                indicator_name=row["indicator_name"],
+                weight_pct=float(row.get("weight_pct") or 0),
+                goal_label="",
+                goal_value=0.0,
+                goal_periodicity="monthly",
+                scope_type=row.get("scope_type") or "consolidated",
+                strategic_description=row.get("strategic_description") or "",
+                source_key=row.get("source_key"),
+            )
+            for row in rows
+        ]
 
     def list_indicators_catalog_by_department(
         self,
@@ -84,32 +109,16 @@ class PostgresStrategicIndicatorsCatalogRepository(
 
     def get_department_goal_summary(self) -> dict[str, str]:
         sql = """
-            SELECT payload_json
-            FROM strategic_indicators.module_settings
-            WHERE setting_key = %s
-              AND setting_group = %s
-              AND is_active = TRUE
-            LIMIT 1
+            SELECT
+                department_id,
+                headline_goal
+            FROM strategic_indicators.departments
+            WHERE is_active = TRUE
+            ORDER BY display_order ASC, department_name ASC
         """
-        row = self.fetch_one(sql, ("goals.summary", "goals"))
-        payload = row["payload_json"] if row else {}
-        items = payload.get("items", [])
+        rows = self.fetch_all(sql)
 
         return {
-            item["department_id"]: item.get("headline_goal", "")
-            for item in items
+            row["department_id"]: row.get("headline_goal") or ""
+            for row in rows
         }
-
-    def _load_indicators_catalog_payload(self) -> dict:
-        sql = """
-            SELECT payload_json
-            FROM strategic_indicators.module_settings
-            WHERE setting_key = %s
-              AND setting_group = %s
-              AND is_active = TRUE
-            LIMIT 1
-        """
-        row = self.fetch_one(sql, ("indicators.catalog", "indicators"))
-        if not row:
-            return {"items": []}
-        return row["payload_json"] or {"items": []}

@@ -14,17 +14,36 @@ class PostgresStrategicIndicatorsDepartmentsCatalogRepository(
 ):
     def get_departments_catalog(self) -> list[dict]:
         query = """
-            SELECT payload_json
-            FROM strategic_indicators.module_settings
+            SELECT
+                department_id,
+                department_name,
+                short_name,
+                strategic_summary,
+                headline_goal,
+                supporting_focus,
+                weight_pct,
+                aggregation_mode,
+                is_active,
+                display_order
+            FROM strategic_indicators.departments
             WHERE is_active = TRUE
-              AND setting_key = 'indicators.catalog'
-            LIMIT 1
+            ORDER BY display_order ASC, department_name ASC
         """
 
-        row = self.fetch_one(query)
+        rows = self.fetch_all(query)
 
-        if row is None:
-            return []
-
-        payload = row.get("payload_json") or {}
-        return payload.get("items", [])
+        return [
+            {
+                "department_id": row["department_id"],
+                "department_name": row["department_name"],
+                "short_name": row["short_name"],
+                "strategic_summary": row.get("strategic_summary") or "",
+                "headline_goal": row.get("headline_goal") or "",
+                "supporting_focus": row.get("supporting_focus") or "",
+                "weight_pct": float(row.get("weight_pct") or 0),
+                "aggregation_mode": row.get("aggregation_mode") or "consolidated",
+                "is_active": bool(row.get("is_active", True)),
+                "display_order": int(row.get("display_order") or 0),
+            }
+            for row in rows
+        ]

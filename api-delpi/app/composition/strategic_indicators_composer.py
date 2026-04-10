@@ -58,9 +58,53 @@ from app.application.use_cases.strategic_indicators.activate_indicator_goal_use_
 from app.application.use_cases.strategic_indicators.deactivate_indicator_goal_use_case import (
     DeactivateStrategicIndicatorsIndicatorGoalUseCase,
 )
+from app.application.use_cases.strategic_indicators.list_admin_departments_use_case import (
+    ListStrategicIndicatorsAdminDepartmentsUseCase,
+)
+from app.application.use_cases.strategic_indicators.create_admin_department_use_case import (
+    CreateStrategicIndicatorsAdminDepartmentUseCase,
+)
+from app.application.use_cases.strategic_indicators.update_admin_department_use_case import (
+    UpdateStrategicIndicatorsAdminDepartmentUseCase,
+)
+from app.application.use_cases.strategic_indicators.deactivate_admin_department_use_case import (
+    DeactivateStrategicIndicatorsAdminDepartmentUseCase,
+)
+from app.application.use_cases.strategic_indicators.delete_admin_department_use_case import (
+    DeleteStrategicIndicatorsAdminDepartmentUseCase,
+)
+from app.application.use_cases.strategic_indicators.list_admin_department_indicators_use_case import (
+    ListStrategicIndicatorsAdminDepartmentIndicatorsUseCase,
+)
+from app.application.use_cases.strategic_indicators.create_admin_department_indicator_use_case import (
+    CreateStrategicIndicatorsAdminDepartmentIndicatorUseCase,
+)
+from app.application.use_cases.strategic_indicators.update_admin_department_indicator_use_case import (
+    UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase,
+)
+from app.application.use_cases.strategic_indicators.deactivate_admin_department_indicator_use_case import (
+    DeactivateStrategicIndicatorsAdminDepartmentIndicatorUseCase,
+)
+from app.application.use_cases.strategic_indicators.delete_admin_department_indicator_use_case import (
+    DeleteStrategicIndicatorsAdminDepartmentIndicatorUseCase,
+)
+from app.application.use_cases.strategic_indicators.bulk_create_indicator_goals_use_case import (
+    BulkCreateStrategicIndicatorsIndicatorGoalsUseCase,
+)
+from app.application.use_cases.strategic_indicators.duplicate_indicator_goals_year_use_case import (
+    DuplicateStrategicIndicatorsIndicatorGoalsYearUseCase,
+)
+from app.application.use_cases.strategic_indicators.fill_missing_indicator_goals_use_case import (
+    FillMissingStrategicIndicatorsIndicatorGoalsUseCase,
+)
+from app.application.use_cases.strategic_indicators.list_goal_years_overview_use_case import (
+    ListStrategicIndicatorsGoalYearsOverviewUseCase,
+)
+
 from app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
+
 from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_repository import (
     PostgresStrategicIndicatorsSettingsRepository,
 )
@@ -79,6 +123,13 @@ from app.infrastructure.persistence.plugins.repositories.strategic_indicators.po
 from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_indicator_goals_repository import (
     PostgresStrategicIndicatorsIndicatorGoalsRepository,
 )
+from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_admin_departments_repository import (
+    PostgresStrategicIndicatorsAdminDepartmentsRepository,
+)
+from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_department_indicators_repository import (
+    PostgresStrategicIndicatorsDepartmentIndicatorsRepository,
+)
+
 from app.infrastructure.providers.strategic_indicators.calculated_alerts_summary_provider import (
     CalculatedStrategicIndicatorsAlertsSummaryProvider,
 )
@@ -97,9 +148,11 @@ from app.infrastructure.providers.strategic_indicators.commercial_indicators_sna
 from app.infrastructure.providers.strategic_indicators.quality_indicators_snapshot_provider import (
     QualityIndicatorsSnapshotProvider,
 )
+
 from app.application.services.engineering.engineering_metrics_snapshot_service import (
     EngineeringMetricsSnapshotService,
 )
+
 from app.composition.commercial_composer import (
     build_commercial_metrics_snapshot_service,
 )
@@ -286,3 +339,81 @@ def build_activate_strategic_indicators_indicator_goal_use_case():
 def build_deactivate_strategic_indicators_indicator_goal_use_case():
     repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
     return DeactivateStrategicIndicatorsIndicatorGoalUseCase(repository)
+
+
+def build_list_strategic_indicators_admin_departments_use_case():
+    repository = PostgresStrategicIndicatorsAdminDepartmentsRepository()
+    return ListStrategicIndicatorsAdminDepartmentsUseCase(repository)
+
+
+def build_create_strategic_indicators_admin_department_use_case():
+    repository = PostgresStrategicIndicatorsAdminDepartmentsRepository()
+    return CreateStrategicIndicatorsAdminDepartmentUseCase(repository)
+
+
+def build_update_strategic_indicators_admin_department_use_case():
+    repository = PostgresStrategicIndicatorsAdminDepartmentsRepository()
+    return UpdateStrategicIndicatorsAdminDepartmentUseCase(repository)
+
+
+def build_deactivate_strategic_indicators_admin_department_use_case():
+    repository = PostgresStrategicIndicatorsAdminDepartmentsRepository()
+    return DeactivateStrategicIndicatorsAdminDepartmentUseCase(repository)
+
+
+def build_delete_strategic_indicators_admin_department_use_case():
+    repository = PostgresStrategicIndicatorsAdminDepartmentsRepository()
+    return DeleteStrategicIndicatorsAdminDepartmentUseCase(repository)
+
+
+def build_list_strategic_indicators_admin_department_indicators_use_case():
+    repository = PostgresStrategicIndicatorsDepartmentIndicatorsRepository()
+    return ListStrategicIndicatorsAdminDepartmentIndicatorsUseCase(repository)
+
+
+def build_create_strategic_indicators_admin_department_indicator_use_case():
+    repository = PostgresStrategicIndicatorsDepartmentIndicatorsRepository()
+    return CreateStrategicIndicatorsAdminDepartmentIndicatorUseCase(repository)
+
+
+def build_update_strategic_indicators_admin_department_indicator_use_case():
+    repository = PostgresStrategicIndicatorsDepartmentIndicatorsRepository()
+    return UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase(repository)
+
+
+def build_deactivate_strategic_indicators_admin_department_indicator_use_case():
+    repository = PostgresStrategicIndicatorsDepartmentIndicatorsRepository()
+    return DeactivateStrategicIndicatorsAdminDepartmentIndicatorUseCase(repository)
+
+
+def build_delete_strategic_indicators_admin_department_indicator_use_case():
+    repository = PostgresStrategicIndicatorsDepartmentIndicatorsRepository()
+    return DeleteStrategicIndicatorsAdminDepartmentIndicatorUseCase(repository)
+
+
+def build_bulk_create_strategic_indicators_indicator_goals_use_case():
+    repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
+    return BulkCreateStrategicIndicatorsIndicatorGoalsUseCase(repository)
+
+
+def build_duplicate_strategic_indicators_indicator_goals_year_use_case():
+    goals_repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
+    indicators_repository = PostgresStrategicIndicatorsDepartmentIndicatorsRepository()
+    return DuplicateStrategicIndicatorsIndicatorGoalsYearUseCase(
+        goals_repository=goals_repository,
+        indicators_repository=indicators_repository,
+    )
+
+
+def build_fill_missing_strategic_indicators_indicator_goals_use_case():
+    goals_repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
+    indicators_repository = PostgresStrategicIndicatorsDepartmentIndicatorsRepository()
+    return FillMissingStrategicIndicatorsIndicatorGoalsUseCase(
+        goals_repository=goals_repository,
+        indicators_repository=indicators_repository,
+    )
+
+
+def build_list_strategic_indicators_goal_years_overview_use_case():
+    repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
+    return ListStrategicIndicatorsGoalYearsOverviewUseCase(repository)

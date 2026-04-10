@@ -87,3 +87,43 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
+
+    @abstractmethod
+    def bulk_create_indicator_goals(
+        self,
+        *,
+        goal_year: int,
+        items: list[dict],
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def duplicate_goals_year(
+        self,
+        *,
+        source_year: int,
+        target_year: int,
+        indicator_ids: list[str] | None,
+        overwrite_existing: bool,
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def fill_missing_goals(
+        self,
+        *,
+        goal_year: int,
+        indicator_ids: list[str],
+        copy_from_year: int | None,
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_goal_years_overview(self) -> list[dict]:
+        raise NotImplementedError

@@ -8,8 +8,9 @@ from app.domain.ports.strategic_indicators.change_request_repository_port import
 
 class CreateStrategicIndicatorsChangeRequestUseCase:
     VALID_BLOCKS = {
-        "weights.departments",
-        "goals.summary",
+        "departments",
+        "department_indicators",
+        "indicator_goals",
         "parameters.global",
         "governance.notes",
     }

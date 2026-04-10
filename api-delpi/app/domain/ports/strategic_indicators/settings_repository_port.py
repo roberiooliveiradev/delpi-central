@@ -12,8 +12,6 @@ class StrategicIndicatorsSettingsRepositoryPort(ABC):
     def update_settings(
         self,
         *,
-        weights: dict,
-        goals: dict,
         parameters: dict,
         governance: dict,
         actor_user_id: str | None,

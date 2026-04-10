@@ -8,6 +8,13 @@ from app.interface.http.schemas.strategic_indicators_settings_schema import (
     AddCommentBody,
     CreateIndicatorGoalBodySchema,
     UpdateIndicatorGoalBodySchema,
+    CreateDepartmentBodySchema,
+    UpdateDepartmentBodySchema,
+    CreateDepartmentIndicatorBodySchema,
+    UpdateDepartmentIndicatorBodySchema,
+    BulkCreateIndicatorGoalsBodySchema,
+    DuplicateIndicatorGoalsYearBodySchema,
+    FillMissingIndicatorGoalsBodySchema,
 )
 
 from app.application.dto.strategic_indicators.update_settings_request import (
@@ -60,6 +67,20 @@ from app.composition.strategic_indicators_composer import (
     build_update_strategic_indicators_indicator_goal_use_case,
     build_activate_strategic_indicators_indicator_goal_use_case,
     build_deactivate_strategic_indicators_indicator_goal_use_case,
+    build_list_strategic_indicators_admin_departments_use_case,
+    build_create_strategic_indicators_admin_department_use_case,
+    build_update_strategic_indicators_admin_department_use_case,
+    build_deactivate_strategic_indicators_admin_department_use_case,
+    build_delete_strategic_indicators_admin_department_use_case,
+    build_list_strategic_indicators_admin_department_indicators_use_case,
+    build_create_strategic_indicators_admin_department_indicator_use_case,
+    build_update_strategic_indicators_admin_department_indicator_use_case,
+    build_deactivate_strategic_indicators_admin_department_indicator_use_case,
+    build_delete_strategic_indicators_admin_department_indicator_use_case,
+    build_bulk_create_strategic_indicators_indicator_goals_use_case,
+    build_duplicate_strategic_indicators_indicator_goals_year_use_case,
+    build_fill_missing_strategic_indicators_indicator_goals_use_case,
+    build_list_strategic_indicators_goal_years_overview_use_case,
 )
 
 router = APIRouter(
@@ -149,8 +170,6 @@ async def update_strategic_indicators_settings(
         actor_user_id, actor_email = _extract_actor(request)
 
         dto = UpdateStrategicIndicatorsSettingsRequest(
-            weights=body.weights.model_dump(),
-            goals=body.goals.model_dump(),
             parameters=body.parameters.model_dump(),
             governance=body.governance.model_dump(),
             actor_user_id=actor_user_id,
@@ -261,6 +280,219 @@ def submit_change_request(change_request_id: str, request: Request):
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+
+# =========================================================
+# ADMIN — DEPARTAMENTOS
+# =========================================================
+
+@router.get("/admin/departments")
+@require_permission("strategic-indicators.settings.manage")
+def list_admin_departments():
+    try:
+        use_case = build_list_strategic_indicators_admin_departments_use_case()
+        return {"items": use_case.execute()}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar departamentos administrativos: {exc}",
+        ) from exc
+
+
+@router.post("/admin/departments")
+@require_permission("strategic-indicators.settings.manage")
+def create_admin_department(body: CreateDepartmentBodySchema, request: Request):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_create_strategic_indicators_admin_department_use_case()
+        return use_case.execute(
+            body=body.model_dump(),
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao criar departamento: {exc}",
+        ) from exc
+
+
+@router.put("/admin/departments/{department_id}")
+@require_permission("strategic-indicators.settings.manage")
+def update_admin_department(
+    department_id: str,
+    body: UpdateDepartmentBodySchema,
+    request: Request,
+):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_update_strategic_indicators_admin_department_use_case()
+        return use_case.execute(
+            department_id=department_id,
+            body=body.model_dump(),
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao atualizar departamento: {exc}",
+        ) from exc
+
+
+@router.post("/admin/departments/{department_id}/deactivate")
+@require_permission("strategic-indicators.settings.manage")
+def deactivate_admin_department(department_id: str, request: Request):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_deactivate_strategic_indicators_admin_department_use_case()
+        return use_case.execute(
+            department_id=department_id,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao desativar departamento: {exc}",
+        ) from exc
+
+
+@router.delete("/admin/departments/{department_id}")
+@require_permission("strategic-indicators.settings.manage")
+def delete_admin_department(department_id: str, request: Request):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_delete_strategic_indicators_admin_department_use_case()
+        return use_case.execute(
+            department_id=department_id,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao excluir departamento: {exc}",
+        ) from exc
+
+
+# =========================================================
+# ADMIN — INDICADORES ESTRUTURAIS
+# =========================================================
+
+@router.get("/admin/departments/{department_id}/indicators")
+@require_permission("strategic-indicators.settings.manage")
+def list_admin_department_indicators(department_id: str):
+    try:
+        use_case = build_list_strategic_indicators_admin_department_indicators_use_case()
+        return {"items": use_case.execute(department_id=department_id)}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar indicadores estruturais do departamento: {exc}",
+        ) from exc
+
+
+@router.post("/admin/departments/{department_id}/indicators")
+@require_permission("strategic-indicators.settings.manage")
+def create_admin_department_indicator(
+    department_id: str,
+    body: CreateDepartmentIndicatorBodySchema,
+    request: Request,
+):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_create_strategic_indicators_admin_department_indicator_use_case()
+        return use_case.execute(
+            department_id=department_id,
+            body=body.model_dump(),
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao criar indicador estrutural: {exc}",
+        ) from exc
+
+
+@router.put("/admin/indicators/{indicator_id}")
+@require_permission("strategic-indicators.settings.manage")
+def update_admin_department_indicator(
+    indicator_id: str,
+    body: UpdateDepartmentIndicatorBodySchema,
+    request: Request,
+):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_update_strategic_indicators_admin_department_indicator_use_case()
+        return use_case.execute(
+            indicator_id=indicator_id,
+            body=body.model_dump(),
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao atualizar indicador estrutural: {exc}",
+        ) from exc
+
+
+@router.post("/admin/indicators/{indicator_id}/deactivate")
+@require_permission("strategic-indicators.settings.manage")
+def deactivate_admin_department_indicator(indicator_id: str, request: Request):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_deactivate_strategic_indicators_admin_department_indicator_use_case()
+        return use_case.execute(
+            indicator_id=indicator_id,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao desativar indicador estrutural: {exc}",
+        ) from exc
+
+
+@router.delete("/admin/indicators/{indicator_id}")
+@require_permission("strategic-indicators.settings.manage")
+def delete_admin_department_indicator(indicator_id: str, request: Request):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_delete_strategic_indicators_admin_department_indicator_use_case()
+        return use_case.execute(
+            indicator_id=indicator_id,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao excluir indicador estrutural: {exc}",
+        ) from exc
+
+
+# =========================================================
+# INDICATOR GOALS — UNITÁRIO
+# =========================================================
 
 @router.get("/indicator-goals")
 @require_permission("strategic-indicators.settings.manage")
@@ -429,6 +661,96 @@ def deactivate_indicator_goal(
             detail=f"Falha ao desativar meta analítica: {exc}",
         ) from exc
 
+
+# =========================================================
+# INDICATOR GOALS — LOTE / CICLOS
+# =========================================================
+
+@router.get("/admin/goal-years/overview")
+@require_permission("strategic-indicators.settings.manage")
+def list_goal_years_overview():
+    try:
+        use_case = build_list_strategic_indicators_goal_years_overview_use_case()
+        return {"items": use_case.execute()}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar visão dos ciclos anuais: {exc}",
+        ) from exc
+
+
+@router.post("/admin/indicator-goals/bulk-create")
+@require_permission("strategic-indicators.settings.manage")
+def bulk_create_indicator_goals(
+    body: BulkCreateIndicatorGoalsBodySchema,
+    request: Request,
+):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_bulk_create_strategic_indicators_indicator_goals_use_case()
+        return use_case.execute(
+            body=body.model_dump(),
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao criar metas analíticas em lote: {exc}",
+        ) from exc
+
+
+@router.post("/admin/indicator-goals/duplicate-year")
+@require_permission("strategic-indicators.settings.manage")
+def duplicate_indicator_goals_year(
+    body: DuplicateIndicatorGoalsYearBodySchema,
+    request: Request,
+):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_duplicate_strategic_indicators_indicator_goals_year_use_case()
+        return use_case.execute(
+            body=body.model_dump(),
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao duplicar metas entre anos: {exc}",
+        ) from exc
+
+
+@router.post("/admin/indicator-goals/fill-missing")
+@require_permission("strategic-indicators.settings.manage")
+def fill_missing_indicator_goals(
+    body: FillMissingIndicatorGoalsBodySchema,
+    request: Request,
+):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_fill_missing_strategic_indicators_indicator_goals_use_case()
+        return use_case.execute(
+            body=body.model_dump(),
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao preencher metas faltantes: {exc}",
+        ) from exc
+
+
+# =========================================================
+# LEITURA ANALÍTICA
+# =========================================================
 
 @router.get("/departments")
 @require_permission("strategic-indicators.view")
