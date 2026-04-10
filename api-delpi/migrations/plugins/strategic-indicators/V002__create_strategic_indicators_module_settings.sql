@@ -43,7 +43,7 @@ CREATE INDEX IF NOT EXISTS idx_si_module_settings_updated_at
     ON strategic_indicators.module_settings (updated_at DESC);
 
 COMMENT ON TABLE strategic_indicators.module_settings IS
-'Tabela base de configurações persistidas do plugin Strategic Indicators. Armazena pesos, metas, parâmetros, catálogos de indicadores e observações administrativas em blocos JSON versionáveis por chave lógica.';
+'Tabela base de configurações persistidas do plugin Strategic Indicators. Armazena pesos, metas executivas resumidas, parâmetros, governança e catálogo estrutural de departamentos e indicadores em blocos JSON versionáveis por chave lógica.';
 
 COMMENT ON COLUMN strategic_indicators.module_settings.setting_key IS
 'Chave lógica única da configuração. Exemplos: weights.departments, goals.summary, parameters.global, governance.notes, indicators.catalog.';
@@ -52,7 +52,7 @@ COMMENT ON COLUMN strategic_indicators.module_settings.setting_group IS
 'Grupo funcional da configuração: weights, goals, parameters, governance ou indicators.';
 
 COMMENT ON COLUMN strategic_indicators.module_settings.payload_json IS
-'Payload JSONB da configuração, mantendo flexibilidade para evolução incremental do módulo.';
+'Payload JSONB da configuração. No caso de indicators.catalog, armazena apenas a estrutura do catálogo e não mais as metas analíticas por ano.';
 
 COMMENT ON COLUMN strategic_indicators.module_settings.is_active IS
 'Define se o registro está ativo para leitura pelo módulo.';

@@ -15,6 +15,7 @@ import { AuditWorkspacePanel } from "../components/AuditWorkspacePanel";
 import { SettingsWorkspaceNav } from "../components/SettingsWorkspaceNav";
 import { SettingsStatusStrip } from "../components/SettingsStatusStrip";
 import { InfoState } from "../components/InfoState";
+import { IndicatorGoalsWorkspace } from "../components/IndicatorGoalsWorkspace";
 import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
 import type {
   SettingsDashboardData,
@@ -65,6 +66,7 @@ const settingsNavItems = [
   { id: "settings-readiness", label: "Prontidão" },
   { id: "settings-next-action", label: "Próxima ação" },
   { id: "settings-editor", label: "Edição" },
+  { id: "settings-indicator-goals", label: "Metas analíticas" },
   { id: "settings-audit", label: "Auditoria" },
 ];
 
@@ -231,6 +233,15 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
                 saving={saving}
                 onSave={save}
               />
+            </SectionBlock>
+          </div>
+
+          <div id="settings-indicator-goals">
+            <SectionBlock
+              title="Metas analíticas"
+              description="Gestão versionada das metas reais dos indicadores por ano, vigência e ativação."
+            >
+              <IndicatorGoalsWorkspace getAccessToken={getAccessToken} />
             </SectionBlock>
           </div>
 

@@ -37,24 +37,34 @@ class PostgresStrategicIndicatorsCatalogRepository(
         ]
 
     def list_indicators_catalog(self) -> list[StrategicIndicatorCatalogItem]:
+        return self.list_structural_indicators_catalog()
+
+    def list_structural_indicators_catalog(
+        self,
+        *,
+        department_id: str | None = None,
+    ) -> list[StrategicIndicatorCatalogItem]:
         catalog = self._load_indicators_catalog_payload()
         items = catalog.get("items", [])
 
         flattened: list[StrategicIndicatorCatalogItem] = []
 
         for department in items:
-            department_id = department["department_id"]
+            current_department_id = department["department_id"]
+
+            if department_id and current_department_id != department_id:
+                continue
 
             for indicator in department.get("indicators", []):
                 flattened.append(
                     StrategicIndicatorCatalogItem(
                         indicator_id=indicator["id"],
-                        department_id=department_id,
+                        department_id=current_department_id,
                         indicator_name=indicator["name"],
                         weight_pct=float(indicator["weight_pct"]),
-                        goal_label=indicator["goal_label"],
-                        goal_value=float(indicator["goal_value"]),
-                        goal_periodicity=indicator.get("goal_periodicity", "monthly"),
+                        goal_label="",
+                        goal_value=0.0,
+                        goal_periodicity="monthly",
                         scope_type=indicator.get("scope_type", "consolidated"),
                         strategic_description=indicator.get(
                             "strategic_description",
@@ -70,11 +80,7 @@ class PostgresStrategicIndicatorsCatalogRepository(
         self,
         department_id: str,
     ) -> list[StrategicIndicatorCatalogItem]:
-        return [
-            item
-            for item in self.list_indicators_catalog()
-            if item.department_id == department_id
-        ]
+        return self.list_structural_indicators_catalog(department_id=department_id)
 
     def get_department_goal_summary(self) -> dict[str, str]:
         sql = """

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from collections.abc import Callable
 
 from app.application.dto.strategic_indicators.catalog_models import (
     StrategicIndicatorMeasuredValue,
@@ -38,8 +39,8 @@ class RealStrategicIndicatorsMeasurementsProvider(
         production_snapshot_port: StrategicIndicatorsProductionIndicatorsSnapshotPort,
         commercial_snapshot_port: StrategicIndicatorsCommercialIndicatorsSnapshotPort,
         quality_snapshot_port: StrategicIndicatorsQualityIndicatorsSnapshotPort,
-        hr_snapshot_port: StrategicIndicatorsHrIndicatorsSnapshotPort,
-        financial_snapshot_port: StrategicIndicatorsFinancialIndicatorsSnapshotPort,
+        hr_snapshot_port: StrategicIndicatorsHrIndicatorsSnapshotPort | None = None,
+        financial_snapshot_port: StrategicIndicatorsFinancialIndicatorsSnapshotPort | None = None,
     ) -> None:
         self._engineering_snapshot_port = engineering_snapshot_port
         self._production_snapshot_port = production_snapshot_port
@@ -51,6 +52,22 @@ class RealStrategicIndicatorsMeasurementsProvider(
             tuple[str | None, str | None, str | None],
             tuple[list[StrategicIndicatorMeasuredValue], list[dict]],
         ] = {}
+
+    def get_measurements(
+        self,
+        *,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        competence: str | None = None,
+        department_id: str | None = None,
+    ) -> tuple[list[StrategicIndicatorMeasuredValue], list[dict]]:
+        # competence fica aqui por compatibilidade com a nova snapshot layer.
+        # A coleta real hoje continua baseada em start_date/end_date já resolvidos.
+        return self.get_indicator_measurements(
+            start_date=start_date,
+            end_date=end_date,
+            department_id=department_id,
+        )
 
     def get_indicator_measurements(
         self,
@@ -92,8 +109,8 @@ class RealStrategicIndicatorsMeasurementsProvider(
         start_date: str | None,
         end_date: str | None,
         department_id: str | None,
-    ) -> list[tuple[str, callable]]:
-        collectors: list[tuple[str, callable]] = []
+    ) -> list[tuple[str, Callable[[], dict]]]:
+        collectors: list[tuple[str, Callable[[], dict]]] = []
 
         if department_id in (None, "", "engineering"):
             collectors.append(
@@ -138,8 +155,8 @@ class RealStrategicIndicatorsMeasurementsProvider(
                     ),
                 )
             )
-            
-        if department_id in (None, "", "hr"):
+
+        if self._hr_snapshot_port is not None and department_id in (None, "", "hr"):
             collectors.append(
                 (
                     "hr",
@@ -149,8 +166,8 @@ class RealStrategicIndicatorsMeasurementsProvider(
                     ),
                 )
             )
-        
-        if department_id in (None, "", "financial"):
+
+        if self._financial_snapshot_port is not None and department_id in (None, "", "financial"):
             collectors.append(
                 (
                     "financial",
@@ -165,7 +182,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
 
     def _collect_parallel(
         self,
-        collectors: list[tuple[str, callable]],
+        collectors: list[tuple[str, Callable[[], dict]]],
     ) -> list[dict]:
         if not collectors:
             return []
@@ -200,7 +217,9 @@ class RealStrategicIndicatorsMeasurementsProvider(
 
         ordered_results: list[dict] = []
         for name, _fetcher in collectors:
-            ordered_results.append(results_by_name.get(name, {"items": [], "errors": []}))
+            ordered_results.append(
+                results_by_name.get(name, {"items": [], "errors": []})
+            )
 
         return ordered_results
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from types import SimpleNamespace
 
 from app.application.dto.strategic_indicators.catalog_models import (
     StrategicDepartmentCalculatedValue,
@@ -12,6 +13,82 @@ from app.application.dto.strategic_indicators.catalog_models import (
 
 
 class StrategicIndicatorsCalculator:
+    def build_period_snapshot(
+        self,
+        *,
+        period,
+        departments_catalog: list[StrategicDepartmentCatalogItem],
+        indicators_catalog: list[StrategicIndicatorCatalogItem],
+        measurements_result,
+        goals_by_department: dict[str, str] | None = None,
+        department_id: str | None = None,
+    ):
+        measurements, measurement_errors = measurements_result
+        goals_by_department = goals_by_department or {}
+
+        calculated_indicators = self.calculate_indicators(
+            indicators_catalog=indicators_catalog,
+            measurements=measurements,
+            department_id=department_id,
+            start_date=getattr(period, "start_date", None),
+            end_date=getattr(period, "end_date", None),
+            competence=getattr(period, "competence", None),
+        )
+
+        calculated_departments = self.calculate_departments(
+            departments_catalog=departments_catalog,
+            indicators_catalog=indicators_catalog,
+            measurements=measurements,
+            start_date=getattr(period, "start_date", None),
+            end_date=getattr(period, "end_date", None),
+            competence=getattr(period, "competence", None),
+        )
+
+        if department_id:
+            calculated_departments = [
+                item
+                for item in calculated_departments
+                if item.department_id == department_id
+            ]
+
+        enriched_departments: list[StrategicDepartmentCalculatedValue] = []
+        for department in calculated_departments:
+            strategic_summary = goals_by_department.get(
+                department.department_id,
+                department.strategic_summary,
+            )
+
+            enriched_departments.append(
+                StrategicDepartmentCalculatedValue(
+                    department_id=department.department_id,
+                    department_name=department.department_name,
+                    short_name=department.short_name,
+                    weight_pct=department.weight_pct,
+                    strategic_summary=strategic_summary,
+                    aggregation_mode=department.aggregation_mode,
+                    score=department.score,
+                    contribution=department.contribution,
+                    classification=department.classification,
+                    trend=department.trend,
+                    indicators=department.indicators,
+                )
+            )
+
+        igd, igd_exact, igd_classification = self.calculate_igd(enriched_departments)
+
+        return SimpleNamespace(
+            competence=getattr(period, "competence", None),
+            start_date=getattr(period, "start_date", None),
+            end_date=getattr(period, "end_date", None),
+            months=getattr(period, "months", None),
+            indicators=calculated_indicators,
+            departments=enriched_departments,
+            measurement_errors=measurement_errors,
+            igd=igd,
+            igd_exact=igd_exact,
+            igd_classification=igd_classification,
+        )
+
     def calculate_indicators(
         self,
         *,

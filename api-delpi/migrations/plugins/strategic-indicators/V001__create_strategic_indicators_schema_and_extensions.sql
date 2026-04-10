@@ -6,21 +6,11 @@
 
 BEGIN;
 
--- ==========================================================
--- EXTENSÕES NECESSÁRIAS
--- ==========================================================
--- gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- ==========================================================
--- SCHEMA DO PLUGIN
--- ==========================================================
 CREATE SCHEMA IF NOT EXISTS strategic_indicators;
 
--- ==========================================================
--- DOCUMENTAÇÃO DO SCHEMA
--- ==========================================================
 COMMENT ON SCHEMA strategic_indicators IS
-'Schema do plugin Strategic Indicators dentro do postgres-plugins. Responsável por persistência administrativa, configurações, pesos, metas e parâmetros do módulo.';
+'Schema do plugin Strategic Indicators dentro do postgres-plugins. Responsável por persistência administrativa, catálogo estrutural, metas analíticas versionadas, auditoria e workflows administrativos do módulo.';
 
 COMMIT;

@@ -1,3 +1,5 @@
+BEGIN;
+
 INSERT INTO strategic_indicators.module_settings (
     setting_key,
     setting_group,
@@ -44,7 +46,7 @@ VALUES
       "items": [
         { "key": "igd_scale", "label": "Escala oficial do IGD", "value": "0 a 10" },
         { "key": "executive_refresh", "label": "Frequência executiva", "value": "Mensal" },
-        { "key": "source_of_truth", "label": "Fonte oficial", "value": "api-delpi + strategic_indicators.module_settings" }
+        { "key": "source_of_truth", "label": "Fonte oficial", "value": "api-delpi + strategic_indicators.module_settings + strategic_indicators.indicator_goals" }
       ]
     }'::jsonb,
     TRUE
@@ -55,7 +57,8 @@ VALUES
     '{
       "items": [
         { "key": "catalog_owner", "label": "Responsável pelo catálogo", "value": "Administração do módulo", "observation": "Mudanças estruturais devem ser versionadas" },
-        { "key": "calculation_rule", "label": "Regra de cálculo", "value": "Backend", "observation": "Frontend não deve calcular score oficial" }
+        { "key": "calculation_rule", "label": "Regra de cálculo", "value": "Backend", "observation": "Frontend não deve calcular score oficial" },
+        { "key": "goal_versioning", "label": "Versionamento de metas", "value": "Ativo", "observation": "Metas analíticas agora são resolvidas pela tabela indicator_goals" }
       ]
     }'::jsonb,
     TRUE
@@ -77,9 +80,6 @@ VALUES
               "id": "financial-ebitda",
               "name": "EBITDA / Receita Operacional",
               "weight_pct": 40,
-              "goal_label": "13,0%",
-              "goal_value": 13.0,
-              "goal_periodicity": "monthly",
               "strategic_description": "Mede a capacidade de geração de resultado operacional.",
               "scope_type": "consolidated",
               "source_key": "financial_ebitda"
@@ -88,9 +88,6 @@ VALUES
               "id": "financial-fixed-cost",
               "name": "% Custos Fixos / Receita Operacional",
               "weight_pct": 30,
-              "goal_label": "14,0%",
-              "goal_value": 14.0,
-              "goal_periodicity": "monthly",
               "strategic_description": "Indica eficiência e estrutura enxuta.",
               "scope_type": "consolidated",
               "source_key": "financial_fixed_cost"
@@ -99,9 +96,6 @@ VALUES
               "id": "financial-pmr",
               "name": "Prazo Médio de Recebimento (PMR)",
               "weight_pct": 30,
-              "goal_label": "39 dias",
-              "goal_value": 39,
-              "goal_periodicity": "monthly",
               "strategic_description": "Indica eficiência de recebimentos e fluxo de caixa.",
               "scope_type": "consolidated",
               "source_key": "financial_pmr"
@@ -120,9 +114,6 @@ VALUES
               "id": "hr-absenteeism",
               "name": "Absenteísmo",
               "weight_pct": 20,
-              "goal_label": "2,0%",
-              "goal_value": 2.0,
-              "goal_periodicity": "monthly",
               "strategic_description": "Mede engajamento e bem-estar.",
               "scope_type": "consolidated",
               "source_key": "hr_absenteeism"
@@ -131,9 +122,6 @@ VALUES
               "id": "hr-turnover",
               "name": "Turnover (Rotatividade)",
               "weight_pct": 20,
-              "goal_label": "1,5% ao mês",
-              "goal_value": 1.5,
-              "goal_periodicity": "monthly",
               "strategic_description": "Mede retenção e estabilidade.",
               "scope_type": "consolidated",
               "source_key": "hr_turnover"
@@ -142,9 +130,6 @@ VALUES
               "id": "hr-satisfaction",
               "name": "Satisfação Interna (Clima/Engajamento)",
               "weight_pct": 20,
-              "goal_label": "85% de satisfação",
-              "goal_value": 85,
-              "goal_periodicity": "monthly",
               "strategic_description": "Reputação interna da cultura.",
               "scope_type": "consolidated",
               "source_key": "hr_satisfaction"
@@ -153,9 +138,6 @@ VALUES
               "id": "hr-pdi",
               "name": "% de PDIs Ativos",
               "weight_pct": 20,
-              "goal_label": "100%",
-              "goal_value": 100,
-              "goal_periodicity": "monthly",
               "strategic_description": "Estruturação de desenvolvimento individual.",
               "scope_type": "consolidated",
               "source_key": "hr_pdi"
@@ -164,9 +146,6 @@ VALUES
               "id": "hr-training-hours",
               "name": "Horas de Treinamento / Colaborador / mês",
               "weight_pct": 20,
-              "goal_label": "2 horas/mês",
-              "goal_value": 2,
-              "goal_periodicity": "monthly",
               "strategic_description": "Investimento em formação e capacitação.",
               "scope_type": "consolidated",
               "source_key": "hr_training_hours"
@@ -185,9 +164,6 @@ VALUES
               "id": "commercial-rol-matrix",
               "name": "ROL Matriz / Meta",
               "weight_pct": 25,
-              "goal_label": "100%",
-              "goal_value": 100,
-              "goal_periodicity": "annual",
               "strategic_description": "Atingimento da receita da unidade matriz.",
               "scope_type": "per_unit",
               "source_key": "commercial_head_office_rol_target"
@@ -196,9 +172,6 @@ VALUES
               "id": "commercial-rol-branch",
               "name": "ROL Filial / Meta",
               "weight_pct": 25,
-              "goal_label": "100%",
-              "goal_value": 100,
-              "goal_periodicity": "annual",
               "strategic_description": "Atingimento da receita da unidade filial.",
               "scope_type": "per_unit",
               "source_key": "commercial_branch_rol_target"
@@ -207,9 +180,6 @@ VALUES
               "id": "commercial-closing-rate",
               "name": "Taxa de Fechamento de Negócios",
               "weight_pct": 20,
-              "goal_label": "30%",
-              "goal_value": 30,
-              "goal_periodicity": "monthly",
               "strategic_description": "Conversão de propostas em vendas.",
               "scope_type": "consolidated",
               "source_key": "commercial_sales_conversion_rate"
@@ -218,9 +188,6 @@ VALUES
               "id": "commercial-new-clients",
               "name": "Número de Novos Clientes (média mensal)",
               "weight_pct": 15,
-              "goal_label": "10 novos/mês",
-              "goal_value": 10,
-              "goal_periodicity": "monthly",
               "strategic_description": "Capacidade de abertura de mercado.",
               "scope_type": "consolidated",
               "source_key": "commercial_new_clients_average"
@@ -229,9 +196,6 @@ VALUES
               "id": "commercial-new-rol",
               "name": "% ROL de Novos Clientes",
               "weight_pct": 15,
-              "goal_label": "12%",
-              "goal_value": 12,
-              "goal_periodicity": "monthly",
               "strategic_description": "Participação dos novos no total da receita.",
               "scope_type": "consolidated",
               "source_key": "commercial_new_clients_rol_pct"
@@ -250,9 +214,6 @@ VALUES
               "id": "production-direct-labor",
               "name": "Custo Mão de Obra Direta / ROL",
               "weight_pct": 25,
-              "goal_label": "10,0%",
-              "goal_value": 10,
-              "goal_periodicity": "monthly",
               "strategic_description": "Eficiência da mão de obra direta.",
               "scope_type": "per_unit",
               "source_key": "production_direct_labor"
@@ -261,9 +222,6 @@ VALUES
               "id": "production-costs",
               "name": "Custos de Produção / ROL",
               "weight_pct": 20,
-              "goal_label": "32,0%",
-              "goal_value": 32,
-              "goal_periodicity": "monthly",
               "strategic_description": "Controle de desperdícios e produtividade.",
               "scope_type": "per_unit",
               "source_key": "production_cost"
@@ -272,9 +230,6 @@ VALUES
               "id": "production-depreciation",
               "name": "Depreciação / ROL",
               "weight_pct": 10,
-              "goal_label": "1,5%",
-              "goal_value": 1.5,
-              "goal_periodicity": "monthly",
               "strategic_description": "Uso racional da capacidade instalada.",
               "scope_type": "per_unit",
               "source_key": "production_depreciation"
@@ -283,9 +238,6 @@ VALUES
               "id": "production-oee",
               "name": "OEE (Eficiência Global dos Equip.)",
               "weight_pct": 20,
-              "goal_label": "70%",
-              "goal_value": 70,
-              "goal_periodicity": "monthly",
               "strategic_description": "Utilização real dos ativos produtivos.",
               "scope_type": "per_unit",
               "source_key": "production_oee"
@@ -294,9 +246,6 @@ VALUES
               "id": "production-otd",
               "name": "OTD (Entrega no Prazo)",
               "weight_pct": 25,
-              "goal_label": "92%",
-              "goal_value": 92,
-              "goal_periodicity": "monthly",
               "strategic_description": "Cumprimento do prazo prometido ao cliente.",
               "scope_type": "per_unit",
               "source_key": "production_otd"
@@ -315,9 +264,6 @@ VALUES
               "id": "quality-ppm-internal",
               "name": "PPM Interno",
               "weight_pct": 20,
-              "goal_label": "1.400 PPM",
-              "goal_value": 1400,
-              "goal_periodicity": "monthly",
               "strategic_description": "Indicador de falhas detectadas internamente.",
               "scope_type": "consolidated",
               "source_key": "quality_ppm_internal"
@@ -326,9 +272,6 @@ VALUES
               "id": "quality-ppm-external",
               "name": "PPM Externo",
               "weight_pct": 30,
-              "goal_label": "1.100 PPM",
-              "goal_value": 1100,
-              "goal_periodicity": "monthly",
               "strategic_description": "Indicador de falhas detectadas pelo cliente.",
               "scope_type": "consolidated",
               "source_key": "quality_ppm_external"
@@ -337,9 +280,6 @@ VALUES
               "id": "quality-kaizen-ideas",
               "name": "Ideias Aprovadas para Kaizen/mês",
               "weight_pct": 15,
-              "goal_label": "8 ideias/mês",
-              "goal_value": 8,
-              "goal_periodicity": "monthly",
               "strategic_description": "Cultura de melhoria e participação.",
               "scope_type": "consolidated",
               "source_key": "quality_kaizen_ideas"
@@ -348,9 +288,6 @@ VALUES
               "id": "quality-audit-5s",
               "name": "Nota Auditoria 5S",
               "weight_pct": 15,
-              "goal_label": "80%",
-              "goal_value": 80,
-              "goal_periodicity": "monthly",
               "strategic_description": "Padronização, organização e disciplina.",
               "scope_type": "consolidated",
               "source_key": "quality_audit_5s"
@@ -359,9 +296,6 @@ VALUES
               "id": "quality-kaizen-financial",
               "name": "Ganhos Financeiros Kaizen/mês",
               "weight_pct": 20,
-              "goal_label": "R$ 9.000/mês",
-              "goal_value": 9000,
-              "goal_periodicity": "monthly",
               "strategic_description": "Impacto financeiro direto das melhorias Kaizen.",
               "scope_type": "consolidated",
               "source_key": "quality_kaizen_financial"
@@ -380,9 +314,6 @@ VALUES
               "id": "supplies-cpv",
               "name": "CPV Consolidado (matriz e filial)",
               "weight_pct": 30,
-              "goal_label": "50,5%",
-              "goal_value": 50.5,
-              "goal_periodicity": "monthly",
               "strategic_description": "Eficiência nas compras totais.",
               "scope_type": "consolidated",
               "source_key": "supplies_cpv"
@@ -391,9 +322,6 @@ VALUES
               "id": "supplies-otd",
               "name": "OTD Consolidado de Compras",
               "weight_pct": 20,
-              "goal_label": "92%",
-              "goal_value": 92,
-              "goal_periodicity": "monthly",
               "strategic_description": "Entregas dentro do prazo pelos fornecedores.",
               "scope_type": "consolidated",
               "source_key": "supplies_otd"
@@ -402,9 +330,6 @@ VALUES
               "id": "supplies-stock-turnover",
               "name": "Giro de Estoque Consolidado",
               "weight_pct": 20,
-              "goal_label": "1,95 mês",
-              "goal_value": 1.95,
-              "goal_periodicity": "monthly",
               "strategic_description": "Rotatividade do estoque total.",
               "scope_type": "consolidated",
               "source_key": "supplies_stock_turnover"
@@ -413,9 +338,6 @@ VALUES
               "id": "supplies-stock-value",
               "name": "Valor Total do Estoque Consolidado",
               "weight_pct": 15,
-              "goal_label": "R$ 13.500.000,00",
-              "goal_value": 13500000,
-              "goal_periodicity": "monthly",
               "strategic_description": "Estoque como capital parado.",
               "scope_type": "consolidated",
               "source_key": "supplies_stock_value"
@@ -424,9 +346,6 @@ VALUES
               "id": "supplies-negotiation-savings",
               "name": "Economia em Negociações de Compras",
               "weight_pct": 15,
-              "goal_label": "R$ 20.000/mês",
-              "goal_value": 20000,
-              "goal_periodicity": "monthly",
               "strategic_description": "Eficiência em negociações e renegociações com fornecedores.",
               "scope_type": "consolidated",
               "source_key": "supplies_negotiation_savings"
@@ -445,9 +364,6 @@ VALUES
               "id": "engineering-projects-on-time",
               "name": "% de Projetos Concluídos no Prazo",
               "weight_pct": 60,
-              "goal_label": "95%",
-              "goal_value": 95,
-              "goal_periodicity": "monthly",
               "strategic_description": "Compromisso com entregas e gestão eficiente de escopo.",
               "scope_type": "per_unit",
               "source_key": "lmp"
@@ -456,9 +372,6 @@ VALUES
               "id": "engineering-transforma-plus",
               "name": "Ganhos Financeiros do TRANSFORMA+ DELPI",
               "weight_pct": 40,
-              "goal_label": "R$ 15.000/mês",
-              "goal_value": 15000,
-              "goal_periodicity": "monthly",
               "strategic_description": "Valor gerado por inovações e digitalização via TRANSFORMA+.",
               "scope_type": "per_unit",
               "source_key": "transforma_mais"
@@ -469,3 +382,54 @@ VALUES
     }'::jsonb,
     TRUE
 );
+
+INSERT INTO strategic_indicators.indicator_goals (
+    indicator_id,
+    goal_year,
+    goal_label,
+    goal_value,
+    goal_periodicity,
+    version,
+    is_active,
+    created_by_email,
+    updated_by_email
+)
+VALUES
+    ('financial-ebitda', 2026, '13,0%', 13.0, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('financial-fixed-cost', 2026, '14,0%', 14.0, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('financial-pmr', 2026, '39 dias', 39, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+
+    ('hr-absenteeism', 2026, '2,0%', 2.0, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('hr-turnover', 2026, '1,5% ao mês', 1.5, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('hr-satisfaction', 2026, '85% de satisfação', 85, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('hr-pdi', 2026, '100%', 100, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('hr-training-hours', 2026, '2 horas/mês', 2, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+
+    ('commercial-rol-matrix', 2026, '100%', 100, 'annual', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('commercial-rol-branch', 2026, '100%', 100, 'annual', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('commercial-closing-rate', 2026, '30%', 30, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('commercial-new-clients', 2026, '10 novos/mês', 10, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('commercial-new-rol', 2026, '12%', 12, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+
+    ('production-direct-labor', 2026, '10,0%', 10, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('production-costs', 2026, '32,0%', 32, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('production-depreciation', 2026, '1,5%', 1.5, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('production-oee', 2026, '70%', 70, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('production-otd', 2026, '92%', 92, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+
+    ('quality-ppm-internal', 2026, '1.400 PPM', 1400, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('quality-ppm-external', 2026, '1.100 PPM', 1100, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('quality-kaizen-ideas', 2026, '8 ideias/mês', 8, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('quality-audit-5s', 2026, '80%', 80, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('quality-kaizen-financial', 2026, 'R$ 9.000/mês', 9000, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+
+    ('supplies-cpv', 2026, '50,5%', 50.5, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('supplies-otd', 2026, '92%', 92, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('supplies-stock-turnover', 2026, '1,95 mês', 1.95, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('supplies-stock-value', 2026, 'R$ 13.500.000,00', 13500000, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('supplies-negotiation-savings', 2026, 'R$ 20.000/mês', 20000, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+
+    ('engineering-projects-on-time', 2026, '95%', 95, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local'),
+    ('engineering-transforma-plus', 2026, 'R$ 15.000/mês', 15000, 'monthly', 1, TRUE, 'seed@delpi.local', 'seed@delpi.local');
+
+COMMIT;

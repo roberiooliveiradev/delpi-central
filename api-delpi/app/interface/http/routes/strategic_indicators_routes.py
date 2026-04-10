@@ -6,6 +6,8 @@ from app.interface.http.schemas.strategic_indicators_settings_schema import (
     UpdateStrategicIndicatorsSettingsBodySchema,
     CreateChangeRequestBody,
     AddCommentBody,
+    CreateIndicatorGoalBodySchema,
+    UpdateIndicatorGoalBodySchema,
 )
 
 from app.application.dto.strategic_indicators.update_settings_request import (
@@ -18,11 +20,20 @@ from app.application.dto.strategic_indicators.create_change_request_request impo
     CreateStrategicIndicatorsChangeRequestRequest,
 )
 from app.application.dto.strategic_indicators.get_executive_summary_real_request import (
-    GetExecutiveSummaryRealRequest
+    GetExecutiveSummaryRealRequest,
+)
+from app.application.dto.strategic_indicators.create_indicator_goal_request import (
+    CreateStrategicIndicatorsIndicatorGoalRequest,
+)
+from app.application.dto.strategic_indicators.update_indicator_goal_request import (
+    UpdateStrategicIndicatorsIndicatorGoalRequest,
 )
 
 from app.application.use_cases.strategic_indicators.update_settings_use_case import (
     StrategicIndicatorsSettingsValidationError,
+)
+from app.application.use_cases.strategic_indicators.create_indicator_goal_use_case import (
+    StrategicIndicatorsIndicatorGoalValidationError,
 )
 
 from app.application.dto.strategic_indicators.get_trends_real_request import (
@@ -43,6 +54,12 @@ from app.composition.strategic_indicators_composer import (
     build_get_strategic_indicators_use_case,
     build_get_strategic_indicators_alerts_use_case,
     build_get_strategic_indicators_trends_use_case,
+    build_list_strategic_indicators_indicator_goals_use_case,
+    build_list_strategic_indicators_indicator_goal_history_use_case,
+    build_create_strategic_indicators_indicator_goal_use_case,
+    build_update_strategic_indicators_indicator_goal_use_case,
+    build_activate_strategic_indicators_indicator_goal_use_case,
+    build_deactivate_strategic_indicators_indicator_goal_use_case,
 )
 
 router = APIRouter(
@@ -245,6 +262,174 @@ def submit_change_request(change_request_id: str, request: Request):
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
+@router.get("/indicator-goals")
+@require_permission("strategic-indicators.settings.manage")
+def list_indicator_goals(
+    indicator_id: str | None = Query(None),
+    goal_year: int | None = Query(None),
+    department_id: str | None = Query(None),
+    active_only: bool = Query(False),
+):
+    try:
+        use_case = build_list_strategic_indicators_indicator_goals_use_case()
+        items = use_case.execute(
+            indicator_id=indicator_id,
+            goal_year=goal_year,
+            department_id=department_id,
+            active_only=active_only,
+        )
+        return {"items": items}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar metas analíticas: {exc}",
+        ) from exc
+
+
+@router.get("/indicator-goals/history")
+@require_permission("strategic-indicators.settings.manage")
+def list_indicator_goal_history(
+    indicator_id: str = Query(...),
+    goal_year: int | None = Query(None),
+):
+    try:
+        use_case = build_list_strategic_indicators_indicator_goal_history_use_case()
+        items = use_case.execute(
+            indicator_id=indicator_id,
+            goal_year=goal_year,
+        )
+        return {"items": items}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar histórico das metas: {exc}",
+        ) from exc
+
+
+@router.post("/indicator-goals")
+@require_permission("strategic-indicators.settings.manage")
+def create_indicator_goal(
+    body: CreateIndicatorGoalBodySchema,
+    request: Request,
+):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+
+        use_case = build_create_strategic_indicators_indicator_goal_use_case()
+        result = use_case.execute(
+            CreateStrategicIndicatorsIndicatorGoalRequest(
+                indicator_id=body.indicator_id,
+                goal_year=body.goal_year,
+                goal_label=body.goal_label,
+                goal_value=body.goal_value,
+                goal_periodicity=body.goal_periodicity,
+                valid_from=body.valid_from,
+                valid_to=body.valid_to,
+                notes=body.notes,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
+        )
+        return result
+    except StrategicIndicatorsIndicatorGoalValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao criar meta analítica: {exc}",
+        ) from exc
+
+
+@router.put("/indicator-goals/{goal_id}")
+@require_permission("strategic-indicators.settings.manage")
+def update_indicator_goal(
+    goal_id: str,
+    body: UpdateIndicatorGoalBodySchema,
+    request: Request,
+):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+
+        use_case = build_update_strategic_indicators_indicator_goal_use_case()
+        result = use_case.execute(
+            UpdateStrategicIndicatorsIndicatorGoalRequest(
+                goal_id=goal_id,
+                goal_label=body.goal_label,
+                goal_value=body.goal_value,
+                goal_periodicity=body.goal_periodicity,
+                valid_from=body.valid_from,
+                valid_to=body.valid_to,
+                notes=body.notes,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
+        )
+        return result
+    except StrategicIndicatorsIndicatorGoalValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao atualizar meta analítica: {exc}",
+        ) from exc
+
+
+@router.post("/indicator-goals/{goal_id}/activate")
+@require_permission("strategic-indicators.settings.manage")
+def activate_indicator_goal(
+    goal_id: str,
+    request: Request,
+):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+
+        use_case = build_activate_strategic_indicators_indicator_goal_use_case()
+        result = use_case.execute(
+            goal_id=goal_id,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+        return result
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao ativar meta analítica: {exc}",
+        ) from exc
+
+
+@router.delete("/indicator-goals/{goal_id}")
+@require_permission("strategic-indicators.settings.manage")
+def deactivate_indicator_goal(
+    goal_id: str,
+    request: Request,
+):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+
+        use_case = build_deactivate_strategic_indicators_indicator_goal_use_case()
+        result = use_case.execute(
+            goal_id=goal_id,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+        return result
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao desativar meta analítica: {exc}",
+        ) from exc
+
+
 @router.get("/departments")
 @require_permission("strategic-indicators.view")
 def get_strategic_indicators_departments(
@@ -360,7 +545,7 @@ def get_strategic_indicators(
             status_code=500,
             detail=f"Falha ao carregar indicadores do Strategic Indicators: {exc}",
         ) from exc
-    
+
 
 @router.get("/alerts")
 @require_permission("strategic-indicators.view")
@@ -388,7 +573,7 @@ def get_strategic_indicators_alerts(
             status_code=500,
             detail=f"Falha ao carregar alertas do Strategic Indicators: {exc}",
         ) from exc
-    
+
 
 @router.get("/trends")
 @require_permission("strategic-indicators.trends.view")

@@ -80,10 +80,12 @@ class HrIndicatorsSnapshotProvider(
             items.append(
                 {
                     "department_id": "hr",
-                    "indicator_id": "hr-internal-satisfaction",
+                    "indicator_id": "hr-satisfaction",
                     "value": float(snapshot.internal_satisfaction_pct),
                     "source": "portal_rh_satisfaction",
-                    "unit_values": {"consolidated": float(snapshot.internal_satisfaction_pct)},
+                    "unit_values": {
+                        "consolidated": float(snapshot.internal_satisfaction_pct)
+                    },
                 }
             )
 
@@ -91,7 +93,7 @@ class HrIndicatorsSnapshotProvider(
             items.append(
                 {
                     "department_id": "hr",
-                    "indicator_id": "hr-active-pdi",
+                    "indicator_id": "hr-pdi",
                     "value": float(snapshot.active_pdi_pct),
                     "source": "portal_rh_pdi",
                     "unit_values": {"consolidated": float(snapshot.active_pdi_pct)},

@@ -4029,3 +4029,102 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ==========================================
+   Indicator goals workspace refinements
+   ========================================== */
+
+.si-settings-form-field select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--si-card-border);
+  background: var(--surface, #ffffff);
+  color: var(--si-title);
+  font: inherit;
+  padding: 10px 12px;
+}
+
+.si-settings-form-field input:focus,
+.si-settings-form-field textarea:focus,
+.si-settings-form-field select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary, #089bdb) 12%, transparent);
+}
+
+.si-settings-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.si-settings-form-card__grid input[readonly],
+.si-settings-form-card__grid textarea[readonly] {
+  background: var(--surface-2, #f7f7f7);
+  color: var(--si-text-muted);
+}
+
+.si-settings-editor__button + .si-settings-editor__button {
+  margin-left: 0;
+}
+
+.si-settings-editor__button--danger {
+  background: var(--danger, #b42318);
+  color: #fff;
+}
+
+.si-settings-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.si-settings-history-card {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--surface-2, #f7f7f7);
+  border: 1px solid var(--si-card-border);
+}
+
+.si-settings-history-card__title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--si-title);
+}
+
+.si-settings-history-card__meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--si-text-muted);
+  line-height: 1.6;
+}
+
+.si-settings-form-card--interactive {
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.si-settings-form-card--interactive:hover {
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 28%, transparent);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .si-settings-editor__header {
+    align-items: flex-start;
+  }
+
+  .si-settings-editor__meta-group {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .si-settings-editor__actions {
+    justify-content: stretch;
+  }
+
+  .si-settings-editor__actions .si-settings-editor__button {
+    width: 100%;
+  }
+}

@@ -31,7 +31,9 @@ CREATE TABLE IF NOT EXISTS strategic_indicators.settings_change_requests (
                 'weights.departments',
                 'goals.summary',
                 'parameters.global',
-                'governance.notes'
+                'governance.notes',
+                'indicators.catalog',
+                'indicator_goals'
             )
         )
 );
@@ -47,5 +49,8 @@ CREATE INDEX IF NOT EXISTS idx_si_change_requests_created_at
 
 COMMENT ON TABLE strategic_indicators.settings_change_requests IS
 'Fila inicial de solicitações administrativas para futuras evoluções de workflow do Strategic Indicators.';
+
+COMMENT ON COLUMN strategic_indicators.settings_change_requests.target_block IS
+'Bloco administrativo alvo da solicitação. Agora suporta também indicators.catalog e indicator_goals.';
 
 COMMIT;

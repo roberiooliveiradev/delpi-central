@@ -40,6 +40,24 @@ from app.application.use_cases.strategic_indicators.get_alerts_real_use_case imp
 from app.application.use_cases.strategic_indicators.get_trends_real_use_case import (
     GetStrategicIndicatorsTrendsRealUseCase,
 )
+from app.application.use_cases.strategic_indicators.list_indicator_goals_use_case import (
+    ListStrategicIndicatorsIndicatorGoalsUseCase,
+)
+from app.application.use_cases.strategic_indicators.list_indicator_goal_history_use_case import (
+    ListStrategicIndicatorsIndicatorGoalHistoryUseCase,
+)
+from app.application.use_cases.strategic_indicators.create_indicator_goal_use_case import (
+    CreateStrategicIndicatorsIndicatorGoalUseCase,
+)
+from app.application.use_cases.strategic_indicators.update_indicator_goal_use_case import (
+    UpdateStrategicIndicatorsIndicatorGoalUseCase,
+)
+from app.application.use_cases.strategic_indicators.activate_indicator_goal_use_case import (
+    ActivateStrategicIndicatorsIndicatorGoalUseCase,
+)
+from app.application.use_cases.strategic_indicators.deactivate_indicator_goal_use_case import (
+    DeactivateStrategicIndicatorsIndicatorGoalUseCase,
+)
 from app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
@@ -54,6 +72,12 @@ from app.infrastructure.persistence.plugins.repositories.strategic_indicators.po
 )
 from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_catalog_repository import (
     PostgresStrategicIndicatorsCatalogRepository,
+)
+from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_resolved_indicators_catalog_repository import (
+    PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository,
+)
+from app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_indicator_goals_repository import (
+    PostgresStrategicIndicatorsIndicatorGoalsRepository,
 )
 from app.infrastructure.providers.strategic_indicators.calculated_alerts_summary_provider import (
     CalculatedStrategicIndicatorsAlertsSummaryProvider,
@@ -119,6 +143,7 @@ def build_get_production_indicators_snapshot_port():
         production_metrics_snapshot_service=build_production_metrics_snapshot_service(),
     )
 
+
 def build_get_commercial_indicators_snapshot_port():
     return CommercialIndicatorsSnapshotProvider(
         commercial_metrics_snapshot_service=build_commercial_metrics_snapshot_service(),
@@ -146,18 +171,18 @@ def build_real_indicator_measurements_provider():
 
 
 def build_strategic_indicators_snapshot_service() -> StrategicIndicatorsSnapshotService:
-    catalog_repository = PostgresStrategicIndicatorsCatalogRepository()
+    structural_catalog_repository = PostgresStrategicIndicatorsCatalogRepository()
+    resolved_catalog_repository = PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository()
 
     return StrategicIndicatorsSnapshotService(
-        departments_catalog_repository=catalog_repository,
-        indicators_catalog_repository=catalog_repository,
+        departments_catalog_repository=structural_catalog_repository,
+        resolved_indicators_catalog_repository=resolved_catalog_repository,
         measurements_port=build_real_indicator_measurements_provider(),
         calculator=StrategicIndicatorsCalculator(),
     )
 
 
-def build_get_strategic_indicators_executive_summary_use_case(
-) -> GetStrategicIndicatorsExecutiveSummaryRealUseCase:
+def build_get_strategic_indicators_executive_summary_use_case():
     return GetStrategicIndicatorsExecutiveSummaryRealUseCase(
         snapshot_service=build_strategic_indicators_snapshot_service(),
         alerts_summary_port=CalculatedStrategicIndicatorsAlertsSummaryProvider(),
@@ -165,17 +190,17 @@ def build_get_strategic_indicators_executive_summary_use_case(
     )
 
 
-def build_get_strategic_indicators_settings_use_case() -> GetStrategicIndicatorsSettingsUseCase:
+def build_get_strategic_indicators_settings_use_case():
     repository = PostgresStrategicIndicatorsSettingsRepository()
     return GetStrategicIndicatorsSettingsUseCase(repository)
 
 
-def build_list_strategic_indicators_settings_audit_use_case() -> ListStrategicIndicatorsSettingsAuditUseCase:
+def build_list_strategic_indicators_settings_audit_use_case():
     repository = PostgresStrategicIndicatorsSettingsAuditRepository()
     return ListStrategicIndicatorsSettingsAuditUseCase(repository)
 
 
-def build_update_strategic_indicators_settings_use_case() -> UpdateStrategicIndicatorsSettingsUseCase:
+def build_update_strategic_indicators_settings_use_case():
     repository = PostgresStrategicIndicatorsSettingsRepository()
     return UpdateStrategicIndicatorsSettingsUseCase(repository)
 
@@ -200,35 +225,64 @@ def build_submit_strategic_indicators_change_request_use_case():
     return SubmitStrategicIndicatorsChangeRequestUseCase(repository)
 
 
-def build_get_strategic_indicators_departments_use_case() -> GetStrategicIndicatorsDepartmentsRealUseCase:
+def build_get_strategic_indicators_departments_use_case():
     return GetStrategicIndicatorsDepartmentsRealUseCase(
         snapshot_service=build_strategic_indicators_snapshot_service(),
         calculator=StrategicIndicatorsCalculator(),
     )
 
 
-def build_get_strategic_indicators_department_details_use_case(
-) -> GetStrategicIndicatorsDepartmentDetailsRealUseCase:
+def build_get_strategic_indicators_department_details_use_case():
     return GetStrategicIndicatorsDepartmentDetailsRealUseCase(
         snapshot_service=build_strategic_indicators_snapshot_service(),
         calculator=StrategicIndicatorsCalculator(),
     )
 
 
-def build_get_strategic_indicators_use_case() -> GetStrategicIndicatorsUseCase:
+def build_get_strategic_indicators_use_case():
     return GetStrategicIndicatorsUseCase(
         snapshot_service=build_strategic_indicators_snapshot_service(),
     )
 
 
-def build_get_strategic_indicators_alerts_use_case() -> GetStrategicIndicatorsAlertsRealUseCase:
+def build_get_strategic_indicators_alerts_use_case():
     return GetStrategicIndicatorsAlertsRealUseCase(
         snapshot_service=build_strategic_indicators_snapshot_service(),
         alerts_summary_port=CalculatedStrategicIndicatorsAlertsSummaryProvider(),
     )
 
 
-def build_get_strategic_indicators_trends_use_case() -> GetStrategicIndicatorsTrendsRealUseCase:
+def build_get_strategic_indicators_trends_use_case():
     return GetStrategicIndicatorsTrendsRealUseCase(
         snapshot_service=build_strategic_indicators_snapshot_service(),
     )
+
+
+def build_list_strategic_indicators_indicator_goals_use_case():
+    repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
+    return ListStrategicIndicatorsIndicatorGoalsUseCase(repository)
+
+
+def build_list_strategic_indicators_indicator_goal_history_use_case():
+    repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
+    return ListStrategicIndicatorsIndicatorGoalHistoryUseCase(repository)
+
+
+def build_create_strategic_indicators_indicator_goal_use_case():
+    repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
+    return CreateStrategicIndicatorsIndicatorGoalUseCase(repository)
+
+
+def build_update_strategic_indicators_indicator_goal_use_case():
+    repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
+    return UpdateStrategicIndicatorsIndicatorGoalUseCase(repository)
+
+
+def build_activate_strategic_indicators_indicator_goal_use_case():
+    repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
+    return ActivateStrategicIndicatorsIndicatorGoalUseCase(repository)
+
+
+def build_deactivate_strategic_indicators_indicator_goal_use_case():
+    repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
+    return DeactivateStrategicIndicatorsIndicatorGoalUseCase(repository)

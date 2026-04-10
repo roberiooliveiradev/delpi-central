@@ -50,6 +50,7 @@ class UpdateStrategicIndicatorsSettingsBodySchema(BaseModel):
     parameters: ParametersPayloadSchema
     governance: GovernancePayloadSchema
 
+
 class CreateChangeRequestBody(BaseModel):
     title: str
     description: str
@@ -59,3 +60,23 @@ class CreateChangeRequestBody(BaseModel):
 
 class AddCommentBody(BaseModel):
     comment_text: str
+
+
+class CreateIndicatorGoalBodySchema(BaseModel):
+    indicator_id: str
+    goal_year: int
+    goal_label: str
+    goal_value: float
+    goal_periodicity: str
+    valid_from: Optional[str] = None
+    valid_to: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class UpdateIndicatorGoalBodySchema(BaseModel):
+    goal_label: str
+    goal_value: float
+    goal_periodicity: str
+    valid_from: Optional[str] = None
+    valid_to: Optional[str] = None
+    notes: Optional[str] = None
