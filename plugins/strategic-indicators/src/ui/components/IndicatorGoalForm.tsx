@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   CreateStrategicIndicatorGoalRequest,
   StrategicIndicatorGoalItem,
@@ -8,18 +8,22 @@ import type {
 type IndicatorGoalFormProps = {
   saving: boolean;
   initialValue?: StrategicIndicatorGoalItem | null;
+  indicatorOptions?: string[];
   onCreate?: (payload: CreateStrategicIndicatorGoalRequest) => Promise<void>;
   onUpdate?: (
     goalId: string,
     payload: UpdateStrategicIndicatorGoalRequest,
   ) => Promise<void>;
+  onCancel?: () => void;
 };
 
 export function IndicatorGoalForm({
   saving,
   initialValue,
+  indicatorOptions = [],
   onCreate,
   onUpdate,
+  onCancel,
 }: IndicatorGoalFormProps) {
   const [indicatorId, setIndicatorId] = useState("");
   const [goalYear, setGoalYear] = useState<number>(new Date().getFullYear());
@@ -32,6 +36,8 @@ export function IndicatorGoalForm({
   const [validTo, setValidTo] = useState("");
   const [notes, setNotes] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
+
+  const isEditing = useMemo(() => !!initialValue, [initialValue]);
 
   useEffect(() => {
     if (!initialValue) {
@@ -62,21 +68,26 @@ export function IndicatorGoalForm({
     setLocalError(null);
 
     if (!goalLabel.trim()) {
-      setLocalError("Goal label is required.");
+      setLocalError("O nome da meta é obrigatório.");
       return;
     }
 
-    if (!initialValue && !indicatorId.trim()) {
-      setLocalError("Indicator ID is required.");
+    if (!isEditing && !indicatorId.trim()) {
+      setLocalError("Selecione um indicador.");
       return;
     }
 
     if (goalValue < 0) {
-      setLocalError("Goal value cannot be negative.");
+      setLocalError("O valor da meta não pode ser negativo.");
       return;
     }
 
-    if (initialValue && onUpdate) {
+    if (validFrom && validTo && validFrom > validTo) {
+      setLocalError("A data final não pode ser anterior à data inicial.");
+      return;
+    }
+
+    if (isEditing && initialValue && onUpdate) {
       await onUpdate(initialValue.id, {
         goal_label: goalLabel.trim(),
         goal_value: Number(goalValue),
@@ -103,131 +114,155 @@ export function IndicatorGoalForm({
   }
 
   return (
-    <section className="si-settings-editor">
-      <div className="si-settings-editor__header">
-        <div>
-          <h3 className="si-settings-editor__title">
-            {initialValue ? "Edit analytical goal" : "Create analytical goal"}
-          </h3>
-          <span className="si-settings-editor__subtitle">
-            Manage year-based and versioned indicator goals.
-          </span>
-        </div>
-      </div>
-
+    <div className="si-modal-form">
       {localError ? (
         <div className="si-settings-editor__alert si-settings-editor__alert--error">
           {localError}
         </div>
       ) : null}
 
-      <div className="si-settings-form-list">
-        <article className="si-settings-form-card">
-          <div className="si-settings-form-card__grid">
-            {!initialValue ? (
-              <Field label="Indicator ID">
-                <input
-                  value={indicatorId}
-                  onChange={(e) => setIndicatorId(e.target.value)}
-                />
-              </Field>
-            ) : null}
-
-            {!initialValue ? (
-              <Field label="Goal year">
-                <input
-                  type="number"
-                  value={goalYear}
-                  onChange={(e) => setGoalYear(Number(e.target.value))}
-                />
-              </Field>
-            ) : null}
-
-            <Field label="Goal label">
-              <input
-                value={goalLabel}
-                onChange={(e) => setGoalLabel(e.target.value)}
-              />
-            </Field>
-
-            <Field label="Goal value">
-              <input
-                type="number"
-                step="0.0001"
-                value={goalValue}
-                onChange={(e) => setGoalValue(Number(e.target.value))}
-              />
-            </Field>
-
-            <Field label="Periodicity">
+      <div className="si-modal-form__grid">
+        {!isEditing ? (
+          <Field label="Indicador">
+            {indicatorOptions.length > 0 ? (
               <select
-                value={goalPeriodicity}
-                onChange={(e) =>
-                  setGoalPeriodicity(
-                    e.target.value as
-                      | "monthly"
-                      | "annual"
-                      | "quarterly"
-                      | "weekly",
-                  )
-                }
+                value={indicatorId}
+                onChange={(e) => setIndicatorId(e.target.value)}
+                autoFocus
               >
-                <option value="monthly">monthly</option>
-                <option value="annual">annual</option>
-                <option value="quarterly">quarterly</option>
-                <option value="weekly">weekly</option>
+                <option value="">Selecione</option>
+                {indicatorOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
               </select>
-            </Field>
-
-            <Field label="Valid from">
+            ) : (
               <input
-                type="date"
-                value={validFrom}
-                onChange={(e) => setValidFrom(e.target.value)}
+                value={indicatorId}
+                onChange={(e) => setIndicatorId(e.target.value)}
+                autoFocus
               />
-            </Field>
+            )}
+          </Field>
+        ) : (
+          <Field label="Indicador">
+            <input value={indicatorId} readOnly />
+          </Field>
+        )}
 
-            <Field label="Valid to">
-              <input
-                type="date"
-                value={validTo}
-                onChange={(e) => setValidTo(e.target.value)}
-              />
-            </Field>
+        {!isEditing ? (
+          <Field label="Ano da meta">
+            <input
+              type="number"
+              value={goalYear}
+              onChange={(e) => setGoalYear(Number(e.target.value))}
+            />
+          </Field>
+        ) : (
+          <Field label="Ano da meta">
+            <input value={goalYear} readOnly />
+          </Field>
+        )}
 
-            <Field label="Notes">
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </Field>
-          </div>
-        </article>
+        <Field label="Nome da meta">
+          <input
+            value={goalLabel}
+            onChange={(e) => setGoalLabel(e.target.value)}
+          />
+        </Field>
+
+        <Field label="Valor da meta">
+          <input
+            type="number"
+            step="0.0001"
+            value={goalValue}
+            onChange={(e) => setGoalValue(Number(e.target.value))}
+          />
+        </Field>
+
+        <Field label="Periodicidade">
+          <select
+            value={goalPeriodicity}
+            onChange={(e) =>
+              setGoalPeriodicity(
+                e.target.value as "monthly" | "annual" | "quarterly" | "weekly",
+              )
+            }
+          >
+            <option value="monthly">Mensal</option>
+            <option value="annual">Anual</option>
+            <option value="quarterly">Trimestral</option>
+            <option value="weekly">Semanal</option>
+          </select>
+        </Field>
+
+        <Field label="Vigência inicial">
+          <input
+            type="date"
+            value={validFrom}
+            onChange={(e) => setValidFrom(e.target.value)}
+          />
+        </Field>
+
+        <Field label="Vigência final">
+          <input
+            type="date"
+            value={validTo}
+            onChange={(e) => setValidTo(e.target.value)}
+          />
+        </Field>
+
+        <Field label="Observações" fullWidth>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+        </Field>
       </div>
 
-      <div className="si-settings-editor__actions">
+      <div className="si-modal-form__actions">
+        {onCancel ? (
+          <button
+            type="button"
+            className="si-settings-editor__button si-settings-editor__button--secondary"
+            onClick={onCancel}
+            disabled={saving}
+          >
+            Cancelar
+          </button>
+        ) : null}
+
         <button
           type="button"
           className="si-settings-editor__button"
           onClick={() => void handleSubmit()}
           disabled={saving}
         >
-          {saving ? "Saving..." : initialValue ? "Update goal" : "Create goal"}
+          {saving
+            ? "Salvando..."
+            : isEditing
+              ? "Salvar alterações"
+              : "Criar meta"}
         </button>
       </div>
-    </section>
+    </div>
   );
 }
 
 function Field({
   label,
   children,
+  fullWidth = false,
 }: {
   label: string;
   children: React.ReactNode;
+  fullWidth?: boolean;
 }) {
   return (
-    <label className="si-settings-form-field">
+    <label
+      className={`si-settings-form-field ${fullWidth ? "si-settings-form-field--full" : ""}`}
+    >
       <span className="si-settings-form-field__label">{label}</span>
       {children}
     </label>

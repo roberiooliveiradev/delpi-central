@@ -11,10 +11,13 @@ export function SettingsHero({
     <section className="si-settings-hero">
       <div className="si-settings-hero__content">
         <p className="si-settings-hero__eyebrow">Governança do módulo</p>
-        <h2 className="si-settings-hero__title">Configurações do Strategic Indicators</h2>
+        <h2 className="si-settings-hero__title">
+          Administração do Strategic Indicators
+        </h2>
         <p className="si-settings-hero__description">
-          Esta área organiza os pesos oficiais do IGD, as metas resumidas por
-          área e os parâmetros administrativos do painel.
+          Gerencie departamentos, indicadores estruturais, metas anuais,
+          parâmetros globais e trilha de auditoria em um único espaço
+          administrativo.
         </p>
       </div>
 

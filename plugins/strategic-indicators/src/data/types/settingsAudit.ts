@@ -1,8 +1,11 @@
 export type StrategicIndicatorsAuditEntityKey =
-  | "weights.departments"
-  | "goals.summary"
+  | "departments"
+  | "department_indicators"
+  | "indicator_goals"
   | "parameters.global"
-  | "governance.notes";
+  | "governance.notes"
+  | "weights.departments"
+  | "goals.summary";
 
 export type StrategicIndicatorsSettingsAuditItem = {
   id: string;
@@ -26,7 +29,7 @@ export type StrategicIndicatorsChangeRequest = {
   description: string;
   target_block: string;
   proposed_payload: Record<string, unknown>;
-  status: "draft" | "submitted";
+  status: "draft" | "submitted" | "approved" | "rejected" | "cancelled";
   created_by_user_id: string | null;
   created_by_email: string | null;
   submitted_by_user_id: string | null;

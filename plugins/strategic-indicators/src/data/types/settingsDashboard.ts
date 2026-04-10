@@ -35,10 +35,17 @@ export type SettingsDashboardGovernanceItem = {
   observation: string;
 };
 
+export type SettingsDashboardMeta = {
+  source: string;
+  updatedAt: string | null;
+  updatedByEmail: string | null;
+};
+
 export type SettingsDashboardData = {
   weights: SettingsDashboardWeightItem[];
   goals: SettingsDashboardGoalItem[];
   parameters: SettingsDashboardParameterItem[];
   governance: SettingsDashboardGovernanceItem[];
   readiness: SettingsReadinessItem[];
+  meta: SettingsDashboardMeta;
 };

@@ -15,37 +15,45 @@ export function SettingsSummaryCards({
   const totalWeight = getTotalWeight(data);
   const totalGoals = data.goals.length;
   const totalGovernanceItems = data.governance.length;
+  const totalParameters = data.parameters.length;
 
   return (
     <div className="si-settings-summary-grid">
       <article className="si-settings-summary-card">
-        <span className="si-settings-summary-card__label">Peso total do IGD</span>
+        <span className="si-settings-summary-card__label">
+          Estrutura executiva
+        </span>
         <strong className="si-settings-summary-card__value">
-          {totalWeight}%
+          {data.weights.length}
         </strong>
         <p className="si-settings-summary-card__text">
-          Soma consolidada dos pesos oficiais dos departamentos no índice global.
+          Departamentos atualmente refletidos na visão administrativa do módulo.
         </p>
       </article>
 
       <article className="si-settings-summary-card">
-        <span className="si-settings-summary-card__label">Metas resumidas</span>
-        <strong className="si-settings-summary-card__value">
-          {totalGoals}
-        </strong>
-        <p className="si-settings-summary-card__text">
-          Quantidade de áreas com meta executiva sintetizada nesta fase.
-        </p>
-      </article>
-
-      <article className="si-settings-summary-card">
-        <span className="si-settings-summary-card__label">Governança ativa</span>
+        <span className="si-settings-summary-card__label">
+          Cobertura estratégica
+        </span>
         <div className="si-settings-summary-card__badges">
-          <StatusBadge label={`${totalGovernanceItems} parâmetros`} variant="neutral" />
-          <StatusBadge label="Modo administrativo" variant="info" />
+          <StatusBadge label={`${totalGoals} metas`} variant="info" />
+          <StatusBadge label={`${totalWeight}% IGD`} variant="neutral" />
         </div>
         <p className="si-settings-summary-card__text">
-          Leitura rápida do estado administrativo atual do módulo.
+          Leitura rápida da distribuição executiva disponível na camada de overview.
+        </p>
+      </article>
+
+      <article className="si-settings-summary-card">
+        <span className="si-settings-summary-card__label">
+          Configuração global
+        </span>
+        <div className="si-settings-summary-card__badges">
+          <StatusBadge label={`${totalParameters} parâmetros`} variant="neutral" />
+          <StatusBadge label={`${totalGovernanceItems} governança`} variant="success" />
+        </div>
+        <p className="si-settings-summary-card__text">
+          Itens globais atualmente administráveis no backend do módulo.
         </p>
       </article>
     </div>

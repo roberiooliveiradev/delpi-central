@@ -7,8 +7,6 @@ export function buildSettingsPayloadFromResponse(
   data: StrategicIndicatorsSettingsResponse,
 ): StrategicIndicatorsSettingsUpdateRequest {
   return {
-    weights: { items: data.weights.items },
-    goals: { items: data.goals.items },
     parameters: { items: data.parameters.items },
     governance: { items: data.governance.items },
   };

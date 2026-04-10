@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { InfoState } from "./InfoState";
 import { IndicatorGoalForm } from "./IndicatorGoalForm";
+import { Modal } from "./Modal";
+import { DataTable } from "./DataTable";
+import { ActionButtons } from "./ActionButtons";
 import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndicatorGoals";
 import type { StrategicIndicatorGoalItem } from "../../data/types/indicatorGoals";
 
@@ -37,266 +40,284 @@ export function IndicatorGoalsWorkspace({
     initialGoalYear: new Date().getFullYear(),
   });
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<StrategicIndicatorGoalItem | null>(null);
+  const [historyContext, setHistoryContext] = useState<{
+    indicatorId: string;
+    goalYear?: number;
+  } | null>(null);
 
-  const groupedIndicators = useMemo(() => {
+  const indicatorOptions = useMemo(() => {
     return Array.from(new Set(items.map((item) => item.indicator_id))).sort();
   }, [items]);
 
+  const columns = useMemo(
+    () => [
+      {
+        key: "indicator",
+        header: "Indicador",
+        render: (row: StrategicIndicatorGoalItem) => row.indicator_id,
+      },
+      {
+        key: "year",
+        header: "Ano",
+        render: (row: StrategicIndicatorGoalItem) => row.goal_year,
+      },
+      {
+        key: "version",
+        header: "Versão",
+        render: (row: StrategicIndicatorGoalItem) => row.version,
+      },
+      {
+        key: "label",
+        header: "Meta",
+        render: (row: StrategicIndicatorGoalItem) => row.goal_label,
+      },
+      {
+        key: "value",
+        header: "Valor",
+        render: (row: StrategicIndicatorGoalItem) => row.goal_value,
+      },
+      {
+        key: "periodicity",
+        header: "Periodicidade",
+        render: (row: StrategicIndicatorGoalItem) =>
+          translatePeriodicity(row.goal_periodicity),
+      },
+      {
+        key: "status",
+        header: "Situação",
+        render: (row: StrategicIndicatorGoalItem) => (
+          <span
+            className={`si-goal-status-badge ${
+              row.is_active
+                ? "si-goal-status-badge--active"
+                : "si-goal-status-badge--inactive"
+            }`}
+          >
+            {row.is_active ? "Ativa" : "Inativa"}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        header: "Ações",
+        render: (row: StrategicIndicatorGoalItem) => (
+          <ActionButtons
+            disabled={saving}
+            onEdit={() => setEditingItem(row)}
+            onHistory={() => void handleOpenHistory(row.indicator_id, row.goal_year)}
+            onActivate={!row.is_active ? () => void activateGoal(row.id) : undefined}
+            onDeactivate={row.is_active ? () => void deactivateGoal(row.id) : undefined}
+          />
+        ),
+      },
+    ],
+    [saving, activateGoal, deactivateGoal],
+  );
+
+  async function handleOpenHistory(indicatorId: string, goalYear?: number) {
+    setHistoryContext({ indicatorId, goalYear });
+    await loadHistory(indicatorId, goalYear);
+  }
+
+  async function handleCreate(payload: any) {
+    await createGoal(payload);
+    setIsCreateModalOpen(false);
+  }
+
+  async function handleUpdate(goalId: string, payload: any) {
+    await updateGoal(goalId, payload);
+    setEditingItem(null);
+  }
+
   return (
-    <div className="si-page">
+    <section className="si-settings-goals-shell" aria-label="Metas analíticas">
       {successMessage ? (
         <InfoState
-          title="Analytical goals updated"
+          title="Metas analíticas atualizadas"
           description={successMessage}
-          actionLabel="Dismiss"
+          actionLabel="Fechar aviso"
           onAction={clearSuccessMessage}
         />
       ) : null}
 
       {error ? (
         <InfoState
-          title="Failed to load analytical goals"
+          title="Falha ao carregar metas analíticas"
           description={error}
-          actionLabel="Retry"
+          actionLabel="Tentar novamente"
           onAction={() => void reload()}
         />
       ) : null}
 
-      <section className="si-settings-editor">
-        <div className="si-settings-editor__header">
-          <div>
-            <h3 className="si-settings-editor__title">Analytical goals</h3>
-            <span className="si-settings-editor__subtitle">
-              Manage versioned goals by indicator and year.
+      <div className="si-goals-toolbar">
+        <div className="si-goals-toolbar__filters">
+          <label className="si-settings-form-field">
+            <span className="si-settings-form-field__label">
+              Filtrar por indicador
             </span>
-          </div>
+            <select
+              value={selectedIndicatorId}
+              onChange={(e) => setSelectedIndicatorId(e.target.value)}
+            >
+              <option value="">Todos</option>
+              {indicatorOptions.map((indicatorId) => (
+                <option key={indicatorId} value={indicatorId}>
+                  {indicatorId}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <div className="si-settings-editor__meta-group">
-            <div className="si-settings-editor__summary">
-              <span>Records</span>
-              <strong>{items.length}</strong>
-            </div>
-          </div>
+          <label className="si-settings-form-field">
+            <span className="si-settings-form-field__label">Ano da meta</span>
+            <input
+              type="number"
+              value={selectedGoalYear}
+              onChange={(e) =>
+                setSelectedGoalYear(e.target.value ? Number(e.target.value) : "")
+              }
+            />
+          </label>
         </div>
 
-        <div className="si-settings-form-list">
-          <article className="si-settings-form-card">
-            <div className="si-settings-form-card__grid">
-              <Field label="Indicator filter">
-                <select
-                  value={selectedIndicatorId}
-                  onChange={(e) => setSelectedIndicatorId(e.target.value)}
-                >
-                  <option value="">All indicators</option>
-                  {groupedIndicators.map((indicatorId) => (
-                    <option key={indicatorId} value={indicatorId}>
-                      {indicatorId}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Goal year">
-                <input
-                  type="number"
-                  value={selectedGoalYear}
-                  onChange={(e) =>
-                    setSelectedGoalYear(
-                      e.target.value ? Number(e.target.value) : "",
-                    )
-                  }
-                />
-              </Field>
-            </div>
-          </article>
-        </div>
-
-        {loading ? (
-          <InfoState
-            title="Loading analytical goals"
-            description="Please wait while the administrative catalog is loaded."
-          />
-        ) : null}
-
-        {refreshing ? (
-          <InfoState
-            title="Refreshing analytical goals"
-            description="The goal list is being refreshed without leaving the page."
-          />
-        ) : null}
-
-        {!loading ? (
-          <div className="si-settings-form-list">
-            {items.map((item) => (
-              <article key={item.id} className="si-settings-form-card">
-                <div className="si-settings-form-card__grid">
-                  <Field label="Indicator">
-                    <input value={item.indicator_id} readOnly />
-                  </Field>
-
-                  <Field label="Year">
-                    <input value={item.goal_year} readOnly />
-                  </Field>
-
-                  <Field label="Version">
-                    <input value={item.version} readOnly />
-                  </Field>
-
-                  <Field label="Label">
-                    <input value={item.goal_label} readOnly />
-                  </Field>
-
-                  <Field label="Value">
-                    <input value={item.goal_value} readOnly />
-                  </Field>
-
-                  <Field label="Periodicity">
-                    <input value={item.goal_periodicity} readOnly />
-                  </Field>
-
-                  <Field label="Status">
-                    <input value={item.is_active ? "Active" : "Inactive"} readOnly />
-                  </Field>
-                </div>
-
-                <div className="si-settings-editor__actions">
-                  <button
-                    type="button"
-                    className="si-settings-editor__button si-settings-editor__button--secondary"
-                    onClick={() => setEditingItem(item)}
-                    disabled={saving}
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    type="button"
-                    className="si-settings-editor__button si-settings-editor__button--secondary"
-                    onClick={() =>
-                      void loadHistory(item.indicator_id, item.goal_year)
-                    }
-                    disabled={historyLoading}
-                  >
-                    History
-                  </button>
-
-                  {!item.is_active ? (
-                    <button
-                      type="button"
-                      className="si-settings-editor__button"
-                      onClick={() => void activateGoal(item.id)}
-                      disabled={saving}
-                    >
-                      Activate
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="si-settings-editor__button si-settings-editor__button--secondary"
-                      onClick={() => void deactivateGoal(item.id)}
-                      disabled={saving}
-                    >
-                      Deactivate
-                    </button>
-                  )}
-                </div>
-              </article>
-            ))}
+        <div className="si-goals-toolbar__actions">
+          <div className="si-settings-editor__summary">
+            <span>Registros</span>
+            <strong>{items.length}</strong>
           </div>
-        ) : null}
-      </section>
 
-      <IndicatorGoalForm saving={saving} onCreate={createGoal} />
+          <button
+            type="button"
+            className="si-settings-editor__button"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            Nova meta
+          </button>
+        </div>
+      </div>
 
-      {editingItem ? (
-        <IndicatorGoalForm
-          saving={saving}
-          initialValue={editingItem}
-          onUpdate={updateGoal}
+      {refreshing ? (
+        <InfoState
+          title="Atualizando metas analíticas"
+          description="Os registros estão sendo recarregados sem sair da página."
         />
       ) : null}
 
-      <section className="si-settings-editor">
-        <div className="si-settings-editor__header">
-          <div>
-            <h3 className="si-settings-editor__title">Goal history</h3>
-            <span className="si-settings-editor__subtitle">
-              Historical versions for the selected indicator/year.
-            </span>
-          </div>
-        </div>
+      <DataTable
+        columns={columns}
+        rows={items}
+        loading={loading}
+        emptyText="Nenhuma meta analítica encontrada para os filtros selecionados."
+        getRowKey={(row) => row.id}
+      />
 
+      <Modal
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Criar meta analítica"
+        description="Cadastre uma nova meta versionada por indicador e ano."
+        size="lg"
+        initialFocusSelector="select, input"
+      >
+        <IndicatorGoalForm
+          saving={saving}
+          indicatorOptions={indicatorOptions}
+          onCreate={handleCreate}
+          onCancel={() => setIsCreateModalOpen(false)}
+        />
+      </Modal>
+
+      <Modal
+        open={!!editingItem}
+        onClose={() => setEditingItem(null)}
+        title="Editar meta analítica"
+        description="Atualize os dados da versão selecionada."
+        size="lg"
+        initialFocusSelector="input, select, textarea"
+      >
+        <IndicatorGoalForm
+          saving={saving}
+          initialValue={editingItem}
+          indicatorOptions={indicatorOptions}
+          onUpdate={handleUpdate}
+          onCancel={() => setEditingItem(null)}
+        />
+      </Modal>
+
+      <Modal
+        open={!!historyContext}
+        onClose={() => setHistoryContext(null)}
+        title="Histórico da meta"
+        description="Versões registradas para o indicador e ano selecionados."
+        size="lg"
+      >
         {historyError ? (
           <InfoState
-            title="Failed to load history"
+            title="Falha ao carregar histórico"
             description={historyError}
           />
-        ) : null}
-
-        {historyLoading ? (
+        ) : historyLoading ? (
           <InfoState
-            title="Loading history"
-            description="Historical versions are being loaded."
+            title="Carregando histórico"
+            description="As versões anteriores estão sendo carregadas."
           />
-        ) : null}
-
-        {!historyLoading && historyItems.length === 0 ? (
+        ) : historyItems.length === 0 ? (
           <InfoState
-            title="No history loaded"
-            description="Use the History button on a row to inspect past versions."
+            title="Sem histórico disponível"
+            description="Nenhuma versão foi encontrada para este contexto."
           />
-        ) : null}
-
-        {!historyLoading && historyItems.length > 0 ? (
-          <div className="si-settings-form-list">
+        ) : (
+          <div className="si-history-list">
             {historyItems.map((item) => (
-              <article key={item.id} className="si-settings-form-card">
-                <div className="si-settings-form-card__grid">
-                  <Field label="Indicator">
-                    <input value={item.indicator_id} readOnly />
-                  </Field>
+              <article key={item.id} className="si-history-card">
+                <div className="si-history-card__top">
+                  <strong className="si-history-card__title">
+                    {item.indicator_id} • {item.goal_year}
+                  </strong>
+                  <span className="si-history-card__badge">
+                    Versão {item.version}
+                  </span>
+                </div>
 
-                  <Field label="Year">
-                    <input value={item.goal_year} readOnly />
-                  </Field>
-
-                  <Field label="Version">
-                    <input value={item.version} readOnly />
-                  </Field>
-
-                  <Field label="Label">
-                    <input value={item.goal_label} readOnly />
-                  </Field>
-
-                  <Field label="Updated at">
-                    <input value={item.updated_at} readOnly />
-                  </Field>
-
-                  <Field label="Updated by">
-                    <input value={item.updated_by_email ?? "-"} readOnly />
-                  </Field>
+                <div className="si-history-card__meta">
+                  <span>Meta: {item.goal_label}</span>
+                  <span>Valor: {item.goal_value}</span>
+                  <span>
+                    Periodicidade: {translatePeriodicity(item.goal_periodicity)}
+                  </span>
+                  <span>Situação: {item.is_active ? "Ativa" : "Inativa"}</span>
+                  <span>Atualizado em: {formatDateTime(item.updated_at)}</span>
+                  <span>Atualizado por: {item.updated_by_email ?? "-"}</span>
                 </div>
               </article>
             ))}
           </div>
-        ) : null}
-      </section>
-    </div>
+        )}
+      </Modal>
+    </section>
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="si-settings-form-field">
-      <span className="si-settings-form-field__label">{label}</span>
-      {children}
-    </label>
-  );
+function translatePeriodicity(value: string) {
+  switch (value) {
+    case "monthly":
+      return "Mensal";
+    case "annual":
+      return "Anual";
+    case "quarterly":
+      return "Trimestral";
+    case "weekly":
+      return "Semanal";
+    default:
+      return value;
+  }
+}
+
+function formatDateTime(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+
+  return parsed.toLocaleString("pt-BR");
 }

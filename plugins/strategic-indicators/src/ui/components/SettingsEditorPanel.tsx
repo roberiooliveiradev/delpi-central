@@ -15,15 +15,11 @@ export function SettingsEditorPanel({
   saving,
   onSave,
 }: SettingsEditorPanelProps) {
-  const [weightsJson, setWeightsJson] = useState("");
-  const [goalsJson, setGoalsJson] = useState("");
   const [parametersJson, setParametersJson] = useState("");
   const [governanceJson, setGovernanceJson] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
-    setWeightsJson(JSON.stringify(data.weights, null, 2));
-    setGoalsJson(JSON.stringify(data.goals, null, 2));
     setParametersJson(JSON.stringify(data.parameters, null, 2));
     setGovernanceJson(JSON.stringify(data.governance, null, 2));
   }, [data]);
@@ -33,8 +29,6 @@ export function SettingsEditorPanel({
 
     try {
       const payload: StrategicIndicatorsSettingsUpdateRequest = {
-        weights: JSON.parse(weightsJson),
-        goals: JSON.parse(goalsJson),
         parameters: JSON.parse(parametersJson),
         governance: JSON.parse(governanceJson),
       };
@@ -54,7 +48,7 @@ export function SettingsEditorPanel({
       <div className="si-settings-editor__header">
         <h3 className="si-settings-editor__title">Edição administrativa</h3>
         <span className="si-settings-editor__subtitle">
-          integração real inicial com a API do módulo
+          parâmetros globais e governança do módulo
         </span>
       </div>
 
@@ -65,16 +59,6 @@ export function SettingsEditorPanel({
       ) : null}
 
       <div className="si-settings-editor__grid">
-        <EditorBlock
-          title="weights"
-          value={weightsJson}
-          onChange={setWeightsJson}
-        />
-        <EditorBlock
-          title="goals"
-          value={goalsJson}
-          onChange={setGoalsJson}
-        />
         <EditorBlock
           title="parameters"
           value={parametersJson}

@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   activateStrategicIndicatorGoal,
+  bulkCreateStrategicIndicatorGoals,
   createStrategicIndicatorGoal,
   deactivateStrategicIndicatorGoal,
+  duplicateStrategicIndicatorGoalsYear,
   fetchStrategicIndicatorGoalHistory,
   fetchStrategicIndicatorGoals,
+  fillMissingStrategicIndicatorGoals,
   updateStrategicIndicatorGoal,
 } from "../../data/api/strategicIndicatorGoalsApi";
 import type {
+  BulkCreateStrategicIndicatorGoalsRequest,
   CreateStrategicIndicatorGoalRequest,
+  DuplicateStrategicIndicatorGoalsYearRequest,
+  FillMissingStrategicIndicatorGoalsRequest,
   StrategicIndicatorGoalItem,
   UpdateStrategicIndicatorGoalRequest,
 } from "../../data/types/indicatorGoals";
@@ -24,6 +30,7 @@ export function useStrategicIndicatorGoals({
 }: UseStrategicIndicatorGoalsParams) {
   const [items, setItems] = useState<StrategicIndicatorGoalItem[]>([]);
   const [selectedIndicatorId, setSelectedIndicatorId] = useState<string>("");
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("");
   const [selectedGoalYear, setSelectedGoalYear] = useState<number | "">(
     initialGoalYear ?? new Date().getFullYear(),
   );
@@ -65,6 +72,7 @@ export function useStrategicIndicatorGoals({
         getAccessTokenRef.current,
         {
           indicatorId: selectedIndicatorId || undefined,
+          departmentId: selectedDepartmentId || undefined,
           goalYear:
             typeof selectedGoalYear === "number" ? selectedGoalYear : undefined,
         },
@@ -83,7 +91,9 @@ export function useStrategicIndicatorGoals({
       }
 
       setError(
-        err instanceof Error ? err.message : "Unexpected error while loading goals.",
+        err instanceof Error
+          ? err.message
+          : "Erro inesperado ao carregar metas analíticas.",
       );
     } finally {
       if (requestId === requestIdRef.current && !controller.signal.aborted) {
@@ -91,7 +101,7 @@ export function useStrategicIndicatorGoals({
         setRefreshing(false);
       }
     }
-  }, [selectedIndicatorId, selectedGoalYear]);
+  }, [selectedIndicatorId, selectedDepartmentId, selectedGoalYear]);
 
   useEffect(() => {
     void load();
@@ -114,7 +124,9 @@ export function useStrategicIndicatorGoals({
         setHistoryItems(response.items);
       } catch (err) {
         setHistoryError(
-          err instanceof Error ? err.message : "Unexpected error while loading history.",
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao carregar o histórico da meta.",
         );
       } finally {
         setHistoryLoading(false);
@@ -131,10 +143,14 @@ export function useStrategicIndicatorGoals({
 
       try {
         await createStrategicIndicatorGoal(payload, getAccessTokenRef.current);
-        setSuccessMessage("Goal created successfully.");
+        setSuccessMessage("Meta analítica criada com sucesso.");
         await load();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unexpected error while creating goal.");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao criar a meta analítica.",
+        );
         throw err;
       } finally {
         setSaving(false);
@@ -151,10 +167,14 @@ export function useStrategicIndicatorGoals({
 
       try {
         await updateStrategicIndicatorGoal(goalId, payload, getAccessTokenRef.current);
-        setSuccessMessage("Goal updated successfully.");
+        setSuccessMessage("Meta analítica atualizada com sucesso.");
         await load();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unexpected error while updating goal.");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao atualizar a meta analítica.",
+        );
         throw err;
       } finally {
         setSaving(false);
@@ -171,10 +191,14 @@ export function useStrategicIndicatorGoals({
 
       try {
         await activateStrategicIndicatorGoal(goalId, getAccessTokenRef.current);
-        setSuccessMessage("Goal activated successfully.");
+        setSuccessMessage("Versão da meta ativada com sucesso.");
         await load();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unexpected error while activating goal.");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao ativar a meta analítica.",
+        );
         throw err;
       } finally {
         setSaving(false);
@@ -191,10 +215,90 @@ export function useStrategicIndicatorGoals({
 
       try {
         await deactivateStrategicIndicatorGoal(goalId, getAccessTokenRef.current);
-        setSuccessMessage("Goal deactivated successfully.");
+        setSuccessMessage("Versão da meta desativada com sucesso.");
         await load();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unexpected error while deactivating goal.");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao desativar a meta analítica.",
+        );
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [load],
+  );
+
+  const bulkCreateGoals = useCallback(
+    async (payload: BulkCreateStrategicIndicatorGoalsRequest) => {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        await bulkCreateStrategicIndicatorGoals(payload, getAccessTokenRef.current);
+        setSuccessMessage("Metas criadas em lote com sucesso.");
+        await load();
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Erro inesperado ao criar metas em lote.",
+        );
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [load],
+  );
+
+  const duplicateGoalsYear = useCallback(
+    async (payload: DuplicateStrategicIndicatorGoalsYearRequest) => {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        await duplicateStrategicIndicatorGoalsYear(
+          payload,
+          getAccessTokenRef.current,
+        );
+        setSuccessMessage("Metas duplicadas entre anos com sucesso.");
+        await load();
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao duplicar metas entre anos.",
+        );
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [load],
+  );
+
+  const fillMissingGoals = useCallback(
+    async (payload: FillMissingStrategicIndicatorGoalsRequest) => {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        await fillMissingStrategicIndicatorGoals(
+          payload,
+          getAccessTokenRef.current,
+        );
+        setSuccessMessage("Metas faltantes preenchidas com sucesso.");
+        await load();
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao preencher metas faltantes.",
+        );
         throw err;
       } finally {
         setSaving(false);
@@ -212,8 +316,10 @@ export function useStrategicIndicatorGoals({
       items,
       historyItems,
       selectedIndicatorId,
+      selectedDepartmentId,
       selectedGoalYear,
       setSelectedIndicatorId,
+      setSelectedDepartmentId,
       setSelectedGoalYear,
       loading,
       refreshing,
@@ -228,12 +334,16 @@ export function useStrategicIndicatorGoals({
       updateGoal,
       activateGoal,
       deactivateGoal,
+      bulkCreateGoals,
+      duplicateGoalsYear,
+      fillMissingGoals,
       clearSuccessMessage,
     }),
     [
       items,
       historyItems,
       selectedIndicatorId,
+      selectedDepartmentId,
       selectedGoalYear,
       loading,
       refreshing,
@@ -248,6 +358,9 @@ export function useStrategicIndicatorGoals({
       updateGoal,
       activateGoal,
       deactivateGoal,
+      bulkCreateGoals,
+      duplicateGoalsYear,
+      fillMissingGoals,
       clearSuccessMessage,
     ],
   );

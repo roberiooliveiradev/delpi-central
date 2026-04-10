@@ -1,5 +1,10 @@
 import type {
+  BulkCreateStrategicIndicatorGoalsRequest,
+  BulkGoalMutationResponse,
   CreateStrategicIndicatorGoalRequest,
+  DuplicateStrategicIndicatorGoalsYearRequest,
+  FillMissingStrategicIndicatorGoalsRequest,
+  GoalYearsOverviewResponse,
   StrategicIndicatorGoalHistoryResponse,
   StrategicIndicatorGoalListResponse,
   UpdateStrategicIndicatorGoalRequest,
@@ -32,21 +37,12 @@ export async function fetchStrategicIndicatorGoals(
 ): Promise<StrategicIndicatorGoalListResponse> {
   const searchParams = new URLSearchParams();
 
-  if (params?.indicatorId) {
-    searchParams.set("indicator_id", params.indicatorId);
-  }
-
+  if (params?.indicatorId) searchParams.set("indicator_id", params.indicatorId);
   if (typeof params?.goalYear === "number") {
     searchParams.set("goal_year", String(params.goalYear));
   }
-
-  if (params?.departmentId) {
-    searchParams.set("department_id", params.departmentId);
-  }
-
-  if (params?.activeOnly) {
-    searchParams.set("active_only", "true");
-  }
+  if (params?.departmentId) searchParams.set("department_id", params.departmentId);
+  if (params?.activeOnly) searchParams.set("active_only", "true");
 
   const queryString = searchParams.toString();
   const url = `${BASE_URL}/indicator-goals${queryString ? `?${queryString}` : ""}`;
@@ -59,7 +55,7 @@ export async function fetchStrategicIndicatorGoals(
 
   if (!response.ok) {
     const message = await safeReadError(response);
-    throw new Error(message || "Failed to load indicator goals.");
+    throw new Error(message || "Falha ao carregar metas analíticas.");
   }
 
   return response.json();
@@ -90,7 +86,7 @@ export async function fetchStrategicIndicatorGoalHistory(
 
   if (!response.ok) {
     const message = await safeReadError(response);
-    throw new Error(message || "Failed to load goal history.");
+    throw new Error(message || "Falha ao carregar histórico das metas.");
   }
 
   return response.json();
@@ -108,7 +104,7 @@ export async function createStrategicIndicatorGoal(
 
   if (!response.ok) {
     const message = await safeReadError(response);
-    throw new Error(message || "Failed to create indicator goal.");
+    throw new Error(message || "Falha ao criar meta analítica.");
   }
 
   return response.json();
@@ -127,7 +123,7 @@ export async function updateStrategicIndicatorGoal(
 
   if (!response.ok) {
     const message = await safeReadError(response);
-    throw new Error(message || "Failed to update indicator goal.");
+    throw new Error(message || "Falha ao atualizar meta analítica.");
   }
 
   return response.json();
@@ -144,7 +140,7 @@ export async function activateStrategicIndicatorGoal(
 
   if (!response.ok) {
     const message = await safeReadError(response);
-    throw new Error(message || "Failed to activate indicator goal.");
+    throw new Error(message || "Falha ao ativar meta analítica.");
   }
 
   return response.json();
@@ -161,7 +157,79 @@ export async function deactivateStrategicIndicatorGoal(
 
   if (!response.ok) {
     const message = await safeReadError(response);
-    throw new Error(message || "Failed to deactivate indicator goal.");
+    throw new Error(message || "Falha ao desativar meta analítica.");
+  }
+
+  return response.json();
+}
+
+export async function fetchGoalYearsOverview(
+  getAccessToken?: GetToken,
+  signal?: AbortSignal,
+): Promise<GoalYearsOverviewResponse> {
+  const response = await fetch(`${BASE_URL}/admin/goal-years/overview`, {
+    method: "GET",
+    headers: buildHeaders(getAccessToken),
+    signal,
+  });
+
+  if (!response.ok) {
+    const message = await safeReadError(response);
+    throw new Error(message || "Falha ao carregar visão anual das metas.");
+  }
+
+  return response.json();
+}
+
+export async function bulkCreateStrategicIndicatorGoals(
+  payload: BulkCreateStrategicIndicatorGoalsRequest,
+  getAccessToken?: GetToken,
+): Promise<BulkGoalMutationResponse> {
+  const response = await fetch(`${BASE_URL}/admin/indicator-goals/bulk-create`, {
+    method: "POST",
+    headers: buildHeaders(getAccessToken),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await safeReadError(response);
+    throw new Error(message || "Falha ao criar metas em lote.");
+  }
+
+  return response.json();
+}
+
+export async function duplicateStrategicIndicatorGoalsYear(
+  payload: DuplicateStrategicIndicatorGoalsYearRequest,
+  getAccessToken?: GetToken,
+): Promise<BulkGoalMutationResponse> {
+  const response = await fetch(`${BASE_URL}/admin/indicator-goals/duplicate-year`, {
+    method: "POST",
+    headers: buildHeaders(getAccessToken),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await safeReadError(response);
+    throw new Error(message || "Falha ao duplicar metas entre anos.");
+  }
+
+  return response.json();
+}
+
+export async function fillMissingStrategicIndicatorGoals(
+  payload: FillMissingStrategicIndicatorGoalsRequest,
+  getAccessToken?: GetToken,
+): Promise<BulkGoalMutationResponse> {
+  const response = await fetch(`${BASE_URL}/admin/indicator-goals/fill-missing`, {
+    method: "POST",
+    headers: buildHeaders(getAccessToken),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await safeReadError(response);
+    throw new Error(message || "Falha ao preencher metas faltantes.");
   }
 
   return response.json();

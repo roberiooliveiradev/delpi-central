@@ -1,26 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  fetchStrategicIndicatorsSettings,
-  updateStrategicIndicatorsSettings,
-} from "../../data/api/strategicIndicatorsSettingsApi";
-import type {
-  StrategicIndicatorsSettingsResponse,
-  StrategicIndicatorsSettingsUpdateRequest,
-} from "../../data/types/settings";
+import { fetchGoalYearsOverview } from "../../data/api/strategicIndicatorGoalsApi";
+import type { GoalYearOverviewItem } from "../../data/types/indicatorGoals";
 
-type UseStrategicIndicatorsSettingsParams = {
+type UseStrategicIndicatorsGoalYearsOverviewParams = {
   getAccessToken?: () => string | undefined;
 };
 
-export function useStrategicIndicatorsSettings({
+export function useStrategicIndicatorsGoalYearsOverview({
   getAccessToken,
-}: UseStrategicIndicatorsSettingsParams) {
-  const [data, setData] = useState<StrategicIndicatorsSettingsResponse | null>(null);
+}: UseStrategicIndicatorsGoalYearsOverviewParams) {
+  const [items, setItems] = useState<GoalYearOverviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -50,7 +42,7 @@ export function useStrategicIndicatorsSettings({
       setError(null);
 
       try {
-        const response = await fetchStrategicIndicatorsSettings(
+        const response = await fetchGoalYearsOverview(
           getAccessTokenRef.current,
           controller.signal,
         );
@@ -59,7 +51,7 @@ export function useStrategicIndicatorsSettings({
           return;
         }
 
-        setData(response);
+        setItems(response.items);
         hasLoadedOnceRef.current = true;
       } catch (err) {
         if (requestId !== requestIdRef.current || controller.signal.aborted) {
@@ -69,7 +61,7 @@ export function useStrategicIndicatorsSettings({
         setError(
           err instanceof Error
             ? err.message
-            : "Erro inesperado ao carregar configurações globais.",
+            : "Erro inesperado ao carregar visão anual das metas.",
         );
       } finally {
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
@@ -80,9 +72,7 @@ export function useStrategicIndicatorsSettings({
     };
   }, []);
 
-  const reload = useCallback(() => {
-    return loadRef.current();
-  }, []);
+  const reload = useCallback(() => loadRef.current(), []);
 
   useEffect(() => {
     void reload();
@@ -92,49 +82,14 @@ export function useStrategicIndicatorsSettings({
     };
   }, [reload]);
 
-  const save = useCallback(
-    async (payload: StrategicIndicatorsSettingsUpdateRequest) => {
-      setSaving(true);
-      setError(null);
-      setSuccessMessage(null);
-
-      try {
-        const response = await updateStrategicIndicatorsSettings(
-          payload,
-          getAccessTokenRef.current,
-        );
-        setSuccessMessage(response.message);
-        await loadRef.current();
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Erro inesperado ao salvar configurações globais.",
-        );
-        throw err;
-      } finally {
-        setSaving(false);
-      }
-    },
-    [],
-  );
-
-  const clearSuccessMessage = useCallback(() => {
-    setSuccessMessage(null);
-  }, []);
-
   return useMemo(
     () => ({
-      data,
+      items,
       loading,
       refreshing,
-      saving,
       error,
-      successMessage,
       reload,
-      save,
-      clearSuccessMessage,
     }),
-    [data, loading, refreshing, saving, error, successMessage, reload, save, clearSuccessMessage],
+    [items, loading, refreshing, error, reload],
   );
 }

@@ -22,10 +22,13 @@ type AuditFilterValue = "all" | StrategicIndicatorsAuditEntityKey;
 
 const FILTER_OPTIONS: { value: AuditFilterValue; label: string }[] = [
   { value: "all", label: "Todos os blocos" },
-  { value: "weights.departments", label: "Pesos por departamento" },
-  { value: "goals.summary", label: "Metas resumidas" },
+  { value: "departments", label: "Departamentos" },
+  { value: "department_indicators", label: "Indicadores estruturais" },
+  { value: "indicator_goals", label: "Metas anuais" },
   { value: "parameters.global", label: "Parâmetros globais" },
   { value: "governance.notes", label: "Governança" },
+  { value: "weights.departments", label: "Pesos por departamento (legado)" },
+  { value: "goals.summary", label: "Metas resumidas (legado)" },
 ];
 
 export function AuditTimelinePanel({
@@ -59,6 +62,7 @@ export function AuditTimelinePanel({
     onEntityKeyChange("all");
     setExpandedId(null);
   }
+
   useEffect(() => {
     void onReload({
       limit: Number(limit),
@@ -69,6 +73,7 @@ export function AuditTimelinePanel({
   useEffect(() => {
     setFilter(initialEntityKey);
   }, [initialEntityKey]);
+
   const filteredItems = useMemo(() => {
     const normalized = search.trim().toLowerCase();
     const base = !normalized
@@ -358,10 +363,13 @@ export function AuditTimelinePanel({
 
 function humanizeEntityKey(entityKey: string): string {
   const map: Record<string, string> = {
-    "weights.departments": "Pesos por departamento",
-    "goals.summary": "Metas resumidas",
+    "departments": "Departamentos",
+    "department_indicators": "Indicadores estruturais",
+    "indicator_goals": "Metas anuais",
     "parameters.global": "Parâmetros globais",
     "governance.notes": "Governança",
+    "weights.departments": "Pesos por departamento (legado)",
+    "goals.summary": "Metas resumidas (legado)",
   };
 
   return map[entityKey] ?? entityKey;
@@ -405,4 +413,3 @@ function formatPayload(payload: Record<string, unknown> | null): string {
   if (!payload) return "Sem payload registrado.";
   return JSON.stringify(payload, null, 2);
 }
-

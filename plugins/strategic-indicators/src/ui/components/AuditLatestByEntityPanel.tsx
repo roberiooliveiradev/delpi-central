@@ -21,10 +21,13 @@ type EntitySummary = {
 };
 
 const ENTITY_ORDER: StrategicIndicatorsAuditEntityKey[] = [
-  "weights.departments",
-  "goals.summary",
+  "departments",
+  "department_indicators",
+  "indicator_goals",
   "parameters.global",
   "governance.notes",
+  "weights.departments",
+  "goals.summary",
 ];
 
 export function AuditLatestByEntityPanel({
@@ -116,10 +119,13 @@ export function AuditLatestByEntityPanel({
 
 function humanizeEntityKey(entityKey: string): string {
   const map: Record<string, string> = {
-    "weights.departments": "Pesos por departamento",
-    "goals.summary": "Metas resumidas",
+    "departments": "Departamentos",
+    "department_indicators": "Indicadores estruturais",
+    "indicator_goals": "Metas anuais",
     "parameters.global": "Parâmetros globais",
     "governance.notes": "Governança",
+    "weights.departments": "Pesos por departamento (legado)",
+    "goals.summary": "Metas resumidas (legado)",
   };
 
   return map[entityKey] ?? entityKey;

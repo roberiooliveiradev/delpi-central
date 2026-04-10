@@ -28,13 +28,8 @@ export async function fetchStrategicIndicatorsSettingsAudit(
 ): Promise<StrategicIndicatorsSettingsAuditResponse> {
   const searchParams = new URLSearchParams();
 
-  if (params?.limit) {
-    searchParams.set("limit", String(params.limit));
-  }
-
-  if (params?.entityKey) {
-    searchParams.set("entity_key", params.entityKey);
-  }
+  if (params?.limit) searchParams.set("limit", String(params.limit));
+  if (params?.entityKey) searchParams.set("entity_key", params.entityKey);
 
   const queryString = searchParams.toString();
   const url = `${BASE_URL}/settings/audit${queryString ? `?${queryString}` : ""}`;

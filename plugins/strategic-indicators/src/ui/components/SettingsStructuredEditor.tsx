@@ -1,204 +1,251 @@
-import { useEffect, useMemo, useState } from "react";
-import type {
-  SettingsGoalItem,
-  SettingsGovernanceItem,
-  SettingsParameterItem,
-  SettingsWeightItem,
-  StrategicIndicatorsSettingsResponse,
-  StrategicIndicatorsSettingsUpdateRequest,
-} from "../../data/types/settings";
-import {
-  buildSettingsPayloadFromResponse,
-  hasSettingsChanged,
-} from "../../utils/settingsComparison";
-import { SettingsGoalsForm } from "./SettingsGoalsForm";
-import { SettingsGovernanceForm } from "./SettingsGovernanceForm";
-import { SettingsParametersForm } from "./SettingsParametersForm";
+import { useMemo, useState } from "react";
+import type { StrategicIndicatorsSettingsResponse } from "../../data/types/settings";
+import { useSettingsDraft } from "../../state/hooks/useSettingsDraft";
 import { SettingsWeightsForm } from "./SettingsWeightsForm";
+import { SettingsGoalsForm } from "./SettingsGoalsForm";
+import { SettingsParametersForm } from "./SettingsParametersForm";
+import { SettingsGovernanceForm } from "./SettingsGovernanceForm";
+import { Modal } from "./Modal";
 
 type SettingsStructuredEditorProps = {
   data: StrategicIndicatorsSettingsResponse;
-  saving: boolean;
-  onSave: (payload: StrategicIndicatorsSettingsUpdateRequest) => Promise<void>;
+  saving?: boolean;
+  onSave: (
+    payload: Pick<
+      StrategicIndicatorsSettingsResponse,
+      "weights" | "goals" | "parameters" | "governance"
+    >,
+  ) => Promise<void>;
 };
+
+type EditorSection = "weights" | "goals" | "parameters" | "governance" | null;
 
 export function SettingsStructuredEditor({
   data,
-  saving,
+  saving = false,
   onSave,
 }: SettingsStructuredEditorProps) {
-  const [weights, setWeights] = useState<SettingsWeightItem[]>([]);
-  const [goals, setGoals] = useState<SettingsGoalItem[]>([]);
-  const [parameters, setParameters] = useState<SettingsParameterItem[]>([]);
-  const [governance, setGovernance] = useState<SettingsGovernanceItem[]>([]);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const {
+    draft,
+    errors,
+    totalWeight,
+    isDirty,
+    isSaveDisabled,
+    setWeightItems,
+    setGoalItems,
+    setParameterItems,
+    setGovernanceItems,
+    reset,
+    validateAll,
+  } = useSettingsDraft(data);
 
-  useEffect(() => {
-    setWeights(data.weights.items);
-    setGoals(data.goals.items);
-    setParameters(data.parameters.items);
-    setGovernance(data.governance.items);
-    setLocalError(null);
-  }, [data]);
+  const [openSection, setOpenSection] = useState<EditorSection>(null);
+  const [sectionMessage, setSectionMessage] = useState<string | null>(null);
 
-  const totalWeight = useMemo(
-    () => weights.reduce((sum, item) => sum + Number(item.weight_pct || 0), 0),
-    [weights],
-  );
-
-  const currentPayload = useMemo<StrategicIndicatorsSettingsUpdateRequest>(
+  const summary = useMemo(
     () => ({
-      weights: { items: weights },
-      goals: { items: goals },
-      parameters: { items: parameters },
-      governance: { items: governance },
+      weightsCount: draft.weights.items.length,
+      goalsCount: draft.goals.items.length,
+      parametersCount: draft.parameters.items.length,
+      governanceCount: draft.governance.items.length,
     }),
-    [weights, goals, parameters, governance],
+    [draft],
   );
 
-  const originalPayload = useMemo(
-    () => buildSettingsPayloadFromResponse(data),
-    [data],
-  );
+  async function handleSaveAll() {
+    const isValid = validateAll();
+    if (!isValid) return;
 
-  const dirty = useMemo(
-    () => hasSettingsChanged(originalPayload, currentPayload),
-    [originalPayload, currentPayload],
-  );
+    await onSave({
+      weights: draft.weights,
+      goals: draft.goals,
+      parameters: draft.parameters,
+      governance: draft.governance,
+    });
 
-  function handleReset() {
-    setWeights(data.weights.items);
-    setGoals(data.goals.items);
-    setParameters(data.parameters.items);
-    setGovernance(data.governance.items);
-    setLocalError(null);
+    setSectionMessage("Configurações salvas com sucesso.");
+    setOpenSection(null);
   }
 
-  async function handleSave() {
-    setLocalError(null);
-
-    if (totalWeight !== 100) {
-      setLocalError(`A soma dos pesos deve ser 100. Valor atual: ${totalWeight}.`);
-      return;
-    }
-
-    if (!dirty) {
-      setLocalError("Nenhuma alteração pendente para salvar.");
-      return;
-    }
-
-    await onSave(currentPayload);
+  function handleCloseModal() {
+    setOpenSection(null);
   }
 
   return (
-    <section className="si-settings-editor">
+    <section className="si-settings-admin-shell">
       <div className="si-settings-editor__header">
-        <div>
-          <h3 className="si-settings-editor__title">Edição administrativa</h3>
-          <span className="si-settings-editor__subtitle">
-            integração real com a API do módulo
-          </span>
-        </div>
-
         <div className="si-settings-editor__meta-group">
           <div className="si-settings-editor__summary">
-            <span>Peso total atual</span>
-            <strong>{totalWeight}%</strong>
+            <span>Blocos</span>
+            <strong>4</strong>
           </div>
 
-          <div
-            className={`si-settings-editor__status ${
-              dirty ? "si-settings-editor__status--warning" : "si-settings-editor__status--ok"
-            }`}
-          >
-            {dirty ? "Alterações pendentes" : "Sem alterações pendentes"}
+          <div className="si-settings-editor__summary">
+            <span>Total dos pesos</span>
+            <strong>{totalWeight}%</strong>
           </div>
         </div>
       </div>
 
-      {localError ? (
-        <div className="si-settings-editor__alert si-settings-editor__alert--error">
-          {localError}
+      {sectionMessage ? (
+        <div className="si-settings-editor__alert si-settings-editor__alert--success">
+          {sectionMessage}
         </div>
       ) : null}
 
-      <div className="si-settings-editor__sections">
-        <EditorSection
-          title="Pesos por departamento"
-          description="Estrutura oficial de composição do IGD."
-        >
-          <SettingsWeightsForm items={weights} onChange={setWeights} />
-        </EditorSection>
+      {errors.root ? (
+        <div className="si-settings-editor__alert si-settings-editor__alert--error">
+          {errors.root}
+        </div>
+      ) : null}
 
-        <EditorSection
+      <div className="si-settings-admin-grid">
+        <AdminCard
+          title="Pesos"
+          description="Distribuição oficial dos departamentos no cálculo do IGD."
+          meta={`${summary.weightsCount} departamentos`}
+          status={totalWeight === 100 ? "Total validado" : "Revisar total"}
+          onEdit={() => setOpenSection("weights")}
+        />
+
+        <AdminCard
           title="Metas resumidas"
-          description="Objetivos executivos por área."
-        >
-          <SettingsGoalsForm items={goals} onChange={setGoals} />
-        </EditorSection>
+          description="Direcionadores executivos por departamento."
+          meta={`${summary.goalsCount} registros`}
+          status="Resumo executivo"
+          onEdit={() => setOpenSection("goals")}
+        />
 
-        <EditorSection
-          title="Parâmetros globais"
-          description="Configurações estruturais do módulo."
-        >
-          <SettingsParametersForm
-            items={parameters}
-            onChange={setParameters}
-          />
-        </EditorSection>
+        <AdminCard
+          title="Parâmetros"
+          description="Parâmetros globais do módulo e convenções oficiais."
+          meta={`${summary.parametersCount} parâmetros`}
+          status="Configuração global"
+          onEdit={() => setOpenSection("parameters")}
+        />
 
-        <EditorSection
+        <AdminCard
           title="Governança"
-          description="Observações e parâmetros administrativos."
-        >
-          <SettingsGovernanceForm
-            items={governance}
-            onChange={setGovernance}
-          />
-        </EditorSection>
+          description="Regras administrativas e observações estruturais do módulo."
+          meta={`${summary.governanceCount} itens`}
+          status="Políticas do módulo"
+          onEdit={() => setOpenSection("governance")}
+        />
       </div>
 
-      <div className="si-settings-editor__actions">
+      <div className="si-settings-admin-actions">
         <button
           type="button"
           className="si-settings-editor__button si-settings-editor__button--secondary"
-          onClick={handleReset}
-          disabled={saving || !dirty}
+          onClick={() => {
+            reset();
+            setSectionMessage("Alterações descartadas.");
+          }}
+          disabled={saving || !isDirty}
         >
-          Resetar alterações
+          Descartar alterações
         </button>
 
         <button
           type="button"
           className="si-settings-editor__button"
-          onClick={() => void handleSave()}
-          disabled={saving || !dirty}
+          onClick={() => void handleSaveAll()}
+          disabled={saving || isSaveDisabled}
         >
           {saving ? "Salvando..." : "Salvar configurações"}
         </button>
       </div>
+
+      <Modal
+        open={openSection === "weights"}
+        onClose={handleCloseModal}
+        title="Editar pesos"
+        description="Ajuste a distribuição dos departamentos. O total deve permanecer em 100%."
+        size="lg"
+      >
+        <SettingsWeightsForm
+          items={draft.weights.items}
+          onChange={setWeightItems}
+        />
+      </Modal>
+
+      <Modal
+        open={openSection === "goals"}
+        onClose={handleCloseModal}
+        title="Editar metas resumidas"
+        description="Atualize os direcionadores executivos de cada departamento."
+        size="lg"
+      >
+        <SettingsGoalsForm
+          items={draft.goals.items}
+          onChange={setGoalItems}
+        />
+      </Modal>
+
+      <Modal
+        open={openSection === "parameters"}
+        onClose={handleCloseModal}
+        title="Editar parâmetros"
+        description="Atualize os parâmetros globais utilizados pela área administrativa."
+        size="lg"
+      >
+        <SettingsParametersForm
+          items={draft.parameters.items}
+          onChange={setParameterItems}
+        />
+      </Modal>
+
+      <Modal
+        open={openSection === "governance"}
+        onClose={handleCloseModal}
+        title="Editar governança"
+        description="Atualize notas e regras administrativas do módulo."
+        size="lg"
+      >
+        <SettingsGovernanceForm
+          items={draft.governance.items}
+          onChange={setGovernanceItems}
+        />
+      </Modal>
     </section>
   );
 }
 
-type EditorSectionProps = {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-};
-
-function EditorSection({
+function AdminCard({
   title,
   description,
-  children,
-}: EditorSectionProps) {
+  meta,
+  status,
+  onEdit,
+}: {
+  title: string;
+  description: string;
+  meta: string;
+  status: string;
+  onEdit: () => void;
+}) {
   return (
-    <article className="si-settings-editor__section">
-      <div className="si-settings-editor__section-header">
-        <h4 className="si-settings-editor__section-title">{title}</h4>
-        <p className="si-settings-editor__section-description">{description}</p>
+    <article className="si-settings-admin-card">
+      <div className="si-settings-admin-card__content">
+        <div className="si-settings-admin-card__top">
+          <h4 className="si-settings-admin-card__title">{title}</h4>
+          <span className="si-settings-admin-card__status">{status}</span>
+        </div>
+
+        <p className="si-settings-admin-card__description">{description}</p>
+
+        <div className="si-settings-admin-card__meta">{meta}</div>
       </div>
-      {children}
+
+      <div className="si-settings-admin-card__actions">
+        <button
+          type="button"
+          className="si-settings-editor__button si-settings-editor__button--secondary"
+          onClick={onEdit}
+        >
+          Editar
+        </button>
+      </div>
     </article>
   );
 }
