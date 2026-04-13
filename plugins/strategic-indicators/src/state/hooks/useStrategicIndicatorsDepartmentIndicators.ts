@@ -133,7 +133,10 @@ export function useStrategicIndicatorsDepartmentIndicators({
   );
 
   const updateIndicator = useCallback(
-    async (indicatorId: string, payload: UpdateAdminDepartmentIndicatorRequest) => {
+    async (
+      indicatorId: string,
+      payload: UpdateAdminDepartmentIndicatorRequest,
+    ) => {
       setSaving(true);
       setError(null);
       setSuccessMessage(null);
@@ -194,7 +197,10 @@ export function useStrategicIndicatorsDepartmentIndicators({
       setSuccessMessage(null);
 
       try {
-        await deleteAdminDepartmentIndicator(indicatorId, getAccessTokenRef.current);
+        await deleteAdminDepartmentIndicator(
+          indicatorId,
+          getAccessTokenRef.current,
+        );
         setSuccessMessage("Indicador estrutural excluído com sucesso.");
         await load();
       } catch (err) {

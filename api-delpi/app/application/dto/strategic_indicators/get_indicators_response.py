@@ -13,13 +13,16 @@ class IndicatorItemResponse:
     goal_label: str
     goal_value: float
     goal_periodicity: str
-    scope_type: str
-    value: float
-    score: float
-    gap: float
-    trend: str
-    classification: str
-    source: str
+    goal_mode: str = "standard"
+    monthly_targets: list[dict] = field(default_factory=list)
+    scope_type: str = "consolidated"
+    performance_direction: str = "higher_is_better"
+    value: float = 0.0
+    score: float = 0.0
+    gap: float = 0.0
+    trend: str = "stable"
+    classification: str = ""
+    source: str = ""
 
 
 @dataclass

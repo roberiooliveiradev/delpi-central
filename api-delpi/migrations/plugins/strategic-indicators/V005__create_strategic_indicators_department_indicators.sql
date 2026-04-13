@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS strategic_indicators.department_indicators (
     weight_pct NUMERIC(8,2) NOT NULL DEFAULT 0,
 
     scope_type VARCHAR(40) NOT NULL DEFAULT 'consolidated',
+    performance_direction VARCHAR(30) NOT NULL DEFAULT 'higher_is_better',
     strategic_description TEXT NOT NULL DEFAULT '',
     source_key VARCHAR(150) NULL,
 
@@ -42,6 +43,14 @@ CREATE TABLE IF NOT EXISTS strategic_indicators.department_indicators (
                 'consolidated',
                 'per_unit'
             )
+        ),
+
+    CONSTRAINT ck_si_department_indicators_performance_direction
+        CHECK (
+            performance_direction IN (
+                'higher_is_better',
+                'lower_is_better'
+            )
         )
 );
 
@@ -57,6 +66,9 @@ CREATE INDEX IF NOT EXISTS idx_si_department_indicators_display_order
 CREATE INDEX IF NOT EXISTS idx_si_department_indicators_source_key
     ON strategic_indicators.department_indicators (source_key);
 
+CREATE INDEX IF NOT EXISTS idx_si_department_indicators_performance_direction
+    ON strategic_indicators.department_indicators (performance_direction);
+
 COMMENT ON TABLE strategic_indicators.department_indicators IS
 'Catálogo estrutural dos indicadores por departamento.';
 
@@ -71,6 +83,9 @@ COMMENT ON COLUMN strategic_indicators.department_indicators.weight_pct IS
 
 COMMENT ON COLUMN strategic_indicators.department_indicators.scope_type IS
 'Escopo do indicador: consolidated ou per_unit.';
+
+COMMENT ON COLUMN strategic_indicators.department_indicators.performance_direction IS
+'Direção de performance do indicador. higher_is_better = quanto maior, melhor. lower_is_better = quanto menor, melhor.';
 
 COMMENT ON COLUMN strategic_indicators.department_indicators.source_key IS
 'Chave de origem usada pela camada de medições reais.';

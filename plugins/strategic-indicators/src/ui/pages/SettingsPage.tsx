@@ -24,9 +24,7 @@ type SettingsTab =
   | "global"
   | "audit";
 
-export function SettingsPage({
-  getAccessToken,
-}: SettingsPageProps) {
+export function SettingsPage({ getAccessToken }: SettingsPageProps) {
   const settings = useStrategicIndicatorsSettings({ getAccessToken });
   const [activeTab, setActiveTab] = useState<SettingsTab>("overview");
 
@@ -38,7 +36,7 @@ export function SettingsPage({
         id: item.department_id,
         departmentName: item.department_name,
         weightPct: item.weight_pct,
-        note: `Peso executivo atual do departamento ${item.department_name}.`,
+        note: "Bloco legado de overview. A edição principal agora ocorre via Departamentos.",
       })),
       goals: settings.data.goals.items.map((item) => ({
         id: item.department_id,
@@ -58,7 +56,29 @@ export function SettingsPage({
         value: item.value,
         observation: item.observation,
       })),
-      readiness: [],
+      readiness: [
+        {
+          id: "departments-admin",
+          title: "Administração de departamentos",
+          status: "ready",
+          description:
+            "Fluxo principal do catálogo estrutural do módulo.",
+        },
+        {
+          id: "annual-goals-admin",
+          title: "Metas anuais",
+          status: "ready",
+          description:
+            "Fluxo principal para metas analíticas, ciclos anuais e operações em lote.",
+        },
+        {
+          id: "global-settings",
+          title: "Configurações globais",
+          status: "ready",
+          description:
+            "Escopo reduzido a parâmetros e governança.",
+        },
+      ],
       meta: {
         source: settings.data.meta.source,
         updatedAt: settings.data.meta.updated_at,
@@ -72,7 +92,7 @@ export function SettingsPage({
       <PageHeader
         eyebrow="Strategic Indicators"
         title="Administração do módulo"
-        description="Central de gestão para estrutura organizacional, catálogo de indicadores, metas anuais, parâmetros globais e trilha de auditoria."
+        description="Central administrativa do modelo novo: departamentos, indicadores estruturais, metas anuais, parâmetros globais e auditoria."
       />
 
       <SettingsHero
@@ -101,7 +121,9 @@ export function SettingsPage({
           <button
             key={tabId}
             type="button"
-            className={`si-settings-tabbar__item ${activeTab === tabId ? "is-active" : ""}`}
+            className={`si-settings-tabbar__item ${
+              activeTab === tabId ? "is-active" : ""
+            }`}
             onClick={() => setActiveTab(tabId)}
           >
             {label}
@@ -113,7 +135,7 @@ export function SettingsPage({
         {activeTab === "overview" ? (
           <SectionBlock
             title="Painel administrativo"
-            description="Resumo executivo do estado atual da administração do módulo."
+            description="Resumo executivo do estado atual do módulo. Os blocos de pesos e goals abaixo são overview de leitura, não a base principal de edição."
           >
             {!dashboardData ? (
               <InfoState
@@ -143,13 +165,25 @@ export function SettingsPage({
 
                   <article className="si-settings-overview-card">
                     <span className="si-settings-overview-card__label">
-                      Origem do overview
+                      Fonte declarada
                     </span>
                     <strong className="si-settings-overview-card__value">
                       {dashboardData.meta.source}
                     </strong>
                     <p>
-                      Fonte declarada pelo backend para composição das configurações exibidas.
+                      O backend ainda pode retornar blocos legados para overview, mas a escrita principal permanece no modelo novo.
+                    </p>
+                  </article>
+
+                  <article className="si-settings-overview-card">
+                    <span className="si-settings-overview-card__label">
+                      Centro da administração
+                    </span>
+                    <strong className="si-settings-overview-card__value">
+                      Departamentos e metas anuais
+                    </strong>
+                    <p>
+                      Use as abas dedicadas para editar catálogo estrutural e ciclos anuais. Configurações globais ficaram restritas a parâmetros e governança.
                     </p>
                   </article>
                 </div>
@@ -161,7 +195,7 @@ export function SettingsPage({
         {activeTab === "departments" ? (
           <SectionBlock
             title="Departamentos"
-            description="Gerencie a estrutura administrativa do módulo e abra cada departamento em um workspace focado."
+            description="Gerencie a estrutura administrativa do módulo e abra cada departamento em um workspace focado no catálogo estrutural."
           >
             <DepartmentsListPanel getAccessToken={getAccessToken} />
           </SectionBlock>
@@ -170,7 +204,7 @@ export function SettingsPage({
         {activeTab === "goals" ? (
           <SectionBlock
             title="Metas anuais"
-            description="Gerencie os ciclos anuais e abra cada ano em um workspace completo de metas."
+            description="Gerencie ciclos anuais, metas por indicador e operações em lote como duplicação e preenchimento."
           >
             <GoalYearsListPanel getAccessToken={getAccessToken} />
           </SectionBlock>
@@ -179,7 +213,7 @@ export function SettingsPage({
         {activeTab === "global" ? (
           <SectionBlock
             title="Configurações globais"
-            description="Administre os blocos globais que continuam centralizados no módulo."
+            description="Administre apenas os blocos globais centrais do módulo: parâmetros e governança."
           >
             {!settings.data ? (
               <InfoState
@@ -188,12 +222,8 @@ export function SettingsPage({
               />
             ) : (
               <div className="si-settings-global-grid">
-                <SettingsParametersPanel
-                  items={dashboardData?.parameters ?? []}
-                />
-                <SettingsGovernancePanel
-                  items={dashboardData?.governance ?? []}
-                />
+                <SettingsParametersPanel items={dashboardData?.parameters ?? []} />
+                <SettingsGovernancePanel items={dashboardData?.governance ?? []} />
               </div>
             )}
           </SectionBlock>

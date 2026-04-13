@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -10,6 +10,8 @@ class CreateStrategicIndicatorsIndicatorGoalRequest:
     goal_label: str
     goal_value: float
     goal_periodicity: str
+    goal_mode: str = "standard"
+    monthly_targets: list[dict] = field(default_factory=list)
     valid_from: str | None = None
     valid_to: str | None = None
     notes: str | None = None

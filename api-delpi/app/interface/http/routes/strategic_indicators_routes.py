@@ -103,6 +103,31 @@ def _extract_actor(request: Request) -> tuple[str | None, str | None]:
     return actor_user_id, actor_email
 
 
+def _serialize_goal_item(item: dict) -> dict:
+    return {
+        "id": item.get("id"),
+        "indicator_id": item.get("indicator_id"),
+        "indicator_name": item.get("indicator_name"),
+        "goal_year": item.get("goal_year"),
+        "goal_label": item.get("goal_label"),
+        "goal_value": float(item.get("goal_value") or 0),
+        "goal_periodicity": item.get("goal_periodicity"),
+        "goal_mode": item.get("goal_mode", "standard"),
+        "monthly_targets": item.get("monthly_targets") or [],
+        "version": item.get("version"),
+        "is_active": item.get("is_active"),
+        "valid_from": item.get("valid_from"),
+        "valid_to": item.get("valid_to"),
+        "notes": item.get("notes"),
+        "created_by_user_id": item.get("created_by_user_id"),
+        "created_by_email": item.get("created_by_email"),
+        "updated_by_user_id": item.get("updated_by_user_id"),
+        "updated_by_email": item.get("updated_by_email"),
+        "created_at": item.get("created_at"),
+        "updated_at": item.get("updated_at"),
+    }
+
+
 @router.get("/health")
 def strategic_indicators_health():
     return {
@@ -510,7 +535,7 @@ def list_indicator_goals(
             department_id=department_id,
             active_only=active_only,
         )
-        return {"items": items}
+        return {"items": [_serialize_goal_item(item) for item in items]}
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -530,7 +555,7 @@ def list_indicator_goal_history(
             indicator_id=indicator_id,
             goal_year=goal_year,
         )
-        return {"items": items}
+        return {"items": [_serialize_goal_item(item) for item in items]}
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -557,6 +582,10 @@ def create_indicator_goal(
                 goal_label=body.goal_label,
                 goal_value=body.goal_value,
                 goal_periodicity=body.goal_periodicity,
+                goal_mode=body.goal_mode,
+                monthly_targets=[
+                    item.model_dump() for item in (body.monthly_targets or [])
+                ],
                 valid_from=body.valid_from,
                 valid_to=body.valid_to,
                 notes=body.notes,
@@ -564,7 +593,7 @@ def create_indicator_goal(
                 actor_email=actor_email,
             )
         )
-        return result
+        return _serialize_goal_item(result)
     except StrategicIndicatorsIndicatorGoalValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ValueError as exc:
@@ -593,6 +622,10 @@ def update_indicator_goal(
                 goal_label=body.goal_label,
                 goal_value=body.goal_value,
                 goal_periodicity=body.goal_periodicity,
+                goal_mode=body.goal_mode,
+                monthly_targets=[
+                    item.model_dump() for item in (body.monthly_targets or [])
+                ],
                 valid_from=body.valid_from,
                 valid_to=body.valid_to,
                 notes=body.notes,
@@ -600,7 +633,7 @@ def update_indicator_goal(
                 actor_email=actor_email,
             )
         )
-        return result
+        return _serialize_goal_item(result)
     except StrategicIndicatorsIndicatorGoalValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ValueError as exc:
@@ -627,7 +660,7 @@ def activate_indicator_goal(
             actor_user_id=actor_user_id,
             actor_email=actor_email,
         )
-        return result
+        return _serialize_goal_item(result)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -652,7 +685,7 @@ def deactivate_indicator_goal(
             actor_user_id=actor_user_id,
             actor_email=actor_email,
         )
-        return result
+        return _serialize_goal_item(result)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -688,11 +721,13 @@ def bulk_create_indicator_goals(
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_bulk_create_strategic_indicators_indicator_goals_use_case()
-        return use_case.execute(
+        result = use_case.execute(
             body=body.model_dump(),
             actor_user_id=actor_user_id,
             actor_email=actor_email,
         )
+        result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -711,11 +746,13 @@ def duplicate_indicator_goals_year(
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_duplicate_strategic_indicators_indicator_goals_year_use_case()
-        return use_case.execute(
+        result = use_case.execute(
             body=body.model_dump(),
             actor_user_id=actor_user_id,
             actor_email=actor_email,
         )
+        result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -734,11 +771,13 @@ def fill_missing_indicator_goals(
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_fill_missing_strategic_indicators_indicator_goals_use_case()
-        return use_case.execute(
+        result = use_case.execute(
             body=body.model_dump(),
             actor_user_id=actor_user_id,
             actor_email=actor_email,
         )
+        result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -842,7 +881,14 @@ def get_strategic_indicators(
                     "goal_label": item.goal_label,
                     "goal_value": item.goal_value,
                     "goal_periodicity": item.goal_periodicity,
+                    "goal_mode": getattr(item, "goal_mode", "standard"),
+                    "monthly_targets": getattr(item, "monthly_targets", []) or [],
                     "scope_type": item.scope_type,
+                    "performance_direction": getattr(
+                        item,
+                        "performance_direction",
+                        "higher_is_better",
+                    ),
                     "value": item.value,
                     "score": item.score,
                     "gap": item.gap,

@@ -24,6 +24,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 indicator_name,
                 weight_pct,
                 scope_type,
+                performance_direction,
                 strategic_description,
                 source_key,
                 is_active,
@@ -46,6 +47,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
         indicator_name: str,
         weight_pct: float,
         scope_type: str,
+        performance_direction: str,
         strategic_description: str,
         source_key: str | None,
         display_order: int,
@@ -59,6 +61,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 indicator_name,
                 weight_pct,
                 scope_type,
+                performance_direction,
                 strategic_description,
                 source_key,
                 is_active,
@@ -68,7 +71,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 updated_by_user_id,
                 updated_by_email
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s)
             RETURNING *
         """
         return self.execute_returning_one(
@@ -79,6 +82,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 indicator_name,
                 weight_pct,
                 scope_type,
+                performance_direction,
                 strategic_description,
                 source_key,
                 display_order,
@@ -96,6 +100,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
         indicator_name: str,
         weight_pct: float,
         scope_type: str,
+        performance_direction: str,
         strategic_description: str,
         source_key: str | None,
         is_active: bool,
@@ -109,6 +114,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 indicator_name = %s,
                 weight_pct = %s,
                 scope_type = %s,
+                performance_direction = %s,
                 strategic_description = %s,
                 source_key = %s,
                 is_active = %s,
@@ -125,6 +131,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 indicator_name,
                 weight_pct,
                 scope_type,
+                performance_direction,
                 strategic_description,
                 source_key,
                 is_active,

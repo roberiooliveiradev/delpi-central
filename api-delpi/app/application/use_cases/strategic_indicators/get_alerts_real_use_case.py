@@ -120,6 +120,21 @@ class GetStrategicIndicatorsAlertsRealUseCase:
                         "goal_periodicity": (
                             catalog_item.goal_periodicity if catalog_item else None
                         ),
+                        "goal_mode": (
+                            getattr(catalog_item, "goal_mode", "standard")
+                            if catalog_item
+                            else "standard"
+                        ),
+                        "monthly_targets": (
+                            getattr(catalog_item, "monthly_targets", []) or []
+                            if catalog_item
+                            else []
+                        ),
+                        "performance_direction": (
+                            getattr(catalog_item, "performance_direction", "higher_is_better")
+                            if catalog_item
+                            else "higher_is_better"
+                        ),
                         "message": (
                             f"{indicator.indicator_name} está abaixo do esperado em "
                             f"{department.department_name}."

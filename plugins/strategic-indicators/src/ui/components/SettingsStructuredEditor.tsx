@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import type { StrategicIndicatorsSettingsResponse } from "../../data/types/settings";
+import type {
+  StrategicIndicatorsSettingsResponse,
+  StrategicIndicatorsSettingsUpdateRequest,
+} from "../../data/types/settings";
 import { useSettingsDraft } from "../../state/hooks/useSettingsDraft";
-import { SettingsWeightsForm } from "./SettingsWeightsForm";
-import { SettingsGoalsForm } from "./SettingsGoalsForm";
 import { SettingsParametersForm } from "./SettingsParametersForm";
 import { SettingsGovernanceForm } from "./SettingsGovernanceForm";
 import { Modal } from "./Modal";
@@ -10,15 +11,10 @@ import { Modal } from "./Modal";
 type SettingsStructuredEditorProps = {
   data: StrategicIndicatorsSettingsResponse;
   saving?: boolean;
-  onSave: (
-    payload: Pick<
-      StrategicIndicatorsSettingsResponse,
-      "weights" | "goals" | "parameters" | "governance"
-    >,
-  ) => Promise<void>;
+  onSave: (payload: StrategicIndicatorsSettingsUpdateRequest) => Promise<void>;
 };
 
-type EditorSection = "weights" | "goals" | "parameters" | "governance" | null;
+type EditorSection = "parameters" | "governance" | null;
 
 export function SettingsStructuredEditor({
   data,
@@ -28,11 +24,8 @@ export function SettingsStructuredEditor({
   const {
     draft,
     errors,
-    totalWeight,
     isDirty,
     isSaveDisabled,
-    setWeightItems,
-    setGoalItems,
     setParameterItems,
     setGovernanceItems,
     reset,
@@ -44,8 +37,6 @@ export function SettingsStructuredEditor({
 
   const summary = useMemo(
     () => ({
-      weightsCount: draft.weights.items.length,
-      goalsCount: draft.goals.items.length,
       parametersCount: draft.parameters.items.length,
       governanceCount: draft.governance.items.length,
     }),
@@ -57,8 +48,6 @@ export function SettingsStructuredEditor({
     if (!isValid) return;
 
     await onSave({
-      weights: draft.weights,
-      goals: draft.goals,
       parameters: draft.parameters,
       governance: draft.governance,
     });
@@ -76,13 +65,13 @@ export function SettingsStructuredEditor({
       <div className="si-settings-editor__header">
         <div className="si-settings-editor__meta-group">
           <div className="si-settings-editor__summary">
-            <span>Blocos</span>
-            <strong>4</strong>
+            <span>Blocos editáveis</span>
+            <strong>2</strong>
           </div>
 
           <div className="si-settings-editor__summary">
-            <span>Total dos pesos</span>
-            <strong>{totalWeight}%</strong>
+            <span>Modelo de escrita</span>
+            <strong>Parameters + Governance</strong>
           </div>
         </div>
       </div>
@@ -100,22 +89,6 @@ export function SettingsStructuredEditor({
       ) : null}
 
       <div className="si-settings-admin-grid">
-        <AdminCard
-          title="Pesos"
-          description="Distribuição oficial dos departamentos no cálculo do IGD."
-          meta={`${summary.weightsCount} departamentos`}
-          status={totalWeight === 100 ? "Total validado" : "Revisar total"}
-          onEdit={() => setOpenSection("weights")}
-        />
-
-        <AdminCard
-          title="Metas resumidas"
-          description="Direcionadores executivos por departamento."
-          meta={`${summary.goalsCount} registros`}
-          status="Resumo executivo"
-          onEdit={() => setOpenSection("goals")}
-        />
-
         <AdminCard
           title="Parâmetros"
           description="Parâmetros globais do módulo e convenções oficiais."
@@ -155,32 +128,6 @@ export function SettingsStructuredEditor({
           {saving ? "Salvando..." : "Salvar configurações"}
         </button>
       </div>
-
-      <Modal
-        open={openSection === "weights"}
-        onClose={handleCloseModal}
-        title="Editar pesos"
-        description="Ajuste a distribuição dos departamentos. O total deve permanecer em 100%."
-        size="lg"
-      >
-        <SettingsWeightsForm
-          items={draft.weights.items}
-          onChange={setWeightItems}
-        />
-      </Modal>
-
-      <Modal
-        open={openSection === "goals"}
-        onClose={handleCloseModal}
-        title="Editar metas resumidas"
-        description="Atualize os direcionadores executivos de cada departamento."
-        size="lg"
-      >
-        <SettingsGoalsForm
-          items={draft.goals.items}
-          onChange={setGoalItems}
-        />
-      </Modal>
 
       <Modal
         open={openSection === "parameters"}

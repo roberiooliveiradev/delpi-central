@@ -1,4 +1,13 @@
 export type AlertSeverity = "high" | "medium" | "low";
+export type GoalMode = "standard" | "monthly_curve";
+export type PerformanceDirection =
+  | "higher_is_better"
+  | "lower_is_better";
+
+export type MonthlyTargetItem = {
+  month_number: number;
+  target_value: number;
+};
 
 export type ExecutiveAlertViewItem = {
   id: string;
@@ -26,6 +35,9 @@ export type IndicatorAlertViewItem = {
   goalLabel: string;
   goalValue: number | null;
   goalPeriodicity: string | null;
+  goalMode: GoalMode;
+  monthlyTargets: MonthlyTargetItem[];
+  performanceDirection: PerformanceDirection;
   severity: AlertSeverity;
   reason: string;
   recommendation: string;
@@ -76,6 +88,9 @@ export type StrategicIndicatorsAlertsResponse = {
     goal_label?: string | null;
     goal_value?: number | null;
     goal_periodicity?: string | null;
+    goal_mode?: GoalMode;
+    monthly_targets?: MonthlyTargetItem[];
+    performance_direction?: PerformanceDirection;
   }>;
   errors?: Array<{
     department_id: string;

@@ -22,11 +22,15 @@ export function adaptIndicatorsToView(
     goalLabel: item.goal_label,
     goalValue: item.goal_value,
     goalPeriodicity: item.goal_periodicity,
+    goalMode: item.goal_mode,
+    monthlyTargets: item.monthly_targets ?? [],
     value: item.value,
     score: item.score,
     gap: item.gap,
     trend: normalizeTrend(item.trend),
     classification: item.classification,
+    scopeType: item.scope_type,
+    performanceDirection: item.performance_direction,
     source: item.source,
   }));
 }

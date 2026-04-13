@@ -1,3 +1,16 @@
+export type TrendDirection = "up" | "down" | "stable";
+
+export type GoalMode = "standard" | "monthly_curve";
+
+export type PerformanceDirection =
+  | "higher_is_better"
+  | "lower_is_better";
+
+export type MonthlyTargetItem = {
+  month_number: number;
+  target_value: number;
+};
+
 export type IndicatorViewItem = {
   id: string;
   name: string;
@@ -7,11 +20,15 @@ export type IndicatorViewItem = {
   goalLabel: string;
   goalValue: number;
   goalPeriodicity: string;
+  goalMode: GoalMode;
+  monthlyTargets: MonthlyTargetItem[];
   value: number;
   score: number;
   gap: number;
-  trend: "up" | "down" | "stable";
+  trend: TrendDirection;
   classification: string;
+  scopeType: string;
+  performanceDirection: PerformanceDirection;
   source: string;
 };
 
@@ -31,7 +48,10 @@ export type StrategicIndicatorsResponse = {
     goal_label: string;
     goal_value: number;
     goal_periodicity: string;
+    goal_mode: GoalMode;
+    monthly_targets: MonthlyTargetItem[];
     scope_type: string;
+    performance_direction: PerformanceDirection;
     value: number;
     score: number;
     gap: number;

@@ -32,6 +32,7 @@ type IndicatorFormState = {
   indicator_name: string;
   weight_pct: number;
   scope_type: "consolidated" | "per_unit";
+  performance_direction: "higher_is_better" | "lower_is_better";
   strategic_description: string;
   source_key: string;
   display_order: number;
@@ -56,6 +57,7 @@ const emptyIndicatorForm: IndicatorFormState = {
   indicator_name: "",
   weight_pct: 0,
   scope_type: "consolidated",
+  performance_direction: "higher_is_better",
   strategic_description: "",
   source_key: "",
   display_order: 0,
@@ -129,6 +131,7 @@ export function AdminDepartmentsWorkspace({
       indicator_name: item.indicator_name,
       weight_pct: item.weight_pct,
       scope_type: item.scope_type,
+      performance_direction: item.performance_direction,
       strategic_description: item.strategic_description,
       source_key: item.source_key ?? "",
       display_order: item.display_order,
@@ -180,6 +183,7 @@ export function AdminDepartmentsWorkspace({
         indicator_name: indicatorForm.indicator_name.trim(),
         weight_pct: Number(indicatorForm.weight_pct || 0),
         scope_type: indicatorForm.scope_type,
+        performance_direction: indicatorForm.performance_direction,
         strategic_description: indicatorForm.strategic_description.trim(),
         source_key: indicatorForm.source_key.trim() || null,
         display_order: Number(indicatorForm.display_order || 0),
@@ -189,6 +193,7 @@ export function AdminDepartmentsWorkspace({
         indicator_name: indicatorForm.indicator_name.trim(),
         weight_pct: Number(indicatorForm.weight_pct || 0),
         scope_type: indicatorForm.scope_type,
+        performance_direction: indicatorForm.performance_direction,
         strategic_description: indicatorForm.strategic_description.trim(),
         source_key: indicatorForm.source_key.trim() || null,
         display_order: Number(indicatorForm.display_order || 0),
@@ -646,6 +651,24 @@ export function AdminDepartmentsWorkspace({
             >
               <option value="consolidated">consolidated</option>
               <option value="per_unit">per_unit</option>
+            </select>
+          </label>
+
+          <label className="si-admin-form-field">
+            <span>Direção de performance</span>
+            <select
+              value={indicatorForm.performance_direction}
+              onChange={(event) =>
+                setIndicatorForm((current) => ({
+                  ...current,
+                  performance_direction: event.target.value as
+                    | "higher_is_better"
+                    | "lower_is_better",
+                }))
+              }
+            >
+              <option value="higher_is_better">Quanto maior, melhor</option>
+              <option value="lower_is_better">Quanto menor, melhor</option>
             </select>
           </label>
 

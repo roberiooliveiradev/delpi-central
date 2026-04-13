@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional
 
 
@@ -97,6 +97,7 @@ class DepartmentIndicatorItemSchema(BaseModel):
     indicator_name: str
     weight_pct: float
     scope_type: str
+    performance_direction: str = "higher_is_better"
     strategic_description: str = ""
     source_key: Optional[str] = None
     is_active: bool = True
@@ -108,6 +109,7 @@ class CreateDepartmentIndicatorBodySchema(BaseModel):
     indicator_name: str
     weight_pct: float
     scope_type: str
+    performance_direction: str = "higher_is_better"
     strategic_description: str = ""
     source_key: Optional[str] = None
     display_order: int = 0
@@ -117,6 +119,7 @@ class UpdateDepartmentIndicatorBodySchema(BaseModel):
     indicator_name: str
     weight_pct: float
     scope_type: str
+    performance_direction: str = "higher_is_better"
     strategic_description: str = ""
     source_key: Optional[str] = None
     is_active: bool = True
@@ -127,24 +130,65 @@ class UpdateDepartmentIndicatorBodySchema(BaseModel):
 # METAS ANALÍTICAS UNITÁRIAS
 # =========================================================
 
+class MonthlyTargetItemSchema(BaseModel):
+    month_number: int = Field(ge=1, le=12)
+    target_value: float = Field(ge=0)
+
+
 class CreateIndicatorGoalBodySchema(BaseModel):
     indicator_id: str
     goal_year: int
     goal_label: str
-    goal_value: float
+    goal_value: float = 0
     goal_periodicity: str
+    goal_mode: str = "standard"
+    monthly_targets: List[MonthlyTargetItemSchema] = Field(default_factory=list)
     valid_from: Optional[str] = None
     valid_to: Optional[str] = None
     notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_goal_mode(self):
+        if self.goal_mode == "monthly_curve":
+            if len(self.monthly_targets) != 12:
+                raise ValueError(
+                    "monthly_targets deve conter exatamente 12 meses para goal_mode=monthly_curve."
+                )
+
+            months = sorted(item.month_number for item in self.monthly_targets)
+            if months != list(range(1, 13)):
+                raise ValueError(
+                    "monthly_targets deve conter os meses de 1 a 12 sem repetição."
+                )
+
+        return self
 
 
 class UpdateIndicatorGoalBodySchema(BaseModel):
     goal_label: str
-    goal_value: float
+    goal_value: float = 0
     goal_periodicity: str
+    goal_mode: str = "standard"
+    monthly_targets: List[MonthlyTargetItemSchema] = Field(default_factory=list)
     valid_from: Optional[str] = None
     valid_to: Optional[str] = None
     notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_goal_mode(self):
+        if self.goal_mode == "monthly_curve":
+            if len(self.monthly_targets) != 12:
+                raise ValueError(
+                    "monthly_targets deve conter exatamente 12 meses para goal_mode=monthly_curve."
+                )
+
+            months = sorted(item.month_number for item in self.monthly_targets)
+            if months != list(range(1, 13)):
+                raise ValueError(
+                    "monthly_targets deve conter os meses de 1 a 12 sem repetição."
+                )
+
+        return self
 
 
 # =========================================================

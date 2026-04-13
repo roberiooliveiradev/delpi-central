@@ -47,6 +47,7 @@ class PostgresStrategicIndicatorsSummarySettingsRepository(
                 indicator_name,
                 weight_pct,
                 scope_type,
+                performance_direction,
                 strategic_description,
                 source_key,
                 display_order
@@ -101,6 +102,7 @@ class PostgresStrategicIndicatorsSummarySettingsRepository(
                     "name": row["indicator_name"],
                     "weight_pct": float(row.get("weight_pct") or 0),
                     "scope_type": row.get("scope_type") or "consolidated",
+                    "performance_direction": row.get("performance_direction") or "higher_is_better",
                     "strategic_description": row.get("strategic_description") or "",
                     "source_key": row.get("source_key"),
                 }

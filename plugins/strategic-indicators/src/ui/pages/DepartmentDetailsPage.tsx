@@ -160,7 +160,7 @@ export function DepartmentDetailsPage({
       <PageHeader
         eyebrow="MinhaDelpi"
         title={`Departamento — ${data.name}`}
-        description={`Visão detalhada do IDD departamental no período ${referenceMonth}.`}
+        description={`Visão detalhada do IDD departamental no período ${referenceMonth}, com metas estruturadas por indicador e composição analítica da área.`}
         badge={
           <StatusBadge
             label={loading || refreshing ? "Atualizando" : "Drill-down real"}
@@ -206,7 +206,7 @@ export function DepartmentDetailsPage({
 
       <SectionBlock
         title="Indicadores que compõem o IDD"
-        description="Os cards abaixo mostram os indicadores oficiais da área, com peso interno, meta estruturada e descrição estratégica."
+        description="Os cards abaixo mostram os indicadores oficiais da área com peso interno, direção de performance, meta estruturada e descrição estratégica. Indicadores com curva mensal devem refletir metas variáveis ao longo do ano."
       >
         <IndicatorDetailGrid indicators={data.indicators} />
       </SectionBlock>

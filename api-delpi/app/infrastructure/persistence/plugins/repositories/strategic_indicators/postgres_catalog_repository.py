@@ -62,6 +62,7 @@ class PostgresStrategicIndicatorsCatalogRepository(
                 di.indicator_name,
                 di.weight_pct,
                 di.scope_type,
+                di.performance_direction,
                 di.strategic_description,
                 di.source_key
             FROM strategic_indicators.department_indicators di
@@ -94,7 +95,10 @@ class PostgresStrategicIndicatorsCatalogRepository(
                 goal_label="",
                 goal_value=0.0,
                 goal_periodicity="monthly",
+                goal_mode="standard",
+                monthly_targets=[],
                 scope_type=row.get("scope_type") or "consolidated",
+                performance_direction=row.get("performance_direction") or "higher_is_better",
                 strategic_description=row.get("strategic_description") or "",
                 source_key=row.get("source_key"),
             )

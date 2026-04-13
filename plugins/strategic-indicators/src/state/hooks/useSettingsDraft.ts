@@ -3,7 +3,7 @@ import type { StrategicIndicatorsSettingsResponse } from "../../data/types/setti
 
 type SettingsDraft = Pick<
   StrategicIndicatorsSettingsResponse,
-  "weights" | "goals" | "parameters" | "governance"
+  "parameters" | "governance"
 >;
 
 type SettingsDraftErrors = {
@@ -12,12 +12,6 @@ type SettingsDraftErrors = {
 
 function cloneDraft(data: StrategicIndicatorsSettingsResponse): SettingsDraft {
   return {
-    weights: {
-      items: data.weights.items.map((item) => ({ ...item })),
-    },
-    goals: {
-      items: data.goals.items.map((item) => ({ ...item })),
-    },
     parameters: {
       items: data.parameters.items.map((item) => ({ ...item })),
     },
@@ -42,59 +36,42 @@ export function useSettingsDraft(data: StrategicIndicatorsSettingsResponse) {
     setErrors({ root: null });
   }, [data]);
 
-  const totalWeight = useMemo(() => {
-    return draft.weights.items.reduce(
-      (sum, item) => sum + Number(item.weight_pct || 0),
-      0,
-    );
-  }, [draft.weights.items]);
-
   const isDirty = useMemo(() => {
     return !areDraftsEqual(draft, cloneDraft(data));
   }, [draft, data]);
 
   const validateAll = useCallback(() => {
-    if (totalWeight !== 100) {
+    const hasInvalidParameter = draft.parameters.items.some(
+      (item) => !item.key?.trim() || !item.label?.trim(),
+    );
+    if (hasInvalidParameter) {
       setErrors({
-        root: "A soma dos pesos deve ser exatamente 100%.",
+        root: "Todos os parâmetros devem possuir chave e rótulo válidos.",
+      });
+      return false;
+    }
+
+    const hasInvalidGovernance = draft.governance.items.some(
+      (item) =>
+        !item.key?.trim() ||
+        !item.label?.trim() ||
+        !item.value?.trim() ||
+        !item.observation?.trim(),
+    );
+    if (hasInvalidGovernance) {
+      setErrors({
+        root: "Todos os itens de governança devem estar preenchidos corretamente.",
       });
       return false;
     }
 
     setErrors({ root: null });
     return true;
-  }, [totalWeight]);
+  }, [draft]);
 
   const isSaveDisabled = useMemo(() => {
-    return !isDirty || totalWeight !== 100;
-  }, [isDirty, totalWeight]);
-
-  const setWeightItems = useCallback(
-    (items: SettingsDraft["weights"]["items"]) => {
-      setDraft((current) => ({
-        ...current,
-        weights: {
-          items: items.map((item) => ({
-            ...item,
-            weight_pct: Number(item.weight_pct || 0),
-          })),
-        },
-      }));
-    },
-    [],
-  );
-
-  const setGoalItems = useCallback(
-    (items: SettingsDraft["goals"]["items"]) => {
-      setDraft((current) => ({
-        ...current,
-        goals: {
-          items: items.map((item) => ({ ...item })),
-        },
-      }));
-    },
-    [],
-  );
+    return !isDirty;
+  }, [isDirty]);
 
   const setParameterItems = useCallback(
     (items: SettingsDraft["parameters"]["items"]) => {
@@ -128,11 +105,8 @@ export function useSettingsDraft(data: StrategicIndicatorsSettingsResponse) {
   return {
     draft,
     errors,
-    totalWeight,
     isDirty,
     isSaveDisabled,
-    setWeightItems,
-    setGoalItems,
     setParameterItems,
     setGovernanceItems,
     reset,

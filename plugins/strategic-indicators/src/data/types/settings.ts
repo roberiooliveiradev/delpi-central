@@ -99,12 +99,17 @@ export type UpdateAdminDepartmentRequest = {
   display_order?: number;
 };
 
+export type PerformanceDirection =
+  | "higher_is_better"
+  | "lower_is_better";
+
 export type AdminDepartmentIndicatorItem = {
   indicator_id: string;
   department_id: string;
   indicator_name: string;
   weight_pct: number;
   scope_type: "consolidated" | "per_unit";
+  performance_direction: PerformanceDirection;
   strategic_description: string;
   source_key: string | null;
   is_active: boolean;
@@ -124,6 +129,7 @@ export type CreateAdminDepartmentIndicatorRequest = {
   indicator_name: string;
   weight_pct: number;
   scope_type: "consolidated" | "per_unit";
+  performance_direction: PerformanceDirection;
   strategic_description?: string;
   source_key?: string | null;
   display_order?: number;
@@ -133,6 +139,7 @@ export type UpdateAdminDepartmentIndicatorRequest = {
   indicator_name: string;
   weight_pct: number;
   scope_type: "consolidated" | "per_unit";
+  performance_direction: PerformanceDirection;
   strategic_description?: string;
   source_key?: string | null;
   is_active?: boolean;

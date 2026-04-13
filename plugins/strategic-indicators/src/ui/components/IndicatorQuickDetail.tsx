@@ -12,6 +12,18 @@ function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
   return "Crítico";
 }
 
+function getGoalModeLabel(value: IndicatorAnalyticsViewItem["goalMode"]) {
+  return value === "monthly_curve" ? "Curva mensal" : "Meta padrão";
+}
+
+function getPerformanceDirectionLabel(
+  value: IndicatorAnalyticsViewItem["performanceDirection"],
+) {
+  return value === "lower_is_better"
+    ? "Quanto menor, melhor"
+    : "Quanto maior, melhor";
+}
+
 export function IndicatorQuickDetail({
   indicator,
 }: IndicatorQuickDetailProps) {
@@ -63,6 +75,18 @@ export function IndicatorQuickDetail({
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">
+          <span>Modo da meta</span>
+          <strong>{getGoalModeLabel(indicator.goalMode)}</strong>
+        </div>
+
+        <div className="si-indicator-quick-detail__meta-item">
+          <span>Direção</span>
+          <strong>
+            {getPerformanceDirectionLabel(indicator.performanceDirection)}
+          </strong>
+        </div>
+
+        <div className="si-indicator-quick-detail__meta-item">
           <span>Nota atual</span>
           <strong>{indicator.score.toFixed(1)}</strong>
         </div>
@@ -76,6 +100,13 @@ export function IndicatorQuickDetail({
           <span>Gap</span>
           <strong>{indicator.gap.toFixed(2)}</strong>
         </div>
+
+        {indicator.goalMode === "monthly_curve" ? (
+          <div className="si-indicator-quick-detail__meta-item">
+            <span>Curva mensal</span>
+            <strong>{indicator.monthlyTargets.length} meses parametrizados</strong>
+          </div>
+        ) : null}
       </div>
 
       <div className="si-indicator-quick-detail__body">

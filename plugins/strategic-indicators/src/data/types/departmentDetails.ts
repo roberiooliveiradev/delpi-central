@@ -1,3 +1,16 @@
+export type TrendDirection = "up" | "down" | "stable";
+
+export type GoalMode = "standard" | "monthly_curve";
+
+export type PerformanceDirection =
+  | "higher_is_better"
+  | "lower_is_better";
+
+export type MonthlyTargetItem = {
+  month_number: number;
+  target_value: number;
+};
+
 export type DepartmentIndicator = {
   id: string;
   name: string;
@@ -5,12 +18,15 @@ export type DepartmentIndicator = {
   goalLabel: string;
   goalValue: number;
   goalPeriodicity: string;
+  goalMode: GoalMode;
+  monthlyTargets: MonthlyTargetItem[];
   strategicDescription: string;
   scopeType: string;
+  performanceDirection: PerformanceDirection;
   realized: Record<string, number>;
   score: number;
   gap: number;
-  trend: "up" | "down" | "stable";
+  trend: TrendDirection;
 };
 
 export type DepartmentUnit = {
@@ -65,8 +81,11 @@ export type StrategicIndicatorsDepartmentDetailsResponse = {
     goal_label: string;
     goal_value: number;
     goal_periodicity: string;
+    goal_mode: GoalMode;
+    monthly_targets: MonthlyTargetItem[];
     strategic_description: string;
     scope_type: string;
+    performance_direction: PerformanceDirection;
     realized: Record<string, number>;
     score: number;
     gap: number;

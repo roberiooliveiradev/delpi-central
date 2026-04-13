@@ -61,7 +61,9 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
         }
 
         previous_score = (
-            previous_department.score if previous_department is not None else current_department.score
+            previous_department.score
+            if previous_department is not None
+            else current_department.score
         )
         department_variation = self._calculator.calculate_variation(
             current_department.score,
@@ -114,8 +116,15 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             "goal_label": current.goal_label,
             "goal_value": current.goal_value,
             "goal_periodicity": current.goal_periodicity,
+            "goal_mode": getattr(current, "goal_mode", "standard"),
+            "monthly_targets": getattr(current, "monthly_targets", []) or [],
             "strategic_description": current.strategic_description,
             "scope_type": current.scope_type,
+            "performance_direction": getattr(
+                current,
+                "performance_direction",
+                "higher_is_better",
+            ),
             "realized": current.unit_values or {"consolidated": current.value},
             "score": current.score,
             "gap": current.gap,
@@ -139,6 +148,8 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             comparable_goal = self._calculator.calculate_comparable_goal(
                 goal_value=indicator.goal_value,
                 goal_periodicity=indicator.goal_periodicity,
+                goal_mode=getattr(indicator, "goal_mode", "standard"),
+                monthly_targets=getattr(indicator, "monthly_targets", None),
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
@@ -146,7 +157,11 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
 
             for unit_id, raw_value in indicator.unit_values.items():
                 unit_score = self._calculator.calculate_indicator_score(
-                    indicator_id=indicator.indicator_id,
+                    performance_direction=getattr(
+                        indicator,
+                        "performance_direction",
+                        "higher_is_better",
+                    ),
                     comparable_goal=comparable_goal,
                     value=float(raw_value),
                 )

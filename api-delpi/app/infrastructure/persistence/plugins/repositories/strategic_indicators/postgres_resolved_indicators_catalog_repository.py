@@ -56,7 +56,10 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                     goal_label=goal["goal_label"],
                     goal_value=float(goal["goal_value"]),
                     goal_periodicity=goal["goal_periodicity"],
+                    goal_mode=goal.get("goal_mode", "standard"),
+                    monthly_targets=goal.get("monthly_targets") or [],
                     scope_type=item.scope_type,
+                    performance_direction=getattr(item, "performance_direction", "higher_is_better"),
                     strategic_description=item.strategic_description,
                     source_key=item.source_key,
                 )

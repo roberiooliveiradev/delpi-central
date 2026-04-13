@@ -19,6 +19,11 @@ type BulkGoalRow = {
   goal_label: string;
   goal_value: number;
   goal_periodicity: "monthly" | "annual" | "quarterly" | "weekly";
+  goal_mode: "standard" | "monthly_curve";
+  monthly_targets: Array<{
+    month_number: number;
+    target_value: number;
+  }>;
 };
 
 const emptyBulkRow: BulkGoalRow = {
@@ -26,6 +31,8 @@ const emptyBulkRow: BulkGoalRow = {
   goal_label: "",
   goal_value: 0,
   goal_periodicity: "monthly",
+  goal_mode: "standard",
+  monthly_targets: [],
 };
 
 export function AnnualGoalsWorkspace({
@@ -68,6 +75,9 @@ export function AnnualGoalsWorkspace({
           goal_label: item.goal_label.trim(),
           goal_value: Number(item.goal_value || 0),
           goal_periodicity: item.goal_periodicity,
+          goal_mode: item.goal_mode,
+          monthly_targets:
+            item.goal_mode === "monthly_curve" ? item.monthly_targets : [],
         })),
     };
 
@@ -319,6 +329,7 @@ export function AnnualGoalsWorkspace({
                       )
                     }
                   />
+
                   <input
                     placeholder="goal_label"
                     value={row.goal_label}
@@ -332,6 +343,7 @@ export function AnnualGoalsWorkspace({
                       )
                     }
                   />
+
                   <input
                     type="number"
                     placeholder="goal_value"
@@ -346,6 +358,7 @@ export function AnnualGoalsWorkspace({
                       )
                     }
                   />
+
                   <select
                     value={row.goal_periodicity}
                     onChange={(event) =>
@@ -365,6 +378,32 @@ export function AnnualGoalsWorkspace({
                     <option value="annual">annual</option>
                     <option value="quarterly">quarterly</option>
                     <option value="weekly">weekly</option>
+                  </select>
+
+                  <select
+                    value={row.goal_mode}
+                    onChange={(event) =>
+                      setBulkRows((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index
+                            ? {
+                                ...item,
+                                goal_mode: event.target.value as "standard" | "monthly_curve",
+                                monthly_targets:
+                                  event.target.value === "monthly_curve"
+                                    ? Array.from({ length: 12 }, (_, monthIndex) => ({
+                                        month_number: monthIndex + 1,
+                                        target_value: 0,
+                                      }))
+                                    : [],
+                              }
+                            : item,
+                        ),
+                      )
+                    }
+                  >
+                    <option value="standard">standard</option>
+                    <option value="monthly_curve">monthly_curve</option>
                   </select>
                 </div>
               ))}

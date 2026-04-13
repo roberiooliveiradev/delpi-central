@@ -1,4 +1,15 @@
-export type GoalPeriodicity = "monthly" | "annual" | "quarterly" | "weekly";
+export type GoalPeriodicity =
+  | "monthly"
+  | "annual"
+  | "quarterly"
+  | "weekly";
+
+export type GoalMode = "standard" | "monthly_curve";
+
+export type MonthlyTargetItem = {
+  month_number: number;
+  target_value: number;
+};
 
 export type StrategicIndicatorGoalItem = {
   id: string;
@@ -8,6 +19,8 @@ export type StrategicIndicatorGoalItem = {
   goal_label: string;
   goal_value: number;
   goal_periodicity: GoalPeriodicity;
+  goal_mode: GoalMode;
+  monthly_targets: MonthlyTargetItem[];
   version: number;
   is_active: boolean;
   valid_from: string | null;
@@ -35,6 +48,8 @@ export type CreateStrategicIndicatorGoalRequest = {
   goal_label: string;
   goal_value: number;
   goal_periodicity: GoalPeriodicity;
+  goal_mode: GoalMode;
+  monthly_targets: MonthlyTargetItem[];
   valid_from?: string | null;
   valid_to?: string | null;
   notes?: string | null;
@@ -44,6 +59,8 @@ export type UpdateStrategicIndicatorGoalRequest = {
   goal_label: string;
   goal_value: number;
   goal_periodicity: GoalPeriodicity;
+  goal_mode: GoalMode;
+  monthly_targets: MonthlyTargetItem[];
   valid_from?: string | null;
   valid_to?: string | null;
   notes?: string | null;
@@ -54,6 +71,8 @@ export type BulkCreateStrategicIndicatorGoalItemRequest = {
   goal_label: string;
   goal_value: number;
   goal_periodicity: GoalPeriodicity;
+  goal_mode: GoalMode;
+  monthly_targets: MonthlyTargetItem[];
   valid_from?: string | null;
   valid_to?: string | null;
   notes?: string | null;

@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Modal } from "./Modal";
 import { SectionBlock } from "./SectionBlock";
 import { InfoState } from "./InfoState";
 import { ActionButtons } from "./ActionButtons";
+import { IndicatorGoalForm } from "./IndicatorGoalForm";
 import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndicatorGoals";
 import type {
   DuplicateStrategicIndicatorGoalsYearRequest,
   FillMissingStrategicIndicatorGoalsRequest,
+  StrategicIndicatorGoalItem,
 } from "../../data/types/indicatorGoals";
 
 type GoalYearManagementModalProps = {
@@ -15,6 +17,10 @@ type GoalYearManagementModalProps = {
   onClose: () => void;
   getAccessToken?: () => string | undefined;
 };
+
+function getGoalModeLabel(value: string) {
+  return value === "monthly_curve" ? "Curva mensal" : "Meta padrão";
+}
 
 export function GoalYearManagementModal({
   open,
@@ -29,15 +35,36 @@ export function GoalYearManagementModal({
 
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
   const [fillMissingModalOpen, setFillMissingModalOpen] = useState(false);
-  const [sourceYear, setSourceYear] = useState<number>(new Date().getFullYear() - 1);
+  const [goalFormOpen, setGoalFormOpen] = useState(false);
+  const [editingGoal, setEditingGoal] =
+    useState<StrategicIndicatorGoalItem | null>(null);
+
+  const [sourceYear, setSourceYear] = useState<number>(
+    new Date().getFullYear() - 1,
+  );
   const [overwriteExisting, setOverwriteExisting] = useState(false);
-  const [copyFromYear, setCopyFromYear] = useState<number>(new Date().getFullYear() - 1);
+  const [copyFromYear, setCopyFromYear] = useState<number>(
+    new Date().getFullYear() - 1,
+  );
 
   useEffect(() => {
     if (typeof goalYear === "number") {
       goals.setSelectedGoalYear(goalYear);
     }
   }, [goalYear]);
+
+  const indicatorOptions = useMemo(() => {
+    const map = new Map<string, string>();
+
+    goals.items.forEach((item) => {
+      map.set(item.indicator_id, item.indicator_name || item.indicator_id);
+    });
+
+    return Array.from(map.entries()).map(([value, label]) => ({
+      value,
+      label,
+    }));
+  }, [goals.items]);
 
   async function handleDuplicateYear() {
     if (typeof goalYear !== "number") return;
@@ -64,6 +91,17 @@ export function GoalYearManagementModal({
     setFillMissingModalOpen(false);
   }
 
+  async function handleCreate(payload: any) {
+    await goals.createGoal(payload);
+    setGoalFormOpen(false);
+  }
+
+  async function handleUpdate(goalId: string, payload: any) {
+    await goals.updateGoal(goalId, payload);
+    setGoalFormOpen(false);
+    setEditingGoal(null);
+  }
+
   return (
     <>
       <Modal
@@ -81,11 +119,23 @@ export function GoalYearManagementModal({
               <div className="si-admin-inline-actions">
                 <button
                   type="button"
+                  className="si-settings-editor__button"
+                  onClick={() => {
+                    setEditingGoal(null);
+                    setGoalFormOpen(true);
+                  }}
+                >
+                  Nova meta
+                </button>
+
+                <button
+                  type="button"
                   className="si-settings-editor__button si-settings-editor__button--secondary"
                   onClick={() => setDuplicateModalOpen(true)}
                 >
                   Duplicar de outro ano
                 </button>
+
                 <button
                   type="button"
                   className="si-settings-editor__button si-settings-editor__button--secondary"
@@ -101,8 +151,11 @@ export function GoalYearManagementModal({
                 <span className="si-admin-detail-card__label">Ano</span>
                 <strong>{goalYear ?? "—"}</strong>
               </div>
+
               <div className="si-admin-detail-card">
-                <span className="si-admin-detail-card__label">Metas carregadas</span>
+                <span className="si-admin-detail-card__label">
+                  Metas carregadas
+                </span>
                 <strong>{goals.items.length}</strong>
               </div>
             </div>
@@ -117,7 +170,9 @@ export function GoalYearManagementModal({
                 <span>Departamento</span>
                 <input
                   value={goals.selectedDepartmentId}
-                  onChange={(event) => goals.setSelectedDepartmentId(event.target.value)}
+                  onChange={(event) =>
+                    goals.setSelectedDepartmentId(event.target.value)
+                  }
                   placeholder="financial, hr..."
                 />
               </label>
@@ -126,7 +181,9 @@ export function GoalYearManagementModal({
                 <span>Indicador</span>
                 <input
                   value={goals.selectedIndicatorId}
-                  onChange={(event) => goals.setSelectedIndicatorId(event.target.value)}
+                  onChange={(event) =>
+                    goals.setSelectedIndicatorId(event.target.value)
+                  }
                   placeholder="financial-ebitda..."
                 />
               </label>
@@ -156,19 +213,35 @@ export function GoalYearManagementModal({
                 {goals.items.map((item) => (
                   <article key={item.id} className="si-admin-card-list__item">
                     <div className="si-admin-card-list__content">
-                      <strong>{item.indicator_id}</strong>
+                      <strong>{item.indicator_name || item.indicator_id}</strong>
                       <p>
-                        {item.goal_label} · {item.goal_value} · {item.goal_periodicity}
+                        {item.goal_label} · {item.goal_periodicity} ·{" "}
+                        {getGoalModeLabel(item.goal_mode)}
                       </p>
                       <small>
-                        Versão {item.version} · {item.is_active ? "Ativa" : "Inativa"}
+                        Versão {item.version} ·{" "}
+                        {item.is_active ? "Ativa" : "Inativa"}
                       </small>
                     </div>
 
                     <ActionButtons
-                      onHistory={() => void goals.loadHistory(item.indicator_id, item.goal_year)}
-                      onActivate={!item.is_active ? () => void goals.activateGoal(item.id) : undefined}
-                      onDeactivate={item.is_active ? () => void goals.deactivateGoal(item.id) : undefined}
+                      onEdit={() => {
+                        setEditingGoal(item);
+                        setGoalFormOpen(true);
+                      }}
+                      onHistory={() =>
+                        void goals.loadHistory(item.indicator_id, item.goal_year)
+                      }
+                      onActivate={
+                        !item.is_active
+                          ? () => void goals.activateGoal(item.id)
+                          : undefined
+                      }
+                      onDeactivate={
+                        item.is_active
+                          ? () => void goals.deactivateGoal(item.id)
+                          : undefined
+                      }
                       disabled={goals.saving}
                     />
                   </article>
@@ -186,7 +259,8 @@ export function GoalYearManagementModal({
                         Ano {item.goal_year} · v{item.version}
                       </strong>
                       <span>
-                        {item.goal_label} · {item.goal_value} · {item.goal_periodicity}
+                        {item.goal_label} · {item.goal_periodicity} ·{" "}
+                        {getGoalModeLabel(item.goal_mode)}
                       </span>
                     </div>
                   ))}
@@ -195,6 +269,30 @@ export function GoalYearManagementModal({
             ) : null}
           </SectionBlock>
         </div>
+      </Modal>
+
+      <Modal
+        open={goalFormOpen}
+        onClose={() => {
+          setGoalFormOpen(false);
+          setEditingGoal(null);
+        }}
+        title={editingGoal ? "Editar meta analítica" : "Criar meta analítica"}
+        description="Cadastre ou ajuste uma meta versionada por indicador e ano."
+        size="lg"
+        initialFocusSelector="select, input, textarea"
+      >
+        <IndicatorGoalForm
+          saving={goals.saving}
+          initialValue={editingGoal}
+          indicatorOptions={indicatorOptions}
+          onCreate={handleCreate}
+          onUpdate={handleUpdate}
+          onCancel={() => {
+            setGoalFormOpen(false);
+            setEditingGoal(null);
+          }}
+        />
       </Modal>
 
       <Modal
@@ -229,7 +327,9 @@ export function GoalYearManagementModal({
             <input
               type="number"
               value={sourceYear}
-              onChange={(event) => setSourceYear(Number(event.target.value || 0))}
+              onChange={(event) =>
+                setSourceYear(Number(event.target.value || 0))
+              }
             />
           </label>
 
@@ -238,7 +338,9 @@ export function GoalYearManagementModal({
               <input
                 type="checkbox"
                 checked={overwriteExisting}
-                onChange={(event) => setOverwriteExisting(event.target.checked)}
+                onChange={(event) =>
+                  setOverwriteExisting(event.target.checked)
+                }
               />{" "}
               Sobrescrever metas existentes no ano de destino
             </span>
@@ -278,7 +380,9 @@ export function GoalYearManagementModal({
             <input
               type="number"
               value={copyFromYear}
-              onChange={(event) => setCopyFromYear(Number(event.target.value || 0))}
+              onChange={(event) =>
+                setCopyFromYear(Number(event.target.value || 0))
+              }
             />
           </label>
         </div>

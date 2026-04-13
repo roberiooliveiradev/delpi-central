@@ -29,6 +29,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 ig.goal_label,
                 ig.goal_value,
                 ig.goal_periodicity,
+                ig.goal_mode,
                 ig.version,
                 ig.is_active,
                 ig.valid_from,
@@ -72,7 +73,12 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 ig.version DESC
         """
 
-        return self.fetch_all(query, tuple(params))
+        rows = self.fetch_all(query, tuple(params))
+        for row in rows:
+            row["monthly_targets"] = self.list_monthly_targets(
+                indicator_goal_id=row["id"]
+            )
+        return rows
 
     def list_indicator_goal_history(
         self,
@@ -89,6 +95,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 ig.goal_label,
                 ig.goal_value,
                 ig.goal_periodicity,
+                ig.goal_mode,
                 ig.version,
                 ig.is_active,
                 ig.valid_from,
@@ -112,7 +119,13 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             params.append(goal_year)
 
         query += " ORDER BY ig.goal_year DESC, ig.version DESC, ig.created_at DESC"
-        return self.fetch_all(query, tuple(params))
+
+        rows = self.fetch_all(query, tuple(params))
+        for row in rows:
+            row["monthly_targets"] = self.list_monthly_targets(
+                indicator_goal_id=row["id"]
+            )
+        return rows
 
     def get_resolved_goal(
         self,
@@ -136,6 +149,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 goal_label,
                 goal_value,
                 goal_periodicity,
+                goal_mode,
                 version,
                 is_active,
                 valid_from,
@@ -150,7 +164,62 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             ORDER BY version DESC, updated_at DESC
             LIMIT 1
         """
-        return self.fetch_one(query, (indicator_id, year))
+        row = self.fetch_one(query, (indicator_id, year))
+        if not row:
+            return None
+
+        row["monthly_targets"] = self.list_monthly_targets(
+            indicator_goal_id=row["id"]
+        )
+        return row
+
+    def list_monthly_targets(
+        self,
+        *,
+        indicator_goal_id: str,
+    ) -> list[dict]:
+        return self.fetch_all(
+            """
+            SELECT
+                month_number,
+                target_value
+            FROM strategic_indicators.indicator_goal_monthly_targets
+            WHERE indicator_goal_id = %s
+            ORDER BY month_number ASC
+            """,
+            (indicator_goal_id,),
+        )
+
+    def replace_monthly_targets(
+        self,
+        *,
+        indicator_goal_id: str,
+        monthly_targets: list[dict],
+    ) -> None:
+        self.execute(
+            """
+            DELETE FROM strategic_indicators.indicator_goal_monthly_targets
+            WHERE indicator_goal_id = %s
+            """,
+            (indicator_goal_id,),
+        )
+
+        for item in monthly_targets:
+            self.execute(
+                """
+                INSERT INTO strategic_indicators.indicator_goal_monthly_targets (
+                    indicator_goal_id,
+                    month_number,
+                    target_value
+                )
+                VALUES (%s, %s, %s)
+                """,
+                (
+                    indicator_goal_id,
+                    int(item["month_number"]),
+                    float(item["target_value"]),
+                ),
+            )
 
     def create_indicator_goal(
         self,
@@ -160,6 +229,8 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         goal_label: str,
         goal_value: float,
         goal_periodicity: str,
+        goal_mode: str,
+        monthly_targets: list[dict],
         valid_from: str | None,
         valid_to: str | None,
         notes: str | None,
@@ -175,44 +246,61 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         row = self.fetch_one(version_query, (indicator_id, goal_year))
         next_version = int((row or {}).get("max_version") or 0) + 1
 
-        insert_query = """
-            INSERT INTO strategic_indicators.indicator_goals (
-                indicator_id,
-                goal_year,
-                goal_label,
-                goal_value,
-                goal_periodicity,
-                version,
-                is_active,
-                valid_from,
-                valid_to,
-                notes,
-                created_by_user_id,
-                created_by_email,
-                updated_by_user_id,
-                updated_by_email
+        try:
+            created = self.execute_returning_one(
+                """
+                INSERT INTO strategic_indicators.indicator_goals (
+                    indicator_id,
+                    goal_year,
+                    goal_label,
+                    goal_value,
+                    goal_periodicity,
+                    goal_mode,
+                    version,
+                    is_active,
+                    valid_from,
+                    valid_to,
+                    notes,
+                    created_by_user_id,
+                    created_by_email,
+                    updated_by_user_id,
+                    updated_by_email
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING *
+                """,
+                (
+                    indicator_id,
+                    goal_year,
+                    goal_label,
+                    goal_value,
+                    goal_periodicity,
+                    goal_mode,
+                    next_version,
+                    valid_from,
+                    valid_to,
+                    notes,
+                    actor_user_id,
+                    actor_email,
+                    actor_user_id,
+                    actor_email,
+                ),
             )
-            VALUES (%s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING *
-        """
-        return self.execute_returning_one(
-            insert_query,
-            (
-                indicator_id,
-                goal_year,
-                goal_label,
-                goal_value,
-                goal_periodicity,
-                next_version,
-                valid_from,
-                valid_to,
-                notes,
-                actor_user_id,
-                actor_email,
-                actor_user_id,
-                actor_email,
-            ),
-        )
+
+            if goal_mode == "monthly_curve":
+                self.replace_monthly_targets(
+                    indicator_goal_id=created["id"],
+                    monthly_targets=monthly_targets,
+                )
+
+            self.commit()
+            created["monthly_targets"] = self.list_monthly_targets(
+                indicator_goal_id=created["id"]
+            )
+            return created
+        except Exception:
+            self.rollback()
+            raise
 
     def update_indicator_goal(
         self,
@@ -221,41 +309,68 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         goal_label: str,
         goal_value: float,
         goal_periodicity: str,
+        goal_mode: str,
+        monthly_targets: list[dict],
         valid_from: str | None,
         valid_to: str | None,
         notes: str | None,
         actor_user_id: str | None,
         actor_email: str | None,
     ) -> dict:
-        query = """
-            UPDATE strategic_indicators.indicator_goals
-            SET
-                goal_label = %s,
-                goal_value = %s,
-                goal_periodicity = %s,
-                valid_from = %s,
-                valid_to = %s,
-                notes = %s,
-                updated_by_user_id = %s,
-                updated_by_email = %s,
-                updated_at = NOW()
-            WHERE id = %s
-            RETURNING *
-        """
-        return self.execute_returning_one(
-            query,
-            (
-                goal_label,
-                goal_value,
-                goal_periodicity,
-                valid_from,
-                valid_to,
-                notes,
-                actor_user_id,
-                actor_email,
-                goal_id,
-            ),
-        )
+        try:
+            updated = self.execute_returning_one(
+                """
+                UPDATE strategic_indicators.indicator_goals
+                SET
+                    goal_label = %s,
+                    goal_value = %s,
+                    goal_periodicity = %s,
+                    goal_mode = %s,
+                    valid_from = %s,
+                    valid_to = %s,
+                    notes = %s,
+                    updated_by_user_id = %s,
+                    updated_by_email = %s,
+                    updated_at = NOW()
+                WHERE id = %s
+                RETURNING *
+                """,
+                (
+                    goal_label,
+                    goal_value,
+                    goal_periodicity,
+                    goal_mode,
+                    valid_from,
+                    valid_to,
+                    notes,
+                    actor_user_id,
+                    actor_email,
+                    goal_id,
+                ),
+            )
+
+            if goal_mode == "monthly_curve":
+                self.replace_monthly_targets(
+                    indicator_goal_id=goal_id,
+                    monthly_targets=monthly_targets,
+                )
+            else:
+                self.execute(
+                    """
+                    DELETE FROM strategic_indicators.indicator_goal_monthly_targets
+                    WHERE indicator_goal_id = %s
+                    """,
+                    (goal_id,),
+                )
+
+            self.commit()
+            updated["monthly_targets"] = self.list_monthly_targets(
+                indicator_goal_id=goal_id
+            )
+            return updated
+        except Exception:
+            self.rollback()
+            raise
 
     def activate_indicator_goal(
         self,
@@ -313,6 +428,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 ),
             )
             self.commit()
+            row["monthly_targets"] = self.list_monthly_targets(
+                indicator_goal_id=goal_id
+            )
             return row
         except Exception:
             self.rollback()
@@ -325,7 +443,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         actor_user_id: str | None,
         actor_email: str | None,
     ) -> dict:
-        return self.execute_returning_one(
+        row = self.execute_returning_one(
             """
             UPDATE strategic_indicators.indicator_goals
             SET
@@ -342,6 +460,10 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 goal_id,
             ),
         )
+        row["monthly_targets"] = self.list_monthly_targets(
+            indicator_goal_id=goal_id
+        )
+        return row
 
     def _resolve_goal_year(
         self,
@@ -379,6 +501,8 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     goal_label=item["goal_label"],
                     goal_value=float(item["goal_value"]),
                     goal_periodicity=item["goal_periodicity"],
+                    goal_mode=item.get("goal_mode", "standard"),
+                    monthly_targets=item.get("monthly_targets") or [],
                     valid_from=item.get("valid_from"),
                     valid_to=item.get("valid_to"),
                     notes=item.get("notes"),
@@ -409,6 +533,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 goal_label,
                 goal_value,
                 goal_periodicity,
+                goal_mode,
                 valid_from,
                 valid_to,
                 notes
@@ -426,7 +551,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         source_query += " ORDER BY indicator_id ASC"
 
         source_rows = self.fetch_all(source_query, tuple(params))
-
         created_items: list[dict] = []
 
         for row in source_rows:
@@ -484,6 +608,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     goal_label,
                     goal_value,
                     goal_periodicity,
+                    goal_mode,
                     version,
                     is_active,
                     valid_from,
@@ -496,7 +621,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     updated_by_user_id,
                     updated_by_email
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING *
                 """,
                 (
@@ -505,6 +630,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     row["goal_label"],
                     row["goal_value"],
                     row["goal_periodicity"],
+                    row.get("goal_mode", "standard"),
                     next_version,
                     row.get("valid_from"),
                     row.get("valid_to"),
@@ -516,6 +642,19 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     actor_user_id,
                     actor_email,
                 ),
+            )
+
+            if row.get("goal_mode") == "monthly_curve":
+                monthly_targets = self.list_monthly_targets(
+                    indicator_goal_id=row["id"]
+                )
+                self.replace_monthly_targets(
+                    indicator_goal_id=created["id"],
+                    monthly_targets=monthly_targets,
+                )
+
+            created["monthly_targets"] = self.list_monthly_targets(
+                indicator_goal_id=created["id"]
             )
             created_items.append(created)
 
@@ -558,6 +697,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                         goal_label,
                         goal_value,
                         goal_periodicity,
+                        goal_mode,
                         valid_from,
                         valid_to,
                         notes
@@ -590,6 +730,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                             goal_label,
                             goal_value,
                             goal_periodicity,
+                            goal_mode,
                             version,
                             is_active,
                             valid_from,
@@ -602,7 +743,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                             updated_by_user_id,
                             updated_by_email
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING *
                         """,
                         (
@@ -611,6 +752,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                             source["goal_label"],
                             source["goal_value"],
                             source["goal_periodicity"],
+                            source.get("goal_mode", "standard"),
                             next_version,
                             source.get("valid_from"),
                             source.get("valid_to"),
@@ -622,6 +764,19 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                             actor_user_id,
                             actor_email,
                         ),
+                    )
+
+                    if source.get("goal_mode") == "monthly_curve":
+                        monthly_targets = self.list_monthly_targets(
+                            indicator_goal_id=source["id"]
+                        )
+                        self.replace_monthly_targets(
+                            indicator_goal_id=created["id"],
+                            monthly_targets=monthly_targets,
+                        )
+
+                    created["monthly_targets"] = self.list_monthly_targets(
+                        indicator_goal_id=created["id"]
                     )
                     created_items.append(created)
                     continue

@@ -38,7 +38,9 @@ export function useStrategicIndicatorGoals({
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [historyItems, setHistoryItems] = useState<StrategicIndicatorGoalItem[]>([]);
+  const [historyItems, setHistoryItems] = useState<StrategicIndicatorGoalItem[]>(
+    [],
+  );
   const [error, setError] = useState<string | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -166,7 +168,11 @@ export function useStrategicIndicatorGoals({
       setSuccessMessage(null);
 
       try {
-        await updateStrategicIndicatorGoal(goalId, payload, getAccessTokenRef.current);
+        await updateStrategicIndicatorGoal(
+          goalId,
+          payload,
+          getAccessTokenRef.current,
+        );
         setSuccessMessage("Meta analítica atualizada com sucesso.");
         await load();
       } catch (err) {
@@ -214,7 +220,10 @@ export function useStrategicIndicatorGoals({
       setSuccessMessage(null);
 
       try {
-        await deactivateStrategicIndicatorGoal(goalId, getAccessTokenRef.current);
+        await deactivateStrategicIndicatorGoal(
+          goalId,
+          getAccessTokenRef.current,
+        );
         setSuccessMessage("Versão da meta desativada com sucesso.");
         await load();
       } catch (err) {
@@ -243,7 +252,9 @@ export function useStrategicIndicatorGoals({
         await load();
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Erro inesperado ao criar metas em lote.",
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao criar metas em lote.",
         );
         throw err;
       } finally {

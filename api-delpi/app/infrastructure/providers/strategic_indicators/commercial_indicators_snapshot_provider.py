@@ -48,8 +48,8 @@ class CommercialIndicatorsSnapshotProvider(
             builder=lambda: self._build_measurement(
                 indicator_id="commercial-rol-matrix",
                 source="commercial_head_office_rol_target",
-                value=snapshot.matrix_rol_target_pct,
-                unit_values={"matrix": snapshot.matrix_rol_target_pct},
+                value=snapshot.matrix_rol_value,
+                unit_values={"matrix": snapshot.matrix_rol_value},
             ),
             department_id="commercial",
             source="commercial_head_office_rol_target",
@@ -61,8 +61,8 @@ class CommercialIndicatorsSnapshotProvider(
             builder=lambda: self._build_measurement(
                 indicator_id="commercial-rol-branch",
                 source="commercial_branch_rol_target",
-                value=snapshot.branch_rol_target_pct,
-                unit_values={"branch": snapshot.branch_rol_target_pct},
+                value=snapshot.branch_rol_value,
+                unit_values={"branch": snapshot.branch_rol_value},
             ),
             department_id="commercial",
             source="commercial_branch_rol_target",

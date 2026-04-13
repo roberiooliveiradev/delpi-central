@@ -7,6 +7,10 @@ from app.domain.ports.strategic_indicators.department_indicators_repository_port
 
 class UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
     VALID_SCOPE_TYPES = {"consolidated", "per_unit"}
+    VALID_PERFORMANCE_DIRECTIONS = {
+        "higher_is_better",
+        "lower_is_better",
+    }
 
     def __init__(
         self,
@@ -27,11 +31,16 @@ class UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
 
         indicator_name = (body.get("indicator_name") or "").strip()
         scope_type = (body.get("scope_type") or "").strip()
+        performance_direction = (
+            body.get("performance_direction") or "higher_is_better"
+        ).strip()
 
         if not indicator_name:
             raise ValueError("indicator_name é obrigatório.")
         if scope_type not in self.VALID_SCOPE_TYPES:
             raise ValueError("scope_type inválido.")
+        if performance_direction not in self.VALID_PERFORMANCE_DIRECTIONS:
+            raise ValueError("performance_direction inválido.")
 
         weight_pct = float(body.get("weight_pct") or 0)
         if weight_pct < 0 or weight_pct > 100:
@@ -42,6 +51,7 @@ class UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
             indicator_name=indicator_name,
             weight_pct=weight_pct,
             scope_type=scope_type,
+            performance_direction=performance_direction,
             strategic_description=(body.get("strategic_description") or "").strip(),
             source_key=(body.get("source_key") or None),
             is_active=bool(body.get("is_active", True)),

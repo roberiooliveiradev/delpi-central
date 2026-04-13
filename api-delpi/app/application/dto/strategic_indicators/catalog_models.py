@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -12,8 +12,11 @@ class StrategicIndicatorCatalogItem:
     goal_label: str
     goal_value: float
     goal_periodicity: str
-    scope_type: str
-    strategic_description: str
+    goal_mode: str = "standard"
+    monthly_targets: list[dict] = field(default_factory=list)
+    scope_type: str = "consolidated"
+    performance_direction: str = "higher_is_better"
+    strategic_description: str = ""
     source_key: str | None = None
 
 
@@ -45,14 +48,17 @@ class StrategicIndicatorCalculatedValue:
     goal_label: str
     goal_value: float
     goal_periodicity: str
-    scope_type: str
-    strategic_description: str
-    source: str
-    value: float
-    score: float
-    gap: float
-    trend: str
-    classification: str
+    goal_mode: str = "standard"
+    monthly_targets: list[dict] = field(default_factory=list)
+    scope_type: str = "consolidated"
+    performance_direction: str = "higher_is_better"
+    strategic_description: str = ""
+    source: str = ""
+    value: float = 0.0
+    score: float = 0.0
+    gap: float = 0.0
+    trend: str = "stable"
+    classification: str = ""
     unit_values: dict[str, float] | None = None
 
 

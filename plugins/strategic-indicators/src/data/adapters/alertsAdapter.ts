@@ -34,6 +34,9 @@ export function adaptAlertsToView(
       goalLabel: item.goal_label ?? "-",
       goalValue: item.goal_value ?? null,
       goalPeriodicity: item.goal_periodicity ?? null,
+      goalMode: item.goal_mode ?? "standard",
+      monthlyTargets: item.monthly_targets ?? [],
+      performanceDirection: item.performance_direction ?? "higher_is_better",
       severity: item.severity,
       reason: item.message,
       recommendation:

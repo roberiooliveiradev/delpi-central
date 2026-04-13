@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -25,12 +25,15 @@ class DepartmentIndicatorDetailsResponse:
     goal_label: str
     goal_value: float
     goal_periodicity: str
-    strategic_description: str
-    scope_type: str
-    realized: dict
-    score: float
-    gap: float
-    trend: str
+    goal_mode: str = "standard"
+    monthly_targets: list[dict] = field(default_factory=list)
+    strategic_description: str = ""
+    scope_type: str = "consolidated"
+    performance_direction: str = "higher_is_better"
+    realized: dict = field(default_factory=dict)
+    score: float = 0.0
+    gap: float = 0.0
+    trend: str = "stable"
 
 
 @dataclass

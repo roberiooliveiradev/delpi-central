@@ -30,8 +30,8 @@ from app.application.use_cases.commercial.get_sales_conversion_rate_use_case imp
 class CommercialMetricsSnapshot:
     start_date: str | None
     end_date: str | None
-    matrix_rol_target_pct: float
-    branch_rol_target_pct: float
+    matrix_rol_value: float
+    branch_rol_value: float
     sales_conversion_rate_pct: float
     monthly_average_new_clients: float
     new_clients_rol_pct: float
@@ -104,13 +104,13 @@ class CommercialMetricsSnapshotService:
         snapshot = CommercialMetricsSnapshot(
             start_date=start_date,
             end_date=end_date,
-            matrix_rol_target_pct=self._extract_number(
+            matrix_rol_value=self._extract_number(
                 matrix_target_result,
-                ["rol_target_pct"],
+                ["rol"],
             ) or 0.0,
-            branch_rol_target_pct=self._extract_number(
+            branch_rol_value=self._extract_number(
                 branch_target_result,
-                ["rol_target_pct"],
+                ["rol"],
             ) or 0.0,
             sales_conversion_rate_pct=self._extract_number(
                 sales_conversion_result,

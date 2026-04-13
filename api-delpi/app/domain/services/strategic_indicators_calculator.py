@@ -116,18 +116,28 @@ class StrategicIndicatorsCalculator:
             comparable_goal = self.calculate_comparable_goal(
                 goal_value=indicator.goal_value,
                 goal_periodicity=indicator.goal_periodicity,
+                goal_mode=getattr(indicator, "goal_mode", "standard"),
+                monthly_targets=getattr(indicator, "monthly_targets", None),
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
             )
 
             score = self.calculate_indicator_score(
-                indicator_id=indicator.indicator_id,
+                performance_direction=getattr(
+                    indicator,
+                    "performance_direction",
+                    "higher_is_better",
+                ),
                 comparable_goal=comparable_goal,
                 value=measurement.value,
             )
             gap = self.calculate_indicator_gap(
-                indicator_id=indicator.indicator_id,
+                performance_direction=getattr(
+                    indicator,
+                    "performance_direction",
+                    "higher_is_better",
+                ),
                 comparable_goal=comparable_goal,
                 value=measurement.value,
             )
@@ -141,7 +151,14 @@ class StrategicIndicatorsCalculator:
                     goal_label=indicator.goal_label,
                     goal_value=indicator.goal_value,
                     goal_periodicity=indicator.goal_periodicity,
+                    goal_mode=getattr(indicator, "goal_mode", "standard"),
+                    monthly_targets=getattr(indicator, "monthly_targets", None),
                     scope_type=indicator.scope_type,
+                    performance_direction=getattr(
+                        indicator,
+                        "performance_direction",
+                        "higher_is_better",
+                    ),
                     strategic_description=indicator.strategic_description,
                     source=measurement.source,
                     value=measurement.value,
@@ -218,10 +235,22 @@ class StrategicIndicatorsCalculator:
         *,
         goal_value: float,
         goal_periodicity: str,
+        goal_mode: str = "standard",
+        monthly_targets: list[dict] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         competence: str | None = None,
     ) -> float:
+        normalized_goal_mode = (goal_mode or "standard").strip().lower()
+
+        if normalized_goal_mode == "monthly_curve":
+            return self._calculate_monthly_curve_goal(
+                monthly_targets=monthly_targets or [],
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+
         if goal_value <= 0:
             return 0.0
 
@@ -249,11 +278,11 @@ class StrategicIndicatorsCalculator:
     def calculate_indicator_score(
         self,
         *,
-        indicator_id: str,
+        performance_direction: str,
         comparable_goal: float,
         value: float,
     ) -> float:
-        lower_is_better = self._is_lower_better(indicator_id)
+        lower_is_better = self._is_lower_better(performance_direction)
 
         if comparable_goal <= 0:
             return 0.0
@@ -268,11 +297,11 @@ class StrategicIndicatorsCalculator:
     def calculate_indicator_gap(
         self,
         *,
-        indicator_id: str,
+        performance_direction: str,
         comparable_goal: float,
         value: float,
     ) -> float:
-        lower_is_better = self._is_lower_better(indicator_id)
+        lower_is_better = self._is_lower_better(performance_direction)
 
         if comparable_goal <= 0:
             return 0.0
@@ -340,6 +369,144 @@ class StrategicIndicatorsCalculator:
         weighted_sum = sum(item.score * item.weight_pct for item in indicators)
         return round(weighted_sum / total_weight, 3)
 
+    def _calculate_monthly_curve_goal(
+        self,
+        *,
+        monthly_targets: list[dict],
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> float:
+        if not monthly_targets:
+            return 0.0
+
+        targets_by_month: dict[int, float] = {}
+        for item in monthly_targets:
+            month_number = int(item.get("month_number") or 0)
+            if month_number < 1 or month_number > 12:
+                continue
+            targets_by_month[month_number] = float(item.get("target_value") or 0)
+
+        month_numbers = self._resolve_period_month_numbers(
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+
+        comparable_goal = sum(
+            targets_by_month.get(month_number, 0.0)
+            for month_number in month_numbers
+        )
+        return round(comparable_goal, 2)
+
+    def _resolve_period_month_numbers(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> list[int]:
+        normalized_competence = (competence or "").strip()
+
+        if normalized_competence:
+            parsed_competence = self._parse_competence_month(normalized_competence)
+            if parsed_competence is not None:
+                return [parsed_competence.month]
+
+            if len(normalized_competence) >= 4 and normalized_competence[:4].isdigit():
+                if start_date and end_date:
+                    return self._resolve_month_numbers_from_dates(
+                        start_date=start_date,
+                        end_date=end_date,
+                    )
+                return list(range(1, 13))
+
+        if start_date and end_date:
+            return self._resolve_month_numbers_from_dates(
+                start_date=start_date,
+                end_date=end_date,
+            )
+
+        return [1]
+
+    def _resolve_month_numbers_from_dates(
+        self,
+        *,
+        start_date: str,
+        end_date: str,
+    ) -> list[int]:
+        start = self._parse_date(start_date)
+        end = self._parse_date(end_date)
+
+        if start is None or end is None:
+            return [1]
+
+        if start > end:
+            start, end = end, start
+
+        month_numbers: list[int] = []
+        cursor_year = start.year
+        cursor_month = start.month
+
+        while True:
+            month_numbers.append(cursor_month)
+
+            if cursor_year == end.year and cursor_month == end.month:
+                break
+
+            cursor_month += 1
+            if cursor_month > 12:
+                cursor_month = 1
+                cursor_year += 1
+
+        return month_numbers
+
+    def _parse_competence_month(self, value: str):
+        normalized = value.strip()
+
+        known_formats = [
+            "%Y-%m",
+            "%m/%y",
+            "%m/%Y",
+            "%Y/%m",
+        ]
+
+        for fmt in known_formats:
+            try:
+                return datetime.strptime(normalized, fmt)
+            except ValueError:
+                continue
+
+        month_aliases = {
+            "jan": 1,
+            "fev": 2,
+            "mar": 3,
+            "abr": 4,
+            "mai": 5,
+            "jun": 6,
+            "jul": 7,
+            "ago": 8,
+            "set": 9,
+            "out": 10,
+            "nov": 11,
+            "dez": 12,
+        }
+
+        lowered = normalized.lower()
+        if "/" in lowered:
+            maybe_month, maybe_year = lowered.split("/", 1)
+            if maybe_month in month_aliases and maybe_year.isdigit():
+                year = int(maybe_year)
+                if year < 100:
+                    year += 2000
+                return datetime(
+                    year=year,
+                    month=month_aliases[maybe_month],
+                    day=1,
+                )
+
+        return None
+
     def _resolve_period_months(
         self,
         *,
@@ -350,10 +517,16 @@ class StrategicIndicatorsCalculator:
         if competence and len(competence) == 7:
             return 1
 
+        parsed_competence = self._parse_competence_month(competence or "")
+        if parsed_competence is not None:
+            return 1
+
         start = self._parse_date(start_date)
         end = self._parse_date(end_date)
 
         if start is None or end is None:
+            if competence and len(competence) >= 4 and competence[:4].isdigit():
+                return 12
             return 1
 
         months = ((end.year - start.year) * 12) + (end.month - start.month) + 1
@@ -383,17 +556,5 @@ class StrategicIndicatorsCalculator:
         except Exception:
             return None
 
-    def _is_lower_better(self, indicator_id: str) -> bool:
-        negative_patterns = [
-            "fixed-cost",
-            "pmr",
-            "absentee",
-            "turnover",
-            "cost",
-            "depreciation",
-            "ppm",
-            "stock",
-            "cpv",
-        ]
-        normalized = indicator_id.lower()
-        return any(pattern in normalized for pattern in negative_patterns)
+    def _is_lower_better(self, performance_direction: str | None) -> bool:
+        return (performance_direction or "higher_is_better") == "lower_is_better"

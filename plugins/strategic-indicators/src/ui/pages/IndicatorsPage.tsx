@@ -101,6 +101,30 @@ function buildPartialErrorDescription(
     .join("\n");
 }
 
+function buildIndicatorNarrative(item: {
+  source: string;
+  goalLabel: string;
+  goalPeriodicity: string;
+  goalMode?: string;
+  performanceDirection?: string;
+  monthlyTargets?: Array<{ month_number: number; target_value: number }>;
+}) {
+  const goalModeLabel =
+    item.goalMode === "monthly_curve" ? "curva mensal" : "meta padrão";
+
+  const directionLabel =
+    item.performanceDirection === "lower_is_better"
+      ? "quanto menor, melhor"
+      : "quanto maior, melhor";
+
+  const monthlyCurveHint =
+    item.goalMode === "monthly_curve" && (item.monthlyTargets?.length ?? 0) > 0
+      ? ` • ${item.monthlyTargets?.length ?? 0} metas mensais`
+      : "";
+
+  return `${item.source} • Meta ${item.goalLabel} • Periodicidade ${item.goalPeriodicity} • ${goalModeLabel} • ${directionLabel}${monthlyCurveHint}`;
+}
+
 export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("all");
@@ -136,12 +160,27 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         departmentId: item.departmentId,
         departmentName: item.departmentName,
         indicatorName: item.name,
-        strategicDescription:
-          `${item.source} • Meta ${item.goalLabel} • Periodicidade ${item.goalPeriodicity}`,
+        strategicDescription: buildIndicatorNarrative({
+          source: item.source,
+          goalLabel: item.goalLabel,
+          goalPeriodicity: item.goalPeriodicity,
+          goalMode: item.goalMode,
+          performanceDirection: item.performanceDirection,
+          monthlyTargets: item.monthlyTargets.map((target) => ({
+            month_number: target.month_number,
+            target_value: target.target_value,
+          })),
+        }),
         weightPct: item.weightPct,
         goalLabel: item.goalLabel,
         goalValue: item.goalValue,
         goalPeriodicity: item.goalPeriodicity,
+        goalMode: item.goalMode,
+        monthlyTargets: item.monthlyTargets.map((target) => ({
+          monthNumber: target.month_number,
+          targetValue: target.target_value,
+        })),
+        performanceDirection: item.performanceDirection,
         currentValue: item.value,
         score: item.score,
         gap: item.gap,
@@ -183,10 +222,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
       selectedIndicatorId &&
       filteredIndicators.some((item) => item.id === selectedIndicatorId)
     ) {
-      return (
-        filteredIndicators.find((item) => item.id === selectedIndicatorId) ??
-        null
-      );
+      return filteredIndicators.find((item) => item.id === selectedIndicatorId) ?? null;
     }
 
     return filteredIndicators[0];
@@ -197,7 +233,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Indicadores"
-        description="Visão analítica inicial dos indicadores que compõem os IDDs departamentais, com filtros, busca, período de referência e leitura cruzada entre áreas."
+        description="Visão analítica dos indicadores que compõem os IDDs departamentais, com leitura de meta estruturada, direção de performance e filtros por área."
         badge={
           <StatusBadge
             label={loading || refreshing ? "Carregando" : "API Real"}
