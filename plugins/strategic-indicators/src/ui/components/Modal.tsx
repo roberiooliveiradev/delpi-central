@@ -27,52 +27,70 @@ export function Modal({
   const titleId = useId();
   const descriptionId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  const hasAutoFocusedRef = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!open) {
+      hasAutoFocusedRef.current = false;
+      return;
+    }
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
 
-    requestAnimationFrame(() => {
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      hasAutoFocusedRef.current = false;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || hasAutoFocusedRef.current) return;
+
+    const rafId = requestAnimationFrame(() => {
+      if (!dialogRef.current) return;
+
       if (initialFocusSelector) {
-        const focusTarget = dialogRef.current?.querySelector<HTMLElement>(
+        const focusTarget = dialogRef.current.querySelector<HTMLElement>(
           initialFocusSelector,
         );
         if (focusTarget) {
           focusTarget.focus();
+          hasAutoFocusedRef.current = true;
           return;
         }
       }
 
-      const fallback = dialogRef.current?.querySelector<HTMLElement>(
-        "button, input, select, textarea, [tabindex]:not([tabindex='-1'])",
+      const fallback = dialogRef.current.querySelector<HTMLElement>(
+        "input, select, textarea, button, [tabindex]:not([tabindex='-1'])",
       );
       fallback?.focus();
+      hasAutoFocusedRef.current = true;
     });
 
     return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", handleKeyDown);
+      cancelAnimationFrame(rafId);
     };
-  }, [open, onClose, initialFocusSelector]);
+  }, [open, initialFocusSelector]);
 
   if (!open) return null;
 
   return (
-    <div
-      className="si-modal-overlay"
-      onClick={onClose}
-      aria-hidden="true"
-    >
+    <div className="si-modal-overlay" onClick={onClose} aria-hidden="true">
       <div
         ref={dialogRef}
         className={`si-modal si-modal--${size}`}

@@ -9,9 +9,9 @@ import { SectionBlock } from "../components/SectionBlock";
 import { InfoState } from "../components/InfoState";
 import { SettingsSummaryCards } from "../components/SettingsSummaryCards";
 import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
-import { AdminDepartmentsWorkspace } from "../components/AdminDepartmentsWorkspace";
-import { AnnualGoalsWorkspace } from "../components/AnnualGoalsWorkspace";
 import type { SettingsDashboardData } from "../../data/types/settingsDashboard";
+import { DepartmentsListPanel } from "../components/DepartmentsListPanel";
+import { GoalYearsListPanel } from "../components/GoalYearsListPanel";
 
 type SettingsPageProps = {
   getAccessToken?: () => string | undefined;
@@ -161,18 +161,18 @@ export function SettingsPage({
         {activeTab === "departments" ? (
           <SectionBlock
             title="Departamentos"
-            description="Gerencie a estrutura administrativa do módulo e o catálogo estrutural de cada área."
+            description="Gerencie a estrutura administrativa do módulo e abra cada departamento em um workspace focado."
           >
-            <AdminDepartmentsWorkspace getAccessToken={getAccessToken} />
+            <DepartmentsListPanel getAccessToken={getAccessToken} />
           </SectionBlock>
         ) : null}
 
         {activeTab === "goals" ? (
           <SectionBlock
             title="Metas anuais"
-            description="Organize ciclos anuais, monitore a cobertura das metas e execute ações administrativas em lote."
+            description="Gerencie os ciclos anuais e abra cada ano em um workspace completo de metas."
           >
-            <AnnualGoalsWorkspace getAccessToken={getAccessToken} />
+            <GoalYearsListPanel getAccessToken={getAccessToken} />
           </SectionBlock>
         ) : null}
 

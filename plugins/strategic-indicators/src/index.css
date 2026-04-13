@@ -4967,3 +4967,119 @@ body {
     padding: 16px;
   }
 }
+
+
+
+.si-admin-list-shell,
+.si-department-workspace,
+.si-goal-year-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.si-admin-list-toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.si-admin-list-toolbar__actions,
+.si-admin-inline-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.si-admin-table-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.si-admin-table-cell strong {
+  color: var(--si-title);
+}
+
+.si-admin-table-cell span,
+.si-admin-table-cell small {
+  color: var(--si-text-muted);
+}
+
+.si-admin-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.si-admin-detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--surface-2, #f7f7f7);
+  border: 1px solid var(--si-card-border);
+}
+
+.si-admin-detail-card__label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--si-text-muted);
+}
+
+.si-admin-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.si-admin-card-list__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--si-card-border);
+  background: var(--surface, #ffffff);
+}
+
+.si-admin-card-list__content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.si-admin-card-list__content strong {
+  color: var(--si-title);
+}
+
+.si-admin-card-list__content p,
+.si-admin-card-list__content small {
+  margin: 0;
+  color: var(--si-text-muted);
+}
+
+@media (max-width: 1100px) {
+  .si-admin-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .si-admin-list-toolbar,
+  .si-admin-inline-actions,
+  .si-admin-card-list__item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .si-admin-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -37,72 +37,70 @@ export function useStrategicIndicatorsDepartmentIndicators({
     getAccessTokenRef.current = getAccessToken;
   }, [getAccessToken]);
 
-  const loadRef = useRef<() => Promise<void>>(async () => {});
+  const load = useCallback(async () => {
+    if (!departmentId) {
+      setItems([]);
+      setLoading(false);
+      setRefreshing(false);
+      setError(null);
+      hasLoadedOnceRef.current = false;
+      return;
+    }
 
-  useEffect(() => {
-    loadRef.current = async () => {
-      if (!departmentId) {
-        setItems([]);
-        setLoading(false);
-        setRefreshing(false);
+    const requestId = ++requestIdRef.current;
+
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    if (hasLoadedOnceRef.current) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    setError(null);
+
+    try {
+      const response = await fetchAdminDepartmentIndicators(
+        departmentId,
+        getAccessTokenRef.current,
+        controller.signal,
+      );
+
+      if (requestId !== requestIdRef.current || controller.signal.aborted) {
         return;
       }
 
-      const requestId = ++requestIdRef.current;
-
-      abortControllerRef.current?.abort();
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-
-      if (hasLoadedOnceRef.current) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
+      setItems(response.items);
+      hasLoadedOnceRef.current = true;
+    } catch (err) {
+      if (requestId !== requestIdRef.current || controller.signal.aborted) {
+        return;
       }
 
-      setError(null);
-
-      try {
-        const response = await fetchAdminDepartmentIndicators(
-          departmentId,
-          getAccessTokenRef.current,
-          controller.signal,
-        );
-
-        if (requestId !== requestIdRef.current || controller.signal.aborted) {
-          return;
-        }
-
-        setItems(response.items);
-        hasLoadedOnceRef.current = true;
-      } catch (err) {
-        if (requestId !== requestIdRef.current || controller.signal.aborted) {
-          return;
-        }
-
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Erro inesperado ao carregar indicadores estruturais.",
-        );
-      } finally {
-        if (requestId === requestIdRef.current && !controller.signal.aborted) {
-          setLoading(false);
-          setRefreshing(false);
-        }
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erro inesperado ao carregar indicadores estruturais.",
+      );
+    } finally {
+      if (requestId === requestIdRef.current && !controller.signal.aborted) {
+        setLoading(false);
+        setRefreshing(false);
       }
-    };
+    }
   }, [departmentId]);
 
-  const reload = useCallback(() => loadRef.current(), []);
-
   useEffect(() => {
-    void reload();
+    void load();
 
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [reload]);
+  }, [load]);
+
+  const reload = useCallback(() => load(), [load]);
 
   const createIndicator = useCallback(
     async (payload: CreateAdminDepartmentIndicatorRequest) => {
@@ -119,7 +117,7 @@ export function useStrategicIndicatorsDepartmentIndicators({
           getAccessTokenRef.current,
         );
         setSuccessMessage("Indicador estrutural criado com sucesso.");
-        await loadRef.current();
+        await load();
       } catch (err) {
         setError(
           err instanceof Error
@@ -131,7 +129,7 @@ export function useStrategicIndicatorsDepartmentIndicators({
         setSaving(false);
       }
     },
-    [departmentId],
+    [departmentId, load],
   );
 
   const updateIndicator = useCallback(
@@ -147,7 +145,7 @@ export function useStrategicIndicatorsDepartmentIndicators({
           getAccessTokenRef.current,
         );
         setSuccessMessage("Indicador estrutural atualizado com sucesso.");
-        await loadRef.current();
+        await load();
       } catch (err) {
         setError(
           err instanceof Error
@@ -159,7 +157,7 @@ export function useStrategicIndicatorsDepartmentIndicators({
         setSaving(false);
       }
     },
-    [],
+    [load],
   );
 
   const deactivateIndicator = useCallback(
@@ -174,7 +172,7 @@ export function useStrategicIndicatorsDepartmentIndicators({
           getAccessTokenRef.current,
         );
         setSuccessMessage("Indicador estrutural desativado com sucesso.");
-        await loadRef.current();
+        await load();
       } catch (err) {
         setError(
           err instanceof Error
@@ -186,7 +184,7 @@ export function useStrategicIndicatorsDepartmentIndicators({
         setSaving(false);
       }
     },
-    [],
+    [load],
   );
 
   const removeIndicator = useCallback(
@@ -198,7 +196,7 @@ export function useStrategicIndicatorsDepartmentIndicators({
       try {
         await deleteAdminDepartmentIndicator(indicatorId, getAccessTokenRef.current);
         setSuccessMessage("Indicador estrutural excluído com sucesso.");
-        await loadRef.current();
+        await load();
       } catch (err) {
         setError(
           err instanceof Error
@@ -210,7 +208,7 @@ export function useStrategicIndicatorsDepartmentIndicators({
         setSaving(false);
       }
     },
-    [],
+    [load],
   );
 
   const clearSuccessMessage = useCallback(() => {

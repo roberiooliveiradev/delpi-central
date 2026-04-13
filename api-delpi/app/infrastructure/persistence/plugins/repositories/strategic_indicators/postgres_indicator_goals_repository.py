@@ -24,6 +24,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             SELECT
                 ig.id,
                 ig.indicator_id,
+                di.indicator_name,
                 ig.goal_year,
                 ig.goal_label,
                 ig.goal_value,
@@ -81,33 +82,36 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
     ) -> list[dict]:
         query = """
             SELECT
-                id,
-                indicator_id,
-                goal_year,
-                goal_label,
-                goal_value,
-                goal_periodicity,
-                version,
-                is_active,
-                valid_from,
-                valid_to,
-                notes,
-                created_by_user_id,
-                created_by_email,
-                updated_by_user_id,
-                updated_by_email,
-                created_at,
-                updated_at
-            FROM strategic_indicators.indicator_goals
-            WHERE indicator_id = %s
+                ig.id,
+                ig.indicator_id,
+                di.indicator_name,
+                ig.goal_year,
+                ig.goal_label,
+                ig.goal_value,
+                ig.goal_periodicity,
+                ig.version,
+                ig.is_active,
+                ig.valid_from,
+                ig.valid_to,
+                ig.notes,
+                ig.created_by_user_id,
+                ig.created_by_email,
+                ig.updated_by_user_id,
+                ig.updated_by_email,
+                ig.created_at,
+                ig.updated_at
+            FROM strategic_indicators.indicator_goals ig
+            INNER JOIN strategic_indicators.department_indicators di
+                ON di.indicator_id = ig.indicator_id
+            WHERE ig.indicator_id = %s
         """
         params: list = [indicator_id]
 
         if goal_year is not None:
-            query += " AND goal_year = %s"
+            query += " AND ig.goal_year = %s"
             params.append(goal_year)
 
-        query += " ORDER BY goal_year DESC, version DESC, created_at DESC"
+        query += " ORDER BY ig.goal_year DESC, ig.version DESC, ig.created_at DESC"
         return self.fetch_all(query, tuple(params))
 
     def get_resolved_goal(
@@ -356,7 +360,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     return int(parts[2])
 
         raise ValueError("Não foi possível resolver o ano da meta.")
-
 
     def bulk_create_indicator_goals(
         self,

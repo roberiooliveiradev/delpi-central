@@ -3,6 +3,7 @@ export type GoalPeriodicity = "monthly" | "annual" | "quarterly" | "weekly";
 export type StrategicIndicatorGoalItem = {
   id: string;
   indicator_id: string;
+  indicator_name?: string;
   goal_year: number;
   goal_label: string;
   goal_value: number;
