@@ -37,9 +37,15 @@ class GetStrategicIndicatorsAlertsRealUseCase:
             end_date=request.end_date,
         )
 
+        catalog_snapshot = self._snapshot_service.get_catalog_snapshot(
+            competence=snapshot.period.competence,
+            start_date=snapshot.period.start_date,
+            end_date=snapshot.period.end_date,
+        )
+
         catalog_by_indicator_id = {
             item.indicator_id: item
-            for item in self._snapshot_service.get_catalog_snapshot().indicators_catalog
+            for item in catalog_snapshot.indicators_catalog
         }
 
         executive_alerts = self._alerts_summary_port.get_alerts_summary(
