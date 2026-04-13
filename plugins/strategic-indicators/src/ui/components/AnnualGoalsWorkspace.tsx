@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   BulkCreateStrategicIndicatorGoalsRequest,
   DuplicateStrategicIndicatorGoalsYearRequest,
@@ -8,9 +8,17 @@ import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndica
 import { useStrategicIndicatorsGoalYearsOverview } from "../../state/hooks/useStrategicIndicatorsGoalYearsOverview";
 import { InfoState } from "./InfoState";
 import { Modal } from "./Modal";
-import { SectionBlock } from "./SectionBlock";
+
+type AnnualGoalsWorkspaceMode =
+  | "create_year"
+  | "duplicate_into_year"
+  | "fill_missing_for_year";
 
 type AnnualGoalsWorkspaceProps = {
+  open: boolean;
+  mode: AnnualGoalsWorkspaceMode;
+  fixedTargetYear: number | null;
+  onClose: () => void;
   getAccessToken?: () => string | undefined;
 };
 
@@ -36,38 +44,66 @@ const emptyBulkRow: BulkGoalRow = {
 };
 
 export function AnnualGoalsWorkspace({
+  open,
+  mode,
+  fixedTargetYear,
+  onClose,
   getAccessToken,
 }: AnnualGoalsWorkspaceProps) {
   const goals = useStrategicIndicatorGoals({ getAccessToken });
   const yearsOverview = useStrategicIndicatorsGoalYearsOverview({ getAccessToken });
 
-  const [bulkModalOpen, setBulkModalOpen] = useState(false);
-  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
-  const [fillMissingModalOpen, setFillMissingModalOpen] = useState(false);
-
-  const [bulkGoalYear, setBulkGoalYear] = useState<number>(
-    typeof goals.selectedGoalYear === "number"
-      ? goals.selectedGoalYear
-      : new Date().getFullYear(),
+  const [targetYear, setTargetYear] = useState<number>(
+    fixedTargetYear ?? new Date().getFullYear(),
   );
   const [bulkRows, setBulkRows] = useState<BulkGoalRow[]>([emptyBulkRow]);
-
-  const [sourceYear, setSourceYear] = useState<number>(new Date().getFullYear());
-  const [targetYear, setTargetYear] = useState<number>(new Date().getFullYear() + 1);
+  const [sourceYear, setSourceYear] = useState<number>(new Date().getFullYear() - 1);
   const [overwriteExisting, setOverwriteExisting] = useState(false);
+  const [copyFromYear, setCopyFromYear] = useState<number | "">(
+    new Date().getFullYear() - 1,
+  );
 
-  const [fillGoalYear, setFillGoalYear] = useState<number>(new Date().getFullYear());
-  const [copyFromYear, setCopyFromYear] = useState<number | "">(new Date().getFullYear() - 1);
+  useEffect(() => {
+    if (!open) return;
 
-  const selectedYearLabel = useMemo(() => {
-    return typeof goals.selectedGoalYear === "number"
-      ? String(goals.selectedGoalYear)
-      : "Todos";
-  }, [goals.selectedGoalYear]);
+    if (typeof fixedTargetYear === "number") {
+      if (mode === "duplicate_into_year") {
+        // Regra correta:
+        // ano selecionado = origem
+        // ano digitado no modal = destino
+        setSourceYear(fixedTargetYear);
+        setTargetYear(fixedTargetYear + 1);
+      } else {
+        setTargetYear(fixedTargetYear);
+      }
+    } else {
+      setTargetYear(new Date().getFullYear());
+    }
 
-  async function handleSubmitBulkCreate() {
+    if (mode === "fill_missing_for_year") {
+      setCopyFromYear(new Date().getFullYear() - 1);
+    }
+
+    if (mode === "create_year") {
+      setBulkRows([emptyBulkRow]);
+    }
+
+    setOverwriteExisting(false);
+  }, [open, mode, fixedTargetYear]);
+
+  const resolvedTargetYear = useMemo(
+    () =>
+      mode === "duplicate_into_year"
+        ? targetYear
+        : typeof fixedTargetYear === "number"
+          ? fixedTargetYear
+          : targetYear,
+    [mode, fixedTargetYear, targetYear],
+  );
+
+  async function handleSubmitCreateYear() {
     const payload: BulkCreateStrategicIndicatorGoalsRequest = {
-      goal_year: bulkGoalYear,
+      goal_year: resolvedTargetYear,
       items: bulkRows
         .filter((item) => item.indicator_id.trim() && item.goal_label.trim())
         .map((item) => ({
@@ -83,235 +119,157 @@ export function AnnualGoalsWorkspace({
 
     await goals.bulkCreateGoals(payload);
     await yearsOverview.reload();
-    setBulkModalOpen(false);
+    onClose();
   }
 
   async function handleSubmitDuplicateYear() {
     const payload: DuplicateStrategicIndicatorGoalsYearRequest = {
       source_year: sourceYear,
-      target_year: targetYear,
+      target_year: resolvedTargetYear,
       overwrite_existing: overwriteExisting,
     };
 
     await goals.duplicateGoalsYear(payload);
     await yearsOverview.reload();
-    setDuplicateModalOpen(false);
+    onClose();
   }
 
   async function handleSubmitFillMissing() {
     const payload: FillMissingStrategicIndicatorGoalsRequest = {
-      goal_year: fillGoalYear,
+      goal_year: resolvedTargetYear,
       copy_from_year: typeof copyFromYear === "number" ? copyFromYear : null,
     };
 
     await goals.fillMissingGoals(payload);
     await yearsOverview.reload();
-    setFillMissingModalOpen(false);
+    onClose();
   }
 
+  const title =
+    mode === "create_year"
+      ? "Novo ano"
+      : mode === "duplicate_into_year"
+        ? `Duplicar metas de ${sourceYear} para outro ano`
+        : `Preencher metas faltantes de ${resolvedTargetYear}`;
+
+  const description =
+    mode === "create_year"
+      ? "Crie um novo ciclo anual e, se quiser, já adicione metas iniciais."
+      : mode === "duplicate_into_year"
+        ? "Use o ano selecionado como origem e informe o ano de destino."
+        : "Complete metas ausentes do ano selecionado usando outro ciclo como referência.";
+
   return (
-    <div className="si-admin-workspace">
-      <SectionBlock
-        title="Ciclos anuais de metas"
-        description="Gerencie metas analíticas por ano, com visão consolidada e ações em lote."
-      >
-        <div className="si-goals-overview-grid">
-          {yearsOverview.loading ? (
-            <div className="si-admin-placeholder">Carregando visão anual...</div>
-          ) : yearsOverview.items.length === 0 ? (
-            <InfoState
-              title="Nenhum ciclo anual disponível"
-              description="As metas analíticas ainda não possuem anos cadastrados."
-            />
-          ) : (
-            yearsOverview.items.map((item) => (
-              <article key={item.goal_year} className="si-goals-overview-card">
-                <span className="si-goals-overview-card__label">Ano</span>
-                <strong className="si-goals-overview-card__value">{item.goal_year}</strong>
-                <p>Indicadores ativos: {item.total_active_indicators}</p>
-                <p>Versões ativas: {item.total_active_versions}</p>
-              </article>
-            ))
-          )}
-        </div>
-      </SectionBlock>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      description={description}
+      size="lg"
+      footer={
+        <>
+          <button
+            type="button"
+            className="si-settings-editor__button si-settings-editor__button--secondary"
+            onClick={onClose}
+          >
+            Cancelar
+          </button>
 
-      <SectionBlock
-        title="Operações em lote"
-        description="Use ações administrativas para acelerar a preparação anual das metas."
-      >
-        {!!goals.successMessage ? (
-          <div className="si-settings-editor__alert si-settings-editor__alert--success">
-            {goals.successMessage}
-          </div>
-        ) : null}
-
-        {goals.error ? (
-          <InfoState
-            title="Falha ao processar metas"
-            description={goals.error}
-            actionLabel="Recarregar"
-            onAction={() => void goals.reload()}
-          />
-        ) : null}
-
-        <div className="si-admin-batch-actions">
           <button
             type="button"
             className="si-settings-editor__button"
-            onClick={() => setBulkModalOpen(true)}
+            onClick={() => {
+              if (mode === "create_year") {
+                void handleSubmitCreateYear();
+                return;
+              }
+              if (mode === "duplicate_into_year") {
+                void handleSubmitDuplicateYear();
+                return;
+              }
+              void handleSubmitFillMissing();
+            }}
+            disabled={goals.saving}
           >
-            Criar metas em lote
+            {goals.saving
+              ? "Processando..."
+              : mode === "create_year"
+                ? "Criar ano"
+                : mode === "duplicate_into_year"
+                  ? "Duplicar"
+                  : "Preencher"}
           </button>
+        </>
+      }
+    >
+      {goals.error ? (
+        <InfoState
+          title="Falha ao processar operação"
+          description={goals.error}
+          actionLabel="Recarregar"
+          onAction={() => void goals.reload()}
+        />
+      ) : null}
 
-          <button
-            type="button"
-            className="si-settings-editor__button si-settings-editor__button--secondary"
-            onClick={() => setDuplicateModalOpen(true)}
-          >
-            Duplicar metas entre anos
-          </button>
+      <div className="si-admin-form-grid">
+        {mode === "duplicate_into_year" ? (
+          <>
+            <label className="si-admin-form-field">
+              <span>Ano de origem</span>
+              <input type="number" value={sourceYear} readOnly />
+            </label>
 
-          <button
-            type="button"
-            className="si-settings-editor__button si-settings-editor__button--secondary"
-            onClick={() => setFillMissingModalOpen(true)}
-          >
-            Preencher metas faltantes
-          </button>
-        </div>
-      </SectionBlock>
-
-      <SectionBlock
-        title="Metas carregadas"
-        description={`Listagem atual filtrada para o ano ${selectedYearLabel}.`}
-        aside={
-          <div className="si-goals-filter-row">
-            <label className="si-admin-form-field si-admin-form-field--compact">
-              <span>Ano</span>
+            <label className="si-admin-form-field">
+              <span>Ano de destino</span>
               <input
                 type="number"
-                value={goals.selectedGoalYear}
-                onChange={(event) =>
-                  goals.setSelectedGoalYear(Number(event.target.value || new Date().getFullYear()))
-                }
+                value={targetYear}
+                onChange={(event) => setTargetYear(Number(event.target.value || 0))}
               />
             </label>
-
-            <label className="si-admin-form-field si-admin-form-field--compact">
-              <span>Departamento</span>
-              <input
-                value={goals.selectedDepartmentId}
-                onChange={(event) => goals.setSelectedDepartmentId(event.target.value)}
-                placeholder="financial, hr..."
-              />
-            </label>
-
-            <label className="si-admin-form-field si-admin-form-field--compact">
-              <span>Indicador</span>
-              <input
-                value={goals.selectedIndicatorId}
-                onChange={(event) => goals.setSelectedIndicatorId(event.target.value)}
-                placeholder="financial-ebitda..."
-              />
-            </label>
-          </div>
-        }
-      >
-        {goals.loading ? (
-          <div className="si-admin-placeholder">Carregando metas analíticas...</div>
-        ) : goals.items.length === 0 ? (
-          <InfoState
-            title="Nenhuma meta encontrada"
-            description="Ajuste os filtros ou utilize uma das operações em lote para iniciar a configuração anual."
-          />
+          </>
         ) : (
-          <div className="si-goals-list">
-            {goals.items.map((item) => (
-              <article key={item.id} className="si-goals-list__item">
-                <div>
-                  <strong>{item.indicator_id}</strong>
-                  <p>
-                    {item.goal_label} · {item.goal_value} · {item.goal_periodicity}
-                  </p>
-                </div>
-
-                <div className="si-goals-list__meta">
-                  <span>Ano {item.goal_year}</span>
-                  <span>Versão {item.version}</span>
-                  <span>{item.is_active ? "Ativa" : "Inativa"}</span>
-                </div>
-
-                <div className="si-goals-list__actions">
-                  {!item.is_active ? (
-                    <button
-                      type="button"
-                      className="si-settings-editor__button si-settings-editor__button--secondary"
-                      onClick={() => void goals.activateGoal(item.id)}
-                    >
-                      Ativar
-                    </button>
-                  ) : null}
-
-                  <button
-                    type="button"
-                    className="si-settings-editor__button si-settings-editor__button--secondary"
-                    onClick={() => void goals.deactivateGoal(item.id)}
-                  >
-                    Desativar
-                  </button>
-
-                  <button
-                    type="button"
-                    className="si-settings-editor__button si-settings-editor__button--secondary"
-                    onClick={() => void goals.loadHistory(item.indicator_id, item.goal_year)}
-                  >
-                    Histórico
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-
-        {goals.historyItems.length > 0 ? (
-          <div className="si-goals-history-panel">
-            <h4>Histórico da meta</h4>
-            <div className="si-goals-history-panel__list">
-              {goals.historyItems.map((item) => (
-                <div key={item.id} className="si-goals-history-panel__item">
-                  <strong>
-                    Ano {item.goal_year} · v{item.version}
-                  </strong>
-                  <span>
-                    {item.goal_label} · {item.goal_value} · {item.goal_periodicity}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </SectionBlock>
-
-      <Modal
-        open={bulkModalOpen}
-        onClose={() => setBulkModalOpen(false)}
-        title="Criar metas em lote"
-        description="Cadastre várias metas para um mesmo ano em uma única operação."
-        size="lg"
-      >
-        <div className="si-admin-form-grid">
           <label className="si-admin-form-field">
-            <span>Ano</span>
+            <span>Ano de destino</span>
             <input
               type="number"
-              value={bulkGoalYear}
-              onChange={(event) => setBulkGoalYear(Number(event.target.value || 0))}
+              value={resolvedTargetYear}
+              readOnly={typeof fixedTargetYear === "number"}
+              onChange={(event) => setTargetYear(Number(event.target.value || 0))}
             />
           </label>
+        )}
 
+        {mode === "fill_missing_for_year" ? (
+          <label className="si-admin-form-field">
+            <span>Copiar de</span>
+            <input
+              type="number"
+              value={copyFromYear}
+              onChange={(event) =>
+                setCopyFromYear(Number(event.target.value || 0))
+              }
+            />
+          </label>
+        ) : null}
+
+        {mode === "duplicate_into_year" ? (
+          <label className="si-admin-form-field si-admin-form-field--full">
+            <span>
+              <input
+                type="checkbox"
+                checked={overwriteExisting}
+                onChange={(event) => setOverwriteExisting(event.target.checked)}
+              />{" "}
+              Sobrescrever metas já existentes no ano de destino
+            </span>
+          </label>
+        ) : null}
+
+        {mode === "create_year" ? (
           <div className="si-admin-form-field si-admin-form-field--full">
-            <span>Itens</span>
+            <span>Metas iniciais do novo ano</span>
 
             <div className="si-bulk-goals-form">
               {bulkRows.map((row, index) => (
@@ -352,7 +310,10 @@ export function AnnualGoalsWorkspace({
                       setBulkRows((current) =>
                         current.map((item, itemIndex) =>
                           itemIndex === index
-                            ? { ...item, goal_value: Number(event.target.value || 0) }
+                            ? {
+                                ...item,
+                                goal_value: Number(event.target.value || 0),
+                              }
                             : item,
                         ),
                       )
@@ -367,7 +328,8 @@ export function AnnualGoalsWorkspace({
                           itemIndex === index
                             ? {
                                 ...item,
-                                goal_periodicity: event.target.value as BulkGoalRow["goal_periodicity"],
+                                goal_periodicity:
+                                  event.target.value as BulkGoalRow["goal_periodicity"],
                               }
                             : item,
                         ),
@@ -378,32 +340,6 @@ export function AnnualGoalsWorkspace({
                     <option value="annual">annual</option>
                     <option value="quarterly">quarterly</option>
                     <option value="weekly">weekly</option>
-                  </select>
-
-                  <select
-                    value={row.goal_mode}
-                    onChange={(event) =>
-                      setBulkRows((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? {
-                                ...item,
-                                goal_mode: event.target.value as "standard" | "monthly_curve",
-                                monthly_targets:
-                                  event.target.value === "monthly_curve"
-                                    ? Array.from({ length: 12 }, (_, monthIndex) => ({
-                                        month_number: monthIndex + 1,
-                                        target_value: 0,
-                                      }))
-                                    : [],
-                              }
-                            : item,
-                        ),
-                      )
-                    }
-                  >
-                    <option value="standard">standard</option>
-                    <option value="monthly_curve">monthly_curve</option>
                   </select>
                 </div>
               ))}
@@ -417,131 +353,8 @@ export function AnnualGoalsWorkspace({
               </button>
             </div>
           </div>
-        </div>
-
-        <div className="si-admin-modal-actions">
-          <button
-            type="button"
-            className="si-settings-editor__button si-settings-editor__button--secondary"
-            onClick={() => setBulkModalOpen(false)}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="si-settings-editor__button"
-            onClick={() => void handleSubmitBulkCreate()}
-            disabled={goals.saving}
-          >
-            {goals.saving ? "Salvando..." : "Criar em lote"}
-          </button>
-        </div>
-      </Modal>
-
-      <Modal
-        open={duplicateModalOpen}
-        onClose={() => setDuplicateModalOpen(false)}
-        title="Duplicar metas entre anos"
-        description="Copie as metas ativas de um ano-base para um novo ciclo anual."
-        size="md"
-      >
-        <div className="si-admin-form-grid">
-          <label className="si-admin-form-field">
-            <span>Ano de origem</span>
-            <input
-              type="number"
-              value={sourceYear}
-              onChange={(event) => setSourceYear(Number(event.target.value || 0))}
-            />
-          </label>
-
-          <label className="si-admin-form-field">
-            <span>Ano de destino</span>
-            <input
-              type="number"
-              value={targetYear}
-              onChange={(event) => setTargetYear(Number(event.target.value || 0))}
-            />
-          </label>
-
-          <label className="si-admin-form-field si-admin-form-field--full">
-            <span>
-              <input
-                type="checkbox"
-                checked={overwriteExisting}
-                onChange={(event) => setOverwriteExisting(event.target.checked)}
-              />{" "}
-              Sobrescrever metas ativas já existentes no ano de destino
-            </span>
-          </label>
-        </div>
-
-        <div className="si-admin-modal-actions">
-          <button
-            type="button"
-            className="si-settings-editor__button si-settings-editor__button--secondary"
-            onClick={() => setDuplicateModalOpen(false)}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="si-settings-editor__button"
-            onClick={() => void handleSubmitDuplicateYear()}
-            disabled={goals.saving}
-          >
-            {goals.saving ? "Processando..." : "Duplicar"}
-          </button>
-        </div>
-      </Modal>
-
-      <Modal
-        open={fillMissingModalOpen}
-        onClose={() => setFillMissingModalOpen(false)}
-        title="Preencher metas faltantes"
-        description="Crie metas ausentes de um ano usando outro ciclo como referência."
-        size="md"
-      >
-        <div className="si-admin-form-grid">
-          <label className="si-admin-form-field">
-            <span>Ano alvo</span>
-            <input
-              type="number"
-              value={fillGoalYear}
-              onChange={(event) => setFillGoalYear(Number(event.target.value || 0))}
-            />
-          </label>
-
-          <label className="si-admin-form-field">
-            <span>Copiar de</span>
-            <input
-              type="number"
-              value={copyFromYear}
-              onChange={(event) =>
-                setCopyFromYear(Number(event.target.value || 0))
-              }
-            />
-          </label>
-        </div>
-
-        <div className="si-admin-modal-actions">
-          <button
-            type="button"
-            className="si-settings-editor__button si-settings-editor__button--secondary"
-            onClick={() => setFillMissingModalOpen(false)}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="si-settings-editor__button"
-            onClick={() => void handleSubmitFillMissing()}
-            disabled={goals.saving}
-          >
-            {goals.saving ? "Processando..." : "Preencher"}
-          </button>
-        </div>
-      </Modal>
-    </div>
+        ) : null}
+      </div>
+    </Modal>
   );
 }

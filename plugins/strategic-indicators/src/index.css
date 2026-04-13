@@ -4149,8 +4149,8 @@ body {
 }
 
 .si-modal {
-  width: 720px;
-  max-width: 95%;
+  width: min(95vw, 720px);
+  max-width: 95vw;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -4162,10 +4162,10 @@ body {
   animation: si-modal-fade 0.2s ease-out;
 }
 
-.si-modal--sm { width: 480px; }
-.si-modal--md { width: 720px; }
-.si-modal--lg { width: 920px; }
-.si-modal--xl { width: 1120px; }
+.si-modal--sm { width: clamp(320px, 42vw, 480px); }
+.si-modal--md { width: clamp(420px, 60vw, 720px); }
+.si-modal--lg { width: clamp(560px, 78vw, 920px); }
+.si-modal--xl { width: clamp(720px, 92vw, 1120px); }
 
 .si-modal__header {
   display: flex;
@@ -4297,20 +4297,69 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
 }
 
 .si-table-actions__button {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border: 1px solid var(--si-card-border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--surface, #ffffff);
   color: var(--si-title);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.si-table-actions__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 30%, transparent);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.si-table-actions__button--primary {
+  color: var(--primary, #089bdb);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 22%, var(--si-card-border));
+  background: color-mix(in srgb, var(--primary, #089bdb) 8%, var(--surface, #ffffff));
+}
+
+.si-table-actions__button--primary:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
+  background: color-mix(in srgb, var(--primary, #089bdb) 14%, var(--surface, #ffffff));
+}
+
+.si-table-actions__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.si-table-actions__button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.si-table-actions__button--primary {
+  color: var(--primary, #089bdb);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 22%, var(--si-card-border));
+  background: color-mix(in srgb, var(--primary, #089bdb) 8%, var(--surface, #ffffff));
+}
+
+.si-table-actions__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 30%, transparent);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.si-table-actions__button svg {
+  width: 18px;
+  height: 18px;
 }
 
 .si-table-actions__button--success {

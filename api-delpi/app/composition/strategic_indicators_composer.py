@@ -153,6 +153,10 @@ from app.application.services.engineering.engineering_metrics_snapshot_service i
     EngineeringMetricsSnapshotService,
 )
 
+from app.application.use_cases.strategic_indicators.activate_admin_department_use_case import (
+    ActivateStrategicIndicatorsAdminDepartmentUseCase,
+)
+
 from app.composition.commercial_composer import (
     build_commercial_metrics_snapshot_service,
 )
@@ -417,3 +421,8 @@ def build_fill_missing_strategic_indicators_indicator_goals_use_case():
 def build_list_strategic_indicators_goal_years_overview_use_case():
     repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
     return ListStrategicIndicatorsGoalYearsOverviewUseCase(repository)
+
+
+def build_activate_strategic_indicators_admin_department_use_case():
+    repository = PostgresStrategicIndicatorsAdminDepartmentsRepository()
+    return ActivateStrategicIndicatorsAdminDepartmentUseCase(repository)

@@ -81,6 +81,7 @@ from app.composition.strategic_indicators_composer import (
     build_duplicate_strategic_indicators_indicator_goals_year_use_case,
     build_fill_missing_strategic_indicators_indicator_goals_use_case,
     build_list_strategic_indicators_goal_years_overview_use_case,
+    build_activate_strategic_indicators_admin_department_use_case
 )
 
 router = APIRouter(
@@ -962,4 +963,24 @@ def get_strategic_indicators_trends(
         raise HTTPException(
             status_code=500,
             detail=f"Falha ao carregar tendências do Strategic Indicators: {exc}",
+        ) from exc
+
+
+@router.post("/admin/departments/{department_id}/activate")
+@require_permission("strategic-indicators.settings.manage")
+def activate_admin_department(department_id: str, request: Request):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_activate_strategic_indicators_admin_department_use_case()
+        return use_case.execute(
+            department_id=department_id,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao ativar departamento: {exc}",
         ) from exc

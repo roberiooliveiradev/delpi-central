@@ -158,25 +158,22 @@ export function DepartmentsListPanel({
       ),
     },
     {
-      key: "open",
-      header: "Workspace",
-      render: (row) => (
-        <button
-          type="button"
-          className="si-settings-editor__button"
-          onClick={() => setOpenedDepartment(row)}
-        >
-          Abrir
-        </button>
-      ),
-    },
-    {
       key: "actions",
       header: "Ações",
       render: (row) => (
         <ActionButtons
+          onOpen={() => setOpenedDepartment(row)}
           onEdit={() => openEditDepartmentForm(row)}
-          onDeactivate={() => void departments.deactivateDepartment(row.department_id)}
+          onActivate={
+            !row.is_active
+              ? () => void departments.activateDepartment(row.department_id)
+              : undefined
+          }
+          onDeactivate={
+            row.is_active
+              ? () => void departments.deactivateDepartment(row.department_id)
+              : undefined
+          }
           disabled={departments.saving}
         />
       ),
@@ -404,6 +401,9 @@ export function DepartmentsListPanel({
         onClose={() => setOpenedDepartment(null)}
         getAccessToken={getAccessToken}
         onEditDepartment={openEditDepartmentForm}
+        onActivateDepartment={(departmentId) =>
+          void departments.activateDepartment(departmentId)
+        }
         onDeactivateDepartment={(departmentId) =>
           void departments.deactivateDepartment(departmentId)
         }

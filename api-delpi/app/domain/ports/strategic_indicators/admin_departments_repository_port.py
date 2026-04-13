@@ -46,6 +46,16 @@ class StrategicIndicatorsAdminDepartmentsRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def activate_department(
+        self,
+        *,
+        department_id: str,
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
     def deactivate_department(
         self,
         *,

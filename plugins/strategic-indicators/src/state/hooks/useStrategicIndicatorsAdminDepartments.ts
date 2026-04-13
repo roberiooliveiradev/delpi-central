@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  activateAdminDepartment,
   createAdminDepartment,
   deactivateAdminDepartment,
   deleteAdminDepartment,
@@ -142,6 +143,28 @@ export function useStrategicIndicatorsAdminDepartments({
     [],
   );
 
+  const activateDepartment = useCallback(
+    async (departmentId: string) => {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        await activateAdminDepartment(departmentId, getAccessTokenRef.current);
+        setSuccessMessage("Departamento ativado com sucesso.");
+        await loadRef.current();
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Erro inesperado ao ativar departamento.",
+        );
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [],
+  );
+
   const deactivateDepartment = useCallback(
     async (departmentId: string) => {
       setSaving(true);
@@ -201,6 +224,7 @@ export function useStrategicIndicatorsAdminDepartments({
       reload,
       createDepartment,
       updateDepartment,
+      activateDepartment,
       deactivateDepartment,
       removeDepartment,
       clearSuccessMessage,
@@ -215,6 +239,7 @@ export function useStrategicIndicatorsAdminDepartments({
       reload,
       createDepartment,
       updateDepartment,
+      activateDepartment,
       deactivateDepartment,
       removeDepartment,
       clearSuccessMessage,

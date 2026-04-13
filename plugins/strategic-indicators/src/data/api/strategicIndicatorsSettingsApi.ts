@@ -262,3 +262,23 @@ async function safeReadError(response: Response): Promise<string | null> {
     return null;
   }
 }
+
+export async function activateAdminDepartment(
+  departmentId: string,
+  getAccessToken?: GetToken,
+): Promise<{ department_id: string }> {
+  const response = await fetch(
+    `${BASE_URL}/admin/departments/${departmentId}/activate`,
+    {
+      method: "POST",
+      headers: buildHeaders(getAccessToken),
+    },
+  );
+
+  if (!response.ok) {
+    const message = await safeReadError(response);
+    throw new Error(message || "Falha ao ativar departamento.");
+  }
+
+  return response.json();
+}

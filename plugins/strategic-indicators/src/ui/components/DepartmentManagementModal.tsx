@@ -13,13 +13,14 @@ import type {
 } from "../../data/types/settings";
 
 type DepartmentManagementModalProps = {
-  open: boolean;
   department: AdminDepartmentItem | null;
+  open: boolean;
   onClose: () => void;
   getAccessToken?: () => string | undefined;
   onEditDepartment: (department: AdminDepartmentItem) => void;
-  onDeactivateDepartment: (departmentId: string) => void;
-  onDeleteDepartment: (departmentId: string) => void;
+  onActivateDepartment?: (departmentId: string) => void;
+  onDeactivateDepartment?: (departmentId: string) => void;
+  onDeleteDepartment?: (departmentId: string) => void;
 };
 
 type IndicatorFormState = {
@@ -58,6 +59,7 @@ export function DepartmentManagementModal({
   onClose,
   getAccessToken,
   onEditDepartment,
+  onActivateDepartment,
   onDeactivateDepartment,
   onDeleteDepartment,
 }: DepartmentManagementModalProps) {
@@ -153,20 +155,36 @@ export function DepartmentManagementModal({
                   >
                     Editar departamento
                   </button>
-                  <button
-                    type="button"
-                    className="si-settings-editor__button si-settings-editor__button--secondary"
-                    onClick={() => onDeactivateDepartment(department.department_id)}
-                  >
-                    Desativar
-                  </button>
-                  <button
-                    type="button"
-                    className="si-settings-editor__button si-settings-editor__button--secondary"
-                    onClick={() => onDeleteDepartment(department.department_id)}
-                  >
-                    Excluir
-                  </button>
+
+                  {!department.is_active && onActivateDepartment ? (
+                    <button
+                      type="button"
+                      className="si-settings-editor__button"
+                      onClick={() => onActivateDepartment(department.department_id)}
+                    >
+                      Ativar
+                    </button>
+                  ) : null}
+
+                  {department.is_active && onDeactivateDepartment ? (
+                    <button
+                      type="button"
+                      className="si-settings-editor__button si-settings-editor__button--secondary"
+                      onClick={() => onDeactivateDepartment(department.department_id)}
+                    >
+                      Desativar
+                    </button>
+                  ) : null}
+
+                  {onDeleteDepartment ? (
+                    <button
+                      type="button"
+                      className="si-settings-editor__button si-settings-editor__button--secondary"
+                      onClick={() => onDeleteDepartment(department.department_id)}
+                    >
+                      Excluir
+                    </button>
+                  ) : null}
                 </div>
               }
             >
@@ -241,8 +259,11 @@ export function DepartmentManagementModal({
                       </div>
                       <ActionButtons
                         onEdit={() => openEditIndicatorForm(item)}
-                        onDeactivate={() =>
-                          void departmentIndicators.deactivateIndicator(item.indicator_id)
+                        onDeactivate={
+                          item.is_active
+                            ? () =>
+                                void departmentIndicators.deactivateIndicator(item.indicator_id)
+                            : undefined
                         }
                         disabled={departmentIndicators.saving}
                       />
@@ -348,7 +369,7 @@ export function DepartmentManagementModal({
               <option value="per_unit">Por unidade</option>
             </select>
           </label>
-          
+
           <label className="si-admin-form-field">
             <span>Direção de performance</span>
             <select

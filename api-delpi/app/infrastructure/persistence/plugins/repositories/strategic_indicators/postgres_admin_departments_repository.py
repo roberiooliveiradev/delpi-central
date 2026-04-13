@@ -140,6 +140,37 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
             ),
         )
 
+    def activate_department(
+        self,
+        *,
+        department_id: str,
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        query = """
+            UPDATE strategic_indicators.departments
+            SET
+                is_active = TRUE,
+                updated_by_user_id = %s,
+                updated_by_email = %s,
+                updated_at = NOW()
+            WHERE department_id = %s
+            RETURNING *
+        """
+        row = self.execute_returning_one(
+            query,
+            (
+                actor_user_id,
+                actor_email,
+                department_id,
+            ),
+        )
+
+        if not row:
+            raise ValueError("Departamento não encontrado.")
+
+        return row
+
     def deactivate_department(
         self,
         *,
@@ -157,7 +188,7 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
             WHERE department_id = %s
             RETURNING *
         """
-        return self.execute_returning_one(
+        row = self.execute_returning_one(
             query,
             (
                 actor_user_id,
@@ -165,6 +196,11 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
                 department_id,
             ),
         )
+
+        if not row:
+            raise ValueError("Departamento não encontrado.")
+
+        return row
 
     def delete_department(
         self,
