@@ -277,7 +277,7 @@ export function IndicatorGoalForm({
           </Field>
         )}
 
-        <Field label="Label da meta" fullWidth>
+        <Field label="Nome da meta" fullWidth>
           <input
             value={goalLabel}
             onChange={(e) => setGoalLabel(e.target.value)}

@@ -8,6 +8,10 @@ import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndica
 import { useStrategicIndicatorsGoalYearsOverview } from "../../state/hooks/useStrategicIndicatorsGoalYearsOverview";
 import { InfoState } from "./InfoState";
 import { Modal } from "./Modal";
+import {
+  getGoalModeLabel,
+  getGoalPeriodicityLabel,
+} from "../presentation/labels";
 
 type AnnualGoalsWorkspaceMode =
   | "create_year"
@@ -68,9 +72,6 @@ export function AnnualGoalsWorkspace({
 
     if (typeof fixedTargetYear === "number") {
       if (mode === "duplicate_into_year") {
-        // Regra correta:
-        // ano selecionado = origem
-        // ano digitado no modal = destino
         setSourceYear(fixedTargetYear);
         setTargetYear(fixedTargetYear + 1);
       } else {
@@ -275,7 +276,7 @@ export function AnnualGoalsWorkspace({
               {bulkRows.map((row, index) => (
                 <div key={index} className="si-bulk-goals-form__row">
                   <input
-                    placeholder="indicator_id"
+                    placeholder="ID do indicador"
                     value={row.indicator_id}
                     onChange={(event) =>
                       setBulkRows((current) =>
@@ -289,7 +290,7 @@ export function AnnualGoalsWorkspace({
                   />
 
                   <input
-                    placeholder="goal_label"
+                    placeholder="Nome da meta"
                     value={row.goal_label}
                     onChange={(event) =>
                       setBulkRows((current) =>
@@ -304,7 +305,7 @@ export function AnnualGoalsWorkspace({
 
                   <input
                     type="number"
-                    placeholder="goal_value"
+                    placeholder="Valor da meta"
                     value={row.goal_value}
                     onChange={(event) =>
                       setBulkRows((current) =>
@@ -322,6 +323,7 @@ export function AnnualGoalsWorkspace({
 
                   <select
                     value={row.goal_periodicity}
+                    aria-label="Periodicidade da meta"
                     onChange={(event) =>
                       setBulkRows((current) =>
                         current.map((item, itemIndex) =>
@@ -336,10 +338,39 @@ export function AnnualGoalsWorkspace({
                       )
                     }
                   >
-                    <option value="monthly">monthly</option>
-                    <option value="annual">annual</option>
-                    <option value="quarterly">quarterly</option>
-                    <option value="weekly">weekly</option>
+                    <option value="monthly">{getGoalPeriodicityLabel("monthly")}</option>
+                    <option value="annual">{getGoalPeriodicityLabel("annual")}</option>
+                    <option value="quarterly">{getGoalPeriodicityLabel("quarterly")}</option>
+                    <option value="weekly">{getGoalPeriodicityLabel("weekly")}</option>
+                  </select>
+
+                  <select
+                    value={row.goal_mode}
+                    aria-label="Modo da meta"
+                    onChange={(event) =>
+                      setBulkRows((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index
+                            ? {
+                                ...item,
+                                goal_mode: event.target.value as "standard" | "monthly_curve",
+                                monthly_targets:
+                                  event.target.value === "monthly_curve"
+                                    ? Array.from({ length: 12 }, (_, monthIndex) => ({
+                                        month_number: monthIndex + 1,
+                                        target_value: 0,
+                                      }))
+                                    : [],
+                              }
+                            : item,
+                        ),
+                      )
+                    }
+                  >
+                    <option value="standard">{getGoalModeLabel("standard")}</option>
+                    <option value="monthly_curve">
+                      {getGoalModeLabel("monthly_curve")}
+                    </option>
                   </select>
                 </div>
               ))}

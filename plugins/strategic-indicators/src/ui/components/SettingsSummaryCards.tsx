@@ -40,7 +40,7 @@ export function SettingsSummaryCards({
           <StatusBadge label={`${totalWeight}% IGD`} variant="neutral" />
         </div>
         <p className="si-settings-summary-card__text">
-          Leitura rápida da distribuição executiva disponível na camada de overview.
+          Leitura rápida da distribuição executiva disponível na camada de painel.
         </p>
       </article>
 
@@ -50,7 +50,7 @@ export function SettingsSummaryCards({
         </span>
         <div className="si-settings-summary-card__badges">
           <StatusBadge label={`${totalParameters} parâmetros`} variant="neutral" />
-          <StatusBadge label={`${totalGovernanceItems} governança`} variant="success" />
+          <StatusBadge label={`${totalGovernanceItems} itens de governança`} variant="success" />
         </div>
         <p className="si-settings-summary-card__text">
           Itens globais atualmente administráveis no backend do módulo.

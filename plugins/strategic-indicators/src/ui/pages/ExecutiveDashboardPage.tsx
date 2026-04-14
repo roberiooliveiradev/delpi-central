@@ -76,7 +76,7 @@ export function ExecutiveDashboardPage({
       <div className="si-page">
         <PageHeader
           eyebrow="MinhaDelpi"
-          title="Strategic Indicators"
+          title="Indicadores Estratégicos"
           description="Carregando visão executiva do IGD e dos IDDs departamentais."
           badge={<StatusBadge label="Carregando" variant="neutral" />}
         />

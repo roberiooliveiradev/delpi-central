@@ -14,7 +14,7 @@ function getVariant(status: SettingsReadinessItem["status"]) {
 function getLabel(status: SettingsReadinessItem["status"]) {
   if (status === "ready") return "Pronto";
   if (status === "planned") return "Planejado";
-  return "Mock";
+  return "Simulado";
 }
 
 export function SettingsReadinessPanel({

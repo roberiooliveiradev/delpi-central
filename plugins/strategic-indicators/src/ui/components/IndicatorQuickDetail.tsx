@@ -1,5 +1,10 @@
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
+import {
+  getGoalModeLabel,
+  getGoalPeriodicityLabel,
+  getPerformanceDirectionLabel,
+} from "../presentation/labels";
 
 type IndicatorQuickDetailProps = {
   indicator: IndicatorAnalyticsViewItem | null;
@@ -10,18 +15,6 @@ function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
   if (status === "info") return "Satisfatório";
   if (status === "warning") return "Exige atenção";
   return "Crítico";
-}
-
-function getGoalModeLabel(value: IndicatorAnalyticsViewItem["goalMode"]) {
-  return value === "monthly_curve" ? "Curva mensal" : "Meta padrão";
-}
-
-function getPerformanceDirectionLabel(
-  value: IndicatorAnalyticsViewItem["performanceDirection"],
-) {
-  return value === "lower_is_better"
-    ? "Quanto menor, melhor"
-    : "Quanto maior, melhor";
 }
 
 export function IndicatorQuickDetail({
@@ -71,7 +64,7 @@ export function IndicatorQuickDetail({
 
         <div className="si-indicator-quick-detail__meta-item">
           <span>Periodicidade</span>
-          <strong>{indicator.goalPeriodicity}</strong>
+          <strong>{getGoalPeriodicityLabel(indicator.goalPeriodicity)}</strong>
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">

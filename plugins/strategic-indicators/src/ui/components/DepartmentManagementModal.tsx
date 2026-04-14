@@ -11,6 +11,11 @@ import type {
   CreateAdminDepartmentIndicatorRequest,
   UpdateAdminDepartmentIndicatorRequest,
 } from "../../data/types/settings";
+import {
+  getAggregationModeLabel,
+  getPerformanceDirectionLabel,
+  getScopeTypeLabel,
+} from "../presentation/labels";
 
 type DepartmentManagementModalProps = {
   department: AdminDepartmentItem | null;
@@ -46,12 +51,6 @@ const emptyIndicatorForm: IndicatorFormState = {
   display_order: 0,
   is_active: true,
 };
-
-function getScopeLabel(value: "consolidated" | "per_unit"): string {
-  if (value === "consolidated") return "Consolidado";
-  if (value === "per_unit") return "Por unidade";
-  return value;
-}
 
 export function DepartmentManagementModal({
   open,
@@ -203,7 +202,7 @@ export function DepartmentManagementModal({
                 </div>
                 <div className="si-admin-detail-card">
                   <span className="si-admin-detail-card__label">Agregação</span>
-                  <strong>{department.aggregation_mode}</strong>
+                  <strong>{getAggregationModeLabel(department.aggregation_mode)}</strong>
                 </div>
               </div>
             </SectionBlock>
@@ -253,7 +252,7 @@ export function DepartmentManagementModal({
                         <strong>{item.indicator_name}</strong>
                         <p>{item.strategic_description || "Sem descrição estratégica."}</p>
                         <small>
-                          {item.weight_pct}% · {getScopeLabel(item.scope_type)} ·{" "}
+                          {item.weight_pct}% · {getScopeTypeLabel(item.scope_type)} ·{" "}
                           {item.is_active ? "Ativo" : "Inativo"}
                         </small>
                       </div>
@@ -365,8 +364,8 @@ export function DepartmentManagementModal({
                 }))
               }
             >
-              <option value="consolidated">Consolidado</option>
-              <option value="per_unit">Por unidade</option>
+              <option value="consolidated">{getScopeTypeLabel("consolidated")}</option>
+              <option value="per_unit">{getScopeTypeLabel("per_unit")}</option>
             </select>
           </label>
 
@@ -383,13 +382,17 @@ export function DepartmentManagementModal({
                 }))
               }
             >
-              <option value="higher_is_better">Quanto maior, melhor</option>
-              <option value="lower_is_better">Quanto menor, melhor</option>
+              <option value="higher_is_better">
+                {getPerformanceDirectionLabel("higher_is_better")}
+              </option>
+              <option value="lower_is_better">
+                {getPerformanceDirectionLabel("lower_is_better")}
+              </option>
             </select>
           </label>
 
           <label className="si-admin-form-field">
-            <span>Source key</span>
+            <span>Chave da fonte</span>
             <input
               value={indicatorForm.source_key}
               onChange={(event) =>

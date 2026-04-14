@@ -10,6 +10,7 @@ import type {
   UpdateAdminDepartmentRequest,
 } from "../../data/types/settings";
 import { DepartmentManagementModal } from "./DepartmentManagementModal";
+import { getAggregationModeLabel } from "../presentation/labels";
 
 type DepartmentsListPanelProps = {
   getAccessToken?: () => string | undefined;
@@ -152,7 +153,7 @@ export function DepartmentsListPanel({
       render: (row) => (
         <div className="si-admin-table-cell">
           <span>Peso: {row.weight_pct}%</span>
-          <span>{row.aggregation_mode}</span>
+          <span>{getAggregationModeLabel(row.aggregation_mode)}</span>
           <span>{row.is_active ? "Ativo" : "Inativo"}</span>
         </div>
       ),
@@ -189,7 +190,7 @@ export function DepartmentsListPanel({
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Nome, sigla ou id"
+              placeholder="Nome, sigla ou ID"
             />
           </label>
 
@@ -334,8 +335,12 @@ export function DepartmentsListPanel({
                 }))
               }
             >
-              <option value="consolidated">consolidated</option>
-              <option value="average_of_units">average_of_units</option>
+              <option value="consolidated">
+                {getAggregationModeLabel("consolidated")}
+              </option>
+              <option value="average_of_units">
+                {getAggregationModeLabel("average_of_units")}
+              </option>
             </select>
           </label>
 

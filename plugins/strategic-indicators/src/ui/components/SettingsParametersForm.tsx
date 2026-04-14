@@ -34,7 +34,7 @@ export function SettingsParametersForm({
               />
             </Field>
 
-            <Field label="Label">
+            <Field label="Rótulo">
               <input
                 value={item.label}
                 onChange={(e) => updateItem(index, "label", e.target.value)}

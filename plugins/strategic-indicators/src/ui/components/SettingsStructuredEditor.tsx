@@ -71,7 +71,7 @@ export function SettingsStructuredEditor({
 
           <div className="si-settings-editor__summary">
             <span>Modelo de escrita</span>
-            <strong>Parameters + Governance</strong>
+            <strong>Parâmetros + Governança</strong>
           </div>
         </div>
       </div>

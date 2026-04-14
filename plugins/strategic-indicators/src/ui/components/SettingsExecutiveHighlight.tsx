@@ -24,7 +24,7 @@ export function SettingsExecutiveHighlight({
             Direcionamento administrativo
           </p>
           <h3 className="si-settings-executive-highlight__title">
-            Governança estrutural do Strategic Indicators
+            Governança estrutural dos Indicadores Estratégicos
           </h3>
         </div>
 

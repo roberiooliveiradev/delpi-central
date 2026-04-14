@@ -12,7 +12,7 @@ export function SettingsHero({
       <div className="si-settings-hero__content">
         <p className="si-settings-hero__eyebrow">Governança do módulo</p>
         <h2 className="si-settings-hero__title">
-          Administração do Strategic Indicators
+          Administração dos Indicadores Estratégicos
         </h2>
         <p className="si-settings-hero__description">
           Gerencie departamentos, indicadores estruturais, metas anuais,

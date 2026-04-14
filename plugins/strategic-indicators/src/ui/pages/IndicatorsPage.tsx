@@ -11,6 +11,12 @@ import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import {
+  getGoalModeLabel,
+  getGoalPeriodicityLabel,
+  getMetaSourceLabel,
+  getPerformanceDirectionLabel,
+} from "../presentation/labels";
 
 type IndicatorsPageProps = {
   getAccessToken?: () => string | undefined;
@@ -96,7 +102,7 @@ function buildPartialErrorDescription(
   return errors
     .map(
       (item) =>
-        `Departamento: ${item.departmentId} • Fonte: ${item.source} • Erro: ${item.message}`,
+        `Departamento: ${item.departmentId} • Fonte: ${getMetaSourceLabel(item.source)} • Erro: ${item.message}`,
     )
     .join("\n");
 }
@@ -109,20 +115,17 @@ function buildIndicatorNarrative(item: {
   performanceDirection?: string;
   monthlyTargets?: Array<{ month_number: number; target_value: number }>;
 }) {
-  const goalModeLabel =
-    item.goalMode === "monthly_curve" ? "curva mensal" : "meta padrão";
-
-  const directionLabel =
-    item.performanceDirection === "lower_is_better"
-      ? "quanto menor, melhor"
-      : "quanto maior, melhor";
+  const goalModeLabel = getGoalModeLabel(item.goalMode);
+  const directionLabel = getPerformanceDirectionLabel(item.performanceDirection);
+  const periodicityLabel = getGoalPeriodicityLabel(item.goalPeriodicity);
+  const sourceLabel = getMetaSourceLabel(item.source);
 
   const monthlyCurveHint =
     item.goalMode === "monthly_curve" && (item.monthlyTargets?.length ?? 0) > 0
       ? ` • ${item.monthlyTargets?.length ?? 0} metas mensais`
       : "";
 
-  return `${item.source} • Meta ${item.goalLabel} • Periodicidade ${item.goalPeriodicity} • ${goalModeLabel} • ${directionLabel}${monthlyCurveHint}`;
+  return `${sourceLabel} • Meta ${item.goalLabel} • Periodicidade ${periodicityLabel} • ${goalModeLabel} • ${directionLabel}${monthlyCurveHint}`;
 }
 
 export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
@@ -236,7 +239,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         description="Visão analítica dos indicadores que compõem os IDDs departamentais, com leitura de meta estruturada, direção de performance e filtros por área."
         badge={
           <StatusBadge
-            label={loading || refreshing ? "Carregando" : "API Real"}
+            label={loading || refreshing ? "Carregando" : "API real"}
             variant={loading || refreshing ? "neutral" : "success"}
           />
         }

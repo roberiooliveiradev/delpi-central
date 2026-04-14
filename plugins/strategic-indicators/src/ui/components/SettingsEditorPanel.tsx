@@ -60,12 +60,12 @@ export function SettingsEditorPanel({
 
       <div className="si-settings-editor__grid">
         <EditorBlock
-          title="parameters"
+          title="Parâmetros"
           value={parametersJson}
           onChange={setParametersJson}
         />
         <EditorBlock
-          title="governance"
+          title="Governança"
           value={governanceJson}
           onChange={setGovernanceJson}
         />

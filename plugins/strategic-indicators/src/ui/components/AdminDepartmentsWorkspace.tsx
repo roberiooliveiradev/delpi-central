@@ -9,6 +9,11 @@ import { useStrategicIndicatorsDepartmentIndicators } from "../../state/hooks/us
 import { InfoState } from "./InfoState";
 import { Modal } from "./Modal";
 import { SectionBlock } from "./SectionBlock";
+import {
+  getAggregationModeLabel,
+  getPerformanceDirectionLabel,
+  getScopeTypeLabel,
+} from "../presentation/labels";
 
 type AdminDepartmentsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -337,7 +342,7 @@ export function AdminDepartmentsWorkspace({
 
                     <div>
                       <span className="si-admin-detail-card__label">Agregação</span>
-                      <strong>{selectedDepartment.aggregation_mode}</strong>
+                      <strong>{getAggregationModeLabel(selectedDepartment.aggregation_mode)}</strong>
                     </div>
                   </div>
                 </div>
@@ -393,7 +398,7 @@ export function AdminDepartmentsWorkspace({
 
                           <div className="si-admin-indicators-table__meta">
                             <span>{item.weight_pct}%</span>
-                            <span>{item.scope_type}</span>
+                            <span>{getScopeTypeLabel(item.scope_type)}</span>
                             <span>{item.is_active ? "Ativo" : "Inativo"}</span>
                           </div>
 
@@ -510,8 +515,12 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             >
-              <option value="consolidated">consolidated</option>
-              <option value="average_of_units">average_of_units</option>
+              <option value="consolidated">
+                {getAggregationModeLabel("consolidated")}
+              </option>
+              <option value="average_of_units">
+                {getAggregationModeLabel("average_of_units")}
+              </option>
             </select>
           </label>
 
@@ -649,8 +658,8 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             >
-              <option value="consolidated">consolidated</option>
-              <option value="per_unit">per_unit</option>
+              <option value="consolidated">{getScopeTypeLabel("consolidated")}</option>
+              <option value="per_unit">{getScopeTypeLabel("per_unit")}</option>
             </select>
           </label>
 
@@ -667,13 +676,17 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             >
-              <option value="higher_is_better">Quanto maior, melhor</option>
-              <option value="lower_is_better">Quanto menor, melhor</option>
+              <option value="higher_is_better">
+                {getPerformanceDirectionLabel("higher_is_better")}
+              </option>
+              <option value="lower_is_better">
+                {getPerformanceDirectionLabel("lower_is_better")}
+              </option>
             </select>
           </label>
 
           <label className="si-admin-form-field">
-            <span>Source key</span>
+            <span>Chave da fonte</span>
             <input
               value={indicatorForm.source_key}
               onChange={(event) =>

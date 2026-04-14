@@ -12,6 +12,9 @@ import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIn
 import type { SettingsDashboardData } from "../../data/types/settingsDashboard";
 import { DepartmentsListPanel } from "../components/DepartmentsListPanel";
 import { GoalYearsListPanel } from "../components/GoalYearsListPanel";
+import {
+  getMetaSourceLabel,
+} from "../presentation/labels";
 
 type SettingsPageProps = {
   getAccessToken?: () => string | undefined;
@@ -36,7 +39,7 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
         id: item.department_id,
         departmentName: item.department_name,
         weightPct: item.weight_pct,
-        note: "Bloco legado de overview. A edição principal agora ocorre via Departamentos.",
+        note: "Bloco legado do painel. A edição principal agora ocorre via departamentos.",
       })),
       goals: settings.data.goals.items.map((item) => ({
         id: item.department_id,
@@ -80,7 +83,7 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
         },
       ],
       meta: {
-        source: settings.data.meta.source,
+        source: getMetaSourceLabel(settings.data.meta.source),
         updatedAt: settings.data.meta.updated_at,
         updatedByEmail: settings.data.meta.updated_by_email,
       },
@@ -90,7 +93,7 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
   return (
     <div className="si-settings-page">
       <PageHeader
-        eyebrow="Strategic Indicators"
+        eyebrow="Indicadores Estratégicos"
         title="Administração do módulo"
         description="Central administrativa do modelo novo: departamentos, indicadores estruturais, metas anuais, parâmetros globais e auditoria."
       />
@@ -135,12 +138,12 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
         {activeTab === "overview" ? (
           <SectionBlock
             title="Painel administrativo"
-            description="Resumo executivo do estado atual do módulo. Os blocos de pesos e goals abaixo são overview de leitura, não a base principal de edição."
+            description="Resumo executivo do estado atual do módulo. Os blocos de pesos e metas abaixo são visão de leitura, não a base principal de edição."
           >
             {!dashboardData ? (
               <InfoState
                 title="Carregando painel administrativo"
-                description="Aguarde enquanto o overview do módulo é carregado."
+                description="Aguarde enquanto o painel do módulo é carregado."
               />
             ) : (
               <>
@@ -171,7 +174,7 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
                       {dashboardData.meta.source}
                     </strong>
                     <p>
-                      O backend ainda pode retornar blocos legados para overview, mas a escrita principal permanece no modelo novo.
+                      O backend ainda pode retornar blocos legados para o painel, mas a escrita principal permanece no modelo novo.
                     </p>
                   </article>
 

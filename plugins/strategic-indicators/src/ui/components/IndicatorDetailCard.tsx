@@ -1,25 +1,31 @@
 import type { DepartmentIndicator } from "../../data/types/departmentDetails";
+import {
+  getGoalModeLabel,
+  getGoalPeriodicityLabel,
+  getPerformanceDirectionLabel,
+} from "../presentation/labels";
 
 type IndicatorDetailCardProps = {
   indicator: DepartmentIndicator;
 };
 
+function getRealizedKeyLabel(key: string) {
+  switch (key) {
+    case "consolidated":
+      return "Consolidado";
+    case "per_unit":
+      return "Por unidade";
+    case "average_of_units":
+      return "Média das unidades";
+    default:
+      return key;
+  }
+}
+
 function formatRealized(realized: Record<string, number>) {
   return Object.entries(realized)
-    .map(([key, value]) => `${key}: ${value}`)
+    .map(([key, value]) => `${getRealizedKeyLabel(key)}: ${value}`)
     .join(" · ");
-}
-
-function getGoalModeLabel(value: DepartmentIndicator["goalMode"]) {
-  return value === "monthly_curve" ? "Curva mensal" : "Meta padrão";
-}
-
-function getPerformanceDirectionLabel(
-  value: DepartmentIndicator["performanceDirection"],
-) {
-  return value === "lower_is_better"
-    ? "Quanto menor, melhor"
-    : "Quanto maior, melhor";
 }
 
 export function IndicatorDetailCard({
@@ -44,7 +50,7 @@ export function IndicatorDetailCard({
       <div className="si-indicator-card__goal">
         <span className="si-indicator-card__goal-label">Periodicidade</span>
         <strong className="si-indicator-card__goal-value">
-          {indicator.goalPeriodicity}
+          {getGoalPeriodicityLabel(indicator.goalPeriodicity)}
         </strong>
       </div>
 

@@ -10,6 +10,10 @@ import type {
   FillMissingStrategicIndicatorGoalsRequest,
   StrategicIndicatorGoalItem,
 } from "../../data/types/indicatorGoals";
+import {
+  getGoalModeLabel,
+  getGoalPeriodicityLabel,
+} from "../presentation/labels";
 
 type GoalYearManagementModalProps = {
   open: boolean;
@@ -17,10 +21,6 @@ type GoalYearManagementModalProps = {
   onClose: () => void;
   getAccessToken?: () => string | undefined;
 };
-
-function getGoalModeLabel(value: string) {
-  return value === "monthly_curve" ? "Curva mensal" : "Meta padrão";
-}
 
 export function GoalYearManagementModal({
   open,
@@ -173,7 +173,7 @@ export function GoalYearManagementModal({
                   onChange={(event) =>
                     goals.setSelectedDepartmentId(event.target.value)
                   }
-                  placeholder="financial, hr..."
+                  placeholder="ID do departamento"
                 />
               </label>
 
@@ -184,7 +184,7 @@ export function GoalYearManagementModal({
                   onChange={(event) =>
                     goals.setSelectedIndicatorId(event.target.value)
                   }
-                  placeholder="financial-ebitda..."
+                  placeholder="ID do indicador"
                 />
               </label>
             </div>
@@ -215,7 +215,7 @@ export function GoalYearManagementModal({
                     <div className="si-admin-card-list__content">
                       <strong>{item.indicator_name || item.indicator_id}</strong>
                       <p>
-                        {item.goal_label} · {item.goal_periodicity} ·{" "}
+                        {item.goal_label} · {getGoalPeriodicityLabel(item.goal_periodicity)} ·{" "}
                         {getGoalModeLabel(item.goal_mode)}
                       </p>
                       <small>
@@ -259,7 +259,7 @@ export function GoalYearManagementModal({
                         Ano {item.goal_year} · v{item.version}
                       </strong>
                       <span>
-                        {item.goal_label} · {item.goal_periodicity} ·{" "}
+                        {item.goal_label} · {getGoalPeriodicityLabel(item.goal_periodicity)} ·{" "}
                         {getGoalModeLabel(item.goal_mode)}
                       </span>
                     </div>

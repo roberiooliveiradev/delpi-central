@@ -4,6 +4,10 @@ import {
   fetchStrategicIndicatorsChangeRequests,
 } from "../../data/api/strategicIndicatorsSettingsAuditApi";
 import type { StrategicIndicatorsChangeRequest } from "../../data/types/settingsAudit";
+import {
+  getAuditEntityKeyLabel,
+  getChangeRequestStatusLabel,
+} from "../presentation/labels";
 
 type ChangeRequestsWorkspacePanelProps = {
   getAccessToken?: () => string | undefined;
@@ -90,10 +94,18 @@ export function ChangeRequestsWorkspacePanel({
           <label className="si-change-requests__field">
             <span>Bloco alvo</span>
             <select value={targetBlock} onChange={(e) => setTargetBlock(e.target.value)}>
-              <option value="weights.departments">Pesos</option>
-              <option value="goals.summary">Metas</option>
-              <option value="parameters.global">Parâmetros</option>
-              <option value="governance.notes">Governança</option>
+              <option value="weights.departments">
+                {getAuditEntityKeyLabel("weights.departments")}
+              </option>
+              <option value="goals.summary">
+                {getAuditEntityKeyLabel("goals.summary")}
+              </option>
+              <option value="parameters.global">
+                {getAuditEntityKeyLabel("parameters.global")}
+              </option>
+              <option value="governance.notes">
+                {getAuditEntityKeyLabel("governance.notes")}
+              </option>
             </select>
           </label>
 
@@ -128,11 +140,11 @@ export function ChangeRequestsWorkspacePanel({
                 <article key={item.id} className="si-change-requests__card">
                   <div className="si-change-requests__card-top">
                     <strong>{item.request_code}</strong>
-                    <span>{item.status}</span>
+                    <span>{getChangeRequestStatusLabel(item.status)}</span>
                   </div>
                   <div className="si-change-requests__card-title">{item.title}</div>
                   <div className="si-change-requests__card-meta">
-                    <span>Bloco: {item.target_block}</span>
+                    <span>Bloco: {getAuditEntityKeyLabel(item.target_block)}</span>
                     <span>Criado em: {new Date(item.created_at).toLocaleString("pt-BR")}</span>
                   </div>
                   <p className="si-change-requests__card-description">
