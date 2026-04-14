@@ -18,6 +18,7 @@ class EngineeringMetricsSnapshot:
     end_date: str | None
     lmp_projects_on_time_pct: float
     transforma_mais_financial_gain: float
+    requested_branch: str | None = None
 
 
 class EngineeringMetricsSnapshotService:
@@ -29,15 +30,19 @@ class EngineeringMetricsSnapshotService:
     ) -> None:
         self._lmp_dashboard_use_case = lmp_dashboard_use_case
         self._transforma_mais_summary_use_case = transforma_mais_summary_use_case
-        self._cache: dict[tuple[str | None, str | None], EngineeringMetricsSnapshot] = {}
+        self._cache: dict[
+            tuple[str | None, str | None, str | None],
+            EngineeringMetricsSnapshot,
+        ] = {}
 
     def get_snapshot(
         self,
         *,
         start_date: str | None,
         end_date: str | None,
+        branch: str | None = None,
     ) -> EngineeringMetricsSnapshot:
-        key = (start_date, end_date)
+        key = (start_date, end_date, branch)
         cached = self._cache.get(key)
         if cached is not None:
             return cached
@@ -46,18 +51,20 @@ class EngineeringMetricsSnapshotService:
             ListLMPRequest(
                 date_start=start_date,
                 date_end=end_date,
-                branch=None,
+                branch=branch,
                 page=None,
                 page_size=None,
             ),
             status_filter="Todos",
         )
         lmp_summary = lmp_result.get("summary", {})
-        lmp_projects_on_time_pct = float(lmp_summary.get("percent_dentro_prazo", 0) or 0)
+        lmp_projects_on_time_pct = float(
+            lmp_summary.get("percent_dentro_prazo", 0) or 0
+        )
 
         transforma_summary = self._transforma_mais_summary_use_case.execute(
             ProcessSummaryRequest(
-                filial_id=None,
+                filial_id=branch,
                 start_date=start_date,
                 end_date=end_date,
             )
@@ -74,6 +81,7 @@ class EngineeringMetricsSnapshotService:
             end_date=end_date,
             lmp_projects_on_time_pct=lmp_projects_on_time_pct,
             transforma_mais_financial_gain=transforma_mais_financial_gain,
+            requested_branch=branch,
         )
         self._cache[key] = snapshot
         return snapshot

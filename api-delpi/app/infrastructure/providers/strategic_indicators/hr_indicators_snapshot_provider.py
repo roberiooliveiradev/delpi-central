@@ -23,19 +23,22 @@ class HrIndicatorsSnapshotProvider(
         *,
         start_date: str | None = None,
         end_date: str | None = None,
+        branch: str | None = None,
     ) -> dict:
         try:
             snapshot = self._hr_metrics_snapshot_service.get_snapshot(
                 start_date=start_date,
                 end_date=end_date,
+                branch=branch,
             )
         except Exception as exc:
+            scope = branch or "consolidated"
             return {
                 "items": [],
                 "errors": [
                     {
                         "department_id": "hr",
-                        "source": "hr_snapshot",
+                        "source": f"hr_snapshot_{scope}",
                         "message": str(exc),
                     }
                 ],
@@ -56,21 +59,30 @@ class HrIndicatorsSnapshotProvider(
             {
                 "department_id": "hr",
                 "indicator_id": "hr-absenteeism",
-                "value": self._average_branch_values(absenteeism_unit_values),
+                "value": self._resolve_indicator_value(
+                    unit_values=absenteeism_unit_values,
+                    branch=branch,
+                ),
                 "source": "portal_rh_absenteeism",
                 "unit_values": absenteeism_unit_values,
             },
             {
                 "department_id": "hr",
                 "indicator_id": "hr-turnover",
-                "value": self._average_branch_values(turnover_unit_values),
+                "value": self._resolve_indicator_value(
+                    unit_values=turnover_unit_values,
+                    branch=branch,
+                ),
                 "source": "portal_rh_turnover",
                 "unit_values": turnover_unit_values,
             },
             {
                 "department_id": "hr",
                 "indicator_id": "hr-training-hours",
-                "value": self._average_branch_values(training_unit_values),
+                "value": self._resolve_indicator_value(
+                    unit_values=training_unit_values,
+                    branch=branch,
+                ),
                 "source": "portal_rh_training",
                 "unit_values": training_unit_values,
             },
@@ -105,8 +117,17 @@ class HrIndicatorsSnapshotProvider(
             "errors": [],
         }
 
-    def _average_branch_values(self, values: dict[str, float]) -> float:
-        valid = [float(value) for value in values.values()]
+    def _resolve_indicator_value(
+        self,
+        *,
+        unit_values: dict[str, float],
+        branch: str | None,
+    ) -> float:
+        if branch:
+            value = unit_values.get(branch)
+            return round(float(value), 2) if value is not None else 0.0
+
+        valid = [float(value) for value in unit_values.values()]
         if not valid:
             return 0.0
         return round(sum(valid) / len(valid), 2)

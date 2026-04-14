@@ -1,5 +1,3 @@
-# app/infrastructure/persistence/totvs/ppm_repositories/ppm_query_repository.py
-
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
@@ -16,18 +14,19 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             return "QI2_TIPO = '1'"
         return "QI2_TIPO IN ('2','3')"
 
-
     def get_summary(self, request) -> PpmSummary:
         qb_nc = QueryBuilder()
         qb_nc.raw("D_E_L_E_T_ = ''")
-        qb_nc.eq("QI2_FILIAL", request.branch)
+        if request.branch:
+            qb_nc.eq("QI2_FILIAL", request.branch)
         qb_nc.date_range("QI2_REGIST", request.date_start, request.date_end)
         qb_nc.raw(self._type_filter(request.type))
         where_nc, params_nc = qb_nc.build()
 
         qb_prod = QueryBuilder()
         qb_prod.raw("D_E_L_E_T_ = ''")
-        qb_prod.eq("H6_FILIAL", request.branch)
+        if request.branch:
+            qb_prod.eq("H6_FILIAL", request.branch)
         qb_prod.date_range("H6_DATAINI", request.date_start, request.date_end)
         where_prod, params_prod = qb_prod.build()
 
@@ -79,7 +78,8 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
     def list_items(self, request) -> Page[PpmItem]:
         qb = QueryBuilder()
         qb.raw("D_E_L_E_T_ = ''")
-        qb.eq("QI2_FILIAL", request.branch)
+        if request.branch:
+            qb.eq("QI2_FILIAL", request.branch)
         qb.date_range("QI2_REGIST", request.date_start, request.date_end)
         qb.raw(self._type_filter(request.type))
 

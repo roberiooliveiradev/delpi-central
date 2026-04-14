@@ -13,7 +13,10 @@ class SalesConversionRateRepository(BaseRepository, SalesConversionRateRepositor
     ) -> SalesConversionRate:
         qb = QueryBuilder()
         qb.raw("AD1.D_E_L_E_T_ = ''")
-        qb.eq("AD1.AD1_FILIAL", request.branch)
+
+        if request.branch:
+            qb.eq("AD1.AD1_FILIAL", request.branch)
+
         qb.date_range("AD1.AD1_DATA", request.start_date, request.end_date)
 
         where_clause, where_params = qb.build()

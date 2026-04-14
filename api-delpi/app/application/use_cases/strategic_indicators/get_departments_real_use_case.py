@@ -12,6 +12,8 @@ from app.domain.services.strategic_indicators_calculator import (
 
 @dataclass
 class GetStrategicIndicatorsDepartmentsRealRequest:
+    department_id: str | None = None
+    branch: str | None = None
     start_date: str | None = None
     end_date: str | None = None
     competence: str | None = None
@@ -37,6 +39,8 @@ class GetStrategicIndicatorsDepartmentsRealUseCase:
             competence=request.competence,
             start_date=request.start_date,
             end_date=request.end_date,
+            department_id=request.department_id,
+            branch=request.branch,
         )
 
         previous_by_id = {

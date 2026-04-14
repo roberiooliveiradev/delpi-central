@@ -40,7 +40,7 @@ class FinancialMetricsSnapshotService:
         self._sheets_repository = sheets_repository
         self._financial_query_repository = financial_query_repository
         self._cache: dict[
-            tuple[str | None, str | None],
+            tuple[str | None, str | None, str | None],
             FinancialMetricsSnapshot,
         ] = {}
 
@@ -49,8 +49,9 @@ class FinancialMetricsSnapshotService:
         *,
         start_date: str | None,
         end_date: str | None,
+        branch: str | None = None,
     ) -> FinancialMetricsSnapshot:
-        key = (start_date, end_date)
+        key = (start_date, end_date, branch)
         cached = self._cache.get(key)
         if cached is not None:
             return cached
@@ -75,14 +76,15 @@ class FinancialMetricsSnapshotService:
             ebitda_rows=ebitda_rows,
             fixed_cost_rows=fixed_cost_rows,
             receivables_rows=receivables_rows,
+            branch=branch,
         )
 
         snapshots: list[FinancialBranchSnapshot] = []
 
-        for branch in branches:
+        for branch_code in branches:
             rol_payload = self._financial_query_repository.get_rol(
                 GetRolRequest(
-                    branch=branch,
+                    branch=branch_code,
                     start_date=start_date,
                     end_date=end_date,
                 )
@@ -91,19 +93,19 @@ class FinancialMetricsSnapshotService:
 
             ebitda_value = self._average_numeric_field(
                 rows=ebitda_rows,
-                branch=branch,
+                branch=branch_code,
                 field_name="ebitida",
             )
 
             fixed_cost_value = self._average_numeric_field(
                 rows=fixed_cost_rows,
-                branch=branch,
+                branch=branch_code,
                 field_name="custos_fixos",
             )
 
             pmr_days = self._average_numeric_field(
                 rows=receivables_rows,
-                branch=branch,
+                branch=branch_code,
                 field_name="prazo_medio_recebimento",
             )
 
@@ -118,7 +120,7 @@ class FinancialMetricsSnapshotService:
 
             snapshots.append(
                 FinancialBranchSnapshot(
-                    branch=branch,
+                    branch=branch_code,
                     rol_with_ipi=rol_with_ipi,
                     ebitda_value=round(ebitda_value, 2),
                     fixed_cost_value=round(fixed_cost_value, 2),
@@ -136,19 +138,37 @@ class FinancialMetricsSnapshotService:
         self._cache[key] = snapshot
         return snapshot
 
+    def get_branch_snapshot(
+        self,
+        *,
+        branch: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> FinancialBranchSnapshot | None:
+        snapshot = self.get_snapshot(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
+        return snapshot.branches[0] if snapshot.branches else None
+
     def _resolve_branches(
         self,
         *,
         ebitda_rows: list[dict],
         fixed_cost_rows: list[dict],
         receivables_rows: list[dict],
+        branch: str | None,
     ) -> list[str]:
+        if branch:
+            return [branch]
+
         branches = set()
 
         for row in ebitda_rows + fixed_cost_rows + receivables_rows:
-            branch = self._normalize_branch(row.get("filial"))
-            if branch:
-                branches.add(branch)
+            branch_code = self._normalize_branch(row.get("filial"))
+            if branch_code:
+                branches.add(branch_code)
 
         return sorted(branches)
 

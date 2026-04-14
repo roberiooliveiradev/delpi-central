@@ -70,11 +70,11 @@ class StrategicIndicatorsSnapshotService:
         self._calculator = calculator
 
         self._catalog_cache: dict[
-            tuple[str | None, str | None, str | None, str | None],
+            tuple[str | None, str | None, str | None, str | None, str | None],
             StrategicIndicatorsCatalogSnapshot,
         ] = {}
         self._measurements_cache: dict[
-            tuple[str, str, str | None],
+            tuple[str, str, str | None, str | None],
             tuple[list[StrategicIndicatorMeasuredValue], list[dict]],
         ] = {}
 
@@ -85,8 +85,9 @@ class StrategicIndicatorsSnapshotService:
         start_date: str | None = None,
         end_date: str | None = None,
         department_id: str | None = None,
+        branch: str | None = None,
     ) -> StrategicIndicatorsCatalogSnapshot:
-        cache_key = (competence, start_date, end_date, department_id)
+        cache_key = (competence, start_date, end_date, department_id, branch)
         cached = self._catalog_cache.get(cache_key)
         if cached is not None:
             return cached
@@ -132,6 +133,7 @@ class StrategicIndicatorsSnapshotService:
         start_date: str | None = None,
         end_date: str | None = None,
         department_id: str | None = None,
+        branch: str | None = None,
     ) -> StrategicIndicatorsPeriodSnapshot:
         period = resolve_period(
             competence=competence,
@@ -144,6 +146,7 @@ class StrategicIndicatorsSnapshotService:
             start_date=period.start_date,
             end_date=period.end_date,
             department_id=department_id,
+            branch=branch,
         )
 
         measurements, measurement_errors = self._get_measurements(
@@ -151,6 +154,7 @@ class StrategicIndicatorsSnapshotService:
             end_date=period.end_date,
             competence=period.competence,
             department_id=department_id,
+            branch=branch,
         )
 
         calculated_indicators = self._calculator.calculate_indicators(
@@ -213,12 +217,14 @@ class StrategicIndicatorsSnapshotService:
         start_date: str | None = None,
         end_date: str | None = None,
         department_id: str | None = None,
+        branch: str | None = None,
     ) -> StrategicIndicatorsComparativeSnapshot:
         current = self.get_period_snapshot(
             competence=competence,
             start_date=start_date,
             end_date=end_date,
             department_id=department_id,
+            branch=branch,
         )
 
         prev = previous_period(current.period)
@@ -228,6 +234,7 @@ class StrategicIndicatorsSnapshotService:
             start_date=prev.start_date,
             end_date=prev.end_date,
             department_id=department_id,
+            branch=branch,
         )
 
         return StrategicIndicatorsComparativeSnapshot(
@@ -236,6 +243,7 @@ class StrategicIndicatorsSnapshotService:
                 start_date=current.period.start_date,
                 end_date=current.period.end_date,
                 department_id=department_id,
+                branch=branch,
             ),
             current=current,
             previous=previous,
@@ -246,6 +254,7 @@ class StrategicIndicatorsSnapshotService:
         *,
         periods: Iterable[ResolvedPeriod],
         department_id: str | None = None,
+        branch: str | None = None,
     ) -> list[StrategicIndicatorsPeriodSnapshot]:
         return [
             self.get_period_snapshot(
@@ -253,6 +262,7 @@ class StrategicIndicatorsSnapshotService:
                 start_date=period.start_date,
                 end_date=period.end_date,
                 department_id=department_id,
+                branch=branch,
             )
             for period in periods
         ]
@@ -264,8 +274,9 @@ class StrategicIndicatorsSnapshotService:
         end_date: str,
         competence: str | None,
         department_id: str | None,
+        branch: str | None,
     ) -> tuple[list[StrategicIndicatorMeasuredValue], list[dict]]:
-        key = (start_date, end_date, department_id)
+        key = (start_date, end_date, department_id, branch)
 
         cached = self._measurements_cache.get(key)
         if cached is not None:
@@ -276,6 +287,7 @@ class StrategicIndicatorsSnapshotService:
             end_date=end_date,
             competence=competence,
             department_id=department_id,
+            branch=branch,
         )
         self._measurements_cache[key] = result
         return result

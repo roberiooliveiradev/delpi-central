@@ -28,6 +28,8 @@ class GetStrategicIndicatorsExecutiveSummaryRealUseCase:
             competence=request.competence,
             start_date=request.start_date,
             end_date=request.end_date,
+            department_id=request.department_id,
+            branch=request.branch,
         )
 
         previous_by_id = {

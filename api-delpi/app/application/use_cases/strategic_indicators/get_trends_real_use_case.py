@@ -30,7 +30,11 @@ class GetStrategicIndicatorsTrendsRealUseCase:
         reference = self._parse_competence(request.competence)
         periods = self._build_periods(reference, months)
 
-        snapshots = self._snapshot_service.get_series_snapshot(periods=periods)
+        snapshots = self._snapshot_service.get_series_snapshot(
+            periods=periods,
+            department_id=request.department_id,
+            branch=request.branch,
+        )
 
         monthly_points: list[dict] = []
         monthly_departments: dict[str, list[dict]] = {}

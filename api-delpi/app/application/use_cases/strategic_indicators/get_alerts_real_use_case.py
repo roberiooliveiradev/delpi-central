@@ -12,6 +12,8 @@ from app.domain.ports.strategic_indicators.alerts_summary_port import (
 
 @dataclass
 class GetStrategicIndicatorsAlertsRealRequest:
+    department_id: str | None = None
+    branch: str | None = None
     start_date: str | None = None
     end_date: str | None = None
     competence: str | None = None
@@ -35,12 +37,16 @@ class GetStrategicIndicatorsAlertsRealUseCase:
             competence=request.competence,
             start_date=request.start_date,
             end_date=request.end_date,
+            department_id=request.department_id,
+            branch=request.branch,
         )
 
         catalog_snapshot = self._snapshot_service.get_catalog_snapshot(
             competence=snapshot.period.competence,
             start_date=snapshot.period.start_date,
             end_date=snapshot.period.end_date,
+            department_id=request.department_id,
+            branch=request.branch,
         )
 
         catalog_by_indicator_id = {

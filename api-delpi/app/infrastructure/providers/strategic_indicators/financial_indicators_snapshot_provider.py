@@ -23,19 +23,22 @@ class FinancialIndicatorsSnapshotProvider(
         *,
         start_date: str | None = None,
         end_date: str | None = None,
+        branch: str | None = None,
     ) -> dict:
         try:
             snapshot = self._financial_metrics_snapshot_service.get_snapshot(
                 start_date=start_date,
                 end_date=end_date,
+                branch=branch,
             )
         except Exception as exc:
+            scope = branch or "consolidated"
             return {
                 "items": [],
                 "errors": [
                     {
                         "department_id": "financial",
-                        "source": "financial_snapshot",
+                        "source": f"financial_snapshot_{scope}",
                         "message": str(exc),
                     }
                 ],
@@ -56,21 +59,30 @@ class FinancialIndicatorsSnapshotProvider(
                 {
                     "department_id": "financial",
                     "indicator_id": "financial-ebitda",
-                    "value": self._average_branch_values(ebitda_unit_values),
+                    "value": self._resolve_indicator_value(
+                        unit_values=ebitda_unit_values,
+                        branch=branch,
+                    ),
                     "source": "financial_ebitda",
                     "unit_values": ebitda_unit_values,
                 },
                 {
                     "department_id": "financial",
                     "indicator_id": "financial-fixed-cost",
-                    "value": self._average_branch_values(fixed_cost_unit_values),
+                    "value": self._resolve_indicator_value(
+                        unit_values=fixed_cost_unit_values,
+                        branch=branch,
+                    ),
                     "source": "financial_fixed_cost",
                     "unit_values": fixed_cost_unit_values,
                 },
                 {
                     "department_id": "financial",
                     "indicator_id": "financial-pmr",
-                    "value": self._average_branch_values(pmr_unit_values),
+                    "value": self._resolve_indicator_value(
+                        unit_values=pmr_unit_values,
+                        branch=branch,
+                    ),
                     "source": "financial_pmr",
                     "unit_values": pmr_unit_values,
                 },
@@ -78,8 +90,18 @@ class FinancialIndicatorsSnapshotProvider(
             "errors": [],
         }
 
-    def _average_branch_values(self, values: dict[str, float]) -> float:
-        valid = [float(value) for value in values.values()]
+    def _resolve_indicator_value(
+        self,
+        *,
+        unit_values: dict[str, float],
+        branch: str | None,
+    ) -> float:
+        if branch:
+            value = unit_values.get(branch)
+            return round(float(value), 2) if value is not None else 0.0
+
+        valid = [float(value) for value in unit_values.values()]
         if not valid:
             return 0.0
+
         return round(sum(valid) / len(valid), 2)

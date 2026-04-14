@@ -26,6 +26,10 @@ from app.application.use_cases.commercial.get_sales_conversion_rate_use_case imp
 )
 
 
+MATRIX_BRANCH_CODE = "01"
+BRANCH_BRANCH_CODE = "02"
+
+
 @dataclass(frozen=True)
 class CommercialMetricsSnapshot:
     start_date: str | None
@@ -35,6 +39,7 @@ class CommercialMetricsSnapshot:
     sales_conversion_rate_pct: float
     monthly_average_new_clients: float
     new_clients_rol_pct: float
+    requested_branch: str | None = None
 
 
 class CommercialMetricsSnapshotService:
@@ -52,50 +57,53 @@ class CommercialMetricsSnapshotService:
         self._sales_conversion_rate_use_case = sales_conversion_rate_use_case
         self._new_clients_average_use_case = new_clients_average_use_case
         self._new_clients_rol_pct_use_case = new_clients_rol_pct_use_case
-        self._cache: dict[tuple[str | None, str | None], CommercialMetricsSnapshot] = {}
+        self._cache: dict[
+            tuple[str | None, str | None, str | None],
+            CommercialMetricsSnapshot,
+        ] = {}
 
     def get_snapshot(
         self,
         *,
         start_date: str | None,
         end_date: str | None,
+        branch: str | None = None,
     ) -> CommercialMetricsSnapshot:
-        key = (start_date, end_date)
+        key = (start_date, end_date, branch)
         cached = self._cache.get(key)
         if cached is not None:
             return cached
 
-        matrix_target_result = self._head_office_rol_target_use_case.execute(
-            CommercialTargetRequest(
-                branch="01",
-                start_date=start_date,
-                end_date=end_date,
-            )
+        matrix_rol_value = self._load_rol_value(
+            use_case=self._head_office_rol_target_use_case,
+            branch=MATRIX_BRANCH_CODE,
+            start_date=start_date,
+            end_date=end_date,
         )
-        branch_target_result = self._branch_rol_target_use_case.execute(
-            CommercialTargetRequest(
-                branch="02",
-                start_date=start_date,
-                end_date=end_date,
-            )
+        branch_rol_value = self._load_rol_value(
+            use_case=self._branch_rol_target_use_case,
+            branch=BRANCH_BRANCH_CODE,
+            start_date=start_date,
+            end_date=end_date,
         )
+
         sales_conversion_result = self._sales_conversion_rate_use_case.execute(
             SalesConversionRateRequest(
-                branch=None,
+                branch=branch,
                 start_date=start_date,
                 end_date=end_date,
             )
         )
         new_clients_average_result = self._new_clients_average_use_case.execute(
             NewClientsAverageRequest(
-                branch=None,
+                branch=branch,
                 start_date=start_date,
                 end_date=end_date,
             )
         )
         new_clients_rol_result = self._new_clients_rol_pct_use_case.execute(
             NewClientsRolPctRequest(
-                branch=None,
+                branch=branch,
                 start_date=start_date,
                 end_date=end_date,
             )
@@ -104,14 +112,8 @@ class CommercialMetricsSnapshotService:
         snapshot = CommercialMetricsSnapshot(
             start_date=start_date,
             end_date=end_date,
-            matrix_rol_value=self._extract_number(
-                matrix_target_result,
-                ["rol"],
-            ) or 0.0,
-            branch_rol_value=self._extract_number(
-                branch_target_result,
-                ["rol"],
-            ) or 0.0,
+            matrix_rol_value=round(float(matrix_rol_value or 0.0), 2),
+            branch_rol_value=round(float(branch_rol_value or 0.0), 2),
             sales_conversion_rate_pct=self._extract_number(
                 sales_conversion_result,
                 ["sales_conversion_rate_pct"],
@@ -124,9 +126,27 @@ class CommercialMetricsSnapshotService:
                 new_clients_rol_result,
                 ["new_clients_rol_pct"],
             ) or 0.0,
+            requested_branch=branch,
         )
         self._cache[key] = snapshot
         return snapshot
+
+    def _load_rol_value(
+        self,
+        *,
+        use_case: GetRolTargetPctUseCase,
+        branch: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> float:
+        result = use_case.execute(
+            CommercialTargetRequest(
+                branch=branch,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        )
+        return self._extract_number(result, ["rol"]) or 0.0
 
     def _extract_number(self, payload, candidate_keys: list[str]) -> float | None:
         if payload is None:

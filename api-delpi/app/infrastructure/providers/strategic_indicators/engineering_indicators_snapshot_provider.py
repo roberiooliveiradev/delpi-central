@@ -23,23 +23,28 @@ class EngineeringIndicatorsSnapshotProvider(
         *,
         start_date: str | None = None,
         end_date: str | None = None,
+        branch: str | None = None,
     ) -> dict:
         try:
             snapshot = self._engineering_metrics_snapshot_service.get_snapshot(
                 start_date=start_date,
                 end_date=end_date,
+                branch=branch,
             )
         except Exception as exc:
+            scope = branch or "consolidated"
             return {
                 "items": [],
                 "errors": [
                     {
                         "department_id": "engineering",
-                        "source": "engineering_snapshot",
+                        "source": f"engineering_snapshot_{scope}",
                         "message": str(exc),
                     }
                 ],
             }
+
+        unit_key = branch or "consolidated"
 
         return {
             "items": [
@@ -48,14 +53,18 @@ class EngineeringIndicatorsSnapshotProvider(
                     "indicator_id": "engineering-projects-on-time",
                     "value": snapshot.lmp_projects_on_time_pct,
                     "source": "lmp",
-                    "unit_values": None,
+                    "unit_values": {
+                        unit_key: snapshot.lmp_projects_on_time_pct,
+                    },
                 },
                 {
                     "department_id": "engineering",
                     "indicator_id": "engineering-transforma-plus",
                     "value": snapshot.transforma_mais_financial_gain,
                     "source": "transforma_mais",
-                    "unit_values": None,
+                    "unit_values": {
+                        unit_key: snapshot.transforma_mais_financial_gain,
+                    },
                 },
             ],
             "errors": [],

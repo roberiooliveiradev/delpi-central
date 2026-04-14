@@ -81,7 +81,7 @@ from app.composition.strategic_indicators_composer import (
     build_duplicate_strategic_indicators_indicator_goals_year_use_case,
     build_fill_missing_strategic_indicators_indicator_goals_use_case,
     build_list_strategic_indicators_goal_years_overview_use_case,
-    build_activate_strategic_indicators_admin_department_use_case
+    build_activate_strategic_indicators_admin_department_use_case,
 )
 
 router = APIRouter(
@@ -140,6 +140,8 @@ def strategic_indicators_health():
 @router.get("/executive-summary")
 @require_permission("strategic-indicators.view")
 def get_strategic_indicators_executive_summary(
+    department_id: str | None = Query(None),
+    branch: str | None = Query(None),
     competence: str | None = Query(None),
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
@@ -148,6 +150,8 @@ def get_strategic_indicators_executive_summary(
         use_case = build_get_strategic_indicators_executive_summary_use_case()
         result = use_case.execute(
             GetExecutiveSummaryRealRequest(
+                department_id=department_id,
+                branch=branch,
                 competence=competence,
                 start_date=start_date,
                 end_date=end_date,
@@ -307,10 +311,6 @@ def submit_change_request(change_request_id: str, request: Request):
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
-# =========================================================
-# ADMIN — DEPARTAMENTOS
-# =========================================================
-
 @router.get("/admin/departments")
 @require_permission("strategic-indicators.settings.manage")
 def list_admin_departments():
@@ -408,10 +408,6 @@ def delete_admin_department(department_id: str, request: Request):
             detail=f"Falha ao excluir departamento: {exc}",
         ) from exc
 
-
-# =========================================================
-# ADMIN — INDICADORES ESTRUTURAIS
-# =========================================================
 
 @router.get("/admin/departments/{department_id}/indicators")
 @require_permission("strategic-indicators.settings.manage")
@@ -515,10 +511,6 @@ def delete_admin_department_indicator(indicator_id: str, request: Request):
             detail=f"Falha ao excluir indicador estrutural: {exc}",
         ) from exc
 
-
-# =========================================================
-# INDICATOR GOALS — UNITÁRIO
-# =========================================================
 
 @router.get("/indicator-goals")
 @require_permission("strategic-indicators.settings.manage")
@@ -696,10 +688,6 @@ def deactivate_indicator_goal(
         ) from exc
 
 
-# =========================================================
-# INDICATOR GOALS — LOTE / CICLOS
-# =========================================================
-
 @router.get("/admin/goal-years/overview")
 @require_permission("strategic-indicators.settings.manage")
 def list_goal_years_overview():
@@ -788,13 +776,11 @@ def fill_missing_indicator_goals(
         ) from exc
 
 
-# =========================================================
-# LEITURA ANALÍTICA
-# =========================================================
-
 @router.get("/departments")
 @require_permission("strategic-indicators.view")
 def get_strategic_indicators_departments(
+    department_id: str | None = Query(None),
+    branch: str | None = Query(None),
     competence: str | None = Query(None),
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
@@ -807,6 +793,8 @@ def get_strategic_indicators_departments(
         use_case = build_get_strategic_indicators_departments_use_case()
         result = use_case.execute(
             GetStrategicIndicatorsDepartmentsRealRequest(
+                department_id=department_id,
+                branch=branch,
                 competence=competence,
                 start_date=start_date,
                 end_date=end_date,
@@ -825,6 +813,7 @@ def get_strategic_indicators_departments(
 @require_permission("strategic-indicators.view")
 def get_strategic_indicators_department_details(
     department_id: str,
+    branch: str | None = Query(None),
     competence: str | None = Query(None),
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
@@ -839,6 +828,7 @@ def get_strategic_indicators_department_details(
         result = use_case.execute(
             GetStrategicIndicatorsDepartmentDetailsRealRequest(
                 department_id=department_id,
+                branch=branch,
                 competence=competence,
                 start_date=start_date,
                 end_date=end_date,
@@ -858,6 +848,7 @@ def get_strategic_indicators_department_details(
 @require_permission("strategic-indicators.view")
 def get_strategic_indicators(
     department_id: str | None = Query(None),
+    branch: str | None = Query(None),
     competence: str | None = Query(None),
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
@@ -866,6 +857,7 @@ def get_strategic_indicators(
         use_case = build_get_strategic_indicators_use_case()
         result = use_case.execute(
             department_id=department_id,
+            branch=branch,
             competence=competence,
             start_date=start_date,
             end_date=end_date,
@@ -919,6 +911,8 @@ def get_strategic_indicators(
 @router.get("/alerts")
 @require_permission("strategic-indicators.view")
 def get_strategic_indicators_alerts(
+    department_id: str | None = Query(None),
+    branch: str | None = Query(None),
     competence: str | None = Query(None),
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
@@ -931,6 +925,8 @@ def get_strategic_indicators_alerts(
         use_case = build_get_strategic_indicators_alerts_use_case()
         result = use_case.execute(
             GetStrategicIndicatorsAlertsRealRequest(
+                department_id=department_id,
+                branch=branch,
                 competence=competence,
                 start_date=start_date,
                 end_date=end_date,
@@ -947,14 +943,22 @@ def get_strategic_indicators_alerts(
 @router.get("/trends")
 @require_permission("strategic-indicators.trends.view")
 def get_strategic_indicators_trends(
+    department_id: str | None = Query(None),
+    branch: str | None = Query(None),
     competence: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
     months: int = Query(6, ge=2, le=12),
 ):
     try:
         use_case = build_get_strategic_indicators_trends_use_case()
         result = use_case.execute(
             GetStrategicIndicatorsTrendsRealRequest(
+                department_id=department_id,
+                branch=branch,
                 competence=competence,
+                start_date=start_date,
+                end_date=end_date,
                 months=months,
             )
         )

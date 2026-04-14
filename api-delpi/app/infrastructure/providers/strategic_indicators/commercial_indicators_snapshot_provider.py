@@ -23,6 +23,7 @@ class CommercialIndicatorsSnapshotProvider(
         *,
         start_date: str | None = None,
         end_date: str | None = None,
+        branch: str | None = None,
     ) -> dict:
         items: list[dict] = []
         errors: list[dict] = []
@@ -31,14 +32,16 @@ class CommercialIndicatorsSnapshotProvider(
             snapshot = self._commercial_metrics_snapshot_service.get_snapshot(
                 start_date=start_date,
                 end_date=end_date,
+                branch=branch,
             )
         except Exception as exc:
+            scope = branch or "consolidated"
             return {
                 "items": [],
                 "errors": [
                     {
                         "department_id": "commercial",
-                        "source": "commercial_snapshot",
+                        "source": f"commercial_snapshot_{scope}",
                         "message": str(exc),
                     }
                 ],
@@ -75,7 +78,7 @@ class CommercialIndicatorsSnapshotProvider(
                 indicator_id="commercial-closing-rate",
                 source="commercial_sales_conversion_rate",
                 value=snapshot.sales_conversion_rate_pct,
-                unit_values={"consolidated": snapshot.sales_conversion_rate_pct},
+                unit_values={branch or "consolidated": snapshot.sales_conversion_rate_pct},
             ),
             department_id="commercial",
             source="commercial_sales_conversion_rate",
@@ -88,7 +91,7 @@ class CommercialIndicatorsSnapshotProvider(
                 indicator_id="commercial-new-clients",
                 source="commercial_new_clients_average",
                 value=snapshot.monthly_average_new_clients,
-                unit_values={"consolidated": snapshot.monthly_average_new_clients},
+                unit_values={branch or "consolidated": snapshot.monthly_average_new_clients},
             ),
             department_id="commercial",
             source="commercial_new_clients_average",
@@ -101,7 +104,7 @@ class CommercialIndicatorsSnapshotProvider(
                 indicator_id="commercial-new-rol",
                 source="commercial_new_clients_rol_pct",
                 value=snapshot.new_clients_rol_pct,
-                unit_values={"consolidated": snapshot.new_clients_rol_pct},
+                unit_values={branch or "consolidated": snapshot.new_clients_rol_pct},
             ),
             department_id="commercial",
             source="commercial_new_clients_rol_pct",

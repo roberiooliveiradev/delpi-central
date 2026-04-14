@@ -23,33 +23,35 @@ class ProductionIndicatorsSnapshotProvider(
         *,
         start_date: str | None = None,
         end_date: str | None = None,
+        branch: str | None = None,
     ) -> dict:
         items: list[dict] = []
         errors: list[dict] = []
 
-        unit_snapshots: dict[str, object] = {}
-
-        for unit_id, branch in (("matrix", "01"), ("branch", "02")):
-            try:
-                unit_snapshots[unit_id] = self._production_metrics_snapshot_service.get_unit_snapshot(
-                    branch=branch,
-                    start_date=start_date,
-                    end_date=end_date,
-                )
-            except Exception as exc:
-                errors.append(
+        try:
+            snapshot = self._resolve_snapshot(
+                branch=branch,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        except Exception as exc:
+            scope = branch or "consolidated"
+            return {
+                "items": [],
+                "errors": [
                     {
                         "department_id": "production",
-                        "source": f"production_unit_{unit_id}",
+                        "source": f"production_snapshot_{scope}",
                         "message": str(exc),
                     }
-                )
+                ],
+            }
 
         self._collect_indicator(
             builder=lambda: self._build_measurement(
                 indicator_id="production-direct-labor",
                 source="production_direct_labor",
-                unit_snapshots=unit_snapshots,
+                snapshot=snapshot,
                 value_getter=lambda item: item.direct_labor_cost_pct,
             ),
             department_id="production",
@@ -62,7 +64,7 @@ class ProductionIndicatorsSnapshotProvider(
             builder=lambda: self._build_measurement(
                 indicator_id="production-costs",
                 source="production_cost",
-                unit_snapshots=unit_snapshots,
+                snapshot=snapshot,
                 value_getter=lambda item: item.production_cost_pct,
             ),
             department_id="production",
@@ -75,7 +77,7 @@ class ProductionIndicatorsSnapshotProvider(
             builder=lambda: self._build_measurement(
                 indicator_id="production-depreciation",
                 source="production_depreciation",
-                unit_snapshots=unit_snapshots,
+                snapshot=snapshot,
                 value_getter=lambda item: item.depreciation_pct,
             ),
             department_id="production",
@@ -88,7 +90,7 @@ class ProductionIndicatorsSnapshotProvider(
             builder=lambda: self._build_measurement(
                 indicator_id="production-oee",
                 source="production_oee",
-                unit_snapshots=unit_snapshots,
+                snapshot=snapshot,
                 value_getter=lambda item: item.oee_pct,
             ),
             department_id="production",
@@ -101,7 +103,7 @@ class ProductionIndicatorsSnapshotProvider(
             builder=lambda: self._build_measurement(
                 indicator_id="production-otd",
                 source="production_otd",
-                unit_snapshots=unit_snapshots,
+                snapshot=snapshot,
                 value_getter=lambda item: item.otd_pct,
             ),
             department_id="production",
@@ -114,6 +116,25 @@ class ProductionIndicatorsSnapshotProvider(
             "items": items,
             "errors": errors,
         }
+
+    def _resolve_snapshot(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ):
+        if branch:
+            return self._production_metrics_snapshot_service.get_unit_snapshot(
+                branch=branch,
+                start_date=start_date,
+                end_date=end_date,
+            )
+
+        return self._production_metrics_snapshot_service.get_consolidated_snapshot(
+            start_date=start_date,
+            end_date=end_date,
+        )
 
     def _collect_indicator(
         self,
@@ -140,34 +161,19 @@ class ProductionIndicatorsSnapshotProvider(
         *,
         indicator_id: str,
         source: str,
-        unit_snapshots: dict[str, object],
+        snapshot,
         value_getter,
     ) -> dict:
-        matrix_snapshot = unit_snapshots.get("matrix")
-        branch_snapshot = unit_snapshots.get("branch")
-
-        matrix_value = value_getter(matrix_snapshot) if matrix_snapshot else 0.0
-        branch_value = value_getter(branch_snapshot) if branch_snapshot else 0.0
-
-        value = self._average_values(matrix_value, branch_value) or 0.0
+        value = value_getter(snapshot)
+        normalized_value = float(value) if value is not None else 0.0
+        unit_key = snapshot.branch if snapshot.branch else "consolidated"
 
         return {
             "department_id": "production",
             "indicator_id": indicator_id,
-            "value": value,
+            "value": normalized_value,
             "source": source,
             "unit_values": {
-                "matrix": matrix_value or 0.0,
-                "branch": branch_value or 0.0,
+                unit_key: normalized_value,
             },
         }
-
-    def _average_values(
-        self,
-        first: float | None,
-        second: float | None,
-    ) -> float | None:
-        valid = [value for value in [first, second] if value is not None]
-        if not valid:
-            return None
-        return round(sum(valid) / len(valid), 2)

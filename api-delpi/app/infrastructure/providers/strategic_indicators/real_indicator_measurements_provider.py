@@ -49,7 +49,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
         self._hr_snapshot_port = hr_snapshot_port
         self._financial_snapshot_port = financial_snapshot_port
         self._cache: dict[
-            tuple[str | None, str | None, str | None],
+            tuple[str | None, str | None, str | None, str | None],
             tuple[list[StrategicIndicatorMeasuredValue], list[dict]],
         ] = {}
 
@@ -60,13 +60,13 @@ class RealStrategicIndicatorsMeasurementsProvider(
         end_date: str | None = None,
         competence: str | None = None,
         department_id: str | None = None,
+        branch: str | None = None,
     ) -> tuple[list[StrategicIndicatorMeasuredValue], list[dict]]:
-        # competence fica aqui por compatibilidade com a nova snapshot layer.
-        # A coleta real hoje continua baseada em start_date/end_date já resolvidos.
         return self.get_indicator_measurements(
             start_date=start_date,
             end_date=end_date,
             department_id=department_id,
+            branch=branch,
         )
 
     def get_indicator_measurements(
@@ -75,8 +75,9 @@ class RealStrategicIndicatorsMeasurementsProvider(
         start_date: str | None = None,
         end_date: str | None = None,
         department_id: str | None = None,
+        branch: str | None = None,
     ) -> tuple[list[StrategicIndicatorMeasuredValue], list[dict]]:
-        cache_key = (start_date, end_date, department_id)
+        cache_key = (start_date, end_date, department_id, branch)
         cached = self._cache.get(cache_key)
         if cached is not None:
             return cached
@@ -85,6 +86,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
             start_date=start_date,
             end_date=end_date,
             department_id=department_id,
+            branch=branch,
         )
 
         raw_results = self._collect_parallel(collectors)
@@ -109,6 +111,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
         start_date: str | None,
         end_date: str | None,
         department_id: str | None,
+        branch: str | None,
     ) -> list[tuple[str, Callable[[], dict]]]:
         collectors: list[tuple[str, Callable[[], dict]]] = []
 
@@ -119,6 +122,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
                     lambda: self._engineering_snapshot_port.get_engineering_indicators_snapshot(
                         start_date=start_date,
                         end_date=end_date,
+                        branch=branch,
                     ),
                 )
             )
@@ -130,6 +134,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
                     lambda: self._production_snapshot_port.get_production_indicators_snapshot(
                         start_date=start_date,
                         end_date=end_date,
+                        branch=branch,
                     ),
                 )
             )
@@ -141,6 +146,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
                     lambda: self._commercial_snapshot_port.get_commercial_indicators_snapshot(
                         start_date=start_date,
                         end_date=end_date,
+                        branch=branch,
                     ),
                 )
             )
@@ -152,6 +158,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
                     lambda: self._quality_snapshot_port.get_quality_indicators_snapshot(
                         start_date=start_date,
                         end_date=end_date,
+                        branch=branch,
                     ),
                 )
             )
@@ -163,6 +170,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
                     lambda: self._hr_snapshot_port.get_hr_indicators_snapshot(
                         start_date=start_date,
                         end_date=end_date,
+                        branch=branch,
                     ),
                 )
             )
@@ -174,6 +182,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
                     lambda: self._financial_snapshot_port.get_financial_indicators_snapshot(
                         start_date=start_date,
                         end_date=end_date,
+                        branch=branch,
                     ),
                 )
             )

@@ -26,7 +26,7 @@ from app.domain.ports.production.production_cost_repository_port import (
 
 @dataclass(frozen=True)
 class ProductionUnitMetricsSnapshot:
-    branch: str
+    branch: str | None
     start_date: str | None
     end_date: str | None
     rol_with_ipi: float
@@ -60,7 +60,7 @@ class ProductionMetricsSnapshotService:
         self._on_time_delivery_repository = on_time_delivery_repository
         self._financial_query_repository = financial_query_repository
         self._cache: dict[
-            tuple[str, str | None, str | None],
+            tuple[str | None, str | None, str | None],
             ProductionUnitMetricsSnapshot,
         ] = {}
 
@@ -68,6 +68,31 @@ class ProductionMetricsSnapshotService:
         self,
         *,
         branch: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> ProductionUnitMetricsSnapshot:
+        return self._build_snapshot(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+    def get_consolidated_snapshot(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> ProductionUnitMetricsSnapshot:
+        return self._build_snapshot(
+            branch=None,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+    def _build_snapshot(
+        self,
+        *,
+        branch: str | None,
         start_date: str | None,
         end_date: str | None,
     ) -> ProductionUnitMetricsSnapshot:

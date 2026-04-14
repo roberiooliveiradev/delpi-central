@@ -13,7 +13,10 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
     ) -> OnTimeDelivery:
         qb = QueryBuilder()
         qb.raw("OP.D_E_L_E_T_ = ''")
-        qb.eq("OP.C2_FILIAL", request.branch)
+
+        if request.branch:
+            qb.eq("OP.C2_FILIAL", request.branch)
+
         qb.raw("OP.C2_DATPRF IS NOT NULL")
         qb.raw("OP.C2_DATRF IS NOT NULL")
         qb.date_range("OP.C2_DATPRF", request.start_date, request.end_date)

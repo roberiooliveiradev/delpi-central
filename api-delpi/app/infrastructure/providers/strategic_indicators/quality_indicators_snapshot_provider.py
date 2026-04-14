@@ -40,6 +40,7 @@ class QualityIndicatorsSnapshotProvider(
         *,
         start_date: str | None = None,
         end_date: str | None = None,
+        branch: str | None = None,
     ) -> dict:
         items: list[dict] = []
         errors: list[dict] = []
@@ -48,6 +49,7 @@ class QualityIndicatorsSnapshotProvider(
             builder=lambda: self._build_internal_ppm_measurement(
                 start_date=start_date,
                 end_date=end_date,
+                branch=branch,
             ),
             department_id="quality",
             source="quality_ppm_internal",
@@ -59,6 +61,7 @@ class QualityIndicatorsSnapshotProvider(
             builder=lambda: self._build_external_ppm_measurement(
                 start_date=start_date,
                 end_date=end_date,
+                branch=branch,
             ),
             department_id="quality",
             source="quality_ppm_external",
@@ -152,10 +155,11 @@ class QualityIndicatorsSnapshotProvider(
         *,
         start_date: str | None,
         end_date: str | None,
+        branch: str | None,
     ) -> dict:
         request = PpmSummaryRequest(
             type="internal",
-            branch=None,
+            branch=branch,
             date_start=start_date,
             date_end=end_date,
         )
@@ -168,12 +172,14 @@ class QualityIndicatorsSnapshotProvider(
             ["ppm", "ppm_value", "ppm_internal", "internal_ppm", "total_ppm", "ppm_summary"],
         ) or 0.0
 
+        unit_key = branch or "consolidated"
+
         return {
             "department_id": "quality",
             "indicator_id": "quality-ppm-internal",
             "value": value,
             "source": "quality_ppm_internal",
-            "unit_values": {"consolidated": value},
+            "unit_values": {unit_key: value},
         }
 
     def _build_external_ppm_measurement(
@@ -181,10 +187,11 @@ class QualityIndicatorsSnapshotProvider(
         *,
         start_date: str | None,
         end_date: str | None,
+        branch: str | None,
     ) -> dict:
         request = PpmSummaryRequest(
             type="external",
-            branch=None,
+            branch=branch,
             date_start=start_date,
             date_end=end_date,
         )
@@ -197,12 +204,14 @@ class QualityIndicatorsSnapshotProvider(
             ["ppm", "ppm_value", "ppm_external", "external_ppm", "total_ppm", "ppm_summary"],
         ) or 0.0
 
+        unit_key = branch or "consolidated"
+
         return {
             "department_id": "quality",
             "indicator_id": "quality-ppm-external",
             "value": value,
             "source": "quality_ppm_external",
-            "unit_values": {"consolidated": value},
+            "unit_values": {unit_key: value},
         }
 
     def _build_kaizen_ideas_measurement_from_payload(

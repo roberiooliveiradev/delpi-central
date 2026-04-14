@@ -13,14 +13,20 @@ class NewClientsRolPctRepository(BaseRepository, NewClientsRolPctRepositoryPort)
     ) -> NewClientsRolPct:
         faturamento_qb = QueryBuilder()
         faturamento_qb.raw("D2.D_E_L_E_T_ = ''")
-        faturamento_qb.eq("D2.D2_FILIAL", request.branch)
+
+        if request.branch:
+            faturamento_qb.eq("D2.D2_FILIAL", request.branch)
+
         faturamento_qb.date_range("D2.D2_EMISSAO", request.start_date, request.end_date)
 
         faturamento_where_clause, faturamento_where_params = faturamento_qb.build()
 
         primeira_ov_qb = QueryBuilder()
         primeira_ov_qb.raw("AD1.D_E_L_E_T_ = ''")
-        primeira_ov_qb.eq("AD1.AD1_FILIAL", request.branch)
+
+        if request.branch:
+            primeira_ov_qb.eq("AD1.AD1_FILIAL", request.branch)
+
         primeira_ov_qb.raw("AD1.AD1_CODCLI <> ''")
         primeira_ov_qb.raw("AD1.AD1_LOJCLI <> ''")
 
@@ -125,7 +131,7 @@ class NewClientsRolPctRepository(BaseRepository, NewClientsRolPctRepositoryPort)
             + periodo_primeira_ov_where_params
             + faturamento_where_params
             + (
-                request.branch or "all",
+                request.branch or "consolidated",
                 request.start_date or "",
                 request.end_date or "",
             )

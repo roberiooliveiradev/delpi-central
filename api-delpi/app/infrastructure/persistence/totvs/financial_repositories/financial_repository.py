@@ -10,14 +10,19 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
     def get_rol(self, request: GetRolRequest) -> dict:
         qb = QueryBuilder()
         qb.raw("D2.D_E_L_E_T_ = ''")
-        qb.eq("D2.D2_FILIAL", request.branch)
+
+        if request.branch:
+            qb.eq("D2.D2_FILIAL", request.branch)
+
         qb.date_range("D2.D2_EMISSAO", request.start_date, request.end_date)
 
         where_clause, where_params = qb.build()
 
         financeiro_qb = QueryBuilder()
         financeiro_qb.raw("E1.D_E_L_E_T_ = ''")
-        financeiro_qb.eq("E1.E1_FILIAL", request.branch)
+
+        if request.branch:
+            financeiro_qb.eq("E1.E1_FILIAL", request.branch)
 
         financeiro_where_clause, financeiro_where_params = financeiro_qb.build()
 
@@ -159,7 +164,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
             AND F.E1_LOJA    = B.D2_LOJA
         """
 
-        branch_label = request.branch or "all"
+        branch_label = request.branch or "consolidated"
         params = where_params + financeiro_where_params + (branch_label,)
 
         with self as repo:

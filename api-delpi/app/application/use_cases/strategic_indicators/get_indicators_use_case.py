@@ -24,6 +24,7 @@ class GetStrategicIndicatorsUseCase:
         start_date: str | None = None,
         end_date: str | None = None,
         department_id: str | None = None,
+        branch: str | None = None,
         competence: str | None = None,
     ) -> GetStrategicIndicatorsResponse:
         snapshot = self._snapshot_service.get_period_snapshot(
@@ -31,6 +32,7 @@ class GetStrategicIndicatorsUseCase:
             start_date=start_date,
             end_date=end_date,
             department_id=department_id,
+            branch=branch,
         )
 
         departments_by_id = {

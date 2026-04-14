@@ -31,20 +31,21 @@ class HrMetricsSnapshotService:
         repository: HrMetricsRepository,
     ) -> None:
         self._repository = repository
-        self._cache: dict[tuple[str | None, str | None], HrMetricsSnapshot] = {}
+        self._cache: dict[tuple[str | None, str | None, str | None], HrMetricsSnapshot] = {}
 
     def get_snapshot(
         self,
         *,
         start_date: str | None,
         end_date: str | None,
+        branch: str | None = None,
     ) -> HrMetricsSnapshot:
-        key = (start_date, end_date)
+        key = (start_date, end_date, branch)
         cached = self._cache.get(key)
         if cached is not None:
             return cached
 
-        branches = self._repository.list_active_branches()
+        branches = self._resolve_branches(branch=branch)
         branch_snapshots: list[HrBranchSnapshot] = []
 
         for branch_code in branches:
@@ -106,6 +107,25 @@ class HrMetricsSnapshotService:
         )
         self._cache[key] = snapshot
         return snapshot
+
+    def get_branch_snapshot(
+        self,
+        *,
+        branch: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> HrBranchSnapshot | None:
+        snapshot = self.get_snapshot(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
+        return snapshot.branches[0] if snapshot.branches else None
+
+    def _resolve_branches(self, *, branch: str | None) -> list[str]:
+        if branch:
+            return [branch]
+        return self._repository.list_active_branches()
 
     def _to_float(self, value) -> float | None:
         if value is None:

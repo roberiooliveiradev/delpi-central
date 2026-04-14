@@ -13,7 +13,10 @@ class NewClientsAverageRepository(BaseRepository, NewClientsAverageRepositoryPor
     ) -> NewClientsAverage:
         qb = QueryBuilder()
         qb.raw("AD1.D_E_L_E_T_ = ''")
-        qb.eq("AD1.AD1_FILIAL", request.branch)
+
+        if request.branch:
+            qb.eq("AD1.AD1_FILIAL", request.branch)
+
         qb.raw("AD1.AD1_CODCLI <> ''")
         qb.raw("AD1.AD1_LOJCLI <> ''")
 
