@@ -5194,7 +5194,8 @@ body {
   min-height: 0;
   height: 100%;
   width: 100%;
-  overflow: visible;
+  overflow-x: clip;
+  overflow-y: visible;
   display: flex;
   flex-direction: column;
   padding: 10px;
@@ -5393,11 +5394,11 @@ body {
 
 .si-presentation-page .si-presentation-board {
   min-height: 0;
-  height: 100%;
-  overflow: hidden;
+  height: auto;
+  overflow: visible;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   padding: 18px;
   border-radius: 22px;
   background: var(--si-card-bg);
@@ -5406,7 +5407,6 @@ body {
 }
 
 .si-presentation-page .si-presentation-board__header {
-  min-height: 0;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -5429,68 +5429,136 @@ body {
    GRID DE DEPARTAMENTOS E ALERTAS
    ========================================== */
 
+.si-presentation-board__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 260px));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.si-presentation-board__summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--surface-2, #f7f7f7);
+  border: 1px solid var(--si-card-border);
+}
+
+.si-presentation-board__summary-card span {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--si-text-muted);
+}
+
+.si-presentation-board__summary-card strong {
+  font-size: 16px;
+  line-height: 1.25;
+  color: var(--si-title);
+}
+
+.si-presentation-board__summary-card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--si-text-muted);
+}
+
 .si-presentation-page .si-presentation-department-grid {
   min-height: 0;
-  height: 100%;
-  overflow: hidden;
+  height: auto;
+  overflow: visible;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  align-items: stretch;
 }
 
 .si-presentation-page .si-presentation-alert-list {
   min-height: 0;
-  height: 100%;
-  overflow: hidden;
+  height: auto;
+  overflow: visible;
   display: grid;
-  grid-template-rows: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  align-items: stretch;
 }
 
 .si-presentation-page .si-presentation-department-card,
 .si-presentation-page .si-presentation-alert-card {
-  min-height: 0;
-  overflow: hidden;
+  min-height: 180px;
+  height: auto;
+  overflow: visible;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 14px;
+  gap: 10px;
+  padding: 16px;
   border-radius: 18px;
   background: var(--surface-2, #f7f7f7);
   border: 1px solid var(--si-card-border);
 }
 
-.si-presentation-page .si-presentation-department-card h3,
+.si-presentation-page .si-presentation-department-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.si-presentation-page .si-presentation-department-card__header h3,
 .si-presentation-page .si-presentation-alert-card h3 {
   margin: 0;
   font-size: 16px;
-  line-height: 1.2;
+  line-height: 1.25;
   color: var(--si-title);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
-.si-presentation-page .si-presentation-department-card strong {
+.si-presentation-page .si-presentation-department-card__header strong {
   font-size: 20px;
   line-height: 1;
   color: var(--si-title);
+  flex-shrink: 0;
 }
 
-.si-presentation-page .si-presentation-department-card p,
-.si-presentation-page .si-presentation-alert-card p,
-.si-presentation-page .si-presentation-alert-card strong {
+.si-presentation-page .si-presentation-department-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.si-presentation-page .si-presentation-department-card__meta p,
+.si-presentation-page .si-presentation-alert-card p {
   margin: 0;
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--si-text-muted);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+}
+
+.si-presentation-alert-card__recommendation {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.si-presentation-alert-card__recommendation strong {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--si-title);
+}
+
+.si-presentation-alert-card__recommendation p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--si-text-muted);
 }
 
 /* ==========================================
@@ -5501,7 +5569,7 @@ body {
   min-height: 0;
   height: 100%;
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 12px;
@@ -5700,7 +5768,7 @@ body {
 .si-presentation-page .si-presentation-closing__grid {
   min-height: 0;
   height: 100%;
-  overflow: hidden;
+  overflow: visible;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
@@ -5750,10 +5818,10 @@ body {
 
 .si-presentation-edge-nav {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: 14px;
+  bottom: 14px;
   z-index: 20;
-  width: 56px;
+  width: 52px;
   display: flex;
   align-items: center;
   pointer-events: none;
@@ -5768,23 +5836,24 @@ body {
   pointer-events: auto;
 }
 
+
 .si-presentation-edge-nav--left {
-  left: 0;
+  left: 6px;
   justify-content: flex-start;
 }
 
 .si-presentation-edge-nav--right {
-  right: 0;
+  right: 6px;
   justify-content: flex-end;
 }
 
 .si-presentation-edge-nav__button {
   width: 48px;
   height: 48px;
-  margin: 0 4px;
+  margin: 0;
   border: 1px solid color-mix(in srgb, var(--primary, #089bdb) 22%, transparent);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface, #ffffff) 86%, transparent);
+  background: color-mix(in srgb, var(--surface, #ffffff) 92%, transparent);
   backdrop-filter: blur(8px);
   color: var(--si-title);
   display: inline-flex;
@@ -5804,12 +5873,21 @@ body {
    ========================================== */
 
 @media (max-width: 1400px) {
-  .si-presentation-page .si-presentation-department-grid {
+  .si-presentation-page .si-presentation-department-grid,
+  .si-presentation-page .si-presentation-alert-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .si-presentation-page .si-presentation-closing__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .si-presentation-board__summary-grid,
+  .si-presentation-page .si-presentation-department-grid,
+  .si-presentation-page .si-presentation-alert-list {
+    grid-template-columns: 1fr;
   }
 }
 

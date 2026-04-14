@@ -4,6 +4,13 @@ type PresentationHeroProps = {
   trendLabel: string;
 };
 
+function formatScore(value: number) {
+  return value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+}
+
 export function PresentationHero({
   igd,
   classification,
@@ -13,11 +20,11 @@ export function PresentationHero({
     <section className="si-presentation-hero">
       <div className="si-presentation-hero__content">
         <p className="si-presentation-hero__eyebrow">Painel Estratégico DELPI</p>
-        <h1 className="si-presentation-hero__value">{igd.toFixed(1)}</h1>
+        <h1 className="si-presentation-hero__value">{formatScore(igd)}</h1>
         <p className="si-presentation-hero__classification">{classification}</p>
         <p className="si-presentation-hero__description">
-          Síntese executiva do índice global, da tendência recente e das
-          prioridades mais relevantes do período.
+          Síntese executiva do IGD, com leitura consolidada do período e foco
+          imediato nos principais movimentos do resultado.
         </p>
       </div>
 

@@ -33,7 +33,7 @@ export function PresentationNarrativeStrip({
 
       <div className="si-presentation-narrative__block">
         <span className="si-presentation-narrative__label">
-          Melhor área
+          Área destaque
         </span>
         <strong className="si-presentation-narrative__value">
           {topDepartment}

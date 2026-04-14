@@ -22,7 +22,7 @@ export function PresentationClosingPanel({
           Fechamento executivo do período
         </h2>
         <span className="si-presentation-closing__subtitle">
-          síntese final para reunião
+          síntese final para reunião da direção
         </span>
       </div>
 
@@ -36,25 +36,25 @@ export function PresentationClosingPanel({
         <div className="si-presentation-closing__item">
           <span>Leitura do IGD</span>
           <strong>{classification}</strong>
-          <p>Classificação executiva consolidada do índice.</p>
+          <p>Classificação executiva consolidada do índice global do período.</p>
         </div>
 
         <div className="si-presentation-closing__item">
           <span>Direção do período</span>
           <strong>{trendLabel}</strong>
-          <p>Comportamento recente do índice global.</p>
+          <p>Comportamento recente do índice e da leitura consolidada da organização.</p>
         </div>
 
         <div className="si-presentation-closing__item">
-          <span>Maior destaque</span>
+          <span>Área destaque</span>
           <strong>{topDepartment}</strong>
-          <p>Área com melhor leitura no recorte atual.</p>
+          <p>Departamento com melhor leitura executiva no recorte atual.</p>
         </div>
 
         <div className="si-presentation-closing__item">
-          <span>Maior risco</span>
+          <span>Risco prioritário</span>
           <strong>{topRisk}</strong>
-          <p>Área que exige maior atenção imediata.</p>
+          <p>Ponto que exige maior atenção imediata na sequência da reunião.</p>
         </div>
       </div>
     </section>

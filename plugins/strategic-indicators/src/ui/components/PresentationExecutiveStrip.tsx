@@ -6,36 +6,37 @@ type PresentationExecutiveStripProps = {
   topRisk: string;
 };
 
+function formatScore(value: number) {
+  return value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+}
+
 export function PresentationExecutiveStrip({
   currentIgd,
   previousIgd,
   variationValue,
-  topDepartment,
   topRisk,
 }: PresentationExecutiveStripProps) {
   return (
     <section className="si-presentation-strip">
       <div className="si-presentation-strip__item">
         <span>IGD atual</span>
-        <strong>{currentIgd.toFixed(1)}</strong>
+        <strong>{formatScore(currentIgd)}</strong>
       </div>
 
       <div className="si-presentation-strip__item">
         <span>IGD anterior</span>
-        <strong>{previousIgd.toFixed(1)}</strong>
+        <strong>{formatScore(previousIgd)}</strong>
       </div>
 
       <div className="si-presentation-strip__item">
         <span>Variação</span>
         <strong>
           {variationValue > 0 ? "+" : ""}
-          {variationValue.toFixed(1)}
+          {formatScore(variationValue)}
         </strong>
-      </div>
-
-      <div className="si-presentation-strip__item">
-        <span>Melhor área</span>
-        <strong>{topDepartment}</strong>
       </div>
 
       <div className="si-presentation-strip__item">

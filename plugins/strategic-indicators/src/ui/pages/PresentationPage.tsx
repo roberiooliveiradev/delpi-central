@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PresentationAlertsBoard } from "../components/PresentationAlertsBoard";
 import { PresentationClosingPanel } from "../components/PresentationClosingPanel";
 import { PresentationDepartmentBoard } from "../components/PresentationDepartmentBoard";
@@ -9,9 +9,7 @@ import { PresentationNarrativeStrip } from "../components/PresentationNarrativeS
 import { PresentationTopBar } from "../components/PresentationTopBar";
 import { InfoState } from "../components/InfoState";
 import { StatusBadge } from "../components/StatusBadge";
-import { useStrategicIndicatorsAlerts } from "../../state/hooks/useStrategicIndicatorsAlerts";
-import { useStrategicIndicatorsExecutiveSummary } from "../../state/hooks/useStrategicIndicatorsExecutiveSummary";
-import { buildPresentationViewData } from "../../data/types/presentation";
+import { useStrategicIndicatorsPresentation } from "../../state/hooks/useStrategicIndicatorsPresentation";
 
 type PresentationPageProps = {
   getAccessToken?: () => string | undefined;
@@ -95,6 +93,13 @@ function getSceneTitle(scene: PresentationScene) {
   }
 }
 
+function formatScore(value: number) {
+  return value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+}
+
 export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   const [referenceMonth, setReferenceMonth] = useState(getCurrentMonthValue());
   const [mode, setMode] = useState<PresentationMode>("meeting");
@@ -106,47 +111,62 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     [referenceMonth],
   );
 
-  const executive = useStrategicIndicatorsExecutiveSummary({
+  const presentation = useStrategicIndicatorsPresentation({
     competence: referenceMonth,
     startDate,
     endDate,
+    months: 3,
     getAccessToken,
   });
 
-  const alerts = useStrategicIndicatorsAlerts({
-    competence: referenceMonth,
-    startDate,
-    endDate,
-    getAccessToken,
-  });
-
-  const loading =
-    (executive.loading && !executive.data) || (alerts.loading && !alerts.data);
-
-  const hardError =
-    !loading && (executive.error ?? alerts.error) && (!executive.data || !alerts.data);
-
-  const data =
-    executive.data && alerts.data
-      ? buildPresentationViewData({
-          executiveSummary: executive.data,
-          executiveAlerts: alerts.data.executiveAlerts,
-        })
-      : null;
-
+  const data = presentation.data;
   const orderedScenes = getSceneOrder();
   const currentSceneIndex = orderedScenes.indexOf(scene);
-  const selectedDepartment =
-    data?.departments[departmentIndex] ?? data?.departments[0] ?? null;
+
+  const selectedDepartment = useMemo(() => {
+    if (!data) {
+      return null;
+    }
+
+    const focusedId = presentation.selectedDepartmentId;
+    if (!focusedId) {
+      return data.departments[departmentIndex] ?? data.departments[0] ?? null;
+    }
+
+    return (
+      data.departments.find((department) => department.id === focusedId) ??
+      data.departments[departmentIndex] ??
+      data.departments[0] ??
+      null
+    );
+  }, [data, departmentIndex, presentation.selectedDepartmentId]);
+
+  useEffect(() => {
+    if (!data || !presentation.selectedDepartmentId) {
+      return;
+    }
+
+    const nextIndex = data.departments.findIndex(
+      (department) => department.id === presentation.selectedDepartmentId,
+    );
+
+    if (nextIndex >= 0 && nextIndex !== departmentIndex) {
+      setDepartmentIndex(nextIndex);
+    }
+  }, [data, departmentIndex, presentation.selectedDepartmentId]);
 
   function goToPrevious() {
     if (!data) return;
 
     if (scene === "department_detail") {
       if (departmentIndex > 0) {
-        setDepartmentIndex((current) => current - 1);
+        const nextIndex = departmentIndex - 1;
+        const nextDepartmentId = presentation.departmentIds[nextIndex] ?? null;
+        setDepartmentIndex(nextIndex);
+        presentation.setFocusedDepartmentId(nextDepartmentId);
         return;
       }
+
       setScene("departments");
       return;
     }
@@ -161,15 +181,20 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
     if (scene === "department_detail") {
       if (departmentIndex < data.departments.length - 1) {
-        setDepartmentIndex((current) => current + 1);
+        const nextIndex = departmentIndex + 1;
+        const nextDepartmentId = presentation.departmentIds[nextIndex] ?? null;
+        setDepartmentIndex(nextIndex);
+        presentation.setFocusedDepartmentId(nextDepartmentId);
         return;
       }
+
       setScene("alerts");
       return;
     }
 
     if (scene === "departments" && data.departments.length > 0) {
       setDepartmentIndex(0);
+      presentation.setFocusedDepartmentId(presentation.departmentIds[0] ?? null);
       setScene("department_detail");
       return;
     }
@@ -180,18 +205,49 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   }
 
   function renderDepartmentDetailScene() {
-    if (!selectedDepartment) {
+    if (!data || !selectedDepartment) {
       return (
         <div className="si-presentation-scene-card">
           <InfoState
             title="Nenhum departamento disponível"
-            description="Não há departamentos suficientes para exibir o slide detalhado."
+            description="Não há dados suficientes para exibir o detalhamento do departamento."
           />
         </div>
       );
     }
 
+    if (
+      presentation.selectedDepartmentId &&
+      data.departmentFocus &&
+      data.departmentFocus.id !== presentation.selectedDepartmentId
+    ) {
+      return (
+        <div className="si-presentation-scene-card">
+          <InfoState
+            title="Atualizando departamento"
+            description="Aguarde enquanto os indicadores e a leitura executiva do departamento selecionado são atualizados."
+          />
+        </div>
+      );
+    }
+
+    if (!data.departmentFocus) {
+      return (
+        <div className="si-presentation-scene-card">
+          <InfoState
+            title="Detalhamento indisponível"
+            description="Não foi possível carregar o detalhamento do departamento selecionado."
+          />
+        </div>
+      );
+    }
+
+    const focus = data.departmentFocus;
     const variation = selectedDepartment.current - selectedDepartment.previous;
+    const topIndicators = focus.indicators
+      .slice()
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 4);
 
     return (
       <div className="si-presentation-department-slide">
@@ -204,23 +260,17 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
               {selectedDepartment.name}
             </h2>
             <p className="si-presentation-department-slide__subtitle">
-              Slide {departmentIndex + 1} de {data?.departments.length ?? 0}
+              Slide {departmentIndex + 1} de {data.departments.length}
             </p>
           </div>
 
           <div className="si-presentation-department-slide__hero-badge">
             <StatusBadge
-              label={
-                selectedDepartment.direction === "up"
-                  ? "Melhora"
-                  : selectedDepartment.direction === "down"
-                    ? "Queda"
-                    : "Estável"
-              }
+              label={focus.variation.directionLabel}
               variant={
-                selectedDepartment.direction === "up"
+                focus.variation.direction === "up"
                   ? "success"
-                  : selectedDepartment.direction === "down"
+                  : focus.variation.direction === "down"
                     ? "warning"
                     : "neutral"
               }
@@ -231,31 +281,25 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
         <div className="si-presentation-department-slide__metrics">
           <article className="si-presentation-metric-card">
             <span>Score atual</span>
-            <strong>{selectedDepartment.current.toFixed(1)}</strong>
+            <strong>{formatScore(focus.score)}</strong>
           </article>
 
           <article className="si-presentation-metric-card">
             <span>Período anterior</span>
-            <strong>{selectedDepartment.previous.toFixed(1)}</strong>
+            <strong>{formatScore(selectedDepartment.previous)}</strong>
           </article>
 
           <article className="si-presentation-metric-card">
             <span>Variação</span>
             <strong>
               {variation > 0 ? "+" : ""}
-              {variation.toFixed(1)}
+              {formatScore(variation)}
             </strong>
           </article>
 
           <article className="si-presentation-metric-card">
-            <span>Direção</span>
-            <strong>
-              {selectedDepartment.direction === "up"
-                ? "Melhora"
-                : selectedDepartment.direction === "down"
-                  ? "Queda"
-                  : "Estável"}
-            </strong>
+            <span>Contribuição no IGD</span>
+            <strong>{formatScore(focus.contribution)}</strong>
           </article>
         </div>
 
@@ -265,26 +309,56 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
               Leitura executiva
             </span>
             <strong className="si-presentation-scene-card__value">
-              {selectedDepartment.name}
+              {focus.classification}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Departamento em evidência para aprofundamento executivo no período.
+              {focus.strategicSummary ||
+                "Departamento em evidência para aprofundamento executivo no período."}
             </p>
           </article>
 
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Principal mensagem
+              Agregação do departamento
             </span>
             <strong className="si-presentation-scene-card__value">
-              {variation > 0
-                ? "Evolução positiva"
-                : variation < 0
-                  ? "Exige atenção"
-                  : "Estabilidade"}
+              {focus.aggregationMode}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Comparativo direto com o período anterior para orientar a reunião.
+              Peso no IGD: {formatScore(focus.weightInIgd)}% · {focus.units.length} unidade(s) considerada(s).
+            </p>
+          </article>
+
+          <article className="si-presentation-scene-card">
+            <span className="si-presentation-scene-card__label">
+              Indicadores que exigem atenção
+            </span>
+            <strong className="si-presentation-scene-card__value">
+              {topIndicators.length}
+            </strong>
+            <p className="si-presentation-scene-card__text">
+              {topIndicators.length > 0
+                ? topIndicators
+                    .map(
+                      (indicator) =>
+                        `${indicator.name} (${formatScore(indicator.score)})`,
+                    )
+                    .join(" • ")
+                : "Nenhum indicador crítico identificado para o período."}
+            </p>
+          </article>
+
+          <article className="si-presentation-scene-card">
+            <span className="si-presentation-scene-card__label">
+              Meta e direção de performance
+            </span>
+            <strong className="si-presentation-scene-card__value">
+              {topIndicators[0]?.goalLabel ?? "Sem meta destacada"}
+            </strong>
+            <p className="si-presentation-scene-card__text">
+              {topIndicators[0]
+                ? `${topIndicators[0].goalPeriodicity} · ${topIndicators[0].goalMode} · ${topIndicators[0].performanceDirection}`
+                : "Não há indicador com meta destacada para exibir."}
             </p>
           </article>
         </div>
@@ -293,49 +367,71 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   }
 
   function renderTrendScene() {
-    if (!data) return null;
+    if (!data?.trend) {
+      return (
+        <div className="si-presentation-scene-card">
+          <InfoState
+            title="Tendência indisponível"
+            description="Não foi possível consolidar a série histórica do período."
+          />
+        </div>
+      );
+    }
+
+    const trend = data.trend;
+    const highlightDepartment = trend.departments[0] ?? null;
+    const latestSeries = trend.igdSeries.slice(-6);
 
     return (
       <div className="si-presentation-trend-scene">
         <div className="si-presentation-trend-scene__grid">
           <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">Período atual</span>
+            <span className="si-presentation-scene-card__label">IGD atual</span>
             <strong className="si-presentation-scene-card__value">
-              {data.currentPeriod}
+              {formatScore(trend.currentIgd)}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Competência usada na leitura executiva atual.
+              Classificação atual: {trend.currentClassification}.
             </p>
           </article>
 
           <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">Período anterior</span>
+            <span className="si-presentation-scene-card__label">IGD anterior</span>
             <strong className="si-presentation-scene-card__value">
-              {data.previousPeriod}
+              {formatScore(trend.previousIgd)}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Base usada para comparação de tendência.
+              Base comparativa para a leitura temporal do período.
             </p>
           </article>
 
           <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">Variação do IGD</span>
+            <span className="si-presentation-scene-card__label">
+              Série recente do IGD
+            </span>
             <strong className="si-presentation-scene-card__value">
-              {data.variationValue > 0 ? "+" : ""}
-              {data.variationValue.toFixed(1)}
+              {latestSeries.length} pontos
             </strong>
             <p className="si-presentation-scene-card__text">
-              Diferença consolidada entre os períodos.
+              {latestSeries
+                .map((item) => `${item.period}: ${formatScore(item.value)}`)
+                .join(" • ")}
             </p>
           </article>
 
           <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">Tendência</span>
+            <span className="si-presentation-scene-card__label">
+              Departamento em destaque
+            </span>
             <strong className="si-presentation-scene-card__value">
-              {data.trendLabel}
+              {highlightDepartment?.name ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Direção resumida do comportamento global.
+              {highlightDepartment
+                ? `Atual ${formatScore(highlightDepartment.current)} · Anterior ${formatScore(
+                    highlightDepartment.previous,
+                  )} · ${highlightDepartment.directionLabel}`
+                : "Sem destaque departamental disponível para o período."}
             </p>
           </article>
         </div>
@@ -343,30 +439,45 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     );
   }
 
+  function renderAlertsScene() {
+    if (!data) return null;
+
+    const alertsToShow =
+      data.alerts.executive.length > 0
+        ? data.alerts.executive
+        : data.executiveAlerts;
+
+    return (
+      <div className="si-presentation-single-scene">
+        <PresentationAlertsBoard alerts={alertsToShow.slice(0, 3)} />
+      </div>
+    );
+  }
+
   function renderScene() {
-    if (loading) {
+    if (presentation.loading) {
       return (
         <div className="si-presentation-loading-stage">
           <InfoState
             title="Carregando apresentação"
-            description="Aguarde enquanto a síntese executiva é preparada."
+            description="Aguarde enquanto a visão executiva do IGD e dos departamentos é preparada."
           />
         </div>
       );
     }
 
-    if (hardError || !data) {
+    if (presentation.error || !data) {
       return (
         <div className="si-presentation-loading-stage">
           <InfoState
             title="Falha ao carregar apresentação"
             description={
-              executive.error ?? alerts.error ?? "Não foi possível obter os dados necessários."
+              presentation.error ??
+              "Não foi possível obter os dados necessários."
             }
             actionLabel="Tentar novamente"
             onAction={() => {
-              void executive.reload();
-              void alerts.reload();
+              void presentation.reload();
             }}
           />
         </div>
@@ -403,7 +514,9 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     if (scene === "departments") {
       return (
         <div className="si-presentation-single-scene">
-          <PresentationDepartmentBoard departments={data.departments.slice(0, 6)} />
+          <PresentationDepartmentBoard
+            departments={data.departments.slice(0, 6)}
+          />
         </div>
       );
     }
@@ -413,11 +526,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     }
 
     if (scene === "alerts") {
-      return (
-        <div className="si-presentation-single-scene">
-          <PresentationAlertsBoard alerts={data.executiveAlerts.slice(0, 3)} />
-        </div>
-      );
+      return renderAlertsScene();
     }
 
     if (scene === "trend") {
@@ -438,9 +547,9 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     );
   }
 
-  const previousDisabled = loading || !data || scene === "overview";
-
-  const nextDisabled = loading || !data || scene === "closing";
+  const previousDisabled = presentation.loading || !data || scene === "overview";
+  const nextDisabled = presentation.loading || !data || scene === "closing";
+  const warningMessage = presentation.warnings[0]?.message ?? null;
 
   return (
     <div className={`si-presentation-page si-presentation-page--${mode}`}>
@@ -449,22 +558,21 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
           competence={data?.competence ?? referenceMonth}
           sceneTitle={getSceneTitle(scene)}
           mode={mode}
-          isRefreshing={executive.refreshing || alerts.refreshing || loading}
+          isRefreshing={presentation.refreshing || presentation.loading}
           referenceMonth={referenceMonth}
           onReferenceMonthChange={setReferenceMonth}
           onModeChange={setMode}
         />
 
         <div className="si-presentation-stage">
-          {executive.error && executive.data && alerts.data ? (
+          {warningMessage && data ? (
             <div className="si-presentation-stage__feedback">
               <InfoState
-                title="Falha ao atualizar apresentação"
-                description={executive.error}
+                title="Atualização parcial da apresentação"
+                description={warningMessage}
                 actionLabel="Tentar novamente"
                 onAction={() => {
-                  void executive.reload();
-                  void alerts.reload();
+                  void presentation.reload();
                 }}
               />
             </div>
