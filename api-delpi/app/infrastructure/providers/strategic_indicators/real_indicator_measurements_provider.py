@@ -27,7 +27,9 @@ from app.domain.ports.strategic_indicators.hr_indicators_snapshot_port import (
 from app.domain.ports.strategic_indicators.financial_indicators_snapshot_port import (
     StrategicIndicatorsFinancialIndicatorsSnapshotPort,
 )
-
+from app.domain.ports.strategic_indicators.supplies_indicators_snapshot_port import (
+    StrategicIndicatorsSuppliesIndicatorsSnapshotPort,
+)
 
 class RealStrategicIndicatorsMeasurementsProvider(
     StrategicIndicatorsIndicatorMeasurementsPort,
@@ -41,6 +43,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
         quality_snapshot_port: StrategicIndicatorsQualityIndicatorsSnapshotPort,
         hr_snapshot_port: StrategicIndicatorsHrIndicatorsSnapshotPort | None = None,
         financial_snapshot_port: StrategicIndicatorsFinancialIndicatorsSnapshotPort | None = None,
+        supplies_snapshot_port: StrategicIndicatorsSuppliesIndicatorsSnapshotPort | None = None,
     ) -> None:
         self._engineering_snapshot_port = engineering_snapshot_port
         self._production_snapshot_port = production_snapshot_port
@@ -48,6 +51,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
         self._quality_snapshot_port = quality_snapshot_port
         self._hr_snapshot_port = hr_snapshot_port
         self._financial_snapshot_port = financial_snapshot_port
+        self._supplies_snapshot_port = supplies_snapshot_port
         self._cache: dict[
             tuple[str | None, str | None, str | None, str | None],
             tuple[list[StrategicIndicatorMeasuredValue], list[dict]],
@@ -187,6 +191,18 @@ class RealStrategicIndicatorsMeasurementsProvider(
                 )
             )
 
+        if self._supplies_snapshot_port is not None and department_id in (None, "", "supplies"):
+            collectors.append(
+                (
+                    "supplies",
+                    lambda: self._supplies_snapshot_port.get_supplies_indicators_snapshot(
+                        start_date=start_date,
+                        end_date=end_date,
+                        branch=branch,
+                    ),
+                )
+            )
+            
         return collectors
 
     def _collect_parallel(
