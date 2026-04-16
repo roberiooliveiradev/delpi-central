@@ -392,7 +392,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = useCallback(() => {
     stopTokenRefresh();
     clearSessionState();
-    void keycloak.logout({ redirectUri: window.location.origin + "/" });
+
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.referrerPolicy = "strict-origin-when-cross-origin";
+    iframe.src =
+      "https://rhdelpi.minhadelpi.com.br/integracao/logout-pelo-portal-mae/";
+
+    document.body.appendChild(iframe);
+
+    window.setTimeout(() => {
+      iframe.remove();
+      void keycloak.logout({ redirectUri: window.location.origin + "/" });
+    }, 700);
   }, [clearSessionState, stopTokenRefresh]);
 
   const contextValue = useMemo<AuthContextType>(
