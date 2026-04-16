@@ -1,4 +1,5 @@
 # app/infrastructure/persistence/plugins/plugin_base_repository.py
+
 from __future__ import annotations
 
 import logging
@@ -77,7 +78,7 @@ class PluginBaseRepository:
         query: str,
         params: tuple[Any, ...] | None = None,
         *,
-        auto_commit: bool = False,
+        auto_commit: bool = True,
     ) -> None:
         try:
             with self.connection.cursor() as cursor:
@@ -100,7 +101,7 @@ class PluginBaseRepository:
         query: str,
         params: tuple[Any, ...] | None = None,
         *,
-        auto_commit: bool = False,
+        auto_commit: bool = True,
     ) -> dict[str, Any] | None:
         try:
             with self.connection.cursor() as cursor:
@@ -126,7 +127,7 @@ class PluginBaseRepository:
         query: str,
         values: Iterable[tuple[Any, ...]],
         *,
-        auto_commit: bool = False,
+        auto_commit: bool = True,
     ) -> None:
         try:
             with self.connection.cursor() as cursor:
