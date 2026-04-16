@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  activateAdminDepartmentIndicator,
   createAdminDepartmentIndicator,
   deactivateAdminDepartmentIndicator,
   deleteAdminDepartmentIndicator,
@@ -163,6 +164,33 @@ export function useStrategicIndicatorsDepartmentIndicators({
     [load],
   );
 
+  const activateIndicator = useCallback(
+    async (indicatorId: string) => {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        await activateAdminDepartmentIndicator(
+          indicatorId,
+          getAccessTokenRef.current,
+        );
+        setSuccessMessage("Indicador estrutural ativado com sucesso.");
+        await load();
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao ativar indicador estrutural.",
+        );
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [load],
+  );
+
   const deactivateIndicator = useCallback(
     async (indicatorId: string) => {
       setSaving(true);
@@ -232,6 +260,7 @@ export function useStrategicIndicatorsDepartmentIndicators({
       reload,
       createIndicator,
       updateIndicator,
+      activateIndicator,
       deactivateIndicator,
       removeIndicator,
       clearSuccessMessage,
@@ -246,6 +275,7 @@ export function useStrategicIndicatorsDepartmentIndicators({
       reload,
       createIndicator,
       updateIndicator,
+      activateIndicator,
       deactivateIndicator,
       removeIndicator,
       clearSuccessMessage,

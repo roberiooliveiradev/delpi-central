@@ -142,6 +142,37 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
             ),
         )
 
+    def activate_department_indicator(
+        self,
+        *,
+        indicator_id: str,
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        query = """
+            UPDATE strategic_indicators.department_indicators
+            SET
+                is_active = TRUE,
+                updated_by_user_id = %s,
+                updated_by_email = %s,
+                updated_at = NOW()
+            WHERE indicator_id = %s
+            RETURNING *
+        """
+        row = self.execute_returning_one(
+            query,
+            (
+                actor_user_id,
+                actor_email,
+                indicator_id,
+            ),
+        )
+
+        if not row:
+            raise ValueError("Indicador estrutural não encontrado.")
+
+        return row
+
     def deactivate_department_indicator(
         self,
         *,
@@ -159,7 +190,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
             WHERE indicator_id = %s
             RETURNING *
         """
-        return self.execute_returning_one(
+        row = self.execute_returning_one(
             query,
             (
                 actor_user_id,
@@ -167,6 +198,11 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 indicator_id,
             ),
         )
+
+        if not row:
+            raise ValueError("Indicador estrutural não encontrado.")
+
+        return row
 
     def delete_department_indicator(
         self,

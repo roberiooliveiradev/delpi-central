@@ -161,6 +161,10 @@ from app.infrastructure.providers.strategic_indicators.supplies_indicators_snaps
     SuppliesIndicatorsSnapshotProvider,
 )
 
+from app.application.use_cases.strategic_indicators.activate_admin_department_indicator_use_case import (
+    ActivateStrategicIndicatorsAdminDepartmentIndicatorUseCase,
+)
+
 from app.composition.commercial_composer import (
     build_commercial_metrics_snapshot_service,
 )
@@ -446,3 +450,8 @@ def build_get_supplies_indicators_snapshot_port():
         get_otd_use_case=build_get_otd_use_case(),
         get_stock_value_use_case=build_get_stock_value_use_case(),
     )
+
+
+def build_activate_strategic_indicators_admin_department_indicator_use_case():
+    repository = PostgresStrategicIndicatorsDepartmentIndicatorsRepository()
+    return ActivateStrategicIndicatorsAdminDepartmentIndicatorUseCase(repository)

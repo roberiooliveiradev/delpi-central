@@ -7,9 +7,9 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_html
 
-from app.startup.run_plugins_migrations_on_startup import (
-    run_plugins_migrations_on_startup,
-)
+# from app.startup.run_plugins_migrations_on_startup import (
+#     run_plugins_migrations_on_startup,
+# )
 
 from app.config import settings
 from app.interface.http.routes import product_routes
@@ -59,10 +59,10 @@ ALLOWED_ORIGINS = build_allowed_origins()
 # FASTAPI CONFIG
 # ==========================================================
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    run_plugins_migrations_on_startup()
-    yield
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     run_plugins_migrations_on_startup()
+#     yield
 
 app = FastAPI(
     title="API DELPI",
@@ -71,7 +71,7 @@ app = FastAPI(
     root_path="/apps/api-delpi",
     docs_url=None,
     redoc_url=None,
-    lifespan=lifespan,
+    # lifespan=lifespan,
 )
 
 

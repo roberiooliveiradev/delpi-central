@@ -215,6 +215,26 @@ export async function updateAdminDepartmentIndicator(
   return response.json();
 }
 
+export async function activateAdminDepartmentIndicator(
+  indicatorId: string,
+  getAccessToken?: GetToken,
+): Promise<{ indicator_id: string }> {
+  const response = await fetch(
+    `${BASE_URL}/admin/indicators/${indicatorId}/activate`,
+    {
+      method: "POST",
+      headers: buildHeaders(getAccessToken),
+    },
+  );
+
+  if (!response.ok) {
+    const message = await safeReadError(response);
+    throw new Error(message || "Falha ao ativar indicador estrutural.");
+  }
+
+  return response.json();
+}
+
 export async function deactivateAdminDepartmentIndicator(
   indicatorId: string,
   getAccessToken?: GetToken,

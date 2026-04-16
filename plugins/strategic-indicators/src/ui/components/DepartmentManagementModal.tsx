@@ -258,10 +258,14 @@ export function DepartmentManagementModal({
                       </div>
                       <ActionButtons
                         onEdit={() => openEditIndicatorForm(item)}
+                        onActivate={
+                          !item.is_active
+                            ? () => void departmentIndicators.activateIndicator(item.indicator_id)
+                            : undefined
+                        }
                         onDeactivate={
                           item.is_active
-                            ? () =>
-                                void departmentIndicators.deactivateIndicator(item.indicator_id)
+                            ? () => void departmentIndicators.deactivateIndicator(item.indicator_id)
                             : undefined
                         }
                         disabled={departmentIndicators.saving}

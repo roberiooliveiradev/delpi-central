@@ -21,6 +21,7 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         indicator_name: str,
         weight_pct: float,
         scope_type: str,
+        performance_direction: str,
         strategic_description: str,
         source_key: str | None,
         display_order: int,
@@ -37,10 +38,21 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         indicator_name: str,
         weight_pct: float,
         scope_type: str,
+        performance_direction: str,
         strategic_description: str,
         source_key: str | None,
         is_active: bool,
         display_order: int,
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def activate_department_indicator(
+        self,
+        *,
+        indicator_id: str,
         actor_user_id: str | None,
         actor_email: str | None,
     ) -> dict:

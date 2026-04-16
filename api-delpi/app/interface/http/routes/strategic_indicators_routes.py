@@ -82,6 +82,7 @@ from app.composition.strategic_indicators_composer import (
     build_fill_missing_strategic_indicators_indicator_goals_use_case,
     build_list_strategic_indicators_goal_years_overview_use_case,
     build_activate_strategic_indicators_admin_department_use_case,
+    build_activate_strategic_indicators_admin_department_indicator_use_case,
 )
 
 router = APIRouter(
@@ -471,6 +472,26 @@ def update_admin_department_indicator(
             detail=f"Falha ao atualizar indicador estrutural: {exc}",
         ) from exc
 
+
+@router.post("/admin/indicators/{indicator_id}/activate")
+@require_permission("strategic-indicators.settings.manage")
+def activate_admin_department_indicator(indicator_id: str, request: Request):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+        use_case = build_activate_strategic_indicators_admin_department_indicator_use_case()
+        return use_case.execute(
+            indicator_id=indicator_id,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao ativar indicador estrutural: {exc}",
+        ) from exc
+    
 
 @router.post("/admin/indicators/{indicator_id}/deactivate")
 @require_permission("strategic-indicators.settings.manage")
