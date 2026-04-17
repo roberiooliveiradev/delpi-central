@@ -1,38 +1,76 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DepartmentTrendGrid } from "../components/DepartmentTrendGrid";
 import { IgdTrendTimeline } from "../components/IgdTrendTimeline";
 import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { TrendHeroCard } from "../components/TrendHeroCard";
 import { TrendHighlights } from "../components/TrendHighlights";
 import { TrendMonthComparison } from "../components/TrendMonthComparison";
 import { TrendPriorityList } from "../components/TrendPriorityList";
 import { TrendSummaryCards } from "../components/TrendSummaryCards";
 import { useStrategicIndicatorsTrends } from "../../state/hooks/useStrategicIndicatorsTrends";
+import {
+  getCurrentStrategicIndicatorsMonthValue,
+  resolveStrategicIndicatorsBranch,
+  type StrategicIndicatorsViewMode,
+} from "../shared/strategicIndicatorsFilters";
 
 type TrendsPageProps = {
   getAccessToken?: () => string | undefined;
 };
 
-function getCurrentMonthValue() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
-
 export function TrendsPage({ getAccessToken }: TrendsPageProps) {
-  const [referenceMonth, setReferenceMonth] = useState(getCurrentMonthValue());
+  const [referenceMonth, setReferenceMonth] = useState(
+    getCurrentStrategicIndicatorsMonthValue(),
+  );
   const [monthsToCompare, setMonthsToCompare] = useState(3);
+  const [viewMode, setViewMode] =
+    useState<StrategicIndicatorsViewMode>("consolidated");
+  const [branch, setBranch] = useState("01");
+
+  const effectiveBranch = useMemo(
+    () => resolveStrategicIndicatorsBranch(viewMode, branch),
+    [viewMode, branch],
+  );
 
   const { data, loading, refreshing, error, reload } =
     useStrategicIndicatorsTrends({
+      branch: effectiveBranch,
       competence: referenceMonth,
       months: monthsToCompare,
       getAccessToken,
     });
+
+  const referenceFilters = (
+    <div className="si-form-grid">
+      <StrategicIndicatorsReferenceFilters
+        referenceMonth={referenceMonth}
+        viewMode={viewMode}
+        branch={branch}
+        onReferenceMonthChange={setReferenceMonth}
+        onViewModeChange={setViewMode}
+        onBranchChange={setBranch}
+      />
+
+      <label className="si-field">
+        <span className="si-field__label">Meses de comparação</span>
+        <select
+          className="si-input"
+          value={monthsToCompare}
+          onChange={(event) => setMonthsToCompare(Number(event.target.value))}
+        >
+          <option value={2}>2 meses</option>
+          <option value={3}>3 meses</option>
+          <option value={4}>4 meses</option>
+          <option value={6}>6 meses</option>
+          <option value={12}>12 meses</option>
+        </select>
+      </label>
+    </div>
+  );
 
   if (loading && !data) {
     return (
@@ -46,34 +84,9 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
 
         <SectionBlock
           title="Filtro de referência"
-          description="Selecione o mês de referência e a quantidade de meses para analisar a tendência histórica."
+          description="Selecione o mês de referência, a visão analítica e a quantidade de meses para analisar a tendência histórica."
         >
-          <div className="si-form-grid">
-            <label className="si-field">
-              <span className="si-field__label">Mês de referência</span>
-              <input
-                type="month"
-                className="si-input"
-                value={referenceMonth}
-                onChange={(event) => setReferenceMonth(event.target.value)}
-              />
-            </label>
-
-            <label className="si-field">
-              <span className="si-field__label">Meses de comparação</span>
-              <select
-                className="si-input"
-                value={monthsToCompare}
-                onChange={(event) => setMonthsToCompare(Number(event.target.value))}
-              >
-                <option value={2}>2 meses</option>
-                <option value={3}>3 meses</option>
-                <option value={4}>4 meses</option>
-                <option value={6}>6 meses</option>
-                <option value={12}>12 meses</option>
-              </select>
-            </label>
-          </div>
+          {referenceFilters}
         </SectionBlock>
 
         <InfoState
@@ -96,34 +109,9 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
 
         <SectionBlock
           title="Filtro de referência"
-          description="Selecione o mês de referência e a quantidade de meses para analisar a tendência histórica."
+          description="Selecione o mês de referência, a visão analítica e a quantidade de meses para analisar a tendência histórica."
         >
-          <div className="si-form-grid">
-            <label className="si-field">
-              <span className="si-field__label">Mês de referência</span>
-              <input
-                type="month"
-                className="si-input"
-                value={referenceMonth}
-                onChange={(event) => setReferenceMonth(event.target.value)}
-              />
-            </label>
-
-            <label className="si-field">
-              <span className="si-field__label">Meses de comparação</span>
-              <select
-                className="si-input"
-                value={monthsToCompare}
-                onChange={(event) => setMonthsToCompare(Number(event.target.value))}
-              >
-                <option value={2}>2 meses</option>
-                <option value={3}>3 meses</option>
-                <option value={4}>4 meses</option>
-                <option value={6}>6 meses</option>
-                <option value={12}>12 meses</option>
-              </select>
-            </label>
-          </div>
+          {referenceFilters}
         </SectionBlock>
 
         <InfoState
@@ -161,34 +149,9 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
 
       <SectionBlock
         title="Filtro de referência"
-        description="Selecione o mês de referência e a quantidade de meses para analisar a tendência histórica."
+        description="Selecione o mês de referência, a visão analítica e a quantidade de meses para analisar a tendência histórica."
       >
-        <div className="si-form-grid">
-          <label className="si-field">
-            <span className="si-field__label">Mês de referência</span>
-            <input
-              type="month"
-              className="si-input"
-              value={referenceMonth}
-              onChange={(event) => setReferenceMonth(event.target.value)}
-            />
-          </label>
-
-          <label className="si-field">
-            <span className="si-field__label">Meses de comparação</span>
-            <select
-              className="si-input"
-              value={monthsToCompare}
-              onChange={(event) => setMonthsToCompare(Number(event.target.value))}
-            >
-              <option value={2}>2 meses</option>
-              <option value={3}>3 meses</option>
-              <option value={4}>4 meses</option>
-              <option value={6}>6 meses</option>
-              <option value={12}>12 meses</option>
-            </select>
-          </label>
-        </div>
+        {referenceFilters}
       </SectionBlock>
 
       {refreshing ? (

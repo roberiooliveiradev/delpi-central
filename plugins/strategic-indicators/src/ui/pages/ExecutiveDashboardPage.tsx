@@ -9,93 +9,74 @@ import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { useStrategicIndicatorsExecutiveSummary } from "../../state/hooks/useStrategicIndicatorsExecutiveSummary";
+import {
+  buildStrategicIndicatorsMonthRange,
+  getCurrentStrategicIndicatorsMonthValue,
+  resolveStrategicIndicatorsBranch,
+  type StrategicIndicatorsViewMode,
+} from "../shared/strategicIndicatorsFilters";
 
 type ExecutiveDashboardPageProps = {
   getAccessToken?: () => string | undefined;
 };
 
-function getCurrentMonthValue() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
-
-function buildMonthRange(monthValue: string) {
-  if (!monthValue) {
-    return {
-      startDate: undefined,
-      endDate: undefined,
-    };
-  }
-
-  const [yearStr, monthStr] = monthValue.split("-");
-  const year = Number(yearStr);
-  const month = Number(monthStr);
-
-  if (!year || !month) {
-    return {
-      startDate: undefined,
-      endDate: undefined,
-    };
-  }
-
-  const firstDay = `01-${String(month).padStart(2, "0")}-${year}`;
-  const lastDayDate = new Date(year, month, 0);
-  const lastDay = `${String(lastDayDate.getDate()).padStart(2, "0")}-${String(
-    month,
-  ).padStart(2, "0")}-${year}`;
-
-  return {
-    startDate: firstDay,
-    endDate: lastDay,
-  };
-}
-
 export function ExecutiveDashboardPage({
   getAccessToken,
 }: ExecutiveDashboardPageProps) {
-  const [referenceMonth, setReferenceMonth] = useState(getCurrentMonthValue());
+  const [referenceMonth, setReferenceMonth] = useState(
+    getCurrentStrategicIndicatorsMonthValue(),
+  );
+  const [viewMode, setViewMode] =
+    useState<StrategicIndicatorsViewMode>("consolidated");
+  const [branch, setBranch] = useState("01");
 
   const { startDate, endDate } = useMemo(
-    () => buildMonthRange(referenceMonth),
+    () => buildStrategicIndicatorsMonthRange(referenceMonth),
     [referenceMonth],
+  );
+
+  const effectiveBranch = useMemo(
+    () => resolveStrategicIndicatorsBranch(viewMode, branch),
+    [viewMode, branch],
   );
 
   const { data, loading, refreshing, error, reload } =
     useStrategicIndicatorsExecutiveSummary({
+      branch: effectiveBranch,
       competence: referenceMonth,
       startDate,
       endDate,
       getAccessToken,
     });
 
+  const filterBlock = (
+    <StrategicIndicatorsReferenceFilters
+      referenceMonth={referenceMonth}
+      viewMode={viewMode}
+      branch={branch}
+      onReferenceMonthChange={setReferenceMonth}
+      onViewModeChange={setViewMode}
+      onBranchChange={setBranch}
+    />
+  );
+
   if (loading && !data) {
     return (
       <div className="si-page">
         <PageHeader
           eyebrow="MinhaDelpi"
-          title="Indicadores Estratégicos"
+          title="Strategic Indicators"
           description="Carregando visão executiva do IGD e dos IDDs departamentais."
           badge={<StatusBadge label="Carregando" variant="neutral" />}
         />
 
         <SectionBlock
           title="Filtro de referência"
-          description="Selecione o mês de referência do fechamento executivo."
+          description="Selecione o mês de referência e a visão analítica desejada."
         >
-          <div className="si-form-grid">
-            <label className="si-field">
-              <span className="si-field__label">Mês de referência</span>
-              <input
-                type="month"
-                className="si-input"
-                value={referenceMonth}
-                onChange={(event) => setReferenceMonth(event.target.value)}
-              />
-            </label>
-          </div>
+          {filterBlock}
         </SectionBlock>
 
         <InfoState
@@ -118,19 +99,9 @@ export function ExecutiveDashboardPage({
 
         <SectionBlock
           title="Filtro de referência"
-          description="Selecione o mês de referência do fechamento executivo."
+          description="Selecione o mês de referência e a visão analítica desejada."
         >
-          <div className="si-form-grid">
-            <label className="si-field">
-              <span className="si-field__label">Mês de referência</span>
-              <input
-                type="month"
-                className="si-input"
-                value={referenceMonth}
-                onChange={(event) => setReferenceMonth(event.target.value)}
-              />
-            </label>
-          </div>
+          {filterBlock}
         </SectionBlock>
 
         <InfoState
@@ -176,19 +147,9 @@ export function ExecutiveDashboardPage({
 
       <SectionBlock
         title="Filtro de referência"
-        description="Selecione o mês de referência do fechamento executivo."
+        description="Selecione o mês de referência e a visão analítica desejada."
       >
-        <div className="si-form-grid">
-          <label className="si-field">
-            <span className="si-field__label">Mês de referência</span>
-            <input
-              type="month"
-              className="si-input"
-              value={referenceMonth}
-              onChange={(event) => setReferenceMonth(event.target.value)}
-            />
-          </label>
-        </div>
+        {filterBlock}
       </SectionBlock>
 
       {refreshing ? (
@@ -222,8 +183,8 @@ export function ExecutiveDashboardPage({
           headerRight={<StatusBadge label="Mensal" variant="neutral" />}
         >
           <p className="si-muted">
-            A visão executiva agora é servida por API real do módulo, considerando
-            o período selecionado no filtro de referência.
+            A visão executiva agora é servida por API real do módulo,
+            considerando o período e a visão selecionados no filtro.
           </p>
 
           <div className="si-executive-note">
@@ -242,7 +203,9 @@ export function ExecutiveDashboardPage({
             </div>
 
             <div className="si-executive-note__item">
-              <span className="si-executive-note__label">Atenção prioritária</span>
+              <span className="si-executive-note__label">
+                Atenção prioritária
+              </span>
               <strong className="si-executive-note__value">
                 {watchDepartment.name}
               </strong>
