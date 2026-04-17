@@ -1,30 +1,50 @@
-import { Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import {
-  type StrategicIndicatorsViewMode,
-} from "../shared/strategicIndicatorsFilters";
-import { PresentationModeToggle } from "./PresentationModeToggle";
 import { StatusBadge } from "./StatusBadge";
+
+type PresentationMode = "meeting" | "tv" | "slide";
+type StrategicIndicatorsViewMode = "consolidated" | "branch";
+
+type BranchOption = {
+  value: string;
+  label: string;
+};
+
+type MonthsOption = {
+  value: number;
+  label: string;
+};
 
 type PresentationTopBarProps = {
   competence: string;
   sceneTitle: string;
-  mode: "meeting" | "tv" | "slide";
+  mode: PresentationMode;
   viewMode: StrategicIndicatorsViewMode;
   branch: string;
-  branchOptions: Array<{ value: string; label: string }>;
+  branchOptions: BranchOption[];
+  months: number;
+  monthsOptions?: MonthsOption[];
   isRefreshing: boolean;
   referenceMonth: string;
   onReferenceMonthChange: (value: string) => void;
-  onModeChange: (value: "meeting" | "tv" | "slide") => void;
+  onModeChange: (value: PresentationMode) => void;
   onViewModeChange: (value: StrategicIndicatorsViewMode) => void;
   onBranchChange: (value: string) => void;
+  onMonthsChange: (value: number) => void;
 };
 
-function getModeLabel(mode: PresentationTopBarProps["mode"]) {
+const DEFAULT_MONTHS_OPTIONS: MonthsOption[] = [
+  { value: 3, label: "3 meses" },
+  { value: 6, label: "6 meses" },
+  { value: 12, label: "12 meses" },
+];
+
+function getModeLabel(mode: PresentationMode) {
   if (mode === "meeting") return "Reunião";
   if (mode === "tv") return "TV";
   return "Slide";
+}
+
+function getViewModeLabel(viewMode: StrategicIndicatorsViewMode) {
+  return viewMode === "consolidated" ? "Consolidado" : "Filial";
 }
 
 export function PresentationTopBar({
@@ -34,45 +54,31 @@ export function PresentationTopBar({
   viewMode,
   branch,
   branchOptions,
+  months,
+  monthsOptions = DEFAULT_MONTHS_OPTIONS,
   isRefreshing,
   referenceMonth,
   onReferenceMonthChange,
   onModeChange,
   onViewModeChange,
   onBranchChange,
+  onMonthsChange,
 }: PresentationTopBarProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [sceneTitle, competence, mode, viewMode, branch, referenceMonth]);
+  const showBranchFilter = viewMode === "branch";
 
   return (
-    <section
-      className={`si-presentation-topbar ${menuOpen ? "is-menu-open" : ""}`}
-    >
+    <section className="si-presentation-topbar">
       <div className="si-presentation-topbar__identity">
-        <span className="si-presentation-topbar__eyebrow">
-          Apresentação Executiva
-        </span>
-
         <div className="si-presentation-topbar__title-row">
           <div className="si-presentation-topbar__title-group">
+            <span className="si-presentation-topbar__eyebrow">
+              Apresentação Executiva
+            </span>
             <h2 className="si-presentation-topbar__title">{sceneTitle}</h2>
             <p className="si-presentation-topbar__subtitle">
               Competência {competence}
             </p>
           </div>
-
-          <button
-            type="button"
-            className="si-presentation-topbar__menu-toggle"
-            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((current) => !current)}
-          >
-            {menuOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
         </div>
       </div>
 
@@ -83,45 +89,91 @@ export function PresentationTopBar({
             <strong>{getModeLabel(mode)}</strong>
           </div>
 
-          <PresentationModeToggle mode={mode} onChange={onModeChange} />
-        </div>
-
-        <div className="si-presentation-topbar__meta-item">
-          <span>Visão</span>
-
           <div
-            className="si-segmented-control"
-            role="group"
-            aria-label="Modo de visão"
+            className="si-presentation-mode-toggle"
+            role="tablist"
+            aria-label="Modo da apresentação"
           >
             <button
               type="button"
-              className={viewMode === "consolidated" ? "is-active" : ""}
+              className={`si-presentation-mode-toggle__button${
+                mode === "meeting" ? " is-active" : ""
+              }`}
+              onClick={() => onModeChange("meeting")}
+              aria-pressed={mode === "meeting"}
+            >
+              Reunião
+            </button>
+
+            <button
+              type="button"
+              className={`si-presentation-mode-toggle__button${
+                mode === "tv" ? " is-active" : ""
+              }`}
+              onClick={() => onModeChange("tv")}
+              aria-pressed={mode === "tv"}
+            >
+              TV
+            </button>
+
+            <button
+              type="button"
+              className={`si-presentation-mode-toggle__button${
+                mode === "slide" ? " is-active" : ""
+              }`}
+              onClick={() => onModeChange("slide")}
+              aria-pressed={mode === "slide"}
+            >
+              Slide
+            </button>
+          </div>
+        </div>
+
+        <div className="si-presentation-topbar__mode-group">
+          <div className="si-presentation-topbar__meta-item">
+            <span>Visão</span>
+            <strong>{getViewModeLabel(viewMode)}</strong>
+          </div>
+
+          <div
+            className="si-presentation-mode-toggle"
+            role="tablist"
+            aria-label="Visão da apresentação"
+          >
+            <button
+              type="button"
+              className={`si-presentation-mode-toggle__button${
+                viewMode === "consolidated" ? " is-active" : ""
+              }`}
               onClick={() => onViewModeChange("consolidated")}
+              aria-pressed={viewMode === "consolidated"}
             >
               Consolidado
             </button>
 
             <button
               type="button"
-              className={viewMode === "branch" ? "is-active" : ""}
+              className={`si-presentation-mode-toggle__button${
+                viewMode === "branch" ? " is-active" : ""
+              }`}
               onClick={() => onViewModeChange("branch")}
+              aria-pressed={viewMode === "branch"}
             >
               Filial
             </button>
           </div>
         </div>
 
-        {viewMode === "branch" ? (
+        {showBranchFilter ? (
           <label className="si-presentation-topbar__filter">
             <span>Filial</span>
             <select
               value={branch}
               onChange={(event) => onBranchChange(event.target.value)}
             >
-              {branchOptions.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
+              {branchOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -135,6 +187,20 @@ export function PresentationTopBar({
             value={referenceMonth}
             onChange={(event) => onReferenceMonthChange(event.target.value)}
           />
+        </label>
+
+        <label className="si-presentation-topbar__filter">
+          <span>Janela de tendência</span>
+          <select
+            value={String(months)}
+            onChange={(event) => onMonthsChange(Number(event.target.value))}
+          >
+            {monthsOptions.map((option) => (
+              <option key={option.value} value={String(option.value)}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </label>
 
         <div className="si-presentation-topbar__status">
