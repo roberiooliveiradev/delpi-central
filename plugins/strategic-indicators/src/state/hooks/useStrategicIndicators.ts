@@ -8,6 +8,8 @@ import type {
 
 type UseStrategicIndicatorsParams = {
   departmentId?: string;
+  branch?: string;
+  competence?: string;
   startDate?: string;
   endDate?: string;
   getAccessToken?: () => string | undefined;
@@ -15,6 +17,8 @@ type UseStrategicIndicatorsParams = {
 
 export function useStrategicIndicators({
   departmentId,
+  branch,
+  competence,
   startDate,
   endDate,
   getAccessToken,
@@ -56,6 +60,8 @@ export function useStrategicIndicators({
       try {
         const response = await fetchStrategicIndicators({
           departmentId,
+          branch,
+          competence,
           startDate,
           endDate,
           getAccessToken: getAccessTokenRef.current,
@@ -93,7 +99,7 @@ export function useStrategicIndicators({
         }
       }
     };
-  }, [departmentId, startDate, endDate]);
+  }, [departmentId, branch, competence, startDate, endDate]);
 
   useEffect(() => {
     void loadRef.current();
@@ -101,7 +107,7 @@ export function useStrategicIndicators({
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [departmentId, startDate, endDate]);
+  }, [departmentId, branch, competence, startDate, endDate]);
 
   return useMemo(
     () => ({

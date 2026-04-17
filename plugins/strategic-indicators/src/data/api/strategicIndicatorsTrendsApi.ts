@@ -5,7 +5,11 @@ const BASE_URL = "/apps/api-delpi/strategic-indicators";
 type GetToken = (() => string | undefined) | undefined;
 
 export type FetchStrategicIndicatorsTrendsParams = {
+  departmentId?: string;
+  branch?: string;
   competence?: string;
+  startDate?: string;
+  endDate?: string;
   months?: number;
   getAccessToken?: GetToken;
   signal?: AbortSignal;
@@ -21,12 +25,20 @@ function buildHeaders(getAccessToken?: GetToken): HeadersInit {
 }
 
 function buildQuery(params: {
+  departmentId?: string;
+  branch?: string;
   competence?: string;
+  startDate?: string;
+  endDate?: string;
   months?: number;
 }) {
   const query = new URLSearchParams();
 
+  if (params.departmentId) query.set("department_id", params.departmentId);
+  if (params.branch) query.set("branch", params.branch);
   if (params.competence) query.set("competence", params.competence);
+  if (params.startDate) query.set("start_date", params.startDate);
+  if (params.endDate) query.set("end_date", params.endDate);
   if (typeof params.months === "number") query.set("months", String(params.months));
 
   const queryString = query.toString();
@@ -34,14 +46,22 @@ function buildQuery(params: {
 }
 
 export async function fetchStrategicIndicatorsTrends({
+  departmentId,
+  branch,
   competence,
+  startDate,
+  endDate,
   months,
   getAccessToken,
   signal,
 }: FetchStrategicIndicatorsTrendsParams): Promise<StrategicIndicatorsTrendsResponse> {
   const response = await fetch(
     `${BASE_URL}/trends${buildQuery({
+      departmentId,
+      branch,
       competence,
+      startDate,
+      endDate,
       months,
     })}`,
     {

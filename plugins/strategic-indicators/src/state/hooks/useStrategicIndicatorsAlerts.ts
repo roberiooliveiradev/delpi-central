@@ -4,6 +4,8 @@ import { fetchStrategicIndicatorsAlerts } from "../../data/api/strategicIndicato
 import type { AlertsDashboardViewData } from "../../data/types/alerts";
 
 type UseStrategicIndicatorsAlertsParams = {
+  departmentId?: string;
+  branch?: string;
   competence?: string;
   startDate?: string;
   endDate?: string;
@@ -11,6 +13,8 @@ type UseStrategicIndicatorsAlertsParams = {
 };
 
 export function useStrategicIndicatorsAlerts({
+  departmentId,
+  branch,
   competence,
   startDate,
   endDate,
@@ -50,6 +54,8 @@ export function useStrategicIndicatorsAlerts({
 
       try {
         const response = await fetchStrategicIndicatorsAlerts({
+          departmentId,
+          branch,
           competence,
           startDate,
           endDate,
@@ -80,7 +86,7 @@ export function useStrategicIndicatorsAlerts({
         }
       }
     };
-  }, [competence, startDate, endDate]);
+  }, [departmentId, branch, competence, startDate, endDate]);
 
   useEffect(() => {
     void loadRef.current();
@@ -88,7 +94,7 @@ export function useStrategicIndicatorsAlerts({
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [competence, startDate, endDate]);
+  }, [departmentId, branch, competence, startDate, endDate]);
 
   return useMemo(
     () => ({

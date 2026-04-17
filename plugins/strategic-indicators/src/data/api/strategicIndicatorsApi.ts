@@ -6,6 +6,8 @@ type GetToken = (() => string | undefined) | undefined;
 
 export type FetchStrategicIndicatorsParams = {
   departmentId?: string;
+  branch?: string;
+  competence?: string;
   startDate?: string;
   endDate?: string;
   getAccessToken?: GetToken;
@@ -23,12 +25,16 @@ function buildHeaders(getAccessToken?: GetToken): HeadersInit {
 
 function buildQuery(params: {
   departmentId?: string;
+  branch?: string;
+  competence?: string;
   startDate?: string;
   endDate?: string;
 }) {
   const query = new URLSearchParams();
 
   if (params.departmentId) query.set("department_id", params.departmentId);
+  if (params.branch) query.set("branch", params.branch);
+  if (params.competence) query.set("competence", params.competence);
   if (params.startDate) query.set("start_date", params.startDate);
   if (params.endDate) query.set("end_date", params.endDate);
 
@@ -38,6 +44,8 @@ function buildQuery(params: {
 
 export async function fetchStrategicIndicators({
   departmentId,
+  branch,
+  competence,
   startDate,
   endDate,
   getAccessToken,
@@ -46,6 +54,8 @@ export async function fetchStrategicIndicators({
   const response = await fetch(
     `${BASE_URL}/indicators${buildQuery({
       departmentId,
+      branch,
+      competence,
       startDate,
       endDate,
     })}`,
