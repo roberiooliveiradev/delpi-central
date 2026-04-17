@@ -496,7 +496,7 @@ export function buildPresentationViewData(params: {
           shortName: department.shortName,
           score: department.score,
           classification: "",
-          contribution: department.contribution,
+          contribution: 0,
           weightInIgd: department.weightPct,
           strategicSummary: department.strategicSummary,
           variation: {

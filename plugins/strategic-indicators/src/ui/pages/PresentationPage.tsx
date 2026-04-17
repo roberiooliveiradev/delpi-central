@@ -492,18 +492,12 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   const mostPositiveDepartmentOverview = [...(data?.departmentsOverview ?? [])]
     .sort((a, b) => b.score - a.score)[0];
 
-  const strongestContributionDepartment = [...(data?.departmentsOverview ?? [])]
-    .sort((a, b) => b.contribution - a.contribution)[0];
-
-  const weakestContributionDepartment = [...(data?.departmentsOverview ?? [])]
-    .sort((a, b) => a.contribution - b.contribution)[0];
-
-  const departmentsByContribution = [...(data?.departmentsOverview ?? [])]
-    .sort((a, b) => b.contribution - a.contribution)
-    .slice(0, 3);
-
   const departmentsByLowestScore = [...(data?.departmentsOverview ?? [])]
     .sort((a, b) => a.score - b.score)
+    .slice(0, 3);
+
+  const departmentsByHighestWeight = [...(data?.departmentsOverview ?? [])]
+    .sort((a, b) => b.weightInIgd - a.weightInIgd)
     .slice(0, 3);
 
   const strongestDepartmentCard = [...(data?.departmentsOverview ?? [])]
@@ -756,16 +750,17 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Maior contribuição no IGD
+              Maior peso no IGD
             </span>
             <strong className="si-presentation-scene-card__value">
-              {strongestContributionDepartment?.name ?? "—"}
+              {highestWeightDepartment?.name ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Contribuição atual de{" "}
-              {strongestContributionDepartment
-                ? formatScore(strongestContributionDepartment.contribution)
-                : "—"}.
+              Peso atual de{" "}
+              {highestWeightDepartment
+                ? formatPct(highestWeightDepartment.weightInIgd)
+                : "—"}{" "}
+              na composição do índice.
             </p>
           </article>
         </div>
@@ -773,15 +768,15 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
         <div className="si-presentation-trend-scene__grid">
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Top 3 contribuições
+              Top 3 pesos no IGD
             </span>
             <strong className="si-presentation-scene-card__value">
-              {departmentsByContribution[0]?.name ?? "—"}
+              {departmentsByHighestWeight[0]?.name ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              {departmentsByContribution
+              {departmentsByHighestWeight
                 .map(
-                  (item) => `${item.name} (${formatScore(item.contribution)})`,
+                  (item) => `${item.name} (${formatPct(item.weightInIgd)})`,
                 )
                 .join(" • ") || "Sem dados disponíveis."}
             </p>
@@ -1288,31 +1283,29 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Maior contribuição
+              Maior peso no IGD
             </span>
             <strong className="si-presentation-scene-card__value">
-              {strongestContributionDepartment?.name ?? "—"}
+              {highestWeightDepartment?.name ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Contribuição no IGD de{" "}
-              {strongestContributionDepartment
-                ? formatScore(strongestContributionDepartment.contribution)
-                : "—"}.
+              Peso de{" "}
+              {highestWeightDepartment
+                ? formatPct(highestWeightDepartment.weightInIgd)
+                : "—"}{" "}
+              na composição do índice global.
             </p>
           </article>
 
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Menor contribuição
+              Principal ponto de atenção
             </span>
             <strong className="si-presentation-scene-card__value">
-              {weakestContributionDepartment?.name ?? "—"}
+              {weakestDepartmentCard?.name ?? data.topRisk}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Contribuição no IGD de{" "}
-              {weakestContributionDepartment
-                ? formatScore(weakestContributionDepartment.contribution)
-                : "—"}.
+              Menor score consolidado no fechamento do período.
             </p>
           </article>
         </div>
