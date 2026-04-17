@@ -166,7 +166,6 @@ export type PresentationViewData = {
   previousPeriod: string;
   departments: PresentationDepartmentBoardItem[];
   executiveAlerts: ExecutiveAlertViewItem[];
-
   kpis: PresentationKpiCard[];
   departmentsOverview: PresentationDepartmentSnapshot[];
   departmentFocus: PresentationDepartmentFocus | null;
@@ -277,12 +276,12 @@ function buildDepartmentsOverview(
 function buildDepartmentFocus(params: {
   departmentId?: string | null;
   departmentDetailsById?: Record<string, DepartmentDetailsViewData>;
-  indicators?: IndicatorViewItem[];
+  indicatorsByDepartmentId?: Record<string, IndicatorViewItem[]>;
 }): PresentationDepartmentFocus | null {
   const {
     departmentId,
     departmentDetailsById = {},
-    indicators = [],
+    indicatorsByDepartmentId = {},
   } = params;
 
   if (!departmentId) {
@@ -295,6 +294,7 @@ function buildDepartmentFocus(params: {
     return null;
   }
 
+  const indicators = indicatorsByDepartmentId[departmentId] ?? [];
   const indicatorsById = new Map(indicators.map((item) => [item.id, item]));
 
   return {
@@ -459,7 +459,7 @@ export function buildPresentationViewData(params: {
   alerts?: AlertsDashboardViewData;
   departmentsOverview?: DepartmentOverviewViewItem[];
   departmentDetailsById?: Record<string, DepartmentDetailsViewData>;
-  indicators?: IndicatorViewItem[];
+  indicatorsByDepartmentId?: Record<string, IndicatorViewItem[]>;
   trends?: TrendsDashboardViewData | null;
   focusDepartmentId?: string | null;
 }): PresentationViewData {
@@ -469,7 +469,7 @@ export function buildPresentationViewData(params: {
     alerts,
     departmentsOverview = [],
     departmentDetailsById = {},
-    indicators = [],
+    indicatorsByDepartmentId = {},
     trends = null,
     focusDepartmentId,
   } = params;
@@ -515,7 +515,7 @@ export function buildPresentationViewData(params: {
   const departmentFocus = buildDepartmentFocus({
     departmentId: effectiveFocusDepartmentId,
     departmentDetailsById,
-    indicators,
+    indicatorsByDepartmentId,
   });
 
   const alertsSnapshot = buildAlertsSnapshot(

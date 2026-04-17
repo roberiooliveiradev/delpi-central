@@ -31,18 +31,23 @@ type UseStrategicIndicatorsPresentationParams = {
   getAccessToken?: () => string | undefined;
 };
 
+type PresentationWarningSource =
+  | "tendencias"
+  | "indicadores"
+  | "detalhe_departamento";
+
 type PresentationWarningItem = {
-  source: "tendencias" | "indicadores" | "detalhe_departamento";
+  source: PresentationWarningSource;
   message: string;
 };
 
 type PresentationDataBundle = {
-  executive: ExecutiveDashboardViewData;
-  alerts: AlertsDashboardViewData;
+  executive: ExecutiveDashboardViewData | null;
+  alerts: AlertsDashboardViewData | null;
   departments: DepartmentOverviewViewItem[];
   trends: TrendsDashboardViewData | null;
   departmentDetailsById: Record<string, DepartmentDetailsViewData>;
-  indicators: IndicatorViewItem[];
+  indicatorsByDepartmentId: Record<string, IndicatorViewItem[]>;
   selectedDepartmentId: string | null;
 };
 
@@ -61,6 +66,31 @@ function settle<T>(promise: Promise<T>): Promise<SettledResult<T>> {
   );
 }
 
+function createInitialBundle(): PresentationDataBundle {
+  return {
+    executive: null,
+    alerts: null,
+    departments: [],
+    trends: null,
+    departmentDetailsById: {},
+    indicatorsByDepartmentId: {},
+    selectedDepartmentId: null,
+  };
+}
+
+function mergeWarnings(
+  previous: PresentationWarningItem[],
+  next: PresentationWarningItem[],
+) {
+  const map = new Map<PresentationWarningSource, PresentationWarningItem>();
+
+  [...previous, ...next].forEach((item) => {
+    map.set(item.source, item);
+  });
+
+  return Array.from(map.values());
+}
+
 export function useStrategicIndicatorsPresentation({
   competence,
   branch,
@@ -69,7 +99,9 @@ export function useStrategicIndicatorsPresentation({
   months = 3,
   getAccessToken,
 }: UseStrategicIndicatorsPresentationParams) {
-  const [bundle, setBundle] = useState<PresentationDataBundle | null>(null);
+  const [bundle, setBundle] = useState<PresentationDataBundle>(
+    createInitialBundle(),
+  );
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(
     null,
   );
@@ -81,168 +113,273 @@ export function useStrategicIndicatorsPresentation({
   const requestIdRef = useRef(0);
   const hasLoadedOnceRef = useRef(false);
   const getAccessTokenRef = useRef(getAccessToken);
+  const detailRequestIdRef = useRef(0);
 
   useEffect(() => {
     getAccessTokenRef.current = getAccessToken;
   }, [getAccessToken]);
 
-  const loadRef = useRef<() => Promise<void>>(async () => {});
+  const commonParams = useMemo(
+    () => ({
+      competence,
+      branch,
+      startDate,
+      endDate,
+      getAccessToken: getAccessTokenRef.current,
+    }),
+    [competence, branch, startDate, endDate],
+  );
 
-  useEffect(() => {
-    loadRef.current = async () => {
-      const requestId = ++requestIdRef.current;
+  const loadDepartmentDetails = useCallback(
+    async (departmentId: string, prefetchOnly = false) => {
+      if (!departmentId) return;
 
-      if (hasLoadedOnceRef.current) {
-        setRefreshing(true);
+      const requestId = ++detailRequestIdRef.current;
+
+      const [detailsResult, indicatorsResult] = await Promise.all([
+        settle(
+          fetchStrategicIndicatorsDepartmentDetails({
+            departmentId,
+            competence,
+            branch,
+            startDate,
+            endDate,
+            getAccessToken: getAccessTokenRef.current,
+          }),
+        ),
+        settle(
+          fetchStrategicIndicators({
+            departmentId,
+            competence,
+            branch,
+            startDate,
+            endDate,
+            getAccessToken: getAccessTokenRef.current,
+          }),
+        ),
+      ]);
+
+      if (!prefetchOnly && requestId !== detailRequestIdRef.current) {
+        return;
+      }
+
+      const nextWarnings: PresentationWarningItem[] = [];
+      let nextDetails: DepartmentDetailsViewData | undefined;
+      let nextIndicators: IndicatorViewItem[] | undefined;
+
+      if (detailsResult.status === "fulfilled") {
+        nextDetails = adaptDepartmentDetailsToView(detailsResult.value);
       } else {
-        setLoading(true);
-      }
-
-      setError(null);
-      setWarnings([]);
-
-      const commonParams = {
-        competence,
-        branch,
-        startDate,
-        endDate,
-        getAccessToken: getAccessTokenRef.current,
-      };
-
-      try {
-        const [executiveResponse, alertsResponse, departmentsResponse, trendsResult] =
-          await Promise.all([
-            fetchStrategicIndicatorsExecutiveSummary(commonParams),
-            fetchStrategicIndicatorsAlerts(commonParams),
-            fetchStrategicIndicatorsDepartments(commonParams),
-            settle(
-              fetchStrategicIndicatorsTrends({
-                ...commonParams,
-                months,
-              }),
-            ),
-          ]);
-
-        if (requestId !== requestIdRef.current) {
-          return;
-        }
-
-        const executive = adaptExecutiveSummaryToView(executiveResponse);
-        const alerts = adaptAlertsToView(alertsResponse);
-        const departments = adaptDepartmentsToView(departmentsResponse);
-
-        const nextWarnings: PresentationWarningItem[] = [];
-
-        const trends =
-          trendsResult.status === "fulfilled"
-            ? adaptTrendsToView(trendsResult.value)
-            : (() => {
-                nextWarnings.push({
-                  source: "tendencias",
-                  message: getSafeErrorMessage(
-                    trendsResult.reason,
-                    "Não foi possível carregar a tendência do período.",
-                  ),
-                });
-                return null;
-              })();
-
-        const effectiveDepartmentId =
-          selectedDepartmentId &&
-          departments.some((item) => item.id === selectedDepartmentId)
-            ? selectedDepartmentId
-            : departments[0]?.id ?? null;
-
-        let departmentDetailsById: Record<string, DepartmentDetailsViewData> = {};
-        let indicators: IndicatorViewItem[] = [];
-
-        if (effectiveDepartmentId) {
-          const [detailsResult, indicatorsResult] = await Promise.all([
-            settle(
-              fetchStrategicIndicatorsDepartmentDetails({
-                departmentId: effectiveDepartmentId,
-                ...commonParams,
-              }),
-            ),
-            settle(
-              fetchStrategicIndicators({
-                departmentId: effectiveDepartmentId,
-                ...commonParams,
-              }),
-            ),
-          ]);
-
-          if (requestId !== requestIdRef.current) {
-            return;
-          }
-
-          if (detailsResult.status === "fulfilled") {
-            departmentDetailsById = {
-              [effectiveDepartmentId]: adaptDepartmentDetailsToView(
-                detailsResult.value,
-              ),
-            };
-          } else {
-            nextWarnings.push({
-              source: "detalhe_departamento",
-              message: getSafeErrorMessage(
-                detailsResult.reason,
-                "Não foi possível carregar o detalhamento do departamento em foco.",
-              ),
-            });
-          }
-
-          if (indicatorsResult.status === "fulfilled") {
-            indicators = adaptIndicatorsToView(indicatorsResult.value);
-          } else {
-            nextWarnings.push({
-              source: "indicadores",
-              message: getSafeErrorMessage(
-                indicatorsResult.reason,
-                "Não foi possível carregar os indicadores do departamento em foco.",
-              ),
-            });
-          }
-        }
-
-        setBundle({
-          executive,
-          alerts,
-          departments,
-          trends,
-          departmentDetailsById,
-          indicators,
-          selectedDepartmentId: effectiveDepartmentId,
-        });
-        setSelectedDepartmentId(effectiveDepartmentId);
-        setWarnings(nextWarnings);
-        hasLoadedOnceRef.current = true;
-      } catch (err) {
-        if (requestId !== requestIdRef.current) {
-          return;
-        }
-
-        setError(
-          getSafeErrorMessage(
-            err,
-            "Erro inesperado ao carregar a apresentação executiva.",
+        nextWarnings.push({
+          source: "detalhe_departamento",
+          message: getSafeErrorMessage(
+            detailsResult.reason,
+            "Não foi possível carregar o detalhamento do departamento em foco.",
           ),
+        });
+      }
+
+      if (indicatorsResult.status === "fulfilled") {
+        nextIndicators = adaptIndicatorsToView(indicatorsResult.value);
+      } else {
+        nextWarnings.push({
+          source: "indicadores",
+          message: getSafeErrorMessage(
+            indicatorsResult.reason,
+            "Não foi possível carregar os indicadores do departamento em foco.",
+          ),
+        });
+      }
+
+      setBundle((current) => ({
+        ...current,
+        selectedDepartmentId: prefetchOnly
+          ? current.selectedDepartmentId
+          : departmentId,
+        departmentDetailsById: nextDetails
+          ? {
+              ...current.departmentDetailsById,
+              [departmentId]: nextDetails,
+            }
+          : current.departmentDetailsById,
+        indicatorsByDepartmentId: nextIndicators
+          ? {
+              ...current.indicatorsByDepartmentId,
+              [departmentId]: nextIndicators,
+            }
+          : current.indicatorsByDepartmentId,
+      }));
+
+      if (nextWarnings.length > 0) {
+        setWarnings((current) => mergeWarnings(current, nextWarnings));
+      }
+    },
+    [competence, branch, startDate, endDate],
+  );
+
+  const reloadBase = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+
+    if (hasLoadedOnceRef.current) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    setError(null);
+    setWarnings([]);
+
+    try {
+      const [executiveResponse, alertsResponse, departmentsResponse] =
+        await Promise.all([
+          fetchStrategicIndicatorsExecutiveSummary(commonParams),
+          fetchStrategicIndicatorsAlerts(commonParams),
+          fetchStrategicIndicatorsDepartments(commonParams),
+        ]);
+
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
+      const executive = adaptExecutiveSummaryToView(executiveResponse);
+      const alerts = adaptAlertsToView(alertsResponse);
+      const departments = adaptDepartmentsToView(departmentsResponse);
+
+      const effectiveDepartmentId =
+        selectedDepartmentId &&
+        departments.some((item) => item.id === selectedDepartmentId)
+          ? selectedDepartmentId
+          : departments[0]?.id ?? null;
+
+      setBundle((current) => ({
+        ...current,
+        executive,
+        alerts,
+        departments,
+        selectedDepartmentId: effectiveDepartmentId,
+      }));
+
+      setSelectedDepartmentId(effectiveDepartmentId);
+      hasLoadedOnceRef.current = true;
+
+      void (async () => {
+        const trendsResult = await settle(
+          fetchStrategicIndicatorsTrends({
+            competence,
+            branch,
+            startDate,
+            endDate,
+            months,
+            getAccessToken: getAccessTokenRef.current,
+          }),
         );
-      } finally {
-        if (requestId === requestIdRef.current) {
-          setLoading(false);
-          setRefreshing(false);
+
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+
+        if (trendsResult.status === "fulfilled") {
+          setBundle((current) => ({
+            ...current,
+            trends: adaptTrendsToView(trendsResult.value),
+          }));
+        } else {
+          setWarnings((current) =>
+            mergeWarnings(current, [
+              {
+                source: "tendencias",
+                message: getSafeErrorMessage(
+                  trendsResult.reason,
+                  "Não foi possível carregar a tendência do período.",
+                ),
+              },
+            ]),
+          );
+        }
+      })();
+
+      if (effectiveDepartmentId) {
+        void loadDepartmentDetails(effectiveDepartmentId, false);
+
+        const nextDepartmentId =
+          departments.find((item) => item.id !== effectiveDepartmentId)?.id ??
+          null;
+
+        if (nextDepartmentId) {
+          void loadDepartmentDetails(nextDepartmentId, true);
         }
       }
-    };
-  }, [competence, branch, startDate, endDate, months, selectedDepartmentId]);
+    } catch (err) {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
+      setError(
+        getSafeErrorMessage(
+          err,
+          "Erro inesperado ao carregar a apresentação executiva.",
+        ),
+      );
+    } finally {
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    }
+  }, [
+    commonParams,
+    competence,
+    branch,
+    startDate,
+    endDate,
+    months,
+    selectedDepartmentId,
+    loadDepartmentDetails,
+  ]);
 
   useEffect(() => {
-    void loadRef.current();
-  }, [competence, branch, startDate, endDate, months]);
+    setBundle(createInitialBundle());
+    setSelectedDepartmentId(null);
+    void reloadBase();
+  }, [reloadBase]);
+
+  useEffect(() => {
+    if (!selectedDepartmentId) {
+      return;
+    }
+
+    const hasDetails = Boolean(bundle.departmentDetailsById[selectedDepartmentId]);
+    const hasIndicators = Boolean(bundle.indicatorsByDepartmentId[selectedDepartmentId]);
+
+    if (!hasDetails || !hasIndicators) {
+      void loadDepartmentDetails(selectedDepartmentId, false);
+    }
+
+    const currentIndex = bundle.departments.findIndex(
+      (item) => item.id === selectedDepartmentId,
+    );
+
+    if (currentIndex >= 0) {
+      const nextDepartmentId = bundle.departments[currentIndex + 1]?.id;
+
+      if (
+        nextDepartmentId &&
+        !bundle.departmentDetailsById[nextDepartmentId] &&
+        !bundle.indicatorsByDepartmentId[nextDepartmentId]
+      ) {
+        void loadDepartmentDetails(nextDepartmentId, true);
+      }
+    }
+  }, [
+    selectedDepartmentId,
+    bundle.departments,
+    bundle.departmentDetailsById,
+    bundle.indicatorsByDepartmentId,
+    loadDepartmentDetails,
+  ]);
 
   const data = useMemo<PresentationViewData | null>(() => {
-    if (!bundle) {
+    if (!bundle.executive || !bundle.alerts || bundle.departments.length === 0) {
       return null;
     }
 
@@ -252,21 +389,28 @@ export function useStrategicIndicatorsPresentation({
       alerts: bundle.alerts,
       departmentsOverview: bundle.departments,
       departmentDetailsById: bundle.departmentDetailsById,
-      indicators: bundle.indicators,
+      indicatorsByDepartmentId: bundle.indicatorsByDepartmentId,
       trends: bundle.trends,
       focusDepartmentId: bundle.selectedDepartmentId,
     });
   }, [bundle]);
 
-  const departmentIds = useMemo(() => {
-    return bundle?.departments.map((item) => item.id) ?? [];
-  }, [bundle]);
+  const departmentIds = useMemo(
+    () => bundle.departments.map((item) => item.id),
+    [bundle.departments],
+  );
 
   const setFocusedDepartmentId = useCallback((departmentId: string | null) => {
     setSelectedDepartmentId(departmentId);
+    setBundle((current) => ({
+      ...current,
+      selectedDepartmentId: departmentId,
+    }));
   }, []);
 
-  const reload = useCallback(() => loadRef.current(), []);
+  const reload = useCallback(async () => {
+    await reloadBase();
+  }, [reloadBase]);
 
   return useMemo(
     () => ({
