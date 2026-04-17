@@ -5,6 +5,8 @@ const BASE_URL = "/apps/api-delpi/strategic-indicators";
 type GetToken = (() => string | undefined) | undefined;
 
 export type FetchStrategicIndicatorsAlertsParams = {
+  departmentId?: string;
+  branch?: string;
   competence?: string;
   startDate?: string;
   endDate?: string;
@@ -22,12 +24,16 @@ function buildHeaders(getAccessToken?: GetToken): HeadersInit {
 }
 
 function buildQuery(params: {
+  departmentId?: string;
+  branch?: string;
   competence?: string;
   startDate?: string;
   endDate?: string;
 }) {
   const query = new URLSearchParams();
 
+  if (params.departmentId) query.set("department_id", params.departmentId);
+  if (params.branch) query.set("branch", params.branch);
   if (params.competence) query.set("competence", params.competence);
   if (params.startDate) query.set("start_date", params.startDate);
   if (params.endDate) query.set("end_date", params.endDate);
@@ -37,6 +43,8 @@ function buildQuery(params: {
 }
 
 export async function fetchStrategicIndicatorsAlerts({
+  departmentId,
+  branch,
   competence,
   startDate,
   endDate,
@@ -45,6 +53,8 @@ export async function fetchStrategicIndicatorsAlerts({
 }: FetchStrategicIndicatorsAlertsParams): Promise<StrategicIndicatorsAlertsResponse> {
   const response = await fetch(
     `${BASE_URL}/alerts${buildQuery({
+      departmentId,
+      branch,
       competence,
       startDate,
       endDate,

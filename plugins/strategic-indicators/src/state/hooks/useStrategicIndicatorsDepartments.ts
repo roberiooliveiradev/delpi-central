@@ -4,6 +4,8 @@ import { fetchStrategicIndicatorsDepartments } from "../../data/api/strategicInd
 import type { DepartmentOverviewViewItem } from "../../data/types/departments";
 
 type UseStrategicIndicatorsDepartmentsParams = {
+  departmentId?: string;
+  branch?: string;
   competence?: string;
   startDate?: string;
   endDate?: string;
@@ -11,6 +13,8 @@ type UseStrategicIndicatorsDepartmentsParams = {
 };
 
 export function useStrategicIndicatorsDepartments({
+  departmentId,
+  branch,
   competence,
   startDate,
   endDate,
@@ -50,6 +54,8 @@ export function useStrategicIndicatorsDepartments({
 
       try {
         const response = await fetchStrategicIndicatorsDepartments({
+          departmentId,
+          branch,
           competence,
           startDate,
           endDate,
@@ -80,7 +86,7 @@ export function useStrategicIndicatorsDepartments({
         }
       }
     };
-  }, [competence, startDate, endDate]);
+  }, [departmentId, branch, competence, startDate, endDate]);
 
   useEffect(() => {
     void loadRef.current();
@@ -88,7 +94,7 @@ export function useStrategicIndicatorsDepartments({
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [competence, startDate, endDate]);
+  }, [departmentId, branch, competence, startDate, endDate]);
 
   return useMemo(
     () => ({

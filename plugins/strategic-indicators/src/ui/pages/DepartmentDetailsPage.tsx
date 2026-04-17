@@ -5,7 +5,14 @@ import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { useStrategicIndicatorsDepartmentDetails } from "../../state/hooks/useStrategicIndicatorsDepartmentDetails";
+import {
+  buildStrategicIndicatorsMonthRange,
+  getCurrentStrategicIndicatorsMonthValue,
+  resolveStrategicIndicatorsBranch,
+  type StrategicIndicatorsViewMode,
+} from "../shared/strategicIndicatorsFilters";
 
 type DepartmentDetailsPageProps = {
   pathname: string;
@@ -17,64 +24,48 @@ function extractDepartmentId(pathname: string) {
   return parts[parts.length - 1] ?? "";
 }
 
-function getCurrentMonthValue() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
-
-function buildMonthRange(monthValue: string) {
-  if (!monthValue) {
-    return {
-      startDate: undefined,
-      endDate: undefined,
-    };
-  }
-
-  const [yearStr, monthStr] = monthValue.split("-");
-  const year = Number(yearStr);
-  const month = Number(monthStr);
-
-  if (!year || !month) {
-    return {
-      startDate: undefined,
-      endDate: undefined,
-    };
-  }
-
-  const firstDay = `01-${String(month).padStart(2, "0")}-${year}`;
-  const lastDayDate = new Date(year, month, 0);
-  const lastDay = `${String(lastDayDate.getDate()).padStart(2, "0")}-${String(
-    month,
-  ).padStart(2, "0")}-${year}`;
-
-  return {
-    startDate: firstDay,
-    endDate: lastDay,
-  };
-}
-
 export function DepartmentDetailsPage({
   pathname,
   getAccessToken,
 }: DepartmentDetailsPageProps) {
   const departmentId = useMemo(() => extractDepartmentId(pathname), [pathname]);
-  const [referenceMonth, setReferenceMonth] = useState(getCurrentMonthValue());
+  const [referenceMonth, setReferenceMonth] = useState(
+    getCurrentStrategicIndicatorsMonthValue(),
+  );
+  const [viewMode, setViewMode] =
+    useState<StrategicIndicatorsViewMode>("consolidated");
+  const [branch, setBranch] = useState("01");
 
   const { startDate, endDate } = useMemo(
-    () => buildMonthRange(referenceMonth),
+    () => buildStrategicIndicatorsMonthRange(referenceMonth),
     [referenceMonth],
+  );
+
+  const effectiveBranch = useMemo(
+    () => resolveStrategicIndicatorsBranch(viewMode, branch),
+    [viewMode, branch],
   );
 
   const { data, loading, refreshing, error, reload } =
     useStrategicIndicatorsDepartmentDetails({
       departmentId,
+      branch: effectiveBranch,
       competence: referenceMonth,
       startDate,
       endDate,
       getAccessToken,
     });
+
+  const filters = (
+    <StrategicIndicatorsReferenceFilters
+      referenceMonth={referenceMonth}
+      viewMode={viewMode}
+      branch={branch}
+      onReferenceMonthChange={setReferenceMonth}
+      onViewModeChange={setViewMode}
+      onBranchChange={setBranch}
+    />
+  );
 
   if (loading && !data) {
     return (
@@ -88,19 +79,9 @@ export function DepartmentDetailsPage({
 
         <SectionBlock
           title="Filtro de referência"
-          description="Selecione o mês de referência para consultar o detalhe do departamento."
+          description="Selecione o mês de referência e a visão analítica desejada para consultar o detalhe do departamento."
         >
-          <div className="si-form-grid">
-            <label className="si-field">
-              <span className="si-field__label">Mês de referência</span>
-              <input
-                type="month"
-                className="si-input"
-                value={referenceMonth}
-                onChange={(event) => setReferenceMonth(event.target.value)}
-              />
-            </label>
-          </div>
+          {filters}
         </SectionBlock>
 
         <InfoState
@@ -123,19 +104,9 @@ export function DepartmentDetailsPage({
 
         <SectionBlock
           title="Filtro de referência"
-          description="Selecione o mês de referência para consultar o detalhe do departamento."
+          description="Selecione o mês de referência e a visão analítica desejada para consultar o detalhe do departamento."
         >
-          <div className="si-form-grid">
-            <label className="si-field">
-              <span className="si-field__label">Mês de referência</span>
-              <input
-                type="month"
-                className="si-input"
-                value={referenceMonth}
-                onChange={(event) => setReferenceMonth(event.target.value)}
-              />
-            </label>
-          </div>
+          {filters}
         </SectionBlock>
 
         <InfoState
@@ -171,19 +142,9 @@ export function DepartmentDetailsPage({
 
       <SectionBlock
         title="Filtro de referência"
-        description="Selecione o mês de referência para consultar o detalhe do departamento."
+        description="Selecione o mês de referência e a visão analítica desejada para consultar o detalhe do departamento."
       >
-        <div className="si-form-grid">
-          <label className="si-field">
-            <span className="si-field__label">Mês de referência</span>
-            <input
-              type="month"
-              className="si-input"
-              value={referenceMonth}
-              onChange={(event) => setReferenceMonth(event.target.value)}
-            />
-          </label>
-        </div>
+        {filters}
       </SectionBlock>
 
       {refreshing ? (

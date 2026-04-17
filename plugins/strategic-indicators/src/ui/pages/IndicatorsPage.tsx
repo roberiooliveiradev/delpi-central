@@ -11,54 +11,17 @@ import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import {
-  getGoalModeLabel,
-  getGoalPeriodicityLabel,
-  getMetaSourceLabel,
-  getPerformanceDirectionLabel,
-} from "../presentation/labels";
+  buildStrategicIndicatorsMonthRange,
+  getCurrentStrategicIndicatorsMonthValue,
+  resolveStrategicIndicatorsBranch,
+  type StrategicIndicatorsViewMode,
+} from "../shared/strategicIndicatorsFilters";
 
 type IndicatorsPageProps = {
   getAccessToken?: () => string | undefined;
 };
-
-function getCurrentMonthValue() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
-
-function buildMonthRange(monthValue: string) {
-  if (!monthValue) {
-    return {
-      startDate: undefined,
-      endDate: undefined,
-    };
-  }
-
-  const [yearStr, monthStr] = monthValue.split("-");
-  const year = Number(yearStr);
-  const month = Number(monthStr);
-
-  if (!year || !month) {
-    return {
-      startDate: undefined,
-      endDate: undefined,
-    };
-  }
-
-  const firstDay = `01-${String(month).padStart(2, "0")}-${year}`;
-  const lastDayDate = new Date(year, month, 0);
-  const lastDay = `${String(lastDayDate.getDate()).padStart(2, "0")}-${String(
-    month,
-  ).padStart(2, "0")}-${year}`;
-
-  return {
-    startDate: firstDay,
-    endDate: lastDay,
-  };
-}
 
 function mapClassificationToStatus(
   classification: string,
@@ -102,9 +65,50 @@ function buildPartialErrorDescription(
   return errors
     .map(
       (item) =>
-        `Departamento: ${item.departmentId} • Fonte: ${getMetaSourceLabel(item.source)} • Erro: ${item.message}`,
+        `Departamento: ${item.departmentId} • Fonte: ${formatMetaSource(item.source)} • Erro: ${item.message}`,
     )
     .join("\n");
+}
+
+function formatGoalMode(goalMode?: string) {
+  if (goalMode === "monthly_curve") return "curva mensal";
+  return "meta padrão";
+}
+
+function formatGoalPeriodicity(goalPeriodicity?: string) {
+  if (goalPeriodicity === "daily") return "diária";
+  if (goalPeriodicity === "weekly") return "semanal";
+  if (goalPeriodicity === "monthly") return "mensal";
+  if (goalPeriodicity === "quarterly") return "trimestral";
+  if (goalPeriodicity === "semiannual") return "semestral";
+  if (goalPeriodicity === "yearly") return "anual";
+  return goalPeriodicity || "não informada";
+}
+
+function formatMetaSource(source?: string) {
+  if (!source) return "fonte não informada";
+
+  const normalized = source.toLowerCase();
+
+  if (normalized.includes("manual")) return "manual";
+  if (normalized.includes("sheet")) return "planilha";
+  if (normalized.includes("totvs")) return "TOTVS";
+  if (normalized.includes("portal_rh")) return "Portal RH";
+  if (normalized.includes("lmp")) return "LMP";
+  if (normalized.includes("transforma")) return "Transforma Mais";
+  if (normalized.includes("financial")) return "Financeiro";
+  if (normalized.includes("commercial")) return "Comercial";
+  if (normalized.includes("production")) return "Produção";
+  if (normalized.includes("quality")) return "Qualidade";
+  if (normalized.includes("engineering")) return "Engenharia";
+  if (normalized.includes("hr")) return "RH";
+
+  return source;
+}
+
+function formatPerformanceDirection(performanceDirection?: string) {
+  if (performanceDirection === "lower_is_better") return "quanto menor, melhor";
+  return "quanto maior, melhor";
 }
 
 function buildIndicatorNarrative(item: {
@@ -115,10 +119,10 @@ function buildIndicatorNarrative(item: {
   performanceDirection?: string;
   monthlyTargets?: Array<{ month_number: number; target_value: number }>;
 }) {
-  const goalModeLabel = getGoalModeLabel(item.goalMode);
-  const directionLabel = getPerformanceDirectionLabel(item.performanceDirection);
-  const periodicityLabel = getGoalPeriodicityLabel(item.goalPeriodicity);
-  const sourceLabel = getMetaSourceLabel(item.source);
+  const goalModeLabel = formatGoalMode(item.goalMode);
+  const directionLabel = formatPerformanceDirection(item.performanceDirection);
+  const periodicityLabel = formatGoalPeriodicity(item.goalPeriodicity);
+  const sourceLabel = formatMetaSource(item.source);
 
   const monthlyCurveHint =
     item.goalMode === "monthly_curve" && (item.monthlyTargets?.length ?? 0) > 0
@@ -132,14 +136,25 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("all");
   const [status, setStatus] = useState("all");
-  const [referenceMonth, setReferenceMonth] = useState(getCurrentMonthValue());
+  const [referenceMonth, setReferenceMonth] = useState(
+    getCurrentStrategicIndicatorsMonthValue(),
+  );
+  const [viewMode, setViewMode] =
+    useState<StrategicIndicatorsViewMode>("consolidated");
+  const [branch, setBranch] = useState("01");
+  const [selectedIndicatorId, setSelectedIndicatorId] = useState<string | null>(
+    null,
+  );
 
   const { startDate, endDate } = useMemo(
-    () => buildMonthRange(referenceMonth),
+    () => buildStrategicIndicatorsMonthRange(referenceMonth),
     [referenceMonth],
   );
 
-  const departmentIdForApi = department === "all" ? undefined : department;
+  const effectiveBranch = useMemo(
+    () => resolveStrategicIndicatorsBranch(viewMode, branch),
+    [viewMode, branch],
+  );
 
   const {
     items,
@@ -150,7 +165,8 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
     error,
     reload,
   } = useStrategicIndicators({
-    departmentId: departmentIdForApi,
+    branch: effectiveBranch,
+    competence: referenceMonth,
     startDate,
     endDate,
     getAccessToken,
@@ -201,6 +217,9 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
 
   const filteredIndicators = useMemo(() => {
     return analyticsItems.filter((indicator) => {
+      const matchesDepartment =
+        department === "all" || indicator.departmentId === department;
+
       const matchesSearch =
         !search.trim() ||
         indicator.indicatorName.toLowerCase().includes(search.toLowerCase()) ||
@@ -210,13 +229,9 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
 
       const matchesStatus = status === "all" || indicator.status === status;
 
-      return matchesSearch && matchesStatus;
+      return matchesDepartment && matchesSearch && matchesStatus;
     });
-  }, [analyticsItems, search, status]);
-
-  const [selectedIndicatorId, setSelectedIndicatorId] = useState<string | null>(
-    null,
-  );
+  }, [analyticsItems, department, search, status]);
 
   const resolvedSelectedIndicator = useMemo(() => {
     if (!filteredIndicators.length) return null;
@@ -225,11 +240,25 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
       selectedIndicatorId &&
       filteredIndicators.some((item) => item.id === selectedIndicatorId)
     ) {
-      return filteredIndicators.find((item) => item.id === selectedIndicatorId) ?? null;
+      return (
+        filteredIndicators.find((item) => item.id === selectedIndicatorId) ??
+        null
+      );
     }
 
     return filteredIndicators[0];
   }, [filteredIndicators, selectedIndicatorId]);
+
+  const referenceFilters = (
+    <StrategicIndicatorsReferenceFilters
+      referenceMonth={referenceMonth}
+      viewMode={viewMode}
+      branch={branch}
+      onReferenceMonthChange={setReferenceMonth}
+      onViewModeChange={setViewMode}
+      onBranchChange={setBranch}
+    />
+  );
 
   return (
     <div className="si-page">
@@ -239,7 +268,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         description="Visão analítica dos indicadores que compõem os IDDs departamentais, com leitura de meta estruturada, direção de performance e filtros por área."
         badge={
           <StatusBadge
-            label={loading || refreshing ? "Carregando" : "API real"}
+            label={loading || refreshing ? "Carregando" : "API Real"}
             variant={loading || refreshing ? "neutral" : "success"}
           />
         }
@@ -247,19 +276,9 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
 
       <SectionBlock
         title="Filtro de referência"
-        description="Selecione o mês de referência para consultar os indicadores do período correto."
+        description="Selecione o mês de referência e a visão analítica desejada para consultar os indicadores do período correto."
       >
-        <div className="si-form-grid">
-          <label className="si-field">
-            <span className="si-field__label">Mês de referência</span>
-            <input
-              type="month"
-              className="si-input"
-              value={referenceMonth}
-              onChange={(event) => setReferenceMonth(event.target.value)}
-            />
-          </label>
-        </div>
+        {referenceFilters}
       </SectionBlock>
 
       {loading && items.length === 0 ? (

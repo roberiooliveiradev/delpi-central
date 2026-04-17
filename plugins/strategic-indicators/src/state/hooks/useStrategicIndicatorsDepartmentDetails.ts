@@ -5,6 +5,7 @@ import type { DepartmentDetailsViewData } from "../../data/types/departmentDetai
 
 type UseStrategicIndicatorsDepartmentDetailsParams = {
   departmentId: string;
+  branch?: string;
   competence?: string;
   startDate?: string;
   endDate?: string;
@@ -13,6 +14,7 @@ type UseStrategicIndicatorsDepartmentDetailsParams = {
 
 export function useStrategicIndicatorsDepartmentDetails({
   departmentId,
+  branch,
   competence,
   startDate,
   endDate,
@@ -61,6 +63,7 @@ export function useStrategicIndicatorsDepartmentDetails({
       try {
         const response = await fetchStrategicIndicatorsDepartmentDetails({
           departmentId,
+          branch,
           competence,
           startDate,
           endDate,
@@ -91,7 +94,7 @@ export function useStrategicIndicatorsDepartmentDetails({
         }
       }
     };
-  }, [departmentId, competence, startDate, endDate]);
+  }, [departmentId, branch, competence, startDate, endDate]);
 
   useEffect(() => {
     void loadRef.current();
@@ -99,7 +102,7 @@ export function useStrategicIndicatorsDepartmentDetails({
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [departmentId, competence, startDate, endDate]);
+  }, [departmentId, branch, competence, startDate, endDate]);
 
   return useMemo(
     () => ({

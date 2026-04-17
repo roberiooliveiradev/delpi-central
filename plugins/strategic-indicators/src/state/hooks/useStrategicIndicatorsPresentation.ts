@@ -24,6 +24,7 @@ import type { TrendsDashboardViewData } from "../../data/types/trends";
 
 type UseStrategicIndicatorsPresentationParams = {
   competence?: string;
+  branch?: string;
   startDate?: string;
   endDate?: string;
   months?: number;
@@ -42,21 +43,36 @@ type PresentationDataBundle = {
   trends: TrendsDashboardViewData | null;
   departmentDetailsById: Record<string, DepartmentDetailsViewData>;
   indicators: IndicatorViewItem[];
+  selectedDepartmentId: string | null;
 };
+
+type SettledResult<T> =
+  | { status: "fulfilled"; value: T }
+  | { status: "rejected"; reason: unknown };
 
 function getSafeErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
+function settle<T>(promise: Promise<T>): Promise<SettledResult<T>> {
+  return promise.then(
+    (value) => ({ status: "fulfilled", value }) as const,
+    (reason) => ({ status: "rejected", reason }) as const,
+  );
+}
+
 export function useStrategicIndicatorsPresentation({
   competence,
+  branch,
   startDate,
   endDate,
   months = 3,
   getAccessToken,
 }: UseStrategicIndicatorsPresentationParams) {
   const [bundle, setBundle] = useState<PresentationDataBundle | null>(null);
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,16 +81,12 @@ export function useStrategicIndicatorsPresentation({
   const requestIdRef = useRef(0);
   const hasLoadedOnceRef = useRef(false);
   const getAccessTokenRef = useRef(getAccessToken);
-  const selectedDepartmentIdRef = useRef<string | null>(null);
-  const loadRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     getAccessTokenRef.current = getAccessToken;
   }, [getAccessToken]);
 
-  useEffect(() => {
-    selectedDepartmentIdRef.current = selectedDepartmentId;
-  }, [selectedDepartmentId]);
+  const loadRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     loadRef.current = async () => {
@@ -89,40 +101,27 @@ export function useStrategicIndicatorsPresentation({
       setError(null);
       setWarnings([]);
 
+      const commonParams = {
+        competence,
+        branch,
+        startDate,
+        endDate,
+        getAccessToken: getAccessTokenRef.current,
+      };
+
       try {
-        const [
-          executiveResponse,
-          alertsResponse,
-          departmentsResponse,
-          trendsResult,
-        ] = await Promise.all([
-          fetchStrategicIndicatorsExecutiveSummary({
-            competence,
-            startDate,
-            endDate,
-            getAccessToken: getAccessTokenRef.current,
-          }),
-          fetchStrategicIndicatorsAlerts({
-            competence,
-            startDate,
-            endDate,
-            getAccessToken: getAccessTokenRef.current,
-          }),
-          fetchStrategicIndicatorsDepartments({
-            competence,
-            startDate,
-            endDate,
-            getAccessToken: getAccessTokenRef.current,
-          }),
-          fetchStrategicIndicatorsTrends({
-            competence,
-            months,
-            getAccessToken: getAccessTokenRef.current,
-          }).then(
-            (response) => ({ status: "fulfilled", value: response } as const),
-            (reason) => ({ status: "rejected", reason } as const),
-          ),
-        ]);
+        const [executiveResponse, alertsResponse, departmentsResponse, trendsResult] =
+          await Promise.all([
+            fetchStrategicIndicatorsExecutiveSummary(commonParams),
+            fetchStrategicIndicatorsAlerts(commonParams),
+            fetchStrategicIndicatorsDepartments(commonParams),
+            settle(
+              fetchStrategicIndicatorsTrends({
+                ...commonParams,
+                months,
+              }),
+            ),
+          ]);
 
         if (requestId !== requestIdRef.current) {
           return;
@@ -133,25 +132,25 @@ export function useStrategicIndicatorsPresentation({
         const departments = adaptDepartmentsToView(departmentsResponse);
 
         const nextWarnings: PresentationWarningItem[] = [];
-        let trends: TrendsDashboardViewData | null = null;
 
-        if (trendsResult.status === "fulfilled") {
-          trends = adaptTrendsToView(trendsResult.value);
-        } else {
-          nextWarnings.push({
-            source: "tendencias",
-            message: getSafeErrorMessage(
-              trendsResult.reason,
-              "Não foi possível carregar a tendência do período.",
-            ),
-          });
-        }
+        const trends =
+          trendsResult.status === "fulfilled"
+            ? adaptTrendsToView(trendsResult.value)
+            : (() => {
+                nextWarnings.push({
+                  source: "tendencias",
+                  message: getSafeErrorMessage(
+                    trendsResult.reason,
+                    "Não foi possível carregar a tendência do período.",
+                  ),
+                });
+                return null;
+              })();
 
-        const currentSelectedDepartmentId = selectedDepartmentIdRef.current;
         const effectiveDepartmentId =
-          currentSelectedDepartmentId &&
-          departments.some((item) => item.id === currentSelectedDepartmentId)
-            ? currentSelectedDepartmentId
+          selectedDepartmentId &&
+          departments.some((item) => item.id === selectedDepartmentId)
+            ? selectedDepartmentId
             : departments[0]?.id ?? null;
 
         let departmentDetailsById: Record<string, DepartmentDetailsViewData> = {};
@@ -159,24 +158,17 @@ export function useStrategicIndicatorsPresentation({
 
         if (effectiveDepartmentId) {
           const [detailsResult, indicatorsResult] = await Promise.all([
-            fetchStrategicIndicatorsDepartmentDetails({
-              departmentId: effectiveDepartmentId,
-              competence,
-              startDate,
-              endDate,
-              getAccessToken: getAccessTokenRef.current,
-            }).then(
-              (response) => ({ status: "fulfilled", value: response } as const),
-              (reason) => ({ status: "rejected", reason } as const),
+            settle(
+              fetchStrategicIndicatorsDepartmentDetails({
+                departmentId: effectiveDepartmentId,
+                ...commonParams,
+              }),
             ),
-            fetchStrategicIndicators({
-              departmentId: effectiveDepartmentId,
-              startDate,
-              endDate,
-              getAccessToken: getAccessTokenRef.current,
-            }).then(
-              (response) => ({ status: "fulfilled", value: response } as const),
-              (reason) => ({ status: "rejected", reason } as const),
+            settle(
+              fetchStrategicIndicators({
+                departmentId: effectiveDepartmentId,
+                ...commonParams,
+              }),
             ),
           ]);
 
@@ -220,9 +212,8 @@ export function useStrategicIndicatorsPresentation({
           trends,
           departmentDetailsById,
           indicators,
+          selectedDepartmentId: effectiveDepartmentId,
         });
-
-        selectedDepartmentIdRef.current = effectiveDepartmentId;
         setSelectedDepartmentId(effectiveDepartmentId);
         setWarnings(nextWarnings);
         hasLoadedOnceRef.current = true;
@@ -244,19 +235,11 @@ export function useStrategicIndicatorsPresentation({
         }
       }
     };
-  }, [competence, startDate, endDate, months]);
-
-  useEffect(() => {
-    if (!hasLoadedOnceRef.current) {
-      return;
-    }
-
-    void loadRef.current();
-  }, [selectedDepartmentId]);
+  }, [competence, branch, startDate, endDate, months, selectedDepartmentId]);
 
   useEffect(() => {
     void loadRef.current();
-  }, [competence, startDate, endDate, months]);
+  }, [competence, branch, startDate, endDate, months]);
 
   const data = useMemo<PresentationViewData | null>(() => {
     if (!bundle) {
@@ -271,22 +254,19 @@ export function useStrategicIndicatorsPresentation({
       departmentDetailsById: bundle.departmentDetailsById,
       indicators: bundle.indicators,
       trends: bundle.trends,
-      focusDepartmentId: selectedDepartmentId,
+      focusDepartmentId: bundle.selectedDepartmentId,
     });
-  }, [bundle, selectedDepartmentId]);
+  }, [bundle]);
 
   const departmentIds = useMemo(() => {
     return bundle?.departments.map((item) => item.id) ?? [];
   }, [bundle]);
 
   const setFocusedDepartmentId = useCallback((departmentId: string | null) => {
-    selectedDepartmentIdRef.current = departmentId;
     setSelectedDepartmentId(departmentId);
   }, []);
 
-  const reload = useCallback(() => {
-    return loadRef.current();
-  }, []);
+  const reload = useCallback(() => loadRef.current(), []);
 
   return useMemo(
     () => ({

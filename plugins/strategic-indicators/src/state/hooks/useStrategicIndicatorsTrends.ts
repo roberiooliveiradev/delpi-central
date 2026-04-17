@@ -4,13 +4,21 @@ import { fetchStrategicIndicatorsTrends } from "../../data/api/strategicIndicato
 import type { TrendsDashboardViewData } from "../../data/types/trends";
 
 type UseStrategicIndicatorsTrendsParams = {
+  departmentId?: string;
+  branch?: string;
   competence?: string;
+  startDate?: string;
+  endDate?: string;
   months?: number;
   getAccessToken?: () => string | undefined;
 };
 
 export function useStrategicIndicatorsTrends({
+  departmentId,
+  branch,
   competence,
+  startDate,
+  endDate,
   months = 3,
   getAccessToken,
 }: UseStrategicIndicatorsTrendsParams) {
@@ -48,7 +56,11 @@ export function useStrategicIndicatorsTrends({
 
       try {
         const response = await fetchStrategicIndicatorsTrends({
+          departmentId,
+          branch,
           competence,
+          startDate,
+          endDate,
           months,
           getAccessToken: getAccessTokenRef.current,
           signal: controller.signal,
@@ -77,7 +89,7 @@ export function useStrategicIndicatorsTrends({
         }
       }
     };
-  }, [competence, months]);
+  }, [departmentId, branch, competence, startDate, endDate, months]);
 
   useEffect(() => {
     void loadRef.current();
@@ -85,7 +97,7 @@ export function useStrategicIndicatorsTrends({
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [competence, months]);
+  }, [departmentId, branch, competence, startDate, endDate, months]);
 
   return useMemo(
     () => ({

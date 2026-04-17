@@ -4,6 +4,8 @@ import { fetchStrategicIndicatorsExecutiveSummary } from "../../data/api/strateg
 import type { ExecutiveDashboardViewData } from "../../data/types/executiveSummary";
 
 type UseStrategicIndicatorsExecutiveSummaryParams = {
+  departmentId?: string;
+  branch?: string;
   competence?: string;
   startDate?: string;
   endDate?: string;
@@ -11,6 +13,8 @@ type UseStrategicIndicatorsExecutiveSummaryParams = {
 };
 
 export function useStrategicIndicatorsExecutiveSummary({
+  departmentId,
+  branch,
   competence,
   startDate,
   endDate,
@@ -25,7 +29,6 @@ export function useStrategicIndicatorsExecutiveSummary({
   const requestIdRef = useRef(0);
   const hasLoadedOnceRef = useRef(false);
   const getAccessTokenRef = useRef(getAccessToken);
-  
 
   useEffect(() => {
     getAccessTokenRef.current = getAccessToken;
@@ -51,6 +54,8 @@ export function useStrategicIndicatorsExecutiveSummary({
 
       try {
         const response = await fetchStrategicIndicatorsExecutiveSummary({
+          departmentId,
+          branch,
           competence,
           startDate,
           endDate,
@@ -81,7 +86,7 @@ export function useStrategicIndicatorsExecutiveSummary({
         }
       }
     };
-  }, [competence, startDate, endDate]);
+  }, [departmentId, branch, competence, startDate, endDate]);
 
   useEffect(() => {
     void loadRef.current();
@@ -89,7 +94,7 @@ export function useStrategicIndicatorsExecutiveSummary({
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [competence, startDate, endDate]);
+  }, [departmentId, branch, competence, startDate, endDate]);
 
   return useMemo(
     () => ({
