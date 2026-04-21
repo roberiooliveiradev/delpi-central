@@ -8,6 +8,7 @@ import { PresentationHero } from "../components/PresentationHero";
 import { PresentationNarrativeStrip } from "../components/PresentationNarrativeStrip";
 import { PresentationTopBar } from "../components/PresentationTopBar";
 import { InfoState } from "../components/InfoState";
+import { PresentationAlertsSeverityDonut } from "../components/PresentationAlertsSeverityDonut";
 import { useStrategicIndicatorsPresentation } from "../../state/hooks/useStrategicIndicatorsPresentation";
 import {
   buildStrategicIndicatorsMonthRange,
@@ -668,11 +669,39 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
         ? data.alerts.executive
         : data.executiveAlerts;
 
-    return (
-      <div className="si-presentation-single-scene">
-        <PresentationAlertsBoard alerts={alertsToShow.slice(0, 3)} />
+    const severityTotals = {
+      high:
+        data.alerts.executive.filter((item) => item.severity === "high").length +
+        data.alerts.departments.filter((item) => item.severity === "high").length +
+        data.alerts.indicators.filter((item) => item.severity === "high").length,
+      medium:
+        data.alerts.executive.filter((item) => item.severity === "medium").length +
+        data.alerts.departments.filter((item) => item.severity === "medium").length +
+        data.alerts.indicators.filter((item) => item.severity === "medium").length,
+      low:
+        data.alerts.executive.filter((item) => item.severity === "low").length +
+        data.alerts.departments.filter((item) => item.severity === "low").length +
+        data.alerts.indicators.filter((item) => item.severity === "low").length,
+    };
 
-        <div className="si-presentation-trend-scene__grid">
+    const topIndicatorAlert = [...data.alerts.indicators].sort(
+      (a, b) => a.simulatedScore - b.simulatedScore,
+    )[0];
+
+    const priorityRecommendation =
+      alertsToShow[0]?.recommendation ??
+      topIndicatorAlert?.recommendation ??
+      "Priorizar resposta rápida para os pontos críticos do período.";
+
+    return (
+      <div className="si-presentation-alerts-scene">
+        <div className="si-presentation-alerts-scene__top">
+          <PresentationAlertsSeverityDonut values={severityTotals} />
+
+          <PresentationAlertsBoard alerts={alertsToShow.slice(0, 3)} />
+        </div>
+
+        <div className="si-presentation-alerts-scene__grid">
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
               Alertas executivos
@@ -681,7 +710,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
               {executiveAlertsCount}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Itens priorizados para acompanhamento direto da diretoria.
+              Itens priorizados para leitura direta da diretoria.
             </p>
           </article>
 
@@ -693,7 +722,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
               {departmentAlertsCount}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Áreas com sinais relevantes de deterioração ou atenção.
+              Áreas que exigem acompanhamento executivo imediato.
             </p>
           </article>
 
@@ -705,43 +734,45 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
               {indicatorAlertsCount}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Indicadores com comportamento abaixo da leitura esperada.
+              Indicadores com score abaixo da leitura esperada.
             </p>
           </article>
 
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Área mais pressionada
+              Departamento mais pressionado
             </span>
             <strong className="si-presentation-scene-card__value">
               {mostCriticalDepartmentOverview?.name ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Menor score consolidado no período e maior necessidade de reação.
+              Menor score consolidado do período.
             </p>
           </article>
 
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Principal risco executivo
+              Indicador mais crítico
             </span>
             <strong className="si-presentation-scene-card__value">
-              {data.topRisk}
+              {topIndicatorAlert?.indicatorName ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Tema mais sensível para priorização imediata da gestão.
+              {topIndicatorAlert?.departmentName
+                ? `Área: ${topIndicatorAlert.departmentName}`
+                : "Sem indicador crítico disponível."}
             </p>
           </article>
 
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Leitura do cenário
+              Recomendação prioritária
             </span>
             <strong className="si-presentation-scene-card__value">
-              {data.classification}
+              Ação imediata
             </strong>
             <p className="si-presentation-scene-card__text">
-              {data.trendLabel} no fechamento atual, com foco em correção rápida.
+              {priorityRecommendation}
             </p>
           </article>
         </div>

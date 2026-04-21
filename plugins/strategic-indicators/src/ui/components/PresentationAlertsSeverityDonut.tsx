@@ -1,129 +1,129 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
+type AlertSeverity = "high" | "medium" | "low";
+
 type PresentationAlertsSeverityDonutProps = {
-  high: number;
-  medium: number;
-  low: number;
+  values: {
+    high: number;
+    medium: number;
+    low: number;
+  };
 };
 
-type TooltipValue =
-  | number
-  | string
-  | readonly (string | number)[]
-  | undefined;
+type DonutDatum = {
+  key: AlertSeverity;
+  label: string;
+  value: number;
+};
 
-const SEVERITY_DATA = [
-  { key: "high", label: "Alta", color: "#ef4444" },
-  { key: "medium", label: "Média", color: "#f59e0b" },
-  { key: "low", label: "Baixa", color: "#22c55e" },
-] as const;
+function getSeverityLabel(severity: AlertSeverity) {
+  if (severity === "high") return "Alta";
+  if (severity === "medium") return "Média";
+  return "Baixa";
+}
 
-function toNumber(value: TooltipValue): number {
-  if (typeof value === "number") return value;
-
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      if (typeof item === "number" && Number.isFinite(item)) {
-        return item;
-      }
-
-      if (typeof item === "string") {
-        const parsed = Number(item);
-        if (Number.isFinite(parsed)) {
-          return parsed;
-        }
-      }
-    }
-  }
-
-  return 0;
+function getSeverityColorToken(severity: AlertSeverity) {
+  if (severity === "high") return "var(--danger, #dc2626)";
+  if (severity === "medium") return "var(--warning, #f59e0b)";
+  return "var(--primary, #089bdb)";
 }
 
 export function PresentationAlertsSeverityDonut({
-  high,
-  medium,
-  low,
+  values,
 }: PresentationAlertsSeverityDonutProps) {
-  const chartData = [
-    { name: "Alta", value: high, color: "#ef4444" },
-    { name: "Média", value: medium, color: "#f59e0b" },
-    { name: "Baixa", value: low, color: "#22c55e" },
-  ].filter((item) => item.value > 0);
+  const baseData: DonutDatum[] = [
+    { key: "high", label: "Alta", value: values.high },
+    { key: "medium", label: "Média", value: values.medium },
+    { key: "low", label: "Baixa", value: values.low },
+  ];
 
-  const total = high + medium + low;
+  const data = baseData.filter((item): item is DonutDatum => item.value > 0);
+
+  const total = values.high + values.medium + values.low;
 
   return (
-    <section className="si-presentation-alerts-donut">
-      <div className="si-presentation-alerts-donut__chart">
-        {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Tooltip
-                formatter={(value, name) => [toNumber(value), String(name)]}
-                contentStyle={{
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(15, 23, 42, 0.96)",
-                  color: "#ffffff",
-                }}
-              />
-              <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius="62%"
-                outerRadius="100%"
-                paddingAngle={4}
-                stroke="transparent"
-              >
-                {chartData.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="si-presentation-alerts-donut__empty">
-            Sem alertas
-          </div>
-        )}
+    <section className="si-presentation-alerts-donut si-presentation-scene-card">
+      <div className="si-presentation-alerts-donut__header">
+        <div>
+          <span className="si-presentation-alerts-donut__eyebrow">
+            Distribuição de severidade
+          </span>
+          <h3>Mapa executivo de alertas</h3>
+        </div>
 
-        <div className="si-presentation-alerts-donut__center">
-          <span className="si-presentation-alerts-donut__label">Alertas</span>
-          <strong className="si-presentation-alerts-donut__value">
-            {total}
-          </strong>
+        <div className="si-presentation-alerts-donut__total">
+          <strong>{total}</strong>
+          <span>alertas</span>
         </div>
       </div>
 
-      <div className="si-presentation-alerts-donut__legend">
-        {SEVERITY_DATA.map((item) => {
-          const value =
-            item.key === "high" ? high : item.key === "medium" ? medium : low;
+      <div className="si-presentation-alerts-donut__content">
+        <div className="si-presentation-alerts-donut__chart">
+          {data.length ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={data}
+                  dataKey="value"
+                  nameKey="label"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={58}
+                  outerRadius={84}
+                  paddingAngle={3}
+                  stroke="transparent"
+                >
+                  {data.map((entry) => (
+                    <Cell
+                      key={entry.key}
+                      fill={getSeverityColorToken(entry.key)}
+                    />
+                  ))}
+                </Pie>
 
-          return (
+                <Tooltip
+                  formatter={(value, name) => {
+                    const safeValue =
+                      typeof value === "number" || typeof value === "string" ? value : 0;
+
+                    return [`${safeValue}`, String(name ?? "")];
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="si-presentation-alerts-donut__empty">
+              Sem alertas para exibição.
+            </div>
+          )}
+        </div>
+
+        <div className="si-presentation-alerts-donut__legend">
+          {(["high", "medium", "low"] as AlertSeverity[]).map((severity) => (
             <div
-              key={item.key}
+              key={severity}
               className="si-presentation-alerts-donut__legend-item"
             >
               <span
                 className="si-presentation-alerts-donut__legend-dot"
-                style={{ background: item.color }}
+                style={{
+                  background: getSeverityColorToken(severity),
+                }}
               />
-              <span className="si-presentation-alerts-donut__legend-label">
-                {item.label}
-              </span>
-              <strong className="si-presentation-alerts-donut__legend-value">
-                {value}
-              </strong>
+
+              <div className="si-presentation-alerts-donut__legend-copy">
+                <strong>{getSeverityLabel(severity)}</strong>
+                <span>
+                  {severity === "high"
+                    ? values.high
+                    : severity === "medium"
+                    ? values.medium
+                    : values.low}
+                </span>
+              </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </section>
   );
