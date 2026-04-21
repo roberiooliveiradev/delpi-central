@@ -2,15 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { PresentationAlertsBoard } from "../components/PresentationAlertsBoard";
 import { PresentationClosingPanel } from "../components/PresentationClosingPanel";
 import { PresentationDepartmentBoard } from "../components/PresentationDepartmentBoard";
+import { PresentationDepartmentSlideScene } from "../components/PresentationDepartmentSlideScene";
 import { PresentationEdgeNavigation } from "../components/PresentationEdgeNavigation";
 import { PresentationHero } from "../components/PresentationHero";
 import { PresentationNarrativeStrip } from "../components/PresentationNarrativeStrip";
 import { PresentationTopBar } from "../components/PresentationTopBar";
 import { InfoState } from "../components/InfoState";
-import type {
-  PresentationDepartmentBoardItem,
-  PresentationDepartmentFocus,
-} from "../../data/types/presentation";
 import { useStrategicIndicatorsPresentation } from "../../state/hooks/useStrategicIndicatorsPresentation";
 import {
   buildStrategicIndicatorsMonthRange,
@@ -139,24 +136,11 @@ function getDirectionLabel(direction: "up" | "down" | "stable") {
   return "Estável";
 }
 
-function getDirectionVariant(direction: "up" | "down" | "stable") {
-  if (direction === "up") return "success";
-  if (direction === "down") return "warning";
-  return "neutral";
-}
-
 function formatScore(value: number) {
   return value.toLocaleString("pt-BR", {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   });
-}
-
-function formatPct(value: number) {
-  return `${value.toLocaleString("pt-BR", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  })}%`;
 }
 
 function readStoredPresentationMode(): PresentationMode {
@@ -187,46 +171,6 @@ function readStoredPresentationMonths(): number {
   const parsedValue = Number(rawValue);
 
   return [3, 6, 12].includes(parsedValue) ? parsedValue : 3;
-}
-
-function buildSelectedDepartment(
-  boardDepartment: PresentationDepartmentBoardItem | null,
-  focus: PresentationDepartmentFocus | null,
-) {
-  if (!boardDepartment && !focus) return null;
-
-  const sameDepartment =
-    Boolean(boardDepartment) &&
-    Boolean(focus) &&
-    boardDepartment!.id === focus!.id;
-
-  const safeFocus = sameDepartment ? focus : null;
-
-  return {
-    id: boardDepartment?.id ?? safeFocus?.id ?? "",
-    name: boardDepartment?.name ?? safeFocus?.name ?? "—",
-    score: safeFocus?.score ?? boardDepartment?.current ?? 0,
-    previous:
-      boardDepartment?.previous ??
-      Math.max(0, (safeFocus?.score ?? 0) - (safeFocus?.variation.value ?? 0)),
-    direction:
-      safeFocus?.variation.direction ?? boardDepartment?.direction ?? "stable",
-    classification: safeFocus?.classification ?? "—",
-    contribution: safeFocus?.contribution ?? 0,
-    weightInIgd: safeFocus?.weightInIgd ?? 0,
-    aggregationMode: safeFocus?.aggregationMode ?? "—",
-    strategicSummary:
-      safeFocus?.strategicSummary ??
-      "Departamento em evidência para aprofundamento executivo.",
-    units: safeFocus?.units ?? [],
-    indicators: safeFocus?.indicators ?? [],
-    variationValue:
-      safeFocus?.variation.value ??
-      ((boardDepartment?.current ?? 0) - (boardDepartment?.previous ?? 0)),
-    variationLabel:
-      safeFocus?.variation.directionLabel ??
-      getDirectionLabel(boardDepartment?.direction ?? "stable"),
-  };
 }
 
 export function PresentationPage({ getAccessToken }: PresentationPageProps) {
@@ -448,17 +392,12 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   const selectedBoardDepartment =
     data?.departments[departmentIndex] ?? data?.departments[0] ?? null;
 
-  const selectedFocus =
+  const departmentFocus =
     data?.departmentFocus &&
     selectedBoardDepartment &&
     data.departmentFocus.id === selectedBoardDepartment.id
       ? data.departmentFocus
       : null;
-
-  const selectedDepartment = buildSelectedDepartment(
-    selectedBoardDepartment,
-    selectedFocus,
-  );
 
   const mostCriticalDepartmentOverview = [...(data?.departmentsOverview ?? [])]
     .sort((a, b) => a.score - b.score)[0];
@@ -495,22 +434,8 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   const departmentAlertsCount = data?.alerts.departments.length ?? 0;
   const indicatorAlertsCount = data?.alerts.indicators.length ?? 0;
 
-  const selectedDepartmentIndicatorsSorted = selectedDepartment
-    ? [...selectedDepartment.indicators].sort((a, b) => a.score - b.score)
-    : [];
-
-  const selectedDepartmentWorstIndicator =
-    selectedDepartmentIndicatorsSorted[0] ?? null;
-
-  const selectedDepartmentBestIndicator =
-    [...selectedDepartmentIndicatorsSorted].sort((a, b) => b.score - a.score)[0] ??
-    null;
-
   const selectedDepartmentCriticalIndicatorsCount =
-    selectedDepartment?.indicators.filter((item) => item.score < 7).length ?? 0;
-
-  const selectedDepartmentExcellentIndicatorsCount =
-    selectedDepartment?.indicators.filter((item) => item.score >= 9).length ?? 0;
+    departmentFocus?.indicators.filter((item) => item.score < 7).length ?? 0;
 
   const trendPointsCount = data?.trend?.igdSeries.length ?? 0;
 
@@ -567,10 +492,14 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     if (!data) return null;
 
     const bestDepartmentName =
-      strongestDepartmentCard?.name ?? mostPositiveDepartmentOverview?.name ?? data.topDepartment;
+      strongestDepartmentCard?.name ??
+      mostPositiveDepartmentOverview?.name ??
+      data.topDepartment;
 
     const primaryRiskName =
-      weakestDepartmentCard?.name ?? mostCriticalDepartmentOverview?.name ?? data.topRisk;
+      weakestDepartmentCard?.name ??
+      mostCriticalDepartmentOverview?.name ??
+      data.topRisk;
 
     return (
       <div className="si-presentation-overview-scene">
@@ -666,10 +595,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             </strong>
             <p className="si-presentation-scene-card__text">
               {departmentsByHighestContribution
-                .map(
-                  (item) =>
-                    `${item.name} (${formatScore(item.contribution)})`,
-                )
+                .map((item) => `${item.name} (${formatScore(item.contribution)})`)
                 .join(" • ") || "Sem dados disponíveis."}
             </p>
           </article>
@@ -725,177 +651,12 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   }
 
   function renderDepartmentDetailScene() {
-    if (!selectedDepartment) {
-      return (
-        <div className="si-presentation-scene-card">
-          <InfoState
-            title="Nenhum departamento disponível"
-            description="Não há departamentos suficientes para exibir o slide detalhado."
-          />
-        </div>
-      );
-    }
-
     return (
-      <div className="si-presentation-department-slide">
-        <section className="si-presentation-department-slide__hero">
-          <div className="si-presentation-department-slide__hero-main">
-            <span className="si-presentation-department-slide__eyebrow">
-              Departamento em foco
-            </span>
-            <h2 className="si-presentation-department-slide__title">
-              {selectedDepartment.name}
-            </h2>
-            <p className="si-presentation-department-slide__subtitle">
-              Slide {departmentIndex + 1} de {data?.departments.length ?? 0}
-            </p>
-          </div>
-
-          <div className="si-presentation-department-slide__hero-badge">
-            <span
-              className={`si-status-badge si-status-badge--${getDirectionVariant(
-                selectedDepartment.direction,
-              )}`}
-            >
-              {getDirectionLabel(selectedDepartment.direction)}
-            </span>
-          </div>
-        </section>
-
-        <div className="si-presentation-department-slide__metrics">
-          <article className="si-presentation-metric-card">
-            <span>Score atual</span>
-            <strong>{formatScore(selectedDepartment.score)}</strong>
-          </article>
-
-          <article className="si-presentation-metric-card">
-            <span>Período anterior</span>
-            <strong>{formatScore(selectedDepartment.previous)}</strong>
-          </article>
-
-          <article className="si-presentation-metric-card">
-            <span>Contribuição no IGD</span>
-            <strong>{formatScore(selectedDepartment.contribution)}</strong>
-          </article>
-
-          <article className="si-presentation-metric-card">
-            <span>Peso no IGD</span>
-            <strong>{formatPct(selectedDepartment.weightInIgd)}</strong>
-          </article>
-        </div>
-
-        <div className="si-presentation-department-slide__bottom">
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Leitura executiva
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {selectedDepartment.classification}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              {selectedDepartment.strategicSummary}
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Agregação e direção
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {selectedDepartment.aggregationMode}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              {selectedDepartment.variationLabel} ·{" "}
-              {selectedDepartment.variationValue > 0 ? "+" : ""}
-              {formatScore(selectedDepartment.variationValue)}
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Melhor indicador
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {selectedDepartmentBestIndicator?.name ?? "—"}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              {selectedDepartmentBestIndicator
-                ? `Score ${formatScore(selectedDepartmentBestIndicator.score)}`
-                : "Sem indicadores disponíveis."}
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Pior indicador
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {selectedDepartmentWorstIndicator?.name ?? "—"}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              {selectedDepartmentWorstIndicator
-                ? `Score ${formatScore(selectedDepartmentWorstIndicator.score)}`
-                : "Sem indicadores disponíveis."}
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Indicadores em atenção
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {selectedDepartmentCriticalIndicatorsCount}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              Score abaixo de 7 no conjunto atual do departamento.
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Indicadores de destaque
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {selectedDepartmentExcellentIndicatorsCount}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              Score igual ou acima de 9 no período analisado.
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Unidades consideradas
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {selectedDepartment.units.length}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              {selectedDepartment.units.length > 0
-                ? selectedDepartment.units
-                    .slice(0, 3)
-                    .map((unit) => unit.name)
-                    .join(" • ")
-                : "Sem detalhamento por unidade disponível."}
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              3 piores indicadores
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {selectedDepartmentCriticalIndicatorsCount}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              {selectedDepartmentIndicatorsSorted
-                .slice(0, 3)
-                .map((item) => `${item.name} (${formatScore(item.score)})`)
-                .join(" • ") || "Sem indicadores disponíveis."}
-            </p>
-          </article>
-        </div>
-      </div>
+      <PresentationDepartmentSlideScene
+        department={departmentFocus}
+        series={departmentFocus?.series}
+        mode={mode}
+      />
     );
   }
 

@@ -10,6 +10,7 @@ import type { ExecutiveDashboardViewData } from "./executiveSummary";
 import type { IndicatorViewItem } from "./indicators";
 import type {
   DepartmentTrendSeriesPoint,
+  IndicatorTrendSeriesItem,
   TrendsDashboardViewData,
 } from "./trends";
 import {
@@ -27,6 +28,15 @@ export type PresentationSparklinePoint = {
   value: number;
   classification?: string;
   contribution?: number;
+};
+
+export type PresentationIndicatorSeriesPoint = {
+  period: string;
+  value: number;
+  score: number;
+  gap: number;
+  classification?: string;
+  trend: "up" | "down" | "stable";
 };
 
 export type PresentationDepartmentBoardItem = {
@@ -76,6 +86,10 @@ export type PresentationDepartmentIndicatorSnapshot = {
   goalValue: number;
   goalPeriodicity: string;
   goalMode: string;
+  monthlyTargets: Array<{
+    monthNumber: number;
+    targetValue: number;
+  }>;
   strategicDescription: string;
   scopeType: string;
   performanceDirection: string;
@@ -84,6 +98,7 @@ export type PresentationDepartmentIndicatorSnapshot = {
   gap: number;
   trend: "up" | "down" | "stable";
   trendLabel: string;
+  series?: PresentationIndicatorSeriesPoint[];
 };
 
 export type PresentationDepartmentFocus = {
@@ -108,6 +123,7 @@ export type PresentationDepartmentFocus = {
     classification: string;
   }>;
   indicators: PresentationDepartmentIndicatorSnapshot[];
+  series?: PresentationSparklinePoint[];
 };
 
 export type PresentationTrendSnapshot = {
@@ -120,6 +136,7 @@ export type PresentationTrendSnapshot = {
     value: number;
   }>;
   departments: PresentationDepartmentBoardItem[];
+  indicatorSeriesByDepartmentId: Record<string, IndicatorTrendSeriesItem[]>;
   partialSuccess: boolean;
   errors: Array<{
     competence: string;
@@ -222,6 +239,21 @@ function mapTrendSeriesToSparklinePoints(
     value: point.score,
     classification: point.classification,
     contribution: point.contribution,
+  }));
+}
+
+function mapIndicatorSeries(
+  item: IndicatorTrendSeriesItem | undefined,
+): PresentationIndicatorSeriesPoint[] | undefined {
+  if (!item?.series?.length) return undefined;
+
+  return item.series.map((point) => ({
+    period: point.period,
+    value: point.value,
+    score: point.score,
+    gap: point.gap,
+    classification: point.classification,
+    trend: normalizeDirection(point.trend),
   }));
 }
 
@@ -365,14 +397,30 @@ function buildDepartmentFocus(
   departmentId: string | null | undefined,
   departmentDetailsById: Record<string, DepartmentDetailsViewData>,
   indicatorsByDepartmentId: Record<string, IndicatorViewItem[]>,
+  trends: TrendsDashboardViewData | null,
 ): PresentationDepartmentFocus | null {
   if (!departmentId) return null;
 
   const details = departmentDetailsById[departmentId];
   if (!details) return null;
 
-  const indicators = (indicatorsByDepartmentId[departmentId] ?? []).map(
-    (indicator) => ({
+  const trendDepartment = trends?.departments.find(
+    (department) => department.id === departmentId,
+  );
+
+  const trendIndicatorsMap = new Map(
+    (trends?.indicatorSeriesByDepartmentId?.[departmentId] ?? []).map((item) => [
+      item.indicatorId,
+      item,
+    ]),
+  );
+
+  const indicators = details.indicators.map((indicator) => {
+    const fallbackIndicator = (indicatorsByDepartmentId[departmentId] ?? []).find(
+      (item) => item.id === indicator.id,
+    );
+
+    return {
       id: indicator.id,
       name: indicator.name,
       weightPct: indicator.weightPct,
@@ -380,18 +428,27 @@ function buildDepartmentFocus(
       goalValue: indicator.goalValue,
       goalPeriodicity: getGoalPeriodicityLabel(indicator.goalPeriodicity),
       goalMode: getGoalModeLabel(indicator.goalMode),
-      strategicDescription: "",
+      monthlyTargets: (indicator.monthlyTargets ?? []).map((item) => ({
+        monthNumber: item.month_number,
+        targetValue: item.target_value,
+      })),
+      strategicDescription:
+        indicator.strategicDescription || fallbackIndicator?.name || "",
       scopeType: getScopeTypeLabel(indicator.scopeType),
       performanceDirection: getPerformanceDirectionLabel(
         indicator.performanceDirection,
       ),
-      currentValue: indicator.value,
+      currentValue:
+        fallbackIndicator?.value ??
+        Object.values(indicator.realized ?? {})[0] ??
+        0,
       score: indicator.score,
       gap: indicator.gap,
       trend: normalizeDirection(indicator.trend),
       trendLabel: getTrendLabel(indicator.trend),
-    }),
-  );
+      series: mapIndicatorSeries(trendIndicatorsMap.get(indicator.id)),
+    };
+  });
 
   return {
     id: details.id,
@@ -415,6 +472,9 @@ function buildDepartmentFocus(
       classification: unit.classification,
     })),
     indicators,
+    series: trendDepartment?.series?.length
+      ? mapTrendSeriesToSparklinePoints(trendDepartment.series)
+      : undefined,
   };
 }
 
@@ -441,6 +501,7 @@ function buildTrendSnapshot(
       bestScore: department.bestScore,
       worstScore: department.worstScore,
     })),
+    indicatorSeriesByDepartmentId: trends.indicatorSeriesByDepartmentId,
     partialSuccess: trends.partialSuccess,
     errors: trends.errors.map((error) => ({
       competence: error.competence,
@@ -509,6 +570,7 @@ export function buildPresentationViewData({
     focusDepartmentId,
     departmentDetailsById,
     indicatorsByDepartmentId,
+    trends,
   );
   const trend = buildTrendSnapshot(trends);
   const alertSnapshot = buildAlertSnapshot(alerts, executiveSummary);

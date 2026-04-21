@@ -223,7 +223,7 @@ function buildDepartmentDetailsById(
         strategicSummary: details.strategic_summary,
         variation: {
           value: details.variation.value,
-          direction: details.variation.direction,
+          direction: normalizeDirection(details.variation.direction),
         },
         units: details.units.map((unit) => ({
           unitId: unit.unit_id,
@@ -313,6 +313,78 @@ function buildDepartmentSeries(
   ];
 }
 
+function buildIndicatorSeriesByDepartmentId(
+  payload: StrategicIndicatorsPresentationApiResponse,
+): TrendsDashboardViewData["indicatorSeriesByDepartmentId"] {
+  const rawIndicatorSeriesByDepartmentId = (
+    payload.trends as StrategicIndicatorsPresentationApiResponse["trends"] & {
+      indicator_series_by_department_id?: Record<
+        string,
+        Array<{
+          indicator_id: string;
+          indicator_name: string;
+          weight_pct: number;
+          goal_label: string;
+          goal_value: number;
+          goal_periodicity: string;
+          goal_mode?: string;
+          monthly_targets?: Array<{
+            month_number: number;
+            target_value: number;
+          }>;
+          scope_type: string;
+          performance_direction: string;
+          strategic_description: string;
+          source: string;
+          series: Array<{
+            period: string;
+            value: number;
+            score: number;
+            gap: number;
+            classification?: string;
+            trend: "up" | "down" | "stable";
+          }>;
+        }>
+      >;
+    }
+  ).indicator_series_by_department_id;
+
+  if (!rawIndicatorSeriesByDepartmentId) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(rawIndicatorSeriesByDepartmentId).map(([departmentId, items]) => [
+      departmentId,
+      (items ?? []).map((item) => ({
+        indicatorId: item.indicator_id,
+        indicatorName: item.indicator_name,
+        weightPct: item.weight_pct,
+        goalLabel: item.goal_label,
+        goalValue: item.goal_value,
+        goalPeriodicity: item.goal_periodicity,
+        goalMode: item.goal_mode ?? "standard",
+        monthlyTargets: (item.monthly_targets ?? []).map((target) => ({
+          monthNumber: target.month_number,
+          targetValue: target.target_value,
+        })),
+        scopeType: item.scope_type,
+        performanceDirection: item.performance_direction,
+        strategicDescription: item.strategic_description,
+        source: item.source,
+        series: (item.series ?? []).map((point) => ({
+          period: point.period,
+          value: point.value,
+          score: point.score,
+          gap: point.gap,
+          classification: point.classification,
+          trend: normalizeDirection(point.trend),
+        })),
+      })),
+    ]),
+  );
+}
+
 function buildTrends(
   payload: StrategicIndicatorsPresentationApiResponse,
 ): TrendsDashboardViewData {
@@ -336,13 +408,15 @@ function buildTrends(
         department.last_step_direction ?? department.direction,
       ),
       netVariation: department.net_variation ?? department.current - department.previous,
-      bestScore: department.best_score ?? Math.max(department.current, department.previous),
+      bestScore:
+        department.best_score ?? Math.max(department.current, department.previous),
       worstScore:
         department.worst_score ?? Math.min(department.current, department.previous),
       currentClassification: department.current_classification,
       currentContribution: department.current_contribution,
       series: buildDepartmentSeries(department),
     })),
+    indicatorSeriesByDepartmentId: buildIndicatorSeriesByDepartmentId(payload),
     errors: (payload.trends.errors ?? []).map((error) => ({
       competence: error.competence ?? "",
       departmentId: error.department_id ?? "",

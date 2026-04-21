@@ -1,6 +1,7 @@
 import {
   Area,
   AreaChart,
+  CartesianGrid,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -15,6 +16,9 @@ type PresentationDepartmentSparklinePoint = {
 type PresentationDepartmentSparklineProps = {
   points: PresentationDepartmentSparklinePoint[];
   direction?: "up" | "down" | "stable";
+  height?: number;
+  compact?: boolean;
+  showGrid?: boolean;
 };
 
 type TooltipValue = number | string | null | undefined;
@@ -43,12 +47,18 @@ function resolvePointLabel(point: PresentationDepartmentSparklinePoint) {
 export function PresentationDepartmentSparkline({
   points,
   direction = "stable",
+  height = 72,
+  compact = false,
+  showGrid = false,
 }: PresentationDepartmentSparklineProps) {
   const color = resolveSparklineColor(direction);
 
   if (!points.length) {
     return (
-      <div className="si-presentation-sparkline si-presentation-sparkline--empty" />
+      <div
+        className="si-presentation-sparkline si-presentation-sparkline--empty"
+        style={{ height }}
+      />
     );
   }
 
@@ -57,21 +67,36 @@ export function PresentationDepartmentSparkline({
     chartLabel: resolvePointLabel(point) || `P${index + 1}`,
   }));
 
-  const gradientId = `sparkline-gradient-${direction}-${chartData.length}`;
+  const gradientId = `sparkline-gradient-${direction}-${chartData.length}-${height}`;
+  const strokeWidth = compact ? 2.5 : 3;
+  const dotRadius = compact ? 2 : 2.8;
 
   return (
-    <div className="si-presentation-sparkline">
+    <div className="si-presentation-sparkline" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={chartData}
-          margin={{ top: 4, right: 4, left: 4, bottom: 2 }}
+          margin={{
+            top: compact ? 4 : 6,
+            right: compact ? 4 : 8,
+            left: compact ? 0 : 4,
+            bottom: compact ? 0 : 4,
+          }}
         >
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.42} />
-              <stop offset="100%" stopColor={color} stopOpacity={0.04} />
+              <stop offset="0%" stopColor={color} stopOpacity={0.34} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.03} />
             </linearGradient>
           </defs>
+
+          {showGrid ? (
+            <CartesianGrid
+              vertical={false}
+              stroke="rgba(0,0,0,0.08)"
+              strokeDasharray="4 4"
+            />
+          ) : null}
 
           <XAxis dataKey="chartLabel" hide />
 
@@ -110,10 +135,14 @@ export function PresentationDepartmentSparkline({
             type="monotone"
             dataKey="value"
             stroke={color}
-            strokeWidth={3}
+            strokeWidth={strokeWidth}
             fill={`url(#${gradientId})`}
-            dot={chartData.length <= 8 ? { r: 2.5, strokeWidth: 0, fill: color } : false}
-            activeDot={{ r: 4, fill: color }}
+            dot={
+              chartData.length <= 8
+                ? { r: dotRadius, strokeWidth: 0, fill: color }
+                : false
+            }
+            activeDot={{ r: compact ? 3 : 4, fill: color }}
           />
         </AreaChart>
       </ResponsiveContainer>
