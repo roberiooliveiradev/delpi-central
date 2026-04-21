@@ -3,7 +3,6 @@ import { PresentationAlertsBoard } from "../components/PresentationAlertsBoard";
 import { PresentationClosingPanel } from "../components/PresentationClosingPanel";
 import { PresentationDepartmentBoard } from "../components/PresentationDepartmentBoard";
 import { PresentationEdgeNavigation } from "../components/PresentationEdgeNavigation";
-import { PresentationExecutiveStrip } from "../components/PresentationExecutiveStrip";
 import { PresentationHero } from "../components/PresentationHero";
 import { PresentationNarrativeStrip } from "../components/PresentationNarrativeStrip";
 import { PresentationTopBar } from "../components/PresentationTopBar";
@@ -567,126 +566,28 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   function renderOverviewScene() {
     if (!data) return null;
 
+    const bestDepartmentName =
+      strongestDepartmentCard?.name ?? mostPositiveDepartmentOverview?.name ?? data.topDepartment;
+
+    const primaryRiskName =
+      weakestDepartmentCard?.name ?? mostCriticalDepartmentOverview?.name ?? data.topRisk;
+
     return (
       <div className="si-presentation-overview-scene">
         <PresentationHero
           igd={data.igd}
           classification={data.classification}
           trendLabel={data.trendLabel}
+          bestDepartment={bestDepartmentName}
+          primaryRisk={primaryRiskName}
         />
 
         <PresentationNarrativeStrip
           classification={data.classification}
           trendLabel={data.trendLabel}
-          topDepartment={data.topDepartment}
-          topRisk={data.topRisk}
+          highlightedDepartment={bestDepartmentName}
+          riskLabel={primaryRiskName}
         />
-
-        <PresentationExecutiveStrip
-          currentIgd={data.currentIgd}
-          previousIgd={data.previousIgd}
-          variationValue={data.variationValue}
-          topDepartment={data.topDepartment}
-          topRisk={data.topRisk}
-        />
-
-        <div className="si-presentation-trend-scene__grid">
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Fechamento atual
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {formatScore(data.currentIgd)}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              IGD consolidado da competência {data.currentPeriod}.
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Fechamento anterior
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {formatScore(data.previousIgd)}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              Base comparativa usada para leitura de tendência.
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Melhor departamento
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {strongestDepartmentCard?.name ?? data.topDepartment}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              Score atual de{" "}
-              {strongestDepartmentCard
-                ? formatScore(strongestDepartmentCard.score)
-                : "—"}
-              .
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Maior ponto de atenção
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {weakestDepartmentCard?.name ?? data.topRisk}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              Menor score consolidado no período atual.
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Maior contribuição no IGD
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {highestContributionDepartment?.name ?? "—"}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              Contribuição de{" "}
-              {highestContributionDepartment
-                ? formatScore(highestContributionDepartment.contribution)
-                : "—"}{" "}
-              no índice global.
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Leitura executiva
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {data.classification}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              {data.trendLabel} com foco principal em {data.topRisk}.
-            </p>
-          </article>
-        </div>
-
-        <div className="si-presentation-trend-scene__grid">
-          {data.kpis.map((kpi) => (
-            <article key={kpi.id} className="si-presentation-scene-card">
-              <span className="si-presentation-scene-card__label">
-                {kpi.label}
-              </span>
-              <strong className="si-presentation-scene-card__value">
-                {kpi.value}
-              </strong>
-              <p className="si-presentation-scene-card__text">
-                {kpi.support ?? "Leitura executiva do período."}
-              </p>
-            </article>
-          ))}
-        </div>
       </div>
     );
   }
