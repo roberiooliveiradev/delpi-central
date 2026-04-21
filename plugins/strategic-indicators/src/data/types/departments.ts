@@ -27,6 +27,8 @@ export type DepartmentOverviewViewItem = {
   weightInIgd: number;
   score: number;
   classification: string;
+  contribution: number;
+  aggregationMode: "average_of_units" | "consolidated" | "mixed_scope";
   strategicSummary: string;
   variation: {
     value: number;

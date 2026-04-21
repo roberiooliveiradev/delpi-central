@@ -4,15 +4,14 @@ import type {
   ExecutiveAlertViewItem,
   IndicatorAlertViewItem,
 } from "./alerts";
-import type {
-  DepartmentDetailsViewData,
-  DepartmentIndicator,
-  DepartmentUnit,
-} from "./departmentDetails";
+import type { DepartmentDetailsViewData } from "./departmentDetails";
 import type { DepartmentOverviewViewItem } from "./departments";
 import type { ExecutiveDashboardViewData } from "./executiveSummary";
 import type { IndicatorViewItem } from "./indicators";
-import type { TrendsDashboardViewData } from "./trends";
+import type {
+  DepartmentTrendSeriesPoint,
+  TrendsDashboardViewData,
+} from "./trends";
 import {
   getAggregationModeLabel,
   getGoalModeLabel,
@@ -23,12 +22,27 @@ import {
   getTrendLabel,
 } from "../../ui/presentation/labels";
 
+export type PresentationSparklinePoint = {
+  period: string;
+  value: number;
+  classification?: string;
+  contribution?: number;
+};
+
 export type PresentationDepartmentBoardItem = {
   id: string;
   name: string;
   current: number;
   previous: number;
   direction: "up" | "down" | "stable";
+  directionLabel: string;
+  series: PresentationSparklinePoint[];
+  netVariation: number;
+  bestScore: number;
+  worstScore: number;
+  currentClassification?: string;
+  currentContribution?: number;
+  lastStepDirection?: "up" | "down" | "stable";
 };
 
 export type PresentationKpiCard = {
@@ -105,14 +119,7 @@ export type PresentationTrendSnapshot = {
     period: string;
     value: number;
   }>;
-  departments: Array<{
-    id: string;
-    name: string;
-    current: number;
-    previous: number;
-    direction: "up" | "down" | "stable";
-    directionLabel: string;
-  }>;
+  departments: PresentationDepartmentBoardItem[];
   partialSuccess: boolean;
   errors: Array<{
     competence: string;
@@ -183,14 +190,6 @@ function normalizeDirection(
   return "stable";
 }
 
-function getDirectionFromVariation(
-  value: number,
-): "up" | "down" | "stable" {
-  if (value > 0.09) return "up";
-  if (value < -0.09) return "down";
-  return "stable";
-}
-
 function getPresentationTrendLabel(
   direction: "up" | "down" | "stable",
 ): string {
@@ -215,6 +214,17 @@ function buildPreviousCompetence(competence: string): string {
   return `${year}-${String(month - 1).padStart(2, "0")}`;
 }
 
+function mapTrendSeriesToSparklinePoints(
+  series: DepartmentTrendSeriesPoint[],
+): PresentationSparklinePoint[] {
+  return series.map((point) => ({
+    period: point.period,
+    value: point.score,
+    classification: point.classification,
+    contribution: point.contribution,
+  }));
+}
+
 function formatNumber(value: number, fractionDigits = 1): string {
   return value.toLocaleString("pt-BR", {
     minimumFractionDigits: fractionDigits,
@@ -222,33 +232,111 @@ function formatNumber(value: number, fractionDigits = 1): string {
   });
 }
 
-function getIndicatorCurrentValue(
-  indicator: DepartmentIndicator,
-  fallbackIndicator?: IndicatorViewItem,
-): number {
-  const realizedValues = Object.values(indicator.realized ?? {}).filter(
-    (value) => Number.isFinite(value),
-  );
+function buildExecutiveKpis(
+  executiveSummary: ExecutiveDashboardViewData,
+  trends: TrendsDashboardViewData | null,
+): PresentationKpiCard[] {
+  const departments = executiveSummary.departments ?? [];
+  const strongest = [...departments].sort((a, b) => b.score - a.score)[0];
+  const weakest = [...departments].sort((a, b) => a.score - b.score)[0];
 
-  if (realizedValues.length > 0) {
-    return realizedValues[realizedValues.length - 1] ?? 0;
-  }
-
-  return fallbackIndicator?.value ?? 0;
+  return [
+    {
+      id: "igd-current",
+      label: "IGD atual",
+      value: formatNumber(executiveSummary.igd, 1),
+      support: executiveSummary.classification,
+    },
+    {
+      id: "igd-variation",
+      label: "Variação",
+      value: `${executiveSummary.variation.value > 0 ? "+" : ""}${formatNumber(
+        executiveSummary.variation.value,
+        1,
+      )}`,
+      support: getTrendLabel(executiveSummary.variation.direction),
+    },
+    {
+      id: "top-department",
+      label: "Melhor departamento",
+      value: strongest?.name ?? "—",
+      support: strongest ? formatNumber(strongest.score, 1) : undefined,
+    },
+    {
+      id: "risk-department",
+      label: "Maior atenção",
+      value: weakest?.name ?? "—",
+      support: weakest ? formatNumber(weakest.score, 1) : undefined,
+    },
+    {
+      id: "period-window",
+      label: "Janela analisada",
+      value: `${trends?.igdSeries.length ?? 1} período(s)`,
+      support: executiveSummary.competence,
+    },
+  ];
 }
 
-function buildDepartmentBoardItems(
+function buildDepartmentBoard(
   executiveSummary: ExecutiveDashboardViewData,
+  trends: TrendsDashboardViewData | null,
 ): PresentationDepartmentBoardItem[] {
-  return executiveSummary.departments.map((department) => {
-    const previous = Math.max(0, department.score - department.variation.value);
+  const trendDepartmentsMap = new Map(
+    (trends?.departments ?? []).map((department) => [department.id, department]),
+  );
+
+  return (executiveSummary.departments ?? []).map((department) => {
+    const trendDepartment = trendDepartmentsMap.get(department.id);
+    const previous =
+      trendDepartment?.previous ??
+      Math.max(0, department.score - department.variation.value);
+
+    const series: PresentationSparklinePoint[] =
+      trendDepartment?.series?.length
+        ? mapTrendSeriesToSparklinePoints(trendDepartment.series)
+        : [
+            {
+              period: buildPreviousCompetence(executiveSummary.competence),
+              value: previous,
+            },
+            {
+              period: executiveSummary.competence,
+              value: department.score,
+            },
+          ];
+
+    const bestScore =
+      trendDepartment?.bestScore ??
+      Math.max(...series.map((point) => point.value), department.score);
+
+    const worstScore =
+      trendDepartment?.worstScore ??
+      Math.min(...series.map((point) => point.value), department.score);
+
+    const netVariation =
+      trendDepartment?.netVariation ??
+      (series.length >= 2
+        ? series[series.length - 1]!.value - series[0]!.value
+        : department.variation.value);
+
+    const direction =
+      trendDepartment?.direction ?? normalizeDirection(department.trend);
 
     return {
       id: department.id,
       name: department.name,
       current: department.score,
       previous,
-      direction: normalizeDirection(department.variation.direction),
+      direction,
+      directionLabel: getTrendLabel(direction),
+      series,
+      netVariation,
+      bestScore,
+      worstScore,
+      currentClassification: trendDepartment?.currentClassification,
+      currentContribution:
+        trendDepartment?.currentContribution ?? department.contribution,
+      lastStepDirection: trendDepartment?.lastStepDirection,
     };
   });
 }
@@ -262,7 +350,7 @@ function buildDepartmentsOverview(
     shortName: department.shortName,
     score: department.score,
     classification: department.classification,
-    contribution: 0,
+    contribution: department.contribution,
     weightInIgd: department.weightInIgd,
     strategicSummary: department.strategicSummary,
     variation: {
@@ -273,29 +361,37 @@ function buildDepartmentsOverview(
   }));
 }
 
-function buildDepartmentFocus(params: {
-  departmentId?: string | null;
-  departmentDetailsById?: Record<string, DepartmentDetailsViewData>;
-  indicatorsByDepartmentId?: Record<string, IndicatorViewItem[]>;
-}): PresentationDepartmentFocus | null {
-  const {
-    departmentId,
-    departmentDetailsById = {},
-    indicatorsByDepartmentId = {},
-  } = params;
-
-  if (!departmentId) {
-    return null;
-  }
+function buildDepartmentFocus(
+  departmentId: string | null | undefined,
+  departmentDetailsById: Record<string, DepartmentDetailsViewData>,
+  indicatorsByDepartmentId: Record<string, IndicatorViewItem[]>,
+): PresentationDepartmentFocus | null {
+  if (!departmentId) return null;
 
   const details = departmentDetailsById[departmentId];
+  if (!details) return null;
 
-  if (!details) {
-    return null;
-  }
-
-  const indicators = indicatorsByDepartmentId[departmentId] ?? [];
-  const indicatorsById = new Map(indicators.map((item) => [item.id, item]));
+  const indicators = (indicatorsByDepartmentId[departmentId] ?? []).map(
+    (indicator) => ({
+      id: indicator.id,
+      name: indicator.name,
+      weightPct: indicator.weightPct,
+      goalLabel: indicator.goalLabel,
+      goalValue: indicator.goalValue,
+      goalPeriodicity: getGoalPeriodicityLabel(indicator.goalPeriodicity),
+      goalMode: getGoalModeLabel(indicator.goalMode),
+      strategicDescription: "",
+      scopeType: getScopeTypeLabel(indicator.scopeType),
+      performanceDirection: getPerformanceDirectionLabel(
+        indicator.performanceDirection,
+      ),
+      currentValue: indicator.value,
+      score: indicator.score,
+      gap: indicator.gap,
+      trend: normalizeDirection(indicator.trend),
+      trendLabel: getTrendLabel(indicator.trend),
+    }),
+  );
 
   return {
     id: details.id,
@@ -312,62 +408,38 @@ function buildDepartmentFocus(params: {
       direction: normalizeDirection(details.variation.direction),
       directionLabel: getTrendLabel(details.variation.direction),
     },
-    units: details.units.map((unit: DepartmentUnit) => ({
+    units: details.units.map((unit) => ({
       id: unit.unitId,
       name: unit.unitName,
       score: unit.score,
       classification: unit.classification,
     })),
-    indicators: details.indicators.map((indicator: DepartmentIndicator) => {
-      const fallbackIndicator = indicatorsById.get(indicator.id);
-      const currentValue = getIndicatorCurrentValue(indicator, fallbackIndicator);
-
-      return {
-        id: indicator.id,
-        name: indicator.name,
-        weightPct: indicator.weightPct,
-        goalLabel: indicator.goalLabel,
-        goalValue: indicator.goalValue,
-        goalPeriodicity: getGoalPeriodicityLabel(indicator.goalPeriodicity),
-        goalMode: getGoalModeLabel(indicator.goalMode),
-        strategicDescription: indicator.strategicDescription,
-        scopeType: getScopeTypeLabel(indicator.scopeType),
-        performanceDirection: getPerformanceDirectionLabel(
-          indicator.performanceDirection,
-        ),
-        currentValue,
-        score: indicator.score,
-        gap: indicator.gap,
-        trend: normalizeDirection(indicator.trend),
-        trendLabel: getTrendLabel(indicator.trend),
-      };
-    }),
+    indicators,
   };
 }
 
 function buildTrendSnapshot(
-  trends: TrendsDashboardViewData | null | undefined,
+  trends: TrendsDashboardViewData | null,
 ): PresentationTrendSnapshot | null {
-  if (!trends) {
-    return null;
-  }
+  if (!trends) return null;
 
   return {
     competence: trends.competence,
     currentIgd: trends.currentIgd,
     previousIgd: trends.previousIgd,
     currentClassification: trends.currentClassification,
-    igdSeries: trends.igdSeries.map((item) => ({
-      period: item.period,
-      value: item.value,
+    igdSeries: trends.igdSeries.map((point) => ({
+      period: point.period,
+      value: point.value,
     })),
     departments: trends.departments.map((department) => ({
-      id: department.id,
-      name: department.name,
-      current: department.current,
-      previous: department.previous,
+      ...department,
       direction: normalizeDirection(department.direction),
       directionLabel: getTrendLabel(department.direction),
+      series: mapTrendSeriesToSparklinePoints(department.series),
+      netVariation: department.netVariation,
+      bestScore: department.bestScore,
+      worstScore: department.worstScore,
     })),
     partialSuccess: trends.partialSuccess,
     errors: trends.errors.map((error) => ({
@@ -379,11 +451,12 @@ function buildTrendSnapshot(
   };
 }
 
-function buildAlertsSnapshot(
+function buildAlertSnapshot(
   alerts: AlertsDashboardViewData,
+  executiveSummary: ExecutiveDashboardViewData,
 ): PresentationAlertSnapshot {
   return {
-    igdClassification: alerts.igdClassification,
+    igdClassification: executiveSummary.classification,
     executive: alerts.executiveAlerts.map((alert) => ({
       ...alert,
       severityLabel: getSeverityLabel(alert.severity),
@@ -409,153 +482,66 @@ function buildAlertsSnapshot(
   };
 }
 
-function buildKpis(params: {
-  executiveSummary: ExecutiveDashboardViewData;
-  topDepartment: string;
-  topRisk: string;
-  trendLabel: string;
-}): PresentationKpiCard[] {
-  const { executiveSummary, topDepartment, topRisk, trendLabel } = params;
-
-  return [
-    {
-      id: "igd-atual",
-      label: "IGD atual",
-      value: formatNumber(executiveSummary.igd),
-      support: executiveSummary.classification,
-    },
-    {
-      id: "variacao",
-      label: "Variação",
-      value: `${executiveSummary.variation.value > 0 ? "+" : ""}${formatNumber(
-        executiveSummary.variation.value,
-      )}`,
-      support: executiveSummary.variation.vsLabel,
-    },
-    {
-      id: "tendencia",
-      label: "Tendência",
-      value: trendLabel,
-      support: "Comparação com o período anterior",
-    },
-    {
-      id: "melhor-area",
-      label: "Área destaque",
-      value: topDepartment,
-      support: "Melhor score no período",
-    },
-    {
-      id: "risco-prioritario",
-      label: "Risco prioritário",
-      value: topRisk,
-      support: "Principal alerta executivo",
-    },
-  ];
-}
-
-export function buildPresentationViewData(params: {
+type BuildPresentationViewDataParams = {
   executiveSummary: ExecutiveDashboardViewData;
   executiveAlerts: ExecutiveAlertViewItem[];
-  alerts?: AlertsDashboardViewData;
-  departmentsOverview?: DepartmentOverviewViewItem[];
-  departmentDetailsById?: Record<string, DepartmentDetailsViewData>;
-  indicatorsByDepartmentId?: Record<string, IndicatorViewItem[]>;
-  trends?: TrendsDashboardViewData | null;
+  alerts: AlertsDashboardViewData;
+  departmentsOverview: DepartmentOverviewViewItem[];
+  departmentDetailsById: Record<string, DepartmentDetailsViewData>;
+  indicatorsByDepartmentId: Record<string, IndicatorViewItem[]>;
+  trends: TrendsDashboardViewData | null;
   focusDepartmentId?: string | null;
-}): PresentationViewData {
-  const {
-    executiveSummary,
-    executiveAlerts,
-    alerts,
-    departmentsOverview = [],
-    departmentDetailsById = {},
-    indicatorsByDepartmentId = {},
-    trends = null,
+};
+
+export function buildPresentationViewData({
+  executiveSummary,
+  executiveAlerts,
+  alerts,
+  departmentsOverview,
+  departmentDetailsById,
+  indicatorsByDepartmentId,
+  trends,
+  focusDepartmentId,
+}: BuildPresentationViewDataParams): PresentationViewData {
+  const departments = buildDepartmentBoard(executiveSummary, trends);
+  const departmentsOverviewSnapshot = buildDepartmentsOverview(departmentsOverview);
+  const departmentFocus = buildDepartmentFocus(
     focusDepartmentId,
-  } = params;
-
-  const departmentsSorted = [...executiveSummary.departments].sort(
-    (a, b) => b.score - a.score,
-  );
-  const bestDepartment = departmentsSorted[0];
-  const topRiskAlert = executiveAlerts[0] ?? null;
-
-  const variationValue = executiveSummary.variation.value;
-  const variationDirection = getDirectionFromVariation(variationValue);
-  const variationDirectionLabel = getTrendLabel(variationDirection);
-  const trendLabel = getPresentationTrendLabel(variationDirection);
-  const previousIgd = Math.max(0, executiveSummary.igd - variationValue);
-  const departments = buildDepartmentBoardItems(executiveSummary);
-
-  const overview =
-    departmentsOverview.length > 0
-      ? buildDepartmentsOverview(departmentsOverview)
-      : executiveSummary.departments.map((department) => ({
-          id: department.id,
-          name: department.name,
-          shortName: department.shortName,
-          score: department.score,
-          classification: "",
-          contribution: 0,
-          weightInIgd: department.weightPct,
-          strategicSummary: department.strategicSummary,
-          variation: {
-            value: department.variation.value,
-            direction: normalizeDirection(department.variation.direction),
-            directionLabel: getTrendLabel(department.variation.direction),
-          },
-        }));
-
-  const effectiveFocusDepartmentId =
-    focusDepartmentId ??
-    overview[0]?.id ??
-    executiveSummary.departments[0]?.id ??
-    null;
-
-  const departmentFocus = buildDepartmentFocus({
-    departmentId: effectiveFocusDepartmentId,
     departmentDetailsById,
     indicatorsByDepartmentId,
-  });
-
-  const alertsSnapshot = buildAlertsSnapshot(
-    alerts ?? {
-      competence: executiveSummary.competence,
-      igdClassification: executiveSummary.classification,
-      executiveAlerts,
-      departmentAlerts: [],
-      indicatorAlerts: [],
-      partialSuccess: false,
-      errors: [],
-    },
   );
+  const trend = buildTrendSnapshot(trends);
+  const alertSnapshot = buildAlertSnapshot(alerts, executiveSummary);
+  const variationDirection = normalizeDirection(executiveSummary.variation.direction);
+  const sortedDepartments = [...executiveSummary.departments].sort(
+    (a, b) => b.score - a.score,
+  );
+  const topDepartment = sortedDepartments[0]?.name ?? "—";
+  const topRisk =
+    [...executiveSummary.departments].sort((a, b) => a.score - b.score)[0]?.name ??
+    "—";
 
   return {
     competence: executiveSummary.competence,
     igd: executiveSummary.igd,
     igdExact: executiveSummary.igdExact,
     classification: executiveSummary.classification,
-    trendLabel,
+    trendLabel: getPresentationTrendLabel(variationDirection),
     currentIgd: executiveSummary.igd,
-    previousIgd,
-    variationValue,
+    previousIgd: trends?.previousIgd ?? executiveSummary.igd,
+    variationValue: executiveSummary.variation.value,
     variationDirection,
-    variationDirectionLabel,
-    topDepartment: bestDepartment?.name ?? "—",
-    topRisk: topRiskAlert?.title ?? "—",
+    variationDirectionLabel: getTrendLabel(variationDirection),
+    topDepartment,
+    topRisk,
     currentPeriod: executiveSummary.competence,
     previousPeriod: buildPreviousCompetence(executiveSummary.competence),
     departments,
     executiveAlerts,
-    kpis: buildKpis({
-      executiveSummary,
-      topDepartment: bestDepartment?.name ?? "—",
-      topRisk: topRiskAlert?.title ?? "—",
-      trendLabel,
-    }),
-    departmentsOverview: overview,
+    kpis: buildExecutiveKpis(executiveSummary, trends),
+    departmentsOverview: departmentsOverviewSnapshot,
     departmentFocus,
-    trend: buildTrendSnapshot(trends),
-    alerts: alertsSnapshot,
+    trend,
+    alerts: alertSnapshot,
   };
 }

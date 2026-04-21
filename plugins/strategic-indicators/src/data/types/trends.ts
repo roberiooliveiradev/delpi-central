@@ -5,12 +5,26 @@ export type IgdTrendPoint = {
   value: number;
 };
 
+export type DepartmentTrendSeriesPoint = {
+  period: string;
+  score: number;
+  classification?: string;
+  contribution?: number;
+};
+
 export type DepartmentTrendItem = {
   id: string;
   name: string;
   current: number;
   previous: number;
   direction: TrendDirection;
+  lastStepDirection?: TrendDirection;
+  netVariation: number;
+  bestScore: number;
+  worstScore: number;
+  currentClassification?: string;
+  currentContribution?: number;
+  series: DepartmentTrendSeriesPoint[];
 };
 
 export type TrendFetchErrorViewItem = {
@@ -47,6 +61,18 @@ export type StrategicIndicatorsTrendsResponse = {
     current: number;
     previous: number;
     direction: TrendDirection;
+    last_step_direction?: TrendDirection;
+    net_variation?: number;
+    best_score?: number;
+    worst_score?: number;
+    current_classification?: string;
+    current_contribution?: number;
+    series?: Array<{
+      period: string;
+      score: number;
+      classification?: string;
+      contribution?: number;
+    }>;
   }>;
   errors?: Array<{
     competence: string;

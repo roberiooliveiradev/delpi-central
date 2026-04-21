@@ -74,6 +74,20 @@ function normalizeMonthlyTargets(
   }));
 }
 
+function normalizeAggregationMode(
+  value: string | null | undefined,
+): "average_of_units" | "consolidated" | "mixed_scope" {
+  if (
+    value === "average_of_units" ||
+    value === "consolidated" ||
+    value === "mixed_scope"
+  ) {
+    return value;
+  }
+
+  return "consolidated";
+}
+
 function buildExecutiveSummary(
   payload: StrategicIndicatorsPresentationApiResponse,
 ): ExecutiveDashboardViewData {
@@ -182,7 +196,7 @@ function buildDepartmentsOverview(
     score: department.score,
     classification: department.classification,
     contribution: department.contribution,
-    aggregationMode: department.aggregation_mode,
+    aggregationMode: normalizeAggregationMode(department.aggregation_mode),
     strategicSummary: department.strategic_summary,
     variation: {
       value: department.variation.value,
@@ -205,7 +219,7 @@ function buildDepartmentDetailsById(
         score: details.score,
         classification: details.classification,
         contribution: details.contribution,
-        aggregationMode: details.aggregation_mode,
+        aggregationMode: normalizeAggregationMode(details.aggregation_mode),
         strategicSummary: details.strategic_summary,
         variation: {
           value: details.variation.value,
@@ -275,6 +289,30 @@ function buildIndicatorsByDepartmentId(
   );
 }
 
+function buildDepartmentSeries(
+  department: StrategicIndicatorsPresentationApiResponse["trends"]["departments"][number],
+) {
+  if (department.series?.length) {
+    return department.series.map((point) => ({
+      period: point.period,
+      score: point.score,
+      classification: point.classification,
+      contribution: point.contribution,
+    }));
+  }
+
+  return [
+    {
+      period: "Anterior",
+      score: department.previous,
+    },
+    {
+      period: "Atual",
+      score: department.current,
+    },
+  ];
+}
+
 function buildTrends(
   payload: StrategicIndicatorsPresentationApiResponse,
 ): TrendsDashboardViewData {
@@ -294,6 +332,16 @@ function buildTrends(
       current: department.current,
       previous: department.previous,
       direction: normalizeDirection(department.direction),
+      lastStepDirection: normalizeDirection(
+        department.last_step_direction ?? department.direction,
+      ),
+      netVariation: department.net_variation ?? department.current - department.previous,
+      bestScore: department.best_score ?? Math.max(department.current, department.previous),
+      worstScore:
+        department.worst_score ?? Math.min(department.current, department.previous),
+      currentClassification: department.current_classification,
+      currentContribution: department.current_contribution,
+      series: buildDepartmentSeries(department),
     })),
     errors: (payload.trends.errors ?? []).map((error) => ({
       competence: error.competence ?? "",

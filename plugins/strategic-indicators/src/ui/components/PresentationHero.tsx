@@ -42,7 +42,7 @@ function buildExecutiveMessage(params: {
   }
 
   if (igd < 8) {
-    return "O resultado segue competitivo, porém com alertas relevantes. A diretoria deve acompanhar os pontos de maior pressão no curto prazo.";
+    return "O resultado segue competitivo, porém com alertas relevantes. A liderança deve acompanhar os pontos de maior pressão no curto prazo.";
   }
 
   if (igd < 9) {

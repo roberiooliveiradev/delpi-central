@@ -597,7 +597,10 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
     return (
       <div className="si-presentation-single-scene">
-        <PresentationDepartmentBoard departments={data.departments.slice(0, 6)} />
+        <PresentationDepartmentBoard
+          departments={data.departmentsOverview}
+          trendDepartments={data.trend?.departments}
+        />
 
         <div className="si-presentation-trend-scene__grid">
           <article className="si-presentation-scene-card">

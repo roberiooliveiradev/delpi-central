@@ -61,7 +61,7 @@ export type StrategicIndicatorsPresentationApiResponse = {
     score: number;
     classification: string;
     contribution: number;
-    aggregation_mode: string;
+    aggregation_mode: "average_of_units" | "consolidated" | "mixed_scope";
     strategic_summary: string;
     variation: {
       value: number;
@@ -78,7 +78,7 @@ export type StrategicIndicatorsPresentationApiResponse = {
       score: number;
       classification: string;
       contribution: number;
-      aggregation_mode: string;
+      aggregation_mode: "average_of_units" | "consolidated" | "mixed_scope";
       strategic_summary: string;
       variation: {
         value: number;
@@ -205,6 +205,18 @@ export type StrategicIndicatorsPresentationApiResponse = {
       current: number;
       previous: number;
       direction: TrendDirection;
+      last_step_direction?: TrendDirection;
+      net_variation?: number;
+      best_score?: number;
+      worst_score?: number;
+      current_classification?: string;
+      current_contribution?: number;
+      series?: Array<{
+        period: string;
+        score: number;
+        classification?: string;
+        contribution?: number;
+      }>;
     }>;
     errors: Array<{
       competence?: string | null;
@@ -226,79 +238,56 @@ export type StrategicIndicatorsPresentationApiResponse = {
   };
 };
 
-function buildHeaders(
-  getAccessToken?: () => string | undefined,
-): HeadersInit {
-  const token = getAccessToken?.();
+function buildQueryString(params: StrategicIndicatorsPresentationRequest) {
+  const searchParams = new URLSearchParams();
 
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
-function buildQuery(params: {
-  competence?: string;
-  branch?: string;
-  startDate?: string;
-  endDate?: string;
-  months?: number;
-}) {
-  const query = new URLSearchParams();
-
-  if (params.competence) query.set("competence", params.competence);
-  if (params.branch) query.set("branch", params.branch);
-  if (params.startDate) query.set("start_date", params.startDate);
-  if (params.endDate) query.set("end_date", params.endDate);
+  if (params.competence) searchParams.set("competence", params.competence);
+  if (params.branch) searchParams.set("branch", params.branch);
+  if (params.startDate) searchParams.set("start_date", params.startDate);
+  if (params.endDate) searchParams.set("end_date", params.endDate);
   if (typeof params.months === "number") {
-    query.set("months", String(params.months));
+    searchParams.set("months", String(params.months));
   }
 
-  const asString = query.toString();
-  return asString ? `?${asString}` : "";
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : "";
 }
 
-export async function fetchStrategicIndicatorsPresentation({
-  competence,
-  branch,
-  startDate,
-  endDate,
-  months,
-  getAccessToken,
-  signal,
-}: StrategicIndicatorsPresentationRequest): Promise<StrategicIndicatorsPresentationApiResponse> {
+function getPresentationApiUrl() {
+  return `${BASE_URL}/presentation`;
+}
+
+export async function fetchStrategicIndicatorsPresentation(
+  params: StrategicIndicatorsPresentationRequest,
+): Promise<StrategicIndicatorsPresentationApiResponse> {
+  const token = params.getAccessToken?.();
+
   const response = await fetch(
-    `${BASE_URL}/presentation${buildQuery({
-      competence,
-      branch,
-      startDate,
-      endDate,
-      months,
-    })}`,
+    `${getPresentationApiUrl()}${buildQueryString(params)}`,
     {
       method: "GET",
-      headers: buildHeaders(getAccessToken),
-      signal,
+      signal: params.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     },
   );
 
   if (!response.ok) {
-    const message = await safeReadError(response);
-    throw new Error(
-      message || "Falha ao carregar presentation do Strategic Indicators.",
-    );
+    let detail = "Falha ao carregar presentation do Strategic Indicators.";
+
+    try {
+      const payload = (await response.json()) as { detail?: string };
+      if (payload?.detail) {
+        detail = payload.detail;
+      }
+    } catch {
+      // mantém fallback
+    }
+
+    throw new Error(detail);
   }
 
-  return response.json();
-}
-
-async function safeReadError(response: Response): Promise<string | null> {
-  try {
-    const data = await response.json();
-    if (typeof data?.detail === "string") return data.detail;
-    if (typeof data?.message === "string") return data.message;
-    return null;
-  } catch {
-    return null;
-  }
+  return (await response.json()) as StrategicIndicatorsPresentationApiResponse;
 }

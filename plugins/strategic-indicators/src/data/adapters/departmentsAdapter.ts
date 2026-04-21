@@ -13,6 +13,8 @@ export function adaptDepartmentsToView(
     weightInIgd: item.weight_pct,
     score: item.score,
     classification: item.classification,
+    contribution: item.contribution,
+    aggregationMode: item.aggregation_mode,
     strategicSummary: item.strategic_summary,
     variation: {
       value: item.variation.value,

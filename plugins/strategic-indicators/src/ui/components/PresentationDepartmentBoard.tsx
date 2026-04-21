@@ -1,20 +1,13 @@
-import type { PresentationDepartmentBoardItem } from "../../data/types/presentation";
+import { PresentationDepartmentSparkline } from "./PresentationDepartmentSparkline";
+import type {
+  PresentationDepartmentSnapshot,
+  PresentationTrendSnapshot,
+} from "../../data/types/presentation";
 
 type PresentationDepartmentBoardProps = {
-  departments: PresentationDepartmentBoardItem[];
+  departments: PresentationDepartmentSnapshot[];
+  trendDepartments?: PresentationTrendSnapshot["departments"];
 };
-
-function getDirectionLabel(direction: PresentationDepartmentBoardItem["direction"]) {
-  if (direction === "up") return "Melhora";
-  if (direction === "down") return "Queda";
-  return "Estável";
-}
-
-function getDirectionVariant(direction: PresentationDepartmentBoardItem["direction"]) {
-  if (direction === "up") return "success";
-  if (direction === "down") return "warning";
-  return "neutral";
-}
 
 function formatScore(value: number) {
   return value.toLocaleString("pt-BR", {
@@ -23,25 +16,55 @@ function formatScore(value: number) {
   });
 }
 
+function formatPct(value: number) {
+  return `${value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })}%`;
+}
+
+function getDirectionLabel(direction: "up" | "down" | "stable") {
+  if (direction === "up") return "Melhora";
+  if (direction === "down") return "Queda";
+  return "Estável";
+}
+
+function getDirectionVariant(direction: "up" | "down" | "stable") {
+  if (direction === "up") return "success";
+  if (direction === "down") return "warning";
+  return "neutral";
+}
+
 export function PresentationDepartmentBoard({
   departments,
+  trendDepartments = [],
 }: PresentationDepartmentBoardProps) {
-  const rankedDepartments = [...departments]
-    .sort((a, b) => b.current - a.current)
-    .slice(0, 6);
+  const rankedDepartments = [...departments].sort((a, b) => b.score - a.score);
 
   const bestDepartment = rankedDepartments[0] ?? null;
-  const needsAttention =
-    [...rankedDepartments].sort(
-      (a, b) => a.current - a.previous - (b.current - b.previous),
-    )[0] ?? null;
+  const criticalDepartment =
+    [...rankedDepartments].sort((a, b) => a.score - b.score)[0] ?? null;
+  const highestContributionDepartment =
+    [...rankedDepartments].sort((a, b) => b.contribution - a.contribution)[0] ??
+    null;
+
+  const trendMap = new Map(
+    trendDepartments.map((department) => [department.id, department]),
+  );
+
+  const maxContribution =
+    rankedDepartments.reduce((highest, department) => {
+      return Math.max(highest, department.contribution);
+    }, 0) || 1;
 
   return (
     <section className="si-presentation-board">
       <div className="si-presentation-board__header">
-        <h2 className="si-presentation-board__title">Panorama dos departamentos</h2>
+        <h2 className="si-presentation-board__title">
+          Panorama dos departamentos
+        </h2>
         <span className="si-presentation-board__subtitle">
-          leitura executiva consolidada do período
+          ranking executivo, contribuição no IGD e direção por área
         </span>
       </div>
 
@@ -51,53 +74,159 @@ export function PresentationDepartmentBoard({
           <strong>{bestDepartment?.name ?? "—"}</strong>
           <p>
             {bestDepartment
-              ? `Melhor score do período: ${formatScore(bestDepartment.current)}.`
+              ? `Melhor score do período: ${formatScore(bestDepartment.score)}.`
               : "Sem dados suficientes para identificar a área destaque."}
           </p>
         </article>
 
         <article className="si-presentation-board__summary-card">
-          <span>Área que exige atenção</span>
-          <strong>{needsAttention?.name ?? "—"}</strong>
+          <span>Principal ponto de atenção</span>
+          <strong>{criticalDepartment?.name ?? "—"}</strong>
           <p>
-            {needsAttention
-              ? "Maior pressão na comparação com o período anterior."
+            {criticalDepartment
+              ? `Menor score atual do recorte: ${formatScore(criticalDepartment.score)}.`
               : "Sem dados suficientes para identificar a área mais pressionada."}
           </p>
         </article>
       </div>
 
-      <div className="si-presentation-department-grid">
+      <div className="si-contribution-ranking">
+        <div className="si-contribution-ranking__header">
+          <h3 className="si-contribution-ranking__title">Contribuição no IGD</h3>
+          <span className="si-contribution-ranking__subtitle">
+            {highestContributionDepartment
+              ? `${highestContributionDepartment.name} lidera o impacto atual`
+              : "Sem dados disponíveis"}
+          </span>
+        </div>
+
+        <div className="si-contribution-ranking__list">
+          {rankedDepartments.map((department) => {
+            const contributionWidth = Math.max(
+              10,
+              (department.contribution / maxContribution) * 100,
+            );
+
+            return (
+              <div
+                key={`contribution-${department.id}`}
+                className="si-contribution-ranking__item"
+              >
+                <div className="si-contribution-ranking__top">
+                  <div className="si-contribution-ranking__identity">
+                    <strong>{department.name}</strong>
+                    <span>{department.classification}</span>
+                  </div>
+
+                  <span className="si-contribution-ranking__value">
+                    {formatScore(department.contribution)}
+                  </span>
+                </div>
+
+                <div className="si-contribution-ranking__bar">
+                  <div
+                    className="si-contribution-ranking__fill"
+                    style={{ width: `${contributionWidth}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="si-department-grid">
         {rankedDepartments.map((department) => {
-          const delta = department.current - department.previous;
-          const directionLabel = getDirectionLabel(department.direction);
-          const variant = getDirectionVariant(department.direction);
+          const trendDepartment = trendMap.get(department.id);
+          const previousScore =
+            trendDepartment?.previous ??
+            Math.max(0, department.score - department.variation.value);
+
+          const sparklinePoints =
+            trendDepartment?.series?.length
+              ? trendDepartment.series.map((point) => ({
+                  period: point.period,
+                  value: point.value,
+                }))
+              : [
+                  { period: "Anterior", value: previousScore },
+                  { period: "Atual", value: department.score },
+                ];
 
           return (
-            <article
-              key={department.id}
-              className="si-presentation-department-card"
-              data-variant={variant}
-            >
-              <div className="si-presentation-department-card__header">
-                <h3>{department.name}</h3>
-                <strong>{formatScore(department.current)}</strong>
+            <article key={department.id} className="si-department-card">
+              <div className="si-department-card__top">
+                <div className="si-department-card__identity">
+                  <div className="si-department-card__short">
+                    {department.shortName}
+                  </div>
+
+                  <div>
+                    <h3 className="si-department-card__title">
+                      {department.name}
+                    </h3>
+                    <p className="si-department-card__weight">
+                      Peso no IGD: {formatPct(department.weightInIgd)}
+                    </p>
+                  </div>
+                </div>
+
+                <span
+                  className={`si-status-badge si-status-badge--${getDirectionVariant(
+                    department.variation.direction,
+                  )}`}
+                >
+                  {getDirectionLabel(department.variation.direction)}
+                </span>
               </div>
 
-              <div className="si-presentation-department-card__meta">
-                <p>
-                  <strong>Direção:</strong> {directionLabel}
-                </p>
+              <div className="si-department-card__metrics">
+                <div className="si-department-card__metric">
+                  <span className="si-department-card__metric-label">
+                    Score atual
+                  </span>
+                  <strong className="si-department-card__metric-value">
+                    {formatScore(department.score)}
+                  </strong>
+                </div>
 
-                <p>
-                  <strong>Variação:</strong> {delta > 0 ? "+" : ""}
-                  {formatScore(delta)}
-                </p>
+                <div className="si-department-card__metric">
+                  <span className="si-department-card__metric-label">
+                    Período anterior
+                  </span>
+                  <strong className="si-department-card__metric-value">
+                    {formatScore(previousScore)}
+                  </strong>
+                </div>
 
-                <p>
-                  <strong>Período anterior:</strong> {formatScore(department.previous)}
-                </p>
+                <div className="si-department-card__metric">
+                  <span className="si-department-card__metric-label">
+                    Variação
+                  </span>
+                  <strong className="si-department-card__metric-value">
+                    {department.variation.value > 0 ? "+" : ""}
+                    {formatScore(department.variation.value)}
+                  </strong>
+                </div>
+
+                <div className="si-department-card__metric">
+                  <span className="si-department-card__metric-label">
+                    Contribuição
+                  </span>
+                  <strong className="si-department-card__metric-value">
+                    {formatScore(department.contribution)}
+                  </strong>
+                </div>
               </div>
+
+              <PresentationDepartmentSparkline
+                direction={trendDepartment?.direction ?? department.variation.direction}
+                points={sparklinePoints}
+              />
+
+              <p className="si-department-card__summary">
+                {department.strategicSummary}
+              </p>
             </article>
           );
         })}
