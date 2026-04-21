@@ -91,14 +91,8 @@ function getSceneAutoplayMs(
 
   const base = baseByScene[scene];
 
-  if (mode === "tv") {
-    return base;
-  }
-
-  if (mode === "slide") {
-    return base + 2000;
-  }
-
+  if (mode === "tv") return base;
+  if (mode === "slide") return base + 2000;
   return base;
 }
 
@@ -124,20 +118,17 @@ function getAdaptiveSceneAutoplayMs(params: {
   const base = getSceneAutoplayMs(scene, mode);
 
   if (scene === "department_detail") {
-    const criticalBonus = Math.min(criticalIndicatorsCount, 6) * 1000;
-    return base + criticalBonus;
+    return base + Math.min(criticalIndicatorsCount, 6) * 1000;
   }
 
   if (scene === "alerts") {
     const totalAlerts =
       executiveAlertsCount + departmentAlertsCount + indicatorAlertsCount;
-    const alertsBonus = Math.min(totalAlerts, 8) * 500;
-    return base + alertsBonus;
+    return base + Math.min(totalAlerts, 8) * 500;
   }
 
   if (scene === "trend") {
-    const trendBonus = Math.min(trendPointsCount, 6) * 400;
-    return base + trendBonus;
+    return base + Math.min(trendPointsCount, 6) * 400;
   }
 
   return base;
@@ -196,11 +187,7 @@ function readStoredPresentationMonths(): number {
   const rawValue = window.localStorage.getItem(PRESENTATION_MONTHS_STORAGE_KEY);
   const parsedValue = Number(rawValue);
 
-  if ([3, 6, 12].includes(parsedValue)) {
-    return parsedValue;
-  }
-
-  return 3;
+  return [3, 6, 12].includes(parsedValue) ? parsedValue : 3;
 }
 
 function buildSelectedDepartment(
@@ -477,6 +464,26 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   const mostCriticalDepartmentOverview = [...(data?.departmentsOverview ?? [])]
     .sort((a, b) => a.score - b.score)[0];
 
+  const mostPositiveDepartmentOverview = [...(data?.departmentsOverview ?? [])]
+    .sort((a, b) => b.score - a.score)[0];
+
+  const departmentsByLowestScore = [...(data?.departmentsOverview ?? [])]
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 3);
+
+  const departmentsByHighestContribution = [...(data?.departmentsOverview ?? [])]
+    .sort((a, b) => b.contribution - a.contribution)
+    .slice(0, 3);
+
+  const strongestDepartmentCard = [...(data?.departmentsOverview ?? [])]
+    .sort((a, b) => b.score - a.score)[0];
+
+  const weakestDepartmentCard = [...(data?.departmentsOverview ?? [])]
+    .sort((a, b) => a.score - b.score)[0];
+
+  const highestContributionDepartment = [...(data?.departmentsOverview ?? [])]
+    .sort((a, b) => b.contribution - a.contribution)[0];
+
   const trendHighlightUp = [...(data?.trend?.departments ?? [])].sort(
     (a, b) => b.current - b.previous - (a.current - a.previous),
   )[0];
@@ -488,26 +495,6 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   const executiveAlertsCount = data?.alerts.executive.length ?? 0;
   const departmentAlertsCount = data?.alerts.departments.length ?? 0;
   const indicatorAlertsCount = data?.alerts.indicators.length ?? 0;
-
-  const mostPositiveDepartmentOverview = [...(data?.departmentsOverview ?? [])]
-    .sort((a, b) => b.score - a.score)[0];
-
-  const departmentsByLowestScore = [...(data?.departmentsOverview ?? [])]
-    .sort((a, b) => a.score - b.score)
-    .slice(0, 3);
-
-  const departmentsByHighestWeight = [...(data?.departmentsOverview ?? [])]
-    .sort((a, b) => b.weightInIgd - a.weightInIgd)
-    .slice(0, 3);
-
-  const strongestDepartmentCard = [...(data?.departmentsOverview ?? [])]
-    .sort((a, b) => b.score - a.score)[0];
-
-  const weakestDepartmentCard = [...(data?.departmentsOverview ?? [])]
-    .sort((a, b) => a.score - b.score)[0];
-
-  const highestWeightDepartment = [...(data?.departmentsOverview ?? [])]
-    .sort((a, b) => b.weightInIgd - a.weightInIgd)[0];
 
   const selectedDepartmentIndicatorsSorted = selectedDepartment
     ? [...selectedDepartment.indicators].sort((a, b) => a.score - b.score)
@@ -658,17 +645,17 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Maior peso no IGD
+              Maior contribuição no IGD
             </span>
             <strong className="si-presentation-scene-card__value">
-              {highestWeightDepartment?.name ?? "—"}
+              {highestContributionDepartment?.name ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Peso de{" "}
-              {highestWeightDepartment
-                ? formatPct(highestWeightDepartment.weightInIgd)
+              Contribuição de{" "}
+              {highestContributionDepartment
+                ? formatScore(highestContributionDepartment.contribution)
                 : "—"}{" "}
-              na composição do índice global.
+              no índice global.
             </p>
           </article>
 
@@ -750,17 +737,17 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Maior peso no IGD
+              Maior contribuição
             </span>
             <strong className="si-presentation-scene-card__value">
-              {highestWeightDepartment?.name ?? "—"}
+              {highestContributionDepartment?.name ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Peso atual de{" "}
-              {highestWeightDepartment
-                ? formatPct(highestWeightDepartment.weightInIgd)
+              Contribuição atual de{" "}
+              {highestContributionDepartment
+                ? formatScore(highestContributionDepartment.contribution)
                 : "—"}{" "}
-              na composição do índice.
+              no IGD.
             </p>
           </article>
         </div>
@@ -768,15 +755,16 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
         <div className="si-presentation-trend-scene__grid">
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Top 3 pesos no IGD
+              Top 3 contribuições
             </span>
             <strong className="si-presentation-scene-card__value">
-              {departmentsByHighestWeight[0]?.name ?? "—"}
+              {departmentsByHighestContribution[0]?.name ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              {departmentsByHighestWeight
+              {departmentsByHighestContribution
                 .map(
-                  (item) => `${item.name} (${formatPct(item.weightInIgd)})`,
+                  (item) =>
+                    `${item.name} (${formatScore(item.contribution)})`,
                 )
                 .join(" • ") || "Sem dados disponíveis."}
             </p>
@@ -805,7 +793,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             </strong>
             <p className="si-presentation-scene-card__text">
               {trendHighlightUp
-                ? `${trendHighlightUp.directionLabel} · atual ${formatScore(
+                ? `${getDirectionLabel(trendHighlightUp.direction)} · atual ${formatScore(
                     trendHighlightUp.current,
                   )}`
                 : "Sem destaque positivo disponível."}
@@ -821,7 +809,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             </strong>
             <p className="si-presentation-scene-card__text">
               {trendHighlightDown
-                ? `${trendHighlightDown.directionLabel} · atual ${formatScore(
+                ? `${getDirectionLabel(trendHighlightDown.direction)} · atual ${formatScore(
                     trendHighlightDown.current,
                   )}`
                 : "Sem destaque negativo disponível."}
@@ -1173,7 +1161,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             </strong>
             <p className="si-presentation-scene-card__text">
               {trendHighlightUp
-                ? `${trendHighlightUp.directionLabel} · atual ${formatScore(
+                ? `${getDirectionLabel(trendHighlightUp.direction)} · atual ${formatScore(
                     trendHighlightUp.current,
                   )}`
                 : "Sem destaque positivo disponível."}
@@ -1189,7 +1177,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             </strong>
             <p className="si-presentation-scene-card__text">
               {trendHighlightDown
-                ? `${trendHighlightDown.directionLabel} · atual ${formatScore(
+                ? `${getDirectionLabel(trendHighlightDown.direction)} · atual ${formatScore(
                     trendHighlightDown.current,
                   )}`
                 : "Sem destaque negativo disponível."}
@@ -1283,17 +1271,17 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
           <article className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Maior peso no IGD
+              Maior contribuição
             </span>
             <strong className="si-presentation-scene-card__value">
-              {highestWeightDepartment?.name ?? "—"}
+              {highestContributionDepartment?.name ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Peso de{" "}
-              {highestWeightDepartment
-                ? formatPct(highestWeightDepartment.weightInIgd)
+              Contribuição de{" "}
+              {highestContributionDepartment
+                ? formatScore(highestContributionDepartment.contribution)
                 : "—"}{" "}
-              na composição do índice global.
+              no índice global.
             </p>
           </article>
 
@@ -1359,26 +1347,11 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
       );
     }
 
-    if (scene === "overview") {
-      return renderOverviewScene();
-    }
-
-    if (scene === "departments") {
-      return renderDepartmentsScene();
-    }
-
-    if (scene === "department_detail") {
-      return renderDepartmentDetailScene();
-    }
-
-    if (scene === "alerts") {
-      return renderAlertsScene();
-    }
-
-    if (scene === "trend") {
-      return renderTrendScene();
-    }
-
+    if (scene === "overview") return renderOverviewScene();
+    if (scene === "departments") return renderDepartmentsScene();
+    if (scene === "department_detail") return renderDepartmentDetailScene();
+    if (scene === "alerts") return renderAlertsScene();
+    if (scene === "trend") return renderTrendScene();
     return renderClosingScene();
   }
 
@@ -1422,6 +1395,11 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
                 }
                 actionLabel="Tentar novamente"
                 onAction={() => {
+                  if (presentation.warnings.length > 0) {
+                    void presentation.retryFailedParts();
+                    return;
+                  }
+
                   void presentation.reload();
                 }}
               />

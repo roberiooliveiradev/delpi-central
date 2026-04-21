@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { StatusBadge } from "./StatusBadge";
 
 type PresentationMode = "meeting" | "tv" | "slide";
@@ -65,9 +66,27 @@ export function PresentationTopBar({
   onMonthsChange,
 }: PresentationTopBarProps) {
   const showBranchFilter = viewMode === "branch";
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth > 900) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [sceneTitle, mode, viewMode, branch, months, referenceMonth]);
 
   return (
-    <section className="si-presentation-topbar">
+    <section
+      className={`si-presentation-topbar${isMenuOpen ? " is-menu-open" : ""}`}
+    >
       <div className="si-presentation-topbar__identity">
         <div className="si-presentation-topbar__title-row">
           <div className="si-presentation-topbar__title-group">
@@ -79,6 +98,16 @@ export function PresentationTopBar({
               Competência {competence}
             </p>
           </div>
+
+          <button
+            type="button"
+            className="si-presentation-topbar__menu-toggle"
+            aria-label={isMenuOpen ? "Fechar controles" : "Abrir controles"}
+            aria-expanded={isMenuOpen}
+            onClick={() => setIsMenuOpen((current) => !current)}
+          >
+            <span aria-hidden="true">{isMenuOpen ? "✕" : "☰"}</span>
+          </button>
         </div>
       </div>
 

@@ -4989,10 +4989,10 @@ body {
 .si-presentation-topbar {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: center;
-  padding: 10px 16px;
+  grid-template-columns: minmax(320px, 1.15fr) minmax(520px, 1fr);
+  gap: 18px;
+  align-items: start;
+  padding: 14px 18px;
   border-radius: 18px;
   background: var(--si-card-bg);
   border: 1px solid var(--si-card-border);
@@ -5001,10 +5001,11 @@ body {
 
 .si-presentation-topbar__identity {
   min-width: 0;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 2px;
+  justify-content: flex-start;
+  gap: 4px;
 }
 
 .si-presentation-topbar__eyebrow {
@@ -5017,47 +5018,51 @@ body {
 
 .si-presentation-topbar__title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
 
 .si-presentation-topbar__title-group {
   min-width: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .si-presentation-topbar__title {
   margin: 0;
-  font-size: clamp(18px, 1.7vw, 24px);
-  line-height: 1.08;
+  font-size: clamp(28px, 2.4vw, 40px);
+  line-height: 1.05;
   color: var(--si-title);
-  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
   overflow-wrap: anywhere;
 }
 
 .si-presentation-topbar__subtitle {
   margin: 0;
-  font-size: 12px;
-  line-height: 1.25;
+  font-size: 14px;
+  line-height: 1.35;
   color: var(--si-text-muted);
+  white-space: normal;
+  word-break: break-word;
   overflow-wrap: anywhere;
 }
 
 .si-presentation-topbar__meta {
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-end;
+  gap: 12px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
 .si-presentation-topbar__mode-group {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 10px;
   flex-wrap: wrap;
 }
@@ -5067,7 +5072,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 108px;
+  min-width: 140px;
+  flex: 0 1 auto;
 }
 
 .si-presentation-topbar__meta-item span,

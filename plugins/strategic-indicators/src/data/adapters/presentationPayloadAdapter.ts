@@ -1,0 +1,338 @@
+import type { AlertsDashboardViewData } from "../types/alerts";
+import type { DepartmentDetailsViewData } from "../types/departmentDetails";
+import type { DepartmentOverviewViewItem } from "../types/departments";
+import type { ExecutiveDashboardViewData } from "../types/executiveSummary";
+import type {
+  GoalMode,
+  IndicatorViewItem,
+  MonthlyTargetItem,
+  PerformanceDirection,
+} from "../types/indicators";
+import type { TrendsDashboardViewData } from "../types/trends";
+import {
+  buildPresentationViewData,
+  type PresentationViewData,
+} from "../types/presentation";
+import type { StrategicIndicatorsPresentationApiResponse } from "../api/strategicIndicatorsPresentationApi";
+
+export type PresentationWarningItem = {
+  source: string;
+  message: string;
+};
+
+type AdaptPresentationPayloadParams = {
+  payload: StrategicIndicatorsPresentationApiResponse;
+  focusDepartmentId?: string | null;
+};
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function buildId(
+  prefix: string,
+  ...parts: Array<string | number | undefined | null>
+) {
+  const normalized = parts
+    .filter((part) => part !== undefined && part !== null && String(part).trim() !== "")
+    .map((part) => slugify(String(part)));
+
+  return [prefix, ...normalized].join("-");
+}
+
+function normalizeDirection(
+  value: string | null | undefined,
+): "up" | "down" | "stable" {
+  if (value === "up" || value === "down" || value === "stable") {
+    return value;
+  }
+
+  return "stable";
+}
+
+function normalizeGoalMode(value: string | null | undefined): GoalMode {
+  return value === "monthly_curve" ? "monthly_curve" : "standard";
+}
+
+function normalizePerformanceDirection(
+  value: string | null | undefined,
+): PerformanceDirection {
+  return value === "lower_is_better" ? "lower_is_better" : "higher_is_better";
+}
+
+function normalizeMonthlyTargets(
+  value: Array<{ month_number: number; target_value: number }> | undefined | null,
+): MonthlyTargetItem[] {
+  return (value ?? []).map((item) => ({
+    month_number: item.month_number,
+    target_value: item.target_value,
+  }));
+}
+
+function buildExecutiveSummary(
+  payload: StrategicIndicatorsPresentationApiResponse,
+): ExecutiveDashboardViewData {
+  return {
+    competence: payload.executive_summary.competence,
+    igd: payload.executive_summary.igd,
+    igdExact: payload.executive_summary.igd_exact,
+    classification: payload.executive_summary.classification,
+    variation: {
+      value: payload.executive_summary.variation.value,
+      direction: normalizeDirection(payload.executive_summary.variation.direction),
+      vsLabel: payload.executive_summary.variation.vs_label,
+    },
+    departments: payload.executive_summary.departments.map((department) => ({
+      id: department.id,
+      name: department.name,
+      shortName: department.short_name,
+      weightPct: department.weight_pct,
+      score: department.score,
+      contribution: department.contribution,
+      trend: normalizeDirection(department.trend),
+      strategicSummary: department.strategic_summary,
+      keyIndicators: department.key_indicators,
+      executiveGoal: department.executive_goal,
+      variation: {
+        value: department.variation.value,
+        direction: normalizeDirection(department.variation.direction),
+      },
+    })),
+    alertsSummary: payload.executive_summary.alerts_summary.map((alert, index) => ({
+      id: buildId("executive-summary-alert", index, alert.severity, alert.title),
+      title: alert.title,
+      severity: alert.severity,
+      impact: alert.impact,
+      recommendation: alert.recommendation,
+    })),
+  };
+}
+
+function buildAlerts(
+  payload: StrategicIndicatorsPresentationApiResponse,
+): AlertsDashboardViewData {
+  return {
+    competence: payload.alerts.competence,
+    igdClassification: payload.executive_summary.classification,
+    executiveAlerts: payload.alerts.executive_alerts.map((alert, index) => ({
+      id: buildId("executive-alert", index, alert.severity, alert.title),
+      title: alert.title,
+      severity: alert.severity,
+      impact: alert.impact,
+      recommendation: alert.recommendation,
+    })),
+    departmentAlerts: payload.alerts.department_alerts.map((alert) => ({
+      id: buildId(
+        "department-alert",
+        alert.department_id,
+        alert.severity,
+        alert.message,
+      ),
+      departmentName: alert.department_name,
+      currentScore: alert.score,
+      previousScore: alert.score,
+      severity: alert.severity,
+      reason: alert.message,
+      recommendation: "Priorizar plano de ação do departamento no curto prazo.",
+    })),
+    indicatorAlerts: payload.alerts.indicator_alerts.map((alert) => ({
+      id: buildId(
+        "indicator-alert",
+        alert.department_id,
+        alert.indicator_id,
+        alert.severity,
+      ),
+      departmentName: alert.department_name,
+      indicatorName: alert.indicator_name,
+      simulatedScore: alert.score,
+      goalLabel: alert.goal_label ?? "Meta não informada",
+      goalValue: alert.goal_value ?? null,
+      goalPeriodicity: alert.goal_periodicity ?? null,
+      goalMode: normalizeGoalMode(alert.goal_mode),
+      monthlyTargets: normalizeMonthlyTargets(alert.monthly_targets),
+      performanceDirection: normalizePerformanceDirection(
+        alert.performance_direction,
+      ),
+      severity: alert.severity,
+      reason: alert.message,
+      recommendation: "Atuar na causa do indicador e monitorar no próximo fechamento.",
+    })),
+    partialSuccess: payload.alerts.partial_success,
+    errors: (payload.alerts.errors ?? []).map((error) => ({
+      departmentId: error.department_id ?? "",
+      source: error.source ?? "",
+      message: error.message,
+    })),
+  };
+}
+
+function buildDepartmentsOverview(
+  payload: StrategicIndicatorsPresentationApiResponse,
+): DepartmentOverviewViewItem[] {
+  return payload.departments_overview.map((department) => ({
+    id: department.id,
+    name: department.name,
+    shortName: department.short_name,
+    weightInIgd: department.weight_pct,
+    score: department.score,
+    classification: department.classification,
+    contribution: department.contribution,
+    aggregationMode: department.aggregation_mode,
+    strategicSummary: department.strategic_summary,
+    variation: {
+      value: department.variation.value,
+      direction: normalizeDirection(department.variation.direction),
+    },
+  }));
+}
+
+function buildDepartmentDetailsById(
+  payload: StrategicIndicatorsPresentationApiResponse,
+): Record<string, DepartmentDetailsViewData> {
+  return Object.fromEntries(
+    Object.entries(payload.department_details_by_id).map(([departmentId, details]) => [
+      departmentId,
+      {
+        id: details.id,
+        name: details.name,
+        shortName: details.short_name,
+        weightInIgd: details.weight_pct,
+        score: details.score,
+        classification: details.classification,
+        contribution: details.contribution,
+        aggregationMode: details.aggregation_mode,
+        strategicSummary: details.strategic_summary,
+        variation: {
+          value: details.variation.value,
+          direction: details.variation.direction,
+        },
+        units: details.units.map((unit) => ({
+          unitId: unit.unit_id,
+          unitName: unit.unit_name,
+          score: unit.score,
+          classification: unit.classification,
+        })),
+        indicators: details.indicators.map((indicator) => ({
+          id: indicator.id,
+          name: indicator.name,
+          weightPct: indicator.weight_pct,
+          goalLabel: indicator.goal_label,
+          goalValue: indicator.goal_value,
+          goalPeriodicity: indicator.goal_periodicity,
+          goalMode: normalizeGoalMode(indicator.goal_mode),
+          monthlyTargets: normalizeMonthlyTargets(indicator.monthly_targets),
+          strategicDescription: indicator.strategic_description,
+          scopeType: indicator.scope_type,
+          performanceDirection: normalizePerformanceDirection(
+            indicator.performance_direction,
+          ),
+          realized: indicator.realized,
+          score: indicator.score,
+          gap: indicator.gap,
+          trend: normalizeDirection(indicator.trend),
+        })),
+      },
+    ]),
+  );
+}
+
+function buildIndicatorsByDepartmentId(
+  payload: StrategicIndicatorsPresentationApiResponse,
+): Record<string, IndicatorViewItem[]> {
+  return Object.fromEntries(
+    Object.entries(payload.indicators_by_department_id).map(
+      ([departmentId, indicators]) => [
+        departmentId,
+        indicators.map((indicator) => ({
+          id: indicator.indicator_id,
+          name: indicator.indicator_name,
+          departmentId: indicator.department_id,
+          departmentName: indicator.department_name,
+          weightPct: indicator.weight_pct,
+          goalLabel: indicator.goal_label,
+          goalValue: indicator.goal_value,
+          goalPeriodicity: indicator.goal_periodicity,
+          goalMode: normalizeGoalMode(indicator.goal_mode),
+          monthlyTargets: normalizeMonthlyTargets(indicator.monthly_targets),
+          value: indicator.value,
+          score: indicator.score,
+          gap: indicator.gap,
+          trend: normalizeDirection(indicator.trend),
+          classification: indicator.classification,
+          scopeType: indicator.scope_type,
+          performanceDirection: normalizePerformanceDirection(
+            indicator.performance_direction,
+          ),
+          source: indicator.source,
+        })),
+      ],
+    ),
+  );
+}
+
+function buildTrends(
+  payload: StrategicIndicatorsPresentationApiResponse,
+): TrendsDashboardViewData {
+  return {
+    competence: payload.trends.competence,
+    currentIgd: payload.trends.current_igd,
+    previousIgd: payload.trends.previous_igd,
+    currentClassification: payload.trends.current_classification,
+    igdSeries: payload.trends.igd_series.map((point) => ({
+      period: point.period,
+      value: point.value,
+      classification: point.classification,
+    })),
+    departments: payload.trends.departments.map((department) => ({
+      id: department.id,
+      name: department.name,
+      current: department.current,
+      previous: department.previous,
+      direction: normalizeDirection(department.direction),
+    })),
+    errors: (payload.trends.errors ?? []).map((error) => ({
+      competence: error.competence ?? "",
+      departmentId: error.department_id ?? "",
+      source: error.source ?? "",
+      message: error.message,
+    })),
+    partialSuccess: payload.trends.partial_success,
+  };
+}
+
+export function adaptPresentationPayloadToViewData({
+  payload,
+  focusDepartmentId,
+}: AdaptPresentationPayloadParams): PresentationViewData {
+  const executiveSummary = buildExecutiveSummary(payload);
+  const alerts = buildAlerts(payload);
+  const departmentsOverview = buildDepartmentsOverview(payload);
+  const departmentDetailsById = buildDepartmentDetailsById(payload);
+  const indicatorsByDepartmentId = buildIndicatorsByDepartmentId(payload);
+  const trends = buildTrends(payload);
+
+  return buildPresentationViewData({
+    executiveSummary,
+    executiveAlerts: alerts.executiveAlerts,
+    alerts,
+    departmentsOverview,
+    departmentDetailsById,
+    indicatorsByDepartmentId,
+    trends,
+    focusDepartmentId,
+  });
+}
+
+export function adaptPresentationWarnings(
+  payload: StrategicIndicatorsPresentationApiResponse,
+): PresentationWarningItem[] {
+  return (payload.meta.errors ?? []).map((error, index) => ({
+    source: error.source || error.scope || `presentation-${index}`,
+    message: error.message,
+  }));
+}
