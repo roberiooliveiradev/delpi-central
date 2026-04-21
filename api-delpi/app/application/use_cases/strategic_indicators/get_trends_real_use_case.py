@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 from calendar import monthrange
+from collections import defaultdict
 from datetime import date
 
-from app.application.use_cases.strategic_indicators.period_resolution import (
-    ResolvedPeriod,
+from app.application.dto.strategic_indicators.catalog_models import (
+    StrategicIndicatorCalculatedValue,
 )
 from app.application.dto.strategic_indicators.get_trends_real_request import (
     GetStrategicIndicatorsTrendsRealRequest,
 )
 from app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
+    StrategicIndicatorsPeriodSnapshot,
     StrategicIndicatorsSnapshotService,
 )
-
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
+)
 
 class GetStrategicIndicatorsTrendsRealUseCase:
     def __init__(
@@ -128,6 +132,10 @@ class GetStrategicIndicatorsTrendsRealUseCase:
 
         departments.sort(key=lambda item: item["name"])
 
+        indicator_series_by_department_id = self._build_indicator_series_by_department_id(
+            snapshots
+        )
+
         return {
             "competence": current_point["period"],
             "current_igd": current_point["value"],
@@ -135,8 +143,78 @@ class GetStrategicIndicatorsTrendsRealUseCase:
             "current_classification": current_point["classification"],
             "igd_series": monthly_points,
             "departments": departments,
+            "indicator_series_by_department_id": indicator_series_by_department_id,
             "errors": errors,
             "partial_success": len(errors) > 0,
+        }
+
+    def _build_indicator_series_by_department_id(
+        self,
+        snapshots: list[StrategicIndicatorsPeriodSnapshot],
+    ) -> dict[str, list[dict]]:
+        grouped: dict[str, dict[str, dict]] = defaultdict(dict)
+
+        for snapshot in snapshots:
+            period_label = snapshot.period.competence
+
+            for indicator in snapshot.calculated_indicators:
+                department_bucket = grouped[indicator.department_id]
+                existing = department_bucket.get(indicator.indicator_id)
+
+                point = self._build_indicator_series_point(
+                    period_label=period_label,
+                    indicator=indicator,
+                )
+
+                if existing is None:
+                    department_bucket[indicator.indicator_id] = {
+                        "indicator_id": indicator.indicator_id,
+                        "indicator_name": indicator.indicator_name,
+                        "weight_pct": indicator.weight_pct,
+                        "goal_label": indicator.goal_label,
+                        "goal_value": indicator.goal_value,
+                        "goal_periodicity": indicator.goal_periodicity,
+                        "goal_mode": getattr(indicator, "goal_mode", "standard"),
+                        "monthly_targets": getattr(indicator, "monthly_targets", []) or [],
+                        "scope_type": indicator.scope_type,
+                        "performance_direction": getattr(
+                            indicator,
+                            "performance_direction",
+                            "higher_is_better",
+                        ),
+                        "strategic_description": indicator.strategic_description,
+                        "source": indicator.source,
+                        "series": [point],
+                    }
+                    continue
+
+                existing["series"].append(point)
+
+        for department_bucket in grouped.values():
+            for item in department_bucket.values():
+                item["series"] = sorted(
+                    item["series"],
+                    key=lambda entry: entry["period"],
+                )
+
+        return {
+            department_id: list(indicators.values())
+            for department_id, indicators in grouped.items()
+        }
+
+    def _build_indicator_series_point(
+        self,
+        *,
+        period_label: str,
+        indicator: StrategicIndicatorCalculatedValue,
+    ) -> dict:
+        return {
+            "period": period_label,
+            "value": round(float(indicator.value), 3),
+            "score": round(float(indicator.score), 3),
+            "gap": round(float(indicator.gap), 3),
+            "classification": indicator.classification,
+            "trend": indicator.trend,
         }
 
     def _parse_competence(self, competence: str | None) -> date:
@@ -168,7 +246,9 @@ class GetStrategicIndicatorsTrendsRealUseCase:
             competence = f"{current_year}-{str(current_month).zfill(2)}"
             first_day = f"01-{str(current_month).zfill(2)}-{current_year}"
             last_day = monthrange(current_year, current_month)[1]
-            last_date = f"{str(last_day).zfill(2)}-{str(current_month).zfill(2)}-{current_year}"
+            last_date = (
+                f"{str(last_day).zfill(2)}-{str(current_month).zfill(2)}-{current_year}"
+            )
 
             periods.append(
                 ResolvedPeriod(
