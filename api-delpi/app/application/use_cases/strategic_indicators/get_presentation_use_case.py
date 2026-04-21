@@ -584,6 +584,8 @@ class GetStrategicIndicatorsPresentationUseCase:
                         "period": snapshot.period.competence,
                         "score": department.score,
                         "name": department.department_name,
+                        "classification": department.classification,
+                        "contribution": department.contribution,
                     }
                 )
 
@@ -604,9 +606,25 @@ class GetStrategicIndicatorsPresentationUseCase:
 
         departments = []
         for department_id, series in monthly_departments.items():
+            if not series:
+                continue
+
+            first = series[0]
             current = series[-1]
             previous = series[-2] if len(series) >= 2 else series[-1]
-            direction = self._resolve_direction(current["score"], previous["score"])
+
+            best_point = max(series, key=lambda item: item["score"])
+            worst_point = min(series, key=lambda item: item["score"])
+
+            interval_direction = self._resolve_direction(
+                current["score"],
+                first["score"],
+            )
+
+            last_step_direction = self._resolve_direction(
+                current["score"],
+                previous["score"],
+            )
 
             departments.append(
                 {
@@ -614,7 +632,26 @@ class GetStrategicIndicatorsPresentationUseCase:
                     "name": current["name"],
                     "current": current["score"],
                     "previous": previous["score"],
-                    "direction": direction,
+                    "direction": interval_direction,
+                    "last_step_direction": last_step_direction,
+                    "net_variation": round(current["score"] - first["score"], 3),
+                    "best_score": round(best_point["score"], 3),
+                    "worst_score": round(worst_point["score"], 3),
+                    "current_classification": current["classification"],
+                    "current_contribution": round(
+                        float(current.get("contribution") or 0), 3
+                    ),
+                    "series": [
+                        {
+                            "period": point["period"],
+                            "score": round(float(point["score"]), 3),
+                            "classification": point["classification"],
+                            "contribution": round(
+                                float(point.get("contribution") or 0), 3
+                            ),
+                        }
+                        for point in series
+                    ],
                 }
             )
 
