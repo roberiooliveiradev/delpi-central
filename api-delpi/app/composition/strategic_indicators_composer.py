@@ -165,6 +165,10 @@ from app.application.use_cases.strategic_indicators.activate_admin_department_in
     ActivateStrategicIndicatorsAdminDepartmentIndicatorUseCase,
 )
 
+from app.application.use_cases.strategic_indicators.get_presentation_use_case import (
+    GetStrategicIndicatorsPresentationUseCase,
+)
+
 from app.composition.commercial_composer import (
     build_commercial_metrics_snapshot_service,
 )
@@ -455,3 +459,11 @@ def build_get_supplies_indicators_snapshot_port():
 def build_activate_strategic_indicators_admin_department_indicator_use_case():
     repository = PostgresStrategicIndicatorsDepartmentIndicatorsRepository()
     return ActivateStrategicIndicatorsAdminDepartmentIndicatorUseCase(repository)
+
+
+def build_get_strategic_indicators_presentation_use_case():
+    return GetStrategicIndicatorsPresentationUseCase(
+        snapshot_service=build_strategic_indicators_snapshot_service(),
+        alerts_summary_port=CalculatedStrategicIndicatorsAlertsSummaryProvider(),
+        calculator=StrategicIndicatorsCalculator(),
+    )

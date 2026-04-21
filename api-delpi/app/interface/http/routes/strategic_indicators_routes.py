@@ -47,6 +47,10 @@ from app.application.dto.strategic_indicators.get_trends_real_request import (
     GetStrategicIndicatorsTrendsRealRequest,
 )
 
+from app.application.dto.strategic_indicators.get_presentation_request import (
+    GetStrategicIndicatorsPresentationRequest,
+)
+
 from app.composition.strategic_indicators_composer import (
     build_get_strategic_indicators_executive_summary_use_case,
     build_get_strategic_indicators_settings_use_case,
@@ -83,6 +87,7 @@ from app.composition.strategic_indicators_composer import (
     build_list_strategic_indicators_goal_years_overview_use_case,
     build_activate_strategic_indicators_admin_department_use_case,
     build_activate_strategic_indicators_admin_department_indicator_use_case,
+    build_get_strategic_indicators_presentation_use_case,
 )
 
 router = APIRouter(
@@ -1008,4 +1013,32 @@ def activate_admin_department(department_id: str, request: Request):
         raise HTTPException(
             status_code=500,
             detail=f"Falha ao ativar departamento: {exc}",
+        ) from exc
+    
+
+@router.get("/presentation")
+@require_permission("strategic-indicators.view")
+def get_strategic_indicators_presentation(
+    branch: str | None = Query(None),
+    competence: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+    months: int = Query(6, ge=2, le=12),
+):
+    try:
+        use_case = build_get_strategic_indicators_presentation_use_case()
+        result = use_case.execute(
+            GetStrategicIndicatorsPresentationRequest(
+                branch=branch,
+                competence=competence,
+                start_date=start_date,
+                end_date=end_date,
+                months=months,
+            )
+        )
+        return result
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar presentation do Strategic Indicators: {exc}",
         ) from exc
