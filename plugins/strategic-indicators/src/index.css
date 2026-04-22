@@ -4990,7 +4990,7 @@ body {
   width: 100%;
   position: relative;
   display: grid;
-  grid-template-columns: minmax(320px, 1.15fr) minmax(520px, 1fr);
+  grid-template-columns: minmax(320px, 1fr) minmax(520px, 1fr);
   gap: 18px;
   align-items: start;
   padding: 14px 18px 22px;
@@ -5877,45 +5877,125 @@ body {
 
 .si-presentation-edge-nav {
   position: fixed;
-  top: 50%;
+  top: 0;
+  bottom: 0;
   z-index: 20;
-  width: 44px;
+  width: 52px;
   display: flex;
   align-items: center;
-  transform: translateY(-50%);
-  opacity: 0.9;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .si-presentation-edge-nav--left {
-  left: 16px;
+  left: 0;
   justify-content: flex-start;
 }
 
 .si-presentation-edge-nav--right {
-  right: 16px;
+  right: 0;
   justify-content: flex-end;
 }
 
 .si-presentation-edge-nav__button {
-  width: 40px;
-  height: 40px;
+  width: 100%;
+  height: 180px;
+  border: none;
+  background: transparent;
+  padding: 0;
   margin: 0;
-  border: 1px solid color-mix(in srgb, var(--primary, #089bdb) 22%, transparent);
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.si-presentation-edge-nav--left .si-presentation-edge-nav__button {
+  justify-content: flex-start;
+}
+
+.si-presentation-edge-nav--right .si-presentation-edge-nav__button {
+  justify-content: flex-end;
+}
+
+.si-presentation-edge-nav__button-pill {
+  width: 34px;
+  min-width: 34px;
+  height: 96px;
+  padding: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface, #ffffff) 92%, transparent);
-  backdrop-filter: blur(8px);
+  border: 1px solid
+    color-mix(in srgb, var(--primary, #089bdb) 24%, var(--si-card-border));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface, #ffffff) 96%, transparent),
+      color-mix(in srgb, var(--primary, #089bdb) 7%, var(--surface, #ffffff))
+    );
   color: var(--si-title);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.14),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.si-presentation-edge-nav--left .si-presentation-edge-nav__button-pill {
+  transform: translateX(-18px);
+  opacity: 0;
+}
+
+.si-presentation-edge-nav--right .si-presentation-edge-nav__button-pill {
+  transform: translateX(18px);
+  opacity: 0;
+}
+
+.si-presentation-edge-nav:hover .si-presentation-edge-nav__button-pill,
+.si-presentation-edge-nav:focus-within .si-presentation-edge-nav__button-pill {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.si-presentation-edge-nav__button:hover:not(:disabled)
+  .si-presentation-edge-nav__button-pill {
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 38%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface, #ffffff) 94%, transparent),
+      color-mix(in srgb, var(--primary, #089bdb) 10%, var(--surface, #ffffff))
+    );
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.16),
+    0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.si-presentation-edge-nav__button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
 }
 
 .si-presentation-edge-nav__button:disabled {
-  opacity: 0.45;
   cursor: not-allowed;
+}
+
+.si-presentation-edge-nav__button:disabled
+  .si-presentation-edge-nav__button-pill {
+  opacity: 0.38;
+  transform: translateX(0);
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* ==========================================
@@ -6071,6 +6151,20 @@ body {
   .si-presentation-department-slide__bottom {
     grid-template-columns: 1fr;
   }
+
+  .si-presentation-edge-nav--left {
+    left: 10px;
+  }
+
+  .si-presentation-edge-nav--right {
+    right: 10px;
+  }
+
+  .si-presentation-edge-nav__button-pill {
+    min-width: 60px;
+    height: 32px;
+    padding: 0 12px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -6138,9 +6232,47 @@ body {
   .si-presentation-page .si-presentation-closing__item p {
     line-height: 1.5;
   }
+
+  .si-presentation-edge-nav__button-pill {
+    min-width: 52px;
+    height: 30px;
+    padding: 0 10px;
+  }
 }
 
+@media (max-width: 900px) {
+  .si-presentation-edge-nav {
+    width: 44px;
+  }
 
+  .si-presentation-edge-nav__button {
+    height: 150px;
+  }
+
+  .si-presentation-edge-nav__button-pill {
+    width: 30px;
+    min-width: 30px;
+    height: 84px;
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .si-presentation-edge-nav {
+    width: 40px;
+  }
+
+  .si-presentation-edge-nav__button {
+    height: 132px;
+  }
+
+  .si-presentation-edge-nav__button-pill {
+    width: 28px;
+    min-width: 28px;
+    height: 74px;
+  }
+}
 
 /* ==========================================
    HERO VISUAL — GAUGE E CLASSIFICATION BAND

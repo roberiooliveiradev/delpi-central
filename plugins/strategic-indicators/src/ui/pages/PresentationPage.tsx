@@ -190,6 +190,9 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   const [scene, setScene] = useState<PresentationScene>("overview");
   const [departmentIndex, setDepartmentIndex] = useState(0);
   const [isAutoplayPaused, setIsAutoplayPaused] = useState(false);
+  
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
 
   const autoplayResumeTimerRef = useRef<number | null>(null);
 
@@ -368,6 +371,40 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     goToNext();
   }
 
+  function handleSceneTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+    if (event.touches.length !== 1) return;
+
+    const touch = event.touches[0];
+    touchStartXRef.current = touch.clientX;
+    touchStartYRef.current = touch.clientY;
+  }
+
+  function handleSceneTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
+    if (touchStartXRef.current === null || touchStartYRef.current === null) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartXRef.current;
+    const deltaY = touch.clientY - touchStartYRef.current;
+
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+
+    const minSwipeDistance = 64;
+    const horizontalDominance = Math.abs(deltaX) > Math.abs(deltaY) * 1.25;
+
+    if (!horizontalDominance || Math.abs(deltaX) < minSwipeDistance) {
+      return;
+    }
+
+    if (deltaX > 0) {
+      handlePrevious();
+      return;
+    }
+
+    handleNext();
+  }
   function handleModeChange(nextMode: PresentationMode) {
     pauseAutoplayTemporarily();
     setMode(nextMode);
@@ -1178,7 +1215,13 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             </div>
           ) : null}
 
-          <div className="si-presentation-scene-frame">{renderScene()}</div>
+          <div
+            className="si-presentation-scene-frame"
+            onTouchStart={handleSceneTouchStart}
+            onTouchEnd={handleSceneTouchEnd}
+          >
+            {renderScene()}
+          </div>
         </div>
 
         <PresentationEdgeNavigation

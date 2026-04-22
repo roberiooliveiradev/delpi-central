@@ -24,7 +24,14 @@ export function PresentationEdgeNavigation({
           aria-label="Cena anterior"
           title="Cena anterior"
         >
-          <ChevronLeft size={22} />
+          <span className="si-presentation-edge-nav__button-pill">
+            <span
+              className="si-presentation-edge-nav__button-icon"
+              aria-hidden="true"
+            >
+              <ChevronLeft size={20} />
+            </span>
+          </span>
         </button>
       </div>
 
@@ -37,7 +44,14 @@ export function PresentationEdgeNavigation({
           aria-label="Próxima cena"
           title="Próxima cena"
         >
-          <ChevronRight size={22} />
+          <span className="si-presentation-edge-nav__button-pill">
+            <span
+              className="si-presentation-edge-nav__button-icon"
+              aria-hidden="true"
+            >
+              <ChevronRight size={20} />
+            </span>
+          </span>
         </button>
       </div>
     </>
