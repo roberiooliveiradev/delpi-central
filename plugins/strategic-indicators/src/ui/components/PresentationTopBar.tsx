@@ -42,16 +42,6 @@ const DEFAULT_MONTHS_OPTIONS: MonthsOption[] = [
   { value: 12, label: "12 meses" },
 ];
 
-function getModeLabel(mode: PresentationMode) {
-  if (mode === "meeting") return "Reunião";
-  if (mode === "tv") return "TV";
-  return "Slide";
-}
-
-function getViewModeLabel(viewMode: StrategicIndicatorsViewMode) {
-  return viewMode === "consolidated" ? "Consolidado" : "Filial";
-}
-
 function shouldStartCollapsed(mode: PresentationMode) {
   return mode === "tv" || mode === "slide";
 }
@@ -204,11 +194,6 @@ export function PresentationTopBar({
         </div>
       ) : null}
         <div className="si-presentation-topbar__mode-group">
-          <div className="si-presentation-topbar__meta-item">
-            <span>Modo</span>
-            <strong>{getModeLabel(mode)}</strong>
-          </div>
-
           <div
             className="si-presentation-mode-toggle"
             role="tablist"
@@ -250,11 +235,6 @@ export function PresentationTopBar({
         </div>
 
         <div className="si-presentation-topbar__mode-group">
-          <div className="si-presentation-topbar__meta-item">
-            <span>Visão</span>
-            <strong>{getViewModeLabel(viewMode)}</strong>
-          </div>
-
           <div
             className="si-presentation-mode-toggle"
             role="tablist"
