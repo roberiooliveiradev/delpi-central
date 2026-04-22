@@ -6573,6 +6573,7 @@ body {
 
 .si-presentation-department-slide__panel,
 .si-presentation-department-slide__narrative-card,
+.si-presentation-department-slide__priority-card,
 .si-presentation-department-slide__closing,
 .si-presentation-department-slide__signal-card,
 .si-presentation-department-slide__mini-kpi {
@@ -6583,6 +6584,7 @@ body {
 
 .si-presentation-department-slide__panel,
 .si-presentation-department-slide__narrative-card,
+.si-presentation-department-slide__priority-card,
 .si-presentation-department-slide__closing {
   padding: 18px 20px;
   border-radius: 22px;
