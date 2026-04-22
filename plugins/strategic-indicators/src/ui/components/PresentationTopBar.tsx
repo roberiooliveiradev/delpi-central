@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StatusBadge } from "./StatusBadge";
 
 type PresentationMode = "meeting" | "tv" | "slide";
@@ -48,6 +48,10 @@ function getViewModeLabel(viewMode: StrategicIndicatorsViewMode) {
   return viewMode === "consolidated" ? "Consolidado" : "Filial";
 }
 
+function shouldStartCollapsed(mode: PresentationMode) {
+  return mode === "tv" || mode === "slide";
+}
+
 export function PresentationTopBar({
   competence,
   sceneTitle,
@@ -66,26 +70,58 @@ export function PresentationTopBar({
   onMonthsChange,
 }: PresentationTopBarProps) {
   const showBranchFilter = viewMode === "branch";
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(() => {
+    if (typeof window !== "undefined" && window.innerWidth <= 900) {
+      return false;
+    }
+
+    return !shouldStartCollapsed(mode);
+  });
+
+  const isCollapsed = useMemo(() => !isMenuOpen, [isMenuOpen]);
+
+  function handleToggleControls() {
+    setIsMenuOpen((current) => !current);
+  }
 
   useEffect(() => {
     function handleResize() {
-      if (window.innerWidth > 900) {
+      if (window.innerWidth <= 900) {
         setIsMenuOpen(false);
+        return;
       }
+
+      setIsMenuOpen(!shouldStartCollapsed(mode));
     }
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
-    setIsMenuOpen(false);
-  }, [sceneTitle, mode, viewMode, branch, months, referenceMonth]);
+    if (typeof window !== "undefined" && window.innerWidth <= 900) {
+      setIsMenuOpen(false);
+      return;
+    }
+
+    setIsMenuOpen(!shouldStartCollapsed(mode));
+  }, [mode]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth <= 900) {
+      setIsMenuOpen(false);
+      return;
+    }
+
+    setIsMenuOpen(!shouldStartCollapsed(mode));
+  }, [mode]);
 
   return (
     <section
-      className={`si-presentation-topbar${isMenuOpen ? " is-menu-open" : ""}`}
+      className={`si-presentation-topbar${
+        isMenuOpen ? " is-menu-open" : ""
+      }${isCollapsed ? " is-collapsed" : ""}`}
     >
       <div className="si-presentation-topbar__identity">
         <div className="si-presentation-topbar__title-row">
@@ -93,7 +129,9 @@ export function PresentationTopBar({
             <span className="si-presentation-topbar__eyebrow">
               Apresentação Executiva
             </span>
+
             <h2 className="si-presentation-topbar__title">{sceneTitle}</h2>
+
             <p className="si-presentation-topbar__subtitle">
               Competência {competence}
             </p>
@@ -102,11 +140,41 @@ export function PresentationTopBar({
           <button
             type="button"
             className="si-presentation-topbar__menu-toggle"
-            aria-label={isMenuOpen ? "Fechar controles" : "Abrir controles"}
+            aria-label={isMenuOpen ? "Recolher filtros" : "Expandir filtros"}
             aria-expanded={isMenuOpen}
-            onClick={() => setIsMenuOpen((current) => !current)}
+            onClick={handleToggleControls}
           >
-            <span aria-hidden="true">{isMenuOpen ? "✕" : "☰"}</span>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              {isMenuOpen ? (
+                <path
+                  d="M6 6l12 12M18 6L6 18"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              ) : (
+                <>
+                  <path
+                    d="M4 7h16"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M4 12h16"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M4 17h16"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </>
+              )}
+            </svg>
           </button>
         </div>
       </div>
@@ -239,6 +307,33 @@ export function PresentationTopBar({
           />
         </div>
       </div>
+
+      <button
+        type="button"
+        className="si-presentation-topbar__edge-toggle"
+        aria-label={isMenuOpen ? "Recolher filtros" : "Expandir filtros"}
+        aria-expanded={isMenuOpen}
+        onClick={handleToggleControls}
+      >
+        <span className="si-presentation-topbar__edge-toggle-pill">
+          <span
+            className={`si-presentation-topbar__edge-toggle-icon${
+              isMenuOpen ? " is-open" : ""
+            }`}
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 20 20" fill="none">
+              <path
+                d="M5 8l5 5 5-5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        </span>
+      </button>
     </section>
   );
 }

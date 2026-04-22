@@ -4988,11 +4988,12 @@ body {
 
 .si-presentation-topbar {
   width: 100%;
+  position: relative;
   display: grid;
   grid-template-columns: minmax(320px, 1.15fr) minmax(520px, 1fr);
   gap: 18px;
   align-items: start;
-  padding: 14px 18px;
+  padding: 14px 18px 22px;
   border-radius: 18px;
   background: var(--si-card-bg);
   border: 1px solid var(--si-card-border);
@@ -5109,6 +5110,99 @@ body {
   align-items: center;
 }
 
+
+.si-presentation-topbar__edge-toggle {
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  transform: translateX(-50%);
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.si-presentation-topbar:hover .si-presentation-topbar__edge-toggle,
+.si-presentation-topbar:focus-within .si-presentation-topbar__edge-toggle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.si-presentation-topbar__edge-toggle-pill {
+  min-width: 72px;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid
+    color-mix(in srgb, var(--primary, #089bdb) 24%, var(--si-card-border));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface, #ffffff) 96%, transparent),
+      color-mix(in srgb, var(--primary, #089bdb) 7%, var(--surface, #ffffff))
+    );
+  color: var(--si-title);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.14),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.si-presentation-topbar__edge-toggle:hover
+  .si-presentation-topbar__edge-toggle-pill {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 38%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface, #ffffff) 94%, transparent),
+      color-mix(in srgb, var(--primary, #089bdb) 10%, var(--surface, #ffffff))
+    );
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.16),
+    0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.si-presentation-topbar__edge-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  transform: rotate(0deg);
+  transition: transform 0.18s ease;
+}
+
+.si-presentation-topbar__edge-toggle-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.si-presentation-topbar__edge-toggle-icon.is-open {
+  transform: rotate(180deg);
+}
+
+.si-presentation-topbar.is-collapsed .si-presentation-topbar__meta {
+  display: none;
+}
+
+.si-presentation-topbar.is-collapsed {
+  padding-bottom: 18px;
+}
+
 .si-presentation-topbar__menu-toggle {
   display: none;
   width: 40px;
@@ -5121,6 +5215,28 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.si-presentation-topbar__menu-toggle:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 30%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--primary, #089bdb) 8%,
+    var(--surface, #ffffff)
+  );
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.si-presentation-topbar__menu-toggle svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 /* ==========================================
@@ -5886,20 +6002,27 @@ body {
     overflow-wrap: anywhere;
   }
 
-  .si-presentation-topbar__menu-toggle {
-    display: inline-flex;
-  }
-
   .si-presentation-topbar__meta {
-    display: none;
     width: 100%;
     grid-template-columns: 1fr;
     gap: 10px;
     justify-content: stretch;
   }
 
+  .si-presentation-topbar.is-collapsed .si-presentation-topbar__meta {
+    display: none;
+  }
+
   .si-presentation-topbar.is-menu-open .si-presentation-topbar__meta {
     display: grid;
+  }
+
+  .si-presentation-topbar__menu-toggle {
+    display: inline-flex;
+  }
+
+  .si-presentation-topbar__edge-toggle {
+    display: none;
   }
 
   .si-presentation-topbar__mode-group {
