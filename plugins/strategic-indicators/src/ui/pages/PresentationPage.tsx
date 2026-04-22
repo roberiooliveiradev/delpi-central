@@ -970,117 +970,121 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     );
   }
 
-  function renderClosingScene() {
-    if (!data) return null;
+function renderClosingScene() {
+  if (!data) return null;
 
-    return (
-      <div className="si-presentation-single-scene">
-        <PresentationClosingPanel
-          currentPeriod={data.currentPeriod}
-          previousPeriod={data.previousPeriod}
-          classification={data.classification}
-          trendLabel={data.trendLabel}
-          topDepartment={data.topDepartment}
-          topRisk={data.topRisk}
-        />
+  const recommendation =
+    data.executiveAlerts[0]?.recommendation ??
+    "Sem recomendação executiva disponível.";
 
-        <div className="si-presentation-trend-scene__grid">
-          <article className="si-presentation-scene-card">
+  const strongestDepartmentName =
+    mostPositiveDepartmentOverview?.name ?? data.topDepartment;
+
+  const highestContributionName =
+    highestContributionDepartment?.name ?? strongestDepartmentName;
+
+  const immediateFocusName =
+    weakestDepartmentCard?.name ?? data.topRisk;
+
+  const cycleMovementValue = trendHighlightUp?.name ?? "—";
+  const cycleMovementSupport = trendHighlightUp
+    ? `Score atual ${formatScore(trendHighlightUp.current)}`
+    : "Sem destaque adicional disponível.";
+
+  const reinforcementCards = [
+    {
+      label: "Departamento de destaque",
+      value: strongestDepartmentName,
+      text: data.topDepartment === strongestDepartmentName
+        ? "Melhor leitura comparativa no recorte atual."
+        : `Destaque executivo do período: ${data.topDepartment}.`,
+    },
+    {
+      label: "Foco imediato",
+      value: immediateFocusName,
+      text: recommendation,
+    },
+    {
+      label: "Maior contribuição",
+      value: highestContributionName,
+      text: highestContributionDepartment
+        ? `Contribuição atual de ${formatScore(
+            highestContributionDepartment.contribution,
+          )} no IGD.`
+        : "Sem contribuição consolidada disponível.",
+    },
+    {
+      label: "Movimento do ciclo",
+      value: cycleMovementValue,
+      text: cycleMovementSupport,
+    },
+  ];
+
+  const footerCards = [
+    {
+      label: "Próximo passo",
+      value: data.executiveAlerts[0]?.title ?? "Plano executivo",
+      text: recommendation,
+    },
+    {
+      label: "Risco prioritário",
+      value: data.topRisk,
+      text: weakestDepartmentCard
+        ? `${weakestDepartmentCard.name} fecha o período com score ${formatScore(
+            weakestDepartmentCard.score,
+          )}.`
+        : "Tema mais sensível para acompanhamento imediato.",
+    },
+    {
+      label: "Mensagem de encerramento",
+      value: data.classification,
+      text: `${data.trendLabel} no fechamento entre ${data.previousPeriod} e ${data.currentPeriod}.`,
+    },
+  ];
+  
+  return (
+    <div className="si-presentation-single-scene">
+      <PresentationClosingPanel
+        currentPeriod={data.currentPeriod}
+        previousPeriod={data.previousPeriod}
+        classification={data.classification}
+        trendLabel={data.trendLabel}
+        topDepartment={strongestDepartmentName}
+        topRisk={data.topRisk}
+        igd={data.igd}
+        recommendation={recommendation}
+      />
+
+      <div className="si-presentation-closing__reinforcement-grid">
+        {reinforcementCards.map((card) => (
+          <article key={card.label} className="si-presentation-scene-card">
             <span className="si-presentation-scene-card__label">
-              Fechamento do período
+              {card.label}
             </span>
             <strong className="si-presentation-scene-card__value">
-              {data.currentPeriod}
+              {card.value}
             </strong>
-            <p className="si-presentation-scene-card__text">
-              Competência consolidada usada nesta leitura executiva.
-            </p>
+            <p className="si-presentation-scene-card__text">{card.text}</p>
           </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Classificação final
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {data.classification}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              Síntese da condição global do IGD no período.
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Tendência observada
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {data.trendLabel}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              Direção predominante do comportamento entre os períodos.
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Melhor departamento
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {mostPositiveDepartmentOverview?.name ?? data.topDepartment}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              Melhor leitura comparativa no recorte consolidado atual.
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Maior contribuição
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {highestContributionDepartment?.name ?? "—"}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              Contribuição de{" "}
-              {highestContributionDepartment
-                ? formatScore(highestContributionDepartment.contribution)
-                : "—"}{" "}
-              no índice global.
-            </p>
-          </article>
-
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Principal ponto de atenção
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {weakestDepartmentCard?.name ?? data.topRisk}
-            </strong>
-            <p className="si-presentation-scene-card__text">
-              Menor score consolidado no fechamento do período.
-            </p>
-          </article>
-        </div>
-
-        <div className="si-presentation-trend-scene__grid">
-          {data.kpis.map((kpi) => (
-            <article key={kpi.id} className="si-presentation-scene-card">
-              <span className="si-presentation-scene-card__label">
-                {kpi.label}
-              </span>
-              <strong className="si-presentation-scene-card__value">
-                {kpi.value}
-              </strong>
-              <p className="si-presentation-scene-card__text">
-                {kpi.support ?? "Síntese final da leitura executiva."}
-              </p>
-            </article>
-          ))}
-        </div>
+        ))}
       </div>
-    );
-  }
 
+      <div className="si-presentation-closing__footer-grid">
+        {footerCards.map((card) => (
+          <article key={card.label} className="si-presentation-scene-card">
+            <span className="si-presentation-scene-card__label">
+              {card.label}
+            </span>
+            <strong className="si-presentation-scene-card__value">
+              {card.value}
+            </strong>
+            <p className="si-presentation-scene-card__text">{card.text}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
   function renderScene() {
     if (presentation.loading) {
       return (
