@@ -5312,6 +5312,31 @@ body {
   padding: 2px 8px 8px;
 }
 
+.si-presentation-scene-frame__content {
+  width: 100%;
+  min-width: 0;
+  animation: si-presentation-scene-enter 300ms ease;
+  transform-origin: center top;
+  will-change: opacity, transform;
+}
+
+@keyframes si-presentation-scene-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .si-presentation-scene-frame__content {
+    animation: none;
+  }
+}
+
 /* ==========================================
    CENAS
    ========================================== */

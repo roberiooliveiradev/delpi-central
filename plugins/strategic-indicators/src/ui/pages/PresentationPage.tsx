@@ -56,6 +56,17 @@ function getSceneOrder(): PresentationScene[] {
   ];
 }
 
+function getSceneRenderKey(
+  scene: PresentationScene,
+  departmentIndex: number,
+): string {
+  if (scene === "department_detail") {
+    return `${scene}-${departmentIndex}`;
+  }
+
+  return scene;
+}
+
 function getSceneTitle(scene: PresentationScene) {
   switch (scene) {
     case "overview":
@@ -1171,6 +1182,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   const nextDisabled =
     loading || !data || (scene === "closing" && mode === "meeting");
 
+  const sceneRenderKey = getSceneRenderKey(scene, departmentIndex);
   return (
     <div className={`si-presentation-page si-presentation-page--${mode}`}>
       <div className="si-presentation-viewport">
@@ -1222,7 +1234,12 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             onTouchStart={handleSceneTouchStart}
             onTouchEnd={handleSceneTouchEnd}
           >
-            {renderScene()}
+            <div
+              key={sceneRenderKey}
+              className="si-presentation-scene-frame__content"
+            >
+              {renderScene()}
+            </div>
           </div>
         </div>
 
