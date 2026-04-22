@@ -9,6 +9,7 @@ import { PresentationNarrativeStrip } from "../components/PresentationNarrativeS
 import { PresentationTopBar } from "../components/PresentationTopBar";
 import { InfoState } from "../components/InfoState";
 import { PresentationAlertsSeverityDonut } from "../components/PresentationAlertsSeverityDonut";
+import { PresentationTrendAreaChart } from "../components/PresentationTrendAreaChart";
 import { useStrategicIndicatorsPresentation } from "../../state/hooks/useStrategicIndicatorsPresentation";
 import {
   buildStrategicIndicatorsMonthRange,
@@ -796,13 +797,68 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
       );
     }
 
+    const igdSeries = trend.igdSeries.slice(-months);
+
+    const strongestMomentumDepartment = [...trend.departments].sort(
+      (a, b) => b.netVariation - a.netVariation,
+    )[0] ?? null;
+
+    const biggestDropDepartment = [...trend.departments].sort(
+      (a, b) => a.netVariation - b.netVariation,
+    )[0] ?? null;
+
+    const bestCurrentDepartment = [...trend.departments].sort(
+      (a, b) => b.current - a.current,
+    )[0] ?? null;
+
+    const worstCurrentDepartment = [...trend.departments].sort(
+      (a, b) => a.current - b.current,
+    )[0] ?? null;
+
+    const currentIgd = trend.currentIgd ?? data.igd ?? 0;
+    const previousIgd = trend.previousIgd ?? currentIgd;
+    const igdDelta = currentIgd - previousIgd;
+
+    const trendSummaryLabel =
+      igdDelta > 0.09
+        ? "Trajetória de melhora no fechamento atual."
+        : igdDelta < -0.09
+        ? "Trajetória de queda no fechamento atual."
+        : "Comportamento estável entre os períodos recentes.";
+
     return (
       <div className="si-presentation-trend-scene">
+        <div className="si-presentation-trend-scene__hero">
+          <section className="si-presentation-trend-scene__chart-card">
+            <div className="si-presentation-trend-scene__chart-header">
+              <div className="si-presentation-trend-scene__chart-header-copy">
+                <span className="si-presentation-trend-scene__chart-eyebrow">
+                  Evolução histórica
+                </span>
+                <h3 className="si-presentation-trend-scene__chart-title">
+                  Comportamento do IGD nos últimos {months} meses
+                </h3>
+                <p className="si-presentation-trend-scene__chart-subtitle">
+                  Leitura consolidada da trajetória do índice global no recorte
+                  selecionado.
+                </p>
+              </div>
+
+              <div className="si-presentation-trend-scene__chart-highlight">
+                <span>IGD atual</span>
+                <strong>{formatScore(currentIgd)}</strong>
+              </div>
+            </div>
+
+            <div className="si-presentation-trend-scene__chart">
+              <PresentationTrendAreaChart points={igdSeries} />
+            </div>
+          </section>
+        </div>
+
         <div className="si-presentation-trend-scene__grid">
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Período atual
-            </span>
+          <article className="si-presentation-scene-card si-presentation-scene-card--primary">
+            <span className="si-presentation-scene-card__label">Período atual</span>
             <strong className="si-presentation-scene-card__value">
               {data.currentPeriod}
             </strong>
@@ -811,7 +867,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             </p>
           </article>
 
-          <article className="si-presentation-scene-card">
+          <article className="si-presentation-scene-card si-presentation-scene-card--secondary">
             <span className="si-presentation-scene-card__label">
               Período anterior
             </span>
@@ -819,84 +875,96 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
               {data.previousPeriod}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Base usada para comparação de tendência.
+              Base de comparação imediata do índice global.
             </p>
           </article>
 
-          <article className="si-presentation-scene-card">
+          <article
+            className={`si-presentation-scene-card ${
+              igdDelta >= 0
+                ? "si-presentation-scene-card--success"
+                : "si-presentation-scene-card--danger"
+            }`}
+          >
             <span className="si-presentation-scene-card__label">
               Variação do IGD
             </span>
             <strong className="si-presentation-scene-card__value">
-              {data.variationValue > 0 ? "+" : ""}
-              {formatScore(data.variationValue)}
+              {igdDelta > 0 ? "+" : ""}
+              {formatScore(igdDelta)}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Diferença consolidada entre os períodos.
+              Diferença consolidada entre o fechamento atual e o anterior.
             </p>
           </article>
 
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Tendência
-            </span>
+          <article className="si-presentation-scene-card si-presentation-scene-card--warning">
+            <span className="si-presentation-scene-card__label">Tendência</span>
             <strong className="si-presentation-scene-card__value">
               {data.trendLabel}
             </strong>
             <p className="si-presentation-scene-card__text">
-              Direção resumida do comportamento global.
+              {trendSummaryLabel}
             </p>
           </article>
 
-          <article className="si-presentation-scene-card">
+          <article className="si-presentation-scene-card si-presentation-scene-card--success">
             <span className="si-presentation-scene-card__label">
               Melhor movimento
             </span>
             <strong className="si-presentation-scene-card__value">
-              {trendHighlightUp?.name ?? "—"}
+              {strongestMomentumDepartment?.name ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              {trendHighlightUp
-                ? `${getDirectionLabel(trendHighlightUp.direction)} · atual ${formatScore(
-                    trendHighlightUp.current,
-                  )}`
+              {strongestMomentumDepartment
+                ? `Variação acumulada de ${
+                    strongestMomentumDepartment.netVariation > 0 ? "+" : ""
+                  }${formatScore(strongestMomentumDepartment.netVariation)}.`
                 : "Sem destaque positivo disponível."}
             </p>
           </article>
 
-          <article className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              Maior queda
-            </span>
+          <article className="si-presentation-scene-card si-presentation-scene-card--danger">
+            <span className="si-presentation-scene-card__label">Maior queda</span>
             <strong className="si-presentation-scene-card__value">
-              {trendHighlightDown?.name ?? "—"}
+              {biggestDropDepartment?.name ?? "—"}
             </strong>
             <p className="si-presentation-scene-card__text">
-              {trendHighlightDown
-                ? `${getDirectionLabel(trendHighlightDown.direction)} · atual ${formatScore(
-                    trendHighlightDown.current,
-                  )}`
+              {biggestDropDepartment
+                ? `Variação acumulada de ${formatScore(
+                    biggestDropDepartment.netVariation,
+                  )}.`
                 : "Sem destaque negativo disponível."}
             </p>
           </article>
-        </div>
 
-        <div className="si-presentation-trend-scene__grid">
-          {trend.igdSeries.slice(-months).map((item) => (
-            <article key={item.period} className="si-presentation-scene-card">
-              <span className="si-presentation-scene-card__label">
-                {item.period}
-              </span>
-              <strong className="si-presentation-scene-card__value">
-                {formatScore(item.value)}
-              </strong>
-              <p className="si-presentation-scene-card__text">
-                {item.period === data.currentPeriod
-                  ? "Competência atual em destaque na série histórica."
-                  : "Série histórica do IGD no período comparado."}
-              </p>
-            </article>
-          ))}
+          <article className="si-presentation-scene-card si-presentation-scene-card--success">
+            <span className="si-presentation-scene-card__label">
+              Melhor score atual
+            </span>
+            <strong className="si-presentation-scene-card__value">
+              {bestCurrentDepartment?.name ?? "—"}
+            </strong>
+            <p className="si-presentation-scene-card__text">
+              {bestCurrentDepartment
+                ? `Score atual de ${formatScore(bestCurrentDepartment.current)}.`
+                : "Sem referência disponível."}
+            </p>
+          </article>
+
+          <article className="si-presentation-scene-card si-presentation-scene-card--danger">
+            <span className="si-presentation-scene-card__label">
+              Menor score atual
+            </span>
+            <strong className="si-presentation-scene-card__value">
+              {worstCurrentDepartment?.name ?? "—"}
+            </strong>
+            <p className="si-presentation-scene-card__text">
+              {worstCurrentDepartment
+                ? `Score atual de ${formatScore(worstCurrentDepartment.current)}.`
+                : "Sem referência disponível."}
+            </p>
+          </article>
         </div>
       </div>
     );

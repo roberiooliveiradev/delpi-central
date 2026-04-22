@@ -7216,3 +7216,307 @@ body {
     justify-items: start;
   }
 }
+
+
+/* =========================================
+   PRESENTATION — CENA 5 / TENDÊNCIA
+   gráfico principal em destaque + cards analíticos
+========================================= */
+
+.si-presentation-trend-scene {
+  display: grid;
+  gap: 18px;
+  min-height: 100%;
+}
+
+.si-presentation-trend-scene__hero {
+  display: grid;
+  gap: 16px;
+}
+
+.si-presentation-trend-scene__chart-card {
+  padding: 20px 22px 16px;
+  border-radius: 24px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary, #089bdb) 10%, var(--surface, #ffffff)),
+      color-mix(in srgb, var(--surface, #ffffff) 96%, transparent)
+    );
+  border: 1px solid
+    color-mix(in srgb, var(--primary, #089bdb) 18%, var(--si-card-border));
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-presentation-trend-scene__chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.si-presentation-trend-scene__chart-header-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.si-presentation-trend-scene__chart-eyebrow {
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary, #089bdb);
+}
+
+.si-presentation-trend-scene__chart-title {
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.25;
+  color: var(--si-title);
+}
+
+.si-presentation-trend-scene__chart-subtitle {
+  margin: 0;
+  color: var(--si-text-muted);
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+.si-presentation-trend-scene__chart-highlight {
+  display: grid;
+  gap: 4px;
+  min-width: 140px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface, #ffffff) 86%, transparent);
+  border: 1px solid var(--si-card-border);
+}
+
+.si-presentation-trend-scene__chart-highlight span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--si-text-muted);
+}
+
+.si-presentation-trend-scene__chart-highlight strong {
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--si-title);
+}
+
+.si-presentation-trend-scene__chart {
+  width: 100%;
+}
+
+.si-presentation-trend-chart {
+  width: 100%;
+  min-height: 320px;
+  height: 320px;
+  padding: 4px 2px 0;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface, #ffffff) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary, #089bdb) 12%, transparent);
+}
+
+/* -----------------------------------------
+   GRID DE CARDS EXECUTIVOS
+----------------------------------------- */
+
+.si-presentation-trend-scene__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.si-presentation-trend-scene .si-presentation-scene-card {
+  min-height: 132px;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-presentation-trend-scene .si-presentation-scene-card__label {
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--si-text-muted);
+}
+
+.si-presentation-trend-scene .si-presentation-scene-card__value {
+  font-size: clamp(1.2rem, 1.8vw, 1.8rem);
+  line-height: 1.1;
+  color: var(--si-title);
+}
+
+.si-presentation-trend-scene .si-presentation-scene-card__text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--si-text-muted);
+}
+
+/* -----------------------------------------
+   VARIANTES VISUAIS DOS CARDS
+----------------------------------------- */
+
+.si-presentation-trend-scene__grid .si-presentation-scene-card--primary {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--primary, #089bdb) 8%, var(--surface, #ffffff)),
+      var(--si-card-bg)
+    );
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 18%, var(--si-card-border));
+}
+
+.si-presentation-trend-scene__grid .si-presentation-scene-card--secondary {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--secundary, #003866) 8%, var(--surface, #ffffff)),
+      var(--si-card-bg)
+    );
+  border-color: color-mix(in srgb, var(--secundary, #003866) 14%, var(--si-card-border));
+}
+
+.si-presentation-trend-scene__grid .si-presentation-scene-card--success {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--success, #16a34a) 8%, var(--surface, #ffffff)),
+      var(--si-card-bg)
+    );
+  border-color: color-mix(in srgb, var(--success, #16a34a) 16%, var(--si-card-border));
+}
+
+.si-presentation-trend-scene__grid .si-presentation-scene-card--warning {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--warning, #f59e0b) 9%, var(--surface, #ffffff)),
+      var(--si-card-bg)
+    );
+  border-color: color-mix(in srgb, var(--warning, #f59e0b) 18%, var(--si-card-border));
+}
+
+.si-presentation-trend-scene__grid .si-presentation-scene-card--danger {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--danger, #dc2626) 8%, var(--surface, #ffffff)),
+      var(--si-card-bg)
+    );
+  border-color: color-mix(in srgb, var(--danger, #dc2626) 16%, var(--si-card-border));
+}
+
+/* -----------------------------------------
+   LINHA DE CARDS MENSAIS
+----------------------------------------- */
+
+.si-presentation-trend-scene__period-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.si-presentation-trend-scene__period-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface, #ffffff) 90%, transparent);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-presentation-trend-scene__period-card span {
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--si-text-muted);
+}
+
+.si-presentation-trend-scene__period-card strong {
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--si-title);
+}
+
+.si-presentation-trend-scene__period-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--si-text-muted);
+}
+
+.si-presentation-trend-scene__period-card--current {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--primary, #089bdb) 8%, var(--surface, #ffffff)),
+      var(--si-card-bg)
+    );
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 18%, var(--si-card-border));
+}
+
+/* -----------------------------------------
+   RESPONSIVIDADE
+----------------------------------------- */
+
+@media (max-width: 1400px) {
+  .si-presentation-trend-scene__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1200px) {
+  .si-presentation-trend-scene__chart-header {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .si-presentation-trend-scene__chart-highlight {
+    min-width: 0;
+    width: fit-content;
+  }
+
+  .si-presentation-trend-scene__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .si-presentation-trend-chart {
+    min-height: 290px;
+    height: 290px;
+  }
+}
+
+@media (max-width: 768px) {
+  .si-presentation-trend-scene__chart-card {
+    padding: 18px 16px 14px;
+  }
+
+  .si-presentation-trend-scene__grid,
+  .si-presentation-trend-scene__period-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .si-presentation-trend-chart {
+    min-height: 250px;
+    height: 250px;
+  }
+
+  .si-presentation-trend-scene .si-presentation-scene-card {
+    min-height: 118px;
+  }
+}
