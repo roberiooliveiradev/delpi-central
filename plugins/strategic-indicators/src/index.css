@@ -5024,6 +5024,13 @@ body {
   gap: 12px;
 }
 
+.si-presentation-topbar__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .si-presentation-topbar__title-group {
   min-width: 0;
   flex: 1;
@@ -5238,6 +5245,54 @@ body {
   height: 18px;
   display: block;
 }
+
+.si-presentation-topbar__meta-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+  flex: 1 1 100%;
+}
+
+/* ==========================================
+   FULL SCREEN BUTTON
+   ========================================== */
+.si-presentation-topbar__fullscreen-toggle {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid var(--si-card-border);
+  border-radius: 12px;
+  background: var(--surface, #ffffff);
+  color: var(--si-title);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.si-presentation-topbar__fullscreen-toggle:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 30%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--primary, #089bdb) 8%,
+    var(--surface, #ffffff)
+  );
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.si-presentation-topbar__fullscreen-toggle svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
 
 /* ==========================================
    TOGGLE DE MODO
@@ -6080,9 +6135,23 @@ body {
   .si-presentation-department-slide__bottom {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .si-presentation-topbar__meta {
+    justify-content: flex-end;
+  }
 }
 
 @media (max-width: 900px) {
+
+  .si-presentation-topbar__header-actions {
+    align-items: center;
+  }
+
+  .si-presentation-topbar__meta-actions {
+    justify-content: flex-start;
+    margin-left: 0;
+    flex: 0 1 auto;
+  }
+
   .si-presentation-page {
     overflow-y: auto;
   }

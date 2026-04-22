@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Expand, Minimize } from "lucide-react";
 import { LoadingActivityBadge } from "./LoadingActivityBadge";
 import { StatusBadge } from "./StatusBadge";
 
@@ -31,6 +32,8 @@ type PresentationTopBarProps = {
   onViewModeChange: (value: StrategicIndicatorsViewMode) => void;
   onBranchChange: (value: string) => void;
   onMonthsChange: (value: number) => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 };
 
 const DEFAULT_MONTHS_OPTIONS: MonthsOption[] = [
@@ -69,6 +72,8 @@ export function PresentationTopBar({
   onViewModeChange,
   onBranchChange,
   onMonthsChange,
+  isFullscreen = false,
+  onToggleFullscreen,
 }: PresentationTopBarProps) {
   const showBranchFilter = viewMode === "branch";
 
@@ -181,6 +186,23 @@ export function PresentationTopBar({
       </div>
 
       <div className="si-presentation-topbar__meta">
+        {onToggleFullscreen ? (
+        <div className="si-presentation-topbar__meta-actions">
+          <button
+            type="button"
+            className="si-presentation-topbar__fullscreen-toggle"
+            aria-label={isFullscreen ? "Sair da tela cheia" : "Entrar em tela cheia"}
+            aria-pressed={isFullscreen}
+            onClick={onToggleFullscreen}
+          >
+            {isFullscreen ? (
+              <Minimize size={18} aria-hidden="true" />
+            ) : (
+              <Expand size={18} aria-hidden="true" />
+            )}
+          </button>
+        </div>
+      ) : null}
         <div className="si-presentation-topbar__mode-group">
           <div className="si-presentation-topbar__meta-item">
             <span>Modo</span>

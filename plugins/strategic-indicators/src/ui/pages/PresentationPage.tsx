@@ -188,6 +188,10 @@ function readStoredPresentationMonths(): number {
 }
 
 export function PresentationPage({ getAccessToken }: PresentationPageProps) {
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(() => {
+    if (typeof document === "undefined") return false;
+    return Boolean(document.fullscreenElement);
+  });
   const [referenceMonth, setReferenceMonth] = useState(
     getCurrentStrategicIndicatorsMonthValue(),
   );
@@ -373,6 +377,21 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     }
   }
 
+  async function handleToggleFullscreen() {
+    try {
+      if (typeof document === "undefined") return;
+
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+
+      await document.documentElement.requestFullscreen();
+    } catch {
+      // fullscreen pode falhar por política do navegador
+    }
+  }
+
   function handlePrevious() {
     pauseAutoplayTemporarily();
     goToPrevious();
@@ -501,6 +520,17 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     indicatorAlertsCount,
     trendPointsCount,
   });
+
+
+  useEffect(() => {
+    function handleFullscreenChange() {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   useEffect(() => {
     if (mode === "meeting") return;
@@ -1202,6 +1232,8 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
           onViewModeChange={handleViewModeChange}
           onBranchChange={handleBranchChange}
           onMonthsChange={handleMonthsChange}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={handleToggleFullscreen}
         />
 
         <div className="si-presentation-stage">
