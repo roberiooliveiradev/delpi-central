@@ -1,5 +1,4 @@
 import { PresentationClassificationBand } from "./PresentationClassificationBand";
-import { PresentationIgdGauge } from "./PresentationIgdGauge";
 
 type PresentationHeroProps = {
   igd: number;
@@ -14,17 +13,6 @@ function formatScore(value: number) {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   });
-}
-
-function resolveVariationValueFromTrendLabel(trendLabel: string) {
-  const normalized = trendLabel.toLowerCase();
-
-  if (normalized.includes("queda")) return -0.2;
-  if (normalized.includes("alta")) return 0.2;
-  if (normalized.includes("melhora")) return 0.2;
-  if (normalized.includes("crescimento")) return 0.2;
-
-  return 0;
 }
 
 function buildExecutiveMessage(params: {
@@ -75,7 +63,6 @@ export function PresentationHero({
   bestDepartment,
   primaryRisk,
 }: PresentationHeroProps) {
-  const variationValue = resolveVariationValueFromTrendLabel(trendLabel);
   const executiveMessage = buildExecutiveMessage({
     igd,
     classification,
@@ -135,16 +122,6 @@ export function PresentationHero({
         <div className="si-presentation-hero__band-shell">
           <PresentationClassificationBand value={igd} />
         </div>
-      </div>
-
-      <div className="si-presentation-hero__visual">
-        <PresentationIgdGauge
-          value={igd}
-          classification={classification}
-          variationLabel="vs período anterior"
-          variationValue={variationValue}
-          size={360}
-        />
       </div>
     </section>
   );
