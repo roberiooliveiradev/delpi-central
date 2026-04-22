@@ -5,6 +5,8 @@ import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
+import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { useStrategicIndicatorsDepartmentDetails } from "../../state/hooks/useStrategicIndicatorsDepartmentDetails";
 import {
@@ -74,7 +76,7 @@ export function DepartmentDetailsPage({
           eyebrow="MinhaDelpi"
           title="Departamento"
           description="Carregando visão detalhada da área."
-          badge={<StatusBadge label="Carregando" variant="neutral" />}
+          badge={<LoadingActivityBadge label="Carregando" tone="neutral" />}
         />
 
         <SectionBlock
@@ -84,9 +86,11 @@ export function DepartmentDetailsPage({
           {filters}
         </SectionBlock>
 
-        <InfoState
+        <LoadingActivityInline
           title="Carregando departamento"
           description="Aguarde enquanto a visão detalhada é carregada."
+          variant="panel"
+          tone="info"
         />
       </div>
     );
@@ -133,10 +137,11 @@ export function DepartmentDetailsPage({
         title={`Departamento — ${data.name}`}
         description={`Visão detalhada do IDD departamental no período ${referenceMonth}, com metas estruturadas por indicador e composição analítica da área.`}
         badge={
-          <StatusBadge
-            label={loading || refreshing ? "Atualizando" : "Drill-down real"}
-            variant={loading || refreshing ? "neutral" : "success"}
-          />
+          loading || refreshing ? (
+            <LoadingActivityBadge label="Atualizando" tone="info" />
+          ) : (
+            <StatusBadge label="Drill-down real" variant="success" />
+          )
         }
       />
 
@@ -148,9 +153,11 @@ export function DepartmentDetailsPage({
       </SectionBlock>
 
       {refreshing ? (
-        <InfoState
+        <LoadingActivityInline
           title="Atualizando departamento"
           description="Os dados exibidos estão sendo atualizados para o novo período."
+          variant="compact"
+          tone="info"
         />
       ) : null}
 

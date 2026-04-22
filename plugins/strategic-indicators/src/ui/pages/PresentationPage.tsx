@@ -8,6 +8,7 @@ import { PresentationHero } from "../components/PresentationHero";
 import { PresentationNarrativeStrip } from "../components/PresentationNarrativeStrip";
 import { PresentationTopBar } from "../components/PresentationTopBar";
 import { InfoState } from "../components/InfoState";
+import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { PresentationAlertsSeverityDonut } from "../components/PresentationAlertsSeverityDonut";
 import { PresentationTrendAreaChart } from "../components/PresentationTrendAreaChart";
 import { useStrategicIndicatorsPresentation } from "../../state/hooks/useStrategicIndicatorsPresentation";
@@ -1130,9 +1131,11 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     if (presentation.loading) {
       return (
         <div className="si-presentation-loading-stage">
-          <InfoState
+          <LoadingActivityInline
             title="Carregando apresentação"
             description="Aguarde enquanto a visão executiva do IGD e dos departamentos é preparada."
+            variant="panel"
+            tone="info"
           />
         </div>
       );
@@ -1192,26 +1195,25 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
         <div className="si-presentation-stage">
           {(presentation.error && data) || presentation.warnings.length > 0 ? (
             <div className="si-presentation-stage__feedback">
-              <InfoState
-                title={
-                  presentation.error
-                    ? "Falha ao atualizar apresentação"
-                    : "Atualização parcial da apresentação"
-                }
-                description={
-                  presentation.error ??
-                  presentation.warnings.map((item) => item.message).join(" • ")
-                }
-                actionLabel="Tentar novamente"
-                onAction={() => {
-                  if (presentation.warnings.length > 0) {
-                    void presentation.retryFailedParts();
-                    return;
-                  }
-
-                  void presentation.reload();
-                }}
-              />
+              {presentation.error ? (
+                <InfoState
+                  title="Falha ao atualizar apresentação"
+                  description={presentation.error}
+                  actionLabel="Tentar novamente"
+                  onAction={() => {
+                    void presentation.reload();
+                  }}
+                />
+              ) : (
+                <LoadingActivityInline
+                  title="Atualização parcial da apresentação"
+                  description={presentation.warnings
+                    .map((item) => item.message)
+                    .join(" • ")}
+                  variant="compact"
+                  tone="info"
+                />
+              )}
             </div>
           ) : null}
 

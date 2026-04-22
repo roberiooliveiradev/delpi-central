@@ -9,6 +9,8 @@ import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
+import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { useStrategicIndicatorsExecutiveSummary } from "../../state/hooks/useStrategicIndicatorsExecutiveSummary";
 import {
@@ -67,9 +69,9 @@ export function ExecutiveDashboardPage({
       <div className="si-page">
         <PageHeader
           eyebrow="MinhaDelpi"
-          title="Strategic Indicators"
+          title="Indicadores Estratégicos"
           description="Carregando visão executiva do IGD e dos IDDs departamentais."
-          badge={<StatusBadge label="Carregando" variant="neutral" />}
+          badge={<LoadingActivityBadge label="Carregando" tone="neutral" />}
         />
 
         <SectionBlock
@@ -79,9 +81,11 @@ export function ExecutiveDashboardPage({
           {filterBlock}
         </SectionBlock>
 
-        <InfoState
+        <LoadingActivityInline
           title="Carregando painel executivo"
           description="Aguarde enquanto o resumo executivo é carregado."
+          variant="panel"
+          tone="info"
         />
       </div>
     );
@@ -92,7 +96,7 @@ export function ExecutiveDashboardPage({
       <div className="si-page">
         <PageHeader
           eyebrow="MinhaDelpi"
-          title="Strategic Indicators"
+          title="Indicadores Estratégicos"
           description="Não foi possível carregar a visão executiva do painel."
           badge={<StatusBadge label="Erro" variant="warning" />}
         />
@@ -135,13 +139,14 @@ export function ExecutiveDashboardPage({
     <div className="si-page">
       <PageHeader
         eyebrow="MinhaDelpi"
-        title="Strategic Indicators"
+        title="Indicadores Estratégicos"
         description={`Painel executivo do IGD e dos IDDs departamentais. Competência ${data.competence}.`}
         badge={
-          <StatusBadge
-            label={loading || refreshing ? "Atualizando" : "API Real"}
-            variant={loading || refreshing ? "neutral" : "success"}
-          />
+          loading || refreshing ? (
+            <LoadingActivityBadge label="Atualizando" tone="info" />
+          ) : (
+            <StatusBadge label="API Real" variant="success" />
+          )
         }
       />
 
@@ -153,9 +158,11 @@ export function ExecutiveDashboardPage({
       </SectionBlock>
 
       {refreshing ? (
-        <InfoState
+        <LoadingActivityInline
           title="Atualizando resumo executivo"
           description="Os dados exibidos estão sendo atualizados para o novo período."
+          variant="compact"
+          tone="info"
         />
       ) : null}
 

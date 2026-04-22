@@ -5,6 +5,8 @@ import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
+import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { TrendHeroCard } from "../components/TrendHeroCard";
 import { TrendHighlights } from "../components/TrendHighlights";
@@ -79,7 +81,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
           eyebrow="MinhaDelpi"
           title="Tendências"
           description="Carregando visão temporal do IGD e dos departamentos."
-          badge={<StatusBadge label="Carregando" variant="neutral" />}
+          badge={<LoadingActivityBadge label="Carregando" tone="neutral" />}
         />
 
         <SectionBlock
@@ -89,9 +91,11 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
           {referenceFilters}
         </SectionBlock>
 
-        <InfoState
+        <LoadingActivityInline
           title="Carregando tendências"
-          description="Aguarde enquanto a série temporal é preparada."
+          description="Aguarde enquanto a visão temporal do IGD e dos departamentos é preparada."
+          variant="panel"
+          tone="info"
         />
       </div>
     );
@@ -140,10 +144,11 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
         title="Tendências"
         description={`Visão temporal do IGD e dos departamentos. Competência ${data.competence}.`}
         badge={
-          <StatusBadge
-            label={refreshing ? "Atualizando" : "API Real"}
-            variant={refreshing ? "neutral" : "info"}
-          />
+          loading || refreshing ? (
+            <LoadingActivityBadge label="Atualizando" tone="info" />
+          ) : (
+            <StatusBadge label="API Real" variant="success" />
+          )
         }
       />
 
@@ -155,9 +160,11 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
       </SectionBlock>
 
       {refreshing ? (
-        <InfoState
+        <LoadingActivityInline
           title="Atualizando tendências"
           description="Os dados exibidos estão sendo atualizados para o novo período."
+          variant="compact"
+          tone="info"
         />
       ) : null}
 

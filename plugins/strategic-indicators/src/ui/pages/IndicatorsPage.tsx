@@ -11,6 +11,7 @@ import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import {
   buildStrategicIndicatorsMonthRange,
@@ -267,10 +268,11 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         title="Indicadores"
         description="Visão analítica dos indicadores que compõem os IDDs departamentais, com leitura de meta estruturada, direção de performance e filtros por área."
         badge={
-          <StatusBadge
-            label={loading || refreshing ? "Carregando" : "API Real"}
-            variant={loading || refreshing ? "neutral" : "success"}
-          />
+          loading || refreshing ? (
+            <LoadingActivityBadge label="Atualizando" tone="info" />
+          ) : (
+            <StatusBadge label="API Real" variant="success" />
+          )
         }
       />
 

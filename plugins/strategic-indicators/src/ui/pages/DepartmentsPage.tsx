@@ -4,6 +4,8 @@ import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
+import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { useStrategicIndicatorsDepartments } from "../../state/hooks/useStrategicIndicatorsDepartments";
 import {
@@ -62,10 +64,11 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
         title="Departamentos"
         description="Visão comparativa dos departamentos que compõem o IGD, com peso oficial, nota resumida e acesso ao drill-down por área."
         badge={
-          <StatusBadge
-            label={loading || refreshing ? "Atualizando" : "API Real"}
-            variant={loading || refreshing ? "neutral" : "success"}
-          />
+          loading || refreshing ? (
+            <LoadingActivityBadge label="Atualizando" tone="info" />
+          ) : (
+            <StatusBadge label="API Real" variant="success" />
+          )
         }
       />
 
@@ -81,9 +84,11 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
         description="Cada linha representa um departamento oficial do IGD, com acesso à visão específica do seu IDD."
       >
         {loading && items.length === 0 ? (
-          <InfoState
+          <LoadingActivityInline
             title="Carregando departamentos"
             description="Aguarde enquanto a visão comparativa é carregada."
+            variant="panel"
+            tone="info"
           />
         ) : error && items.length === 0 ? (
           <InfoState
@@ -95,9 +100,11 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
         ) : (
           <>
             {refreshing ? (
-              <InfoState
+              <LoadingActivityInline
                 title="Atualizando departamentos"
                 description="Os dados exibidos estão sendo atualizados para o novo período."
+                variant="compact"
+                tone="info"
               />
             ) : null}
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { LoadingActivityBadge } from "./LoadingActivityBadge";
 import { StatusBadge } from "./StatusBadge";
 
 type PresentationMode = "meeting" | "tv" | "slide";
@@ -301,10 +302,11 @@ export function PresentationTopBar({
         </label>
 
         <div className="si-presentation-topbar__status">
-          <StatusBadge
-            label={isRefreshing ? "Atualizando" : "API real"}
-            variant={isRefreshing ? "neutral" : "success"}
-          />
+          {isRefreshing ? (
+            <LoadingActivityBadge label="Atualizando" tone="info" />
+          ) : (
+            <StatusBadge label="API real" variant="success" />
+          )}
         </div>
       </div>
 

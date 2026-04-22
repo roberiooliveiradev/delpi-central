@@ -9,6 +9,8 @@ import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
+import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { TopAlertHighlight } from "../components/TopAlertHighlight";
 import { useStrategicIndicatorsAlerts } from "../../state/hooks/useStrategicIndicatorsAlerts";
@@ -79,7 +81,7 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
           eyebrow="MinhaDelpi"
           title="Alertas"
           description="Carregando visão de criticidade e priorização do painel."
-          badge={<StatusBadge label="Carregando" variant="neutral" />}
+          badge={<LoadingActivityBadge label="Carregando" tone="neutral" />}
         />
 
         <SectionBlock
@@ -89,9 +91,11 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
           {filters}
         </SectionBlock>
 
-        <InfoState
+        <LoadingActivityInline
           title="Carregando alertas"
           description="Aguarde enquanto os alertas reais são carregados."
+          variant="panel"
+          tone="info"
         />
       </div>
     );
@@ -137,10 +141,11 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
         title="Alertas"
         description={`Visão de criticidade e priorização do painel. Competência ${data.competence}.`}
         badge={
-          <StatusBadge
-            label={loading || refreshing ? "Atualizando" : "API Real"}
-            variant={loading || refreshing ? "neutral" : "warning"}
-          />
+          loading || refreshing ? (
+            <LoadingActivityBadge label="Atualizando" tone="info" />
+          ) : (
+            <StatusBadge label="API Real" variant="warning" />
+          )
         }
       />
 
@@ -152,9 +157,11 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
       </SectionBlock>
 
       {refreshing ? (
-        <InfoState
+        <LoadingActivityInline
           title="Atualizando alertas"
           description="Os dados exibidos estão sendo atualizados para o novo período."
+          variant="compact"
+          tone="info"
         />
       ) : null}
 
