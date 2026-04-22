@@ -16,6 +16,12 @@ type DonutDatum = {
   value: number;
 };
 
+type TooltipValue =
+  | number
+  | string
+  | readonly (number | string)[]
+  | undefined;
+
 function getSeverityLabel(severity: AlertSeverity) {
   if (severity === "high") return "Alta";
   if (severity === "medium") return "Média";
@@ -26,6 +32,18 @@ function getSeverityColorToken(severity: AlertSeverity) {
   if (severity === "high") return "var(--danger, #dc2626)";
   if (severity === "medium") return "var(--warning, #f59e0b)";
   return "var(--primary, #089bdb)";
+}
+
+function toTooltipNumber(value: TooltipValue): string {
+  if (typeof value === "number" || typeof value === "string") {
+    return String(value);
+  }
+
+  if (Array.isArray(value) && value.length > 0) {
+    return String(value[0] ?? 0);
+  }
+
+  return "0";
 }
 
 export function PresentationAlertsSeverityDonut({
@@ -53,7 +71,7 @@ export function PresentationAlertsSeverityDonut({
 
         <div className="si-presentation-alerts-donut__total">
           <strong>{total}</strong>
-          <span>alertas</span>
+          <span>alertas totais</span>
         </div>
       </div>
 
@@ -82,12 +100,10 @@ export function PresentationAlertsSeverityDonut({
                 </Pie>
 
                 <Tooltip
-                  formatter={(value, name) => {
-                    const safeValue =
-                      typeof value === "number" || typeof value === "string" ? value : 0;
-
-                    return [`${safeValue}`, String(name ?? "")];
-                  }}
+                  formatter={(value, name) => [
+                    toTooltipNumber(value),
+                    String(name ?? ""),
+                  ]}
                 />
               </PieChart>
             </ResponsiveContainer>

@@ -205,52 +205,6 @@ export function PresentationDepartmentSlideScene({
         </div>
       </article>
 
-      <div className="si-presentation-department-slide__signal-grid">
-        <article className="si-presentation-department-slide__signal-card">
-          <span>Melhor indicador</span>
-          <strong>{bestIndicator?.name ?? "—"}</strong>
-        </article>
-
-        <article className="si-presentation-department-slide__signal-card">
-          <span>Pior indicador</span>
-          <strong>{worstIndicator?.name ?? "—"}</strong>
-        </article>
-
-        <article className="si-presentation-department-slide__signal-card">
-          <span>Em atenção</span>
-          <strong>{criticalIndicators.length}</strong>
-        </article>
-
-        <article className="si-presentation-department-slide__signal-card">
-          <span>Destaques</span>
-          <strong>{highlightIndicators.length}</strong>
-        </article>
-
-        <article className="si-presentation-department-slide__signal-card">
-          <span>Agregação</span>
-          <strong>{department.aggregationMode}</strong>
-        </article>
-
-        <article className="si-presentation-department-slide__signal-card">
-          <span>Unidades</span>
-          <strong>
-            {department.units.length
-              ? department.units.map((unit) => unit.name).join(", ")
-              : "—"}
-          </strong>
-        </article>
-
-        <article className="si-presentation-department-slide__signal-card">
-          <span>Leitura</span>
-          <strong>{department.classification}</strong>
-        </article>
-
-        <article className="si-presentation-department-slide__signal-card">
-          <span>Direção</span>
-          <strong>{department.variation.directionLabel}</strong>
-        </article>
-      </div>
-
       <div className="si-presentation-department-slide__priority-grid si-presentation-department-slide__priority-grid--indicators">
         {department.indicators.map((indicator) => (
           <article
@@ -301,7 +255,7 @@ export function PresentationDepartmentSlideScene({
           </article>
         ))}
 
-        <article className="si-presentation-department-slide__priority-card si-presentation-department-slide__priority-card--summary">
+        {/* <article className="si-presentation-department-slide__priority-card si-presentation-department-slide__priority-card--summary">
           <div className="si-presentation-department-slide__priority-top">
             <h4>Resumo visual</h4>
           </div>
@@ -327,6 +281,52 @@ export function PresentationDepartmentSlideScene({
               <strong>{bestIndicator ? formatScore(bestIndicator.score) : "—"}</strong>
             </div>
           </div>
+        </article> */}
+      </div>
+
+      <div className="si-presentation-department-slide__signal-grid">
+        <article className="si-presentation-department-slide__signal-card">
+          <span>Melhor indicador</span>
+          <strong>{bestIndicator?.name ?? "—"}</strong>
+        </article>
+
+        <article className="si-presentation-department-slide__signal-card">
+          <span>Pior indicador</span>
+          <strong>{worstIndicator?.name ?? "—"}</strong>
+        </article>
+
+        <article className="si-presentation-department-slide__signal-card">
+          <span>Em atenção</span>
+          <strong>{criticalIndicators.length}</strong>
+        </article>
+
+        <article className="si-presentation-department-slide__signal-card">
+          <span>Destaques</span>
+          <strong>{highlightIndicators.length}</strong>
+        </article>
+
+        <article className="si-presentation-department-slide__signal-card">
+          <span>Agregação</span>
+          <strong>{department.aggregationMode}</strong>
+        </article>
+
+        <article className="si-presentation-department-slide__signal-card">
+          <span>Unidades</span>
+          <strong>
+            {department.units.length
+              ? department.units.map((unit) => unit.name).join(", ")
+              : "—"}
+          </strong>
+        </article>
+
+        <article className="si-presentation-department-slide__signal-card">
+          <span>Leitura</span>
+          <strong>{department.classification}</strong>
+        </article>
+
+        <article className="si-presentation-department-slide__signal-card">
+          <span>Direção</span>
+          <strong>{department.variation.directionLabel}</strong>
         </article>
       </div>
 

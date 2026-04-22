@@ -698,7 +698,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
         <div className="si-presentation-alerts-scene__top">
           <PresentationAlertsSeverityDonut values={severityTotals} />
 
-          <PresentationAlertsBoard alerts={alertsToShow.slice(0, 3)} />
+          <PresentationAlertsBoard alerts={alertsToShow} />
         </div>
 
         <div className="si-presentation-alerts-scene__grid">
