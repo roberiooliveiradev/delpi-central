@@ -253,6 +253,13 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     presentation.setFocusedDepartmentId(null);
   }
 
+  function syncDeckAfterFilterChange() {
+    if (scene === "department_detail") {
+      setDepartmentIndex(0);
+      presentation.setFocusedDepartmentId(null);
+    }
+  }
+
   function pauseAutoplayTemporarily(timeoutMs = 15000) {
     if (typeof window === "undefined") return;
 
@@ -265,11 +272,6 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     }, timeoutMs);
   }
 
-  function pauseAndResetDeck(timeoutMs = 15000) {
-    pauseAutoplayTemporarily(timeoutMs);
-    resetDeck();
-  }
-
   useEffect(() => {
     return () => {
       clearAutoplayResumeTimer();
@@ -277,7 +279,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   }, []);
 
   useEffect(() => {
-    pauseAndResetDeck();
+    syncDeckAfterFilterChange();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, branch, referenceMonth, months]);
 
@@ -367,27 +369,27 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   }
 
   function handleModeChange(nextMode: PresentationMode) {
-    pauseAndResetDeck();
+    pauseAutoplayTemporarily();
     setMode(nextMode);
   }
 
   function handleViewModeChange(nextViewMode: StrategicIndicatorsViewMode) {
-    pauseAndResetDeck();
+    pauseAutoplayTemporarily();
     setViewMode(nextViewMode);
   }
 
   function handleBranchChange(nextBranch: string) {
-    pauseAndResetDeck();
+    pauseAutoplayTemporarily();
     setBranch(nextBranch);
   }
 
   function handleReferenceMonthChange(nextReferenceMonth: string) {
-    pauseAndResetDeck();
+    pauseAutoplayTemporarily();
     setReferenceMonth(nextReferenceMonth);
   }
 
   function handleMonthsChange(nextMonths: number) {
-    pauseAndResetDeck();
+    pauseAutoplayTemporarily();
     setMonths(nextMonths);
   }
 
@@ -823,8 +825,8 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
       igdDelta > 0.09
         ? "Trajetória de melhora no fechamento atual."
         : igdDelta < -0.09
-        ? "Trajetória de queda no fechamento atual."
-        : "Comportamento estável entre os períodos recentes.";
+          ? "Trajetória de queda no fechamento atual."
+          : "Comportamento estável entre os períodos recentes.";
 
     return (
       <div className="si-presentation-trend-scene">
@@ -970,121 +972,123 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     );
   }
 
-function renderClosingScene() {
-  if (!data) return null;
+  function renderClosingScene() {
+    if (!data) return null;
 
-  const recommendation =
-    data.executiveAlerts[0]?.recommendation ??
-    "Sem recomendação executiva disponível.";
+    const recommendation =
+      data.executiveAlerts[0]?.recommendation ??
+      "Sem recomendação executiva disponível.";
 
-  const strongestDepartmentName =
-    mostPositiveDepartmentOverview?.name ?? data.topDepartment;
+    const strongestDepartmentName =
+      mostPositiveDepartmentOverview?.name ?? data.topDepartment;
 
-  const highestContributionName =
-    highestContributionDepartment?.name ?? strongestDepartmentName;
+    const highestContributionName =
+      highestContributionDepartment?.name ?? strongestDepartmentName;
 
-  const immediateFocusName =
-    weakestDepartmentCard?.name ?? data.topRisk;
+    const immediateFocusName =
+      weakestDepartmentCard?.name ?? data.topRisk;
 
-  const cycleMovementValue = trendHighlightUp?.name ?? "—";
-  const cycleMovementSupport = trendHighlightUp
-    ? `Score atual ${formatScore(trendHighlightUp.current)}`
-    : "Sem destaque adicional disponível.";
+    const cycleMovementValue = trendHighlightUp?.name ?? "—";
+    const cycleMovementSupport = trendHighlightUp
+      ? `Score atual ${formatScore(trendHighlightUp.current)}`
+      : "Sem destaque adicional disponível.";
 
-  const reinforcementCards = [
-    {
-      label: "Departamento de destaque",
-      value: strongestDepartmentName,
-      text: data.topDepartment === strongestDepartmentName
-        ? "Melhor leitura comparativa no recorte atual."
-        : `Destaque executivo do período: ${data.topDepartment}.`,
-    },
-    {
-      label: "Foco imediato",
-      value: immediateFocusName,
-      text: recommendation,
-    },
-    {
-      label: "Maior contribuição",
-      value: highestContributionName,
-      text: highestContributionDepartment
-        ? `Contribuição atual de ${formatScore(
-            highestContributionDepartment.contribution,
-          )} no IGD.`
-        : "Sem contribuição consolidada disponível.",
-    },
-    {
-      label: "Movimento do ciclo",
-      value: cycleMovementValue,
-      text: cycleMovementSupport,
-    },
-  ];
+    const reinforcementCards = [
+      {
+        label: "Departamento de destaque",
+        value: strongestDepartmentName,
+        text:
+          data.topDepartment === strongestDepartmentName
+            ? "Melhor leitura comparativa no recorte atual."
+            : `Destaque executivo do período: ${data.topDepartment}.`,
+      },
+      {
+        label: "Foco imediato",
+        value: immediateFocusName,
+        text: recommendation,
+      },
+      {
+        label: "Maior contribuição",
+        value: highestContributionName,
+        text: highestContributionDepartment
+          ? `Contribuição atual de ${formatScore(
+              highestContributionDepartment.contribution,
+            )} no IGD.`
+          : "Sem contribuição consolidada disponível.",
+      },
+      {
+        label: "Movimento do ciclo",
+        value: cycleMovementValue,
+        text: cycleMovementSupport,
+      },
+    ];
 
-  const footerCards = [
-    {
-      label: "Próximo passo",
-      value: data.executiveAlerts[0]?.title ?? "Plano executivo",
-      text: recommendation,
-    },
-    {
-      label: "Risco prioritário",
-      value: data.topRisk,
-      text: weakestDepartmentCard
-        ? `${weakestDepartmentCard.name} fecha o período com score ${formatScore(
-            weakestDepartmentCard.score,
-          )}.`
-        : "Tema mais sensível para acompanhamento imediato.",
-    },
-    {
-      label: "Mensagem de encerramento",
-      value: data.classification,
-      text: `${data.trendLabel} no fechamento entre ${data.previousPeriod} e ${data.currentPeriod}.`,
-    },
-  ];
-  
-  return (
-    <div className="si-presentation-single-scene">
-      <PresentationClosingPanel
-        currentPeriod={data.currentPeriod}
-        previousPeriod={data.previousPeriod}
-        classification={data.classification}
-        trendLabel={data.trendLabel}
-        topDepartment={strongestDepartmentName}
-        topRisk={data.topRisk}
-        igd={data.igd}
-        recommendation={recommendation}
-      />
+    const footerCards = [
+      {
+        label: "Próximo passo",
+        value: data.executiveAlerts[0]?.title ?? "Plano executivo",
+        text: recommendation,
+      },
+      {
+        label: "Risco prioritário",
+        value: data.topRisk,
+        text: weakestDepartmentCard
+          ? `${weakestDepartmentCard.name} fecha o período com score ${formatScore(
+              weakestDepartmentCard.score,
+            )}.`
+          : "Tema mais sensível para acompanhamento imediato.",
+      },
+      {
+        label: "Mensagem de encerramento",
+        value: data.classification,
+        text: `${data.trendLabel} no fechamento entre ${data.previousPeriod} e ${data.currentPeriod}.`,
+      },
+    ];
 
-      <div className="si-presentation-closing__reinforcement-grid">
-        {reinforcementCards.map((card) => (
-          <article key={card.label} className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              {card.label}
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {card.value}
-            </strong>
-            <p className="si-presentation-scene-card__text">{card.text}</p>
-          </article>
-        ))}
+    return (
+      <div className="si-presentation-single-scene">
+        <PresentationClosingPanel
+          currentPeriod={data.currentPeriod}
+          previousPeriod={data.previousPeriod}
+          classification={data.classification}
+          trendLabel={data.trendLabel}
+          topDepartment={strongestDepartmentName}
+          topRisk={data.topRisk}
+          igd={data.igd}
+          recommendation={recommendation}
+        />
+
+        <div className="si-presentation-closing__reinforcement-grid">
+          {reinforcementCards.map((card) => (
+            <article key={card.label} className="si-presentation-scene-card">
+              <span className="si-presentation-scene-card__label">
+                {card.label}
+              </span>
+              <strong className="si-presentation-scene-card__value">
+                {card.value}
+              </strong>
+              <p className="si-presentation-scene-card__text">{card.text}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className="si-presentation-closing__footer-grid">
+          {footerCards.map((card) => (
+            <article key={card.label} className="si-presentation-scene-card">
+              <span className="si-presentation-scene-card__label">
+                {card.label}
+              </span>
+              <strong className="si-presentation-scene-card__value">
+                {card.value}
+              </strong>
+              <p className="si-presentation-scene-card__text">{card.text}</p>
+            </article>
+          ))}
+        </div>
       </div>
+    );
+  }
 
-      <div className="si-presentation-closing__footer-grid">
-        {footerCards.map((card) => (
-          <article key={card.label} className="si-presentation-scene-card">
-            <span className="si-presentation-scene-card__label">
-              {card.label}
-            </span>
-            <strong className="si-presentation-scene-card__value">
-              {card.value}
-            </strong>
-            <p className="si-presentation-scene-card__text">{card.text}</p>
-          </article>
-        ))}
-      </div>
-    </div>
-  );
-}
   function renderScene() {
     if (presentation.loading) {
       return (
