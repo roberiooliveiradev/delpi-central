@@ -12,6 +12,7 @@ import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
+import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import {
   buildStrategicIndicatorsMonthRange,
@@ -282,11 +283,13 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
       >
         {referenceFilters}
       </SectionBlock>
-
+      
       {loading && items.length === 0 ? (
-        <InfoState
+        <LoadingActivityInline
           title="Carregando indicadores"
           description="Aguarde enquanto os indicadores reais são carregados."
+          variant="panel"
+          tone="info"
         />
       ) : error && items.length === 0 ? (
         <InfoState
@@ -298,9 +301,11 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
       ) : (
         <>
           {refreshing ? (
-            <InfoState
+            <LoadingActivityInline
               title="Atualizando indicadores"
               description="Os dados exibidos estão sendo atualizados com o novo filtro."
+              variant="compact"
+              tone="info"
             />
           ) : null}
 
