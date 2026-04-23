@@ -5,6 +5,7 @@ from app.domain.ports.production.direct_labor_repository_port import DirectLabor
 from app.application.dto.production.production_request import ProductionRequest
 from app.domain.entities.production.direct_labor_cost import DirectLaborCost
 from app.shared.utils.spreadsheet_date import spreadsheet_date_in_range
+from app.infrastructure.persistence.google_sheets.utils import Utils
 
 
 class DirectLaborRepository(DirectLaborRepositoryPort):
@@ -12,6 +13,7 @@ class DirectLaborRepository(DirectLaborRepositoryPort):
         self.client = client
         self.sheet_id = sheet_id
         self.gid = gid
+        self.utils = Utils()
 
     def get_direct_labor_cost(self, request: ProductionRequest) -> list[DirectLaborCost]:
         rows = self.client.read_csv_rows(sheet_id=self.sheet_id, gid=self.gid)
@@ -19,15 +21,17 @@ class DirectLaborRepository(DirectLaborRepositoryPort):
 
         for row in rows:
             if self._matches_request(row, request):
-                try:
-                    direct_labor_cost = DirectLaborCost(
-                        branch=row.get("filial"),
-                        date=row.get("data"),
-                        cost=float(row.get("custo_mao_de_obra_direta", 0)),
-                    )
-                    direct_labor_costs.append(direct_labor_cost)
-                except ValueError:
+                cost = self.utils.to_float(row.get("custo_mao_de_obra_direta"))
+
+                if cost is None:
                     continue
+
+                direct_labor_cost = DirectLaborCost(
+                    branch=row.get("filial"),
+                    date=row.get("data"),
+                    cost=cost,
+                )
+                direct_labor_costs.append(direct_labor_cost)
 
         return direct_labor_costs
 

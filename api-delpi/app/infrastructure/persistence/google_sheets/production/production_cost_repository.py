@@ -5,6 +5,7 @@ from app.domain.ports.production.production_cost_repository_port import Producti
 from app.application.dto.production.production_request import ProductionRequest
 from app.domain.entities.production.production_cost import ProductionCost
 from app.shared.utils.spreadsheet_date import spreadsheet_date_in_range
+from app.infrastructure.persistence.google_sheets.utils import Utils
 
 
 class ProductionCostRepository(ProductionCostRepositoryPort):
@@ -12,6 +13,7 @@ class ProductionCostRepository(ProductionCostRepositoryPort):
         self.client = client
         self.sheet_id = sheet_id
         self.gid = gid
+        self.utils = Utils()
 
     def get_production_cost(self, request: ProductionRequest) -> list[ProductionCost]:
         rows = self.client.read_csv_rows(sheet_id=self.sheet_id, gid=self.gid)
@@ -19,15 +21,17 @@ class ProductionCostRepository(ProductionCostRepositoryPort):
 
         for row in rows:
             if self._matches_request(row, request):
-                try:
-                    production_cost = ProductionCost(
-                        branch=row.get("filial"),
-                        date=row.get("data"),
-                        cost=float(row.get("custo_de_producao", 0)),
-                    )
-                    production_costs.append(production_cost)
-                except ValueError:
+                cost = self.utils.to_float(row.get("custo_de_producao"))
+
+                if cost is None:
                     continue
+
+                production_cost = ProductionCost(
+                    branch=row.get("filial"),
+                    date=row.get("data"),
+                    cost=cost,
+                )
+                production_costs.append(production_cost)
 
         return production_costs
 

@@ -6,9 +6,16 @@ from app.application.dto.financial.get_rol_request import GetRolRequest
 from app.domain.ports.financial.financial_query_repository_port import (
     FinancialQueryRepositoryPort,
 )
-from app.infrastructure.persistence.google_sheets.financial.financial_metrics_repository import (
-    FinancialMetricsRepository,
+from app.infrastructure.persistence.google_sheets.financial.financial_ebitda_repository import (
+    FinancialEbitdaRepository,
 )
+from app.infrastructure.persistence.google_sheets.financial.financial_fixed_cost_repository import (
+    FinancialFixedCostRepository,
+)
+from app.infrastructure.persistence.google_sheets.financial.financial_receivables_repository import (
+    FinancialReceivablesRepository,
+)
+from app.infrastructure.persistence.google_sheets.utils import Utils
 from app.shared.utils.spreadsheet_date import spreadsheet_date_in_range
 
 
@@ -34,11 +41,16 @@ class FinancialMetricsSnapshotService:
     def __init__(
         self,
         *,
-        sheets_repository: FinancialMetricsRepository,
+        ebitda_repository: FinancialEbitdaRepository,
+        fixed_cost_repository: FinancialFixedCostRepository,
+        receivables_repository: FinancialReceivablesRepository,
         financial_query_repository: FinancialQueryRepositoryPort,
     ) -> None:
-        self._sheets_repository = sheets_repository
+        self._ebitda_repository = ebitda_repository
+        self._fixed_cost_repository = fixed_cost_repository
+        self._receivables_repository = receivables_repository
         self._financial_query_repository = financial_query_repository
+        self._utils = Utils()
         self._cache: dict[
             tuple[str | None, str | None, str | None],
             FinancialMetricsSnapshot,
@@ -57,17 +69,17 @@ class FinancialMetricsSnapshotService:
             return cached
 
         ebitda_rows = self._filter_period_rows(
-            self._sheets_repository.load_ebitda_rows(),
+            self._ebitda_repository.load_rows(),
             start_date=start_date,
             end_date=end_date,
         )
         fixed_cost_rows = self._filter_period_rows(
-            self._sheets_repository.load_fixed_cost_rows(),
+            self._fixed_cost_repository.load_rows(),
             start_date=start_date,
             end_date=end_date,
         )
         receivables_rows = self._filter_period_rows(
-            self._sheets_repository.load_receivables_rows(),
+            self._receivables_repository.load_rows(),
             start_date=start_date,
             end_date=end_date,
         )
@@ -89,7 +101,7 @@ class FinancialMetricsSnapshotService:
                     end_date=end_date,
                 )
             )
-            rol_with_ipi = self._to_float(rol_payload.get("rol_with_ipi")) or 0.0
+            rol_with_ipi = self._utils.to_float(rol_payload.get("rol_with_ipi")) or 0.0
 
             ebitda_value = self._average_numeric_field(
                 rows=ebitda_rows,
@@ -203,7 +215,7 @@ class FinancialMetricsSnapshotService:
             if row_branch != branch:
                 continue
 
-            number = self._to_float(row.get(field_name))
+            number = row.get(field_name)
             if number is not None:
                 values.append(number)
 
@@ -227,26 +239,3 @@ class FinancialMetricsSnapshotService:
             return None
         raw = str(value).strip()
         return raw or None
-
-    def _to_float(self, value) -> float | None:
-        if value is None:
-            return None
-
-        if isinstance(value, (int, float)):
-            return float(value)
-
-        raw = str(value).strip()
-        if not raw:
-            return None
-
-        raw = raw.replace("R$", "").replace("%", "").replace(" ", "")
-
-        if "," in raw and "." in raw:
-            raw = raw.replace(".", "").replace(",", ".")
-        elif "," in raw:
-            raw = raw.replace(",", ".")
-
-        try:
-            return float(raw)
-        except ValueError:
-            return None

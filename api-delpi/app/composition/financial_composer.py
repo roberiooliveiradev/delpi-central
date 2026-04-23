@@ -1,16 +1,17 @@
-# app/composition/financial_composer.py
-
 import os
 
 from app.application.services.financial.financial_metrics_snapshot_service import (
     FinancialMetricsSnapshotService,
 )
 from app.application.use_cases.financial.get_rol_use_case import GetRolUseCase
-from app.infrastructure.persistence.google_sheets.financial.financial_metrics_repository import (
-    FinancialMetricsRepository,
+from app.infrastructure.persistence.google_sheets.financial.financial_ebitda_repository import (
+    FinancialEbitdaRepository,
 )
-from app.infrastructure.persistence.google_sheets.financial.sheet_sources import (
-    FinancialIndicatorsSources,
+from app.infrastructure.persistence.google_sheets.financial.financial_fixed_cost_repository import (
+    FinancialFixedCostRepository,
+)
+from app.infrastructure.persistence.google_sheets.financial.financial_receivables_repository import (
+    FinancialReceivablesRepository,
 )
 from app.infrastructure.persistence.totvs.financial_repositories.financial_repository import (
     FinancialRepository,
@@ -20,6 +21,16 @@ from app.infrastructure.providers.google_sheets.google_sheets_client import (
 )
 from app.infrastructure.providers.strategic_indicators.financial_indicators_snapshot_provider import (
     FinancialIndicatorsSnapshotProvider,
+)
+
+from app.application.use_cases.financial.get_financial_ebitda_pct_use_case import (
+    GetFinancialEbitdaPctUseCase,
+)
+from app.application.use_cases.financial.get_financial_fixed_cost_pct_use_case import (
+    GetFinancialFixedCostPctUseCase,
+)
+from app.application.use_cases.financial.get_financial_pmr_use_case import (
+    GetFinancialPmrUseCase,
 )
 
 DEFAULT_FINANCIAL_SHEET_ID = "1Esd2boUNbaHxwBsO1X_fEPITVNCOD3fxmY8z8D4K9Mg"
@@ -34,38 +45,49 @@ def _build_google_sheets_client() -> GoogleSheetsClient:
     return GoogleSheetsClient(timeout=timeout)
 
 
-def _build_financial_sources() -> FinancialIndicatorsSources:
-    sheet_id = os.getenv("FINANCIAL_SHEET_ID", DEFAULT_FINANCIAL_SHEET_ID)
-
-    return FinancialIndicatorsSources(
+def _build_financial_ebitda_repository(
+    client: GoogleSheetsClient,
+) -> FinancialEbitdaRepository:
+    sheet_id = os.getenv("FINANCIAL_EBITDA_SHEET_ID", DEFAULT_FINANCIAL_SHEET_ID)
+    gid = os.getenv("FINANCIAL_EBITDA_SHEET_GID", DEFAULT_FINANCIAL_GID_EBITDA)
+    return FinancialEbitdaRepository(
+        client=client,
         sheet_id=sheet_id,
-        tabs={
-            "ebitda": os.getenv(
-                "FINANCIAL_GID_EBITDA",
-                DEFAULT_FINANCIAL_GID_EBITDA,
-            ),
-            "fixed_cost": os.getenv(
-                "FINANCIAL_GID_FIXED_COST",
-                DEFAULT_FINANCIAL_GID_FIXED_COST,
-            ),
-            "receivables": os.getenv(
-                "FINANCIAL_GID_RECEIVABLES",
-                DEFAULT_FINANCIAL_GID_RECEIVABLES,
-            ),
-        },
+        gid=gid,
     )
 
 
-def build_financial_metrics_repository() -> FinancialMetricsRepository:
-    return FinancialMetricsRepository(
-        client=_build_google_sheets_client(),
-        sources=_build_financial_sources(),
+def _build_financial_fixed_cost_repository(
+    client: GoogleSheetsClient,
+) -> FinancialFixedCostRepository:
+    sheet_id = os.getenv("FINANCIAL_FIXED_COST_SHEET_ID", DEFAULT_FINANCIAL_SHEET_ID)
+    gid = os.getenv("FINANCIAL_FIXED_COST_SHEET_GID", DEFAULT_FINANCIAL_GID_FIXED_COST)
+    return FinancialFixedCostRepository(
+        client=client,
+        sheet_id=sheet_id,
+        gid=gid,
+    )
+
+
+def _build_financial_receivables_repository(
+    client: GoogleSheetsClient,
+) -> FinancialReceivablesRepository:
+    sheet_id = os.getenv("FINANCIAL_RECEIVABLES_SHEET_ID", DEFAULT_FINANCIAL_SHEET_ID)
+    gid = os.getenv("FINANCIAL_RECEIVABLES_SHEET_GID", DEFAULT_FINANCIAL_GID_RECEIVABLES)
+    return FinancialReceivablesRepository(
+        client=client,
+        sheet_id=sheet_id,
+        gid=gid,
     )
 
 
 def build_financial_metrics_snapshot_service() -> FinancialMetricsSnapshotService:
+    client = _build_google_sheets_client()
+
     return FinancialMetricsSnapshotService(
-        sheets_repository=build_financial_metrics_repository(),
+        ebitda_repository=_build_financial_ebitda_repository(client),
+        fixed_cost_repository=_build_financial_fixed_cost_repository(client),
+        receivables_repository=_build_financial_receivables_repository(client),
         financial_query_repository=FinancialRepository(),
     )
 
@@ -79,3 +101,21 @@ def build_get_financial_indicators_snapshot_port() -> FinancialIndicatorsSnapsho
 def build_get_rol_use_case() -> GetRolUseCase:
     repository = FinancialRepository()
     return GetRolUseCase(repository)
+
+
+def build_get_financial_ebitda_pct_use_case() -> GetFinancialEbitdaPctUseCase:
+    return GetFinancialEbitdaPctUseCase(
+        financial_metrics_snapshot_service=build_financial_metrics_snapshot_service(),
+    )
+
+
+def build_get_financial_fixed_cost_pct_use_case() -> GetFinancialFixedCostPctUseCase:
+    return GetFinancialFixedCostPctUseCase(
+        financial_metrics_snapshot_service=build_financial_metrics_snapshot_service(),
+    )
+
+
+def build_get_financial_pmr_use_case() -> GetFinancialPmrUseCase:
+    return GetFinancialPmrUseCase(
+        financial_metrics_snapshot_service=build_financial_metrics_snapshot_service(),
+    )

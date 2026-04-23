@@ -5,6 +5,7 @@ from app.domain.ports.production.depreciation_repository_port import Depreciatio
 from app.application.dto.production.production_request import ProductionRequest
 from app.domain.entities.production.depreciation_cost import DepreciationCost
 from app.shared.utils.spreadsheet_date import spreadsheet_date_in_range
+from app.infrastructure.persistence.google_sheets.utils import Utils
 
 
 class DepreciationRepository(DepreciationRepositoryPort):
@@ -12,6 +13,7 @@ class DepreciationRepository(DepreciationRepositoryPort):
         self.client = client
         self.sheet_id = sheet_id
         self.gid = gid
+        self.utils = Utils()
 
     def get_depreciation_cost(self, request: ProductionRequest) -> list[DepreciationCost]:
         rows = self.client.read_csv_rows(sheet_id=self.sheet_id, gid=self.gid)
@@ -19,15 +21,17 @@ class DepreciationRepository(DepreciationRepositoryPort):
 
         for row in rows:
             if self._matches_request(row, request):
-                try:
-                    depreciation_cost = DepreciationCost(
-                        branch=row.get("filial"),
-                        date=row.get("data"),
-                        cost=float(row.get("depreciacao", 0)),
-                    )
-                    depreciation_costs.append(depreciation_cost)
-                except ValueError:
+                cost = self.utils.to_float(row.get("depreciacao"))
+
+                if cost is None:
                     continue
+
+                depreciation_cost = DepreciationCost(
+                    branch=row.get("filial"),
+                    date=row.get("data"),
+                    cost=cost,
+                )
+                depreciation_costs.append(depreciation_cost)
 
         return depreciation_costs
 

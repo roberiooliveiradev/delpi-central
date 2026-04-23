@@ -16,7 +16,7 @@ from app.interface.http.routes import product_routes
 from app.interface.http.routes import system_routes
 from app.interface.http.routes import data_routes
 from app.interface.http.routes import sale_routes
-from app.interface.http.routes import financial_routes
+from app.interface.http.routes.financial import financial_routes
 from app.interface.http.routes.supplies import supplies_router
 from app.interface.http.routes.commercial import commercial_router
 from app.interface.http.routes.production import production_router
