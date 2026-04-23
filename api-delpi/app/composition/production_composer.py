@@ -1,4 +1,4 @@
-import os
+from app.config import settings
 
 from app.application.services.production.production_metrics_snapshot_service import (
     ProductionMetricsSnapshotService,
@@ -40,34 +40,39 @@ from app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
 )
 
-DEFAULT_PRODUCTION_SHEET_ID = "1UM3g5QPixVJitlryNg8xaa34syjYTzT6ydaVVon5_Lw"
-DEFAULT_DIRECT_LABOR_SHEET_GID = "1525246844"
-DEFAULT_PRODUCTION_COST_SHEET_GID = "1959625411"
-DEFAULT_DEPRECIATION_SHEET_GID = "594516707"
-DEFAULT_GOOGLE_SHEETS_TIMEOUT = 10
-
 
 def _build_google_sheets_client() -> GoogleSheetsClient:
-    timeout = int(os.getenv("GOOGLE_SHEETS_TIMEOUT", str(DEFAULT_GOOGLE_SHEETS_TIMEOUT)))
-    return GoogleSheetsClient(timeout=timeout)
+    return GoogleSheetsClient(timeout=int(settings.GOOGLE_SHEETS_TIMEOUT))
 
 
-def _build_direct_labor_repository(client: GoogleSheetsClient) -> DirectLaborRepository:
-    sheet_id = os.getenv("DIRECT_LABOR_SHEET_ID", DEFAULT_PRODUCTION_SHEET_ID)
-    gid = os.getenv("DIRECT_LABOR_SHEET_GID", DEFAULT_DIRECT_LABOR_SHEET_GID)
-    return DirectLaborRepository(client=client, sheet_id=sheet_id, gid=gid)
+def _build_direct_labor_repository(
+    client: GoogleSheetsClient,
+) -> DirectLaborRepository:
+    return DirectLaborRepository(
+        client=client,
+        sheet_id=settings.DIRECT_LABOR_SHEET_ID,
+        gid=settings.DIRECT_LABOR_SHEET_GID,
+    )
 
 
-def _build_production_cost_repository(client: GoogleSheetsClient) -> ProductionCostRepository:
-    sheet_id = os.getenv("PRODUCTION_COST_SHEET_ID", DEFAULT_PRODUCTION_SHEET_ID)
-    gid = os.getenv("PRODUCTION_COST_SHEET_GID", DEFAULT_PRODUCTION_COST_SHEET_GID)
-    return ProductionCostRepository(client=client, sheet_id=sheet_id, gid=gid)
+def _build_production_cost_repository(
+    client: GoogleSheetsClient,
+) -> ProductionCostRepository:
+    return ProductionCostRepository(
+        client=client,
+        sheet_id=settings.PRODUCTION_COST_SHEET_ID,
+        gid=settings.PRODUCTION_COST_SHEET_GID,
+    )
 
 
-def _build_depreciation_repository(client: GoogleSheetsClient) -> DepreciationRepository:
-    sheet_id = os.getenv("DEPRECIATION_SHEET_ID", DEFAULT_PRODUCTION_SHEET_ID)
-    gid = os.getenv("DEPRECIATION_SHEET_GID", DEFAULT_DEPRECIATION_SHEET_GID)
-    return DepreciationRepository(client=client, sheet_id=sheet_id, gid=gid)
+def _build_depreciation_repository(
+    client: GoogleSheetsClient,
+) -> DepreciationRepository:
+    return DepreciationRepository(
+        client=client,
+        sheet_id=settings.DEPRECIATION_SHEET_ID,
+        gid=settings.DEPRECIATION_SHEET_GID,
+    )
 
 
 def build_production_metrics_snapshot_service() -> ProductionMetricsSnapshotService:

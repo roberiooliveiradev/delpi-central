@@ -210,6 +210,9 @@ services:
 
     container_name: delpi-api-delpi
     restart: unless-stopped
+    
+    env_file:
+      - .env
 
     environment:
       DB_HOST: ${TOTVS_DB_HOST}

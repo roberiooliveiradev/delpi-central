@@ -1,4 +1,4 @@
-import os
+from app.config import settings
 
 from app.application.services.financial.financial_metrics_snapshot_service import (
     FinancialMetricsSnapshotService,
@@ -33,51 +33,38 @@ from app.application.use_cases.financial.get_financial_pmr_use_case import (
     GetFinancialPmrUseCase,
 )
 
-DEFAULT_FINANCIAL_SHEET_ID = "1Esd2boUNbaHxwBsO1X_fEPITVNCOD3fxmY8z8D4K9Mg"
-DEFAULT_FINANCIAL_GID_EBITDA = "1525246844"
-DEFAULT_FINANCIAL_GID_FIXED_COST = "1959625411"
-DEFAULT_FINANCIAL_GID_RECEIVABLES = "594516707"
-DEFAULT_GOOGLE_SHEETS_TIMEOUT = 10
-
 
 def _build_google_sheets_client() -> GoogleSheetsClient:
-    timeout = int(os.getenv("GOOGLE_SHEETS_TIMEOUT", str(DEFAULT_GOOGLE_SHEETS_TIMEOUT)))
-    return GoogleSheetsClient(timeout=timeout)
+    return GoogleSheetsClient(timeout=int(settings.GOOGLE_SHEETS_TIMEOUT))
 
 
 def _build_financial_ebitda_repository(
     client: GoogleSheetsClient,
 ) -> FinancialEbitdaRepository:
-    sheet_id = os.getenv("FINANCIAL_EBITDA_SHEET_ID", DEFAULT_FINANCIAL_SHEET_ID)
-    gid = os.getenv("FINANCIAL_EBITDA_SHEET_GID", DEFAULT_FINANCIAL_GID_EBITDA)
     return FinancialEbitdaRepository(
         client=client,
-        sheet_id=sheet_id,
-        gid=gid,
+        sheet_id=settings.FINANCIAL_EBITDA_SHEET_ID,
+        gid=settings.FINANCIAL_EBITDA_SHEET_GID,
     )
 
 
 def _build_financial_fixed_cost_repository(
     client: GoogleSheetsClient,
 ) -> FinancialFixedCostRepository:
-    sheet_id = os.getenv("FINANCIAL_FIXED_COST_SHEET_ID", DEFAULT_FINANCIAL_SHEET_ID)
-    gid = os.getenv("FINANCIAL_FIXED_COST_SHEET_GID", DEFAULT_FINANCIAL_GID_FIXED_COST)
     return FinancialFixedCostRepository(
         client=client,
-        sheet_id=sheet_id,
-        gid=gid,
+        sheet_id=settings.FINANCIAL_FIXED_COST_SHEET_ID,
+        gid=settings.FINANCIAL_FIXED_COST_SHEET_GID,
     )
 
 
 def _build_financial_receivables_repository(
     client: GoogleSheetsClient,
 ) -> FinancialReceivablesRepository:
-    sheet_id = os.getenv("FINANCIAL_RECEIVABLES_SHEET_ID", DEFAULT_FINANCIAL_SHEET_ID)
-    gid = os.getenv("FINANCIAL_RECEIVABLES_SHEET_GID", DEFAULT_FINANCIAL_GID_RECEIVABLES)
     return FinancialReceivablesRepository(
         client=client,
-        sheet_id=sheet_id,
-        gid=gid,
+        sheet_id=settings.FINANCIAL_RECEIVABLES_SHEET_ID,
+        gid=settings.FINANCIAL_RECEIVABLES_SHEET_GID,
     )
 
 

@@ -1,4 +1,4 @@
-import os
+from app.config import settings
 
 from app.application.services.quality.quality_metrics_snapshot_service import (
     QualityMetricsSnapshotService,
@@ -38,30 +38,20 @@ from app.infrastructure.providers.strategic_indicators.quality_indicators_snapsh
     QualityIndicatorsSnapshotProvider,
 )
 
-DEFAULT_QUALITY_SHEET_ID = "1e7RWYCcxsD8oem4aqjSzPYPYu9GuBDjZrb5Xd-fQ0tQ"
-DEFAULT_KAIZEN_SHEET_GID = "1320135691"
-DEFAULT_AUDIT_5S_SHEET_GID = "1189329906"
-DEFAULT_GOOGLE_SHEETS_TIMEOUT = 10
-
 
 def _build_google_sheets_client() -> GoogleSheetsClient:
-    timeout = int(os.getenv("GOOGLE_SHEETS_TIMEOUT", str(DEFAULT_GOOGLE_SHEETS_TIMEOUT)))
-    return GoogleSheetsClient(timeout=timeout)
+    return GoogleSheetsClient(timeout=int(settings.GOOGLE_SHEETS_TIMEOUT))
 
 
 def _build_utils() -> Utils:
     return Utils()
 
 
-def _build_quality_sheet_id() -> str:
-    return os.getenv("QUALITY_SHEET_ID", DEFAULT_QUALITY_SHEET_ID)
-
-
 def _build_kaizen_repository() -> KaizenRepository:
     return KaizenRepository(
         client=_build_google_sheets_client(),
-        sheet_id=_build_quality_sheet_id(),
-        gid=os.getenv("QUALITY_KAIZEN_SHEET_GID", DEFAULT_KAIZEN_SHEET_GID),
+        sheet_id=settings.QUALITY_SHEET_ID,
+        gid=settings.QUALITY_KAIZEN_SHEET_GID,
         utils=_build_utils(),
     )
 
@@ -69,8 +59,8 @@ def _build_kaizen_repository() -> KaizenRepository:
 def _build_audit_5s_repository() -> Audit5SRepository:
     return Audit5SRepository(
         client=_build_google_sheets_client(),
-        sheet_id=_build_quality_sheet_id(),
-        gid=os.getenv("QUALITY_AUDIT_5S_SHEET_GID", DEFAULT_AUDIT_5S_SHEET_GID),
+        sheet_id=settings.QUALITY_SHEET_ID,
+        gid=settings.QUALITY_AUDIT_5S_SHEET_GID,
         utils=_build_utils(),
     )
 
