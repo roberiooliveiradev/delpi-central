@@ -256,13 +256,26 @@ class RealStrategicIndicatorsMeasurementsProvider(
         errors: list[dict],
     ) -> None:
         for raw in result.get("items", []):
+            raw_value = raw.get("value")
+            normalized_value = (
+                round(float(raw_value), 2)
+                if raw_value is not None
+                else None
+            )
+
+            raw_unit_values = raw.get("unit_values") or {}
+            normalized_unit_values = {
+                key: (round(float(value), 2) if value is not None else None)
+                for key, value in raw_unit_values.items()
+            }
+
             items.append(
                 StrategicIndicatorMeasuredValue(
                     indicator_id=raw["indicator_id"],
                     department_id=raw["department_id"],
-                    value=float(raw["value"]),
+                    value=normalized_value,
                     source=raw["source"],
-                    unit_values=raw.get("unit_values"),
+                    unit_values=normalized_unit_values,
                 )
             )
 

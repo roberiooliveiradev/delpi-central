@@ -161,7 +161,11 @@ class StrategicIndicatorsCalculator:
                     ),
                     strategic_description=indicator.strategic_description,
                     source=measurement.source,
-                    value=measurement.value,
+                    value=(
+                        round(measurement.value, 2)
+                        if measurement.value is not None
+                        else None
+                    ),
                     score=score,
                     gap=gap,
                     trend="stable",
@@ -201,7 +205,7 @@ class StrategicIndicatorsCalculator:
             )
 
             department_score = self._calculate_department_score(calculated_indicators)
-            contribution = round((department_score * department.weight_pct) / 100.0, 3)
+            contribution = round((department_score * department.weight_pct) / 100.0, 2)
 
             calculated_departments.append(
                 StrategicDepartmentCalculatedValue(
@@ -225,8 +229,8 @@ class StrategicIndicatorsCalculator:
         self,
         departments: list[StrategicDepartmentCalculatedValue],
     ) -> tuple[float, float, str]:
-        igd_exact = round(sum(item.contribution for item in departments), 3)
-        igd = round(igd_exact, 1)
+        igd_exact = round(sum(item.contribution for item in departments), 2)
+        igd = round(igd_exact, 2)
         classification = self.classify_score(igd)
         return igd, igd_exact, classification
 
@@ -321,7 +325,7 @@ class StrategicIndicatorsCalculator:
         current: float,
         previous: float,
         *,
-        decimals: int = 3,
+        decimals: int = 2,
         tolerance: float = 0.09,
     ) -> dict[str, float | str]:
         delta = round(current - previous, decimals)
@@ -372,7 +376,7 @@ class StrategicIndicatorsCalculator:
             return 0.0
 
         weighted_sum = sum(item.score * item.weight_pct for item in indicators)
-        return round(weighted_sum / total_weight, 3)
+        return round(weighted_sum / total_weight, 2)
 
     def _calculate_monthly_curve_goal(
         self,
