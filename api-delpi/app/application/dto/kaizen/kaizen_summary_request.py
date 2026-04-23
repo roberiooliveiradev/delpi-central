@@ -1,4 +1,3 @@
-# app/application/dto/kaizen/kaizen_summary_request.py
 from dataclasses import dataclass
 from typing import Optional
 
@@ -9,3 +8,4 @@ class KaizenSummaryRequest:
     status: Optional[str] = None
     date_start: Optional[str] = None
     date_end: Optional[str] = None
+    branch: Optional[str] = None

@@ -1,4 +1,3 @@
-# app/domain/entities/auditoria_5s/audit_5s.py
 from dataclasses import dataclass, asdict
 from typing import Optional
 
@@ -13,6 +12,7 @@ class Audit5S:
     audited: Optional[str]
     inspection_number: Optional[str]
     shift: Optional[str]
+    branch: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)

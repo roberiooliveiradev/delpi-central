@@ -14,10 +14,7 @@ from app.infrastructure.persistence.google_sheets.utils import Utils
 from app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
 )
-from app.shared.utils.spreadsheet_date import (
-    format_date_ddmmyyyy,
-    parse_spreadsheet_date,
-)
+from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
 
 
 class Audit5SRepository(Audit5SQueryRepositoryPort):
@@ -33,26 +30,30 @@ class Audit5SRepository(Audit5SQueryRepositoryPort):
         self.gid = gid
         self.utils = utils
 
-    def _format_date_pt_br(self, value: Optional[str]) -> Optional[str]:
-        return format_date_ddmmyyyy(value) or (str(value).strip() if value else None)
+    def _is_deleted(self, value) -> bool:
+        if value is None:
+            return False
+        normalized = str(value).strip().lower()
+        return normalized in {"true", "1", "sim", "yes", "x"}
 
     def _map_row_to_model(self, row: dict) -> Optional[dict]:
-        audit_id = self.utils.first_non_empty(row, ["id"])
-        audit_date = self.utils.first_non_empty(row, ["data"])
-        score = row.get("media_linha_percent")
+        audit_date = self.utils.empty_to_none(row.get("data"))
+        score = self.utils.to_float(row.get("nota"))
+        branch = self.utils.empty_to_none(row.get("filial"))
 
-        if not audit_id and not audit_date and score in {None, ""}:
+        if not audit_date and score is None:
             return None
 
         return {
-            "id": str(audit_id or "").strip(),
-            "date": self._format_date_pt_br(audit_date),
-            "average_line_score": self.utils.to_float(score),
-            "evaluated_area": self.utils.empty_to_none(row.get("area_avaliada")),
-            "auditor": self.utils.empty_to_none(row.get("auditor")),
-            "audited": self.utils.empty_to_none(row.get("auditado")),
-            "inspection_number": self.utils.empty_to_none(row.get("n_da_inspecao")),
-            "shift": self.utils.empty_to_none(row.get("turno")),
+            "id": f"{branch or ''}-{audit_date or ''}".strip("-"),
+            "date": audit_date,
+            "average_line_score": score,
+            "evaluated_area": None,
+            "auditor": None,
+            "audited": None,
+            "inspection_number": None,
+            "shift": None,
+            "branch": branch,
         }
 
     def _is_in_date_range(
@@ -70,7 +71,6 @@ class Audit5SRepository(Audit5SQueryRepositoryPort):
 
         if parsed_start and parsed_value < parsed_start:
             return False
-
         if parsed_end and parsed_value > parsed_end:
             return False
 
@@ -92,16 +92,24 @@ class Audit5SRepository(Audit5SQueryRepositoryPort):
 
         normalized_rows = []
         for row in rows:
+            if self._is_deleted(row.get("deleted")):
+                continue
+
             item = self._map_row_to_model(row)
             if item is not None:
                 normalized_rows.append(item)
 
         filtered_rows = [
-            row for row in normalized_rows
+            row
+            for row in normalized_rows
             if self._is_in_date_range(
                 value=row["date"],
                 start_date=request.start_date,
                 end_date=request.end_date,
+            )
+            and (
+                not request.branch
+                or (row.get("branch") or "").strip() == request.branch.strip()
             )
         ]
 
@@ -116,11 +124,8 @@ class Audit5SRepository(Audit5SQueryRepositoryPort):
         average_score = round(sum(scores) / len(scores), 2) if scores else 0.0
 
         return Audit5SSummaryResponse(
-            start_date=self._format_filter_date(request.start_date),
-            end_date=self._format_filter_date(request.end_date),
+            start_date=request.start_date,
+            end_date=request.end_date,
             average_score=average_score,
             list_audits=audits,
         )
-
-    def _format_filter_date(self, value: Optional[str]) -> Optional[str]:
-        return format_date_ddmmyyyy(value) or value

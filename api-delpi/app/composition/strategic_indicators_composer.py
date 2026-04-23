@@ -100,6 +100,15 @@ from app.application.use_cases.strategic_indicators.fill_missing_indicator_goals
 from app.application.use_cases.strategic_indicators.list_goal_years_overview_use_case import (
     ListStrategicIndicatorsGoalYearsOverviewUseCase,
 )
+from app.application.use_cases.strategic_indicators.activate_admin_department_use_case import (
+    ActivateStrategicIndicatorsAdminDepartmentUseCase,
+)
+from app.application.use_cases.strategic_indicators.activate_admin_department_indicator_use_case import (
+    ActivateStrategicIndicatorsAdminDepartmentIndicatorUseCase,
+)
+from app.application.use_cases.strategic_indicators.get_presentation_use_case import (
+    GetStrategicIndicatorsPresentationUseCase,
+)
 
 from app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
@@ -145,28 +154,12 @@ from app.infrastructure.providers.strategic_indicators.production_indicators_sna
 from app.infrastructure.providers.strategic_indicators.commercial_indicators_snapshot_provider import (
     CommercialIndicatorsSnapshotProvider,
 )
-from app.infrastructure.providers.strategic_indicators.quality_indicators_snapshot_provider import (
-    QualityIndicatorsSnapshotProvider,
-)
-
-from app.application.services.engineering.engineering_metrics_snapshot_service import (
-    EngineeringMetricsSnapshotService,
-)
-
-from app.application.use_cases.strategic_indicators.activate_admin_department_use_case import (
-    ActivateStrategicIndicatorsAdminDepartmentUseCase,
-)
-
 from app.infrastructure.providers.strategic_indicators.supplies_indicators_snapshot_provider import (
     SuppliesIndicatorsSnapshotProvider,
 )
 
-from app.application.use_cases.strategic_indicators.activate_admin_department_indicator_use_case import (
-    ActivateStrategicIndicatorsAdminDepartmentIndicatorUseCase,
-)
-
-from app.application.use_cases.strategic_indicators.get_presentation_use_case import (
-    GetStrategicIndicatorsPresentationUseCase,
+from app.application.services.engineering.engineering_metrics_snapshot_service import (
+    EngineeringMetricsSnapshotService,
 )
 
 from app.composition.commercial_composer import (
@@ -181,14 +174,8 @@ from app.composition.lmp_composer import (
 from app.composition.transforma_mais_composer import (
     transforma_mais_get_process_summary_composer,
 )
-from app.composition.audit_5s_composer import (
-    audit_5s_get_summary_composer,
-)
-from app.composition.kaizen_composer import (
-    kaizen_get_summary_composer,
-)
-from app.composition.ppm_composer import (
-    build_get_ppm_summary_use_case,
+from app.composition.quality_composer import (
+    build_get_quality_indicators_snapshot_port,
 )
 from app.composition.hr_composer import (
     build_get_hr_indicators_snapshot_port,
@@ -196,13 +183,13 @@ from app.composition.hr_composer import (
 from app.composition.financial_composer import (
     build_get_financial_indicators_snapshot_port,
 )
-
 from app.composition.supplies_composer import (
     build_get_cpv_use_case,
     build_get_inventory_turnover_use_case,
     build_get_otd_use_case,
     build_get_stock_value_use_case,
 )
+
 
 def build_get_engineering_indicators_snapshot_port():
     return EngineeringIndicatorsSnapshotProvider(
@@ -225,12 +212,12 @@ def build_get_commercial_indicators_snapshot_port():
     )
 
 
-def build_get_quality_indicators_snapshot_port():
-    return QualityIndicatorsSnapshotProvider(
-        internal_ppm_use_case=build_get_ppm_summary_use_case(),
-        external_ppm_use_case=build_get_ppm_summary_use_case(),
-        kaizen_summary_use_case=kaizen_get_summary_composer(),
-        audit_5s_summary_use_case=audit_5s_get_summary_composer(),
+def build_get_supplies_indicators_snapshot_port():
+    return SuppliesIndicatorsSnapshotProvider(
+        get_cpv_use_case=build_get_cpv_use_case(),
+        get_inventory_turnover_use_case=build_get_inventory_turnover_use_case(),
+        get_otd_use_case=build_get_otd_use_case(),
+        get_stock_value_use_case=build_get_stock_value_use_case(),
     )
 
 
@@ -445,15 +432,6 @@ def build_list_strategic_indicators_goal_years_overview_use_case():
 def build_activate_strategic_indicators_admin_department_use_case():
     repository = PostgresStrategicIndicatorsAdminDepartmentsRepository()
     return ActivateStrategicIndicatorsAdminDepartmentUseCase(repository)
-
-
-def build_get_supplies_indicators_snapshot_port():
-    return SuppliesIndicatorsSnapshotProvider(
-        get_cpv_use_case=build_get_cpv_use_case(),
-        get_inventory_turnover_use_case=build_get_inventory_turnover_use_case(),
-        get_otd_use_case=build_get_otd_use_case(),
-        get_stock_value_use_case=build_get_stock_value_use_case(),
-    )
 
 
 def build_activate_strategic_indicators_admin_department_indicator_use_case():

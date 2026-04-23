@@ -23,22 +23,31 @@ class KaizenRepository(KaizenQueryRepositoryPort):
         self.gid = gid
         self.utils = utils
 
-    def _map_row_to_summary_model(self, row: dict) -> Optional[dict]:
-        kaizen_id = row.get("kaizenid") or row.get("id")
-        title = row.get("titulo")
+    def _is_deleted(self, value) -> bool:
+        if value is None:
+            return False
+        normalized = str(value).strip().lower()
+        return normalized in {"true", "1", "sim", "yes", "x"}
 
-        if not kaizen_id and not title:
+    def _map_row_to_summary_model(self, row: dict) -> Optional[dict]:
+        title = self.utils.empty_to_none(row.get("descricao"))
+        implemented_date = self.utils.empty_to_none(row.get("data"))
+
+        if not title and not implemented_date:
             return None
 
+        branch = self.utils.empty_to_none(row.get("filial"))
+
         return {
-            "id": str(kaizen_id or "").strip(),
-            "title": str(title or "").strip(),
+            "id": f"{branch or ''}-{implemented_date or ''}-{title or ''}".strip("-"),
+            "title": title or "",
+            "date_implemented": implemented_date,
             "status": self.utils.empty_to_none(row.get("status")),
-            "date_implemented": self.utils.empty_to_none(row.get("dataimplantacao")),
             "accountable": self.utils.empty_to_none(row.get("responsavel")),
             "sector": self.utils.empty_to_none(row.get("area_setor")),
-            "investment": self.utils.to_float(row.get("investimento_rs")),
-            "daily_savings": self.utils.to_float(row.get("ganhoreal_rs")),
+            "investment": self.utils.to_float(row.get("custo_investimento")),
+            "daily_savings": self.utils.to_float(row.get("ganho_diario")),
+            "branch": branch,
         }
 
     def _is_implemented(self, status: Optional[str]) -> bool:
@@ -53,46 +62,26 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             .replace("ú", "u")
             .replace("ã", "a")
         )
-
         return normalized == "implantado"
 
-    def _matches_title(self, title: Optional[str], search: Optional[str]) -> bool:
-        if not search:
-            return True
-        if not title:
-            return False
-        return search.strip().lower() in title.strip().lower()
-
-    def _matches_status(self, status: Optional[str], search: Optional[str]) -> bool:
-        if not search:
-            return True
-        if not status:
-            return False
-        return status.strip().lower() == search.strip().lower()
-
-    def _is_in_period(
-        self,
-        date_value: Optional[str],
-        date_start: Optional[str],
-        date_end: Optional[str],
-    ) -> bool:
-        parsed = parse_spreadsheet_date(date_value)
-        if parsed is None:
-            return False
-
-        start = parse_spreadsheet_date(date_start) if date_start else None
-        end = parse_spreadsheet_date(date_end) if date_end else None
-
-        if start and parsed < start:
-            return False
-
-        if end and parsed > end:
-            return False
-
-        return True
-
-    def _parse_date_safe(self, value: Optional[str]) -> Optional[date]:
+    def _parse_date_safe(self, value: Optional[str]):
         return parse_spreadsheet_date(value)
+
+    def _was_active_in_range(
+        self,
+        implemented_at: Optional[str],
+        range_start: Optional[str],
+        range_end: Optional[str],
+    ) -> bool:
+        impl_date = self._parse_date_safe(implemented_at)
+        if impl_date is None:
+            return False
+
+        end = self._parse_date_safe(range_end) if range_end else date.today()
+        if end is None:
+            return False
+
+        return impl_date <= end
 
     def _days_active_in_range(
         self,
@@ -111,7 +100,6 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             return 0
 
         effective_start = max(impl_date, start)
-
         if effective_start > end:
             return 0
 
@@ -144,20 +132,24 @@ class KaizenRepository(KaizenQueryRepositoryPort):
 
         normalized_rows = []
         for row in rows:
+            if self._is_deleted(row.get("deleted")):
+                continue
+
             item = self._map_row_to_summary_model(row)
             if item is not None:
                 normalized_rows.append(item)
 
-        concluded_rows = [
+        implemented_rows = [
             row for row in normalized_rows
             if self._is_implemented(row["status"])
         ]
 
         filtered_rows = []
-        for row in concluded_rows:
+        for row in implemented_rows:
             title_ok = True
             status_ok = True
-            period_ok = self._is_in_period(
+            branch_ok = True
+            period_ok = self._was_active_in_range(
                 row.get("date_implemented"),
                 request.date_start,
                 request.date_end,
@@ -169,10 +161,26 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             if request.status:
                 status_ok = (row.get("status") or "").strip().lower() == request.status.strip().lower()
 
-            if title_ok and status_ok and period_ok:
+            if request.branch:
+                branch_ok = (row.get("branch") or "").strip() == request.branch.strip()
+
+            if title_ok and status_ok and branch_ok and period_ok:
                 filtered_rows.append(row)
 
-        kaizens = [Kaizen(**row) for row in filtered_rows]
+        kaizens = [
+            Kaizen(
+                id=row["id"],
+                title=row["title"],
+                date_implemented=row["date_implemented"],
+                status=row["status"],
+                accountable=row["accountable"],
+                sector=row["sector"],
+                investment=row["investment"],
+                daily_savings=row["daily_savings"],
+                branch=row.get("branch"),
+            )
+            for row in filtered_rows
+        ]
 
         total_savings = sum(
             self._calculate_kaizen_total_savings(
