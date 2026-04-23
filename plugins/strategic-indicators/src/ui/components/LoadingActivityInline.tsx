@@ -6,6 +6,7 @@ type LoadingActivityInlineProps = {
   description?: string;
   variant?: LoadingActivityInlineVariant;
   tone?: LoadingActivityInlineTone;
+  sticky?: boolean;
 };
 
 export function LoadingActivityInline({
@@ -13,6 +14,7 @@ export function LoadingActivityInline({
   description,
   variant = "panel",
   tone = "neutral",
+  sticky = variant === "compact",
 }: LoadingActivityInlineProps) {
   return (
     <div
@@ -20,7 +22,10 @@ export function LoadingActivityInline({
         "si-loading-activity-inline",
         `si-loading-activity-inline--${variant}`,
         `si-loading-activity-inline--${tone}`,
-      ].join(" ")}
+        sticky ? "si-loading-activity-inline--sticky" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       role="status"
       aria-live="polite"
     >
