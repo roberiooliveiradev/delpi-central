@@ -67,3 +67,51 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
             late_ops=0,
             on_time_delivery_pct=None,
         )
+
+    def list_on_time_delivery_by_branch(
+        self,
+        request: ProductionRequest
+    ) -> list[dict]:
+        qb = QueryBuilder()
+        qb.raw("OP.D_E_L_E_T_ = ''")
+
+        if request.branch:
+            qb.eq("OP.C2_FILIAL", request.branch)
+
+        qb.raw("OP.C2_DATPRF IS NOT NULL")
+        qb.raw("OP.C2_DATRF IS NOT NULL")
+        qb.date_range("OP.C2_DATPRF", request.start_date, request.end_date)
+
+        where_clause, where_params = qb.build()
+
+        sql = f"""
+            WITH OPS_FINALIZADAS AS (
+                SELECT DISTINCT
+                    OP.C2_FILIAL AS branch,
+                    OP.C2_NUM,
+                    OP.C2_DATPRF,
+                    OP.C2_DATRF
+                FROM SC2010 OP
+                WHERE {where_clause}
+            )
+            SELECT
+                branch,
+                COUNT(*) AS total_ops_finished,
+                SUM(CASE WHEN C2_DATRF <= C2_DATPRF THEN 1 ELSE 0 END) AS on_time_ops,
+                SUM(CASE WHEN C2_DATRF > C2_DATPRF THEN 1 ELSE 0 END) AS late_ops,
+                CAST(
+                    SUM(CASE WHEN C2_DATRF <= C2_DATPRF THEN 1 ELSE 0 END) * 100.0
+                    / NULLIF(COUNT(*), 0)
+                    AS DECIMAL(10, 2)
+                ) AS on_time_delivery_pct
+            FROM OPS_FINALIZADAS
+            WHERE branch IS NOT NULL
+            AND LTRIM(RTRIM(branch)) <> ''
+            GROUP BY branch
+            ORDER BY branch
+        """
+
+        with self:
+            rows = self.execute_query(sql, where_params)
+
+        return rows or []

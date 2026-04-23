@@ -25,15 +25,13 @@ class OverallEquipmentEffectivenessRepository(BaseRepository, OverallEquipmentEf
             SELECT
                 AVG(
                     CASE
-                        WHEN TRY_CAST(REPLACE(LTRIM(RTRIM(H6_ZEFICI)), ',', '.') AS DECIMAL(18, 4)) BETWEEN 0 AND 299
+                        WHEN TRY_CAST(REPLACE(LTRIM(RTRIM(H6_ZEFICI)), ',', '.') AS DECIMAL(18, 4)) BETWEEN 0 AND 199
                         THEN TRY_CAST(REPLACE(LTRIM(RTRIM(H6_ZEFICI)), ',', '.') AS DECIMAL(18, 4))
                         ELSE NULL
                     END
                 ) AS oee_pct
-            FROM
-                SH6010
-            WHERE
-                {where_clause}
+            FROM SH6010
+            WHERE {where_clause}
         """
 
         with self:
@@ -54,3 +52,40 @@ class OverallEquipmentEffectivenessRepository(BaseRepository, OverallEquipmentEf
             end_date=request.end_date,
             oee_pct=None,
         )
+
+    def list_overall_equipment_effectiveness_by_branch(
+        self,
+        request: ProductionRequest
+    ) -> list[dict]:
+        qb = QueryBuilder()
+        qb.raw("D_E_L_E_T_ = ''")
+
+        if request.branch:
+            qb.eq("H6_FILIAL", request.branch)
+
+        qb.date_range("H6_DTPROD", request.start_date, request.end_date)
+
+        where_clause, where_params = qb.build()
+
+        sql = f"""
+            SELECT
+                H6_FILIAL AS branch,
+                AVG(
+                    CASE
+                        WHEN TRY_CAST(REPLACE(LTRIM(RTRIM(H6_ZEFICI)), ',', '.') AS DECIMAL(18, 4)) BETWEEN 0 AND 199
+                        THEN TRY_CAST(REPLACE(LTRIM(RTRIM(H6_ZEFICI)), ',', '.') AS DECIMAL(18, 4))
+                        ELSE NULL
+                    END
+                ) AS oee_pct
+            FROM SH6010
+            WHERE {where_clause}
+              AND H6_FILIAL IS NOT NULL
+              AND LTRIM(RTRIM(H6_FILIAL)) <> ''
+            GROUP BY H6_FILIAL
+            ORDER BY H6_FILIAL
+        """
+
+        with self:
+            rows = self.execute_query(sql, where_params)
+
+        return rows or []

@@ -104,11 +104,24 @@ class ProductionMetricsSnapshotService:
             production_request
         )
 
-        branches = self._resolve_branches_from_items(
+        oee_rows = self._overall_equipment_effectiveness_repository.list_overall_equipment_effectiveness_by_branch(
+            production_request
+        )
+        otd_rows = self._on_time_delivery_repository.list_on_time_delivery_by_branch(
+            production_request
+        )
+
+        sheet_branches = self._resolve_branches_from_items(
             direct_labor_items,
             production_cost_items,
             depreciation_items,
         )
+        totvs_branches = self._resolve_branches_from_rows(
+            oee_rows,
+            otd_rows,
+        )
+
+        branches = self._merge_branches(sheet_branches, totvs_branches)
 
         if not branches:
             snapshot = ProductionUnitMetricsSnapshot(
@@ -256,6 +269,32 @@ class ProductionMetricsSnapshotService:
                 if branch is None:
                     continue
 
+                normalized_branch = str(branch).strip()
+                if normalized_branch:
+                    branches.add(normalized_branch)
+
+        return sorted(branches)
+
+    def _resolve_branches_from_rows(self, *collections) -> list[str]:
+        branches = set()
+
+        for collection in collections:
+            for row in collection:
+                branch = row.get("branch")
+                if branch is None:
+                    continue
+
+                normalized_branch = str(branch).strip()
+                if normalized_branch:
+                    branches.add(normalized_branch)
+
+        return sorted(branches)
+
+    def _merge_branches(self, *collections: list[str]) -> list[str]:
+        branches = set()
+
+        for collection in collections:
+            for branch in collection:
                 normalized_branch = str(branch).strip()
                 if normalized_branch:
                     branches.add(normalized_branch)
