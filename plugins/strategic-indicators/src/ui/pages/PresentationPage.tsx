@@ -553,14 +553,32 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   ]);
 
   useEffect(() => {
+    function isTypingTarget(target: EventTarget | null) {
+      if (!(target instanceof HTMLElement)) return false;
+
+      const tagName = target.tagName.toLowerCase();
+
+      return (
+        tagName === "input" ||
+        tagName === "textarea" ||
+        tagName === "select" ||
+        target.isContentEditable
+      );
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
+      if (isTypingTarget(event.target)) {
+        return;
+      }
+
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         pauseAutoplayTemporarily();
         goToPrevious();
+        return;
       }
 
-      if (event.key === "ArrowRight" || event.key === " ") {
+      if (event.key === "ArrowRight") {
         event.preventDefault();
         pauseAutoplayTemporarily();
         goToNext();
@@ -569,7 +587,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  });
+  }, [goToNext, goToPrevious, pauseAutoplayTemporarily]);
 
   function renderOverviewScene() {
     if (!data) return null;
