@@ -100,11 +100,21 @@ class HrMetricsSnapshotService:
                 )
             )
 
+        internal_satisfaction_raw = self._repository.get_internal_satisfaction_snapshot(
+            start_date=start_date,
+            end_date=end_date,
+        )
+        internal_satisfaction_pct = self._to_float(
+            internal_satisfaction_raw.get("value")
+        )
+
         snapshot = HrMetricsSnapshot(
             start_date=start_date,
             end_date=end_date,
             branches=branch_snapshots,
-            internal_satisfaction_pct=None,
+            internal_satisfaction_pct=round(internal_satisfaction_pct, 2)
+            if internal_satisfaction_pct is not None
+            else None,
             active_pdi_pct=None,
         )
         self._cache[key] = snapshot

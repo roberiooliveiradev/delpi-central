@@ -78,6 +78,24 @@ class HrMetricsRepository(PortalRhBaseRepository):
             "total_participations": 1.0,
         }
 
+    def get_internal_satisfaction_snapshot(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict:
+        value = self._get_indicator_average_or_latest_value(
+            start_date=start_date,
+            end_date=end_date,
+            indicator_codes=["SAT_INT"],
+            fallback_to_latest_before_end=True,
+        )
+
+        return {
+            "indicator_code": "SAT_INT",
+            "value": value,
+        }
+
     def _get_indicator_average_value(
         self,
         *,
@@ -130,3 +148,96 @@ class HrMetricsRepository(PortalRhBaseRepository):
             return round(float((row or {}).get("value") or 0.0), 2)
         except (TypeError, ValueError):
             return 0.0
+
+    def _get_indicator_average_or_latest_value(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        indicator_codes: list[str],
+        fallback_to_latest_before_end: bool = False,
+    ) -> float | None:
+        exact_sql = """
+            WITH params AS (
+                SELECT
+                    TO_DATE(NULLIF(CAST(%(start_date)s AS text), ''), 'DD-MM-YYYY') AS start_date,
+                    TO_DATE(NULLIF(CAST(%(end_date)s AS text), ''), 'DD-MM-YYYY') AS end_date
+            ),
+            filtered AS (
+                SELECT
+                    ma.actual_value
+                FROM indicators_monthlyactual ma
+                INNER JOIN indicators_indicator i
+                    ON i.id = ma.indicator_id
+                CROSS JOIN params p
+                WHERE i.active = TRUE
+                  AND i.code = ANY(%(indicator_codes)s)
+                  AND (
+                        p.start_date IS NULL
+                        OR make_date(ma.year, ma.month, 1) >= date_trunc('month', p.start_date)::date
+                  )
+                  AND (
+                        p.end_date IS NULL
+                        OR make_date(ma.year, ma.month, 1) <= date_trunc('month', p.end_date)::date
+                  )
+            )
+            SELECT AVG(actual_value) AS value
+            FROM filtered
+        """
+
+        row = self.fetch_one(
+            exact_sql,
+            {
+                "start_date": start_date,
+                "end_date": end_date,
+                "indicator_codes": indicator_codes,
+            },
+        )
+
+        exact_value = self._safe_round((row or {}).get("value"))
+        if exact_value is not None:
+            return exact_value
+
+        if not fallback_to_latest_before_end:
+            return None
+
+        fallback_sql = """
+            WITH params AS (
+                SELECT
+                    COALESCE(
+                        TO_DATE(NULLIF(CAST(%(end_date)s AS text), ''), 'DD-MM-YYYY'),
+                        TO_DATE(NULLIF(CAST(%(start_date)s AS text), ''), 'DD-MM-YYYY'),
+                        CURRENT_DATE
+                    ) AS reference_date
+            )
+            SELECT ma.actual_value AS value
+            FROM indicators_monthlyactual ma
+            INNER JOIN indicators_indicator i
+                ON i.id = ma.indicator_id
+            CROSS JOIN params p
+            WHERE i.active = TRUE
+              AND i.code = ANY(%(indicator_codes)s)
+              AND make_date(ma.year, ma.month, 1) <= date_trunc('month', p.reference_date)::date
+            ORDER BY ma.year DESC, ma.month DESC
+            LIMIT 1
+        """
+
+        fallback_row = self.fetch_one(
+            fallback_sql,
+            {
+                "start_date": start_date,
+                "end_date": end_date,
+                "indicator_codes": indicator_codes,
+            },
+        )
+
+        return self._safe_round((fallback_row or {}).get("value"))
+
+    def _safe_round(self, value) -> float | None:
+        if value is None:
+            return None
+
+        try:
+            return round(float(value), 2)
+        except (TypeError, ValueError):
+            return None
