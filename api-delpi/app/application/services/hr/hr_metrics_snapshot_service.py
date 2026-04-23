@@ -10,9 +10,9 @@ from app.infrastructure.persistence.portal_rh.hr_repositories.hr_metrics_reposit
 @dataclass(frozen=True)
 class HrBranchSnapshot:
     branch_code: str
-    absenteeism_pct: float
-    turnover_pct: float
-    training_hours_per_collaborator: float
+    absenteeism_pct: float | None
+    turnover_pct: float | None
+    training_hours_per_collaborator: float | None
 
 
 @dataclass(frozen=True)
@@ -70,7 +70,7 @@ class HrMetricsSnapshotService:
             absenteeism_pct = (
                 (total_absence_hours / expected_hours) * 100
                 if expected_hours > 0
-                else 0.0
+                else None
             )
 
             terminations_count = self._to_float(turnover_raw.get("terminations_count")) or 0.0
@@ -78,7 +78,7 @@ class HrMetricsSnapshotService:
             turnover_pct = (
                 (terminations_count / active_count) * 100
                 if active_count > 0
-                else 0.0
+                else None
             )
 
             total_training_hours = self._to_float(training_raw.get("total_training_hours")) or 0.0
@@ -86,15 +86,17 @@ class HrMetricsSnapshotService:
             training_hours_per_collaborator = (
                 total_training_hours / total_participations
                 if total_participations > 0
-                else 0.0
+                else None
             )
 
             branch_snapshots.append(
                 HrBranchSnapshot(
                     branch_code=branch_code,
-                    absenteeism_pct=round(absenteeism_pct, 2),
-                    turnover_pct=round(turnover_pct, 2),
-                    training_hours_per_collaborator=round(training_hours_per_collaborator, 2),
+                    absenteeism_pct=round(absenteeism_pct, 2) if absenteeism_pct is not None else None,
+                    turnover_pct=round(turnover_pct, 2) if turnover_pct is not None else None,
+                    training_hours_per_collaborator=round(training_hours_per_collaborator, 2)
+                    if training_hours_per_collaborator is not None
+                    else None,
                 )
             )
 

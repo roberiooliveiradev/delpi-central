@@ -34,11 +34,11 @@ BRANCH_BRANCH_CODE = "02"
 class CommercialMetricsSnapshot:
     start_date: str | None
     end_date: str | None
-    matrix_rol_value: float
-    branch_rol_value: float
-    sales_conversion_rate_pct: float
-    monthly_average_new_clients: float
-    new_clients_rol_pct: float
+    matrix_rol_value: float | None
+    branch_rol_value: float | None
+    sales_conversion_rate_pct: float | None
+    monthly_average_new_clients: float | None
+    new_clients_rol_pct: float | None
     requested_branch: str | None = None
 
 
@@ -109,23 +109,47 @@ class CommercialMetricsSnapshotService:
             )
         )
 
+        sales_conversion_rate_pct = self._extract_number(
+            sales_conversion_result,
+            ["sales_conversion_rate_pct"],
+        )
+        monthly_average_new_clients = self._extract_number(
+            new_clients_average_result,
+            ["monthly_average"],
+        )
+        new_clients_rol_pct = self._extract_number(
+            new_clients_rol_result,
+            ["new_clients_rol_pct"],
+        )
+
         snapshot = CommercialMetricsSnapshot(
             start_date=start_date,
             end_date=end_date,
-            matrix_rol_value=round(float(matrix_rol_value or 0.0), 2),
-            branch_rol_value=round(float(branch_rol_value or 0.0), 2),
-            sales_conversion_rate_pct=self._extract_number(
-                sales_conversion_result,
-                ["sales_conversion_rate_pct"],
-            ) or 0.0,
-            monthly_average_new_clients=self._extract_number(
-                new_clients_average_result,
-                ["monthly_average"],
-            ) or 0.0,
-            new_clients_rol_pct=self._extract_number(
-                new_clients_rol_result,
-                ["new_clients_rol_pct"],
-            ) or 0.0,
+            matrix_rol_value=(
+                round(matrix_rol_value, 2)
+                if matrix_rol_value is not None
+                else None
+            ),
+            branch_rol_value=(
+                round(branch_rol_value, 2)
+                if branch_rol_value is not None
+                else None
+            ),
+            sales_conversion_rate_pct=(
+                round(sales_conversion_rate_pct, 2)
+                if sales_conversion_rate_pct is not None
+                else None
+            ),
+            monthly_average_new_clients=(
+                round(monthly_average_new_clients, 2)
+                if monthly_average_new_clients is not None
+                else None
+            ),
+            new_clients_rol_pct=(
+                round(new_clients_rol_pct, 2)
+                if new_clients_rol_pct is not None
+                else None
+            ),
             requested_branch=branch,
         )
         self._cache[key] = snapshot
@@ -138,7 +162,7 @@ class CommercialMetricsSnapshotService:
         branch: str,
         start_date: str | None,
         end_date: str | None,
-    ) -> float:
+    ) -> float | None:
         result = use_case.execute(
             CommercialTargetRequest(
                 branch=branch,
@@ -146,7 +170,7 @@ class CommercialMetricsSnapshotService:
                 end_date=end_date,
             )
         )
-        return self._extract_number(result, ["rol"]) or 0.0
+        return self._extract_number(result, ["rol"])
 
     def _extract_number(self, payload, candidate_keys: list[str]) -> float | None:
         if payload is None:

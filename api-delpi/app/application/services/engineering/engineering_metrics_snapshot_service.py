@@ -16,8 +16,8 @@ from app.application.use_cases.transforma_mais.get_process_summary_use_case impo
 class EngineeringMetricsSnapshot:
     start_date: str | None
     end_date: str | None
-    lmp_projects_on_time_pct: float
-    transforma_mais_financial_gain: float
+    lmp_projects_on_time_pct: float | None
+    transforma_mais_financial_gain: float | None
     requested_branch: str | None = None
 
 
@@ -58,8 +58,8 @@ class EngineeringMetricsSnapshotService:
             status_filter="Todos",
         )
         lmp_summary = lmp_result.get("summary", {})
-        lmp_projects_on_time_pct = float(
-            lmp_summary.get("percent_dentro_prazo", 0) or 0
+        lmp_projects_on_time_pct = self._to_float(
+            lmp_summary.get("percent_dentro_prazo")
         )
 
         transforma_summary = self._transforma_mais_summary_use_case.execute(
@@ -79,27 +79,47 @@ class EngineeringMetricsSnapshotService:
         snapshot = EngineeringMetricsSnapshot(
             start_date=start_date,
             end_date=end_date,
-            lmp_projects_on_time_pct=lmp_projects_on_time_pct,
-            transforma_mais_financial_gain=transforma_mais_financial_gain,
+            lmp_projects_on_time_pct=(
+                round(lmp_projects_on_time_pct, 2)
+                if lmp_projects_on_time_pct is not None
+                else None
+            ),
+            transforma_mais_financial_gain=(
+                round(transforma_mais_financial_gain, 2)
+                if transforma_mais_financial_gain is not None
+                else None
+            ),
             requested_branch=branch,
         )
         self._cache[key] = snapshot
         return snapshot
 
-    def _extract_financial_gain_value(self, payload: dict) -> float:
+    def _extract_financial_gain_value(self, payload: dict) -> float | None:
         data = payload.get("data", payload)
 
         value = data.get("total_gross_savings_in_period")
-        if isinstance(value, (int, float)):
-            return float(value)
+        direct_value = self._to_float(value)
+        if direct_value is not None:
+            return direct_value
 
         monthly_breakdown = data.get("monthly_breakdown", [])
         if monthly_breakdown:
-            total = 0.0
-            for item in monthly_breakdown:
-                monthly_value = item.get("gross_savings_month")
-                if isinstance(monthly_value, (int, float)):
-                    total += float(monthly_value)
-            return total
+            values: list[float] = []
 
-        return 0.0
+            for item in monthly_breakdown:
+                monthly_value = self._to_float(item.get("gross_savings_month"))
+                if monthly_value is not None:
+                    values.append(monthly_value)
+
+            if values:
+                return sum(values)
+
+        return None
+
+    def _to_float(self, value) -> float | None:
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None

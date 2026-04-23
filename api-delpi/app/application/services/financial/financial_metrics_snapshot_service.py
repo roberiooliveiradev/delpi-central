@@ -26,8 +26,8 @@ class FinancialBranchSnapshot:
     ebitda_value: float
     fixed_cost_value: float
     pmr_days: float
-    ebitda_over_rol_pct: float
-    fixed_cost_over_rol_pct: float
+    ebitda_over_rol_pct: float | None
+    fixed_cost_over_rol_pct: float | None
 
 
 @dataclass(frozen=True)
@@ -229,9 +229,9 @@ class FinancialMetricsSnapshotService:
         *,
         numerator: float,
         denominator: float,
-    ) -> float:
+    ) -> float | None:
         if not denominator:
-            return 0.0
+            return None
         return round((numerator / denominator) * 100, 2)
 
     def _normalize_branch(self, value) -> str | None:

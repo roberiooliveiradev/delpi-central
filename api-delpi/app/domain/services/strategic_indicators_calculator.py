@@ -280,15 +280,20 @@ class StrategicIndicatorsCalculator:
         *,
         performance_direction: str,
         comparable_goal: float,
-        value: float,
+        value: float | None,
     ) -> float:
         lower_is_better = self._is_lower_better(performance_direction)
 
         if comparable_goal <= 0:
             return 0.0
 
+        if value is None:
+            return 0.0
+
         if lower_is_better:
-            ratio = comparable_goal / value if value > 0 else 10.0
+            if value <= 0:
+                return 0.0
+            ratio = comparable_goal / value
             return round(min(ratio * 10.0, 10.0), 2)
 
         ratio = value / comparable_goal
@@ -299,11 +304,11 @@ class StrategicIndicatorsCalculator:
         *,
         performance_direction: str,
         comparable_goal: float,
-        value: float,
+        value: float | None,
     ) -> float:
         lower_is_better = self._is_lower_better(performance_direction)
 
-        if comparable_goal <= 0:
+        if comparable_goal <= 0 or value is None:
             return 0.0
 
         if lower_is_better:
