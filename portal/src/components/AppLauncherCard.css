@@ -69,11 +69,11 @@
 
 .launcher-pin {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 2px;
+  right: 2px;
   border-radius: 100%;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -188,6 +188,7 @@
     align-items: center;
     gap: 5px;
     cursor: pointer;
+    width: 100%;
 }
 
 
@@ -272,4 +273,63 @@
 .launcher-inline-route:visited,
 .sidebar-inline-route:visited {
   color: inherit;
+}
+
+
+/* LINK RESET */
+
+.launcher-app-main,
+.launcher-app-main:link,
+.launcher-app-main:visited,
+.launcher-app-main:hover,
+.launcher-app-main:active,
+.launcher-inline-route,
+.launcher-inline-route:link,
+.launcher-inline-route:visited,
+.launcher-inline-route:hover,
+.launcher-inline-route:active,
+.sidebar-inline-route,
+.sidebar-inline-route:link,
+.sidebar-inline-route:visited,
+.sidebar-inline-route:hover,
+.sidebar-inline-route:active {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* MAIN LINK */
+
+.launcher-app-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* ACTIVE APP CARD */
+
+.launcher-app-tile.active {
+  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
+  box-shadow: var(--shadow);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+.launcher-app-tile.sidebar-variant.active {
+  background: rgba(0, 153, 220, 0.12);
+}
+
+.launcher-app-main.active .launcher-app-name {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.launcher-app-main.active .launcher-app-icon {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.launcher-app-main.active .launcher-chevron {
+  opacity: 1;
+  color: var(--primary);
 }
