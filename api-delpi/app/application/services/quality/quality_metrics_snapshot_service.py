@@ -16,6 +16,9 @@ from app.application.use_cases.kaizen.get_kaizen_summary_use_case import (
 from app.application.use_cases.ppm.get_ppm_summary_use_case import (
     GetPpmSummaryUseCase,
 )
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
+)
 
 
 @dataclass(frozen=True)
@@ -65,8 +68,53 @@ class QualityMetricsSnapshotService:
         if cached is not None:
             return cached
 
+        snapshot = self._build_snapshot(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            branches_override=None,
+        )
+        self._cache[key] = snapshot
+        return snapshot
+
+    def get_snapshot_series(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+        branch: str | None = None,
+    ) -> dict[str, QualityMetricsSnapshot]:
+        result: dict[str, QualityMetricsSnapshot] = {}
+
+        for period in periods:
+            key = (period.start_date, period.end_date, branch)
+            cached = self._cache.get(key)
+            if cached is not None:
+                result[period.competence] = cached
+                continue
+
+            snapshot = self._build_snapshot(
+                start_date=period.start_date,
+                end_date=period.end_date,
+                branch=branch,
+                branches_override=None,
+            )
+            self._cache[key] = snapshot
+            result[period.competence] = snapshot
+
+        return result
+
+    def _build_snapshot(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        branch: str | None,
+        branches_override: list[str] | None,
+    ) -> QualityMetricsSnapshot:
         if branch:
             branches = [branch]
+        elif branches_override is not None:
+            branches = branches_override
         else:
             branches = self._resolve_branches(
                 start_date=start_date,
@@ -76,7 +124,6 @@ class QualityMetricsSnapshotService:
         snapshots: list[QualityBranchSnapshot] = []
 
         for branch_code in branches:
-
             ppm_internal = self._extract_first_number(
                 self._internal_ppm_use_case.execute(
                     PpmSummaryRequest(
@@ -143,13 +190,11 @@ class QualityMetricsSnapshotService:
                 )
             )
 
-        snapshot = QualityMetricsSnapshot(
+        return QualityMetricsSnapshot(
             start_date=start_date,
             end_date=end_date,
             branches=snapshots,
         )
-        self._cache[key] = snapshot
-        return snapshot
 
     def _resolve_branches(
         self,

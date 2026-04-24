@@ -3,6 +3,9 @@ from __future__ import annotations
 from app.application.services.quality.quality_metrics_snapshot_service import (
     QualityMetricsSnapshotService,
 )
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
+)
 from app.domain.ports.strategic_indicators.quality_indicators_snapshot_port import (
     StrategicIndicatorsQualityIndicatorsSnapshotPort,
 )
@@ -44,6 +47,59 @@ class QualityIndicatorsSnapshotProvider(
                 ],
             }
 
+        return self._map_snapshot_to_result(
+            snapshot=snapshot,
+            branch=branch,
+        )
+
+    def get_quality_indicators_snapshot_series(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+        branch: str | None = None,
+    ) -> dict[str, dict]:
+        try:
+            snapshots = self._quality_metrics_snapshot_service.get_snapshot_series(
+                periods=periods,
+                branch=branch,
+            )
+        except Exception as exc:
+            scope = branch or "consolidated"
+            return {
+                period.competence: {
+                    "items": [],
+                    "errors": [
+                        {
+                            "department_id": "quality",
+                            "source": f"quality_snapshot_{scope}",
+                            "message": str(exc),
+                        }
+                    ],
+                }
+                for period in periods
+            }
+
+        result: dict[str, dict] = {}
+
+        for period in periods:
+            snapshot = snapshots.get(period.competence)
+            if snapshot is None:
+                result[period.competence] = {"items": [], "errors": []}
+                continue
+
+            result[period.competence] = self._map_snapshot_to_result(
+                snapshot=snapshot,
+                branch=branch,
+            )
+
+        return result
+
+    def _map_snapshot_to_result(
+        self,
+        *,
+        snapshot,
+        branch: str | None,
+    ) -> dict:
         ppm_internal_unit_values = {
             item.branch: item.ppm_internal for item in snapshot.branches
         }
