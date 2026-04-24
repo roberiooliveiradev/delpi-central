@@ -1,4 +1,3 @@
-// src/ui/AppHost.tsx
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
@@ -65,6 +64,16 @@ export const AppHost = () => {
       pushRecentApp(app.id);
     }
   }, [app]);
+
+  useEffect(() => {
+    const isEmbedded = app?.renderMode === "embedded";
+
+    document.body.classList.toggle("portal-has-embedded-app", !!isEmbedded);
+
+    return () => {
+      document.body.classList.remove("portal-has-embedded-app");
+    };
+  }, [app?.renderMode]);
 
   useEffect(() => {
     if (!app) return;
@@ -212,23 +221,21 @@ export const AppHost = () => {
     if (!resolvedEntry) return <div>entryUrl não definido.</div>;
 
     return (
-      <iframe
-        key={location.pathname}
-        ref={iframeRef}
-        title={route?.label || app.name}
-        src={resolvedEntry}
-        style={{
-          width: "100%",
-          height: "100%",
-          border: "none",
-        }}
-      />
+      <div className="app-host app-host-embedded">
+        <iframe
+          key={location.pathname}
+          ref={iframeRef}
+          title={route?.label || app.name}
+          src={resolvedEntry}
+          className="app-host-iframe"
+        />
+      </div>
     );
   }
 
   if (app.renderMode === "federated") {
     return (
-      <div>
+      <div className="app-host app-host-federated">
         {federatedError ? (
           <div style={{ padding: 12 }}>
             <b>Falha ao carregar microfrontend</b>
