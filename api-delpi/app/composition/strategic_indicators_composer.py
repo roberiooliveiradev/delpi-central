@@ -145,9 +145,6 @@ from app.infrastructure.providers.strategic_indicators.calculated_alerts_summary
 from app.infrastructure.providers.strategic_indicators.real_indicator_measurements_provider import (
     RealStrategicIndicatorsMeasurementsProvider,
 )
-from app.infrastructure.providers.strategic_indicators.engineering_indicators_snapshot_provider import (
-    EngineeringIndicatorsSnapshotProvider,
-)
 from app.infrastructure.providers.strategic_indicators.production_indicators_snapshot_provider import (
     ProductionIndicatorsSnapshotProvider,
 )
@@ -155,21 +152,12 @@ from app.infrastructure.providers.strategic_indicators.commercial_indicators_sna
     CommercialIndicatorsSnapshotProvider,
 )
 
-from app.application.services.engineering.engineering_metrics_snapshot_service import (
-    EngineeringMetricsSnapshotService,
-)
 
 from app.composition.commercial_composer import (
     build_commercial_metrics_snapshot_service,
 )
 from app.composition.production_composer import (
     build_production_metrics_snapshot_service,
-)
-from app.composition.lmp_composer import (
-    build_list_lmp_dashboard_use_case,
-)
-from app.composition.transforma_mais_composer import (
-    transforma_mais_get_process_summary_composer,
 )
 from app.composition.quality_composer import (
     build_get_quality_indicators_snapshot_port,
@@ -184,14 +172,12 @@ from app.composition.supplies_composer import (
     build_supplies_indicators_snapshot_provider,
 )
 
+from app.composition.engineering_composer import (
+    build_engineering_indicators_snapshot_provider,
+)
 
 def build_get_engineering_indicators_snapshot_port():
-    return EngineeringIndicatorsSnapshotProvider(
-        engineering_metrics_snapshot_service=EngineeringMetricsSnapshotService(
-            lmp_dashboard_use_case=build_list_lmp_dashboard_use_case(),
-            transforma_mais_summary_use_case=transforma_mais_get_process_summary_composer(),
-        ),
-    )
+    return build_engineering_indicators_snapshot_provider()
 
 
 def build_get_production_indicators_snapshot_port():

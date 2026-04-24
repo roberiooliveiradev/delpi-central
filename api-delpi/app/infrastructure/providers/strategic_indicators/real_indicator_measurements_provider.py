@@ -260,6 +260,29 @@ class RealStrategicIndicatorsMeasurementsProvider(
 
             return result
 
+        if (
+            department_id == "engineering"
+            and self._engineering_snapshot_port is not None
+            and hasattr(self._engineering_snapshot_port, "get_engineering_indicators_snapshot_series")
+        ):
+            raw_series = self._engineering_snapshot_port.get_engineering_indicators_snapshot_series(
+                periods=periods,
+                branch=branch,
+            )
+
+            result: dict[str, tuple[list[StrategicIndicatorMeasuredValue], list[dict]]] = {}
+            for competence, raw in raw_series.items():
+                items: list[StrategicIndicatorMeasuredValue] = []
+                errors: list[dict] = []
+                self._append_result(
+                    result=raw,
+                    items=items,
+                    errors=errors,
+                )
+                result[competence] = (items, errors)
+
+            return result
+
         for period in periods:
             result[period.competence] = self.get_indicator_measurements(
                 start_date=period.start_date,

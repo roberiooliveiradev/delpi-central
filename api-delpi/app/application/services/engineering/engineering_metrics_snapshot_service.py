@@ -7,6 +7,9 @@ from app.application.dto.transforma_mais.process_summary_request import ProcessS
 from app.application.use_cases.lmp.list_lmp_dashboard_use_case import (
     ListLMPDashboardUseCase,
 )
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
+)
 from app.application.use_cases.transforma_mais.get_process_summary_use_case import (
     GetProcessSummaryUseCase,
 )
@@ -47,6 +50,46 @@ class EngineeringMetricsSnapshotService:
         if cached is not None:
             return cached
 
+        snapshot = self._build_snapshot(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
+        self._cache[key] = snapshot
+        return snapshot
+
+    def get_snapshot_series(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+        branch: str | None = None,
+    ) -> dict[str, EngineeringMetricsSnapshot]:
+        result: dict[str, EngineeringMetricsSnapshot] = {}
+
+        for period in periods:
+            key = (period.start_date, period.end_date, branch)
+            cached = self._cache.get(key)
+            if cached is not None:
+                result[period.competence] = cached
+                continue
+
+            snapshot = self._build_snapshot(
+                start_date=period.start_date,
+                end_date=period.end_date,
+                branch=branch,
+            )
+            self._cache[key] = snapshot
+            result[period.competence] = snapshot
+
+        return result
+
+    def _build_snapshot(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        branch: str | None,
+    ) -> EngineeringMetricsSnapshot:
         lmp_result = self._lmp_dashboard_use_case.execute(
             ListLMPRequest(
                 date_start=start_date,
@@ -76,7 +119,7 @@ class EngineeringMetricsSnapshotService:
         )
         transforma_mais_financial_gain = self._extract_financial_gain_value(payload)
 
-        snapshot = EngineeringMetricsSnapshot(
+        return EngineeringMetricsSnapshot(
             start_date=start_date,
             end_date=end_date,
             lmp_projects_on_time_pct=(
@@ -91,8 +134,6 @@ class EngineeringMetricsSnapshotService:
             ),
             requested_branch=branch,
         )
-        self._cache[key] = snapshot
-        return snapshot
 
     def _extract_financial_gain_value(self, payload: dict) -> float | None:
         data = payload.get("data", payload)
