@@ -18,6 +18,7 @@ from app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
 
+
 class GetStrategicIndicatorsTrendsRealUseCase:
     def __init__(
         self,
@@ -34,7 +35,7 @@ class GetStrategicIndicatorsTrendsRealUseCase:
         reference = self._parse_competence(request.competence)
         periods = self._build_periods(reference, months)
 
-        snapshots = self._snapshot_service.get_series_snapshot(
+        snapshots = self._snapshot_service.get_series_snapshot_optimized(
             periods=periods,
             department_id=request.department_id,
             branch=request.branch,

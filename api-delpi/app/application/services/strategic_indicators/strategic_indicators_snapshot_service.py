@@ -267,6 +267,92 @@ class StrategicIndicatorsSnapshotService:
             for period in periods
         ]
 
+    def get_series_snapshot_optimized(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+        department_id: str | None = None,
+        branch: str | None = None,
+    ) -> list[StrategicIndicatorsPeriodSnapshot]:
+        measurements_by_period = self._measurements_port.get_indicator_measurements_series(
+            periods=periods,
+            department_id=department_id,
+            branch=branch,
+        )
+
+        snapshots: list[StrategicIndicatorsPeriodSnapshot] = []
+
+        for period in periods:
+            catalog = self.get_catalog_snapshot(
+                competence=period.competence,
+                start_date=period.start_date,
+                end_date=period.end_date,
+                department_id=department_id,
+                branch=branch,
+            )
+
+            measurements, measurement_errors = measurements_by_period.get(
+                period.competence,
+                ([], []),
+            )
+
+            calculated_indicators = self._calculator.calculate_indicators(
+                indicators_catalog=catalog.indicators_catalog,
+                measurements=measurements,
+                department_id=department_id,
+                start_date=period.start_date,
+                end_date=period.end_date,
+                competence=period.competence,
+            )
+
+            calculated_departments = self._calculator.calculate_departments(
+                departments_catalog=catalog.departments_catalog,
+                indicators_catalog=catalog.indicators_catalog,
+                measurements=measurements,
+                start_date=period.start_date,
+                end_date=period.end_date,
+                competence=period.competence,
+            )
+
+            for index, department in enumerate(calculated_departments):
+                strategic_summary = catalog.goals_by_department.get(
+                    department.department_id,
+                    department.strategic_summary,
+                )
+                if strategic_summary != department.strategic_summary:
+                    calculated_departments[index] = StrategicDepartmentCalculatedValue(
+                        department_id=department.department_id,
+                        department_name=department.department_name,
+                        short_name=department.short_name,
+                        weight_pct=department.weight_pct,
+                        strategic_summary=strategic_summary,
+                        aggregation_mode=department.aggregation_mode,
+                        score=department.score,
+                        contribution=department.contribution,
+                        classification=department.classification,
+                        trend=department.trend,
+                        indicators=department.indicators,
+                    )
+
+            igd, igd_exact, classification = self._calculator.calculate_igd(
+                calculated_departments
+            )
+
+            snapshots.append(
+                StrategicIndicatorsPeriodSnapshot(
+                    period=period,
+                    measurements=measurements,
+                    measurement_errors=measurement_errors,
+                    calculated_indicators=calculated_indicators,
+                    calculated_departments=calculated_departments,
+                    igd=igd,
+                    igd_exact=igd_exact,
+                    classification=classification,
+                )
+            )
+
+        return snapshots
+
     def _get_measurements(
         self,
         *,

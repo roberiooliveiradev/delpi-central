@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
+)
 from app.infrastructure.persistence.portal_rh.hr_repositories.hr_metrics_repository import (
     HrMetricsRepository,
 )
@@ -45,6 +48,75 @@ class HrMetricsSnapshotService:
         if cached is not None:
             return cached
 
+        snapshot = self._build_snapshot(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            internal_satisfaction_override=None,
+        )
+        self._cache[key] = snapshot
+        return snapshot
+
+    def get_snapshot_series(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+        branch: str | None = None,
+    ) -> dict[str, HrMetricsSnapshot]:
+        result: dict[str, HrMetricsSnapshot] = {}
+
+        if not periods:
+            return result
+
+        satisfaction_by_competence = self._repository.get_internal_satisfaction_snapshot_series(
+            periods=periods,
+        )
+
+        for period in periods:
+            internal_satisfaction_raw = satisfaction_by_competence.get(period.competence, {})
+            internal_satisfaction_override = self._to_float(
+                internal_satisfaction_raw.get("value")
+            )
+
+            key = (period.start_date, period.end_date, branch)
+            cached = self._cache.get(key)
+            if cached is not None:
+                result[period.competence] = cached
+                continue
+
+            snapshot = self._build_snapshot(
+                start_date=period.start_date,
+                end_date=period.end_date,
+                branch=branch,
+                internal_satisfaction_override=internal_satisfaction_override,
+            )
+            self._cache[key] = snapshot
+            result[period.competence] = snapshot
+
+        return result
+
+    def get_branch_snapshot(
+        self,
+        *,
+        branch: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> HrBranchSnapshot | None:
+        snapshot = self.get_snapshot(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
+        return snapshot.branches[0] if snapshot.branches else None
+
+    def _build_snapshot(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        branch: str | None,
+        internal_satisfaction_override: float | None,
+    ) -> HrMetricsSnapshot:
         branches = self._resolve_branches(branch=branch)
         branch_snapshots: list[HrBranchSnapshot] = []
 
@@ -100,15 +172,18 @@ class HrMetricsSnapshotService:
                 )
             )
 
-        internal_satisfaction_raw = self._repository.get_internal_satisfaction_snapshot(
-            start_date=start_date,
-            end_date=end_date,
-        )
-        internal_satisfaction_pct = self._to_float(
-            internal_satisfaction_raw.get("value")
-        )
+        if internal_satisfaction_override is None:
+            internal_satisfaction_raw = self._repository.get_internal_satisfaction_snapshot(
+                start_date=start_date,
+                end_date=end_date,
+            )
+            internal_satisfaction_pct = self._to_float(
+                internal_satisfaction_raw.get("value")
+            )
+        else:
+            internal_satisfaction_pct = internal_satisfaction_override
 
-        snapshot = HrMetricsSnapshot(
+        return HrMetricsSnapshot(
             start_date=start_date,
             end_date=end_date,
             branches=branch_snapshots,
@@ -117,22 +192,6 @@ class HrMetricsSnapshotService:
             else None,
             active_pdi_pct=None,
         )
-        self._cache[key] = snapshot
-        return snapshot
-
-    def get_branch_snapshot(
-        self,
-        *,
-        branch: str,
-        start_date: str | None,
-        end_date: str | None,
-    ) -> HrBranchSnapshot | None:
-        snapshot = self.get_snapshot(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-        )
-        return snapshot.branches[0] if snapshot.branches else None
 
     def _resolve_branches(self, *, branch: str | None) -> list[str]:
         if branch:

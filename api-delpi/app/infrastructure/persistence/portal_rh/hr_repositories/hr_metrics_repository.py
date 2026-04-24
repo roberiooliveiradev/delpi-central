@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
+)
 from app.infrastructure.persistence.portal_rh.portal_rh_base_repository import (
     PortalRhBaseRepository,
 )
@@ -98,6 +101,56 @@ class HrMetricsRepository(PortalRhBaseRepository):
             "effective_date": result.get("effective_date"),
             "used_fallback": result.get("used_fallback", False),
         }
+
+    def get_internal_satisfaction_snapshot_series(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+    ) -> dict[str, dict]:
+        if not periods:
+            return {}
+
+        rows = self._list_indicator_values_until_reference_dates(
+            periods=periods,
+            indicator_codes=["SAT_INT"],
+        )
+
+        values_by_competence: dict[str, dict] = {
+            period.competence: {
+                "indicator_code": "SAT_INT",
+                "value": None,
+                "measurement_date": None,
+                "effective_date": period.end_date or period.start_date,
+                "used_fallback": False,
+            }
+            for period in periods
+        }
+
+        for row in rows:
+            competence = row["competence"]
+            value = self._safe_round(row.get("value"))
+            measurement_date = row.get("measurement_date")
+
+            if competence not in values_by_competence:
+                continue
+
+            effective_date = values_by_competence[competence]["effective_date"]
+
+            used_fallback = False
+            if effective_date and measurement_date is not None:
+                used_fallback = str(measurement_date)[:7] != self._to_yyyy_mm_from_ddmmyyyy(
+                    effective_date
+                )
+
+            values_by_competence[competence] = {
+                "indicator_code": "SAT_INT",
+                "value": value,
+                "measurement_date": measurement_date,
+                "effective_date": effective_date,
+                "used_fallback": used_fallback,
+            }
+
+        return values_by_competence
 
     def _get_indicator_average_value(
         self,
@@ -255,6 +308,71 @@ class HrMetricsRepository(PortalRhBaseRepository):
             "effective_date": end_date or start_date,
             "used_fallback": True,
         }
+
+    def _list_indicator_values_until_reference_dates(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+        indicator_codes: list[str],
+    ) -> list[dict]:
+        sql = """
+            WITH requested_periods AS (
+                SELECT *
+                FROM UNNEST(
+                    %(competences)s::text[],
+                    %(reference_dates)s::date[]
+                ) AS rp(competence, reference_date)
+            ),
+            candidates AS (
+                SELECT
+                    rp.competence,
+                    ma.actual_value AS value,
+                    make_date(ma.year, ma.month, 1) AS measurement_date,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY rp.competence
+                        ORDER BY make_date(ma.year, ma.month, 1) DESC
+                    ) AS row_num
+                FROM requested_periods rp
+                INNER JOIN indicators_monthlyactual ma
+                    ON make_date(ma.year, ma.month, 1) <= date_trunc('month', rp.reference_date)::date
+                INNER JOIN indicators_indicator i
+                    ON i.id = ma.indicator_id
+                WHERE i.active = TRUE
+                  AND i.code = ANY(%(indicator_codes)s)
+            )
+            SELECT
+                competence,
+                value,
+                measurement_date
+            FROM candidates
+            WHERE row_num = 1
+            ORDER BY competence
+        """
+
+        params = {
+            "competences": [period.competence for period in periods],
+            "reference_dates": [
+                self._to_iso_date(period.end_date or period.start_date)
+                for period in periods
+            ],
+            "indicator_codes": indicator_codes,
+        }
+
+        return self.fetch_all(sql, params)
+
+    def _to_iso_date(self, value: str | None) -> str | None:
+        if not value:
+            return None
+
+        day, month, year = value.split("-")
+        return f"{year}-{month}-{day}"
+
+    def _to_yyyy_mm_from_ddmmyyyy(self, value: str | None) -> str | None:
+        if not value:
+            return None
+
+        _day, month, year = value.split("-")
+        return f"{year}-{month}"
 
     def _safe_round(self, value) -> float | None:
         if value is None:

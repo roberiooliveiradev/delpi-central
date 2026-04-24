@@ -3,6 +3,9 @@ from __future__ import annotations
 from app.application.services.hr.hr_metrics_snapshot_service import (
     HrMetricsSnapshotService,
 )
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
+)
 from app.domain.ports.strategic_indicators.hr_indicators_snapshot_port import (
     StrategicIndicatorsHrIndicatorsSnapshotPort,
 )
@@ -44,6 +47,59 @@ class HrIndicatorsSnapshotProvider(
                 ],
             }
 
+        return self._map_snapshot_to_result(
+            snapshot=snapshot,
+            branch=branch,
+        )
+
+    def get_hr_indicators_snapshot_series(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+        branch: str | None = None,
+    ) -> dict[str, dict]:
+        try:
+            snapshots = self._hr_metrics_snapshot_service.get_snapshot_series(
+                periods=periods,
+                branch=branch,
+            )
+        except Exception as exc:
+            scope = branch or "consolidated"
+            return {
+                period.competence: {
+                    "items": [],
+                    "errors": [
+                        {
+                            "department_id": "hr",
+                            "source": f"hr_snapshot_{scope}",
+                            "message": str(exc),
+                        }
+                    ],
+                }
+                for period in periods
+            }
+
+        result: dict[str, dict] = {}
+
+        for period in periods:
+            snapshot = snapshots.get(period.competence)
+            if snapshot is None:
+                result[period.competence] = {"items": [], "errors": []}
+                continue
+
+            result[period.competence] = self._map_snapshot_to_result(
+                snapshot=snapshot,
+                branch=branch,
+            )
+
+        return result
+
+    def _map_snapshot_to_result(
+        self,
+        *,
+        snapshot,
+        branch: str | None,
+    ) -> dict:
         absenteeism_unit_values = {
             item.branch_code: item.absenteeism_pct for item in snapshot.branches
         }
@@ -120,14 +176,15 @@ class HrIndicatorsSnapshotProvider(
     def _resolve_indicator_value(
         self,
         *,
-        unit_values: dict[str, float],
+        unit_values: dict[str, float | None],
         branch: str | None,
-    ) -> float:
+    ) -> float | None:
         if branch:
             value = unit_values.get(branch)
-            return round(float(value), 2) if value is not None else 0.0
+            return round(float(value), 2) if value is not None else None
 
-        valid = [float(value) for value in unit_values.values()]
-        if not valid:
-            return 0.0
-        return round(sum(valid) / len(valid), 2)
+        values = [float(value) for value in unit_values.values() if value is not None]
+        if not values:
+            return None
+
+        return round(sum(values) / len(values), 2)

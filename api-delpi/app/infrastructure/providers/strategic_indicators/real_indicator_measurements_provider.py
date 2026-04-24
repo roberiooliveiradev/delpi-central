@@ -6,6 +6,9 @@ from collections.abc import Callable
 from app.application.dto.strategic_indicators.catalog_models import (
     StrategicIndicatorMeasuredValue,
 )
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
+)
 from app.domain.ports.strategic_indicators.indicator_measurements_port import (
     StrategicIndicatorsIndicatorMeasurementsPort,
 )
@@ -30,6 +33,7 @@ from app.domain.ports.strategic_indicators.financial_indicators_snapshot_port im
 from app.domain.ports.strategic_indicators.supplies_indicators_snapshot_port import (
     StrategicIndicatorsSuppliesIndicatorsSnapshotPort,
 )
+
 
 class RealStrategicIndicatorsMeasurementsProvider(
     StrategicIndicatorsIndicatorMeasurementsPort,
@@ -108,6 +112,48 @@ class RealStrategicIndicatorsMeasurementsProvider(
         final_result = (items, errors)
         self._cache[cache_key] = final_result
         return final_result
+
+    def get_indicator_measurements_series(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+        department_id: str | None = None,
+        branch: str | None = None,
+    ) -> dict[str, tuple[list[StrategicIndicatorMeasuredValue], list[dict]]]:
+        if (
+            department_id == "hr"
+            and self._hr_snapshot_port is not None
+            and hasattr(self._hr_snapshot_port, "get_hr_indicators_snapshot_series")
+        ):
+            raw_series = self._hr_snapshot_port.get_hr_indicators_snapshot_series(
+                periods=periods,
+                branch=branch,
+            )
+
+            result: dict[str, tuple[list[StrategicIndicatorMeasuredValue], list[dict]]] = {}
+            for competence, raw in raw_series.items():
+                items: list[StrategicIndicatorMeasuredValue] = []
+                errors: list[dict] = []
+                self._append_result(
+                    result=raw,
+                    items=items,
+                    errors=errors,
+                )
+                result[competence] = (items, errors)
+
+            return result
+
+        result: dict[str, tuple[list[StrategicIndicatorMeasuredValue], list[dict]]] = {}
+
+        for period in periods:
+            result[period.competence] = self.get_indicator_measurements(
+                start_date=period.start_date,
+                end_date=period.end_date,
+                department_id=department_id,
+                branch=branch,
+            )
+
+        return result
 
     def _build_collectors(
         self,
@@ -202,7 +248,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
                     ),
                 )
             )
-            
+
         return collectors
 
     def _collect_parallel(
