@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.application.dto.financial.get_rol_request import GetRolRequest
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
+)
 from app.domain.ports.financial.financial_query_repository_port import (
     FinancialQueryRepositoryPort,
 )
@@ -68,21 +71,108 @@ class FinancialMetricsSnapshotService:
         if cached is not None:
             return cached
 
-        ebitda_rows = self._filter_period_rows(
-            self._ebitda_repository.load_rows(),
+        snapshot = self._build_snapshot(
             start_date=start_date,
             end_date=end_date,
+            branch=branch,
+            rows_override=None,
         )
-        fixed_cost_rows = self._filter_period_rows(
-            self._fixed_cost_repository.load_rows(),
+        self._cache[key] = snapshot
+        return snapshot
+
+    def get_snapshot_series(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+        branch: str | None = None,
+    ) -> dict[str, FinancialMetricsSnapshot]:
+        result: dict[str, FinancialMetricsSnapshot] = {}
+
+        if not periods:
+            return result
+
+        all_ebitda_rows = self._ebitda_repository.load_rows()
+        all_fixed_cost_rows = self._fixed_cost_repository.load_rows()
+        all_receivables_rows = self._receivables_repository.load_rows()
+
+        for period in periods:
+            key = (period.start_date, period.end_date, branch)
+            cached = self._cache.get(key)
+            if cached is not None:
+                result[period.competence] = cached
+                continue
+
+            filtered_rows = {
+                "ebitda_rows": self._filter_period_rows(
+                    all_ebitda_rows,
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                ),
+                "fixed_cost_rows": self._filter_period_rows(
+                    all_fixed_cost_rows,
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                ),
+                "receivables_rows": self._filter_period_rows(
+                    all_receivables_rows,
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                ),
+            }
+
+            snapshot = self._build_snapshot(
+                start_date=period.start_date,
+                end_date=period.end_date,
+                branch=branch,
+                rows_override=filtered_rows,
+            )
+            self._cache[key] = snapshot
+            result[period.competence] = snapshot
+
+        return result
+
+    def get_branch_snapshot(
+        self,
+        *,
+        branch: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> FinancialBranchSnapshot | None:
+        snapshot = self.get_snapshot(
             start_date=start_date,
             end_date=end_date,
+            branch=branch,
         )
-        receivables_rows = self._filter_period_rows(
-            self._receivables_repository.load_rows(),
-            start_date=start_date,
-            end_date=end_date,
-        )
+        return snapshot.branches[0] if snapshot.branches else None
+
+    def _build_snapshot(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        branch: str | None,
+        rows_override: dict[str, list[dict]] | None,
+    ) -> FinancialMetricsSnapshot:
+        if rows_override is None:
+            ebitda_rows = self._filter_period_rows(
+                self._ebitda_repository.load_rows(),
+                start_date=start_date,
+                end_date=end_date,
+            )
+            fixed_cost_rows = self._filter_period_rows(
+                self._fixed_cost_repository.load_rows(),
+                start_date=start_date,
+                end_date=end_date,
+            )
+            receivables_rows = self._filter_period_rows(
+                self._receivables_repository.load_rows(),
+                start_date=start_date,
+                end_date=end_date,
+            )
+        else:
+            ebitda_rows = rows_override.get("ebitda_rows", [])
+            fixed_cost_rows = rows_override.get("fixed_cost_rows", [])
+            receivables_rows = rows_override.get("receivables_rows", [])
 
         branches = self._resolve_branches(
             ebitda_rows=ebitda_rows,
@@ -142,27 +232,11 @@ class FinancialMetricsSnapshotService:
                 )
             )
 
-        snapshot = FinancialMetricsSnapshot(
+        return FinancialMetricsSnapshot(
             start_date=start_date,
             end_date=end_date,
             branches=snapshots,
         )
-        self._cache[key] = snapshot
-        return snapshot
-
-    def get_branch_snapshot(
-        self,
-        *,
-        branch: str,
-        start_date: str | None,
-        end_date: str | None,
-    ) -> FinancialBranchSnapshot | None:
-        snapshot = self.get_snapshot(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-        )
-        return snapshot.branches[0] if snapshot.branches else None
 
     def _resolve_branches(
         self,
