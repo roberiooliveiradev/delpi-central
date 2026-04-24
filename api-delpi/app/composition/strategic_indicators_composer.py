@@ -154,9 +154,6 @@ from app.infrastructure.providers.strategic_indicators.production_indicators_sna
 from app.infrastructure.providers.strategic_indicators.commercial_indicators_snapshot_provider import (
     CommercialIndicatorsSnapshotProvider,
 )
-from app.infrastructure.providers.strategic_indicators.supplies_indicators_snapshot_provider import (
-    SuppliesIndicatorsSnapshotProvider,
-)
 
 from app.application.services.engineering.engineering_metrics_snapshot_service import (
     EngineeringMetricsSnapshotService,
@@ -184,10 +181,7 @@ from app.composition.financial_composer import (
     build_get_financial_indicators_snapshot_port,
 )
 from app.composition.supplies_composer import (
-    build_get_cpv_use_case,
-    build_get_inventory_turnover_use_case,
-    build_get_otd_use_case,
-    build_get_stock_value_use_case,
+    build_supplies_indicators_snapshot_provider,
 )
 
 
@@ -213,12 +207,7 @@ def build_get_commercial_indicators_snapshot_port():
 
 
 def build_get_supplies_indicators_snapshot_port():
-    return SuppliesIndicatorsSnapshotProvider(
-        get_cpv_use_case=build_get_cpv_use_case(),
-        get_inventory_turnover_use_case=build_get_inventory_turnover_use_case(),
-        get_otd_use_case=build_get_otd_use_case(),
-        get_stock_value_use_case=build_get_stock_value_use_case(),
-    )
+    return build_supplies_indicators_snapshot_provider()
 
 
 def build_real_indicator_measurements_provider():

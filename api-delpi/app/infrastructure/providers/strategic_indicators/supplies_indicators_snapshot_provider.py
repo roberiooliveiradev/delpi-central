@@ -1,18 +1,10 @@
 from __future__ import annotations
 
-from app.application.dto.supplies.get_cpv_request import GetCPVRequest
-from app.application.dto.supplies.get_inventory_turnover_request import (
-    GetInventoryTurnoverRequest,
+from app.application.services.supplies.supplies_metrics_snapshot_service import (
+    SuppliesMetricsSnapshotService,
 )
-from app.application.dto.supplies.get_otd_request import GetOTDRequest
-from app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
-from app.application.use_cases.supplies.get_cpv_use_case import GetCPVUseCase
-from app.application.use_cases.supplies.get_inventory_turnover_use_case import (
-    GetInventoryTurnoverUseCase,
-)
-from app.application.use_cases.supplies.get_otd_use_case import GetOTDUseCase
-from app.application.use_cases.supplies.get_stock_value_use_case import (
-    GetStockValueUseCase,
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
 )
 from app.domain.ports.strategic_indicators.supplies_indicators_snapshot_port import (
     StrategicIndicatorsSuppliesIndicatorsSnapshotPort,
@@ -25,15 +17,9 @@ class SuppliesIndicatorsSnapshotProvider(
     def __init__(
         self,
         *,
-        get_cpv_use_case: GetCPVUseCase,
-        get_inventory_turnover_use_case: GetInventoryTurnoverUseCase,
-        get_otd_use_case: GetOTDUseCase,
-        get_stock_value_use_case: GetStockValueUseCase,
+        supplies_metrics_snapshot_service: SuppliesMetricsSnapshotService,
     ) -> None:
-        self._get_cpv_use_case = get_cpv_use_case
-        self._get_inventory_turnover_use_case = get_inventory_turnover_use_case
-        self._get_otd_use_case = get_otd_use_case
-        self._get_stock_value_use_case = get_stock_value_use_case
+        self._supplies_metrics_snapshot_service = supplies_metrics_snapshot_service
 
     def get_supplies_indicators_snapshot(
         self,
@@ -42,191 +28,99 @@ class SuppliesIndicatorsSnapshotProvider(
         end_date: str | None = None,
         branch: str | None = None,
     ) -> dict:
-        items: list[dict] = []
-        errors: list[dict] = []
-
-        self._collect_indicator(
-            builder=lambda: self._build_cpv_measurement(
-                start_date=start_date,
-                end_date=end_date,
-                branch=branch,
-            ),
-            department_id="supplies",
-            source="supplies_cpv",
-            items=items,
-            errors=errors,
-        )
-
-        self._collect_indicator(
-            builder=lambda: self._build_inventory_turnover_measurement(
-                start_date=start_date,
-                end_date=end_date,
-                branch=branch,
-            ),
-            department_id="supplies",
-            source="supplies_inventory_turnover",
-            items=items,
-            errors=errors,
-        )
-
-        self._collect_indicator(
-            builder=lambda: self._build_otd_measurement(
-                start_date=start_date,
-                end_date=end_date,
-                branch=branch,
-            ),
-            department_id="supplies",
-            source="supplies_otd",
-            items=items,
-            errors=errors,
-        )
-
-        self._collect_indicator(
-            builder=lambda: self._build_stock_value_measurement(
-                branch=branch,
-            ),
-            department_id="supplies",
-            source="supplies_stock_value",
-            items=items,
-            errors=errors,
-        )
-
-        return {
-            "items": items,
-            "errors": errors,
-        }
-
-    def _collect_indicator(
-        self,
-        *,
-        builder,
-        department_id: str,
-        source: str,
-        items: list[dict],
-        errors: list[dict],
-    ) -> None:
         try:
-            items.append(builder())
-        except Exception as exc:
-            errors.append(
-                {
-                    "department_id": department_id,
-                    "source": source,
-                    "message": str(exc),
-                }
+            snapshot = self._supplies_metrics_snapshot_service.get_snapshot(
+                start_date=start_date,
+                end_date=end_date,
+                branch=branch,
             )
+        except Exception as exc:
+            scope = branch or "consolidated"
+            return {
+                "items": [],
+                "errors": [
+                    {
+                        "department_id": "supplies",
+                        "source": f"supplies_snapshot_{scope}",
+                        "message": str(exc),
+                    }
+                ],
+            }
 
-    def _extract_payload(self, result):
-        return result.to_dict() if hasattr(result, "to_dict") else result
+        return self._map_snapshot_to_result(snapshot=snapshot)
 
-    def _extract_data(self, payload: dict) -> dict:
-        return payload.get("data", payload)
-
-    def _build_cpv_measurement(
+    def get_supplies_indicators_snapshot_series(
         self,
         *,
-        start_date: str | None,
-        end_date: str | None,
-        branch: str | None,
-    ) -> dict:
-        request = GetCPVRequest(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-        )
-        result = self._get_cpv_use_case.execute(request)
-        payload = self._extract_payload(result)
+        periods: list[ResolvedPeriod],
+        branch: str | None = None,
+    ) -> dict[str, dict]:
+        try:
+            snapshots = self._supplies_metrics_snapshot_service.get_snapshot_series(
+                periods=periods,
+                branch=branch,
+            )
+        except Exception as exc:
+            scope = branch or "consolidated"
+            return {
+                period.competence: {
+                    "items": [],
+                    "errors": [
+                        {
+                            "department_id": "supplies",
+                            "source": f"supplies_snapshot_{scope}",
+                            "message": str(exc),
+                        }
+                    ],
+                }
+                for period in periods
+            }
 
-        data = self._extract_data(payload)
-        summary = data.get("summary", {})
-        value = float(summary.get("cpv_percentage") or 0.0)
-        unit_key = branch or "consolidated"
+        result: dict[str, dict] = {}
 
-        return {
-            "department_id": "supplies",
-            "indicator_id": "supplies-cpv",
-            "value": value,
-            "source": "supplies_cpv",
-            "unit_values": {unit_key: value},
-        }
+        for period in periods:
+            snapshot = snapshots.get(period.competence)
+            if snapshot is None:
+                result[period.competence] = {"items": [], "errors": []}
+                continue
 
-    def _build_inventory_turnover_measurement(
-        self,
-        *,
-        start_date: str | None,
-        end_date: str | None,
-        branch: str | None,
-    ) -> dict:
-        request = GetInventoryTurnoverRequest(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            strict_idd_period=False,
-        )
-        result = self._get_inventory_turnover_use_case.execute(request)
-        payload = self._extract_payload(result)
+            result[period.competence] = self._map_snapshot_to_result(snapshot=snapshot)
 
-        data = self._extract_data(payload)
-        summary = data.get("summary", {})
-        value = float(summary.get("inventory_turnover_months") or 0.0)
-        unit_key = branch or "consolidated"
+        return result
+
+    def _map_snapshot_to_result(self, *, snapshot) -> dict:
+        unit_key = snapshot.branch or "consolidated"
 
         return {
-            "department_id": "supplies",
-            "indicator_id": "supplies-stock-turnover",
-            "value": value,
-            "source": "supplies_inventory_turnover",
-            "unit_values": {unit_key: value},
-        }
-
-    def _build_otd_measurement(
-        self,
-        *,
-        start_date: str | None,
-        end_date: str | None,
-        branch: str | None,
-    ) -> dict:
-        request = GetOTDRequest(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-        )
-        result = self._get_otd_use_case.execute(request)
-        payload = self._extract_payload(result)
-
-        data = self._extract_data(payload)
-        summary = data.get("summary", {})
-        value = float(summary.get("otd_percentage") or 0.0)
-        unit_key = branch or "consolidated"
-
-        return {
-            "department_id": "supplies",
-            "indicator_id": "supplies-otd",
-            "value": value,
-            "source": "supplies_otd",
-            "unit_values": {unit_key: value},
-        }
-
-    def _build_stock_value_measurement(
-        self,
-        *,
-        branch: str | None,
-    ) -> dict:
-        request = GetStockValueRequest(
-            branch=branch,
-        )
-        result = self._get_stock_value_use_case.execute(request)
-        payload = self._extract_payload(result)
-
-        data = self._extract_data(payload)
-        summary = data.get("summary", {})
-        value = float(summary.get("total_stock_value") or 0.0)
-        unit_key = branch or "consolidated"
-
-        return {
-            "department_id": "supplies",
-            "indicator_id": "supplies-stock-value",
-            "value": value,
-            "source": "supplies_stock_value",
-            "unit_values": {unit_key: value},
+            "items": [
+                {
+                    "department_id": "supplies",
+                    "indicator_id": "supplies-cpv",
+                    "value": snapshot.cpv_pct,
+                    "source": "supplies_cpv",
+                    "unit_values": {unit_key: snapshot.cpv_pct},
+                },
+                {
+                    "department_id": "supplies",
+                    "indicator_id": "supplies-stock-turnover",
+                    "value": snapshot.inventory_turnover_months,
+                    "source": "supplies_inventory_turnover",
+                    "unit_values": {unit_key: snapshot.inventory_turnover_months},
+                },
+                {
+                    "department_id": "supplies",
+                    "indicator_id": "supplies-otd",
+                    "value": snapshot.otd_pct,
+                    "source": "supplies_otd",
+                    "unit_values": {unit_key: snapshot.otd_pct},
+                },
+                {
+                    "department_id": "supplies",
+                    "indicator_id": "supplies-stock-value",
+                    "value": snapshot.stock_value,
+                    "source": "supplies_stock_value",
+                    "unit_values": {unit_key: snapshot.stock_value},
+                },
+            ],
+            "errors": [],
         }
