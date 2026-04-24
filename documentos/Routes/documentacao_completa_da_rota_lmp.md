@@ -12,6 +12,7 @@ Documentar a implementação **atualizada** da rota de **LMPs (Lançamento ou Mo
 - critérios de identificação de atraso, pontualidade, andamento e retorno;
 - filtro por filial;
 - contrato atual do payload;
+- paginação SQL na rota base;
 - pontos de atenção para evolução.
 
 ---
@@ -419,6 +420,7 @@ Responsável por:
 - montar filtros SQL;
 - compor os CTEs;
 - listar LMPs;
+- listar LMPs paginadas via SQL;
 - buscar uma LMP específica;
 - consolidar histórico de engenharia;
 - calcular `engineering_total_minutes`;
@@ -439,13 +441,15 @@ A implementação atual é **híbrida**:
   - `qtd_advanced_from_engineering`
   - `qtd_returned_from_engineering`
   - `engineering_status`
+- a rota base agora usa `COUNT + OFFSET/FETCH` quando `page_size` é informado.
 
 Essa separação foi necessária para corrigir ao mesmo tempo:
 
 - status errados em revisões antigas;
 - tempos zerados em revisões novas com reencaminhamento;
 - retornos indevidamente tratados como andamento;
-- dashboards que listavam ou excluíam OVs erradas por depender de âncora incorreta.
+- dashboards que listavam ou excluíam OVs erradas por depender de âncora incorreta;
+- desperdício de memória e tráfego causado por paginação em memória na listagem simples.
 
 ### `lmp_business_rules.py`
 
@@ -485,8 +489,19 @@ Responsável por:
 
 Responsável por:
 
-- listar LMPs em formato paginado;
-- devolver a entidade `LMP` serializada.
+- delegar a listagem paginada de LMPs ao repository;
+- preservar o contrato de retorno em `Page[LMP]`;
+- manter o caso de uso sem paginação em memória.
+
+Regra consolidada:
+
+- quando `page_size` não for informado, o repository retorna a coleção completa;
+- quando `page_size` for informado, a paginação é executada diretamente no SQL Server com `COUNT + OFFSET/FETCH`.
+
+Consequência arquitetural:
+
+- a aplicação deixa de carregar todas as LMPs apenas para recortar a página em Python;
+- reduz custo de memória, tráfego e tempo de resposta na rota base.
 
 ### `lmp_dashboard_item.py`
 
@@ -531,17 +546,23 @@ Campos atuais relevantes:
 - vendedor
 - lista de produtos
 
-### `lmp_routes.py`
+### `engineering_router.py`
 
 Endpoints relevantes:
 
-- `GET /lmps/`
-- `GET /lmps/{sale_number}`
-- `GET /lmps/dashboard`
+- `GET /engineering/lmps`
+- `GET /engineering/lmps/{sale_number}`
+- `GET /engineering/lmps/dashboard`
 
-### `lmp_composer.py`
+### `engineering_composer.py`
 
-Composição dos use cases com o repository.
+Composição centralizada dos use cases da área de Engenharia, incluindo:
+
+- listagem simples de LMPs;
+- dashboard de LMPs;
+- detalhe de LMP;
+- summary enxuto de LMP para Strategic Indicators;
+- fluxos do Transforma Mais.
 
 ---
 
@@ -557,7 +578,7 @@ Antes:
 
 Agora:
 
-- o plugin consome a rota `/lmps/dashboard` já enriquecida;
+- o plugin consome a rota `/engineering/lmps/dashboard` já enriquecida;
 - o hook `useLmpsDashboard` trabalha com a estrutura devolvida pelo backend;
 - o `lmpApi.ts` reflete o contrato consolidado.
 
@@ -754,6 +775,22 @@ Para a filial aparecer no payload final do dashboard, o fluxo completo precisa e
 
 Sem essa cadeia completa, a API pode filtrar corretamente, mas ainda assim devolver `branch` ausente no JSON do dashboard.
 
+### 6. Paginação SQL na rota base
+
+A listagem simples deixou de paginar em memória.
+
+Agora:
+
+- o repository executa uma query de contagem;
+- executa uma query paginada com `OFFSET/FETCH`;
+- devolve `Page[LMP]` já consistente com o contrato da rota.
+
+Com isso:
+
+- a camada de aplicação deixa de carregar todas as LMPs para recortar a página;
+- a rota base passa a escalar melhor em períodos maiores;
+- o dashboard continua podendo operar com a coleção completa quando necessário.
+
 ---
 
 ## Casos reais de análise
@@ -804,7 +841,7 @@ Conclusão:
 
 ## Campos atualmente expostos
 
-## Listagem base (`GET /lmps/`)
+## Listagem base (`GET /engineering/lmps`)
 
 Cada item da listagem deve retornar ao menos:
 
@@ -821,7 +858,15 @@ Cada item da listagem deve retornar ao menos:
 - `engineering_total_minutes`
 - `qtd_pi`
 
-## Detalhe (`GET /lmps/{sale_number}`)
+Payload de paginação:
+
+- `items`
+- `page`
+- `page_size`
+- `total`
+- `total_pages`
+
+## Detalhe (`GET /engineering/lmps/{sale_number}`)
 
 Além dos campos base, deve retornar:
 
@@ -830,7 +875,7 @@ Além dos campos base, deve retornar:
 - produtos relacionados
 - `branch`
 
-## Dashboard (`GET /lmps/dashboard`)
+## Dashboard (`GET /engineering/lmps/dashboard`)
 
 Cada item do dashboard deve retornar:
 
@@ -859,7 +904,7 @@ Resumo agregado:
 
 ## Endpoints oficiais
 
-## `GET /lmps/`
+## `GET /engineering/lmps`
 
 Objetivo:
 
@@ -869,21 +914,32 @@ Parâmetros atuais:
 
 - `date_start`
 - `date_end`
+- `branch`
 - `page`
 - `page_size`
 
-Observação:
+Comportamento consolidado:
 
-- na consolidação funcional da rota, o filtro por filial existe como necessidade de negócio;
-- quando esse endpoint também precisar respeitar filial explicitamente pela borda HTTP, ele deve expor `branch` assim como o dashboard.
+- quando `branch` vier preenchido, o backend restringe a leitura à filial informada;
+- quando `branch` vier ausente, o backend usa o fallback configurado em `LMPQuerySettings.branches`;
+- quando `page_size` vier preenchido, a paginação é executada nativamente no SQL Server;
+- quando `page_size` vier ausente, a rota devolve o conjunto completo respeitando os filtros informados.
 
-## `GET /lmps/{sale_number}`
+Contrato de retorno:
+
+- `items`
+- `page`
+- `page_size`
+- `total`
+- `total_pages`
+
+## `GET /engineering/lmps/{sale_number}`
 
 Objetivo:
 
 - obter o detalhe completo de uma OV/LMP.
 
-## `GET /lmps/dashboard`
+## `GET /engineering/lmps/dashboard`
 
 Objetivo:
 
@@ -915,7 +971,7 @@ Comportamento:
 ### Request sem filial
 
 ```http
-GET /lmps/dashboard?date_start=2026-03-02&date_end=2026-03-23&status=Todos
+GET /engineering/lmps/dashboard?date_start=2026-03-02&date_end=2026-03-23&status=Todos
 ```
 
 Comportamento esperado:
@@ -925,7 +981,7 @@ Comportamento esperado:
 ### Request com filial específica
 
 ```http
-GET /lmps/dashboard?date_start=2026-03-02&date_end=2026-03-23&status=Todos&branch=01
+GET /engineering/lmps/dashboard?date_start=2026-03-02&date_end=2026-03-23&status=Todos&branch=01
 ```
 
 Comportamento esperado:
@@ -939,7 +995,7 @@ Comportamento esperado:
 ```json
 {
   "success": true,
-  "message": "LMP dashboard data fetched successfully.",
+  "message": "Dashboard de LMPs carregado com sucesso.",
   "data": {
     "items": [
       {
@@ -1009,6 +1065,26 @@ Exemplo crítico:
 - `branch` pode existir no `SELECT` do repository;
 - mas, se o DTO do dashboard não tiver `branch`, o JSON final continuará sem o campo.
 
+## 5. O maior custo restante continua em `qtd_pi`
+
+Mesmo com as otimizações recentes:
+
+- separação da query mínima do summary;
+- remoção de join redundante em `AD1010` quando existe escopo;
+- paginação SQL na rota base;
+
+O maior gargalo remanescente continua sendo o cálculo online de `qtd_pi`, por depender de:
+
+- `ProdutosLMPRef`
+- `ProdutosBase`
+- `Recursive_BOM`
+- `PI_COUNT_BY_OV`
+
+Ou seja:
+
+- a rota base melhorou na paginação;
+- mas o cálculo de PI ainda é o principal custo estrutural da query.
+
 ---
 
 ## Melhorias futuras recomendadas
@@ -1021,9 +1097,10 @@ Exemplo crítico:
   - tempo efetivo usado para SLA;
 - criar flag de “cadastro inconsistente” quando houver etapa âncora sem encerramento explícito e sem follow-up claro;
 - permitir filtros por cliente, vendedor e faixa de PI;
-- paginação SQL nativa no dashboard;
+- paginação SQL nativa também no dashboard;
 - incluir endpoint de indicadores agregados por período;
-- consolidar `branch` também na rota base `GET /lmps/`, caso o filtro de filial deva existir igualmente na listagem simples.
+- revisar caminhos de query de `qtd_pi` para reduzir ainda mais o custo da recursão BOM;
+- consolidar telemetria de performance da rota base e do dashboard.
 
 ---
 
@@ -1043,6 +1120,7 @@ As decisões mais importantes foram:
 - `RETORNADA` passou a ser um estado oficial do fluxo;
 - o processo `000003` passou a aceitar `000003` como âncora operacional de engenharia/LMP;
 - o filtro por filial passou a ter fallback oficial em `settings.branches`;
+- a rota base `GET /engineering/lmps` agora aceita `branch` e paginação SQL nativa;
 - a serialização de `branch` no dashboard depende do alinhamento completo entre repository, entity, DTO e use case;
 - margem de tolerância foi adicionada para reduzir falsos atrasos em casos limítrofes.
 
@@ -1053,3 +1131,4 @@ Com isso, a rota passou a ser uma base mais confiável para:
 - auditoria de SLA;
 - investigação de inconsistências no histórico;
 - leitura por filial com comportamento previsível.
+

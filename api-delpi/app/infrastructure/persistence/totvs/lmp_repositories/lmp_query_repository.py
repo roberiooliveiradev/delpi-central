@@ -1,16 +1,16 @@
-# app/infrastructure/persistence/totvs/lmp_repositories/lmp_query_repository.py
 from typing import List, Tuple
 
-from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+from app.application.dto.lmp.get_lmp_request import GetLMPRequest
+from app.application.dto.lmp.list_lmp_request import ListLMPRequest
+from app.application.models.page import Page
 from app.domain.entities.lmp.lmp import LMP
 from app.domain.entities.lmp.lmp_product import LMPProduct
-from app.application.dto.lmp.list_lmp_request import ListLMPRequest
-from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.domain.ports.lmp.lmp_query_repository_port import LMPQueryRepositoryPort
-from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
+from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.lmp_repositories.lmp_query_settings import (
     LMPQuerySettings,
 )
+from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
 class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
@@ -188,6 +188,214 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     # =========================
     # SQL BLOCKS
     # =========================
+
+    def _sql_lmp_base_dataset_ctes(
+        self,
+        request: ListLMPRequest,
+        *,
+        include_qtd_pi: bool,
+    ) -> Tuple[str, tuple]:
+        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(request)
+        cte_hist, params_hist = self._sql_historico_ov_cte(
+            scope_cte_name="CandidateLMPs",
+            requested_branch=request.branch,
+        )
+
+        ctes = [
+            cte_candidates,
+            cte_hist,
+        ]
+        params: list = [
+            *params_candidates,
+            *params_hist,
+        ]
+
+        if include_qtd_pi:
+            cte_prod, params_prod = self._sql_produtos_lmp_cte(
+                scope_cte_name="CandidateLMPs",
+                requested_branch=request.branch,
+            )
+            cte_pi_total, params_pi_total = self._sql_pi_total_by_ov_ctes_from_produtos_lmp()
+
+            ctes.extend([cte_prod, cte_pi_total])
+            params.extend([*params_prod, *params_pi_total])
+
+        sql = ",\n".join(ctes)
+        return sql, tuple(params)
+
+    def _sql_lmp_base_rows_dataset_query(
+        self,
+        request: ListLMPRequest,
+        *,
+        include_qtd_pi: bool,
+        order_by: bool,
+    ) -> Tuple[str, tuple]:
+        ctes_sql, ctes_params = self._sql_lmp_base_dataset_ctes(
+            request,
+            include_qtd_pi=include_qtd_pi,
+        )
+
+        qtd_pi_select = "ISNULL(PI.QTD_PI, 0) AS qtd_pi" if include_qtd_pi else "0 AS qtd_pi"
+        qtd_pi_join = """
+            LEFT JOIN PI_COUNT_BY_OV PI
+                ON PI.ADJ_FILIAL = C.AD1_FILIAL
+               AND PI.ADJ_NROPOR = C.AD1_NROPOR
+               AND PI.ADJ_REVISA = C.AD1_REVISA
+        """ if include_qtd_pi else ""
+
+        qtd_pi_group_by = ",\n                PI.QTD_PI" if include_qtd_pi else ""
+        order_clause = """
+            ORDER BY
+                C.LMP_START_DATE DESC,
+                C.AD1_NROPOR DESC
+        """ if order_by else ""
+
+        sql = f"""
+            WITH
+            {ctes_sql}
+            SELECT
+                C.AD1_FILIAL AS branch,
+                C.AD1_NROPOR AS sale_number,
+                C.AD1_DESCRI AS sale_description,
+                C.LMP_START_DATE AS start_date,
+                C.LMP_END_DATE AS end_date,
+                H.ENGINEERING_STATUS AS engineering_status,
+                H.QTD_PASSAGENS_ENG AS qtd_engineering_entries,
+                H.QTD_PASSAGENS_ENCERRADAS AS qtd_engineering_closed,
+                H.QTD_AVANCOU_ENG AS qtd_advanced_from_engineering,
+                H.QTD_RETORNOU_ENG AS qtd_returned_from_engineering,
+                H.TEMPO_TOTAL_MINUTOS_ENG AS engineering_total_minutes,
+                {qtd_pi_select}
+            FROM CandidateLMPs C
+            LEFT JOIN EngenhariaResumoUltimaRevisao H
+                ON H.AIJ_FILIAL = C.AD1_FILIAL
+               AND H.AIJ_NROPOR = C.AD1_NROPOR
+            {qtd_pi_join}
+            GROUP BY
+                C.AD1_FILIAL,
+                C.AD1_NROPOR,
+                C.AD1_DESCRI,
+                C.LMP_START_DATE,
+                C.LMP_END_DATE,
+                H.ENGINEERING_STATUS,
+                H.QTD_PASSAGENS_ENG,
+                H.QTD_PASSAGENS_ENCERRADAS,
+                H.QTD_AVANCOU_ENG,
+                H.QTD_RETORNOU_ENG,
+                H.TEMPO_TOTAL_MINUTOS_ENG
+                {qtd_pi_group_by}
+            {order_clause}
+        """
+
+        return sql, ctes_params
+
+    def _sql_lmp_base_rows_query(
+        self,
+        request: ListLMPRequest,
+        *,
+        include_qtd_pi: bool,
+    ) -> Tuple[str, tuple]:
+        return self._sql_lmp_base_rows_dataset_query(
+            request,
+            include_qtd_pi=include_qtd_pi,
+            order_by=True,
+        )
+
+    def _sql_lmp_base_rows_count_query(
+        self,
+        request: ListLMPRequest,
+        *,
+        include_qtd_pi: bool,
+    ) -> Tuple[str, tuple]:
+        base_sql, base_params = self._sql_lmp_base_rows_dataset_query(
+            request,
+            include_qtd_pi=include_qtd_pi,
+            order_by=False,
+        )
+
+        sql = f"""
+            SELECT COUNT(*) AS total
+            FROM (
+                {base_sql}
+            ) BASE_ROWS
+        """
+        return sql, base_params
+
+    def _sql_lmp_base_rows_paged_query(
+        self,
+        request: ListLMPRequest,
+        *,
+        include_qtd_pi: bool,
+    ) -> Tuple[str, tuple]:
+        base_sql, base_params = self._sql_lmp_base_rows_dataset_query(
+            request,
+            include_qtd_pi=include_qtd_pi,
+            order_by=True,
+        )
+
+        page = request.page or 1
+        page_size = request.page_size or 0
+        offset = (page - 1) * page_size
+
+        sql = f"""
+            {base_sql}
+            OFFSET ? ROWS
+            FETCH NEXT ? ROWS ONLY
+        """
+        params = (*base_params, offset, page_size)
+        return sql, params
+
+    def _sql_lmp_summary_rows_query(
+        self,
+        request: ListLMPRequest,
+        *,
+        include_qtd_pi: bool,
+    ) -> Tuple[str, tuple]:
+        ctes_sql, ctes_params = self._sql_lmp_base_dataset_ctes(
+            request,
+            include_qtd_pi=include_qtd_pi,
+        )
+
+        qtd_pi_select = "ISNULL(PI.QTD_PI, 0) AS qtd_pi" if include_qtd_pi else "0 AS qtd_pi"
+        qtd_pi_join = """
+            LEFT JOIN PI_COUNT_BY_OV PI
+                ON PI.ADJ_FILIAL = C.AD1_FILIAL
+               AND PI.ADJ_NROPOR = C.AD1_NROPOR
+               AND PI.ADJ_REVISA = C.AD1_REVISA
+        """ if include_qtd_pi else ""
+
+        qtd_pi_group_by = ",\n                PI.QTD_PI" if include_qtd_pi else ""
+
+        sql = f"""
+            WITH
+            {ctes_sql}
+            SELECT
+                C.AD1_FILIAL AS branch,
+                C.AD1_NROPOR AS sale_number,
+                C.LMP_START_DATE AS start_date,
+                C.LMP_END_DATE AS end_date,
+                H.ENGINEERING_STATUS AS engineering_status,
+                H.TEMPO_TOTAL_MINUTOS_ENG AS engineering_total_minutes,
+                {qtd_pi_select}
+            FROM CandidateLMPs C
+            LEFT JOIN EngenhariaResumoUltimaRevisao H
+                ON H.AIJ_FILIAL = C.AD1_FILIAL
+               AND H.AIJ_NROPOR = C.AD1_NROPOR
+            {qtd_pi_join}
+            GROUP BY
+                C.AD1_FILIAL,
+                C.AD1_NROPOR,
+                C.LMP_START_DATE,
+                C.LMP_END_DATE,
+                H.ENGINEERING_STATUS,
+                H.TEMPO_TOTAL_MINUTOS_ENG
+                {qtd_pi_group_by}
+            ORDER BY
+                C.LMP_START_DATE DESC,
+                C.AD1_NROPOR DESC
+        """
+
+        return sql, ctes_params
 
     def _sql_candidate_lmps_cte(self, request: ListLMPRequest) -> Tuple[str, tuple]:
         qb = QueryBuilder()
@@ -686,17 +894,27 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         scope_cte_name: str | None = None,
         requested_branch: str | None = None,
     ) -> Tuple[str, tuple]:
-        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", requested_branch)
         where_adj, params_adj = self._sql_filter_adj_active_branch("ADJ", requested_branch)
 
-        scope_join = ""
         if scope_cte_name:
-            scope_join = f"""
-                INNER JOIN {scope_cte_name} SCOPE_P
-                    ON SCOPE_P.AD1_FILIAL = ADJ.ADJ_FILIAL
-                   AND SCOPE_P.AD1_NROPOR = ADJ.ADJ_NROPOR
-                   AND SCOPE_P.AD1_REVISA = ADJ.ADJ_REVISA
+            sql = f"""
+                ProdutosLMP AS (
+                    SELECT DISTINCT
+                        ADJ.ADJ_FILIAL,
+                        ADJ.ADJ_NROPOR,
+                        ADJ.ADJ_REVISA,
+                        ADJ.ADJ_PROD
+                    FROM ADJ010 ADJ
+                    INNER JOIN {scope_cte_name} SCOPE_P
+                        ON SCOPE_P.AD1_FILIAL = ADJ.ADJ_FILIAL
+                       AND SCOPE_P.AD1_NROPOR = ADJ.ADJ_NROPOR
+                       AND SCOPE_P.AD1_REVISA = ADJ.ADJ_REVISA
+                    WHERE {where_adj}
+                )
             """
+            return sql, params_adj
+
+        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", requested_branch)
 
         sql = f"""
             ProdutosLMP AS (
@@ -706,7 +924,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ADJ.ADJ_REVISA,
                     ADJ.ADJ_PROD
                 FROM ADJ010 ADJ
-                {scope_join}
                 INNER JOIN AD1010 AD1
                     ON AD1.AD1_FILIAL = ADJ.ADJ_FILIAL
                    AND AD1.AD1_NROPOR = ADJ.ADJ_NROPOR
@@ -716,6 +933,110 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             )
         """
         return sql, (*params_adj, *params_ad1)
+
+    def _sql_pi_total_by_ov_ctes_from_produtos_lmp(self) -> Tuple[str, tuple]:
+        where_sb1, params_sb1 = self._sql_filter_sb1_active("SB1")
+        where_sb_root, params_sb_root = self._sql_filter_sb_root_types("SB")
+        where_sg, params_sg = self._sql_filter_sg_active("G")
+        where_sb_pi, params_sb_pi = self._sql_filter_sb_pi_types("SB")
+
+        sql = f"""
+            ProdutosLMPRef AS (
+                SELECT
+                    P.ADJ_FILIAL,
+                    P.ADJ_NROPOR,
+                    P.ADJ_REVISA,
+                    P.ADJ_PROD,
+                    SB1.B1_REFEREN
+                FROM ProdutosLMP P
+                INNER JOIN SB1010 SB1
+                    ON SB1.B1_COD = P.ADJ_PROD
+                WHERE {where_sb1}
+                  AND SB1.B1_REFEREN <> ''
+            ),
+
+            ProdutosBase AS (
+                SELECT DISTINCT
+                    R.ADJ_FILIAL,
+                    R.ADJ_NROPOR,
+                    R.ADJ_REVISA,
+                    R.ADJ_PROD,
+                    SB.B1_COD AS ROOT_PRODUCT
+                FROM ProdutosLMPRef R
+                INNER JOIN SB1010 SB
+                    ON SB.B1_REFEREN = R.B1_REFEREN
+                WHERE {where_sb_root}
+            ),
+
+            Recursive_BOM AS (
+                SELECT
+                    B.ADJ_FILIAL,
+                    B.ADJ_NROPOR,
+                    B.ADJ_REVISA,
+                    B.ADJ_PROD,
+                    G.G1_COMP AS COMPONENT,
+                    1 AS LEVEL
+                FROM ProdutosBase B
+                INNER JOIN SG1010 G
+                    ON G.G1_COD = B.ROOT_PRODUCT
+                WHERE {where_sg}
+                  AND G.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+
+                UNION ALL
+
+                SELECT
+                    R.ADJ_FILIAL,
+                    R.ADJ_NROPOR,
+                    R.ADJ_REVISA,
+                    R.ADJ_PROD,
+                    G.G1_COMP,
+                    R.LEVEL + 1
+                FROM SG1010 G
+                INNER JOIN Recursive_BOM R
+                    ON R.COMPONENT = G.G1_COD
+                WHERE {where_sg}
+                  AND G.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+                  AND R.LEVEL < {int(self.settings.max_bom_level)}
+            ),
+
+            PI_COUNT_BY_OV AS (
+                SELECT
+                    X.ADJ_FILIAL,
+                    X.ADJ_NROPOR,
+                    X.ADJ_REVISA,
+                    SUM(X.QTD_PI_PRODUTO) AS QTD_PI
+                FROM (
+                    SELECT
+                        R.ADJ_FILIAL,
+                        R.ADJ_NROPOR,
+                        R.ADJ_REVISA,
+                        R.ADJ_PROD,
+                        COUNT(DISTINCT SB.B1_COD) AS QTD_PI_PRODUTO
+                    FROM Recursive_BOM R
+                    INNER JOIN SB1010 SB
+                        ON SB.B1_COD = R.COMPONENT
+                    WHERE {where_sb_pi}
+                    GROUP BY
+                        R.ADJ_FILIAL,
+                        R.ADJ_NROPOR,
+                        R.ADJ_REVISA,
+                        R.ADJ_PROD
+                ) X
+                GROUP BY
+                    X.ADJ_FILIAL,
+                    X.ADJ_NROPOR,
+                    X.ADJ_REVISA
+            )
+        """
+
+        params = (
+            *params_sb1,
+            *params_sb_root,
+            *params_sg,
+            *params_sg,
+            *params_sb_pi,
+        )
+        return sql, params
 
     def _sql_pi_por_referencia_ctes_from_produtos_lmp(self) -> Tuple[str, tuple]:
         where_sb1, params_sb1 = self._sql_filter_sb1_active("SB1")
@@ -947,72 +1268,47 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     # PUBLIC METHODS
     # =========================
     def list_lmps(self, request: ListLMPRequest) -> List[LMP]:
-        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(request)
-        cte_hist, params_hist = self._sql_historico_ov_cte(
-            scope_cte_name="CandidateLMPs",
-            requested_branch=request.branch,
-        )
-        cte_prod, params_prod = self._sql_produtos_lmp_cte(
-            scope_cte_name="CandidateLMPs",
-            requested_branch=request.branch,
-        )
-        cte_pi, params_pi = self._sql_pi_por_referencia_ctes_from_produtos_lmp()
-
-        sql = f"""
-            WITH
-            {cte_candidates},
-            {cte_hist},
-            {cte_prod},
-            {cte_pi}
-            SELECT
-                C.AD1_FILIAL AS branch,
-                C.AD1_NROPOR AS sale_number,
-                C.AD1_DESCRI AS sale_description,
-                C.LMP_START_DATE AS start_date,
-                C.LMP_END_DATE AS end_date,
-                H.ENGINEERING_STATUS AS engineering_status,
-                H.QTD_PASSAGENS_ENG AS qtd_engineering_entries,
-                H.QTD_PASSAGENS_ENCERRADAS AS qtd_engineering_closed,
-                H.QTD_AVANCOU_ENG AS qtd_advanced_from_engineering,
-                H.QTD_RETORNOU_ENG AS qtd_returned_from_engineering,
-                H.TEMPO_TOTAL_MINUTOS_ENG AS engineering_total_minutes,
-                ISNULL(PI.QTD_PI, 0) AS qtd_pi
-            FROM CandidateLMPs C
-            LEFT JOIN EngenhariaResumoUltimaRevisao H
-                ON H.AIJ_FILIAL = C.AD1_FILIAL
-               AND H.AIJ_NROPOR = C.AD1_NROPOR
-            LEFT JOIN PI_COUNT_BY_OV PI
-                ON PI.ADJ_FILIAL = C.AD1_FILIAL
-               AND PI.ADJ_NROPOR = C.AD1_NROPOR
-               AND PI.ADJ_REVISA = C.AD1_REVISA
-            GROUP BY
-                C.AD1_FILIAL,
-                C.AD1_NROPOR,
-                C.AD1_DESCRI,
-                C.LMP_START_DATE,
-                C.LMP_END_DATE,
-                H.ENGINEERING_STATUS,
-                H.QTD_PASSAGENS_ENG,
-                H.QTD_PASSAGENS_ENCERRADAS,
-                H.QTD_AVANCOU_ENG,
-                H.QTD_RETORNOU_ENG,
-                H.TEMPO_TOTAL_MINUTOS_ENG,
-                PI.QTD_PI
-            ORDER BY
-                C.LMP_START_DATE DESC,
-                C.AD1_NROPOR DESC
-        """
-
-        params = (
-            *params_candidates,
-            *params_hist,
-            *params_prod,
-            *params_pi,
+        sql, params = self._sql_lmp_base_rows_query(
+            request,
+            include_qtd_pi=True,
         )
 
         with self as repo:
             rows = repo.execute_query(sql, params)
             return [LMP(**row) for row in rows]
+
+    def list_lmps_page(self, request: ListLMPRequest) -> Page[LMP]:
+        if not request.page_size:
+            rows = self.list_lmps(request)
+            total = len(rows)
+            return Page(
+                items=rows,
+                total=total,
+                page=1,
+                page_size=total,
+            )
+
+        count_sql, count_params = self._sql_lmp_base_rows_count_query(
+            request,
+            include_qtd_pi=True,
+        )
+        page_sql, page_params = self._sql_lmp_base_rows_paged_query(
+            request,
+            include_qtd_pi=True,
+        )
+
+        with self as repo:
+            total_row = repo.execute_one(count_sql, count_params)
+            total = int((total_row or {}).get("total") or 0)
+
+            rows = repo.execute_query(page_sql, page_params)
+
+        return Page(
+            items=[LMP(**row) for row in rows],
+            total=total,
+            page=request.page or 1,
+            page_size=request.page_size,
+        )
 
     def get_lmp(self, request: GetLMPRequest) -> LMP:
         requested_branch = self._get_request_branch(request)
@@ -1062,59 +1358,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             seller_name=header_row.get("seller_name"),
             list_products=products,
         )
-    
+
     def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:
-        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(request)
-        cte_hist, params_hist = self._sql_historico_ov_cte(
-            scope_cte_name="CandidateLMPs",
-            requested_branch=request.branch,
-        )
-        cte_prod, params_prod = self._sql_produtos_lmp_cte(
-            scope_cte_name="CandidateLMPs",
-            requested_branch=request.branch,
-        )
-        cte_pi, params_pi = self._sql_pi_por_referencia_ctes_from_produtos_lmp()
-
-        sql = f"""
-            WITH
-            {cte_candidates},
-            {cte_hist},
-            {cte_prod},
-            {cte_pi}
-            SELECT
-                C.AD1_FILIAL AS branch,
-                C.AD1_NROPOR AS sale_number,
-                C.LMP_START_DATE AS start_date,
-                C.LMP_END_DATE AS end_date,
-                H.ENGINEERING_STATUS AS engineering_status,
-                H.TEMPO_TOTAL_MINUTOS_ENG AS engineering_total_minutes,
-                ISNULL(PI.QTD_PI, 0) AS qtd_pi
-            FROM CandidateLMPs C
-            LEFT JOIN EngenhariaResumoUltimaRevisao H
-                ON H.AIJ_FILIAL = C.AD1_FILIAL
-            AND H.AIJ_NROPOR = C.AD1_NROPOR
-            LEFT JOIN PI_COUNT_BY_OV PI
-                ON PI.ADJ_FILIAL = C.AD1_FILIAL
-            AND PI.ADJ_NROPOR = C.AD1_NROPOR
-            AND PI.ADJ_REVISA = C.AD1_REVISA
-            GROUP BY
-                C.AD1_FILIAL,
-                C.AD1_NROPOR,
-                C.LMP_START_DATE,
-                C.LMP_END_DATE,
-                H.ENGINEERING_STATUS,
-                H.TEMPO_TOTAL_MINUTOS_ENG,
-                PI.QTD_PI
-            ORDER BY
-                C.LMP_START_DATE DESC,
-                C.AD1_NROPOR DESC
-        """
-
-        params = (
-            *params_candidates,
-            *params_hist,
-            *params_prod,
-            *params_pi,
+        sql, params = self._sql_lmp_summary_rows_query(
+            request,
+            include_qtd_pi=True,
         )
 
         with self as repo:
