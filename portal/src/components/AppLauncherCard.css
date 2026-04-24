@@ -257,3 +257,19 @@
   content: "↳";
   opacity: 0.6;
 }
+
+
+/* LINK RESET */
+
+.launcher-app-main,
+.launcher-inline-route,
+.sidebar-inline-route {
+  text-decoration: none;
+  color: inherit;
+}
+
+.launcher-app-main:visited,
+.launcher-inline-route:visited,
+.sidebar-inline-route:visited {
+  color: inherit;
+}
