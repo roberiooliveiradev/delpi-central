@@ -11,15 +11,15 @@ class IndicatorItemResponse:
     indicator_name: str
     weight_pct: int
     goal_label: str
-    goal_value: float | None
+    goal_value: float
     goal_periodicity: str
     goal_mode: str = "standard"
     monthly_targets: list[dict] = field(default_factory=list)
     scope_type: str = "consolidated"
     performance_direction: str = "higher_is_better"
-    value: float | None = None
-    score: float | None = None
-    gap: float | None = None
+    value: float = 0.0
+    score: float = 0.0
+    gap: float = 0.0
     trend: str = "stable"
     classification: str = ""
     source: str = ""
