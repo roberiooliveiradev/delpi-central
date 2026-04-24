@@ -49,7 +49,7 @@ class GetStrategicIndicatorsTrendsRealUseCase:
             monthly_points.append(
                 {
                     "period": snapshot.period.competence,
-                    "value": snapshot.igd,
+                    "value": self._safe_float(snapshot.igd),
                     "classification": snapshot.classification,
                 }
             )
@@ -58,10 +58,10 @@ class GetStrategicIndicatorsTrendsRealUseCase:
                 monthly_departments.setdefault(department.department_id, []).append(
                     {
                         "period": snapshot.period.competence,
-                        "score": department.score,
+                        "score": self._safe_float(department.score),
                         "name": department.department_name,
                         "classification": department.classification,
-                        "contribution": department.contribution,
+                        "contribution": self._safe_float(department.contribution),
                     }
                 )
 
@@ -89,17 +89,17 @@ class GetStrategicIndicatorsTrendsRealUseCase:
             current = series[-1]
             previous = series[-2] if len(series) >= 2 else series[-1]
 
-            best_point = max(series, key=lambda item: item["score"])
-            worst_point = min(series, key=lambda item: item["score"])
+            best_point = max(series, key=lambda item: self._safe_float(item["score"]))
+            worst_point = min(series, key=lambda item: self._safe_float(item["score"]))
 
             interval_direction = self._resolve_direction(
-                current=current["score"],
-                previous=first["score"],
+                current=self._safe_float(current["score"]),
+                previous=self._safe_float(first["score"]),
             )
 
             last_step_direction = self._resolve_direction(
-                current=current["score"],
-                previous=previous["score"],
+                current=self._safe_float(current["score"]),
+                previous=self._safe_float(previous["score"]),
             )
 
             departments.append(
@@ -108,9 +108,9 @@ class GetStrategicIndicatorsTrendsRealUseCase:
                     "name": current["name"],
                     "current": current["score"],
                     "previous": previous["score"],
-                    "direction": interval_direction,
+                    "direction": last_step_direction,
                     "last_step_direction": last_step_direction,
-                    "net_variation": round(current["score"] - first["score"], 3),
+                    "net_variation": round(current["score"] - previous["score"], 3),
                     "best_score": round(best_point["score"], 3),
                     "worst_score": round(worst_point["score"], 3),
                     "current_classification": current["classification"],
@@ -139,8 +139,8 @@ class GetStrategicIndicatorsTrendsRealUseCase:
 
         return {
             "competence": current_point["period"],
-            "current_igd": current_point["value"],
-            "previous_igd": previous_point["value"],
+            "current_igd": self._safe_float(current_point["value"]),
+            "previous_igd": self._safe_float(previous_point["value"]),
             "current_classification": current_point["classification"],
             "igd_series": monthly_points,
             "departments": departments,
@@ -173,7 +173,7 @@ class GetStrategicIndicatorsTrendsRealUseCase:
                         "indicator_name": indicator.indicator_name,
                         "weight_pct": indicator.weight_pct,
                         "goal_label": indicator.goal_label,
-                        "goal_value": indicator.goal_value,
+                        "goal_value": self._safe_float(indicator.goal_value),
                         "goal_periodicity": indicator.goal_periodicity,
                         "goal_mode": getattr(indicator, "goal_mode", "standard"),
                         "monthly_targets": getattr(indicator, "monthly_targets", []) or [],
@@ -211,9 +211,9 @@ class GetStrategicIndicatorsTrendsRealUseCase:
     ) -> dict:
         return {
             "period": period_label,
-            "value": round(float(indicator.value), 3),
-            "score": round(float(indicator.score), 3),
-            "gap": round(float(indicator.gap), 3),
+            "value": self._safe_round(indicator.value, 3),
+            "score": self._safe_round(indicator.score, 3),
+            "gap": self._safe_round(indicator.gap, 3),
             "classification": indicator.classification,
             "trend": indicator.trend,
         }
@@ -269,3 +269,14 @@ class GetStrategicIndicatorsTrendsRealUseCase:
         if delta < -0.09:
             return "down"
         return "stable"
+
+    def _safe_float(self, value) -> float:
+        if value is None:
+            return 0.0
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _safe_round(self, value, digits: int) -> float:
+        return round(self._safe_float(value), digits)
