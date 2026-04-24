@@ -4,6 +4,9 @@ from dataclasses import dataclass
 
 from app.application.dto.financial.get_rol_request import GetRolRequest
 from app.application.dto.production.production_request import ProductionRequest
+from app.application.use_cases.strategic_indicators.period_resolution import (
+    ResolvedPeriod,
+)
 from app.domain.ports.financial.financial_query_repository_port import (
     FinancialQueryRepositoryPort,
 )
@@ -77,6 +80,37 @@ class ProductionMetricsSnapshotService:
             end_date=end_date,
         )
 
+    def get_snapshot_series(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+        branch: str | None = None,
+    ) -> dict[str, ProductionUnitMetricsSnapshot]:
+        result: dict[str, ProductionUnitMetricsSnapshot] = {}
+
+        for period in periods:
+            key = (branch, period.start_date, period.end_date)
+            cached = self._cache.get(key)
+            if cached is not None:
+                result[period.competence] = cached
+                continue
+
+            if branch:
+                snapshot = self.get_unit_snapshot(
+                    branch=branch,
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                )
+            else:
+                snapshot = self.get_consolidated_snapshot(
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                )
+
+            result[period.competence] = snapshot
+
+        return result
+
     def get_consolidated_snapshot(
         self,
         *,
@@ -143,11 +177,11 @@ class ProductionMetricsSnapshotService:
 
         branch_snapshots = [
             self.get_unit_snapshot(
-                branch=branch,
+                branch=branch_code,
                 start_date=start_date,
                 end_date=end_date,
             )
-            for branch in branches
+            for branch_code in branches
         ]
 
         snapshot = ProductionUnitMetricsSnapshot(
