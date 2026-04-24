@@ -23,3 +23,6 @@ class LMPQueryRepositoryPort(ABC):
     ) -> LMP:
         raise NotImplementedError
     
+    @abstractmethod
+    def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:
+        raise NotImplementedError

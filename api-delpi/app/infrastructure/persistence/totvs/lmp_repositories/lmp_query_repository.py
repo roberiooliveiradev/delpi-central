@@ -1062,3 +1062,73 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             seller_name=header_row.get("seller_name"),
             list_products=products,
         )
+    
+    def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:
+        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(request)
+        cte_hist, params_hist = self._sql_historico_ov_cte(
+            scope_cte_name="CandidateLMPs",
+            requested_branch=request.branch,
+        )
+        cte_prod, params_prod = self._sql_produtos_lmp_cte(
+            scope_cte_name="CandidateLMPs",
+            requested_branch=request.branch,
+        )
+        cte_pi, params_pi = self._sql_pi_por_referencia_ctes_from_produtos_lmp()
+
+        sql = f"""
+            WITH
+            {cte_candidates},
+            {cte_hist},
+            {cte_prod},
+            {cte_pi}
+            SELECT
+                C.AD1_FILIAL AS branch,
+                C.AD1_NROPOR AS sale_number,
+                C.LMP_START_DATE AS start_date,
+                C.LMP_END_DATE AS end_date,
+                H.ENGINEERING_STATUS AS engineering_status,
+                H.TEMPO_TOTAL_MINUTOS_ENG AS engineering_total_minutes,
+                ISNULL(PI.QTD_PI, 0) AS qtd_pi
+            FROM CandidateLMPs C
+            LEFT JOIN EngenhariaResumoUltimaRevisao H
+                ON H.AIJ_FILIAL = C.AD1_FILIAL
+            AND H.AIJ_NROPOR = C.AD1_NROPOR
+            LEFT JOIN PI_COUNT_BY_OV PI
+                ON PI.ADJ_FILIAL = C.AD1_FILIAL
+            AND PI.ADJ_NROPOR = C.AD1_NROPOR
+            AND PI.ADJ_REVISA = C.AD1_REVISA
+            GROUP BY
+                C.AD1_FILIAL,
+                C.AD1_NROPOR,
+                C.LMP_START_DATE,
+                C.LMP_END_DATE,
+                H.ENGINEERING_STATUS,
+                H.TEMPO_TOTAL_MINUTOS_ENG,
+                PI.QTD_PI
+            ORDER BY
+                C.LMP_START_DATE DESC,
+                C.AD1_NROPOR DESC
+        """
+
+        params = (
+            *params_candidates,
+            *params_hist,
+            *params_prod,
+            *params_pi,
+        )
+
+        with self as repo:
+            rows = repo.execute_query(sql, params)
+
+        return [
+            {
+                "branch": row.get("branch"),
+                "sale_number": row.get("sale_number"),
+                "start_date": row.get("start_date"),
+                "end_date": row.get("end_date"),
+                "engineering_status": row.get("engineering_status"),
+                "engineering_total_minutes": int(row.get("engineering_total_minutes") or 0),
+                "qtd_pi": int(row.get("qtd_pi") or 0),
+            }
+            for row in rows
+        ]

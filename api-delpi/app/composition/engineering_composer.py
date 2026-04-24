@@ -12,6 +12,9 @@ from app.application.use_cases.transforma_mais.get_process_summary_use_case impo
 from app.application.use_cases.transforma_mais.list_process_use_case import (
     ListProcessUseCase,
 )
+from app.application.use_cases.lmp.get_lmp_dashboard_summary_use_case import (
+    GetLMPDashboardSummaryUseCase,
+)
 from app.domain.services.transforma_mais.process_summary_calculator import (
     ProcessSummaryCalculator,
 )
@@ -93,7 +96,7 @@ def build_engineering_get_transforma_mais_summary_use_case() -> GetProcessSummar
 
 def build_engineering_metrics_snapshot_service() -> EngineeringMetricsSnapshotService:
     return EngineeringMetricsSnapshotService(
-        lmp_dashboard_use_case=build_engineering_list_lmps_dashboard_use_case(),
+        lmp_dashboard_summary_use_case=build_engineering_get_lmp_dashboard_summary_use_case(),
         transforma_mais_summary_use_case=build_engineering_get_transforma_mais_summary_use_case(),
     )
 
@@ -102,3 +105,6 @@ def build_engineering_indicators_snapshot_provider() -> EngineeringIndicatorsSna
     return EngineeringIndicatorsSnapshotProvider(
         engineering_metrics_snapshot_service=build_engineering_metrics_snapshot_service(),
     )
+
+def build_engineering_get_lmp_dashboard_summary_use_case() -> GetLMPDashboardSummaryUseCase:
+    return GetLMPDashboardSummaryUseCase(_build_lmp_repository())
