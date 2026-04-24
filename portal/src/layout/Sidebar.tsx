@@ -1,5 +1,3 @@
-// src/layout/Sidebar.tsx
-
 import "./Sidebar.css";
 import {
   useContext,
@@ -7,6 +5,7 @@ import {
   useState,
   useEffect,
   useRef,
+  useCallback,
 } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
@@ -14,17 +13,17 @@ import { useTheme } from "../hooks/useTheme";
 import { AppLauncher } from "../components/AppLauncher";
 
 import {
-  PanelLeftClose,
-  PanelLeftOpen,
   Bell,
   Sun,
   Moon,
   Grid,
   Shield,
   ChevronDown,
+  ChevronRight,
   CircleDashed,
   User,
   LogOut,
+  ChevronLeft,
 } from "lucide-react";
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
@@ -50,13 +49,13 @@ export const Sidebar = () => {
     markAllNotificationsRead,
   } = useContext(AuthContext);
 
-  // const location = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const notifDropdownRef = useRef<HTMLDivElement>(null);
+  const themeDropdownRef = useRef<HTMLDivElement>(null);
 
   /* ===============================
      ESTADOS
@@ -71,13 +70,96 @@ export const Sidebar = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
-  const themeDropdownRef = useRef<HTMLDivElement>(null);
-  
+  const [showEdgeExpand, setShowEdgeExpand] = useState(false);
+
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
   }, [collapsed]);
 
-  // 🔹 Fecha dropdown ao clicar fora
+  const openSidebarFromEdge = useCallback(() => {
+    setCollapsed(false);
+    setShowEdgeExpand(false);
+  }, []);
+
+  const hideEdgeExpand = useCallback(() => {
+    setShowEdgeExpand(false);
+  }, []);
+
+  const showEdgeExpandHint = useCallback(() => {
+    if (!collapsed) return;
+    setShowEdgeExpand(true);
+  }, [collapsed]);
+
+  const handleEdgePointerMove = useCallback(
+    (event: PointerEvent) => {
+      if (!collapsed) {
+        setShowEdgeExpand(false);
+        return;
+      }
+
+      const edgeWidth = event.pointerType === "touch" ? 34 : 24;
+
+      if (event.clientX <= edgeWidth) {
+        setShowEdgeExpand(true);
+        return;
+      }
+
+      setShowEdgeExpand(false);
+    },
+    [collapsed],
+  );
+
+  const handleEdgeTouchStart = useCallback(
+    (event: TouchEvent) => {
+      if (!collapsed) return;
+
+      const touch = event.touches[0];
+      if (!touch) return;
+
+      if (touch.clientX <= 36) {
+        setShowEdgeExpand(true);
+      }
+    },
+    [collapsed],
+  );
+
+  useEffect(() => {
+    if (!collapsed) {
+      setShowEdgeExpand(false);
+      return;
+    }
+
+    window.addEventListener("pointermove", handleEdgePointerMove, {
+      passive: true,
+    });
+
+    window.addEventListener("touchstart", handleEdgeTouchStart, {
+      passive: true,
+    });
+
+    window.addEventListener("scroll", hideEdgeExpand, {
+      passive: true,
+    });
+
+    return () => {
+      window.removeEventListener("pointermove", handleEdgePointerMove);
+      window.removeEventListener("touchstart", handleEdgeTouchStart);
+      window.removeEventListener("scroll", hideEdgeExpand);
+    };
+  }, [
+    collapsed,
+    handleEdgePointerMove,
+    handleEdgeTouchStart,
+    hideEdgeExpand,
+  ]);
+
+  useEffect(() => {
+    if (!collapsed) {
+      setShowEdgeExpand(false);
+    }
+  }, [collapsed]);
+
+  // Fecha dropdown ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -96,6 +178,14 @@ export const Sidebar = () => {
         !notifDropdownRef.current.contains(target)
       ) {
         setNotifOpen(false);
+      }
+
+      if (
+        userOpen &&
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(target)
+      ) {
+        setUserOpen(false);
       }
     };
 
@@ -130,7 +220,6 @@ export const Sidebar = () => {
     return map;
   }, [apps, routes]);
 
-  // 🔹 Apenas apps pinados, mantendo ordem do pin
   const pinnedGroupedEntries = useMemo(() => {
     if (!favorites?.length) return [];
 
@@ -153,14 +242,11 @@ export const Sidebar = () => {
     return (first + last).toUpperCase() || "?";
   })();
 
-
   /* ========================================
      ADMINISTRADOR
   ======================================== */
   const canAccessAdmin =
-    user?.is_superadmin ||
-    user?.permissions?.includes("rbac.manage");  
-
+    user?.is_superadmin || user?.permissions?.includes("rbac.manage");
 
   /* ========================================
      RENDER
@@ -169,12 +255,29 @@ export const Sidebar = () => {
   return (
     <>
       {collapsed && (
-        <button
-          className="sidebar-expand-btn"
-          onClick={() => setCollapsed(false)}
-        >
-          <PanelLeftOpen size={18} />
-        </button>
+        <>
+          <button
+            className={`sidebar-expand-btn ${showEdgeExpand ? "is-visible" : ""}`}
+            onClick={openSidebarFromEdge}
+            onMouseEnter={showEdgeExpandHint}
+            aria-label="Expandir menu lateral"
+            type="button"
+          >
+            <span className="sidebar-expand-btn__icon">
+              <ChevronRight size={18} />
+            </span>
+          </button>
+
+          <button
+            className="sidebar-edge-hotspot"
+            type="button"
+            aria-label="Abrir menu lateral"
+            onMouseEnter={showEdgeExpandHint}
+            onTouchStart={showEdgeExpandHint}
+            onFocus={showEdgeExpandHint}
+            onClick={openSidebarFromEdge}
+          />
+        </>
       )}
 
       <div
@@ -183,7 +286,6 @@ export const Sidebar = () => {
       >
         {!collapsed && (
           <>
-            {/* ================= HEADER ================= */}
             <div className="sidebar-header">
               <div
                 className="sidebar-logo"
@@ -199,12 +301,12 @@ export const Sidebar = () => {
               <button
                 className="collapse-btn"
                 onClick={() => setCollapsed(true)}
+                type="button"
               >
-                <PanelLeftClose size={18} />
+                <ChevronLeft size={18} />
               </button>
             </div>
 
-            {/* ================= APPS PINADOS ================= */}
             <div className="sidebar-content">
               {pinnedGroupedEntries.map(([appId, group]) => {
                 const isOpen = openApps[appId] ?? false;
@@ -233,14 +335,13 @@ export const Sidebar = () => {
               })}
             </div>
 
-            {/* ================= FOOTER ================= */}
             <div className="sidebar-footer">
-            {canAccessAdmin && (
-              <NavLink to="/admin" className="sidebar-footer-item">
-                <Shield size={18} />
-                <span>Admin</span>
-              </NavLink>
-            )}
+              {canAccessAdmin && (
+                <NavLink to="/admin" className="sidebar-footer-item">
+                  <Shield size={18} />
+                  <span>Admin</span>
+                </NavLink>
+              )}
 
               <div
                 className="sidebar-footer-item"
@@ -249,9 +350,7 @@ export const Sidebar = () => {
                 <Bell size={18} />
                 <span>Notificações</span>
                 {unreadCount > 0 && (
-                  <span className="notif-badge">
-                    {unreadCount}
-                  </span>
+                  <span className="notif-badge">{unreadCount}</span>
                 )}
               </div>
 
@@ -261,9 +360,7 @@ export const Sidebar = () => {
                   ref={notifDropdownRef}
                 >
                   {notifications.length === 0 && (
-                    <div className="notif-item">
-                      Sem notificações
-                    </div>
+                    <div className="notif-item">Sem notificações</div>
                   )}
 
                   {notifications.length > 0 && (
@@ -278,12 +375,8 @@ export const Sidebar = () => {
                   {notifications.map((n) => (
                     <div
                       key={n.id}
-                      className={`notif-item ${
-                        !n.read ? "unread" : ""
-                      }`}
-                      onClick={() =>
-                        markNotificationRead(n.id)
-                      }
+                      className={`notif-item ${!n.read ? "unread" : ""}`}
+                      onClick={() => markNotificationRead(n.id)}
                     >
                       {n.message}
                     </div>
@@ -298,6 +391,7 @@ export const Sidebar = () => {
                 <Grid size={18} />
                 <span>Apps</span>
               </div>
+
               <div
                 className="sidebar-footer-item"
                 onClick={() => setThemeOpen(!themeOpen)}
@@ -325,7 +419,7 @@ export const Sidebar = () => {
                       setThemeOpen(false);
                     }}
                   >
-                   <Sun size={18} /> Claro
+                    <Sun size={18} /> Claro
                   </div>
 
                   <div
@@ -345,7 +439,7 @@ export const Sidebar = () => {
                       setThemeOpen(false);
                     }}
                   >
-                   <CircleDashed size={18} /> Sistema
+                    <CircleDashed size={18} /> Sistema
                   </div>
                 </div>
               )}
@@ -354,9 +448,7 @@ export const Sidebar = () => {
                 className="sidebar-footer-item"
                 onClick={() => setUserOpen(!userOpen)}
               >
-                <div className="avatar small">
-                  {initials}
-                </div>
+                <div className="avatar small">{initials}</div>
                 <span>{user?.name}</span>
                 <ChevronDown size={16} />
               </div>
@@ -366,16 +458,17 @@ export const Sidebar = () => {
                   className="dropdown sidebar-user"
                   ref={userDropdownRef}
                 >
-                <div
-                  className="dropdown-item"
-                  onClick={() => {
-                    navigate("/profile");
-                    setUserOpen(false);
-                  }}
-                >
-                  <User size={16}/>
-                  Meu Perfil
-                </div>
+                  <div
+                    className="dropdown-item"
+                    onClick={() => {
+                      navigate("/profile");
+                      setUserOpen(false);
+                    }}
+                  >
+                    <User size={16} />
+                    Meu Perfil
+                  </div>
+
                   <div
                     className="dropdown-item danger"
                     onClick={logout}
