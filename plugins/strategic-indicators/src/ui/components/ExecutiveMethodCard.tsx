@@ -21,7 +21,7 @@ export function ExecutiveMethodCard({
       </p>
 
       <div className="si-method-card__formula">
-        IGD = (FIN × 15%) + (RH × 15%) + (COM × 17%) + (PRD × 17%) + (QLD × 14%)
+        IGD = (FIN × 15%) + (RH × 15%) + (COM × 17%) + (PRO × 17%) + (QUA × 14%)
         + (SUP × 12%) + (ENG × 10%)
       </div>
 
