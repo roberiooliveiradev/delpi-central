@@ -2,6 +2,7 @@
 
 from typing import List, Tuple
 from uuid import UUID
+
 from sqlalchemy import asc, desc, or_
 from sqlalchemy.orm import Session
 
@@ -18,27 +19,39 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
     def __init__(self, session: Session):
         self.session = session
 
+    def _to_dto(self, row: Permission) -> PermissionDTO:
+        return PermissionDTO(
+            id=row.id,
+            code=row.code,
+            name=row.name,
+            description=row.description,
+            module=row.module,
+        )
+
     # ==========================================================
-    # LIST ALL (admin simple list)
+    # LIST ALL
     # ==========================================================
 
     def list_all(self) -> List[PermissionDTO]:
         rows = self.session.query(Permission).all()
-
-        return [
-            PermissionDTO(
-                id=row.id,
-                code=row.code,
-                name=row.name,
-                description=row.description,
-                module=row.module,
-            )
-            for row in rows
-        ]
+        return [self._to_dto(row) for row in rows]
 
     # ==========================================================
-    # PAGINATED LIST (Admin Console)
+    # GET
     # ==========================================================
+
+    def get(self, permission_id: UUID) -> PermissionDTO | None:
+        row = self.session.get(Permission, permission_id)
+
+        if not row:
+            return None
+
+        return self._to_dto(row)
+
+    # ==========================================================
+    # PAGINATED LIST
+    # ==========================================================
+
     def list_paginated(
         self,
         *,
@@ -56,6 +69,7 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
             query = query.filter(
                 or_(
                     Permission.code.ilike(search),
+                    Permission.name.ilike(search),
                     Permission.description.ilike(search),
                     Permission.module.ilike(search),
                 )
@@ -63,7 +77,15 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
 
         total = query.count()
 
-        sort_column = getattr(Permission, sort, Permission.code)
+        sortable_fields = {
+            "code": Permission.code,
+            "name": Permission.name,
+            "description": Permission.description,
+            "module": Permission.module,
+            "created_at": getattr(Permission, "created_at", None),
+        }
+
+        sort_column = sortable_fields.get(sort, Permission.code)
         order = asc(sort_column) if direction == "asc" else desc(sort_column)
 
         rows = (
@@ -74,18 +96,7 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
             .all()
         )
 
-        items = [
-            PermissionDTO(
-                id=row.id,
-                code=row.code,
-                name=row.name,
-                description=row.description,
-                module=row.module,
-            )
-            for row in rows
-        ]
-
-        return items, total
+        return [self._to_dto(row) for row in rows], total
 
     # ==========================================================
     # GET BY CODE
@@ -102,13 +113,7 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
         if not row:
             return None
 
-        return PermissionDTO(
-            id=row.id,
-            code=row.code,
-            name=row.name,
-            description=row.description,
-            module=row.module,
-        )
+        return self._to_dto(row)
 
     # ==========================================================
     # EXISTS
@@ -172,13 +177,4 @@ class SqlAlchemyPermissionRepository(PermissionRepositoryPort):
             .all()
         )
 
-        return [
-            PermissionDTO(
-                id=row.id,
-                code=row.code,
-                name=row.name,
-                description=row.description,
-                module=row.module,
-            )
-            for row in rows
-        ]
+        return [self._to_dto(row) for row in rows]

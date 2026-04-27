@@ -37,6 +37,7 @@ from app.application.use_cases.admin.list_users_use_case import ListUsersUseCase
 from app.application.use_cases.admin.list_roles_use_case import ListRolesUseCase
 from app.application.use_cases.admin.list_groups_use_case import ListGroupsUseCase
 from app.application.use_cases.admin.list_permissions_use_case import ListPermissionsUseCase
+from app.application.use_cases.list_permission_usage_use_case import ListPermissionUsageUseCase
 
 from app.interfaces.http.utils.errors import api_error, server_error
 from app.interfaces.http.security.authorization import (
@@ -930,6 +931,22 @@ def remove_group_from_user(user_id: str, group_id: str):
 # ==========================================================
 # PERMISSIONS
 # ==========================================================
+@rbac_bp.route("/admin/rbac/permissions/<permission_id>/usage", methods=["GET"])
+@require_permission("rbac.manage")
+def get_permission_usage(permission_id: str):
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            uc = ListPermissionUsageUseCase(uow)
+            result = uc.execute(permission_id)
+
+        return jsonify(result), 200
+
+    except ValueError as e:
+        return api_error("not_found", str(e))
+
+    except Exception as e:
+        return server_error(str(e))
+
 
 @rbac_bp.route("/admin/rbac/permissions", methods=["GET"])
 @require_permission("rbac.manage")

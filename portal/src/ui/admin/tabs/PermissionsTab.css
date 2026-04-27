@@ -151,7 +151,8 @@
 }
 
 .permissions-toolbar-actions button,
-.permissions-pagination button {
+.permissions-pagination button,
+.permission-card-actions button {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
@@ -164,17 +165,16 @@
     border-color 0.2s ease,
     color 0.2s ease,
     background 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+    box-shadow 0.2s ease;
 }
 
 .permissions-toolbar-actions button:hover:not(:disabled),
-.permissions-pagination button:hover:not(:disabled) {
+.permissions-pagination button:hover:not(:disabled),
+.permission-card-actions button:hover:not(:disabled) {
   border-color: var(--primary);
   color: var(--primary);
   background: var(--surface-2);
-  box-shadow: var(--focus-2);
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 .permissions-toolbar-actions button:disabled,
@@ -253,7 +253,7 @@
 
 .permissions-module:hover {
   border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.045);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 6%, transparent);
 }
 
 .permissions-module-header {
@@ -320,7 +320,7 @@
 
 .permissions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
   gap: 12px;
   padding: 14px;
   border-top: 1px solid var(--border);
@@ -340,15 +340,13 @@
   transition:
     border-color 0.2s ease,
     background 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+    box-shadow 0.2s ease;
 }
 
 .permission-card:hover {
   border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
   background: var(--surface);
-  box-shadow: var(--shadow);
-  transform: translateY(-2px);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 8%, transparent);
 }
 
 .permission-card-header {
@@ -416,6 +414,135 @@
   padding: 3px 8px;
   font-size: 11px;
   font-weight: 800;
+}
+
+.permission-card-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 2px;
+}
+
+
+/* =========================
+   PERMISSION USAGE
+========================= */
+
+.permission-usage-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+  padding: 10px;
+}
+
+.permission-usage-state {
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-muted);
+  padding: 12px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.permission-usage-error {
+  border-color: var(--alert-danger-border);
+  background: var(--alert-danger-bg);
+  color: var(--danger);
+}
+
+.permission-usage-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.permission-usage-summary span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.permission-usage-summary strong {
+  color: var(--primary);
+}
+
+.permission-usage-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.permission-usage-section > strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.permission-usage-section p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.permission-usage-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.permission-usage-list span {
+  display: inline-flex;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.permission-usage-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.permission-usage-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 8px 10px;
+}
+
+.permission-usage-group span {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.permission-usage-group small {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 

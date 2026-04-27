@@ -43,6 +43,28 @@ export type AdminGroup = {
   description?: string | null;
 };
 
+export type AdminPermissionUsageRole = {
+  id: string;
+  name: string;
+  description?: string | null;
+};
+
+export type AdminPermissionUsageGroup = {
+  id: string;
+  name: string;
+  description?: string | null;
+  via_roles: {
+    id: string;
+    name: string;
+  }[];
+};
+
+export type AdminPermissionUsage = {
+  permission: AdminPermission;
+  roles: AdminPermissionUsageRole[];
+  groups: AdminPermissionUsageGroup[];
+};
+
 export type ListQueryOptions = {
   page?: number;
   pageSize?: number;
@@ -199,13 +221,13 @@ export class AdminApi {
 
   getUserRoles(userId: string) {
     return this.client.get<PaginatedResponse<AdminRole>>(
-      `/core-api/admin/users/${userId}/roles?page=1&page_size=999`
+      `/core-api/admin/users/${userId}/roles`
     );
   }
 
   getUserGroups(userId: string) {
     return this.client.get<PaginatedResponse<AdminGroup>>(
-      `/core-api/admin/users/${userId}/groups?page=1&page_size=999`
+      `/core-api/admin/users/${userId}/groups`
     );
   }
 
@@ -262,7 +284,7 @@ export class AdminApi {
   }
 
   setRolePermissions(roleId: string, permissionIds: string[]) {
-    return this.client.put<{ ok: boolean }>(
+    return this.client.put<AdminRole>(
       `/core-api/admin/rbac/roles/${roleId}/permissions`,
       { permissionIds }
     );
@@ -280,6 +302,12 @@ export class AdminApi {
     );
   }
 
+  getPermissionUsage(permissionId: string) {
+    return this.client.get<AdminPermissionUsage>(
+      `/core-api/admin/rbac/permissions/${permissionId}/usage`
+    );
+  }
+
   /* =========================
      RBAC - GROUPS
   ========================= */
@@ -293,14 +321,14 @@ export class AdminApi {
   }
 
   createGroup(payload: { name: string; description?: string | null }) {
-    return this.client.post<{ id: string }>(
+    return this.client.post<AdminGroup>(
       `/core-api/admin/rbac/groups`,
       payload
     );
   }
 
   updateGroup(groupId: string, payload: Partial<AdminGroup>) {
-    return this.client.put<{ ok: boolean }>(
+    return this.client.put<AdminGroup>(
       `/core-api/admin/rbac/groups/${groupId}`,
       payload
     );
@@ -320,7 +348,7 @@ export class AdminApi {
   }
 
   setGroupRoles(groupId: string, roleIds: string[]) {
-    return this.client.put<{ ok: boolean }>(
+    return this.client.put<AdminGroup>(
       `/core-api/admin/rbac/groups/${groupId}/roles`,
       { roleIds }
     );
@@ -407,52 +435,20 @@ export class AdminApi {
   ========================= */
 
   getRolePermissions(roleId: string) {
-    return this.client.get<PaginatedResponse<AdminPermission>>(
+    return this.client.get<{
+      data: any[];
+      pagination: PaginationMeta;
+    }>(
       `/core-api/admin/rbac/roles/${roleId}/permissions?page=1&page_size=999`
     );
   }
 
   getGroupRoles(groupId: string) {
-    return this.client.get<PaginatedResponse<AdminRole>>(
+    return this.client.get<{
+      data: any[];
+      pagination: PaginationMeta;
+    }>(
       `/core-api/admin/rbac/groups/${groupId}/roles?page=1&page_size=999`
-    );
-  }
-
-  getGroupUsers(groupId: string) {
-    return this.client.get<PaginatedResponse<AdminUser>>(
-      `/core-api/admin/rbac/groups/${groupId}/users?page=1&page_size=999`
-    );
-  }
-
-  addUserToGroup(groupId: string, userId: string) {
-    return this.client.post<{ ok: boolean }>(
-      `/core-api/admin/rbac/groups/${groupId}/users/${userId}`,
-      {}
-    );
-  }
-
-  removeUserFromGroup(groupId: string, userId: string) {
-    return this.client.delete<{ ok: boolean }>(
-      `/core-api/admin/rbac/groups/${groupId}/users/${userId}`
-    );
-  }
-
-  getRoleUsers(roleId: string) {
-    return this.client.get<PaginatedResponse<AdminUser>>(
-      `/core-api/admin/rbac/roles/${roleId}/users?page=1&page_size=999`
-    );
-  }
-
-  addUserToRole(roleId: string, userId: string) {
-    return this.client.post<{ ok: boolean }>(
-      `/core-api/admin/rbac/roles/${roleId}/users/${userId}`,
-      {}
-    );
-  }
-
-  removeUserFromRole(roleId: string, userId: string) {
-    return this.client.delete<{ ok: boolean }>(
-      `/core-api/admin/rbac/roles/${roleId}/users/${userId}`
     );
   }
 }

@@ -5,7 +5,11 @@ import { Package } from "lucide-react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
-import type { AdminApp, AdminPermission } from "../../../data/adminApi";
+import type {
+  AdminApp,
+  AdminPermission,
+  AdminPermissionUsage,
+} from "../../../data/adminApi";
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { resolveIcon } from "../../../utils/iconResolver";
 import "./PermissionsTab.css";
@@ -23,6 +27,12 @@ type GroupedPermissionModule = {
   appName: string;
   icon?: string | null;
   permissions: AdminPermission[];
+};
+
+type PermissionUsageState = {
+  loading: boolean;
+  data?: AdminPermissionUsage;
+  error?: string;
 };
 
 const MODULES_PER_PAGE = 6;
@@ -70,6 +80,11 @@ export const PermissionsTab = () => {
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [appInfoByModule, setAppInfoByModule] = useState<AppInfoByModule>({});
   const [modulePage, setModulePage] = useState(1);
+
+  const [expandedUsageIds, setExpandedUsageIds] = useState<string[]>([]);
+  const [usageByPermissionId, setUsageByPermissionId] = useState<
+    Record<string, PermissionUsageState>
+  >({});
 
   const api = useMemo(() => {
     return new AdminApi(new ApiClient("", getAccessToken));
@@ -130,7 +145,6 @@ export const PermissionsTab = () => {
 
   const filteredPermissions = useMemo(() => {
     const term = normalizeText(search);
-
     const permissions = permsResource.data ?? [];
 
     if (!term) return permissions;
@@ -148,7 +162,7 @@ export const PermissionsTab = () => {
     });
   }, [permsResource.data, search, appInfoByModule]);
 
-  const groupedPermissions = useMemo<GroupedPermissionModule[]>(() => {
+  const groupedPermissions = useMemo<GroupedPermissionModule[]>((() => {
     const groups = new Map<string, AdminPermission[]>();
 
     for (const permission of filteredPermissions) {
@@ -178,7 +192,7 @@ export const PermissionsTab = () => {
         };
       })
       .sort((a, b) => a.appName.localeCompare(b.appName));
-  }, [filteredPermissions, appInfoByModule]);
+  }) as () => GroupedPermissionModule[], [filteredPermissions, appInfoByModule]);
 
   const totalModules = groupedPermissions.length;
   const totalPages = Math.max(1, Math.ceil(totalModules / MODULES_PER_PAGE));
@@ -271,6 +285,52 @@ export const PermissionsTab = () => {
     }
 
     return meta;
+  };
+
+  const loadPermissionUsage = async (permissionId: string) => {
+    setUsageByPermissionId((prev) => ({
+      ...prev,
+      [permissionId]: {
+        loading: true,
+        data: prev[permissionId]?.data,
+      },
+    }));
+
+    try {
+      const usage = await api.getPermissionUsage(permissionId);
+
+      setUsageByPermissionId((prev) => ({
+        ...prev,
+        [permissionId]: {
+          loading: false,
+          data: usage,
+        },
+      }));
+    } catch {
+      setUsageByPermissionId((prev) => ({
+        ...prev,
+        [permissionId]: {
+          loading: false,
+          error: "Não foi possível carregar o uso desta permissão.",
+        },
+      }));
+    }
+  };
+
+  const togglePermissionUsage = (permissionId: string) => {
+    const nextExpanded = expandedUsageIds.includes(permissionId)
+      ? expandedUsageIds.filter((id) => id !== permissionId)
+      : [...expandedUsageIds, permissionId];
+
+    setExpandedUsageIds(nextExpanded);
+
+    const shouldOpen = !expandedUsageIds.includes(permissionId);
+    const alreadyLoaded = usageByPermissionId[permissionId]?.data;
+    const isLoading = usageByPermissionId[permissionId]?.loading;
+
+    if (shouldOpen && !alreadyLoaded && !isLoading) {
+      loadPermissionUsage(permissionId);
+    }
   };
 
   return (
@@ -385,6 +445,10 @@ export const PermissionsTab = () => {
                       {group.permissions.map((permission) => {
                         const appInfo = getPermissionAppInfo(permission);
                         const PermissionIcon = getModuleIcon(appInfo?.icon);
+                        const usageState = usageByPermissionId[permission.id];
+                        const usageExpanded = expandedUsageIds.includes(
+                          permission.id
+                        );
 
                         return (
                           <article
@@ -423,6 +487,98 @@ export const PermissionsTab = () => {
                                 </span>
                               ))}
                             </div>
+
+                            <div className="permission-card-actions">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  togglePermissionUsage(permission.id)
+                                }
+                              >
+                                {usageExpanded ? "Ocultar uso" : "Ver uso"}
+                              </button>
+                            </div>
+
+                            {usageExpanded && (
+                              <div className="permission-usage-panel">
+                                {usageState?.loading && (
+                                  <div className="permission-usage-state">
+                                    Carregando uso da permissão...
+                                  </div>
+                                )}
+
+                                {usageState?.error && (
+                                  <div className="permission-usage-state permission-usage-error">
+                                    {usageState.error}
+                                  </div>
+                                )}
+
+                                {usageState?.data && (
+                                  <>
+                                    <div className="permission-usage-summary">
+                                      <span>
+                                        <strong>
+                                          {usageState.data.roles.length}
+                                        </strong>{" "}
+                                        papéis
+                                      </span>
+
+                                      <span>
+                                        <strong>
+                                          {usageState.data.groups.length}
+                                        </strong>{" "}
+                                        grupos
+                                      </span>
+                                    </div>
+
+                                    <div className="permission-usage-section">
+                                      <strong>Papéis com esta permissão</strong>
+
+                                      {usageState.data.roles.length === 0 ? (
+                                        <p>Nenhum papel vinculado.</p>
+                                      ) : (
+                                        <div className="permission-usage-list">
+                                          {usageState.data.roles.map((role) => (
+                                            <span key={role.id}>
+                                              {role.name}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    <div className="permission-usage-section">
+                                      <strong>
+                                        Grupos que herdam esta permissão
+                                      </strong>
+
+                                      {usageState.data.groups.length === 0 ? (
+                                        <p>Nenhum grupo herdando.</p>
+                                      ) : (
+                                        <div className="permission-usage-groups">
+                                          {usageState.data.groups.map(
+                                            (group) => (
+                                              <div
+                                                key={group.id}
+                                                className="permission-usage-group"
+                                              >
+                                                <span>{group.name}</span>
+                                                <small>
+                                                  via{" "}
+                                                  {group.via_roles
+                                                    .map((role) => role.name)
+                                                    .join(", ")}
+                                                </small>
+                                              </div>
+                                            )
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )}
                           </article>
                         );
                       })}

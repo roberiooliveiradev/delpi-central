@@ -19,13 +19,22 @@ class PermissionRepositoryPort(Protocol):
     def list_all(self) -> List[PermissionDTO]:
         ...
 
+    def get(self, permission_id: UUID) -> PermissionDTO | None:
+        ...
+
     def get_by_code(self, code: str) -> PermissionDTO | None:
         ...
 
     def exists_by_code(self, code: str) -> bool:
         ...
 
-    def create(self, code: str, name: str, module: str, description: str | None) -> UUID:
+    def create(
+        self,
+        code: str,
+        name: str,
+        module: str,
+        description: str | None,
+    ) -> UUID:
         ...
 
     def delete(self, permission_id: UUID) -> None:
@@ -33,7 +42,7 @@ class PermissionRepositoryPort(Protocol):
 
     def list_by_module(self, module: str) -> List[PermissionDTO]:
         ...
-    
+
     def list_paginated(
         self,
         *,
@@ -43,4 +52,4 @@ class PermissionRepositoryPort(Protocol):
         sort: str,
         direction: str,
     ) -> Tuple[List[PermissionDTO], int]:
-            ...
+        ...
