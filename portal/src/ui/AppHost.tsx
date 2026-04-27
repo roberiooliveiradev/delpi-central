@@ -2,10 +2,8 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import type { AppItem, RouteItem } from "../data/coreApi";
+import { useGoogleEmbeddedAppLogin, isGoogleHostedApp } from "../hooks/useGoogleEmbeddedAppLogin";
 import { pushRecentApp } from "../utils/recentApps";
-
-const GOOGLE_LOGIN_POPUP_NAME = "delpi-google-login";
-const GOOGLE_AUTO_LOGIN_DELAY_MS = 1200;
 
 function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -19,26 +17,6 @@ function getUrlOrigin(url: string | undefined) {
   } catch {
     return window.location.origin;
   }
-}
-
-function isGoogleHostedApp(url: string | undefined) {
-  if (!url) return false;
-
-  try {
-    const parsed = new URL(url, window.location.origin);
-
-    return (
-      parsed.hostname === "script.google.com" ||
-      parsed.hostname.endsWith(".googleusercontent.com") ||
-      parsed.hostname.endsWith(".google.com")
-    );
-  } catch {
-    return false;
-  }
-}
-
-function buildGoogleLoginUrl() {
-  return "https://accounts.google.com/AccountChooser";
 }
 
 async function loadFederatedContainer(entryUrl: string) {
@@ -64,13 +42,9 @@ export const AppHost = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const federatedHostRef = useRef<HTMLDivElement>(null);
   const mountedModuleRef = useRef<any>(null);
-  const googleLoginPopupRef = useRef<Window | null>(null);
-  const googleAutoLoginAttemptedRef = useRef<string | null>(null);
 
   const [federatedError, setFederatedError] = useState<string | null>(null);
   const [iframeReloadKey, setIframeReloadKey] = useState(0);
-  const [showGoogleHelp, setShowGoogleHelp] = useState(false);
-  const [googlePopupBlocked, setGooglePopupBlocked] = useState(false);
 
   const app = useMemo(() => {
     return (
@@ -112,42 +86,18 @@ export const AppHost = () => {
     setIframeReloadKey((current) => current + 1);
   }
 
-  function openGoogleLogin() {
-    const popup = window.open(
-      buildGoogleLoginUrl(),
-      GOOGLE_LOGIN_POPUP_NAME,
-      "width=560,height=760"
-    );
-
-    setShowGoogleHelp(true);
-
-    if (!popup) {
-      setGooglePopupBlocked(true);
-      return;
-    }
-
-    setGooglePopupBlocked(false);
-    googleLoginPopupRef.current = popup;
-
-    const timer = window.setInterval(() => {
-      if (!popup.closed) return;
-
-      window.clearInterval(timer);
-
-      if (googleLoginPopupRef.current === popup) {
-        googleLoginPopupRef.current = null;
-      }
-
-      setShowGoogleHelp(false);
-      reloadIframe();
-    }, 800);
-  }
-
   function openAppInNewTab() {
     if (!resolvedEntry) return;
 
     window.open(resolvedEntry, "_blank", "noopener,noreferrer");
   }
+
+  const googleLogin = useGoogleEmbeddedAppLogin({
+    enabled: Boolean(isGoogleApp),
+    pathname: location.pathname,
+    resolvedEntry,
+    onReloadIframe: reloadIframe,
+  });
 
   useEffect(() => {
     if (app?.id) {
@@ -166,11 +116,7 @@ export const AppHost = () => {
   }, [app?.renderMode]);
 
   useEffect(() => {
-    setShowGoogleHelp(false);
-    setGooglePopupBlocked(false);
     setIframeReloadKey(0);
-
-    googleLoginPopupRef.current = null;
   }, [app?.id, location.pathname, resolvedEntry]);
 
   useEffect(() => {
@@ -181,23 +127,6 @@ export const AppHost = () => {
     window.open(resolvedEntry, "_blank", "noopener,noreferrer");
     navigate("/", { replace: true });
   }, [app, resolvedEntry, navigate]);
-
-  useEffect(() => {
-    if (!isGoogleApp) return;
-    if (!resolvedEntry) return;
-
-    const attemptKey = `${location.pathname}|${resolvedEntry}`;
-
-    if (googleAutoLoginAttemptedRef.current === attemptKey) return;
-
-    googleAutoLoginAttemptedRef.current = attemptKey;
-
-    const timer = window.setTimeout(() => {
-      openGoogleLogin();
-    }, GOOGLE_AUTO_LOGIN_DELAY_MS);
-
-    return () => window.clearTimeout(timer);
-  }, [isGoogleApp, location.pathname, resolvedEntry]);
 
   useEffect(() => {
     if (!iframeRef.current) return;
@@ -339,23 +268,23 @@ export const AppHost = () => {
 
     return (
       <div className="app-host app-host-embedded">
-        {isGoogleApp ? (
+        {isGoogleApp && googleLogin.barVisible ? (
           <div className="app-host-google-bar">
             <div className="app-host-google-info">
               <div className="app-host-google-title">Aplicação Google</div>
 
               <div className="app-host-google-description">
-                Se o Google negar acesso, o login será solicitado automaticamente.
+                Se o Google negar acesso, entre com sua conta em uma nova aba.
               </div>
 
-              {showGoogleHelp ? (
+              {googleLogin.showHelp ? (
                 <div className="app-host-google-help">
-                  Após concluir o login, feche a janela aberta. O aplicativo será
+                  Após concluir o login, volte para esta aba. O aplicativo será
                   recarregado automaticamente.
                 </div>
               ) : null}
 
-              {googlePopupBlocked ? (
+              {googleLogin.popupBlocked ? (
                 <div className="app-host-google-warning">
                   O navegador bloqueou a abertura automática do login. Clique em
                   “Entrar no Google”.
@@ -367,7 +296,7 @@ export const AppHost = () => {
               <button
                 type="button"
                 className="app-host-google-button"
-                onClick={openGoogleLogin}
+                onClick={googleLogin.openGoogleLogin}
               >
                 Entrar no Google
               </button>
@@ -387,8 +316,28 @@ export const AppHost = () => {
               >
                 Abrir em nova aba
               </button>
+
+              <button
+                type="button"
+                className="app-host-google-button app-host-google-close-button"
+                onClick={googleLogin.closeBar}
+                aria-label="Fechar barra de opções do Google"
+                title="Fechar"
+              >
+                Fechar
+              </button>
             </div>
           </div>
+        ) : null}
+
+        {isGoogleApp && !googleLogin.barVisible && googleLogin.optionsAvailable ? (
+          <button
+            type="button"
+            className="app-host-google-floating-button"
+            onClick={googleLogin.showBar}
+          >
+            Opções Google
+          </button>
         ) : null}
 
         <iframe

@@ -261,6 +261,7 @@ body.portal-has-embedded-app .content {
 ========================================= */
 
 .app-host-embedded {
+  position: relative;
   display: flex;
   flex-direction: column;
 }
@@ -276,6 +277,7 @@ body.portal-has-embedded-app .content {
   color: var(--text);
   font-size: 13px;
   flex: 0 0 auto;
+  z-index: 4;
 }
 
 .app-host-google-info {
@@ -295,6 +297,10 @@ body.portal-has-embedded-app .content {
   color: var(--text-muted);
 }
 
+.app-host-google-warning {
+  color: var(--danger);
+}
+
 .app-host-google-actions {
   display: flex;
   align-items: center;
@@ -312,12 +318,45 @@ body.portal-has-embedded-app .content {
   transition:
     background 0.2s ease,
     box-shadow 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    color 0.2s ease;
   white-space: nowrap;
 }
 
 .app-host-google-button:hover {
   background: var(--surface-3);
+  box-shadow: var(--focus-2);
+  transform: translateY(-1px);
+}
+
+.app-host-google-close-button {
+  color: var(--text-muted);
+}
+
+.app-host-google-close-button:hover {
+  color: var(--danger);
+}
+
+.app-host-google-floating-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.app-host-google-floating-button:hover {
+  background: var(--surface-2);
   box-shadow: var(--focus-2);
   transform: translateY(-1px);
 }
