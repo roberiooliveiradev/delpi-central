@@ -199,13 +199,13 @@ export class AdminApi {
 
   getUserRoles(userId: string) {
     return this.client.get<PaginatedResponse<AdminRole>>(
-      `/core-api/admin/users/${userId}/roles`
+      `/core-api/admin/users/${userId}/roles?page=1&page_size=999`
     );
   }
 
   getUserGroups(userId: string) {
     return this.client.get<PaginatedResponse<AdminGroup>>(
-      `/core-api/admin/users/${userId}/groups`
+      `/core-api/admin/users/${userId}/groups?page=1&page_size=999`
     );
   }
 

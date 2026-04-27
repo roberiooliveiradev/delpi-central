@@ -1,5 +1,6 @@
 // src/ui/admin/modals/UserRbacModal.tsx
-import { useEffect, useState, useMemo } from "react";
+
+import { useEffect, useState } from "react";
 import type {
   AdminGroup,
   AdminRole,
@@ -7,8 +8,10 @@ import type {
 } from "../../../data/adminApi";
 import { AdminApi } from "../../../data/adminApi";
 import { Modal } from "../../../components/Modal";
+import { RelationshipPicker } from "../../../components/RelationshipPicker";
 import "./UserRbacModal.css";
-import { DataTable } from "../../../components/DataTable";
+
+type UserRbacTab = "summary" | "roles" | "groups";
 
 type Props = {
   open: boolean;
@@ -16,6 +19,25 @@ type Props = {
   user: AdminUser | null;
   api: AdminApi;
   onSaved: () => void;
+};
+
+const normalizeIds = (items: unknown[]): string[] => {
+  return items
+    .map((item) => {
+      if (typeof item === "string") return item;
+
+      if (
+        item &&
+        typeof item === "object" &&
+        "id" in item &&
+        typeof (item as { id?: unknown }).id === "string"
+      ) {
+        return (item as { id: string }).id;
+      }
+
+      return null;
+    })
+    .filter((id): id is string => !!id);
 };
 
 export const UserRbacModal = ({
@@ -26,6 +48,7 @@ export const UserRbacModal = ({
   onSaved,
 }: Props) => {
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<UserRbacTab>("summary");
 
   const [roles, setRoles] = useState<AdminRole[]>([]);
   const [groups, setGroups] = useState<AdminGroup[]>([]);
@@ -34,22 +57,6 @@ export const UserRbacModal = ({
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
 
-  const [roleSearch, setRoleSearch] = useState("");
-  const [groupSearch, setGroupSearch] = useState("");
-  const [rolePage, setRolePage] = useState(1);
-  const [groupPage, setGroupPage] = useState(1);
-
-  const [rolePageSize, setRolePageSize] = useState(10);
-  const [groupPageSize, setGroupPageSize] = useState(10);
-
-  useEffect(() => {
-    setRolePage(1);
-  }, [roleSearch]);
-
-  useEffect(() => {
-    setGroupPage(1);
-  }, [groupSearch]);
-
   useEffect(() => {
     if (!open || !user) return;
 
@@ -57,6 +64,7 @@ export const UserRbacModal = ({
 
     const load = async () => {
       setLoading(true);
+
       try {
         const [
           allRolesRes,
@@ -74,9 +82,10 @@ export const UserRbacModal = ({
 
         setRoles(allRolesRes.data ?? []);
         setGroups(allGroupsRes.data ?? []);
-        setSelectedRoleIds((userRolesRes.data ?? []).map((r) => r.id));
-        setSelectedGroupIds((userGroupsRes.data ?? []).map((g) => g.id));
+        setSelectedRoleIds(normalizeIds(userRolesRes.data ?? []));
+        setSelectedGroupIds(normalizeIds(userGroupsRes.data ?? []));
         setIsSuperadmin(!!user.is_superadmin);
+        setActiveTab("summary");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -89,80 +98,26 @@ export const UserRbacModal = ({
     };
   }, [open, user, api]);
 
-  const filteredRoles = useMemo(() => {
-    const base = roleSearch
-      ? roles.filter((r) =>
-          r.name.toLowerCase().includes(roleSearch.toLowerCase())
-        )
-      : roles;
-
-    return [...base].sort((a, b) => {
-      const aSelected = selectedRoleIds.includes(a.id);
-      const bSelected = selectedRoleIds.includes(b.id);
-
-      if (aSelected && !bSelected) return -1;
-      if (!aSelected && bSelected) return 1;
-
-      return a.name.localeCompare(b.name);
-    });
-  }, [roles, roleSearch, selectedRoleIds]);
-
-  const filteredGroups = useMemo(() => {
-    const base = groupSearch
-      ? groups.filter((g) =>
-          g.name.toLowerCase().includes(groupSearch.toLowerCase())
-        )
-      : groups;
-
-    return [...base].sort((a, b) => {
-      const aSelected = selectedGroupIds.includes(a.id);
-      const bSelected = selectedGroupIds.includes(b.id);
-
-      if (aSelected && !bSelected) return -1;
-      if (!aSelected && bSelected) return 1;
-
-      return a.name.localeCompare(b.name);
-    });
-  }, [groups, groupSearch, selectedGroupIds]);
-
-  // 🔹 Paginação ROLES
-  const paginatedRoles = useMemo(() => {
-    const start = (rolePage - 1) * rolePageSize;
-    return filteredRoles.slice(start, start + rolePageSize);
-  }, [filteredRoles, rolePage, rolePageSize]);
-
-  const roleTotalPages = Math.max(
-    1,
-    Math.ceil(filteredRoles.length / rolePageSize)
-  );
-
-  // 🔹 Paginação GROUPS
-  const paginatedGroups = useMemo(() => {
-    const start = (groupPage - 1) * groupPageSize;
-    return filteredGroups.slice(start, start + groupPageSize);
-  }, [filteredGroups, groupPage, groupPageSize]);
-
-  const groupTotalPages = Math.max(
-    1,
-    Math.ceil(filteredGroups.length / groupPageSize)
-  );
-
   if (!open || !user) return null;
 
   const save = async () => {
     setLoading(true);
+
     try {
       await api.updateUser(user.id, {
-        roleIds: selectedRoleIds,
-        groupIds: selectedGroupIds,
+        roleIds: normalizeIds(selectedRoleIds),
+        groupIds: normalizeIds(selectedGroupIds),
         is_superadmin: isSuperadmin,
       });
+
       onSaved();
       onClose();
     } finally {
       setLoading(false);
     }
   };
+
+  const userStatusLabel = user.active === false ? "Inativo" : "Ativo";
 
   return (
     <Modal
@@ -175,108 +130,187 @@ export const UserRbacModal = ({
           <button onClick={onClose} disabled={loading}>
             Cancelar
           </button>
+
           <button onClick={save} disabled={loading}>
             Salvar
           </button>
         </>
       }
     >
-      <div className="superadmin-row">
-        <input
-          type="checkbox"
-          checked={isSuperadmin}
-          onChange={(e) => setIsSuperadmin(e.target.checked)}
-          disabled={loading}
-        />
-        <span>Superadmin</span>
-      </div>
+      <div className="user-rbac-body">
+        <div className="tabs">
+          <button
+            type="button"
+            className={activeTab === "summary" ? "active" : ""}
+            onClick={() => setActiveTab("summary")}
+          >
+            Resumo
+          </button>
 
-      <div className="rbac-grid">
-        {/* ROLES */}
-        <div className="rbac-column">
-          <DataTable<AdminRole>
-            columns={[
-              { key: "name", header: "Nome", sortable: true },
-              {
-                key: "description",
-                header: "Descrição",
-                render: (r) => r.description ?? "-",
-              },
-            ]}
-            data={paginatedRoles}
-            loading={loading}
-            searchValue={roleSearch}
-            onSearchChange={setRoleSearch}
-            selectable
-            getRowId={(r) => r.id}
-            selectedRows={selectedRoleIds}
-            onSelectionChange={setSelectedRoleIds}
-            pagination={{
-              page: rolePage,
-              totalPages: roleTotalPages,
-              total: filteredRoles.length,
-              pageSize: rolePageSize,
-            }}
-            onPageChange={setRolePage}
-            onPageSizeChange={(size) => {
-              setRolePageSize(size);
-              setRolePage(1);
-            }}
-            pageSizeOptions={[5, 10, 20, 50]}
-            emptyText="Nenhum papel encontrado"
-            toolbar={
-              <>
-                <h4>Papéis do usuário</h4>
-                <div className="dt-muted">
-                  {filteredRoles.length} de {roles.length} papéis
-                </div>
-              </>
-            }
-          />
+          <button
+            type="button"
+            className={activeTab === "roles" ? "active" : ""}
+            onClick={() => setActiveTab("roles")}
+          >
+            Papéis diretos
+          </button>
+
+          <button
+            type="button"
+            className={activeTab === "groups" ? "active" : ""}
+            onClick={() => setActiveTab("groups")}
+          >
+            Grupos
+          </button>
         </div>
 
-        {/* GROUPS */}
-        <div className="rbac-column">
-          <DataTable<AdminGroup>
-            columns={[
-              { key: "name", header: "Nome", sortable: true },
-              {
-                key: "description",
-                header: "Descrição",
-                render: (g) => g.description ?? "-",
-              },
-            ]}
-            data={paginatedGroups}
-            loading={loading}
-            searchValue={groupSearch}
-            onSearchChange={setGroupSearch}
-            selectable
-            getRowId={(g) => g.id}
-            selectedRows={selectedGroupIds}
-            onSelectionChange={setSelectedGroupIds}
-            pagination={{
-              page: groupPage,
-              totalPages: groupTotalPages,
-              total: filteredGroups.length,
-              pageSize: groupPageSize,
-            }}
-            onPageChange={setGroupPage}
-            onPageSizeChange={(size) => {
-              setGroupPageSize(size);
-              setGroupPage(1);
-            }}
-            pageSizeOptions={[5, 10, 20, 50]}
-            emptyText="Nenhum grupo encontrado"
-            toolbar={
-              <>
-                <h4>Grupos do usuário</h4>
-                <div className="dt-muted">
-                  {filteredGroups.length} de {groups.length} grupos
+        {activeTab === "summary" && (
+          <div className="user-rbac-summary">
+            <div className="user-rbac-summary-grid">
+              <section className="user-rbac-panel">
+                <div className="user-rbac-panel-header">
+                  <div>
+                    <h4>Usuário</h4>
+                    <p>Identidade sincronizada pelo provedor de autenticação.</p>
+                  </div>
+
+                  <span
+                    className={[
+                      "user-rbac-status",
+                      user.active === false
+                        ? "user-rbac-status-danger"
+                        : "user-rbac-status-success",
+                    ].join(" ")}
+                  >
+                    {userStatusLabel}
+                  </span>
                 </div>
-              </>
-            }
+
+                <div className="user-rbac-info-list">
+                  <div className="user-rbac-info-item">
+                    <span>Nome</span>
+                    <strong>{user.name || "-"}</strong>
+                  </div>
+
+                  <div className="user-rbac-info-item">
+                    <span>Email</span>
+                    <strong>{user.email}</strong>
+                  </div>
+
+                  <div className="user-rbac-info-item">
+                    <span>Status</span>
+                    <strong>{userStatusLabel}</strong>
+                  </div>
+                </div>
+              </section>
+
+              <section className="user-rbac-panel">
+                <div className="user-rbac-panel-header">
+                  <div>
+                    <h4>Acessos</h4>
+                    <p>Resumo dos vínculos diretos configurados no RBAC.</p>
+                  </div>
+                </div>
+
+                <div className="user-rbac-stat-grid">
+                  <button
+                    type="button"
+                    className="user-rbac-stat-card"
+                    onClick={() => setActiveTab("roles")}
+                  >
+                    <strong>{selectedRoleIds.length}</strong>
+                    <span>Papéis diretos</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="user-rbac-stat-card"
+                    onClick={() => setActiveTab("groups")}
+                  >
+                    <strong>{selectedGroupIds.length}</strong>
+                    <span>Grupos</span>
+                  </button>
+                </div>
+              </section>
+            </div>
+
+            <section
+              className={[
+                "user-rbac-superadmin-card",
+                isSuperadmin ? "active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              <div className="user-rbac-superadmin-content">
+                <div className="user-rbac-superadmin-icon">★</div>
+
+                <div>
+                  <h4>Privilégio administrativo</h4>
+                  <strong>Superadmin</strong>
+                  <p>
+                    Concede acesso administrativo completo, independentemente
+                    dos papéis, grupos ou permissões vinculadas ao usuário.
+                  </p>
+                </div>
+              </div>
+
+              <label className="user-rbac-switch">
+                <input
+                  type="checkbox"
+                  checked={isSuperadmin}
+                  onChange={(event) => setIsSuperadmin(event.target.checked)}
+                  disabled={loading}
+                />
+                <span className="user-rbac-switch-control" />
+                <span className="user-rbac-switch-label">
+                  {isSuperadmin ? "Ativado" : "Desativado"}
+                </span>
+              </label>
+            </section>
+
+            <div className="user-rbac-alert">
+              Papéis diretos são concedidos diretamente ao usuário. Grupos podem
+              conceder papéis adicionais de forma indireta.
+            </div>
+          </div>
+        )}
+
+        {activeTab === "roles" && (
+          <RelationshipPicker<AdminRole>
+            title="Papéis diretos do Usuário"
+            availableTitle="Papéis disponíveis"
+            selectedTitle="Papéis vinculados ao usuário"
+            searchPlaceholder="Buscar papel..."
+            emptyAvailableText="Nenhum papel disponível para adicionar."
+            emptySelectedText="Nenhum papel direto vinculado a este usuário."
+            items={roles}
+            selectedIds={selectedRoleIds}
+            disabled={loading}
+            getId={(role) => role.id}
+            getTitle={(role) => role.name}
+            getDescription={(role) => role.description ?? null}
+            onChange={setSelectedRoleIds}
           />
-        </div>
+        )}
+
+        {activeTab === "groups" && (
+          <RelationshipPicker<AdminGroup>
+            title="Grupos do Usuário"
+            availableTitle="Grupos disponíveis"
+            selectedTitle="Grupos vinculados ao usuário"
+            searchPlaceholder="Buscar grupo..."
+            emptyAvailableText="Nenhum grupo disponível para adicionar."
+            emptySelectedText="Nenhum grupo vinculado a este usuário."
+            items={groups}
+            selectedIds={selectedGroupIds}
+            disabled={loading}
+            getId={(group) => group.id}
+            getTitle={(group) => group.name}
+            getDescription={(group) => group.description ?? null}
+            onChange={setSelectedGroupIds}
+          />
+        )}
       </div>
     </Modal>
   );

@@ -1,5 +1,344 @@
+/* src/ui/admin/modals/UserRbacModal.css */
+
 /* =========================
-   Helpers p/ RBAC modal
+   USER RBAC MODAL
+========================= */
+
+.user-rbac-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.user-rbac-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+
+/* =========================
+   SUMMARY GRID
+========================= */
+
+.user-rbac-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 14px;
+}
+
+.user-rbac-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  padding: 16px;
+
+  min-width: 0;
+}
+
+.user-rbac-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.user-rbac-panel-header h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.user-rbac-panel-header p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+
+/* =========================
+   USER INFO
+========================= */
+
+.user-rbac-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-rbac-info-item {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+  padding: 12px;
+}
+
+.user-rbac-info-item span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.user-rbac-info-item strong {
+  color: var(--text);
+  font-size: 14px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+.user-rbac-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 10px;
+
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.user-rbac-status-success {
+  border-color: var(--alert-success-border);
+  background: var(--alert-success-bg);
+  color: var(--success);
+}
+
+.user-rbac-status-danger {
+  border-color: var(--alert-danger-border);
+  background: var(--alert-danger-bg);
+  color: var(--danger);
+}
+
+
+/* =========================
+   ACCESS STATS
+========================= */
+
+.user-rbac-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.user-rbac-stat-card {
+  width: 100%;
+  min-height: 82px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 14px;
+
+  text-align: left;
+}
+
+.user-rbac-stat-card:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: var(--focus-2);
+}
+
+.user-rbac-stat-card strong {
+  color: var(--primary);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.user-rbac-stat-card span {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* =========================
+   SUPERADMIN CARD
+========================= */
+
+.user-rbac-superadmin-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  padding: 16px;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.user-rbac-superadmin-card.active {
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
+  background: var(--surface);
+  box-shadow: var(--focus-2);
+}
+
+.user-rbac-superadmin-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.user-rbac-superadmin-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid color-mix(in srgb, var(--primary) 42%, var(--border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  color: var(--primary);
+
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.user-rbac-superadmin-content h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.user-rbac-superadmin-content strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.user-rbac-superadmin-content p {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+
+/* =========================
+   SWITCH
+========================= */
+
+.user-rbac-switch {
+  flex: 0 0 auto;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  padding: 8px 12px;
+
+  cursor: pointer;
+  user-select: none;
+}
+
+.user-rbac-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.user-rbac-switch-control {
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+
+  position: relative;
+  background: var(--border-2);
+  transition: background 0.2s ease;
+}
+
+.user-rbac-switch-control::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+
+  background: var(--surface);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+
+  transition: transform 0.2s ease;
+}
+
+.user-rbac-switch input:checked + .user-rbac-switch-control {
+  background: var(--primary);
+}
+
+.user-rbac-switch input:checked + .user-rbac-switch-control::after {
+  transform: translateX(18px);
+}
+
+.user-rbac-switch input:disabled + .user-rbac-switch-control {
+  opacity: 0.55;
+}
+
+.user-rbac-switch-label {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+
+/* =========================
+   ALERT
+========================= */
+
+.user-rbac-alert {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+
+/* =========================
+   LEGACY / FALLBACK HELPERS
 ========================= */
 
 .superadmin-row {
@@ -10,13 +349,12 @@
   padding: 14px 18px;
   border-radius: 16px;
 
-  background: color-mix(in srgb, var(--primary) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
 
   color: var(--text);
 }
 
-/* checkbox alinhado */
 .superadmin-row input[type="checkbox"] {
   margin: 0;
   width: 16px;
@@ -24,27 +362,11 @@
   accent-color: var(--primary);
 }
 
-
-/* =========================
-   GRID
-========================= */
-
 .rbac-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
-
-@media (max-width: 900px) {
-  .rbac-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-
-/* =========================
-   COLUMN CARD
-========================= */
 
 .rbac-column {
   display: flex;
@@ -57,7 +379,7 @@
   border: 1px solid var(--border);
   background: var(--surface-2);
 
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--shadow) 20%, transparent);
+  box-shadow: none;
 }
 
 .rbac-column h4 {
@@ -71,11 +393,6 @@
   font-size: 13px;
   color: var(--text-muted);
 }
-
-
-/* =========================
-   SEARCH
-========================= */
 
 .rbac-search {
   display: flex;
@@ -110,11 +427,6 @@
   color: var(--control-placeholder);
 }
 
-
-/* =========================
-   CHECKBOX LIST (fallback se usar)
-========================= */
-
 .checkbox-list {
   display: flex;
   flex-direction: column;
@@ -144,21 +456,11 @@
   accent-color: var(--primary);
 }
 
-
-/* =========================
-   EMPTY STATE
-========================= */
-
 .dt-empty {
   font-size: 13px;
   color: var(--text-muted);
   padding: 8px 4px;
 }
-
-
-/* =========================
-   DataTable adjustments inside modal
-========================= */
 
 .rbac-column .datatable-wrapper {
   margin: 0;
@@ -170,4 +472,44 @@
 
 .rbac-column .datatable-container {
   border-radius: 14px;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 980px) {
+  .user-rbac-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-rbac-superadmin-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .user-rbac-switch {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .rbac-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .user-rbac-info-item {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .user-rbac-info-item strong {
+    text-align: left;
+  }
+
+  .user-rbac-panel-header {
+    flex-direction: column;
+  }
 }

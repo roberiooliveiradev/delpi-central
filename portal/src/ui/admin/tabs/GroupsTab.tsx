@@ -1,16 +1,30 @@
 // src/ui/admin/tabs/GroupsTab.tsx
 
 import { useContext, useMemo, useState } from "react";
+import {
+  Edit,
+  ShieldCheck,
+  Trash2,
+  UsersRound,
+} from "lucide-react";
+
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
-import type { AdminGroup, AdminRole, AdminUser } from "../../../data/adminApi";
+import type {
+  AdminGroup,
+  AdminRole,
+  AdminUser,
+} from "../../../data/adminApi";
 
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
-import { DataTable } from "../../../components/DataTable";
-import { ActionButtons } from "../../../components/ActionButtons";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
+import { AdminEntityList } from "../../../components/admin/AdminEntityList";
 import { GroupEditModal } from "../modals/GroupEditModal";
+
+type GroupSortField = "name" | "description";
+
+const PAGE_SIZE = 10;
 
 const normalizeIds = (items: unknown[]): string[] => {
   return items
@@ -31,6 +45,21 @@ const normalizeIds = (items: unknown[]): string[] => {
     .filter((id): id is string => !!id);
 };
 
+const getGroupInitials = (group: AdminGroup) => {
+  const source = group.name?.trim() || "Grupo";
+
+  const parts = source
+    .split(" ")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+
+  return source.slice(0, 2).toUpperCase();
+};
+
 export const GroupsTab = () => {
   const { getAccessToken } = useContext(AuthContext);
 
@@ -49,9 +78,12 @@ export const GroupsTab = () => {
 
   const [saving, setSaving] = useState(false);
 
-  const [sortState, setSortState] = useState({
+  const [sortState, setSortState] = useState<{
+    sort: GroupSortField;
+    direction: "asc" | "desc";
+  }>({
     sort: "name",
-    direction: "asc" as "asc" | "desc",
+    direction: "asc",
   });
 
   const api = useMemo(() => {
@@ -67,9 +99,15 @@ export const GroupsTab = () => {
         sort: sortState.sort,
         direction: sortState.direction,
       }),
-    10,
+    PAGE_SIZE,
     [search, sortState.sort, sortState.direction]
   );
+
+  const groups = groupsResource.data ?? [];
+
+  const totalGroups = groupsResource.pagination?.total ?? groups.length;
+  const totalPages = groupsResource.pagination?.total_pages ?? 1;
+  const currentPage = groupsResource.page;
 
   const loadCatalogs = async () => {
     const [rolesRes, usersRes] = await Promise.all([
@@ -147,9 +185,7 @@ export const GroupsTab = () => {
         });
       }
 
-      const roleIds = normalizeIds(selectedRoleIds);
-
-      await api.setGroupRoles(groupId, roleIds);
+      await api.setGroupRoles(groupId, normalizeIds(selectedRoleIds));
       await syncGroupUsers(groupId);
 
       setEditing(null);
@@ -157,6 +193,55 @@ export const GroupsTab = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    groupsResource.setPage(1);
+  };
+
+  const toggleSort = (field: GroupSortField) => {
+    setSortState((prev) => {
+      if (prev.sort === field) {
+        return {
+          sort: field,
+          direction: prev.direction === "asc" ? "desc" : "asc",
+        };
+      }
+
+      return {
+        sort: field,
+        direction: "asc",
+      };
+    });
+
+    groupsResource.setPage(1);
+  };
+
+  const toggleGroupSelection = (groupId: string) => {
+    setSelected((prev) =>
+      prev.includes(groupId)
+        ? prev.filter((id) => id !== groupId)
+        : [...prev, groupId]
+    );
+  };
+
+  const clearSelection = () => {
+    setSelected([]);
+  };
+
+  const selectVisibleGroups = () => {
+    const visibleIds = groups.map((group) => group.id);
+
+    setSelected((prev) => {
+      const next = new Set(prev);
+
+      visibleIds.forEach((id) => {
+        next.add(id);
+      });
+
+      return Array.from(next);
+    });
   };
 
   const handleDeleteOne = async () => {
@@ -178,57 +263,126 @@ export const GroupsTab = () => {
     groupsResource.refetch();
   };
 
-  return (
-    <div>
-      <DataTable
-        columns={[
-          { key: "name", header: "Nome", sortable: true },
-          { key: "description", header: "Descrição" },
-        ]}
-        data={groupsResource.data}
-        loading={groupsResource.loading}
-        searchValue={search}
-        onSearchChange={setSearch}
-        sort={sortState}
-        onSortChange={(next) =>
-          setSortState({
-            sort: next.sort ?? "name",
-            direction: next.direction ?? "asc",
-          })
-        }
-        selectable
-        getRowId={(row) => row.id}
-        selectedRows={selected}
-        onSelectionChange={setSelected}
-        actions={(row) => (
-          <ActionButtons
-            onEdit={() => openGroup(row)}
-            onDelete={() => setDeleteOneId(row.id)}
-          />
-        )}
-        toolbar={
-          <>
-            <button onClick={openNew}>Novo Grupo</button>
+  const goToPreviousPage = () => {
+    groupsResource.setPage(Math.max(1, currentPage - 1));
+  };
 
-            {selected.length > 0 && (
-              <button
-                className="btn-danger"
-                onClick={() => setConfirmBulk(true)}
-              >
-                Excluir selecionados ({selected.length})
-              </button>
-            )}
-          </>
-        }
+  const goToNextPage = () => {
+    groupsResource.setPage(Math.min(totalPages, currentPage + 1));
+  };
+
+  const sortLabel = sortState.direction === "asc" ? "A-Z" : "Z-A";
+
+  return (
+    <>
+      <AdminEntityList<AdminGroup>
+        title="Grupos"
+        description="Administre agrupamentos de usuários e os papéis herdados por cada grupo."
+        summary={[
+          { value: totalGroups, label: "grupos" },
+          { value: groups.length, label: "nesta página" },
+          { value: selected.length, label: "selecionados" },
+        ]}
+        search={{
+          value: search,
+          placeholder: "Buscar por nome ou descrição...",
+          onChange: handleSearchChange,
+        }}
+        toolbarActions={[
+          {
+            label: `Nome ${sortState.sort === "name" ? sortLabel : ""}`,
+            active: sortState.sort === "name",
+            onClick: () => toggleSort("name"),
+          },
+          {
+            label: `Descrição ${
+              sortState.sort === "description" ? sortLabel : ""
+            }`,
+            active: sortState.sort === "description",
+            onClick: () => toggleSort("description"),
+          },
+          {
+            label: "Novo Grupo",
+            primary: true,
+            onClick: openNew,
+          },
+        ]}
+        listTitle="Listagem de grupos"
+        listSubtitle={`Página ${currentPage} de ${totalPages}`}
+        items={groups}
+        loading={groupsResource.loading}
+        emptyText="Nenhum grupo encontrado."
+        getId={(group) => group.id}
+        selectedIds={selected}
+        selectionLabel="grupos selecionados"
+        onToggleSelected={toggleGroupSelection}
+        onSelectVisible={selectVisibleGroups}
+        onClearSelection={clearSelection}
+        bulkActions={[
+          {
+            label: (
+              <>
+                <Trash2 size={14} />
+                Excluir selecionados
+              </>
+            ),
+            danger: true,
+            onClick: () => setConfirmBulk(true),
+          },
+        ]}
         pagination={
-          groupsResource.pagination && {
-            page: groupsResource.page,
-            totalPages: groupsResource.pagination.total_pages,
-            total: groupsResource.pagination.total,
-            pageSize: 10,
-          }
+          groupsResource.pagination
+            ? {
+                page: currentPage,
+                totalPages,
+                onPrevious: goToPreviousPage,
+                onNext: goToNextPage,
+              }
+            : undefined
         }
-        onPageChange={groupsResource.setPage}
+        renderIcon={getGroupInitials}
+        renderTitle={(group) => group.name}
+        renderSubtitle={(group) => group.id}
+        renderBadges={() => [
+          {
+            label: (
+              <>
+                <UsersRound size={12} />
+                Grupo RBAC
+              </>
+            ),
+          },
+        ]}
+        renderDescription={(group) =>
+          group.description || "Sem descrição cadastrada."
+        }
+        renderMeta={() => [
+          <>
+            <ShieldCheck size={13} />
+            Usuários e papéis gerenciados no modal
+          </>,
+        ]}
+        renderActions={(group) => [
+          {
+            label: (
+              <>
+                <Edit size={14} />
+                Editar
+              </>
+            ),
+            onClick: () => openGroup(group),
+          },
+          {
+            label: (
+              <>
+                <Trash2 size={14} />
+                Excluir
+              </>
+            ),
+            danger: true,
+            onClick: () => setDeleteOneId(group.id),
+          },
+        ]}
       />
 
       <ConfirmDialog
@@ -264,21 +418,9 @@ export const GroupsTab = () => {
         onChangeGroup={(patch) =>
           setEditing((prev) => (prev ? { ...prev, ...patch } : prev))
         }
-        onToggleUser={(userId) =>
-          setSelectedUserIds((prev) =>
-            prev.includes(userId)
-              ? prev.filter((x) => x !== userId)
-              : [...prev, userId]
-          )
-        }
-        onToggleRole={(roleId) =>
-          setSelectedRoleIds((prev) =>
-            prev.includes(roleId)
-              ? prev.filter((x) => x !== roleId)
-              : [...prev, roleId]
-          )
-        }
+        onChangeUserIds={setSelectedUserIds}
+        onChangeRoleIds={setSelectedRoleIds}
       />
-    </div>
+    </>
   );
 };

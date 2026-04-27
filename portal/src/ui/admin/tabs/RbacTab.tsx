@@ -1,21 +1,49 @@
 // src/ui/admin/tabs/RbacTab.tsx
+
 import { useContext, useMemo, useState } from "react";
+import { ShieldCheck, UserRound } from "lucide-react";
+
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
 import type { AdminUser } from "../../../data/adminApi";
 
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
-import { DataTable } from "../../../components/DataTable";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
-import { ActionButtons } from "../../../components/ActionButtons";
+import { AdminEntityList } from "../../../components/admin/AdminEntityList";
 import { UserRbacModal } from "../modals/UserRbacModal";
+
+type UserSortField = "name" | "email" | "is_superadmin";
+
+const PAGE_SIZE = 10;
+
+const getInitials = (user: AdminUser) => {
+  const source = user.name?.trim() || user.email?.trim() || "?";
+
+  const parts = source
+    .split(" ")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+
+  return source.slice(0, 2).toUpperCase();
+};
+
+const getUserStatusLabel = (user: AdminUser) => {
+  return user.active === false ? "Inativo" : "Ativo";
+};
 
 export const RbacTab = () => {
   const { getAccessToken } = useContext(AuthContext);
 
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<{ sort?: string; direction?: "asc" | "desc" }>({
+  const [sort, setSort] = useState<{
+    sort?: UserSortField;
+    direction?: "asc" | "desc";
+  }>({
     sort: "email",
     direction: "asc",
   });
@@ -30,66 +58,191 @@ export const RbacTab = () => {
 
   const usersResource = usePaginatedResource<AdminUser>(
     ({ page, pageSize }) =>
-      api!.listUsers({
+      api.listUsers({
         page,
         pageSize,
         q: search,
         sort: sort.sort,
         direction: sort.direction,
       }),
-    10,
+    PAGE_SIZE,
     [search, sort.sort, sort.direction]
   );
 
-  if (!api) return null;
+  const users = usersResource.data ?? [];
+  const totalUsers = usersResource.pagination?.total ?? users.length;
+  const totalPages = usersResource.pagination?.total_pages ?? 1;
+  const currentPage = usersResource.page;
+
+  const superadminCount = users.filter((user) => user.is_superadmin).length;
+  const activeCount = users.filter((user) => user.active !== false).length;
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    usersResource.setPage(1);
+  };
+
+  const toggleSort = (field: UserSortField) => {
+    setSort((prev) => {
+      if (prev.sort === field) {
+        return {
+          sort: field,
+          direction: prev.direction === "asc" ? "desc" : "asc",
+        };
+      }
+
+      return {
+        sort: field,
+        direction: "asc",
+      };
+    });
+
+    usersResource.setPage(1);
+  };
+
+  const toggleUserSelection = (userId: string) => {
+    setSelected((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const clearSelection = () => {
+    setSelected([]);
+  };
+
+  const selectVisibleUsers = () => {
+    const visibleIds = users.map((user) => user.id);
+
+    setSelected((prev) => {
+      const next = new Set(prev);
+
+      visibleIds.forEach((id) => {
+        next.add(id);
+      });
+
+      return Array.from(next);
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selected.length === 0) return;
+
+    await api.bulkDeleteUsers(selected);
+
+    setSelected([]);
+    setConfirmBulk(false);
+    usersResource.refetch();
+  };
+
+  const goToPreviousPage = () => {
+    usersResource.setPage(Math.max(1, currentPage - 1));
+  };
+
+  const goToNextPage = () => {
+    usersResource.setPage(Math.min(totalPages, currentPage + 1));
+  };
+
+  const sortLabel = sort.direction === "asc" ? "A-Z" : "Z-A";
 
   return (
-    <div>
-      <DataTable
-        columns={[
-          { key: "name", header: "Nome", sortable: true },
-          { key: "email", header: "Email", sortable: true },
+    <>
+      <AdminEntityList<AdminUser>
+        title="Usuários"
+        description="Administre usuários, papéis diretos, grupos e privilégios administrativos."
+        summary={[
+          { value: totalUsers, label: "usuários" },
+          { value: activeCount, label: "ativos nesta página" },
+          { value: superadminCount, label: "superadmins nesta página" },
+        ]}
+        search={{
+          value: search,
+          placeholder: "Buscar por nome ou email...",
+          onChange: handleSearchChange,
+        }}
+        toolbarActions={[
           {
-            key: "is_superadmin",
-            header: "Superadmin",
-            sortable: true,
-            render: (row) => (row.is_superadmin ? "Sim" : "Não"),
+            label: `Nome ${sort.sort === "name" ? sortLabel : ""}`,
+            active: sort.sort === "name",
+            onClick: () => toggleSort("name"),
+          },
+          {
+            label: `Email ${sort.sort === "email" ? sortLabel : ""}`,
+            active: sort.sort === "email",
+            onClick: () => toggleSort("email"),
+          },
+          {
+            label: "Superadmin",
+            active: sort.sort === "is_superadmin",
+            onClick: () => toggleSort("is_superadmin"),
           },
         ]}
-        data={usersResource.data}
+        listTitle="Listagem de usuários"
+        listSubtitle={`Página ${currentPage} de ${totalPages}`}
+        items={users}
         loading={usersResource.loading}
-        searchValue={search}
-        onSearchChange={setSearch}
-        sort={sort}
-        onSortChange={setSort}
-        selectable
-        getRowId={(row) => row.id}
-        selectedRows={selected}
-        onSelectionChange={setSelected}
-        actions={(row) => (
-        <ActionButtons
-          onEdit={() => setEditing(row)}
-        />
-        )}
-        toolbar={
-          selected.length > 0 && (
-            <button
-              className="btn-danger"
-              onClick={() => setConfirmBulk(true)}
-            >
-              Excluir selecionados ({selected.length})
-            </button>
-          )
-        }
+        emptyText="Nenhum usuário encontrado."
+        getId={(user) => user.id}
+        selectedIds={selected}
+        selectionLabel="usuários selecionados"
+        onToggleSelected={toggleUserSelection}
+        onSelectVisible={selectVisibleUsers}
+        onClearSelection={clearSelection}
+        bulkActions={[
+          {
+            label: "Excluir selecionados",
+            danger: true,
+            onClick: () => setConfirmBulk(true),
+          },
+        ]}
         pagination={
-          usersResource.pagination && {
-            page: usersResource.page,
-            totalPages: usersResource.pagination.total_pages,
-            total: usersResource.pagination.total,
-            pageSize: 10,
-          }
+          usersResource.pagination
+            ? {
+                page: currentPage,
+                totalPages,
+                onPrevious: goToPreviousPage,
+                onNext: goToNextPage,
+              }
+            : undefined
         }
-        onPageChange={usersResource.setPage}
+        renderIcon={getInitials}
+        renderTitle={(user) => user.name || "Usuário sem nome"}
+        renderSubtitle={(user) => user.email}
+        renderBadges={(user) => [
+          {
+            label: getUserStatusLabel(user),
+            tone: user.active === false ? "danger" : "success",
+          },
+          ...(user.is_superadmin
+            ? [
+                {
+                  label: (
+                    <>
+                      <ShieldCheck size={12} />
+                      Superadmin
+                    </>
+                  ),
+                  tone: "warning" as const,
+                },
+              ]
+            : []),
+        ]}
+        renderMeta={(user) => [
+          <>
+            <UserRound size={13} />
+            ID: {user.id}
+          </>,
+          ...(user.last_login_at
+            ? [`Último login: ${user.last_login_at}`]
+            : []),
+        ]}
+        renderActions={(user) => [
+          {
+            label: "Editar RBAC",
+            onClick: () => setEditing(user),
+          },
+        ]}
       />
 
       <ConfirmDialog
@@ -99,12 +252,7 @@ export const RbacTab = () => {
         confirmText="Excluir"
         danger
         onCancel={() => setConfirmBulk(false)}
-        onConfirm={async () => {
-          await api.bulkDeleteUsers(selected);
-          setSelected([]);
-          setConfirmBulk(false);
-          usersResource.refetch();
-        }}
+        onConfirm={handleBulkDelete}
       />
 
       <UserRbacModal
@@ -114,6 +262,6 @@ export const RbacTab = () => {
         onClose={() => setEditing(null)}
         onSaved={() => usersResource.refetch()}
       />
-    </div>
+    </>
   );
 };

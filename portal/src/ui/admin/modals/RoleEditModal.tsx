@@ -1,13 +1,15 @@
 // src/ui/admin/modals/RoleEditModal.tsx
 
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import type {
   AdminPermission,
   AdminRole,
   AdminUser,
 } from "../../../data/adminApi";
 import { Modal } from "../../../components/Modal";
-import { DataTable } from "../../../components/DataTable";
+import { RelationshipPicker } from "../../../components/RelationshipPicker";
+import { resolveIcon } from "../../../utils/iconResolver";
+import type { AppInfoByModule } from "../tabs/RolesTab";
 import "./RoleEditModal.css";
 
 type RoleModalTab = "details" | "users" | "permissions";
@@ -21,6 +23,7 @@ type Props = {
 
   allPerms: AdminPermission[];
   selectedPermIds: string[];
+  appInfoByModule?: AppInfoByModule;
 
   saving?: boolean;
 
@@ -28,8 +31,16 @@ type Props = {
   onSave: () => void;
 
   onChangeRole: (patch: Partial<AdminRole>) => void;
-  onToggleUser: (userId: string) => void;
-  onTogglePerm: (permId: string) => void;
+  onChangeUserIds: (nextIds: string[]) => void;
+  onChangePermissionIds: (nextIds: string[]) => void;
+};
+
+const normalizeModuleKey = (value: string | null | undefined) => {
+  return (value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^\/+/, "")
+    .replace(/^apps\//, "");
 };
 
 export const RoleEditModal = ({
@@ -39,169 +50,72 @@ export const RoleEditModal = ({
   selectedUserIds,
   allPerms,
   selectedPermIds,
+  appInfoByModule = {},
   saving = false,
   onClose,
   onSave,
   onChangeRole,
-  onToggleUser,
-  onTogglePerm,
+  onChangeUserIds,
+  onChangePermissionIds,
 }: Props) => {
   const [activeTab, setActiveTab] = useState<RoleModalTab>("details");
-
-  const [userSearch, setUserSearch] = useState("");
-  const [userSort, setUserSort] = useState<{
-    sort?: string;
-    direction?: "asc" | "desc";
-  }>({
-    sort: "name",
-    direction: "asc",
-  });
-  const [userPage, setUserPage] = useState(1);
-  const [userPageSize, setUserPageSize] = useState(10);
-
-  const [permSearch, setPermSearch] = useState("");
-  const [permSort, setPermSort] = useState<{
-    sort?: string;
-    direction?: "asc" | "desc";
-  }>({
-    sort: "code",
-    direction: "asc",
-  });
-  const [permPage, setPermPage] = useState(1);
-  const [permPageSize, setPermPageSize] = useState(10);
 
   useEffect(() => {
     if (open) {
       setActiveTab("details");
-      setUserSearch("");
-      setPermSearch("");
-      setUserPage(1);
-      setPermPage(1);
     }
   }, [open, role?.id]);
-
-  useEffect(() => {
-    setUserPage(1);
-  }, [userSearch]);
-
-  useEffect(() => {
-    setPermPage(1);
-  }, [permSearch]);
-
-  const processedUsers = useMemo(() => {
-    const search = userSearch.trim().toLowerCase();
-
-    let base = search
-      ? users.filter(
-          (user) =>
-            (user.name || "").toLowerCase().includes(search) ||
-            (user.email || "").toLowerCase().includes(search)
-        )
-      : [...users];
-
-    base.sort((a, b) => {
-      const aSelected = selectedUserIds.includes(a.id);
-      const bSelected = selectedUserIds.includes(b.id);
-
-      if (aSelected && !bSelected) return -1;
-      if (!aSelected && bSelected) return 1;
-
-      const key = userSort.sort as keyof AdminUser;
-      if (!key) return 0;
-
-      const aValue = (a[key] ?? "").toString();
-      const bValue = (b[key] ?? "").toString();
-
-      const result = aValue.localeCompare(bValue);
-
-      return userSort.direction === "desc" ? -result : result;
-    });
-
-    return base;
-  }, [users, userSearch, selectedUserIds, userSort]);
-
-  const userTotalPages = Math.max(
-    1,
-    Math.ceil(processedUsers.length / userPageSize)
-  );
-
-  const paginatedUsers = useMemo(() => {
-    const start = (userPage - 1) * userPageSize;
-    return processedUsers.slice(start, start + userPageSize);
-  }, [processedUsers, userPage, userPageSize]);
-
-  const processedPerms = useMemo(() => {
-    const search = permSearch.trim().toLowerCase();
-
-    let base = search
-      ? allPerms.filter(
-          (permission) =>
-            (permission.code || "").toLowerCase().includes(search) ||
-            (permission.name || "").toLowerCase().includes(search) ||
-            (permission.module || "").toLowerCase().includes(search)
-        )
-      : [...allPerms];
-
-    base.sort((a, b) => {
-      const aSelected = selectedPermIds.includes(a.id);
-      const bSelected = selectedPermIds.includes(b.id);
-
-      if (aSelected && !bSelected) return -1;
-      if (!aSelected && bSelected) return 1;
-
-      const key = permSort.sort as keyof AdminPermission;
-      if (!key) return 0;
-
-      const aValue = (a[key] ?? "").toString();
-      const bValue = (b[key] ?? "").toString();
-
-      const result = aValue.localeCompare(bValue);
-
-      return permSort.direction === "desc" ? -result : result;
-    });
-
-    return base;
-  }, [allPerms, permSearch, selectedPermIds, permSort]);
-
-  const permTotalPages = Math.max(
-    1,
-    Math.ceil(processedPerms.length / permPageSize)
-  );
-
-  const paginatedPerms = useMemo(() => {
-    const start = (permPage - 1) * permPageSize;
-    return processedPerms.slice(start, start + permPageSize);
-  }, [processedPerms, permPage, permPageSize]);
-
-  const reconcileUserSelection = (ids: string[]) => {
-    const current = new Set(selectedUserIds);
-    const next = new Set(ids);
-
-    ids.forEach((id) => {
-      if (!current.has(id)) onToggleUser(id);
-    });
-
-    selectedUserIds.forEach((id) => {
-      if (!next.has(id)) onToggleUser(id);
-    });
-  };
-
-  const reconcilePermissionSelection = (ids: string[]) => {
-    const current = new Set(selectedPermIds);
-    const next = new Set(ids);
-
-    ids.forEach((id) => {
-      if (!current.has(id)) onTogglePerm(id);
-    });
-
-    selectedPermIds.forEach((id) => {
-      if (!next.has(id)) onTogglePerm(id);
-    });
-  };
 
   if (!open || !role) return null;
 
   const isEdit = !!role.id;
+
+  const getPermissionAppInfo = (permission: AdminPermission) => {
+    const moduleKey = normalizeModuleKey(permission.module);
+
+    if (!moduleKey) return null;
+
+    return appInfoByModule[moduleKey] ?? null;
+  };
+
+  const getPermissionAvatar = (permission: AdminPermission) => {
+    const appInfo = getPermissionAppInfo(permission);
+    const Icon = resolveIcon(appInfo?.icon);
+
+    if (!Icon) {
+      return permission.code?.[0]?.toUpperCase() ?? "•";
+    }
+
+    return <Icon size={18} />;
+  };
+
+  const getPermissionMeta = (permission: AdminPermission) => {
+    const appInfo = getPermissionAppInfo(permission);
+
+    const meta: {
+      label: string;
+      tone?: "default" | "success" | "warning" | "danger";
+    }[] = [];
+
+    if (appInfo?.name) {
+      meta.push({
+        label: appInfo.name,
+        tone: "default",
+      });
+    }
+
+    if (
+      permission.module &&
+      normalizeModuleKey(appInfo?.name) !== normalizeModuleKey(permission.module)
+    ) {
+      meta.push({
+        label: permission.module,
+        tone: "default",
+      });
+    }
+
+    return meta;
+  };
 
   return (
     <Modal
@@ -270,124 +184,62 @@ export const RoleEditModal = ({
                 disabled={saving}
               />
             </label>
+
+            <div className="alert">
+              Usuários diretos recebem este papel pela relação usuário ↔ papel.
+              Usuários também podem receber permissões indiretamente por grupos.
+            </div>
           </>
         )}
 
         {activeTab === "users" && (
-          <DataTable<AdminUser>
-            columns={[
+          <RelationshipPicker<AdminUser>
+            title="Usuários diretos do Papel"
+            availableTitle="Usuários disponíveis"
+            selectedTitle="Usuários com este papel"
+            searchPlaceholder="Buscar por nome ou email..."
+            emptyAvailableText="Nenhum usuário disponível para adicionar."
+            emptySelectedText="Nenhum usuário direto vinculado a este papel."
+            items={users}
+            selectedIds={selectedUserIds}
+            disabled={saving}
+            getId={(user) => user.id}
+            getTitle={(user) => user.name || user.email}
+            getSubtitle={(user) => user.email}
+            getMeta={(user) => [
               {
-                key: "name",
-                header: "Nome",
-                sortable: true,
+                label: user.is_superadmin ? "Superadmin" : "Usuário",
+                tone: user.is_superadmin ? "warning" : "default",
               },
               {
-                key: "email",
-                header: "Email",
-                sortable: true,
-              },
-              {
-                key: "is_superadmin",
-                header: "Superadmin",
-                sortable: true,
-                render: (user) => (user.is_superadmin ? "Sim" : "Não"),
+                label: user.active === false ? "Inativo" : "Ativo",
+                tone: user.active === false ? "danger" : "success",
               },
             ]}
-            data={paginatedUsers}
-            loading={saving}
-            searchValue={userSearch}
-            onSearchChange={setUserSearch}
-            sort={userSort}
-            onSortChange={setUserSort}
-            selectable
-            getRowId={(user) => user.id}
-            selectedRows={selectedUserIds}
-            onSelectionChange={reconcileUserSelection}
-            pagination={{
-              page: userPage,
-              totalPages: userTotalPages,
-              total: processedUsers.length,
-              pageSize: userPageSize,
-            }}
-            onPageChange={setUserPage}
-            onPageSizeChange={(size) => {
-              setUserPageSize(size);
-              setUserPage(1);
-            }}
-            pageSizeOptions={[5, 10, 20, 50]}
-            emptyText="Nenhum usuário encontrado"
-            toolbar={
-              <>
-                <h4>Usuários diretos do Papel</h4>
-                <div className="dt-muted">
-                  {selectedUserIds.length} usuários selecionados
-                </div>
-              </>
-            }
+            onChange={onChangeUserIds}
           />
         )}
 
         {activeTab === "permissions" && (
-          <DataTable<AdminPermission>
-            columns={[
-              {
-                key: "code",
-                header: "Código",
-                sortable: true,
-                render: (permission) => (
-                  <span className="role-edit-perm-code">
-                    {permission.code}
-                  </span>
-                ),
-              },
-              {
-                key: "name",
-                header: "Nome",
-                sortable: true,
-                render: (permission) => (
-                  <span className="role-edit-perm-name">
-                    {permission.name ?? "-"}
-                  </span>
-                ),
-              },
-              {
-                key: "module",
-                header: "Módulo",
-                sortable: true,
-                render: (permission) => permission.module ?? "-",
-              },
-            ]}
-            data={paginatedPerms}
-            loading={saving}
-            searchValue={permSearch}
-            onSearchChange={setPermSearch}
-            sort={permSort}
-            onSortChange={setPermSort}
-            selectable
-            getRowId={(permission) => permission.id}
-            selectedRows={selectedPermIds}
-            onSelectionChange={reconcilePermissionSelection}
-            pagination={{
-              page: permPage,
-              totalPages: permTotalPages,
-              total: processedPerms.length,
-              pageSize: permPageSize,
-            }}
-            onPageChange={setPermPage}
-            onPageSizeChange={(size) => {
-              setPermPageSize(size);
-              setPermPage(1);
-            }}
-            pageSizeOptions={[5, 10, 20, 50]}
-            emptyText="Nenhuma permissão encontrada"
-            toolbar={
-              <>
-                <h4>Permissões do Papel</h4>
-                <div className="dt-muted">
-                  {selectedPermIds.length} permissões selecionadas
-                </div>
-              </>
+          <RelationshipPicker<AdminPermission>
+            title="Permissões do Papel"
+            availableTitle="Permissões disponíveis"
+            selectedTitle="Permissões vinculadas ao papel"
+            searchPlaceholder="Buscar por código, nome, app ou módulo..."
+            emptyAvailableText="Nenhuma permissão disponível para adicionar."
+            emptySelectedText="Nenhuma permissão vinculada a este papel."
+            items={allPerms}
+            selectedIds={selectedPermIds}
+            disabled={saving}
+            getId={(permission) => permission.id}
+            getTitle={(permission) => permission.code}
+            getSubtitle={(permission) =>
+              permission.name ?? permission.module ?? ""
             }
+            getDescription={(permission) => permission.description ?? null}
+            getMeta={getPermissionMeta}
+            getAvatar={getPermissionAvatar}
+            onChange={onChangePermissionIds}
           />
         )}
       </div>
