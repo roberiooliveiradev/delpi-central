@@ -3,7 +3,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Query
-from delpi_auth.authorization import require_permission, has_any_permission
+from delpi_auth.authorization import require_permission, require_any_permission
 
 from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.application.dto.lmp.list_lmp_request import ListLMPRequest
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/engineering", tags=["Engenharia"])
 
 
 @router.get("/lmps")
-@has_any_permission(["api-delpi.access", "dashboard-lmps.view"])
+@require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
 def list_lmps_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
@@ -60,7 +60,7 @@ def list_lmps_route(
 
 
 @router.get("/lmps/dashboard")
-@has_any_permission(["api-delpi.access", "dashboard-lmps.view"])
+@require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
 def list_lmps_dashboard_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
@@ -99,7 +99,7 @@ def list_lmps_dashboard_route(
 
 
 @router.get("/lmps/{sale_number}")
-@has_any_permission(["api-delpi.access", "dashboard-lmps.view"])
+@require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
 def get_lmp_route(sale_number: str):
     try:
         dto = GetLMPRequest(sale_number=sale_number)
@@ -122,7 +122,7 @@ def get_lmp_route(sale_number: str):
 
 
 @router.get("/transforma-mais/processes")
-@has_any_permission(["api-delpi.access", "dashboard-lmps.view"])
+@require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
 def list_processes(
     id: str | None = Query(default=None),
     name_process: str | None = Query(default=None),
@@ -168,7 +168,7 @@ def list_processes(
 
 
 @router.get("/transforma-mais/processes/summary")
-@has_any_permission(["api-delpi.access", "dashboard-lmps.view"])
+@require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
 def get_process_summary(
     filial_id: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
