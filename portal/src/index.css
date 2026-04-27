@@ -342,17 +342,31 @@ body.portal-has-embedded-app .content {
   top: 12px;
   right: 12px;
   z-index: 5;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
+  border: 1px solid transparent;
+  background: transparent;
+  color: transparent;
   border-radius: 999px;
   padding: 8px 12px;
   cursor: pointer;
-  box-shadow: var(--shadow);
+  box-shadow: none;
+  opacity: 0;
   transition:
+    opacity 0.2s ease,
     background 0.2s ease,
+    border-color 0.2s ease,
     box-shadow 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    color 0.2s ease;
+}
+
+.app-host-embedded:hover .app-host-google-floating-button,
+.app-host-google-floating-button:hover,
+.app-host-google-floating-button:focus-visible {
+  opacity: 1;
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text);
+  box-shadow: var(--shadow);
 }
 
 .app-host-google-floating-button:hover {
