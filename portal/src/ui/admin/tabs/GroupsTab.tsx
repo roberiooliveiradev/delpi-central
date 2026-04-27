@@ -12,6 +12,25 @@ import { ActionButtons } from "../../../components/ActionButtons";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { GroupEditModal } from "../modals/GroupEditModal";
 
+const normalizeIds = (items: unknown[]): string[] => {
+  return items
+    .map((item) => {
+      if (typeof item === "string") return item;
+
+      if (
+        item &&
+        typeof item === "object" &&
+        "id" in item &&
+        typeof (item as { id?: unknown }).id === "string"
+      ) {
+        return (item as { id: string }).id;
+      }
+
+      return null;
+    })
+    .filter((id): id is string => !!id);
+};
+
 export const GroupsTab = () => {
   const { getAccessToken } = useContext(AuthContext);
 
@@ -73,10 +92,10 @@ export const GroupsTab = () => {
     ]);
 
     setRoles(rolesRes.data ?? []);
-    setSelectedRoleIds((groupRoles.data ?? []).map((role) => role.id));
+    setSelectedRoleIds(normalizeIds(groupRoles.data ?? []));
 
     setUsers(usersRes.data ?? []);
-    setSelectedUserIds((groupUsers.data ?? []).map((user) => user.id));
+    setSelectedUserIds(normalizeIds(groupUsers.data ?? []));
   };
 
   const openNew = async () => {
@@ -94,10 +113,11 @@ export const GroupsTab = () => {
 
   const syncGroupUsers = async (groupId: string) => {
     const current = await api.getGroupUsers(groupId);
-    const currentIds = (current.data ?? []).map((user) => user.id);
+    const currentIds = normalizeIds(current.data ?? []);
+    const nextIds = normalizeIds(selectedUserIds);
 
-    const toAdd = selectedUserIds.filter((id) => !currentIds.includes(id));
-    const toRemove = currentIds.filter((id) => !selectedUserIds.includes(id));
+    const toAdd = nextIds.filter((id) => !currentIds.includes(id));
+    const toRemove = currentIds.filter((id) => !nextIds.includes(id));
 
     await Promise.all([
       ...toAdd.map((userId) => api.addUserToGroup(groupId, userId)),
@@ -127,7 +147,9 @@ export const GroupsTab = () => {
         });
       }
 
-      await api.setGroupRoles(groupId, selectedRoleIds);
+      const roleIds = normalizeIds(selectedRoleIds);
+
+      await api.setGroupRoles(groupId, roleIds);
       await syncGroupUsers(groupId);
 
       setEditing(null);
