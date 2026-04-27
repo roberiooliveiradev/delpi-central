@@ -9,6 +9,9 @@ class UserRoleRepositoryPort(Protocol):
     def list_role_ids(self, user_id: UUID) -> List[UUID]:
         ...
 
+    def list_user_ids_by_role_id(self, role_id: UUID) -> List[UUID]:
+        ...
+
     def replace_roles(self, user_id: UUID, role_ids: List[UUID]) -> None:
         ...
 
@@ -17,7 +20,7 @@ class UserRoleRepositoryPort(Protocol):
 
     def remove_role(self, user_id: UUID, role_id: UUID) -> None:
         ...
-        
+
     def delete_by_role_id(self, role_id: UUID) -> None:
         ...
 

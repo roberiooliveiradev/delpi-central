@@ -4,7 +4,7 @@ import { useContext, useMemo, useState } from "react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
-import type { AdminGroup, AdminRole } from "../../../data/adminApi";
+import type { AdminGroup, AdminRole, AdminUser } from "../../../data/adminApi";
 
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { DataTable } from "../../../components/DataTable";
@@ -22,8 +22,12 @@ export const GroupsTab = () => {
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [deleteOneId, setDeleteOneId] = useState<string | null>(null);
 
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+
   const [roles, setRoles] = useState<AdminRole[]>([]);
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+
   const [saving, setSaving] = useState(false);
 
   const [sortState, setSortState] = useState({
@@ -37,7 +41,7 @@ export const GroupsTab = () => {
 
   const groupsResource = usePaginatedResource<AdminGroup>(
     ({ page, pageSize }) =>
-      api!.listGroups({
+      api.listGroups({
         page,
         pageSize,
         q: search,
@@ -45,30 +49,60 @@ export const GroupsTab = () => {
         direction: sortState.direction,
       }),
     10,
-    [search, sortState]
+    [search, sortState.sort, sortState.direction]
   );
 
-  if (!api) return null;
+  const loadCatalogs = async () => {
+    const [rolesRes, usersRes] = await Promise.all([
+      api.listRoles({ page: 1, pageSize: 999 }),
+      api.listUsers({ page: 1, pageSize: 999 }),
+    ]);
 
-  const fetchRoles = async () => {
-    const res = await api.listRoles({ page: 1, pageSize: 999 });
-    setRoles(res.data ?? []);
+    setRoles(rolesRes.data ?? []);
+    setUsers(usersRes.data ?? []);
   };
 
-  const openGroup = async (g: AdminGroup) => {
-    setEditing(g);
+  const openGroup = async (group: AdminGroup) => {
+    setEditing({ ...group });
 
-    const rolesRes = await api.listRoles({ page: 1, pageSize: 999 });
+    const [rolesRes, groupRoles, usersRes, groupUsers] = await Promise.all([
+      api.listRoles({ page: 1, pageSize: 999 }),
+      api.getGroupRoles(group.id),
+      api.listUsers({ page: 1, pageSize: 999 }),
+      api.getGroupUsers(group.id),
+    ]);
+
     setRoles(rolesRes.data ?? []);
+    setSelectedRoleIds((groupRoles.data ?? []).map((role) => role.id));
 
-    const groupRoles = await api.getGroupRoles(g.id);
-    setSelectedRoleIds(groupRoles.data ?? []);
+    setUsers(usersRes.data ?? []);
+    setSelectedUserIds((groupUsers.data ?? []).map((user) => user.id));
   };
 
   const openNew = async () => {
-    setEditing({ id: "", name: "", description: "" } as any);
+    setEditing({
+      id: "",
+      name: "",
+      description: "",
+    } as AdminGroup);
+
     setSelectedRoleIds([]);
-    await fetchRoles();
+    setSelectedUserIds([]);
+
+    await loadCatalogs();
+  };
+
+  const syncGroupUsers = async (groupId: string) => {
+    const current = await api.getGroupUsers(groupId);
+    const currentIds = (current.data ?? []).map((user) => user.id);
+
+    const toAdd = selectedUserIds.filter((id) => !currentIds.includes(id));
+    const toRemove = currentIds.filter((id) => !selectedUserIds.includes(id));
+
+    await Promise.all([
+      ...toAdd.map((userId) => api.addUserToGroup(groupId, userId)),
+      ...toRemove.map((userId) => api.removeUserFromGroup(groupId, userId)),
+    ]);
   };
 
   const save = async () => {
@@ -94,6 +128,7 @@ export const GroupsTab = () => {
       }
 
       await api.setGroupRoles(groupId, selectedRoleIds);
+      await syncGroupUsers(groupId);
 
       setEditing(null);
       groupsResource.refetch();
@@ -112,6 +147,8 @@ export const GroupsTab = () => {
   };
 
   const handleBulkDelete = async () => {
+    if (selected.length === 0) return;
+
     await api.bulkDeleteGroups(selected);
 
     setSelected([]);
@@ -195,6 +232,8 @@ export const GroupsTab = () => {
       <GroupEditModal
         open={!!editing}
         group={editing}
+        users={users}
+        selectedUserIds={selectedUserIds}
         roles={roles}
         selectedRoleIds={selectedRoleIds}
         saving={saving}
@@ -202,6 +241,13 @@ export const GroupsTab = () => {
         onSave={save}
         onChangeGroup={(patch) =>
           setEditing((prev) => (prev ? { ...prev, ...patch } : prev))
+        }
+        onToggleUser={(userId) =>
+          setSelectedUserIds((prev) =>
+            prev.includes(userId)
+              ? prev.filter((x) => x !== userId)
+              : [...prev, userId]
+          )
         }
         onToggleRole={(roleId) =>
           setSelectedRoleIds((prev) =>

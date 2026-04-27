@@ -1,8 +1,14 @@
+// src/ui/admin/tabs/RolesTab.tsx
+
 import { useContext, useMemo, useState } from "react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
-import type { AdminPermission, AdminRole } from "../../../data/adminApi";
+import type {
+  AdminPermission,
+  AdminRole,
+  AdminUser,
+} from "../../../data/adminApi";
 
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { DataTable } from "../../../components/DataTable";
@@ -14,7 +20,10 @@ export const RolesTab = () => {
   const { getAccessToken } = useContext(AuthContext);
 
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<{ sort?: string; direction?: "asc" | "desc" }>({
+  const [sort, setSort] = useState<{
+    sort?: string;
+    direction?: "asc" | "desc";
+  }>({
     sort: "name",
     direction: "asc",
   });
@@ -24,8 +33,12 @@ export const RolesTab = () => {
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [deleteOneId, setDeleteOneId] = useState<string | null>(null);
 
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+
   const [allPerms, setAllPerms] = useState<AdminPermission[]>([]);
   const [selectedPermIds, setSelectedPermIds] = useState<string[]>([]);
+
   const [saving, setSaving] = useState(false);
 
   const api = useMemo(() => {
@@ -34,7 +47,7 @@ export const RolesTab = () => {
 
   const rolesResource = usePaginatedResource<AdminRole>(
     ({ page, pageSize }) =>
-      api!.listRoles({
+      api.listRoles({
         page,
         pageSize,
         q: search,
@@ -45,34 +58,36 @@ export const RolesTab = () => {
     [search, sort.sort, sort.direction]
   );
 
-  if (!api) return null;
+  const loadCatalogs = async () => {
+    const [permissionsRes, usersRes] = await Promise.all([
+      api.listPermissions({ page: 1, pageSize: 999 }),
+      api.listUsers({ page: 1, pageSize: 999 }),
+    ]);
 
-  // ============================
-  // Carregar catálogo permissões
-  // ============================
-  const fetchPermissions = async () => {
-    const res = await api.listPermissions({ page: 1, pageSize: 999 });
-    setAllPerms(res.data ?? []);
+    setAllPerms(permissionsRes.data ?? []);
+    setUsers(usersRes.data ?? []);
   };
 
-  // ============================
-  // Abrir edição
-  // ============================
   const openRole = async (role: AdminRole) => {
     setEditing({ ...role });
 
-    const permsRes = await api.listPermissions({ page: 1, pageSize: 999 });
-    setAllPerms(permsRes.data ?? []);
+    const [permissionsRes, rolePermissions, usersRes, roleUsers] =
+      await Promise.all([
+        api.listPermissions({ page: 1, pageSize: 999 }),
+        api.getRolePermissions(role.id),
+        api.listUsers({ page: 1, pageSize: 999 }),
+        api.getRoleUsers(role.id),
+      ]);
 
-    const roleRes = await api.getRolePermissions(role.id);
-    const selected = (roleRes.data ?? []).map((p) => p.id);
+    setAllPerms(permissionsRes.data ?? []);
+    setSelectedPermIds(
+      (rolePermissions.data ?? []).map((permission) => permission.id)
+    );
 
-    setSelectedPermIds(selected);
+    setUsers(usersRes.data ?? []);
+    setSelectedUserIds((roleUsers.data ?? []).map((user) => user.id));
   };
 
-  // ============================
-  // Novo papel
-  // ============================
   const openNew = async () => {
     setEditing({
       id: "",
@@ -81,12 +96,24 @@ export const RolesTab = () => {
     } as AdminRole);
 
     setSelectedPermIds([]);
-    await fetchPermissions();
+    setSelectedUserIds([]);
+
+    await loadCatalogs();
   };
 
-  // ============================
-  // SAVE
-  // ============================
+  const syncRoleUsers = async (roleId: string) => {
+    const current = await api.getRoleUsers(roleId);
+    const currentIds = (current.data ?? []).map((user) => user.id);
+
+    const toAdd = selectedUserIds.filter((id) => !currentIds.includes(id));
+    const toRemove = currentIds.filter((id) => !selectedUserIds.includes(id));
+
+    await Promise.all([
+      ...toAdd.map((userId) => api.addUserToRole(roleId, userId)),
+      ...toRemove.map((userId) => api.removeUserFromRole(roleId, userId)),
+    ]);
+  };
+
   const save = async () => {
     if (!editing) return;
 
@@ -96,7 +123,6 @@ export const RolesTab = () => {
       let roleId: string;
 
       if (!editing.id) {
-        // CREATE
         const created = await api.createRole({
           name: editing.name,
           description: editing.description ?? undefined,
@@ -104,7 +130,6 @@ export const RolesTab = () => {
 
         roleId = created.id;
       } else {
-        // UPDATE
         await api.updateRole(editing.id, {
           name: editing.name,
           description: editing.description ?? undefined,
@@ -113,21 +138,16 @@ export const RolesTab = () => {
         roleId = editing.id;
       }
 
-      // Atualiza permissões
       await api.setRolePermissions(roleId, selectedPermIds);
+      await syncRoleUsers(roleId);
 
-      // 🔥 Igual ao Group
       setEditing(null);
-
       rolesResource.refetch();
     } finally {
       setSaving(false);
     }
   };
 
-  // ================================
-  // DELETE INDIVIDUAL
-  // ================================
   const handleDeleteOne = async () => {
     if (!deleteOneId) return;
 
@@ -137,9 +157,6 @@ export const RolesTab = () => {
     rolesResource.refetch();
   };
 
-  // ================================
-  // DELETE BULK
-  // ================================
   const handleBulkDelete = async () => {
     if (selected.length === 0) return;
 
@@ -221,6 +238,8 @@ export const RolesTab = () => {
       <RoleEditModal
         open={!!editing}
         role={editing}
+        users={users}
+        selectedUserIds={selectedUserIds}
         allPerms={allPerms}
         selectedPermIds={selectedPermIds}
         saving={saving}
@@ -228,6 +247,13 @@ export const RolesTab = () => {
         onSave={save}
         onChangeRole={(patch) =>
           setEditing((prev) => (prev ? { ...prev, ...patch } : prev))
+        }
+        onToggleUser={(userId) =>
+          setSelectedUserIds((prev) =>
+            prev.includes(userId)
+              ? prev.filter((x) => x !== userId)
+              : [...prev, userId]
+          )
         }
         onTogglePerm={(permId) =>
           setSelectedPermIds((prev) =>

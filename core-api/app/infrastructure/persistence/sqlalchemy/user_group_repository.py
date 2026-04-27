@@ -2,6 +2,7 @@
 
 from typing import List
 from uuid import UUID
+
 from sqlalchemy.orm import Session
 
 from app.domain.ports.user_group_repository_port import UserGroupRepositoryPort
@@ -9,6 +10,7 @@ from app.infrastructure.db.models import user_groups
 
 
 class SqlAlchemyUserGroupRepository(UserGroupRepositoryPort):
+
     def __init__(self, session: Session):
         self.session = session
 
@@ -19,6 +21,14 @@ class SqlAlchemyUserGroupRepository(UserGroupRepositoryPort):
             .all()
         )
         return [gid for (gid,) in rows]
+
+    def list_user_ids_by_group_id(self, group_id: UUID) -> List[UUID]:
+        rows = (
+            self.session.query(user_groups.c.user_id)
+            .filter(user_groups.c.group_id == group_id)
+            .all()
+        )
+        return [uid for (uid,) in rows]
 
     def replace_groups(self, user_id: UUID, group_ids: List[UUID]) -> None:
         unique_ids = sorted(set(group_ids))
@@ -44,6 +54,7 @@ class SqlAlchemyUserGroupRepository(UserGroupRepositoryPort):
             .first()
             is not None
         )
+
         if exists:
             return
 
