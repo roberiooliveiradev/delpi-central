@@ -2,7 +2,10 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import type { AppItem, RouteItem } from "../data/coreApi";
-import { useGoogleEmbeddedAppLogin, isGoogleHostedApp } from "../hooks/useGoogleEmbeddedAppLogin";
+import {
+  isGoogleHostedApp,
+  useGoogleEmbeddedAppLogin,
+} from "../hooks/useGoogleEmbeddedAppLogin";
 import { pushRecentApp } from "../utils/recentApps";
 
 function normalize(path: string) {
@@ -330,13 +333,19 @@ export const AppHost = () => {
           </div>
         ) : null}
 
-        {isGoogleApp && !googleLogin.barVisible && googleLogin.optionsAvailable ? (
+        {isGoogleApp && !googleLogin.barVisible ? (
           <button
             type="button"
             className="app-host-google-floating-button"
             onClick={googleLogin.showBar}
+            aria-label="Abrir opções do Google"
+            title="Opções Google"
           >
-            Opções Google
+            <span className="app-host-google-floating-icon" aria-hidden="true">
+              G
+            </span>
+
+            <span className="app-host-google-floating-label">Opções Google</span>
           </button>
         ) : null}
 

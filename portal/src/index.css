@@ -342,37 +342,81 @@ body.portal-has-embedded-app .content {
   top: 12px;
   right: 12px;
   z-index: 5;
-  border: 1px solid transparent;
-  background: transparent;
-  color: transparent;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-width: 38px;
+  min-height: 38px;
+  padding: 8px 10px;
+
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  background: color-mix(in srgb, var(--surface) 28%, transparent);
+  color: var(--text);
+
   border-radius: 999px;
-  padding: 8px 12px;
   cursor: pointer;
+
+  opacity: 0.32;
   box-shadow: none;
-  opacity: 0;
+  backdrop-filter: blur(6px);
+
   transition:
     opacity 0.2s ease,
     background 0.2s ease,
     border-color 0.2s ease,
     box-shadow 0.2s ease,
-    transform 0.2s ease,
-    color 0.2s ease;
+    transform 0.2s ease;
 }
 
-.app-host-embedded:hover .app-host-google-floating-button,
 .app-host-google-floating-button:hover,
 .app-host-google-floating-button:focus-visible {
   opacity: 1;
   border-color: var(--border);
   background: color-mix(in srgb, var(--surface) 88%, transparent);
-  color: var(--text);
   box-shadow: var(--shadow);
+  transform: translateY(-1px);
 }
 
-.app-host-google-floating-button:hover {
-  background: var(--surface-2);
-  box-shadow: var(--focus-2);
-  transform: translateY(-1px);
+.app-host-google-floating-icon {
+  width: 22px;
+  height: 22px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+  background: #ffffff;
+  color: #4285f4;
+
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+}
+
+.app-host-google-floating-label {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+
+  opacity: 0;
+  font-size: 13px;
+  font-weight: 700;
+
+  transition:
+    max-width 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.app-host-google-floating-button:hover .app-host-google-floating-label,
+.app-host-google-floating-button:focus-visible .app-host-google-floating-label {
+  max-width: 140px;
+  opacity: 1;
 }
 
 .app-host-iframe {
@@ -386,6 +430,17 @@ body.portal-has-embedded-app .content {
 .app-host-federated-error-message {
   margin-top: 8px;
   white-space: pre-wrap;
+}
+
+@media (hover: none) {
+  .app-host-google-floating-button {
+    opacity: 0.55;
+    background: color-mix(in srgb, var(--surface) 42%, transparent);
+  }
+
+  .app-host-google-floating-label {
+    display: none;
+  }
 }
 
 @media (max-width: 860px) {
@@ -402,7 +457,6 @@ body.portal-has-embedded-app .content {
     flex: 1 1 auto;
   }
 }
-
 
 /* =========================================
    HOME PAGE (Dashboard)
