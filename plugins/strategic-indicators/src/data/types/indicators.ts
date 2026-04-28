@@ -6,9 +6,27 @@ export type PerformanceDirection =
   | "higher_is_better"
   | "lower_is_better";
 
+export type IndicatorValueUnit =
+  | "percent"
+  | "currency"
+  | "ppm"
+  | "days"
+  | "hours"
+  | "count"
+  | "ratio"
+  | "months"
+  | string;
+
 export type MonthlyTargetItem = {
   month_number: number;
   target_value: number;
+};
+
+export type IndicatorValueFormat = {
+  valueUnit: IndicatorValueUnit | null;
+  valuePrefix: string | null;
+  valueSuffix: string | null;
+  valueDecimals: number;
 };
 
 export type IndicatorViewItem = {
@@ -30,6 +48,10 @@ export type IndicatorViewItem = {
   scopeType: string;
   performanceDirection: PerformanceDirection;
   source: string;
+  valueUnit: IndicatorValueUnit | null;
+  valuePrefix: string | null;
+  valueSuffix: string | null;
+  valueDecimals: number;
 };
 
 export type IndicatorFetchErrorViewItem = {
@@ -58,6 +80,10 @@ export type StrategicIndicatorsResponse = {
     trend: string;
     classification: string;
     source: string;
+    value_unit?: IndicatorValueUnit | null;
+    value_prefix?: string | null;
+    value_suffix?: string | null;
+    value_decimals?: number | null;
   }>;
   errors?: Array<{
     department_id: string;

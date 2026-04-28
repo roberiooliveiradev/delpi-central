@@ -3,11 +3,16 @@ import type {
   PresentationSparklinePoint,
 } from "../../data/types/presentation";
 import { PresentationDepartmentSparkline } from "./PresentationDepartmentSparkline";
+import {
+  formatIndicatorGoalValue,
+  formatIndicatorValue,
+} from "../shared/indicatorValueFormatter";
 
 type PresentationDepartmentSlideSceneProps = {
   department: PresentationDepartmentFocus | null;
   series?: PresentationSparklinePoint[];
   mode: "meeting" | "tv" | "slide";
+  competence?: string | null;
 };
 
 function formatScore(value: number) {
@@ -82,7 +87,9 @@ function buildClosingSentence(department: PresentationDepartmentFocus) {
     return `${bestIndicator.name} sustenta o resultado; ${worstIndicator.name} concentra a principal oportunidade de reação.`;
   }
 
-  return `${department.name} com leitura concentrada em ${bestIndicator?.name ?? worstIndicator?.name}.`;
+  return `${department.name} com leitura concentrada em ${
+    bestIndicator?.name ?? worstIndicator?.name
+  }.`;
 }
 
 function buildIndicatorChartSeries(
@@ -98,10 +105,22 @@ function buildIndicatorChartSeries(
   return [{ period: "Atual", value: indicator.score }];
 }
 
+function getIndicatorValueFormat(
+  indicator: PresentationDepartmentFocus["indicators"][number],
+) {
+  return {
+    valueUnit: indicator.valueUnit,
+    valuePrefix: indicator.valuePrefix,
+    valueSuffix: indicator.valueSuffix,
+    valueDecimals: indicator.valueDecimals,
+  };
+}
+
 export function PresentationDepartmentSlideScene({
   department,
   series,
   mode,
+  competence,
 }: PresentationDepartmentSlideSceneProps) {
   if (!department) {
     return (
@@ -206,82 +225,69 @@ export function PresentationDepartmentSlideScene({
       </article>
 
       <div className="si-presentation-department-slide__priority-grid si-presentation-department-slide__priority-grid--indicators">
-        {department.indicators.map((indicator) => (
-          <article
-            key={indicator.id}
-            className="si-presentation-department-slide__priority-card si-presentation-department-slide__priority-card--indicator"
-          >
-            <div className="si-presentation-department-slide__priority-top">
-              <h4>{indicator.name}</h4>
-              <span
-                className={`si-status-badge si-status-badge--${getDirectionVariant(
-                  indicator.trend,
-                )}`}
-              >
-                {indicator.trendLabel}
-              </span>
-            </div>
+        {department.indicators.map((indicator) => {
+          const valueFormat = getIndicatorValueFormat(indicator);
 
-            <div className="si-presentation-department-slide__indicator-chart">
-              <PresentationDepartmentSparkline
-                points={buildIndicatorChartSeries(indicator)}
-                direction={indicator.trend}
-                height={88}
-                compact
-              />
-            </div>
-
-            <div className="si-presentation-department-slide__priority-metrics si-presentation-department-slide__priority-metrics--grid">
-              <div>
-                <span>Score</span>
-                <strong>{formatScore(indicator.score)}</strong>
+          return (
+            <article
+              key={indicator.id}
+              className="si-presentation-department-slide__priority-card si-presentation-department-slide__priority-card--indicator"
+            >
+              <div className="si-presentation-department-slide__priority-top">
+                <h4>{indicator.name}</h4>
+                <span
+                  className={`si-status-badge si-status-badge--${getDirectionVariant(
+                    indicator.trend,
+                  )}`}
+                >
+                  {indicator.trendLabel}
+                </span>
               </div>
 
-              <div>
-                <span>Meta</span>
-                <strong>{indicator.goalLabel}</strong>
+              <div className="si-presentation-department-slide__indicator-chart">
+                <PresentationDepartmentSparkline
+                  points={buildIndicatorChartSeries(indicator)}
+                  direction={indicator.trend}
+                  height={88}
+                  compact
+                />
               </div>
 
-              <div>
-                <span>Gap</span>
-                <strong>{formatScore(indicator.gap)}</strong>
+              <div className="si-presentation-department-slide__priority-metrics si-presentation-department-slide__priority-metrics--grid">
+                <div>
+                  <span>Score</span>
+                  <strong>{formatScore(indicator.score)}</strong>
+                </div>
+
+                <div>
+                  <span>Valor atual</span>
+                  <strong>
+                    {formatIndicatorValue(indicator.currentValue, valueFormat)}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Meta</span>
+                  <strong>{formatIndicatorGoalValue(indicator, competence)}</strong>
+                </div>
+
+                <div>
+                  <span>Gap</span>
+                  <strong>
+                    {formatIndicatorValue(indicator.gap, valueFormat, {
+                      signed: true,
+                    })}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Peso</span>
+                  <strong>{formatPercent(indicator.weightPct)}</strong>
+                </div>
               </div>
-
-              <div>
-                <span>Peso</span>
-                <strong>{formatPercent(indicator.weightPct)}</strong>
-              </div>
-            </div>
-          </article>
-        ))}
-
-        {/* <article className="si-presentation-department-slide__priority-card si-presentation-department-slide__priority-card--summary">
-          <div className="si-presentation-department-slide__priority-top">
-            <h4>Resumo visual</h4>
-          </div>
-
-          <div className="si-presentation-department-slide__priority-summary">
-            <div>
-              <span>Indicadores</span>
-              <strong>{department.indicators.length}</strong>
-            </div>
-
-            <div>
-              <span>Em atenção</span>
-              <strong>{criticalIndicators.length}</strong>
-            </div>
-
-            <div>
-              <span>Destaques</span>
-              <strong>{highlightIndicators.length}</strong>
-            </div>
-
-            <div>
-              <span>Melhor score</span>
-              <strong>{bestIndicator ? formatScore(bestIndicator.score) : "—"}</strong>
-            </div>
-          </div>
-        </article> */}
+            </article>
+          );
+        })}
       </div>
 
       <div className="si-presentation-department-slide__signal-grid">

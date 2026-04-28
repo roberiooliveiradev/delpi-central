@@ -176,7 +176,10 @@ export function DepartmentDetailsPage({
         title="Indicadores que compõem o IDD"
         description="Os cards abaixo mostram os indicadores oficiais da área com peso interno, direção de performance, meta estruturada e descrição estratégica. Indicadores com curva mensal devem refletir metas variáveis ao longo do ano."
       >
-        <IndicatorDetailGrid indicators={data.indicators} />
+        <IndicatorDetailGrid
+          indicators={data.indicators}
+          competence={referenceMonth}
+        />
       </SectionBlock>
     </div>
   );

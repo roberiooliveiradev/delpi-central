@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 import type {
+  AdminDepartmentIndicatorItem,
   AdminDepartmentItem,
+  CreateAdminDepartmentIndicatorRequest,
   CreateAdminDepartmentRequest,
+  UpdateAdminDepartmentIndicatorRequest,
   UpdateAdminDepartmentRequest,
 } from "../../data/types/settings";
 import { useStrategicIndicatorsAdminDepartments } from "../../state/hooks/useStrategicIndicatorsAdminDepartments";
@@ -40,6 +43,10 @@ type IndicatorFormState = {
   performance_direction: "higher_is_better" | "lower_is_better";
   strategic_description: string;
   source_key: string;
+  value_unit: string;
+  value_prefix: string;
+  value_suffix: string;
+  value_decimals: number;
   display_order: number;
   is_active: boolean;
 };
@@ -65,9 +72,25 @@ const emptyIndicatorForm: IndicatorFormState = {
   performance_direction: "higher_is_better",
   strategic_description: "",
   source_key: "",
+  value_unit: "",
+  value_prefix: "",
+  value_suffix: "",
+  value_decimals: 2,
   display_order: 0,
   is_active: true,
 };
+
+function getIndicatorFormatLabel(item: AdminDepartmentIndicatorItem) {
+  const prefix = item.value_prefix?.trim() ?? "";
+  const suffix = item.value_suffix?.trim() ?? "";
+  const unit = item.value_unit?.trim() ?? "";
+
+  if (prefix || suffix) {
+    return `${prefix}${suffix ? ` ${suffix}` : ""}`.trim();
+  }
+
+  return unit || "Sem unidade";
+}
 
 export function AdminDepartmentsWorkspace({
   getAccessToken,
@@ -125,11 +148,7 @@ export function AdminDepartmentsWorkspace({
     setIndicatorModalOpen(true);
   }
 
-  function openEditIndicatorModal(
-    item: Awaited<
-      ReturnType<typeof useStrategicIndicatorsDepartmentIndicators>
-    >["items"][number],
-  ) {
+  function openEditIndicatorModal(item: AdminDepartmentIndicatorItem) {
     setIndicatorMode("edit");
     setIndicatorForm({
       indicator_id: item.indicator_id,
@@ -139,6 +158,10 @@ export function AdminDepartmentsWorkspace({
       performance_direction: item.performance_direction,
       strategic_description: item.strategic_description,
       source_key: item.source_key ?? "",
+      value_unit: item.value_unit ?? "",
+      value_prefix: item.value_prefix ?? "",
+      value_suffix: item.value_suffix ?? "",
+      value_decimals: Number(item.value_decimals ?? 2),
       display_order: item.display_order,
       is_active: item.is_active,
     });
@@ -183,7 +206,7 @@ export function AdminDepartmentsWorkspace({
     if (!selectedDepartmentId) return;
 
     if (indicatorMode === "create") {
-      await departmentIndicators.createIndicator({
+      const payload: CreateAdminDepartmentIndicatorRequest = {
         indicator_id: indicatorForm.indicator_id.trim(),
         indicator_name: indicatorForm.indicator_name.trim(),
         weight_pct: Number(indicatorForm.weight_pct || 0),
@@ -191,19 +214,31 @@ export function AdminDepartmentsWorkspace({
         performance_direction: indicatorForm.performance_direction,
         strategic_description: indicatorForm.strategic_description.trim(),
         source_key: indicatorForm.source_key.trim() || null,
+        value_unit: indicatorForm.value_unit.trim() || null,
+        value_prefix: indicatorForm.value_prefix.trim() || null,
+        value_suffix: indicatorForm.value_suffix.trim() || null,
+        value_decimals: Number(indicatorForm.value_decimals ?? 2),
         display_order: Number(indicatorForm.display_order || 0),
-      });
+      };
+
+      await departmentIndicators.createIndicator(payload);
     } else {
-      await departmentIndicators.updateIndicator(indicatorForm.indicator_id, {
+      const payload: UpdateAdminDepartmentIndicatorRequest = {
         indicator_name: indicatorForm.indicator_name.trim(),
         weight_pct: Number(indicatorForm.weight_pct || 0),
         scope_type: indicatorForm.scope_type,
         performance_direction: indicatorForm.performance_direction,
         strategic_description: indicatorForm.strategic_description.trim(),
         source_key: indicatorForm.source_key.trim() || null,
+        value_unit: indicatorForm.value_unit.trim() || null,
+        value_prefix: indicatorForm.value_prefix.trim() || null,
+        value_suffix: indicatorForm.value_suffix.trim() || null,
+        value_decimals: Number(indicatorForm.value_decimals ?? 2),
         display_order: Number(indicatorForm.display_order || 0),
         is_active: indicatorForm.is_active,
-      });
+      };
+
+      await departmentIndicators.updateIndicator(indicatorForm.indicator_id, payload);
     }
 
     setIndicatorModalOpen(false);
@@ -399,6 +434,7 @@ export function AdminDepartmentsWorkspace({
                           <div className="si-admin-indicators-table__meta">
                             <span>{item.weight_pct}%</span>
                             <span>{getScopeTypeLabel(item.scope_type)}</span>
+                            <span>{getIndicatorFormatLabel(item)}</span>
                             <span>{item.is_active ? "Ativo" : "Inativo"}</span>
                           </div>
 
@@ -693,6 +729,73 @@ export function AdminDepartmentsWorkspace({
                 setIndicatorForm((current) => ({
                   ...current,
                   source_key: event.target.value,
+                }))
+              }
+            />
+          </label>
+
+          <label className="si-admin-form-field">
+            <span>Unidade</span>
+            <select
+              value={indicatorForm.value_unit}
+              onChange={(event) =>
+                setIndicatorForm((current) => ({
+                  ...current,
+                  value_unit: event.target.value,
+                }))
+              }
+            >
+              <option value="">Não informada</option>
+              <option value="percent">Percentual</option>
+              <option value="currency">Moeda</option>
+              <option value="ppm">PPM</option>
+              <option value="days">Dias</option>
+              <option value="hours">Horas</option>
+              <option value="count">Quantidade</option>
+              <option value="months">Meses</option>
+              <option value="ratio">Razão</option>
+            </select>
+          </label>
+
+          <label className="si-admin-form-field">
+            <span>Prefixo</span>
+            <input
+              placeholder="Ex.: R$"
+              value={indicatorForm.value_prefix}
+              onChange={(event) =>
+                setIndicatorForm((current) => ({
+                  ...current,
+                  value_prefix: event.target.value,
+                }))
+              }
+            />
+          </label>
+
+          <label className="si-admin-form-field">
+            <span>Sufixo</span>
+            <input
+              placeholder="Ex.: %, PPM, /mês, dias"
+              value={indicatorForm.value_suffix}
+              onChange={(event) =>
+                setIndicatorForm((current) => ({
+                  ...current,
+                  value_suffix: event.target.value,
+                }))
+              }
+            />
+          </label>
+
+          <label className="si-admin-form-field">
+            <span>Casas decimais</span>
+            <input
+              type="number"
+              min={0}
+              max={6}
+              value={indicatorForm.value_decimals}
+              onChange={(event) =>
+                setIndicatorForm((current) => ({
+                  ...current,
+                  value_decimals: Number(event.target.value || 0),
                 }))
               }
             />

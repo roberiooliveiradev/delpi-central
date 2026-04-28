@@ -23,6 +23,10 @@ class IndicatorItemResponse:
     trend: str = "stable"
     classification: str = ""
     source: str = ""
+    value_unit: str | None = None
+    value_prefix: str | None = None
+    value_suffix: str | None = None
+    value_decimals: int = 2
 
 
 @dataclass

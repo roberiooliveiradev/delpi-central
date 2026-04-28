@@ -65,6 +65,10 @@ class GetStrategicIndicatorsUseCase:
                     trend=item.trend,
                     classification=item.classification,
                     source=item.source,
+                    value_unit=getattr(item, "value_unit", None),
+                    value_prefix=getattr(item, "value_prefix", None),
+                    value_suffix=getattr(item, "value_suffix", None),
+                    value_decimals=int(getattr(item, "value_decimals", 2) or 2),
                 )
                 for item in snapshot.calculated_indicators
             ],

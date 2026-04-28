@@ -330,6 +330,10 @@ class GetStrategicIndicatorsPresentationUseCase:
             "score": current.score,
             "gap": current.gap,
             "trend": trend,
+            "value_unit": getattr(current, "value_unit", None),
+            "value_prefix": getattr(current, "value_prefix", None),
+            "value_suffix": getattr(current, "value_suffix", None),
+            "value_decimals": int(getattr(current, "value_decimals", 2) or 2),
         }
 
     def _build_units(
@@ -429,6 +433,10 @@ class GetStrategicIndicatorsPresentationUseCase:
                     "trend": item.trend,
                     "classification": item.classification,
                     "source": item.source,
+                    "value_unit": getattr(item, "value_unit", None),
+                    "value_prefix": getattr(item, "value_prefix", None),
+                    "value_suffix": getattr(item, "value_suffix", None),
+                    "value_decimals": int(getattr(item, "value_decimals", 2) or 2),
                 }
             )
 
@@ -612,7 +620,6 @@ class GetStrategicIndicatorsPresentationUseCase:
             if not series:
                 continue
 
-            first = series[0]
             current = series[-1]
             previous = series[-2] if len(series) >= 2 else series[-1]
 
@@ -710,6 +717,10 @@ class GetStrategicIndicatorsPresentationUseCase:
                         ),
                         "strategic_description": indicator.strategic_description,
                         "source": indicator.source,
+                        "value_unit": getattr(indicator, "value_unit", None),
+                        "value_prefix": getattr(indicator, "value_prefix", None),
+                        "value_suffix": getattr(indicator, "value_suffix", None),
+                        "value_decimals": int(getattr(indicator, "value_decimals", 2) or 2),
                         "series": [point],
                     }
                     continue

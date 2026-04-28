@@ -14,6 +14,11 @@ CREATE TABLE IF NOT EXISTS strategic_indicators.department_indicators (
     strategic_description TEXT NOT NULL DEFAULT '',
     source_key VARCHAR(150) NULL,
 
+    value_unit VARCHAR(40) NULL,
+    value_prefix VARCHAR(20) NULL,
+    value_suffix VARCHAR(40) NULL,
+    value_decimals SMALLINT NOT NULL DEFAULT 2,
+
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     display_order INT NOT NULL DEFAULT 0,
 
@@ -51,7 +56,10 @@ CREATE TABLE IF NOT EXISTS strategic_indicators.department_indicators (
                 'higher_is_better',
                 'lower_is_better'
             )
-        )
+        ),
+
+    CONSTRAINT ck_si_department_indicators_value_decimals
+        CHECK (value_decimals >= 0 AND value_decimals <= 6)
 );
 
 CREATE INDEX IF NOT EXISTS idx_si_department_indicators_department_id
@@ -89,5 +97,17 @@ COMMENT ON COLUMN strategic_indicators.department_indicators.performance_directi
 
 COMMENT ON COLUMN strategic_indicators.department_indicators.source_key IS
 'Chave de origem usada pela camada de medições reais.';
+
+COMMENT ON COLUMN strategic_indicators.department_indicators.value_unit IS
+'Unidade semântica do indicador. Ex.: percent, currency, ppm, days, hours, count, ratio, months.';
+
+COMMENT ON COLUMN strategic_indicators.department_indicators.value_prefix IS
+'Prefixo de apresentação do valor. Ex.: R$.';
+
+COMMENT ON COLUMN strategic_indicators.department_indicators.value_suffix IS
+'Sufixo de apresentação do valor. Ex.: %, PPM, /mês, dias, horas/mês.';
+
+COMMENT ON COLUMN strategic_indicators.department_indicators.value_decimals IS
+'Quantidade padrão de casas decimais para apresentação do valor realizado, meta e gap.';
 
 COMMIT;

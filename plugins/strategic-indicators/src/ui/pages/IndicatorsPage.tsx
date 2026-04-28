@@ -208,6 +208,10 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         trend: item.trend,
         status: mapClassificationToStatus(item.classification),
         source: item.source,
+        valueUnit: item.valueUnit,
+        valuePrefix: item.valuePrefix,
+        valueSuffix: item.valueSuffix,
+        valueDecimals: item.valueDecimals,
       })),
     [items],
   );
@@ -372,12 +376,16 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
               <IndicatorAnalyticsTable
                 indicators={filteredIndicators}
                 selectedIndicatorId={resolvedSelectedIndicator?.id}
+                competence={referenceMonth}
                 onSelectIndicator={(indicator) =>
                   setSelectedIndicatorId(indicator.id)
                 }
               />
 
-              <IndicatorQuickDetail indicator={resolvedSelectedIndicator} />
+              <IndicatorQuickDetail
+                indicator={resolvedSelectedIndicator}
+                competence={referenceMonth}
+              />
             </div>
           </SectionBlock>
         </>

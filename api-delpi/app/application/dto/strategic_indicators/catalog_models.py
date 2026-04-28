@@ -18,6 +18,10 @@ class StrategicIndicatorCatalogItem:
     performance_direction: str = "higher_is_better"
     strategic_description: str = ""
     source_key: str | None = None
+    value_unit: str | None = None
+    value_prefix: str | None = None
+    value_suffix: str | None = None
+    value_decimals: int = 2
 
 
 @dataclass(frozen=True)
@@ -60,6 +64,10 @@ class StrategicIndicatorCalculatedValue:
     trend: str = "stable"
     classification: str = ""
     unit_values: dict[str, float] | None = None
+    value_unit: str | None = None
+    value_prefix: str | None = None
+    value_suffix: str | None = None
+    value_decimals: int = 2
 
 
 @dataclass(frozen=True)

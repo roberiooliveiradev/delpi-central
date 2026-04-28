@@ -4,9 +4,14 @@ import {
   getGoalPeriodicityLabel,
   getPerformanceDirectionLabel,
 } from "../presentation/labels";
+import {
+  formatIndicatorGoalValue,
+  formatIndicatorValue,
+} from "../shared/indicatorValueFormatter";
 
 type IndicatorDetailCardProps = {
   indicator: DepartmentIndicator;
+  competence?: string | null;
 };
 
 function getRealizedKeyLabel(key: string) {
@@ -22,15 +27,32 @@ function getRealizedKeyLabel(key: string) {
   }
 }
 
-function formatRealized(realized: Record<string, number>) {
-  return Object.entries(realized)
-    .map(([key, value]) => `${getRealizedKeyLabel(key)}: ${value}`)
+function getValueFormat(indicator: DepartmentIndicator) {
+  return {
+    valueUnit: indicator.valueUnit,
+    valuePrefix: indicator.valuePrefix,
+    valueSuffix: indicator.valueSuffix,
+    valueDecimals: indicator.valueDecimals,
+  };
+}
+
+function formatRealized(indicator: DepartmentIndicator) {
+  const valueFormat = getValueFormat(indicator);
+
+  return Object.entries(indicator.realized)
+    .map(
+      ([key, value]) =>
+        `${getRealizedKeyLabel(key)}: ${formatIndicatorValue(value, valueFormat)}`,
+    )
     .join(" · ");
 }
 
 export function IndicatorDetailCard({
   indicator,
+  competence,
 }: IndicatorDetailCardProps) {
+  const valueFormat = getValueFormat(indicator);
+
   return (
     <article className="si-indicator-card">
       <div className="si-indicator-card__header">
@@ -43,7 +65,7 @@ export function IndicatorDetailCard({
       <div className="si-indicator-card__goal">
         <span className="si-indicator-card__goal-label">Meta</span>
         <strong className="si-indicator-card__goal-value">
-          {indicator.goalLabel}
+          {formatIndicatorGoalValue(indicator, competence)}
         </strong>
       </div>
 
@@ -80,7 +102,7 @@ export function IndicatorDetailCard({
       <div className="si-indicator-card__goal">
         <span className="si-indicator-card__goal-label">Realizado</span>
         <strong className="si-indicator-card__goal-value">
-          {formatRealized(indicator.realized)}
+          {formatRealized(indicator)}
         </strong>
       </div>
 
@@ -94,7 +116,9 @@ export function IndicatorDetailCard({
       <div className="si-indicator-card__goal">
         <span className="si-indicator-card__goal-label">Gap</span>
         <strong className="si-indicator-card__goal-value">
-          {indicator.gap.toFixed(2)}
+          {formatIndicatorValue(indicator.gap, valueFormat, {
+            signed: true,
+          })}
         </strong>
       </div>
 

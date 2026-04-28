@@ -36,6 +36,10 @@ type IndicatorFormState = {
   performance_direction: "higher_is_better" | "lower_is_better";
   strategic_description: string;
   source_key: string;
+  value_unit: string;
+  value_prefix: string;
+  value_suffix: string;
+  value_decimals: number;
   display_order: number;
   is_active: boolean;
 };
@@ -48,6 +52,10 @@ const emptyIndicatorForm: IndicatorFormState = {
   performance_direction: "higher_is_better",
   strategic_description: "",
   source_key: "",
+  value_unit: "",
+  value_prefix: "",
+  value_suffix: "",
+  value_decimals: 2,
   display_order: 0,
   is_active: true,
 };
@@ -91,6 +99,10 @@ export function DepartmentManagementModal({
       source_key: item.source_key ?? "",
       display_order: item.display_order,
       is_active: item.is_active,
+      value_unit: item.value_unit ?? "",
+      value_prefix: item.value_prefix ?? "",
+      value_suffix: item.value_suffix ?? "",
+      value_decimals: Number(item.value_decimals ?? 2),
     });
     setIndicatorFormOpen(true);
   }
@@ -108,6 +120,10 @@ export function DepartmentManagementModal({
         strategic_description: indicatorForm.strategic_description.trim(),
         source_key: indicatorForm.source_key.trim() || null,
         display_order: Number(indicatorForm.display_order || 0),
+        value_unit: indicatorForm.value_unit.trim() || null,
+        value_prefix: indicatorForm.value_prefix.trim() || null,
+        value_suffix: indicatorForm.value_suffix.trim() || null,
+        value_decimals: Number(indicatorForm.value_decimals ?? 2),
       };
 
       await departmentIndicators.createIndicator(payload);
@@ -121,6 +137,10 @@ export function DepartmentManagementModal({
         source_key: indicatorForm.source_key.trim() || null,
         display_order: Number(indicatorForm.display_order || 0),
         is_active: indicatorForm.is_active,
+        value_unit: indicatorForm.value_unit.trim() || null,
+        value_prefix: indicatorForm.value_prefix.trim() || null,
+        value_suffix: indicatorForm.value_suffix.trim() || null,
+        value_decimals: Number(indicatorForm.value_decimals ?? 2),
       };
 
       await departmentIndicators.updateIndicator(indicatorForm.indicator_id, payload);
@@ -253,6 +273,8 @@ export function DepartmentManagementModal({
                         <p>{item.strategic_description || "Sem descrição estratégica."}</p>
                         <small>
                           {item.weight_pct}% · {getScopeTypeLabel(item.scope_type)} ·{" "}
+                          {item.value_prefix || ""}
+                          {item.value_suffix ? ` ${item.value_suffix}` : item.value_unit ? ` ${item.value_unit}` : ""} ·{" "}
                           {item.is_active ? "Ativo" : "Inativo"}
                         </small>
                       </div>
@@ -407,7 +429,73 @@ export function DepartmentManagementModal({
               }
             />
           </label>
+          
+          <label className="si-admin-form-field">
+            <span>Unidade</span>
+            <select
+              value={indicatorForm.value_unit}
+              onChange={(event) =>
+                setIndicatorForm((current) => ({
+                  ...current,
+                  value_unit: event.target.value,
+                }))
+              }
+            >
+              <option value="">Não informada</option>
+              <option value="percent">Percentual</option>
+              <option value="currency">Moeda</option>
+              <option value="ppm">PPM</option>
+              <option value="days">Dias</option>
+              <option value="hours">Horas</option>
+              <option value="count">Quantidade</option>
+              <option value="months">Meses</option>
+              <option value="ratio">Razão</option>
+            </select>
+          </label>
 
+          <label className="si-admin-form-field">
+            <span>Prefixo</span>
+            <input
+              placeholder="Ex.: R$"
+              value={indicatorForm.value_prefix}
+              onChange={(event) =>
+                setIndicatorForm((current) => ({
+                  ...current,
+                  value_prefix: event.target.value,
+                }))
+              }
+            />
+          </label>
+
+          <label className="si-admin-form-field">
+            <span>Sufixo</span>
+            <input
+              placeholder="Ex.: %, PPM, /mês, dias"
+              value={indicatorForm.value_suffix}
+              onChange={(event) =>
+                setIndicatorForm((current) => ({
+                  ...current,
+                  value_suffix: event.target.value,
+                }))
+              }
+            />
+          </label>
+
+          <label className="si-admin-form-field">
+            <span>Casas decimais</span>
+            <input
+              type="number"
+              min={0}
+              max={6}
+              value={indicatorForm.value_decimals}
+              onChange={(event) =>
+                setIndicatorForm((current) => ({
+                  ...current,
+                  value_decimals: Number(event.target.value || 0),
+                }))
+              }
+            />
+          </label>
           <label className="si-admin-form-field">
             <span>Ordem</span>
             <input

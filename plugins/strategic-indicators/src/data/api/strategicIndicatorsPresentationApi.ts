@@ -13,6 +13,13 @@ const BASE_URL = "/apps/api-delpi/strategic-indicators";
 type Severity = "low" | "medium" | "high";
 type TrendDirection = "up" | "down" | "stable";
 
+type IndicatorValueFormatApiFields = {
+  value_unit?: string | null;
+  value_prefix?: string | null;
+  value_suffix?: string | null;
+  value_decimals?: number | null;
+};
+
 export type StrategicIndicatorsPresentationApiResponse = {
   executive_summary: {
     competence: string;
@@ -53,6 +60,7 @@ export type StrategicIndicatorsPresentationApiResponse = {
     }>;
     partial_success: boolean;
   };
+
   departments_overview: Array<{
     id: string;
     name: string;
@@ -68,6 +76,7 @@ export type StrategicIndicatorsPresentationApiResponse = {
       direction: TrendDirection;
     };
   }>;
+
   department_details_by_id: Record<
     string,
     {
@@ -90,9 +99,45 @@ export type StrategicIndicatorsPresentationApiResponse = {
         score: number;
         classification: string;
       }>;
-      indicators: Array<{
-        id: string;
-        name: string;
+      indicators: Array<
+        {
+          id: string;
+          name: string;
+          weight_pct: number;
+          goal_label: string;
+          goal_value: number;
+          goal_periodicity: string;
+          goal_mode: string;
+          monthly_targets: Array<{
+            month_number: number;
+            target_value: number;
+          }>;
+          strategic_description: string;
+          scope_type: string;
+          performance_direction: string;
+          realized: Record<string, number>;
+          score: number;
+          gap: number;
+          trend: TrendDirection;
+        } & IndicatorValueFormatApiFields
+      >;
+      errors: Array<{
+        department_id?: string | null;
+        source?: string | null;
+        message: string;
+      }>;
+      partial_success: boolean;
+    }
+  >;
+
+  indicators_by_department_id: Record<
+    string,
+    Array<
+      {
+        department_id: string;
+        department_name: string;
+        indicator_id: string;
+        indicator_name: string;
         weight_pct: number;
         goal_label: string;
         goal_value: number;
@@ -102,48 +147,18 @@ export type StrategicIndicatorsPresentationApiResponse = {
           month_number: number;
           target_value: number;
         }>;
-        strategic_description: string;
         scope_type: string;
         performance_direction: string;
-        realized: Record<string, number>;
+        value: number;
         score: number;
         gap: number;
         trend: TrendDirection;
-      }>;
-      errors: Array<{
-        department_id?: string | null;
-        source?: string | null;
-        message: string;
-      }>;
-      partial_success: boolean;
-    }
+        classification: string;
+        source: string;
+      } & IndicatorValueFormatApiFields
+    >
   >;
-  indicators_by_department_id: Record<
-    string,
-    Array<{
-      department_id: string;
-      department_name: string;
-      indicator_id: string;
-      indicator_name: string;
-      weight_pct: number;
-      goal_label: string;
-      goal_value: number;
-      goal_periodicity: string;
-      goal_mode: string;
-      monthly_targets: Array<{
-        month_number: number;
-        target_value: number;
-      }>;
-      scope_type: string;
-      performance_direction: string;
-      value: number;
-      score: number;
-      gap: number;
-      trend: TrendDirection;
-      classification: string;
-      source: string;
-    }>
-  >;
+
   alerts: {
     competence: string;
     executive_alerts: Array<{
@@ -189,6 +204,7 @@ export type StrategicIndicatorsPresentationApiResponse = {
     }>;
     partial_success: boolean;
   };
+
   trends: {
     competence: string;
     current_igd: number;
@@ -218,6 +234,36 @@ export type StrategicIndicatorsPresentationApiResponse = {
         contribution?: number;
       }>;
     }>;
+    indicator_series_by_department_id?: Record<
+      string,
+      Array<
+        {
+          indicator_id: string;
+          indicator_name: string;
+          weight_pct: number;
+          goal_label: string;
+          goal_value: number;
+          goal_periodicity: string;
+          goal_mode?: string;
+          monthly_targets?: Array<{
+            month_number: number;
+            target_value: number;
+          }>;
+          scope_type: string;
+          performance_direction: string;
+          strategic_description: string;
+          source: string;
+          series: Array<{
+            period: string;
+            value: number;
+            score: number;
+            gap: number;
+            classification?: string;
+            trend: TrendDirection;
+          }>;
+        } & IndicatorValueFormatApiFields
+      >
+    >;
     errors: Array<{
       competence?: string | null;
       department_id?: string | null;
@@ -226,6 +272,7 @@ export type StrategicIndicatorsPresentationApiResponse = {
     }>;
     partial_success: boolean;
   };
+
   meta: {
     partial_success: boolean;
     errors: Array<{

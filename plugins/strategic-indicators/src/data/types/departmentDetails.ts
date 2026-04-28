@@ -6,6 +6,17 @@ export type PerformanceDirection =
   | "higher_is_better"
   | "lower_is_better";
 
+export type IndicatorValueUnit =
+  | "percent"
+  | "currency"
+  | "ppm"
+  | "days"
+  | "hours"
+  | "count"
+  | "ratio"
+  | "months"
+  | string;
+
 export type MonthlyTargetItem = {
   month_number: number;
   target_value: number;
@@ -27,6 +38,10 @@ export type DepartmentIndicator = {
   score: number;
   gap: number;
   trend: TrendDirection;
+  valueUnit: IndicatorValueUnit | null;
+  valuePrefix: string | null;
+  valueSuffix: string | null;
+  valueDecimals: number;
 };
 
 export type DepartmentUnit = {
@@ -90,6 +105,10 @@ export type StrategicIndicatorsDepartmentDetailsResponse = {
     score: number;
     gap: number;
     trend: string;
+    value_unit?: IndicatorValueUnit | null;
+    value_prefix?: string | null;
+    value_suffix?: string | null;
+    value_decimals?: number | null;
   }>;
   errors?: Array<{
     department_id: string;

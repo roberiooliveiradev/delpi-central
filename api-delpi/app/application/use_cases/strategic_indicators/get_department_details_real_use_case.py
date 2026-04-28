@@ -131,6 +131,10 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             "score": current.score,
             "gap": current.gap,
             "trend": trend,
+            "value_unit": getattr(current, "value_unit", None),
+            "value_prefix": getattr(current, "value_prefix", None),
+            "value_suffix": getattr(current, "value_suffix", None),
+            "value_decimals": int(getattr(current, "value_decimals", 2) or 2),
         }
 
     def _build_units(

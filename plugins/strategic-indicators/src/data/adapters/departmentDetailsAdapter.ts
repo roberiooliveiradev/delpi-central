@@ -49,6 +49,10 @@ export function adaptDepartmentDetailsToView(
       score: indicator.score,
       gap: indicator.gap,
       trend: normalizeTrend(indicator.trend),
+      valueUnit: indicator.value_unit ?? null,
+      valuePrefix: indicator.value_prefix ?? null,
+      valueSuffix: indicator.value_suffix ?? null,
+      valueDecimals: Number(indicator.value_decimals ?? 2),
     })),
   };
 }

@@ -3,10 +3,12 @@ import { IndicatorDetailCard } from "./IndicatorDetailCard";
 
 type IndicatorDetailGridProps = {
   indicators: DepartmentIndicator[];
+  competence?: string | null;
 };
 
 export function IndicatorDetailGrid({
   indicators,
+  competence,
 }: IndicatorDetailGridProps) {
   return (
     <div className="si-indicator-grid">
@@ -14,6 +16,7 @@ export function IndicatorDetailGrid({
         <IndicatorDetailCard
           key={indicator.id}
           indicator={indicator}
+          competence={competence}
         />
       ))}
     </div>

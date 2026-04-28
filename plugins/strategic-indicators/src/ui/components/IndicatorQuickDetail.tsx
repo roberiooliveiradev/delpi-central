@@ -5,9 +5,14 @@ import {
   getGoalPeriodicityLabel,
   getPerformanceDirectionLabel,
 } from "../presentation/labels";
+import {
+  formatIndicatorGoalValue,
+  formatIndicatorValue,
+} from "../shared/indicatorValueFormatter";
 
 type IndicatorQuickDetailProps = {
   indicator: IndicatorAnalyticsViewItem | null;
+  competence?: string | null;
 };
 
 function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
@@ -19,6 +24,7 @@ function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
 
 export function IndicatorQuickDetail({
   indicator,
+  competence,
 }: IndicatorQuickDetailProps) {
   if (!indicator) {
     return (
@@ -27,6 +33,13 @@ export function IndicatorQuickDetail({
       </div>
     );
   }
+
+  const valueFormat = {
+    valueUnit: indicator.valueUnit,
+    valuePrefix: indicator.valuePrefix,
+    valueSuffix: indicator.valueSuffix,
+    valueDecimals: indicator.valueDecimals,
+  };
 
   return (
     <aside className="si-indicator-quick-detail">
@@ -59,7 +72,7 @@ export function IndicatorQuickDetail({
 
         <div className="si-indicator-quick-detail__meta-item">
           <span>Meta</span>
-          <strong>{indicator.goalLabel}</strong>
+          <strong>{formatIndicatorGoalValue(indicator, competence)}</strong>
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">
@@ -86,18 +99,26 @@ export function IndicatorQuickDetail({
 
         <div className="si-indicator-quick-detail__meta-item">
           <span>Valor atual</span>
-          <strong>{indicator.currentValue.toFixed(2)}</strong>
+          <strong>
+            {formatIndicatorValue(indicator.currentValue, valueFormat)}
+          </strong>
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">
           <span>Gap</span>
-          <strong>{indicator.gap.toFixed(2)}</strong>
+          <strong>
+            {formatIndicatorValue(indicator.gap, valueFormat, {
+              signed: true,
+            })}
+          </strong>
         </div>
 
         {indicator.goalMode === "monthly_curve" ? (
           <div className="si-indicator-quick-detail__meta-item">
             <span>Curva mensal</span>
-            <strong>{indicator.monthlyTargets.length} meses parametrizados</strong>
+            <strong>
+              {indicator.monthlyTargets.length} meses parametrizados
+            </strong>
           </div>
         ) : null}
       </div>

@@ -10,6 +10,13 @@ import { InfoState } from "../components/InfoState";
 import { SettingsSummaryCards } from "../components/SettingsSummaryCards";
 import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
 import type { SettingsDashboardData } from "../../data/types/settingsDashboard";
+import type {
+  SettingsWeightItem,
+  SettingsGoalItem,
+  SettingsParameterItem,
+  SettingsGovernanceItem,
+} from "../../data/types/settings";
+
 import { DepartmentsListPanel } from "../components/DepartmentsListPanel";
 import { GoalYearsListPanel } from "../components/GoalYearsListPanel";
 import {
@@ -35,30 +42,37 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
     if (!settings.data) return null;
 
     return {
-      weights: settings.data.weights.items.map((item) => ({
+      weights: settings.data.weights.items.map((item: SettingsWeightItem) => ({
         id: item.department_id,
         departmentName: item.department_name,
         weightPct: item.weight_pct,
         note: "Bloco legado do painel. A edição principal agora ocorre via departamentos.",
       })),
-      goals: settings.data.goals.items.map((item) => ({
+
+      goals: settings.data.goals.items.map((item: SettingsGoalItem) => ({
         id: item.department_id,
         departmentName: item.department_name,
         headlineGoal: item.headline_goal,
         supportingFocus: item.supporting_focus,
       })),
-      parameters: settings.data.parameters.items.map((item, index) => ({
-        id: `${item.key}-${index}`,
-        label: item.label,
-        value: item.value,
-        observation: item.key,
-      })),
-      governance: settings.data.governance.items.map((item, index) => ({
-        id: `${item.key}-${index}`,
-        label: item.label,
-        value: item.value,
-        observation: item.observation,
-      })),
+
+      parameters: settings.data.parameters.items.map(
+        (item: SettingsParameterItem, index: number) => ({
+          id: `${item.key}-${index}`,
+          label: item.label,
+          value: item.value,
+          observation: item.key,
+        }),
+      ),
+
+      governance: settings.data.governance.items.map(
+        (item: SettingsGovernanceItem, index: number) => ({
+          id: `${item.key}-${index}`,
+          label: item.label,
+          value: item.value,
+          observation: item.observation,
+        }),
+      ),
       readiness: [
         {
           id: "departments-admin",

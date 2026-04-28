@@ -64,7 +64,11 @@ class PostgresStrategicIndicatorsCatalogRepository(
                 di.scope_type,
                 di.performance_direction,
                 di.strategic_description,
-                di.source_key
+                di.source_key,
+                di.value_unit,
+                di.value_prefix,
+                di.value_suffix,
+                di.value_decimals
             FROM strategic_indicators.department_indicators di
             INNER JOIN strategic_indicators.departments d
                 ON d.department_id = di.department_id
@@ -101,6 +105,10 @@ class PostgresStrategicIndicatorsCatalogRepository(
                 performance_direction=row.get("performance_direction") or "higher_is_better",
                 strategic_description=row.get("strategic_description") or "",
                 source_key=row.get("source_key"),
+                value_unit=row.get("value_unit"),
+                value_prefix=row.get("value_prefix"),
+                value_suffix=row.get("value_suffix"),
+                value_decimals=int(row.get("value_decimals") or 2),
             )
             for row in rows
         ]

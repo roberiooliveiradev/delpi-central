@@ -914,6 +914,10 @@ def get_strategic_indicators(
                     "trend": item.trend,
                     "classification": item.classification,
                     "source": item.source,
+                    "value_unit": getattr(item, "value_unit", None),
+                    "value_prefix": getattr(item, "value_prefix", None),
+                    "value_suffix": getattr(item, "value_suffix", None),
+                    "value_decimals": getattr(item, "value_decimals", 2),
                 }
                 for item in result.items
             ],

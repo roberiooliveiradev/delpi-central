@@ -10,6 +10,17 @@ export type PerformanceDirection =
   | "higher_is_better"
   | "lower_is_better";
 
+export type IndicatorValueUnit =
+  | "percent"
+  | "currency"
+  | "ppm"
+  | "days"
+  | "hours"
+  | "count"
+  | "ratio"
+  | "months"
+  | string;
+
 export type MonthlyTargetViewItem = {
   monthNumber: number;
   targetValue: number;
@@ -34,4 +45,9 @@ export type IndicatorAnalyticsViewItem = {
   trend: "up" | "down" | "stable";
   status: IndicatorAnalyticsStatus;
   source: string;
+
+  valueUnit: IndicatorValueUnit | null;
+  valuePrefix: string | null;
+  valueSuffix: string | null;
+  valueDecimals: number;
 };

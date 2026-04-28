@@ -757,6 +757,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
         department={departmentFocus}
         series={departmentFocus?.series}
         mode={mode}
+        competence={referenceMonth}
       />
     );
   }

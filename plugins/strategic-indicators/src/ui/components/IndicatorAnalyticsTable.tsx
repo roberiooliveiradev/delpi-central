@@ -1,9 +1,11 @@
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
+import { formatIndicatorGoalValue } from "../shared/indicatorValueFormatter";
 
 type IndicatorAnalyticsTableProps = {
   indicators: IndicatorAnalyticsViewItem[];
   selectedIndicatorId?: string;
+  competence?: string | null;
   onSelectIndicator: (indicator: IndicatorAnalyticsViewItem) => void;
 };
 
@@ -17,6 +19,7 @@ function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
 export function IndicatorAnalyticsTable({
   indicators,
   selectedIndicatorId,
+  competence,
   onSelectIndicator,
 }: IndicatorAnalyticsTableProps) {
   if (!indicators.length) {
@@ -57,7 +60,7 @@ export function IndicatorAnalyticsTable({
 
             <span>{indicator.departmentName}</span>
             <span>{indicator.weightPct}%</span>
-            <span>{indicator.goalLabel}</span>
+            <span>{formatIndicatorGoalValue(indicator, competence)}</span>
             <strong className="si-indicator-table__score">
               {indicator.score.toFixed(1)}
             </strong>

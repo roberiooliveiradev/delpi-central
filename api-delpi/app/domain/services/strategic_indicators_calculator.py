@@ -165,6 +165,10 @@ class StrategicIndicatorsCalculator:
                     trend="stable",
                     classification=self.classify_score(score),
                     unit_values=measurement.unit_values,
+                    value_unit=indicator.value_unit,
+                    value_prefix=indicator.value_prefix,
+                    value_suffix=indicator.value_suffix,
+                    value_decimals=indicator.value_decimals,
                 )
             )
 

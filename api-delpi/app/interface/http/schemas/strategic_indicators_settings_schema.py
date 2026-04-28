@@ -100,6 +100,10 @@ class DepartmentIndicatorItemSchema(BaseModel):
     performance_direction: str = "higher_is_better"
     strategic_description: str = ""
     source_key: Optional[str] = None
+    value_unit: Optional[str] = None
+    value_prefix: Optional[str] = None
+    value_suffix: Optional[str] = None
+    value_decimals: int = Field(default=2, ge=0, le=6)
     is_active: bool = True
     display_order: int = 0
 
@@ -112,6 +116,10 @@ class CreateDepartmentIndicatorBodySchema(BaseModel):
     performance_direction: str = "higher_is_better"
     strategic_description: str = ""
     source_key: Optional[str] = None
+    value_unit: Optional[str] = None
+    value_prefix: Optional[str] = None
+    value_suffix: Optional[str] = None
+    value_decimals: int = Field(default=2, ge=0, le=6)
     display_order: int = 0
 
 
@@ -122,6 +130,10 @@ class UpdateDepartmentIndicatorBodySchema(BaseModel):
     performance_direction: str = "higher_is_better"
     strategic_description: str = ""
     source_key: Optional[str] = None
+    value_unit: Optional[str] = None
+    value_prefix: Optional[str] = None
+    value_suffix: Optional[str] = None
+    value_decimals: int = Field(default=2, ge=0, le=6)
     is_active: bool = True
     display_order: int = 0
 

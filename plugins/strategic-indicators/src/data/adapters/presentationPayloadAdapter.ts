@@ -25,6 +25,13 @@ type AdaptPresentationPayloadParams = {
   focusDepartmentId?: string | null;
 };
 
+type IndicatorValueFormatFields = {
+  valueUnit: string | null;
+  valuePrefix: string | null;
+  valueSuffix: string | null;
+  valueDecimals: number;
+};
+
 function slugify(value: string) {
   return value
     .toLowerCase()
@@ -86,6 +93,24 @@ function normalizeAggregationMode(
   }
 
   return "consolidated";
+}
+
+function getValueFormatFields(source: unknown): IndicatorValueFormatFields {
+  const item = source as {
+    value_unit?: string | null;
+    value_prefix?: string | null;
+    value_suffix?: string | null;
+    value_decimals?: number | string | null;
+  };
+
+  const parsedDecimals = Number(item.value_decimals ?? 2);
+
+  return {
+    valueUnit: item.value_unit ?? null,
+    valuePrefix: item.value_prefix ?? null,
+    valueSuffix: item.value_suffix ?? null,
+    valueDecimals: Number.isFinite(parsedDecimals) ? parsedDecimals : 2,
+  };
 }
 
 function buildExecutiveSummary(
@@ -249,6 +274,7 @@ function buildDepartmentDetailsById(
           score: indicator.score,
           gap: indicator.gap,
           trend: normalizeDirection(indicator.trend),
+          ...getValueFormatFields(indicator),
         })),
       },
     ]),
@@ -283,6 +309,7 @@ function buildIndicatorsByDepartmentId(
             indicator.performance_direction,
           ),
           source: indicator.source,
+          ...getValueFormatFields(indicator),
         })),
       ],
     ),
@@ -336,6 +363,10 @@ function buildIndicatorSeriesByDepartmentId(
           performance_direction: string;
           strategic_description: string;
           source: string;
+          value_unit?: string | null;
+          value_prefix?: string | null;
+          value_suffix?: string | null;
+          value_decimals?: number | string | null;
           series: Array<{
             period: string;
             value: number;
@@ -372,6 +403,7 @@ function buildIndicatorSeriesByDepartmentId(
         performanceDirection: item.performance_direction,
         strategicDescription: item.strategic_description,
         source: item.source,
+        ...getValueFormatFields(item),
         series: (item.series ?? []).map((point) => ({
           period: point.period,
           value: point.value,

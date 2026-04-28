@@ -49,6 +49,10 @@ class CreateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
         if weight_pct < 0 or weight_pct > 100:
             raise ValueError("weight_pct deve estar entre 0 e 100.")
 
+        value_decimals = int(body.get("value_decimals") if body.get("value_decimals") is not None else 2)
+        if value_decimals < 0 or value_decimals > 6:
+            raise ValueError("value_decimals deve estar entre 0 e 6.")
+
         return self._repository.create_department_indicator(
             department_id=department_id.strip(),
             indicator_id=indicator_id,
@@ -58,6 +62,10 @@ class CreateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
             performance_direction=performance_direction,
             strategic_description=(body.get("strategic_description") or "").strip(),
             source_key=(body.get("source_key") or None),
+            value_unit=(body.get("value_unit") or None),
+            value_prefix=(body.get("value_prefix") or None),
+            value_suffix=(body.get("value_suffix") or None),
+            value_decimals=value_decimals,
             display_order=int(body.get("display_order") or 0),
             actor_user_id=actor_user_id,
             actor_email=actor_email,

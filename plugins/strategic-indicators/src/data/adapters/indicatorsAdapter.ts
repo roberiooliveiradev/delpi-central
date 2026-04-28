@@ -32,5 +32,9 @@ export function adaptIndicatorsToView(
     scopeType: item.scope_type,
     performanceDirection: item.performance_direction,
     source: item.source,
+    valueUnit: item.value_unit ?? null,
+    valuePrefix: item.value_prefix ?? null,
+    valueSuffix: item.value_suffix ?? null,
+    valueDecimals: Number(item.value_decimals ?? 2),
   }));
 }

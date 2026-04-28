@@ -98,6 +98,10 @@ export type PresentationDepartmentIndicatorSnapshot = {
   gap: number;
   trend: "up" | "down" | "stable";
   trendLabel: string;
+  valueUnit: string | null;
+  valuePrefix: string | null;
+  valueSuffix: string | null;
+  valueDecimals: number;
   series?: PresentationIndicatorSeriesPoint[];
 };
 
@@ -446,6 +450,10 @@ function buildDepartmentFocus(
       gap: indicator.gap,
       trend: normalizeDirection(indicator.trend),
       trendLabel: getTrendLabel(indicator.trend),
+      valueUnit: fallbackIndicator?.valueUnit ?? indicator.valueUnit,
+      valuePrefix: fallbackIndicator?.valuePrefix ?? indicator.valuePrefix,
+      valueSuffix: fallbackIndicator?.valueSuffix ?? indicator.valueSuffix,
+      valueDecimals: fallbackIndicator?.valueDecimals ?? indicator.valueDecimals,
       series: mapIndicatorSeries(trendIndicatorsMap.get(indicator.id)),
     };
   });
