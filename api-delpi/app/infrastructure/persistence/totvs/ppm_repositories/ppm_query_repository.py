@@ -16,19 +16,37 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
     def get_summary(self, request) -> PpmSummary:
         qb_nc = QueryBuilder()
-        qb_nc.raw("D_E_L_E_T_ = ''")
+        qb_nc.raw("D_E_L_E_T_ = ' '")
+
         if request.branch:
             qb_nc.eq("QI2_FILIAL", request.branch)
+
         qb_nc.date_range("QI2_REGIST", request.date_start, request.date_end)
         qb_nc.raw(self._type_filter(request.type))
+
         where_nc, params_nc = qb_nc.build()
 
-        qb_prod = QueryBuilder()
-        qb_prod.raw("D_E_L_E_T_ = ''")
+        prod_branch_filter_g2 = ""
+        prod_branch_filter_sh6 = ""
+        prod_params = []
+
         if request.branch:
-            qb_prod.eq("H6_FILIAL", request.branch)
-        qb_prod.date_range("H6_DATAINI", request.date_start, request.date_end)
-        where_prod, params_prod = qb_prod.build()
+            prod_branch_filter_g2 = "AND G2.G2_FILIAL = ?"
+            prod_params.append(request.branch)
+
+        prod_params.extend([
+            request.date_end,
+            request.date_start,
+        ])
+
+        if request.branch:
+            prod_branch_filter_sh6 = "AND SH6.H6_FILIAL = ?"
+            prod_params.append(request.branch)
+
+        prod_params.extend([
+            request.date_start,
+            request.date_end,
+        ])
 
         sql = f"""
             WITH nc AS (
@@ -43,11 +61,59 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                 FROM QI2010
                 WHERE {where_nc}
             ),
+            roteiro_final AS (
+                SELECT
+                    G2.G2_FILIAL,
+                    G2.G2_PRODUTO,
+                    MAX(G2.G2_OPERAC) AS operacao_final_roteiro
+                FROM SG2010 G2
+                WHERE
+                    G2.D_E_L_E_T_ = ' '
+                    {prod_branch_filter_g2}
+                    AND (G2.G2_DTINI = '' OR G2.G2_DTINI < ?)
+                    AND (G2.G2_DTFIM = '' OR G2.G2_DTFIM >= ?)
+                GROUP BY
+                    G2.G2_FILIAL,
+                    G2.G2_PRODUTO
+            ),
+            apont_final AS (
+                SELECT
+                    SH6.H6_FILIAL,
+                    SH6.H6_OP,
+                    SH6.H6_PRODUTO,
+                    SH6.H6_OPERAC,
+                    SB1.B1_GRUPO,
+                    MAX(ISNULL(SH6.H6_QTDPROD, 0)) AS qtd_produzida_op
+                FROM SH6010 SH6
+                INNER JOIN roteiro_final RF
+                    ON RF.G2_FILIAL = SH6.H6_FILIAL
+                   AND RF.G2_PRODUTO = SH6.H6_PRODUTO
+                   AND RF.operacao_final_roteiro = SH6.H6_OPERAC
+                INNER JOIN SB1010 SB1
+                    ON SB1.B1_COD = SH6.H6_PRODUTO
+                   AND SB1.D_E_L_E_T_ = ' '
+                   AND SB1.B1_TIPO = 'PA'
+                WHERE
+                    SH6.D_E_L_E_T_ = ' '
+                    {prod_branch_filter_sh6}
+                    AND SH6.H6_TIPO = 'P'
+                    AND SH6.H6_OP <> ''
+                    AND SH6.H6_PRODUTO <> ''
+                    AND SH6.H6_DTAPONT >= ?
+                    AND SH6.H6_DTAPONT < ?
+                GROUP BY
+                    SH6.H6_FILIAL,
+                    SH6.H6_OP,
+                    SH6.H6_PRODUTO,
+                    SH6.H6_OPERAC,
+                    SB1.B1_GRUPO
+            ),
             prod AS (
                 SELECT
-                    SUM(ISNULL(H6_QTDPROD, 0)) AS total_produzido_milheiro
-                FROM SH6010
-                WHERE {where_prod}
+                    SUM(qtd_produzida_op) AS total_produzido_milheiro
+                FROM apont_final
+                WHERE
+                    B1_GRUPO NOT IN ('9043', '9028')
             )
             SELECT
                 ISNULL(nc.total_devolvido_un, 0) AS total_devolvido_un,
@@ -55,14 +121,16 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                 ISNULL(prod.total_produzido_milheiro, 0) * 1000 AS total_produzido_un,
                 CASE
                     WHEN ISNULL(prod.total_produzido_milheiro, 0) = 0 THEN 0
-                    ELSE (ISNULL(nc.total_devolvido_un, 0) / prod.total_produzido_milheiro) * 1000.0
+                    ELSE (ISNULL(nc.total_devolvido_un, 0) / (prod.total_produzido_milheiro * 1000.0)) * 1000000.0
                 END AS ppm
             FROM nc
             CROSS JOIN prod
         """
 
+        final_params = tuple(list(params_nc) + prod_params)
+
         with self as repo:
-            row = repo.execute_one(sql, tuple(list(params_nc) + list(params_prod))) or {}
+            row = repo.execute_one(sql, final_params) or {}
 
         return PpmSummary(
             type=request.type,
@@ -77,9 +145,11 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
     def list_items(self, request) -> Page[PpmItem]:
         qb = QueryBuilder()
-        qb.raw("D_E_L_E_T_ = ''")
+        qb.raw("D_E_L_E_T_ = ' '")
+
         if request.branch:
             qb.eq("QI2_FILIAL", request.branch)
+
         qb.date_range("QI2_REGIST", request.date_start, request.date_end)
         qb.raw(self._type_filter(request.type))
 
@@ -103,6 +173,13 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                     FORMAT(TRY_CONVERT(date, QI2_REGIST, 112), 'dd/MM/yyyy') AS registered_date,
                     QI2_FNC AS code,
                     QI2_REV AS revision,
+                    QI2_TIPO AS ppm_type,
+                    CASE
+                        WHEN QI2_TIPO = '1' THEN 'interno'
+                        WHEN QI2_TIPO = '2' THEN 'externo_cliente'
+                        WHEN QI2_TIPO = '3' THEN 'fornecedor'
+                        ELSE 'outro'
+                    END AS ppm_type_description,
                     QI2_ITEM AS item_code,
                     QI2_DESCR AS description,
                     QI2_QTDDEV AS returned_quantity_original,
@@ -126,14 +203,17 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                     OFFSET ? ROWS
                     FETCH NEXT ? ROWS ONLY
                 """
+
                 final_params = list(params)
                 final_params.extend([offset, request.page_size])
             else:
                 page = 1
+
                 sql = f"""
                     {select_sql}
                     ORDER BY QI2_REGIST DESC, QI2_FNC DESC
                 """
+
                 final_params = params
 
             rows = repo.execute_query(sql, final_params)
