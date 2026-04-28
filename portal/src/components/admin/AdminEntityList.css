@@ -81,15 +81,16 @@
 ========================= */
 
 .admin-entity-toolbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
 .admin-entity-search {
-  flex: 1 1 420px;
+  min-width: 0;
+  width: 100%;
+  height: 44px;
   min-height: 44px;
 
   display: grid;
@@ -123,7 +124,8 @@
 .admin-entity-search input {
   width: 100%;
   min-width: 0;
-  height: 100%;
+  height: 42px;
+  line-height: 42px;
 
   border: 0 !important;
   outline: 0 !important;
@@ -606,6 +608,15 @@
     flex: 1 1 160px;
   }
 
+  .admin-entity-toolbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .admin-entity-toolbar-actions {
+    width: 100%;
+  }
+
   .admin-entity-card {
     grid-template-columns: auto 46px minmax(0, 1fr);
   }
@@ -622,16 +633,26 @@
 
 @media (max-width: 760px) {
   .admin-entity-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
     align-items: stretch;
-    flex-direction: column;
+    gap: 10px;
   }
 
-  .admin-entity-search,
+  .admin-entity-search {
+    width: 100%;
+    height: 42px;
+    min-height: 42px;
+    flex: none;
+  }
+
+  .admin-entity-search input {
+    height: 40px;
+    line-height: 40px;
+  }
+
   .admin-entity-toolbar-actions {
     width: 100%;
-  }
-
-  .admin-entity-toolbar-actions {
     display: grid;
     grid-template-columns: 1fr;
   }
