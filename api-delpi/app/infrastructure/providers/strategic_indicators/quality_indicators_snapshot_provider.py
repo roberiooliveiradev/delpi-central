@@ -124,6 +124,7 @@ class QualityIndicatorsSnapshotProvider(
                     "value": self._resolve_indicator_value(
                         unit_values=ppm_internal_unit_values,
                         branch=branch,
+                        default_value=0.0,
                     ),
                     "source": "quality_ppm_internal",
                     "unit_values": ppm_internal_unit_values,
@@ -134,6 +135,7 @@ class QualityIndicatorsSnapshotProvider(
                     "value": self._resolve_indicator_value(
                         unit_values=ppm_external_unit_values,
                         branch=branch,
+                        default_value=0.0,
                     ),
                     "source": "quality_ppm_external",
                     "unit_values": ppm_external_unit_values,
@@ -177,13 +179,23 @@ class QualityIndicatorsSnapshotProvider(
         *,
         unit_values: dict[str, float | None],
         branch: str | None,
+        default_value: float | None = None,
     ) -> float | None:
         if branch:
             value = unit_values.get(branch)
-            return round(float(value), 2) if value is not None else None
 
-        values = [float(value) for value in unit_values.values() if value is not None]
+            if value is None:
+                return default_value
+
+            return round(float(value), 2)
+
+        values = [
+            float(value)
+            for value in unit_values.values()
+            if value is not None
+        ]
+
         if not values:
-            return None
+            return default_value
 
         return round(sum(values) / len(values), 2)

@@ -123,21 +123,19 @@ class StrategicIndicatorsCalculator:
                 competence=competence,
             )
 
+            performance_direction = getattr(
+                indicator,
+                "performance_direction",
+                "higher_is_better",
+            )
+
             score = self.calculate_indicator_score(
-                performance_direction=getattr(
-                    indicator,
-                    "performance_direction",
-                    "higher_is_better",
-                ),
+                performance_direction=performance_direction,
                 comparable_goal=comparable_goal,
                 value=measurement.value,
             )
             gap = self.calculate_indicator_gap(
-                performance_direction=getattr(
-                    indicator,
-                    "performance_direction",
-                    "higher_is_better",
-                ),
+                performance_direction=performance_direction,
                 comparable_goal=comparable_goal,
                 value=measurement.value,
             )
@@ -154,11 +152,7 @@ class StrategicIndicatorsCalculator:
                     goal_mode=getattr(indicator, "goal_mode", "standard"),
                     monthly_targets=getattr(indicator, "monthly_targets", None),
                     scope_type=indicator.scope_type,
-                    performance_direction=getattr(
-                        indicator,
-                        "performance_direction",
-                        "higher_is_better",
-                    ),
+                    performance_direction=performance_direction,
                     strategic_description=indicator.strategic_description,
                     source=measurement.source,
                     value=(
@@ -288,17 +282,21 @@ class StrategicIndicatorsCalculator:
     ) -> float:
         lower_is_better = self._is_lower_better(performance_direction)
 
-        if comparable_goal <= 0:
-            return 0.0
-
         if value is None:
             return 0.0
 
+        if comparable_goal <= 0:
+            return 0.0
+
         if lower_is_better:
-            if value <= 0:
-                return 0.0
+            if value <= comparable_goal:
+                return 10.0
+
             ratio = comparable_goal / value
             return round(min(ratio * 10.0, 10.0), 2)
+
+        if value >= comparable_goal:
+            return 10.0
 
         ratio = value / comparable_goal
         return round(min(ratio * 10.0, 10.0), 2)
