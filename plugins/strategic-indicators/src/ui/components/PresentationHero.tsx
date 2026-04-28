@@ -73,11 +73,11 @@ export function PresentationHero({
   return (
     <section className="si-presentation-hero">
       <div className="si-presentation-hero__content">
-        <p className="si-presentation-hero__eyebrow">Painel Estratégico DELPI</p>
+        <p className="si-presentation-hero__eyebrow">Índice Global Delpi</p>
 
         <div className="si-presentation-hero__headline-block">
           <div className="si-presentation-hero__headline-copy">
-            <h1 className="si-presentation-hero__value">{formatScore(igd)}</h1>
+            <h1 className="si-presentation-hero__value">IGD: {formatScore(igd)}</h1>
             <p className="si-presentation-hero__classification">
               {classification}
             </p>

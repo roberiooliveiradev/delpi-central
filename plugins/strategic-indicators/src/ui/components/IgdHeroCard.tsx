@@ -22,7 +22,7 @@ export function IgdHeroCard({
 
         <div className="si-igd-hero__headline">
           <div>
-            <h2 className="si-igd-hero__value">{igd.toFixed(1)}</h2>
+            <h2 className="si-igd-hero__value">IGD: {igd.toFixed(1)}</h2>
             <p className="si-igd-hero__exact">
               cálculo consolidado: {igdExact.toFixed(3)}
             </p>
