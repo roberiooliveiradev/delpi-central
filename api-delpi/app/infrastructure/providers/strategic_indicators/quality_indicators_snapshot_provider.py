@@ -121,7 +121,12 @@ class QualityIndicatorsSnapshotProvider(
                 {
                     "department_id": "quality",
                     "indicator_id": "quality-ppm-internal",
-                    "value": self._resolve_indicator_value(
+                    "value": self._resolve_ppm_indicator_value(
+                        consolidated_value=getattr(
+                            snapshot,
+                            "ppm_internal_consolidated",
+                            None,
+                        ),
                         unit_values=ppm_internal_unit_values,
                         branch=branch,
                         default_value=0.0,
@@ -132,7 +137,12 @@ class QualityIndicatorsSnapshotProvider(
                 {
                     "department_id": "quality",
                     "indicator_id": "quality-ppm-external",
-                    "value": self._resolve_indicator_value(
+                    "value": self._resolve_ppm_indicator_value(
+                        consolidated_value=getattr(
+                            snapshot,
+                            "ppm_external_consolidated",
+                            None,
+                        ),
                         unit_values=ppm_external_unit_values,
                         branch=branch,
                         default_value=0.0,
@@ -173,6 +183,27 @@ class QualityIndicatorsSnapshotProvider(
             ],
             "errors": [],
         }
+
+    def _resolve_ppm_indicator_value(
+        self,
+        *,
+        consolidated_value: float | None,
+        unit_values: dict[str, float | None],
+        branch: str | None,
+        default_value: float | None = None,
+    ) -> float | None:
+        if branch:
+            value = unit_values.get(branch)
+
+            if value is None:
+                return default_value
+
+            return round(float(value), 2)
+
+        if consolidated_value is None:
+            return default_value
+
+        return round(float(consolidated_value), 2)
 
     def _resolve_indicator_value(
         self,

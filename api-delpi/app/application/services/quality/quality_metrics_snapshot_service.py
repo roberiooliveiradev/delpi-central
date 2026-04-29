@@ -36,6 +36,8 @@ class QualityMetricsSnapshot:
     start_date: str | None
     end_date: str | None
     branches: list[QualityBranchSnapshot]
+    ppm_internal_consolidated: float | None = None
+    ppm_external_consolidated: float | None = None
 
 
 class QualityMetricsSnapshotService:
@@ -121,34 +123,36 @@ class QualityMetricsSnapshotService:
                 end_date=end_date,
             )
 
+        ppm_internal_consolidated = self._resolve_ppm(
+            ppm_type="internal",
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        ppm_external_consolidated = self._resolve_ppm(
+            ppm_type="external",
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
         snapshots: list[QualityBranchSnapshot] = []
 
         for branch_code in branches:
-            ppm_internal = self._extract_first_number(
-                self._internal_ppm_use_case.execute(
-                    PpmSummaryRequest(
-                        type="internal",
-                        branch=branch_code,
-                        date_start=start_date,
-                        date_end=end_date,
-                    )
-                )
+            ppm_internal = self._resolve_ppm(
+                ppm_type="internal",
+                branch=branch_code,
+                start_date=start_date,
+                end_date=end_date,
             )
-            if ppm_internal is None:
-                ppm_internal = 0.0
 
-            ppm_external = self._extract_first_number(
-                self._external_ppm_use_case.execute(
-                    PpmSummaryRequest(
-                        type="external",
-                        branch=branch_code,
-                        date_start=start_date,
-                        date_end=end_date,
-                    )
-                )
+            ppm_external = self._resolve_ppm(
+                ppm_type="external",
+                branch=branch_code,
+                start_date=start_date,
+                end_date=end_date,
             )
-            if ppm_external is None:
-                ppm_external = 0.0
 
             kaizen_summary = self._kaizen_summary_use_case.execute(
                 KaizenSummaryRequest(
@@ -194,7 +198,47 @@ class QualityMetricsSnapshotService:
             start_date=start_date,
             end_date=end_date,
             branches=snapshots,
+            ppm_internal_consolidated=(
+                round(ppm_internal_consolidated, 2)
+                if ppm_internal_consolidated is not None
+                else 0.0
+            ),
+            ppm_external_consolidated=(
+                round(ppm_external_consolidated, 2)
+                if ppm_external_consolidated is not None
+                else 0.0
+            ),
         )
+
+    def _resolve_ppm(
+        self,
+        *,
+        ppm_type: str,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> float | None:
+        use_case = (
+            self._internal_ppm_use_case
+            if ppm_type == "internal"
+            else self._external_ppm_use_case
+        )
+
+        result = use_case.execute(
+            PpmSummaryRequest(
+                type=ppm_type,
+                branch=branch,
+                date_start=start_date,
+                date_end=end_date,
+            )
+        )
+
+        value = self._extract_first_number(result)
+
+        if value is None:
+            return 0.0
+
+        return value
 
     def _resolve_branches(
         self,
@@ -202,36 +246,71 @@ class QualityMetricsSnapshotService:
         start_date: str | None,
         end_date: str | None,
     ) -> list[str]:
-        kaizen_summary = self._kaizen_summary_use_case.execute(
-            KaizenSummaryRequest(
-                title=None,
-                status=None,
+        branches: set[str] = set()
+
+        try:
+            internal_ppm_branches = self._internal_ppm_use_case.list_branches(
+                ppm_type="internal",
                 date_start=start_date,
                 date_end=end_date,
-                branch=None,
             )
-        )
-        audit_summary = self._audit_5s_summary_use_case.execute(
-            Audit5SSummaryRequest(
-                start_date=start_date,
-                end_date=end_date,
-                branch=None,
+            branches.update(
+                branch.strip()
+                for branch in internal_ppm_branches
+                if branch and branch.strip()
             )
-        )
+        except Exception:
+            pass
 
-        branches = {
-            (item.branch or "").strip()
-            for item in kaizen_summary.list_kaizen
-            if (item.branch or "").strip()
-        }
+        try:
+            external_ppm_branches = self._external_ppm_use_case.list_branches(
+                ppm_type="external",
+                date_start=start_date,
+                date_end=end_date,
+            )
+            branches.update(
+                branch.strip()
+                for branch in external_ppm_branches
+                if branch and branch.strip()
+            )
+        except Exception:
+            pass
 
-        branches.update(
-            {
+        try:
+            kaizen_summary = self._kaizen_summary_use_case.execute(
+                KaizenSummaryRequest(
+                    title=None,
+                    status=None,
+                    date_start=start_date,
+                    date_end=end_date,
+                    branch=None,
+                )
+            )
+
+            branches.update(
+                (item.branch or "").strip()
+                for item in kaizen_summary.list_kaizen
+                if (item.branch or "").strip()
+            )
+        except Exception:
+            pass
+
+        try:
+            audit_summary = self._audit_5s_summary_use_case.execute(
+                Audit5SSummaryRequest(
+                    start_date=start_date,
+                    end_date=end_date,
+                    branch=None,
+                )
+            )
+
+            branches.update(
                 (item.branch or "").strip()
                 for item in audit_summary.list_audits
                 if (item.branch or "").strip()
-            }
-        )
+            )
+        except Exception:
+            pass
 
         return sorted(branches)
 

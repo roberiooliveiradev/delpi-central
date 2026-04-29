@@ -13,3 +13,22 @@ class GetPpmSummaryUseCase:
             raise ValueError("type deve ser internal ou external")
 
         return self._repository.get_summary(request)
+
+    def list_branches(
+        self,
+        *,
+        ppm_type: str,
+        date_start: str | None,
+        date_end: str | None,
+    ) -> list[str]:
+        if ppm_type not in {"internal", "external"}:
+            raise ValueError("ppm_type deve ser internal ou external")
+
+        if not hasattr(self._repository, "list_branches"):
+            return []
+
+        return self._repository.list_branches(
+            ppm_type=ppm_type,
+            date_start=date_start,
+            date_end=date_end,
+        )

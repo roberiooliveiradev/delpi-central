@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
@@ -12,16 +14,40 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
     def _type_filter(self, ppm_type: str) -> str:
         if ppm_type == "internal":
             return "QI2_TIPO = '1'"
-        return "QI2_TIPO IN ('2','3')"
+
+        if ppm_type == "external":
+            return "QI2_TIPO = '2'"
+
+        raise ValueError("ppm_type deve ser internal ou external")
+
+    def _to_protheus_date(self, value: str | None) -> str | None:
+        return QueryBuilder().convert_date_to_protheus(value)
+
+    def _exclusive_end_date(self, value: str | None) -> str | None:
+        protheus_date = self._to_protheus_date(value)
+
+        if not protheus_date:
+            return None
+
+        parsed = datetime.strptime(protheus_date, "%Y%m%d")
+        return (parsed + timedelta(days=1)).strftime("%Y%m%d")
 
     def get_summary(self, request) -> PpmSummary:
+        date_start = self._to_protheus_date(request.date_start)
+        date_end_exclusive = self._exclusive_end_date(request.date_end)
+
         qb_nc = QueryBuilder()
         qb_nc.raw("D_E_L_E_T_ = ' '")
 
         if request.branch:
             qb_nc.eq("QI2_FILIAL", request.branch)
 
-        qb_nc.date_range("QI2_REGIST", request.date_start, request.date_end)
+        if date_start:
+            qb_nc.gte("QI2_REGIST", date_start)
+
+        if date_end_exclusive:
+            qb_nc.lt("QI2_REGIST", date_end_exclusive)
+
         qb_nc.raw(self._type_filter(request.type))
 
         where_nc, params_nc = qb_nc.build()
@@ -35,8 +61,8 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             prod_params.append(request.branch)
 
         prod_params.extend([
-            request.date_end,
-            request.date_start,
+            date_end_exclusive,
+            date_start,
         ])
 
         if request.branch:
@@ -44,8 +70,8 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             prod_params.append(request.branch)
 
         prod_params.extend([
-            request.date_start,
-            request.date_end,
+            date_start,
+            date_end_exclusive,
         ])
 
         sql = f"""
@@ -143,14 +169,34 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             ppm=float(row.get("ppm") or 0),
         )
 
+    def list_branches(
+        self,
+        *,
+        ppm_type: str,
+        date_start: str | None,
+        date_end: str | None,
+    ) -> list[str]:
+        if ppm_type not in {"internal", "external"}:
+            raise ValueError("ppm_type deve ser internal ou external")
+
+        return ["01", "02"]
+
     def list_items(self, request) -> Page[PpmItem]:
+        date_start = self._to_protheus_date(request.date_start)
+        date_end_exclusive = self._exclusive_end_date(request.date_end)
+
         qb = QueryBuilder()
         qb.raw("D_E_L_E_T_ = ' '")
 
         if request.branch:
             qb.eq("QI2_FILIAL", request.branch)
 
-        qb.date_range("QI2_REGIST", request.date_start, request.date_end)
+        if date_start:
+            qb.gte("QI2_REGIST", date_start)
+
+        if date_end_exclusive:
+            qb.lt("QI2_REGIST", date_end_exclusive)
+
         qb.raw(self._type_filter(request.type))
 
         where_clause, params = qb.build()
@@ -224,5 +270,5 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                 items=items,
                 total=total,
                 page=page,
-                page_size=request.page_size or total
+                page_size=request.page_size or total,
             )
