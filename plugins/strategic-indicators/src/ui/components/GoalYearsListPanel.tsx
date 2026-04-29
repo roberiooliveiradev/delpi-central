@@ -6,6 +6,7 @@ import { GoalYearManagementModal } from "./GoalYearManagementModal";
 import { AnnualGoalsWorkspace } from "./AnnualGoalsWorkspace";
 import { useStrategicIndicatorsGoalYearsOverview } from "../../state/hooks/useStrategicIndicatorsGoalYearsOverview";
 import type { GoalYearOverviewItem } from "../../data/types/indicatorGoals";
+import "./GoalYearsListPanel.css";
 
 type GoalYearsListPanelProps = {
   getAccessToken?: () => string | undefined;

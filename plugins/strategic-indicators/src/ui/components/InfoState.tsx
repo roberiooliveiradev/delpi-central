@@ -1,3 +1,5 @@
+import "./InfoState.css";
+
 type InfoStateProps = {
   title: string;
   description: string;

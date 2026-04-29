@@ -7,6 +7,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import "./PresentationTrendAreaChart.css";
 
 type PresentationTrendAreaChartPoint = {
   period: string;

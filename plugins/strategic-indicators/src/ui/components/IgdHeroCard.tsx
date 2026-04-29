@@ -1,4 +1,5 @@
 import { StatusBadge } from "./StatusBadge";
+import "./IgdHeroCard.css";
 
 type IgdHeroCardProps = {
   igd: number;

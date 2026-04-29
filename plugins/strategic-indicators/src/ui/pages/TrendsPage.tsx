@@ -19,6 +19,8 @@ import {
   resolveStrategicIndicatorsBranch,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
+import "./TrendsPage.css";
+
 
 type TrendsPageProps = {
   getAccessToken?: () => string | undefined;

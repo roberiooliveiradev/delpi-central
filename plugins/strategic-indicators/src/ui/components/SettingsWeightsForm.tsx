@@ -1,4 +1,5 @@
 import type { SettingsWeightItem } from "../../data/types/settings";
+import "./SettingsWeightsForm.css";
 
 type SettingsWeightsFormProps = {
   items: SettingsWeightItem[];
@@ -23,10 +24,13 @@ export function SettingsWeightsForm({
   }
 
   return (
-    <div className="si-settings-form-list">
+    <div className="si-settings-weights-form">
       {items.map((item, index) => (
-        <article key={item.department_id} className="si-settings-form-card">
-          <div className="si-settings-form-card__grid">
+        <article
+          key={item.department_id}
+          className="si-settings-weights-form__card"
+        >
+          <div className="si-settings-weights-form__grid">
             <Field label="Departamento">
               <input
                 value={item.department_name}
@@ -68,8 +72,8 @@ type FieldProps = {
 
 function Field({ label, children }: FieldProps) {
   return (
-    <label className="si-settings-form-field">
-      <span className="si-settings-form-field__label">{label}</span>
+    <label className="si-settings-weights-form__field">
+      <span className="si-settings-weights-form__label">{label}</span>
       {children}
     </label>
   );

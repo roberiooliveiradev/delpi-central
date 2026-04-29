@@ -20,6 +20,7 @@ import {
   resolveStrategicIndicatorsBranch,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
+import "./IndicatorsPage.css";
 
 type IndicatorsPageProps = {
   getAccessToken?: () => string | undefined;

@@ -1,3 +1,5 @@
+import "./LoadingActivityInline.css";
+
 type LoadingActivityInlineVariant = "compact" | "panel";
 type LoadingActivityInlineTone = "neutral" | "info";
 

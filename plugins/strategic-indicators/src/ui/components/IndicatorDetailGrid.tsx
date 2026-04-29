@@ -1,5 +1,6 @@
 import type { DepartmentIndicator } from "../../data/types/departmentDetails";
 import { IndicatorDetailCard } from "./IndicatorDetailCard";
+import "./IndicatorDetailGrid.css";
 
 type IndicatorDetailGridProps = {
   indicators: DepartmentIndicator[];

@@ -8,6 +8,7 @@ import {
   formatIndicatorGoalValue,
   formatIndicatorValue,
 } from "../shared/indicatorValueFormatter";
+import "./IndicatorDetailCard.css";
 
 type IndicatorDetailCardProps = {
   indicator: DepartmentIndicator;

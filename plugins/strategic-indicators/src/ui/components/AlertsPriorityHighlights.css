@@ -1,0 +1,56 @@
+.si-alert-highlights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.si-alert-highlight-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-alert-highlight-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.si-alert-highlight-card__label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--si-text-muted);
+}
+
+.si-alert-highlight-card__title {
+  margin: 0;
+  font-size: 20px;
+  color: var(--si-title);
+}
+
+.si-alert-highlight-card__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--si-text-muted);
+}
+
+.si-alert-highlight-card__meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--si-title);
+}
+
+@media (max-width: 1100px) {
+  .si-alert-highlights {
+    grid-template-columns: 1fr;
+  }
+}

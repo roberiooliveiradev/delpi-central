@@ -1,0 +1,44 @@
+.si-info-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--si-info-bg);
+  border: 1px solid var(--si-info-border);
+}
+
+.si-info-state__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: var(--si-title-soft);
+  background: color-mix(in srgb, var(--primary, #089bdb) 18%, transparent);
+  flex-shrink: 0;
+}
+
+.si-info-state__content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.si-info-state__title {
+  margin: 0;
+  font-size: 16px;
+  color: var(--si-title);
+}
+
+.si-info-state__description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--si-text-muted);
+}
+
+.si-info-state__action {
+  margin-top: 4px;
+}

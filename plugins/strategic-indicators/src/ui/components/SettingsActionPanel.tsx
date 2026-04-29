@@ -1,4 +1,5 @@
 import type { SettingsDashboardData } from "../../data/types/settingsDashboard";
+import "./SettingsActionPanel.css";
 
 type SettingsActionPanelProps = {
   data: SettingsDashboardData;

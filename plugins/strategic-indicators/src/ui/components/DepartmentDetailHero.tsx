@@ -1,5 +1,6 @@
 import type { DepartmentDetails } from "../../data/types/departmentDetails";
 import { StatusBadge } from "./StatusBadge";
+import "./DepartmentDetailHero.css";
 
 type DepartmentDetailHeroProps = {
   department: DepartmentDetails;

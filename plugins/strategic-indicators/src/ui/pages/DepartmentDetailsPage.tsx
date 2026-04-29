@@ -15,6 +15,7 @@ import {
   resolveStrategicIndicatorsBranch,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
+import "./DepartmentDetailsPage.css";
 
 type DepartmentDetailsPageProps = {
   pathname: string;

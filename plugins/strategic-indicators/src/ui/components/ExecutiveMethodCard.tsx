@@ -1,3 +1,5 @@
+import "./ExecutiveMethodCard.css";
+
 type ExecutiveMethodCardProps = {
   igd: number;
   igdExact: number;

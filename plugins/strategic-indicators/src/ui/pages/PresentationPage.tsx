@@ -19,6 +19,7 @@ import {
   STRATEGIC_INDICATORS_BRANCH_OPTIONS,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
+import "./PresentationPage.css";
 
 type PresentationPageProps = {
   getAccessToken?: () => string | undefined;

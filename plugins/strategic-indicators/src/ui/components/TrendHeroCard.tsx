@@ -1,4 +1,5 @@
 import { StatusBadge } from "./StatusBadge";
+import "./TrendHeroCard.css";
 
 type TrendHeroCardProps = {
   current: number;

@@ -8,6 +8,7 @@ import {
   Wand2,
   Trash2,
 } from "lucide-react";
+import "./ActionButtons.css";
 
 type ActionButtonsProps = {
   onOpen?: () => void;

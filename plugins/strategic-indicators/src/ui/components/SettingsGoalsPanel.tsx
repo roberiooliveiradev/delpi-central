@@ -1,4 +1,5 @@
 import type { SettingsDashboardGoalItem } from "../../data/types/settingsDashboard";
+import "./SettingsGoalsPanel.css";
 
 type SettingsGoalsPanelProps = {
   items: SettingsDashboardGoalItem[];

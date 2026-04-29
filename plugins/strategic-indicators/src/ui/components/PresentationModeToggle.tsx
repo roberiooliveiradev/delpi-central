@@ -1,3 +1,5 @@
+import "./PresentationModeToggle.css";
+
 type PresentationMode = "meeting" | "tv" | "slide";
 
 type PresentationModeToggleProps = {

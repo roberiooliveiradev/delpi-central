@@ -1,5 +1,6 @@
 import type { ExecutiveAlertViewItem } from "../../data/types/alerts";
 import { StatusBadge } from "./StatusBadge";
+import "./TopAlertHighlight.css";
 
 type TopAlertHighlightProps = {
   alert: ExecutiveAlertViewItem | null;

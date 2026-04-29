@@ -1,4 +1,5 @@
 import type { SettingsDashboardWeightItem } from "../../data/types/settingsDashboard";
+import "./SettingsWeightsPanel.css";
 
 type SettingsWeightsPanelProps = {
   items: SettingsDashboardWeightItem[];

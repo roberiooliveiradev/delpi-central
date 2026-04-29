@@ -1,5 +1,6 @@
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
+import "./IndicatorPriorityList.css";
 
 type IndicatorPriorityListProps = {
   indicators: IndicatorAnalyticsViewItem[];

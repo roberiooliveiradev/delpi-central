@@ -1,5 +1,6 @@
 import type { SettingsDashboardData } from "../../data/types/settingsDashboard";
 import { StatusBadge } from "./StatusBadge";
+import "./SettingsSummaryCards.css";
 
 type SettingsSummaryCardsProps = {
   data: SettingsDashboardData;

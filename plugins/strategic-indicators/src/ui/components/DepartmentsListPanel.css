@@ -1,0 +1,121 @@
+.si-admin-list-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.si-admin-list-toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.si-admin-list-toolbar__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.si-admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.si-admin-form-field {
+  display: grid;
+  gap: 6px;
+}
+
+.si-admin-form-field--full {
+  grid-column: 1 / -1;
+}
+
+.si-admin-form-field--compact {
+  min-width: 180px;
+}
+
+.si-admin-form-field span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.si-admin-form-field input,
+.si-admin-form-field select,
+.si-admin-form-field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.si-admin-table-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.si-admin-table-cell strong {
+  color: var(--si-title);
+}
+
+.si-admin-table-cell span,
+.si-admin-table-cell small {
+  color: var(--si-text-muted);
+}
+
+.si-settings-editor__button {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: var(--primary, #089bdb);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.si-settings-editor__button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.si-settings-editor__button--secondary {
+  background: var(--surface-2, #f7f7f7);
+  color: var(--si-title);
+  border: 1px solid var(--si-card-border);
+}
+
+.si-settings-editor__alert {
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+}
+
+.si-settings-editor__alert--success {
+  background: color-mix(in srgb, var(--success, #067647) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success, #067647) 30%, transparent);
+  color: var(--si-title);
+}
+
+@media (max-width: 980px) {
+  .si-admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .si-admin-list-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .si-admin-list-toolbar__actions .si-settings-editor__button {
+    width: 100%;
+  }
+}

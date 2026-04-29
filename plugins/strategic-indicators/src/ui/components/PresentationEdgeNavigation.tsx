@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import "./PresentationEdgeNavigation.css";
 
 type PresentationEdgeNavigationProps = {
   onPrevious: () => void;

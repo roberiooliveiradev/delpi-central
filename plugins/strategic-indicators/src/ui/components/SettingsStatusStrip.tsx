@@ -1,3 +1,5 @@
+import "./SettingsStatusStrip.css";
+
 type SettingsStatusStripProps = {
   loading: boolean;
   error: string | null;

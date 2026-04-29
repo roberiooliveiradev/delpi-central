@@ -1,0 +1,43 @@
+.si-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.si-status-badge--neutral {
+  background: var(--surface-2, #f7f7f7);
+  border-color: var(--border-2, #d9d9d9);
+  color: var(--si-title-soft);
+}
+
+.si-status-badge--info {
+  background: color-mix(in srgb, var(--primary, #089bdb) 12%, transparent);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 28%, transparent);
+  color: var(--si-badge-info-text);
+}
+
+.si-status-badge--success {
+  background: var(--alert-success-bg, rgba(6, 118, 71, 0.1));
+  border-color: var(--alert-success-border, rgba(6, 118, 71, 0.25));
+  color: var(--success, #067647);
+}
+
+.si-status-badge--warning {
+  background: rgba(245, 183, 0, 0.14);
+  border-color: rgba(245, 183, 0, 0.28);
+  color: var(--si-badge-warning-text);
+}
+
+.si-status-badge--danger {
+  background: var(--alert-danger-bg, rgba(180, 35, 24, 0.1));
+  border-color: var(--alert-danger-border, rgba(180, 35, 24, 0.25));
+  color: var(--danger, #b42318);
+}

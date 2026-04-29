@@ -8,6 +8,7 @@ import {
   getAuditEntityKeyLabel,
   getChangeRequestStatusLabel,
 } from "../presentation/labels";
+import "./ChangeRequestsWorkspacePanel.css";
 
 type ChangeRequestsWorkspacePanelProps = {
   getAccessToken?: () => string | undefined;

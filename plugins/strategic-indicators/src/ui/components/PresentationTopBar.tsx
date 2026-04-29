@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Expand, Minimize } from "lucide-react";
 import { LoadingActivityBadge } from "./LoadingActivityBadge";
 import { StatusBadge } from "./StatusBadge";
+import "./PresentationTopBar.css";
 
 type PresentationMode = "meeting" | "tv" | "slide";
 type StrategicIndicatorsViewMode = "consolidated" | "branch";

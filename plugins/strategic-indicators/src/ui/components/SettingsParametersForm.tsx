@@ -1,4 +1,5 @@
 import type { SettingsParameterItem } from "../../data/types/settings";
+import "./SettingsParametersForm.css";
 
 type SettingsParametersFormProps = {
   items: SettingsParameterItem[];
@@ -23,10 +24,10 @@ export function SettingsParametersForm({
   }
 
   return (
-    <div className="si-settings-form-list">
+    <div className="si-settings-parameters-form">
       {items.map((item, index) => (
-        <article key={item.key} className="si-settings-form-card">
-          <div className="si-settings-form-card__grid">
+        <article key={item.key} className="si-settings-parameters-form__card">
+          <div className="si-settings-parameters-form__grid">
             <Field label="Chave">
               <input
                 value={item.key}
@@ -61,8 +62,8 @@ type FieldProps = {
 
 function Field({ label, children }: FieldProps) {
   return (
-    <label className="si-settings-form-field">
-      <span className="si-settings-form-field__label">{label}</span>
+    <label className="si-settings-parameters-form__field">
+      <span className="si-settings-parameters-form__label">{label}</span>
       {children}
     </label>
   );

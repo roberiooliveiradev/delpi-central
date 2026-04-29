@@ -1,4 +1,5 @@
 import type { SettingsGovernanceItem } from "../../data/types/settings";
+import "./SettingsGovernanceForm.css";
 
 type SettingsGovernanceFormProps = {
   items: SettingsGovernanceItem[];
@@ -23,10 +24,10 @@ export function SettingsGovernanceForm({
   }
 
   return (
-    <div className="si-settings-form-list">
+    <div className="si-settings-governance-form">
       {items.map((item, index) => (
-        <article key={item.key} className="si-settings-form-card">
-          <div className="si-settings-form-card__grid">
+        <article key={item.key} className="si-settings-governance-form__card">
+          <div className="si-settings-governance-form__grid">
             <Field label="Chave">
               <input
                 value={item.key}
@@ -70,8 +71,8 @@ type FieldProps = {
 
 function Field({ label, children }: FieldProps) {
   return (
-    <label className="si-settings-form-field">
-      <span className="si-settings-form-field__label">{label}</span>
+    <label className="si-settings-governance-form__field">
+      <span className="si-settings-governance-form__label">{label}</span>
       {children}
     </label>
   );

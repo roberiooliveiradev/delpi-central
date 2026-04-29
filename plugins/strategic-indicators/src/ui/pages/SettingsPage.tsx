@@ -22,6 +22,8 @@ import { GoalYearsListPanel } from "../components/GoalYearsListPanel";
 import {
   getMetaSourceLabel,
 } from "../presentation/labels";
+import "./SettingsPage.css";
+
 
 type SettingsPageProps = {
   getAccessToken?: () => string | undefined;

@@ -1,3 +1,5 @@
+import "./ClassificationBand.css";
+
 type ClassificationBandProps = {
   value: number;
 };

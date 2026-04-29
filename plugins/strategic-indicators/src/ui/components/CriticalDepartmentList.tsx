@@ -1,5 +1,6 @@
 import type { DepartmentAlertViewItem } from "../../data/types/alerts";
 import { StatusBadge } from "./StatusBadge";
+import "./CriticalDepartmentList.css";
 
 type CriticalDepartmentListProps = {
   alerts: DepartmentAlertViewItem[];

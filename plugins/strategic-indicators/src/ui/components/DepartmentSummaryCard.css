@@ -1,0 +1,141 @@
+.si-department-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-department-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.si-department-card__identity {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.si-department-card__short {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--primary, #089bdb) 14%, transparent);
+  color: var(--si-title);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.si-department-card__title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: var(--si-title);
+}
+
+.si-department-card__weight {
+  margin: 0;
+  font-size: 13px;
+  color: var(--si-text-muted);
+}
+
+.si-department-card__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.si-department-card__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--surface-2, #f7f7f7);
+  border: 1px solid var(--si-card-border);
+}
+
+.si-department-card__metric-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--si-text-muted);
+}
+
+.si-department-card__metric-value {
+  font-size: 18px;
+  color: var(--si-title);
+}
+
+.si-department-card__summary {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--si-text-muted);
+  min-height: 72px;
+}
+
+.si-department-card__indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--si-card-border);
+}
+
+.si-department-card__indicators-label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--si-title-soft);
+}
+
+.si-department-card__indicator-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--si-text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.si-department-card__indicator-list li::marker {
+  color: var(--primary, #089bdb);
+}
+
+.si-department-card__goal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--primary, #089bdb) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary, #089bdb) 18%, transparent);
+}
+
+.si-department-card__goal-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--si-text-muted);
+}
+
+.si-department-card__goal-value {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--si-title);
+}

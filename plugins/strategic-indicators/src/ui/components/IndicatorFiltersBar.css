@@ -1,0 +1,44 @@
+.si-indicator-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) repeat(2, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.si-indicator-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.si-indicator-filter label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--si-title);
+}
+
+.si-indicator-filter input,
+.si-indicator-filter select {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--control-border, var(--border-2, #d9d9d9));
+  background: var(--control-bg, var(--surface, #ffffff));
+  color: var(--control-text, var(--si-text));
+  outline: none;
+}
+
+.si-indicator-filter input::placeholder {
+  color: var(--control-placeholder, rgba(17, 17, 17, 0.55));
+}
+
+.si-indicator-filter input:focus,
+.si-indicator-filter select:focus {
+  box-shadow: var(--focus-ring);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
+}
+
+@media (max-width: 900px) {
+  .si-indicator-filters {
+    grid-template-columns: 1fr;
+  }
+}

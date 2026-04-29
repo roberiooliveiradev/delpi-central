@@ -1,5 +1,6 @@
 import type { AlertsDashboardViewData } from "../../data/types/alerts";
 import { StatusBadge } from "./StatusBadge";
+import "./AlertsPriorityHighlights.css";
 
 type AlertsPriorityHighlightsProps = {
   data: AlertsDashboardViewData;

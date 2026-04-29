@@ -7,6 +7,7 @@ import { useSettingsDraft } from "../../state/hooks/useSettingsDraft";
 import { SettingsParametersForm } from "./SettingsParametersForm";
 import { SettingsGovernanceForm } from "./SettingsGovernanceForm";
 import { Modal } from "./Modal";
+import "./SettingsStructuredEditor.css";
 
 type SettingsStructuredEditorProps = {
   data: StrategicIndicatorsSettingsResponse;

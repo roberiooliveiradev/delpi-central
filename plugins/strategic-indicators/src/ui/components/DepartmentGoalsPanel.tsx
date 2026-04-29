@@ -7,6 +7,7 @@ import { IndicatorGoalForm } from "./IndicatorGoalForm";
 import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndicatorGoals";
 import type { StrategicIndicatorGoalItem } from "../../data/types/indicatorGoals";
 import type { AdminDepartmentIndicatorItem } from "../../data/types/settings";
+import "./DepartmentGoalsPanel.css";
 
 type DepartmentGoalsPanelProps = {
   departmentId: string;

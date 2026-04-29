@@ -1,3 +1,5 @@
+import "./PresentationClosingPanel.css";
+
 type PresentationClosingPanelProps = {
   currentPeriod: string;
   previousPeriod: string;

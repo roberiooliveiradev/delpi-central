@@ -1,0 +1,11 @@
+.si-page {
+  min-height: 100%;
+  padding: 24px;
+  color: var(--si-text);
+}
+
+@media (max-width: 900px) {
+  .si-page {
+    padding: 16px;
+  }
+}

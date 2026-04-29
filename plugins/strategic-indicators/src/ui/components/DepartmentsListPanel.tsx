@@ -11,6 +11,7 @@ import type {
 } from "../../data/types/settings";
 import { DepartmentManagementModal } from "./DepartmentManagementModal";
 import { getAggregationModeLabel } from "../presentation/labels";
+import "./DepartmentsListPanel.css";
 
 type DepartmentsListPanelProps = {
   getAccessToken?: () => string | undefined;

@@ -1,5 +1,6 @@
 import type { SettingsDashboardData } from "../../data/types/settingsDashboard";
 import { StatusBadge } from "./StatusBadge";
+import "./SettingsExecutiveHighlight.css";
 
 type SettingsExecutiveHighlightProps = {
   data: SettingsDashboardData;

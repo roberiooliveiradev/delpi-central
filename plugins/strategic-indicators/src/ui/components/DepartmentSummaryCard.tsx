@@ -1,6 +1,6 @@
 import type { ExecutiveDepartmentSummary } from "../../data/types/executiveSummaryView";
 import { StatusBadge } from "./StatusBadge";
-
+import "./DepartmentSummaryCard.css";
 type DepartmentSummaryCardProps = {
   department: ExecutiveDepartmentSummary;
 };

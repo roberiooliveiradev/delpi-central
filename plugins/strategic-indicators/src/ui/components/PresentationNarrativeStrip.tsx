@@ -1,3 +1,5 @@
+import "./PresentationNarrativeStrip.css";
+
 type PresentationNarrativeStripProps = {
   classification: string;
   trendLabel: string;

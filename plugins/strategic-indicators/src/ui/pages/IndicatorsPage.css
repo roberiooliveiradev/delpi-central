@@ -1,0 +1,24 @@
+.si-page {
+  min-height: 100%;
+  padding: 24px;
+  color: var(--si-text);
+}
+
+.si-indicator-analytics-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 0.95fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .si-indicator-analytics-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .si-page {
+    padding: 16px;
+  }
+}

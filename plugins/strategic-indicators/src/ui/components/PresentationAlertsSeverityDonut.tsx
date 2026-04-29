@@ -1,4 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import "./PresentationAlertsSeverityDonut.css";
 
 type AlertSeverity = "high" | "medium" | "low";
 

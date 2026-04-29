@@ -1,0 +1,43 @@
+.si-top-alert-highlight {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  border-radius: 22px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-top-alert-highlight--empty {
+  color: var(--si-text-muted);
+}
+
+.si-top-alert-highlight__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.si-top-alert-highlight__label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary, #089bdb);
+}
+
+.si-top-alert-highlight__title {
+  margin: 0;
+  font-size: 20px;
+  color: var(--si-title);
+}
+
+.si-top-alert-highlight__impact,
+.si-top-alert-highlight__recommendation {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--si-text-muted);
+}

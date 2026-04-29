@@ -1,4 +1,5 @@
 import type { PropsWithChildren, ReactNode } from "react";
+import "./Card.css";
 
 type CardProps = PropsWithChildren<{
   title?: string;

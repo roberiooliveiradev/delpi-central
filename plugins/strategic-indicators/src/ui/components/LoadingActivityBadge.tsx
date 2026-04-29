@@ -1,3 +1,5 @@
+import "./LoadingActivityBadge.css";
+
 type LoadingActivityBadgeTone = "neutral" | "info";
 
 type LoadingActivityBadgeProps = {

@@ -7,6 +7,7 @@ import {
   formatIndicatorGoalValue,
   formatIndicatorValue,
 } from "../shared/indicatorValueFormatter";
+import "./PresentationDepartmentSlideScene.css";
 
 type PresentationDepartmentSlideSceneProps = {
   department: PresentationDepartmentFocus | null;

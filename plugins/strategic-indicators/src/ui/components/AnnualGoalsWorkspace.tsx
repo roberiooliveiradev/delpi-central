@@ -12,6 +12,7 @@ import {
   getGoalModeLabel,
   getGoalPeriodicityLabel,
 } from "../presentation/labels";
+import "./AnnualGoalsWorkspace.css";
 
 type AnnualGoalsWorkspaceMode =
   | "create_year"

@@ -1,5 +1,6 @@
 import type { SettingsReadinessItem } from "../../data/types/settingsDashboard";
 import { StatusBadge } from "./StatusBadge";
+import "./SettingsReadinessPanel.css";
 
 type SettingsReadinessPanelProps = {
   items: SettingsReadinessItem[];

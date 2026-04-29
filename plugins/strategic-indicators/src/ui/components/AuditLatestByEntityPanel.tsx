@@ -3,6 +3,7 @@ import type {
   StrategicIndicatorsAuditEntityKey,
   StrategicIndicatorsSettingsAuditItem,
 } from "../../data/types/settingsAudit";
+import "./AuditLatestByEntityPanel.css";
 
 type AuditLatestByEntityPanelProps = {
   items: StrategicIndicatorsSettingsAuditItem[];

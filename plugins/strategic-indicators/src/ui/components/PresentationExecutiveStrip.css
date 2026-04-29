@@ -1,0 +1,60 @@
+.si-presentation-strip {
+  width: 100%;
+  overflow: visible;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.si-presentation-strip__item {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 14px 16px;
+  min-height: 120px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface, #ffffff) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary, #089bdb) 18%, transparent);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-presentation-strip__item span {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--si-text-muted);
+}
+
+.si-presentation-strip__item strong {
+  font-size: clamp(15px, 1.15vw, 20px);
+  line-height: 1.2;
+  color: var(--si-title);
+  overflow-wrap: anywhere;
+}
+
+.si-presentation-strip__item p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--si-text-muted);
+}
+
+@media (max-width: 1200px) {
+  .si-presentation-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .si-presentation-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .si-presentation-strip__item strong {
+    font-size: 16px;
+  }
+}

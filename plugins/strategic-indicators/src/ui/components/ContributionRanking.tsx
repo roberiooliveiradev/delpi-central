@@ -1,4 +1,5 @@
 import type { ExecutiveDepartmentSummary } from "../../data/types/executiveSummaryView";
+import "./ContributionRanking.css";
 
 type ContributionRankingProps = {
   departments: ExecutiveDepartmentSummary[];

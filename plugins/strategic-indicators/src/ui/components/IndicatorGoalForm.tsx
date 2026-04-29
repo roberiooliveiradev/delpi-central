@@ -7,6 +7,7 @@ import type {
   StrategicIndicatorGoalItem,
   UpdateStrategicIndicatorGoalRequest,
 } from "../../data/types/indicatorGoals";
+import "./IndicatorGoalForm.css";
 
 type IndicatorOption = {
   value: string;

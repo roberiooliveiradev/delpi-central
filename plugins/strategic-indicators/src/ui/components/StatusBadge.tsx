@@ -1,3 +1,5 @@
+import "./StatusBadge.css";
+
 type StatusVariant = "neutral" | "info" | "success" | "warning" | "danger";
 
 type StatusBadgeProps = {

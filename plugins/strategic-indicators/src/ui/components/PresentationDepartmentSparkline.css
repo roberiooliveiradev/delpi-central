@@ -1,0 +1,11 @@
+.si-presentation-sparkline {
+  width: 100%;
+  height: 72px;
+  min-height: 72px;
+}
+
+.si-presentation-sparkline--empty {
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-2, #f7f7f7) 92%, transparent);
+  border: 1px dashed var(--si-card-border);
+}

@@ -1,4 +1,5 @@
 import type { SettingsGoalItem } from "../../data/types/settings";
+import "./SettingsGoalsForm.css";
 
 type SettingsGoalsFormProps = {
   items: SettingsGoalItem[];
@@ -23,10 +24,13 @@ export function SettingsGoalsForm({
   }
 
   return (
-    <div className="si-settings-form-list">
+    <div className="si-settings-goals-form">
       {items.map((item, index) => (
-        <article key={item.department_id} className="si-settings-form-card">
-          <div className="si-settings-form-card__grid">
+        <article
+          key={item.department_id}
+          className="si-settings-goals-form__card"
+        >
+          <div className="si-settings-goals-form__grid">
             <Field label="Departamento">
               <input
                 value={item.department_name}
@@ -76,8 +80,8 @@ type FieldProps = {
 
 function Field({ label, children }: FieldProps) {
   return (
-    <label className="si-settings-form-field">
-      <span className="si-settings-form-field__label">{label}</span>
+    <label className="si-settings-goals-form__field">
+      <span className="si-settings-goals-form__label">{label}</span>
       {children}
     </label>
   );

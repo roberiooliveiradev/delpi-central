@@ -1,0 +1,118 @@
+.si-presentation-classification-band {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--surface, #ffffff) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary, #089bdb) 16%, transparent);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-presentation-classification-band__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.si-presentation-classification-band__title {
+  margin: 0;
+  font-size: 18px;
+  color: var(--si-title);
+}
+
+.si-presentation-classification-band__value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--si-title);
+}
+
+.si-presentation-classification-band__track {
+  position: relative;
+  height: 22px;
+  border-radius: 999px;
+  overflow: visible;
+  background: linear-gradient(
+    90deg,
+    #c12b1f 0%,
+    #cf6a11 22%,
+    #d89b05 48%,
+    #1f9fd1 72%,
+    #2bc46b 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.si-presentation-classification-band__marker {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #071426;
+  border: 4px solid color-mix(in srgb, var(--primary, #089bdb) 28%, #ffffff);
+  transform: translate(-50%, -50%);
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.08),
+    0 6px 18px rgba(0, 0, 0, 0.28);
+  z-index: 2;
+}
+
+.si-presentation-classification-band__segments {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.si-presentation-classification-band__segment-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--si-card-border);
+  background: color-mix(in srgb, var(--surface, #ffffff) 82%, transparent);
+}
+
+.si-presentation-classification-band__segment-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--si-title);
+}
+
+.si-presentation-classification-band__segment-range {
+  font-size: 12px;
+  color: var(--si-text-muted);
+}
+
+@media (max-width: 1200px) {
+  .si-presentation-classification-band__segments {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .si-presentation-classification-band__track {
+    min-height: 50px;
+  }
+}
+
+@media (max-width: 640px) {
+  .si-presentation-classification-band {
+    padding: 18px;
+  }
+
+  .si-presentation-classification-band__track {
+    height: 18px;
+    min-height: 46px;
+  }
+
+  .si-presentation-classification-band__marker {
+    width: 18px;
+    height: 18px;
+    border-width: 3px;
+  }
+}

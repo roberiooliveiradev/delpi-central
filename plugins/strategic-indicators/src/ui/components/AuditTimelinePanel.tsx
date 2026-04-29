@@ -3,6 +3,7 @@ import type {
   StrategicIndicatorsAuditEntityKey,
   StrategicIndicatorsSettingsAuditItem,
 } from "../../data/types/settingsAudit";
+import "./AuditTimelinePanel.css";
 
 type AuditTimelinePanelProps = {
   items: StrategicIndicatorsSettingsAuditItem[];

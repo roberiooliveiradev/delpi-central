@@ -1,5 +1,6 @@
 import type { DepartmentTrendItem } from "../../data/types/trends";
 import { StatusBadge } from "./StatusBadge";
+import "./TrendSummaryCards.css";
 
 type TrendSummaryCardsProps = {
   currentIgd: number;

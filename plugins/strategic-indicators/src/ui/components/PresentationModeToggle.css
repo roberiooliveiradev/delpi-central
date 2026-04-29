@@ -1,0 +1,58 @@
+.si-presentation-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--surface-2, #f7f7f7);
+  border: 1px solid var(--si-card-border);
+  flex-shrink: 0;
+}
+
+.si-presentation-mode-toggle__button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--si-title);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+  white-space: nowrap;
+}
+
+.si-presentation-mode-toggle__button:hover {
+  background: color-mix(in srgb, var(--primary, #089bdb) 8%, transparent);
+}
+
+.si-presentation-mode-toggle__button.is-active {
+  background: color-mix(in srgb, var(--primary, #089bdb) 12%, transparent);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 24%, transparent);
+}
+
+@media (max-width: 900px) {
+  .si-presentation-mode-toggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .si-presentation-mode-toggle__button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .si-presentation-mode-toggle {
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .si-presentation-mode-toggle__button {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+}

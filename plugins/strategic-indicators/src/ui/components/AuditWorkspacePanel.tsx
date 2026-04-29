@@ -6,6 +6,7 @@ import { AuditSummaryPanel } from "./AuditSummaryPanel";
 import { AuditLatestByEntityPanel } from "./AuditLatestByEntityPanel";
 import { AuditTimelinePanel } from "./AuditTimelinePanel";
 import { ChangeRequestsWorkspacePanel } from "./ChangeRequestsWorkspacePanel";
+import "./AuditWorkspacePanel.css";
 
 type AuditWorkspacePanelProps = {
   getAccessToken?: () => string | undefined;

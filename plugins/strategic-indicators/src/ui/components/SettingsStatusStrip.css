@@ -1,0 +1,44 @@
+.si-settings-status-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  border-radius: 16px;
+  border: 1px solid var(--si-card-border);
+  background: var(--si-card-bg);
+  color: var(--si-title);
+}
+
+.si-settings-status-strip--error {
+  border-color: color-mix(in srgb, var(--danger, #b42318) 35%, transparent);
+  background: color-mix(in srgb, var(--danger, #b42318) 10%, transparent);
+}
+
+.si-settings-status-strip--success {
+  border-color: color-mix(in srgb, var(--success, #067647) 35%, transparent);
+  background: color-mix(in srgb, var(--success, #067647) 10%, transparent);
+}
+
+.si-settings-status-strip--neutral {
+  background: var(--si-card-bg);
+}
+
+.si-settings-status-strip__button {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: var(--primary, #089bdb);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.si-settings-status-strip__button--ghost {
+  background: transparent;
+  color: var(--si-title);
+  border: 1px solid var(--si-card-border);
+}

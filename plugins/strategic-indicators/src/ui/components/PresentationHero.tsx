@@ -1,4 +1,5 @@
 import { PresentationClassificationBand } from "./PresentationClassificationBand";
+import "./PresentationHero.css";
 
 type PresentationHeroProps = {
   igd: number;

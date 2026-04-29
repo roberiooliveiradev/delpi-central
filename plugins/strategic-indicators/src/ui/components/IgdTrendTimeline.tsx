@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import type { IgdTrendPoint } from "../../data/types/trends";
 import { StatusBadge } from "./StatusBadge";
+import "./IgdTrendTimeline.css";
 
 type IgdTrendTimelineProps = {
   series: IgdTrendPoint[];

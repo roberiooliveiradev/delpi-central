@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import type { PropsWithChildren, ReactNode } from "react";
 import { X } from "lucide-react";
+import "./Modal.css";
 
 type ModalSize = "sm" | "md" | "lg" | "xl";
 

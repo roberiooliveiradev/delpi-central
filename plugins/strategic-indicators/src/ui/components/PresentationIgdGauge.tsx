@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import "./PresentationIgdGauge.css";
 
 type PresentationIgdGaugeProps = {
   value: number;

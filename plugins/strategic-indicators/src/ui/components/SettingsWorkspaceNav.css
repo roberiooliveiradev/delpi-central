@@ -1,0 +1,39 @@
+.si-settings-workspace-nav {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  margin-bottom: 20px;
+}
+
+.si-settings-workspace-nav__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-settings-workspace-nav__item {
+  border: 1px solid var(--si-card-border);
+  background: var(--surface-2, #f7f7f7);
+  color: var(--si-title);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.si-settings-workspace-nav__item:hover {
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
+  background: color-mix(in srgb, var(--primary, #089bdb) 8%, var(--surface-2, #f7f7f7));
+}
+
+@media (max-width: 900px) {
+  .si-settings-workspace-nav {
+    position: static;
+  }
+}

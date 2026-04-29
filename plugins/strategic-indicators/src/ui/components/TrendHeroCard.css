@@ -1,0 +1,129 @@
+.si-trend-hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 24px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-trend-hero--up {
+  border-color: color-mix(in srgb, var(--success, #067647) 28%, var(--si-card-border));
+}
+
+.si-trend-hero--down {
+  border-color: color-mix(in srgb, var(--warning, #f59e0b) 34%, var(--si-card-border));
+}
+
+.si-trend-hero--stable {
+  border-color: var(--si-card-border);
+}
+
+.si-trend-hero__glow {
+  position: absolute;
+  inset: -80px -80px auto auto;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--primary, #089bdb) 18%, transparent),
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
+.si-trend-hero__header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  z-index: 1;
+}
+
+.si-trend-hero__headline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.si-trend-hero__eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary, #089bdb);
+}
+
+.si-trend-hero__value {
+  margin: 0;
+  font-size: 52px;
+  line-height: 1;
+  color: var(--si-title);
+}
+
+.si-trend-hero__classification {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--si-title);
+}
+
+.si-trend-hero__description {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--si-text-muted);
+}
+
+.si-trend-hero__metrics {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.si-trend-hero__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--surface-2, #f7f7f7);
+  border: 1px solid var(--si-card-border);
+}
+
+.si-trend-hero__metric-label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--si-text-muted);
+}
+
+.si-trend-hero__metric-value {
+  font-size: 18px;
+  color: var(--si-title);
+}
+
+@media (max-width: 900px) {
+  .si-trend-hero__metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .si-trend-hero__value {
+    font-size: 42px;
+  }
+}

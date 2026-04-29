@@ -1,5 +1,6 @@
 import type { IndicatorAlertViewItem } from "../../data/types/alerts";
 import { StatusBadge } from "./StatusBadge";
+import "./CriticalIndicatorList.css";
 
 type CriticalIndicatorListProps = {
   alerts: IndicatorAlertViewItem[];

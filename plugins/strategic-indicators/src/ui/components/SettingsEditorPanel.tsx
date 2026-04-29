@@ -3,6 +3,7 @@ import type {
   StrategicIndicatorsSettingsResponse,
   StrategicIndicatorsSettingsUpdateRequest,
 } from "../../data/types/settings";
+import "./SettingsEditorPanel.css";
 
 type SettingsEditorPanelProps = {
   data: StrategicIndicatorsSettingsResponse;

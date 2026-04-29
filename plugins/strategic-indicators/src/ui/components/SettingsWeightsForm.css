@@ -1,0 +1,73 @@
+.si-settings-weights-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.si-settings-weights-form__card {
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--surface-2, #f7f7f7);
+  border: 1px solid var(--si-card-border);
+}
+
+.si-settings-weights-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.si-settings-weights-form__grid input[readonly],
+.si-settings-weights-form__grid textarea[readonly] {
+  background: var(--surface-2, #f7f7f7);
+  color: var(--si-text-muted);
+}
+
+.si-settings-weights-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.si-settings-weights-form__field--full {
+  grid-column: 1 / -1;
+}
+
+.si-settings-weights-form__label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--si-text-muted);
+}
+
+.si-settings-weights-form__field input,
+.si-settings-weights-form__field textarea,
+.si-settings-weights-form__field select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--si-card-border);
+  background: var(--surface, #ffffff);
+  color: var(--si-title);
+  font: inherit;
+  padding: 10px 12px;
+}
+
+.si-settings-weights-form__field textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.si-settings-weights-form__field input:focus,
+.si-settings-weights-form__field textarea:focus,
+.si-settings-weights-form__field select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary, #089bdb) 12%, transparent);
+}
+
+@media (max-width: 1100px) {
+  .si-settings-weights-form__grid {
+    grid-template-columns: 1fr;
+  }
+}

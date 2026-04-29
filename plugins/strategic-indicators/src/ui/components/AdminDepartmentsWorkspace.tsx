@@ -17,6 +17,7 @@ import {
   getPerformanceDirectionLabel,
   getScopeTypeLabel,
 } from "../presentation/labels";
+import "./AdminDepartmentsWorkspace.css";
 
 type AdminDepartmentsWorkspaceProps = {
   getAccessToken?: () => string | undefined;

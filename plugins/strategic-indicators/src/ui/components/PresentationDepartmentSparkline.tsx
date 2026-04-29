@@ -6,6 +6,7 @@ import {
   Tooltip,
   XAxis,
 } from "recharts";
+import "./PresentationDepartmentSparkline.css";
 
 type PresentationDepartmentSparklinePoint = {
   period?: string;

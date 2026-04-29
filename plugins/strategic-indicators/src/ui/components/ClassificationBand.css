@@ -1,0 +1,94 @@
+.si-classification-band {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  border-radius: 22px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-classification-band__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.si-classification-band__title {
+  margin: 0;
+  font-size: 18px;
+  color: var(--si-title);
+}
+
+.si-classification-band__value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--si-title);
+}
+
+.si-classification-band__track {
+  position: relative;
+  height: 16px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    rgba(180, 35, 24, 0.8) 0%,
+    rgba(245, 183, 0, 0.85) 34%,
+    rgba(8, 155, 219, 0.85) 60%,
+    rgba(46, 204, 113, 0.9) 100%
+  );
+}
+
+.si-classification-band__marker {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface, #ffffff);
+  border: 3px solid var(--secundary, #003866);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.si-classification-band__segments {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.si-classification-band__segment {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--si-card-border);
+  background: var(--surface-2, #f7f7f7);
+}
+
+.si-classification-band__segment-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--si-title);
+}
+
+.si-classification-band__segment-range {
+  font-size: 12px;
+  color: var(--si-text-muted);
+}
+
+@media (max-width: 1100px) {
+  .si-classification-band__segments {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .si-classification-band {
+    padding: 18px;
+  }
+}

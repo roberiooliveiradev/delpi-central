@@ -1,0 +1,58 @@
+.si-department-trend-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-department-trend-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.si-department-trend-card__title {
+  margin: 0;
+  font-size: 18px;
+  color: var(--si-title);
+}
+
+.si-department-trend-card__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.si-department-trend-card__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--surface-2, #f7f7f7);
+  border: 1px solid var(--si-card-border);
+}
+
+.si-department-trend-card__metric span {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--si-text-muted);
+}
+
+.si-department-trend-card__metric strong {
+  font-size: 16px;
+  color: var(--si-title);
+}
+
+@media (max-width: 900px) {
+  .si-department-trend-card__metrics {
+    grid-template-columns: 1fr;
+  }
+}

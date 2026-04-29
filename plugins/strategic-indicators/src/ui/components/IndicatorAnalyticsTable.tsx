@@ -1,6 +1,7 @@
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
 import { formatIndicatorGoalValue } from "../shared/indicatorValueFormatter";
+import "./IndicatorAnalyticsTable.css";
 
 type IndicatorAnalyticsTableProps = {
   indicators: IndicatorAnalyticsViewItem[];

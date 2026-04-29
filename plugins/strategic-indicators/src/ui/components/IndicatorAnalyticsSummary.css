@@ -1,0 +1,49 @@
+.si-indicator-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.si-indicator-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-indicator-summary-card__label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--si-text-muted);
+}
+
+.si-indicator-summary-card__value {
+  font-size: 32px;
+  line-height: 1;
+  color: var(--si-title);
+}
+
+.si-indicator-summary-card__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--si-text-muted);
+}
+
+.si-indicator-summary-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 1100px) {
+  .si-indicator-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

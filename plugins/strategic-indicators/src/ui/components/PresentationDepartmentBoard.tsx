@@ -3,6 +3,7 @@ import type {
   PresentationDepartmentSnapshot,
   PresentationTrendSnapshot,
 } from "../../data/types/presentation";
+import "./PresentationDepartmentBoard.css";
 
 type PresentationDepartmentBoardProps = {
   departments: PresentationDepartmentSnapshot[];

@@ -1,4 +1,5 @@
 import type { SettingsDashboardGovernanceItem } from "../../data/types/settingsDashboard";
+import "./SettingsGovernancePanel.css";
 
 type SettingsGovernancePanelProps = {
   items: SettingsDashboardGovernanceItem[];

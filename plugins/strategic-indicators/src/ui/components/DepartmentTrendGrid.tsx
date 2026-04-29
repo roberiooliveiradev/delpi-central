@@ -8,6 +8,7 @@ import {
 } from "recharts";
 import type { DepartmentTrendItem } from "../../data/types/trends";
 import { StatusBadge } from "./StatusBadge";
+import "./DepartmentTrendGrid.css";
 
 type DepartmentTrendGridProps = {
   departments: DepartmentTrendItem[];

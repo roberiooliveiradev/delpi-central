@@ -1,3 +1,5 @@
+import "./PresentationExecutiveStrip.css";
+
 type PresentationExecutiveStripProps = {
   currentIgd: number;
   previousIgd: number;

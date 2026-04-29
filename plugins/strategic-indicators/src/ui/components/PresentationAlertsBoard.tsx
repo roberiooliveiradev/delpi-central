@@ -1,5 +1,6 @@
 import type { ExecutiveAlertViewItem } from "../../data/types/alerts";
 import { getSeverityLabel } from "../../ui/presentation/labels";
+import "./PresentationAlertsBoard.css";
 
 type PresentationAlertsBoardProps = {
   alerts: ExecutiveAlertViewItem[];

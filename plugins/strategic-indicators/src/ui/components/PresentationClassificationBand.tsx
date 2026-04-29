@@ -1,3 +1,5 @@
+import "./PresentationClassificationBand.css";
+
 type PresentationClassificationBandProps = {
   value: number;
   max?: number;

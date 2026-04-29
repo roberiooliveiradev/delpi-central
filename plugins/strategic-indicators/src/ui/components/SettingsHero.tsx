@@ -1,3 +1,5 @@
+import "./SettingsHero.css";
+
 type SettingsHeroProps = {
   routePath: string;
   permissionCode: string;

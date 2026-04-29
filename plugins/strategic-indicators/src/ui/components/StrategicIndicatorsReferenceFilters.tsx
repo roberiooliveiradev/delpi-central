@@ -2,6 +2,7 @@ import {
   STRATEGIC_INDICATORS_BRANCH_OPTIONS,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
+import "./StrategicIndicatorsReferenceFilters.css";
 
 type StrategicIndicatorsReferenceFiltersProps = {
   referenceMonth: string;

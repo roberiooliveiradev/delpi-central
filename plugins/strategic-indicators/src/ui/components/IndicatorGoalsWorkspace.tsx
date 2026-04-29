@@ -6,6 +6,7 @@ import { DataTable } from "./DataTable";
 import { ActionButtons } from "./ActionButtons";
 import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndicatorGoals";
 import type { StrategicIndicatorGoalItem } from "../../data/types/indicatorGoals";
+import "./IndicatorGoalsWorkspace.css";
 
 type IndicatorGoalsWorkspaceProps = {
   getAccessToken?: () => string | undefined;

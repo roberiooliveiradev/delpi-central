@@ -19,6 +19,7 @@ import {
   resolveStrategicIndicatorsBranch,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
+import "./ExecutiveDashboardPage.css";
 
 type ExecutiveDashboardPageProps = {
   getAccessToken?: () => string | undefined;

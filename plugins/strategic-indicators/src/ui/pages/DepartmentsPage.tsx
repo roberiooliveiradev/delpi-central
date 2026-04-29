@@ -14,6 +14,7 @@ import {
   resolveStrategicIndicatorsBranch,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
+import "./DepartmentsPage.css";
 
 type DepartmentsPageProps = {
   getAccessToken?: () => string | undefined;

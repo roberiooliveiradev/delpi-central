@@ -1,3 +1,5 @@
+import "./IndicatorFiltersBar.css";
+
 type IndicatorFiltersBarProps = {
   search: string;
   department: string;

@@ -14,6 +14,7 @@ import {
   getGoalModeLabel,
   getGoalPeriodicityLabel,
 } from "../presentation/labels";
+import "./GoalYearManagementModal.css";
 
 type GoalYearManagementModalProps = {
   open: boolean;

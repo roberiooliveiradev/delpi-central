@@ -1,5 +1,6 @@
 import type { ExecutiveDepartmentSummary } from "../../data/types/executiveSummaryView";
 import { DepartmentSummaryCard } from "./DepartmentSummaryCard";
+import "./DepartmentSummaryGrid.css";
 
 type DepartmentSummaryGridProps = {
   departments: ExecutiveDepartmentSummary[];

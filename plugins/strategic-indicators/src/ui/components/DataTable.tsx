@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import "./DataTable.css";
 
 export type DataTableColumn<T> = {
   key: string;

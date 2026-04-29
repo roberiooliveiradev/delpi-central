@@ -1,0 +1,41 @@
+@keyframes si-presentation-scene-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.si-presentation-scene-shell {
+  width: 100%;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  padding: 2px 8px 8px;
+}
+
+.si-presentation-scene-shell__inner {
+  width: 100%;
+  min-width: 0;
+  animation: si-presentation-scene-enter 300ms ease;
+  transform-origin: center top;
+  will-change: opacity, transform;
+}
+
+.si-presentation-scene-shell--overview {
+  padding-top: 4px;
+}
+
+.si-presentation-scene-shell--single {
+  padding-top: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .si-presentation-scene-shell__inner {
+    animation: none;
+  }
+}

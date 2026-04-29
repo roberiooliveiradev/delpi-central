@@ -1,3 +1,5 @@
+import "./SettingsWorkspaceNav.css";
+
 type SettingsWorkspaceNavItem = {
   id: string;
   label: string;

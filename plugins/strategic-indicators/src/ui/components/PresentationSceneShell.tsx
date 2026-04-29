@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import "./PresentationSceneShell.css";
 
 type PresentationMode = "meeting" | "tv" | "slide";
 

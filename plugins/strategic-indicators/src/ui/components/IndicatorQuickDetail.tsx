@@ -9,6 +9,7 @@ import {
   formatIndicatorGoalValue,
   formatIndicatorValue,
 } from "../shared/indicatorValueFormatter";
+import "./IndicatorQuickDetail.css";
 
 type IndicatorQuickDetailProps = {
   indicator: IndicatorAnalyticsViewItem | null;

@@ -16,6 +16,7 @@ import {
   getPerformanceDirectionLabel,
   getScopeTypeLabel,
 } from "../presentation/labels";
+import "./DepartmentManagementModal.css";
 
 type DepartmentManagementModalProps = {
   department: AdminDepartmentItem | null;

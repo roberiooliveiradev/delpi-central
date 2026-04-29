@@ -1,5 +1,6 @@
 import type { DepartmentOverviewViewItem } from "../../data/types/departments";
 import { StatusBadge } from "./StatusBadge";
+import "./DepartmentOverviewTable.css";
 
 type DepartmentOverviewTableProps = {
   departments: DepartmentOverviewViewItem[];

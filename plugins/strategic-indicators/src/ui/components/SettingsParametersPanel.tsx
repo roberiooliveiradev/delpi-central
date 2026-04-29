@@ -1,4 +1,5 @@
 import type { SettingsDashboardParameterItem } from "../../data/types/settingsDashboard";
+import "./SettingsParametersPanel.css";
 
 type SettingsParametersPanelProps = {
   items: SettingsDashboardParameterItem[];

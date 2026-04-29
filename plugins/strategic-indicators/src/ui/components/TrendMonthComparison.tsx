@@ -1,4 +1,5 @@
 import { StatusBadge } from "./StatusBadge";
+import "./TrendMonthComparison.css";
 
 type TrendMonthComparisonProps = {
   currentPeriod: string;

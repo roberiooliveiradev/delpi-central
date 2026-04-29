@@ -1,0 +1,65 @@
+.si-critical-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.si-critical-list--empty {
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--si-card-bg);
+  border: 1px dashed var(--si-card-border);
+  color: var(--si-text-muted);
+}
+
+.si-critical-item {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-critical-item__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.si-critical-item__title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: var(--si-title);
+}
+
+.si-critical-item__subtitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--si-text-muted);
+}
+
+.si-critical-item__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  font-size: 13px;
+  color: var(--si-text-muted);
+}
+
+.si-critical-item__recommendation {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--si-title);
+}
+
+@media (max-width: 1100px) {
+  .si-critical-list {
+    grid-template-columns: 1fr;
+  }
+}
