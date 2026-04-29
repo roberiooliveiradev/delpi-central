@@ -138,8 +138,6 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                 SELECT
                     SUM(qtd_produzida_op) AS total_produzido_milheiro
                 FROM apont_final
-                WHERE
-                    B1_GRUPO NOT IN ('9043', '9028')
             )
             SELECT
                 ISNULL(nc.total_devolvido_un, 0) AS total_devolvido_un,
@@ -179,7 +177,70 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
         if ppm_type not in {"internal", "external"}:
             raise ValueError("ppm_type deve ser internal ou external")
 
-        return ["01", "02"]
+        date_start_protheus = self._to_protheus_date(date_start)
+        date_end_exclusive = self._exclusive_end_date(date_end)
+
+        nc_filters = [
+            "D_E_L_E_T_ = ' '",
+            self._type_filter(ppm_type),
+            "NULLIF(LTRIM(RTRIM(QI2_FILIAL)), '') IS NOT NULL",
+        ]
+        nc_params: list[str] = []
+
+        if date_start_protheus:
+            nc_filters.append("QI2_REGIST >= ?")
+            nc_params.append(date_start_protheus)
+
+        if date_end_exclusive:
+            nc_filters.append("QI2_REGIST < ?")
+            nc_params.append(date_end_exclusive)
+
+        prod_filters = [
+            "D_E_L_E_T_ = ' '",
+            "H6_TIPO = 'P'",
+            "H6_OP <> ''",
+            "H6_PRODUTO <> ''",
+            "NULLIF(LTRIM(RTRIM(H6_FILIAL)), '') IS NOT NULL",
+        ]
+        prod_params: list[str] = []
+
+        if date_start_protheus:
+            prod_filters.append("H6_DTAPONT >= ?")
+            prod_params.append(date_start_protheus)
+
+        if date_end_exclusive:
+            prod_filters.append("H6_DTAPONT < ?")
+            prod_params.append(date_end_exclusive)
+
+        sql = f"""
+            SELECT DISTINCT branch
+            FROM (
+                SELECT
+                    LTRIM(RTRIM(QI2_FILIAL)) AS branch
+                FROM QI2010
+                WHERE {' AND '.join(nc_filters)}
+
+                UNION
+
+                SELECT
+                    LTRIM(RTRIM(H6_FILIAL)) AS branch
+                FROM SH6010
+                WHERE {' AND '.join(prod_filters)}
+            ) branches
+            WHERE branch <> ''
+            ORDER BY branch
+        """
+
+        params = tuple(nc_params + prod_params)
+
+        with self as repo:
+            rows = repo.execute_query(sql, params)
+
+        return [
+            str(row.get("branch")).strip()
+            for row in rows
+            if row.get("branch") and str(row.get("branch")).strip()
+        ]
 
     def list_items(self, request) -> Page[PpmItem]:
         date_start = self._to_protheus_date(request.date_start)
