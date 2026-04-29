@@ -138,7 +138,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
     data.igdSeries[data.igdSeries.length - 2]?.period ?? "Anterior";
 
   return (
-    <div className="si-page">
+    <div className="si-page si-trends-page">
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Tendências"
@@ -190,11 +190,17 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
         title="Tendência consolidada do IGD"
         description="Leitura executiva da evolução mais recente do índice global."
       >
-        <TrendHeroCard
-          current={data.currentIgd}
-          previous={data.previousIgd}
-          classification={data.currentClassification}
-        />
+        <div className="si-trends-executive-grid">
+          <TrendHeroCard
+            current={data.currentIgd}
+            previous={data.previousIgd}
+            classification={data.currentClassification}
+            currentPeriod={currentPeriod}
+            previousPeriod={previousPeriod}
+          />
+
+          <IgdTrendTimeline series={data.igdSeries} />
+        </div>
       </SectionBlock>
 
       <SectionBlock
@@ -225,13 +231,6 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
         description="Melhor movimento e maior queda entre os departamentos no recorte atual."
       >
         <TrendHighlights departments={data.departments} />
-      </SectionBlock>
-
-      <SectionBlock
-        title="Evolução mensal"
-        description="Série histórica real do IGD no intervalo solicitado."
-      >
-        <IgdTrendTimeline series={data.igdSeries} />
       </SectionBlock>
 
       <SectionBlock

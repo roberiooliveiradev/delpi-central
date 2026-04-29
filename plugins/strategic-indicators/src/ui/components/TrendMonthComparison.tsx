@@ -1,9 +1,46 @@
+import { StatusBadge } from "./StatusBadge";
+
 type TrendMonthComparisonProps = {
   currentPeriod: string;
   previousPeriod: string;
   currentIgd: number;
   previousIgd: number;
 };
+
+function formatScore(value: number) {
+  return value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+}
+
+function formatVariation(value: number) {
+  const formatted = Math.abs(value).toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+
+  if (value > 0) return `+${formatted}`;
+  if (value < 0) return `-${formatted}`;
+  return "0,0";
+}
+
+function getDirectionLabel(value: number) {
+  if (value > 0.09) return "Melhora";
+  if (value < -0.09) return "Queda";
+  return "Estável";
+}
+
+function getDirectionVariant(value: number): "success" | "warning" | "neutral" {
+  if (value > 0.09) return "success";
+  if (value < -0.09) return "warning";
+  return "neutral";
+}
+
+function getPercentVariation(current: number, previous: number) {
+  if (!previous) return 0;
+  return ((current - previous) / previous) * 100;
+}
 
 export function TrendMonthComparison({
   currentPeriod,
@@ -12,44 +49,66 @@ export function TrendMonthComparison({
   previousIgd,
 }: TrendMonthComparisonProps) {
   const variation = currentIgd - previousIgd;
+  const percentVariation = getPercentVariation(currentIgd, previousIgd);
 
   return (
-    <section className="si-trend-month-comparison">
+    <section
+      className={`si-trend-month-comparison si-trend-month-comparison--${getDirectionVariant(
+        variation,
+      )}`}
+    >
       <div className="si-trend-month-comparison__header">
-        <h3 className="si-trend-month-comparison__title">
-          Comparação do mês
-        </h3>
-        <span className="si-trend-month-comparison__subtitle">
-          leitura direta do último fechamento
-        </span>
+        <div>
+          <p className="si-trend-month-comparison__eyebrow">
+            Último fechamento
+          </p>
+          <h3 className="si-trend-month-comparison__title">
+            Comparação direta do mês
+          </h3>
+        </div>
+
+        <StatusBadge
+          label={getDirectionLabel(variation)}
+          variant={getDirectionVariant(variation)}
+        />
       </div>
 
-      <div className="si-trend-month-comparison__grid">
-        <div className="si-trend-month-comparison__card">
+      <div className="si-trend-month-comparison__flow">
+        <article className="si-trend-month-comparison__period-card">
           <span className="si-trend-month-comparison__label">
+            Período anterior
+          </span>
+          <strong className="si-trend-month-comparison__period">
             {previousPeriod}
-          </span>
-          <strong className="si-trend-month-comparison__value">
-            {previousIgd.toFixed(1)}
           </strong>
+          <strong className="si-trend-month-comparison__value">
+            {formatScore(previousIgd)}
+          </strong>
+        </article>
+
+        <div className="si-trend-month-comparison__bridge">
+          <span className="si-trend-month-comparison__arrow">→</span>
+
+          <div className="si-trend-month-comparison__variation-card">
+            <span>Variação</span>
+            <strong>{formatVariation(variation)}</strong>
+            <small>
+              {formatVariation(percentVariation)}% no período
+            </small>
+          </div>
         </div>
 
-        <div className="si-trend-month-comparison__card">
+        <article className="si-trend-month-comparison__period-card si-trend-month-comparison__period-card--current">
           <span className="si-trend-month-comparison__label">
-            {currentPeriod}
+            Período atual
           </span>
-          <strong className="si-trend-month-comparison__value">
-            {currentIgd.toFixed(1)}
+          <strong className="si-trend-month-comparison__period">
+            {currentPeriod}
           </strong>
-        </div>
-
-        <div className="si-trend-month-comparison__card">
-          <span className="si-trend-month-comparison__label">Variação</span>
           <strong className="si-trend-month-comparison__value">
-            {variation > 0 ? "+" : ""}
-            {variation.toFixed(1)}
+            {formatScore(currentIgd)}
           </strong>
-        </div>
+        </article>
       </div>
     </section>
   );
