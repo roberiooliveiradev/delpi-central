@@ -313,9 +313,9 @@ body,
   min-width: 0;
 }
 
-.app-host-federated {
+.app-host-federated, .app-host-federated > div  {
   height: 100%;
-  min-height: 0;
+  min-height: 100%;
 }
 
 .app-host-embedded {
