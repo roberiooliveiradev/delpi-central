@@ -21,7 +21,6 @@ import {
 } from "../shared/strategicIndicatorsFilters";
 import "./TrendsPage.css";
 
-
 type TrendsPageProps = {
   getAccessToken?: () => string | undefined;
 };
@@ -49,36 +48,22 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
     });
 
   const referenceFilters = (
-    <div className="si-form-grid">
-      <StrategicIndicatorsReferenceFilters
-        referenceMonth={referenceMonth}
-        viewMode={viewMode}
-        branch={branch}
-        onReferenceMonthChange={setReferenceMonth}
-        onViewModeChange={setViewMode}
-        onBranchChange={setBranch}
-      />
-
-      <label className="si-field">
-        <span className="si-field__label">Meses de comparação</span>
-        <select
-          className="si-input"
-          value={monthsToCompare}
-          onChange={(event) => setMonthsToCompare(Number(event.target.value))}
-        >
-          <option value={2}>2 meses</option>
-          <option value={3}>3 meses</option>
-          <option value={4}>4 meses</option>
-          <option value={6}>6 meses</option>
-          <option value={12}>12 meses</option>
-        </select>
-      </label>
-    </div>
+    <StrategicIndicatorsReferenceFilters
+      referenceMonth={referenceMonth}
+      viewMode={viewMode}
+      branch={branch}
+      monthsToCompare={monthsToCompare}
+      showMonthsToCompare
+      onReferenceMonthChange={setReferenceMonth}
+      onViewModeChange={setViewMode}
+      onBranchChange={setBranch}
+      onMonthsToCompareChange={setMonthsToCompare}
+    />
   );
 
   if (loading && !data) {
     return (
-      <div className="si-page">
+      <div className="si-trends-page">
         <PageHeader
           eyebrow="MinhaDelpi"
           title="Tendências"
@@ -105,7 +90,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
 
   if (error && !data) {
     return (
-      <div className="si-page">
+      <div className="si-trends-page">
         <PageHeader
           eyebrow="MinhaDelpi"
           title="Tendências"
@@ -140,7 +125,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
     data.igdSeries[data.igdSeries.length - 2]?.period ?? "Anterior";
 
   return (
-    <div className="si-page si-trends-page">
+    <div className="si-trends-page">
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Tendências"

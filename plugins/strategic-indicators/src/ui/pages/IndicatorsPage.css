@@ -1,7 +1,8 @@
-.si-page {
+.si-indicators-page {
   min-height: 100%;
   padding: 24px;
   color: var(--si-text);
+  background: var(--surface-2, #f7f7f7);
 }
 
 .si-indicator-analytics-layout {
@@ -18,7 +19,7 @@
 }
 
 @media (max-width: 900px) {
-  .si-page {
+  .si-indicators-page {
     padding: 16px;
   }
 }

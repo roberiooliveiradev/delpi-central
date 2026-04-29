@@ -77,7 +77,7 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
 
   if (loading && !data) {
     return (
-      <div className="si-page">
+      <div className="si-alerts-page">
         <PageHeader
           eyebrow="MinhaDelpi"
           title="Alertas"
@@ -104,7 +104,7 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
 
   if (error && !data) {
     return (
-      <div className="si-page">
+      <div className="si-alerts-page">
         <PageHeader
           eyebrow="MinhaDelpi"
           title="Alertas"
@@ -136,7 +136,7 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
   const topExecutiveAlert = data.executiveAlerts[0] ?? null;
 
   return (
-    <div className="si-page">
+    <div className="si-alerts-page">
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Alertas"

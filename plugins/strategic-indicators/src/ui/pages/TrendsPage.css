@@ -1,48 +1,8 @@
-.si-page {
+.si-trends-page {
   min-height: 100%;
   padding: 24px;
   color: var(--si-text);
-}
-
-.si-trends-page {
   background: var(--surface-2, #f7f7f7);
-}
-
-.si-form-grid {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr) minmax(160px, 220px);
-  gap: 14px;
-}
-
-.si-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.si-field__label {
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--si-text-muted);
-}
-
-.si-input {
-  width: 100%;
-  min-height: 44px;
-  border-radius: 12px;
-  border: 1px solid var(--control-border, var(--border-2, #d9d9d9));
-  background: var(--control-bg, var(--surface, #ffffff));
-  color: var(--control-text, var(--si-text));
-  font: inherit;
-  padding: 10px 12px;
-  outline: none;
-}
-
-.si-input:focus {
-  box-shadow: var(--focus-ring);
-  border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
 }
 
 .si-trends-executive-grid {
@@ -59,11 +19,7 @@
 }
 
 @media (max-width: 900px) {
-  .si-page {
+  .si-trends-page {
     padding: 16px;
-  }
-
-  .si-form-grid {
-    grid-template-columns: 1fr;
   }
 }

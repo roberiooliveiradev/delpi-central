@@ -76,6 +76,12 @@ function getDirectionClassName(direction: DepartmentTrendItem["direction"]) {
   return "si-department-trend-card--stable";
 }
 
+function resolveTrendColor(direction: DepartmentTrendItem["direction"]) {
+  if (direction === "up") return "#22c55e";
+  if (direction === "down") return "#ef4444";
+  return "#3b82f6";
+}
+
 function buildSeries(department: DepartmentTrendItem) {
   if (department.series?.length) {
     return department.series.map((point) => ({
@@ -111,6 +117,7 @@ export function DepartmentTrendGrid({ departments }: DepartmentTrendGridProps) {
         const delta = department.current - department.previous;
         const chartData = buildSeries(department);
         const gradientId = `department-trend-${department.id}`;
+        const chartColor = resolveTrendColor(department.direction);
 
         return (
           <article
@@ -152,13 +159,13 @@ export function DepartmentTrendGrid({ departments }: DepartmentTrendGridProps) {
                     >
                       <stop
                         offset="0%"
-                        stopColor="currentColor"
-                        stopOpacity={0.42}
+                        stopColor={chartColor}
+                        stopOpacity={0.34}
                       />
                       <stop
                         offset="100%"
-                        stopColor="currentColor"
-                        stopOpacity={0.02}
+                        stopColor={chartColor}
+                        stopOpacity={0.03}
                       />
                     </linearGradient>
                   </defs>
@@ -169,6 +176,7 @@ export function DepartmentTrendGrid({ departments }: DepartmentTrendGridProps) {
                   <Tooltip
                     formatter={(value) => [formatScore(value), "Score"]}
                     labelFormatter={(label) => `Competência ${label}`}
+                    cursor={false}
                     contentStyle={{
                       borderRadius: 12,
                       border: "1px solid rgba(255,255,255,0.12)",
@@ -181,18 +189,18 @@ export function DepartmentTrendGrid({ departments }: DepartmentTrendGridProps) {
                   <Area
                     type="monotone"
                     dataKey="score"
-                    stroke="currentColor"
+                    stroke={chartColor}
                     strokeWidth={3}
                     fill={`url(#${gradientId})`}
                     dot={{
                       r: 3,
-                      fill: "currentColor",
+                      fill: chartColor,
                       stroke: "var(--surface, #ffffff)",
                       strokeWidth: 1.5,
                     }}
                     activeDot={{
                       r: 5,
-                      fill: "currentColor",
+                      fill: chartColor,
                       stroke: "var(--surface, #ffffff)",
                       strokeWidth: 2,
                     }}

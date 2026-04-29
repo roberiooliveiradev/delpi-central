@@ -8,35 +8,45 @@ type StrategicIndicatorsReferenceFiltersProps = {
   referenceMonth: string;
   viewMode: StrategicIndicatorsViewMode;
   branch: string;
+  monthsToCompare?: number;
+  showMonthsToCompare?: boolean;
   onReferenceMonthChange: (value: string) => void;
   onViewModeChange: (value: StrategicIndicatorsViewMode) => void;
   onBranchChange: (value: string) => void;
+  onMonthsToCompareChange?: (value: number) => void;
 };
 
 export function StrategicIndicatorsReferenceFilters({
   referenceMonth,
   viewMode,
   branch,
+  monthsToCompare = 3,
+  showMonthsToCompare = false,
   onReferenceMonthChange,
   onViewModeChange,
   onBranchChange,
+  onMonthsToCompareChange,
 }: StrategicIndicatorsReferenceFiltersProps) {
   return (
-    <div className="si-form-grid">
-      <label className="si-field">
-        <span className="si-field__label">Mês de referência</span>
+    <div
+      className={`si-reference-filters ${
+        showMonthsToCompare ? "si-reference-filters--with-comparison" : ""
+      }`}
+    >
+      <label className="si-reference-filters__field">
+        <span className="si-reference-filters__label">Mês de referência</span>
         <input
           type="month"
-          className="si-input"
+          className="si-reference-filters__input"
           value={referenceMonth}
           onChange={(event) => onReferenceMonthChange(event.target.value)}
         />
       </label>
 
-      <label className="si-field">
-        <span className="si-field__label">Visão</span>
+      <label className="si-reference-filters__field">
+        <span className="si-reference-filters__label">Visão</span>
         <select
-          className="si-input"
+          className="si-reference-filters__input"
           value={viewMode}
           onChange={(event) =>
             onViewModeChange(event.target.value as StrategicIndicatorsViewMode)
@@ -48,10 +58,10 @@ export function StrategicIndicatorsReferenceFilters({
       </label>
 
       {viewMode === "branch" ? (
-        <label className="si-field">
-          <span className="si-field__label">Filial</span>
+        <label className="si-reference-filters__field">
+          <span className="si-reference-filters__label">Filial</span>
           <select
-            className="si-input"
+            className="si-reference-filters__input"
             value={branch}
             onChange={(event) => onBranchChange(event.target.value)}
           >
@@ -60,6 +70,28 @@ export function StrategicIndicatorsReferenceFilters({
                 {item.label}
               </option>
             ))}
+          </select>
+        </label>
+      ) : null}
+
+      {showMonthsToCompare ? (
+        <label className="si-reference-filters__field">
+          <span className="si-reference-filters__label">
+            Meses de comparação
+          </span>
+
+          <select
+            className="si-reference-filters__input"
+            value={monthsToCompare}
+            onChange={(event) =>
+              onMonthsToCompareChange?.(Number(event.target.value))
+            }
+          >
+            <option value={2}>2 meses</option>
+            <option value={3}>3 meses</option>
+            <option value={4}>4 meses</option>
+            <option value={6}>6 meses</option>
+            <option value={12}>12 meses</option>
           </select>
         </label>
       ) : null}

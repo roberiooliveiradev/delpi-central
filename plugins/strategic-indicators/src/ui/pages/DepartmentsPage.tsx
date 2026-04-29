@@ -59,7 +59,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
   );
 
   return (
-    <div className="si-page">
+    <div className="si-departments-page">
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Departamentos"

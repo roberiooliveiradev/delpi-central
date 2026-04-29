@@ -67,7 +67,7 @@ export function ExecutiveDashboardPage({
 
   if (loading && !data) {
     return (
-      <div className="si-page">
+      <div className="si-executive-dashboard-page">
         <PageHeader
           eyebrow="MinhaDelpi"
           title="Indicadores Estratégicos"
@@ -94,7 +94,7 @@ export function ExecutiveDashboardPage({
 
   if (error && !data) {
     return (
-      <div className="si-page">
+      <div className="si-executive-dashboard-page">
         <PageHeader
           eyebrow="MinhaDelpi"
           title="Indicadores Estratégicos"
@@ -137,7 +137,7 @@ export function ExecutiveDashboardPage({
   );
 
   return (
-    <div className="si-page">
+    <div className="si-executive-dashboard-page">
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Indicadores Estratégicos"

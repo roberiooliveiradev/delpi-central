@@ -72,7 +72,7 @@ export function DepartmentDetailsPage({
 
   if (loading && !data) {
     return (
-      <div className="si-page">
+      <div className="si-department-details-page">
         <PageHeader
           eyebrow="MinhaDelpi"
           title="Departamento"
@@ -99,7 +99,7 @@ export function DepartmentDetailsPage({
 
   if (error && !data) {
     return (
-      <div className="si-page">
+      <div className="si-department-details-page">
         <PageHeader
           eyebrow="MinhaDelpi"
           title="Departamento não encontrado"
@@ -132,7 +132,7 @@ export function DepartmentDetailsPage({
   }
 
   return (
-    <div className="si-page">
+    <div className="si-department-details-page">
       <PageHeader
         eyebrow="MinhaDelpi"
         title={`Departamento — ${data.name}`}

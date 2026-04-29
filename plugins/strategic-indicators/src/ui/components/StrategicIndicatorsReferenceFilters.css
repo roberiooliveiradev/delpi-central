@@ -1,16 +1,32 @@
-.si-form-grid {
+.si-reference-filters {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr);
+  grid-template-columns:
+    minmax(180px, 220px)
+    minmax(180px, 220px)
+    minmax(180px, 220px);
   gap: 14px;
+  align-items: end;
+  width: 100%;
+  max-width: 720px;
 }
 
-.si-field {
+.si-reference-filters--with-comparison {
+  grid-template-columns:
+    minmax(180px, 220px)
+    minmax(180px, 220px)
+    minmax(180px, 220px)
+    minmax(180px, 220px);
+  max-width: 954px;
+}
+
+.si-reference-filters__field {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
-.si-field__label {
+.si-reference-filters__label {
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
@@ -18,8 +34,9 @@
   color: var(--si-text-muted);
 }
 
-.si-input {
+.si-reference-filters__input {
   width: 100%;
+  min-width: 0;
   min-height: 44px;
   border-radius: 12px;
   border: 1px solid var(--control-border, var(--border-2, #d9d9d9));
@@ -30,13 +47,22 @@
   outline: none;
 }
 
-.si-input:focus {
+.si-reference-filters__input:focus {
   box-shadow: var(--focus-ring);
   border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
 }
 
-@media (max-width: 900px) {
-  .si-form-grid {
+@media (max-width: 1100px) {
+  .si-reference-filters,
+  .si-reference-filters--with-comparison {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    max-width: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .si-reference-filters,
+  .si-reference-filters--with-comparison {
     grid-template-columns: 1fr;
   }
 }

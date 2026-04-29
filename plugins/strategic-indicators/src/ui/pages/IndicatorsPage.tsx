@@ -268,7 +268,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
   );
 
   return (
-    <div className="si-page">
+    <div className="si-indicators-page">
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Indicadores"
@@ -288,7 +288,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
       >
         {referenceFilters}
       </SectionBlock>
-      
+
       {loading && items.length === 0 ? (
         <LoadingActivityInline
           title="Carregando indicadores"

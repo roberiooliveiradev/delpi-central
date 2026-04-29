@@ -1,5 +1,6 @@
 .si-settings-page {
   padding: 24px;
+  background: var(--surface-2, #f7f7f7);
 }
 
 .si-settings-tabbar {

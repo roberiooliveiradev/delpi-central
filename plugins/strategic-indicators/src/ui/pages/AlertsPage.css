@@ -1,7 +1,8 @@
-.si-page {
+.si-alerts-page {
   min-height: 100%;
   padding: 24px;
   color: var(--si-text);
+  background: var(--surface-2, #f7f7f7);
 }
 
 .si-alerts-executive-layout {
@@ -17,7 +18,7 @@
 }
 
 @media (max-width: 900px) {
-  .si-page {
+  .si-alerts-page {
     padding: 16px;
   }
 }
