@@ -17,6 +17,36 @@ function getLabel(severity: DepartmentAlertViewItem["severity"]) {
   return "Baixa criticidade";
 }
 
+function formatScore(value: number) {
+  return value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+}
+
+function formatVariation(value: number) {
+  const formatted = Math.abs(value).toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+
+  if (value > 0) return `+${formatted}`;
+  if (value < 0) return `-${formatted}`;
+  return "0,0";
+}
+
+function getVariationLabel(value: number) {
+  if (value > 0) return "Melhora";
+  if (value < 0) return "Queda";
+  return "Estável";
+}
+
+function getVariationClassName(value: number) {
+  if (value > 0) return "si-critical-item__variation si-critical-item__variation--up";
+  if (value < 0) return "si-critical-item__variation si-critical-item__variation--down";
+  return "si-critical-item__variation si-critical-item__variation--stable";
+}
+
 export function CriticalDepartmentList({
   alerts,
 }: CriticalDepartmentListProps) {
@@ -45,8 +75,12 @@ export function CriticalDepartmentList({
           </div>
 
           <div className="si-critical-item__metrics">
-            <span>Atual: {alert.currentScore.toFixed(1)}</span>
-            <span>Anterior: {alert.previousScore.toFixed(1)}</span>
+            <span>Atual: {formatScore(alert.currentScore)}</span>
+            <span>Anterior: {formatScore(alert.previousScore)}</span>
+            <span className={getVariationClassName(alert.variation)}>
+              Variação: {formatVariation(alert.variation)} (
+              {getVariationLabel(alert.variation)})
+            </span>
           </div>
 
           <p className="si-critical-item__recommendation">

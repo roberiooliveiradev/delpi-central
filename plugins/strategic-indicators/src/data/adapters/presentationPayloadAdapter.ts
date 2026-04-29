@@ -165,20 +165,27 @@ function buildAlerts(
       impact: alert.impact,
       recommendation: alert.recommendation,
     })),
-    departmentAlerts: payload.alerts.department_alerts.map((alert) => ({
-      id: buildId(
-        "department-alert",
-        alert.department_id,
-        alert.severity,
-        alert.message,
-      ),
-      departmentName: alert.department_name,
-      currentScore: alert.score,
-      previousScore: alert.score,
-      severity: alert.severity,
-      reason: alert.message,
-      recommendation: "Priorizar plano de ação do departamento no curto prazo.",
-    })),
+    departmentAlerts: payload.alerts.department_alerts.map((alert) => {
+      const currentScore = Number(alert.score ?? 0);
+      const previousScore = Number(alert.previous_score ?? currentScore);
+      const variation = Number(alert.variation ?? currentScore - previousScore);
+
+      return {
+        id: buildId(
+          "department-alert",
+          alert.department_id,
+          alert.severity,
+          alert.message,
+        ),
+        departmentName: alert.department_name,
+        currentScore,
+        previousScore,
+        variation,
+        severity: alert.severity,
+        reason: alert.message,
+        recommendation: "Priorizar plano de ação do departamento no curto prazo.",
+      };
+    }),
     indicatorAlerts: payload.alerts.indicator_alerts.map((alert) => ({
       id: buildId(
         "indicator-alert",
@@ -343,42 +350,8 @@ function buildDepartmentSeries(
 function buildIndicatorSeriesByDepartmentId(
   payload: StrategicIndicatorsPresentationApiResponse,
 ): TrendsDashboardViewData["indicatorSeriesByDepartmentId"] {
-  const rawIndicatorSeriesByDepartmentId = (
-    payload.trends as StrategicIndicatorsPresentationApiResponse["trends"] & {
-      indicator_series_by_department_id?: Record<
-        string,
-        Array<{
-          indicator_id: string;
-          indicator_name: string;
-          weight_pct: number;
-          goal_label: string;
-          goal_value: number;
-          goal_periodicity: string;
-          goal_mode?: string;
-          monthly_targets?: Array<{
-            month_number: number;
-            target_value: number;
-          }>;
-          scope_type: string;
-          performance_direction: string;
-          strategic_description: string;
-          source: string;
-          value_unit?: string | null;
-          value_prefix?: string | null;
-          value_suffix?: string | null;
-          value_decimals?: number | string | null;
-          series: Array<{
-            period: string;
-            value: number;
-            score: number;
-            gap: number;
-            classification?: string;
-            trend: "up" | "down" | "stable";
-          }>;
-        }>
-      >;
-    }
-  ).indicator_series_by_department_id;
+  const rawIndicatorSeriesByDepartmentId =
+    payload.trends.indicator_series_by_department_id;
 
   if (!rawIndicatorSeriesByDepartmentId) {
     return {};

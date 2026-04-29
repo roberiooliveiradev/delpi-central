@@ -3,6 +3,16 @@ import type {
   StrategicIndicatorsAlertsResponse,
 } from "../types/alerts";
 
+function toNumber(value: number | null | undefined, fallback = 0) {
+  const numeric = Number(value);
+
+  if (!Number.isFinite(numeric)) {
+    return fallback;
+  }
+
+  return numeric;
+}
+
 export function adaptAlertsToView(
   response: StrategicIndicatorsAlertsResponse,
 ): AlertsDashboardViewData {
@@ -16,21 +26,31 @@ export function adaptAlertsToView(
       impact: item.impact,
       recommendation: item.recommendation,
     })),
-    departmentAlerts: response.department_alerts.map((item) => ({
-      id: item.department_id,
-      departmentName: item.department_name,
-      currentScore: item.score,
-      previousScore: item.score,
-      severity: item.severity,
-      reason: item.message,
-      recommendation:
-        "Revisar os indicadores de maior peso da área e construir plano de ação com responsáveis.",
-    })),
+    departmentAlerts: response.department_alerts.map((item) => {
+      const currentScore = toNumber(item.score);
+      const previousScore = toNumber(item.previous_score, currentScore);
+      const variation = toNumber(
+        item.variation,
+        currentScore - previousScore,
+      );
+
+      return {
+        id: item.department_id,
+        departmentName: item.department_name,
+        currentScore,
+        previousScore,
+        variation,
+        severity: item.severity,
+        reason: item.message,
+        recommendation:
+          "Revisar os indicadores de maior peso da área e construir plano de ação com responsáveis.",
+      };
+    }),
     indicatorAlerts: response.indicator_alerts.map((item) => ({
       id: item.indicator_id,
       departmentName: item.department_name,
       indicatorName: item.indicator_name,
-      simulatedScore: item.score,
+      simulatedScore: toNumber(item.score),
       goalLabel: item.goal_label ?? "-",
       goalValue: item.goal_value ?? null,
       goalPeriodicity: item.goal_periodicity ?? null,
@@ -59,5 +79,6 @@ function inferIgdClassification(
   if (first.includes("crítica")) return "Crítico";
   if (first.includes("exige ação")) return "Regular, Exige Ação";
   if (first.includes("atenção")) return "Satisfatório com Alertas";
+
   return "Alto Desempenho";
 }

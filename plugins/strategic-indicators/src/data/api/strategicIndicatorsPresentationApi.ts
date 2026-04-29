@@ -172,6 +172,8 @@ export type StrategicIndicatorsPresentationApiResponse = {
       department_name: string;
       severity: Severity;
       score: number;
+      previous_score?: number | null;
+      variation?: number | null;
       classification: string;
       contribution: number;
       message: string;

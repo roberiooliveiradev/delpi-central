@@ -22,6 +22,7 @@ export type DepartmentAlertViewItem = {
   departmentName: string;
   currentScore: number;
   previousScore: number;
+  variation: number;
   severity: AlertSeverity;
   reason: string;
   recommendation: string;
@@ -70,6 +71,8 @@ export type StrategicIndicatorsAlertsResponse = {
     department_name: string;
     severity: AlertSeverity;
     score: number;
+    previous_score?: number | null;
+    variation?: number | null;
     classification: string;
     contribution: number;
     message: string;

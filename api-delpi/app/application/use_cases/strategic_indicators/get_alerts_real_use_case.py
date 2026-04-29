@@ -33,7 +33,7 @@ class GetStrategicIndicatorsAlertsRealUseCase:
         self,
         request: GetStrategicIndicatorsAlertsRealRequest,
     ) -> dict:
-        snapshot = self._snapshot_service.get_period_snapshot(
+        comparative = self._snapshot_service.get_current_and_previous_snapshot(
             competence=request.competence,
             start_date=request.start_date,
             end_date=request.end_date,
@@ -41,10 +41,13 @@ class GetStrategicIndicatorsAlertsRealUseCase:
             branch=request.branch,
         )
 
+        current_snapshot = comparative.current
+        previous_snapshot = comparative.previous
+
         catalog_snapshot = self._snapshot_service.get_catalog_snapshot(
-            competence=snapshot.period.competence,
-            start_date=snapshot.period.start_date,
-            end_date=snapshot.period.end_date,
+            competence=current_snapshot.period.competence,
+            start_date=current_snapshot.period.start_date,
+            end_date=current_snapshot.period.end_date,
             department_id=request.department_id,
             branch=request.branch,
         )
@@ -54,27 +57,41 @@ class GetStrategicIndicatorsAlertsRealUseCase:
             for item in catalog_snapshot.indicators_catalog
         }
 
+        previous_departments_by_id = {
+            item.department_id: item
+            for item in previous_snapshot.calculated_departments
+        }
+
         executive_alerts = self._alerts_summary_port.get_alerts_summary(
-            departments=snapshot.calculated_departments,
-            measurement_errors=snapshot.measurement_errors,
+            departments=current_snapshot.calculated_departments,
+            measurement_errors=current_snapshot.measurement_errors,
         )
 
-        department_alerts = self._build_department_alerts(snapshot.calculated_departments)
+        department_alerts = self._build_department_alerts(
+            current_snapshot.calculated_departments,
+            previous_departments_by_id=previous_departments_by_id,
+        )
+
         indicator_alerts = self._build_indicator_alerts(
-            snapshot.calculated_departments,
+            current_snapshot.calculated_departments,
             catalog_by_indicator_id,
         )
 
         return {
-            "competence": snapshot.period.competence,
+            "competence": current_snapshot.period.competence,
             "executive_alerts": executive_alerts,
             "department_alerts": department_alerts,
             "indicator_alerts": indicator_alerts,
-            "errors": snapshot.measurement_errors,
-            "partial_success": len(snapshot.measurement_errors) > 0,
+            "errors": current_snapshot.measurement_errors,
+            "partial_success": len(current_snapshot.measurement_errors) > 0,
         }
 
-    def _build_department_alerts(self, departments) -> list[dict]:
+    def _build_department_alerts(
+        self,
+        departments,
+        *,
+        previous_departments_by_id: dict,
+    ) -> list[dict]:
         ordered = sorted(departments, key=lambda item: item.score)
         alerts: list[dict] = []
 
@@ -84,12 +101,26 @@ class GetStrategicIndicatorsAlertsRealUseCase:
 
             severity = "high" if department.score < 7 else "medium"
 
+            previous_department = previous_departments_by_id.get(
+                department.department_id,
+            )
+
+            previous_score = (
+                previous_department.score
+                if previous_department is not None
+                else department.score
+            )
+
+            variation = round(float(department.score) - float(previous_score), 3)
+
             alerts.append(
                 {
                     "department_id": department.department_id,
                     "department_name": department.department_name,
                     "severity": severity,
                     "score": department.score,
+                    "previous_score": previous_score,
+                    "variation": variation,
                     "classification": department.classification,
                     "contribution": department.contribution,
                     "message": (
@@ -143,7 +174,11 @@ class GetStrategicIndicatorsAlertsRealUseCase:
                             else []
                         ),
                         "performance_direction": (
-                            getattr(catalog_item, "performance_direction", "higher_is_better")
+                            getattr(
+                                catalog_item,
+                                "performance_direction",
+                                "higher_is_better",
+                            )
                             if catalog_item
                             else "higher_is_better"
                         ),
