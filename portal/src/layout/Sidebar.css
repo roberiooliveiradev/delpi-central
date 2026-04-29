@@ -183,14 +183,16 @@
   opacity: 0;
   pointer-events: none;
 
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  border-color: color-mix(in srgb, var(--border) 88%, var(--primary));
   backdrop-filter: blur(10px);
 
   transition:
     opacity 0.22s ease,
     transform 0.22s ease,
     box-shadow 0.22s ease,
-    background 0.22s ease;
+    background 0.22s ease,
+    border-color 0.22s ease;
 }
 
 .sidebar-expand-btn__icon {
@@ -199,11 +201,11 @@
   justify-content: center;
   width: 22px;
   height: 22px;
-  opacity: 0.92;
+  opacity: 1;
 }
 
 .sidebar-expand-btn.is-visible {
-  opacity: 0.5;
+  opacity: 0.82;
   pointer-events: auto;
   transform: translateY(-50%) translateX(0);
 }
@@ -211,6 +213,8 @@
 .sidebar-expand-btn.is-visible:hover {
   opacity: 1;
   transform: translateY(-50%) scale(1.06);
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
   box-shadow: var(--focus-2);
 }
 

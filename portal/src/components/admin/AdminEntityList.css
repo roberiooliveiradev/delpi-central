@@ -11,7 +11,6 @@
   min-height: 0;
 }
 
-
 /* =========================
    HEADER
 ========================= */
@@ -74,7 +73,6 @@
   font-size: 11px;
   font-weight: 700;
 }
-
 
 /* =========================
    TOOLBAR
@@ -160,7 +158,6 @@
   flex-wrap: wrap;
 }
 
-
 /* =========================
    BUTTONS
 ========================= */
@@ -224,7 +221,6 @@
   box-shadow: none !important;
 }
 
-
 /* =========================
    SELECTION BAR
 ========================= */
@@ -256,7 +252,6 @@
   gap: 8px;
   flex-wrap: wrap;
 }
-
 
 /* =========================
    LIST SHELL
@@ -311,7 +306,6 @@
   margin: 12px;
   text-align: center;
 }
-
 
 /* =========================
    CARD
@@ -450,9 +444,9 @@
   min-width: 0;
 
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
 }
 
 .admin-entity-card-title-row strong {
@@ -463,7 +457,12 @@
   overflow-wrap: anywhere;
 }
 
-.admin-entity-card-title-row span {
+/*
+  Importante:
+  O seletor antigo era ".admin-entity-card-title-row span".
+  Ele afetava também badges, porque badge também é span.
+*/
+.admin-entity-card-title-row > div > span {
   display: block;
   margin-top: 2px;
   color: var(--text-muted);
@@ -496,29 +495,58 @@
   overflow-wrap: anywhere;
 }
 
+/* =========================
+   PILLS / BADGES
+========================= */
+
 .admin-entity-card-pills {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: nowrap;
+  flex: 0 0 auto;
+  min-width: max-content;
+  white-space: nowrap;
 }
 
 .admin-entity-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center;
+  gap: 5px;
+
+  width: auto;
+  max-width: none;
+  min-width: max-content;
+  min-height: 28px;
+
+  margin: 0 !important;
 
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface-2);
   color: var(--text-muted);
 
-  padding: 3px 8px;
+  padding: 5px 10px;
 
   font-size: 11px;
   font-weight: 800;
-  white-space: nowrap;
+  line-height: 1;
+
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: keep-all !important;
+
+  flex: 0 0 auto;
+}
+
+.admin-entity-badge svg {
+  display: inline-block !important;
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
 }
 
 .admin-entity-badge-success {
@@ -544,8 +572,9 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
+  flex: 0 0 auto;
+  min-width: max-content;
 }
-
 
 /* =========================
    PAGINATION
@@ -589,7 +618,6 @@
   color: var(--primary);
 }
 
-
 /* =========================
    RESPONSIVE
 ========================= */
@@ -624,6 +652,7 @@
   .admin-entity-card-actions {
     grid-column: 1 / -1;
     justify-content: stretch;
+    min-width: 0;
   }
 
   .admin-entity-card-actions button {
@@ -668,6 +697,8 @@
 
   .admin-entity-card-pills {
     justify-content: flex-start;
+    min-width: 0;
+    flex-wrap: wrap;
   }
 
   .admin-entity-list-header,
