@@ -2,24 +2,35 @@
   min-height: 100%;
   padding: 24px;
   color: var(--si-text);
-  background: var(--surface-2, #f7f7f7);
+  background:
+    radial-gradient(circle at top left, rgba(8, 155, 219, 0.14), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(0, 56, 102, 0.12), transparent 34%),
+    var(--surface-2, #f7f7f7);
 }
 
 .si-trends-executive-grid {
   display: grid;
-  grid-template-columns: minmax(320px, 0.78fr) minmax(0, 1.42fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: stretch;
 }
 
-@media (max-width: 1280px) {
-  .si-trends-executive-grid {
-    grid-template-columns: 1fr;
-  }
+.si-trends-executive-grid > .si-igd-timeline {
+  order: 1;
+  grid-column: 1 / -1;
+}
+
+.si-trends-executive-grid > .si-trend-hero {
+  order: 2;
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 900px) {
   .si-trends-page {
     padding: 16px;
+  }
+
+  .si-trends-executive-grid {
+    gap: 14px;
   }
 }
