@@ -336,10 +336,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useSocket({
     token: !loading && isAuthenticated ? tokenRef.current : undefined,
     onConnected: async () => {
-      await Promise.all([
-        loadIdentityAndNavigation(),
-        loadNotificationsData(),
-      ]);
+      await Promise.all([loadIdentityAndNavigation(), loadNotificationsData()]);
     },
     onNotification: (data) => {
       setNotifications((prev) => [data, ...prev]);
@@ -390,21 +387,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const logout = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("DELPI_GLOBAL_LOGOUT"));
+
     stopTokenRefresh();
-    clearSessionState();
-
-    const iframe = document.createElement("iframe");
-    iframe.style.display = "none";
-    iframe.referrerPolicy = "strict-origin-when-cross-origin";
-    iframe.src =
-      "https://rhdelpi.minhadelpi.com.br/integracao/logout-pelo-portal-mae/";
-
-    document.body.appendChild(iframe);
 
     window.setTimeout(() => {
-      iframe.remove();
-      void keycloak.logout({ redirectUri: window.location.origin + "/" });
-    }, 700);
+      clearSessionState();
+
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.referrerPolicy = "strict-origin-when-cross-origin";
+      iframe.src =
+        "https://rhdelpi.minhadelpi.com.br/integracao/logout-pelo-portal-mae/";
+
+      document.body.appendChild(iframe);
+
+      window.setTimeout(() => {
+        iframe.remove();
+        void keycloak.logout({ redirectUri: window.location.origin + "/" });
+      }, 700);
+    }, 150);
   }, [clearSessionState, stopTokenRefresh]);
 
   const contextValue = useMemo<AuthContextType>(
@@ -448,6 +450,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       removeFavorite,
       markNotificationRead,
       markAllNotificationsRead,
+      login,
+      logout,
       loadCoreData,
       refreshToken,
     ]

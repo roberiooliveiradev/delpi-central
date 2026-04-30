@@ -91,7 +91,6 @@ export const AppHost = () => {
 
   function openAppInNewTab() {
     if (!resolvedEntry) return;
-
     window.open(resolvedEntry, "_blank", "noopener,noreferrer");
   }
 
@@ -105,6 +104,17 @@ export const AppHost = () => {
 
     iframeRef.current.contentWindow?.postMessage(
       { type: "DELPI_AUTH", token },
+      getUrlOrigin(resolvedEntry)
+    );
+  }
+
+  function sendLogoutToIframe() {
+    if (!iframeRef.current) return;
+    if (!app || app.renderMode !== "embedded") return;
+    if (!resolvedEntry) return;
+
+    iframeRef.current.contentWindow?.postMessage(
+      { type: "DELPI_LOGOUT" },
       getUrlOrigin(resolvedEntry)
     );
   }
@@ -124,7 +134,6 @@ export const AppHost = () => {
 
   useEffect(() => {
     const isEmbedded = app?.renderMode === "embedded";
-
     document.body.classList.toggle("portal-has-embedded-app", !!isEmbedded);
 
     return () => {
@@ -154,7 +163,6 @@ export const AppHost = () => {
       if (!resolvedEntry) return;
 
       const iframeOrigin = getUrlOrigin(resolvedEntry);
-
       if (event.origin !== iframeOrigin) return;
 
       if (event.data?.type === "DELPI_AUTH_READY") {
@@ -179,6 +187,18 @@ export const AppHost = () => {
     iframeReloadKey,
     refreshToken,
   ]);
+
+  useEffect(() => {
+    function handleGlobalLogout() {
+      sendLogoutToIframe();
+    }
+
+    window.addEventListener("DELPI_GLOBAL_LOGOUT", handleGlobalLogout);
+
+    return () => {
+      window.removeEventListener("DELPI_GLOBAL_LOGOUT", handleGlobalLogout);
+    };
+  }, [app, resolvedEntry, iframeReloadKey]);
 
   useEffect(() => {
     let isActive = true;
