@@ -95,6 +95,20 @@ export const AppHost = () => {
     window.open(resolvedEntry, "_blank", "noopener,noreferrer");
   }
 
+  function sendAuthToIframe() {
+    if (!iframeRef.current) return;
+    if (!app || app.renderMode !== "embedded") return;
+    if (!resolvedEntry) return;
+
+    const token = getAccessToken();
+    if (!token) return;
+
+    iframeRef.current.contentWindow?.postMessage(
+      { type: "DELPI_AUTH", token },
+      getUrlOrigin(resolvedEntry)
+    );
+  }
+
   const googleLogin = useGoogleEmbeddedAppLogin({
     enabled: Boolean(isGoogleApp),
     pathname: location.pathname,
@@ -132,31 +146,39 @@ export const AppHost = () => {
   }, [app, resolvedEntry, navigate]);
 
   useEffect(() => {
-    if (!iframeRef.current) return;
-    if (!app || app.renderMode !== "embedded") return;
-    if (!resolvedEntry) return;
-
-    const token = getAccessToken();
-    if (!token) return;
-
-    iframeRef.current.contentWindow?.postMessage(
-      { type: "DELPI_AUTH", token },
-      getUrlOrigin(resolvedEntry)
-    );
+    sendAuthToIframe();
   }, [app, resolvedEntry, location.pathname, getAccessToken, iframeReloadKey]);
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
+      if (!resolvedEntry) return;
+
+      const iframeOrigin = getUrlOrigin(resolvedEntry);
+
+      if (event.origin !== iframeOrigin) return;
+
+      if (event.data?.type === "DELPI_AUTH_READY") {
+        sendAuthToIframe();
+        return;
+      }
 
       if (event.data?.type === "DELPI_REFRESH_REQUEST") {
-        void refreshToken();
+        void refreshToken().then(() => {
+          window.setTimeout(sendAuthToIframe, 100);
+        });
       }
     }
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [refreshToken]);
+  }, [
+    app,
+    resolvedEntry,
+    location.pathname,
+    getAccessToken,
+    iframeReloadKey,
+    refreshToken,
+  ]);
 
   useEffect(() => {
     let isActive = true;
@@ -357,6 +379,7 @@ export const AppHost = () => {
           className="app-host-iframe"
           referrerPolicy="strict-origin-when-cross-origin"
           allow="clipboard-read; clipboard-write; fullscreen"
+          onLoad={sendAuthToIframe}
         />
       </div>
     );
