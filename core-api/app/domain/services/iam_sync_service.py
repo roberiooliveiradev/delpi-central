@@ -9,7 +9,7 @@ class IamSyncService:
     após alterações administrativas.
 
     ⚠️ Não sincroniza mais roles com Keycloak.
-    A DELPI Central resolve autorização internamente.
+    A aplicação resolve autorização internamente.
     """
 
     def __init__(self, uow):
