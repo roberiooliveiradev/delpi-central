@@ -48,6 +48,34 @@ interface AuthContextType {
   refreshToken: () => Promise<void>;
 }
 
+const DEFAULT_FRONT_CHANNEL_LOGOUT_URLS = [
+  "https://rhdelpi.minhadelpi.com.br/integracao/logout-pelo-portal-mae/",
+  "https://controle-mp.minhadelpi.com.br/sso/logout-from-parent",
+];
+
+const FRONT_CHANNEL_LOGOUT_TIMEOUT_MS = 900;
+
+/**
+ * Permite evoluir o logout global sem alterar código a cada novo app.
+ *
+ * Exemplo:
+ * VITE_FRONT_CHANNEL_LOGOUT_URLS=https://app1/logout-from-parent,https://app2/logout-from-parent
+ */
+function getFrontChannelLogoutUrls(): string[] {
+  const raw = import.meta.env.VITE_FRONT_CHANNEL_LOGOUT_URLS;
+
+  if (!raw || typeof raw !== "string") {
+    return DEFAULT_FRONT_CHANNEL_LOGOUT_URLS;
+  }
+
+  const urls = raw
+    .split(",")
+    .map((url) => url.trim())
+    .filter(Boolean);
+
+  return urls.length > 0 ? urls : DEFAULT_FRONT_CHANNEL_LOGOUT_URLS;
+}
+
 export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   loading: true,
@@ -114,6 +142,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setDashboard(undefined);
     setNotifications([]);
     setFavorites([]);
+
+    identityLoadInFlightRef.current = false;
+    dashboardLoadInFlightRef.current = false;
+    notificationsLoadInFlightRef.current = false;
+    favoritesLoadInFlightRef.current = false;
   }, []);
 
   const stopTokenRefresh = useCallback(() => {
@@ -122,6 +155,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       refreshIntervalRef.current = null;
     }
   }, []);
+
+  const runFrontChannelLogout = useCallback(
+    (url: string, timeoutMs = FRONT_CHANNEL_LOGOUT_TIMEOUT_MS): Promise<void> => {
+      return new Promise((resolve) => {
+        const iframe = document.createElement("iframe");
+        let finished = false;
+
+        const finish = () => {
+          if (finished) return;
+          finished = true;
+
+          try {
+            iframe.remove();
+          } catch {
+            // noop
+          }
+
+          resolve();
+        };
+
+        iframe.style.display = "none";
+        iframe.referrerPolicy = "strict-origin-when-cross-origin";
+        iframe.src = url;
+
+        iframe.onload = () => {
+          window.setTimeout(finish, 150);
+        };
+
+        iframe.onerror = () => {
+          finish();
+        };
+
+        document.body.appendChild(iframe);
+        window.setTimeout(finish, timeoutMs);
+      });
+    },
+    []
+  );
+
+  const runGlobalFrontChannelLogout = useCallback(async () => {
+    const urls = getFrontChannelLogoutUrls();
+
+    await Promise.allSettled(
+      urls.map((url) => runFrontChannelLogout(url))
+    );
+  }, [runFrontChannelLogout]);
 
   const handleUnauthorized = useCallback(async () => {
     if (unauthorizedHandledRef.current) return;
@@ -387,6 +466,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const logout = useCallback(() => {
+    /**
+     * Evento local para componentes/microfrontends já carregados dentro da Minha DELPI.
+     * Ex.: AppHost pode repassar DELPI_LOGOUT para iframes ou remotes montados.
+     */
     window.dispatchEvent(new CustomEvent("DELPI_GLOBAL_LOGOUT"));
 
     stopTokenRefresh();
@@ -394,20 +477,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     window.setTimeout(() => {
       clearSessionState();
 
-      const iframe = document.createElement("iframe");
-      iframe.style.display = "none";
-      iframe.referrerPolicy = "strict-origin-when-cross-origin";
-      iframe.src =
-        "https://rhdelpi.minhadelpi.com.br/integracao/logout-pelo-portal-mae/";
-
-      document.body.appendChild(iframe);
-
-      window.setTimeout(() => {
-        iframe.remove();
+      void runGlobalFrontChannelLogout().finally(() => {
         void keycloak.logout({ redirectUri: window.location.origin + "/" });
-      }, 700);
+      });
     }, 150);
-  }, [clearSessionState, stopTokenRefresh]);
+  }, [clearSessionState, stopTokenRefresh, runGlobalFrontChannelLogout]);
 
   const contextValue = useMemo<AuthContextType>(
     () => ({
