@@ -16,6 +16,7 @@ class HrBranchSnapshot:
     absenteeism_pct: float | None
     turnover_pct: float | None
     training_hours_per_collaborator: float | None
+    active_pdi_pct: float | None = None
 
 
 @dataclass(frozen=True)
@@ -136,6 +137,11 @@ class HrMetricsSnapshotService:
                 start_date=start_date,
                 end_date=end_date,
             )
+            active_pdi_raw = self._repository.get_active_pdi_snapshot(
+                branch_code=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+            )
 
             total_absence_hours = self._to_float(absenteeism_raw.get("total_absence_hours")) or 0.0
             expected_hours = self._to_float(absenteeism_raw.get("expected_hours")) or 0.0
@@ -160,6 +166,7 @@ class HrMetricsSnapshotService:
                 if total_participations > 0
                 else None
             )
+            active_pdi_pct = self._to_float(active_pdi_raw.get("value"))
 
             branch_snapshots.append(
                 HrBranchSnapshot(
@@ -169,8 +176,22 @@ class HrMetricsSnapshotService:
                     training_hours_per_collaborator=round(training_hours_per_collaborator, 2)
                     if training_hours_per_collaborator is not None
                     else None,
+                    active_pdi_pct=round(active_pdi_pct, 2)
+                    if active_pdi_pct is not None
+                    else None,
                 )
             )
+
+        active_pdi_values = [
+            item.active_pdi_pct
+            for item in branch_snapshots
+            if item.active_pdi_pct is not None
+        ]
+        active_pdi_pct = (
+            sum(active_pdi_values) / len(active_pdi_values)
+            if active_pdi_values
+            else None
+        )
 
         if internal_satisfaction_override is None:
             internal_satisfaction_raw = self._repository.get_internal_satisfaction_snapshot(
@@ -190,7 +211,9 @@ class HrMetricsSnapshotService:
             internal_satisfaction_pct=round(internal_satisfaction_pct, 2)
             if internal_satisfaction_pct is not None
             else None,
-            active_pdi_pct=None,
+            active_pdi_pct=round(active_pdi_pct, 2)
+            if active_pdi_pct is not None
+            else None,
         )
 
     def _resolve_branches(self, *, branch: str | None) -> list[str]:

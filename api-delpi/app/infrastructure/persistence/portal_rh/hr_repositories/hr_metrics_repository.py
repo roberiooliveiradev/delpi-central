@@ -81,6 +81,79 @@ class HrMetricsRepository(PortalRhBaseRepository):
             "total_participations": 1.0,
         }
 
+    def get_active_pdi_snapshot(
+        self,
+        *,
+        branch_code: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict:
+        sql = """
+            WITH params AS (
+                SELECT
+                    CAST(%(branch_code)s AS varchar) AS branch_code,
+                    TO_DATE(NULLIF(CAST(%(start_date)s AS text), ''), 'DD-MM-YYYY') AS start_date,
+                    TO_DATE(NULLIF(CAST(%(end_date)s AS text), ''), 'DD-MM-YYYY') AS end_date
+            ),
+            pdi_rows AS (
+                SELECT
+                    mt.branch_code,
+                    mt.year,
+                    mt.month,
+                    mt.target_value AS total_pdis,
+                    ma.actual_value AS active_pdis,
+                    make_date(mt.year, mt.month, 1) AS measurement_date
+                FROM indicators_monthlytarget mt
+                INNER JOIN indicators_indicator i
+                    ON i.id = mt.indicator_id
+                LEFT JOIN indicators_monthlyactual ma
+                    ON ma.indicator_id = mt.indicator_id
+                AND ma.branch_code = mt.branch_code
+                AND ma.year = mt.year
+                AND ma.month = mt.month
+                CROSS JOIN params p
+                WHERE mt.branch_code = p.branch_code
+                AND i.active = TRUE
+                AND i.code = 'PDI_ATV'
+                AND (
+                        p.start_date IS NULL
+                        OR make_date(mt.year, mt.month, 1) >= date_trunc('month', p.start_date)::date
+                )
+                AND (
+                        p.end_date IS NULL
+                        OR make_date(mt.year, mt.month, 1) <= date_trunc('month', p.end_date)::date
+                )
+            )
+            SELECT
+                SUM(total_pdis) AS total_pdis,
+                SUM(active_pdis) AS active_pdis,
+                CASE
+                    WHEN SUM(total_pdis) IS NULL OR SUM(total_pdis) = 0 THEN NULL
+                    WHEN SUM(active_pdis) IS NULL THEN NULL
+                    ELSE (SUM(active_pdis) / SUM(total_pdis)) * 100
+                END AS pdi_pct,
+                MAX(measurement_date) AS measurement_date
+            FROM pdi_rows
+        """
+
+        row = self.fetch_one(
+            sql,
+            {
+                "branch_code": branch_code,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+        )
+
+        return {
+            "indicator_code": "PDI_ATV",
+            "branch_code": branch_code,
+            "total_pdis": self._safe_round((row or {}).get("total_pdis")),
+            "active_pdis": self._safe_round((row or {}).get("active_pdis")),
+            "value": self._safe_round((row or {}).get("pdi_pct")),
+            "measurement_date": (row or {}).get("measurement_date"),
+        }
+    
     def get_internal_satisfaction_snapshot(
         self,
         *,

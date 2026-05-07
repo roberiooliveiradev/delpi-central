@@ -110,6 +110,10 @@ class HrIndicatorsSnapshotProvider(
             item.branch_code: item.training_hours_per_collaborator
             for item in snapshot.branches
         }
+        pdi_unit_values = {
+            item.branch_code: item.active_pdi_pct
+            for item in snapshot.branches
+        }
 
         items = [
             {
@@ -162,9 +166,12 @@ class HrIndicatorsSnapshotProvider(
                 {
                     "department_id": "hr",
                     "indicator_id": "hr-pdi",
-                    "value": float(snapshot.active_pdi_pct),
+                    "value": self._resolve_indicator_value(
+                        unit_values=pdi_unit_values,
+                        branch=branch,
+                    ),
                     "source": "portal_rh_pdi",
-                    "unit_values": {"consolidated": float(snapshot.active_pdi_pct)},
+                    "unit_values": pdi_unit_values,
                 }
             )
 
