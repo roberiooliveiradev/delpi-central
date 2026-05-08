@@ -10,7 +10,8 @@
 
         <div class="login-energy-brand">
             <div class="login-energy-logo">
-                <img src="${url.resourcesPath}/img/logoMinhaDelpi.svg" />
+                <img src="${url.resourcesPath}/img/logoMinhaDelpi.svg"
+                     alt="Minha DELPI" />
             </div>
 
             <div class="login-energy-brand-text">
@@ -29,6 +30,7 @@
         </div>
 
         <form id="kc-reset-password-form"
+              class="login-energy-form"
               action="${url.loginAction}"
               method="post">
 
@@ -42,6 +44,7 @@
                    name="username"
                    value="${(auth.attemptedUsername!'')}"
                    placeholder="Usuário ou email"
+                   autocomplete="username"
                    autofocus />
 
             <button class="login-energy-action" type="submit">

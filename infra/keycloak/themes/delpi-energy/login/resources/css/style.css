@@ -629,3 +629,73 @@ body > div {
   }
 
 }
+
+
+/* =========================
+   FORM PADRÃO DO TEMA
+========================= */
+
+.login-energy-form {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.login-energy-form input[type="text"],
+.login-energy-form input[type="email"],
+.login-energy-form input[type="password"] {
+  width: 100%;
+  padding: 14px 14px;
+
+  border-radius: 12px;
+  border: 1px solid var(--control-border);
+
+  background: var(--control-bg);
+  color: var(--control-text);
+
+  font-size: 15px;
+}
+
+.login-energy-form input::placeholder {
+  color: var(--control-placeholder);
+}
+
+.login-energy-form input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--primary) 65%, var(--control-border));
+  box-shadow: var(--focus);
+}
+
+/* =========================
+   CHECKBOXES DO LOGIN
+========================= */
+
+.login-energy-password-toggle,
+.login-energy-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 2px 0 4px;
+
+  font-size: 13px;
+  color: var(--text-muted);
+
+  cursor: pointer;
+  user-select: none;
+}
+
+.login-energy-password-toggle input[type="checkbox"],
+.login-energy-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.login-energy-password-toggle span,
+.login-energy-checkbox span {
+  line-height: 1.2;
+}

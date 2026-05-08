@@ -1,0 +1,18 @@
+{
+  "name": "Minha DELPI",
+  "short_name": "Minha DELPI",
+  "description": "Portal corporativo Minha DELPI",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1115",
+  "theme_color": "#003866",
+  "icons": [
+    {
+      "src": "/icon-minhadelpi.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

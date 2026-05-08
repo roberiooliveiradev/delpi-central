@@ -13,7 +13,8 @@
 
         <div class="login-energy-brand">
             <div class="login-energy-logo">
-                <img src="${url.resourcesPath}/img/logoMinhaDelpi.svg" />
+                <img src="${url.resourcesPath}/img/logoMinhaDelpi.svg"
+                     alt="Minha DELPI" />
             </div>
 
             <div class="login-energy-brand-text">
@@ -32,6 +33,7 @@
         </div>
 
         <form id="kc-passwd-update-form"
+              class="login-energy-form"
               action="${url.loginAction}"
               method="post">
 
@@ -44,19 +46,29 @@
             <input type="password"
                    name="password-new"
                    placeholder="Nova senha"
+                   autocomplete="new-password"
+                   data-password-toggle="true"
                    autofocus />
 
             <input type="password"
                    name="password-confirm"
-                   placeholder="Confirmar nova senha" />
+                   placeholder="Confirmar nova senha"
+                   autocomplete="new-password"
+                   data-password-toggle="true" />
+
+            <label class="login-energy-password-toggle">
+                <input type="checkbox"
+                       class="js-toggle-passwords" />
+                <span>Mostrar senha</span>
+            </label>
 
             <#if logoutOtherSessions??>
-                <label style="display:flex;gap:8px;margin:12px 0;">
+                <label class="login-energy-checkbox">
                     <input type="checkbox"
                            name="logout-sessions"
                            value="on"
                            checked />
-                    Encerrar sessões ativas
+                    <span>Encerrar sessões ativas</span>
                 </label>
             </#if>
 
@@ -74,6 +86,7 @@
 </div>
 
 <script src="${url.resourcesPath}/js/lightning.js"></script>
+<script src="${url.resourcesPath}/js/password-toggle.js"></script>
 
 </#if>
 

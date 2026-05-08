@@ -34,6 +34,7 @@
         </div>
 
         <form id="kc-form-login"
+              class="login-energy-form"
               action="${url.loginAction}"
               method="post">
 
@@ -47,11 +48,20 @@
                    name="username"
                    value="${(login.username!'')}"
                    placeholder="Usuário ou email"
+                   autocomplete="username"
                    autofocus />
 
             <input type="password"
                    name="password"
-                   placeholder="Senha" />
+                   placeholder="Senha"
+                   autocomplete="current-password"
+                   data-password-toggle="true" />
+
+            <label class="login-energy-password-toggle">
+                <input type="checkbox"
+                       class="js-toggle-passwords" />
+                <span>Mostrar senha</span>
+            </label>
 
             <input type="hidden"
                    name="credentialId"
@@ -66,6 +76,7 @@
             </button>
 
         </form>
+
         <p class="login-energy-subtitle">
             Plataforma corporativa de governança, aplicações e integrações.
         </p>
@@ -74,6 +85,7 @@
 </div>
 
 <script src="${url.resourcesPath}/js/lightning.js"></script>
+<script src="${url.resourcesPath}/js/password-toggle.js"></script>
 
 </#if>
 
