@@ -1,4 +1,3 @@
-# app/infrastructure/persistence/totvs/lmp_repositories/lmp_query_settings.py
 from dataclasses import dataclass, field
 from typing import Dict, List
 
@@ -9,7 +8,12 @@ class LMPQuerySettings:
 
     lmp_anchor_process_stages: Dict[str, List[str]] = field(
         default_factory=lambda: {
-            "000002": ["000012"],
+            # 000002 - OPORTUNIDADE
+            # 000003 = ENGENHARIA
+            # 000012 = LANCAMENTO / HOMOLOGACAO
+            "000002": ["000003", "000012"],
+
+            # 000003
             "000003": ["000003", "000012"],
         }
     )
