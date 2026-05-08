@@ -1,7 +1,5 @@
 # app/interfaces/http/rbac_controller.py
 
-from uuid import UUID
-
 from flask import Blueprint, request, jsonify, g
 
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
@@ -41,6 +39,14 @@ from app.application.use_cases.list_permission_usage_use_case import ListPermiss
 
 from app.application.use_cases.admin.delete_user_use_case import DeleteUserUseCase
 from app.application.use_cases.admin.bulk_delete_users_use_case import BulkDeleteUsersUseCase
+
+from app.application.use_cases.admin.create_group_use_case import CreateGroupUseCase
+from app.application.use_cases.admin.update_group_use_case import UpdateGroupUseCase
+from app.application.use_cases.admin.delete_group_use_case import DeleteGroupUseCase
+from app.application.use_cases.admin.bulk_delete_groups_use_case import BulkDeleteGroupsUseCase
+
+from app.application.use_cases.admin.delete_role_use_case import DeleteRoleUseCase
+from app.application.use_cases.admin.bulk_delete_roles_use_case import BulkDeleteRolesUseCase
 
 from app.interfaces.http.utils.errors import api_error, server_error
 from app.interfaces.http.security.authorization import (
@@ -150,15 +156,13 @@ def update_role(role_id: str):
 def delete_role(role_id: str):
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            rid = UUID(role_id)
+            uc = DeleteRoleUseCase(uow)
+            result = uc.execute(role_id)
 
-            uow.role_permissions.delete_by_role_id(rid)
-            uow.user_roles.delete_by_role_id(rid)
-            uow.group_roles.delete_by_role_id(rid)
+        return jsonify(result), 200
 
-            uow.roles.delete(rid)
-
-        return jsonify({"ok": True}), 200
+    except ValueError as e:
+        return api_error("validation_error", str(e))
 
     except Exception as e:
         return server_error(str(e))
@@ -177,25 +181,15 @@ def bulk_delete_roles():
             path="ids",
         )
 
-    deleted = 0
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            for role_id in ids:
-                rid = UUID(role_id)
+            uc = BulkDeleteRolesUseCase(uow)
+            result = uc.execute(ids)
 
-                role = uow.roles.get(rid)
-                if not role:
-                    continue
+        return jsonify(result), 200
 
-                uow.role_permissions.delete_by_role_id(rid)
-                uow.user_roles.delete_by_role_id(rid)
-                uow.group_roles.delete_by_role_id(rid)
-                uow.roles.delete(rid)
-
-                deleted += 1
-
-        return jsonify({"ok": True, "deleted": deleted}), 200
+    except ValueError as e:
+        return api_error("validation_error", str(e), path="ids")
 
     except Exception as e:
         return server_error(str(e))
@@ -402,12 +396,16 @@ def create_group():
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            group_id = uow.groups.create(
+            uc = CreateGroupUseCase(uow)
+            result = uc.execute(
                 name=name,
                 description=description,
             )
 
-        return jsonify({"id": str(group_id)}), 201
+        return jsonify(result), 201
+
+    except ValueError as e:
+        return api_error("validation_error", str(e), path="name")
 
     except Exception as e:
         return server_error(str(e))
@@ -430,19 +428,17 @@ def update_group(group_id: str):
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            gid = UUID(group_id)
-
-            group = uow.groups.get(gid)
-            if not group:
-                return api_error("not_found", "Grupo não encontrado.")
-
-            uow.groups.update(
-                group_id=gid,
+            uc = UpdateGroupUseCase(uow)
+            result = uc.execute(
+                group_id=group_id,
                 name=name,
                 description=description,
             )
 
-        return jsonify({"ok": True}), 200
+        return jsonify(result), 200
+
+    except ValueError as e:
+        return api_error("validation_error", str(e))
 
     except Exception as e:
         return server_error(str(e))
@@ -453,13 +449,13 @@ def update_group(group_id: str):
 def delete_group(group_id: str):
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            gid = UUID(group_id)
+            uc = DeleteGroupUseCase(uow)
+            result = uc.execute(group_id)
 
-            uow.user_groups.delete_by_group_id(gid)
-            uow.group_roles.delete_by_group_id(gid)
-            uow.groups.delete(gid)
+        return jsonify(result), 200
 
-        return jsonify({"ok": True}), 200
+    except ValueError as e:
+        return api_error("validation_error", str(e))
 
     except Exception as e:
         return server_error(str(e))
@@ -478,24 +474,15 @@ def bulk_delete_groups():
             path="ids",
         )
 
-    deleted = 0
-
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            for group_id in ids:
-                gid = UUID(group_id)
+            uc = BulkDeleteGroupsUseCase(uow)
+            result = uc.execute(ids)
 
-                group = uow.groups.get(gid)
-                if not group:
-                    continue
+        return jsonify(result), 200
 
-                uow.user_groups.delete_by_group_id(gid)
-                uow.group_roles.delete_by_group_id(gid)
-                uow.groups.delete(gid)
-
-                deleted += 1
-
-        return jsonify({"ok": True, "deleted": deleted}), 200
+    except ValueError as e:
+        return api_error("validation_error", str(e), path="ids")
 
     except Exception as e:
         return server_error(str(e))
@@ -735,6 +722,7 @@ def delete_user(user_id: str):
     except Exception as e:
         return server_error(str(e))
 
+
 @rbac_bp.route("/admin/rbac/users/bulk-delete", methods=["POST"])
 @require_superadmin()
 def bulk_delete_users():
@@ -934,6 +922,7 @@ def remove_group_from_user(user_id: str, group_id: str):
 # ==========================================================
 # PERMISSIONS
 # ==========================================================
+
 @rbac_bp.route("/admin/rbac/permissions/<permission_id>/usage", methods=["GET"])
 @require_permission("rbac.manage")
 def get_permission_usage(permission_id: str):
