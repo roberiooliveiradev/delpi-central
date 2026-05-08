@@ -1,3 +1,5 @@
+// portal/src/pages/LoginPage.tsx
+
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../state/AuthContext";
 import { motion } from "framer-motion";
@@ -9,19 +11,50 @@ type LightningPath = {
   branches: string[];
 };
 
+type ViewportSize = {
+  width: number;
+  height: number;
+};
+
 function random(min: number, max: number) {
   return Math.random() * (max - min) + min;
 }
 
-function generateLightning(width: number, height: number): LightningPath[] {
-  const lines: LightningPath[] = [];
+function createId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
 
-  const count = Math.floor(random(3, 6));
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function getViewportSize(): ViewportSize {
+  if (typeof window === "undefined") {
+    return {
+      width: 1440,
+      height: 900,
+    };
+  }
+
+  return {
+    width: Math.max(window.innerWidth, 320),
+    height: Math.max(window.innerHeight, 320),
+  };
+}
+
+function generateLightning(width: number, height: number): LightningPath[] {
+  const isSmallScreen = width <= 640;
+  const isLowHeight = height <= 520;
+
+  const lines: LightningPath[] = [];
+  const count = isSmallScreen || isLowHeight
+    ? Math.floor(random(2, 4))
+    : Math.floor(random(3, 6));
 
   for (let i = 0; i < count; i++) {
     const startLeft = Math.random() > 0.5;
-    const yBase = random(height * 0.3, height * 0.7);
-    const segments = 8;
+    const yBase = random(height * 0.28, height * 0.72);
+    const segments = isSmallScreen ? 6 : 8;
 
     let x = startLeft ? 0 : width;
     let y = yBase;
@@ -34,12 +67,11 @@ function generateLightning(width: number, height: number): LightningPath[] {
       const dir = startLeft ? 1 : -1;
 
       x += stepX * dir;
-      y += random(-30, 30);
+      y += random(isSmallScreen ? -20 : -30, isSmallScreen ? 20 : 30);
 
       d += ` L ${x} ${y}`;
 
-      // chance de ramificação
-      if (Math.random() > 0.7) {
+      if (!isSmallScreen && Math.random() > 0.7) {
         const branchX = x + random(-60, 60);
         const branchY = y + random(-60, 60);
         branches.push(`M ${x} ${y} L ${branchX} ${branchY}`);
@@ -47,7 +79,7 @@ function generateLightning(width: number, height: number): LightningPath[] {
     }
 
     lines.push({
-      id: crypto.randomUUID(),
+      id: createId(),
       d,
       branches,
     });
@@ -58,52 +90,63 @@ function generateLightning(width: number, height: number): LightningPath[] {
 
 export function LoginPage() {
   const { login, loading } = useContext(AuthContext);
+
+  const [viewport, setViewport] = useState<ViewportSize>(() => getViewportSize());
   const [lightning, setLightning] = useState<LightningPath[]>([]);
   const [shock, setShock] = useState(false);
 
   useEffect(() => {
-    const update = () => {
-      setLightning(generateLightning(window.innerWidth, window.innerHeight));
+    function updateViewport() {
+      setViewport(getViewportSize());
+    }
 
-      // 🔥 ativa efeito no card
-      setShock(true);
-      setTimeout(() => setShock(false), 350);
+    updateViewport();
+
+    window.addEventListener("resize", updateViewport);
+    window.addEventListener("orientationchange", updateViewport);
+
+    return () => {
+      window.removeEventListener("resize", updateViewport);
+      window.removeEventListener("orientationchange", updateViewport);
     };
-
-    update();
-    const interval = setInterval(update, 2000);
-
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    const width = 1440;
-    const height = 900;
+    function updateLightning() {
+      setLightning(generateLightning(viewport.width, viewport.height));
 
-    const update = () => {
-      setLightning(generateLightning(width, height));
-    };
+      setShock(true);
+      window.setTimeout(() => setShock(false), 350);
+    }
 
-    update();
-    const interval = setInterval(update, 2000);
+    updateLightning();
 
-    return () => clearInterval(interval);
-  }, []);
+    const interval = window.setInterval(updateLightning, 2200);
+
+    return () => window.clearInterval(interval);
+  }, [viewport.width, viewport.height]);
 
   return (
     <div className="login-energy">
+      <div className="login-energy-grid" />
+      <div className="login-energy-glow" />
 
-      {/* SVG DINÂMICO */}
       <svg
         className="lightning-svg"
-        viewBox="0 0 1440 900"
+        viewBox={`0 0 ${viewport.width} ${viewport.height}`}
         preserveAspectRatio="none"
+        aria-hidden="true"
       >
         {lightning.map((line) => (
           <g key={line.id}>
             <path className="lightning-line" d={line.d} />
-            {line.branches.map((b, i) => (
-              <path key={i} className="lightning-branch" d={b} />
+
+            {line.branches.map((branch, index) => (
+              <path
+                key={`${line.id}-${index}`}
+                className="lightning-branch"
+                d={branch}
+              />
             ))}
           </g>
         ))}
@@ -128,9 +171,9 @@ export function LoginPage() {
               <Activity size={16} />
               <span>Energia & Conectividade</span>
             </div>
+
             <p className="login-energy-subtitle">
-              Plataforma corporativa de governança,
-              aplicações e integrações.
+              Plataforma corporativa de governança, aplicações e integrações.
             </p>
           </div>
         </div>
