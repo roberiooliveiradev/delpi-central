@@ -33,7 +33,7 @@ from app.interfaces.http.security.authorization import (
     require_any_permission,
     require_all_permissions,
     require_superadmin,
-    require_auth
+    require_auth,
 )
 
 admin_apps_bp = Blueprint(
@@ -42,6 +42,7 @@ admin_apps_bp = Blueprint(
     url_prefix="/admin/apps",
 )
 
+
 # ==========================================================
 # LIST APPS (PLUGINS)
 # ==========================================================
@@ -49,7 +50,6 @@ admin_apps_bp = Blueprint(
 @admin_apps_bp.get("")
 @require_permission("apps.view")
 def list_apps():
-
     page = int(request.args.get("page", 1))
     page_size = int(request.args.get("page_size", 10))
     q = request.args.get("q")
@@ -57,7 +57,6 @@ def list_apps():
     direction = request.args.get("direction", "asc")
 
     with SqlAlchemyUnitOfWork() as uow:
-
         uc = ListAdminAppsUseCase(uow)
 
         apps, total = uc.execute(
@@ -77,8 +76,9 @@ def list_apps():
             "page_size": page_size,
             "total": total,
             "total_pages": total_pages,
-        }
+        },
     }), 200
+
 
 # ==========================================================
 # UPDATE APP METADATA
@@ -87,12 +87,10 @@ def list_apps():
 @admin_apps_bp.put("/<plugin_id>")
 @require_permission("apps.manage")
 def update_app(plugin_id: str):
-
     data = request.get_json(silent=True) or {}
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
-
             uc = UpdateAdminAppUseCase(uow)
 
             result = uc.execute(
@@ -115,9 +113,9 @@ def update_app(plugin_id: str):
 @admin_apps_bp.get("/<plugin_id>/manifest")
 @require_permission("apps.view")
 def get_manifest(plugin_id: str):
-    uow = SqlAlchemyUnitOfWork()
-    uc = GetPluginManifestUseCase(uow)
-    result = uc.execute(plugin_id)
+    with SqlAlchemyUnitOfWork() as uow:
+        uc = GetPluginManifestUseCase(uow)
+        result = uc.execute(plugin_id)
 
     if not result.success:
         return not_found("Manifest not found")
@@ -133,11 +131,12 @@ def get_manifest(plugin_id: str):
 @require_permission("apps.manage")
 def register_plugin():
     manifest = request.get_json(silent=True)
+
     if not isinstance(manifest, dict):
         return bad_request(
             "Body must be valid JSON",
             code="validation_error",
-            path="_global"
+            path="_global",
         )
 
     try:
@@ -163,11 +162,12 @@ def register_plugin():
 @require_permission("apps.manage")
 def update_manifest(plugin_id: str):
     manifest = request.get_json(silent=True)
+
     if not isinstance(manifest, dict):
         return bad_request(
             "Body must be valid JSON",
             code="validation_error",
-            path="_global"
+            path="_global",
         )
 
     try:
@@ -192,9 +192,9 @@ def update_manifest(plugin_id: str):
 @admin_apps_bp.get("/<plugin_id>/versions")
 @require_permission("apps.manage")
 def list_versions(plugin_id: str):
-    uow = SqlAlchemyUnitOfWork()
-    uc = ListPluginVersionsUseCase(uow)
-    result = uc.execute(plugin_id)
+    with SqlAlchemyUnitOfWork() as uow:
+        uc = ListPluginVersionsUseCase(uow)
+        result = uc.execute(plugin_id)
 
     if not result.success:
         return jsonify({"errors": result.errors}), 404
@@ -216,7 +216,7 @@ def rollback(plugin_id: str):
         return bad_request(
             "version is required",
             code="validation_error",
-            path="version"
+            path="version",
         )
 
     try:
@@ -254,6 +254,10 @@ def unregister(plugin_id: str):
         return bad_request(str(e))
 
 
+# ==========================================================
+# SET ACTIVE
+# ==========================================================
+
 @admin_apps_bp.post("/<plugin_id>/active")
 @require_permission("apps.manage")
 def set_plugin_active(plugin_id: str):
@@ -272,7 +276,11 @@ def set_plugin_active(plugin_id: str):
 
     except Exception as e:
         return bad_request(str(e))
-    
+
+
+# ==========================================================
+# BULK ACTIVATE / DEACTIVATE
+# ==========================================================
 
 @admin_apps_bp.post("/bulk-activate")
 @require_permission("apps.manage")
@@ -285,7 +293,7 @@ def bulk_activate_plugins():
         return bad_request(
             "ids must be a list",
             code="validation_error",
-            path="ids"
+            path="ids",
         )
 
     try:
@@ -302,6 +310,10 @@ def bulk_activate_plugins():
         return bad_request(str(e))
 
 
+# ==========================================================
+# BULK UNREGISTER
+# ==========================================================
+
 @admin_apps_bp.post("/bulk-unregister")
 @require_permission("apps.manage")
 def bulk_unregister():
@@ -312,7 +324,7 @@ def bulk_unregister():
         return bad_request(
             "ids must be a list",
             code="validation_error",
-            path="ids"
+            path="ids",
         )
 
     try:
@@ -327,7 +339,7 @@ def bulk_unregister():
 
     except Exception as e:
         return bad_request(str(e))
-    
+
 
 # ==========================================================
 # LIST ROUTES
@@ -336,17 +348,15 @@ def bulk_unregister():
 @admin_apps_bp.get("/<app_id>/routes")
 @require_permission("apps.view")
 def list_routes(app_id: str):
-
     with SqlAlchemyUnitOfWork() as uow:
-
         uc = ListAppRoutesUseCase(uow)
-
         result = uc.execute(app_id)
 
     if not result.success:
         return jsonify({"errors": result.errors}), 400
 
     return jsonify(result.routes), 200
+
 
 # ==========================================================
 # CREATE ROUTE
@@ -355,24 +365,20 @@ def list_routes(app_id: str):
 @admin_apps_bp.post("/<app_id>/routes")
 @require_permission("apps.manage")
 def create_route(app_id: str):
-
     data = request.get_json(silent=True) or {}
 
     required = ["path", "label", "icon", "order"]
-
     missing = [k for k in required if data.get(k) in (None, "")]
 
     if missing:
         return bad_request(
             f"Missing fields: {', '.join(missing)}",
             code="validation_error",
-            path="_global"
+            path="_global",
         )
 
     try:
-
         with SqlAlchemyUnitOfWork() as uow:
-
             uc = CreateAppRouteUseCase(uow)
 
             result = uc.execute(
@@ -387,8 +393,10 @@ def create_route(app_id: str):
                 ),
                 order=int(data.get("order")),
                 show_in_menu=bool(
-                    data.get("showInMenu",
-                    data.get("show_in_menu", True))
+                    data.get(
+                        "showInMenu",
+                        data.get("show_in_menu", True),
+                    )
                 ),
                 active=bool(data.get("active", True)),
             )
@@ -399,15 +407,14 @@ def create_route(app_id: str):
         return jsonify(result.route), 201
 
     except Exception as e:
-
         return jsonify({
             "errors": [{
                 "code": "route.create_failed",
                 "message": str(e),
-                "path": "_global"
+                "path": "_global",
             }]
         }), 400
-    
+
 
 # ==========================================================
 # UPDATE ROUTE
@@ -416,7 +423,6 @@ def create_route(app_id: str):
 @admin_apps_bp.put("/routes/<route_id>")
 @require_permission("apps.manage")
 def update_route(route_id: str):
-
     data = request.get_json(silent=True) or {}
 
     patch = {}
@@ -446,15 +452,12 @@ def update_route(route_id: str):
         return bad_request(
             "No fields to update",
             code="validation_error",
-            path="_global"
+            path="_global",
         )
 
     try:
-
         with SqlAlchemyUnitOfWork() as uow:
-
             uc = UpdateRouteUseCase(uow)
-
             result = uc.execute(route_id, patch)
 
         if not result.success:
@@ -463,12 +466,11 @@ def update_route(route_id: str):
         return jsonify({"ok": True}), 200
 
     except Exception as e:
-
         return jsonify({
             "errors": [{
                 "code": "route.update_failed",
                 "message": str(e),
-                "path": "_global"
+                "path": "_global",
             }]
         }), 400
 
@@ -480,13 +482,9 @@ def update_route(route_id: str):
 @admin_apps_bp.delete("/routes/<route_id>")
 @require_permission("apps.manage")
 def delete_route(route_id: str):
-
     try:
-
         with SqlAlchemyUnitOfWork() as uow:
-
             uc = DeleteRouteUseCase(uow)
-
             result = uc.execute(route_id)
 
         if not result.success:
@@ -495,15 +493,15 @@ def delete_route(route_id: str):
         return jsonify({"ok": True}), 200
 
     except Exception as e:
-
         return jsonify({
             "errors": [{
                 "code": "route.delete_failed",
                 "message": str(e),
-                "path": "_global"
+                "path": "_global",
             }]
         }), 400
-    
+
+
 # ==========================================================
 # BULK DELETE ROUTES
 # ==========================================================
@@ -511,7 +509,6 @@ def delete_route(route_id: str):
 @admin_apps_bp.post("/routes/bulk-delete")
 @require_permission("apps.manage")
 def bulk_delete_routes():
-
     data = request.get_json(silent=True) or {}
 
     ids = data.get("ids") or data.get("routeIds") or []
@@ -520,15 +517,12 @@ def bulk_delete_routes():
         return bad_request(
             "ids must be a non-empty list",
             code="validation_error",
-            path="ids"
+            path="ids",
         )
 
     try:
-
         with SqlAlchemyUnitOfWork() as uow:
-
             uc = BulkDeleteRoutesUseCase(uow)
-
             result = uc.execute([str(x) for x in ids])
 
         if not result.success:
@@ -536,15 +530,14 @@ def bulk_delete_routes():
 
         return jsonify({
             "ok": True,
-            "deleted": result.deleted
+            "deleted": result.deleted,
         }), 200
 
     except Exception as e:
-
         return jsonify({
             "errors": [{
                 "code": "route.bulk_delete_failed",
                 "message": str(e),
-                "path": "_global"
+                "path": "_global",
             }]
         }), 400

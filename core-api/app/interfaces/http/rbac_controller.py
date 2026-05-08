@@ -4,8 +4,6 @@ from flask import Blueprint, request, jsonify, g
 
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 
-from app.application.use_cases.set_user_superadmin_use_case import SetUserSuperadminUseCase
-
 from app.application.use_cases.create_role_use_case import CreateRoleUseCase
 from app.application.use_cases.update_role_use_case import UpdateRoleUseCase
 from app.application.use_cases.list_role_permissions_use_case import ListRolePermissionsUseCase
@@ -39,6 +37,7 @@ from app.application.use_cases.list_permission_usage_use_case import ListPermiss
 
 from app.application.use_cases.admin.delete_user_use_case import DeleteUserUseCase
 from app.application.use_cases.admin.bulk_delete_users_use_case import BulkDeleteUsersUseCase
+from app.application.use_cases.admin.update_user_admin_use_case import UpdateUserAdminUseCase
 
 from app.application.use_cases.admin.create_group_use_case import CreateGroupUseCase
 from app.application.use_cases.admin.update_group_use_case import UpdateGroupUseCase
@@ -667,35 +666,27 @@ def list_users():
 def update_user(user_id: str):
     data = request.get_json(silent=True) or {}
 
-    role_ids = data.get("roleIds", None)
-    group_ids = data.get("groupIds", None)
-    is_superadmin = data.get("is_superadmin", None)
-
     try:
+        actor = g.current_user
+
         with SqlAlchemyUnitOfWork() as uow:
-            actor = g.current_user
+            uc = UpdateUserAdminUseCase(uow)
+            result = uc.execute(
+                actor_id=str(actor.id),
+                actor_is_superadmin=actor.is_superadmin,
+                target_user_id=user_id,
+                role_ids=data.get("roleIds", None),
+                group_ids=data.get("groupIds", None),
+                is_superadmin=data.get("is_superadmin", None),
+            )
 
-            if is_superadmin is not None:
-                uc = SetUserSuperadminUseCase(uow)
-                result = uc.execute(
-                    actor_id=str(actor.id),
-                    target_user_id=user_id,
-                    is_superadmin=bool(is_superadmin),
-                    actor_is_superadmin=actor.is_superadmin,
-                )
+        if isinstance(result, tuple):
+            return result
 
-                if isinstance(result, tuple):
-                    return result
+        return jsonify(result), 200
 
-            if role_ids is not None:
-                uc = ReplaceUserRolesUseCase(uow)
-                uc.execute(user_id, role_ids)
-
-            if group_ids is not None:
-                uc = ReplaceUserGroupsUseCase(uow)
-                uc.execute(user_id, group_ids)
-
-        return jsonify({"ok": True}), 200
+    except ValueError as e:
+        return api_error("validation_error", str(e))
 
     except Exception as e:
         return server_error(str(e))
@@ -757,10 +748,9 @@ def bulk_delete_users():
 
 # ==========================================================
 # USER ROLES
-# Mantém compatibilidade com rotas antigas usadas pelo frontend
 # ==========================================================
 
-@rbac_bp.route("/admin/users/<user_id>/roles", methods=["GET"])
+@rbac_bp.route("/admin/rbac/users/<user_id>/roles", methods=["GET"])
 @require_permission("rbac.manage")
 def list_user_roles(user_id: str):
     page = int(request.args.get("page", 1))
@@ -785,7 +775,7 @@ def list_user_roles(user_id: str):
         return server_error(str(e))
 
 
-@rbac_bp.route("/admin/users/<user_id>/roles", methods=["PUT"])
+@rbac_bp.route("/admin/rbac/users/<user_id>/roles", methods=["PUT"])
 @require_all_permissions(["rbac.manage", "users.manage"])
 def replace_user_roles(user_id: str):
     data = request.get_json(silent=True) or {}
@@ -809,7 +799,7 @@ def replace_user_roles(user_id: str):
         return api_error("replace_user_roles_failed", str(e))
 
 
-@rbac_bp.route("/admin/users/<user_id>/roles/<role_id>", methods=["POST"])
+@rbac_bp.route("/admin/rbac/users/<user_id>/roles/<role_id>", methods=["POST"])
 @require_all_permissions(["rbac.manage", "users.manage"])
 def add_role_to_user(user_id: str, role_id: str):
     try:
@@ -823,7 +813,7 @@ def add_role_to_user(user_id: str, role_id: str):
         return api_error("add_role_to_user_failed", str(e))
 
 
-@rbac_bp.route("/admin/users/<user_id>/roles/<role_id>", methods=["DELETE"])
+@rbac_bp.route("/admin/rbac/users/<user_id>/roles/<role_id>", methods=["DELETE"])
 @require_all_permissions(["rbac.manage", "users.manage"])
 def remove_role_from_user(user_id: str, role_id: str):
     try:
@@ -839,10 +829,9 @@ def remove_role_from_user(user_id: str, role_id: str):
 
 # ==========================================================
 # USER GROUPS
-# Mantém compatibilidade com rotas antigas usadas pelo frontend
 # ==========================================================
 
-@rbac_bp.route("/admin/users/<user_id>/groups", methods=["GET"])
+@rbac_bp.route("/admin/rbac/users/<user_id>/groups", methods=["GET"])
 @require_all_permissions(["rbac.manage", "users.view"])
 def list_user_groups(user_id: str):
     page = int(request.args.get("page", 1))
@@ -867,7 +856,7 @@ def list_user_groups(user_id: str):
         return server_error(str(e))
 
 
-@rbac_bp.route("/admin/users/<user_id>/groups", methods=["PUT"])
+@rbac_bp.route("/admin/rbac/users/<user_id>/groups", methods=["PUT"])
 @require_all_permissions(["rbac.manage", "users.manage"])
 def replace_user_groups(user_id: str):
     data = request.get_json(silent=True) or {}
@@ -891,7 +880,7 @@ def replace_user_groups(user_id: str):
         return api_error("replace_user_groups_failed", str(e))
 
 
-@rbac_bp.route("/admin/users/<user_id>/groups/<group_id>", methods=["POST"])
+@rbac_bp.route("/admin/rbac/users/<user_id>/groups/<group_id>", methods=["POST"])
 @require_all_permissions(["rbac.manage", "users.manage"])
 def add_group_to_user(user_id: str, group_id: str):
     try:
@@ -905,7 +894,7 @@ def add_group_to_user(user_id: str, group_id: str):
         return api_error("add_group_to_user_failed", str(e))
 
 
-@rbac_bp.route("/admin/users/<user_id>/groups/<group_id>", methods=["DELETE"])
+@rbac_bp.route("/admin/rbac/users/<user_id>/groups/<group_id>", methods=["DELETE"])
 @require_all_permissions(["rbac.manage", "users.manage"])
 def remove_group_from_user(user_id: str, group_id: str):
     try:

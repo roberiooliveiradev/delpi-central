@@ -114,6 +114,16 @@ export type RollbackPluginResponse = {
   version: string;
 };
 
+export type CreateRoutePayload = {
+  path: string;
+  label: string;
+  icon: string;
+  order: number;
+  permissionCode?: string | null;
+  showInMenu?: boolean;
+  active?: boolean;
+};
+
 export class AdminApi {
   public client: ApiClient;
 
@@ -241,6 +251,13 @@ export class AdminApi {
     );
   }
 
+  createRoute(appId: string, payload: CreateRoutePayload) {
+    return this.client.post<AdminAppRoute>(
+      `/core-api/admin/apps/${appId}/routes`,
+      payload
+    );
+  }
+
   updateRoute(routeId: string, payload: Partial<AdminAppRoute>) {
     return this.client.put<{ ok: boolean }>(
       `/core-api/admin/apps/routes/${routeId}`,
@@ -273,12 +290,6 @@ export class AdminApi {
     );
   }
 
-  getUser(userId: string) {
-    return this.client.get<AdminUser>(
-      `/core-api/admin/rbac/users/${userId}`
-    );
-  }
-
   updateUser(
     userId: string,
     payload: {
@@ -300,7 +311,7 @@ export class AdminApi {
   }
 
   bulkDeleteUsers(ids: string[]) {
-    return this.client.post<{ ok: boolean; deleted: number }>(
+    return this.client.post<{ ok: boolean; deleted: number; skipped?: number }>(
       `/core-api/admin/rbac/users/bulk-delete`,
       { ids }
     );
@@ -308,39 +319,39 @@ export class AdminApi {
 
   getUserRoles(userId: string) {
     return this.client.get<PaginatedResponse<AdminRole>>(
-      `/core-api/admin/users/${userId}/roles?page=1&page_size=999`
+      `/core-api/admin/rbac/users/${userId}/roles?page=1&page_size=999`
     );
   }
 
   getUserGroups(userId: string) {
     return this.client.get<PaginatedResponse<AdminGroup>>(
-      `/core-api/admin/users/${userId}/groups?page=1&page_size=999`
+      `/core-api/admin/rbac/users/${userId}/groups?page=1&page_size=999`
     );
   }
 
   addRoleToUser(userId: string, roleId: string) {
     return this.client.post<{ ok: boolean }>(
-      `/core-api/admin/users/${userId}/roles/${roleId}`,
+      `/core-api/admin/rbac/users/${userId}/roles/${roleId}`,
       {}
     );
   }
 
   removeRoleFromUser(userId: string, roleId: string) {
     return this.client.delete<{ ok: boolean }>(
-      `/core-api/admin/users/${userId}/roles/${roleId}`
+      `/core-api/admin/rbac/users/${userId}/roles/${roleId}`
     );
   }
 
   addGroupToUser(userId: string, groupId: string) {
     return this.client.post<{ ok: boolean }>(
-      `/core-api/admin/users/${userId}/groups/${groupId}`,
+      `/core-api/admin/rbac/users/${userId}/groups/${groupId}`,
       {}
     );
   }
 
   removeGroupFromUser(userId: string, groupId: string) {
     return this.client.delete<{ ok: boolean }>(
-      `/core-api/admin/users/${userId}/groups/${groupId}`
+      `/core-api/admin/rbac/users/${userId}/groups/${groupId}`
     );
   }
 
@@ -377,7 +388,7 @@ export class AdminApi {
   }
 
   bulkDeleteRoles(ids: string[]) {
-    return this.client.post<{ ok: boolean; deleted: number }>(
+    return this.client.post<{ ok: boolean; deleted: number; skipped?: number }>(
       `/core-api/admin/rbac/roles/bulk-delete`,
       { ids }
     );
@@ -461,7 +472,7 @@ export class AdminApi {
   }
 
   bulkDeleteGroups(ids: string[]) {
-    return this.client.post<{ ok: boolean; deleted: number }>(
+    return this.client.post<{ ok: boolean; deleted: number; skipped?: number }>(
       `/core-api/admin/rbac/groups/bulk-delete`,
       { ids }
     );

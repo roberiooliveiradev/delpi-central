@@ -52,7 +52,6 @@ me_bp = Blueprint("me", __name__)
 @me_bp.route("/me", methods=["GET"])
 @require_auth()
 def get_me():
-
     user = g.current_user
 
     return jsonify({
@@ -73,11 +72,9 @@ def get_me():
 @me_bp.route("/me/apps", methods=["GET"])
 @require_auth()
 def get_my_apps():
-
     user = g.current_user
 
     with SqlAlchemyUnitOfWork() as uow:
-
         uc = ListUserAppsUseCase(uow.app_queries)
 
         result = uc.execute(
@@ -95,11 +92,9 @@ def get_my_apps():
 @me_bp.route("/me/apps/favorites", methods=["GET"])
 @require_auth()
 def list_favorites():
-
     user = g.current_user
 
     with SqlAlchemyUnitOfWork() as uow:
-
         uc = ListFavoriteAppsUseCase(uow)
 
         result = uc.execute(
@@ -114,11 +109,9 @@ def list_favorites():
 @me_bp.route("/me/apps/favorites/<app_id>", methods=["POST"])
 @require_auth()
 def add_favorite(app_id: str):
-
     user = g.current_user
 
     with SqlAlchemyUnitOfWork() as uow:
-
         uc = AddFavoriteAppUseCase(uow)
 
         uc.execute(
@@ -132,11 +125,9 @@ def add_favorite(app_id: str):
 @me_bp.route("/me/apps/favorites/<app_id>", methods=["DELETE"])
 @require_auth()
 def remove_favorite(app_id: str):
-
     user = g.current_user
 
     with SqlAlchemyUnitOfWork() as uow:
-
         uc = RemoveFavoriteAppUseCase(uow)
 
         uc.execute(
@@ -154,13 +145,10 @@ def remove_favorite(app_id: str):
 @me_bp.route("/me/notifications", methods=["GET"])
 @require_auth()
 def list_notifications():
-
     user = g.current_user
 
     with SqlAlchemyUnitOfWork() as uow:
-
         uc = ListUnreadNotificationsUseCase(uow)
-
         result = uc.execute(user_id=user.id)
 
     return jsonify([
@@ -180,20 +168,14 @@ def list_notifications():
 @me_bp.route("/me/notifications/<notification_id>/read", methods=["POST"])
 @require_auth()
 def mark_notification_read(notification_id: str):
-
-    user = g.current_user
-
     try:
         notification_uuid = UUID(notification_id)
     except ValueError:
         return api_error("invalid_id", "Invalid notification id", status=400)
 
     try:
-
         with SqlAlchemyUnitOfWork() as uow:
-
             uc = MarkNotificationReadUseCase(uow)
-
             uc.execute(notification_uuid)
 
         return jsonify({"ok": True}), 200
@@ -205,15 +187,11 @@ def mark_notification_read(notification_id: str):
 @me_bp.route("/me/notifications/read-all", methods=["POST"])
 @require_auth()
 def mark_all_notifications_read():
-
     user = g.current_user
 
     try:
-
         with SqlAlchemyUnitOfWork() as uow:
-
             uc = MarkAllNotificationsReadUseCase(uow)
-
             uc.execute(user_id=user.id)
 
         return jsonify({"ok": True}), 200
@@ -229,13 +207,10 @@ def mark_all_notifications_read():
 @me_bp.route("/me/notifications/test", methods=["POST"])
 @require_auth()
 def test_notification():
-
     user = g.current_user
 
     try:
-
         with SqlAlchemyUnitOfWork() as uow:
-
             uc = NotifyUserUseCase(uow)
 
             uc.execute(
@@ -249,7 +224,8 @@ def test_notification():
 
     except Exception as e:
         return api_error("notify_failed", str(e))
-    
+
+
 # ==========================================================
 # DASHBOARD
 # ==========================================================
@@ -257,11 +233,9 @@ def test_notification():
 @me_bp.route("/me/dashboard", methods=["GET"])
 @require_auth()
 def get_dashboard():
-
     user = g.current_user
 
     with SqlAlchemyUnitOfWork() as uow:
-
         uc = ListUserAppsUseCase(app_query=uow.app_queries)
 
         apps = uc.execute(
@@ -269,7 +243,6 @@ def get_dashboard():
             is_superadmin=user.is_superadmin,
         )
 
-    # estrutura simples para dashboard inicial
     return jsonify({
         "appsCount": len(apps),
         "apps": apps,
