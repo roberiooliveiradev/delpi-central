@@ -39,6 +39,9 @@ from app.application.use_cases.admin.list_groups_use_case import ListGroupsUseCa
 from app.application.use_cases.admin.list_permissions_use_case import ListPermissionsUseCase
 from app.application.use_cases.list_permission_usage_use_case import ListPermissionUsageUseCase
 
+from app.application.use_cases.admin.delete_user_use_case import DeleteUserUseCase
+from app.application.use_cases.admin.bulk_delete_users_use_case import BulkDeleteUsersUseCase
+
 from app.interfaces.http.utils.errors import api_error, server_error
 from app.interfaces.http.security.authorization import (
     require_permission,
@@ -715,18 +718,22 @@ def update_user(user_id: str):
 @require_superadmin()
 def delete_user(user_id: str):
     try:
+        actor = g.current_user
+
         with SqlAlchemyUnitOfWork() as uow:
-            uid = UUID(user_id)
+            uc = DeleteUserUseCase(uow)
+            result = uc.execute(
+                user_id,
+                actor_user_id=str(actor.id),
+            )
 
-            uow.user_roles.delete_by_user_id(uid)
-            uow.user_groups.delete_by_user_id(uid)
-            uow.users.delete(uid)
+        return jsonify(result), 200
 
-        return jsonify({"ok": True}), 200
+    except ValueError as e:
+        return api_error("validation_error", str(e))
 
     except Exception as e:
         return server_error(str(e))
-
 
 @rbac_bp.route("/admin/rbac/users/bulk-delete", methods=["POST"])
 @require_superadmin()
@@ -741,24 +748,20 @@ def bulk_delete_users():
             path="ids",
         )
 
-    deleted = 0
-
     try:
+        actor = g.current_user
+
         with SqlAlchemyUnitOfWork() as uow:
-            for user_id in ids:
-                uid = UUID(user_id)
+            uc = BulkDeleteUsersUseCase(uow)
+            result = uc.execute(
+                ids,
+                actor_user_id=str(actor.id),
+            )
 
-                user = uow.users.get_by_id(uid)
-                if not user:
-                    continue
+        return jsonify(result), 200
 
-                uow.user_roles.delete_by_user_id(uid)
-                uow.user_groups.delete_by_user_id(uid)
-                uow.users.delete(uid)
-
-                deleted += 1
-
-        return jsonify({"ok": True, "deleted": deleted}), 200
+    except ValueError as e:
+        return api_error("validation_error", str(e))
 
     except Exception as e:
         return server_error(str(e))

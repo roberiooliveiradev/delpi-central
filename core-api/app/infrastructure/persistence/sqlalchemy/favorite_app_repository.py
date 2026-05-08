@@ -1,3 +1,5 @@
+# app/infrastructure/persistence/sqlalchemy/favorite_app_repository.py
+
 from typing import List, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import asc
@@ -41,7 +43,6 @@ class SqlAlchemyFavoriteAppRepository(FavoriteAppRepository):
         )
 
     def add(self, user_id: str, app_id: str) -> None:
-        # calcular próximo índice
         max_index = (
             self.session.query(UserFavoriteApp)
             .filter_by(user_id=user_id)
@@ -59,5 +60,12 @@ class SqlAlchemyFavoriteAppRepository(FavoriteAppRepository):
         (
             self.session.query(UserFavoriteApp)
             .filter_by(user_id=user_id, app_id=app_id)
-            .delete()
+            .delete(synchronize_session=False)
+        )
+
+    def delete_by_user_id(self, user_id: str) -> None:
+        (
+            self.session.query(UserFavoriteApp)
+            .filter(UserFavoriteApp.user_id == user_id)
+            .delete(synchronize_session=False)
         )
