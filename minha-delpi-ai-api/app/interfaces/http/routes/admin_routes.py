@@ -4,6 +4,7 @@ from app.composition.admin_composer import (
     make_deactivate_knowledge_document_use_case,
     make_get_llm_provider_status_use_case,
     make_get_admin_metrics_summary_use_case,
+    make_get_admin_system_check_use_case,
     make_list_admin_audit_logs_use_case,
     make_list_admin_knowledge_documents_use_case,
     make_reactivate_knowledge_document_use_case,
@@ -18,6 +19,14 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
 
+
+
+
+@admin_bp.get("/system-check")
+@require_permission("minha-delpi.chat.admin")
+def admin_system_check():
+    use_case = make_get_admin_system_check_use_case()
+    return jsonify(use_case.execute()), 200
 
 @admin_bp.get("/metrics/summary")
 @require_permission("minha-delpi.chat.admin")

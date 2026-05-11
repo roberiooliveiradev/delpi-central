@@ -131,3 +131,22 @@ def test_admin_metrics_summary_with_token_returns_counts():
     assert "knowledgeDocuments" in payload
     assert "knowledgeChunks" in payload
     assert "auditLogs" in payload
+
+
+def test_admin_system_check_with_token_returns_status():
+    require_token()
+
+    response = requests.get(
+        api_url("/admin/system-check"),
+        headers=auth_headers(),
+        timeout=10,
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert payload["status"] in {"ok", "warning", "error"}
+    assert "database" in payload
+    assert "pgvector" in payload
+    assert "tables" in payload
+    assert "llm" in payload

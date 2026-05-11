@@ -2,6 +2,7 @@ from app.application.use_cases.deactivate_knowledge_document_use_case import (
     DeactivateKnowledgeDocumentUseCase,
 )
 from app.application.use_cases.get_admin_metrics_summary_use_case import GetAdminMetricsSummaryUseCase
+from app.application.use_cases.get_admin_system_check_use_case import GetAdminSystemCheckUseCase
 from app.application.use_cases.get_llm_provider_status_use_case import (
     GetLlmProviderStatusUseCase,
 )
@@ -21,6 +22,7 @@ from app.domain.services.text_chunker_service import TextChunkerService
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
 from app.infrastructure.persistence.postgres_admin_metrics_repository import PostgresAdminMetricsRepository
+from app.infrastructure.persistence.postgres_admin_system_check_repository import PostgresAdminSystemCheckRepository
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.persistence.postgres_knowledge_repository import (
     PostgresKnowledgeRepository,
@@ -63,4 +65,7 @@ def make_list_admin_audit_logs_use_case() -> ListAdminAuditLogsUseCase:
 
 def make_get_admin_metrics_summary_use_case() -> GetAdminMetricsSummaryUseCase:
     return GetAdminMetricsSummaryUseCase(PostgresAdminMetricsRepository())
+
+def make_get_admin_system_check_use_case() -> GetAdminSystemCheckUseCase:
+    return GetAdminSystemCheckUseCase(PostgresAdminSystemCheckRepository())
 
