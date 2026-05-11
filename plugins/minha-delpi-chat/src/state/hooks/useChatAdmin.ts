@@ -7,6 +7,7 @@ import {
   listAuditLogs,
   listKnowledgeDocuments,
   reactivateKnowledgeDocument,
+  reindexKnowledgeDocument,
   type CreateKnowledgeDocumentPayload,
 } from "../../data/api/adminApi";
 import type {
@@ -118,6 +119,32 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     [loadAdminData, options.getAccessToken],
   );
 
+
+  const reindexDocument = useCallback(
+    async (documentId: string) => {
+      setIsMutating(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        const result = await reindexKnowledgeDocument(documentId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setSuccessMessage(
+          `Documento "${result.title}" reindexado com ${result.chunks} chunk(s).`,
+        );
+
+        await loadAdminData();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao reindexar documento.");
+      } finally {
+        setIsMutating(false);
+      }
+    },
+    [loadAdminData, options.getAccessToken],
+  );
+
   useEffect(() => {
     void loadAdminData();
   }, [loadAdminData]);
@@ -134,5 +161,6 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     createDocument,
     deactivateDocument,
     reactivateDocument,
+    reindexDocument,
   };
 }

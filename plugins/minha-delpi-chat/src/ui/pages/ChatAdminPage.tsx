@@ -20,6 +20,7 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
     createDocument,
     deactivateDocument,
     reactivateDocument,
+    reindexDocument,
   } = useChatAdmin({ getAccessToken });
 
   const [title, setTitle] = useState("");
@@ -178,7 +179,7 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
                       <th>Origem</th>
                       <th>Status</th>
                       <th>Atualizado</th>
-                      <th>Ação</th>
+                      <th>Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -189,23 +190,33 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
                         <td>{document.active ? "Ativo" : "Inativo"}</td>
                         <td>{new Date(document.updatedAt).toLocaleString()}</td>
                         <td>
-                          {document.active ? (
+                          <div className="mdc-admin-row-actions">
+                            {document.active ? (
+                              <button
+                                type="button"
+                                disabled={isMutating}
+                                onClick={() => deactivateDocument(document.id)}
+                              >
+                                Desativar
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={isMutating}
+                                onClick={() => reactivateDocument(document.id)}
+                              >
+                                Reativar
+                              </button>
+                            )}
+
                             <button
                               type="button"
                               disabled={isMutating}
-                              onClick={() => deactivateDocument(document.id)}
+                              onClick={() => reindexDocument(document.id)}
                             >
-                              Desativar
+                              Reindexar
                             </button>
-                          ) : (
-                            <button
-                              type="button"
-                              disabled={isMutating}
-                              onClick={() => reactivateDocument(document.id)}
-                            >
-                              Reativar
-                            </button>
-                          )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -225,7 +236,7 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
                 <table className="mdc-admin-table">
                   <thead>
                     <tr>
-                      <th>Ação</th>
+                      <th>Ações</th>
                       <th>Contexto</th>
                       <th>Usuário</th>
                       <th>Data</th>

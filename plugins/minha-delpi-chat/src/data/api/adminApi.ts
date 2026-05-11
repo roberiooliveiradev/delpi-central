@@ -121,6 +121,22 @@ export async function reactivateKnowledgeDocument(
   return parseJsonResponse<AdminKnowledgeDocument>(response);
 }
 
+
+export async function reindexKnowledgeDocument(
+  documentId: string,
+  options: AdminApiOptions = {},
+): Promise<CreateKnowledgeDocumentResponse & { active: boolean }> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/knowledge/documents/${documentId}/reindex`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<CreateKnowledgeDocumentResponse & { active: boolean }>(response);
+}
+
 export async function listAuditLogs(
   options: AdminApiOptions = {},
 ): Promise<AdminAuditLog[]> {

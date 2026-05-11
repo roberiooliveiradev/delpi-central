@@ -41,6 +41,14 @@ class KnowledgeRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_document_by_id(self, document_id: UUID) -> KnowledgeDocument | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_chunks_by_document_id(self, document_id: UUID) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def deactivate_document(self, document_id: UUID) -> KnowledgeDocument | None:
         raise NotImplementedError
 

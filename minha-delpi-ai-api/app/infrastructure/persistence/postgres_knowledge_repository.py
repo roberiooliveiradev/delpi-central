@@ -96,6 +96,24 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         return result
 
 
+
+    def get_document_by_id(self, document_id: UUID) -> KnowledgeDocument | None:
+        model = AiKnowledgeDocumentModel.query.filter(
+            AiKnowledgeDocumentModel.id == document_id
+        ).first()
+
+        if not model:
+            return None
+
+        return self._to_document_entity(model)
+
+    def delete_chunks_by_document_id(self, document_id: UUID) -> None:
+        AiKnowledgeChunkModel.query.filter(
+            AiKnowledgeChunkModel.document_id == document_id
+        ).delete(synchronize_session=False)
+
+        db.session.flush()
+
     def list_documents(self, limit: int = 100) -> list[KnowledgeDocument]:
         models = (
             AiKnowledgeDocumentModel.query

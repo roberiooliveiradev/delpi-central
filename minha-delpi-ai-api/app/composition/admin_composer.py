@@ -13,6 +13,11 @@ from app.application.use_cases.list_admin_knowledge_documents_use_case import (
 from app.application.use_cases.reactivate_knowledge_document_use_case import (
     ReactivateKnowledgeDocumentUseCase,
 )
+from app.application.use_cases.reindex_knowledge_document_use_case import (
+    ReindexKnowledgeDocumentUseCase,
+)
+from app.domain.services.text_chunker_service import TextChunkerService
+from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.persistence.postgres_knowledge_repository import (
     PostgresKnowledgeRepository,
@@ -37,6 +42,15 @@ def make_deactivate_knowledge_document_use_case() -> DeactivateKnowledgeDocument
 def make_reactivate_knowledge_document_use_case() -> ReactivateKnowledgeDocumentUseCase:
     return ReactivateKnowledgeDocumentUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
+        audit_repository=PostgresAuditRepository(),
+    )
+
+
+def make_reindex_knowledge_document_use_case() -> ReindexKnowledgeDocumentUseCase:
+    return ReindexKnowledgeDocumentUseCase(
+        knowledge_repository=PostgresKnowledgeRepository(),
+        embedding_gateway=LocalEmbeddingGateway(),
+        chunker=TextChunkerService(),
         audit_repository=PostgresAuditRepository(),
     )
 
