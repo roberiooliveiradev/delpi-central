@@ -2,8 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "minha-delpi-chat",
   "name": "Minha DELPI Chat",
-  "description": "Assistente conversacional corporativo da Minha DELPI.",
-  "icon": "message-circle",
+  "description": "Assistente conversacional corporativo integrado à Minha DELPI.",
+  "category": "inteligencia-artificial",
+  "icon": "bot",
   "version": "1.0.0",
   "type": "microfrontend",
   "basePath": "/apps/minha-delpi-chat",
@@ -28,9 +29,21 @@
       "module": "minha-delpi-chat"
     },
     {
-      "code": "minha-delpi.chat.audit.view",
-      "name": "Visualizar auditoria do Minha DELPI Chat",
-      "description": "Permite visualizar eventos auditáveis do módulo de chat.",
+      "code": "minha-delpi.chat.admin",
+      "name": "Administrar Minha DELPI Chat",
+      "description": "Permite administrar configurações e recursos do módulo de chat.",
+      "module": "minha-delpi-chat"
+    },
+    {
+      "code": "minha-delpi.chat.knowledge.manage",
+      "name": "Gerenciar base de conhecimento do Minha DELPI Chat",
+      "description": "Permite gerenciar documentos e base de conhecimento do chat.",
+      "module": "minha-delpi-chat"
+    },
+    {
+      "code": "minha-delpi.chat.tools.use",
+      "name": "Usar ferramentas internas no Minha DELPI Chat",
+      "description": "Permite que o chat consulte ferramentas internas autorizadas.",
       "module": "minha-delpi-chat"
     }
   ],
@@ -39,21 +52,25 @@
       "path": "/apps/minha-delpi-chat",
       "label": "Minha DELPI Chat",
       "permission": "minha-delpi.chat.access",
-      "icon": "message-circle",
+      "icon": "bot",
       "entry": null,
-      "order": 20,
+      "order": 30,
       "showInMenu": true
     }
   ],
   "backend": {
-    "audience": "delpi-central",
-    "baseUrl": "/apps/minha-delpi-ai/api",
-    "issuer": "https://www.minhadelpi.com.br/auth",
     "required": true,
     "serviceName": "minha-delpi-ai-api",
-    "validateJwt": true
+    "baseUrl": "/apps/minha-delpi-ai/api",
+    "validateJwt": true,
+    "issuer": "http://localhost/auth/realms/delpi",
+    "audience": "delpi-central"
   },
   "ui": {
     "renderMode": "federated"
+  },
+  "metadata": {
+    "owner": "DELPI",
+    "stack": "open-source"
   }
 }
