@@ -6,10 +6,7 @@ class Settings:
     ENV = os.getenv("FLASK_ENV", "development")
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
-    DATABASE_URL = os.getenv(
-        "DATABASE_URL",
-        "postgresql+psycopg://plugins_user:plugins_password@postgres-plugins:5432/plugins_hub",
-    )
+    DATABASE_URL = os.getenv("DATABASE_URL", "")
 
     KEYCLOAK_JWKS_URL = os.getenv("KEYCLOAK_JWKS_URL", "")
     KEYCLOAK_ISSUER = os.getenv("KEYCLOAK_ISSUER", "")
