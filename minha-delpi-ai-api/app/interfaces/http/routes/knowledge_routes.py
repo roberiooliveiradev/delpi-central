@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, g, jsonify, request
 
 from app.application.dto.ingest_document_request import IngestDocumentRequest
 from app.application.dto.search_knowledge_request import SearchKnowledgeRequest
@@ -34,6 +34,7 @@ def ingest_document():
                 source_ref=payload.get("sourceRef"),
                 content=payload.get("content", ""),
                 metadata=payload.get("metadata"),
+                user_id=g.current_user.sub,
             )
         )
 

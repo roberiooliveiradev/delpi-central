@@ -1,6 +1,7 @@
 import type {
   AdminAuditLog,
   AdminKnowledgeDocument,
+  AdminKnowledgeDocumentsResponse,
   AdminLlmStatus,
 } from "./adminTypes";
 
@@ -67,15 +68,43 @@ export async function getLlmStatus(
   return parseJsonResponse<AdminLlmStatus>(response);
 }
 
-export async function listKnowledgeDocuments(
-  options: AdminApiOptions = {},
-): Promise<AdminKnowledgeDocument[]> {
-  const response = await fetch(`${API_BASE_URL}/admin/knowledge/documents?limit=100`, {
-    method: "GET",
-    headers: await getAuthHeaders(options),
-  });
+export type ListKnowledgeDocumentsParams = {
+  search?: string;
+  active?: "all" | "active" | "inactive";
+  limit?: number;
+  offset?: number;
+};
 
-  return parseJsonResponse<AdminKnowledgeDocument[]>(response);
+export async function listKnowledgeDocuments(
+  params: ListKnowledgeDocumentsParams = {},
+  options: AdminApiOptions = {},
+): Promise<AdminKnowledgeDocumentsResponse> {
+  const query = new URLSearchParams();
+
+  query.set("limit", String(params.limit ?? 10));
+  query.set("offset", String(params.offset ?? 0));
+
+  if (params.search?.trim()) {
+    query.set("search", params.search.trim());
+  }
+
+  if (params.active === "active") {
+    query.set("active", "true");
+  }
+
+  if (params.active === "inactive") {
+    query.set("active", "false");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/knowledge/documents?${query.toString()}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<AdminKnowledgeDocumentsResponse>(response);
 }
 
 export async function createKnowledgeDocument(

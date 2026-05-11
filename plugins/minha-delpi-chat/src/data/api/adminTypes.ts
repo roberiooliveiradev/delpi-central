@@ -17,6 +17,21 @@ export type AdminKnowledgeDocument = {
   updatedAt: string;
 };
 
+export type AdminKnowledgeDocumentsResponse = {
+  items: AdminKnowledgeDocument[];
+  pagination: {
+    limit: number;
+    offset: number;
+    total: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+  filters: {
+    search: string;
+    active: boolean | null;
+  };
+};
+
 export type AdminAuditLog = {
   id: number;
   userId: string | null;

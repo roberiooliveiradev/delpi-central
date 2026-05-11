@@ -44,7 +44,18 @@ class KnowledgeRepositoryPort(ABC):
     def list_documents_with_chunk_count(
         self,
         limit: int = 100,
+        offset: int = 0,
+        search: str | None = None,
+        active: bool | None = None,
     ) -> list[tuple[KnowledgeDocument, int]]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def count_documents(
+        self,
+        search: str | None = None,
+        active: bool | None = None,
+    ) -> int:
         raise NotImplementedError
 
     @abstractmethod

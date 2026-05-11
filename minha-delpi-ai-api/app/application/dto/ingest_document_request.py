@@ -8,3 +8,4 @@ class IngestDocumentRequest:
     source_ref: str | None
     content: str
     metadata: dict | None = None
+    user_id: str | None = None

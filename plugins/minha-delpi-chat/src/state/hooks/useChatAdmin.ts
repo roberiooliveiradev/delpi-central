@@ -13,6 +13,7 @@ import {
 import type {
   AdminAuditLog,
   AdminKnowledgeDocument,
+  AdminKnowledgeDocumentsResponse,
   AdminLlmStatus,
 } from "../../data/api/adminTypes";
 
@@ -20,10 +21,32 @@ type UseChatAdminOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
+type DocumentStatusFilter = "all" | "active" | "inactive";
+
+const DEFAULT_DOCUMENTS_RESPONSE: AdminKnowledgeDocumentsResponse = {
+  items: [],
+  pagination: {
+    limit: 10,
+    offset: 0,
+    total: 0,
+    hasNext: false,
+    hasPrevious: false,
+  },
+  filters: {
+    search: "",
+    active: null,
+  },
+};
+
 export function useChatAdmin(options: UseChatAdminOptions = {}) {
   const [llmStatus, setLlmStatus] = useState<AdminLlmStatus | null>(null);
-  const [documents, setDocuments] = useState<AdminKnowledgeDocument[]>([]);
+  const [documentsResponse, setDocumentsResponse] =
+    useState<AdminKnowledgeDocumentsResponse>(DEFAULT_DOCUMENTS_RESPONSE);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
+  const [documentSearch, setDocumentSearch] = useState("");
+  const [documentStatus, setDocumentStatus] = useState<DocumentStatusFilter>("all");
+  const [documentOffset, setDocumentOffset] = useState(0);
+  const [documentLimit] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -36,19 +59,51 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     try {
       const [status, docs, logs] = await Promise.all([
         getLlmStatus({ getAccessToken: options.getAccessToken }),
-        listKnowledgeDocuments({ getAccessToken: options.getAccessToken }),
+        listKnowledgeDocuments(
+          {
+            search: documentSearch,
+            active: documentStatus,
+            limit: documentLimit,
+            offset: documentOffset,
+          },
+          { getAccessToken: options.getAccessToken },
+        ),
         listAuditLogs({ getAccessToken: options.getAccessToken }),
       ]);
 
       setLlmStatus(status);
-      setDocuments(docs);
+      setDocumentsResponse(docs);
       setAuditLogs(logs);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar administração.");
     } finally {
       setIsLoading(false);
     }
-  }, [options.getAccessToken]);
+  }, [
+    documentLimit,
+    documentOffset,
+    documentSearch,
+    documentStatus,
+    options.getAccessToken,
+  ]);
+
+  const updateDocumentSearch = useCallback((value: string) => {
+    setDocumentSearch(value);
+    setDocumentOffset(0);
+  }, []);
+
+  const updateDocumentStatus = useCallback((value: DocumentStatusFilter) => {
+    setDocumentStatus(value);
+    setDocumentOffset(0);
+  }, []);
+
+  const goToNextDocumentsPage = useCallback(() => {
+    setDocumentOffset((current) => current + documentLimit);
+  }, [documentLimit]);
+
+  const goToPreviousDocumentsPage = useCallback(() => {
+    setDocumentOffset((current) => Math.max(0, current - documentLimit));
+  }, [documentLimit]);
 
   const createDocument = useCallback(
     async (payload: CreateKnowledgeDocumentPayload) => {
@@ -65,6 +120,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
           `Documento "${result.title}" ingerido com ${result.chunks} chunk(s).`,
         );
 
+        setDocumentOffset(0);
         await loadAdminData();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao ingerir documento.");
@@ -119,7 +175,6 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     [loadAdminData, options.getAccessToken],
   );
 
-
   const reindexDocument = useCallback(
     async (documentId: string) => {
       setIsMutating(true);
@@ -151,12 +206,19 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
 
   return {
     llmStatus,
-    documents,
+    documents: documentsResponse.items as AdminKnowledgeDocument[],
+    documentsPagination: documentsResponse.pagination,
     auditLogs,
+    documentSearch,
+    documentStatus,
     isLoading,
     isMutating,
     successMessage,
     error,
+    setDocumentSearch: updateDocumentSearch,
+    setDocumentStatus: updateDocumentStatus,
+    goToNextDocumentsPage,
+    goToPreviousDocumentsPage,
     loadAdminData,
     createDocument,
     deactivateDocument,

@@ -30,11 +30,23 @@ class FakeChunker:
         return [text]
 
 
-def make_use_case():
+class FakeAuditRepository:
+    def __init__(self):
+        self.logs = []
+
+    def log(self, **kwargs):
+        self.logs.append(kwargs)
+
+    def list_logs(self, limit=100):
+        return self.logs
+
+
+def make_use_case(audit_repository=None):
     return IngestKnowledgeDocumentUseCase(
         knowledge_repository=FakeKnowledgeRepository(),
         embedding_gateway=FakeEmbeddingGateway(),
         chunker=FakeChunker(),
+        audit_repository=audit_repository,
     )
 
 
@@ -52,6 +64,24 @@ def test_ingests_valid_document():
 
     assert result["title"] == "Documento Teste"
     assert result["chunks"] == 1
+
+
+def test_audits_ingestion_when_user_id_is_available():
+    audit_repository = FakeAuditRepository()
+    use_case = make_use_case(audit_repository=audit_repository)
+
+    use_case.execute(
+        IngestDocumentRequest(
+            title="Documento Teste",
+            source_type="manual",
+            source_ref="test:doc",
+            content="Conteúdo válido.",
+            user_id="00000000-0000-0000-0000-000000000099",
+        )
+    )
+
+    assert audit_repository.logs[0]["action"] == "chat.knowledge.document.ingested"
+    assert audit_repository.logs[0]["metadata"]["chunks"] == 1
 
 
 def test_rejects_empty_title():

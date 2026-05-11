@@ -11,12 +11,19 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
   const {
     llmStatus,
     documents,
+    documentsPagination,
     auditLogs,
+    documentSearch,
+    documentStatus,
     isLoading,
     isMutating,
     successMessage,
     error,
     loadAdminData,
+    setDocumentSearch,
+    setDocumentStatus,
+    goToNextDocumentsPage,
+    goToPreviousDocumentsPage,
     createDocument,
     deactivateDocument,
     reactivateDocument,
@@ -166,7 +173,28 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
           </article>
 
           <article className="mdc-admin-card mdc-admin-card--wide">
-            <h2>Documentos de conhecimento</h2>
+            <div className="mdc-admin-card-header">
+              <h2>Documentos de conhecimento</h2>
+
+              <div className="mdc-admin-filters">
+                <input
+                  value={documentSearch}
+                  placeholder="Buscar por título, tipo ou referência"
+                  onChange={(event) => setDocumentSearch(event.target.value)}
+                />
+
+                <select
+                  value={documentStatus}
+                  onChange={(event) =>
+                    setDocumentStatus(event.target.value as "all" | "active" | "inactive")
+                  }
+                >
+                  <option value="all">Todos</option>
+                  <option value="active">Ativos</option>
+                  <option value="inactive">Inativos</option>
+                </select>
+              </div>
+            </div>
 
             {documents.length === 0 ? (
               <p className="mdc-chat-muted">Nenhum documento encontrado.</p>
@@ -226,6 +254,29 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
                 </table>
               </div>
             )}
+
+            <div className="mdc-admin-pagination">
+              <span>
+                Exibindo {documents.length} de {documentsPagination.total} documento(s)
+              </span>
+
+              <div>
+                <button
+                  type="button"
+                  disabled={!documentsPagination.hasPrevious || isLoading}
+                  onClick={goToPreviousDocumentsPage}
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  disabled={!documentsPagination.hasNext || isLoading}
+                  onClick={goToNextDocumentsPage}
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
           </article>
 
           <article className="mdc-admin-card mdc-admin-card--wide">

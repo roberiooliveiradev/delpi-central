@@ -589,3 +589,50 @@
 .mdc-admin-row-actions button {
   padding: 8px 10px;
 }
+
+.mdc-admin-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mdc-admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-2);
+  align-items: center;
+}
+
+.mdc-admin-filters input,
+.mdc-admin-filters select {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  padding: 10px 12px;
+  color: var(--mdc-text);
+  background: var(--mdc-input-bg);
+}
+
+.mdc-admin-filters input {
+  min-width: min(320px, 100%);
+}
+
+.mdc-admin-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-3);
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--mdc-space-4);
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-pagination div {
+  display: flex;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-admin-pagination button {
+  padding: 8px 12px;
+}

@@ -1,5 +1,8 @@
+from uuid import UUID
+
 from app.application.dto.ingest_document_request import IngestDocumentRequest
 from app.domain.exceptions.knowledge_exceptions import InvalidKnowledgeDocumentInputError
+from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.ports.embedding_gateway_port import EmbeddingGatewayPort
 from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
 from app.domain.services.text_chunker_service import TextChunkerService
@@ -12,10 +15,12 @@ class IngestKnowledgeDocumentUseCase:
         knowledge_repository: KnowledgeRepositoryPort,
         embedding_gateway: EmbeddingGatewayPort,
         chunker: TextChunkerService,
+        audit_repository: AuditRepositoryPort | None = None,
     ):
         self.knowledge_repository = knowledge_repository
         self.embedding_gateway = embedding_gateway
         self.chunker = chunker
+        self.audit_repository = audit_repository
 
     def execute(self, request: IngestDocumentRequest) -> dict:
         title = self._validate_title(request.title)
@@ -53,11 +58,45 @@ class IngestKnowledgeDocumentUseCase:
                 },
             )
 
+        self._audit_ingestion(
+            request=request,
+            document_id=str(document.id),
+            title=document.title,
+            source_type=source_type,
+            source_ref=source_ref,
+            chunks=len(chunks),
+        )
+
         return {
             "id": str(document.id),
             "title": document.title,
             "chunks": len(chunks),
         }
+
+    def _audit_ingestion(
+        self,
+        request: IngestDocumentRequest,
+        document_id: str,
+        title: str,
+        source_type: str,
+        source_ref: str | None,
+        chunks: int,
+    ) -> None:
+        if not self.audit_repository or not request.user_id:
+            return
+
+        self.audit_repository.log(
+            user_id=UUID(request.user_id),
+            action="chat.knowledge.document.ingested",
+            context="admin",
+            metadata={
+                "document_id": document_id,
+                "title": title,
+                "source_type": source_type,
+                "source_ref": source_ref,
+                "chunks": chunks,
+            },
+        )
 
     def _validate_title(self, value: str) -> str:
         title = str(value or "").strip()

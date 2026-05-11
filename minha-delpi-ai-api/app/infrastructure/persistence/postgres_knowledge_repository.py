@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from sqlalchemy import or_
+
 from app.domain.entities.knowledge_chunk import KnowledgeChunk
 from app.domain.entities.knowledge_document import KnowledgeDocument
 from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
@@ -98,11 +100,15 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
 
 
+
     def list_documents_with_chunk_count(
         self,
         limit: int = 100,
+        offset: int = 0,
+        search: str | None = None,
+        active: bool | None = None,
     ) -> list[tuple[KnowledgeDocument, int]]:
-        rows = (
+        query = (
             db.session.query(
                 AiKnowledgeDocumentModel,
                 db.func.count(AiKnowledgeChunkModel.id).label("chunk_count"),
@@ -111,8 +117,15 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
                 AiKnowledgeChunkModel,
                 AiKnowledgeChunkModel.document_id == AiKnowledgeDocumentModel.id,
             )
+        )
+
+        query = self._apply_document_filters(query, search=search, active=active)
+
+        rows = (
+            query
             .group_by(AiKnowledgeDocumentModel.id)
             .order_by(AiKnowledgeDocumentModel.created_at.desc())
+            .offset(offset)
             .limit(limit)
             .all()
         )
@@ -121,6 +134,16 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
             (self._to_document_entity(document_model), int(chunk_count or 0))
             for document_model, chunk_count in rows
         ]
+
+    def count_documents(
+        self,
+        search: str | None = None,
+        active: bool | None = None,
+    ) -> int:
+        query = db.session.query(AiKnowledgeDocumentModel)
+        query = self._apply_document_filters(query, search=search, active=active)
+
+        return int(query.count())
 
     def get_document_by_id(self, document_id: UUID) -> KnowledgeDocument | None:
         model = AiKnowledgeDocumentModel.query.filter(
@@ -179,6 +202,25 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         db.session.flush()
 
         return self._to_document_entity(model)
+
+
+    def _apply_document_filters(self, query, search: str | None, active: bool | None):
+        if active is not None:
+            query = query.filter(AiKnowledgeDocumentModel.active.is_(active))
+
+        normalized_search = str(search or "").strip()
+
+        if normalized_search:
+            pattern = f"%{normalized_search}%"
+            query = query.filter(
+                or_(
+                    AiKnowledgeDocumentModel.title.ilike(pattern),
+                    AiKnowledgeDocumentModel.source_type.ilike(pattern),
+                    AiKnowledgeDocumentModel.source_ref.ilike(pattern),
+                )
+            )
+
+        return query
 
     def _to_document_entity(self, model: AiKnowledgeDocumentModel) -> KnowledgeDocument:
         return KnowledgeDocument(
