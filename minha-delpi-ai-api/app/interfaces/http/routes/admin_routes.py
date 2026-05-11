@@ -9,7 +9,9 @@ from app.composition.admin_composer import (
     make_reindex_knowledge_document_use_case,
 )
 from app.extensions.db import db
+from app.infrastructure.config.settings import Settings
 from app.interfaces.http.auth_decorators import require_permission
+from app.interfaces.http.rate_limit_decorators import rate_limit
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -31,6 +33,7 @@ def list_knowledge_documents():
 
 @admin_bp.post("/knowledge/documents/<document_id>/deactivate")
 @require_permission("minha-delpi.chat.admin")
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
 def deactivate_knowledge_document(document_id: str):
     use_case = make_deactivate_knowledge_document_use_case()
 
@@ -49,6 +52,7 @@ def deactivate_knowledge_document(document_id: str):
 
 @admin_bp.post("/knowledge/documents/<document_id>/reactivate")
 @require_permission("minha-delpi.chat.admin")
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
 def reactivate_knowledge_document(document_id: str):
     use_case = make_reactivate_knowledge_document_use_case()
 
@@ -67,6 +71,7 @@ def reactivate_knowledge_document(document_id: str):
 
 @admin_bp.post("/knowledge/documents/<document_id>/reindex")
 @require_permission("minha-delpi.chat.admin")
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
 def reindex_knowledge_document(document_id: str):
     use_case = make_reindex_knowledge_document_use_case()
 

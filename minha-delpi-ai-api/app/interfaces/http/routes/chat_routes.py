@@ -3,6 +3,9 @@ from dataclasses import asdict
 
 from flask import Blueprint, Response, g, jsonify, request, stream_with_context
 
+from app.infrastructure.config.settings import Settings
+from app.interfaces.http.rate_limit_decorators import rate_limit
+
 from app.application.dto.create_chat_session_request import CreateChatSessionRequest
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.use_cases.get_chat_status_use_case import GetChatStatusUseCase
@@ -81,6 +84,7 @@ def get_history(session_id: str):
 
 @chat_bp.post("/sessions/<session_id>/messages")
 @require_permission("minha-delpi.chat.ask")
+@rate_limit("chat_messages", Settings.RATE_LIMIT_CHAT_MESSAGES_PER_WINDOW)
 def send_message(session_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -110,6 +114,7 @@ def send_message(session_id: str):
 
 @chat_bp.post("/sessions/<session_id>/messages/stream")
 @require_permission("minha-delpi.chat.ask")
+@rate_limit("chat_messages", Settings.RATE_LIMIT_CHAT_MESSAGES_PER_WINDOW)
 def stream_message(session_id: str):
     payload = request.get_json(silent=True) or {}
 

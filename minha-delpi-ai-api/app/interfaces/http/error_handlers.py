@@ -15,6 +15,7 @@ from app.domain.exceptions.chat_exceptions import (
     InvalidChatSessionInputError,
 )
 from app.domain.exceptions.llm_exceptions import LlmProviderError
+from app.domain.exceptions.rate_limit_exceptions import RateLimitExceededError
 from app.domain.exceptions.tool_exceptions import ToolError
 from app.interfaces.http.utils.errors import error_response, not_found, server_error
 
@@ -104,6 +105,15 @@ def register_error_handlers(app):
             status_code=status_code,
             code=getattr(error, "code", "tool.error"),
             message=getattr(error, "message", "Tool error"),
+        )
+
+
+    @app.errorhandler(RateLimitExceededError)
+    def handle_rate_limit_error(error):
+        return error_response(
+            status_code=429,
+            code=getattr(error, "code", "rate_limit.exceeded"),
+            message=getattr(error, "message", "Rate limit exceeded"),
         )
 
     @app.errorhandler(404)

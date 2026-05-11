@@ -7,7 +7,9 @@ from app.composition.knowledge_composer import (
     make_search_knowledge_use_case,
 )
 from app.extensions.db import db
+from app.infrastructure.config.settings import Settings
 from app.interfaces.http.auth_decorators import require_permission
+from app.interfaces.http.rate_limit_decorators import rate_limit
 from app.interfaces.http.utils.errors import bad_request
 
 knowledge_bp = Blueprint("knowledge", __name__, url_prefix="/knowledge")
@@ -15,6 +17,7 @@ knowledge_bp = Blueprint("knowledge", __name__, url_prefix="/knowledge")
 
 @knowledge_bp.post("/documents")
 @require_permission("minha-delpi.chat.knowledge.manage")
+@rate_limit("knowledge_writes", Settings.RATE_LIMIT_KNOWLEDGE_WRITES_PER_WINDOW)
 def ingest_document():
     payload = request.get_json(silent=True) or {}
 

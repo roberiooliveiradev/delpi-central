@@ -37,3 +37,18 @@ class Settings:
     CHAT_HISTORY_MAX_MESSAGES = int(os.getenv("CHAT_HISTORY_MAX_MESSAGES", "12"))
     MAX_CONTEXT_CHUNKS = int(os.getenv("MAX_CONTEXT_CHUNKS", "6"))
     MAX_CONTEXT_CHARS = int(os.getenv("MAX_CONTEXT_CHARS", "9000"))
+
+    RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
+    RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
+    RATE_LIMIT_CHAT_MESSAGES_PER_WINDOW = int(
+        os.getenv("RATE_LIMIT_CHAT_MESSAGES_PER_WINDOW", "20")
+    )
+    RATE_LIMIT_TOOL_CALLS_PER_WINDOW = int(
+        os.getenv("RATE_LIMIT_TOOL_CALLS_PER_WINDOW", "30")
+    )
+    RATE_LIMIT_KNOWLEDGE_WRITES_PER_WINDOW = int(
+        os.getenv("RATE_LIMIT_KNOWLEDGE_WRITES_PER_WINDOW", "10")
+    )
+    RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW = int(
+        os.getenv("RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW", "20")
+    )

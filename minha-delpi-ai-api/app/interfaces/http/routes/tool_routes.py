@@ -5,7 +5,9 @@ from flask import Blueprint, g, jsonify, request
 from app.application.dto.execute_tool_request import ExecuteToolRequest
 from app.composition.tool_composer import make_execute_tool_use_case
 from app.extensions.db import db
+from app.infrastructure.config.settings import Settings
 from app.interfaces.http.auth_decorators import require_permission
+from app.interfaces.http.rate_limit_decorators import rate_limit
 from app.interfaces.http.utils.errors import bad_request
 
 tool_bp = Blueprint("tools", __name__, url_prefix="/tools")
@@ -13,6 +15,7 @@ tool_bp = Blueprint("tools", __name__, url_prefix="/tools")
 
 @tool_bp.post("/execute")
 @require_permission("minha-delpi.chat.tools.use")
+@rate_limit("tool_calls", Settings.RATE_LIMIT_TOOL_CALLS_PER_WINDOW)
 def execute_tool():
     payload = request.get_json(silent=True) or {}
 
