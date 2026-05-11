@@ -97,6 +97,31 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
 
 
+
+    def list_documents_with_chunk_count(
+        self,
+        limit: int = 100,
+    ) -> list[tuple[KnowledgeDocument, int]]:
+        rows = (
+            db.session.query(
+                AiKnowledgeDocumentModel,
+                db.func.count(AiKnowledgeChunkModel.id).label("chunk_count"),
+            )
+            .outerjoin(
+                AiKnowledgeChunkModel,
+                AiKnowledgeChunkModel.document_id == AiKnowledgeDocumentModel.id,
+            )
+            .group_by(AiKnowledgeDocumentModel.id)
+            .order_by(AiKnowledgeDocumentModel.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+        return [
+            (self._to_document_entity(document_model), int(chunk_count or 0))
+            for document_model, chunk_count in rows
+        ]
+
     def get_document_by_id(self, document_id: UUID) -> KnowledgeDocument | None:
         model = AiKnowledgeDocumentModel.query.filter(
             AiKnowledgeDocumentModel.id == document_id

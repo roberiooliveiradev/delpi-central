@@ -11,6 +11,7 @@ export type AdminKnowledgeDocument = {
   sourceType: string;
   sourceRef: string | null;
   active: boolean;
+  chunkCount: number;
   metadata: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;

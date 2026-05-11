@@ -178,6 +178,7 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
                       <th>Título</th>
                       <th>Origem</th>
                       <th>Status</th>
+                      <th>Chunks</th>
                       <th>Atualizado</th>
                       <th>Ações</th>
                     </tr>
@@ -188,6 +189,7 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
                         <td>{document.title}</td>
                         <td>{document.sourceRef || document.sourceType}</td>
                         <td>{document.active ? "Ativo" : "Inativo"}</td>
+                        <td>{document.chunkCount}</td>
                         <td>{new Date(document.updatedAt).toLocaleString()}</td>
                         <td>
                           <div className="mdc-admin-row-actions">

@@ -41,6 +41,13 @@ class KnowledgeRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_documents_with_chunk_count(
+        self,
+        limit: int = 100,
+    ) -> list[tuple[KnowledgeDocument, int]]:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_document_by_id(self, document_id: UUID) -> KnowledgeDocument | None:
         raise NotImplementedError
 
