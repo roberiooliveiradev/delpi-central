@@ -15,6 +15,7 @@ from app.domain.exceptions.chat_exceptions import (
     InvalidChatSessionInputError,
 )
 from app.domain.exceptions.llm_exceptions import LlmProviderError
+from app.domain.exceptions.tool_exceptions import ToolError
 from app.interfaces.http.utils.errors import error_response, not_found, server_error
 
 
@@ -89,6 +90,20 @@ def register_error_handlers(app):
             status_code=503,
             code=getattr(error, "code", "llm.provider_error"),
             message=getattr(error, "message", "LLM provider error"),
+        )
+
+
+    @app.errorhandler(ToolError)
+    def handle_tool_error(error):
+        status_code = 403 if getattr(error, "code", "") == "tool.permission_denied" else 400
+
+        if getattr(error, "code", "") == "tool.not_found":
+            status_code = 404
+
+        return error_response(
+            status_code=status_code,
+            code=getattr(error, "code", "tool.error"),
+            message=getattr(error, "message", "Tool error"),
         )
 
     @app.errorhandler(404)
