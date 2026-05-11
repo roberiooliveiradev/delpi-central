@@ -3,6 +3,7 @@ from flask import Flask
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.logging.json_logging import configure_logging
 from app.interfaces.http.error_handlers import register_error_handlers
+from app.interfaces.http.request_logging import register_request_logging
 from app.interfaces.http.routes.health_routes import health_bp
 
 
@@ -13,6 +14,7 @@ def create_application() -> Flask:
     app.config["SERVICE_NAME"] = Settings.SERVICE_NAME
     app.config["ENV"] = Settings.ENV
 
+    register_request_logging(app)
     app.register_blueprint(health_bp)
     register_error_handlers(app)
 

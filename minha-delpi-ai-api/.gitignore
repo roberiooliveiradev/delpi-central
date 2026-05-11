@@ -1,0 +1,102 @@
+# ---- 🐍 Python / Virtualenv ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+
+# ---- 🧰 IDEs e Editores ----
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- 🧩 Logs e Caches ----
+*.log
+*.tmp
+*.bak
+*.cache/
+.cache/
+logs/
+data/logs/
+**/__pycache__/
+
+# ---- 🧠 Modelos e Vetores ----
+*.faiss
+*.pkl
+*.npy
+*.npz
+*.bin
+*.onnx
+*.pt
+*.pth
+data/norms_vectors.faiss
+
+# ---- 📊 Dados e Uploads ----
+data/uploads/
+data/results/
+data/tmp/
+uploads/
+results/
+tmp/
+*.dwg
+*.dxf
+*.png
+*.jpg
+*.jpeg
+
+# ---- ⚙️ Configurações Locais ----
+.env
+.env.*
+config_local.yaml
+config_dev.yaml
+secrets.json
+
+# ---- 🐳 Docker ----
+*.pid
+*.pid.lock
+docker-compose.override.yml
+docker-data/
+.docker/
+
+# ---- 🧾 Relatórios e Saídas ----
+reports/
+output/
+*.csv
+*.xlsx
+*.docx
+
+# ---- 🧪 Testes ----
+.coverage
+pytest_cache/
+htmlcov/
+*.spec
+*.test
+tests/__pycache__/
+
+# ---- 🧱 Build / Distribuição ----
+build/
+dist/
+site/
+*.manifest
+*.spec
+
+# ---- 🧮 Notebooks ----
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# ---- 📁 Pasta softwares auxiliares ----
+bin/
+manuais/nohup.out
+logs.txt
+app/nohup.out
+manuais/
+app/querys/
