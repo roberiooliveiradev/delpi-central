@@ -19,3 +19,15 @@ export type CreateChatSessionPayload = {
   title?: string;
   context?: string;
 };
+
+export type SendChatMessagePayload = {
+  message: string;
+  context?: string;
+};
+
+export type SendChatMessageResponse = {
+  messageId: string;
+  answer: string;
+  sources: unknown[];
+  toolCalls: unknown[];
+};

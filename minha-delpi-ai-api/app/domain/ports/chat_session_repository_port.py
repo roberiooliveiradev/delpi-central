@@ -26,3 +26,13 @@ class ChatSessionRepositoryPort(ABC):
     @abstractmethod
     def list_messages_by_session(self, session_id: UUID) -> list[ChatMessage]:
         raise NotImplementedError
+
+    @abstractmethod
+    def create_message(
+        self,
+        session_id: UUID,
+        role: str,
+        content: str,
+        metadata: dict | None = None,
+    ) -> ChatMessage:
+        raise NotImplementedError

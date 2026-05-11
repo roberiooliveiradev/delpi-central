@@ -14,6 +14,7 @@ from app.domain.exceptions.chat_exceptions import (
     ChatSessionNotFoundError,
     InvalidChatSessionInputError,
 )
+from app.domain.exceptions.llm_exceptions import LlmProviderError
 from app.interfaces.http.utils.errors import error_response, not_found, server_error
 
 
@@ -80,6 +81,14 @@ def register_error_handlers(app):
             status_code=400,
             code=getattr(error, "code", "chat.invalid_session_input"),
             message=getattr(error, "message", "Invalid chat session input"),
+        )
+
+    @app.errorhandler(LlmProviderError)
+    def handle_llm_provider_error(error):
+        return error_response(
+            status_code=503,
+            code=getattr(error, "code", "llm.provider_error"),
+            message=getattr(error, "message", "LLM provider error"),
         )
 
     @app.errorhandler(404)

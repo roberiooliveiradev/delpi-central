@@ -15,8 +15,10 @@ export function ChatPage({ getAccessToken }: ChatPageProps) {
     draft,
     isLoadingSessions,
     isLoadingMessages,
+    isSendingMessage,
     error,
     setDraft,
+    sendMessage,
     startSession,
     selectSession,
   } = useChatSession({ getAccessToken });
@@ -59,7 +61,9 @@ export function ChatPage({ getAccessToken }: ChatPageProps) {
           <ChatInput
             value={draft}
             disabled={!activeSession}
+            isSending={isSendingMessage}
             onChange={setDraft}
+            onSubmit={sendMessage}
           />
         </section>
       </section>

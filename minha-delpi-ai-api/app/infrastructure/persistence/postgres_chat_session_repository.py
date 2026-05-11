@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
 from app.domain.entities.chat_message import ChatMessage
@@ -55,6 +56,33 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
         )
 
         return [self._to_message_entity(model) for model in models]
+
+    def create_message(
+        self,
+        session_id: UUID,
+        role: str,
+        content: str,
+        metadata: dict | None = None,
+    ) -> ChatMessage:
+        model = AiChatMessageModel(
+            session_id=session_id,
+            role=role,
+            content=content,
+            message_metadata=metadata,
+        )
+
+        db.session.add(model)
+
+        session = AiChatSessionModel.query.filter(
+            AiChatSessionModel.id == session_id
+        ).first()
+
+        if session:
+            session.updated_at = datetime.now(timezone.utc)
+
+        db.session.flush()
+
+        return self._to_message_entity(model)
 
     def _to_session_entity(self, model: AiChatSessionModel) -> ChatSession:
         return ChatSession(

@@ -77,3 +77,22 @@ export async function listChatMessages(
 
   return parseJsonResponse<ChatMessage[]>(response);
 }
+
+import type {
+  SendChatMessagePayload,
+  SendChatMessageResponse,
+} from "./chatTypes";
+
+export async function sendChatMessage(
+  sessionId: string,
+  payload: SendChatMessagePayload,
+  options: ChatApiOptions = {},
+): Promise<SendChatMessageResponse> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/messages`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<SendChatMessageResponse>(response);
+}

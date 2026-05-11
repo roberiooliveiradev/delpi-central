@@ -8,7 +8,7 @@ class Settings:
 
     DATABASE_URL = os.getenv(
         "DATABASE_URL",
-        "postgresql+psycopg://delpi:delpi123@postgres-plugins:5432/minha_delpi_ai",
+        "postgresql+psycopg://plugins_user:plugins_password@postgres-plugins:5432/plugins_hub",
     )
 
     KEYCLOAK_JWKS_URL = os.getenv("KEYCLOAK_JWKS_URL", "")
@@ -18,3 +18,10 @@ class Settings:
 
     CORE_API_BASE_URL = os.getenv("CORE_API_BASE_URL", "http://core-api:8000")
     CORE_API_TIMEOUT_SECONDS = float(os.getenv("CORE_API_TIMEOUT_SECONDS", "5"))
+
+    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+    OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "120"))
+
+    CHAT_HISTORY_MAX_MESSAGES = int(os.getenv("CHAT_HISTORY_MAX_MESSAGES", "12"))

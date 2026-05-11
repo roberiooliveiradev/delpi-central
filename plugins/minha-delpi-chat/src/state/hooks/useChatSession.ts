@@ -4,6 +4,7 @@ import {
   createChatSession,
   listChatMessages,
   listChatSessions,
+  sendChatMessage,
 } from "../../data/api/chatApi";
 import type { ChatMessage, ChatSession } from "../../data/api/chatTypes";
 
@@ -18,6 +19,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [draft, setDraft] = useState("");
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadSessions = useCallback(async () => {
@@ -100,6 +102,39 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     void loadMessages(activeSession.id);
   }, [activeSession, loadMessages]);
 
+
+  const sendMessage = useCallback(async () => {
+    const message = draft.trim();
+
+    if (!message || !activeSession) {
+      return;
+    }
+
+    setIsSendingMessage(true);
+    setError(null);
+
+    try {
+      await sendChatMessage(
+        activeSession.id,
+        {
+          message,
+          context: activeSession.context ?? "geral",
+        },
+        {
+          getAccessToken: options.getAccessToken,
+        },
+      );
+
+      setDraft("");
+      await loadMessages(activeSession.id);
+      await loadSessions();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao enviar mensagem.");
+    } finally {
+      setIsSendingMessage(false);
+    }
+  }, [activeSession, draft, loadMessages, loadSessions, options.getAccessToken]);
+
   return {
     sessions,
     activeSession,
@@ -107,8 +142,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     draft,
     isLoadingSessions,
     isLoadingMessages,
+    isSendingMessage,
     error,
     setDraft,
+    sendMessage,
     loadSessions,
     startSession,
     selectSession,

@@ -121,6 +121,21 @@ services:
 
     networks:
       - delpi-network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: delpi-ollama
+    restart: unless-stopped
+
+    ports:
+      - "11434:11434"
+
+    volumes:
+      - ollama_data:/root/.ollama
+
+    networks:
+      - delpi-network
+
   minha-delpi-ai-api:
     build:
       context: ../minha-delpi-ai-api
@@ -141,6 +156,12 @@ services:
       JWT_ALGORITHMS: ${JWT_ALGORITHMS:-RS256}
       CORE_API_BASE_URL: http://core-api:8000
       CORE_API_TIMEOUT_SECONDS: 5
+      LLM_PROVIDER: ollama
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:1.5b
+      OLLAMA_TIMEOUT_SECONDS: 300
+      CHAT_HISTORY_MAX_MESSAGES: 12
+
 
     volumes:
       - ../minha-delpi-ai-api:/app
@@ -148,6 +169,7 @@ services:
     depends_on:
       - core-api
       - postgres-plugins
+      - ollama
       
     networks:
       - delpi-network
@@ -364,3 +386,4 @@ volumes:
   postgres_core_data:
   keycloak_data:
   postgres_plugins_data:
+  ollama_data:
