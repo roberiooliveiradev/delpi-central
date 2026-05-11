@@ -15,6 +15,7 @@ from app.domain.exceptions.chat_exceptions import (
     InvalidChatSessionInputError,
 )
 from app.domain.exceptions.llm_exceptions import LlmProviderError
+from app.domain.exceptions.knowledge_exceptions import KnowledgeError
 from app.domain.exceptions.rate_limit_exceptions import RateLimitExceededError
 from app.domain.exceptions.tool_exceptions import ToolError
 from app.interfaces.http.utils.errors import error_response, not_found, server_error
@@ -114,6 +115,17 @@ def register_error_handlers(app):
             status_code=429,
             code=getattr(error, "code", "rate_limit.exceeded"),
             message=getattr(error, "message", "Rate limit exceeded"),
+        )
+
+
+    @app.errorhandler(KnowledgeError)
+    def handle_knowledge_error(error):
+        status_code = 404 if getattr(error, "code", "") == "knowledge.document_not_found" else 400
+
+        return error_response(
+            status_code=status_code,
+            code=getattr(error, "code", "knowledge.error"),
+            message=getattr(error, "message", "Knowledge error"),
         )
 
     @app.errorhandler(404)

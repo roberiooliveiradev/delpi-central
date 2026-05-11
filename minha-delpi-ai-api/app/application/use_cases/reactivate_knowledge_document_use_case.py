@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.domain.exceptions.chat_exceptions import ChatSessionNotFoundError
+from app.domain.exceptions.knowledge_exceptions import KnowledgeDocumentNotFoundError
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
 
@@ -18,7 +18,7 @@ class ReactivateKnowledgeDocumentUseCase:
         document = self.knowledge_repository.reactivate_document(UUID(document_id))
 
         if not document:
-            raise ChatSessionNotFoundError()
+            raise KnowledgeDocumentNotFoundError()
 
         self.audit_repository.log(
             user_id=UUID(user_id),

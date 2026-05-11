@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.domain.exceptions.chat_exceptions import ChatSessionNotFoundError
+from app.domain.exceptions.knowledge_exceptions import KnowledgeDocumentNotFoundError
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.ports.embedding_gateway_port import EmbeddingGatewayPort
 from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
@@ -25,7 +25,7 @@ class ReindexKnowledgeDocumentUseCase:
         document = self.knowledge_repository.get_document_by_id(document_uuid)
 
         if not document:
-            raise ChatSessionNotFoundError()
+            raise KnowledgeDocumentNotFoundError()
 
         chunks = self.chunker.chunk(document.content)
 

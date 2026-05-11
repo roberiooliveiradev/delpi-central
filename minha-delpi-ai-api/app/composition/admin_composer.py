@@ -17,6 +17,7 @@ from app.application.use_cases.reindex_knowledge_document_use_case import (
     ReindexKnowledgeDocumentUseCase,
 )
 from app.domain.services.text_chunker_service import TextChunkerService
+from app.infrastructure.config.settings import Settings
 from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.persistence.postgres_knowledge_repository import (
@@ -50,7 +51,7 @@ def make_reindex_knowledge_document_use_case() -> ReindexKnowledgeDocumentUseCas
     return ReindexKnowledgeDocumentUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
         embedding_gateway=LocalEmbeddingGateway(),
-        chunker=TextChunkerService(),
+        chunker=TextChunkerService(chunk_size=Settings.KNOWLEDGE_CHUNK_SIZE, overlap=Settings.KNOWLEDGE_CHUNK_OVERLAP),
         audit_repository=PostgresAuditRepository(),
     )
 
