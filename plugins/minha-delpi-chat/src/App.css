@@ -393,3 +393,140 @@
 .mdc-chat-tool-calls li small {
   color: var(--mdc-text-muted);
 }
+
+.mdc-chat-header-actions,
+.mdc-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-2);
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.mdc-admin-shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mdc-space-5);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mdc-admin-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mdc-space-4);
+  padding: var(--mdc-space-6);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+}
+
+.mdc-admin-header h1,
+.mdc-admin-card h2 {
+  margin: 0;
+  color: var(--mdc-title);
+}
+
+.mdc-admin-header p {
+  margin: var(--mdc-space-2) 0 0;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+  gap: var(--mdc-space-5);
+  min-height: 0;
+  overflow: auto;
+  padding-right: var(--mdc-space-1);
+}
+
+.mdc-admin-card {
+  min-width: 0;
+  padding: var(--mdc-space-5);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+}
+
+.mdc-admin-card--wide {
+  grid-column: 1 / -1;
+}
+
+.mdc-admin-kv {
+  display: grid;
+  gap: var(--mdc-space-3);
+  margin: var(--mdc-space-4) 0 0;
+}
+
+.mdc-admin-kv div {
+  display: grid;
+  gap: 4px;
+}
+
+.mdc-admin-kv dt {
+  color: var(--mdc-text-muted);
+  font-size: 0.82rem;
+}
+
+.mdc-admin-kv dd {
+  margin: 0;
+  color: var(--mdc-text);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.mdc-admin-table-wrap {
+  margin-top: var(--mdc-space-4);
+  overflow: auto;
+}
+
+.mdc-admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.mdc-admin-table th,
+.mdc-admin-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--mdc-card-border);
+  color: var(--mdc-text);
+  text-align: left;
+  vertical-align: top;
+}
+
+.mdc-admin-table th {
+  color: var(--mdc-title-soft);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mdc-admin-table td {
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-table button {
+  padding: 8px 10px;
+}
+
+@media (max-width: 920px) {
+  .mdc-admin-header {
+    flex-direction: column;
+    padding: var(--mdc-space-5);
+  }
+
+  .mdc-admin-actions {
+    justify-content: flex-start;
+  }
+
+  .mdc-admin-grid {
+    grid-template-columns: 1fr;
+  }
+}

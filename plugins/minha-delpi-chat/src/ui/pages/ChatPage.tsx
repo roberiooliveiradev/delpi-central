@@ -5,9 +5,10 @@ import { useChatSession } from "../../state/hooks/useChatSession";
 
 type ChatPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  onOpenAdmin?: () => void;
 };
 
-export function ChatPage({ getAccessToken }: ChatPageProps) {
+export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const {
     sessions,
     activeSession,
@@ -48,7 +49,12 @@ export function ChatPage({ getAccessToken }: ChatPageProps) {
               </p>
             </div>
 
-            <span className="mdc-chat-status">MVP</span>
+            <div className="mdc-chat-header-actions">
+              <button type="button" onClick={onOpenAdmin}>
+                Admin
+              </button>
+              <span className="mdc-chat-status">MVP</span>
+            </div>
           </header>
 
           {error ? (
