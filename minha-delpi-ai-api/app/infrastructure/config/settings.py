@@ -10,3 +10,6 @@ class Settings:
     KEYCLOAK_ISSUER = os.getenv("KEYCLOAK_ISSUER", "")
     KEYCLOAK_AUDIENCE = os.getenv("KEYCLOAK_AUDIENCE", "")
     JWT_ALGORITHMS = os.getenv("JWT_ALGORITHMS", "RS256")
+
+    CORE_API_BASE_URL = os.getenv("CORE_API_BASE_URL", "http://core-api:8000")
+    CORE_API_TIMEOUT_SECONDS = float(os.getenv("CORE_API_TIMEOUT_SECONDS", "5"))

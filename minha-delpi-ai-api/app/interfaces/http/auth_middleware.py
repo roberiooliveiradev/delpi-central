@@ -10,6 +10,7 @@ def register_auth_middleware(app):
     @app.before_request
     def authenticate_request():
         g.current_user = None
+        g.access_token = None
 
         auth_header = request.headers.get("Authorization", "")
 
@@ -25,5 +26,6 @@ def register_auth_middleware(app):
             raise AuthenticationError("Authentication required")
 
         g.current_user = validator.validate(token)
+        g.access_token = token
 
         return None
