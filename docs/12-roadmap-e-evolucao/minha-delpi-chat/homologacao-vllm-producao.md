@@ -356,3 +356,24 @@ Como a solução deve permanecer 100% open source/self-hosted e não pode usar s
 ### Pendência
 
 Homologar vLLM em servidor com GPU NVIDIA compatível.
+
+## Homologação provisória com Ollama em produção
+
+Resultado: aprovado como operação provisória sem GPU.
+
+Validações realizadas:
+
+- `postgres-plugins` usando `pgvector/pgvector:pg15`.
+- Migrations do `minha-delpi-ai-api` aplicadas.
+- Tabelas `ai_*` criadas.
+- Extensão `vector` ativa.
+- `GET /admin/llm/status` retornando `provider=ollama`.
+- Modelo de chat `qwen2.5:1.5b` baixado no Ollama.
+- Modelo de embedding disponível/configurado.
+- Criação de sessão funcionando.
+- Streaming funcionando.
+- RAG/embeddings funcionando.
+
+Pendência mantida:
+
+- Homologar vLLM em servidor com GPU NVIDIA.
