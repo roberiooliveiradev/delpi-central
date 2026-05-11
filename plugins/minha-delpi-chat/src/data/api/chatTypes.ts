@@ -21,7 +21,6 @@ export type ChatToolCall = {
   arguments?: Record<string, unknown>;
   reason?: string | null;
   metadata?: Record<string, unknown> | null;
-  data?: unknown;
 };
 
 export type ChatMessageMetadata = {

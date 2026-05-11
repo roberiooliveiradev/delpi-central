@@ -30,7 +30,7 @@ class ChatToolContextService:
             }
 
         context_blocks: list[str] = []
-        tool_calls: list[dict] = []
+        safe_tool_calls: list[dict] = []
 
         for selected_tool in selected_tools:
             result = self.execute_tool_use_case.execute(
@@ -42,16 +42,20 @@ class ChatToolContextService:
                 )
             )
 
-            tool_call = {
-                "name": result.name,
-                "arguments": selected_tool.get("arguments") or {},
-                "reason": selected_tool.get("reason"),
-                "metadata": result.metadata,
-                "data": result.data,
-            }
+            # Safe metadata returned to the client and persisted in chat metadata.
+            # Do not include raw tool data here. Raw data may contain user profile,
+            # e-mail, permissions or operational values.
+            safe_tool_calls.append(
+                {
+                    "name": result.name,
+                    "arguments": selected_tool.get("arguments") or {},
+                    "reason": selected_tool.get("reason"),
+                    "metadata": result.metadata,
+                }
+            )
 
-            tool_calls.append(tool_call)
-
+            # Authorized data is only injected into the LLM context for this request.
+            # It is not returned in toolCalls[] and is not persisted in chat metadata.
             context_blocks.append(
                 self._format_tool_context(
                     name=result.name,
@@ -66,7 +70,7 @@ class ChatToolContextService:
 
         return {
             "context": context,
-            "toolCalls": tool_calls,
+            "toolCalls": safe_tool_calls,
         }
 
     def _format_tool_context(
