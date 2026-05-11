@@ -10,6 +10,7 @@ type ChatAdminPageProps = {
 export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
   const {
     llmStatus,
+    metricsSummary,
     documents,
     documentsPagination,
     auditLogs,
@@ -85,6 +86,48 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
           <div className="mdc-chat-alert mdc-chat-alert--success" role="status">
             {successMessage}
           </div>
+        ) : null}
+
+        {metricsSummary ? (
+          <section className="mdc-admin-metrics" aria-label="Resumo operacional">
+            <article className="mdc-admin-metric-card">
+              <span>Sessões</span>
+              <strong>{metricsSummary.sessions}</strong>
+            </article>
+
+            <article className="mdc-admin-metric-card">
+              <span>Mensagens</span>
+              <strong>{metricsSummary.messages}</strong>
+            </article>
+
+            <article className="mdc-admin-metric-card">
+              <span>Documentos ativos</span>
+              <strong>
+                {metricsSummary.activeKnowledgeDocuments}/
+                {metricsSummary.knowledgeDocuments}
+              </strong>
+            </article>
+
+            <article className="mdc-admin-metric-card">
+              <span>Chunks</span>
+              <strong>{metricsSummary.knowledgeChunks}</strong>
+            </article>
+
+            <article className="mdc-admin-metric-card">
+              <span>Auditorias</span>
+              <strong>{metricsSummary.auditLogs}</strong>
+            </article>
+
+            <article className="mdc-admin-metric-card">
+              <span>Tools 24h</span>
+              <strong>{metricsSummary.recentToolCalls24h}</strong>
+            </article>
+
+            <article className="mdc-admin-metric-card">
+              <span>Erros 24h</span>
+              <strong>{metricsSummary.recentErrors24h}</strong>
+            </article>
+          </section>
         ) : null}
 
         <section className="mdc-admin-grid">

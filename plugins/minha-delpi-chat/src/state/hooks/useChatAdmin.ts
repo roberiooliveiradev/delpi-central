@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   createKnowledgeDocument,
   deactivateKnowledgeDocument,
+  getAdminMetricsSummary,
   getLlmStatus,
   listAuditLogs,
   listKnowledgeDocuments,
@@ -15,6 +16,7 @@ import type {
   AdminKnowledgeDocument,
   AdminKnowledgeDocumentsResponse,
   AdminLlmStatus,
+  AdminMetricsSummary,
 } from "../../data/api/adminTypes";
 
 type UseChatAdminOptions = {
@@ -40,6 +42,7 @@ const DEFAULT_DOCUMENTS_RESPONSE: AdminKnowledgeDocumentsResponse = {
 
 export function useChatAdmin(options: UseChatAdminOptions = {}) {
   const [llmStatus, setLlmStatus] = useState<AdminLlmStatus | null>(null);
+  const [metricsSummary, setMetricsSummary] = useState<AdminMetricsSummary | null>(null);
   const [documentsResponse, setDocumentsResponse] =
     useState<AdminKnowledgeDocumentsResponse>(DEFAULT_DOCUMENTS_RESPONSE);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
@@ -57,8 +60,9 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     setError(null);
 
     try {
-      const [status, docs, logs] = await Promise.all([
+      const [status, metrics, docs, logs] = await Promise.all([
         getLlmStatus({ getAccessToken: options.getAccessToken }),
+        getAdminMetricsSummary({ getAccessToken: options.getAccessToken }),
         listKnowledgeDocuments(
           {
             search: documentSearch,
@@ -72,6 +76,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
       ]);
 
       setLlmStatus(status);
+      setMetricsSummary(metrics);
       setDocumentsResponse(docs);
       setAuditLogs(logs);
     } catch (err) {
@@ -206,6 +211,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
 
   return {
     llmStatus,
+    metricsSummary,
     documents: documentsResponse.items as AdminKnowledgeDocument[],
     documentsPagination: documentsResponse.pagination,
     auditLogs,

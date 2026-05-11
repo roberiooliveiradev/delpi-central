@@ -42,3 +42,14 @@ export type AdminAuditLog = {
   metadata: Record<string, unknown> | null;
   createdAt: string;
 };
+
+export type AdminMetricsSummary = {
+  sessions: number;
+  messages: number;
+  knowledgeDocuments: number;
+  activeKnowledgeDocuments: number;
+  knowledgeChunks: number;
+  auditLogs: number;
+  recentToolCalls24h: number;
+  recentErrors24h: number;
+};

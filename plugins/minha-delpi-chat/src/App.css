@@ -636,3 +636,38 @@
 .mdc-admin-pagination button {
   padding: 8px 12px;
 }
+
+.mdc-admin-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--mdc-space-3);
+  margin: var(--mdc-space-4) 0;
+}
+
+.mdc-admin-metric-card {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  padding: var(--mdc-space-4);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--mdc-primary) 7%, transparent),
+      transparent
+    ),
+    var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+}
+
+.mdc-admin-metric-card span {
+  display: block;
+  color: var(--mdc-text-muted);
+  font-size: 0.82rem;
+  margin-bottom: var(--mdc-space-2);
+}
+
+.mdc-admin-metric-card strong {
+  display: block;
+  color: var(--mdc-title);
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  line-height: 1;
+}

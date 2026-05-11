@@ -3,6 +3,7 @@ import type {
   AdminKnowledgeDocument,
   AdminKnowledgeDocumentsResponse,
   AdminLlmStatus,
+  AdminMetricsSummary,
 } from "./adminTypes";
 
 const API_BASE_URL = "/apps/minha-delpi-ai/api";
@@ -175,4 +176,16 @@ export async function listAuditLogs(
   });
 
   return parseJsonResponse<AdminAuditLog[]>(response);
+}
+
+
+export async function getAdminMetricsSummary(
+  options: AdminApiOptions = {},
+): Promise<AdminMetricsSummary> {
+  const response = await fetch(`${API_BASE_URL}/admin/metrics/summary`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminMetricsSummary>(response);
 }
