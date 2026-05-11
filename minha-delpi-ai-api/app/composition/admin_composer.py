@@ -1,6 +1,7 @@
 from app.application.use_cases.deactivate_knowledge_document_use_case import (
     DeactivateKnowledgeDocumentUseCase,
 )
+from app.application.use_cases.get_admin_metrics_summary_use_case import GetAdminMetricsSummaryUseCase
 from app.application.use_cases.get_llm_provider_status_use_case import (
     GetLlmProviderStatusUseCase,
 )
@@ -19,6 +20,7 @@ from app.application.use_cases.reindex_knowledge_document_use_case import (
 from app.domain.services.text_chunker_service import TextChunkerService
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
+from app.infrastructure.persistence.postgres_admin_metrics_repository import PostgresAdminMetricsRepository
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.persistence.postgres_knowledge_repository import (
     PostgresKnowledgeRepository,
@@ -58,3 +60,7 @@ def make_reindex_knowledge_document_use_case() -> ReindexKnowledgeDocumentUseCas
 
 def make_list_admin_audit_logs_use_case() -> ListAdminAuditLogsUseCase:
     return ListAdminAuditLogsUseCase(PostgresAuditRepository())
+
+def make_get_admin_metrics_summary_use_case() -> GetAdminMetricsSummaryUseCase:
+    return GetAdminMetricsSummaryUseCase(PostgresAdminMetricsRepository())
+

@@ -112,3 +112,22 @@ def test_admin_llm_status_with_token_returns_provider_metadata():
     assert isinstance(payload["model"], str)
     assert "maxTokens" in payload
     assert "temperature" in payload
+
+
+def test_admin_metrics_summary_with_token_returns_counts():
+    require_token()
+
+    response = requests.get(
+        api_url("/admin/metrics/summary"),
+        headers=auth_headers(),
+        timeout=10,
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert "sessions" in payload
+    assert "messages" in payload
+    assert "knowledgeDocuments" in payload
+    assert "knowledgeChunks" in payload
+    assert "auditLogs" in payload
