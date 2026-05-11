@@ -19,10 +19,18 @@ class Settings:
     CORE_API_BASE_URL = os.getenv("CORE_API_BASE_URL", "http://core-api:8000")
     CORE_API_TIMEOUT_SECONDS = float(os.getenv("CORE_API_TIMEOUT_SECONDS", "5"))
 
-    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
+    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama").lower().strip()
+    LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.2"))
+    LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "1024"))
+
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:1.5b")
     OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "300"))
+
+    VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://vllm:8000/v1")
+    VLLM_MODEL = os.getenv("VLLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")
+    VLLM_API_KEY = os.getenv("VLLM_API_KEY", "minha-delpi-local-vllm")
+    VLLM_TIMEOUT_SECONDS = float(os.getenv("VLLM_TIMEOUT_SECONDS", "300"))
 
     EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "ollama")
     EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "bge-m3")

@@ -25,6 +25,10 @@ class OllamaLlmGateway(LlmGatewayPort):
             "model": self.model,
             "messages": messages,
             "stream": False,
+            "options": {
+                "temperature": Settings.LLM_TEMPERATURE,
+                "num_predict": Settings.LLM_MAX_TOKENS,
+            },
         }
 
         try:
@@ -52,6 +56,10 @@ class OllamaLlmGateway(LlmGatewayPort):
             "model": self.model,
             "messages": messages,
             "stream": True,
+            "options": {
+                "temperature": Settings.LLM_TEMPERATURE,
+                "num_predict": Settings.LLM_MAX_TOKENS,
+            },
         }
 
         try:

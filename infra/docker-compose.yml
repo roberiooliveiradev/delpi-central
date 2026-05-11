@@ -135,6 +135,14 @@ services:
       CORE_API_BASE_URL: http://core-api:8000
       CORE_API_TIMEOUT_SECONDS: 5
 
+      LLM_PROVIDER: vllm
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.2}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-1024}
+      VLLM_BASE_URL: http://vllm:8000/v1
+      VLLM_MODEL: ${VLLM_MODEL:-Qwen/Qwen2.5-7B-Instruct}
+      VLLM_API_KEY: ${VLLM_API_KEY:-minha-delpi-local-vllm}
+      VLLM_TIMEOUT_SECONDS: ${VLLM_TIMEOUT_SECONDS:-300}
+
     logging:
       driver: "json-file"
       options:
@@ -144,6 +152,7 @@ services:
     depends_on:
       - core-api
       - postgres-plugins
+      - vllm
 
     networks:
       - delpi-network
@@ -200,6 +209,35 @@ services:
     volumes:
       - ../plugins/strategic-indicators:/app
       - /app/node_modules
+
+    networks:
+      - delpi-network
+
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: delpi-vllm
+    restart: unless-stopped
+
+    ipc: host
+
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      VLLM_API_KEY: ${VLLM_API_KEY:-minha-delpi-local-vllm}
+
+    volumes:
+      - vllm_cache:/root/.cache/huggingface
+
+    command:
+      - --model
+      - ${VLLM_MODEL:-Qwen/Qwen2.5-7B-Instruct}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --api-key
+      - ${VLLM_API_KEY:-minha-delpi-local-vllm}
+      - --max-model-len
+      - ${VLLM_MAX_MODEL_LEN:-8192}
 
     networks:
       - delpi-network
@@ -353,3 +391,4 @@ volumes:
   postgres_core_data:
   keycloak_data:
   postgres_plugins_data:
+  vllm_cache:

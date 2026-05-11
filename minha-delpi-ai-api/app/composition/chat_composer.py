@@ -10,7 +10,7 @@ from app.composition.tool_composer import make_execute_tool_use_case
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
-from app.infrastructure.llm.ollama_llm_gateway import OllamaLlmGateway
+from app.composition.llm_composer import make_llm_gateway
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.persistence.postgres_chat_session_repository import (
     PostgresChatSessionRepository,
@@ -52,7 +52,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
     return SendChatMessageUseCase(
         chat_repository=PostgresChatSessionRepository(),
         audit_repository=PostgresAuditRepository(),
-        llm_gateway=OllamaLlmGateway(),
+        llm_gateway=make_llm_gateway(),
         prompt_policy_service=PromptPolicyService(),
         rag_context_service=make_rag_context_service(),
         chat_tool_context_service=make_chat_tool_context_service(),
@@ -63,7 +63,7 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
     return StreamChatMessageUseCase(
         chat_repository=PostgresChatSessionRepository(),
         audit_repository=PostgresAuditRepository(),
-        llm_gateway=OllamaLlmGateway(),
+        llm_gateway=make_llm_gateway(),
         prompt_policy_service=PromptPolicyService(),
         rag_context_service=make_rag_context_service(),
         chat_tool_context_service=make_chat_tool_context_service(),
