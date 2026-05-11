@@ -309,54 +309,6 @@ Como a solução deve permanecer 100% open source/self-hosted e não pode usar s
 
 Homologar vLLM em servidor com GPU NVIDIA compatível.
 
-## Decisão temporária — Ollama em produção
-
-Data: 2026-05-11  
-Servidor avaliado: srv-api  
-Decisão: usar Ollama temporariamente em produção enquanto não houver host com GPU NVIDIA disponível para vLLM.
-
-### Justificativa
-
-A homologação vLLM com GPU foi bloqueada porque o servidor `srv-api` não possui GPU NVIDIA detectada:
-
-    lspci | grep -i nvidia
-    # sem retorno
-
-    ls -l /dev/nvidia*
-    # No such file or directory
-
-Como a solução deve permanecer 100% open source/self-hosted e não pode usar serviços proprietários de LLM, será usado Ollama como provider produtivo provisório.
-
-### Condições da exceção
-
-- Não usar OpenAI, Azure OpenAI, Anthropic, Gemini ou serviços fechados.
-- Manter `LlmGatewayPort` e troca por variável de ambiente.
-- Manter RAG, RBAC, auditoria e tools autorizadas.
-- Registrar que vLLM continua pendente para produção definitiva.
-- Revisar essa decisão quando houver servidor com GPU.
-
-### Configuração provisória
-
-    LLM_PROVIDER=ollama
-    OLLAMA_BASE_URL=http://ollama:11434
-    OLLAMA_MODEL=qwen2.5:1.5b
-    OLLAMA_TIMEOUT_SECONDS=300
-    LLM_TEMPERATURE=0.2
-    LLM_MAX_TOKENS=1024
-
-### Critério de aceite provisório
-
-- `GET /admin/llm/status` retorna `provider=ollama`.
-- Chat responde via streaming.
-- RAG continua funcionando.
-- Tools continuam funcionando.
-- Auditoria continua funcionando.
-- Nenhuma API proprietária é usada.
-
-### Pendência
-
-Homologar vLLM em servidor com GPU NVIDIA compatível.
-
 ## Homologação provisória com Ollama em produção
 
 Resultado: aprovado como operação provisória sem GPU.

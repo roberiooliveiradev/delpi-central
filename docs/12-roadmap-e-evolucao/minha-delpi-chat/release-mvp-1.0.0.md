@@ -103,3 +103,20 @@ Pendências não bloqueantes:
 ## Resultado esperado
 
 O release `minha-delpi-chat-v1.0.0` deve representar o MVP funcional do Minha DELPI Chat, com chat conversacional, RAG documental, ferramentas internas autorizadas, auditoria, administração básica e preparação para produção com vLLM.
+
+## Atualização pós-release
+
+Após a release MVP `1.0.0`, foram adicionadas melhorias pós-MVP:
+
+- Validação de ingestão de documentos.
+- Reativação e reindexação de documentos.
+- Filtros e paginação na administração de documentos.
+- Contagem de chunks por documento.
+- Auditoria de ingestão.
+- Testes de integração HTTP.
+- Plano de homologação vLLM.
+- Produção provisória com Ollama por ausência de GPU NVIDIA no `srv-api`.
+- Métricas administrativas.
+- Ambiente local de testes com `pytest.ini`.
+
+A pendência produtiva principal permanece a homologação do vLLM em servidor com GPU NVIDIA compatível.

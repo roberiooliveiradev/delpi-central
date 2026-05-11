@@ -61,3 +61,37 @@ Usuário admin:
 Usuário comum:
 Resultado geral:
 Pendências:
+## Resultado parcial atualizado
+
+Data: 2026-05-11  
+Branch: chat  
+Ambiente: desenvolvimento local e produção provisória em `srv-api`  
+Resultado geral: MVP funcional e operação provisória com Ollama validada.
+
+Validações já observadas:
+
+- Backend `/health` retorna `200 OK`.
+- `remoteEntry.js` retorna JavaScript.
+- Plugin registrado na Core API.
+- Plugin aparece no menu para usuário autorizado.
+- Sessão é criada com `user_id` autenticado.
+- Histórico é persistido.
+- Streaming funcional após configuração de modelos Ollama.
+- RAG/embeddings funcional.
+- Tool inexistente retorna erro padronizado.
+- Admin lista documentos.
+- Admin desativa/reativa/reindexa documentos.
+- Admin visualiza auditoria.
+- Status LLM mostra provider atual.
+- Dev usa Ollama.
+- Produção provisória usa Ollama.
+- Produção definitiva com vLLM segue pendente por falta de GPU no `srv-api`.
+
+Pendências:
+
+- Homologar usuário sem permissão em ambiente produtivo.
+- Homologar usuário comum sem acesso admin.
+- Homologar sessão de outro usuário.
+- Homologar tool sem permissão.
+- Criar evidência formal de RAG com documento ativo/inativo.
+- Homologar vLLM em host com GPU.
