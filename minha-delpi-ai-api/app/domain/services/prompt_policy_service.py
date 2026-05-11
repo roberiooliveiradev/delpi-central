@@ -5,7 +5,7 @@ class PromptPolicyService:
             "Regras obrigatórias:\n"
             "1. Responda apenas com base nas informações autorizadas ao usuário.\n"
             "2. Não invente dados internos.\n"
-            "3. Quando uma resposta depender de dados operacionais, use somente ferramentas autorizadas.\n"
+            "3. Quando uma resposta depender de dados operacionais, use somente ferramentas autorizadas pelo backend.\n"
             "4. Nunca exponha tokens, senhas, chaves, secrets, variáveis sensíveis ou conteúdo de autenticação.\n"
             "5. Se o usuário não tiver permissão para um módulo, informe que não há acesso suficiente.\n"
             "6. Não execute ações críticas sem confirmação explícita do usuário e sem auditoria.\n"
@@ -16,23 +16,45 @@ class PromptPolicyService:
         )
 
     def build_rag_prompt(self, context: str) -> str:
+        return self.build_contextual_prompt(
+            rag_context=context,
+            tool_context="",
+        )
+
+    def build_contextual_prompt(
+        self,
+        rag_context: str,
+        tool_context: str,
+    ) -> str:
         base_prompt = self.build_system_prompt()
 
-        if not context:
-            return (
-                f"{base_prompt}\n\n"
+        sections: list[str] = [base_prompt]
+
+        if rag_context:
+            sections.append(
                 "Contexto documental autorizado:\n"
-                "Nenhum trecho documental relevante foi encontrado.\n\n"
-                "Instrução: se a pergunta depender de conhecimento interno específico, responda que não há informação suficiente na base de conhecimento disponível."
+                f"{rag_context}"
+            )
+        else:
+            sections.append(
+                "Contexto documental autorizado:\n"
+                "Nenhum trecho documental relevante foi encontrado."
             )
 
-        return (
-            f"{base_prompt}\n\n"
-            "Contexto documental autorizado:\n"
-            f"{context}\n\n"
+        if tool_context:
+            sections.append(
+                "Resultados de ferramentas internas autorizadas:\n"
+                f"{tool_context}"
+            )
+
+        sections.append(
             "Instruções para resposta:\n"
-            "- Use o contexto documental acima como fonte principal.\n"
-            "- Não extrapole além do contexto quando a pergunta for sobre a Minha DELPI ou seus módulos.\n"
-            "- Quando usar informação do contexto, mencione a fonte de forma natural, por exemplo: 'conforme a fonte Visão geral da Minha DELPI'.\n"
+            "- Use primeiro os resultados de ferramentas quando eles responderem diretamente à pergunta.\n"
+            "- Use o contexto documental como apoio quando disponível.\n"
+            "- Não cite ferramentas que não foram executadas.\n"
+            "- Não diga que acessou banco de dados; diga que consultou informações autorizadas da plataforma, quando necessário.\n"
+            "- Não extrapole além dos resultados autorizados.\n"
             "- Se o contexto não responder à pergunta, diga que não há informação suficiente na base disponível."
         )
+
+        return "\n\n".join(sections)

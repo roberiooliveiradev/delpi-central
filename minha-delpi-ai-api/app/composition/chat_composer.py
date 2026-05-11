@@ -1,3 +1,4 @@
+from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.rag_context_service import RagContextService
 from app.application.use_cases.create_chat_session_use_case import CreateChatSessionUseCase
 from app.application.use_cases.get_chat_history_use_case import GetChatHistoryUseCase
@@ -5,7 +6,9 @@ from app.application.use_cases.list_chat_sessions_use_case import ListChatSessio
 from app.application.use_cases.search_knowledge_use_case import SearchKnowledgeUseCase
 from app.application.use_cases.send_chat_message_use_case import SendChatMessageUseCase
 from app.application.use_cases.stream_chat_message_use_case import StreamChatMessageUseCase
+from app.composition.tool_composer import make_execute_tool_use_case
 from app.domain.services.prompt_policy_service import PromptPolicyService
+from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
 from app.infrastructure.llm.ollama_llm_gateway import OllamaLlmGateway
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
@@ -38,6 +41,13 @@ def make_rag_context_service() -> RagContextService:
     )
 
 
+def make_chat_tool_context_service() -> ChatToolContextService:
+    return ChatToolContextService(
+        tool_selection_service=ToolSelectionService(),
+        execute_tool_use_case=make_execute_tool_use_case(),
+    )
+
+
 def make_send_chat_message_use_case() -> SendChatMessageUseCase:
     return SendChatMessageUseCase(
         chat_repository=PostgresChatSessionRepository(),
@@ -45,6 +55,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
         llm_gateway=OllamaLlmGateway(),
         prompt_policy_service=PromptPolicyService(),
         rag_context_service=make_rag_context_service(),
+        chat_tool_context_service=make_chat_tool_context_service(),
     )
 
 
@@ -55,4 +66,5 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
         llm_gateway=OllamaLlmGateway(),
         prompt_policy_service=PromptPolicyService(),
         rag_context_service=make_rag_context_service(),
+        chat_tool_context_service=make_chat_tool_context_service(),
     )

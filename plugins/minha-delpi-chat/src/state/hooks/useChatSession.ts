@@ -5,7 +5,12 @@ import {
   listChatMessages,
   listChatSessions,
 } from "../../data/api/chatApi";
-import type { ChatMessage, ChatSession, ChatSource } from "../../data/api/chatTypes";
+import type {
+  ChatMessage,
+  ChatSession,
+  ChatSource,
+  ChatToolCall,
+} from "../../data/api/chatTypes";
 import { useChatStreaming } from "./useChatStreaming";
 
 type UseChatSessionOptions = {
@@ -19,6 +24,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [draft, setDraft] = useState("");
   const [streamingAnswer, setStreamingAnswer] = useState("");
   const [streamingSources, setStreamingSources] = useState<ChatSource[]>([]);
+  const [streamingToolCalls, setStreamingToolCalls] = useState<ChatToolCall[]>([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +55,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const selectSession = useCallback((session: ChatSession) => {
     setStreamingAnswer("");
     setStreamingSources([]);
+    setStreamingToolCalls([]);
     setActiveSession(session);
   }, []);
 
@@ -71,6 +78,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       setMessages([]);
       setStreamingAnswer("");
       setStreamingSources([]);
+      setStreamingToolCalls([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar sessão.");
     }
@@ -106,6 +114,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setError(null);
     setStreamingAnswer("");
     setStreamingSources([]);
+    setStreamingToolCalls([]);
 
     try {
       await streamMessage({
@@ -115,6 +124,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         onSources: (sources) => {
           setStreamingSources(sources);
         },
+        onToolCalls: (toolCalls) => {
+          setStreamingToolCalls(toolCalls);
+        },
         onToken: (token) => {
           setStreamingAnswer((current) => current + token);
         },
@@ -122,6 +134,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setDraft("");
           setStreamingAnswer("");
           setStreamingSources([]);
+          setStreamingToolCalls([]);
           await loadMessages(activeSession.id);
           await loadSessions();
         },
@@ -165,6 +178,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     draft,
     streamingAnswer,
     streamingSources,
+    streamingToolCalls,
     isLoadingSessions,
     isLoadingMessages,
     isStreaming,

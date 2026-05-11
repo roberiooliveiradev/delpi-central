@@ -16,9 +16,17 @@ export type ChatSource = {
   score?: number | null;
 };
 
+export type ChatToolCall = {
+  name?: string;
+  arguments?: Record<string, unknown>;
+  reason?: string | null;
+  metadata?: Record<string, unknown> | null;
+  data?: unknown;
+};
+
 export type ChatMessageMetadata = {
   sources?: ChatSource[];
-  toolCalls?: unknown[];
+  toolCalls?: ChatToolCall[];
   rag?: {
     enabled?: boolean;
     sourceCount?: number;
@@ -50,5 +58,5 @@ export type SendChatMessageResponse = {
   messageId: string;
   answer: string;
   sources: ChatSource[];
-  toolCalls: unknown[];
+  toolCalls: ChatToolCall[];
 };

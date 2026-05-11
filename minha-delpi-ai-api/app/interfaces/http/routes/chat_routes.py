@@ -96,6 +96,7 @@ def send_message(session_id: str):
                 session_id=session_id,
                 message=payload.get("message", ""),
                 context=payload.get("context"),
+                access_token=g.access_token,
             )
         )
 
@@ -120,6 +121,7 @@ def stream_message(session_id: str):
         session_id=session_id,
         message=payload.get("message", ""),
         context=payload.get("context"),
+        access_token=g.access_token,
     )
 
     use_case = make_stream_chat_message_use_case()
@@ -132,6 +134,9 @@ def stream_message(session_id: str):
 
                 if event_type == "sources":
                     yield _sse("sources", {"sources": event.get("sources", [])})
+
+                elif event_type == "tool_calls":
+                    yield _sse("tool_calls", {"toolCalls": event.get("toolCalls", [])})
 
                 elif event_type == "token":
                     yield _sse("token", {"content": event.get("content", "")})

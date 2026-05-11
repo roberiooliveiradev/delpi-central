@@ -3,6 +3,7 @@ from uuid import UUID
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.dto.send_chat_message_response import SendChatMessageResponse
+from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.rag_context_service import RagContextService
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
@@ -24,12 +25,14 @@ class SendChatMessageUseCase:
         llm_gateway: LlmGatewayPort,
         prompt_policy_service: PromptPolicyService,
         rag_context_service: RagContextService,
+        chat_tool_context_service: ChatToolContextService,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
         self.llm_gateway = llm_gateway
         self.prompt_policy_service = prompt_policy_service
         self.rag_context_service = rag_context_service
+        self.chat_tool_context_service = chat_tool_context_service
 
     def execute(self, request: SendChatMessageRequest) -> SendChatMessageResponse:
         message = self._validate_message(request.message)
@@ -51,6 +54,9 @@ class SendChatMessageUseCase:
         rag = self.rag_context_service.build_context(message)
         sources = rag["sources"]
 
+        tool_context = self._build_tool_context(request)
+        tool_calls = tool_context["toolCalls"]
+
         self.chat_repository.create_message(
             session_id=session_id,
             role="user",
@@ -60,6 +66,7 @@ class SendChatMessageUseCase:
                 "rag": {
                     "sources": sources,
                 },
+                "toolCalls": tool_calls,
             },
         )
 
@@ -67,6 +74,7 @@ class SendChatMessageUseCase:
             history=history,
             current_message=message,
             rag_context=rag["context"],
+            tool_context=tool_context["context"],
         )
 
         answer = self.llm_gateway.generate(llm_messages)
@@ -79,7 +87,7 @@ class SendChatMessageUseCase:
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
                 "sources": sources,
-                "toolCalls": [],
+                "toolCalls": tool_calls,
                 "rag": {
                     "enabled": True,
                     "sourceCount": len(sources),
@@ -92,13 +100,14 @@ class SendChatMessageUseCase:
             action="chat.message.sent",
             prompt_hash=self._hash_prompt(message),
             context=request.context,
-            tool_calls=[],
+            tool_calls=tool_calls,
             metadata={
                 "session_id": str(session_id),
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
                 "sources": sources,
                 "rag_enabled": True,
+                "tool_count": len(tool_calls),
             },
         )
 
@@ -106,7 +115,20 @@ class SendChatMessageUseCase:
             messageId=str(assistant_message.id),
             answer=answer,
             sources=sources,
-            toolCalls=[],
+            toolCalls=tool_calls,
+        )
+
+    def _build_tool_context(self, request: SendChatMessageRequest) -> dict:
+        if not request.access_token:
+            return {
+                "context": "",
+                "toolCalls": [],
+            }
+
+        return self.chat_tool_context_service.build_context(
+            user_id=request.user_id,
+            access_token=request.access_token,
+            message=request.message,
         )
 
     def _validate_message(self, value: str) -> str:
@@ -128,11 +150,15 @@ class SendChatMessageUseCase:
         history,
         current_message: str,
         rag_context: str,
+        tool_context: str,
     ) -> list[dict]:
         messages = [
             {
                 "role": "system",
-                "content": self.prompt_policy_service.build_rag_prompt(rag_context),
+                "content": self.prompt_policy_service.build_contextual_prompt(
+                    rag_context=rag_context,
+                    tool_context=tool_context,
+                ),
             }
         ]
 

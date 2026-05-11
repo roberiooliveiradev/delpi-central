@@ -1,10 +1,16 @@
-import type { ChatMessage, ChatSource } from "../../data/api/chatTypes";
+import type {
+  ChatMessage,
+  ChatSource,
+  ChatToolCall,
+} from "../../data/api/chatTypes";
 import { ChatSources } from "./ChatSources";
+import { ChatToolCalls } from "./ChatToolCalls";
 
 type ChatMessageListProps = {
   messages: ChatMessage[];
   streamingAnswer?: string;
   streamingSources?: ChatSource[];
+  streamingToolCalls?: ChatToolCall[];
   isLoading?: boolean;
 };
 
@@ -24,10 +30,21 @@ function getMessageSources(message: ChatMessage): ChatSource[] {
   return [];
 }
 
+function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
+  const toolCalls = message.metadata?.toolCalls;
+
+  if (Array.isArray(toolCalls)) {
+    return toolCalls;
+  }
+
+  return [];
+}
+
 export function ChatMessageList({
   messages,
   streamingAnswer,
   streamingSources,
+  streamingToolCalls,
   isLoading,
 }: ChatMessageListProps) {
   if (isLoading) {
@@ -58,7 +75,10 @@ export function ChatMessageList({
           <p>{message.content}</p>
 
           {message.role === "assistant" ? (
-            <ChatSources sources={getMessageSources(message)} />
+            <>
+              <ChatToolCalls toolCalls={getMessageToolCalls(message)} />
+              <ChatSources sources={getMessageSources(message)} />
+            </>
           ) : null}
         </article>
       ))}
@@ -67,6 +87,7 @@ export function ChatMessageList({
         <article className="mdc-chat-message mdc-chat-message--assistant mdc-chat-message--streaming">
           <strong>Minha DELPI Chat</strong>
           <p>{streamingAnswer}</p>
+          <ChatToolCalls toolCalls={streamingToolCalls} />
           <ChatSources sources={streamingSources} />
         </article>
       ) : null}

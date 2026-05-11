@@ -1,7 +1,11 @@
 import { useCallback, useRef, useState } from "react";
 
 import { streamChatMessage } from "../../data/api/chatApi";
-import type { ChatSource, SendChatMessageResponse } from "../../data/api/chatTypes";
+import type {
+  ChatSource,
+  ChatToolCall,
+  SendChatMessageResponse,
+} from "../../data/api/chatTypes";
 
 type UseChatStreamingOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -12,6 +16,7 @@ type StreamMessageParams = {
   message: string;
   context?: string;
   onSources?: (sources: ChatSource[]) => void;
+  onToolCalls?: (toolCalls: ChatToolCall[]) => void;
   onToken?: (token: string) => void;
   onDone?: (response: SendChatMessageResponse) => void;
   onError?: (message: string) => void;
@@ -33,6 +38,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       message,
       context,
       onSources,
+      onToolCalls,
       onToken,
       onDone,
       onError,
@@ -50,6 +56,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
           },
           {
             onSources,
+            onToolCalls,
             onToken,
             onDone,
             onError,

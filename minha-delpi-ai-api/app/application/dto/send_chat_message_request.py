@@ -7,3 +7,4 @@ class SendChatMessageRequest:
     session_id: str
     message: str
     context: str | None = None
+    access_token: str | None = None

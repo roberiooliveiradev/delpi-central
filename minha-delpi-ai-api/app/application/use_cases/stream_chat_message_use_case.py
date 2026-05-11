@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from uuid import UUID
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
+from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.rag_context_service import RagContextService
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
@@ -24,12 +25,14 @@ class StreamChatMessageUseCase:
         llm_gateway: LlmGatewayPort,
         prompt_policy_service: PromptPolicyService,
         rag_context_service: RagContextService,
+        chat_tool_context_service: ChatToolContextService,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
         self.llm_gateway = llm_gateway
         self.prompt_policy_service = prompt_policy_service
         self.rag_context_service = rag_context_service
+        self.chat_tool_context_service = chat_tool_context_service
 
     def stream(self, request: SendChatMessageRequest) -> Iterator[dict]:
         message = self._validate_message(request.message)
@@ -51,6 +54,9 @@ class StreamChatMessageUseCase:
         rag = self.rag_context_service.build_context(message)
         sources = rag["sources"]
 
+        tool_context = self._build_tool_context(request)
+        tool_calls = tool_context["toolCalls"]
+
         self.chat_repository.create_message(
             session_id=session_id,
             role="user",
@@ -61,6 +67,7 @@ class StreamChatMessageUseCase:
                 "rag": {
                     "sources": sources,
                 },
+                "toolCalls": tool_calls,
             },
         )
 
@@ -68,6 +75,7 @@ class StreamChatMessageUseCase:
             history=history,
             current_message=message,
             rag_context=rag["context"],
+            tool_context=tool_context["context"],
         )
 
         answer_parts: list[str] = []
@@ -75,6 +83,11 @@ class StreamChatMessageUseCase:
         yield {
             "type": "sources",
             "sources": sources,
+        }
+
+        yield {
+            "type": "tool_calls",
+            "toolCalls": tool_calls,
         }
 
         for token in self.llm_gateway.stream(llm_messages):
@@ -94,7 +107,7 @@ class StreamChatMessageUseCase:
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
                 "sources": sources,
-                "toolCalls": [],
+                "toolCalls": tool_calls,
                 "stream": True,
                 "rag": {
                     "enabled": True,
@@ -108,13 +121,14 @@ class StreamChatMessageUseCase:
             action="chat.message.streamed",
             prompt_hash=self._hash_prompt(message),
             context=request.context,
-            tool_calls=[],
+            tool_calls=tool_calls,
             metadata={
                 "session_id": str(session_id),
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
                 "sources": sources,
                 "rag_enabled": True,
+                "tool_count": len(tool_calls),
             },
         )
 
@@ -123,8 +137,21 @@ class StreamChatMessageUseCase:
             "messageId": str(assistant_message.id),
             "answer": answer,
             "sources": sources,
-            "toolCalls": [],
+            "toolCalls": tool_calls,
         }
+
+    def _build_tool_context(self, request: SendChatMessageRequest) -> dict:
+        if not request.access_token:
+            return {
+                "context": "",
+                "toolCalls": [],
+            }
+
+        return self.chat_tool_context_service.build_context(
+            user_id=request.user_id,
+            access_token=request.access_token,
+            message=request.message,
+        )
 
     def _validate_message(self, value: str) -> str:
         if not isinstance(value, str):
@@ -145,11 +172,15 @@ class StreamChatMessageUseCase:
         history,
         current_message: str,
         rag_context: str,
+        tool_context: str,
     ) -> list[dict]:
         messages = [
             {
                 "role": "system",
-                "content": self.prompt_policy_service.build_rag_prompt(rag_context),
+                "content": self.prompt_policy_service.build_contextual_prompt(
+                    rag_context=rag_context,
+                    tool_context=tool_context,
+                ),
             }
         ]
 

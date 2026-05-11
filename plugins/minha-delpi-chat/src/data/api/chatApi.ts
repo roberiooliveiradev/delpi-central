@@ -16,6 +16,7 @@ type ChatApiOptions = {
 
 type StreamCallbacks = {
   onSources?: (sources: SendChatMessageResponse["sources"]) => void;
+  onToolCalls?: (toolCalls: SendChatMessageResponse["toolCalls"]) => void;
   onToken?: (token: string) => void;
   onDone?: (response: SendChatMessageResponse) => void;
   onError?: (message: string) => void;
@@ -160,6 +161,10 @@ export async function streamChatMessage(
 
       if (event === "sources") {
         callbacks.onSources?.(data.sources ?? []);
+      }
+
+      if (event === "tool_calls") {
+        callbacks.onToolCalls?.(data.toolCalls ?? []);
       }
 
       if (event === "token") {

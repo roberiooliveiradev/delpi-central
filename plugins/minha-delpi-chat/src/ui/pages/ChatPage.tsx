@@ -15,6 +15,7 @@ export function ChatPage({ getAccessToken }: ChatPageProps) {
     draft,
     streamingAnswer,
     streamingSources,
+    streamingToolCalls,
     isLoadingSessions,
     isLoadingMessages,
     isStreaming,
@@ -60,6 +61,7 @@ export function ChatPage({ getAccessToken }: ChatPageProps) {
             messages={messages}
             streamingAnswer={streamingAnswer}
             streamingSources={streamingSources}
+            streamingToolCalls={streamingToolCalls}
             isLoading={isLoadingMessages}
           />
 
