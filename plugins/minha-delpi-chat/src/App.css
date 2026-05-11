@@ -700,3 +700,111 @@
   color: var(--mdc-title);
   background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-card-bg));
 }
+
+.mdc-chat-sources {
+  margin-top: var(--mdc-space-3);
+}
+
+.mdc-chat-sources-details {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: color-mix(in srgb, var(--mdc-card-bg) 92%, transparent);
+  overflow: hidden;
+}
+
+.mdc-chat-sources-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+  cursor: pointer;
+  padding: var(--mdc-space-3);
+  color: var(--mdc-text-muted);
+  font-size: 0.85rem;
+  list-style: none;
+}
+
+.mdc-chat-sources-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.mdc-chat-sources-details summary::before {
+  content: "▸";
+  color: var(--mdc-text-muted);
+  transition: transform 0.2s ease;
+}
+
+.mdc-chat-sources-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.mdc-chat-sources-details summary span {
+  flex: 1;
+}
+
+.mdc-chat-sources-details summary strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  color: var(--mdc-title);
+  font-size: 0.75rem;
+}
+
+.mdc-chat-sources-list {
+  display: grid;
+  gap: var(--mdc-space-2);
+  padding: 0 var(--mdc-space-3) var(--mdc-space-3);
+}
+
+.mdc-chat-source-card {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  padding: var(--mdc-space-3);
+  background: var(--mdc-card-bg);
+}
+
+.mdc-chat-source-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+  margin-bottom: var(--mdc-space-2);
+}
+
+.mdc-chat-source-card__header strong {
+  color: var(--mdc-title);
+  font-size: 0.9rem;
+}
+
+.mdc-chat-source-card__header span {
+  flex: 0 0 auto;
+  color: var(--mdc-text-muted);
+  font-size: 0.76rem;
+}
+
+.mdc-chat-source-card__meta {
+  display: grid;
+  gap: var(--mdc-space-2);
+  margin: 0;
+}
+
+.mdc-chat-source-card__meta div {
+  min-width: 0;
+}
+
+.mdc-chat-source-card__meta dt {
+  color: var(--mdc-text-muted);
+  font-size: 0.72rem;
+  margin-bottom: 0.15rem;
+}
+
+.mdc-chat-source-card__meta dd {
+  margin: 0;
+  color: var(--mdc-text);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
