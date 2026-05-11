@@ -127,6 +127,7 @@ services:
     environment:
       TZ: ${TZ}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql+psycopg://${PLUGINS_DB_USER}:${PLUGINS_DB_PASSWORD}@postgres-plugins:5432/${PLUGINS_DB_NAME}
       KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
       KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
       KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
@@ -142,6 +143,7 @@ services:
     
     depends_on:
       - core-api
+      - postgres-plugins
 
     networks:
       - delpi-network

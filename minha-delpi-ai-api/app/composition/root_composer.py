@@ -1,5 +1,7 @@
 from flask import Flask
 
+from app.extensions.db import db
+from app.extensions.migrate import migrate
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.logging.json_logging import configure_logging
 from app.interfaces.http.auth_middleware import register_auth_middleware
@@ -15,6 +17,14 @@ def create_application() -> Flask:
     app = Flask(__name__)
     app.config["SERVICE_NAME"] = Settings.SERVICE_NAME
     app.config["ENV"] = Settings.ENV
+    app.config["SQLALCHEMY_DATABASE_URI"] = Settings.DATABASE_URL
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    # Import necessário para registrar models no metadata antes do Alembic.
+    from app.infrastructure.db import models  # noqa: F401
+
+    db.init_app(app)
+    migrate.init_app(app, db)
 
     register_request_logging(app)
     register_auth_middleware(app)

@@ -6,6 +6,11 @@ class Settings:
     ENV = os.getenv("FLASK_ENV", "development")
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
+    DATABASE_URL = os.getenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://delpi:delpi123@postgres-plugins:5432/minha_delpi_ai",
+    )
+
     KEYCLOAK_JWKS_URL = os.getenv("KEYCLOAK_JWKS_URL", "")
     KEYCLOAK_ISSUER = os.getenv("KEYCLOAK_ISSUER", "")
     KEYCLOAK_AUDIENCE = os.getenv("KEYCLOAK_AUDIENCE", "")
