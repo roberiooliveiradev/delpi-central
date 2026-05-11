@@ -161,7 +161,12 @@ services:
       OLLAMA_MODEL: qwen2.5:1.5b
       OLLAMA_TIMEOUT_SECONDS: 300
       CHAT_HISTORY_MAX_MESSAGES: 12
-
+      EMBEDDING_PROVIDER: ollama
+      EMBEDDING_MODEL: bge-m3
+      EMBEDDING_DIMENSIONS: 1024
+      EMBEDDING_TIMEOUT_SECONDS: 120
+      MAX_CONTEXT_CHUNKS: 6
+      MAX_CONTEXT_CHARS: 9000
 
     volumes:
       - ../minha-delpi-ai-api:/app
@@ -329,7 +334,7 @@ services:
       - delpi-network
       
   postgres-plugins:
-    image: postgres:15
+    image: pgvector/pgvector:pg15
     container_name: delpi-postgres-plugins
     restart: unless-stopped
 

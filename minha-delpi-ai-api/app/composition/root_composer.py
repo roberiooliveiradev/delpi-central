@@ -9,6 +9,7 @@ from app.interfaces.http.error_handlers import register_error_handlers
 from app.interfaces.http.request_logging import register_request_logging
 from app.interfaces.http.routes.chat_routes import chat_bp
 from app.interfaces.http.routes.health_routes import health_bp
+from app.interfaces.http.routes.knowledge_routes import knowledge_bp
 
 
 def create_application() -> Flask:
@@ -31,6 +32,7 @@ def create_application() -> Flask:
 
     app.register_blueprint(health_bp)
     app.register_blueprint(chat_bp)
+    app.register_blueprint(knowledge_bp)
 
     register_error_handlers(app)
 
