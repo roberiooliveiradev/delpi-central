@@ -121,6 +121,22 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         return self._to_document_entity(model)
 
+
+    def reactivate_document(self, document_id: UUID) -> KnowledgeDocument | None:
+        model = AiKnowledgeDocumentModel.query.filter(
+            AiKnowledgeDocumentModel.id == document_id
+        ).first()
+
+        if not model:
+            return None
+
+        model.active = True
+        model.updated_at = datetime.now(timezone.utc)
+
+        db.session.flush()
+
+        return self._to_document_entity(model)
+
     def _to_document_entity(self, model: AiKnowledgeDocumentModel) -> KnowledgeDocument:
         return KnowledgeDocument(
             id=model.id,

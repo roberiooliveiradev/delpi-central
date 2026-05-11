@@ -15,6 +15,7 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
     error,
     loadAdminData,
     deactivateDocument,
+    reactivateDocument,
   } = useChatAdmin({ getAccessToken });
 
   return (
@@ -96,13 +97,23 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
                         <td>{document.active ? "Ativo" : "Inativo"}</td>
                         <td>{new Date(document.updatedAt).toLocaleString()}</td>
                         <td>
-                          <button
-                            type="button"
-                            disabled={!document.active || isMutating}
-                            onClick={() => deactivateDocument(document.id)}
-                          >
-                            Desativar
-                          </button>
+                          {document.active ? (
+                            <button
+                              type="button"
+                              disabled={isMutating}
+                              onClick={() => deactivateDocument(document.id)}
+                            >
+                              Desativar
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={isMutating}
+                              onClick={() => reactivateDocument(document.id)}
+                            >
+                              Reativar
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

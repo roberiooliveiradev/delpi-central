@@ -5,6 +5,7 @@ from app.composition.admin_composer import (
     make_get_llm_provider_status_use_case,
     make_list_admin_audit_logs_use_case,
     make_list_admin_knowledge_documents_use_case,
+    make_reactivate_knowledge_document_use_case,
 )
 from app.extensions.db import db
 from app.interfaces.http.auth_decorators import require_permission
@@ -31,6 +32,24 @@ def list_knowledge_documents():
 @require_permission("minha-delpi.chat.admin")
 def deactivate_knowledge_document(document_id: str):
     use_case = make_deactivate_knowledge_document_use_case()
+
+    try:
+        result = use_case.execute(
+            document_id=document_id,
+            user_id=g.current_user.sub,
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@admin_bp.post("/knowledge/documents/<document_id>/reactivate")
+@require_permission("minha-delpi.chat.admin")
+def reactivate_knowledge_document(document_id: str):
+    use_case = make_reactivate_knowledge_document_use_case()
 
     try:
         result = use_case.execute(

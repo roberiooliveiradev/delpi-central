@@ -43,3 +43,7 @@ class KnowledgeRepositoryPort(ABC):
     @abstractmethod
     def deactivate_document(self, document_id: UUID) -> KnowledgeDocument | None:
         raise NotImplementedError
+
+    @abstractmethod
+    def reactivate_document(self, document_id: UUID) -> KnowledgeDocument | None:
+        raise NotImplementedError

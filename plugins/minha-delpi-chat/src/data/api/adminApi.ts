@@ -79,6 +79,22 @@ export async function deactivateKnowledgeDocument(
   return parseJsonResponse<AdminKnowledgeDocument>(response);
 }
 
+
+export async function reactivateKnowledgeDocument(
+  documentId: string,
+  options: AdminApiOptions = {},
+): Promise<AdminKnowledgeDocument> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/knowledge/documents/${documentId}/reactivate`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<AdminKnowledgeDocument>(response);
+}
+
 export async function listAuditLogs(
   options: AdminApiOptions = {},
 ): Promise<AdminAuditLog[]> {

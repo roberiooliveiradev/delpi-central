@@ -5,6 +5,7 @@ import {
   getLlmStatus,
   listAuditLogs,
   listKnowledgeDocuments,
+  reactivateKnowledgeDocument,
 } from "../../data/api/adminApi";
 import type {
   AdminAuditLog,
@@ -65,6 +66,26 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     [loadAdminData, options.getAccessToken],
   );
 
+  const reactivateDocument = useCallback(
+    async (documentId: string) => {
+      setIsMutating(true);
+      setError(null);
+
+      try {
+        await reactivateKnowledgeDocument(documentId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        await loadAdminData();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao reativar documento.");
+      } finally {
+        setIsMutating(false);
+      }
+    },
+    [loadAdminData, options.getAccessToken],
+  );
+
   useEffect(() => {
     void loadAdminData();
   }, [loadAdminData]);
@@ -78,5 +99,6 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     error,
     loadAdminData,
     deactivateDocument,
+    reactivateDocument,
   };
 }
