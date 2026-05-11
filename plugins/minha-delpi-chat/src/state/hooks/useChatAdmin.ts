@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  createKnowledgeDocument,
   deactivateKnowledgeDocument,
   getLlmStatus,
   listAuditLogs,
   listKnowledgeDocuments,
   reactivateKnowledgeDocument,
+  type CreateKnowledgeDocumentPayload,
 } from "../../data/api/adminApi";
 import type {
   AdminAuditLog,
@@ -23,6 +25,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadAdminData = useCallback(async () => {
@@ -46,16 +49,43 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     }
   }, [options.getAccessToken]);
 
+  const createDocument = useCallback(
+    async (payload: CreateKnowledgeDocumentPayload) => {
+      setIsMutating(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        const result = await createKnowledgeDocument(payload, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setSuccessMessage(
+          `Documento "${result.title}" ingerido com ${result.chunks} chunk(s).`,
+        );
+
+        await loadAdminData();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao ingerir documento.");
+      } finally {
+        setIsMutating(false);
+      }
+    },
+    [loadAdminData, options.getAccessToken],
+  );
+
   const deactivateDocument = useCallback(
     async (documentId: string) => {
       setIsMutating(true);
       setError(null);
+      setSuccessMessage(null);
 
       try {
         await deactivateKnowledgeDocument(documentId, {
           getAccessToken: options.getAccessToken,
         });
 
+        setSuccessMessage("Documento desativado com sucesso.");
         await loadAdminData();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao desativar documento.");
@@ -70,12 +100,14 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     async (documentId: string) => {
       setIsMutating(true);
       setError(null);
+      setSuccessMessage(null);
 
       try {
         await reactivateKnowledgeDocument(documentId, {
           getAccessToken: options.getAccessToken,
         });
 
+        setSuccessMessage("Documento reativado com sucesso.");
         await loadAdminData();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao reativar documento.");
@@ -96,8 +128,10 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     auditLogs,
     isLoading,
     isMutating,
+    successMessage,
     error,
     loadAdminData,
+    createDocument,
     deactivateDocument,
     reactivateDocument,
   };

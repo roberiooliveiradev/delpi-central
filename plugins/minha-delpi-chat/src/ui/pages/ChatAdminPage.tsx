@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { useChatAdmin } from "../../state/hooks/useChatAdmin";
 
 type ChatAdminPageProps = {
@@ -12,11 +14,38 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
     auditLogs,
     isLoading,
     isMutating,
+    successMessage,
     error,
     loadAdminData,
+    createDocument,
     deactivateDocument,
     reactivateDocument,
   } = useChatAdmin({ getAccessToken });
+
+  const [title, setTitle] = useState("");
+  const [sourceType, setSourceType] = useState("manual");
+  const [sourceRef, setSourceRef] = useState("");
+  const [content, setContent] = useState("");
+
+  const canSubmitDocument =
+    title.trim().length > 0 && sourceType.trim().length > 0 && content.trim().length > 0;
+
+  async function handleCreateDocument() {
+    if (!canSubmitDocument || isMutating) {
+      return;
+    }
+
+    await createDocument({
+      title: title.trim(),
+      sourceType: sourceType.trim(),
+      sourceRef: sourceRef.trim() || undefined,
+      content: content.trim(),
+    });
+
+    setTitle("");
+    setSourceRef("");
+    setContent("");
+  }
 
   return (
     <main className="minha-delpi-chat">
@@ -41,6 +70,12 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
         {error ? (
           <div className="mdc-chat-alert" role="alert">
             {error}
+          </div>
+        ) : null}
+
+        {successMessage ? (
+          <div className="mdc-chat-alert mdc-chat-alert--success" role="status">
+            {successMessage}
           </div>
         ) : null}
 
@@ -70,6 +105,63 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
             ) : (
               <p className="mdc-chat-muted">Carregando provider...</p>
             )}
+          </article>
+
+          <article className="mdc-admin-card">
+            <h2>Novo documento</h2>
+
+            <form
+              className="mdc-admin-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleCreateDocument();
+              }}
+            >
+              <label>
+                <span>Título</span>
+                <input
+                  value={title}
+                  disabled={isMutating}
+                  placeholder="Ex.: Visão geral da Minha DELPI"
+                  onChange={(event) => setTitle(event.target.value)}
+                />
+              </label>
+
+              <label>
+                <span>Tipo da fonte</span>
+                <input
+                  value={sourceType}
+                  disabled={isMutating}
+                  placeholder="manual"
+                  onChange={(event) => setSourceType(event.target.value)}
+                />
+              </label>
+
+              <label>
+                <span>Referência da fonte</span>
+                <input
+                  value={sourceRef}
+                  disabled={isMutating}
+                  placeholder="seed:minha-delpi-visao-geral"
+                  onChange={(event) => setSourceRef(event.target.value)}
+                />
+              </label>
+
+              <label>
+                <span>Conteúdo</span>
+                <textarea
+                  value={content}
+                  disabled={isMutating}
+                  rows={8}
+                  placeholder="Cole aqui o conteúdo que será indexado no RAG."
+                  onChange={(event) => setContent(event.target.value)}
+                />
+              </label>
+
+              <button type="submit" disabled={!canSubmitDocument || isMutating}>
+                {isMutating ? "Processando..." : "Ingerir documento"}
+              </button>
+            </form>
           </article>
 
           <article className="mdc-admin-card mdc-admin-card--wide">

@@ -12,6 +12,20 @@ type AdminApiOptions = {
   getAccessToken?: TokenProvider;
 };
 
+export type CreateKnowledgeDocumentPayload = {
+  title: string;
+  sourceType: string;
+  sourceRef?: string;
+  content: string;
+  metadata?: Record<string, unknown>;
+};
+
+export type CreateKnowledgeDocumentResponse = {
+  id: string;
+  title: string;
+  chunks: number;
+};
+
 async function getAuthHeaders(options: AdminApiOptions): Promise<HeadersInit> {
   const token = await options.getAccessToken?.();
 
@@ -64,6 +78,19 @@ export async function listKnowledgeDocuments(
   return parseJsonResponse<AdminKnowledgeDocument[]>(response);
 }
 
+export async function createKnowledgeDocument(
+  payload: CreateKnowledgeDocumentPayload,
+  options: AdminApiOptions = {},
+): Promise<CreateKnowledgeDocumentResponse> {
+  const response = await fetch(`${API_BASE_URL}/knowledge/documents`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<CreateKnowledgeDocumentResponse>(response);
+}
+
 export async function deactivateKnowledgeDocument(
   documentId: string,
   options: AdminApiOptions = {},
@@ -78,7 +105,6 @@ export async function deactivateKnowledgeDocument(
 
   return parseJsonResponse<AdminKnowledgeDocument>(response);
 }
-
 
 export async function reactivateKnowledgeDocument(
   documentId: string,
