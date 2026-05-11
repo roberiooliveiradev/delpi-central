@@ -1,3 +1,4 @@
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 
 import type {
@@ -120,9 +121,22 @@ export function ChatMessageList({
                 className="mdc-chat-message-action"
                 type="button"
                 onClick={() => void handleCopy(message.id, message.content)}
-                aria-label="Copiar resposta"
+                aria-label={
+                  copiedMessageId === message.id
+                    ? "Resposta copiada"
+                    : "Copiar resposta"
+                }
+                title={
+                  copiedMessageId === message.id
+                    ? "Resposta copiada"
+                    : "Copiar resposta"
+                }
               >
-                {copiedMessageId === message.id ? "Copiado" : "Copiar"}
+                {copiedMessageId === message.id ? (
+                  <Check size={15} aria-hidden="true" />
+                ) : (
+                  <Copy size={15} aria-hidden="true" />
+                )}
               </button>
             ) : null}
           </div>
