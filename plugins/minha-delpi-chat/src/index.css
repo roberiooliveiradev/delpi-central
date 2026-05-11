@@ -1,0 +1,259 @@
+/* =========================================
+   MINHA DELPI CHAT — TOKENS LOCAIS DO PLUGIN
+   Prefixo: --mdc-*
+   Regra: não sobrescrever tokens globais do Portal.
+========================================= */
+
+:root {
+  --mdc-font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  --mdc-bg: var(--surface, #ffffff);
+  --mdc-bg-soft: var(--surface-2, #f7f7f7);
+  --mdc-bg-muted: var(--surface-3, #fafafa);
+
+  --mdc-card-bg: var(--surface, #ffffff);
+  --mdc-card-border: var(--border, #e6e6e6);
+  --mdc-card-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+
+  --mdc-title: var(--secundary, #003866);
+  --mdc-title-soft: color-mix(in srgb, var(--secundary, #003866) 84%, white);
+  --mdc-text: var(--text, #111111);
+  --mdc-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
+
+  --mdc-primary: var(--primary, #089bdb);
+  --mdc-secondary: var(--secundary, #003866);
+  --mdc-success: var(--success, #067647);
+  --mdc-danger: var(--danger, #b42318);
+
+  --mdc-control-bg: var(--control-bg, var(--surface, #ffffff));
+  --mdc-control-text: var(--control-text, var(--text, #111111));
+  --mdc-control-border: var(--control-border, var(--border-2, #d9d9d9));
+  --mdc-control-placeholder: var(--control-placeholder, rgba(17, 17, 17, 0.55));
+
+  --mdc-focus-ring: var(
+    --focus-ring,
+    0 0 0 3px color-mix(in srgb, var(--primary, #089bdb) 25%, transparent)
+  );
+
+  --mdc-user-message-bg: color-mix(in srgb, var(--primary, #089bdb) 12%, var(--surface, #ffffff));
+  --mdc-user-message-border: color-mix(in srgb, var(--primary, #089bdb) 28%, transparent);
+
+  --mdc-assistant-message-bg: var(--surface-3, #fafafa);
+  --mdc-assistant-message-border: var(--border, #e6e6e6);
+
+  --mdc-badge-bg: color-mix(in srgb, var(--primary, #089bdb) 10%, transparent);
+  --mdc-badge-text: var(--secundary, #003866);
+  --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 22%, transparent);
+
+  --mdc-radius-sm: 10px;
+  --mdc-radius-md: 14px;
+  --mdc-radius-lg: 18px;
+  --mdc-radius-xl: 24px;
+
+  --mdc-space-1: 4px;
+  --mdc-space-2: 8px;
+  --mdc-space-3: 12px;
+  --mdc-space-4: 16px;
+  --mdc-space-5: 20px;
+  --mdc-space-6: 24px;
+  --mdc-space-8: 32px;
+}
+
+/* =========================================
+   DARK MODE LOCAL DO PLUGIN
+========================================= */
+
+:root[data-theme="dark"] {
+  --mdc-bg: var(--surface, #0f1115);
+  --mdc-bg-soft: var(--surface-2, #1b2030);
+  --mdc-bg-muted: var(--surface-3, #111521);
+
+  --mdc-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+  --mdc-card-border: rgba(255, 255, 255, 0.1);
+  --mdc-card-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.55));
+
+  --mdc-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
+  --mdc-title-soft: color-mix(in srgb, var(--primary, #089bdb) 52%, white);
+  --mdc-text: var(--text, rgba(255, 255, 255, 0.88));
+  --mdc-text-muted: var(--text-muted, rgba(255, 255, 255, 0.74));
+
+  --mdc-control-bg: var(--control-bg, var(--surface-2, #1b2030));
+  --mdc-control-text: var(--control-text, rgba(255, 255, 255, 0.88));
+  --mdc-control-border: var(--control-border, rgba(255, 255, 255, 0.16));
+  --mdc-control-placeholder: var(--control-placeholder, rgba(255, 255, 255, 0.55));
+
+  --mdc-user-message-bg: color-mix(in srgb, var(--primary, #089bdb) 18%, transparent);
+  --mdc-user-message-border: color-mix(in srgb, var(--primary, #089bdb) 40%, transparent);
+
+  --mdc-assistant-message-bg: color-mix(in srgb, var(--surface-3, #111521) 88%, black);
+  --mdc-assistant-message-border: rgba(255, 255, 255, 0.08);
+
+  --mdc-badge-bg: color-mix(in srgb, var(--primary, #089bdb) 16%, transparent);
+  --mdc-badge-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
+  --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
+}
+
+/* =========================================
+   DARK MODE AUTOMÁTICO
+========================================= */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --mdc-bg: var(--surface, #0f1115);
+    --mdc-bg-soft: var(--surface-2, #1b2030);
+    --mdc-bg-muted: var(--surface-3, #111521);
+
+    --mdc-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+    --mdc-card-border: rgba(255, 255, 255, 0.1);
+    --mdc-card-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.55));
+
+    --mdc-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
+    --mdc-title-soft: color-mix(in srgb, var(--primary, #089bdb) 52%, white);
+    --mdc-text: var(--text, rgba(255, 255, 255, 0.88));
+    --mdc-text-muted: var(--text-muted, rgba(255, 255, 255, 0.74));
+
+    --mdc-control-bg: var(--control-bg, var(--surface-2, #1b2030));
+    --mdc-control-text: var(--control-text, rgba(255, 255, 255, 0.88));
+    --mdc-control-border: var(--control-border, rgba(255, 255, 255, 0.16));
+    --mdc-control-placeholder: var(--control-placeholder, rgba(255, 255, 255, 0.55));
+
+    --mdc-user-message-bg: color-mix(in srgb, var(--primary, #089bdb) 18%, transparent);
+    --mdc-user-message-border: color-mix(in srgb, var(--primary, #089bdb) 40%, transparent);
+
+    --mdc-assistant-message-bg: color-mix(in srgb, var(--surface-3, #111521) 88%, black);
+    --mdc-assistant-message-border: rgba(255, 255, 255, 0.08);
+
+    --mdc-badge-bg: color-mix(in srgb, var(--primary, #089bdb) 16%, transparent);
+    --mdc-badge-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
+    --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
+  }
+}
+
+/* =========================================
+   ESCOPO DO PLUGIN
+   Não estilizar body/html/#root globalmente.
+========================================= */
+
+.minha-delpi-chat,
+.minha-delpi-chat * {
+  box-sizing: border-box;
+}
+
+.minha-delpi-chat {
+  width: 100%;
+  min-height: 100%;
+  color: var(--mdc-text);
+  font-family: var(--mdc-font-family);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.minha-delpi-chat button,
+.minha-delpi-chat input,
+.minha-delpi-chat select,
+.minha-delpi-chat textarea {
+  font: inherit;
+}
+
+.minha-delpi-chat button {
+  color: var(--mdc-control-text);
+  background: var(--mdc-control-bg);
+  border: 1px solid var(--mdc-control-border);
+  border-radius: var(--mdc-radius-sm);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.minha-delpi-chat button:hover:not(:disabled) {
+  border-color: var(--mdc-primary);
+  color: var(--mdc-primary);
+  background: var(--mdc-bg-soft);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+}
+
+.minha-delpi-chat button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.minha-delpi-chat input,
+.minha-delpi-chat select,
+.minha-delpi-chat textarea {
+  color: var(--mdc-control-text);
+  background: var(--mdc-control-bg);
+  border: 1px solid var(--mdc-control-border);
+  border-radius: var(--mdc-radius-sm);
+}
+
+.minha-delpi-chat input::placeholder,
+.minha-delpi-chat textarea::placeholder {
+  color: var(--mdc-control-placeholder);
+}
+
+.minha-delpi-chat :focus-visible {
+  outline: none;
+  box-shadow: var(--mdc-focus-ring);
+}
+
+.minha-delpi-chat a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.minha-delpi-chat img,
+.minha-delpi-chat svg {
+  display: block;
+}
+
+.minha-delpi-chat ::selection {
+  background: color-mix(in srgb, var(--mdc-primary) 24%, transparent);
+}
+
+/* Scrollbar apenas dentro do plugin */
+
+.minha-delpi-chat {
+  scrollbar-width: thin;
+  scrollbar-color:
+    color-mix(in srgb, var(--mdc-primary) 38%, transparent)
+    transparent;
+}
+
+.minha-delpi-chat * {
+  scrollbar-width: thin;
+  scrollbar-color:
+    color-mix(in srgb, var(--mdc-primary) 38%, transparent)
+    transparent;
+}
+
+.minha-delpi-chat *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.minha-delpi-chat *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.minha-delpi-chat *::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--mdc-primary) 38%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.minha-delpi-chat *::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 52%, transparent);
+  background-clip: padding-box;
+}

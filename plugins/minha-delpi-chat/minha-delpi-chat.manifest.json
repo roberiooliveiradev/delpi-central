@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "minha-delpi-chat",
+  "name": "Minha DELPI Chat",
+  "description": "Assistente conversacional corporativo da Minha DELPI.",
+  "icon": "message-circle",
+  "version": "1.0.0",
+  "type": "microfrontend",
+  "basePath": "/apps/minha-delpi-chat",
+  "entry": "/apps/minha-delpi-chat/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "minha-delpi.chat.access",
+      "name": "Acessar Minha DELPI Chat",
+      "description": "Permite acessar o assistente conversacional da Minha DELPI.",
+      "module": "minha-delpi-chat"
+    },
+    {
+      "code": "minha-delpi.chat.ask",
+      "name": "Enviar perguntas ao Minha DELPI Chat",
+      "description": "Permite enviar mensagens ao assistente conversacional.",
+      "module": "minha-delpi-chat"
+    },
+    {
+      "code": "minha-delpi.chat.history.view",
+      "name": "Visualizar histórico do Minha DELPI Chat",
+      "description": "Permite visualizar histórico de conversas autorizado.",
+      "module": "minha-delpi-chat"
+    },
+    {
+      "code": "minha-delpi.chat.audit.view",
+      "name": "Visualizar auditoria do Minha DELPI Chat",
+      "description": "Permite visualizar eventos auditáveis do módulo de chat.",
+      "module": "minha-delpi-chat"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/minha-delpi-chat",
+      "label": "Minha DELPI Chat",
+      "permission": "minha-delpi.chat.access",
+      "icon": "message-circle",
+      "entry": null,
+      "order": 20,
+      "showInMenu": true
+    }
+  ],
+  "backend": {
+    "audience": "delpi-central",
+    "baseUrl": "/apps/minha-delpi-ai/api",
+    "issuer": "https://www.minhadelpi.com.br/auth",
+    "required": true,
+    "serviceName": "minha-delpi-ai-api",
+    "validateJwt": true
+  },
+  "ui": {
+    "renderMode": "federated"
+  }
+}

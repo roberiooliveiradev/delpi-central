@@ -1,0 +1,48 @@
+.minha-delpi-chat {
+  padding: var(--mdc-space-6);
+}
+
+.minha-delpi-chat__card {
+  max-width: 920px;
+  padding: var(--mdc-space-8);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+}
+
+.minha-delpi-chat__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin: 0 0 var(--mdc-space-4);
+  padding: 6px 10px;
+  border: 1px solid var(--mdc-badge-border);
+  border-radius: 999px;
+  color: var(--mdc-badge-text);
+  background: var(--mdc-badge-bg);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.minha-delpi-chat__card h1 {
+  margin: 0 0 var(--mdc-space-3);
+  color: var(--mdc-title);
+  font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.minha-delpi-chat__card p {
+  max-width: 680px;
+  margin: 0 0 var(--mdc-space-4);
+  color: var(--mdc-text-muted);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.minha-delpi-chat__card small {
+  color: var(--mdc-text-muted);
+}

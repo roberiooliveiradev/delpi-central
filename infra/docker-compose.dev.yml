@@ -185,6 +185,23 @@ services:
 
     networks:
       - delpi-network
+  minha-delpi-chat:
+    build:
+      context: ../plugins/minha-delpi-chat
+      dockerfile: Dockerfile
+
+    container_name: delpi-minha-delpi-chat
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/minha-delpi-chat:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
   dashboard-lmps:
     build:
       context: ../plugins/dashboard-lmps
@@ -302,7 +319,8 @@ services:
       - strategic-indicators
       - api-delpi
       - dashboard-lmps
-
+      - minha-delpi-chat
+      
     networks:
       - delpi-network
 
