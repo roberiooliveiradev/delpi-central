@@ -4,6 +4,7 @@ import {
   createChatSession,
   listChatMessages,
   listChatSessions,
+  renameChatSession,
 } from "../../data/api/chatApi";
 import type {
   ChatMessage,
@@ -104,6 +105,45 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [options.getAccessToken],
   );
 
+  const renameSession = useCallback(
+    async (sessionId: string, title: string) => {
+      const normalizedTitle = title.trim();
+
+      if (!normalizedTitle) {
+        setError("Informe um título para a conversa.");
+        return null;
+      }
+
+      setError(null);
+
+      try {
+        const updatedSession = await renameChatSession(
+          sessionId,
+          normalizedTitle,
+          {
+            getAccessToken: options.getAccessToken,
+          },
+        );
+
+        setSessions((current) =>
+          current.map((session) =>
+            session.id === sessionId ? updatedSession : session,
+          ),
+        );
+
+        setActiveSession((current) =>
+          current?.id === sessionId ? updatedSession : current,
+        );
+
+        return updatedSession;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao renomear conversa.");
+        return null;
+      }
+    },
+    [options.getAccessToken],
+  );
+
   const sendMessage = useCallback(async () => {
     const message = draft.trim();
 
@@ -189,5 +229,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     loadSessions,
     startSession,
     selectSession,
+    renameSession,
   };
 }

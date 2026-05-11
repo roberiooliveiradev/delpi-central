@@ -8,11 +8,13 @@ from app.interfaces.http.rate_limit_decorators import rate_limit
 
 from app.application.dto.create_chat_session_request import CreateChatSessionRequest
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
+from app.application.use_cases.rename_chat_session_use_case import RenameChatSessionRequest
 from app.application.use_cases.get_chat_status_use_case import GetChatStatusUseCase
 from app.composition.chat_composer import (
     make_create_chat_session_use_case,
     make_get_chat_history_use_case,
     make_list_chat_sessions_use_case,
+    make_rename_chat_session_use_case,
     make_send_chat_message_use_case,
     make_stream_chat_message_use_case,
 )
@@ -68,6 +70,54 @@ def list_sessions():
     result = use_case.execute(g.current_user.sub)
 
     return jsonify([asdict(session) for session in result]), 200
+
+
+
+
+@chat_bp.patch("/sessions/<session_id>")
+@require_permission("minha-delpi.chat.history.view")
+def rename_session(session_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_rename_chat_session_use_case()
+
+    try:
+        session = use_case.execute(
+            RenameChatSessionRequest(
+                user_id=g.current_user.sub,
+                session_id=session_id,
+                title=payload.get("title", ""),
+            )
+        )
+
+        if not session:
+            db.session.rollback()
+            return jsonify(
+                {
+                    "errors": [
+                        {
+                            "code": "not_found",
+                            "message": "Resource not found",
+                            "path": "_global",
+                        }
+                    ]
+                }
+            ), 404
+
+        db.session.commit()
+
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(session)), 200
 
 
 @chat_bp.get("/sessions/<session_id>/messages")

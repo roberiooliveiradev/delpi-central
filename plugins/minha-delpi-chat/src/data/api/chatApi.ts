@@ -181,3 +181,17 @@ export async function streamChatMessage(
     }
   }
 }
+
+export async function renameChatSession(
+  sessionId: string,
+  title: string,
+  options: ChatApiOptions = {},
+): Promise<ChatSession> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify({ title }),
+  });
+
+  return parseJsonResponse<ChatSession>(response);
+}

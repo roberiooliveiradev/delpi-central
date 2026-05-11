@@ -6,6 +6,7 @@ type ChatSidebarProps = {
   isLoading?: boolean;
   onNewSession: () => void;
   onSelectSession: (session: ChatSession) => void;
+  onRenameSession: (sessionId: string, title: string) => Promise<ChatSession | null>;
 };
 
 export function ChatSidebar({
@@ -14,7 +15,25 @@ export function ChatSidebar({
   isLoading,
   onNewSession,
   onSelectSession,
+  onRenameSession,
 }: ChatSidebarProps) {
+  async function handleRenameSession(session: ChatSession) {
+    const currentTitle = session.title || "Conversa sem título";
+    const nextTitle = window.prompt("Novo nome da conversa:", currentTitle);
+
+    if (nextTitle === null) {
+      return;
+    }
+
+    const normalizedTitle = nextTitle.trim();
+
+    if (!normalizedTitle || normalizedTitle === currentTitle) {
+      return;
+    }
+
+    await onRenameSession(session.id, normalizedTitle);
+  }
+
   return (
     <aside className="mdc-chat-sidebar" aria-label="Conversas">
       <div className="mdc-chat-sidebar__header">
@@ -35,19 +54,33 @@ export function ChatSidebar({
       ) : (
         <div className="mdc-chat-session-list">
           {sessions.map((session) => (
-            <button
+            <div
               key={session.id}
-              type="button"
               className={
                 session.id === activeSessionId
-                  ? "mdc-chat-session mdc-chat-session--active"
-                  : "mdc-chat-session"
+                  ? "mdc-chat-session-row mdc-chat-session-row--active"
+                  : "mdc-chat-session-row"
               }
-              onClick={() => onSelectSession(session)}
             >
-              <span>{session.title || "Conversa sem título"}</span>
-              <small>{session.context || "geral"}</small>
-            </button>
+              <button
+                type="button"
+                className="mdc-chat-session"
+                onClick={() => onSelectSession(session)}
+              >
+                <span>{session.title || "Conversa sem título"}</span>
+                <small>{session.context || "geral"}</small>
+              </button>
+
+              <button
+                type="button"
+                className="mdc-chat-session-action"
+                onClick={() => void handleRenameSession(session)}
+                aria-label={`Renomear conversa ${session.title || "sem título"}`}
+                title="Renomear conversa"
+              >
+                Renomear
+              </button>
+            </div>
           ))}
         </div>
       )}

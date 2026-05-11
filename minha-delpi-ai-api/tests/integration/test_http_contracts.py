@@ -150,3 +150,57 @@ def test_admin_system_check_with_token_returns_status():
     assert "pgvector" in payload
     assert "tables" in payload
     assert "llm" in payload
+
+
+def test_rename_chat_session_with_token_returns_updated_session():
+    require_token()
+
+    create_response = requests.post(
+        api_url("/chat/sessions"),
+        headers=auth_headers(),
+        json={"title": "Sessão antes", "context": "geral"},
+        timeout=10,
+    )
+
+    assert create_response.status_code == 201
+    session_id = create_response.json()["id"]
+
+    rename_response = requests.patch(
+        api_url(f"/chat/sessions/{session_id}"),
+        headers=auth_headers(),
+        json={"title": "Sessão renomeada"},
+        timeout=10,
+    )
+
+    assert rename_response.status_code == 200
+    payload = rename_response.json()
+
+    assert payload["id"] == session_id
+    assert payload["title"] == "Sessão renomeada"
+
+
+def test_rename_chat_session_with_token_returns_updated_session():
+    require_token()
+
+    create_response = requests.post(
+        api_url("/chat/sessions"),
+        headers=auth_headers(),
+        json={"title": "Sessão antes", "context": "geral"},
+        timeout=10,
+    )
+
+    assert create_response.status_code == 201
+    session_id = create_response.json()["id"]
+
+    rename_response = requests.patch(
+        api_url(f"/chat/sessions/{session_id}"),
+        headers=auth_headers(),
+        json={"title": "Sessão renomeada"},
+        timeout=10,
+    )
+
+    assert rename_response.status_code == 200
+    payload = rename_response.json()
+
+    assert payload["id"] == session_id
+    assert payload["title"] == "Sessão renomeada"

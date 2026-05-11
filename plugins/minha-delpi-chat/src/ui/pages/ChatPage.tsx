@@ -26,6 +26,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     cancelStreaming,
     startSession,
     selectSession,
+    renameSession,
   } = useChatSession({ getAccessToken });
 
   return (
@@ -37,6 +38,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           isLoading={isLoadingSessions}
           onNewSession={startSession}
           onSelectSession={selectSession}
+          onRenameSession={renameSession}
         />
 
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">

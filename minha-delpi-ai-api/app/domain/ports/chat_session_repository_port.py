@@ -19,6 +19,16 @@ class ChatSessionRepositoryPort(ABC):
     def list_sessions_by_user(self, user_id: UUID) -> list[ChatSession]:
         raise NotImplementedError
 
+
+    @abstractmethod
+    def rename_session(
+        self,
+        session_id: UUID,
+        user_id: UUID,
+        title: str,
+    ) -> ChatSession | None:
+        raise NotImplementedError
+
     @abstractmethod
     def get_session_by_id(self, session_id: UUID) -> ChatSession | None:
         raise NotImplementedError
