@@ -9,6 +9,11 @@ from app.domain.exceptions.authorization_exceptions import (
     AuthorizationError,
     CoreApiUnavailableError,
 )
+from app.domain.exceptions.chat_exceptions import (
+    ChatSessionAccessDeniedError,
+    ChatSessionNotFoundError,
+    InvalidChatSessionInputError,
+)
 from app.interfaces.http.utils.errors import error_response, not_found, server_error
 
 
@@ -51,6 +56,30 @@ def register_error_handlers(app):
             status_code=503,
             code=getattr(error, "code", "core_api.unavailable"),
             message=getattr(error, "message", "Core API unavailable"),
+        )
+
+    @app.errorhandler(ChatSessionNotFoundError)
+    def handle_chat_session_not_found(error):
+        return error_response(
+            status_code=404,
+            code=getattr(error, "code", "chat.session_not_found"),
+            message=getattr(error, "message", "Chat session not found"),
+        )
+
+    @app.errorhandler(ChatSessionAccessDeniedError)
+    def handle_chat_session_access_denied(error):
+        return error_response(
+            status_code=403,
+            code=getattr(error, "code", "chat.session_access_denied"),
+            message=getattr(error, "message", "Chat session access denied"),
+        )
+
+    @app.errorhandler(InvalidChatSessionInputError)
+    def handle_invalid_chat_session_input(error):
+        return error_response(
+            status_code=400,
+            code=getattr(error, "code", "chat.invalid_session_input"),
+            message=getattr(error, "message", "Invalid chat session input"),
         )
 
     @app.errorhandler(404)

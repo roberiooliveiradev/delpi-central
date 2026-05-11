@@ -15,6 +15,14 @@ def error_response(status_code: int, code: str, message: str, path: str = "_glob
     return jsonify(payload), status_code
 
 
+def bad_request(message: str = "Bad request"):
+    return error_response(400, "bad_request", message)
+
+
+def forbidden(message: str = "Permission denied"):
+    return error_response(403, "forbidden", message)
+
+
 def not_found(message: str = "Resource not found"):
     return error_response(404, "not_found", message)
 
