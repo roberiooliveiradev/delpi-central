@@ -35,3 +35,11 @@ class KnowledgeRepositoryPort(ABC):
         limit: int,
     ) -> list[KnowledgeChunk]:
         raise NotImplementedError
+
+    @abstractmethod
+    def list_documents(self, limit: int = 100) -> list[KnowledgeDocument]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def deactivate_document(self, document_id: UUID) -> KnowledgeDocument | None:
+        raise NotImplementedError

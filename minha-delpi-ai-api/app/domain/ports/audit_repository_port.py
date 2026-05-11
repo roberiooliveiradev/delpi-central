@@ -14,3 +14,7 @@ class AuditRepositoryPort(ABC):
         metadata: dict | None = None,
     ) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    def list_logs(self, limit: int = 100) -> list[dict]:
+        raise NotImplementedError

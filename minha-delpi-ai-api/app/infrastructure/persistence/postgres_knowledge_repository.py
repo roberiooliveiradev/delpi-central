@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
 from app.domain.entities.knowledge_chunk import KnowledgeChunk
@@ -93,6 +94,32 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
             )
 
         return result
+
+
+    def list_documents(self, limit: int = 100) -> list[KnowledgeDocument]:
+        models = (
+            AiKnowledgeDocumentModel.query
+            .order_by(AiKnowledgeDocumentModel.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+        return [self._to_document_entity(model) for model in models]
+
+    def deactivate_document(self, document_id: UUID) -> KnowledgeDocument | None:
+        model = AiKnowledgeDocumentModel.query.filter(
+            AiKnowledgeDocumentModel.id == document_id
+        ).first()
+
+        if not model:
+            return None
+
+        model.active = False
+        model.updated_at = datetime.now(timezone.utc)
+
+        db.session.flush()
+
+        return self._to_document_entity(model)
 
     def _to_document_entity(self, model: AiKnowledgeDocumentModel) -> KnowledgeDocument:
         return KnowledgeDocument(

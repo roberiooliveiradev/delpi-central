@@ -26,3 +26,26 @@ class PostgresAuditRepository(AuditRepositoryPort):
 
         db.session.add(model)
         db.session.flush()
+
+    def list_logs(self, limit: int = 100) -> list[dict]:
+        models = (
+            AiAuditLogModel.query
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+        return [
+            {
+                "id": model.id,
+                "userId": str(model.user_id) if model.user_id else None,
+                "action": model.action,
+                "promptHash": model.prompt_hash,
+                "context": model.context,
+                "toolCalls": model.tool_calls,
+                "metadata": model.audit_metadata,
+                "createdAt": model.created_at.isoformat(),
+            }
+            for model in models
+        ]
+
