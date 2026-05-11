@@ -116,6 +116,26 @@ services:
     networks:
       - delpi-network
 
+  minha-delpi-ai-api:
+    build:
+      context: ../minha-delpi-ai-api
+      dockerfile: Dockerfile.prod
+
+    container_name: delpi-minha-delpi-ai-api
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
   portal:
     build:
       context: ../portal
@@ -297,8 +317,9 @@ services:
       - api-delpi
       - strategic-indicators
       - dashboard-lmps
+      - minha-delpi-ai-api
       - minha-delpi-chat
-      
+
     logging:
       driver: "json-file"
       options:

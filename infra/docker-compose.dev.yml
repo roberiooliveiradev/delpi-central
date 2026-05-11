@@ -121,7 +121,24 @@ services:
 
     networks:
       - delpi-network
+  minha-delpi-ai-api:
+    build:
+      context: ../minha-delpi-ai-api
+      dockerfile: Dockerfile.dev
 
+    container_name: delpi-minha-delpi-ai-api
+    restart: unless-stopped
+
+    environment:
+      FLASK_APP: app.main:app
+      FLASK_ENV: development
+      TZ: ${TZ}
+
+    volumes:
+      - ../minha-delpi-ai-api:/app
+
+    networks:
+      - delpi-network
 
   portal:
     build:
@@ -319,8 +336,9 @@ services:
       - strategic-indicators
       - api-delpi
       - dashboard-lmps
+      - minha-delpi-ai-api
       - minha-delpi-chat
-      
+
     networks:
       - delpi-network
 
