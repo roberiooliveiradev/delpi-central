@@ -126,6 +126,11 @@ services:
 
     environment:
       TZ: ${TZ}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS:-RS256}
 
     logging:
       driver: "json-file"
