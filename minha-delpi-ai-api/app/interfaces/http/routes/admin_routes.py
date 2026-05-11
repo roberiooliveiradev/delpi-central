@@ -26,9 +26,16 @@ def llm_status():
 @admin_bp.get("/knowledge/documents")
 @require_permission("minha-delpi.chat.admin")
 def list_knowledge_documents():
-    limit = request.args.get("limit", 100)
     use_case = make_list_admin_knowledge_documents_use_case()
-    return jsonify(use_case.execute(limit=limit)), 200
+
+    return jsonify(
+        use_case.execute(
+            limit=request.args.get("limit", 20),
+            offset=request.args.get("offset", 0),
+            search=request.args.get("search"),
+            active=request.args.get("active"),
+        )
+    ), 200
 
 
 @admin_bp.post("/knowledge/documents/<document_id>/deactivate")
