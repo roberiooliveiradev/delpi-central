@@ -49,7 +49,10 @@ class PromptPolicyService:
 
         sections.append(
             "Instruções para resposta:\n"
-            "- Use primeiro os resultados de ferramentas quando eles responderem diretamente à pergunta.\n"
+            "- Se uma ferramenta retornar dados que respondem diretamente à pergunta, responda de forma direta e objetiva usando esses dados.\n"
+            "- Para `get_current_user`, informe nome e e-mail quando disponíveis. Não responda de forma genérica.\n"
+            "- Para `get_allowed_apps`, liste os aplicativos autorizados pelo nome e, se útil, pelo caminho/basePath.\n"
+            "- Para `get_allowed_routes`, liste os menus ou rotas autorizadas relevantes.\n"
             "- Use o contexto documental como apoio quando disponível.\n"
             "- Não cite ferramentas que não foram executadas.\n"
             "- Não diga que acessou banco de dados; diga que consultou informações autorizadas da plataforma, quando necessário.\n"

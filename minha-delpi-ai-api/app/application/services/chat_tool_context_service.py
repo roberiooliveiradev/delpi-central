@@ -1,3 +1,5 @@
+import json
+
 from app.application.dto.execute_tool_request import ExecuteToolRequest
 from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
 from app.domain.services.tool_selection_service import ToolSelectionService
@@ -74,9 +76,14 @@ class ChatToolContextService:
         data,
         metadata: dict | None,
     ) -> str:
+        payload = {
+            "tool": name,
+            "reason": reason,
+            "metadata": metadata or {},
+            "authorizedResult": data,
+        }
+
         return (
-            f"[Ferramenta: {name}]\n"
-            f"Motivo: {reason or 'não informado'}\n"
-            f"Metadados: {metadata or {}}\n"
-            f"Resultado autorizado: {data}"
+            f"[Ferramenta autorizada: {name}]\n"
+            f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
         )
