@@ -671,3 +671,32 @@
   font-size: clamp(1.35rem, 2vw, 2rem);
   line-height: 1;
 }
+
+.mdc-chat-message-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+  margin-bottom: var(--mdc-space-2);
+}
+
+.mdc-chat-message-action {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 999px;
+  background: var(--mdc-card-bg);
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  line-height: 1;
+  padding: 0.4rem 0.7rem;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.mdc-chat-message-action:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+  color: var(--mdc-title);
+  background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-card-bg));
+}

@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type {
   ChatMessage,
   ChatSource,
@@ -40,6 +42,28 @@ function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
   return [];
 }
 
+async function copyTextToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "true");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try {
+    document.execCommand("copy");
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
 export function ChatMessageList({
   messages,
   streamingAnswer,
@@ -47,6 +71,21 @@ export function ChatMessageList({
   streamingToolCalls,
   isLoading,
 }: ChatMessageListProps) {
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+
+  async function handleCopy(messageId: string, content: string) {
+    if (!content.trim()) {
+      return;
+    }
+
+    await copyTextToClipboard(content);
+
+    setCopiedMessageId(messageId);
+    window.setTimeout(() => {
+      setCopiedMessageId((current) => (current === messageId ? null : current));
+    }, 1800);
+  }
+
   if (isLoading) {
     return (
       <div className="mdc-chat-empty">
@@ -71,7 +110,23 @@ export function ChatMessageList({
           key={message.id}
           className={`mdc-chat-message mdc-chat-message--${message.role}`}
         >
-          <strong>{message.role === "user" ? "Você" : "Minha DELPI Chat"}</strong>
+          <div className="mdc-chat-message-header">
+            <strong>
+              {message.role === "user" ? "Você" : "Minha DELPI Chat"}
+            </strong>
+
+            {message.role === "assistant" ? (
+              <button
+                className="mdc-chat-message-action"
+                type="button"
+                onClick={() => void handleCopy(message.id, message.content)}
+                aria-label="Copiar resposta"
+              >
+                {copiedMessageId === message.id ? "Copiado" : "Copiar"}
+              </button>
+            ) : null}
+          </div>
+
           <p>{message.content}</p>
 
           {message.role === "assistant" ? (
@@ -85,7 +140,10 @@ export function ChatMessageList({
 
       {streamingAnswer ? (
         <article className="mdc-chat-message mdc-chat-message--assistant mdc-chat-message--streaming">
-          <strong>Minha DELPI Chat</strong>
+          <div className="mdc-chat-message-header">
+            <strong>Minha DELPI Chat</strong>
+          </div>
+
           <p>{streamingAnswer}</p>
           <ChatToolCalls toolCalls={streamingToolCalls} />
           <ChatSources sources={streamingSources} />
