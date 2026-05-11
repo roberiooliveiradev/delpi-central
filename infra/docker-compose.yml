@@ -116,6 +116,21 @@ services:
     networks:
       - delpi-network
 
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: delpi-ollama
+    restart: unless-stopped
+
+    ports:
+      - "11434:11434"
+
+    volumes:
+      - ollama_data:/root/.ollama
+
+    networks:
+      - delpi-network
+
   minha-delpi-ai-api:
     build:
       context: ../minha-delpi-ai-api
@@ -135,10 +150,15 @@ services:
       CORE_API_BASE_URL: http://core-api:8000
       CORE_API_TIMEOUT_SECONDS: 5
 
-      LLM_PROVIDER: vllm
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
       LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.2}
       LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-1024}
-      VLLM_BASE_URL: http://vllm:8000/v1
+
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:1.5b}
+      OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-300}
+
+      VLLM_BASE_URL: ${VLLM_BASE_URL:-http://vllm:8000/v1}
       VLLM_MODEL: ${VLLM_MODEL:-Qwen/Qwen2.5-7B-Instruct}
       VLLM_API_KEY: ${VLLM_API_KEY:-minha-delpi-local-vllm}
       VLLM_TIMEOUT_SECONDS: ${VLLM_TIMEOUT_SECONDS:-300}
@@ -152,7 +172,7 @@ services:
     depends_on:
       - core-api
       - postgres-plugins
-      - vllm
+      - ollama
 
     networks:
       - delpi-network
@@ -214,6 +234,8 @@ services:
       - delpi-network
 
   vllm:
+    profiles:
+      - gpu
     image: vllm/vllm-openai:latest
     container_name: delpi-vllm
     restart: unless-stopped
@@ -391,4 +413,5 @@ volumes:
   postgres_core_data:
   keycloak_data:
   postgres_plugins_data:
+  ollama_data:
   vllm_cache:

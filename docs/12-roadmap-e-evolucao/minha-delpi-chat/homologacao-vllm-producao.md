@@ -220,3 +220,139 @@ Se vLLM falhar em produção:
 - Definir métricas Prometheus.
 - Definir alerta de erro/latência.
 - Definir política de atualização de modelo.
+
+## Execução em srv-api
+
+### Resultado da verificação de GPU
+
+Data: 2026-05-11  
+Servidor: srv-api  
+Resultado: bloqueado por ausência de GPU NVIDIA detectada no host.
+
+Comandos executados:
+
+    lspci | grep -i nvidia
+
+Resultado:
+
+    Sem retorno.
+
+Comando executado:
+
+    ls -l /dev/nvidia*
+
+Resultado:
+
+    ls: cannot access '/dev/nvidia*': No such file or directory
+
+### Conclusão
+
+O servidor `srv-api` não possui GPU NVIDIA disponível para homologação produtiva do vLLM com aceleração GPU.
+
+A homologação produtiva com vLLM permanece pendente até provisionamento de um host com GPU NVIDIA compatível, driver instalado, `nvidia-smi` funcional e NVIDIA Container Toolkit configurado.
+
+### Decisão temporária
+
+Não subir vLLM como produção neste host.
+
+Opções possíveis:
+
+- Provisionar outro servidor com GPU para vLLM.
+- Manter o `srv-api` usando provider alternativo apenas em contingência.
+- Usar vLLM CPU somente para teste técnico, não como aceite produtivo.
+
+## Decisão temporária — Ollama em produção
+
+Data: 2026-05-11  
+Servidor: srv-api  
+Decisão: usar Ollama temporariamente em produção enquanto não houver host com GPU NVIDIA disponível para vLLM.
+
+### Justificativa
+
+A homologação vLLM com GPU foi bloqueada porque o servidor `srv-api` não possui GPU NVIDIA detectada:
+
+    lspci | grep -i nvidia
+    # sem retorno
+
+    ls -l /dev/nvidia*
+    # No such file or directory
+
+Como a solução deve permanecer 100% open source/self-hosted e não pode usar serviços proprietários de LLM, será usado Ollama como provider produtivo provisório.
+
+### Condições da exceção
+
+- Não usar OpenAI, Azure OpenAI, Anthropic, Gemini ou serviços fechados.
+- Manter `LlmGatewayPort` e troca por variável de ambiente.
+- Manter RAG, RBAC, auditoria e tools autorizadas.
+- Registrar que vLLM continua pendente para produção definitiva.
+- Revisar essa decisão quando houver servidor com GPU.
+
+### Configuração provisória
+
+    LLM_PROVIDER=ollama
+    OLLAMA_BASE_URL=http://ollama:11434
+    OLLAMA_MODEL=qwen2.5:1.5b
+    OLLAMA_TIMEOUT_SECONDS=300
+    LLM_TEMPERATURE=0.2
+    LLM_MAX_TOKENS=1024
+
+### Critério de aceite provisório
+
+- `GET /admin/llm/status` retorna `provider=ollama`.
+- Chat responde via streaming.
+- RAG continua funcionando.
+- Tools continuam funcionando.
+- Auditoria continua funcionando.
+- Nenhuma API proprietária é usada.
+
+### Pendência
+
+Homologar vLLM em servidor com GPU NVIDIA compatível.
+
+## Decisão temporária — Ollama em produção
+
+Data: 2026-05-11  
+Servidor avaliado: srv-api  
+Decisão: usar Ollama temporariamente em produção enquanto não houver host com GPU NVIDIA disponível para vLLM.
+
+### Justificativa
+
+A homologação vLLM com GPU foi bloqueada porque o servidor `srv-api` não possui GPU NVIDIA detectada:
+
+    lspci | grep -i nvidia
+    # sem retorno
+
+    ls -l /dev/nvidia*
+    # No such file or directory
+
+Como a solução deve permanecer 100% open source/self-hosted e não pode usar serviços proprietários de LLM, será usado Ollama como provider produtivo provisório.
+
+### Condições da exceção
+
+- Não usar OpenAI, Azure OpenAI, Anthropic, Gemini ou serviços fechados.
+- Manter `LlmGatewayPort` e troca por variável de ambiente.
+- Manter RAG, RBAC, auditoria e tools autorizadas.
+- Registrar que vLLM continua pendente para produção definitiva.
+- Revisar essa decisão quando houver servidor com GPU.
+
+### Configuração provisória
+
+    LLM_PROVIDER=ollama
+    OLLAMA_BASE_URL=http://ollama:11434
+    OLLAMA_MODEL=qwen2.5:1.5b
+    OLLAMA_TIMEOUT_SECONDS=300
+    LLM_TEMPERATURE=0.2
+    LLM_MAX_TOKENS=1024
+
+### Critério de aceite provisório
+
+- `GET /admin/llm/status` retorna `provider=ollama`.
+- Chat responde via streaming.
+- RAG continua funcionando.
+- Tools continuam funcionando.
+- Auditoria continua funcionando.
+- Nenhuma API proprietária é usada.
+
+### Pendência
+
+Homologar vLLM em servidor com GPU NVIDIA compatível.
