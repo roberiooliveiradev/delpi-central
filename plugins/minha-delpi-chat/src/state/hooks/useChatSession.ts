@@ -4,9 +4,9 @@ import {
   createChatSession,
   listChatMessages,
   listChatSessions,
-  sendChatMessage,
 } from "../../data/api/chatApi";
 import type { ChatMessage, ChatSession } from "../../data/api/chatTypes";
+import { useChatStreaming } from "./useChatStreaming";
 
 type UseChatSessionOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -17,10 +17,14 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [activeSession, setActiveSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
+  const [streamingAnswer, setStreamingAnswer] = useState("");
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { isStreaming, streamMessage, cancelStreaming } = useChatStreaming({
+    getAccessToken: options.getAccessToken,
+  });
 
   const loadSessions = useCallback(async () => {
     setIsLoadingSessions(true);
@@ -33,17 +37,16 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
       setSessions(data);
 
-      if (!activeSession && data.length > 0) {
-        setActiveSession(data[0]);
-      }
+      setActiveSession((current) => current ?? data[0] ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar sessões.");
     } finally {
       setIsLoadingSessions(false);
     }
-  }, [activeSession, options.getAccessToken]);
+  }, [options.getAccessToken]);
 
   const selectSession = useCallback((session: ChatSession) => {
+    setStreamingAnswer("");
     setActiveSession(session);
   }, []);
 
@@ -64,6 +67,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       setSessions((current) => [session, ...current]);
       setActiveSession(session);
       setMessages([]);
+      setStreamingAnswer("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar sessão.");
     }
@@ -89,6 +93,50 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [options.getAccessToken],
   );
 
+  const sendMessage = useCallback(async () => {
+    const message = draft.trim();
+
+    if (!message || !activeSession || isStreaming) {
+      return;
+    }
+
+    setError(null);
+    setStreamingAnswer("");
+
+    try {
+      await streamMessage({
+        sessionId: activeSession.id,
+        message,
+        context: activeSession.context ?? "geral",
+        onToken: (token) => {
+          setStreamingAnswer((current) => current + token);
+        },
+        onDone: async () => {
+          setDraft("");
+          setStreamingAnswer("");
+          await loadMessages(activeSession.id);
+          await loadSessions();
+        },
+        onError: (message) => {
+          setError(message);
+        },
+      });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return;
+      }
+
+      setError(err instanceof Error ? err.message : "Erro ao enviar mensagem.");
+    }
+  }, [
+    activeSession,
+    draft,
+    isStreaming,
+    loadMessages,
+    loadSessions,
+    streamMessage,
+  ]);
+
   useEffect(() => {
     void loadSessions();
   }, [loadSessions]);
@@ -102,50 +150,19 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     void loadMessages(activeSession.id);
   }, [activeSession, loadMessages]);
 
-
-  const sendMessage = useCallback(async () => {
-    const message = draft.trim();
-
-    if (!message || !activeSession) {
-      return;
-    }
-
-    setIsSendingMessage(true);
-    setError(null);
-
-    try {
-      await sendChatMessage(
-        activeSession.id,
-        {
-          message,
-          context: activeSession.context ?? "geral",
-        },
-        {
-          getAccessToken: options.getAccessToken,
-        },
-      );
-
-      setDraft("");
-      await loadMessages(activeSession.id);
-      await loadSessions();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao enviar mensagem.");
-    } finally {
-      setIsSendingMessage(false);
-    }
-  }, [activeSession, draft, loadMessages, loadSessions, options.getAccessToken]);
-
   return {
     sessions,
     activeSession,
     messages,
     draft,
+    streamingAnswer,
     isLoadingSessions,
     isLoadingMessages,
-    isSendingMessage,
+    isStreaming,
     error,
     setDraft,
     sendMessage,
+    cancelStreaming,
     loadSessions,
     startSession,
     selectSession,

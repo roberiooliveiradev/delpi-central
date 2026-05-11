@@ -2,10 +2,15 @@ import type { ChatMessage } from "../../data/api/chatTypes";
 
 type ChatMessageListProps = {
   messages: ChatMessage[];
+  streamingAnswer?: string;
   isLoading?: boolean;
 };
 
-export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
+export function ChatMessageList({
+  messages,
+  streamingAnswer,
+  isLoading,
+}: ChatMessageListProps) {
   if (isLoading) {
     return (
       <div className="mdc-chat-empty">
@@ -14,11 +19,11 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
     );
   }
 
-  if (messages.length === 0) {
+  if (messages.length === 0 && !streamingAnswer) {
     return (
       <div className="mdc-chat-empty">
         <p>Esta conversa ainda não possui mensagens.</p>
-        <small>O envio ao LLM será implementado na próxima etapa do roadmap.</small>
+        <small>Digite uma pergunta para iniciar a conversa.</small>
       </div>
     );
   }
@@ -34,6 +39,13 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
           <p>{message.content}</p>
         </article>
       ))}
+
+      {streamingAnswer ? (
+        <article className="mdc-chat-message mdc-chat-message--assistant mdc-chat-message--streaming">
+          <strong>Minha DELPI Chat</strong>
+          <p>{streamingAnswer}</p>
+        </article>
+      ) : null}
     </div>
   );
 }

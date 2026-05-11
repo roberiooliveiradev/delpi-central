@@ -1,4 +1,6 @@
+import json
 import logging
+from collections.abc import Iterator
 
 import requests
 
@@ -42,3 +44,43 @@ class OllamaLlmGateway(LlmGatewayPort):
             raise LlmProviderUnavailableError("Empty Ollama response")
 
         return str(content).strip()
+
+    def stream(self, messages: list[dict]) -> Iterator[str]:
+        url = f"{self.base_url}/api/chat"
+
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": True,
+        }
+
+        try:
+            with requests.post(
+                url,
+                json=payload,
+                timeout=self.timeout,
+                stream=True,
+            ) as response:
+                response.raise_for_status()
+
+                for raw_line in response.iter_lines(decode_unicode=True):
+                    if not raw_line:
+                        continue
+
+                    try:
+                        data = json.loads(raw_line)
+                    except json.JSONDecodeError:
+                        logger.warning("ollama_invalid_stream_line")
+                        continue
+
+                    if data.get("done"):
+                        break
+
+                    content = (data.get("message") or {}).get("content")
+
+                    if content:
+                        yield str(content)
+
+        except requests.RequestException as exc:
+            logger.exception("ollama_stream_failed")
+            raise LlmProviderUnavailableError("Ollama stream failed") from exc

@@ -13,12 +13,14 @@ export function ChatPage({ getAccessToken }: ChatPageProps) {
     activeSession,
     messages,
     draft,
+    streamingAnswer,
     isLoadingSessions,
     isLoadingMessages,
-    isSendingMessage,
+    isStreaming,
     error,
     setDraft,
     sendMessage,
+    cancelStreaming,
     startSession,
     selectSession,
   } = useChatSession({ getAccessToken });
@@ -55,15 +57,17 @@ export function ChatPage({ getAccessToken }: ChatPageProps) {
 
           <ChatMessageList
             messages={messages}
+            streamingAnswer={streamingAnswer}
             isLoading={isLoadingMessages}
           />
 
           <ChatInput
             value={draft}
             disabled={!activeSession}
-            isSending={isSendingMessage}
+            isSending={isStreaming}
             onChange={setDraft}
             onSubmit={sendMessage}
+            onCancel={cancelStreaming}
           />
         </section>
       </section>

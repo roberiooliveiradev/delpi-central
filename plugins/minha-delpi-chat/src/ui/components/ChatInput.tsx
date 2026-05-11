@@ -4,6 +4,7 @@ type ChatInputProps = {
   isSending?: boolean;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  onCancel?: () => void;
 };
 
 export function ChatInput({
@@ -12,6 +13,7 @@ export function ChatInput({
   isSending,
   onChange,
   onSubmit,
+  onCancel,
 }: ChatInputProps) {
   return (
     <form
@@ -29,12 +31,18 @@ export function ChatInput({
         onChange={(event) => onChange(event.target.value)}
       />
 
-      <button type="submit" disabled={disabled || isSending || !value.trim()}>
-        {isSending ? "Enviando..." : "Enviar"}
-      </button>
+      {isSending ? (
+        <button type="button" onClick={onCancel}>
+          Cancelar
+        </button>
+      ) : (
+        <button type="submit" disabled={disabled || !value.trim()}>
+          Enviar
+        </button>
+      )}
 
       <small>
-        A resposta será gerada localmente pelo Ollama e salva no histórico da sessão.
+        A resposta será exibida em tempo real e salva no histórico ao concluir.
       </small>
     </form>
   );
