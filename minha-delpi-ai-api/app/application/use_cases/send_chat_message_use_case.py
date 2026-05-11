@@ -3,6 +3,7 @@ from uuid import UUID
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.dto.send_chat_message_response import SendChatMessageResponse
+from app.application.services.rag_context_service import RagContextService
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
     ChatSessionNotFoundError,
@@ -22,11 +23,13 @@ class SendChatMessageUseCase:
         audit_repository: AuditRepositoryPort,
         llm_gateway: LlmGatewayPort,
         prompt_policy_service: PromptPolicyService,
+        rag_context_service: RagContextService,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
         self.llm_gateway = llm_gateway
         self.prompt_policy_service = prompt_policy_service
+        self.rag_context_service = rag_context_service
 
     def execute(self, request: SendChatMessageRequest) -> SendChatMessageResponse:
         message = self._validate_message(request.message)
@@ -45,14 +48,26 @@ class SendChatMessageUseCase:
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
         history = previous_messages[-Settings.CHAT_HISTORY_MAX_MESSAGES:]
 
+        rag = self.rag_context_service.build_context(message)
+        sources = rag["sources"]
+
         self.chat_repository.create_message(
             session_id=session_id,
             role="user",
             content=message,
-            metadata={"context": request.context},
+            metadata={
+                "context": request.context,
+                "rag": {
+                    "sources": sources,
+                },
+            },
         )
 
-        llm_messages = self._build_llm_messages(history, message)
+        llm_messages = self._build_llm_messages(
+            history=history,
+            current_message=message,
+            rag_context=rag["context"],
+        )
 
         answer = self.llm_gateway.generate(llm_messages)
 
@@ -63,8 +78,12 @@ class SendChatMessageUseCase:
             metadata={
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
-                "sources": [],
+                "sources": sources,
                 "toolCalls": [],
+                "rag": {
+                    "enabled": True,
+                    "sourceCount": len(sources),
+                },
             },
         )
 
@@ -78,13 +97,15 @@ class SendChatMessageUseCase:
                 "session_id": str(session_id),
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
+                "sources": sources,
+                "rag_enabled": True,
             },
         )
 
         return SendChatMessageResponse(
             messageId=str(assistant_message.id),
             answer=answer,
-            sources=[],
+            sources=sources,
             toolCalls=[],
         )
 
@@ -102,11 +123,16 @@ class SendChatMessageUseCase:
 
         return normalized
 
-    def _build_llm_messages(self, history, current_message: str) -> list[dict]:
+    def _build_llm_messages(
+        self,
+        history,
+        current_message: str,
+        rag_context: str,
+    ) -> list[dict]:
         messages = [
             {
                 "role": "system",
-                "content": self.prompt_policy_service.build_system_prompt(),
+                "content": self.prompt_policy_service.build_rag_prompt(rag_context),
             }
         ]
 

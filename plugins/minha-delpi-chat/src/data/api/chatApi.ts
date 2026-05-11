@@ -15,6 +15,7 @@ type ChatApiOptions = {
 };
 
 type StreamCallbacks = {
+  onSources?: (sources: SendChatMessageResponse["sources"]) => void;
   onToken?: (token: string) => void;
   onDone?: (response: SendChatMessageResponse) => void;
   onError?: (message: string) => void;
@@ -156,6 +157,10 @@ export async function streamChatMessage(
       }
 
       const data = JSON.parse(rawData);
+
+      if (event === "sources") {
+        callbacks.onSources?.(data.sources ?? []);
+      }
 
       if (event === "token") {
         callbacks.onToken?.(data.content ?? "");

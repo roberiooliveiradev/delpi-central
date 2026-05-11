@@ -130,7 +130,10 @@ def stream_message(session_id: str):
             for event in use_case.stream(request_dto):
                 event_type = event.get("type", "message")
 
-                if event_type == "token":
+                if event_type == "sources":
+                    yield _sse("sources", {"sources": event.get("sources", [])})
+
+                elif event_type == "token":
                     yield _sse("token", {"content": event.get("content", "")})
 
                 elif event_type == "done":

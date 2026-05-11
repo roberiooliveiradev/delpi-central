@@ -5,7 +5,7 @@ import {
   listChatMessages,
   listChatSessions,
 } from "../../data/api/chatApi";
-import type { ChatMessage, ChatSession } from "../../data/api/chatTypes";
+import type { ChatMessage, ChatSession, ChatSource } from "../../data/api/chatTypes";
 import { useChatStreaming } from "./useChatStreaming";
 
 type UseChatSessionOptions = {
@@ -18,6 +18,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [streamingAnswer, setStreamingAnswer] = useState("");
+  const [streamingSources, setStreamingSources] = useState<ChatSource[]>([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +48,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
   const selectSession = useCallback((session: ChatSession) => {
     setStreamingAnswer("");
+    setStreamingSources([]);
     setActiveSession(session);
   }, []);
 
@@ -68,6 +70,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       setActiveSession(session);
       setMessages([]);
       setStreamingAnswer("");
+      setStreamingSources([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar sessão.");
     }
@@ -102,18 +105,23 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
     setError(null);
     setStreamingAnswer("");
+    setStreamingSources([]);
 
     try {
       await streamMessage({
         sessionId: activeSession.id,
         message,
         context: activeSession.context ?? "geral",
+        onSources: (sources) => {
+          setStreamingSources(sources);
+        },
         onToken: (token) => {
           setStreamingAnswer((current) => current + token);
         },
         onDone: async () => {
           setDraft("");
           setStreamingAnswer("");
+          setStreamingSources([]);
           await loadMessages(activeSession.id);
           await loadSessions();
         },
@@ -156,6 +164,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     messages,
     draft,
     streamingAnswer,
+    streamingSources,
     isLoadingSessions,
     isLoadingMessages,
     isStreaming,

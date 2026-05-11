@@ -6,12 +6,33 @@ export type ChatSession = {
   updated_at: string;
 };
 
+export type ChatSource = {
+  id?: string;
+  documentId?: string;
+  title?: string | null;
+  sourceType?: string | null;
+  sourceRef?: string | null;
+  chunkIndex?: number | null;
+  score?: number | null;
+};
+
+export type ChatMessageMetadata = {
+  sources?: ChatSource[];
+  toolCalls?: unknown[];
+  rag?: {
+    enabled?: boolean;
+    sourceCount?: number;
+    sources?: ChatSource[];
+  };
+  [key: string]: unknown;
+};
+
 export type ChatMessage = {
   id: string;
   session_id: string;
   role: "user" | "assistant" | "system" | string;
   content: string;
-  metadata: Record<string, unknown> | null;
+  metadata: ChatMessageMetadata | null;
   created_at: string;
 };
 
@@ -28,6 +49,6 @@ export type SendChatMessagePayload = {
 export type SendChatMessageResponse = {
   messageId: string;
   answer: string;
-  sources: unknown[];
+  sources: ChatSource[];
   toolCalls: unknown[];
 };
