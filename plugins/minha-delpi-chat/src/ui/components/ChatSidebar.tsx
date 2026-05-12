@@ -1,4 +1,4 @@
-import { Check, Pencil, Plus, X } from "lucide-react";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import "./ChatSidebar.css";
 import { useState } from "react";
 
@@ -11,6 +11,7 @@ type ChatSidebarProps = {
   onNewSession: () => void;
   onSelectSession: (session: ChatSession) => void;
   onRenameSession: (sessionId: string, title: string) => Promise<ChatSession | null>;
+  onDeleteSession: (sessionId: string) => Promise<boolean>;
 };
 
 function formatSessionDate(value?: string): string {
@@ -39,6 +40,7 @@ export function ChatSidebar({
   onNewSession,
   onSelectSession,
   onRenameSession,
+  onDeleteSession,
 }: ChatSidebarProps) {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -51,6 +53,18 @@ export function ChatSidebar({
   function cancelEditingSession() {
     setEditingSessionId(null);
     setEditingTitle("");
+  }
+
+  async function handleDeleteSession(session: ChatSession) {
+    const confirmed = window.confirm(
+      `Excluir a conversa "${session.title || "sem título"}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    await onDeleteSession(session.id);
   }
 
   async function saveEditingSession(session: ChatSession) {
@@ -166,17 +180,31 @@ export function ChatSidebar({
                       </small>
                     </button>
 
-                    <button
-                      type="button"
-                      className="mdc-chat-session-action"
-                      onClick={() => startEditingSession(session)}
-                      aria-label={`Renomear conversa ${
-                        session.title || "sem título"
-                      }`}
-                      title="Renomear conversa"
-                    >
-                      <Pencil size={15} aria-hidden="true" />
-                    </button>
+                    <div className="mdc-chat-session-actions">
+                      <button
+                        type="button"
+                        className="mdc-chat-session-action"
+                        onClick={() => startEditingSession(session)}
+                        aria-label={`Renomear conversa ${
+                          session.title || "sem título"
+                        }`}
+                        title="Renomear conversa"
+                      >
+                        <Pencil size={15} aria-hidden="true" />
+                      </button>
+
+                      <button
+                        type="button"
+                        className="mdc-chat-session-action"
+                        onClick={() => void handleDeleteSession(session)}
+                        aria-label={`Excluir conversa ${
+                          session.title || "sem título"
+                        }`}
+                        title="Excluir conversa"
+                      >
+                        <Trash2 size={15} aria-hidden="true" />
+                      </button>
+                    </div>
                   </>
                 )}
               </div>

@@ -71,6 +71,59 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
 
         return self._to_session_entity(model)
 
+
+    def delete_session(self, session_id: UUID, user_id: UUID) -> bool:
+        model = (
+            AiChatSessionModel.query
+            .filter(AiChatSessionModel.id == session_id)
+            .filter(AiChatSessionModel.user_id == user_id)
+            .first()
+        )
+
+        if not model:
+            return False
+
+        db.session.delete(model)
+        db.session.flush()
+
+        return True
+
+    def update_user_message(
+        self,
+        message_id: UUID,
+        user_id: UUID,
+        content: str,
+    ) -> ChatMessage | None:
+        model = (
+            AiChatMessageModel.query
+            .join(AiChatSessionModel, AiChatSessionModel.id == AiChatMessageModel.session_id)
+            .filter(AiChatMessageModel.id == message_id)
+            .filter(AiChatMessageModel.role == "user")
+            .filter(AiChatSessionModel.user_id == user_id)
+            .first()
+        )
+
+        if not model:
+            return None
+
+        model.content = content
+
+        metadata = dict(model.message_metadata or {})
+        metadata["edited"] = True
+        metadata["editMode"] = "manual"
+        model.message_metadata = metadata
+
+        session = AiChatSessionModel.query.filter(
+            AiChatSessionModel.id == model.session_id
+        ).first()
+
+        if session:
+            session.updated_at = datetime.now(timezone.utc)
+
+        db.session.flush()
+
+        return self._to_message_entity(model)
+
     def list_messages_by_session(self, session_id: UUID) -> list[ChatMessage]:
         models = (
             AiChatMessageModel.query

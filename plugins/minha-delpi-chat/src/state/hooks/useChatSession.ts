@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   createChatSession,
+  deleteChatSession,
   listChatMessages,
   listChatSessions,
   renameChatSession,
+  updateChatMessage,
 } from "../../data/api/chatApi";
 import type {
   ChatMessage,
@@ -124,6 +126,80 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     },
     [options.getAccessToken],
   );
+
+  const deleteSession = useCallback(
+    async (sessionId: string) => {
+      setError(null);
+
+      try {
+        await deleteChatSession(sessionId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setSessions((current) =>
+          current.filter((session) => session.id !== sessionId),
+        );
+
+        setActiveSession((current) => {
+          if (current?.id !== sessionId) {
+            return current;
+          }
+
+          const nextSession = sessions.find((session) => session.id !== sessionId) ?? null;
+          return nextSession;
+        });
+
+        if (activeSession?.id === sessionId) {
+          setMessages([]);
+        }
+
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao excluir conversa.");
+        return false;
+      }
+    },
+    [activeSession?.id, options.getAccessToken, sessions],
+  );
+
+  const editMessage = useCallback(
+    async (messageId: string, content: string) => {
+      const normalizedContent = content.trim();
+
+      if (!normalizedContent) {
+        setError("Informe uma mensagem.");
+        return null;
+      }
+
+      setError(null);
+
+      try {
+        const updatedMessage = await updateChatMessage(
+          messageId,
+          normalizedContent,
+          {
+            getAccessToken: options.getAccessToken,
+          },
+        );
+
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === messageId ? updatedMessage : message,
+          ),
+        );
+
+        return updatedMessage;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao editar mensagem.");
+        return null;
+      }
+    },
+    [options.getAccessToken],
+  );
+
+  const reuseMessage = useCallback((content: string) => {
+    setDraft(content);
+  }, []);
 
   const renameSession = useCallback(
     async (sessionId: string, title: string) => {
@@ -270,6 +346,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     loadSessions,
     startSession,
     selectSession,
+    deleteSession,
     renameSession,
+    editMessage,
+    reuseMessage,
   };
 }

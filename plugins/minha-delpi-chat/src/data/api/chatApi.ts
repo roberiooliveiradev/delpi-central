@@ -195,3 +195,31 @@ export async function renameChatSession(
 
   return parseJsonResponse<ChatSession>(response);
 }
+
+export async function deleteChatSession(
+  sessionId: string,
+  options: ChatApiOptions = {},
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
+    method: "DELETE",
+    headers: await getAuthHeaders(options),
+  });
+
+  if (!response.ok) {
+    await parseJsonResponse<unknown>(response);
+  }
+}
+
+export async function updateChatMessage(
+  messageId: string,
+  content: string,
+  options: ChatApiOptions = {},
+): Promise<ChatMessage> {
+  const response = await fetch(`${API_BASE_URL}/chat/messages/${messageId}`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify({ content }),
+  });
+
+  return parseJsonResponse<ChatMessage>(response);
+}

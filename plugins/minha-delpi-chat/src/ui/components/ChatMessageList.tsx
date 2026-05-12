@@ -1,4 +1,4 @@
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Pencil, RotateCcw } from "lucide-react";
 import "./ChatMessageList.css";
 import { useState } from "react";
 
@@ -20,6 +20,8 @@ type ChatMessageListProps = {
   isStreaming?: boolean;
   isLoading?: boolean;
   onUseSuggestion?: (value: string) => void;
+  onEditMessage?: (messageId: string, content: string) => Promise<ChatMessage | null>;
+  onReuseMessage?: (content: string) => void;
 };
 
 function getMessageSources(message: ChatMessage): ChatSource[] {
@@ -79,8 +81,31 @@ export function ChatMessageList({
   isStreaming,
   isLoading,
   onUseSuggestion,
+  onEditMessage,
+  onReuseMessage,
 }: ChatMessageListProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+
+  async function handleSaveEdit(messageId: string) {
+    const updated = await onEditMessage?.(messageId, editingContent);
+
+    if (updated) {
+      setEditingMessageId(null);
+      setEditingContent("");
+    }
+  }
+
+  function startEditMessage(message: ChatMessage) {
+    setEditingMessageId(message.id);
+    setEditingContent(message.content);
+  }
+
+  function cancelEditMessage() {
+    setEditingMessageId(null);
+    setEditingContent("");
+  }
 
   async function handleCopy(messageId: string, content: string) {
     if (!content.trim()) {
@@ -119,6 +144,30 @@ export function ChatMessageList({
               {message.role === "user" ? "Você" : "Minha DELPI Chat"}
             </strong>
 
+            {message.role === "user" ? (
+              <div className="mdc-chat-message-user-actions">
+                <button
+                  className="mdc-chat-message-action"
+                  type="button"
+                  onClick={() => startEditMessage(message)}
+                  aria-label="Editar mensagem"
+                  title="Editar mensagem"
+                >
+                  <Pencil size={15} aria-hidden="true" />
+                </button>
+
+                <button
+                  className="mdc-chat-message-action"
+                  type="button"
+                  onClick={() => onReuseMessage?.(message.content)}
+                  aria-label="Reutilizar mensagem"
+                  title="Reutilizar mensagem"
+                >
+                  <RotateCcw size={15} aria-hidden="true" />
+                </button>
+              </div>
+            ) : null}
+
             {message.role === "assistant" ? (
               <button
                 className="mdc-chat-message-action"
@@ -144,7 +193,37 @@ export function ChatMessageList({
             ) : null}
           </div>
 
-          <p>{message.content}</p>
+          {editingMessageId === message.id ? (
+            <div className="mdc-chat-message-edit">
+              <textarea
+                value={editingContent}
+                autoFocus
+                onChange={(event) => setEditingContent(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    cancelEditMessage();
+                  }
+
+                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                    event.preventDefault();
+                    void handleSaveEdit(message.id);
+                  }
+                }}
+              />
+
+              <div className="mdc-chat-message-edit-actions">
+                <button type="button" onClick={() => void handleSaveEdit(message.id)}>
+                  Salvar
+                </button>
+                <button type="button" onClick={cancelEditMessage}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p>{message.content}</p>
+          )}
 
           {message.role === "assistant" ? (
             <>

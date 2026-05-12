@@ -127,3 +127,22 @@
   position: static;
   transform: none;
 }
+
+.mdc-chat-session-actions {
+  position: absolute;
+  top: 50%;
+  right: var(--mdc-space-3);
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mdc-chat-session-actions .mdc-chat-session-action {
+  position: static;
+  transform: none;
+}
+
+.mdc-chat-session-row .mdc-chat-session {
+  padding-right: 5.8rem;
+}

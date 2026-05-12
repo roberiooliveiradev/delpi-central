@@ -38,6 +38,19 @@ class ChatSessionRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def delete_session(self, session_id: UUID, user_id: UUID) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_user_message(
+        self,
+        message_id: UUID,
+        user_id: UUID,
+        content: str,
+    ) -> ChatMessage | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def create_message(
         self,
         session_id: UUID,

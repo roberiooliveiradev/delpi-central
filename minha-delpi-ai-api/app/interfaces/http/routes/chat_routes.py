@@ -8,9 +8,12 @@ from app.interfaces.http.rate_limit_decorators import rate_limit
 
 from app.application.dto.create_chat_session_request import CreateChatSessionRequest
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
+from app.application.use_cases.update_chat_message_use_case import UpdateChatMessageRequest
 from app.application.use_cases.rename_chat_session_use_case import RenameChatSessionRequest
 from app.application.use_cases.get_chat_status_use_case import GetChatStatusUseCase
 from app.composition.chat_composer import (
+    make_delete_chat_session_use_case,
+    make_update_chat_message_use_case,
     make_create_chat_session_use_case,
     make_get_chat_history_use_case,
     make_list_chat_sessions_use_case,
@@ -118,6 +121,88 @@ def rename_session(session_id: str):
         raise
 
     return jsonify(asdict(session)), 200
+
+
+
+
+@chat_bp.delete("/sessions/<session_id>")
+@require_permission("minha-delpi.chat.access")
+def delete_session(session_id: str):
+    use_case = make_delete_chat_session_use_case()
+
+    try:
+        deleted = use_case.execute(
+            user_id=g.current_user.sub,
+            session_id=session_id,
+        )
+
+        if not deleted:
+            db.session.rollback()
+            return jsonify(
+                {
+                    "errors": [
+                        {
+                            "code": "not_found",
+                            "message": "Resource not found",
+                            "path": "_global",
+                        }
+                    ]
+                }
+            ), 404
+
+        db.session.commit()
+
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return "", 204
+
+
+@chat_bp.patch("/messages/<message_id>")
+@require_permission("minha-delpi.chat.ask")
+def update_message(message_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_update_chat_message_use_case()
+
+    try:
+        message = use_case.execute(
+            UpdateChatMessageRequest(
+                user_id=g.current_user.sub,
+                message_id=message_id,
+                content=payload.get("content", ""),
+            )
+        )
+
+        if not message:
+            db.session.rollback()
+            return jsonify(
+                {
+                    "errors": [
+                        {
+                            "code": "not_found",
+                            "message": "Resource not found",
+                            "path": "_global",
+                        }
+                    ]
+                }
+            ), 404
+
+        db.session.commit()
+
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(message)), 200
 
 
 @chat_bp.get("/sessions/<session_id>/messages")

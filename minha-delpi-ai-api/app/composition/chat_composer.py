@@ -1,3 +1,5 @@
+from app.application.use_cases.update_chat_message_use_case import UpdateChatMessageUseCase
+from app.application.use_cases.delete_chat_session_use_case import DeleteChatSessionUseCase
 from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
 from app.application.services.external_actions.external_action_selection_service import ExternalActionSelectionService
 from app.application.services.chat_tool_context_service import ChatToolContextService
@@ -77,4 +79,11 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
 
 def make_rename_chat_session_use_case() -> RenameChatSessionUseCase:
     return RenameChatSessionUseCase(PostgresChatSessionRepository())
+
+def make_delete_chat_session_use_case() -> DeleteChatSessionUseCase:
+    return DeleteChatSessionUseCase(PostgresChatSessionRepository())
+
+
+def make_update_chat_message_use_case() -> UpdateChatMessageUseCase:
+    return UpdateChatMessageUseCase(PostgresChatSessionRepository())
 
