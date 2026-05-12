@@ -28,7 +28,7 @@ class FakeChatSessionRepository:
         self.sessions.append(session)
         return session
 
-    def list_sessions_by_user(self, user_id):
+    def list_sessions_by_user(self, user_id, archived=False):
         return [session for session in self.sessions if session.user_id == user_id]
 
     def get_session_by_id(self, session_id):
