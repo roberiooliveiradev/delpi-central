@@ -46,15 +46,26 @@ export function ChatCanvas({ document, onChange, onClose }: ChatCanvasProps) {
   }
 
   return (
-    <aside
-      className={
-        expanded
-          ? "mdc-chat-canvas mdc-chat-canvas--expanded"
-          : "mdc-chat-canvas"
-      }
-      aria-label="Lousa do Chat DELPI"
+    <div
+      className="mdc-chat-canvas-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose?.();
+        }
+      }}
     >
-      <header className="mdc-chat-canvas__header">
+      <aside
+        className={
+          expanded
+            ? "mdc-chat-canvas mdc-chat-canvas--expanded"
+            : "mdc-chat-canvas"
+        }
+        aria-label="Lousa do Chat DELPI"
+        role="dialog"
+        aria-modal="true"
+      >
+        <header className="mdc-chat-canvas__header">
         <div>
           <p className="mdc-chat-eyebrow">Lousa</p>
           <input
@@ -119,6 +130,7 @@ export function ChatCanvas({ document, onChange, onClose }: ChatCanvasProps) {
           />
         )}
       </div>
-    </aside>
+      </aside>
+    </div>
   );
 }

@@ -124,8 +124,19 @@ export function ChatMessageList({
 
   if (isLoading) {
     return (
-      <div className="mdc-chat-empty">
-        <p>Carregando histórico...</p>
+      <div className="mdc-chat-message-list" aria-live="polite">
+        <article className="mdc-chat-message mdc-chat-message--assistant">
+          <div className="mdc-chat-message-header">
+            <strong>Minha DELPI Chat</strong>
+          </div>
+
+          <div className="mdc-chat-history-loading">
+            <span />
+            <span />
+            <span />
+            <p>Carregando histórico da conversa...</p>
+          </div>
+        </article>
       </div>
     );
   }

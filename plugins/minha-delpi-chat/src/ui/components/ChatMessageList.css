@@ -146,3 +146,50 @@
   color: var(--mdc-primary);
   border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
 }
+
+.mdc-chat-history-loading {
+  display: grid;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-chat-history-loading span {
+  display: block;
+  height: 0.8rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--mdc-card-border) 60%, transparent),
+    color-mix(in srgb, var(--mdc-primary) 18%, transparent),
+    color-mix(in srgb, var(--mdc-card-border) 60%, transparent)
+  );
+  background-size: 200% 100%;
+  animation: mdc-chat-skeleton 1.2s infinite linear;
+}
+
+.mdc-chat-history-loading span:nth-child(1) {
+  width: 75%;
+}
+
+.mdc-chat-history-loading span:nth-child(2) {
+  width: 92%;
+}
+
+.mdc-chat-history-loading span:nth-child(3) {
+  width: 55%;
+}
+
+.mdc-chat-history-loading p {
+  margin-top: var(--mdc-space-2);
+  color: var(--mdc-text-muted);
+  font-size: 0.9rem;
+}
+
+@keyframes mdc-chat-skeleton {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}

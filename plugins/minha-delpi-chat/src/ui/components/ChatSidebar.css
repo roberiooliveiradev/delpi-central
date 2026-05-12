@@ -146,3 +146,18 @@
 .mdc-chat-session-row .mdc-chat-session {
   padding-right: 5.8rem;
 }
+
+.mdc-chat-session-row {
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.mdc-chat-session-row--active {
+  transform: translateX(2px);
+}
+
+.mdc-chat-session:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 6%, var(--mdc-bg));
+}

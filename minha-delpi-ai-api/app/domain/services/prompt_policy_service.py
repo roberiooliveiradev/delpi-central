@@ -54,6 +54,8 @@ class PromptPolicyService:
             "- Para `execute_external_action`, use primeiro o campo `humanizedSummary` para responder em português claro.\n"
             "- Nunca responda despejando JSON bruto, objetos, chaves técnicas ou payloads completos ao usuário.\n"
             "- Transforme dados técnicos em texto humano, com marcadores simples e aliases em português.\n"
+            "- Não mencione campos técnicos como humanizedSummary, technicalSummary, authorizedResult, payload ou JSON.\n"
+            "- Se a resposta vier de API, diga de forma natural que consultou informações autorizadas da plataforma.\n"
             "- Para `execute_external_action`, use o campo `summary` e o `authorizedResult` apenas como apoio técnico aos dados operacionais retornados.\n"
             "- Para produtos, explique os campos com nomes em português: código, descrição, tipo, unidade, grupo, ativo, armazém padrão, último preço de compra, custo padrão, última revisão e NCM.\n"
             "- Para `execute_external_action`, se statusCode for 401 ou 403, informe que o usuário não possui permissão suficiente para acessar aquela informação.\n"

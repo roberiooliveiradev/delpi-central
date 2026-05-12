@@ -3,22 +3,12 @@
   align-items: stretch;
 }
 
-.mdc-chat-shell--with-canvas {
-  grid-template-columns: minmax(17rem, 20rem) minmax(0, 1fr) minmax(26rem, 34rem);
-}
-
 .mdc-chat-main {
   min-width: 0;
 }
 
-@media (max-width: 1180px) {
-  .mdc-chat-shell,
-  .mdc-chat-shell--with-canvas {
+@media (max-width: 980px) {
+  .mdc-chat-shell {
     grid-template-columns: 1fr;
-  }
-
-  .mdc-chat-canvas {
-    max-width: none;
-    width: 100%;
   }
 }

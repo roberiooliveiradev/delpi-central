@@ -45,23 +45,32 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     });
   }
 
+  async function handleStartSession() {
+    setCanvasDocument(null);
+    await startSession();
+  }
+
+  function handleSelectSession(session: typeof sessions[number]) {
+    setCanvasDocument(null);
+    selectSession(session);
+  }
+
+  async function handleDeleteSession(sessionId: string) {
+    setCanvasDocument(null);
+    return deleteSession(sessionId);
+  }
+
   return (
     <main className="minha-delpi-chat">
-      <section
-        className={
-          canvasDocument
-            ? "mdc-chat-shell mdc-chat-shell--with-canvas"
-            : "mdc-chat-shell"
-        }
-      >
+      <section className="mdc-chat-shell">
         <ChatSidebar
           sessions={sessions}
           activeSessionId={activeSession?.id}
           isLoading={isLoadingSessions}
-          onNewSession={startSession}
-          onSelectSession={selectSession}
+          onNewSession={handleStartSession}
+          onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
-          onDeleteSession={deleteSession}
+          onDeleteSession={handleDeleteSession}
         />
 
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
