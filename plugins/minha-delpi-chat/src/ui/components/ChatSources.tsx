@@ -1,5 +1,7 @@
 import type { ChatSource } from "../../data/api/chatTypes";
 
+import "./ChatSources.css";
+
 type ChatSourcesProps = {
   sources?: ChatSource[];
 };

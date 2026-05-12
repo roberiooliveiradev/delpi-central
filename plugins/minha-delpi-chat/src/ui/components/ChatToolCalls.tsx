@@ -1,5 +1,7 @@
 import type { ChatToolCall } from "../../data/api/chatTypes";
 
+import "./ChatToolCalls.css";
+
 type ChatToolCallsProps = {
   toolCalls?: ChatToolCall[];
 };
