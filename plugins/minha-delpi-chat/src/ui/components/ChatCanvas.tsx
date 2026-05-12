@@ -1,4 +1,4 @@
-import { Check, Copy, Maximize2, Minimize2, Save, X } from "lucide-react";
+import { Check, Copy, Edit3, Eye, Maximize2, Minimize2, Save, X } from "lucide-react";
 import { useState } from "react";
 import { ChatMarkdown } from "./ChatMarkdown";
 
@@ -39,6 +39,8 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
     });
   }
 
+  const isPreview = mode === "preview";
+
   return (
     <div
       className="mdc-chat-canvas-backdrop"
@@ -60,7 +62,7 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
         aria-modal="true"
       >
         <header className="mdc-chat-canvas__header">
-          <div>
+          <div className="mdc-chat-canvas__title-area">
             <p className="mdc-chat-eyebrow">Lousa</p>
             <input
               value={document.title}
@@ -74,41 +76,62 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
             />
           </div>
 
-          <div className="mdc-chat-canvas__actions">
+          <div className="mdc-chat-canvas__actions" aria-label="Ações da lousa">
             {onSave ? (
               <button
                 type="button"
+                className={
+                  document.isSaved
+                    ? "mdc-chat-canvas__action mdc-chat-canvas__action--text mdc-chat-canvas__action--success"
+                    : "mdc-chat-canvas__action mdc-chat-canvas__action--text"
+                }
                 onClick={() => void onSave(document)}
                 disabled={document.isSaving}
-                title={document.isSaved ? "Salvo" : "Salvar lousa"}
+                title={document.isSaved ? "Lousa salva" : "Salvar lousa"}
               >
                 {document.isSaved ? (
                   <Check size={16} aria-hidden="true" />
                 ) : (
                   <Save size={16} aria-hidden="true" />
                 )}
-                <span>{document.isSaving ? "Salvando" : document.isSaved ? "Salvo" : "Salvar"}</span>
+                <span>
+                  {document.isSaving ? "Salvando..." : document.isSaved ? "Salvo" : "Salvar"}
+                </span>
               </button>
             ) : null}
 
             <button
               type="button"
+              className="mdc-chat-canvas__action mdc-chat-canvas__action--text"
               onClick={() =>
                 setMode((current) => (current === "edit" ? "preview" : "edit"))
               }
-              title={mode === "edit" ? "Visualizar" : "Editar"}
+              title={isPreview ? "Editar lousa" : "Visualizar prévia"}
             >
-              {mode === "edit" ? "Prévia" : "Editar"}
+              {isPreview ? (
+                <Edit3 size={16} aria-hidden="true" />
+              ) : (
+                <Eye size={16} aria-hidden="true" />
+              )}
+              <span>{isPreview ? "Editar" : "Prévia"}</span>
             </button>
 
-            <button type="button" onClick={copyCanvas} title="Copiar markdown">
+            <button
+              type="button"
+              className="mdc-chat-canvas__action mdc-chat-canvas__action--icon"
+              onClick={copyCanvas}
+              title="Copiar markdown"
+              aria-label="Copiar markdown"
+            >
               <Copy size={16} aria-hidden="true" />
             </button>
 
             <button
               type="button"
+              className="mdc-chat-canvas__action mdc-chat-canvas__action--icon"
               onClick={() => setExpanded((current) => !current)}
               title={expanded ? "Reduzir" : "Expandir"}
+              aria-label={expanded ? "Reduzir lousa" : "Expandir lousa"}
             >
               {expanded ? (
                 <Minimize2 size={16} aria-hidden="true" />
@@ -117,7 +140,13 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
               )}
             </button>
 
-            <button type="button" onClick={onClose} title="Fechar">
+            <button
+              type="button"
+              className="mdc-chat-canvas__action mdc-chat-canvas__action--icon"
+              onClick={onClose}
+              title="Fechar"
+              aria-label="Fechar lousa"
+            >
               <X size={16} aria-hidden="true" />
             </button>
           </div>
