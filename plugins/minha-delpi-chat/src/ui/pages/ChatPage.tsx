@@ -25,6 +25,7 @@ function normalizeCanvasMarkdown(content: string): string {
 export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const {
     sessions,
+    archivedSessions,
     activeSession,
     messages,
     draft,
@@ -33,12 +34,14 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     streamingToolCalls,
     streamingStatus,
     isLoadingSessions,
+    isLoadingArchivedSessions,
     isLoadingMessages,
     isStreaming,
     error,
     setDraft,
     sendMessage,
     cancelStreaming,
+    loadArchivedSessions,
     startSession,
     selectSession,
     deleteSession,
@@ -102,8 +105,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
       >
         <ChatSidebar
           sessions={sessions}
+          archivedSessions={archivedSessions}
           activeSessionId={activeSession?.id}
           isLoading={isLoadingSessions}
+          isLoadingArchivedSessions={isLoadingArchivedSessions}
           onNewSession={handleStartSession}
           onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
@@ -112,6 +117,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onUnpinSession={unpinSession}
           onArchiveSession={archiveSession}
           onUnarchiveSession={unarchiveSession}
+          onLoadArchivedSessions={loadArchivedSessions}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
         />

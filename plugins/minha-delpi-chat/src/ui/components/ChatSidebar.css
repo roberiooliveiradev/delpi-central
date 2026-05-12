@@ -410,3 +410,105 @@
   border-radius: var(--mdc-radius-sm);
   background: color-mix(in srgb, var(--mdc-card-bg) 92%, var(--mdc-bg));
 }
+
+.mdc-chat-archived-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(5px);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-chat-archived-dialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(100%, 34rem);
+  max-height: min(80vh, 42rem);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: color-mix(in srgb, var(--mdc-card-bg) 96%, black);
+  color: var(--mdc-text);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.mdc-chat-archived-dialog header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mdc-space-3);
+  align-items: flex-start;
+  border-bottom: 1px solid var(--mdc-card-border);
+  padding: var(--mdc-space-5);
+}
+
+.mdc-chat-archived-dialog h2 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 1.1rem;
+}
+
+.mdc-chat-archived-dialog p {
+  margin: var(--mdc-space-2) 0 0;
+  color: var(--mdc-text-muted);
+  line-height: 1.45;
+}
+
+.mdc-chat-archived-dialog header button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg);
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.mdc-chat-archived-list {
+  display: grid;
+  gap: var(--mdc-space-2);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--mdc-space-4);
+}
+
+.mdc-chat-archived-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mdc-space-3);
+  align-items: center;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: color-mix(in srgb, var(--mdc-bg) 82%, transparent);
+  padding: var(--mdc-space-3);
+}
+
+.mdc-chat-archived-item strong {
+  display: block;
+  color: var(--mdc-title);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-archived-item small {
+  display: block;
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+  margin-top: 0.2rem;
+}
+
+.mdc-chat-archived-item button {
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-primary) 9%, var(--mdc-bg));
+  color: var(--mdc-primary);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0.55rem 0.75rem;
+}
