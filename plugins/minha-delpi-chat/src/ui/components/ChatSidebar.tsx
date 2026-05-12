@@ -274,7 +274,7 @@ export function ChatSidebar({
         />
       </div>
 
-      <div className="mdc-chat-sidebar__workspace-scroll">
+      <div className="mdc-chat-sidebar__agents-pane">
         <ChatSidebarAgentsSection
           agents={agents}
           selectedAgentKey={selectedAgentKey}
@@ -282,7 +282,9 @@ export function ChatSidebar({
           onSelectAgent={onSelectAgent}
           onManageAgents={() => onViewChange?.("agents")}
         />
+      </div>
 
+      <div className="mdc-chat-sidebar__projects-pane">
         <ChatSidebarProjectsSection
           projects={projects}
           selectedProjectId={selectedProjectId}

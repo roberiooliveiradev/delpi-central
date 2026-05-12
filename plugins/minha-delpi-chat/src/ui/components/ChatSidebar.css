@@ -2,7 +2,12 @@
   --mdc-sidebar-pad-x: 0.65rem;
 
   display: grid;
-  grid-template-rows: auto minmax(9rem, 0.95fr) minmax(10rem, 1.15fr) auto;
+  grid-template-rows:
+    auto
+    minmax(7.8rem, 0.7fr)
+    minmax(6.6rem, 0.52fr)
+    minmax(11rem, 1.35fr)
+    auto;
   width: 18.25rem;
   min-width: 18.25rem;
   height: 100vh;
@@ -20,19 +25,28 @@
   padding-bottom: 0.55rem;
 }
 
-.mdc-chat-sidebar__workspace-scroll {
+.mdc-chat-sidebar__agents-pane,
+.mdc-chat-sidebar__projects-pane {
   min-height: 0;
   overflow-y: auto;
-  padding-bottom: 0.5rem;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--mdc-primary) 42%, transparent) transparent;
 }
 
+.mdc-chat-sidebar__agents-pane {
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
+  padding-bottom: 0.45rem;
+}
+
+.mdc-chat-sidebar__projects-pane {
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
+  padding-bottom: 0.45rem;
+}
+
 .mdc-chat-sidebar__sessions-pane {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
-  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
   overflow: hidden;
 }
 
@@ -87,6 +101,7 @@
   display: grid;
   gap: 0.12rem;
   padding: 0.75rem var(--mdc-sidebar-pad-x) 0.8rem;
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
 }
 
 .mdc-chat-sidebar__footer span {
@@ -142,6 +157,11 @@
 
 @media (max-height: 760px) {
   .mdc-chat-sidebar {
-    grid-template-rows: auto minmax(7.5rem, 0.78fr) minmax(11rem, 1.22fr) auto;
+    grid-template-rows:
+      auto
+      minmax(6.6rem, 0.58fr)
+      minmax(5.4rem, 0.42fr)
+      minmax(12rem, 1.45fr)
+      auto;
   }
 }

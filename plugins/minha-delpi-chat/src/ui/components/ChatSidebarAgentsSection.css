@@ -1,5 +1,4 @@
-.mdc-chat-sidebar__workspace-scroll .mdc-chat-sidebar__link-list {
-  max-height: none;
+.mdc-chat-sidebar__agents-pane .mdc-chat-sidebar__link-list {
   overflow: visible;
 }
 
