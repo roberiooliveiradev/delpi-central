@@ -11,6 +11,14 @@ type ChatPageProps = {
   onOpenAdmin?: () => void;
 };
 
+function normalizeCanvasMarkdown(content: string): string {
+  return content
+    .replace(/\n\s*[-•]\s+/g, "\n- ")
+    .replace(/:\n\s*- /g, ":\n\n- ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const {
     sessions,
@@ -41,7 +49,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   function openCanvasFromMessage(content: string) {
     setCanvasDocument({
       title: "Rascunho da resposta",
-      markdown: content,
+      markdown: normalizeCanvasMarkdown(content),
     });
   }
 
