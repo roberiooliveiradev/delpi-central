@@ -1,0 +1,279 @@
+.mdc-chat-projects-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(5px);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-chat-projects-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(100%, 58rem);
+  max-height: min(86vh, 48rem);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: color-mix(in srgb, var(--mdc-card-bg) 96%, black);
+  color: var(--mdc-text);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48);
+  overflow: hidden;
+}
+
+.mdc-chat-projects-modal__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mdc-space-3);
+  align-items: start;
+  border-bottom: 1px solid var(--mdc-card-border);
+  padding: var(--mdc-space-5);
+}
+
+.mdc-chat-projects-modal__header h2 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 1.35rem;
+}
+
+.mdc-chat-projects-modal__header span {
+  display: block;
+  color: var(--mdc-text-muted);
+  line-height: 1.45;
+  margin-top: var(--mdc-space-1);
+}
+
+.mdc-chat-projects-modal__header > button,
+.mdc-chat-projects-modal__item-actions button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg);
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.mdc-chat-projects-modal__header > button:hover,
+.mdc-chat-projects-modal__item-actions button:hover {
+  color: var(--mdc-primary);
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+}
+
+.mdc-chat-projects-modal__body {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.92fr) minmax(20rem, 1.15fr);
+  min-height: 0;
+}
+
+.mdc-chat-projects-modal__list {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--mdc-space-3);
+  min-height: 0;
+  border-right: 1px solid var(--mdc-card-border);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-chat-projects-modal__all,
+.mdc-chat-projects-modal__item-main {
+  display: flex;
+  align-items: center;
+  gap: var(--mdc-space-3);
+  width: 100%;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: var(--mdc-radius-lg);
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.72rem 0.85rem;
+  text-align: left;
+}
+
+.mdc-chat-projects-modal__all:hover,
+.mdc-chat-projects-modal__item-main:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 18%, transparent);
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+}
+
+.mdc-chat-projects-modal__all--active,
+.mdc-chat-projects-modal__item--active .mdc-chat-projects-modal__item-main {
+  border-color: color-mix(in srgb, var(--mdc-primary) 42%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-card-bg));
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-projects-modal__items {
+  display: grid;
+  align-content: start;
+  gap: var(--mdc-space-2);
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.mdc-chat-projects-modal__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mdc-space-2);
+  align-items: center;
+  border-radius: var(--mdc-radius-lg);
+}
+
+.mdc-chat-projects-modal__item-main span {
+  display: grid;
+  min-width: 0;
+}
+
+.mdc-chat-projects-modal__item-main strong,
+.mdc-chat-projects-modal__item-main small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-projects-modal__item-main small {
+  color: var(--mdc-text-muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  margin-top: 0.1rem;
+}
+
+.mdc-chat-projects-modal__item-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.mdc-chat-projects-modal__form {
+  display: grid;
+  align-content: start;
+  gap: var(--mdc-space-4);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--mdc-space-5);
+}
+
+.mdc-chat-projects-modal__form-title {
+  display: flex;
+  gap: var(--mdc-space-3);
+  align-items: flex-start;
+}
+
+.mdc-chat-projects-modal__form-title svg {
+  color: var(--mdc-primary);
+  margin-top: 0.15rem;
+}
+
+.mdc-chat-projects-modal__form-title h3 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 1.05rem;
+}
+
+.mdc-chat-projects-modal__form-title p {
+  margin: var(--mdc-space-1) 0 0;
+  color: var(--mdc-text-muted);
+  line-height: 1.45;
+}
+
+.mdc-chat-projects-modal__selected {
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 24%, var(--mdc-card-border));
+  border-radius: var(--mdc-radius-lg);
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+  color: var(--mdc-text-muted);
+  font-size: 0.88rem;
+  padding: var(--mdc-space-3);
+}
+
+.mdc-chat-projects-modal__selected strong {
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-projects-modal__form label {
+  display: grid;
+  gap: var(--mdc-space-2);
+  color: var(--mdc-title);
+  font-size: 0.85rem;
+  font-weight: 850;
+}
+
+.mdc-chat-projects-modal__form input,
+.mdc-chat-projects-modal__form textarea {
+  width: 100%;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: var(--mdc-bg);
+  color: var(--mdc-text);
+  font: inherit;
+  padding: 0.8rem 0.9rem;
+  outline: none;
+}
+
+.mdc-chat-projects-modal__form textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.mdc-chat-projects-modal__form input:focus,
+.mdc-chat-projects-modal__form textarea:focus {
+  border-color: color-mix(in srgb, var(--mdc-primary) 48%, var(--mdc-card-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+}
+
+.mdc-chat-projects-modal__error {
+  margin: 0;
+  border: 1px solid color-mix(in srgb, #ef4444 38%, var(--mdc-card-border));
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, #ef4444 10%, transparent);
+  color: #fecaca;
+  padding: var(--mdc-space-3);
+}
+
+.mdc-chat-projects-modal__form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-chat-projects-modal__form-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 999px;
+  background: var(--mdc-bg);
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 850;
+  padding: 0.72rem 1rem;
+}
+
+.mdc-chat-projects-modal__form-actions .mdc-chat-projects-modal__primary {
+  border-color: color-mix(in srgb, var(--mdc-primary) 50%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 13%, var(--mdc-bg));
+  color: var(--mdc-primary);
+}
+
+@media (max-width: 780px) {
+  .mdc-chat-projects-modal {
+    max-height: 92vh;
+  }
+
+  .mdc-chat-projects-modal__body {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-chat-projects-modal__list {
+    border-right: 0;
+    border-bottom: 1px solid var(--mdc-card-border);
+  }
+}

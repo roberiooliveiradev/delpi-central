@@ -3,6 +3,7 @@ import {
   Bot,
   Box,
   Check,
+  Settings,
   ChevronLeft,
   ChevronRight,
   Folder,
@@ -15,6 +16,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { ChatConfirmDialog } from "./ChatConfirmDialog";
 import { ChatConversationMenu } from "./ChatConversationMenu";
+import { ChatProjectsModal } from "./ChatProjectsModal";
 
 import "./ChatSidebar.css";
 
@@ -183,9 +185,7 @@ export function ChatSidebar({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isArchivedOpen, setIsArchivedOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [newProjectName, setNewProjectName] = useState("");
-  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
-  const [editingProjectName, setEditingProjectName] = useState("");
+  const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const filteredSessions = useMemo(() => {
@@ -293,45 +293,6 @@ export function ChatSidebar({
     if (restored) {
       setIsArchivedOpen(false);
       onSelectSession(restored);
-    }
-  }
-
-  async function submitNewProject() {
-    const name = newProjectName.trim();
-
-    if (!name) {
-      return;
-    }
-
-    const project = await onCreateProject?.({ name });
-
-    if (project) {
-      setNewProjectName("");
-    }
-  }
-
-  function startEditingProject(project: ChatProject) {
-    setEditingProjectId(project.id);
-    setEditingProjectName(project.name);
-  }
-
-  function cancelEditingProject() {
-    setEditingProjectId(null);
-    setEditingProjectName("");
-  }
-
-  async function saveEditingProject(project: ChatProject) {
-    const name = editingProjectName.trim();
-
-    if (!name || name === project.name) {
-      cancelEditingProject();
-      return;
-    }
-
-    const updated = await onRenameProject?.(project.id, name);
-
-    if (updated) {
-      cancelEditingProject();
     }
   }
 
@@ -608,26 +569,10 @@ export function ChatSidebar({
         <small>{projects.length}</small>
       </div>
 
-      <div className="mdc-chat-sidebar__project-create">
-        <input
-          value={newProjectName}
-          onChange={(event) => setNewProjectName(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              void submitNewProject();
-            }
-          }}
-          placeholder="Novo projeto..."
-          aria-label="Nome do novo projeto"
-        />
-        <button
-          type="button"
-          onClick={() => void submitNewProject()}
-          aria-label="Criar projeto"
-          title="Criar projeto"
-        >
-          <Check size={15} aria-hidden="true" />
+      <div className="mdc-chat-sidebar__project-manage">
+        <button type="button" onClick={() => setIsProjectsModalOpen(true)}>
+          <Settings size={15} aria-hidden="true" />
+          <span>Gerenciar projetos</span>
         </button>
       </div>
 
@@ -651,83 +596,24 @@ export function ChatSidebar({
           <p className="mdc-chat-muted">Nenhum projeto criado.</p>
         ) : (
           projects.map((project) => (
-            <div key={project.id} className="mdc-chat-project-row">
-              {editingProjectId === project.id ? (
-                <>
-                  <input
-                    value={editingProjectName}
-                    autoFocus
-                    onChange={(event) => setEditingProjectName(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        void saveEditingProject(project);
-                      }
-
-                      if (event.key === "Escape") {
-                        event.preventDefault();
-                        cancelEditingProject();
-                      }
-                    }}
-                    aria-label="Nome do projeto"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void saveEditingProject(project)}
-                    aria-label="Salvar projeto"
-                    title="Salvar"
-                  >
-                    <Check size={14} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={cancelEditingProject}
-                    aria-label="Cancelar edição"
-                    title="Cancelar"
-                  >
-                    <X size={14} aria-hidden="true" />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className={
-                      project.id === selectedProjectId
-                        ? "mdc-chat-sidebar__link--active"
-                        : undefined
-                    }
-                    title={project.description || project.name}
-                    onClick={() =>
-                      onSelectProject?.(
-                        project.id === selectedProjectId ? null : project.id,
-                      )
-                    }
-                  >
-                    <Folder size={16} aria-hidden="true" />
-                    <span>{project.name}</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="mdc-chat-project-row__icon"
-                    onClick={() => startEditingProject(project)}
-                    aria-label="Renomear projeto"
-                    title="Renomear"
-                  >
-                    <Check size={13} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    className="mdc-chat-project-row__icon"
-                    onClick={() => void onDeleteProject?.(project.id)}
-                    aria-label="Excluir projeto"
-                    title="Excluir"
-                  >
-                    <X size={13} aria-hidden="true" />
-                  </button>
-                </>
-              )}
-            </div>
+            <button
+              key={project.id}
+              type="button"
+              className={
+                project.id === selectedProjectId
+                  ? "mdc-chat-sidebar__link--active"
+                  : undefined
+              }
+              title={project.description || project.name}
+              onClick={() =>
+                onSelectProject?.(
+                  project.id === selectedProjectId ? null : project.id,
+                )
+              }
+            >
+              <Folder size={16} aria-hidden="true" />
+              <span>{project.name}</span>
+            </button>
           ))
         )}
       </div>
@@ -762,6 +648,18 @@ export function ChatSidebar({
         <span>DELPI Central</span>
         <small>APIs, conhecimento e ações autorizadas</small>
       </div>
+
+      <ChatProjectsModal
+        open={isProjectsModalOpen}
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        isLoading={isLoadingProjects}
+        onClose={() => setIsProjectsModalOpen(false)}
+        onSelectProject={onSelectProject}
+        onCreateProject={onCreateProject}
+        onRenameProject={onRenameProject}
+        onDeleteProject={onDeleteProject}
+      />
 
       <ChatConfirmDialog
         open={Boolean(deleteTargetSession)}

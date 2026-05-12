@@ -589,3 +589,29 @@
 .mdc-chat-project-row > button.mdc-chat-sidebar__link--active:first-child svg {
   color: var(--mdc-primary);
 }
+
+.mdc-chat-sidebar__project-manage {
+  padding: 0 var(--mdc-space-1);
+}
+
+.mdc-chat-sidebar__project-manage button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 22%, var(--mdc-card-border));
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+  color: var(--mdc-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 850;
+  padding: 0.58rem 0.7rem;
+}
+
+.mdc-chat-sidebar__project-manage button:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 42%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+}
