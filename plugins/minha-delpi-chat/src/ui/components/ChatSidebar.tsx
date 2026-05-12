@@ -18,6 +18,7 @@ import { ChatConfirmDialog } from "./ChatConfirmDialog";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { ChatAgentsModal } from "./ChatAgentsModal";
 import { ChatProjectsModal } from "./ChatProjectsModal";
+import { ChatSidebarWorkspaceItem } from "./ChatSidebarWorkspaceItem";
 
 import "./ChatSidebar.css";
 
@@ -570,24 +571,19 @@ export function ChatSidebar({
           <p className="mdc-chat-muted">Nenhum agente disponível.</p>
         ) : (
           agents.map((agent) => (
-            <button
+            <ChatSidebarWorkspaceItem
               key={agent.id}
-              type="button"
-              className={
-                agent.key === selectedAgentKey
-                  ? "mdc-chat-sidebar__link--active"
-                  : undefined
-              }
-              title={agent.description || agent.name}
+              icon={Bot}
+              title={agent.name}
+              subtitle={agent.category || agent.description || agent.visibility}
+              active={agent.key === selectedAgentKey}
+              badge={agent.access_role === "owner" ? "Seu" : agent.access_role === "system" ? "Oficial" : null}
               onClick={() =>
                 onSelectAgent?.(
                   agent.key === selectedAgentKey ? null : agent.key,
                 )
               }
-            >
-              <Bot size={16} aria-hidden="true" />
-              <span>{agent.name}</span>
-            </button>
+            />
           ))
         )}
       </div>
@@ -612,18 +608,13 @@ export function ChatSidebar({
       </div>
 
       <div className="mdc-chat-sidebar__link-list">
-        <button
-          type="button"
-          className={
-            selectedProjectId
-              ? undefined
-              : "mdc-chat-sidebar__link--active"
-          }
+        <ChatSidebarWorkspaceItem
+          icon={Folder}
+          title="Todos os projetos"
+          subtitle="Conversas sem filtro de projeto"
+          active={!selectedProjectId}
           onClick={() => onSelectProject?.(null)}
-        >
-          <Folder size={16} aria-hidden="true" />
-          <span>Todos os projetos</span>
-        </button>
+        />
 
         {isLoadingProjects ? (
           <p className="mdc-chat-muted">Carregando projetos...</p>
@@ -631,24 +622,18 @@ export function ChatSidebar({
           <p className="mdc-chat-muted">Nenhum projeto criado.</p>
         ) : (
           projects.map((project) => (
-            <button
+            <ChatSidebarWorkspaceItem
               key={project.id}
-              type="button"
-              className={
-                project.id === selectedProjectId
-                  ? "mdc-chat-sidebar__link--active"
-                  : undefined
-              }
-              title={project.description || project.name}
+              icon={Folder}
+              title={project.name}
+              subtitle={project.description || "Projeto de trabalho"}
+              active={project.id === selectedProjectId}
               onClick={() =>
                 onSelectProject?.(
                   project.id === selectedProjectId ? null : project.id,
                 )
               }
-            >
-              <Folder size={16} aria-hidden="true" />
-              <span>{project.name}</span>
-            </button>
+            />
           ))
         )}
       </div>

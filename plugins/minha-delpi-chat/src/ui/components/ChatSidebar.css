@@ -615,3 +615,263 @@
   border-color: color-mix(in srgb, var(--mdc-primary) 42%, var(--mdc-card-border));
   background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
 }
+
+/* Refinamento visual da sidebar */
+.mdc-chat-sidebar {
+  --mdc-sidebar-pad-x: 0.65rem;
+  width: 18.25rem;
+  border-right: 1px solid color-mix(in srgb, var(--mdc-card-border) 88%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mdc-card-bg) 96%, black), var(--mdc-card-bg));
+}
+
+.mdc-chat-sidebar__brand {
+  padding: 1.05rem var(--mdc-sidebar-pad-x) 0.75rem;
+}
+
+.mdc-chat-sidebar__brand strong {
+  color: var(--mdc-primary);
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+}
+
+.mdc-chat-sidebar__brand small {
+  color: var(--mdc-text-muted);
+  font-size: 0.72rem;
+}
+
+.mdc-chat-sidebar__nav {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.25rem var(--mdc-sidebar-pad-x) 0.75rem;
+}
+
+.mdc-chat-sidebar__nav button {
+  border-radius: 0.75rem;
+  min-height: 2.35rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.mdc-chat-sidebar__section-title {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+  padding: 0.68rem var(--mdc-sidebar-pad-x) 0.28rem;
+  background: linear-gradient(
+    180deg,
+    var(--mdc-card-bg) 0%,
+    color-mix(in srgb, var(--mdc-card-bg) 92%, transparent) 100%
+  );
+  color: color-mix(in srgb, var(--mdc-text-muted) 92%, white);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.mdc-chat-sidebar__section-title span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-sidebar__section-title small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 13%, transparent);
+  color: var(--mdc-primary);
+  font-size: 0.66rem;
+  font-weight: 950;
+}
+
+.mdc-chat-sidebar__link-list {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0 var(--mdc-sidebar-pad-x);
+}
+
+.mdc-chat-sidebar__project-manage {
+  padding: 0.18rem var(--mdc-sidebar-pad-x) 0.35rem;
+}
+
+.mdc-chat-sidebar__project-manage button {
+  min-height: 2.05rem;
+  border-style: dashed;
+  border-radius: 0.72rem;
+  background: color-mix(in srgb, var(--mdc-primary) 4%, transparent);
+  color: color-mix(in srgb, var(--mdc-primary) 88%, white);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.mdc-chat-sidebar__project-manage button:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
+}
+
+.mdc-chat-session-list {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--mdc-sidebar-pad-x) 0.65rem;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--mdc-primary) 50%, transparent) transparent;
+}
+
+.mdc-chat-session-group {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.mdc-chat-session-group h3 {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0.25rem 0 0.18rem;
+  padding: 0.38rem 0.22rem 0.28rem;
+  background: var(--mdc-card-bg);
+  color: var(--mdc-text-muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.mdc-chat-session-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 0.82rem;
+  min-height: 3.15rem;
+  padding: 0.22rem;
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease;
+}
+
+.mdc-chat-session-row:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
+}
+
+.mdc-chat-session-row--active {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--mdc-primary) 18%, transparent), transparent 105%);
+  border-color: color-mix(in srgb, var(--mdc-primary) 50%, var(--mdc-card-border));
+}
+
+.mdc-chat-session {
+  display: grid;
+  min-width: 0;
+  gap: 0.1rem;
+  border: 0;
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.42rem 0.38rem;
+  text-align: left;
+}
+
+.mdc-chat-session span,
+.mdc-chat-session small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-session span {
+  color: var(--mdc-primary);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.mdc-chat-session small {
+  color: var(--mdc-text-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.mdc-chat-session-actions {
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+
+.mdc-chat-session-row:hover .mdc-chat-session-actions,
+.mdc-chat-session-row--active .mdc-chat-session-actions {
+  opacity: 1;
+}
+
+.mdc-chat-sidebar__footer {
+  margin: 0.35rem var(--mdc-sidebar-pad-x) 0.65rem;
+  border-top: 1px solid var(--mdc-card-border);
+  padding-top: 0.75rem;
+}
+
+.mdc-chat-sidebar__footer span {
+  color: var(--mdc-primary);
+  font-weight: 900;
+}
+
+.mdc-chat-sidebar__footer small {
+  color: var(--mdc-text-muted);
+  font-size: 0.72rem;
+}
+
+.mdc-chat-sidebar__link-list {
+  max-height: 11.5rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--mdc-primary) 42%, transparent) transparent;
+}
+
+.mdc-chat-sidebar__section-title:nth-of-type(3) ~ .mdc-chat-session-list,
+.mdc-chat-session-list {
+  max-height: min(42vh, 28rem);
+}
+
+@media (max-height: 760px) {
+  .mdc-chat-sidebar__link-list {
+    max-height: 8.5rem;
+  }
+
+  .mdc-chat-session-list {
+    max-height: 31vh;
+  }
+}
+
+.mdc-chat-sidebar--collapsed {
+  width: 4.4rem;
+  align-items: center;
+  padding: 0.85rem 0.5rem;
+}
+
+.mdc-chat-sidebar__rail-button,
+.mdc-chat-sidebar--collapsed .mdc-chat-sidebar__collapse-button {
+  border: 1px solid transparent;
+  border-radius: 0.85rem;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.mdc-chat-sidebar__rail-button:hover,
+.mdc-chat-sidebar--collapsed .mdc-chat-sidebar__collapse-button:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-primary) 22%, transparent);
+  color: var(--mdc-primary);
+}

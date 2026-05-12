@@ -1,0 +1,85 @@
+.mdc-sidebar-workspace-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 0.82rem;
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  min-height: 2.55rem;
+  padding: 0.48rem 0.58rem;
+  text-align: left;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.mdc-sidebar-workspace-item:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-primary) 18%, transparent);
+}
+
+.mdc-sidebar-workspace-item:active {
+  transform: translateY(1px);
+}
+
+.mdc-sidebar-workspace-item--active {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--mdc-primary) 18%, transparent), transparent 110%);
+  border-color: color-mix(in srgb, var(--mdc-primary) 55%, var(--mdc-card-border));
+  color: var(--mdc-primary);
+}
+
+.mdc-sidebar-workspace-item__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-sidebar-workspace-item__content {
+  display: grid;
+  min-width: 0;
+  gap: 0.08rem;
+}
+
+.mdc-sidebar-workspace-item__content strong,
+.mdc-sidebar-workspace-item__content small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-sidebar-workspace-item__content strong {
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
+.mdc-sidebar-workspace-item__content small {
+  color: var(--mdc-text-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.mdc-sidebar-workspace-item em {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 15%, transparent);
+  color: var(--mdc-primary);
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 900;
+}
