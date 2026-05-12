@@ -356,7 +356,6 @@ export function ChatSidebar({
         </label>
       ) : null}
 
-      <div className="mdc-chat-sidebar__scroll">
         <div className="mdc-chat-sidebar__section-title">
           <span>Apps e agentes</span>
         </div>
@@ -500,8 +499,6 @@ export function ChatSidebar({
             ))}
           </div>
         )}
-      </div>
-
       <div className="mdc-chat-sidebar__footer">
         <span>DELPI Central</span>
         <small>APIs, conhecimento e ações autorizadas</small>

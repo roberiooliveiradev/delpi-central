@@ -80,25 +80,29 @@ export function ChatConversationMenu({
 
     updatePosition();
 
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onOpenChange(false);
+      }
+    }
+
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open]);
+  }, [open, onOpenChange]);
 
   const menu = open ? (
     <>
-      <button
-        type="button"
+      <div
         className="mdc-chat-conversation-menu__scrim"
-        aria-label="Fechar opções"
-        onClick={(event) => {
-          event.stopPropagation();
-          onOpenChange(false);
-        }}
+        role="presentation"
+        onMouseDown={() => onOpenChange(false)}
       />
 
       <div
@@ -108,6 +112,7 @@ export function ChatConversationMenu({
           top: position.top,
           left: position.left,
         }}
+        onMouseDown={(event) => event.stopPropagation()}
       >
         <button
           type="button"

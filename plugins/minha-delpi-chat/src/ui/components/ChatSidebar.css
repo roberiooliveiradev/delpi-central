@@ -331,3 +331,81 @@
 .mdc-chat-session-row:focus-within .mdc-chat-session-actions {
   opacity: 1;
 }
+
+
+/* Sidebar com áreas fixas e scroll só no histórico */
+.mdc-chat-sidebar {
+  grid-template-rows:
+    auto
+    auto
+    auto
+    auto
+    auto
+    auto
+    minmax(0, 1fr)
+    auto;
+}
+
+.mdc-chat-sidebar__scroll {
+  display: contents;
+}
+
+.mdc-chat-sidebar__section-title {
+  flex: 0 0 auto;
+  min-height: 1.8rem;
+  padding: var(--mdc-space-3) var(--mdc-space-2) var(--mdc-space-2);
+  color: var(--mdc-text-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.mdc-chat-sidebar__section-title span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.4rem;
+}
+
+.mdc-chat-sidebar__section-title small {
+  flex: 0 0 auto;
+  margin-left: var(--mdc-space-2);
+}
+
+.mdc-chat-session-list {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0.2rem var(--mdc-space-2) 0;
+}
+
+.mdc-chat-session-group {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: var(--mdc-space-3);
+}
+
+.mdc-chat-session-group h3 {
+  margin: 0 var(--mdc-space-2) var(--mdc-space-1);
+  padding-top: var(--mdc-space-1);
+  color: var(--mdc-text-muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.055em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.mdc-chat-session-list::-webkit-scrollbar {
+  width: 0.55rem;
+}
+
+.mdc-chat-session-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 42%, transparent);
+}
+
+.mdc-chat-session-list::-webkit-scrollbar-track {
+  background: transparent;
+}
