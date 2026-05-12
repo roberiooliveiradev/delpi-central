@@ -320,3 +320,14 @@
 .mdc-chat-session-group:first-child h3 {
   margin-top: var(--mdc-space-1);
 }
+
+.mdc-chat-session-actions {
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+
+.mdc-chat-session-row:hover .mdc-chat-session-actions,
+.mdc-chat-session-row--active .mdc-chat-session-actions,
+.mdc-chat-session-row:focus-within .mdc-chat-session-actions {
+  opacity: 1;
+}

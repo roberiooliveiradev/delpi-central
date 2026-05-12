@@ -1,0 +1,98 @@
+.mdc-chat-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(5px);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-chat-confirm {
+  width: min(100%, 28rem);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: color-mix(in srgb, var(--mdc-card-bg) 96%, black);
+  color: var(--mdc-text);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.mdc-chat-confirm__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--mdc-space-3);
+  align-items: flex-start;
+  padding: var(--mdc-space-5);
+}
+
+.mdc-chat-confirm__icon {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 999px;
+  color: var(--mdc-primary);
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+}
+
+.mdc-chat-confirm__icon--danger {
+  color: var(--mdc-danger);
+  background: color-mix(in srgb, var(--mdc-danger) 10%, transparent);
+}
+
+.mdc-chat-confirm h2 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 1.05rem;
+}
+
+.mdc-chat-confirm p {
+  margin: var(--mdc-space-2) 0 0;
+  color: var(--mdc-text-muted);
+  line-height: 1.5;
+}
+
+.mdc-chat-confirm__close {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg);
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.mdc-chat-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--mdc-space-2);
+  border-top: 1px solid var(--mdc-card-border);
+  padding: var(--mdc-space-4) var(--mdc-space-5);
+}
+
+.mdc-chat-confirm__actions button {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg);
+  color: var(--mdc-text);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0.65rem 0.9rem;
+}
+
+.mdc-chat-confirm__actions button:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-card-border));
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-confirm__actions .mdc-chat-confirm__danger {
+  border-color: color-mix(in srgb, var(--mdc-danger) 55%, var(--mdc-card-border));
+  color: var(--mdc-danger);
+  background: color-mix(in srgb, var(--mdc-danger) 8%, var(--mdc-bg));
+}

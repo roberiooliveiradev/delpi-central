@@ -6,14 +6,14 @@ import {
   ChevronRight,
   Folder,
   MessageSquarePlus,
-  Pencil,
   Search,
-  Trash2,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChatSession } from "../../data/api/chatTypes";
+import { ChatConfirmDialog } from "./ChatConfirmDialog";
+import { ChatConversationMenu } from "./ChatConversationMenu";
 
 import "./ChatSidebar.css";
 
@@ -144,6 +144,8 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [openMenuSessionId, setOpenMenuSessionId] = useState<string | null>(null);
+  const [deleteTargetSession, setDeleteTargetSession] = useState<ChatSession | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -200,16 +202,23 @@ export function ChatSidebar({
     setEditingTitle("");
   }
 
-  async function handleDeleteSession(session: ChatSession) {
-    const confirmed = window.confirm(
-      `Excluir a conversa "${session.title || "sem título"}"?`,
-    );
+  function requestDeleteSession(session: ChatSession) {
+    setDeleteTargetSession(session);
+  }
 
-    if (!confirmed) {
+  async function confirmDeleteSession() {
+    if (!deleteTargetSession) {
       return;
     }
 
-    await onDeleteSession(session.id);
+    await onDeleteSession(deleteTargetSession.id);
+    setDeleteTargetSession(null);
+  }
+
+  function handleShareSession(session: ChatSession) {
+    const title = session.title || "Conversa sem título";
+
+    void navigator.clipboard?.writeText(title);
   }
 
   async function saveEditingSession(session: ChatSession) {
@@ -472,29 +481,15 @@ export function ChatSidebar({
                           </button>
 
                           <div className="mdc-chat-session-actions">
-                            <button
-                              type="button"
-                              className="mdc-chat-session-action"
-                              onClick={() => startEditingSession(session)}
-                              aria-label={`Renomear conversa ${
-                                session.title || "sem título"
-                              }`}
-                              title="Renomear conversa"
-                            >
-                              <Pencil size={15} aria-hidden="true" />
-                            </button>
-
-                            <button
-                              type="button"
-                              className="mdc-chat-session-action"
-                              onClick={() => void handleDeleteSession(session)}
-                              aria-label={`Excluir conversa ${
-                                session.title || "sem título"
-                              }`}
-                              title="Excluir conversa"
-                            >
-                              <Trash2 size={15} aria-hidden="true" />
-                            </button>
+                            <ChatConversationMenu
+                              open={openMenuSessionId === session.id}
+                              onOpenChange={(open) =>
+                                setOpenMenuSessionId(open ? session.id : null)
+                              }
+                              onShare={() => handleShareSession(session)}
+                              onRename={() => startEditingSession(session)}
+                              onDelete={() => requestDeleteSession(session)}
+                            />
                           </div>
                         </>
                       )}
@@ -511,6 +506,19 @@ export function ChatSidebar({
         <span>DELPI Central</span>
         <small>APIs, conhecimento e ações autorizadas</small>
       </div>
+
+      <ChatConfirmDialog
+        open={Boolean(deleteTargetSession)}
+        danger
+        title="Excluir conversa?"
+        description={`A conversa "${
+          deleteTargetSession?.title || "sem título"
+        }" será removida com todo o histórico de mensagens.`}
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDeleteSession}
+        onCancel={() => setDeleteTargetSession(null)}
+      />
     </aside>
   );
 }
