@@ -1,18 +1,43 @@
-import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
-import "./ChatSidebar.css";
-import { useState } from "react";
+import {
+  Bot,
+  Box,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Folder,
+  MessageSquarePlus,
+  Pencil,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 
 import type { ChatSession } from "../../data/api/chatTypes";
+
+import "./ChatSidebar.css";
 
 type ChatSidebarProps = {
   sessions: ChatSession[];
   activeSessionId?: string;
   isLoading?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapsed?: () => void;
   onNewSession: () => void;
   onSelectSession: (session: ChatSession) => void;
   onRenameSession: (sessionId: string, title: string) => Promise<ChatSession | null>;
   onDeleteSession: (sessionId: string) => Promise<boolean>;
 };
+
+const apps = [
+  { label: "Minha DELPI Chat", icon: Bot },
+  { label: "Ações OpenAPI", icon: Box },
+];
+
+const projects = [
+  { label: "App - DELPI Central", icon: Folder },
+  { label: "Produtos e estoque", icon: Folder },
+];
 
 function formatSessionDate(value?: string): string {
   if (!value) {
@@ -37,6 +62,8 @@ export function ChatSidebar({
   sessions,
   activeSessionId,
   isLoading,
+  isCollapsed,
+  onToggleCollapsed,
   onNewSession,
   onSelectSession,
   onRenameSession,
@@ -44,6 +71,23 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredSessions = useMemo(() => {
+    const normalized = searchTerm.trim().toLowerCase();
+
+    if (!normalized) {
+      return sessions;
+    }
+
+    return sessions.filter((session) => {
+      const title = session.title || "Conversa sem título";
+      const context = session.context || "geral";
+
+      return `${title} ${context}`.toLowerCase().includes(normalized);
+    });
+  }, [searchTerm, sessions]);
 
   function startEditingSession(session: ChatSession) {
     setEditingSessionId(session.id);
@@ -83,135 +127,282 @@ export function ChatSidebar({
     }
   }
 
-  return (
-    <aside className="mdc-chat-sidebar" aria-label="Conversas">
-      <div className="mdc-chat-sidebar__header">
-        <div>
-          <p className="mdc-chat-eyebrow">Conversas</p>
-          <h2>Histórico</h2>
-        </div>
+  if (isCollapsed) {
+    return (
+      <aside
+        className="mdc-chat-sidebar mdc-chat-sidebar--collapsed"
+        aria-label="Conversas"
+      >
+        <button
+          type="button"
+          className="mdc-chat-sidebar__collapse-button"
+          onClick={onToggleCollapsed}
+          aria-label="Expandir barra lateral"
+          title="Expandir"
+        >
+          <ChevronRight size={18} aria-hidden="true" />
+        </button>
 
         <button
           type="button"
-          className="mdc-chat-icon-button"
+          className="mdc-chat-sidebar__rail-button"
           onClick={onNewSession}
           aria-label="Nova conversa"
           title="Nova conversa"
         >
-          <Plus size={18} aria-hidden="true" />
+          <MessageSquarePlus size={19} aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          className="mdc-chat-sidebar__rail-button"
+          onClick={() => {
+            onToggleCollapsed?.();
+            setIsSearchOpen(true);
+          }}
+          aria-label="Buscar conversas"
+          title="Buscar conversas"
+        >
+          <Search size={19} aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          className="mdc-chat-sidebar__rail-button"
+          aria-label="Apps"
+          title="Apps"
+        >
+          <Box size={19} aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          className="mdc-chat-sidebar__rail-button"
+          aria-label="Projetos"
+          title="Projetos"
+        >
+          <Folder size={19} aria-hidden="true" />
+        </button>
+      </aside>
+    );
+  }
+
+  return (
+    <aside className="mdc-chat-sidebar" aria-label="Conversas">
+      <div className="mdc-chat-sidebar__brand">
+        <div>
+          <strong>Minha DELPI</strong>
+          <small>Chat corporativo</small>
+        </div>
+
+        <button
+          type="button"
+          className="mdc-chat-sidebar__collapse-button"
+          onClick={onToggleCollapsed}
+          aria-label="Recolher barra lateral"
+          title="Recolher"
+        >
+          <ChevronLeft size={18} aria-hidden="true" />
         </button>
       </div>
 
-      {isLoading ? (
-        <p className="mdc-chat-muted">Carregando sessões...</p>
-      ) : sessions.length === 0 ? (
-        <p className="mdc-chat-muted">Nenhuma conversa criada ainda.</p>
-      ) : (
-        <div className="mdc-chat-session-list">
-          {sessions.map((session) => {
-            const isEditing = editingSessionId === session.id;
+      <nav className="mdc-chat-sidebar__nav" aria-label="Ações do chat">
+        <button type="button" onClick={onNewSession}>
+          <MessageSquarePlus size={17} aria-hidden="true" />
+          <span>Nova conversa</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsSearchOpen((current) => !current);
+            setSearchTerm("");
+          }}
+        >
+          <Search size={17} aria-hidden="true" />
+          <span>Buscar conversas</span>
+        </button>
+      </nav>
+
+      {isSearchOpen ? (
+        <label className="mdc-chat-sidebar__search">
+          <Search size={15} aria-hidden="true" />
+          <input
+            value={searchTerm}
+            autoFocus
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Buscar no histórico..."
+          />
+          {searchTerm ? (
+            <button
+              type="button"
+              onClick={() => setSearchTerm("")}
+              aria-label="Limpar busca"
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          ) : null}
+        </label>
+      ) : null}
+
+      <div className="mdc-chat-sidebar__scroll">
+        <div className="mdc-chat-sidebar__section-title">
+          <span>Apps e agentes</span>
+        </div>
+
+        <div className="mdc-chat-sidebar__link-list">
+          {apps.map((item) => {
+            const Icon = item.icon;
 
             return (
-              <div
-                key={session.id}
-                className={
-                  session.id === activeSessionId
-                    ? "mdc-chat-session-row mdc-chat-session-row--active"
-                    : "mdc-chat-session-row"
-                }
-              >
-                {isEditing ? (
-                  <div className="mdc-chat-session-edit-card">
-                    <input
-                      className="mdc-chat-session-edit-input"
-                      value={editingTitle}
-                      autoFocus
-                      maxLength={120}
-                      onChange={(event) => setEditingTitle(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          void saveEditingSession(session);
-                        }
-
-                        if (event.key === "Escape") {
-                          event.preventDefault();
-                          cancelEditingSession();
-                        }
-                      }}
-                      aria-label="Nome da conversa"
-                    />
-
-                    <div className="mdc-chat-session-edit-actions">
-                      <button
-                        type="button"
-                        className="mdc-chat-session-action"
-                        onClick={() => void saveEditingSession(session)}
-                        aria-label="Salvar nome da conversa"
-                        title="Salvar"
-                      >
-                        <Check size={15} aria-hidden="true" />
-                      </button>
-
-                      <button
-                        type="button"
-                        className="mdc-chat-session-action"
-                        onClick={cancelEditingSession}
-                        aria-label="Cancelar edição"
-                        title="Cancelar"
-                      >
-                        <X size={15} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      className="mdc-chat-session"
-                      onClick={() => onSelectSession(session)}
-                    >
-                      <span>{session.title || "Conversa sem título"}</span>
-                      <small>
-                        {session.context || "geral"}
-                        {formatSessionDate(session.updated_at) ? (
-                          <> · {formatSessionDate(session.updated_at)}</>
-                        ) : null}
-                      </small>
-                    </button>
-
-                    <div className="mdc-chat-session-actions">
-                      <button
-                        type="button"
-                        className="mdc-chat-session-action"
-                        onClick={() => startEditingSession(session)}
-                        aria-label={`Renomear conversa ${
-                          session.title || "sem título"
-                        }`}
-                        title="Renomear conversa"
-                      >
-                        <Pencil size={15} aria-hidden="true" />
-                      </button>
-
-                      <button
-                        type="button"
-                        className="mdc-chat-session-action"
-                        onClick={() => void handleDeleteSession(session)}
-                        aria-label={`Excluir conversa ${
-                          session.title || "sem título"
-                        }`}
-                        title="Excluir conversa"
-                      >
-                        <Trash2 size={15} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
+              <button key={item.label} type="button">
+                <Icon size={16} aria-hidden="true" />
+                <span>{item.label}</span>
+              </button>
             );
           })}
         </div>
-      )}
+
+        <div className="mdc-chat-sidebar__section-title">
+          <span>Projetos</span>
+        </div>
+
+        <div className="mdc-chat-sidebar__link-list">
+          {projects.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <button key={item.label} type="button">
+                <Icon size={16} aria-hidden="true" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mdc-chat-sidebar__section-title">
+          <span>Conversas</span>
+          <small>{filteredSessions.length}</small>
+        </div>
+
+        {isLoading ? (
+          <p className="mdc-chat-muted">Carregando sessões...</p>
+        ) : filteredSessions.length === 0 ? (
+          <p className="mdc-chat-muted">
+            {searchTerm ? "Nenhuma conversa encontrada." : "Nenhuma conversa criada ainda."}
+          </p>
+        ) : (
+          <div className="mdc-chat-session-list">
+            {filteredSessions.map((session) => {
+              const isEditing = editingSessionId === session.id;
+
+              return (
+                <div
+                  key={session.id}
+                  className={
+                    session.id === activeSessionId
+                      ? "mdc-chat-session-row mdc-chat-session-row--active"
+                      : "mdc-chat-session-row"
+                  }
+                >
+                  {isEditing ? (
+                    <div className="mdc-chat-session-edit-card">
+                      <input
+                        className="mdc-chat-session-edit-input"
+                        value={editingTitle}
+                        autoFocus
+                        maxLength={120}
+                        onChange={(event) => setEditingTitle(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            void saveEditingSession(session);
+                          }
+
+                          if (event.key === "Escape") {
+                            event.preventDefault();
+                            cancelEditingSession();
+                          }
+                        }}
+                        aria-label="Nome da conversa"
+                      />
+
+                      <div className="mdc-chat-session-edit-actions">
+                        <button
+                          type="button"
+                          className="mdc-chat-session-action"
+                          onClick={() => void saveEditingSession(session)}
+                          aria-label="Salvar nome da conversa"
+                          title="Salvar"
+                        >
+                          <Check size={15} aria-hidden="true" />
+                        </button>
+
+                        <button
+                          type="button"
+                          className="mdc-chat-session-action"
+                          onClick={cancelEditingSession}
+                          aria-label="Cancelar edição"
+                          title="Cancelar"
+                        >
+                          <X size={15} aria-hidden="true" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="mdc-chat-session"
+                        onClick={() => onSelectSession(session)}
+                      >
+                        <span>{session.title || "Conversa sem título"}</span>
+                        <small>
+                          {session.context || "geral"}
+                          {formatSessionDate(session.updated_at) ? (
+                            <> · {formatSessionDate(session.updated_at)}</>
+                          ) : null}
+                        </small>
+                      </button>
+
+                      <div className="mdc-chat-session-actions">
+                        <button
+                          type="button"
+                          className="mdc-chat-session-action"
+                          onClick={() => startEditingSession(session)}
+                          aria-label={`Renomear conversa ${
+                            session.title || "sem título"
+                          }`}
+                          title="Renomear conversa"
+                        >
+                          <Pencil size={15} aria-hidden="true" />
+                        </button>
+
+                        <button
+                          type="button"
+                          className="mdc-chat-session-action"
+                          onClick={() => void handleDeleteSession(session)}
+                          aria-label={`Excluir conversa ${
+                            session.title || "sem título"
+                          }`}
+                          title="Excluir conversa"
+                        >
+                          <Trash2 size={15} aria-hidden="true" />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="mdc-chat-sidebar__footer">
+        <span>DELPI Central</span>
+        <small>APIs, conhecimento e ações autorizadas</small>
+      </div>
     </aside>
   );
 }

@@ -1,38 +1,46 @@
 .mdc-chat-empty-state {
-  border: 1px dashed var(--mdc-card-border);
-  border-radius: var(--mdc-radius-xl);
-  padding: clamp(1.25rem, 3vw, 2rem);
-  background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--mdc-primary) 10%, transparent), transparent 34%),
-    color-mix(in srgb, var(--mdc-card-bg) 86%, transparent);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--mdc-space-5);
+  width: min(100%, 760px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: var(--mdc-space-6) var(--mdc-space-5);
+  text-align: center;
 }
 
 .mdc-chat-empty-state h2 {
-  margin: 0.2rem 0 0.35rem;
+  margin: 0.2rem 0 0.4rem;
   color: var(--mdc-title);
+  font-size: clamp(1.55rem, 2.8vw, 2.4rem);
+  letter-spacing: -0.04em;
 }
 
 .mdc-chat-empty-state p {
-  margin: 0;
+  max-width: 38rem;
+  margin: 0 auto;
   color: var(--mdc-text-muted);
+  line-height: 1.55;
 }
 
 .mdc-chat-empty-state__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--mdc-space-3);
-  margin-top: var(--mdc-space-5);
+  width: min(100%, 680px);
 }
 
 .mdc-chat-empty-state__grid button {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.35rem 0.75rem;
-  align-items: center;
+  align-items: start;
+  min-height: 5rem;
   text-align: left;
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-lg);
-  background: var(--mdc-card-bg);
+  background: color-mix(in srgb, var(--mdc-card-bg) 72%, transparent);
   color: var(--mdc-text);
   cursor: pointer;
   padding: var(--mdc-space-4);
@@ -50,11 +58,12 @@
 
 .mdc-chat-empty-state__grid svg {
   color: var(--mdc-primary);
+  margin-top: 0.1rem;
 }
 
 .mdc-chat-empty-state__grid span {
   color: var(--mdc-title);
-  font-weight: 800;
+  font-weight: 850;
 }
 
 .mdc-chat-empty-state__grid small {

@@ -1,6 +1,11 @@
 .mdc-chat-shell {
-  grid-template-columns: minmax(17rem, 20rem) minmax(0, 1fr);
+  grid-template-columns: 280px minmax(0, 1fr);
   align-items: stretch;
+  transition: grid-template-columns 0.22s ease;
+}
+
+.mdc-chat-shell--sidebar-collapsed {
+  grid-template-columns: 4.75rem minmax(0, 1fr);
 }
 
 .mdc-chat-main {
@@ -8,7 +13,12 @@
 }
 
 @media (max-width: 980px) {
-  .mdc-chat-shell {
+  .mdc-chat-shell,
+  .mdc-chat-shell--sidebar-collapsed {
     grid-template-columns: 1fr;
+  }
+
+  .mdc-chat-sidebar {
+    display: none;
   }
 }

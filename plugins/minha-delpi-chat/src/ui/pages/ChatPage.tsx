@@ -45,6 +45,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   } = useChatSession({ getAccessToken });
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   function openCanvasFromMessage(content: string, title = "Rascunho da resposta") {
     setCanvasDocument({
@@ -70,7 +71,13 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
   return (
     <main className="minha-delpi-chat">
-      <section className="mdc-chat-shell">
+      <section
+        className={
+          isSidebarCollapsed
+            ? "mdc-chat-shell mdc-chat-shell--sidebar-collapsed"
+            : "mdc-chat-shell"
+        }
+      >
         <ChatSidebar
           sessions={sessions}
           activeSessionId={activeSession?.id}
@@ -79,6 +86,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
           onDeleteSession={handleDeleteSession}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
         />
 
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
