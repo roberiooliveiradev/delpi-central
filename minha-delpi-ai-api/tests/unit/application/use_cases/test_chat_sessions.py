@@ -16,12 +16,21 @@ class FakeChatSessionRepository:
         self.sessions = []
         self.messages = []
 
-    def create_session(self, user_id, title, context):
+    def create_session(
+        self,
+        user_id,
+        title,
+        context,
+        project_id=None,
+        agent_key=None,
+    ):
         session = ChatSession(
             id=uuid4(),
             user_id=user_id,
             title=title,
             context=context,
+            project_id=project_id,
+            agent_key=agent_key,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )
