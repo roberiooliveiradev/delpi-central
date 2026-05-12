@@ -5,6 +5,10 @@ import "./ChatPage.css";
 import { ChatInput } from "../components/ChatInput";
 import { ChatMessageList } from "../components/ChatMessageList";
 import { ChatSidebar } from "../components/ChatSidebar";
+import {
+  createChatArtifact,
+  updateChatArtifact,
+} from "../../data/api/chatApi";
 import { useChatSession } from "../../state/hooks/useChatSession";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
@@ -66,11 +70,68 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     );
   }, [isSidebarCollapsed]);
 
-  function openCanvasFromMessage(content: string, title = "Rascunho da resposta") {
+  function openCanvasFromMessage(
+    content: string,
+    title = "Rascunho da resposta",
+    messageId?: string | null,
+  ) {
     setCanvasDocument({
       title,
+      messageId,
       markdown: normalizeCanvasMarkdown(content),
+      isSaved: false,
     });
+  }
+
+  async function saveCanvasDocument(document: ChatCanvasDocument) {
+    if (!activeSession) {
+      return;
+    }
+
+    setCanvasDocument({
+      ...document,
+      isSaving: true,
+    });
+
+    try {
+      const artifact = document.id
+        ? await updateChatArtifact(
+            document.id,
+            {
+              title: document.title,
+              content: document.markdown,
+            },
+            { getAccessToken },
+          )
+        : await createChatArtifact(
+            activeSession.id,
+            {
+              type: "markdown",
+              title: document.title,
+              content: document.markdown,
+              messageId: document.messageId ?? null,
+              metadata: {
+                origin: "canvas",
+              },
+            },
+            { getAccessToken },
+          );
+
+      setCanvasDocument({
+        id: artifact.id,
+        messageId: artifact.message_id,
+        title: artifact.title,
+        markdown: artifact.content,
+        isSaving: false,
+        isSaved: true,
+      });
+    } catch {
+      setCanvasDocument({
+        ...document,
+        isSaving: false,
+        isSaved: false,
+      });
+    }
   }
 
   async function handleStartSession() {
@@ -191,6 +252,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
         <ChatCanvas
           document={canvasDocument}
           onChange={setCanvasDocument}
+          onSave={saveCanvasDocument}
           onClose={() => setCanvasDocument(null)}
         />
       </section>

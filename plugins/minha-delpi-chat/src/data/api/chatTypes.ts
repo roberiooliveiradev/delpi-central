@@ -77,3 +77,30 @@ export type SendChatMessageResponse = {
   sources: ChatSource[];
   toolCalls: ChatToolCall[];
 };
+
+export type ChatArtifact = {
+  id: string;
+  session_id: string;
+  message_id: string | null;
+  user_id: string;
+  type: "markdown" | "table" | "json" | "report" | string;
+  title: string;
+  content: string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CreateChatArtifactPayload = {
+  type: "markdown" | "table" | "json" | "report" | string;
+  title: string;
+  content: string;
+  messageId?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+export type UpdateChatArtifactPayload = {
+  title?: string;
+  content?: string;
+  metadata?: Record<string, unknown> | null;
+};

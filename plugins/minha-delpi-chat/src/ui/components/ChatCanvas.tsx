@@ -1,21 +1,26 @@
-import { Copy, Maximize2, Minimize2, X } from "lucide-react";
+import { Check, Copy, Maximize2, Minimize2, Save, X } from "lucide-react";
 import { useState } from "react";
 import { ChatMarkdown } from "./ChatMarkdown";
 
 import "./ChatCanvas.css";
 
 export type ChatCanvasDocument = {
+  id?: string;
+  messageId?: string | null;
   title: string;
   markdown: string;
+  isSaving?: boolean;
+  isSaved?: boolean;
 };
 
 type ChatCanvasProps = {
   document?: ChatCanvasDocument | null;
   onChange?: (document: ChatCanvasDocument) => void;
+  onSave?: (document: ChatCanvasDocument) => void | Promise<void>;
   onClose?: () => void;
 };
 
-export function ChatCanvas({ document, onChange, onClose }: ChatCanvasProps) {
+export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasProps) {
   const [mode, setMode] = useState<"edit" | "preview">("preview");
   const [expanded, setExpanded] = useState(false);
 
@@ -25,6 +30,13 @@ export function ChatCanvas({ document, onChange, onClose }: ChatCanvasProps) {
 
   async function copyCanvas() {
     await navigator.clipboard?.writeText(document.markdown);
+  }
+
+  function updateDocument(next: ChatCanvasDocument) {
+    onChange?.({
+      ...next,
+      isSaved: false,
+    });
   }
 
   return (
@@ -53,7 +65,7 @@ export function ChatCanvas({ document, onChange, onClose }: ChatCanvasProps) {
             <input
               value={document.title}
               onChange={(event) =>
-                onChange?.({
+                updateDocument({
                   ...document,
                   title: event.target.value,
                 })
@@ -63,6 +75,22 @@ export function ChatCanvas({ document, onChange, onClose }: ChatCanvasProps) {
           </div>
 
           <div className="mdc-chat-canvas__actions">
+            {onSave ? (
+              <button
+                type="button"
+                onClick={() => void onSave(document)}
+                disabled={document.isSaving}
+                title={document.isSaved ? "Salvo" : "Salvar lousa"}
+              >
+                {document.isSaved ? (
+                  <Check size={16} aria-hidden="true" />
+                ) : (
+                  <Save size={16} aria-hidden="true" />
+                )}
+                <span>{document.isSaving ? "Salvando" : document.isSaved ? "Salvo" : "Salvar"}</span>
+              </button>
+            ) : null}
+
             <button
               type="button"
               onClick={() =>
@@ -100,7 +128,7 @@ export function ChatCanvas({ document, onChange, onClose }: ChatCanvasProps) {
             <textarea
               value={document.markdown}
               onChange={(event) =>
-                onChange?.({
+                updateDocument({
                   ...document,
                   markdown: event.target.value,
                 })

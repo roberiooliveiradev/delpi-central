@@ -1,9 +1,12 @@
 import type {
+  ChatArtifact,
   ChatMessage,
   ChatSession,
+  CreateChatArtifactPayload,
   CreateChatSessionPayload,
   SendChatMessagePayload,
   SendChatMessageResponse,
+  UpdateChatArtifactPayload,
 } from "./chatTypes";
 
 const API_BASE_URL = "/apps/minha-delpi-ai/api";
@@ -282,4 +285,59 @@ export async function unarchiveChatSession(
   });
 
   return parseJsonResponse<ChatSession>(response);
+}
+
+
+export async function listChatArtifacts(
+  sessionId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatArtifact[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/artifacts`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatArtifact[]>(response);
+}
+
+export async function createChatArtifact(
+  sessionId: string,
+  payload: CreateChatArtifactPayload,
+  options: ChatApiOptions = {},
+): Promise<ChatArtifact> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/artifacts`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<ChatArtifact>(response);
+}
+
+export async function updateChatArtifact(
+  artifactId: string,
+  payload: UpdateChatArtifactPayload,
+  options: ChatApiOptions = {},
+): Promise<ChatArtifact> {
+  const response = await fetch(`${API_BASE_URL}/chat/artifacts/${artifactId}`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<ChatArtifact>(response);
+}
+
+export async function deleteChatArtifact(
+  artifactId: string,
+  options: ChatApiOptions = {},
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/chat/artifacts/${artifactId}`, {
+    method: "DELETE",
+    headers: await getAuthHeaders(options),
+  });
+
+  if (!response.ok) {
+    await parseJsonResponse<unknown>(response);
+  }
 }

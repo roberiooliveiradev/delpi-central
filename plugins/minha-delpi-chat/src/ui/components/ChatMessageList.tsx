@@ -25,7 +25,11 @@ type ChatMessageListProps = {
   onUseSuggestion?: (value: string) => void;
   onEditMessage?: (messageId: string, content: string) => Promise<ChatMessage | null>;
   onReuseMessage?: (content: string) => void;
-  onOpenCanvas?: (content: string, title?: string) => void;
+  onOpenCanvas?: (
+    content: string,
+    title?: string,
+    messageId?: string | null,
+  ) => void;
 };
 
 function getMessageSources(message: ChatMessage): ChatSource[] {
@@ -198,6 +202,7 @@ export function ChatMessageList({
                       message.role === "user"
                         ? "Pergunta do usuário"
                         : "Rascunho da resposta",
+                      message.id,
                     )
                   }
                   aria-label="Abrir na lousa"
@@ -295,7 +300,7 @@ export function ChatMessageList({
               <ChatCanvasInline
                 document={makeCanvasDocumentFromMessage(message)}
                 onOpen={(document) =>
-                  onOpenCanvas?.(document.markdown, document.title)
+                  onOpenCanvas?.(document.markdown, document.title, message.id)
                 }
               />
             ) : null}
