@@ -1,3 +1,5 @@
+from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
+from app.application.services.external_actions.external_action_selection_service import ExternalActionSelectionService
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.rag_context_service import RagContextService
 from app.application.use_cases.create_chat_session_use_case import CreateChatSessionUseCase
@@ -46,6 +48,9 @@ def make_chat_tool_context_service() -> ChatToolContextService:
     return ChatToolContextService(
         tool_selection_service=ToolSelectionService(),
         execute_tool_use_case=make_execute_tool_use_case(),
+        external_action_selection_service=ExternalActionSelectionService(
+            PostgresExternalActionRepository()
+        ),
     )
 
 

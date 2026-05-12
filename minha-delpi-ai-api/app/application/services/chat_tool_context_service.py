@@ -11,9 +11,11 @@ class ChatToolContextService:
         self,
         tool_selection_service: ToolSelectionService,
         execute_tool_use_case: ExecuteToolUseCase,
+        external_action_selection_service=None,
     ):
         self.tool_selection_service = tool_selection_service
         self.execute_tool_use_case = execute_tool_use_case
+        self.external_action_selection_service = external_action_selection_service
 
     def build_context(
         self,
@@ -22,6 +24,12 @@ class ChatToolContextService:
         message: str,
     ) -> dict:
         selected_tools = self.tool_selection_service.select_tools(message)
+
+        if self.external_action_selection_service:
+            selected_external_action = self.external_action_selection_service.select_action(message)
+
+            if selected_external_action:
+                selected_tools.append(selected_external_action)
 
         if not selected_tools:
             return {

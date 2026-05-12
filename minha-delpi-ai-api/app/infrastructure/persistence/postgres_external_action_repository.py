@@ -132,6 +132,44 @@ class PostgresExternalActionRepository:
         )
 
 
+
+    def find_candidate_actions(self, query: str, limit: int = 8) -> list[dict]:
+        normalized = str(query or "").lower()
+
+        db_query = ExternalActionModel.query.join(ExternalActionProviderModel).filter(
+            ExternalActionModel.enabled.is_(True),
+            ExternalActionProviderModel.enabled.is_(True),
+        )
+
+        if any(term in normalized for term in ["produto", "product", "item", "código", "codigo"]):
+            db_query = db_query.filter(
+                db.or_(
+                    ExternalActionModel.path.ilike("%product%"),
+                    ExternalActionModel.path.ilike("%produto%"),
+                    ExternalActionModel.summary.ilike("%product%"),
+                    ExternalActionModel.summary.ilike("%produto%"),
+                    ExternalActionModel.description.ilike("%product%"),
+                    ExternalActionModel.description.ilike("%produto%"),
+                )
+            )
+        elif any(term in normalized for term in ["lmp", "lmps"]):
+            db_query = db_query.filter(
+                db.or_(
+                    ExternalActionModel.path.ilike("%lmp%"),
+                    ExternalActionModel.summary.ilike("%lmp%"),
+                    ExternalActionModel.description.ilike("%lmp%"),
+                )
+            )
+        else:
+            return []
+
+        actions = db_query.order_by(
+            ExternalActionModel.method.asc(),
+            ExternalActionModel.path.asc(),
+        ).limit(limit).all()
+
+        return [self._action_to_dict(action) for action in actions]
+
     def get_action_for_execution(self, action_id: str) -> dict | None:
         action = ExternalActionModel.query.filter(
             ExternalActionModel.action_id == action_id
