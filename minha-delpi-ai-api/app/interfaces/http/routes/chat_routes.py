@@ -6,7 +6,9 @@ from flask import Blueprint, Response, g, jsonify, request, stream_with_context
 from app.infrastructure.config.settings import Settings
 from app.interfaces.http.rate_limit_decorators import rate_limit
 
+from app.application.dto.create_chat_artifact_request import CreateChatArtifactRequest
 from app.application.dto.create_chat_session_request import CreateChatSessionRequest
+from app.application.dto.update_chat_artifact_request import UpdateChatArtifactRequest
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.use_cases.update_chat_message_use_case import UpdateChatMessageRequest
 from app.application.use_cases.rename_chat_session_use_case import RenameChatSessionRequest
@@ -17,7 +19,11 @@ from app.application.use_cases.get_chat_status_use_case import GetChatStatusUseC
 from app.composition.chat_composer import (
     make_delete_chat_session_use_case,
     make_update_chat_message_use_case,
+    make_create_chat_artifact_use_case,
     make_create_chat_session_use_case,
+    make_delete_chat_artifact_use_case,
+    make_list_chat_artifacts_use_case,
+    make_update_chat_artifact_use_case,
     make_get_chat_history_use_case,
     make_list_chat_sessions_use_case,
     make_rename_chat_session_use_case,
@@ -42,6 +48,106 @@ def _sse(event: str, payload: dict) -> str:
 def status():
     result = GetChatStatusUseCase().execute(g.current_user)
     return jsonify(result), 200
+
+
+
+@chat_bp.get("/sessions/<session_id>/artifacts")
+@require_permission("minha-delpi.chat.access")
+def list_artifacts(session_id: str):
+    use_case = make_list_chat_artifacts_use_case()
+    result = use_case.execute(
+        user_id=g.current_user.sub,
+        session_id=session_id,
+    )
+
+    return jsonify([asdict(artifact) for artifact in result]), 200
+
+
+@chat_bp.post("/sessions/<session_id>/artifacts")
+@require_permission("minha-delpi.chat.access")
+def create_artifact(session_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_create_chat_artifact_use_case()
+
+    try:
+        result = use_case.execute(
+            CreateChatArtifactRequest(
+                user_id=g.current_user.sub,
+                session_id=session_id,
+                message_id=payload.get("messageId"),
+                type=payload.get("type", "markdown"),
+                title=payload.get("title", ""),
+                content=payload.get("content", ""),
+                metadata=payload.get("metadata"),
+            )
+        )
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 201
+
+
+@chat_bp.patch("/artifacts/<artifact_id>")
+@require_permission("minha-delpi.chat.access")
+def update_artifact(artifact_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_update_chat_artifact_use_case()
+
+    try:
+        result = use_case.execute(
+            UpdateChatArtifactRequest(
+                user_id=g.current_user.sub,
+                artifact_id=artifact_id,
+                title=payload.get("title"),
+                content=payload.get("content"),
+                metadata=payload.get("metadata"),
+            )
+        )
+
+        if not result:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 200
+
+
+@chat_bp.delete("/artifacts/<artifact_id>")
+@require_permission("minha-delpi.chat.access")
+def delete_artifact(artifact_id: str):
+    use_case = make_delete_chat_artifact_use_case()
+
+    try:
+        deleted = use_case.execute(
+            user_id=g.current_user.sub,
+            artifact_id=artifact_id,
+        )
+
+        if not deleted:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return "", 204
 
 
 @chat_bp.post("/sessions")

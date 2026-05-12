@@ -5,6 +5,12 @@ from app.application.services.external_actions.external_action_selection_service
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.rag_context_service import RagContextService
 from app.application.use_cases.create_chat_session_use_case import CreateChatSessionUseCase
+from app.application.use_cases.chat_artifacts_use_cases import (
+    CreateChatArtifactUseCase,
+    DeleteChatArtifactUseCase,
+    ListChatArtifactsUseCase,
+    UpdateChatArtifactUseCase,
+)
 from app.application.use_cases.get_chat_history_use_case import GetChatHistoryUseCase
 from app.application.use_cases.list_chat_sessions_use_case import ListChatSessionsUseCase
 from app.application.use_cases.rename_chat_session_use_case import RenameChatSessionUseCase
@@ -99,3 +105,25 @@ def make_set_chat_session_pinned_use_case() -> SetChatSessionPinnedUseCase:
 
 def make_set_chat_session_archived_use_case() -> SetChatSessionArchivedUseCase:
     return SetChatSessionArchivedUseCase(PostgresChatSessionRepository())
+
+
+def make_list_chat_artifacts_use_case() -> ListChatArtifactsUseCase:
+    return ListChatArtifactsUseCase(
+        artifact_repository=PostgresChatArtifactRepository(),
+        session_repository=PostgresChatSessionRepository(),
+    )
+
+
+def make_create_chat_artifact_use_case() -> CreateChatArtifactUseCase:
+    return CreateChatArtifactUseCase(
+        artifact_repository=PostgresChatArtifactRepository(),
+        session_repository=PostgresChatSessionRepository(),
+    )
+
+
+def make_update_chat_artifact_use_case() -> UpdateChatArtifactUseCase:
+    return UpdateChatArtifactUseCase(PostgresChatArtifactRepository())
+
+
+def make_delete_chat_artifact_use_case() -> DeleteChatArtifactUseCase:
+    return DeleteChatArtifactUseCase(PostgresChatArtifactRepository())
