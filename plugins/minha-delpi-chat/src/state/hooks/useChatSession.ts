@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  archiveChatSession,
   createChatSession,
   deleteChatSession,
   listChatMessages,
   listChatSessions,
+  pinChatSession,
   renameChatSession,
+  unarchiveChatSession,
+  unpinChatSession,
   updateChatMessage,
 } from "../../data/api/chatApi";
 import type {
@@ -38,6 +42,7 @@ function createOptimisticUserMessage(
 
 export function useChatSession(options: UseChatSessionOptions = {}) {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [archivedSessions, setArchivedSessions] = useState<ChatSession[]>([]);
   const [activeSession, setActiveSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
@@ -46,6 +51,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [streamingToolCalls, setStreamingToolCalls] = useState<ChatToolCall[]>([]);
   const [streamingStatus, setStreamingStatus] = useState<string | null>(null);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [isLoadingArchivedSessions, setIsLoadingArchivedSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +75,28 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       setError(err instanceof Error ? err.message : "Erro ao carregar sessões.");
     } finally {
       setIsLoadingSessions(false);
+    }
+  }, [options.getAccessToken]);
+
+  const loadArchivedSessions = useCallback(async () => {
+    setIsLoadingArchivedSessions(true);
+    setError(null);
+
+    try {
+      const data = await listChatSessions({
+        getAccessToken: options.getAccessToken,
+        archived: true,
+      });
+
+      setArchivedSessions(data);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erro ao carregar conversas arquivadas.",
+      );
+    } finally {
+      setIsLoadingArchivedSessions(false);
     }
   }, [options.getAccessToken]);
 
@@ -201,6 +229,24 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setDraft(content);
   }, []);
 
+  function replaceSession(updatedSession: ChatSession) {
+    setSessions((current) =>
+      current.map((session) =>
+        session.id === updatedSession.id ? updatedSession : session,
+      ),
+    );
+
+    setArchivedSessions((current) =>
+      current.map((session) =>
+        session.id === updatedSession.id ? updatedSession : session,
+      ),
+    );
+
+    setActiveSession((current) =>
+      current?.id === updatedSession.id ? updatedSession : current,
+    );
+  }
+
   const renameSession = useCallback(
     async (sessionId: string, title: string) => {
       const normalizedTitle = title.trim();
@@ -234,6 +280,108 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         return updatedSession;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao renomear conversa.");
+        return null;
+      }
+    },
+    [options.getAccessToken],
+  );
+
+  const pinSession = useCallback(
+    async (sessionId: string) => {
+      setError(null);
+
+      try {
+        const updatedSession = await pinChatSession(sessionId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        replaceSession(updatedSession);
+        await loadSessions();
+
+        return updatedSession;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao fixar conversa.");
+        return null;
+      }
+    },
+    [loadSessions, options.getAccessToken],
+  );
+
+  const unpinSession = useCallback(
+    async (sessionId: string) => {
+      setError(null);
+
+      try {
+        const updatedSession = await unpinChatSession(sessionId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        replaceSession(updatedSession);
+        await loadSessions();
+
+        return updatedSession;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao desafixar conversa.");
+        return null;
+      }
+    },
+    [loadSessions, options.getAccessToken],
+  );
+
+  const archiveSession = useCallback(
+    async (sessionId: string) => {
+      setError(null);
+
+      try {
+        const updatedSession = await archiveChatSession(sessionId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setSessions((current) =>
+          current.filter((session) => session.id !== sessionId),
+        );
+        setArchivedSessions((current) => [updatedSession, ...current]);
+
+        setActiveSession((current) => {
+          if (current?.id !== sessionId) {
+            return current;
+          }
+
+          return sessions.find((session) => session.id !== sessionId) ?? null;
+        });
+
+        if (activeSession?.id === sessionId) {
+          setMessages([]);
+        }
+
+        return updatedSession;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao arquivar conversa.");
+        return null;
+      }
+    },
+    [activeSession?.id, options.getAccessToken, sessions],
+  );
+
+  const unarchiveSession = useCallback(
+    async (sessionId: string) => {
+      setError(null);
+
+      try {
+        const updatedSession = await unarchiveChatSession(sessionId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setArchivedSessions((current) =>
+          current.filter((session) => session.id !== sessionId),
+        );
+        setSessions((current) => [updatedSession, ...current]);
+
+        return updatedSession;
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Erro ao restaurar conversa.",
+        );
         return null;
       }
     },
@@ -329,6 +477,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
   return {
     sessions,
+    archivedSessions,
     activeSession,
     messages,
     draft,
@@ -337,6 +486,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     streamingToolCalls,
     streamingStatus,
     isLoadingSessions,
+    isLoadingArchivedSessions,
     isLoadingMessages,
     isStreaming,
     error,
@@ -344,10 +494,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     sendMessage,
     cancelStreaming,
     loadSessions,
+    loadArchivedSessions,
     startSession,
     selectSession,
     deleteSession,
     renameSession,
+    pinSession,
+    unpinSession,
+    archiveSession,
+    unarchiveSession,
     editMessage,
     reuseMessage,
   };

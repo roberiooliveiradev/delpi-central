@@ -43,6 +43,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     selectSession,
     deleteSession,
     renameSession,
+    pinSession,
+    unpinSession,
+    archiveSession,
+    unarchiveSession,
     editMessage,
     reuseMessage,
   } = useChatSession({ getAccessToken });
@@ -104,6 +108,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
           onDeleteSession={handleDeleteSession}
+          onPinSession={pinSession}
+          onUnpinSession={unpinSession}
+          onArchiveSession={archiveSession}
+          onUnarchiveSession={unarchiveSession}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
         />

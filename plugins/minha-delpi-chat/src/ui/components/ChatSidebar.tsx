@@ -27,6 +27,10 @@ type ChatSidebarProps = {
   onSelectSession: (session: ChatSession) => void;
   onRenameSession: (sessionId: string, title: string) => Promise<ChatSession | null>;
   onDeleteSession: (sessionId: string) => Promise<boolean>;
+  onPinSession?: (sessionId: string) => Promise<ChatSession | null>;
+  onUnpinSession?: (sessionId: string) => Promise<ChatSession | null>;
+  onArchiveSession?: (sessionId: string) => Promise<ChatSession | null>;
+  onUnarchiveSession?: (sessionId: string) => Promise<ChatSession | null>;
 };
 
 type SessionGroup = {
@@ -141,6 +145,9 @@ export function ChatSidebar({
   onSelectSession,
   onRenameSession,
   onDeleteSession,
+  onPinSession,
+  onUnpinSession,
+  onArchiveSession,
 }: ChatSidebarProps) {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -470,7 +477,10 @@ export function ChatSidebar({
                             className="mdc-chat-session"
                             onClick={() => onSelectSession(session)}
                           >
-                            <span>{session.title || "Conversa sem título"}</span>
+                            <span>
+                              {session.is_pinned ? "📌 " : ""}
+                              {session.title || "Conversa sem título"}
+                            </span>
                             <small>
                               {session.context || "geral"}
                               {formatSessionDate(session.updated_at) ? (
@@ -487,6 +497,14 @@ export function ChatSidebar({
                               }
                               onShare={() => handleShareSession(session)}
                               onRename={() => startEditingSession(session)}
+                              pinLabel={session.is_pinned ? "Desafixar chat" : "Fixar chat"}
+                              archiveLabel="Arquivar"
+                              onPin={
+                                session.is_pinned
+                                  ? () => void onUnpinSession?.(session.id)
+                                  : () => void onPinSession?.(session.id)
+                              }
+                              onArchive={() => void onArchiveSession?.(session.id)}
                               onDelete={() => requestDeleteSession(session)}
                             />
                           </div>

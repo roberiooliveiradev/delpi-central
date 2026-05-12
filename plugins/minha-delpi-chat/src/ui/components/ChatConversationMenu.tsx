@@ -17,6 +17,8 @@ type ChatConversationMenuProps = {
   onOpenChange: (open: boolean) => void;
   onShare?: () => void;
   onRename: () => void;
+  pinLabel?: string;
+  archiveLabel?: string;
   onPin?: () => void;
   onArchive?: () => void;
   onDelete: () => void;
@@ -37,6 +39,8 @@ export function ChatConversationMenu({
   onOpenChange,
   onShare,
   onRename,
+  pinLabel = "Fixar chat",
+  archiveLabel = "Arquivar",
   onPin,
   onArchive,
   onDelete,
@@ -158,7 +162,7 @@ export function ChatConversationMenu({
           }}
         >
           <Pin size={18} aria-hidden="true" />
-          <span>Fixar chat</span>
+          <span>{pinLabel}</span>
         </button>
 
         <button
@@ -177,7 +181,7 @@ export function ChatConversationMenu({
           }}
         >
           <Archive size={18} aria-hidden="true" />
-          <span>Arquivar</span>
+          <span>{archiveLabel}</span>
         </button>
 
         <button

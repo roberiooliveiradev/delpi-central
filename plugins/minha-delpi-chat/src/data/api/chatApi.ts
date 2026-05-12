@@ -66,9 +66,20 @@ export async function createChatSession(
 }
 
 export async function listChatSessions(
-  options: ChatApiOptions = {},
+  options: ChatApiOptions & { archived?: boolean } = {},
 ): Promise<ChatSession[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions`, {
+  const params = new URLSearchParams();
+
+  if (options.archived) {
+    params.set("archived", "true");
+  }
+
+  const queryString = params.toString();
+  const url = queryString
+    ? `${API_BASE_URL}/chat/sessions?${queryString}`
+    : `${API_BASE_URL}/chat/sessions`;
+
+  const response = await fetch(url, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -222,4 +233,53 @@ export async function updateChatMessage(
   });
 
   return parseJsonResponse<ChatMessage>(response);
+}
+
+
+export async function pinChatSession(
+  sessionId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatSession> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/pin`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatSession>(response);
+}
+
+export async function unpinChatSession(
+  sessionId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatSession> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/unpin`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatSession>(response);
+}
+
+export async function archiveChatSession(
+  sessionId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatSession> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/archive`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatSession>(response);
+}
+
+export async function unarchiveChatSession(
+  sessionId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatSession> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/unarchive`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatSession>(response);
 }

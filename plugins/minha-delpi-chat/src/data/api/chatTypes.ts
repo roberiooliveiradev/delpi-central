@@ -2,6 +2,9 @@ export type ChatSession = {
   id: string;
   title: string | null;
   context: string | null;
+  is_pinned: boolean;
+  pinned_at: string | null;
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 };
