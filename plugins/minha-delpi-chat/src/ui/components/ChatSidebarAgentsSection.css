@@ -1,0 +1,30 @@
+.mdc-chat-sidebar__workspace-scroll .mdc-chat-sidebar__link-list {
+  max-height: none;
+  overflow: visible;
+}
+
+.mdc-chat-sidebar__project-manage {
+  padding: 0.45rem var(--mdc-sidebar-pad-x) 0.35rem;
+}
+
+.mdc-chat-sidebar__project-manage button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 2.05rem;
+  border: 1px dashed color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
+  border-radius: 0.72rem;
+  background: color-mix(in srgb, var(--mdc-primary) 4%, transparent);
+  color: color-mix(in srgb, var(--mdc-primary) 88%, white);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  padding: 0.5rem 0.7rem;
+}
+
+.mdc-chat-sidebar__project-manage button:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
+}

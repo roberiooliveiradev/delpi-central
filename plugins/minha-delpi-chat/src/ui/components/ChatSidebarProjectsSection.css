@@ -1,0 +1,6 @@
+/* Usa os mesmos padrões visuais do workspace da sidebar.
+   Mantido separado para futuras regras específicas de projetos. */
+
+.mdc-chat-sidebar__workspace-scroll .mdc-sidebar-workspace-item + .mdc-sidebar-workspace-item {
+  margin-top: 0.05rem;
+}

@@ -20,6 +20,12 @@ import { ChatSidebarSessionList } from "./ChatSidebarSessionList";
 import { groupSessions } from "./chatSidebarUtils";
 
 import "./ChatSidebar.css";
+import "./ChatSidebarBrand.css";
+import "./ChatSidebarNav.css";
+import "./ChatSidebarAgentsSection.css";
+import "./ChatSidebarProjectsSection.css";
+import "./ChatSidebarSessionList.css";
+import "./ChatSidebarArchivedDialog.css";
 
 export type ChatSidebarView = "chat" | "agents";
 
@@ -250,51 +256,57 @@ export function ChatSidebar({
 
   return (
     <aside className="mdc-chat-sidebar" aria-label="Conversas">
-      <ChatSidebarBrand onToggleCollapsed={onToggleCollapsed} />
+      <div className="mdc-chat-sidebar__top">
+        <ChatSidebarBrand onToggleCollapsed={onToggleCollapsed} />
 
-      <ChatSidebarNav
-        isSearchOpen={isSearchOpen}
-        searchTerm={searchTerm}
-        searchInputRef={searchInputRef}
-        onNewSession={onNewSession}
-        onOpenArchived={() => void openArchivedSessions()}
-        onToggleSearch={() => {
-          setIsSearchOpen((current) => !current);
-          setSearchTerm("");
-        }}
-        onClearSearch={() => setSearchTerm("")}
-        onSearchChange={setSearchTerm}
-      />
+        <ChatSidebarNav
+          isSearchOpen={isSearchOpen}
+          searchTerm={searchTerm}
+          searchInputRef={searchInputRef}
+          onNewSession={onNewSession}
+          onOpenArchived={() => void openArchivedSessions()}
+          onToggleSearch={() => {
+            setIsSearchOpen((current) => !current);
+            setSearchTerm("");
+          }}
+          onClearSearch={() => setSearchTerm("")}
+          onSearchChange={setSearchTerm}
+        />
+      </div>
 
-      <ChatSidebarAgentsSection
-        agents={agents}
-        selectedAgentKey={selectedAgentKey}
-        isLoading={isLoadingAgents}
-        onSelectAgent={onSelectAgent}
-        onManageAgents={() => onViewChange?.("agents")}
-      />
+      <div className="mdc-chat-sidebar__workspace-scroll">
+        <ChatSidebarAgentsSection
+          agents={agents}
+          selectedAgentKey={selectedAgentKey}
+          isLoading={isLoadingAgents}
+          onSelectAgent={onSelectAgent}
+          onManageAgents={() => onViewChange?.("agents")}
+        />
 
-      <ChatSidebarProjectsSection
-        projects={projects}
-        selectedProjectId={selectedProjectId}
-        isLoading={isLoadingProjects}
-        onSelectProject={onSelectProject}
-        onManageProjects={() => setIsProjectsModalOpen(true)}
-      />
+        <ChatSidebarProjectsSection
+          projects={projects}
+          selectedProjectId={selectedProjectId}
+          isLoading={isLoadingProjects}
+          onSelectProject={onSelectProject}
+          onManageProjects={() => setIsProjectsModalOpen(true)}
+        />
+      </div>
 
-      <ChatSidebarSessionList
-        groupedSessions={groupedSessions}
-        activeSessionId={activeSessionId}
-        isLoading={isLoading}
-        searchTerm={searchTerm}
-        selectedProjectName={selectedProjectName}
-        onSelectSession={onSelectSession}
-        onRenameSession={onRenameSession}
-        onDeleteSessionRequest={setDeleteTargetSession}
-        onPinSession={onPinSession}
-        onUnpinSession={onUnpinSession}
-        onArchiveSession={onArchiveSession}
-      />
+      <div className="mdc-chat-sidebar__sessions-pane">
+        <ChatSidebarSessionList
+          groupedSessions={groupedSessions}
+          activeSessionId={activeSessionId}
+          isLoading={isLoading}
+          searchTerm={searchTerm}
+          selectedProjectName={selectedProjectName}
+          onSelectSession={onSelectSession}
+          onRenameSession={onRenameSession}
+          onDeleteSessionRequest={setDeleteTargetSession}
+          onPinSession={onPinSession}
+          onUnpinSession={onUnpinSession}
+          onArchiveSession={onArchiveSession}
+        />
+      </div>
 
       <div className="mdc-chat-sidebar__footer">
         <span>DELPI Central</span>

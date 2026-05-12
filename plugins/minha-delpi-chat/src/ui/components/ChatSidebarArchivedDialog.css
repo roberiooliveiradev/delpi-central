@@ -1,0 +1,100 @@
+.mdc-chat-archived-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-chat-archived-dialog {
+  width: min(100%, 38rem);
+  max-height: 82vh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48);
+  overflow: hidden;
+}
+
+.mdc-chat-archived-dialog header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mdc-space-3);
+  align-items: start;
+  border-bottom: 1px solid var(--mdc-card-border);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-chat-archived-dialog h2 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 1.1rem;
+}
+
+.mdc-chat-archived-dialog p {
+  margin: var(--mdc-space-1) 0 0;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-archived-dialog header button {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 0.65rem;
+  background: var(--mdc-bg);
+  color: var(--mdc-text);
+  cursor: pointer;
+}
+
+.mdc-chat-archived-list {
+  display: grid;
+  gap: var(--mdc-space-2);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--mdc-space-4);
+}
+
+.mdc-chat-archived-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mdc-space-3);
+  align-items: center;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  padding: var(--mdc-space-3);
+}
+
+.mdc-chat-archived-item div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.mdc-chat-archived-item strong,
+.mdc-chat-archived-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-archived-item small {
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-archived-item button {
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  color: var(--mdc-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 850;
+  padding: 0.5rem 0.75rem;
+}
