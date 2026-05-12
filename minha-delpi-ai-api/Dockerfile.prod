@@ -13,4 +13,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:8000", "app.main:app"]
+CMD ["gunicorn", "-w", "2", "-k", "gthread", "--threads", "4", "--timeout", "300", "--graceful-timeout", "60", "--keep-alive", "5", "-b", "0.0.0.0:8000", "app.main:app"]
