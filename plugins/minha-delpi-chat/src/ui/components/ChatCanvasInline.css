@@ -1,0 +1,62 @@
+.mdc-chat-canvas-inline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--mdc-space-3);
+  align-items: center;
+  width: 100%;
+  margin: var(--mdc-space-3) 0;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--mdc-primary) 10%, transparent),
+      transparent
+    ),
+    color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
+  color: var(--mdc-text);
+  cursor: pointer;
+  padding: var(--mdc-space-3);
+  text-align: left;
+}
+
+.mdc-chat-canvas-inline:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--mdc-primary) 16%, transparent),
+      transparent
+    ),
+    color-mix(in srgb, var(--mdc-card-bg) 92%, transparent);
+}
+
+.mdc-chat-canvas-inline__icon,
+.mdc-chat-canvas-inline__action {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  color: var(--mdc-primary);
+  background: var(--mdc-bg);
+}
+
+.mdc-chat-canvas-inline__content {
+  min-width: 0;
+}
+
+.mdc-chat-canvas-inline__content strong {
+  display: block;
+  color: var(--mdc-title);
+  margin-bottom: 0.2rem;
+}
+
+.mdc-chat-canvas-inline__content small {
+  display: block;
+  color: var(--mdc-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -9,6 +9,8 @@ import type {
 } from "../../data/api/chatTypes";
 import { ChatSources } from "./ChatSources";
 import { ChatEmptyState } from "./ChatEmptyState";
+import { ChatMarkdown } from "./ChatMarkdown";
+import { ChatCanvasInline } from "./ChatCanvasInline";
 import { ChatToolCalls } from "./ChatToolCalls";
 
 type ChatMessageListProps = {
@@ -39,6 +41,13 @@ function getMessageSources(message: ChatMessage): ChatSource[] {
   }
 
   return [];
+}
+
+function makeCanvasDocumentFromMessage(message: ChatMessage) {
+  return {
+    title: message.role === "user" ? "Pergunta do usuário" : "Rascunho da resposta",
+    markdown: message.content,
+  };
 }
 
 function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
@@ -257,8 +266,16 @@ export function ChatMessageList({
               </div>
             </div>
           ) : (
-            <p>{message.content}</p>
+            <ChatMarkdown
+              content={message.content}
+              compact={message.role === "user"}
+            />
           )}
+
+          <ChatCanvasInline
+            document={makeCanvasDocumentFromMessage(message)}
+            onOpen={(document) => onOpenCanvas?.(document.markdown, document.title)}
+          />
 
           {message.role === "assistant" ? (
             <>
@@ -276,7 +293,7 @@ export function ChatMessageList({
           </div>
 
           {streamingAnswer ? (
-            <p>{streamingAnswer}</p>
+            <ChatMarkdown content={streamingAnswer} />
           ) : (
             <div className="mdc-chat-thinking" role="status" aria-live="polite">
               <span className="mdc-chat-thinking__dot" />
