@@ -38,8 +38,13 @@ class ExecuteToolUseCase:
             permission_context=permission_context,
         )
 
+        tool_arguments = {
+            **(request.arguments or {}),
+            "_userId": request.user_id,
+        }
+
         result = tool.execute(
-            arguments=request.arguments or {},
+            arguments=tool_arguments,
             access_token=request.access_token,
         )
 

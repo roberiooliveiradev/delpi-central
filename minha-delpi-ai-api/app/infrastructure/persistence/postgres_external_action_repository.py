@@ -131,6 +131,27 @@ class PostgresExternalActionRepository:
             source_url=provider.openapi_url,
         )
 
+
+    def get_action_for_execution(self, action_id: str) -> dict | None:
+        action = ExternalActionModel.query.filter(
+            ExternalActionModel.action_id == action_id
+        ).first()
+
+        if not action:
+            return None
+
+        provider = ExternalActionProviderModel.query.filter(
+            ExternalActionProviderModel.id == action.provider_id
+        ).first()
+
+        if not provider:
+            return None
+
+        return {
+            "provider": self._provider_to_dict_with_auth(provider),
+            "action": self._action_to_dict(action),
+        }
+
     def list_actions(self, provider_key: str | None = None) -> list[dict]:
         query = ExternalActionModel.query.join(ExternalActionProviderModel)
 
@@ -148,6 +169,13 @@ class PostgresExternalActionRepository:
     def _hash_schema(self, schema_json: dict) -> str:
         raw = json.dumps(schema_json, sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+    def _provider_to_dict_with_auth(self, provider: ExternalActionProviderModel) -> dict:
+        data = self._provider_to_dict(provider)
+        data["authConfig"] = provider.auth_config or {}
+        data["timeoutSeconds"] = 30
+        return data
 
     def _provider_to_dict(self, provider: ExternalActionProviderModel) -> dict:
         return {

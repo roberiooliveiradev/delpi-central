@@ -1,3 +1,8 @@
+from app.infrastructure.tools.execute_external_action_tool import ExecuteExternalActionTool
+from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
+from app.infrastructure.external_actions.http_external_action_gateway import HttpExternalActionGateway
+from app.domain.services.external_actions.external_action_execution_policy import ExternalActionExecutionPolicy
+from app.application.use_cases.execute_external_action_use_case import ExecuteExternalActionUseCase
 from app.application.services.permission_context_service import PermissionContextService
 from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
 from app.application.use_cases.search_knowledge_use_case import SearchKnowledgeUseCase
@@ -22,11 +27,19 @@ def make_execute_tool_use_case() -> ExecuteToolUseCase:
         embedding_gateway=LocalEmbeddingGateway(),
     )
 
+    execute_external_action_use_case = ExecuteExternalActionUseCase(
+        repository=PostgresExternalActionRepository(),
+        gateway=HttpExternalActionGateway(),
+        policy=ExternalActionExecutionPolicy(),
+        audit_repository=PostgresAuditRepository(),
+    )
+
     tools = {
         "get_current_user": GetCurrentUserTool(core_api_gateway),
         "get_allowed_apps": GetAllowedAppsTool(core_api_gateway),
         "get_allowed_routes": GetAllowedRoutesTool(core_api_gateway),
         "search_knowledge_base": SearchKnowledgeBaseTool(search_knowledge_use_case),
+        "execute_external_action": ExecuteExternalActionTool(execute_external_action_use_case),
     }
 
     return ExecuteToolUseCase(
