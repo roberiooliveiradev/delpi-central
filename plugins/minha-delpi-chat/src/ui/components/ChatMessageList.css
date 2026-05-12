@@ -1,7 +1,7 @@
 .mdc-chat-message-list {
   display: flex;
   flex-direction: column;
-  gap: var(--mdc-space-5);
+  gap: var(--mdc-space-6);
   width: min(100%, 980px);
   height: 100%;
   min-height: 0;
@@ -14,14 +14,13 @@
 
 .mdc-chat-message {
   display: grid;
-  grid-template-columns: 2.1rem minmax(0, 1fr);
+  grid-template-columns: 2.25rem minmax(0, 1fr);
   gap: var(--mdc-space-3);
   width: 100%;
   color: var(--mdc-text);
 }
 
-.mdc-chat-message::before {
-  content: "D";
+.mdc-chat-message-avatar {
   display: grid;
   place-items: center;
   width: 2.1rem;
@@ -34,8 +33,7 @@
   font-weight: 900;
 }
 
-.mdc-chat-message--user::before {
-  content: "V";
+.mdc-chat-message--user .mdc-chat-message-avatar {
   border-color: color-mix(in srgb, var(--mdc-primary) 55%, var(--mdc-card-border));
   background: color-mix(in srgb, var(--mdc-primary) 18%, var(--mdc-card-bg));
   color: var(--mdc-title);
@@ -43,22 +41,22 @@
 
 .mdc-chat-message-card {
   min-width: 0;
-  border-radius: var(--mdc-radius-xl);
-  padding: 0;
+  width: 100%;
 }
 
 .mdc-chat-message--user .mdc-chat-message-card {
   justify-self: end;
   width: fit-content;
-  max-width: min(44rem, 100%);
+  max-width: min(46rem, 100%);
   border: 1px solid color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
-  background: color-mix(in srgb, var(--mdc-primary) 13%, var(--mdc-card-bg));
+  border-radius: var(--mdc-radius-xl);
+  background: color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-card-bg));
   padding: var(--mdc-space-4);
 }
 
 .mdc-chat-message--assistant .mdc-chat-message-card {
-  width: 100%;
-  padding: var(--mdc-space-1) 0;
+  max-width: min(56rem, 100%);
+  padding-top: 0.2rem;
 }
 
 .mdc-chat-message-header {
@@ -74,7 +72,7 @@
   font-size: 0.9rem;
 }
 
-.mdc-chat-message-user-actions {
+.mdc-chat-message-actions {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -82,8 +80,8 @@
   transition: opacity 0.18s ease;
 }
 
-.mdc-chat-message:hover .mdc-chat-message-user-actions,
-.mdc-chat-message:focus-within .mdc-chat-message-user-actions {
+.mdc-chat-message:hover .mdc-chat-message-actions,
+.mdc-chat-message:focus-within .mdc-chat-message-actions {
   opacity: 1;
 }
 
@@ -91,8 +89,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.9rem;
-  height: 1.9rem;
+  width: 1.95rem;
+  height: 1.95rem;
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-md);
   background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
@@ -247,12 +245,13 @@
     grid-template-columns: 1.8rem minmax(0, 1fr);
   }
 
-  .mdc-chat-message::before {
+  .mdc-chat-message-avatar {
     width: 1.8rem;
     height: 1.8rem;
   }
 
-  .mdc-chat-message--user .mdc-chat-message-card {
+  .mdc-chat-message--user .mdc-chat-message-card,
+  .mdc-chat-message--assistant .mdc-chat-message-card {
     max-width: 100%;
   }
 }

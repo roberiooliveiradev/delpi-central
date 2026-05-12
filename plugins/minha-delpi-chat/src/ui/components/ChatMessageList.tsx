@@ -1,5 +1,4 @@
 import { Check, Copy, FileText, Pencil, RotateCcw } from "lucide-react";
-import "./ChatMessageList.css";
 import { useState } from "react";
 
 import type {
@@ -7,11 +6,13 @@ import type {
   ChatSource,
   ChatToolCall,
 } from "../../data/api/chatTypes";
-import { ChatSources } from "./ChatSources";
+import { ChatCanvasInline } from "./ChatCanvasInline";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatMarkdown } from "./ChatMarkdown";
-import { ChatCanvasInline } from "./ChatCanvasInline";
+import { ChatSources } from "./ChatSources";
 import { ChatToolCalls } from "./ChatToolCalls";
+
+import "./ChatMessageList.css";
 
 type ChatMessageListProps = {
   messages: ChatMessage[];
@@ -43,13 +44,6 @@ function getMessageSources(message: ChatMessage): ChatSource[] {
   return [];
 }
 
-function makeCanvasDocumentFromMessage(message: ChatMessage) {
-  return {
-    title: message.role === "user" ? "Pergunta do usuário" : "Rascunho da resposta",
-    markdown: message.content,
-  };
-}
-
 function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
   const toolCalls = message.metadata?.toolCalls;
 
@@ -58,6 +52,25 @@ function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
   }
 
   return [];
+}
+
+function shouldShowCanvasInline(message: ChatMessage): boolean {
+  const content = message.content.trim();
+
+  return (
+    message.role === "assistant" &&
+    (content.length > 420 ||
+      content.includes("\n- ") ||
+      content.includes("|") ||
+      content.includes("##"))
+  );
+}
+
+function makeCanvasDocumentFromMessage(message: ChatMessage) {
+  return {
+    title: message.role === "user" ? "Pergunta do usuário" : "Rascunho da resposta",
+    markdown: message.content,
+  };
 }
 
 async function copyTextToClipboard(text: string): Promise<void> {
@@ -135,15 +148,19 @@ export function ChatMessageList({
     return (
       <div className="mdc-chat-message-list" aria-live="polite">
         <article className="mdc-chat-message mdc-chat-message--assistant">
-          <div className="mdc-chat-message-header">
-            <strong>Minha DELPI Chat</strong>
-          </div>
+          <div className="mdc-chat-message-avatar">D</div>
 
-          <div className="mdc-chat-history-loading">
-            <span />
-            <span />
-            <span />
-            <p>Carregando histórico da conversa...</p>
+          <div className="mdc-chat-message-card">
+            <div className="mdc-chat-message-header">
+              <strong>Minha DELPI Chat</strong>
+            </div>
+
+            <div className="mdc-chat-history-loading">
+              <span />
+              <span />
+              <span />
+              <p>Carregando histórico da conversa...</p>
+            </div>
           </div>
         </article>
       </div>
@@ -161,150 +178,161 @@ export function ChatMessageList({
           key={message.id}
           className={`mdc-chat-message mdc-chat-message--${message.role}`}
         >
-          <div className="mdc-chat-message-header">
-            <strong>
-              {message.role === "user" ? "Você" : "Minha DELPI Chat"}
-            </strong>
+          <div className="mdc-chat-message-avatar">
+            {message.role === "user" ? "V" : "D"}
+          </div>
 
-            {message.role === "user" ? (
-              <div className="mdc-chat-message-user-actions">
+          <div className="mdc-chat-message-card">
+            <div className="mdc-chat-message-header">
+              <strong>
+                {message.role === "user" ? "Você" : "Minha DELPI Chat"}
+              </strong>
+
+              <div className="mdc-chat-message-actions">
                 <button
                   className="mdc-chat-message-action"
                   type="button"
-                  onClick={() => onOpenCanvas?.(message.content, "Pergunta do usuário")}
-                  aria-label="Abrir mensagem na lousa"
+                  onClick={() =>
+                    onOpenCanvas?.(
+                      message.content,
+                      message.role === "user"
+                        ? "Pergunta do usuário"
+                        : "Rascunho da resposta",
+                    )
+                  }
+                  aria-label="Abrir na lousa"
                   title="Abrir na lousa"
                 >
                   <FileText size={15} aria-hidden="true" />
                 </button>
 
-                <button
-                  className="mdc-chat-message-action"
-                  type="button"
-                  onClick={() => startEditMessage(message)}
-                  aria-label="Editar mensagem"
-                  title="Editar mensagem"
-                >
-                  <Pencil size={15} aria-hidden="true" />
-                </button>
+                {message.role === "user" ? (
+                  <>
+                    <button
+                      className="mdc-chat-message-action"
+                      type="button"
+                      onClick={() => startEditMessage(message)}
+                      aria-label="Editar mensagem"
+                      title="Editar mensagem"
+                    >
+                      <Pencil size={15} aria-hidden="true" />
+                    </button>
 
-                <button
-                  className="mdc-chat-message-action"
-                  type="button"
-                  onClick={() => onReuseMessage?.(message.content)}
-                  aria-label="Reutilizar mensagem"
-                  title="Reutilizar mensagem"
-                >
-                  <RotateCcw size={15} aria-hidden="true" />
-                </button>
+                    <button
+                      className="mdc-chat-message-action"
+                      type="button"
+                      onClick={() => onReuseMessage?.(message.content)}
+                      aria-label="Reutilizar mensagem"
+                      title="Reutilizar mensagem"
+                    >
+                      <RotateCcw size={15} aria-hidden="true" />
+                    </button>
+                  </>
+                ) : null}
+
+                {message.role === "assistant" ? (
+                  <button
+                    className="mdc-chat-message-action"
+                    type="button"
+                    onClick={() => void handleCopy(message.id, message.content)}
+                    aria-label={
+                      copiedMessageId === message.id
+                        ? "Resposta copiada"
+                        : "Copiar resposta"
+                    }
+                    title={
+                      copiedMessageId === message.id
+                        ? "Resposta copiada"
+                        : "Copiar resposta"
+                    }
+                  >
+                    {copiedMessageId === message.id ? (
+                      <Check size={15} aria-hidden="true" />
+                    ) : (
+                      <Copy size={15} aria-hidden="true" />
+                    )}
+                  </button>
+                ) : null}
               </div>
+            </div>
+
+            {editingMessageId === message.id ? (
+              <div className="mdc-chat-message-edit">
+                <textarea
+                  value={editingContent}
+                  autoFocus
+                  onChange={(event) => setEditingContent(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      cancelEditMessage();
+                    }
+
+                    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                      event.preventDefault();
+                      void handleSaveEdit(message.id);
+                    }
+                  }}
+                />
+
+                <div className="mdc-chat-message-edit-actions">
+                  <button type="button" onClick={() => void handleSaveEdit(message.id)}>
+                    Salvar
+                  </button>
+                  <button type="button" onClick={cancelEditMessage}>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <ChatMarkdown
+                content={message.content}
+                compact={message.role === "user"}
+              />
+            )}
+
+            {shouldShowCanvasInline(message) ? (
+              <ChatCanvasInline
+                document={makeCanvasDocumentFromMessage(message)}
+                onOpen={(document) =>
+                  onOpenCanvas?.(document.markdown, document.title)
+                }
+              />
             ) : null}
 
             {message.role === "assistant" ? (
-              <div className="mdc-chat-message-user-actions">
-                <button
-                  className="mdc-chat-message-action"
-                  type="button"
-                  onClick={() => onOpenCanvas?.(message.content, "Rascunho da resposta")}
-                  aria-label="Abrir resposta na lousa"
-                  title="Abrir na lousa"
-                >
-                  <FileText size={15} aria-hidden="true" />
-                </button>
-
-                <button
-                  className="mdc-chat-message-action"
-                  type="button"
-                  onClick={() => void handleCopy(message.id, message.content)}
-                aria-label={
-                  copiedMessageId === message.id
-                    ? "Resposta copiada"
-                    : "Copiar resposta"
-                }
-                title={
-                  copiedMessageId === message.id
-                    ? "Resposta copiada"
-                    : "Copiar resposta"
-                }
-              >
-                {copiedMessageId === message.id ? (
-                  <Check size={15} aria-hidden="true" />
-                ) : (
-                  <Copy size={15} aria-hidden="true" />
-                )}
-                </button>
-              </div>
+              <>
+                <ChatToolCalls toolCalls={getMessageToolCalls(message)} />
+                <ChatSources sources={getMessageSources(message)} />
+              </>
             ) : null}
           </div>
-
-          {editingMessageId === message.id ? (
-            <div className="mdc-chat-message-edit">
-              <textarea
-                value={editingContent}
-                autoFocus
-                onChange={(event) => setEditingContent(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") {
-                    event.preventDefault();
-                    cancelEditMessage();
-                  }
-
-                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-                    event.preventDefault();
-                    void handleSaveEdit(message.id);
-                  }
-                }}
-              />
-
-              <div className="mdc-chat-message-edit-actions">
-                <button type="button" onClick={() => void handleSaveEdit(message.id)}>
-                  Salvar
-                </button>
-                <button type="button" onClick={cancelEditMessage}>
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          ) : (
-            <ChatMarkdown
-              content={message.content}
-              compact={message.role === "user"}
-            />
-          )}
-
-          <ChatCanvasInline
-            document={makeCanvasDocumentFromMessage(message)}
-            onOpen={(document) => onOpenCanvas?.(document.markdown, document.title)}
-          />
-
-          {message.role === "assistant" ? (
-            <>
-              <ChatToolCalls toolCalls={getMessageToolCalls(message)} />
-              <ChatSources sources={getMessageSources(message)} />
-            </>
-          ) : null}
         </article>
       ))}
 
       {isStreaming || streamingAnswer ? (
         <article className="mdc-chat-message mdc-chat-message--assistant mdc-chat-message--streaming">
-          <div className="mdc-chat-message-header">
-            <strong>Minha DELPI Chat</strong>
-          </div>
+          <div className="mdc-chat-message-avatar">D</div>
 
-          {streamingAnswer ? (
-            <ChatMarkdown content={streamingAnswer} />
-          ) : (
-            <div className="mdc-chat-thinking" role="status" aria-live="polite">
-              <span className="mdc-chat-thinking__dot" />
-              <span className="mdc-chat-thinking__dot" />
-              <span className="mdc-chat-thinking__dot" />
-              <p>{streamingStatus || "Processando sua solicitação..."}</p>
+          <div className="mdc-chat-message-card">
+            <div className="mdc-chat-message-header">
+              <strong>Minha DELPI Chat</strong>
             </div>
-          )}
 
-          <ChatToolCalls toolCalls={streamingToolCalls} />
-          <ChatSources sources={streamingSources} />
+            {streamingAnswer ? (
+              <ChatMarkdown content={streamingAnswer} />
+            ) : (
+              <div className="mdc-chat-thinking" role="status" aria-live="polite">
+                <span className="mdc-chat-thinking__dot" />
+                <span className="mdc-chat-thinking__dot" />
+                <span className="mdc-chat-thinking__dot" />
+                <p>{streamingStatus || "Processando sua solicitação..."}</p>
+              </div>
+            )}
+
+            <ChatToolCalls toolCalls={streamingToolCalls} />
+            <ChatSources sources={streamingSources} />
+          </div>
         </article>
       ) : null}
     </div>
