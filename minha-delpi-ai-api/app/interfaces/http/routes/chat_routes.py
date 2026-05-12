@@ -7,7 +7,11 @@ from app.infrastructure.config.settings import Settings
 from app.interfaces.http.rate_limit_decorators import rate_limit
 
 from app.application.dto.create_chat_artifact_request import CreateChatArtifactRequest
+from app.application.dto.create_chat_agent_request import CreateChatAgentRequest
 from app.application.dto.create_chat_project_request import CreateChatProjectRequest
+from app.application.dto.share_chat_agent_request import ShareChatAgentRequest
+from app.application.dto.update_chat_agent_request import UpdateChatAgentRequest
+from app.application.dto.upsert_chat_agent_action_request import UpsertChatAgentActionRequest
 from app.application.dto.create_chat_session_request import CreateChatSessionRequest
 from app.application.dto.update_chat_project_request import UpdateChatProjectRequest
 from app.application.dto.update_chat_artifact_request import UpdateChatArtifactRequest
@@ -26,7 +30,12 @@ from app.composition.chat_composer import (
     make_delete_chat_artifact_use_case,
     make_create_chat_project_use_case,
     make_delete_chat_project_use_case,
+    make_create_chat_agent_use_case,
+    make_delete_chat_agent_use_case,
     make_list_chat_agents_use_case,
+    make_share_chat_agent_use_case,
+    make_update_chat_agent_use_case,
+    make_upsert_chat_agent_action_use_case,
     make_list_chat_artifacts_use_case,
     make_list_chat_projects_use_case,
     make_update_chat_project_use_case,
@@ -63,9 +72,172 @@ def status():
 @require_permission("minha-delpi.chat.access")
 def list_agents():
     use_case = make_list_chat_agents_use_case()
-    result = use_case.execute()
+    result = use_case.execute(g.current_user.sub)
 
     return jsonify([asdict(agent) for agent in result]), 200
+
+
+@chat_bp.post("/agents")
+@require_permission("minha-delpi.chat.access")
+def create_agent():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_create_chat_agent_use_case()
+
+    try:
+        result = use_case.execute(
+            CreateChatAgentRequest(
+                user_id=g.current_user.sub,
+                key=payload.get("key"),
+                name=payload.get("name", ""),
+                description=payload.get("description"),
+                system_prompt=payload.get("systemPrompt") or payload.get("system_prompt"),
+                visibility=payload.get("visibility", "private"),
+                category=payload.get("category"),
+                icon=payload.get("icon"),
+                response_style=payload.get("responseStyle") or payload.get("response_style"),
+                metadata=payload.get("metadata"),
+            )
+        )
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 201
+
+
+@chat_bp.patch("/agents/<agent_id>")
+@require_permission("minha-delpi.chat.access")
+def update_agent(agent_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_update_chat_agent_use_case()
+
+    try:
+        result = use_case.execute(
+            UpdateChatAgentRequest(
+                user_id=g.current_user.sub,
+                agent_id=agent_id,
+                name=payload.get("name"),
+                description=payload.get("description"),
+                system_prompt=payload.get("systemPrompt") or payload.get("system_prompt"),
+                visibility=payload.get("visibility"),
+                category=payload.get("category"),
+                icon=payload.get("icon"),
+                response_style=payload.get("responseStyle") or payload.get("response_style"),
+                metadata=payload.get("metadata"),
+                enabled=payload.get("enabled"),
+            )
+        )
+
+        if not result:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 200
+
+
+@chat_bp.delete("/agents/<agent_id>")
+@require_permission("minha-delpi.chat.access")
+def delete_agent(agent_id: str):
+    use_case = make_delete_chat_agent_use_case()
+
+    try:
+        deleted = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+        )
+
+        if not deleted:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return "", 204
+
+
+@chat_bp.post("/agents/<agent_id>/share")
+@require_permission("minha-delpi.chat.access")
+def share_agent(agent_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_share_chat_agent_use_case()
+
+    try:
+        shared = use_case.execute(
+            ShareChatAgentRequest(
+                user_id=g.current_user.sub,
+                agent_id=agent_id,
+                target_user_id=payload.get("targetUserId") or payload.get("target_user_id"),
+                role=payload.get("role", "viewer"),
+            )
+        )
+
+        if not shared:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify({"ok": True}), 200
+
+
+@chat_bp.put("/agents/<agent_id>/actions")
+@require_permission("minha-delpi.chat.access")
+def upsert_agent_action(agent_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_upsert_chat_agent_action_use_case()
+
+    try:
+        saved = use_case.execute(
+            UpsertChatAgentActionRequest(
+                user_id=g.current_user.sub,
+                agent_id=agent_id,
+                provider_key=payload.get("providerKey") or payload.get("provider_key"),
+                action_id=payload.get("actionId") or payload.get("action_id"),
+                sensitivity=payload.get("sensitivity", "read"),
+                requires_confirmation=bool(payload.get("requiresConfirmation") or payload.get("requires_confirmation")),
+                enabled=payload.get("enabled", True),
+            )
+        )
+
+        if not saved:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify({"ok": True}), 200
 
 
 @chat_bp.get("/projects")

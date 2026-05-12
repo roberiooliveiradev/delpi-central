@@ -9,5 +9,13 @@ class ChatAgentResponse:
     description: str | None
     enabled: bool
     metadata: dict | None
+    owner_user_id: str | None
+    visibility: str
+    category: str | None
+    icon: str | None
+    response_style: str | None
+    max_tool_calls: int
+    requires_confirmation_for_write: bool
+    access_role: str
     created_at: str
     updated_at: str

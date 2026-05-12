@@ -51,7 +51,7 @@ class StreamChatMessageUseCase:
         if session.user_id != user_id:
             raise ChatSessionAccessDeniedError()
 
-        selected_agent = self._get_session_agent(session)
+        selected_agent = self._get_session_agent(session, user_id)
 
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
 
@@ -162,11 +162,11 @@ class StreamChatMessageUseCase:
             "toolCalls": tool_calls,
         }
 
-    def _get_session_agent(self, session):
+    def _get_session_agent(self, session, user_id: UUID):
         if not self.agent_repository or not session.agent_key:
             return None
 
-        return self.agent_repository.get_enabled_by_key(session.agent_key)
+        return self.agent_repository.get_enabled_by_key(session.agent_key, user_id=user_id)
 
     def _agent_metadata(self, agent) -> dict | None:
         if not agent:
