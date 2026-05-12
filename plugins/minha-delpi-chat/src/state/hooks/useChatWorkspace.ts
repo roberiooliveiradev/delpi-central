@@ -1,17 +1,26 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  createChatAgent,
   createChatProject,
+  deleteChatAgent,
   deleteChatProject,
   listChatAgents,
   listChatProjects,
+  shareChatAgent,
+  updateChatAgent,
   updateChatProject,
+  upsertChatAgentAction,
 } from "../../data/api/chatApi";
 import type {
   ChatAgent,
   ChatProject,
+  CreateChatAgentPayload,
   CreateChatProjectPayload,
+  ShareChatAgentPayload,
+  UpdateChatAgentPayload,
   UpdateChatProjectPayload,
+  UpsertChatAgentActionPayload,
 } from "../../data/api/chatTypes";
 
 type UseChatWorkspaceOptions = {
@@ -62,6 +71,112 @@ export function useChatWorkspace(options: UseChatWorkspaceOptions = {}) {
       setIsLoadingProjects(false);
     }
   }, [options.getAccessToken]);
+
+  const addAgent = useCallback(
+    async (payload: CreateChatAgentPayload) => {
+      setWorkspaceError(null);
+
+      try {
+        const agent = await createChatAgent(payload, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setAgents((current) => [agent, ...current]);
+        return agent;
+      } catch (err) {
+        setWorkspaceError(
+          err instanceof Error ? err.message : "Erro ao criar agente.",
+        );
+        return null;
+      }
+    },
+    [options.getAccessToken],
+  );
+
+  const editAgent = useCallback(
+    async (agentId: string, payload: UpdateChatAgentPayload) => {
+      setWorkspaceError(null);
+
+      try {
+        const agent = await updateChatAgent(agentId, payload, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setAgents((current) =>
+          current.map((item) => (item.id === agent.id ? agent : item)),
+        );
+
+        return agent;
+      } catch (err) {
+        setWorkspaceError(
+          err instanceof Error ? err.message : "Erro ao atualizar agente.",
+        );
+        return null;
+      }
+    },
+    [options.getAccessToken],
+  );
+
+  const removeAgent = useCallback(
+    async (agentId: string) => {
+      setWorkspaceError(null);
+
+      try {
+        await deleteChatAgent(agentId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setAgents((current) => current.filter((agent) => agent.id !== agentId));
+        return true;
+      } catch (err) {
+        setWorkspaceError(
+          err instanceof Error ? err.message : "Erro ao excluir agente.",
+        );
+        return false;
+      }
+    },
+    [options.getAccessToken],
+  );
+
+  const shareAgent = useCallback(
+    async (agentId: string, payload: ShareChatAgentPayload) => {
+      setWorkspaceError(null);
+
+      try {
+        await shareChatAgent(agentId, payload, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        return true;
+      } catch (err) {
+        setWorkspaceError(
+          err instanceof Error ? err.message : "Erro ao compartilhar agente.",
+        );
+        return false;
+      }
+    },
+    [options.getAccessToken],
+  );
+
+  const saveAgentAction = useCallback(
+    async (agentId: string, payload: UpsertChatAgentActionPayload) => {
+      setWorkspaceError(null);
+
+      try {
+        await upsertChatAgentAction(agentId, payload, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        return true;
+      } catch (err) {
+        setWorkspaceError(
+          err instanceof Error ? err.message : "Erro ao salvar action do agente.",
+        );
+        return false;
+      }
+    },
+    [options.getAccessToken],
+  );
 
   const addProject = useCallback(
     async (payload: CreateChatProjectPayload) => {
@@ -145,6 +260,11 @@ export function useChatWorkspace(options: UseChatWorkspaceOptions = {}) {
     workspaceError,
     loadAgents,
     loadProjects,
+    addAgent,
+    editAgent,
+    removeAgent,
+    shareAgent,
+    saveAgentAction,
     addProject,
     editProject,
     removeProject,

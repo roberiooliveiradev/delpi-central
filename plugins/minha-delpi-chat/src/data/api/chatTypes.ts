@@ -116,6 +116,14 @@ export type ChatAgent = {
   description: string | null;
   enabled: boolean;
   metadata: Record<string, unknown> | null;
+  owner_user_id: string | null;
+  visibility: "system" | "private" | "public" | string;
+  category: string | null;
+  icon: string | null;
+  response_style: string | null;
+  max_tool_calls: number;
+  requires_confirmation_for_write: boolean;
+  access_role: "system" | "owner" | "editor" | "viewer" | string;
   created_at: string;
   updated_at: string;
 };
@@ -136,4 +144,41 @@ export type CreateChatProjectPayload = {
 export type UpdateChatProjectPayload = {
   name?: string;
   description?: string | null;
+};
+
+export type CreateChatAgentPayload = {
+  key?: string | null;
+  name: string;
+  description?: string | null;
+  systemPrompt?: string | null;
+  visibility?: "private" | "public" | string;
+  category?: string | null;
+  icon?: string | null;
+  responseStyle?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+export type UpdateChatAgentPayload = {
+  name?: string;
+  description?: string | null;
+  systemPrompt?: string | null;
+  visibility?: "private" | "public" | string;
+  category?: string | null;
+  icon?: string | null;
+  responseStyle?: string | null;
+  metadata?: Record<string, unknown> | null;
+  enabled?: boolean;
+};
+
+export type ShareChatAgentPayload = {
+  targetUserId: string;
+  role: "viewer" | "editor" | string;
+};
+
+export type UpsertChatAgentActionPayload = {
+  providerKey: string;
+  actionId: string;
+  sensitivity?: "read" | "write" | "admin" | string;
+  requiresConfirmation?: boolean;
+  enabled?: boolean;
 };

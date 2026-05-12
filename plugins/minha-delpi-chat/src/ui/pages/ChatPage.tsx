@@ -65,6 +65,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     isLoadingAgents,
     isLoadingProjects,
     workspaceError,
+    addAgent,
+    editAgent,
+    removeAgent,
+    shareAgent,
     addProject,
     editProject,
     removeProject,
@@ -193,6 +197,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onCreateProject={addProject}
           onRenameProject={(projectId, name) => editProject(projectId, { name })}
           onDeleteProject={removeProject}
+          onCreateAgent={addAgent}
+          onUpdateAgent={editAgent}
+          onDeleteAgent={removeAgent}
+          onShareAgent={shareAgent}
           onSelectProject={(projectId) => {
             setSelectedProjectId(projectId);
             void handleStartSession();

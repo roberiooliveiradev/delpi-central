@@ -4,13 +4,17 @@ import type {
   ChatMessage,
   ChatProject,
   ChatSession,
+  CreateChatAgentPayload,
   CreateChatArtifactPayload,
   CreateChatProjectPayload,
   CreateChatSessionPayload,
   SendChatMessagePayload,
   SendChatMessageResponse,
+  ShareChatAgentPayload,
+  UpdateChatAgentPayload,
   UpdateChatArtifactPayload,
   UpdateChatProjectPayload,
+  UpsertChatAgentActionPayload,
 } from "./chatTypes";
 
 const API_BASE_URL = "/apps/minha-delpi-ai/api";
@@ -356,6 +360,77 @@ export async function listChatAgents(
   });
 
   return parseJsonResponse<ChatAgent[]>(response);
+}
+
+
+
+export async function createChatAgent(
+  payload: CreateChatAgentPayload,
+  options: ChatApiOptions = {},
+): Promise<ChatAgent> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<ChatAgent>(response);
+}
+
+export async function updateChatAgent(
+  agentId: string,
+  payload: UpdateChatAgentPayload,
+  options: ChatApiOptions = {},
+): Promise<ChatAgent> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<ChatAgent>(response);
+}
+
+export async function deleteChatAgent(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}`, {
+    method: "DELETE",
+    headers: await getAuthHeaders(options),
+  });
+
+  if (!response.ok) {
+    await parseJsonResponse<unknown>(response);
+  }
+}
+
+export async function shareChatAgent(
+  agentId: string,
+  payload: ShareChatAgentPayload,
+  options: ChatApiOptions = {},
+): Promise<{ ok: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/share`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<{ ok: boolean }>(response);
+}
+
+export async function upsertChatAgentAction(
+  agentId: string,
+  payload: UpsertChatAgentActionPayload,
+  options: ChatApiOptions = {},
+): Promise<{ ok: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/actions`, {
+    method: "PUT",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<{ ok: boolean }>(response);
 }
 
 export async function listChatProjects(

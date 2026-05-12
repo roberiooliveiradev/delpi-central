@@ -16,6 +16,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { ChatConfirmDialog } from "./ChatConfirmDialog";
 import { ChatConversationMenu } from "./ChatConversationMenu";
+import { ChatAgentsModal } from "./ChatAgentsModal";
 import { ChatProjectsModal } from "./ChatProjectsModal";
 
 import "./ChatSidebar.css";
@@ -48,6 +49,28 @@ type ChatSidebarProps = {
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onSelectProject?: (projectId: string | null) => void;
   onSelectAgent?: (agentKey: string | null) => void;
+  onCreateAgent?: (payload: {
+    key?: string | null;
+    name: string;
+    description?: string | null;
+    systemPrompt?: string | null;
+    visibility?: string;
+    category?: string | null;
+    icon?: string | null;
+    responseStyle?: string | null;
+  }) => Promise<ChatAgent | null>;
+  onUpdateAgent?: (agentId: string, payload: {
+    name?: string;
+    description?: string | null;
+    systemPrompt?: string | null;
+    visibility?: string;
+    category?: string | null;
+    icon?: string | null;
+    responseStyle?: string | null;
+    enabled?: boolean;
+  }) => Promise<ChatAgent | null>;
+  onDeleteAgent?: (agentId: string) => Promise<boolean>;
+  onShareAgent?: (agentId: string, payload: { targetUserId: string; role: string }) => Promise<boolean>;
 };
 
 type SessionGroup = {
@@ -177,6 +200,10 @@ export function ChatSidebar({
   onDeleteProject,
   onSelectProject,
   onSelectAgent,
+  onCreateAgent,
+  onUpdateAgent,
+  onDeleteAgent,
+  onShareAgent,
 }: ChatSidebarProps) {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -186,6 +213,7 @@ export function ChatSidebar({
   const [isArchivedOpen, setIsArchivedOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
+  const [isAgentsModalOpen, setIsAgentsModalOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const filteredSessions = useMemo(() => {
@@ -564,6 +592,13 @@ export function ChatSidebar({
         )}
       </div>
 
+      <div className="mdc-chat-sidebar__project-manage">
+        <button type="button" onClick={() => setIsAgentsModalOpen(true)}>
+          <Settings size={15} aria-hidden="true" />
+          <span>Gerenciar agentes</span>
+        </button>
+      </div>
+
       <div className="mdc-chat-sidebar__section-title">
         <span>Projetos</span>
         <small>{projects.length}</small>
@@ -648,6 +683,19 @@ export function ChatSidebar({
         <span>DELPI Central</span>
         <small>APIs, conhecimento e ações autorizadas</small>
       </div>
+
+      <ChatAgentsModal
+        open={isAgentsModalOpen}
+        agents={agents}
+        selectedAgentKey={selectedAgentKey}
+        isLoading={isLoadingAgents}
+        onClose={() => setIsAgentsModalOpen(false)}
+        onSelectAgent={onSelectAgent}
+        onCreateAgent={onCreateAgent}
+        onUpdateAgent={onUpdateAgent}
+        onDeleteAgent={onDeleteAgent}
+        onShareAgent={onShareAgent}
+      />
 
       <ChatProjectsModal
         open={isProjectsModalOpen}
