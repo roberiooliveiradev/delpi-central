@@ -16,6 +16,8 @@ def _to_response(session) -> ChatSessionResponse:
         id=str(session.id),
         title=session.title,
         context=session.context,
+        project_id=str(session.project_id) if session.project_id else None,
+        agent_key=session.agent_key,
         is_pinned=session.is_pinned,
         pinned_at=session.pinned_at.isoformat() if session.pinned_at else None,
         archived_at=session.archived_at.isoformat() if session.archived_at else None,

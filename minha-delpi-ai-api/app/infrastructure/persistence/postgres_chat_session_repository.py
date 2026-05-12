@@ -237,6 +237,8 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
             user_id=model.user_id,
             title=model.title,
             context=model.context,
+            project_id=model.project_id,
+            agent_key=model.agent_key,
             is_pinned=bool(model.is_pinned),
             pinned_at=model.pinned_at,
             archived_at=model.archived_at,

@@ -7,7 +7,9 @@ from app.infrastructure.config.settings import Settings
 from app.interfaces.http.rate_limit_decorators import rate_limit
 
 from app.application.dto.create_chat_artifact_request import CreateChatArtifactRequest
+from app.application.dto.create_chat_project_request import CreateChatProjectRequest
 from app.application.dto.create_chat_session_request import CreateChatSessionRequest
+from app.application.dto.update_chat_project_request import UpdateChatProjectRequest
 from app.application.dto.update_chat_artifact_request import UpdateChatArtifactRequest
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.use_cases.update_chat_message_use_case import UpdateChatMessageRequest
@@ -22,7 +24,12 @@ from app.composition.chat_composer import (
     make_create_chat_artifact_use_case,
     make_create_chat_session_use_case,
     make_delete_chat_artifact_use_case,
+    make_create_chat_project_use_case,
+    make_delete_chat_project_use_case,
+    make_list_chat_agents_use_case,
     make_list_chat_artifacts_use_case,
+    make_list_chat_projects_use_case,
+    make_update_chat_project_use_case,
     make_update_chat_artifact_use_case,
     make_get_chat_history_use_case,
     make_list_chat_sessions_use_case,
@@ -49,6 +56,107 @@ def status():
     result = GetChatStatusUseCase().execute(g.current_user)
     return jsonify(result), 200
 
+
+
+
+@chat_bp.get("/agents")
+@require_permission("minha-delpi.chat.access")
+def list_agents():
+    use_case = make_list_chat_agents_use_case()
+    result = use_case.execute()
+
+    return jsonify([asdict(agent) for agent in result]), 200
+
+
+@chat_bp.get("/projects")
+@require_permission("minha-delpi.chat.access")
+def list_projects():
+    use_case = make_list_chat_projects_use_case()
+    result = use_case.execute(g.current_user.sub)
+
+    return jsonify([asdict(project) for project in result]), 200
+
+
+@chat_bp.post("/projects")
+@require_permission("minha-delpi.chat.access")
+def create_project():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_create_chat_project_use_case()
+
+    try:
+        result = use_case.execute(
+            CreateChatProjectRequest(
+                user_id=g.current_user.sub,
+                name=payload.get("name", ""),
+                description=payload.get("description"),
+            )
+        )
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 201
+
+
+@chat_bp.patch("/projects/<project_id>")
+@require_permission("minha-delpi.chat.access")
+def update_project(project_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_update_chat_project_use_case()
+
+    try:
+        result = use_case.execute(
+            UpdateChatProjectRequest(
+                user_id=g.current_user.sub,
+                project_id=project_id,
+                name=payload.get("name"),
+                description=payload.get("description"),
+            )
+        )
+
+        if not result:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 200
+
+
+@chat_bp.delete("/projects/<project_id>")
+@require_permission("minha-delpi.chat.access")
+def delete_project(project_id: str):
+    use_case = make_delete_chat_project_use_case()
+
+    try:
+        deleted = use_case.execute(
+            user_id=g.current_user.sub,
+            project_id=project_id,
+        )
+
+        if not deleted:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return "", 204
 
 
 @chat_bp.get("/sessions/<session_id>/artifacts")

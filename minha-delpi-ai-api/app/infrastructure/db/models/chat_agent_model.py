@@ -1,0 +1,30 @@
+import uuid
+from datetime import datetime, timezone
+
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+
+from app.extensions.db import db
+
+
+class AiChatAgentModel(db.Model):
+    __tablename__ = "ai_chat_agents"
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    key = db.Column(db.String(80), nullable=False, unique=True, index=True)
+    name = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.String(800), nullable=True)
+    system_prompt = db.Column(db.Text, nullable=True)
+    enabled = db.Column(db.Boolean, nullable=False, default=True, server_default="true", index=True)
+    agent_metadata = db.Column("metadata", JSONB, nullable=True)
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )

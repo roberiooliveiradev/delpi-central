@@ -11,6 +11,8 @@ class ChatSession:
     context: str | None
     created_at: datetime
     updated_at: datetime
+    project_id: UUID | None = None
+    agent_key: str | None = None
     is_pinned: bool = False
     pinned_at: datetime | None = None
     archived_at: datetime | None = None

@@ -5,6 +5,13 @@ from app.application.services.external_actions.external_action_selection_service
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.rag_context_service import RagContextService
 from app.application.use_cases.create_chat_session_use_case import CreateChatSessionUseCase
+from app.application.use_cases.chat_agents_use_cases import ListChatAgentsUseCase
+from app.application.use_cases.chat_projects_use_cases import (
+    CreateChatProjectUseCase,
+    DeleteChatProjectUseCase,
+    ListChatProjectsUseCase,
+    UpdateChatProjectUseCase,
+)
 from app.application.use_cases.chat_artifacts_use_cases import (
     CreateChatArtifactUseCase,
     DeleteChatArtifactUseCase,
@@ -27,6 +34,8 @@ from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
 from app.composition.llm_composer import make_llm_gateway
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
+from app.infrastructure.persistence.postgres_chat_agent_repository import PostgresChatAgentRepository
+from app.infrastructure.persistence.postgres_chat_project_repository import PostgresChatProjectRepository
 from app.infrastructure.persistence.postgres_chat_artifact_repository import (
     PostgresChatArtifactRepository,
 )
@@ -130,3 +139,23 @@ def make_update_chat_artifact_use_case() -> UpdateChatArtifactUseCase:
 
 def make_delete_chat_artifact_use_case() -> DeleteChatArtifactUseCase:
     return DeleteChatArtifactUseCase(PostgresChatArtifactRepository())
+
+
+def make_list_chat_projects_use_case() -> ListChatProjectsUseCase:
+    return ListChatProjectsUseCase(PostgresChatProjectRepository())
+
+
+def make_create_chat_project_use_case() -> CreateChatProjectUseCase:
+    return CreateChatProjectUseCase(PostgresChatProjectRepository())
+
+
+def make_update_chat_project_use_case() -> UpdateChatProjectUseCase:
+    return UpdateChatProjectUseCase(PostgresChatProjectRepository())
+
+
+def make_delete_chat_project_use_case() -> DeleteChatProjectUseCase:
+    return DeleteChatProjectUseCase(PostgresChatProjectRepository())
+
+
+def make_list_chat_agents_use_case() -> ListChatAgentsUseCase:
+    return ListChatAgentsUseCase(PostgresChatAgentRepository())
