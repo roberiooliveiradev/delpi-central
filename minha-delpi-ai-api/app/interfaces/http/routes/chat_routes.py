@@ -10,6 +10,7 @@ from app.application.dto.create_chat_artifact_request import CreateChatArtifactR
 from app.application.dto.create_chat_agent_request import CreateChatAgentRequest
 from app.application.dto.create_chat_project_request import CreateChatProjectRequest
 from app.application.dto.share_chat_agent_request import ShareChatAgentRequest
+from app.application.dto.share_chat_project_request import ShareChatProjectRequest
 from app.application.dto.update_chat_agent_request import UpdateChatAgentRequest
 from app.application.dto.upsert_chat_agent_action_request import UpsertChatAgentActionRequest
 from app.application.dto.create_chat_session_request import CreateChatSessionRequest
@@ -34,6 +35,7 @@ from app.composition.chat_composer import (
     make_delete_chat_agent_use_case,
     make_list_chat_agents_use_case,
     make_share_chat_agent_use_case,
+    make_share_chat_project_use_case,
     make_update_chat_agent_use_case,
     make_upsert_chat_agent_action_use_case,
     make_list_chat_artifacts_use_case,
@@ -72,7 +74,10 @@ def status():
 @require_permission("minha-delpi.chat.access")
 def list_agents():
     use_case = make_list_chat_agents_use_case()
-    result = use_case.execute(g.current_user.sub)
+    result = use_case.execute(
+        user_id=g.current_user.sub,
+        archived=(request.args.get("archived") == "true"),
+    )
 
     return jsonify([asdict(agent) for agent in result]), 200
 
@@ -94,6 +99,12 @@ def create_agent():
                 key=payload.get("key"),
                 name=payload.get("name", ""),
                 description=payload.get("description"),
+                instructions=payload.get("instructions"),
+                default_agent_key=payload.get("defaultAgentKey") or payload.get("default_agent_key"),
+                visibility=payload.get("visibility", "private"),
+                icon=payload.get("icon"),
+                color=payload.get("color"),
+                metadata=payload.get("metadata"),
                 system_prompt=payload.get("systemPrompt") or payload.get("system_prompt"),
                 visibility=payload.get("visibility", "private"),
                 category=payload.get("category"),
@@ -128,6 +139,13 @@ def update_agent(agent_id: str):
                 agent_id=agent_id,
                 name=payload.get("name"),
                 description=payload.get("description"),
+                instructions=payload.get("instructions"),
+                default_agent_key=payload.get("defaultAgentKey") or payload.get("default_agent_key"),
+                visibility=payload.get("visibility"),
+                icon=payload.get("icon"),
+                color=payload.get("color"),
+                metadata=payload.get("metadata"),
+                archived=payload.get("archived"),
                 system_prompt=payload.get("systemPrompt") or payload.get("system_prompt"),
                 visibility=payload.get("visibility"),
                 category=payload.get("category"),
@@ -265,6 +283,12 @@ def create_project():
                 user_id=g.current_user.sub,
                 name=payload.get("name", ""),
                 description=payload.get("description"),
+                instructions=payload.get("instructions"),
+                default_agent_key=payload.get("defaultAgentKey") or payload.get("default_agent_key"),
+                visibility=payload.get("visibility", "private"),
+                icon=payload.get("icon"),
+                color=payload.get("color"),
+                metadata=payload.get("metadata"),
             )
         )
 
@@ -293,6 +317,13 @@ def update_project(project_id: str):
                 project_id=project_id,
                 name=payload.get("name"),
                 description=payload.get("description"),
+                instructions=payload.get("instructions"),
+                default_agent_key=payload.get("defaultAgentKey") or payload.get("default_agent_key"),
+                visibility=payload.get("visibility"),
+                icon=payload.get("icon"),
+                color=payload.get("color"),
+                metadata=payload.get("metadata"),
+                archived=payload.get("archived"),
             )
         )
 
@@ -329,6 +360,39 @@ def delete_project(project_id: str):
         raise
 
     return "", 204
+
+
+
+@chat_bp.post("/projects/<project_id>/share")
+@require_permission("minha-delpi.chat.access")
+def share_project(project_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_share_chat_project_use_case()
+
+    try:
+        shared = use_case.execute(
+            ShareChatProjectRequest(
+                user_id=g.current_user.sub,
+                project_id=project_id,
+                target_user_id=payload.get("targetUserId") or payload.get("target_user_id"),
+                role=payload.get("role", "viewer"),
+            )
+        )
+
+        if not shared:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify({"ok": True}), 200
 
 
 @chat_bp.get("/sessions/<session_id>/artifacts")

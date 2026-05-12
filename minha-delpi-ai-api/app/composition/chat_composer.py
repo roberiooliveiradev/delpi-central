@@ -17,6 +17,7 @@ from app.application.use_cases.chat_projects_use_cases import (
     CreateChatProjectUseCase,
     DeleteChatProjectUseCase,
     ListChatProjectsUseCase,
+    ShareChatProjectUseCase,
     UpdateChatProjectUseCase,
 )
 from app.application.use_cases.chat_artifacts_use_cases import (
@@ -188,3 +189,7 @@ def make_share_chat_agent_use_case() -> ShareChatAgentUseCase:
 
 def make_upsert_chat_agent_action_use_case() -> UpsertChatAgentActionUseCase:
     return UpsertChatAgentActionUseCase(PostgresChatAgentRepository())
+
+
+def make_share_chat_project_use_case() -> ShareChatProjectUseCase:
+    return ShareChatProjectUseCase(PostgresChatProjectRepository())

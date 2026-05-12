@@ -11,3 +11,10 @@ class ChatProject:
     description: str | None
     created_at: datetime
     updated_at: datetime
+    instructions: str | None = None
+    default_agent_key: str | None = None
+    visibility: str = "private"
+    icon: str | None = None
+    color: str | None = None
+    archived_at: datetime | None = None
+    metadata: dict | None = None

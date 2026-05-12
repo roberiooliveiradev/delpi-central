@@ -6,3 +6,9 @@ class CreateChatProjectRequest:
     user_id: str
     name: str
     description: str | None = None
+    instructions: str | None = None
+    default_agent_key: str | None = None
+    visibility: str = "private"
+    icon: str | None = None
+    color: str | None = None
+    metadata: dict | None = None
