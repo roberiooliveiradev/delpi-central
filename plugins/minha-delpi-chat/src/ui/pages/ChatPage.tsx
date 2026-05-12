@@ -193,8 +193,14 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onCreateProject={addProject}
           onRenameProject={(projectId, name) => editProject(projectId, { name })}
           onDeleteProject={removeProject}
-          onSelectProject={setSelectedProjectId}
-          onSelectAgent={setSelectedAgentKey}
+          onSelectProject={(projectId) => {
+            setSelectedProjectId(projectId);
+            void handleStartSession();
+          }}
+          onSelectAgent={(agentKey) => {
+            setSelectedAgentKey(agentKey);
+            void handleStartSession();
+          }}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
         />

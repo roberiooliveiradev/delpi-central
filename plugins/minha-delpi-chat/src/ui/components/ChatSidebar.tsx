@@ -191,22 +191,29 @@ export function ChatSidebar({
   const filteredSessions = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase();
 
-    if (!normalized) {
-      return sessions;
-    }
-
     return sessions.filter((session) => {
+      if (selectedProjectId && session.project_id !== selectedProjectId) {
+        return false;
+      }
+
+      if (!normalized) {
+        return true;
+      }
+
       const title = session.title || "Conversa sem título";
       const context = session.context || "geral";
 
       return `${title} ${context}`.toLowerCase().includes(normalized);
     });
-  }, [searchTerm, sessions]);
+  }, [searchTerm, selectedProjectId, sessions]);
 
   const groupedSessions = useMemo(
     () => groupSessions(filteredSessions),
     [filteredSessions],
   );
+
+  const selectedProjectName =
+    projects.find((project) => project.id === selectedProjectId)?.name ?? null;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -625,6 +632,19 @@ export function ChatSidebar({
       </div>
 
       <div className="mdc-chat-sidebar__link-list">
+        <button
+          type="button"
+          className={
+            selectedProjectId
+              ? undefined
+              : "mdc-chat-sidebar__link--active"
+          }
+          onClick={() => onSelectProject?.(null)}
+        >
+          <Folder size={16} aria-hidden="true" />
+          <span>Todos os projetos</span>
+        </button>
+
         {isLoadingProjects ? (
           <p className="mdc-chat-muted">Carregando projetos...</p>
         ) : projects.length === 0 ? (
@@ -713,7 +733,7 @@ export function ChatSidebar({
       </div>
 
       <div className="mdc-chat-sidebar__section-title">
-        <span>Conversas</span>
+        <span>{selectedProjectName ? `Conversas · ${selectedProjectName}` : "Conversas"}</span>
         <small>{filteredSessions.length}</small>
       </div>
 
@@ -721,7 +741,11 @@ export function ChatSidebar({
         <p className="mdc-chat-muted">Carregando sessões...</p>
       ) : groupedSessions.length === 0 ? (
         <p className="mdc-chat-muted">
-          {searchTerm ? "Nenhuma conversa encontrada." : "Nenhuma conversa criada ainda."}
+          {searchTerm
+            ? "Nenhuma conversa encontrada."
+            : selectedProjectName
+              ? "Nenhuma conversa neste projeto ainda."
+              : "Nenhuma conversa criada ainda."}
         </p>
       ) : (
         <div className="mdc-chat-session-list">
