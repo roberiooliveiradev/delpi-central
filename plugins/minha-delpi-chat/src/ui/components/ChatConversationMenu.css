@@ -26,7 +26,7 @@
 .mdc-chat-conversation-menu__scrim {
   position: fixed;
   inset: 0;
-  z-index: 110;
+  z-index: 9990;
   border: 0;
   background: transparent;
   cursor: default;
@@ -34,7 +34,7 @@
 
 .mdc-chat-conversation-menu__panel {
   position: fixed;
-  z-index: 130;
+  z-index: 9991;
   display: grid;
   width: 15rem;
   border: 1px solid var(--mdc-card-border);

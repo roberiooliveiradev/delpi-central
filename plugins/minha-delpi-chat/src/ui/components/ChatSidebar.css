@@ -331,15 +331,3 @@
 .mdc-chat-session-row:focus-within .mdc-chat-session-actions {
   opacity: 1;
 }
-
-.mdc-chat-session-row {
-  isolation: isolate;
-}
-
-.mdc-chat-session-row--active {
-  z-index: 2;
-}
-
-.mdc-chat-session-actions {
-  z-index: 3;
-}
