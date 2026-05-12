@@ -86,6 +86,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
         prompt_policy_service=PromptPolicyService(),
         rag_context_service=make_rag_context_service(),
         chat_tool_context_service=make_chat_tool_context_service(),
+        agent_repository=PostgresChatAgentRepository(),
     )
 
 
@@ -97,6 +98,7 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
         prompt_policy_service=PromptPolicyService(),
         rag_context_service=make_rag_context_service(),
         chat_tool_context_service=make_chat_tool_context_service(),
+        agent_repository=PostgresChatAgentRepository(),
     )
 
 def make_rename_chat_session_use_case() -> RenameChatSessionUseCase:

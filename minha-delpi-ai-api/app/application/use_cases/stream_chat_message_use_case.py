@@ -11,6 +11,7 @@ from app.domain.exceptions.chat_exceptions import (
     InvalidChatSessionInputError,
 )
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
+from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.prompt_policy_service import PromptPolicyService
@@ -26,6 +27,7 @@ class StreamChatMessageUseCase:
         prompt_policy_service: PromptPolicyService,
         rag_context_service: RagContextService,
         chat_tool_context_service: ChatToolContextService,
+        agent_repository: ChatAgentRepositoryPort | None = None,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
@@ -33,6 +35,7 @@ class StreamChatMessageUseCase:
         self.prompt_policy_service = prompt_policy_service
         self.rag_context_service = rag_context_service
         self.chat_tool_context_service = chat_tool_context_service
+        self.agent_repository = agent_repository
 
     def stream(self, request: SendChatMessageRequest) -> Iterator[dict]:
         message = self._validate_message(request.message)
@@ -47,6 +50,8 @@ class StreamChatMessageUseCase:
 
         if session.user_id != user_id:
             raise ChatSessionAccessDeniedError()
+
+        selected_agent = self._get_session_agent(session)
 
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
 
@@ -71,6 +76,8 @@ class StreamChatMessageUseCase:
             content=message,
             metadata={
                 "context": request.context,
+                "agentKey": session.agent_key,
+                "agent": self._agent_metadata(selected_agent),
                 "stream": True,
                 "rag": {
                     "sources": sources,
@@ -84,6 +91,7 @@ class StreamChatMessageUseCase:
             current_message=message,
             rag_context=rag["context"],
             tool_context=tool_context["context"],
+            agent_prompt=selected_agent.system_prompt if selected_agent else None,
         )
 
         answer_parts: list[str] = []
@@ -114,6 +122,8 @@ class StreamChatMessageUseCase:
             metadata={
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
+                "agentKey": session.agent_key,
+                "agent": self._agent_metadata(selected_agent),
                 "sources": sources,
                 "toolCalls": tool_calls,
                 "stream": True,
@@ -134,9 +144,13 @@ class StreamChatMessageUseCase:
                 "session_id": str(session_id),
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
+                "agentKey": session.agent_key,
+                "agent": self._agent_metadata(selected_agent),
                 "sources": sources,
                 "rag_enabled": True,
                 "tool_count": len(tool_calls),
+                "agent_key": session.agent_key,
+                "agent": self._agent_metadata(selected_agent),
             },
         )
 
@@ -146,6 +160,23 @@ class StreamChatMessageUseCase:
             "answer": answer,
             "sources": sources,
             "toolCalls": tool_calls,
+        }
+
+    def _get_session_agent(self, session):
+        if not self.agent_repository or not session.agent_key:
+            return None
+
+        return self.agent_repository.get_enabled_by_key(session.agent_key)
+
+    def _agent_metadata(self, agent) -> dict | None:
+        if not agent:
+            return None
+
+        return {
+            "key": agent.key,
+            "name": agent.name,
+            "description": agent.description,
+            "metadata": agent.metadata,
         }
 
     def _should_generate_session_title(self, session, previous_messages) -> bool:
@@ -251,14 +282,24 @@ class StreamChatMessageUseCase:
         current_message: str,
         rag_context: str,
         tool_context: str,
+        agent_prompt: str | None = None,
     ) -> list[dict]:
+        base_prompt = self.prompt_policy_service.build_contextual_prompt(
+            rag_context=rag_context,
+            tool_context=tool_context,
+        )
+
+        if agent_prompt:
+            base_prompt = (
+                f"{base_prompt}\n\n"
+                "Instruções do agente selecionado:\n"
+                f"{agent_prompt}"
+            )
+
         messages = [
             {
                 "role": "system",
-                "content": self.prompt_policy_service.build_contextual_prompt(
-                    rag_context=rag_context,
-                    tool_context=tool_context,
-                ),
+                "content": base_prompt,
             }
         ]
 
