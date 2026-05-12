@@ -1,26 +1,27 @@
 import {
   Archive,
-  Bot,
   Box,
-  Check,
-  Settings,
-  ChevronLeft,
   ChevronRight,
   Folder,
   MessageSquarePlus,
   Search,
-  X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { ChatConfirmDialog } from "./ChatConfirmDialog";
-import { ChatConversationMenu } from "./ChatConversationMenu";
-import { ChatAgentsModal } from "./ChatAgentsModal";
 import { ChatProjectsModal } from "./ChatProjectsModal";
-import { ChatSidebarWorkspaceItem } from "./ChatSidebarWorkspaceItem";
+import { ChatSidebarAgentsSection } from "./ChatSidebarAgentsSection";
+import { ChatSidebarArchivedDialog } from "./ChatSidebarArchivedDialog";
+import { ChatSidebarBrand } from "./ChatSidebarBrand";
+import { ChatSidebarNav } from "./ChatSidebarNav";
+import { ChatSidebarProjectsSection } from "./ChatSidebarProjectsSection";
+import { ChatSidebarSessionList } from "./ChatSidebarSessionList";
+import { groupSessions } from "./chatSidebarUtils";
 
 import "./ChatSidebar.css";
+
+export type ChatSidebarView = "chat" | "agents";
 
 type ChatSidebarProps = {
   sessions: ChatSession[];
@@ -36,6 +37,7 @@ type ChatSidebarProps = {
   isLoadingProjects?: boolean;
   isCollapsed?: boolean;
   onToggleCollapsed?: () => void;
+  onViewChange?: (view: ChatSidebarView) => void;
   onNewSession: () => void;
   onSelectSession: (session: ChatSession) => void;
   onRenameSession: (sessionId: string, title: string) => Promise<ChatSession | null>;
@@ -50,128 +52,7 @@ type ChatSidebarProps = {
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onSelectProject?: (projectId: string | null) => void;
   onSelectAgent?: (agentKey: string | null) => void;
-  onCreateAgent?: (payload: {
-    key?: string | null;
-    name: string;
-    description?: string | null;
-    systemPrompt?: string | null;
-    visibility?: string;
-    category?: string | null;
-    icon?: string | null;
-    responseStyle?: string | null;
-  }) => Promise<ChatAgent | null>;
-  onUpdateAgent?: (agentId: string, payload: {
-    name?: string;
-    description?: string | null;
-    systemPrompt?: string | null;
-    visibility?: string;
-    category?: string | null;
-    icon?: string | null;
-    responseStyle?: string | null;
-    enabled?: boolean;
-  }) => Promise<ChatAgent | null>;
-  onDeleteAgent?: (agentId: string) => Promise<boolean>;
-  onShareAgent?: (agentId: string, payload: { targetUserId: string; role: string }) => Promise<boolean>;
 };
-
-type SessionGroup = {
-  label: string;
-  sessions: ChatSession[];
-};
-
-function getSessionDate(session: ChatSession): Date | null {
-  const value = session.updated_at || session.created_at;
-
-  if (!value) {
-    return null;
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date;
-}
-
-function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function getSessionGroupLabel(session: ChatSession): string {
-  const date = getSessionDate(session);
-
-  if (!date) {
-    return "Sem data";
-  }
-
-  const today = startOfDay(new Date());
-  const target = startOfDay(date);
-  const diffMs = today.getTime() - target.getTime();
-  const diffDays = Math.floor(diffMs / 86_400_000);
-
-  if (diffDays === 0) {
-    return "Hoje";
-  }
-
-  if (diffDays === 1) {
-    return "Ontem";
-  }
-
-  if (diffDays <= 7) {
-    return "Últimos 7 dias";
-  }
-
-  if (diffDays <= 30) {
-    return "Últimos 30 dias";
-  }
-
-  return "Anteriores";
-}
-
-function groupSessions(sessions: ChatSession[]): SessionGroup[] {
-  const order = [
-    "Hoje",
-    "Ontem",
-    "Últimos 7 dias",
-    "Últimos 30 dias",
-    "Anteriores",
-    "Sem data",
-  ];
-  const groups = new Map<string, ChatSession[]>();
-
-  for (const session of sessions) {
-    const label = getSessionGroupLabel(session);
-    groups.set(label, [...(groups.get(label) ?? []), session]);
-  }
-
-  return order
-    .map((label) => ({
-      label,
-      sessions: groups.get(label) ?? [],
-    }))
-    .filter((group) => group.sessions.length > 0);
-}
-
-function formatSessionDate(value?: string): string {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
 
 export function ChatSidebar({
   sessions,
@@ -187,6 +68,7 @@ export function ChatSidebar({
   isLoadingProjects,
   isCollapsed,
   onToggleCollapsed,
+  onViewChange,
   onNewSession,
   onSelectSession,
   onRenameSession,
@@ -201,20 +83,12 @@ export function ChatSidebar({
   onDeleteProject,
   onSelectProject,
   onSelectAgent,
-  onCreateAgent,
-  onUpdateAgent,
-  onDeleteAgent,
-  onShareAgent,
 }: ChatSidebarProps) {
-  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState("");
-  const [openMenuSessionId, setOpenMenuSessionId] = useState<string | null>(null);
   const [deleteTargetSession, setDeleteTargetSession] = useState<ChatSession | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isArchivedOpen, setIsArchivedOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
-  const [isAgentsModalOpen, setIsAgentsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const filteredSessions = useMemo(() => {
@@ -271,20 +145,6 @@ export function ChatSidebar({
     await onLoadArchivedSessions?.();
   }
 
-  function startEditingSession(session: ChatSession) {
-    setEditingSessionId(session.id);
-    setEditingTitle(session.title || "");
-  }
-
-  function cancelEditingSession() {
-    setEditingSessionId(null);
-    setEditingTitle("");
-  }
-
-  function requestDeleteSession(session: ChatSession) {
-    setDeleteTargetSession(session);
-  }
-
   async function confirmDeleteSession() {
     if (!deleteTargetSession) {
       return;
@@ -294,28 +154,6 @@ export function ChatSidebar({
     setDeleteTargetSession(null);
   }
 
-  function handleShareSession(session: ChatSession) {
-    const title = session.title || "Conversa sem título";
-
-    void navigator.clipboard?.writeText(title);
-  }
-
-  async function saveEditingSession(session: ChatSession) {
-    const normalizedTitle = editingTitle.trim();
-    const currentTitle = session.title || "";
-
-    if (!normalizedTitle || normalizedTitle === currentTitle) {
-      cancelEditingSession();
-      return;
-    }
-
-    const updated = await onRenameSession(session.id, normalizedTitle);
-
-    if (updated) {
-      cancelEditingSession();
-    }
-  }
-
   async function restoreArchivedSession(session: ChatSession) {
     const restored = await onUnarchiveSession?.(session.id);
 
@@ -323,106 +161,6 @@ export function ChatSidebar({
       setIsArchivedOpen(false);
       onSelectSession(restored);
     }
-  }
-
-  function renderSessionRow(session: ChatSession) {
-    const isEditing = editingSessionId === session.id;
-
-    return (
-      <div
-        key={session.id}
-        className={
-          session.id === activeSessionId
-            ? "mdc-chat-session-row mdc-chat-session-row--active"
-            : "mdc-chat-session-row"
-        }
-      >
-        {isEditing ? (
-          <div className="mdc-chat-session-edit-card">
-            <input
-              className="mdc-chat-session-edit-input"
-              value={editingTitle}
-              autoFocus
-              maxLength={120}
-              onChange={(event) => setEditingTitle(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  void saveEditingSession(session);
-                }
-
-                if (event.key === "Escape") {
-                  event.preventDefault();
-                  cancelEditingSession();
-                }
-              }}
-              aria-label="Nome da conversa"
-            />
-
-            <div className="mdc-chat-session-edit-actions">
-              <button
-                type="button"
-                className="mdc-chat-session-action"
-                onClick={() => void saveEditingSession(session)}
-                aria-label="Salvar nome da conversa"
-                title="Salvar"
-              >
-                <Check size={15} aria-hidden="true" />
-              </button>
-
-              <button
-                type="button"
-                className="mdc-chat-session-action"
-                onClick={cancelEditingSession}
-                aria-label="Cancelar edição"
-                title="Cancelar"
-              >
-                <X size={15} aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <button
-              type="button"
-              className="mdc-chat-session"
-              onClick={() => onSelectSession(session)}
-            >
-              <span>
-                {session.is_pinned ? "📌 " : ""}
-                {session.title || "Conversa sem título"}
-              </span>
-              <small>
-                {session.context || "geral"}
-                {formatSessionDate(session.updated_at) ? (
-                  <> · {formatSessionDate(session.updated_at)}</>
-                ) : null}
-              </small>
-            </button>
-
-            <div className="mdc-chat-session-actions">
-              <ChatConversationMenu
-                open={openMenuSessionId === session.id}
-                onOpenChange={(open) =>
-                  setOpenMenuSessionId(open ? session.id : null)
-                }
-                onShare={() => handleShareSession(session)}
-                onRename={() => startEditingSession(session)}
-                pinLabel={session.is_pinned ? "Desafixar chat" : "Fixar chat"}
-                archiveLabel="Arquivar"
-                onPin={
-                  session.is_pinned
-                    ? () => void onUnpinSession?.(session.id)
-                    : () => void onPinSession?.(session.id)
-                }
-                onArchive={() => void onArchiveSession?.(session.id)}
-                onDelete={() => requestDeleteSession(session)}
-              />
-            </div>
-          </>
-        )}
-      </div>
-    );
   }
 
   if (isCollapsed) {
@@ -477,6 +215,7 @@ export function ChatSidebar({
         <button
           type="button"
           className="mdc-chat-sidebar__rail-button"
+          onClick={() => onViewChange?.("agents")}
           aria-label="Apps"
           title="Apps"
         >
@@ -486,6 +225,7 @@ export function ChatSidebar({
         <button
           type="button"
           className="mdc-chat-sidebar__rail-button"
+          onClick={() => setIsProjectsModalOpen(true)}
           aria-label="Projetos"
           title="Projetos"
         >
@@ -497,190 +237,56 @@ export function ChatSidebar({
 
   return (
     <aside className="mdc-chat-sidebar" aria-label="Conversas">
-      <div className="mdc-chat-sidebar__brand">
-        <div>
-          <strong>Minha DELPI</strong>
-          <small>Chat corporativo</small>
-        </div>
+      <ChatSidebarBrand onToggleCollapsed={onToggleCollapsed} />
 
-        <button
-          type="button"
-          className="mdc-chat-sidebar__collapse-button"
-          onClick={onToggleCollapsed}
-          aria-label="Recolher barra lateral"
-          title="Recolher"
-        >
-          <ChevronLeft size={18} aria-hidden="true" />
-        </button>
-      </div>
+      <ChatSidebarNav
+        isSearchOpen={isSearchOpen}
+        searchTerm={searchTerm}
+        searchInputRef={searchInputRef}
+        onNewSession={onNewSession}
+        onOpenArchived={() => void openArchivedSessions()}
+        onToggleSearch={() => {
+          setIsSearchOpen((current) => !current);
+          setSearchTerm("");
+        }}
+        onClearSearch={() => setSearchTerm("")}
+        onSearchChange={setSearchTerm}
+      />
 
-      <nav className="mdc-chat-sidebar__nav" aria-label="Ações do chat">
-        <button type="button" onClick={onNewSession}>
-          <MessageSquarePlus size={17} aria-hidden="true" />
-          <span>Nova conversa</span>
-        </button>
+      <ChatSidebarAgentsSection
+        agents={agents}
+        selectedAgentKey={selectedAgentKey}
+        isLoading={isLoadingAgents}
+        onSelectAgent={onSelectAgent}
+        onManageAgents={() => onViewChange?.("agents")}
+      />
 
-        <button
-          type="button"
-          onClick={() => {
-            setIsSearchOpen((current) => !current);
-            setSearchTerm("");
-          }}
-        >
-          <Search size={17} aria-hidden="true" />
-          <span>Buscar conversas</span>
-          <kbd>Ctrl K</kbd>
-        </button>
+      <ChatSidebarProjectsSection
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        isLoading={isLoadingProjects}
+        onSelectProject={onSelectProject}
+        onManageProjects={() => setIsProjectsModalOpen(true)}
+      />
 
-        <button type="button" onClick={() => void openArchivedSessions()}>
-          <Archive size={17} aria-hidden="true" />
-          <span>Arquivadas</span>
-        </button>
-      </nav>
-
-      {isSearchOpen ? (
-        <label className="mdc-chat-sidebar__search">
-          <Search size={15} aria-hidden="true" />
-          <input
-            ref={searchInputRef}
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Buscar no histórico..."
-          />
-          {searchTerm ? (
-            <button
-              type="button"
-              onClick={() => setSearchTerm("")}
-              aria-label="Limpar busca"
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          ) : null}
-        </label>
-      ) : null}
-
-      <div className="mdc-chat-sidebar__section-title">
-        <span>Apps e agentes</span>
-        <small>{agents.length}</small>
-      </div>
-
-      <div className="mdc-chat-sidebar__link-list">
-        {isLoadingAgents ? (
-          <p className="mdc-chat-muted">Carregando agentes...</p>
-        ) : agents.length === 0 ? (
-          <p className="mdc-chat-muted">Nenhum agente disponível.</p>
-        ) : (
-          agents.map((agent) => (
-            <ChatSidebarWorkspaceItem
-              key={agent.id}
-              icon={Bot}
-              title={agent.name}
-              subtitle={agent.category || agent.description || agent.visibility}
-              active={agent.key === selectedAgentKey}
-              badge={agent.access_role === "owner" ? "Seu" : agent.access_role === "system" ? "Oficial" : null}
-              onClick={() =>
-                onSelectAgent?.(
-                  agent.key === selectedAgentKey ? null : agent.key,
-                )
-              }
-            />
-          ))
-        )}
-      </div>
-
-      <div className="mdc-chat-sidebar__project-manage">
-        <button type="button" onClick={() => setIsAgentsModalOpen(true)}>
-          <Settings size={15} aria-hidden="true" />
-          <span>Gerenciar agentes</span>
-        </button>
-      </div>
-
-      <div className="mdc-chat-sidebar__section-title">
-        <span>Projetos</span>
-        <small>{projects.length}</small>
-      </div>
-
-      <div className="mdc-chat-sidebar__project-manage">
-        <button type="button" onClick={() => setIsProjectsModalOpen(true)}>
-          <Settings size={15} aria-hidden="true" />
-          <span>Gerenciar projetos</span>
-        </button>
-      </div>
-
-      <div className="mdc-chat-sidebar__link-list">
-        <ChatSidebarWorkspaceItem
-          icon={Folder}
-          title="Todos os projetos"
-          subtitle="Conversas sem filtro de projeto"
-          active={!selectedProjectId}
-          onClick={() => onSelectProject?.(null)}
-        />
-
-        {isLoadingProjects ? (
-          <p className="mdc-chat-muted">Carregando projetos...</p>
-        ) : projects.length === 0 ? (
-          <p className="mdc-chat-muted">Nenhum projeto criado.</p>
-        ) : (
-          projects.map((project) => (
-            <ChatSidebarWorkspaceItem
-              key={project.id}
-              icon={Folder}
-              title={project.name}
-              subtitle={project.description || "Projeto de trabalho"}
-              active={project.id === selectedProjectId}
-              onClick={() =>
-                onSelectProject?.(
-                  project.id === selectedProjectId ? null : project.id,
-                )
-              }
-            />
-          ))
-        )}
-      </div>
-
-      <div className="mdc-chat-sidebar__section-title">
-        <span>{selectedProjectName ? `Conversas · ${selectedProjectName}` : "Conversas"}</span>
-        <small>{filteredSessions.length}</small>
-      </div>
-
-      {isLoading ? (
-        <p className="mdc-chat-muted">Carregando sessões...</p>
-      ) : groupedSessions.length === 0 ? (
-        <p className="mdc-chat-muted">
-          {searchTerm
-            ? "Nenhuma conversa encontrada."
-            : selectedProjectName
-              ? "Nenhuma conversa neste projeto ainda."
-              : "Nenhuma conversa criada ainda."}
-        </p>
-      ) : (
-        <div className="mdc-chat-session-list">
-          {groupedSessions.map((group) => (
-            <section key={group.label} className="mdc-chat-session-group">
-              <h3>{group.label}</h3>
-              {group.sessions.map(renderSessionRow)}
-            </section>
-          ))}
-        </div>
-      )}
+      <ChatSidebarSessionList
+        groupedSessions={groupedSessions}
+        activeSessionId={activeSessionId}
+        isLoading={isLoading}
+        searchTerm={searchTerm}
+        selectedProjectName={selectedProjectName}
+        onSelectSession={onSelectSession}
+        onRenameSession={onRenameSession}
+        onDeleteSessionRequest={setDeleteTargetSession}
+        onPinSession={onPinSession}
+        onUnpinSession={onUnpinSession}
+        onArchiveSession={onArchiveSession}
+      />
 
       <div className="mdc-chat-sidebar__footer">
         <span>DELPI Central</span>
         <small>APIs, conhecimento e ações autorizadas</small>
       </div>
-
-      <ChatAgentsModal
-        open={isAgentsModalOpen}
-        agents={agents}
-        selectedAgentKey={selectedAgentKey}
-        isLoading={isLoadingAgents}
-        onClose={() => setIsAgentsModalOpen(false)}
-        onSelectAgent={onSelectAgent}
-        onCreateAgent={onCreateAgent}
-        onUpdateAgent={onUpdateAgent}
-        onDeleteAgent={onDeleteAgent}
-        onShareAgent={onShareAgent}
-      />
 
       <ChatProjectsModal
         open={isProjectsModalOpen}
@@ -707,68 +313,13 @@ export function ChatSidebar({
         onCancel={() => setDeleteTargetSession(null)}
       />
 
-      {isArchivedOpen ? (
-        <div
-          className="mdc-chat-archived-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setIsArchivedOpen(false);
-            }
-          }}
-        >
-          <section
-            className="mdc-chat-archived-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="mdc-chat-archived-title"
-          >
-            <header>
-              <div>
-                <h2 id="mdc-chat-archived-title">Conversas arquivadas</h2>
-                <p>Restaure uma conversa para voltar ao histórico principal.</p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsArchivedOpen(false)}
-                aria-label="Fechar"
-              >
-                <X size={17} aria-hidden="true" />
-              </button>
-            </header>
-
-            {isLoadingArchivedSessions ? (
-              <p className="mdc-chat-muted">Carregando arquivadas...</p>
-            ) : archivedSessions.length === 0 ? (
-              <p className="mdc-chat-muted">Nenhuma conversa arquivada.</p>
-            ) : (
-              <div className="mdc-chat-archived-list">
-                {archivedSessions.map((session) => (
-                  <article key={session.id} className="mdc-chat-archived-item">
-                    <div>
-                      <strong>{session.title || "Conversa sem título"}</strong>
-                      <small>
-                        Arquivada em{" "}
-                        {session.archived_at
-                          ? formatSessionDate(session.archived_at)
-                          : "data não informada"}
-                      </small>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => void restoreArchivedSession(session)}
-                    >
-                      Restaurar
-                    </button>
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-      ) : null}
+      <ChatSidebarArchivedDialog
+        open={isArchivedOpen}
+        archivedSessions={archivedSessions}
+        isLoading={isLoadingArchivedSessions}
+        onClose={() => setIsArchivedOpen(false)}
+        onRestoreSession={(session) => void restoreArchivedSession(session)}
+      />
     </aside>
   );
 }

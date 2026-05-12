@@ -4,7 +4,8 @@ import { ChatEmptyState } from "../components/ChatEmptyState";
 import "./ChatPage.css";
 import { ChatInput } from "../components/ChatInput";
 import { ChatMessageList } from "../components/ChatMessageList";
-import { ChatSidebar } from "../components/ChatSidebar";
+import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
+import { ChatAgentsPage } from "./ChatAgentsPage";
 import {
   createChatArtifact,
   updateChatArtifact,
@@ -23,6 +24,7 @@ type ChatPageProps = {
 export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedAgentKey, setSelectedAgentKey] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
 
   const {
     sessions,
@@ -65,10 +67,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     isLoadingAgents,
     isLoadingProjects,
     workspaceError,
-    addAgent,
-    editAgent,
-    removeAgent,
-    shareAgent,
     addProject,
     editProject,
     removeProject,
@@ -197,10 +195,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onCreateProject={addProject}
           onRenameProject={(projectId, name) => editProject(projectId, { name })}
           onDeleteProject={removeProject}
-          onCreateAgent={addAgent}
-          onUpdateAgent={editAgent}
-          onDeleteAgent={removeAgent}
-          onShareAgent={shareAgent}
           onSelectProject={(projectId) => {
             setSelectedProjectId(projectId);
             void handleStartSession();
@@ -211,8 +205,23 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           }}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
+          onViewChange={setCurrentView}
         />
 
+        {currentView === "agents" ? (
+          <section className="mdc-chat-main" aria-label="Gerenciar agentes">
+            <ChatAgentsPage
+              agents={agents}
+              selectedAgentKey={selectedAgentKey}
+              isLoading={isLoadingAgents}
+              onBack={() => setCurrentView("chat")}
+              onSelectAgent={(agentKey) => {
+                setSelectedAgentKey(agentKey);
+                void handleStartSession();
+              }}
+                            />
+          </section>
+        ) : (
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
           <header className="mdc-chat-header">
             <div>
@@ -284,6 +293,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             </>
           )}
         </section>
+        )}
 
         <ChatCanvas
           document={canvasDocument}

@@ -1,0 +1,62 @@
+.mdc-chat-agents-page {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100%;
+  padding: clamp(1.25rem, 2vw, 2rem);
+}
+
+.mdc-chat-agents-page__header {
+  display: grid;
+  gap: var(--mdc-space-4);
+  width: min(100%, 72rem);
+  margin: 0 auto var(--mdc-space-4);
+}
+
+.mdc-chat-agents-page__header > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: fit-content;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 999px;
+  background: var(--mdc-card-bg);
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.55rem 0.85rem;
+}
+
+.mdc-chat-agents-page__header h1 {
+  margin: 0;
+  color: var(--mdc-primary);
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+}
+
+.mdc-chat-agents-page__header p {
+  margin: 0;
+  color: var(--mdc-text-muted);
+}
+
+/* Usa o gerenciador existente como página, sem backdrop de modal */
+.mdc-chat-agents-page .mdc-chat-agents-modal-backdrop {
+  position: static;
+  inset: auto;
+  display: block;
+  background: transparent;
+  backdrop-filter: none;
+  padding: 0;
+}
+
+.mdc-chat-agents-page .mdc-chat-agents-modal {
+  width: min(100%, 72rem);
+  height: min(72vh, 48rem);
+  max-height: none;
+  margin: 0 auto;
+  box-shadow: none;
+}
+
+.mdc-chat-agents-page .mdc-chat-agents-modal__header {
+  display: none;
+}
