@@ -26,6 +26,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [streamingAnswer, setStreamingAnswer] = useState("");
   const [streamingSources, setStreamingSources] = useState<ChatSource[]>([]);
   const [streamingToolCalls, setStreamingToolCalls] = useState<ChatToolCall[]>([]);
+  const [streamingStatus, setStreamingStatus] = useState<string | null>(null);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +58,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
+    setStreamingStatus("Preparando sua pergunta...");
+    setStreamingStatus(null);
     setActiveSession(session);
   }, []);
 
@@ -80,6 +83,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       setStreamingAnswer("");
       setStreamingSources([]);
       setStreamingToolCalls([]);
+      setStreamingStatus(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar sessão.");
     }
@@ -155,6 +159,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
+    setStreamingStatus("Preparando sua pergunta...");
 
     try {
       await streamMessage({
@@ -163,11 +168,22 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         context: activeSession.context ?? "geral",
         onSources: (sources) => {
           setStreamingSources(sources);
+          setStreamingStatus(
+            sources.length > 0
+              ? "Consultando a base de conhecimento..."
+              : "Verificando contexto autorizado...",
+          );
         },
         onToolCalls: (toolCalls) => {
           setStreamingToolCalls(toolCalls);
+          setStreamingStatus(
+            toolCalls.length > 0
+              ? "Consultando sistemas autorizados..."
+              : "Gerando resposta...",
+          );
         },
         onToken: (token) => {
+          setStreamingStatus(null);
           setStreamingAnswer((current) => current + token);
         },
         onDone: async () => {
@@ -175,10 +191,12 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingAnswer("");
           setStreamingSources([]);
           setStreamingToolCalls([]);
+          setStreamingStatus(null);
           await loadMessages(activeSession.id);
           await loadSessions();
         },
         onError: (message) => {
+          setStreamingStatus(null);
           setError(message);
         },
       });
@@ -187,6 +205,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         return;
       }
 
+      setStreamingStatus(null);
       setError(err instanceof Error ? err.message : "Erro ao enviar mensagem.");
     }
   }, [
@@ -219,6 +238,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     streamingAnswer,
     streamingSources,
     streamingToolCalls,
+    streamingStatus,
     isLoadingSessions,
     isLoadingMessages,
     isStreaming,

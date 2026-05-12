@@ -4,6 +4,7 @@ from app.application.dto.execute_tool_request import ExecuteToolRequest
 from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.config.settings import Settings
+from app.domain.services.external_actions.external_action_result_presenter import ExternalActionResultPresenter
 
 
 class ChatToolContextService:
@@ -16,6 +17,7 @@ class ChatToolContextService:
         self.tool_selection_service = tool_selection_service
         self.execute_tool_use_case = execute_tool_use_case
         self.external_action_selection_service = external_action_selection_service
+        self.external_action_result_presenter = ExternalActionResultPresenter()
 
     def build_context(
         self,
@@ -120,6 +122,7 @@ class ChatToolContextService:
         provider = metadata.get("provider")
 
         extracted = self._extract_external_action_summary(data)
+        humanized = self.external_action_result_presenter.present(data)
 
         payload = {
             "tool": "execute_external_action",
@@ -130,6 +133,7 @@ class ChatToolContextService:
             "statusCode": status_code,
             "ok": ok,
             "summary": extracted,
+            "humanizedSummary": humanized,
             "authorizedResult": data,
         }
 
@@ -142,7 +146,8 @@ class ChatToolContextService:
             f"Status HTTP: {status_code}\n"
             f"Sucesso: {ok}\n"
             "Use obrigatoriamente os dados abaixo para responder quando statusCode estiver entre 200 e 299.\n"
-            f"Resumo extraído: {json.dumps(extracted, ensure_ascii=False, indent=2)}\n"
+            f"Resumo humanizado em português: {json.dumps(humanized, ensure_ascii=False, indent=2)}\n"
+            f"Resumo técnico extraído: {json.dumps(extracted, ensure_ascii=False, indent=2)}\n"
             "Resultado autorizado completo:\n"
             f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
         )

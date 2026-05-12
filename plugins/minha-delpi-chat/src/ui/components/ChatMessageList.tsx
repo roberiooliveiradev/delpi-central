@@ -14,6 +14,8 @@ type ChatMessageListProps = {
   streamingAnswer?: string;
   streamingSources?: ChatSource[];
   streamingToolCalls?: ChatToolCall[];
+  streamingStatus?: string | null;
+  isStreaming?: boolean;
   isLoading?: boolean;
 };
 
@@ -70,6 +72,8 @@ export function ChatMessageList({
   streamingAnswer,
   streamingSources,
   streamingToolCalls,
+  streamingStatus,
+  isStreaming,
   isLoading,
 }: ChatMessageListProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
@@ -95,7 +99,7 @@ export function ChatMessageList({
     );
   }
 
-  if (messages.length === 0 && !streamingAnswer) {
+  if (messages.length === 0 && !streamingAnswer && !isStreaming) {
     return (
       <div className="mdc-chat-empty">
         <p>Esta conversa ainda não possui mensagens.</p>
@@ -152,13 +156,23 @@ export function ChatMessageList({
         </article>
       ))}
 
-      {streamingAnswer ? (
+      {isStreaming || streamingAnswer ? (
         <article className="mdc-chat-message mdc-chat-message--assistant mdc-chat-message--streaming">
           <div className="mdc-chat-message-header">
             <strong>Minha DELPI Chat</strong>
           </div>
 
-          <p>{streamingAnswer}</p>
+          {streamingAnswer ? (
+            <p>{streamingAnswer}</p>
+          ) : (
+            <div className="mdc-chat-thinking" role="status" aria-live="polite">
+              <span className="mdc-chat-thinking__dot" />
+              <span className="mdc-chat-thinking__dot" />
+              <span className="mdc-chat-thinking__dot" />
+              <p>{streamingStatus || "Processando sua solicitação..."}</p>
+            </div>
+          )}
+
           <ChatToolCalls toolCalls={streamingToolCalls} />
           <ChatSources sources={streamingSources} />
         </article>

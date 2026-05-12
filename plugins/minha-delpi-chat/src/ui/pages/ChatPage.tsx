@@ -17,6 +17,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     streamingAnswer,
     streamingSources,
     streamingToolCalls,
+    streamingStatus,
     isLoadingSessions,
     isLoadingMessages,
     isStreaming,
@@ -70,6 +71,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             streamingAnswer={streamingAnswer}
             streamingSources={streamingSources}
             streamingToolCalls={streamingToolCalls}
+            streamingStatus={streamingStatus}
+            isStreaming={isStreaming}
             isLoading={isLoadingMessages}
           />
 
