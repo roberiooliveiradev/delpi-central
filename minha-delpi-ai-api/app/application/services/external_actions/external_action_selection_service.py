@@ -6,27 +6,158 @@ class ExternalActionSelectionService:
         self.repository = repository
 
     def select_action(self, message: str) -> dict | None:
-        candidates = self.repository.find_candidate_actions(message, limit=12)
+        normalized = str(message or "").lower()
+        product_code = self._extract_numeric_code(message)
+
+        if product_code and self._looks_like_product_question(normalized):
+            return self._select_product_action(message, product_code)
+
+        if self._looks_like_lmp_question(normalized):
+            return self._select_lmp_action(message)
+
+        return None
+
+    def _looks_like_product_question(self, value: str) -> bool:
+        terms = [
+            "produto",
+            "product",
+            "item",
+            "código",
+            "codigo",
+            "informações do produto",
+            "informacoes do produto",
+            "dados do produto",
+            "busque as informações do produto",
+            "busque informacoes do produto",
+            "api delpi",
+        ]
+
+        return any(term in value for term in terms)
+
+    def _looks_like_lmp_question(self, value: str) -> bool:
+        return "lmp" in value or "lmps" in value
+
+    def _select_product_action(self, message: str, product_code: str) -> dict | None:
+        candidates = self.repository.find_candidate_actions(message, limit=40)
 
         if not candidates:
             return None
 
-        product_code = self._extract_numeric_code(message)
+        candidates = [
+            action for action in candidates
+            if action.get("method") == "GET"
+        ] or candidates
 
-        if product_code:
-            product_action = self._select_product_action(candidates)
+        for action in self._rank_product_actions(candidates):
+            parameters = self._build_product_parameters(action, product_code)
 
-            if product_action:
+            if parameters:
                 return {
                     "name": "execute_external_action",
                     "arguments": {
-                        "actionId": product_action["actionId"],
-                        "parameters": self._build_parameters(product_action, product_code),
+                        "actionId": action["actionId"],
+                        "parameters": parameters,
                     },
                     "reason": "A pergunta solicita informações operacionais de produto via OpenAPI.",
                 }
 
         return None
+
+    def _select_lmp_action(self, message: str) -> dict | None:
+        candidates = self.repository.find_candidate_actions(message, limit=20)
+
+        for action in candidates:
+            if action.get("method") != "GET":
+                continue
+
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": action["actionId"],
+                    "parameters": {
+                        "page": 1,
+                        "page_size": 5,
+                    },
+                },
+                "reason": "A pergunta solicita consulta de LMP via OpenAPI.",
+            }
+
+        return None
+
+    def _rank_product_actions(self, candidates: list[dict]) -> list[dict]:
+        def score(action: dict) -> int:
+            haystack = " ".join(
+                str(action.get(key) or "")
+                for key in ["actionId", "operationId", "path", "summary", "description"]
+            ).lower()
+
+            value = 0
+
+            if "/products/{code}/analyser" in haystack:
+                value += 100
+
+            if "analyser" in haystack or "analyzer" in haystack:
+                value += 60
+
+            if "/products/{code}" in haystack:
+                value += 25
+
+            if "product" in haystack or "products" in haystack or "produto" in haystack:
+                value += 20
+
+            if "search" in haystack or "buscar" in haystack or "busca" in haystack:
+                value += 8
+
+            if "stock" in haystack or "estoque" in haystack:
+                value += 6
+
+            if "structure" in haystack or "estrutura" in haystack:
+                value += 5
+
+            return value
+
+        return sorted(candidates, key=score, reverse=True)
+
+    def _build_product_parameters(self, action: dict, code: str) -> dict:
+        parameters = {}
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if lowered in {
+                "code",
+                "product_code",
+                "productcode",
+                "codigo",
+                "cod_produto",
+                "produto",
+                "item",
+                "id",
+            }:
+                parameters[name] = code
+
+            elif lowered in {
+                "query",
+                "q",
+                "search",
+                "description",
+                "descricao",
+                "term",
+            }:
+                parameters[name] = code
+
+            elif lowered == "page":
+                parameters[name] = 1
+
+            elif lowered in {"page_size", "pagesize", "limit"}:
+                parameters[name] = 5
+
+        return parameters
 
     def _extract_numeric_code(self, message: str) -> str | None:
         match = re.search(r"\b\d{4,}\b", message or "")
@@ -35,48 +166,3 @@ class ExternalActionSelectionService:
             return None
 
         return match.group(0)
-
-    def _select_product_action(self, candidates: list[dict]) -> dict | None:
-        preferred_terms = [
-            "analysis",
-            "análise",
-            "analise",
-            "detail",
-            "details",
-            "search",
-            "product",
-            "products",
-            "produto",
-        ]
-
-        for term in preferred_terms:
-            for candidate in candidates:
-                haystack = " ".join(
-                    str(candidate.get(key) or "")
-                    for key in ["actionId", "operationId", "path", "summary", "description"]
-                ).lower()
-
-                if term in haystack and candidate.get("method") == "GET":
-                    return candidate
-
-        return candidates[0] if candidates else None
-
-    def _build_parameters(self, action: dict, code: str) -> dict:
-        parameters = {}
-
-        for parameter in action.get("parametersSchema") or []:
-            name = parameter.get("name")
-            location = parameter.get("in")
-
-            if not name:
-                continue
-
-            lowered = name.lower()
-
-            if lowered in {"code", "product_code", "productcode", "codigo", "item", "id"}:
-                parameters[name] = code
-
-            if location == "query" and lowered in {"query", "q", "search", "description"}:
-                parameters[name] = code
-
-        return parameters

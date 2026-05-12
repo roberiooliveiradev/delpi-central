@@ -88,6 +88,13 @@ class ChatToolContextService:
         data,
         metadata: dict | None,
     ) -> str:
+        if name == "execute_external_action":
+            return self._format_external_action_context(
+                reason=reason,
+                data=data,
+                metadata=metadata or {},
+            )
+
         payload = {
             "tool": name,
             "reason": reason,
@@ -99,3 +106,97 @@ class ChatToolContextService:
             f"[Ferramenta autorizada: {name}]\n"
             f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
         )
+
+    def _format_external_action_context(
+        self,
+        reason: str | None,
+        data,
+        metadata: dict,
+    ) -> str:
+        status_code = metadata.get("statusCode")
+        ok = metadata.get("ok")
+        action_id = metadata.get("actionId")
+        path = metadata.get("path")
+        provider = metadata.get("provider")
+
+        extracted = self._extract_external_action_summary(data)
+
+        payload = {
+            "tool": "execute_external_action",
+            "reason": reason,
+            "provider": provider,
+            "actionId": action_id,
+            "path": path,
+            "statusCode": status_code,
+            "ok": ok,
+            "summary": extracted,
+            "authorizedResult": data,
+        }
+
+        return (
+            "[Ferramenta autorizada: execute_external_action]\n"
+            "A API externa/interna foi consultada com o token autorizado do usuário.\n"
+            f"Provider: {provider}\n"
+            f"Action: {action_id}\n"
+            f"Path: {path}\n"
+            f"Status HTTP: {status_code}\n"
+            f"Sucesso: {ok}\n"
+            "Use obrigatoriamente os dados abaixo para responder quando statusCode estiver entre 200 e 299.\n"
+            f"Resumo extraído: {json.dumps(extracted, ensure_ascii=False, indent=2)}\n"
+            "Resultado autorizado completo:\n"
+            f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
+        )
+
+    def _extract_external_action_summary(self, data):
+        if not isinstance(data, dict):
+            return data
+
+        root = data.get("data", data)
+
+        if isinstance(root, dict) and "data" in root and isinstance(root["data"], dict):
+            root = root["data"]
+
+        summary = {}
+
+        product = root.get("product") if isinstance(root, dict) else None
+        if isinstance(product, dict):
+            summary["product"] = {
+                "code": product.get("code"),
+                "description": product.get("description"),
+                "type": product.get("type"),
+                "unit": product.get("unit"),
+                "groupCode": product.get("group_code"),
+                "active": product.get("active"),
+                "defaultWarehouse": product.get("default_warehouse"),
+                "lastPurchasePrice": product.get("last_purchase_price"),
+                "standardCost": product.get("standard_cost"),
+                "lastRevisionDate": product.get("last_revision_date"),
+                "ncm": product.get("ncm_ipi_position"),
+            }
+
+        stock = root.get("stock") if isinstance(root, dict) else None
+        if isinstance(stock, dict):
+            summary["stock"] = self._summarize_items(stock.get("items"))
+
+        items = root.get("items") if isinstance(root, dict) else None
+        if isinstance(items, list):
+            summary["items"] = self._summarize_items(items)
+
+        for key in ["guide", "inspection", "structure", "customers", "suppliers"]:
+            value = root.get(key) if isinstance(root, dict) else None
+            if isinstance(value, dict):
+                summary[key] = {
+                    "total": value.get("total"),
+                    "items": self._summarize_items(value.get("items")),
+                }
+
+        if not summary:
+            return root
+
+        return summary
+
+    def _summarize_items(self, items):
+        if not isinstance(items, list):
+            return []
+
+        return items[:10]

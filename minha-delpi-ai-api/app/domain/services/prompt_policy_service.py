@@ -50,6 +50,11 @@ class PromptPolicyService:
         sections.append(
             "Instruções para resposta:\n"
             "- Se uma ferramenta retornar dados que respondem diretamente à pergunta, responda de forma direta e objetiva usando esses dados.\n"
+            "- Para `execute_external_action`, se statusCode estiver entre 200 e 299 e ok=true, considere que a API foi consultada com sucesso; nunca diga que não tem acesso direto à API nesse caso.\n"
+            "- Para `execute_external_action`, use o campo `summary` e o `authorizedResult` para responder com os dados operacionais retornados.\n"
+            "- Para `execute_external_action`, se statusCode for 401 ou 403, informe que o usuário não possui permissão suficiente para acessar aquela informação.\n"
+            "- Para `execute_external_action`, se statusCode for 404, informe que o recurso não foi encontrado.\n"
+            "- Para `execute_external_action`, se statusCode for 422, informe que os parâmetros da consulta estão inválidos ou incompletos.\n"
             "- Para `get_current_user`, informe nome e e-mail quando disponíveis. Não responda de forma genérica.\n"
             "- Para `get_allowed_apps`, liste os aplicativos autorizados pelo nome e, se útil, pelo caminho/basePath.\n"
             "- Para `get_allowed_routes`, liste os menus ou rotas autorizadas relevantes.\n"
