@@ -290,3 +290,33 @@
   line-height: 1.35;
   margin-top: 0.15rem;
 }
+
+.mdc-chat-sidebar__nav kbd {
+  margin-left: auto;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 0.35rem;
+  background: var(--mdc-bg);
+  color: var(--mdc-text-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.12rem 0.35rem;
+}
+
+.mdc-chat-session-group {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: var(--mdc-space-3);
+}
+
+.mdc-chat-session-group h3 {
+  margin: var(--mdc-space-3) var(--mdc-space-2) var(--mdc-space-1);
+  color: var(--mdc-text-muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.mdc-chat-session-group:first-child h3 {
+  margin-top: var(--mdc-space-1);
+}

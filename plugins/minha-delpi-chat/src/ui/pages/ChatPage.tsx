@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
 import "./ChatPage.css";
 import { ChatInput } from "../components/ChatInput";
 import { ChatMessageList } from "../components/ChatMessageList";
 import { ChatSidebar } from "../components/ChatSidebar";
 import { useChatSession } from "../../state/hooks/useChatSession";
+
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
 
 type ChatPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -45,7 +47,16 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   } = useChatSession({ getAccessToken });
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true";
+  });
+
+  useEffect(() => {
+    localStorage.setItem(
+      SIDEBAR_COLLAPSED_STORAGE_KEY,
+      String(isSidebarCollapsed),
+    );
+  }, [isSidebarCollapsed]);
 
   function openCanvasFromMessage(content: string, title = "Rascunho da resposta") {
     setCanvasDocument({

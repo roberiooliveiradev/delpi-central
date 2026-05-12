@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChatSession } from "../../data/api/chatTypes";
 
@@ -29,6 +29,11 @@ type ChatSidebarProps = {
   onDeleteSession: (sessionId: string) => Promise<boolean>;
 };
 
+type SessionGroup = {
+  label: string;
+  sessions: ChatSession[];
+};
+
 const apps = [
   { label: "Minha DELPI Chat", icon: Bot },
   { label: "Ações OpenAPI", icon: Box },
@@ -38,6 +43,74 @@ const projects = [
   { label: "App - DELPI Central", icon: Folder },
   { label: "Produtos e estoque", icon: Folder },
 ];
+
+function getSessionDate(session: ChatSession): Date | null {
+  const value = session.updated_at || session.created_at;
+
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date;
+}
+
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getSessionGroupLabel(session: ChatSession): string {
+  const date = getSessionDate(session);
+
+  if (!date) {
+    return "Sem data";
+  }
+
+  const today = startOfDay(new Date());
+  const target = startOfDay(date);
+  const diffMs = today.getTime() - target.getTime();
+  const diffDays = Math.floor(diffMs / 86_400_000);
+
+  if (diffDays === 0) {
+    return "Hoje";
+  }
+
+  if (diffDays === 1) {
+    return "Ontem";
+  }
+
+  if (diffDays <= 7) {
+    return "Últimos 7 dias";
+  }
+
+  if (diffDays <= 30) {
+    return "Últimos 30 dias";
+  }
+
+  return "Anteriores";
+}
+
+function groupSessions(sessions: ChatSession[]): SessionGroup[] {
+  const order = ["Hoje", "Ontem", "Últimos 7 dias", "Últimos 30 dias", "Anteriores", "Sem data"];
+  const groups = new Map<string, ChatSession[]>();
+
+  for (const session of sessions) {
+    const label = getSessionGroupLabel(session);
+    groups.set(label, [...(groups.get(label) ?? []), session]);
+  }
+
+  return order
+    .map((label) => ({
+      label,
+      sessions: groups.get(label) ?? [],
+    }))
+    .filter((group) => group.sessions.length > 0);
+}
 
 function formatSessionDate(value?: string): string {
   if (!value) {
@@ -73,6 +146,7 @@ export function ChatSidebar({
   const [editingTitle, setEditingTitle] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const filteredSessions = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase();
@@ -88,6 +162,33 @@ export function ChatSidebar({
       return `${title} ${context}`.toLowerCase().includes(normalized);
     });
   }, [searchTerm, sessions]);
+
+  const groupedSessions = useMemo(
+    () => groupSessions(filteredSessions),
+    [filteredSessions],
+  );
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setIsSearchOpen(true);
+        window.setTimeout(() => searchInputRef.current?.focus(), 0);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isSearchOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [isSearchOpen]);
 
   function startEditingSession(session: ChatSession) {
     setEditingSessionId(session.id);
@@ -221,6 +322,7 @@ export function ChatSidebar({
         >
           <Search size={17} aria-hidden="true" />
           <span>Buscar conversas</span>
+          <kbd>Ctrl K</kbd>
         </button>
       </nav>
 
@@ -228,8 +330,8 @@ export function ChatSidebar({
         <label className="mdc-chat-sidebar__search">
           <Search size={15} aria-hidden="true" />
           <input
+            ref={searchInputRef}
             value={searchTerm}
-            autoFocus
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="Buscar no histórico..."
           />
@@ -287,114 +389,120 @@ export function ChatSidebar({
 
         {isLoading ? (
           <p className="mdc-chat-muted">Carregando sessões...</p>
-        ) : filteredSessions.length === 0 ? (
+        ) : groupedSessions.length === 0 ? (
           <p className="mdc-chat-muted">
             {searchTerm ? "Nenhuma conversa encontrada." : "Nenhuma conversa criada ainda."}
           </p>
         ) : (
           <div className="mdc-chat-session-list">
-            {filteredSessions.map((session) => {
-              const isEditing = editingSessionId === session.id;
+            {groupedSessions.map((group) => (
+              <section key={group.label} className="mdc-chat-session-group">
+                <h3>{group.label}</h3>
 
-              return (
-                <div
-                  key={session.id}
-                  className={
-                    session.id === activeSessionId
-                      ? "mdc-chat-session-row mdc-chat-session-row--active"
-                      : "mdc-chat-session-row"
-                  }
-                >
-                  {isEditing ? (
-                    <div className="mdc-chat-session-edit-card">
-                      <input
-                        className="mdc-chat-session-edit-input"
-                        value={editingTitle}
-                        autoFocus
-                        maxLength={120}
-                        onChange={(event) => setEditingTitle(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            void saveEditingSession(session);
-                          }
+                {group.sessions.map((session) => {
+                  const isEditing = editingSessionId === session.id;
 
-                          if (event.key === "Escape") {
-                            event.preventDefault();
-                            cancelEditingSession();
-                          }
-                        }}
-                        aria-label="Nome da conversa"
-                      />
+                  return (
+                    <div
+                      key={session.id}
+                      className={
+                        session.id === activeSessionId
+                          ? "mdc-chat-session-row mdc-chat-session-row--active"
+                          : "mdc-chat-session-row"
+                      }
+                    >
+                      {isEditing ? (
+                        <div className="mdc-chat-session-edit-card">
+                          <input
+                            className="mdc-chat-session-edit-input"
+                            value={editingTitle}
+                            autoFocus
+                            maxLength={120}
+                            onChange={(event) => setEditingTitle(event.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                void saveEditingSession(session);
+                              }
 
-                      <div className="mdc-chat-session-edit-actions">
-                        <button
-                          type="button"
-                          className="mdc-chat-session-action"
-                          onClick={() => void saveEditingSession(session)}
-                          aria-label="Salvar nome da conversa"
-                          title="Salvar"
-                        >
-                          <Check size={15} aria-hidden="true" />
-                        </button>
+                              if (event.key === "Escape") {
+                                event.preventDefault();
+                                cancelEditingSession();
+                              }
+                            }}
+                            aria-label="Nome da conversa"
+                          />
 
-                        <button
-                          type="button"
-                          className="mdc-chat-session-action"
-                          onClick={cancelEditingSession}
-                          aria-label="Cancelar edição"
-                          title="Cancelar"
-                        >
-                          <X size={15} aria-hidden="true" />
-                        </button>
-                      </div>
+                          <div className="mdc-chat-session-edit-actions">
+                            <button
+                              type="button"
+                              className="mdc-chat-session-action"
+                              onClick={() => void saveEditingSession(session)}
+                              aria-label="Salvar nome da conversa"
+                              title="Salvar"
+                            >
+                              <Check size={15} aria-hidden="true" />
+                            </button>
+
+                            <button
+                              type="button"
+                              className="mdc-chat-session-action"
+                              onClick={cancelEditingSession}
+                              aria-label="Cancelar edição"
+                              title="Cancelar"
+                            >
+                              <X size={15} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="mdc-chat-session"
+                            onClick={() => onSelectSession(session)}
+                          >
+                            <span>{session.title || "Conversa sem título"}</span>
+                            <small>
+                              {session.context || "geral"}
+                              {formatSessionDate(session.updated_at) ? (
+                                <> · {formatSessionDate(session.updated_at)}</>
+                              ) : null}
+                            </small>
+                          </button>
+
+                          <div className="mdc-chat-session-actions">
+                            <button
+                              type="button"
+                              className="mdc-chat-session-action"
+                              onClick={() => startEditingSession(session)}
+                              aria-label={`Renomear conversa ${
+                                session.title || "sem título"
+                              }`}
+                              title="Renomear conversa"
+                            >
+                              <Pencil size={15} aria-hidden="true" />
+                            </button>
+
+                            <button
+                              type="button"
+                              className="mdc-chat-session-action"
+                              onClick={() => void handleDeleteSession(session)}
+                              aria-label={`Excluir conversa ${
+                                session.title || "sem título"
+                              }`}
+                              title="Excluir conversa"
+                            >
+                              <Trash2 size={15} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        className="mdc-chat-session"
-                        onClick={() => onSelectSession(session)}
-                      >
-                        <span>{session.title || "Conversa sem título"}</span>
-                        <small>
-                          {session.context || "geral"}
-                          {formatSessionDate(session.updated_at) ? (
-                            <> · {formatSessionDate(session.updated_at)}</>
-                          ) : null}
-                        </small>
-                      </button>
-
-                      <div className="mdc-chat-session-actions">
-                        <button
-                          type="button"
-                          className="mdc-chat-session-action"
-                          onClick={() => startEditingSession(session)}
-                          aria-label={`Renomear conversa ${
-                            session.title || "sem título"
-                          }`}
-                          title="Renomear conversa"
-                        >
-                          <Pencil size={15} aria-hidden="true" />
-                        </button>
-
-                        <button
-                          type="button"
-                          className="mdc-chat-session-action"
-                          onClick={() => void handleDeleteSession(session)}
-                          aria-label={`Excluir conversa ${
-                            session.title || "sem título"
-                          }`}
-                          title="Excluir conversa"
-                        >
-                          <Trash2 size={15} aria-hidden="true" />
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </section>
+            ))}
           </div>
         )}
       </div>
