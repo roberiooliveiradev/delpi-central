@@ -27,6 +27,9 @@ from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
 from app.composition.llm_composer import make_llm_gateway
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
+from app.infrastructure.persistence.postgres_chat_artifact_repository import (
+    PostgresChatArtifactRepository,
+)
 from app.infrastructure.persistence.postgres_chat_session_repository import (
     PostgresChatSessionRepository,
 )
