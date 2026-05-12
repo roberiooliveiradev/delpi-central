@@ -1,3 +1,5 @@
+import "./ChatInput.css";
+
 type ChatInputProps = {
   value: string;
   disabled?: boolean;

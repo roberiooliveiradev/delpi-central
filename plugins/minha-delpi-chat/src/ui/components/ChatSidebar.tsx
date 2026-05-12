@@ -1,4 +1,5 @@
 import { Check, Pencil, Plus, X } from "lucide-react";
+import "./ChatSidebar.css";
 import { useState } from "react";
 
 import type { ChatSession } from "../../data/api/chatTypes";

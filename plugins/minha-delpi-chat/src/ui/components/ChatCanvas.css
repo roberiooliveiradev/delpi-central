@@ -1,0 +1,56 @@
+.mdc-chat-canvas {
+  display: flex;
+  flex-direction: column;
+  min-width: 24rem;
+  max-width: 34rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, transparent);
+  overflow: hidden;
+}
+
+.mdc-chat-canvas__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+  padding: var(--mdc-space-4);
+  border-bottom: 1px solid var(--mdc-card-border);
+}
+
+.mdc-chat-canvas__header h2 {
+  margin: 0.2rem 0 0;
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-canvas__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-chat-canvas__actions button {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg);
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+}
+
+.mdc-chat-canvas__actions button:hover {
+  color: var(--mdc-primary);
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+}
+
+.mdc-chat-canvas__body {
+  min-height: 0;
+  overflow: auto;
+  padding: var(--mdc-space-4);
+}
+
+.mdc-chat-canvas pre {
+  margin: 0;
+  color: var(--mdc-text);
+  white-space: pre-wrap;
+}
