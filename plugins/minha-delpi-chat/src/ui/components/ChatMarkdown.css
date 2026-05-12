@@ -1,0 +1,91 @@
+.mdc-chat-markdown {
+  color: var(--mdc-text);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.mdc-chat-markdown > *:first-child {
+  margin-top: 0;
+}
+
+.mdc-chat-markdown > *:last-child {
+  margin-bottom: 0;
+}
+
+.mdc-chat-markdown p {
+  margin: 0.65rem 0;
+}
+
+.mdc-chat-markdown h1,
+.mdc-chat-markdown h2,
+.mdc-chat-markdown h3 {
+  color: var(--mdc-primary);
+  line-height: 1.25;
+  margin: 1rem 0 0.55rem;
+}
+
+.mdc-chat-markdown h1 {
+  font-size: 1.35rem;
+}
+
+.mdc-chat-markdown h2 {
+  font-size: 1.18rem;
+}
+
+.mdc-chat-markdown h3 {
+  font-size: 1.05rem;
+}
+
+.mdc-chat-markdown ul,
+.mdc-chat-markdown ol {
+  margin: 0.65rem 0;
+  padding-left: 1.35rem;
+}
+
+.mdc-chat-markdown li {
+  margin: 0.25rem 0;
+  padding-left: 0.15rem;
+}
+
+.mdc-chat-markdown strong {
+  color: var(--mdc-title);
+}
+
+.mdc-chat-markdown code {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-bg));
+  color: var(--mdc-title);
+  padding: 0.1rem 0.3rem;
+}
+
+.mdc-chat-markdown pre {
+  overflow: auto;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: color-mix(in srgb, black 22%, var(--mdc-bg));
+  padding: var(--mdc-space-4);
+}
+
+.mdc-chat-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.85rem 0;
+  font-size: 0.92rem;
+}
+
+.mdc-chat-markdown th,
+.mdc-chat-markdown td {
+  border: 1px solid var(--mdc-card-border);
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+}
+
+.mdc-chat-markdown th {
+  color: var(--mdc-primary);
+  background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-card-bg));
+}
+
+.mdc-chat-markdown--compact p {
+  margin: 0.35rem 0;
+}

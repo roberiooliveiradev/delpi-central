@@ -184,3 +184,8 @@
   color: var(--mdc-primary);
   background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-card-bg));
 }
+
+.mdc-chat-canvas__preview .mdc-chat-markdown {
+  max-width: 58rem;
+  margin: 0 auto;
+}

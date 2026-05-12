@@ -46,9 +46,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
 
-  function openCanvasFromMessage(content: string) {
+  function openCanvasFromMessage(content: string, title = "Rascunho da resposta") {
     setCanvasDocument({
-      title: "Rascunho da resposta",
+      title,
       markdown: normalizeCanvasMarkdown(content),
     });
   }

@@ -22,7 +22,7 @@ type ChatMessageListProps = {
   onUseSuggestion?: (value: string) => void;
   onEditMessage?: (messageId: string, content: string) => Promise<ChatMessage | null>;
   onReuseMessage?: (content: string) => void;
-  onOpenCanvas?: (content: string) => void;
+  onOpenCanvas?: (content: string, title?: string) => void;
 };
 
 function getMessageSources(message: ChatMessage): ChatSource[] {
@@ -162,6 +162,16 @@ export function ChatMessageList({
                 <button
                   className="mdc-chat-message-action"
                   type="button"
+                  onClick={() => onOpenCanvas?.(message.content, "Pergunta do usuário")}
+                  aria-label="Abrir mensagem na lousa"
+                  title="Abrir na lousa"
+                >
+                  <FileText size={15} aria-hidden="true" />
+                </button>
+
+                <button
+                  className="mdc-chat-message-action"
+                  type="button"
                   onClick={() => startEditMessage(message)}
                   aria-label="Editar mensagem"
                   title="Editar mensagem"
@@ -186,7 +196,7 @@ export function ChatMessageList({
                 <button
                   className="mdc-chat-message-action"
                   type="button"
-                  onClick={() => onOpenCanvas?.(message.content)}
+                  onClick={() => onOpenCanvas?.(message.content, "Rascunho da resposta")}
                   aria-label="Abrir resposta na lousa"
                   title="Abrir na lousa"
                 >

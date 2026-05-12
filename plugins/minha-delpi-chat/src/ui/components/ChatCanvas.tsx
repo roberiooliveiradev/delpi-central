@@ -1,7 +1,6 @@
 import { Copy, Maximize2, Minimize2, X } from "lucide-react";
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { ChatMarkdown } from "./ChatMarkdown";
 
 import "./ChatCanvas.css";
 
@@ -110,9 +109,7 @@ export function ChatCanvas({ document, onChange, onClose }: ChatCanvasProps) {
             />
           ) : (
             <article className="mdc-chat-canvas__preview">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {document.markdown}
-              </ReactMarkdown>
+              <ChatMarkdown content={document.markdown} />
             </article>
           )}
         </div>
