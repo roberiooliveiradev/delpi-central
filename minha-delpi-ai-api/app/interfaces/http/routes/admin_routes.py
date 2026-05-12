@@ -1,6 +1,10 @@
 from flask import Blueprint, g, jsonify, request
 
 from app.composition.admin_composer import (
+    make_create_external_action_provider_use_case,
+    make_import_external_actions_schema_use_case,
+    make_list_external_action_providers_use_case,
+    make_list_external_actions_use_case,
     make_deactivate_knowledge_document_use_case,
     make_get_llm_provider_status_use_case,
     make_get_admin_metrics_summary_use_case,
@@ -20,6 +24,99 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
 
+
+
+
+
+@admin_bp.get("/external-action-providers")
+@require_permission("minha-delpi.chat.admin")
+def list_external_action_providers():
+    use_case = make_list_external_action_providers_use_case()
+    return jsonify(use_case.execute()), 200
+
+
+@admin_bp.post("/external-action-providers")
+@require_permission("minha-delpi.chat.admin")
+def create_external_action_provider():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify({"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]}), 400
+
+    use_case = make_create_external_action_provider_use_case()
+
+    try:
+        result = use_case.execute(payload)
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify({"errors": [{"code": "external_actions.invalid_input", "message": str(exc), "path": "_global"}]}), 400
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 201
+
+
+@admin_bp.post("/external-action-providers/<provider_key>/schema")
+@require_permission("minha-delpi.chat.admin")
+def import_external_action_schema(provider_key: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify({"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]}), 400
+
+    schema = payload.get("schema")
+
+    use_case = make_import_external_actions_schema_use_case()
+
+    try:
+        result = use_case.execute_from_json(provider_key=provider_key, schema_json=schema)
+
+        if not result.get("found"):
+            db.session.rollback()
+            return jsonify({"errors": [{"code": "not_found", "message": "Provider not found", "path": "_global"}]}), 404
+
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify({"errors": [{"code": "external_actions.invalid_schema", "message": str(exc), "path": "_global"}]}), 400
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@admin_bp.post("/external-action-providers/<provider_key>/reload-schema")
+@require_permission("minha-delpi.chat.admin")
+def reload_external_action_schema(provider_key: str):
+    use_case = make_import_external_actions_schema_use_case()
+
+    try:
+        result = use_case.execute_from_url(provider_key=provider_key)
+
+        if not result.get("found"):
+            db.session.rollback()
+            return jsonify({"errors": [{"code": "not_found", "message": "Provider not found", "path": "_global"}]}), 404
+
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify({"errors": [{"code": "external_actions.invalid_input", "message": str(exc), "path": "_global"}]}), 400
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/external-actions")
+@require_permission("minha-delpi.chat.admin")
+def list_external_actions():
+    provider_key = request.args.get("provider")
+    use_case = make_list_external_actions_use_case()
+    return jsonify(use_case.execute(provider_key=provider_key)), 200
 
 
 @admin_bp.get("/system-check")

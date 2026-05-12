@@ -1,3 +1,9 @@
+from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
+from app.domain.services.external_actions.external_provider_url_policy import ExternalProviderUrlPolicy
+from app.application.use_cases.list_external_actions_use_case import ListExternalActionsUseCase
+from app.application.use_cases.list_external_action_providers_use_case import ListExternalActionProvidersUseCase
+from app.application.use_cases.import_external_actions_schema_use_case import ImportExternalActionsSchemaUseCase
+from app.application.use_cases.create_external_action_provider_use_case import CreateExternalActionProviderUseCase
 from app.application.use_cases.deactivate_knowledge_document_use_case import (
     DeactivateKnowledgeDocumentUseCase,
 )
@@ -68,4 +74,22 @@ def make_get_admin_metrics_summary_use_case() -> GetAdminMetricsSummaryUseCase:
 
 def make_get_admin_system_check_use_case() -> GetAdminSystemCheckUseCase:
     return GetAdminSystemCheckUseCase(PostgresAdminSystemCheckRepository())
+
+def make_create_external_action_provider_use_case() -> CreateExternalActionProviderUseCase:
+    return CreateExternalActionProviderUseCase(
+        repository=PostgresExternalActionRepository(),
+        url_policy=ExternalProviderUrlPolicy(),
+    )
+
+
+def make_list_external_action_providers_use_case() -> ListExternalActionProvidersUseCase:
+    return ListExternalActionProvidersUseCase(PostgresExternalActionRepository())
+
+
+def make_import_external_actions_schema_use_case() -> ImportExternalActionsSchemaUseCase:
+    return ImportExternalActionsSchemaUseCase(PostgresExternalActionRepository())
+
+
+def make_list_external_actions_use_case() -> ListExternalActionsUseCase:
+    return ListExternalActionsUseCase(PostgresExternalActionRepository())
 
