@@ -1,12 +1,9 @@
 .mdc-chat-empty-state {
   display: grid;
-  align-content: center;
   justify-items: center;
   gap: var(--mdc-space-5);
   width: min(100%, 760px);
-  min-height: 100%;
   margin: 0 auto;
-  padding: var(--mdc-space-6) var(--mdc-space-5);
   text-align: center;
 }
 
@@ -36,7 +33,7 @@
   grid-template-columns: auto 1fr;
   gap: 0.35rem 0.75rem;
   align-items: start;
-  min-height: 5rem;
+  min-height: 4.8rem;
   text-align: left;
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-lg);

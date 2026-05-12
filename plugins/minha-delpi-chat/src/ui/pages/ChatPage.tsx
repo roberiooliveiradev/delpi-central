@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
+import { ChatEmptyState } from "../components/ChatEmptyState";
 import "./ChatPage.css";
 import { ChatInput } from "../components/ChatInput";
 import { ChatMessageList } from "../components/ChatMessageList";
@@ -80,6 +81,12 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     return deleteSession(sessionId);
   }
 
+  const isConversationEmpty =
+    !isLoadingMessages &&
+    messages.length === 0 &&
+    !streamingAnswer &&
+    !isStreaming;
+
   return (
     <main className="minha-delpi-chat">
       <section
@@ -125,28 +132,46 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             </div>
           ) : null}
 
-          <ChatMessageList
-            messages={messages}
-            streamingAnswer={streamingAnswer}
-            streamingSources={streamingSources}
-            streamingToolCalls={streamingToolCalls}
-            streamingStatus={streamingStatus}
-            isStreaming={isStreaming}
-            isLoading={isLoadingMessages}
-            onUseSuggestion={setDraft}
-            onEditMessage={editMessage}
-            onReuseMessage={reuseMessage}
-            onOpenCanvas={openCanvasFromMessage}
-          />
+          {isConversationEmpty ? (
+            <section className="mdc-chat-empty-composer">
+              <ChatEmptyState onUseSuggestion={setDraft} />
 
-          <ChatInput
-            value={draft}
-            disabled={!activeSession}
-            isSending={isStreaming}
-            onChange={setDraft}
-            onSubmit={sendMessage}
-            onCancel={cancelStreaming}
-          />
+              <ChatInput
+                value={draft}
+                disabled={!activeSession}
+                isSending={isStreaming}
+                variant="center"
+                onChange={setDraft}
+                onSubmit={sendMessage}
+                onCancel={cancelStreaming}
+              />
+            </section>
+          ) : (
+            <>
+              <ChatMessageList
+                messages={messages}
+                streamingAnswer={streamingAnswer}
+                streamingSources={streamingSources}
+                streamingToolCalls={streamingToolCalls}
+                streamingStatus={streamingStatus}
+                isStreaming={isStreaming}
+                isLoading={isLoadingMessages}
+                onUseSuggestion={setDraft}
+                onEditMessage={editMessage}
+                onReuseMessage={reuseMessage}
+                onOpenCanvas={openCanvasFromMessage}
+              />
+
+              <ChatInput
+                value={draft}
+                disabled={!activeSession}
+                isSending={isStreaming}
+                onChange={setDraft}
+                onSubmit={sendMessage}
+                onCancel={cancelStreaming}
+              />
+            </>
+          )}
         </section>
 
         <ChatCanvas

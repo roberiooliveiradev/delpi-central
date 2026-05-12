@@ -22,3 +22,13 @@
     display: none;
   }
 }
+
+.mdc-chat-empty-composer {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--mdc-space-5);
+  min-height: 0;
+  height: 100%;
+  padding: var(--mdc-space-5);
+}

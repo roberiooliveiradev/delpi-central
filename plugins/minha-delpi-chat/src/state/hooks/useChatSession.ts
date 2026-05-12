@@ -76,8 +76,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
-    setStreamingStatus("Preparando sua pergunta...");
     setStreamingStatus(null);
+    setMessages([]);
     setActiveSession(session);
   }, []);
 
