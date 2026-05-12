@@ -132,9 +132,8 @@ class ChatToolContextService:
             "path": path,
             "statusCode": status_code,
             "ok": ok,
-            "summary": extracted,
             "humanizedSummary": humanized,
-            "authorizedResult": data,
+            "technicalSummary": extracted,
         }
 
         return (
@@ -145,10 +144,9 @@ class ChatToolContextService:
             f"Path: {path}\n"
             f"Status HTTP: {status_code}\n"
             f"Sucesso: {ok}\n"
-            "Use obrigatoriamente os dados abaixo para responder quando statusCode estiver entre 200 e 299.\n"
-            f"Resumo humanizado em português: {json.dumps(humanized, ensure_ascii=False, indent=2)}\n"
-            f"Resumo técnico extraído: {json.dumps(extracted, ensure_ascii=False, indent=2)}\n"
-            "Resultado autorizado completo:\n"
+            "Regra obrigatória: responda ao usuário em português natural, sem mostrar JSON bruto.\n"
+            "Use o resumo humanizado como fonte principal.\n"
+            "Se precisar de algum dado técnico, use apenas o resumo técnico compacto.\n"
             f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
         )
 

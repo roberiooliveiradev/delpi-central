@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
+import "./ChatPage.css";
 import { ChatInput } from "../components/ChatInput";
 import { ChatMessageList } from "../components/ChatMessageList";
 import { ChatSidebar } from "../components/ChatSidebar";
@@ -33,9 +36,24 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     reuseMessage,
   } = useChatSession({ getAccessToken });
 
+  const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
+
+  function openCanvasFromMessage(content: string) {
+    setCanvasDocument({
+      title: "Rascunho da resposta",
+      markdown: content,
+    });
+  }
+
   return (
     <main className="minha-delpi-chat">
-      <section className="mdc-chat-shell">
+      <section
+        className={
+          canvasDocument
+            ? "mdc-chat-shell mdc-chat-shell--with-canvas"
+            : "mdc-chat-shell"
+        }
+      >
         <ChatSidebar
           sessions={sessions}
           activeSessionId={activeSession?.id}
@@ -81,6 +99,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             onUseSuggestion={setDraft}
             onEditMessage={editMessage}
             onReuseMessage={reuseMessage}
+            onOpenCanvas={openCanvasFromMessage}
           />
 
           <ChatInput
@@ -92,6 +111,12 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             onCancel={cancelStreaming}
           />
         </section>
+
+        <ChatCanvas
+          document={canvasDocument}
+          onChange={setCanvasDocument}
+          onClose={() => setCanvasDocument(null)}
+        />
       </section>
     </main>
   );

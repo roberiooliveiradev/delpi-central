@@ -1,4 +1,4 @@
-import { Check, Copy, Pencil, RotateCcw } from "lucide-react";
+import { Check, Copy, FileText, Pencil, RotateCcw } from "lucide-react";
 import "./ChatMessageList.css";
 import { useState } from "react";
 
@@ -22,6 +22,7 @@ type ChatMessageListProps = {
   onUseSuggestion?: (value: string) => void;
   onEditMessage?: (messageId: string, content: string) => Promise<ChatMessage | null>;
   onReuseMessage?: (content: string) => void;
+  onOpenCanvas?: (content: string) => void;
 };
 
 function getMessageSources(message: ChatMessage): ChatSource[] {
@@ -83,6 +84,7 @@ export function ChatMessageList({
   onUseSuggestion,
   onEditMessage,
   onReuseMessage,
+  onOpenCanvas,
 }: ChatMessageListProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -169,10 +171,21 @@ export function ChatMessageList({
             ) : null}
 
             {message.role === "assistant" ? (
-              <button
-                className="mdc-chat-message-action"
-                type="button"
-                onClick={() => void handleCopy(message.id, message.content)}
+              <div className="mdc-chat-message-user-actions">
+                <button
+                  className="mdc-chat-message-action"
+                  type="button"
+                  onClick={() => onOpenCanvas?.(message.content)}
+                  aria-label="Abrir resposta na lousa"
+                  title="Abrir na lousa"
+                >
+                  <FileText size={15} aria-hidden="true" />
+                </button>
+
+                <button
+                  className="mdc-chat-message-action"
+                  type="button"
+                  onClick={() => void handleCopy(message.id, message.content)}
                 aria-label={
                   copiedMessageId === message.id
                     ? "Resposta copiada"
@@ -189,7 +202,8 @@ export function ChatMessageList({
                 ) : (
                   <Copy size={15} aria-hidden="true" />
                 )}
-              </button>
+                </button>
+              </div>
             ) : null}
           </div>
 
