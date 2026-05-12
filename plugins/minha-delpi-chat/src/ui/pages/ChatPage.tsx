@@ -74,6 +74,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             streamingStatus={streamingStatus}
             isStreaming={isStreaming}
             isLoading={isLoadingMessages}
+            onUseSuggestion={setDraft}
           />
 
           <ChatInput

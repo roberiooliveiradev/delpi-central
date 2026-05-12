@@ -12,6 +12,25 @@ type ChatSidebarProps = {
   onRenameSession: (sessionId: string, title: string) => Promise<ChatSession | null>;
 };
 
+function formatSessionDate(value?: string): string {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 export function ChatSidebar({
   sessions,
   activeSessionId,
@@ -138,7 +157,12 @@ export function ChatSidebar({
                       onClick={() => onSelectSession(session)}
                     >
                       <span>{session.title || "Conversa sem título"}</span>
-                      <small>{session.context || "geral"}</small>
+                      <small>
+                        {session.context || "geral"}
+                        {formatSessionDate(session.updated_at) ? (
+                          <> · {formatSessionDate(session.updated_at)}</>
+                        ) : null}
+                      </small>
                     </button>
 
                     <button

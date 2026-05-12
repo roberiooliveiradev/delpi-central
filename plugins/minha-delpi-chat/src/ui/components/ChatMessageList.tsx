@@ -7,6 +7,7 @@ import type {
   ChatToolCall,
 } from "../../data/api/chatTypes";
 import { ChatSources } from "./ChatSources";
+import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatToolCalls } from "./ChatToolCalls";
 
 type ChatMessageListProps = {
@@ -17,6 +18,7 @@ type ChatMessageListProps = {
   streamingStatus?: string | null;
   isStreaming?: boolean;
   isLoading?: boolean;
+  onUseSuggestion?: (value: string) => void;
 };
 
 function getMessageSources(message: ChatMessage): ChatSource[] {
@@ -75,6 +77,7 @@ export function ChatMessageList({
   streamingStatus,
   isStreaming,
   isLoading,
+  onUseSuggestion,
 }: ChatMessageListProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
@@ -100,12 +103,7 @@ export function ChatMessageList({
   }
 
   if (messages.length === 0 && !streamingAnswer && !isStreaming) {
-    return (
-      <div className="mdc-chat-empty">
-        <p>Esta conversa ainda não possui mensagens.</p>
-        <small>Digite uma pergunta para iniciar a conversa.</small>
-      </div>
-    );
+    return <ChatEmptyState onUseSuggestion={onUseSuggestion ?? (() => undefined)} />;
   }
 
   return (

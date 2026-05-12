@@ -18,6 +18,22 @@ type UseChatSessionOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
+function createOptimisticUserMessage(
+  sessionId: string,
+  content: string,
+): ChatMessage {
+  return {
+    id: `optimistic-${Date.now()}`,
+    session_id: sessionId,
+    role: "user",
+    content,
+    metadata: {
+      optimistic: true,
+    },
+    created_at: new Date().toISOString(),
+  };
+}
+
 export function useChatSession(options: UseChatSessionOptions = {}) {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSession, setActiveSession] = useState<ChatSession | null>(null);
@@ -156,6 +172,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     }
 
     setError(null);
+    setDraft("");
+    setMessages((current) => [
+      ...current,
+      createOptimisticUserMessage(activeSession.id, message),
+    ]);
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
