@@ -16,11 +16,26 @@ export type ChatSource = {
   score?: number | null;
 };
 
+export type ChatPresentation =
+  | {
+      type: "table";
+      title: string;
+      columns: { key: string; label: string }[];
+      rows: Record<string, unknown>[];
+    }
+  | {
+      type: "json";
+      title: string;
+      data: unknown;
+    };
+
 export type ChatToolCall = {
   name?: string;
   arguments?: Record<string, unknown>;
   reason?: string | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: (Record<string, unknown> & {
+    presentation?: ChatPresentation | null;
+  }) | null;
 };
 
 export type ChatMessageMetadata = {

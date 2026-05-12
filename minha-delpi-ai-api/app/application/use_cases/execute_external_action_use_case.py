@@ -4,6 +4,7 @@ from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.services.external_actions.external_action_execution_policy import (
     ExternalActionExecutionPolicy,
 )
+from app.domain.services.external_actions.external_action_result_presenter import ExternalActionResultPresenter
 
 
 class ExecuteExternalActionUseCase:
@@ -18,6 +19,7 @@ class ExecuteExternalActionUseCase:
         self.gateway = gateway
         self.policy = policy
         self.audit_repository = audit_repository
+        self.presenter = ExternalActionResultPresenter()
 
     def execute(
         self,
@@ -45,6 +47,7 @@ class ExecuteExternalActionUseCase:
         )
 
         sanitized_data = self.policy.sanitize_response(result["data"])
+        presentation = self.presenter.build_presentation(sanitized_data)
 
         self.audit_repository.log(
             user_id=UUID(user_id),
@@ -86,5 +89,6 @@ class ExecuteExternalActionUseCase:
             "metadata": {
                 "durationMs": result["durationMs"],
                 "sensitivity": action["sensitivity"],
+                "presentation": presentation,
             },
         }

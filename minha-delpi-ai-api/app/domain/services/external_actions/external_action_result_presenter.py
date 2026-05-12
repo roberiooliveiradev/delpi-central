@@ -148,3 +148,74 @@ class ExternalActionResultPresenter:
             return value.get("total")
 
         return None
+
+
+    def build_presentation(self, data) -> dict | None:
+        root = self._unwrap_data(data)
+
+        if not isinstance(root, dict):
+            return None
+
+        product = root.get("product")
+        if isinstance(product, dict):
+            return {
+                "type": "json",
+                "title": f"Produto {product.get('code') or ''}".strip(),
+                "data": self.present(data),
+            }
+
+        items = root.get("items")
+        if isinstance(items, list) and items:
+            return self._build_items_table(items)
+
+        stock = root.get("stock")
+        if isinstance(stock, dict) and isinstance(stock.get("items"), list):
+            return self._build_items_table(
+                stock.get("items") or [],
+                title="Estoque do produto",
+            )
+
+        return None
+
+    def _build_items_table(self, items: list, title: str = "Dados retornados") -> dict | None:
+        if not items:
+            return None
+
+        first = next((item for item in items if isinstance(item, dict)), None)
+
+        if not first:
+            return None
+
+        preferred_columns = [
+            ("branch", "Filial"),
+            ("warehouse", "Armazém"),
+            ("product_code", "Produto"),
+            ("current_quantity", "Qtd. atual"),
+            ("available_quantity", "Qtd. disponível"),
+            ("committed_quantity", "Qtd. empenhada"),
+            ("reserved_quantity", "Qtd. reservada"),
+            ("physical_location", "Localização"),
+            ("cost_center", "Centro de custo"),
+        ]
+
+        columns = [
+            {"key": key, "label": label}
+            for key, label in preferred_columns
+            if key in first
+        ]
+
+        if not columns:
+            columns = [
+                {"key": key, "label": self._humanize_key(key)}
+                for key in list(first.keys())[:12]
+            ]
+
+        return {
+            "type": "table",
+            "title": title,
+            "columns": columns,
+            "rows": items[:50],
+        }
+
+    def _humanize_key(self, key: str) -> str:
+        return str(key).replace("_", " ").strip().capitalize()
