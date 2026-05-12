@@ -11,3 +11,6 @@ class ChatSession:
     context: str | None
     created_at: datetime
     updated_at: datetime
+    is_pinned: bool = False
+    pinned_at: datetime | None = None
+    archived_at: datetime | None = None

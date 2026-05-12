@@ -24,6 +24,9 @@ class CreateChatSessionUseCase:
             id=str(session.id),
             title=session.title,
             context=session.context,
+            is_pinned=session.is_pinned,
+            pinned_at=session.pinned_at.isoformat() if session.pinned_at else None,
+            archived_at=session.archived_at.isoformat() if session.archived_at else None,
             created_at=session.created_at.isoformat(),
             updated_at=session.updated_at.isoformat(),
         )

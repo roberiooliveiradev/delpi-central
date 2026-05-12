@@ -27,11 +27,27 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
 
         return self._to_session_entity(model)
 
-    def list_sessions_by_user(self, user_id: UUID) -> list[ChatSession]:
+    def list_sessions_by_user(
+        self,
+        user_id: UUID,
+        archived: bool = False,
+    ) -> list[ChatSession]:
+        query = AiChatSessionModel.query.filter(
+            AiChatSessionModel.user_id == user_id
+        )
+
+        if archived:
+            query = query.filter(AiChatSessionModel.archived_at.isnot(None))
+        else:
+            query = query.filter(AiChatSessionModel.archived_at.is_(None))
+
         models = (
-            AiChatSessionModel.query
-            .filter(AiChatSessionModel.user_id == user_id)
-            .order_by(AiChatSessionModel.updated_at.desc())
+            query
+            .order_by(
+                AiChatSessionModel.is_pinned.desc(),
+                AiChatSessionModel.pinned_at.desc().nullslast(),
+                AiChatSessionModel.updated_at.desc(),
+            )
             .all()
         )
 
@@ -87,6 +103,60 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
         db.session.flush()
 
         return True
+
+    def set_session_pinned(
+        self,
+        session_id: UUID,
+        user_id: UUID,
+        pinned: bool,
+    ) -> ChatSession | None:
+        model = (
+            AiChatSessionModel.query
+            .filter(AiChatSessionModel.id == session_id)
+            .filter(AiChatSessionModel.user_id == user_id)
+            .filter(AiChatSessionModel.archived_at.is_(None))
+            .first()
+        )
+
+        if not model:
+            return None
+
+        now = datetime.now(timezone.utc)
+        model.is_pinned = pinned
+        model.pinned_at = now if pinned else None
+        model.updated_at = now
+
+        db.session.flush()
+
+        return self._to_session_entity(model)
+
+    def set_session_archived(
+        self,
+        session_id: UUID,
+        user_id: UUID,
+        archived: bool,
+    ) -> ChatSession | None:
+        model = (
+            AiChatSessionModel.query
+            .filter(AiChatSessionModel.id == session_id)
+            .filter(AiChatSessionModel.user_id == user_id)
+            .first()
+        )
+
+        if not model:
+            return None
+
+        now = datetime.now(timezone.utc)
+        model.archived_at = now if archived else None
+        model.updated_at = now
+
+        if archived:
+            model.is_pinned = False
+            model.pinned_at = None
+
+        db.session.flush()
+
+        return self._to_session_entity(model)
 
     def update_user_message(
         self,
@@ -167,6 +237,9 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
             user_id=model.user_id,
             title=model.title,
             context=model.context,
+            is_pinned=bool(model.is_pinned),
+            pinned_at=model.pinned_at,
+            archived_at=model.archived_at,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )

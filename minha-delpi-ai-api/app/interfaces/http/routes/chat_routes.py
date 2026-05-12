@@ -10,6 +10,9 @@ from app.application.dto.create_chat_session_request import CreateChatSessionReq
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.use_cases.update_chat_message_use_case import UpdateChatMessageRequest
 from app.application.use_cases.rename_chat_session_use_case import RenameChatSessionRequest
+from app.application.use_cases.set_chat_session_state_use_case import (
+    SetChatSessionStateRequest,
+)
 from app.application.use_cases.get_chat_status_use_case import GetChatStatusUseCase
 from app.composition.chat_composer import (
     make_delete_chat_session_use_case,
@@ -18,6 +21,8 @@ from app.composition.chat_composer import (
     make_get_chat_history_use_case,
     make_list_chat_sessions_use_case,
     make_rename_chat_session_use_case,
+    make_set_chat_session_archived_use_case,
+    make_set_chat_session_pinned_use_case,
     make_send_chat_message_use_case,
     make_stream_chat_message_use_case,
 )
@@ -69,8 +74,13 @@ def create_session():
 @chat_bp.get("/sessions")
 @require_permission("minha-delpi.chat.access")
 def list_sessions():
+    archived = request.args.get("archived", "false").lower() == "true"
+
     use_case = make_list_chat_sessions_use_case()
-    result = use_case.execute(g.current_user.sub)
+    result = use_case.execute(
+        g.current_user.sub,
+        archived=archived,
+    )
 
     return jsonify([asdict(session) for session in result]), 200
 
@@ -157,6 +167,129 @@ def delete_session(session_id: str):
         raise
 
     return "", 204
+
+
+
+def _not_found_response():
+    return jsonify(
+        {
+            "errors": [
+                {
+                    "code": "not_found",
+                    "message": "Resource not found",
+                    "path": "_global",
+                }
+            ]
+        }
+    ), 404
+
+
+@chat_bp.patch("/sessions/<session_id>/pin")
+@require_permission("minha-delpi.chat.history.view")
+def pin_session(session_id: str):
+    use_case = make_set_chat_session_pinned_use_case()
+
+    try:
+        session = use_case.execute(
+            SetChatSessionStateRequest(
+                user_id=g.current_user.sub,
+                session_id=session_id,
+            ),
+            pinned=True,
+        )
+
+        if not session:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(session)), 200
+
+
+@chat_bp.patch("/sessions/<session_id>/unpin")
+@require_permission("minha-delpi.chat.history.view")
+def unpin_session(session_id: str):
+    use_case = make_set_chat_session_pinned_use_case()
+
+    try:
+        session = use_case.execute(
+            SetChatSessionStateRequest(
+                user_id=g.current_user.sub,
+                session_id=session_id,
+            ),
+            pinned=False,
+        )
+
+        if not session:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(session)), 200
+
+
+@chat_bp.patch("/sessions/<session_id>/archive")
+@require_permission("minha-delpi.chat.history.view")
+def archive_session(session_id: str):
+    use_case = make_set_chat_session_archived_use_case()
+
+    try:
+        session = use_case.execute(
+            SetChatSessionStateRequest(
+                user_id=g.current_user.sub,
+                session_id=session_id,
+            ),
+            archived=True,
+        )
+
+        if not session:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(session)), 200
+
+
+@chat_bp.patch("/sessions/<session_id>/unarchive")
+@require_permission("minha-delpi.chat.history.view")
+def unarchive_session(session_id: str):
+    use_case = make_set_chat_session_archived_use_case()
+
+    try:
+        session = use_case.execute(
+            SetChatSessionStateRequest(
+                user_id=g.current_user.sub,
+                session_id=session_id,
+            ),
+            archived=False,
+        )
+
+        if not session:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(session)), 200
 
 
 @chat_bp.patch("/messages/<message_id>")

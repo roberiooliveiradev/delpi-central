@@ -13,6 +13,9 @@ class AiChatSessionModel(db.Model):
     user_id = db.Column(UUID(as_uuid=True), nullable=False, index=True)
     title = db.Column(db.String(150), nullable=True)
     context = db.Column(db.String(50), nullable=True, index=True)
+    is_pinned = db.Column(db.Boolean, nullable=False, default=False, server_default="false", index=True)
+    pinned_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    archived_at = db.Column(db.DateTime(timezone=True), nullable=True, index=True)
     created_at = db.Column(
         db.DateTime(timezone=True),
         nullable=False,

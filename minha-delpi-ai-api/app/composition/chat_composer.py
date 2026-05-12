@@ -8,6 +8,10 @@ from app.application.use_cases.create_chat_session_use_case import CreateChatSes
 from app.application.use_cases.get_chat_history_use_case import GetChatHistoryUseCase
 from app.application.use_cases.list_chat_sessions_use_case import ListChatSessionsUseCase
 from app.application.use_cases.rename_chat_session_use_case import RenameChatSessionUseCase
+from app.application.use_cases.set_chat_session_state_use_case import (
+    SetChatSessionArchivedUseCase,
+    SetChatSessionPinnedUseCase,
+)
 from app.application.use_cases.search_knowledge_use_case import SearchKnowledgeUseCase
 from app.application.use_cases.send_chat_message_use_case import SendChatMessageUseCase
 from app.application.use_cases.stream_chat_message_use_case import StreamChatMessageUseCase
@@ -87,3 +91,11 @@ def make_delete_chat_session_use_case() -> DeleteChatSessionUseCase:
 def make_update_chat_message_use_case() -> UpdateChatMessageUseCase:
     return UpdateChatMessageUseCase(PostgresChatSessionRepository())
 
+
+
+def make_set_chat_session_pinned_use_case() -> SetChatSessionPinnedUseCase:
+    return SetChatSessionPinnedUseCase(PostgresChatSessionRepository())
+
+
+def make_set_chat_session_archived_use_case() -> SetChatSessionArchivedUseCase:
+    return SetChatSessionArchivedUseCase(PostgresChatSessionRepository())

@@ -16,7 +16,11 @@ class ChatSessionRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def list_sessions_by_user(self, user_id: UUID) -> list[ChatSession]:
+    def list_sessions_by_user(
+        self,
+        user_id: UUID,
+        archived: bool = False,
+    ) -> list[ChatSession]:
         raise NotImplementedError
 
 
@@ -39,6 +43,24 @@ class ChatSessionRepositoryPort(ABC):
 
     @abstractmethod
     def delete_session(self, session_id: UUID, user_id: UUID) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_session_pinned(
+        self,
+        session_id: UUID,
+        user_id: UUID,
+        pinned: bool,
+    ) -> ChatSession | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_session_archived(
+        self,
+        session_id: UUID,
+        user_id: UUID,
+        archived: bool,
+    ) -> ChatSession | None:
         raise NotImplementedError
 
     @abstractmethod
