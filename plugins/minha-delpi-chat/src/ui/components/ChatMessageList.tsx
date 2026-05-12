@@ -1,4 +1,4 @@
-import { Check, Copy, FileText, Pencil, RotateCcw } from "lucide-react";
+import { Check, Copy, Pencil, RotateCcw } from "lucide-react";
 import { useState } from "react";
 
 import type {
@@ -6,7 +6,6 @@ import type {
   ChatSource,
   ChatToolCall,
 } from "../../data/api/chatTypes";
-import { ChatCanvasInline } from "./ChatCanvasInline";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatSources } from "./ChatSources";
@@ -25,11 +24,6 @@ type ChatMessageListProps = {
   onUseSuggestion?: (value: string) => void;
   onEditMessage?: (messageId: string, content: string) => Promise<ChatMessage | null>;
   onReuseMessage?: (content: string) => void;
-  onOpenCanvas?: (
-    content: string,
-    title?: string,
-    messageId?: string | null,
-  ) => void;
 };
 
 function getMessageSources(message: ChatMessage): ChatSource[] {
@@ -56,25 +50,6 @@ function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
   }
 
   return [];
-}
-
-function shouldShowCanvasInline(message: ChatMessage): boolean {
-  const content = message.content.trim();
-
-  return (
-    message.role === "assistant" &&
-    (content.length > 420 ||
-      content.includes("\n- ") ||
-      content.includes("|") ||
-      content.includes("##"))
-  );
-}
-
-function makeCanvasDocumentFromMessage(message: ChatMessage) {
-  return {
-    title: message.role === "user" ? "Pergunta do usuário" : "Rascunho da resposta",
-    markdown: message.content,
-  };
 }
 
 async function copyTextToClipboard(text: string): Promise<void> {
@@ -110,7 +85,6 @@ export function ChatMessageList({
   onUseSuggestion,
   onEditMessage,
   onReuseMessage,
-  onOpenCanvas,
 }: ChatMessageListProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -193,24 +167,6 @@ export function ChatMessageList({
               </strong>
 
               <div className="mdc-chat-message-actions">
-                <button
-                  className="mdc-chat-message-action"
-                  type="button"
-                  onClick={() =>
-                    onOpenCanvas?.(
-                      message.content,
-                      message.role === "user"
-                        ? "Pergunta do usuário"
-                        : "Rascunho da resposta",
-                      message.id,
-                    )
-                  }
-                  aria-label="Abrir na lousa"
-                  title="Abrir na lousa"
-                >
-                  <FileText size={15} aria-hidden="true" />
-                </button>
-
                 {message.role === "user" ? (
                   <>
                     <button
@@ -295,15 +251,6 @@ export function ChatMessageList({
                 compact={message.role === "user"}
               />
             )}
-
-            {shouldShowCanvasInline(message) ? (
-              <ChatCanvasInline
-                document={makeCanvasDocumentFromMessage(message)}
-                onOpen={(document) =>
-                  onOpenCanvas?.(document.markdown, document.title, message.id)
-                }
-              />
-            ) : null}
 
             {message.role === "assistant" ? (
               <>

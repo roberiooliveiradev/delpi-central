@@ -18,13 +18,6 @@ type ChatPageProps = {
   onOpenAdmin?: () => void;
 };
 
-function normalizeCanvasMarkdown(content: string): string {
-  return content
-    .replace(/\n\s*[-•]\s+/g, "\n- ")
-    .replace(/:\n\s*- /g, ":\n\n- ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
 
 export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const {
@@ -70,18 +63,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     );
   }, [isSidebarCollapsed]);
 
-  function openCanvasFromMessage(
-    content: string,
-    title = "Rascunho da resposta",
-    messageId?: string | null,
-  ) {
-    setCanvasDocument({
-      title,
-      messageId,
-      markdown: normalizeCanvasMarkdown(content),
-      isSaved: false,
-    });
-  }
 
   async function saveCanvasDocument(document: ChatCanvasDocument) {
     if (!activeSession) {
@@ -234,7 +215,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 onUseSuggestion={setDraft}
                 onEditMessage={editMessage}
                 onReuseMessage={reuseMessage}
-                onOpenCanvas={openCanvasFromMessage}
               />
 
               <ChatInput
