@@ -49,6 +49,14 @@ class StreamChatMessageUseCase:
             raise ChatSessionAccessDeniedError()
 
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
+
+        if self._should_generate_session_title(session, previous_messages):
+            self._generate_and_apply_session_title(
+                session_id=session_id,
+                user_id=user_id,
+                message=message,
+            )
+
         history = previous_messages[-Settings.CHAT_HISTORY_MAX_MESSAGES:]
 
         rag = self.rag_context_service.build_context(message)
@@ -139,6 +147,76 @@ class StreamChatMessageUseCase:
             "sources": sources,
             "toolCalls": tool_calls,
         }
+
+    def _should_generate_session_title(self, session, previous_messages) -> bool:
+        if previous_messages:
+            return False
+
+        title = (session.title or "").strip().lower()
+
+        return title in {"", "nova conversa", "novo chat", "conversa sem título"}
+
+    def _generate_and_apply_session_title(
+        self,
+        session_id: UUID,
+        user_id: UUID,
+        message: str,
+    ) -> None:
+        fallback_title = self._fallback_title_from_message(message)
+
+        try:
+            generated_title = self.llm_gateway.generate(
+                [
+                    {
+                        "role": "system",
+                        "content": (
+                            "Você cria títulos curtos para conversas corporativas. "
+                            "Responda apenas com o título, em português, sem aspas, "
+                            "sem ponto final, com no máximo 6 palavras."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            "Crie um título curto para esta conversa:\n\n"
+                            f"{message}"
+                        ),
+                    },
+                ]
+            ).strip()
+        except Exception:
+            generated_title = fallback_title
+
+        title = self._normalize_generated_title(generated_title) or fallback_title
+
+        self.chat_repository.rename_session(
+            session_id=session_id,
+            user_id=user_id,
+            title=title,
+        )
+
+    def _normalize_generated_title(self, value: str) -> str:
+        normalized = " ".join(value.replace("\n", " ").split())
+        normalized = normalized.strip(" .\"'`")
+
+        if not normalized:
+            return ""
+
+        if len(normalized) > 80:
+            normalized = normalized[:80].rstrip()
+
+        return normalized
+
+    def _fallback_title_from_message(self, message: str) -> str:
+        normalized = " ".join(message.split()).strip()
+
+        if not normalized:
+            return "Nova conversa"
+
+        if len(normalized) <= 48:
+            return normalized
+
+        return normalized[:48].rstrip() + "..."
 
     def _build_tool_context(self, request: SendChatMessageRequest) -> dict:
         if not request.access_token:

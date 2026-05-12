@@ -111,29 +111,14 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
   const startSession = useCallback(async () => {
     setError(null);
-
-    try {
-      const session = await createChatSession(
-        {
-          title: "Nova conversa",
-          context: "geral",
-        },
-        {
-          getAccessToken: options.getAccessToken,
-        },
-      );
-
-      setSessions((current) => [session, ...current]);
-      setActiveSession(session);
-      setMessages([]);
-      setStreamingAnswer("");
-      setStreamingSources([]);
-      setStreamingToolCalls([]);
-      setStreamingStatus(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar sessão.");
-    }
-  }, [options.getAccessToken]);
+    setActiveSession(null);
+    setMessages([]);
+    setDraft("");
+    setStreamingAnswer("");
+    setStreamingSources([]);
+    setStreamingToolCalls([]);
+    setStreamingStatus(null);
+  }, []);
 
   const loadMessages = useCallback(
     async (sessionId: string) => {
@@ -391,26 +376,49 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const sendMessage = useCallback(async () => {
     const message = draft.trim();
 
-    if (!message || !activeSession || isStreaming) {
+    if (!message || isStreaming) {
       return;
     }
 
     setError(null);
     setDraft("");
-    setMessages((current) => [
-      ...current,
-      createOptimisticUserMessage(activeSession.id, message),
-    ]);
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
-    setStreamingStatus("Preparando sua pergunta...");
+    setStreamingStatus(
+      activeSession
+        ? "Preparando sua pergunta..."
+        : "Criando conversa e preparando sua pergunta...",
+    );
+
+    let sessionForMessage = activeSession;
 
     try {
+      if (!sessionForMessage) {
+        sessionForMessage = await createChatSession(
+          {
+            title: "Nova conversa",
+            context: "geral",
+          },
+          {
+            getAccessToken: options.getAccessToken,
+          },
+        );
+
+        setSessions((current) => [sessionForMessage!, ...current]);
+        setActiveSession(sessionForMessage);
+        setMessages([]);
+      }
+
+      setMessages((current) => [
+        ...current,
+        createOptimisticUserMessage(sessionForMessage!.id, message),
+      ]);
+
       await streamMessage({
-        sessionId: activeSession.id,
+        sessionId: sessionForMessage.id,
         message,
-        context: activeSession.context ?? "geral",
+        context: sessionForMessage.context ?? "geral",
         onSources: (sources) => {
           setStreamingSources(sources);
           setStreamingStatus(
@@ -437,7 +445,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingSources([]);
           setStreamingToolCalls([]);
           setStreamingStatus(null);
-          await loadMessages(activeSession.id);
+          await loadMessages(sessionForMessage!.id);
           await loadSessions();
         },
         onError: (message) => {
@@ -459,6 +467,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isStreaming,
     loadMessages,
     loadSessions,
+    options.getAccessToken,
     streamMessage,
   ]);
 

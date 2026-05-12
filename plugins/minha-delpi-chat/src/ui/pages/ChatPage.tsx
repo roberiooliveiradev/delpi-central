@@ -152,7 +152,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
               <ChatInput
                 value={draft}
-                disabled={!activeSession}
+                disabled={false}
                 isSending={isStreaming}
                 variant="center"
                 onChange={setDraft}
@@ -178,7 +178,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
               <ChatInput
                 value={draft}
-                disabled={!activeSession}
+                disabled={false}
                 isSending={isStreaming}
                 onChange={setDraft}
                 onSubmit={sendMessage}
