@@ -26,17 +26,15 @@
 .mdc-chat-conversation-menu__scrim {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: 110;
   border: 0;
   background: transparent;
   cursor: default;
 }
 
 .mdc-chat-conversation-menu__panel {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 0.35rem);
-  z-index: 30;
+  position: fixed;
+  z-index: 130;
   display: grid;
   width: 15rem;
   border: 1px solid var(--mdc-card-border);

@@ -6,6 +6,7 @@ import {
   Share2,
   Trash2,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import "./ChatConversationMenu.css";
 
@@ -20,6 +21,14 @@ type ChatConversationMenuProps = {
   onDelete: () => void;
 };
 
+type MenuPosition = {
+  top: number;
+  left: number;
+};
+
+const MENU_WIDTH = 240;
+const MENU_MARGIN = 8;
+
 export function ChatConversationMenu({
   open,
   disabled,
@@ -30,14 +39,56 @@ export function ChatConversationMenu({
   onArchive,
   onDelete,
 }: ChatConversationMenuProps) {
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const [position, setPosition] = useState<MenuPosition>({ top: 0, left: 0 });
+
+  function updatePosition() {
+    const trigger = triggerRef.current;
+
+    if (!trigger) {
+      return;
+    }
+
+    const rect = trigger.getBoundingClientRect();
+    const left = Math.min(
+      window.innerWidth - MENU_WIDTH - MENU_MARGIN,
+      Math.max(MENU_MARGIN, rect.right - MENU_WIDTH),
+    );
+
+    const top = Math.min(
+      window.innerHeight - MENU_MARGIN,
+      rect.bottom + MENU_MARGIN,
+    );
+
+    setPosition({ top, left });
+  }
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    updatePosition();
+
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open]);
+
   return (
     <div className="mdc-chat-conversation-menu">
       <button
+        ref={triggerRef}
         type="button"
         className="mdc-chat-conversation-menu__trigger"
         disabled={disabled}
         onClick={(event) => {
           event.stopPropagation();
+          updatePosition();
           onOpenChange(!open);
         }}
         aria-label="Abrir opções da conversa"
@@ -58,7 +109,14 @@ export function ChatConversationMenu({
             }}
           />
 
-          <div className="mdc-chat-conversation-menu__panel" role="menu">
+          <div
+            className="mdc-chat-conversation-menu__panel"
+            role="menu"
+            style={{
+              top: position.top,
+              left: position.left,
+            }}
+          >
             <button
               type="button"
               role="menuitem"
@@ -93,6 +151,7 @@ export function ChatConversationMenu({
               className={!onPin ? "mdc-chat-conversation-menu__disabled" : undefined}
               onClick={(event) => {
                 event.stopPropagation();
+
                 if (!onPin) {
                   return;
                 }
@@ -111,6 +170,7 @@ export function ChatConversationMenu({
               className={!onArchive ? "mdc-chat-conversation-menu__disabled" : undefined}
               onClick={(event) => {
                 event.stopPropagation();
+
                 if (!onArchive) {
                   return;
                 }
