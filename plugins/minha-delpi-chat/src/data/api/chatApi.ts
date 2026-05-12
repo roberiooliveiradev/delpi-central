@@ -1,12 +1,16 @@
 import type {
+  ChatAgent,
   ChatArtifact,
   ChatMessage,
+  ChatProject,
   ChatSession,
   CreateChatArtifactPayload,
+  CreateChatProjectPayload,
   CreateChatSessionPayload,
   SendChatMessagePayload,
   SendChatMessageResponse,
   UpdateChatArtifactPayload,
+  UpdateChatProjectPayload,
 } from "./chatTypes";
 
 const API_BASE_URL = "/apps/minha-delpi-ai/api";
@@ -333,6 +337,70 @@ export async function deleteChatArtifact(
   options: ChatApiOptions = {},
 ): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/chat/artifacts/${artifactId}`, {
+    method: "DELETE",
+    headers: await getAuthHeaders(options),
+  });
+
+  if (!response.ok) {
+    await parseJsonResponse<unknown>(response);
+  }
+}
+
+
+export async function listChatAgents(
+  options: ChatApiOptions = {},
+): Promise<ChatAgent[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAgent[]>(response);
+}
+
+export async function listChatProjects(
+  options: ChatApiOptions = {},
+): Promise<ChatProject[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/projects`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatProject[]>(response);
+}
+
+export async function createChatProject(
+  payload: CreateChatProjectPayload,
+  options: ChatApiOptions = {},
+): Promise<ChatProject> {
+  const response = await fetch(`${API_BASE_URL}/chat/projects`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<ChatProject>(response);
+}
+
+export async function updateChatProject(
+  projectId: string,
+  payload: UpdateChatProjectPayload,
+  options: ChatApiOptions = {},
+): Promise<ChatProject> {
+  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<ChatProject>(response);
+}
+
+export async function deleteChatProject(
+  projectId: string,
+  options: ChatApiOptions = {},
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}`, {
     method: "DELETE",
     headers: await getAuthHeaders(options),
   });

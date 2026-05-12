@@ -10,6 +10,7 @@ import {
   updateChatArtifact,
 } from "../../data/api/chatApi";
 import { useChatSession } from "../../state/hooks/useChatSession";
+import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
 
@@ -50,6 +51,17 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     editMessage,
     reuseMessage,
   } = useChatSession({ getAccessToken });
+
+  const {
+    agents,
+    projects,
+    isLoadingAgents,
+    isLoadingProjects,
+    workspaceError,
+    addProject,
+    editProject,
+    removeProject,
+  } = useChatWorkspace({ getAccessToken });
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -148,9 +160,13 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
         <ChatSidebar
           sessions={sessions}
           archivedSessions={archivedSessions}
+          agents={agents}
+          projects={projects}
           activeSessionId={activeSession?.id}
           isLoading={isLoadingSessions}
           isLoadingArchivedSessions={isLoadingArchivedSessions}
+          isLoadingAgents={isLoadingAgents}
+          isLoadingProjects={isLoadingProjects}
           onNewSession={handleStartSession}
           onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
@@ -160,6 +176,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onArchiveSession={archiveSession}
           onUnarchiveSession={unarchiveSession}
           onLoadArchivedSessions={loadArchivedSessions}
+          onCreateProject={addProject}
+          onRenameProject={(projectId, name) => editProject(projectId, { name })}
+          onDeleteProject={removeProject}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
         />
@@ -182,9 +201,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             </div>
           </header>
 
-          {error ? (
+          {error || workspaceError ? (
             <div className="mdc-chat-alert" role="alert">
-              {error}
+              {error || workspaceError}
             </div>
           ) : null}
 

@@ -2,6 +2,8 @@ export type ChatSession = {
   id: string;
   title: string | null;
   context: string | null;
+  project_id: string | null;
+  agent_key: string | null;
   is_pinned: boolean;
   pinned_at: string | null;
   archived_at: string | null;
@@ -103,4 +105,33 @@ export type UpdateChatArtifactPayload = {
   title?: string;
   content?: string;
   metadata?: Record<string, unknown> | null;
+};
+
+export type ChatAgent = {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  enabled: boolean;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ChatProject = {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CreateChatProjectPayload = {
+  name: string;
+  description?: string | null;
+};
+
+export type UpdateChatProjectPayload = {
+  name?: string;
+  description?: string | null;
 };

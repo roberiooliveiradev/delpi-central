@@ -512,3 +512,67 @@
   font-weight: 800;
   padding: 0.55rem 0.75rem;
 }
+
+.mdc-chat-sidebar__project-create {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0 var(--mdc-space-1);
+}
+
+.mdc-chat-sidebar__project-create input,
+.mdc-chat-project-row input {
+  min-width: 0;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg);
+  color: var(--mdc-text);
+  font: inherit;
+  padding: 0.52rem 0.6rem;
+  outline: none;
+}
+
+.mdc-chat-sidebar__project-create input:focus,
+.mdc-chat-project-row input:focus {
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+}
+
+.mdc-chat-sidebar__project-create button,
+.mdc-chat-project-row__icon,
+.mdc-chat-project-row > button:not(:first-child) {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-bg) 82%, transparent);
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.mdc-chat-sidebar__project-create button:hover,
+.mdc-chat-project-row__icon:hover,
+.mdc-chat-project-row > button:not(:first-child):hover {
+  color: var(--mdc-primary);
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+}
+
+.mdc-chat-project-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.mdc-chat-project-row > button:first-child {
+  min-width: 0;
+}
+
+.mdc-chat-project-row > button:first-child span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
