@@ -11,6 +11,7 @@ import type {
   SendChatMessagePayload,
   SendChatMessageResponse,
   ShareChatAgentPayload,
+  ShareChatProjectPayload,
   UpdateChatAgentPayload,
   UpdateChatArtifactPayload,
   UpdateChatProjectPayload,
@@ -483,4 +484,19 @@ export async function deleteChatProject(
   if (!response.ok) {
     await parseJsonResponse<unknown>(response);
   }
+}
+
+
+export async function shareChatProject(
+  projectId: string,
+  payload: ShareChatProjectPayload,
+  options: ChatApiOptions = {},
+): Promise<{ ok: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}/share`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<{ ok: boolean }>(response);
 }

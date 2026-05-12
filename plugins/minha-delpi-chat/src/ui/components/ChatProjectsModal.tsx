@@ -1,7 +1,7 @@
-import { Check, Folder, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, Folder, Pencil, Plus, Share2, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import type { ChatProject } from "../../data/api/chatTypes";
+import type { ChatAgent, ChatProject } from "../../data/api/chatTypes";
 import { ChatConfirmDialog } from "./ChatConfirmDialog";
 
 import "./ChatProjectsModal.css";
@@ -9,6 +9,7 @@ import "./ChatProjectsModal.css";
 type ChatProjectsModalProps = {
   open: boolean;
   projects: ChatProject[];
+  agents?: ChatAgent[];
   selectedProjectId?: string | null;
   isLoading?: boolean;
   onClose: () => void;
@@ -16,30 +17,72 @@ type ChatProjectsModalProps = {
   onCreateProject?: (payload: {
     name: string;
     description?: string | null;
+    instructions?: string | null;
+    defaultAgentKey?: string | null;
+    visibility?: string;
+    icon?: string | null;
+    color?: string | null;
   }) => Promise<ChatProject | null>;
+  onUpdateProject?: (
+    projectId: string,
+    payload: {
+      name?: string;
+      description?: string | null;
+      instructions?: string | null;
+      defaultAgentKey?: string | null;
+      visibility?: string;
+      icon?: string | null;
+      color?: string | null;
+      archived?: boolean;
+    },
+  ) => Promise<ChatProject | null>;
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
+  onShareProject?: (
+    projectId: string,
+    payload: { targetUserId: string; role: string },
+  ) => Promise<boolean>;
 };
 
 type ProjectFormMode = "create" | "edit";
 
+function canEditProject(project: ChatProject): boolean {
+  return ["owner", "editor"].includes(project.access_role);
+}
+
+function canDeleteProject(project: ChatProject): boolean {
+  return project.access_role === "owner";
+}
+
 export function ChatProjectsModal({
   open,
   projects,
+  agents = [],
   selectedProjectId,
   isLoading,
   onClose,
   onSelectProject,
   onCreateProject,
+  onUpdateProject,
   onRenameProject,
   onDeleteProject,
+  onShareProject,
 }: ChatProjectsModalProps) {
   const [mode, setMode] = useState<ProjectFormMode>("create");
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ChatProject | null>(null);
+  const [shareTarget, setShareTarget] = useState<ChatProject | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<ChatProject | null>(null);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [instructions, setInstructions] = useState("");
+  const [defaultAgentKey, setDefaultAgentKey] = useState("");
+  const [visibility, setVisibility] = useState("private");
+  const [icon, setIcon] = useState("folder");
+  const [color, setColor] = useState("blue");
+  const [targetUserId, setTargetUserId] = useState("");
+  const [shareRole, setShareRole] = useState("viewer");
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === selectedProjectId) ?? null,
@@ -51,12 +94,9 @@ export function ChatProjectsModal({
       return;
     }
 
-    setMode("create");
-    setEditingProjectId(null);
-    setName("");
-    setDescription("");
-    setLocalError(null);
+    startCreate();
     setDeleteTarget(null);
+    setShareTarget(null);
   }, [open]);
 
   if (!open) {
@@ -68,6 +108,13 @@ export function ChatProjectsModal({
     setEditingProjectId(null);
     setName("");
     setDescription("");
+    setInstructions("");
+    setDefaultAgentKey("");
+    setVisibility("private");
+    setIcon("folder");
+    setColor("blue");
+    setTargetUserId("");
+    setShareRole("viewer");
     setLocalError(null);
   }
 
@@ -76,23 +123,34 @@ export function ChatProjectsModal({
     setEditingProjectId(project.id);
     setName(project.name);
     setDescription(project.description ?? "");
+    setInstructions(project.instructions ?? "");
+    setDefaultAgentKey(project.default_agent_key ?? "");
+    setVisibility(project.visibility === "public" ? "public" : "private");
+    setIcon(project.icon ?? "folder");
+    setColor(project.color ?? "blue");
     setLocalError(null);
   }
 
   async function submitForm() {
     const normalizedName = name.trim();
-    const normalizedDescription = description.trim();
 
     if (!normalizedName) {
       setLocalError("Informe o nome do projeto.");
       return;
     }
 
+    const payload = {
+      name: normalizedName,
+      description: description.trim() || null,
+      instructions: instructions.trim() || null,
+      defaultAgentKey: defaultAgentKey || null,
+      visibility,
+      icon: icon.trim() || null,
+      color: color.trim() || null,
+    };
+
     if (mode === "create") {
-      const created = await onCreateProject?.({
-        name: normalizedName,
-        description: normalizedDescription || null,
-      });
+      const created = await onCreateProject?.(payload);
 
       if (created) {
         onSelectProject?.(created.id);
@@ -107,7 +165,9 @@ export function ChatProjectsModal({
       return;
     }
 
-    const updated = await onRenameProject?.(editingProjectId, normalizedName);
+    const updated = onUpdateProject
+      ? await onUpdateProject(editingProjectId, payload)
+      : await onRenameProject?.(editingProjectId, normalizedName);
 
     if (updated) {
       startCreate();
@@ -128,6 +188,25 @@ export function ChatProjectsModal({
 
       setDeleteTarget(null);
       startCreate();
+    }
+  }
+
+  async function submitShare() {
+    if (!shareTarget || !targetUserId.trim()) {
+      setLocalError("Informe o ID do usuário que receberá acesso.");
+      return;
+    }
+
+    const shared = await onShareProject?.(shareTarget.id, {
+      targetUserId: targetUserId.trim(),
+      role: shareRole,
+    });
+
+    if (shared) {
+      setShareTarget(null);
+      setTargetUserId("");
+      setShareRole("viewer");
+      setLocalError(null);
     }
   }
 
@@ -152,7 +231,7 @@ export function ChatProjectsModal({
             <p className="mdc-chat-eyebrow">Workspace</p>
             <h2 id="mdc-chat-projects-modal-title">Projetos</h2>
             <span>
-              Projetos separam conversas, documentos e contexto de trabalho.
+              Projetos separam conversas, documentos, agentes e instruções de trabalho.
             </span>
           </div>
 
@@ -199,28 +278,45 @@ export function ChatProjectsModal({
                       <Folder size={17} aria-hidden="true" />
                       <span>
                         <strong>{project.name}</strong>
-                        <small>{project.description || "Sem descrição"}</small>
+                        <small>
+                          {project.visibility} · {project.access_role}
+                        </small>
                       </span>
                     </button>
 
                     <div className="mdc-chat-projects-modal__item-actions">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(project)}
-                        aria-label="Editar projeto"
-                        title="Editar"
-                      >
-                        <Pencil size={15} aria-hidden="true" />
-                      </button>
+                      {canEditProject(project) ? (
+                        <button
+                          type="button"
+                          onClick={() => startEdit(project)}
+                          aria-label="Editar projeto"
+                          title="Editar"
+                        >
+                          <Pencil size={15} aria-hidden="true" />
+                        </button>
+                      ) : null}
 
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTarget(project)}
-                        aria-label="Excluir projeto"
-                        title="Excluir"
-                      >
-                        <Trash2 size={15} aria-hidden="true" />
-                      </button>
+                      {project.access_role === "owner" ? (
+                        <button
+                          type="button"
+                          onClick={() => setShareTarget(project)}
+                          aria-label="Compartilhar projeto"
+                          title="Compartilhar"
+                        >
+                          <Share2 size={15} aria-hidden="true" />
+                        </button>
+                      ) : null}
+
+                      {canDeleteProject(project) ? (
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(project)}
+                          aria-label="Excluir projeto"
+                          title="Excluir"
+                        >
+                          <Trash2 size={15} aria-hidden="true" />
+                        </button>
+                      ) : null}
                     </div>
                   </article>
                 ))}
@@ -244,9 +340,7 @@ export function ChatProjectsModal({
               <div>
                 <h3>{mode === "create" ? "Novo projeto" : "Editar projeto"}</h3>
                 <p>
-                  {mode === "create"
-                    ? "Crie um ambiente para conversas, documentos e agentes."
-                    : "Atualize as informações do projeto selecionado."}
+                  Crie um ambiente isolado para conversas, documentos e agentes.
                 </p>
               </div>
             </div>
@@ -261,15 +355,28 @@ export function ChatProjectsModal({
               </div>
             )}
 
-            <label>
-              <span>Nome</span>
-              <input
-                value={name}
-                maxLength={120}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Ex.: Qualidade, Engenharia, Produtos..."
-              />
-            </label>
+            <div className="mdc-chat-projects-modal__grid">
+              <label>
+                <span>Nome</span>
+                <input
+                  value={name}
+                  maxLength={120}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Ex.: Qualidade, Engenharia, Produtos..."
+                />
+              </label>
+
+              <label>
+                <span>Visibilidade</span>
+                <select
+                  value={visibility}
+                  onChange={(event) => setVisibility(event.target.value)}
+                >
+                  <option value="private">Privado</option>
+                  <option value="public">Público interno</option>
+                </select>
+              </label>
+            </div>
 
             <label>
               <span>Descrição</span>
@@ -280,6 +387,91 @@ export function ChatProjectsModal({
                 placeholder="Explique o objetivo deste projeto..."
               />
             </label>
+
+            <label>
+              <span>Instruções do projeto</span>
+              <textarea
+                value={instructions}
+                className="mdc-chat-projects-modal__prompt"
+                maxLength={12000}
+                onChange={(event) => setInstructions(event.target.value)}
+                placeholder="Instruções usadas nas conversas deste projeto..."
+              />
+            </label>
+
+            <div className="mdc-chat-projects-modal__grid">
+              <label>
+                <span>Agente padrão</span>
+                <select
+                  value={defaultAgentKey}
+                  onChange={(event) => setDefaultAgentKey(event.target.value)}
+                >
+                  <option value="">Sem agente padrão</option>
+                  {agents.map((agent) => (
+                    <option key={agent.id} value={agent.key}>
+                      {agent.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span>Ícone</span>
+                <input
+                  value={icon}
+                  maxLength={60}
+                  onChange={(event) => setIcon(event.target.value)}
+                />
+              </label>
+
+              <label>
+                <span>Cor</span>
+                <input
+                  value={color}
+                  maxLength={40}
+                  onChange={(event) => setColor(event.target.value)}
+                />
+              </label>
+            </div>
+
+            {shareTarget ? (
+              <div className="mdc-chat-projects-modal__share">
+                <strong>Compartilhar: {shareTarget.name}</strong>
+                <div className="mdc-chat-projects-modal__grid">
+                  <label>
+                    <span>ID do usuário</span>
+                    <input
+                      value={targetUserId}
+                      onChange={(event) => setTargetUserId(event.target.value)}
+                    />
+                  </label>
+
+                  <label>
+                    <span>Permissão</span>
+                    <select
+                      value={shareRole}
+                      onChange={(event) => setShareRole(event.target.value)}
+                    >
+                      <option value="viewer">Visualizador</option>
+                      <option value="editor">Editor</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="mdc-chat-projects-modal__form-actions">
+                  <button type="button" onClick={() => setShareTarget(null)}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="mdc-chat-projects-modal__primary"
+                    onClick={() => void submitShare()}
+                  >
+                    Compartilhar
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             {localError ? (
               <p className="mdc-chat-projects-modal__error">{localError}</p>

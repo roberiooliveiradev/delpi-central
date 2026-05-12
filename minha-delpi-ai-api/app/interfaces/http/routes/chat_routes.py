@@ -74,10 +74,7 @@ def status():
 @require_permission("minha-delpi.chat.access")
 def list_agents():
     use_case = make_list_chat_agents_use_case()
-    result = use_case.execute(
-        user_id=g.current_user.sub,
-        archived=(request.args.get("archived") == "true"),
-    )
+    result = use_case.execute(g.current_user.sub)
 
     return jsonify([asdict(agent) for agent in result]), 200
 
@@ -106,11 +103,8 @@ def create_agent():
                 color=payload.get("color"),
                 metadata=payload.get("metadata"),
                 system_prompt=payload.get("systemPrompt") or payload.get("system_prompt"),
-                visibility=payload.get("visibility", "private"),
                 category=payload.get("category"),
-                icon=payload.get("icon"),
                 response_style=payload.get("responseStyle") or payload.get("response_style"),
-                metadata=payload.get("metadata"),
             )
         )
 
@@ -147,11 +141,8 @@ def update_agent(agent_id: str):
                 metadata=payload.get("metadata"),
                 archived=payload.get("archived"),
                 system_prompt=payload.get("systemPrompt") or payload.get("system_prompt"),
-                visibility=payload.get("visibility"),
                 category=payload.get("category"),
-                icon=payload.get("icon"),
                 response_style=payload.get("responseStyle") or payload.get("response_style"),
-                metadata=payload.get("metadata"),
                 enabled=payload.get("enabled"),
             )
         )
@@ -262,7 +253,10 @@ def upsert_agent_action(agent_id: str):
 @require_permission("minha-delpi.chat.access")
 def list_projects():
     use_case = make_list_chat_projects_use_case()
-    result = use_case.execute(g.current_user.sub)
+    result = use_case.execute(
+        user_id=g.current_user.sub,
+        archived=(request.args.get("archived") == "true"),
+    )
 
     return jsonify([asdict(project) for project in result]), 200
 

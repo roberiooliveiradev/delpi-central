@@ -132,6 +132,14 @@ export type ChatProject = {
   id: string;
   name: string;
   description: string | null;
+  instructions: string | null;
+  default_agent_key: string | null;
+  visibility: "private" | "public" | string;
+  icon: string | null;
+  color: string | null;
+  archived_at: string | null;
+  metadata: Record<string, unknown> | null;
+  access_role: "owner" | "editor" | "viewer" | string;
   created_at: string;
   updated_at: string;
 };
@@ -139,11 +147,24 @@ export type ChatProject = {
 export type CreateChatProjectPayload = {
   name: string;
   description?: string | null;
+  instructions?: string | null;
+  defaultAgentKey?: string | null;
+  visibility?: "private" | "public" | string;
+  icon?: string | null;
+  color?: string | null;
+  metadata?: Record<string, unknown> | null;
 };
 
 export type UpdateChatProjectPayload = {
   name?: string;
   description?: string | null;
+  instructions?: string | null;
+  defaultAgentKey?: string | null;
+  visibility?: "private" | "public" | string;
+  icon?: string | null;
+  color?: string | null;
+  metadata?: Record<string, unknown> | null;
+  archived?: boolean;
 };
 
 export type CreateChatAgentPayload = {
@@ -181,4 +202,10 @@ export type UpsertChatAgentActionPayload = {
   sensitivity?: "read" | "write" | "admin" | string;
   requiresConfirmation?: boolean;
   enabled?: boolean;
+};
+
+
+export type ShareChatProjectPayload = {
+  targetUserId: string;
+  role: "viewer" | "editor" | string;
 };

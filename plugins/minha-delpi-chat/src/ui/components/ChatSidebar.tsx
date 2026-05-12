@@ -49,7 +49,18 @@ type ChatSidebarProps = {
   onLoadArchivedSessions?: () => Promise<void>;
   onCreateProject?: (payload: { name: string; description?: string | null }) => Promise<ChatProject | null>;
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
+  onUpdateProject?: (projectId: string, payload: {
+    name?: string;
+    description?: string | null;
+    instructions?: string | null;
+    defaultAgentKey?: string | null;
+    visibility?: string;
+    icon?: string | null;
+    color?: string | null;
+    archived?: boolean;
+  }) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
+  onShareProject?: (projectId: string, payload: { targetUserId: string; role: string }) => Promise<boolean>;
   onSelectProject?: (projectId: string | null) => void;
   onSelectAgent?: (agentKey: string | null) => void;
 };
@@ -80,7 +91,9 @@ export function ChatSidebar({
   onLoadArchivedSessions,
   onCreateProject,
   onRenameProject,
+  onUpdateProject,
   onDeleteProject,
+  onShareProject,
   onSelectProject,
   onSelectAgent,
 }: ChatSidebarProps) {
@@ -291,13 +304,16 @@ export function ChatSidebar({
       <ChatProjectsModal
         open={isProjectsModalOpen}
         projects={projects}
+        agents={agents}
         selectedProjectId={selectedProjectId}
         isLoading={isLoadingProjects}
         onClose={() => setIsProjectsModalOpen(false)}
         onSelectProject={onSelectProject}
         onCreateProject={onCreateProject}
+        onUpdateProject={onUpdateProject}
         onRenameProject={onRenameProject}
         onDeleteProject={onDeleteProject}
+        onShareProject={onShareProject}
       />
 
       <ChatConfirmDialog

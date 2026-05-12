@@ -277,3 +277,40 @@
     border-bottom: 1px solid var(--mdc-card-border);
   }
 }
+
+.mdc-chat-projects-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mdc-space-3);
+}
+
+.mdc-chat-projects-modal__form select {
+  width: 100%;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: var(--mdc-bg);
+  color: var(--mdc-text);
+  font: inherit;
+  padding: 0.8rem 0.9rem;
+  outline: none;
+}
+
+.mdc-chat-projects-modal__prompt {
+  min-height: 10rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.mdc-chat-projects-modal__share {
+  display: grid;
+  gap: var(--mdc-space-3);
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 24%, var(--mdc-card-border));
+  border-radius: var(--mdc-radius-lg);
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+  padding: var(--mdc-space-4);
+}
+
+@media (max-width: 780px) {
+  .mdc-chat-projects-modal__grid {
+    grid-template-columns: 1fr;
+  }
+}

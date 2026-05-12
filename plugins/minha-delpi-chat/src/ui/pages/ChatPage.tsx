@@ -70,6 +70,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     addProject,
     editProject,
     removeProject,
+    shareProject,
   } = useChatWorkspace({ getAccessToken });
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
@@ -194,7 +195,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onLoadArchivedSessions={loadArchivedSessions}
           onCreateProject={addProject}
           onRenameProject={(projectId, name) => editProject(projectId, { name })}
+          onUpdateProject={editProject}
           onDeleteProject={removeProject}
+          onShareProject={shareProject}
           onSelectProject={(projectId) => {
             setSelectedProjectId(projectId);
             void handleStartSession();

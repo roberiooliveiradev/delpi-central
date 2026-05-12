@@ -8,6 +8,7 @@ import {
   listChatAgents,
   listChatProjects,
   shareChatAgent,
+  shareChatProject,
   updateChatAgent,
   updateChatProject,
   upsertChatAgentAction,
@@ -18,6 +19,7 @@ import type {
   CreateChatAgentPayload,
   CreateChatProjectPayload,
   ShareChatAgentPayload,
+  ShareChatProjectPayload,
   UpdateChatAgentPayload,
   UpdateChatProjectPayload,
   UpsertChatAgentActionPayload,
@@ -223,6 +225,26 @@ export function useChatWorkspace(options: UseChatWorkspaceOptions = {}) {
     [options.getAccessToken],
   );
 
+  const shareProject = useCallback(
+    async (projectId: string, payload: ShareChatProjectPayload) => {
+      setWorkspaceError(null);
+
+      try {
+        await shareChatProject(projectId, payload, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        return true;
+      } catch (err) {
+        setWorkspaceError(
+          err instanceof Error ? err.message : "Erro ao compartilhar projeto.",
+        );
+        return false;
+      }
+    },
+    [options.getAccessToken],
+  );
+
   const removeProject = useCallback(
     async (projectId: string) => {
       setWorkspaceError(null);
@@ -268,5 +290,6 @@ export function useChatWorkspace(options: UseChatWorkspaceOptions = {}) {
     addProject,
     editProject,
     removeProject,
+    shareProject,
   };
 }
