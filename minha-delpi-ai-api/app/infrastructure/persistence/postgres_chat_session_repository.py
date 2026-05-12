@@ -15,11 +15,15 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
         user_id: UUID,
         title: str | None,
         context: str | None,
+        project_id: UUID | None = None,
+        agent_key: str | None = None,
     ) -> ChatSession:
         model = AiChatSessionModel(
             user_id=user_id,
             title=title,
             context=context,
+            project_id=project_id,
+            agent_key=agent_key,
         )
 
         db.session.add(model)

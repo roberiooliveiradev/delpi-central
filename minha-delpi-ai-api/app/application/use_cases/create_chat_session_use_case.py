@@ -13,11 +13,15 @@ class CreateChatSessionUseCase:
     def execute(self, request: CreateChatSessionRequest) -> ChatSessionResponse:
         title = self._normalize_optional_text(request.title, max_length=150)
         context = self._normalize_optional_text(request.context, max_length=50)
+        project_id = UUID(request.project_id) if request.project_id else None
+        agent_key = self._normalize_optional_text(request.agent_key, max_length=80)
 
         session = self.repository.create_session(
             user_id=UUID(request.user_id),
             title=title,
             context=context,
+            project_id=project_id,
+            agent_key=agent_key,
         )
 
         return ChatSessionResponse(

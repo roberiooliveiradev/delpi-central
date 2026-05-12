@@ -576,3 +576,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.mdc-chat-sidebar__link-list button.mdc-chat-sidebar__link--active,
+.mdc-chat-project-row > button.mdc-chat-sidebar__link--active:first-child {
+  border-color: color-mix(in srgb, var(--mdc-primary) 48%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-card-bg));
+  color: var(--mdc-primary);
+  font-weight: 850;
+}
+
+.mdc-chat-sidebar__link-list button.mdc-chat-sidebar__link--active svg,
+.mdc-chat-project-row > button.mdc-chat-sidebar__link--active:first-child svg {
+  color: var(--mdc-primary);
+}

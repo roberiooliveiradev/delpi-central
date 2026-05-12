@@ -24,6 +24,8 @@ type ChatSidebarProps = {
   agents?: ChatAgent[];
   projects?: ChatProject[];
   activeSessionId?: string;
+  selectedProjectId?: string | null;
+  selectedAgentKey?: string | null;
   isLoading?: boolean;
   isLoadingArchivedSessions?: boolean;
   isLoadingAgents?: boolean;
@@ -42,6 +44,8 @@ type ChatSidebarProps = {
   onCreateProject?: (payload: { name: string; description?: string | null }) => Promise<ChatProject | null>;
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
+  onSelectProject?: (projectId: string | null) => void;
+  onSelectAgent?: (agentKey: string | null) => void;
 };
 
 type SessionGroup = {
@@ -149,6 +153,8 @@ export function ChatSidebar({
   agents = [],
   projects = [],
   activeSessionId,
+  selectedProjectId,
+  selectedAgentKey,
   isLoading,
   isLoadingArchivedSessions,
   isLoadingAgents,
@@ -167,6 +173,8 @@ export function ChatSidebar({
   onCreateProject,
   onRenameProject,
   onDeleteProject,
+  onSelectProject,
+  onSelectAgent,
 }: ChatSidebarProps) {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -566,7 +574,21 @@ export function ChatSidebar({
           <p className="mdc-chat-muted">Nenhum agente disponível.</p>
         ) : (
           agents.map((agent) => (
-            <button key={agent.id} type="button" title={agent.description || agent.name}>
+            <button
+              key={agent.id}
+              type="button"
+              className={
+                agent.key === selectedAgentKey
+                  ? "mdc-chat-sidebar__link--active"
+                  : undefined
+              }
+              title={agent.description || agent.name}
+              onClick={() =>
+                onSelectAgent?.(
+                  agent.key === selectedAgentKey ? null : agent.key,
+                )
+              }
+            >
               <Bot size={16} aria-hidden="true" />
               <span>{agent.name}</span>
             </button>
@@ -648,7 +670,20 @@ export function ChatSidebar({
                 </>
               ) : (
                 <>
-                  <button type="button" title={project.description || project.name}>
+                  <button
+                    type="button"
+                    className={
+                      project.id === selectedProjectId
+                        ? "mdc-chat-sidebar__link--active"
+                        : undefined
+                    }
+                    title={project.description || project.name}
+                    onClick={() =>
+                      onSelectProject?.(
+                        project.id === selectedProjectId ? null : project.id,
+                      )
+                    }
+                  >
                     <Folder size={16} aria-hidden="true" />
                     <span>{project.name}</span>
                   </button>

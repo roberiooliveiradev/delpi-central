@@ -12,6 +12,8 @@ class ChatSessionRepositoryPort(ABC):
         user_id: UUID,
         title: str | None,
         context: str | None,
+        project_id: UUID | None = None,
+        agent_key: str | None = None,
     ) -> ChatSession:
         raise NotImplementedError
 

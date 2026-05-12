@@ -274,6 +274,8 @@ def create_session():
                 user_id=g.current_user.sub,
                 title=payload.get("title"),
                 context=payload.get("context"),
+                project_id=payload.get("projectId") or payload.get("project_id"),
+                agent_key=payload.get("agentKey") or payload.get("agent_key"),
             )
         )
 

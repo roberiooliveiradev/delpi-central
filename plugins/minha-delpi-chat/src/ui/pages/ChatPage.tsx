@@ -21,6 +21,9 @@ type ChatPageProps = {
 
 
 export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedAgentKey, setSelectedAgentKey] = useState<string | null>(null);
+
   const {
     sessions,
     archivedSessions,
@@ -50,7 +53,11 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     unarchiveSession,
     editMessage,
     reuseMessage,
-  } = useChatSession({ getAccessToken });
+  } = useChatSession({
+    getAccessToken,
+    projectId: selectedProjectId,
+    agentKey: selectedAgentKey,
+  });
 
   const {
     agents,
@@ -64,6 +71,11 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   } = useChatWorkspace({ getAccessToken });
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
+  const selectedProject = projects.find((project) => project.id === selectedProjectId);
+  const selectedAgent = agents.find((agent) => agent.key === selectedAgentKey);
+  const selectedProjectName = selectedProject?.name ?? null;
+  const selectedAgentName = selectedAgent?.name ?? null;
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true";
   });
@@ -163,6 +175,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           agents={agents}
           projects={projects}
           activeSessionId={activeSession?.id}
+          selectedProjectId={selectedProjectId}
+          selectedAgentKey={selectedAgentKey}
           isLoading={isLoadingSessions}
           isLoadingArchivedSessions={isLoadingArchivedSessions}
           isLoadingAgents={isLoadingAgents}
@@ -179,6 +193,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onCreateProject={addProject}
           onRenameProject={(projectId, name) => editProject(projectId, { name })}
           onDeleteProject={removeProject}
+          onSelectProject={setSelectedProjectId}
+          onSelectAgent={setSelectedAgentKey}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
         />
@@ -191,6 +207,13 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               <p>
                 Assistente conversacional corporativo integrado à Minha DELPI.
               </p>
+
+              {selectedProjectName || selectedAgentName ? (
+                <div className="mdc-chat-context-chips" aria-label="Contexto selecionado">
+                  {selectedProjectName ? <span>Projeto: {selectedProjectName}</span> : null}
+                  {selectedAgentName ? <span>Agente: {selectedAgentName}</span> : null}
+                </div>
+              ) : null}
             </div>
 
             <div className="mdc-chat-header-actions">

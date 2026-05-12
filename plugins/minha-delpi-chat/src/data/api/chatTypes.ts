@@ -66,6 +66,8 @@ export type ChatMessage = {
 export type CreateChatSessionPayload = {
   title?: string;
   context?: string;
+  projectId?: string | null;
+  agentKey?: string | null;
 };
 
 export type SendChatMessagePayload = {

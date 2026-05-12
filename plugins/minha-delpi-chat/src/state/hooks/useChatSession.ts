@@ -22,6 +22,8 @@ import { useChatStreaming } from "./useChatStreaming";
 
 type UseChatSessionOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  projectId?: string | null;
+  agentKey?: string | null;
 };
 
 function createOptimisticUserMessage(
@@ -399,6 +401,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           {
             title: "Nova conversa",
             context: "geral",
+            projectId: options.projectId ?? null,
+            agentKey: options.agentKey ?? null,
           },
           {
             getAccessToken: options.getAccessToken,
@@ -467,7 +471,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isStreaming,
     loadMessages,
     loadSessions,
+    options.agentKey,
     options.getAccessToken,
+    options.projectId,
     streamMessage,
   ]);
 
