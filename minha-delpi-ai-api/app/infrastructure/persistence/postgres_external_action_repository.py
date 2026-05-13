@@ -25,6 +25,7 @@ class PostgresExternalActionRepository:
             provider_type=payload["type"],
             base_url=payload["baseUrl"].rstrip("/"),
             openapi_url=(payload.get("openApiUrl") or "").strip() or None,
+            privacy_policy_url=(payload.get("privacyPolicyUrl") or "").strip() or None,
             auth_mode=payload.get("authMode") or "none",
             auth_config=payload.get("authConfig"),
             enabled=bool(payload.get("enabled", True)),
@@ -48,6 +49,62 @@ class PostgresExternalActionRepository:
         return ExternalActionProviderModel.query.filter(
             ExternalActionProviderModel.provider_key == provider_key
         ).first()
+
+    def update_provider(self, provider_key: str, payload: dict) -> dict | None:
+        provider = self.get_provider_by_key(provider_key)
+
+        if not provider:
+            return None
+
+        if "name" in payload and payload.get("name"):
+            provider.name = str(payload.get("name")).strip()
+
+        if "baseUrl" in payload and payload.get("baseUrl"):
+            provider.base_url = str(payload.get("baseUrl")).strip().rstrip("/")
+
+        if "openApiUrl" in payload:
+            value = str(payload.get("openApiUrl") or "").strip()
+            provider.openapi_url = value or None
+
+        if "privacyPolicyUrl" in payload:
+            value = str(payload.get("privacyPolicyUrl") or "").strip()
+            provider.privacy_policy_url = value or None
+
+        if "authMode" in payload:
+            provider.auth_mode = str(payload.get("authMode") or "none").strip() or "none"
+
+        if "authConfig" in payload:
+            provider.auth_config = payload.get("authConfig") or {}
+
+        if "enabled" in payload:
+            provider.enabled = bool(payload.get("enabled"))
+
+        db.session.flush()
+
+        return self._provider_to_dict(provider)
+
+    def get_provider_details(self, provider_key: str) -> dict | None:
+        provider = self.get_provider_by_key(provider_key)
+
+        if not provider:
+            return None
+
+        latest_schema = (
+            ExternalActionSchemaModel.query
+            .filter(ExternalActionSchemaModel.provider_id == provider.id)
+            .order_by(ExternalActionSchemaModel.imported_at.desc())
+            .first()
+        )
+
+        data = self._provider_to_dict(provider)
+        data["authConfig"] = provider.auth_config or {}
+        data["latestSchema"] = latest_schema.schema_json if latest_schema else None
+        data["latestSchemaHash"] = latest_schema.schema_hash if latest_schema else None
+        data["latestSchemaImportedAt"] = (
+            latest_schema.imported_at.isoformat() if latest_schema else None
+        )
+
+        return data
 
     def import_schema_from_json(
         self,
@@ -236,6 +293,7 @@ class PostgresExternalActionRepository:
             "type": provider.provider_type,
             "baseUrl": provider.base_url,
             "openApiUrl": provider.openapi_url,
+            "privacyPolicyUrl": provider.privacy_policy_url,
             "authMode": provider.auth_mode,
             "enabled": provider.enabled,
             "createdAt": provider.created_at.isoformat(),

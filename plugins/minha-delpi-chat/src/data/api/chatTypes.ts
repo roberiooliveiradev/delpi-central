@@ -280,7 +280,12 @@ export type ChatActionProvider = {
   type: string;
   baseUrl: string;
   openApiUrl: string | null;
+  privacyPolicyUrl?: string | null;
   authMode: string;
+  authConfig?: Record<string, unknown> | null;
+  latestSchema?: Record<string, unknown> | null;
+  latestSchemaHash?: string | null;
+  latestSchemaImportedAt?: string | null;
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -294,6 +299,7 @@ export type ChatAgentActionProvider = {
   providerType: string | null;
   baseUrl: string | null;
   openApiUrl: string | null;
+  privacyPolicyUrl?: string | null;
   enabled: boolean;
   allowRead: boolean;
   allowWrite: boolean;

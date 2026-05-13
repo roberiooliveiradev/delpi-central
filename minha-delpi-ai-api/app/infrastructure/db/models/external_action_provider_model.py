@@ -15,6 +15,7 @@ class ExternalActionProviderModel(db.Model):
     provider_type = db.Column(db.String(20), nullable=False, index=True)
     base_url = db.Column(db.Text, nullable=False)
     openapi_url = db.Column(db.Text, nullable=True)
+    privacy_policy_url = db.Column(db.Text, nullable=True)
     auth_mode = db.Column(db.String(40), nullable=False, default="none")
     auth_config = db.Column(JSONB, nullable=True)
     enabled = db.Column(db.Boolean, nullable=False, default=True, index=True)

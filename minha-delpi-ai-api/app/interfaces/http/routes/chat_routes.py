@@ -261,6 +261,23 @@ def share_agent(agent_id: str):
 
 
 
+
+def _find_linked_agent_provider(agent_id: str, provider_key: str):
+    use_case = make_list_chat_agent_action_providers_use_case()
+    providers = use_case.execute(
+        user_id=g.current_user.sub,
+        agent_id=agent_id,
+    )
+
+    return next(
+        (
+            item for item in providers
+            if item.get("providerKey") == provider_key
+        ),
+        None,
+    )
+
+
 @chat_bp.post("/agents/<agent_id>/providers/create")
 @require_permission("minha-delpi.chat.access")
 def create_agent_action_provider(agent_id: str):
@@ -299,6 +316,7 @@ def create_agent_action_provider(agent_id: str):
                     "type": provider_type,
                     "baseUrl": base_url,
                     "openApiUrl": openapi_url,
+                    "privacyPolicyUrl": payload.get("privacyPolicyUrl") or payload.get("privacy_policy_url"),
                     "authMode": payload.get("authMode") or "none",
                     "authConfig": payload.get("authConfig"),
                     "enabled": True,
@@ -352,6 +370,67 @@ def create_agent_action_provider(agent_id: str):
     ), 201
 
 
+
+
+
+@chat_bp.get("/agents/<agent_id>/providers/<provider_key>")
+@require_permission("minha-delpi.chat.access")
+def get_agent_action_provider(agent_id: str, provider_key: str):
+    linked = _find_linked_agent_provider(agent_id, provider_key)
+
+    if not linked:
+        return _not_found_response()
+
+    repository = PostgresExternalActionRepository()
+    provider = repository.get_provider_details(provider_key)
+
+    if not provider:
+        return _not_found_response()
+
+    return jsonify(provider), 200
+
+
+@chat_bp.patch("/agents/<agent_id>/providers/<provider_key>")
+@require_permission("minha-delpi.chat.access")
+def update_agent_action_provider(agent_id: str, provider_key: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    linked = _find_linked_agent_provider(agent_id, provider_key)
+
+    if not linked:
+        return _not_found_response()
+
+    repository = PostgresExternalActionRepository()
+
+    try:
+        provider = repository.update_provider(
+            provider_key,
+            {
+                "name": payload.get("name"),
+                "baseUrl": payload.get("baseUrl") or payload.get("base_url"),
+                "openApiUrl": payload.get("openApiUrl") or payload.get("openapi_url"),
+                "privacyPolicyUrl": (
+                    payload.get("privacyPolicyUrl") or payload.get("privacy_policy_url")
+                ),
+                "authMode": payload.get("authMode") or payload.get("auth_mode"),
+                "authConfig": payload.get("authConfig") or payload.get("auth_config"),
+                "enabled": payload.get("enabled"),
+            },
+        )
+
+        if not provider:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(provider), 200
 
 
 @chat_bp.post("/agents/<agent_id>/providers/<provider_key>/import")

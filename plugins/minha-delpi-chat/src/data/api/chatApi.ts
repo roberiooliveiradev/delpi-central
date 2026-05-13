@@ -776,6 +776,7 @@ export async function createChatAgentActionProvider(
     type?: string;
     baseUrl: string;
     openApiUrl?: string | null;
+    privacyPolicyUrl?: string | null;
     schema?: Record<string, unknown> | null;
     authMode?: string;
     authConfig?: Record<string, unknown> | null;
@@ -823,4 +824,47 @@ export async function importChatAgentActionProviderSchema(
   );
 
   return parseJsonResponse(response);
+}
+
+
+export async function getChatAgentActionProvider(
+  agentId: string,
+  providerKey: string,
+  options: ChatApiOptions = {},
+): Promise<ChatActionProvider> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<ChatActionProvider>(response);
+}
+
+export async function updateChatAgentActionProvider(
+  agentId: string,
+  providerKey: string,
+  payload: {
+    name?: string;
+    baseUrl?: string;
+    openApiUrl?: string | null;
+    privacyPolicyUrl?: string | null;
+    authMode?: string;
+    authConfig?: Record<string, unknown> | null;
+    enabled?: boolean;
+  },
+  options: ChatApiOptions = {},
+): Promise<ChatActionProvider> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}`,
+    {
+      method: "PATCH",
+      headers: await getAuthHeaders(options),
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return parseJsonResponse<ChatActionProvider>(response);
 }
