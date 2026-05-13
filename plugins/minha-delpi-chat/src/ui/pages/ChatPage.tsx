@@ -3,7 +3,7 @@ import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
 import "./ChatPage.css";
-import { ChatInput } from "../components/ChatInput";
+import { ChatInput, type ChatInputAttachment } from "../components/ChatInput";
 import { ChatMessageList } from "../components/ChatMessageList";
 import { ChatContextTopbar } from "../components/ChatContextTopbar";
 import { ChatProjectHome } from "../components/ChatProjectHome";
@@ -43,6 +43,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
   const [projectSettingsRequestKey, setProjectSettingsRequestKey] = useState(0);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
+  const [composerAttachments, setComposerAttachments] = useState<ChatInputAttachment[]>([]);
 
   const effectiveAgentKey = contextAgentKey ?? activeAgentPageKey;
 
@@ -195,6 +196,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
   async function handleStartSession() {
     setCanvasDocument(null);
+    setComposerAttachments([]);
     await startSession();
   }
 
@@ -209,6 +211,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
   function handleSelectSession(session: typeof sessions[number]) {
     setCanvasDocument(null);
+    setComposerAttachments([]);
     setSelectedProjectId(session.project_id ?? null);
     setActiveAgentPageKey(null);
     setContextAgentKey(session.agent_key ?? null);
@@ -219,6 +222,32 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   async function handleDeleteSession(sessionId: string) {
     setCanvasDocument(null);
     return deleteSession(sessionId);
+  }
+
+  function handleAttachFiles(files: File[]) {
+    const nextAttachments = files.map((file) => ({
+      id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file,
+    }));
+
+    setComposerAttachments((current) => [...current, ...nextAttachments].slice(0, 10));
+  }
+
+  function handleRemoveAttachment(attachmentId: string) {
+    setComposerAttachments((current) =>
+      current.filter((attachment) => attachment.id !== attachmentId),
+    );
+  }
+
+  async function handleSubmitMessage() {
+    await sendMessage();
+
+    if (draft.trim()) {
+      setComposerAttachments([]);
+    }
   }
 
   const isConversationEmpty =
@@ -281,6 +310,13 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     selectedProjectId: null,
     onSelectAgent: () => undefined,
     onSelectProject: () => undefined,
+  };
+
+  const composerAttachmentProps = {
+    attachments: composerAttachments,
+    onAttachFiles: handleAttachFiles,
+    onRemoveAttachment: handleRemoveAttachment,
+    onClearAttachments: () => setComposerAttachments([]),
   };
 
   return (
@@ -497,9 +533,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                       isSending={isStreaming}
                       variant="center"
                       placeholder={getComposerPlaceholder()}
+                      {...composerAttachmentProps}
                       {...composerContextProps}
                       onChange={setDraft}
-                      onSubmit={sendMessage}
+                      onSubmit={handleSubmitMessage}
                       onCancel={cancelStreaming}
                     />
                   }
@@ -526,9 +563,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                     isSending={isStreaming}
                     variant="center"
                     placeholder={getComposerPlaceholder()}
+                    {...composerAttachmentProps}
                     {...(activeAgentPage ? agentPageComposerContextProps : composerContextProps)}
                     onChange={setDraft}
-                    onSubmit={sendMessage}
+                    onSubmit={handleSubmitMessage}
                     onCancel={cancelStreaming}
                   />
                 </>
@@ -554,9 +592,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 disabled={false}
                 isSending={isStreaming}
                 placeholder={getComposerPlaceholder()}
+                {...composerAttachmentProps}
                 {...composerContextProps}
                 onChange={setDraft}
-                onSubmit={sendMessage}
+                onSubmit={handleSubmitMessage}
                 onCancel={cancelStreaming}
               />
             </>

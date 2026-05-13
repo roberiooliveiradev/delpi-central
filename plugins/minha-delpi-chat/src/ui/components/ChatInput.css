@@ -283,3 +283,129 @@
   background: color-mix(in srgb, var(--mdc-primary) 10%, transparent) !important;
   color: var(--mdc-primary) !important;
 }
+
+.mdc-chat-input__file-input {
+  display: none;
+}
+
+.mdc-chat-input__box--with-attachments {
+  grid-template-rows: auto auto;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  padding-top: 0.45rem;
+}
+
+.mdc-chat-input__attachments {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.45rem;
+  margin: -0.08rem -0.25rem 0.35rem;
+  border-radius: 1.1rem 1.1rem 0.55rem 0.55rem;
+  background: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
+  padding: 0.52rem;
+}
+
+.mdc-chat-input__attachments-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mdc-chat-input__attachments-header > span,
+.mdc-chat-input__attachments-header button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.mdc-chat-input__attachments-header > span {
+  color: var(--mdc-primary);
+  font-size: 0.78rem;
+  font-weight: 840;
+}
+
+.mdc-chat-input__attachments-header button {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 780;
+  padding: 0.25rem 0.42rem;
+}
+
+.mdc-chat-input__attachments-header button:hover {
+  background: color-mix(in srgb, var(--mdc-danger) 10%, transparent);
+  color: var(--mdc-danger);
+}
+
+.mdc-chat-input__attachment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.mdc-chat-input__attachment-chip {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.38rem;
+  max-width: min(100%, 18rem);
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-card-bg) 92%, transparent);
+  color: var(--mdc-text);
+  padding: 0.3rem 0.35rem 0.3rem 0.55rem;
+}
+
+.mdc-chat-input__attachment-chip svg {
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-input__attachment-chip strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.76rem;
+  font-weight: 820;
+}
+
+.mdc-chat-input__attachment-chip small {
+  grid-column: auto;
+  color: var(--mdc-text-muted);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.mdc-chat-input__attachment-chip button {
+  display: inline-grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.mdc-chat-input__attachment-chip button:hover {
+  background: color-mix(in srgb, var(--mdc-danger) 10%, transparent);
+  color: var(--mdc-danger);
+}
+
+.mdc-chat-input__box--with-attachments .mdc-chat-input__plus-wrap,
+.mdc-chat-input__box--with-agent.mdc-chat-input__box--with-attachments .mdc-chat-input__plus-wrap {
+  grid-column: 1;
+  grid-row: auto;
+}
+
+.mdc-chat-input__box--with-attachments textarea,
+.mdc-chat-input__box--with-agent.mdc-chat-input__box--with-attachments textarea {
+  grid-column: 2;
+  grid-row: auto;
+}
