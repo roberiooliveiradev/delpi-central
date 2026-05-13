@@ -1,8 +1,8 @@
 .mdc-chat-inline-error {
-  position: fixed;
-  top: 76px;
+  position: absolute;
+  top: 20px;
   left: 50%;
-  z-index: 50;
+  z-index: 20;
 
   width: min(calc(100vw - 48px), 860px);
   height: auto !important;
@@ -212,7 +212,7 @@
 
 @media (max-width: 640px) {
   .mdc-chat-inline-error {
-    top: 68px;
+    top: 12px;
     width: calc(100vw - 24px);
     padding: 14px;
     gap: 12px;

@@ -9,6 +9,7 @@
 }
 
 .mdc-chat-main {
+  position: relative;
   min-width: 0;
 }
 
@@ -54,6 +55,7 @@
 
 /* Topo compacto substitui o header grande antigo */
 .mdc-chat-main {
+  position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 100vh;
