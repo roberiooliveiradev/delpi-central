@@ -65,37 +65,6 @@ type ChatProjectHomeProps = {
   settingsRequestKey?: number;
 };
 
-const sourceTypes = [
-  {
-    key: "file",
-    title: "Enviar arquivos",
-    description: "PDF, planilhas, documentos e materiais do projeto.",
-    icon: Upload,
-    disabled: true,
-  },
-  {
-    key: "link",
-    title: "Adicionar link",
-    description: "Referências externas, páginas internas e documentação.",
-    icon: Link,
-    disabled: true,
-  },
-  {
-    key: "text",
-    title: "Criar nota",
-    description: "Texto livre com regras, contexto ou conhecimento manual.",
-    icon: Text,
-    disabled: true,
-  },
-  {
-    key: "knowledge",
-    title: "Base de conhecimento",
-    description: "Conectar documentos já indexados pela plataforma.",
-    icon: Database,
-    disabled: true,
-  },
-];
-
 export function ChatProjectHome({
   project,
   sessions,

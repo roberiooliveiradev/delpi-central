@@ -6,6 +6,7 @@ import {
   Plus,
   Sparkles,
   Trash2,
+  Upload,
   X,
   Zap,
 } from "lucide-react";
