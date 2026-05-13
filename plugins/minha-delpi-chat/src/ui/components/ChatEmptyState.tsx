@@ -92,20 +92,20 @@ export function ChatEmptyState({ agent, onUseSuggestion }: ChatEmptyStateProps) 
         ) : null}
 
         <p className="mdc-chat-eyebrow">
-          {isAgentMode ? "Agente selecionado" : "Como posso ajudar?"}
+          {isAgentMode ? "Agente selecionado" : "Chat comum"}
         </p>
 
         <h2>
           {isAgentMode
             ? agent?.name || "Agente"
-            : "Comece fazendo uma pergunta"}
+            : "Como posso ajudar?"}
         </h2>
 
         <p>
           {isAgentMode
             ? agent?.description ||
               "Este especialista usa instruções próprias para responder neste chat."
-            : "Consulte conhecimento da plataforma ou dados operacionais autorizados por APIs conectadas."}
+            : "Use o assistente padrão da Minha DELPI para consultar conhecimento, APIs autorizadas e informações operacionais."}
         </p>
 
         {isAgentMode ? (

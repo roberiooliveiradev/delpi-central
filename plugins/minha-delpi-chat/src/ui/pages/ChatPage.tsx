@@ -271,7 +271,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 ? `${selectedProjectSessions.length} chats`
                 : selectedAgent
                   ? `${getAgentIcebreakerCount(selectedAgent)} quebra-gelos`
-                  : "MVP"
+                  : undefined
             }
             onOpenAdmin={onOpenAdmin}
             onRenameProject={async () => {

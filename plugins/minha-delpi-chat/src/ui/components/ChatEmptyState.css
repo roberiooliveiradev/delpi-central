@@ -132,3 +132,28 @@
 .mdc-chat-empty-state__no-icebreakers svg {
   color: var(--mdc-primary);
 }
+
+/* Chat comum: home mais compacta e alinhada à nova topbar */
+.mdc-chat-empty-state:not(.mdc-chat-empty-state--agent) {
+  padding-top: clamp(0.8rem, 3vh, 2rem);
+}
+
+.mdc-chat-empty-state:not(.mdc-chat-empty-state--agent) h2 {
+  font-size: clamp(1.8rem, 3.1vw, 2.65rem);
+}
+
+.mdc-chat-empty-state:not(.mdc-chat-empty-state--agent) .mdc-chat-empty-state__grid {
+  margin-top: -0.25rem;
+}
+
+.mdc-chat-empty-state:not(.mdc-chat-empty-state--agent) .mdc-chat-empty-state__grid button {
+  min-height: 4.45rem;
+  border-color: color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
+  background: transparent;
+}
+
+.mdc-chat-empty-state:not(.mdc-chat-empty-state--agent) .mdc-chat-empty-state__grid button:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 24%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 5%, transparent);
+  transform: none;
+}
