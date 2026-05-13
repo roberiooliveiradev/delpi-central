@@ -269,6 +269,10 @@ export function useChatWorkspace(options: UseChatWorkspaceOptions = {}) {
     [options.getAccessToken],
   );
 
+  const clearWorkspaceError = useCallback(() => {
+    setWorkspaceError(null);
+  }, []);
+
   useEffect(() => {
     void loadAgents();
     void loadProjects();
@@ -280,6 +284,7 @@ export function useChatWorkspace(options: UseChatWorkspaceOptions = {}) {
     isLoadingAgents,
     isLoadingProjects,
     workspaceError,
+    clearWorkspaceError,
     loadAgents,
     loadProjects,
     addAgent,

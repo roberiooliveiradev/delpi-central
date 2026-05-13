@@ -94,6 +94,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     isLoadingAgents,
     isLoadingProjects,
     workspaceError,
+    clearWorkspaceError,
     addAgent,
     editAgent,
     removeAgent,
@@ -229,6 +230,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   }
 
   async function handleStartGeneralSession() {
+    clearWorkspaceError();
     setCanvasDocument(null);
     setSelectedProjectId(null);
     setActiveAgentPageKey(null);
@@ -238,6 +240,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   }
 
   function handleSelectSession(session: typeof sessions[number]) {
+    clearWorkspaceError();
     setCanvasDocument(null);
     setComposerAttachments([]);
     setSelectedProjectId(session.project_id ?? null);
@@ -383,6 +386,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onRenameProject={(projectId, name) => editProject(projectId, { name })}
           onDeleteProject={removeProject}
           onSelectProject={(projectId) => {
+            clearWorkspaceError();
             setCanvasDocument(null);
             setSelectedProjectId(projectId);
             setActiveAgentPageKey(null);
@@ -391,6 +395,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             void startSession();
           }}
           onSelectAgent={(agentKey) => {
+            clearWorkspaceError();
             setCanvasDocument(null);
             setSelectedProjectId(null);
             setActiveAgentPageKey(agentKey);
@@ -409,8 +414,12 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               agents={agents}
               selectedAgentKey={activeAgentPageKey}
               isLoading={isLoadingAgents}
-              onBack={() => setCurrentView("chat")}
+              onBack={() => {
+                clearWorkspaceError();
+                setCurrentView("chat");
+              }}
               onSelectAgent={(agentKey) => {
+                clearWorkspaceError();
                 setCanvasDocument(null);
                 setSelectedProjectId(null);
                 setActiveAgentPageKey(agentKey);
@@ -491,7 +500,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 await handleStartSession();
               }
             }}
-            onManageAgents={() => setCurrentView("agents")}
+            onManageAgents={() => {
+              clearWorkspaceError();
+              setCurrentView("agents");
+            }}
             onClearAgent={() => {
               setActiveAgentPageKey(null);
               setContextAgentKey(null);

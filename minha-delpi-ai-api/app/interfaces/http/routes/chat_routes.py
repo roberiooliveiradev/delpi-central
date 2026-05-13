@@ -62,6 +62,7 @@ from app.composition.chat_composer import (
     make_stream_chat_message_use_case,
 )
 from app.extensions.db import db
+from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.interfaces.http.auth_decorators import require_permission
 from app.interfaces.http.utils.errors import bad_request
 
@@ -815,6 +816,9 @@ def create_session():
         )
 
         db.session.commit()
+    except (ValueError, InvalidChatSessionInputError) as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
     except Exception:
         db.session.rollback()
         raise
