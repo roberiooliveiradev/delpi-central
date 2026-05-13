@@ -11,6 +11,7 @@ import {
   unarchiveChatSession,
   unpinChatSession,
   updateChatMessage,
+  uploadChatAttachment,
 } from "../../data/api/chatApi";
 import type {
   ChatMessage,
@@ -29,6 +30,7 @@ type UseChatSessionOptions = {
 function createOptimisticUserMessage(
   sessionId: string,
   content: string,
+  attachments: { id: string; original_filename: string; size_bytes: number; content_type: string | null; status: string }[] = [],
 ): ChatMessage {
   return {
     id: `optimistic-${Date.now()}`,
@@ -37,6 +39,7 @@ function createOptimisticUserMessage(
     content,
     metadata: {
       optimistic: true,
+      attachments,
     },
     created_at: new Date().toISOString(),
   };
@@ -381,7 +384,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [options.getAccessToken],
   );
 
-  const sendMessage = useCallback(async () => {
+  const sendMessage = useCallback(async (params: { attachments?: File[] } = {}) => {
     const message = draft.trim();
 
     if (!message || isStreaming) {
@@ -420,15 +423,44 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         setMessages([]);
       }
 
+      const uploadedAttachments = [];
+
+      for (const file of params.attachments ?? []) {
+        setStreamingStatus(`Enviando arquivo ${file.name}...`);
+
+        const uploaded = await uploadChatAttachment(
+          sessionForMessage.id,
+          file,
+          {
+            getAccessToken: options.getAccessToken,
+          },
+        );
+
+        uploadedAttachments.push(uploaded);
+      }
+
+      const attachmentIds = uploadedAttachments.map((attachment) => attachment.id);
+
       setMessages((current) => [
         ...current,
-        createOptimisticUserMessage(sessionForMessage!.id, message),
+        createOptimisticUserMessage(
+          sessionForMessage!.id,
+          message,
+          uploadedAttachments.map((attachment) => ({
+            id: attachment.id,
+            original_filename: attachment.original_filename,
+            size_bytes: attachment.size_bytes,
+            content_type: attachment.content_type,
+            status: attachment.status,
+          })),
+        ),
       ]);
 
       await streamMessage({
         sessionId: sessionForMessage.id,
         message,
         context: sessionForMessage.context ?? "geral",
+        attachmentIds,
         onSources: (sources) => {
           setStreamingSources(sources);
           setStreamingStatus(

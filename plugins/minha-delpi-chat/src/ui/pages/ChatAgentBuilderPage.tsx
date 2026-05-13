@@ -9,9 +9,10 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import type { ChatAgent } from "../../data/api/chatTypes";
+import { listAgentSources, listChatActions, listChatAgentActions, uploadAgentSource, createAgentTextSource, deleteChatSource } from "../../data/api/chatApi";
+import type { ChatActionCatalogItem, ChatAgent, ChatAgentAction, ChatWorkspaceSource } from "../../data/api/chatTypes";
 
 import "./ChatAgentBuilderPage.css";
 
@@ -41,6 +42,17 @@ type ChatAgentBuilderPageProps = {
     payload: AgentUpdatePayload,
   ) => Promise<ChatAgent | null>;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
+  onSaveAgentAction?: (
+    agentId: string,
+    payload: {
+      providerKey: string;
+      actionId: string;
+      sensitivity?: string;
+      requiresConfirmation?: boolean;
+      enabled?: boolean;
+    },
+  ) => Promise<boolean>;
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
 function createKeyFromName(name: string): string {
@@ -99,6 +111,8 @@ export function ChatAgentBuilderPage({
   onCreateAgent,
   onUpdateAgent,
   onDeleteAgent,
+  onSaveAgentAction,
+  getAccessToken,
 }: ChatAgentBuilderPageProps) {
   const isEditing = Boolean(agent);
 
@@ -130,8 +144,142 @@ export function ChatAgentBuilderPage({
     getMetadataStringArray(agent?.metadata, "allowed_actions"),
   );
 
+  const [availableActions, setAvailableActions] = useState<ChatActionCatalogItem[]>([]);
+  const [configuredActions, setConfiguredActions] = useState<ChatAgentAction[]>([]);
+  const [agentSources, setAgentSources] = useState<ChatWorkspaceSource[]>([]);
+  const [sourceTitle, setSourceTitle] = useState("");
+  const [sourceContent, setSourceContent] = useState("");
+  const [isLoadingActions, setIsLoadingActions] = useState(false);
+  const [isSavingSource, setIsSavingSource] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadActions() {
+      setIsLoadingActions(true);
+
+      try {
+        const [catalog, configured] = await Promise.all([
+          listChatActions({ getAccessToken }),
+          agent ? listChatAgentActions(agent.id, { getAccessToken }) : Promise.resolve([]),
+        ]);
+
+        if (isMounted) {
+          setAvailableActions(catalog);
+          setConfiguredActions(configured);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingActions(false);
+        }
+      }
+    }
+
+    void loadActions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [agent?.id, getAccessToken]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSources() {
+      if (!agent) {
+        setAgentSources([]);
+        return;
+      }
+
+      const sources = await listAgentSources(agent.id, { getAccessToken });
+
+      if (isMounted) {
+        setAgentSources(sources);
+      }
+    }
+
+    void loadSources();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [agent?.id, getAccessToken]);
+
+  async function toggleAgentAction(action: ChatActionCatalogItem, enabled: boolean) {
+    if (!agent) {
+      setLocalError("Salve o agente antes de configurar actions.");
+      return;
+    }
+
+    const providerKey = action.actionId.split(".")[0] || "api-delpi";
+
+    const saved = await onSaveAgentAction?.(agent.id, {
+      providerKey,
+      actionId: action.actionId,
+      sensitivity: action.sensitivity || "read",
+      requiresConfirmation: action.sensitivity === "write" || action.sensitivity === "admin",
+      enabled,
+    });
+
+    if (saved) {
+      const configured = await listChatAgentActions(agent.id, { getAccessToken });
+      setConfiguredActions(configured);
+    }
+  }
+
+  async function uploadAgentKnowledgeFile(file: File | null | undefined) {
+    if (!agent || !file) {
+      return;
+    }
+
+    setIsSavingSource(true);
+
+    try {
+      await uploadAgentSource(agent.id, file, { getAccessToken });
+      setAgentSources(await listAgentSources(agent.id, { getAccessToken }));
+    } finally {
+      setIsSavingSource(false);
+    }
+  }
+
+  async function createAgentKnowledgeNote() {
+    if (!agent || !sourceContent.trim()) {
+      return;
+    }
+
+    setIsSavingSource(true);
+
+    try {
+      await createAgentTextSource(
+        agent.id,
+        {
+          title: sourceTitle.trim() || "Nota do agente",
+          content: sourceContent.trim(),
+          metadata: {
+            source: "agent_note",
+          },
+        },
+        { getAccessToken },
+      );
+
+      setSourceTitle("");
+      setSourceContent("");
+      setAgentSources(await listAgentSources(agent.id, { getAccessToken }));
+    } finally {
+      setIsSavingSource(false);
+    }
+  }
+
+  async function removeAgentSource(sourceId: string) {
+    await deleteChatSource(sourceId, { getAccessToken });
+
+    if (agent) {
+      setAgentSources(await listAgentSources(agent.id, { getAccessToken }));
+    }
+  }
 
   const normalizedIcebreakers = useMemo(
     () => icebreakers.map((item) => item.trim()).filter(Boolean).slice(0, 8),
@@ -498,10 +646,119 @@ export function ChatAgentBuilderPage({
             <div className="mdc-chat-agent-builder__placeholder">
               <strong>Actions disponíveis</strong>
               <p>
-                A interface já salva <code>metadata.allowed_actions</code>. A listagem
-                real das actions será conectada no backend.
+                {agent
+                  ? "Selecione quais actions este agente pode executar."
+                  : "Crie o agente antes de vincular actions reais."}
               </p>
+
+              {isLoadingActions ? (
+                <small>Carregando actions...</small>
+              ) : (
+                <div className="mdc-chat-agent-builder__action-list">
+                  {availableActions.slice(0, 80).map((action) => {
+                    const configured = configuredActions.find(
+                      (item) => item.actionId === action.actionId && item.enabled,
+                    );
+
+                    return (
+                      <label key={action.actionId}>
+                        <input
+                          type="checkbox"
+                          disabled={!agent}
+                          checked={Boolean(configured)}
+                          onChange={(event) =>
+                            void toggleAgentAction(action, event.target.checked)
+                          }
+                        />
+                        <span>
+                          <strong>{action.summary || action.operationId || action.actionId}</strong>
+                          <small>{action.method} {action.path}</small>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+          </section>
+
+          <section className="mdc-chat-agent-builder__section">
+            <div className="mdc-chat-agent-builder__section-title">
+              <FileText size={18} aria-hidden="true" />
+              <div>
+                <h2>Fontes do agente</h2>
+                <p>Arquivos e notas usados sempre que este agente estiver ativo.</p>
+              </div>
+            </div>
+
+            {agent ? (
+              <>
+                <label className="mdc-chat-agent-builder__source-upload">
+                  <Upload size={16} aria-hidden="true" />
+                  <span>{isSavingSource ? "Enviando..." : "Enviar arquivo"}</span>
+                  <input
+                    type="file"
+                    disabled={isSavingSource}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      void uploadAgentKnowledgeFile(file);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+
+                <div className="mdc-chat-agent-builder__source-note">
+                  <input
+                    value={sourceTitle}
+                    onChange={(event) => setSourceTitle(event.target.value)}
+                    placeholder="Título da nota"
+                  />
+                  <textarea
+                    value={sourceContent}
+                    onChange={(event) => setSourceContent(event.target.value)}
+                    rows={4}
+                    placeholder="Cole contexto, políticas ou conhecimento do agente..."
+                  />
+                  <button
+                    type="button"
+                    disabled={isSavingSource || !sourceContent.trim()}
+                    onClick={() => void createAgentKnowledgeNote()}
+                  >
+                    Adicionar nota
+                  </button>
+                </div>
+
+                <div className="mdc-chat-agent-builder__source-list">
+                  {agentSources.length > 0 ? (
+                    agentSources.map((source) => (
+                      <article key={source.id}>
+                        <FileText size={16} aria-hidden="true" />
+                        <span>
+                          <strong>{source.title}</strong>
+                          <small>
+                            {source.original_filename || source.source_ref || source.source_type}
+                            {typeof source.chunk_count === "number"
+                              ? ` · ${source.chunk_count} trecho(s)`
+                              : ""}
+                          </small>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void removeAgentSource(source.id)}
+                          title="Remover fonte"
+                        >
+                          <Trash2 size={15} aria-hidden="true" />
+                        </button>
+                      </article>
+                    ))
+                  ) : (
+                    <p className="mdc-chat-muted">Nenhuma fonte adicionada.</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="mdc-chat-muted">Salve o agente para adicionar fontes.</p>
+            )}
           </section>
 
           {localError ? (

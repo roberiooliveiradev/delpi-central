@@ -19,7 +19,7 @@ import {
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
-import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
+import type { ChatAgent, ChatProject, ChatSession, ChatWorkspaceSource } from "../../data/api/chatTypes";
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { formatSessionDate } from "./chatSidebarUtils";
@@ -33,6 +33,8 @@ type ChatProjectHomeProps = {
   sessions: ChatSession[];
   agents?: ChatAgent[];
   contextAgentKey?: string | null;
+  sources?: ChatWorkspaceSource[];
+  isLoadingSources?: boolean;
   activeSessionId?: string;
   composer?: ReactNode;
   onSelectSession: (session: ChatSession) => void;
@@ -54,6 +56,9 @@ type ChatProjectHomeProps = {
   onUseAgent?: (agentKey: string | null) => void;
   onOpenAgentPage?: (agentKey: string) => void;
   onSetDefaultAgent?: (agentKey: string | null) => Promise<ChatProject | null>;
+  onUploadSource?: (file: File) => Promise<ChatWorkspaceSource>;
+  onCreateTextSource?: (payload: { title: string; content: string; metadata?: Record<string, unknown> | null }) => Promise<ChatWorkspaceSource>;
+  onDeleteSource?: (sourceId: string) => Promise<void>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onClearProject?: () => void;
   compact?: boolean;
@@ -96,6 +101,8 @@ export function ChatProjectHome({
   sessions,
   agents = [],
   contextAgentKey,
+  sources = [],
+  isLoadingSources,
   activeSessionId,
   composer,
   onSelectSession,
@@ -107,6 +114,9 @@ export function ChatProjectHome({
   onUseAgent,
   onOpenAgentPage,
   onSetDefaultAgent,
+  onUploadSource,
+  onCreateTextSource,
+  onDeleteSource,
   onDeleteProject,
   onClearProject,
   compact,
@@ -120,6 +130,9 @@ export function ChatProjectHome({
   const [description, setDescription] = useState(project.description || "");
   const [instructions, setInstructions] = useState(project.instructions || "");
   const [isSaving, setIsSaving] = useState(false);
+  const [sourceTitle, setSourceTitle] = useState("");
+  const [sourceContent, setSourceContent] = useState("");
+  const [isSavingSource, setIsSavingSource] = useState(false);
 
   useEffect(() => {
     setName(project.name);
@@ -156,6 +169,47 @@ export function ChatProjectHome({
       setIsSettingsOpen(false);
     } finally {
       setIsSaving(false);
+    }
+  }
+
+
+  async function uploadSourceFile(file: File | null | undefined) {
+    if (!file) {
+      return;
+    }
+
+    setIsSavingSource(true);
+
+    try {
+      await onUploadSource?.(file);
+    } finally {
+      setIsSavingSource(false);
+    }
+  }
+
+  async function createTextSource() {
+    const title = sourceTitle.trim() || "Nota do projeto";
+    const content = sourceContent.trim();
+
+    if (!content) {
+      return;
+    }
+
+    setIsSavingSource(true);
+
+    try {
+      await onCreateTextSource?.({
+        title,
+        content,
+        metadata: {
+          source: "project_note",
+        },
+      });
+
+      setSourceTitle("");
+      setSourceContent("");
+    } finally {
+      setIsSavingSource(false);
     }
   }
 
@@ -232,7 +286,7 @@ export function ChatProjectHome({
             <div className="mdc-chat-project-home__meta">
               <span>{project.visibility === "public" ? "Público" : "Privado"}</span>
               <span>{recentSessions.length} chats</span>
-              <span>0 fontes</span>
+              <span>{sources.length} fontes</span>
               {defaultAgent ? (
                 <span>Agente padrão: {defaultAgent.name}</span>
               ) : (
@@ -501,52 +555,90 @@ export function ChatProjectHome({
               <div>
                 <h3>Fontes do projeto</h3>
                 <p>
-                  Adicione arquivos, links e notas para que o assistente use como
-                  contexto exclusivo deste projeto.
+                  Adicione arquivos e notas para que o assistente use como contexto
+                  exclusivo deste projeto.
                 </p>
               </div>
 
-              <button type="button" disabled title="Em breve">
+              <label className="mdc-chat-project-source-upload">
+                <Upload size={16} aria-hidden="true" />
+                <span>{isSavingSource ? "Enviando..." : "Enviar arquivo"}</span>
+                <input
+                  type="file"
+                  disabled={isSavingSource}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    void uploadSourceFile(file);
+                    event.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+
+            <div className="mdc-chat-project-source-note">
+              <input
+                value={sourceTitle}
+                onChange={(event) => setSourceTitle(event.target.value)}
+                placeholder="Título da nota"
+              />
+              <textarea
+                value={sourceContent}
+                onChange={(event) => setSourceContent(event.target.value)}
+                placeholder="Cole aqui regras, contexto ou conhecimento do projeto..."
+                rows={4}
+              />
+              <button
+                type="button"
+                disabled={isSavingSource || !sourceContent.trim()}
+                onClick={() => void createTextSource()}
+              >
                 <Plus size={16} aria-hidden="true" />
-                <span>Adicionar fonte</span>
+                <span>Adicionar nota</span>
               </button>
             </div>
 
-            <div className="mdc-chat-project-sources__grid">
-              {sourceTypes.map((sourceType) => {
-                const Icon = sourceType.icon;
-
-                return (
-                  <button
-                    key={sourceType.key}
-                    type="button"
-                    disabled={sourceType.disabled}
-                    title="Em breve"
-                  >
+            {isLoadingSources ? (
+              <p className="mdc-chat-project-home__empty">Carregando fontes...</p>
+            ) : sources.length > 0 ? (
+              <div className="mdc-chat-project-source-list">
+                {sources.map((source) => (
+                  <article key={source.id} className="mdc-chat-project-source-card">
                     <span>
-                      <Icon size={19} aria-hidden="true" />
+                      <FileText size={18} aria-hidden="true" />
                     </span>
-
-                    <strong>{sourceType.title}</strong>
-                    <small>{sourceType.description}</small>
-
-                    <em>Em breve</em>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mdc-chat-project-sources__empty">
-              <div>
-                <FileText size={22} aria-hidden="true" />
+                    <div>
+                      <strong>{source.title}</strong>
+                      <small>
+                        {source.original_filename ||
+                          source.source_ref ||
+                          source.source_type}
+                        {typeof source.chunk_count === "number"
+                          ? ` · ${source.chunk_count} trecho(s)`
+                          : ""}
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void onDeleteSource?.(source.id)}
+                      title="Remover fonte"
+                    >
+                      <Trash2 size={16} aria-hidden="true" />
+                    </button>
+                  </article>
+                ))}
               </div>
+            ) : (
+              <div className="mdc-chat-project-sources__empty">
+                <div>
+                  <FileText size={22} aria-hidden="true" />
+                </div>
 
-              <strong>Nenhuma fonte adicionada</strong>
-              <p>
-                Quando a funcionalidade estiver ativa, os documentos adicionados aqui
-                serão usados apenas neste projeto.
-              </p>
-            </div>
+                <strong>Nenhuma fonte adicionada</strong>
+                <p>
+                  Arquivos e notas adicionados aqui serão usados apenas neste projeto.
+                </p>
+              </div>
+            )}
 
             <div className="mdc-chat-project-sources__rules">
               <h4>Como as fontes serão usadas</h4>

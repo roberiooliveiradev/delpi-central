@@ -1,9 +1,13 @@
 import type {
+  ChatActionCatalogItem,
   ChatAgent,
+  ChatAgentAction,
   ChatArtifact,
+  ChatAttachment,
   ChatMessage,
   ChatProject,
   ChatSession,
+  ChatWorkspaceSource,
   CreateChatAgentPayload,
   CreateChatArtifactPayload,
   CreateChatProjectPayload,
@@ -33,6 +37,18 @@ type StreamCallbacks = {
   onDone?: (response: SendChatMessageResponse) => void;
   onError?: (message: string) => void;
 };
+
+async function getAuthOnlyHeaders(options: ChatApiOptions): Promise<HeadersInit> {
+  const token = await options.getAccessToken?.();
+
+  if (!token) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
 
 async function getAuthHeaders(options: ChatApiOptions): Promise<HeadersInit> {
   const token = await options.getAccessToken?.();
@@ -499,4 +515,196 @@ export async function shareChatProject(
   });
 
   return parseJsonResponse<{ ok: boolean }>(response);
+}
+
+
+export async function uploadChatAttachment(
+  sessionId: string,
+  file: File,
+  options: ChatApiOptions = {},
+): Promise<ChatAttachment> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/attachments`, {
+    method: "POST",
+    headers: await getAuthOnlyHeaders(options),
+    body: formData,
+  });
+
+  return parseJsonResponse<ChatAttachment>(response);
+}
+
+export async function uploadChatAttachmentWithSession(
+  file: File,
+  payload: {
+    projectId?: string | null;
+    agentKey?: string | null;
+    context?: string | null;
+  } = {},
+  options: ChatApiOptions = {},
+): Promise<{ session: ChatSession; attachment: ChatAttachment }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  if (payload.projectId) {
+    formData.append("projectId", payload.projectId);
+  }
+
+  if (payload.agentKey) {
+    formData.append("agentKey", payload.agentKey);
+  }
+
+  if (payload.context) {
+    formData.append("context", payload.context);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/chat/attachments`, {
+    method: "POST",
+    headers: await getAuthOnlyHeaders(options),
+    body: formData,
+  });
+
+  return parseJsonResponse<{ session: ChatSession; attachment: ChatAttachment }>(response);
+}
+
+export async function listProjectSources(
+  projectId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatWorkspaceSource[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}/sources`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatWorkspaceSource[]>(response);
+}
+
+export async function uploadProjectSource(
+  projectId: string,
+  file: File,
+  options: ChatApiOptions = {},
+): Promise<ChatWorkspaceSource> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}/sources`, {
+    method: "POST",
+    headers: await getAuthOnlyHeaders(options),
+    body: formData,
+  });
+
+  return parseJsonResponse<ChatWorkspaceSource>(response);
+}
+
+export async function createProjectTextSource(
+  projectId: string,
+  payload: {
+    title: string;
+    content: string;
+    metadata?: Record<string, unknown> | null;
+  },
+  options: ChatApiOptions = {},
+): Promise<ChatWorkspaceSource> {
+  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}/sources`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<ChatWorkspaceSource>(response);
+}
+
+export async function listAgentSources(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatWorkspaceSource[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/sources`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatWorkspaceSource[]>(response);
+}
+
+export async function uploadAgentSource(
+  agentId: string,
+  file: File,
+  options: ChatApiOptions = {},
+): Promise<ChatWorkspaceSource> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/sources`, {
+    method: "POST",
+    headers: await getAuthOnlyHeaders(options),
+    body: formData,
+  });
+
+  return parseJsonResponse<ChatWorkspaceSource>(response);
+}
+
+export async function createAgentTextSource(
+  agentId: string,
+  payload: {
+    title: string;
+    content: string;
+    metadata?: Record<string, unknown> | null;
+  },
+  options: ChatApiOptions = {},
+): Promise<ChatWorkspaceSource> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/sources`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<ChatWorkspaceSource>(response);
+}
+
+export async function deleteChatSource(
+  sourceId: string,
+  options: ChatApiOptions = {},
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/chat/sources/${sourceId}`, {
+    method: "DELETE",
+    headers: await getAuthHeaders(options),
+  });
+
+  if (!response.ok) {
+    await parseJsonResponse<unknown>(response);
+  }
+}
+
+export async function listChatActions(
+  options: ChatApiOptions & { providerKey?: string | null } = {},
+): Promise<ChatActionCatalogItem[]> {
+  const params = new URLSearchParams();
+
+  if (options.providerKey) {
+    params.set("providerKey", options.providerKey);
+  }
+
+  const query = params.toString();
+  const response = await fetch(
+    query ? `${API_BASE_URL}/chat/actions?${query}` : `${API_BASE_URL}/chat/actions`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<ChatActionCatalogItem[]>(response);
+}
+
+export async function listChatAgentActions(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAgentAction[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/actions`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAgentAction[]>(response);
 }

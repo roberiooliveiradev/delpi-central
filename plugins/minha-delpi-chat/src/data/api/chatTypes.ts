@@ -70,9 +70,26 @@ export type CreateChatSessionPayload = {
   agentKey?: string | null;
 };
 
+export type ChatAttachment = {
+  id: string;
+  session_id: string;
+  message_id: string | null;
+  project_id: string | null;
+  agent_key: string | null;
+  filename: string;
+  original_filename: string;
+  content_type: string | null;
+  size_bytes: number;
+  status: "uploaded" | "indexed" | "unsupported" | "index_failed" | string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type SendChatMessagePayload = {
   message: string;
   context?: string;
+  attachmentIds?: string[];
 };
 
 export type SendChatMessageResponse = {
@@ -208,4 +225,49 @@ export type UpsertChatAgentActionPayload = {
 export type ShareChatProjectPayload = {
   targetUserId: string;
   role: "viewer" | "editor" | string;
+};
+
+
+export type ChatWorkspaceSource = {
+  id: string;
+  title: string;
+  source_type: string;
+  source_ref: string | null;
+  scope: string | null;
+  project_id: string | null;
+  agent_key: string | null;
+  attachment_id: string | null;
+  original_filename: string | null;
+  content_type: string | null;
+  active: boolean;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+  chunk_count: number | null;
+};
+
+export type ChatActionCatalogItem = {
+  id: string;
+  actionId: string;
+  operationId?: string | null;
+  method?: string | null;
+  path?: string | null;
+  summary?: string | null;
+  description?: string | null;
+  tags?: string[];
+  sensitivity?: "read" | "write" | "admin" | string;
+  enabled?: boolean;
+  deprecated?: boolean;
+};
+
+export type ChatAgentAction = {
+  id: string;
+  agentId: string;
+  providerKey: string;
+  actionId: string;
+  enabled: boolean;
+  sensitivity: "read" | "write" | "admin" | string;
+  requiresConfirmation: boolean;
+  createdAt: string;
+  updatedAt: string;
 };

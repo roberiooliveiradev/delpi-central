@@ -11,7 +11,11 @@ import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import {
   createChatArtifact,
+  createProjectTextSource,
+  deleteChatSource,
+  listProjectSources,
   updateChatArtifact,
+  uploadProjectSource,
 } from "../../data/api/chatApi";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
@@ -44,6 +48,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [projectSettingsRequestKey, setProjectSettingsRequestKey] = useState(0);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [composerAttachments, setComposerAttachments] = useState<ChatInputAttachment[]>([]);
+  const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
+  const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
 
   const effectiveAgentKey = contextAgentKey ?? activeAgentPageKey;
 
@@ -94,6 +100,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     addProject,
     editProject,
     removeProject,
+    saveAgentAction,
   } = useChatWorkspace({ getAccessToken });
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
@@ -142,6 +149,27 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     };
   }, [getAccessToken]);
 
+
+
+  async function loadProjectSources(projectId: string) {
+    setIsLoadingProjectSources(true);
+
+    try {
+      const sources = await listProjectSources(projectId, { getAccessToken });
+      setProjectSources((current) => ({
+        ...current,
+        [projectId]: sources,
+      }));
+    } finally {
+      setIsLoadingProjectSources(false);
+    }
+  }
+
+  useEffect(() => {
+    if (selectedProjectId) {
+      void loadProjectSources(selectedProjectId);
+    }
+  }, [selectedProjectId]);
 
   async function saveCanvasDocument(document: ChatCanvasDocument) {
     if (!activeSession) {
@@ -243,7 +271,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   }
 
   async function handleSubmitMessage() {
-    await sendMessage();
+    const files = composerAttachments.map((attachment) => attachment.file);
+
+    await sendMessage({ attachments: files });
 
     if (draft.trim()) {
       setComposerAttachments([]);
@@ -391,6 +421,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               onCreateAgent={addAgent}
               onUpdateAgent={editAgent}
               onDeleteAgent={removeAgent}
+              onSaveAgentAction={saveAgentAction}
+              getAccessToken={getAccessToken}
             />
           </section>
         ) : (
@@ -489,6 +521,22 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                   onDeleteSession={handleDeleteSession}
                   onPinSession={pinSession}
                   onUnpinSession={unpinSession}
+                  sources={projectSources[selectedProject.id] ?? []}
+                  isLoadingSources={isLoadingProjectSources}
+                  onUploadSource={async (file) => {
+                    const source = await uploadProjectSource(selectedProject.id, file, { getAccessToken });
+                    await loadProjectSources(selectedProject.id);
+                    return source;
+                  }}
+                  onCreateTextSource={async (payload) => {
+                    const source = await createProjectTextSource(selectedProject.id, payload, { getAccessToken });
+                    await loadProjectSources(selectedProject.id);
+                    return source;
+                  }}
+                  onDeleteSource={async (sourceId) => {
+                    await deleteChatSource(sourceId, { getAccessToken });
+                    await loadProjectSources(selectedProject.id);
+                  }}
                   onUpdateProject={editProject}
                   onUseAgent={handleSelectContextAgent}
                   onOpenAgentPage={(agentKey) => {

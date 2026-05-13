@@ -15,6 +15,7 @@ type StreamMessageParams = {
   sessionId: string;
   message: string;
   context?: string;
+  attachmentIds?: string[];
   onSources?: (sources: ChatSource[]) => void;
   onToolCalls?: (toolCalls: ChatToolCall[]) => void;
   onToken?: (token: string) => void;
@@ -37,6 +38,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       sessionId,
       message,
       context,
+      attachmentIds,
       onSources,
       onToolCalls,
       onToken,
@@ -53,6 +55,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
           {
             message,
             context,
+            attachmentIds,
           },
           {
             onSources,
