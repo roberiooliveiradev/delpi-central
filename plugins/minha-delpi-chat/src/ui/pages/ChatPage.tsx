@@ -289,10 +289,12 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             setCurrentView("chat");
           }}
           onSelectAgent={(agentKey) => {
+            setCanvasDocument(null);
             setSelectedProjectId(null);
             setSelectedAgentKey(agentKey);
             setIsAgentContextOnly(false);
             setCurrentView("chat");
+            void startSession();
           }}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
@@ -307,10 +309,12 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               isLoading={isLoadingAgents}
               onBack={() => setCurrentView("chat")}
               onSelectAgent={(agentKey) => {
+                setCanvasDocument(null);
                 setSelectedProjectId(null);
                 setSelectedAgentKey(agentKey);
                 setIsAgentContextOnly(false);
                 setCurrentView("chat");
+                void startSession();
               }}
               onCreateAgent={addAgent}
               onUpdateAgent={editAgent}

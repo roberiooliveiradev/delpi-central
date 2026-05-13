@@ -49,11 +49,7 @@ export function ChatSidebarAgentsSection({
                     ? "Oficial"
                     : null
               }
-              onClick={() =>
-                onSelectAgent?.(
-                  agent.key === selectedAgentKey ? null : agent.key,
-                )
-              }
+              onClick={() => onSelectAgent?.(agent.key)}
             />
           ))
         )}
