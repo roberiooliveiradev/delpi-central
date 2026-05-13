@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   Bot,
+  ChevronRight,
   Pencil,
   Plus,
   Search,
@@ -78,6 +79,18 @@ function getAgentCapabilities(agent: ChatAgent): string[] {
     .map(([name]) => name);
 }
 
+function getOwnerLabel(agent: ChatAgent): string {
+  if (agent.visibility === "system") {
+    return "Oficial";
+  }
+
+  if (agent.visibility === "public") {
+    return "Público interno";
+  }
+
+  return "Privado";
+}
+
 export function ChatAgentsPage({
   agents,
   selectedAgentKey,
@@ -130,6 +143,14 @@ export function ChatAgentsPage({
       <ChatAgentBuilderPage
         agent={editingAgent}
         onBack={() => setEditingAgent(undefined)}
+        onManageActions={
+          editingAgent
+            ? () => {
+                setActionsAgent(editingAgent);
+                setEditingAgent(undefined);
+              }
+            : undefined
+        }
         onSelectAgent={onSelectAgent}
         onCreateAgent={onCreateAgent}
         onUpdateAgent={onUpdateAgent}
@@ -155,11 +176,11 @@ export function ChatAgentsPage({
 
       <main className="mdc-chat-agents-directory__main">
         <section className="mdc-chat-agents-directory__hero">
-          <p className="mdc-chat-eyebrow">Especialistas</p>
+          <p className="mdc-chat-eyebrow">Especialistas da Minha DELPI</p>
           <h1>Agentes</h1>
           <p>
-            Crie e configure especialistas com instruções, quebra-gelos, recursos
-            e actions autorizadas.
+            Crie especialistas com instruções, conhecimento, quebra-gelos e actions
+            OpenAPI configuradas por agente.
           </p>
 
           <div className="mdc-chat-agents-directory__search">
@@ -178,30 +199,48 @@ export function ChatAgentsPage({
               <h2>Meus agentes</h2>
               <p>{agents.length} agente(s) disponível(is)</p>
             </div>
-
-            <button
-              type="button"
-              className="mdc-chat-agents-directory__create"
-              onClick={() => setEditingAgent(null)}
-            >
-              <Plus size={18} aria-hidden="true" />
-              <span>Criar agente</span>
-            </button>
           </div>
 
-          {isLoading ? (
-            <p className="mdc-chat-muted">Carregando agentes...</p>
-          ) : filteredAgents.length === 0 ? (
-            <div className="mdc-chat-agents-directory__empty">
-              <Bot size={22} aria-hidden="true" />
-              <strong>Nenhum agente encontrado</strong>
-              <p>Crie um especialista ou ajuste a busca.</p>
-            </div>
-          ) : (
-            <div className="mdc-chat-agents-directory__list">
-              {filteredAgents.map((agent) => {
+          <div className="mdc-chat-agents-directory__list">
+            <article
+              className="mdc-chat-agents-directory__item mdc-chat-agents-directory__item--create"
+              role="button"
+              tabIndex={0}
+              onClick={() => setEditingAgent(null)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setEditingAgent(null);
+                }
+              }}
+            >
+              <span className="mdc-chat-agents-directory__avatar mdc-chat-agents-directory__avatar--create">
+                <Plus size={20} aria-hidden="true" />
+              </span>
+
+              <span className="mdc-chat-agents-directory__item-copy">
+                <strong>Criar um agente</strong>
+                <small>Configure um especialista para um processo, API ou área específica.</small>
+              </span>
+
+              <span className="mdc-chat-agents-directory__item-arrow">
+                <ChevronRight size={18} aria-hidden="true" />
+              </span>
+            </article>
+
+            {isLoading ? (
+              <p className="mdc-chat-muted">Carregando agentes...</p>
+            ) : filteredAgents.length === 0 ? (
+              <div className="mdc-chat-agents-directory__empty">
+                <Bot size={22} aria-hidden="true" />
+                <strong>Nenhum agente encontrado</strong>
+                <p>Crie um especialista ou ajuste a busca.</p>
+              </div>
+            ) : (
+              filteredAgents.map((agent) => {
                 const icebreakerCount = getAgentIcebreakerCount(agent);
                 const capabilities = getAgentCapabilities(agent);
+                const editable = canEditAgent(agent);
 
                 return (
                   <article
@@ -221,7 +260,7 @@ export function ChatAgentsPage({
                         <Bot size={20} aria-hidden="true" />
                       </span>
 
-                      <span>
+                      <span className="mdc-chat-agents-directory__item-copy">
                         <strong>{agent.name}</strong>
                         <small>
                           {agent.description ||
@@ -239,7 +278,7 @@ export function ChatAgentsPage({
 
                       <span>
                         <ShieldCheck size={14} aria-hidden="true" />
-                        {agent.visibility === "public" ? "Público" : "Privado"}
+                        {getOwnerLabel(agent)}
                       </span>
 
                       {capabilities.length > 0 ? (
@@ -250,27 +289,32 @@ export function ChatAgentsPage({
                     <div className="mdc-chat-agents-directory__actions">
                       <button
                         type="button"
+                        className="mdc-chat-agents-directory__action-primary"
                         onClick={() => onSelectAgent?.(agent.key)}
                       >
                         Usar
                       </button>
 
-                      {canEditAgent(agent) ? (
+                      {editable ? (
                         <>
                           <button
                             type="button"
+                            className="mdc-chat-agents-directory__action-pill"
                             onClick={() => setActionsAgent(agent)}
                             title="Actions do agente"
                           >
-                            <Zap size={16} aria-hidden="true" />
+                            <Zap size={15} aria-hidden="true" />
+                            <span>Actions</span>
                           </button>
 
                           <button
                             type="button"
+                            className="mdc-chat-agents-directory__action-pill"
                             onClick={() => setEditingAgent(agent)}
-                            title="Editar agente"
+                            title="Configurar agente"
                           >
-                            <Pencil size={16} aria-hidden="true" />
+                            <Pencil size={15} aria-hidden="true" />
+                            <span>Configurar</span>
                           </button>
                         </>
                       ) : null}
@@ -296,9 +340,9 @@ export function ChatAgentsPage({
                     </div>
                   </article>
                 );
-              })}
-            </div>
-          )}
+              })
+            )}
+          </div>
         </section>
       </main>
     </section>

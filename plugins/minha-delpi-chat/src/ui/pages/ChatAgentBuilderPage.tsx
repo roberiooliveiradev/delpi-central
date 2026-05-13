@@ -46,6 +46,7 @@ type AgentUpdatePayload = Partial<AgentPayload> & {
 type ChatAgentBuilderPageProps = {
   agent?: ChatAgent | null;
   onBack: () => void;
+  onManageActions?: (agent: ChatAgent) => void;
   onSelectAgent?: (agentKey: string | null) => void;
   onCreateAgent?: (payload: AgentPayload) => Promise<ChatAgent | null>;
   onUpdateAgent?: (
@@ -108,6 +109,7 @@ function getMetadataStringArray(
 export function ChatAgentBuilderPage({
   agent,
   onBack,
+  onManageActions,
   onSelectAgent,
   onCreateAgent,
   onUpdateAgent,
@@ -439,6 +441,17 @@ export function ChatAgentBuilderPage({
         </div>
 
         <div className="mdc-chat-agent-builder__topbar-actions">
+          {agent ? (
+            <button
+              type="button"
+              className="mdc-chat-agent-builder__secondary"
+              onClick={() => onManageActions?.(agent)}
+            >
+              <Zap size={17} aria-hidden="true" />
+              <span>Actions</span>
+            </button>
+          ) : null}
+
           {agent ? (
             <button
               type="button"
