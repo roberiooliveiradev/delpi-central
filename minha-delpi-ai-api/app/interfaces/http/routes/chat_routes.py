@@ -43,6 +43,8 @@ from app.composition.chat_composer import (
     make_delete_chat_project_use_case,
     make_create_chat_agent_use_case,
     make_delete_chat_agent_use_case,
+    make_list_chat_agent_action_providers_use_case,
+    make_upsert_chat_agent_action_provider_use_case,
     make_list_chat_agent_actions_use_case,
     make_list_chat_agents_use_case,
     make_share_chat_agent_use_case,
@@ -82,6 +84,15 @@ def status():
 
 
 
+
+
+
+
+@chat_bp.get("/action-providers")
+@require_permission("minha-delpi.chat.access")
+def list_action_providers():
+    repository = PostgresExternalActionRepository()
+    return jsonify(repository.list_providers()), 200
 
 
 @chat_bp.get("/actions")
@@ -244,6 +255,56 @@ def share_agent(agent_id: str):
     return jsonify({"ok": True}), 200
 
 
+
+
+
+
+@chat_bp.get("/agents/<agent_id>/providers")
+@require_permission("minha-delpi.chat.access")
+def list_agent_action_providers(agent_id: str):
+    use_case = make_list_chat_agent_action_providers_use_case()
+    result = use_case.execute(
+        user_id=g.current_user.sub,
+        agent_id=agent_id,
+    )
+
+    return jsonify(result), 200
+
+
+@chat_bp.put("/agents/<agent_id>/providers")
+@require_permission("minha-delpi.chat.access")
+def upsert_agent_action_provider(agent_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_upsert_chat_agent_action_provider_use_case()
+
+    try:
+        saved = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            provider_key=payload.get("providerKey") or payload.get("provider_key"),
+            enabled=bool(payload.get("enabled", True)),
+            allow_read=bool(payload.get("allowRead", True)),
+            allow_write=bool(payload.get("allowWrite", False)),
+            allow_admin=bool(payload.get("allowAdmin", False)),
+            requires_confirmation_for_write=bool(
+                payload.get("requiresConfirmationForWrite", True)
+            ),
+        )
+
+        if not saved:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify({"saved": True}), 200
 
 
 @chat_bp.get("/agents/<agent_id>/actions")

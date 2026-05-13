@@ -203,3 +203,42 @@ class ListChatAgentActionsUseCase:
             agent_id=UUID(agent_id),
             user_id=UUID(user_id),
         )
+
+
+class ListChatAgentActionProvidersUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(self, *, user_id: str, agent_id: str) -> list[dict]:
+        return self.repository.list_action_providers(
+            agent_id=UUID(agent_id),
+            user_id=UUID(user_id),
+        )
+
+
+class UpsertChatAgentActionProviderUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(
+        self,
+        *,
+        user_id: str,
+        agent_id: str,
+        provider_key: str,
+        enabled: bool = True,
+        allow_read: bool = True,
+        allow_write: bool = False,
+        allow_admin: bool = False,
+        requires_confirmation_for_write: bool = True,
+    ) -> bool:
+        return self.repository.upsert_action_provider(
+            agent_id=UUID(agent_id),
+            user_id=UUID(user_id),
+            provider_key=_normalize_text(provider_key, 120, required=True),
+            enabled=enabled,
+            allow_read=allow_read,
+            allow_write=allow_write,
+            allow_admin=allow_admin,
+            requires_confirmation_for_write=requires_confirmation_for_write,
+        )

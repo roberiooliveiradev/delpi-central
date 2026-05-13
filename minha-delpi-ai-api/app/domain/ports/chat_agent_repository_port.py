@@ -51,6 +51,36 @@ class ChatAgentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_action_providers(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+    ) -> list[dict]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def upsert_action_provider(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        provider_key: str,
+        enabled: bool,
+        allow_read: bool,
+        allow_write: bool,
+        allow_admin: bool,
+        requires_confirmation_for_write: bool,
+    ) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_enabled_provider_keys(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+    ) -> list[str]:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_actions(
         self,
         agent_id: UUID,

@@ -30,7 +30,10 @@ class ChatToolContextService:
         selected_tools = self.tool_selection_service.select_tools(message)
 
         if self.external_action_selection_service and actions_enabled:
-            selected_external_action = self.external_action_selection_service.select_action(message)
+            selected_external_action = self.external_action_selection_service.select_action(
+                message,
+                allowed_action_ids=allowed_action_ids or [],
+            )
 
             if selected_external_action and self._is_external_action_allowed(
                 selected_external_action,
@@ -94,8 +97,8 @@ class ChatToolContextService:
         selected_external_action: dict,
         allowed_action_ids: list[str] | None,
     ) -> bool:
-        if allowed_action_ids is None:
-            return True
+        if not allowed_action_ids:
+            return False
 
         action_id = (
             selected_external_action.get("arguments", {}).get("actionId")

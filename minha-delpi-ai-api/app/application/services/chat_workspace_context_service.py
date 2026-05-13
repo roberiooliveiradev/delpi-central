@@ -37,7 +37,9 @@ class ChatWorkspaceContextService:
             "projectPrompt": self._project_prompt(project),
             "agentPrompt": agent.system_prompt if agent else None,
             "agentKey": agent.key if agent else None,
+            "actionProviderKeys": self._action_provider_keys(agent, user_id),
             "allowedActionIds": self._allowed_action_ids(agent, user_id),
+            "actionsEnabled": bool(agent and self._allowed_action_ids(agent, user_id)),
             "capabilities": self._capabilities(agent),
         }
 
@@ -88,9 +90,9 @@ class ChatWorkspaceContextService:
 
         return "\n".join(parts)
 
-    def _allowed_action_ids(self, agent, user_id: UUID) -> list[str] | None:
+    def _allowed_action_ids(self, agent, user_id: UUID) -> list[str]:
         if not agent:
-            return None
+            return []
 
         configured_actions = self.agent_repository.list_enabled_action_ids(
             agent_id=agent.id,
@@ -106,7 +108,16 @@ class ChatWorkspaceContextService:
         if isinstance(allowed, list):
             return [str(item) for item in allowed if str(item).strip()]
 
-        return None
+        return []
+
+    def _action_provider_keys(self, agent, user_id: UUID) -> list[str]:
+        if not agent:
+            return []
+
+        return self.agent_repository.list_enabled_provider_keys(
+            agent_id=agent.id,
+            user_id=user_id,
+        )
 
     def _capabilities(self, agent) -> dict:
         if not agent:

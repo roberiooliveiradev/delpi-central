@@ -271,3 +271,35 @@ export type ChatAgentAction = {
   createdAt: string;
   updatedAt: string;
 };
+
+
+export type ChatActionProvider = {
+  id: string;
+  providerKey: string;
+  name: string;
+  type: string;
+  baseUrl: string;
+  openApiUrl: string | null;
+  authMode: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ChatAgentActionProvider = {
+  id: string;
+  agentId: string;
+  providerKey: string;
+  providerName: string;
+  providerType: string | null;
+  baseUrl: string | null;
+  openApiUrl: string | null;
+  enabled: boolean;
+  allowRead: boolean;
+  allowWrite: boolean;
+  allowAdmin: boolean;
+  requiresConfirmationForWrite: boolean;
+  actionCount: number;
+  createdAt: string;
+  updatedAt: string;
+};

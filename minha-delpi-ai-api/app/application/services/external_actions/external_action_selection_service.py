@@ -5,15 +5,26 @@ class ExternalActionSelectionService:
     def __init__(self, repository):
         self.repository = repository
 
-    def select_action(self, message: str) -> dict | None:
+    def select_action(
+        self,
+        message: str,
+        allowed_action_ids: list[str] | None = None,
+    ) -> dict | None:
         normalized = str(message or "").lower()
         product_code = self._extract_numeric_code(message)
 
         if product_code and self._looks_like_product_question(normalized):
-            return self._select_product_action(message, product_code)
+            return self._select_product_action(
+                message,
+                product_code,
+                allowed_action_ids=allowed_action_ids or [],
+            )
 
         if self._looks_like_lmp_question(normalized):
-            return self._select_lmp_action(message)
+            return self._select_lmp_action(
+                message,
+                allowed_action_ids=allowed_action_ids or [],
+            )
 
         return None
 
@@ -37,8 +48,20 @@ class ExternalActionSelectionService:
     def _looks_like_lmp_question(self, value: str) -> bool:
         return "lmp" in value or "lmps" in value
 
-    def _select_product_action(self, message: str, product_code: str) -> dict | None:
-        candidates = self.repository.find_candidate_actions(message, limit=40)
+    def _select_product_action(
+        self,
+        message: str,
+        product_code: str,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        if not allowed_action_ids:
+            return None
+
+        allowed = {str(item) for item in allowed_action_ids}
+        candidates = [
+            action for action in self.repository.find_candidate_actions(message, limit=80)
+            if str(action.get("actionId")) in allowed
+        ]
 
         if not candidates:
             return None
@@ -63,8 +86,19 @@ class ExternalActionSelectionService:
 
         return None
 
-    def _select_lmp_action(self, message: str) -> dict | None:
-        candidates = self.repository.find_candidate_actions(message, limit=20)
+    def _select_lmp_action(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        if not allowed_action_ids:
+            return None
+
+        allowed = {str(item) for item in allowed_action_ids}
+        candidates = [
+            action for action in self.repository.find_candidate_actions(message, limit=80)
+            if str(action.get("actionId")) in allowed
+        ]
 
         for action in candidates:
             if action.get("method") != "GET":

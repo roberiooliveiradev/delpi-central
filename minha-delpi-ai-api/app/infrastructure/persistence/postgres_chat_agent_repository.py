@@ -6,6 +6,9 @@ from app.domain.entities.chat_agent import ChatAgent
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.db.models.chat_agent_action_model import AiChatAgentActionModel
+from app.infrastructure.db.models.chat_agent_action_provider_model import AiChatAgentActionProviderModel
+from app.infrastructure.db.models.external_action_model import ExternalActionModel
+from app.infrastructure.db.models.external_action_provider_model import ExternalActionProviderModel
 from app.infrastructure.db.models.chat_agent_model import AiChatAgentModel
 from app.infrastructure.db.models.chat_agent_share_model import AiChatAgentShareModel
 
@@ -186,6 +189,115 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         return True
 
 
+
+    def list_action_providers(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+    ) -> list[dict]:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_access(model, user_id):
+            return []
+
+        rows = (
+            db.session.query(
+                AiChatAgentActionProviderModel,
+                ExternalActionProviderModel,
+                db.func.count(ExternalActionModel.id).label("action_count"),
+            )
+            .outerjoin(
+                ExternalActionProviderModel,
+                ExternalActionProviderModel.provider_key == AiChatAgentActionProviderModel.provider_key,
+            )
+            .outerjoin(
+                ExternalActionModel,
+                ExternalActionModel.provider_id == ExternalActionProviderModel.id,
+            )
+            .filter(AiChatAgentActionProviderModel.agent_id == agent_id)
+            .group_by(AiChatAgentActionProviderModel.id, ExternalActionProviderModel.id)
+            .order_by(AiChatAgentActionProviderModel.provider_key.asc())
+            .all()
+        )
+
+        return [
+            self._provider_link_to_dict(link, provider, int(action_count or 0))
+            for link, provider, action_count in rows
+        ]
+
+    def upsert_action_provider(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        provider_key: str,
+        enabled: bool,
+        allow_read: bool,
+        allow_write: bool,
+        allow_admin: bool,
+        requires_confirmation_for_write: bool,
+    ) -> bool:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_edit(model, user_id):
+            return False
+
+        provider = ExternalActionProviderModel.query.filter(
+            ExternalActionProviderModel.provider_key == provider_key
+        ).first()
+
+        if not provider:
+            return False
+
+        link = (
+            AiChatAgentActionProviderModel.query
+            .filter(AiChatAgentActionProviderModel.agent_id == agent_id)
+            .filter(AiChatAgentActionProviderModel.provider_key == provider_key)
+            .first()
+        )
+
+        if link:
+            link.enabled = enabled
+            link.allow_read = allow_read
+            link.allow_write = allow_write
+            link.allow_admin = allow_admin
+            link.requires_confirmation_for_write = requires_confirmation_for_write
+        else:
+            db.session.add(
+                AiChatAgentActionProviderModel(
+                    agent_id=agent_id,
+                    provider_key=provider_key,
+                    enabled=enabled,
+                    allow_read=allow_read,
+                    allow_write=allow_write,
+                    allow_admin=allow_admin,
+                    requires_confirmation_for_write=requires_confirmation_for_write,
+                )
+            )
+
+        db.session.flush()
+
+        return True
+
+    def list_enabled_provider_keys(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+    ) -> list[str]:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_access(model, user_id):
+            return []
+
+        rows = (
+            AiChatAgentActionProviderModel.query
+            .filter(AiChatAgentActionProviderModel.agent_id == agent_id)
+            .filter(AiChatAgentActionProviderModel.enabled.is_(True))
+            .order_by(AiChatAgentActionProviderModel.provider_key.asc())
+            .all()
+        )
+
+        return [row.provider_key for row in rows]
+
     def list_actions(
         self,
         agent_id: UUID,
@@ -218,7 +330,38 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         if not model or not self._can_access(model, user_id):
             return []
 
-        rows = (
+        provider_links = (
+            AiChatAgentActionProviderModel.query
+            .filter(AiChatAgentActionProviderModel.agent_id == agent_id)
+            .filter(AiChatAgentActionProviderModel.enabled.is_(True))
+            .all()
+        )
+
+        provider_action_ids: list[str] = []
+
+        for link in provider_links:
+            sensitivity_allowed = ["read"]
+
+            if link.allow_write:
+                sensitivity_allowed.append("write")
+
+            if link.allow_admin:
+                sensitivity_allowed.append("admin")
+
+            rows = (
+                db.session.query(ExternalActionModel.action_id)
+                .join(ExternalActionProviderModel)
+                .filter(ExternalActionProviderModel.provider_key == link.provider_key)
+                .filter(ExternalActionProviderModel.enabled.is_(True))
+                .filter(ExternalActionModel.enabled.is_(True))
+                .filter(ExternalActionModel.deprecated.is_(False))
+                .filter(ExternalActionModel.sensitivity.in_(sensitivity_allowed))
+                .all()
+            )
+
+            provider_action_ids.extend([row.action_id for row in rows])
+
+        explicit_rows = (
             AiChatAgentActionModel.query
             .filter(AiChatAgentActionModel.agent_id == agent_id)
             .filter(AiChatAgentActionModel.enabled.is_(True))
@@ -226,7 +369,9 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             .all()
         )
 
-        return [row.action_id for row in rows]
+        explicit_action_ids = [row.action_id for row in explicit_rows]
+
+        return sorted({*provider_action_ids, *explicit_action_ids})
 
     def upsert_action(
         self,
@@ -270,6 +415,30 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         db.session.flush()
 
         return True
+
+    def _provider_link_to_dict(
+        self,
+        link: AiChatAgentActionProviderModel,
+        provider: ExternalActionProviderModel | None,
+        action_count: int,
+    ) -> dict:
+        return {
+            "id": str(link.id),
+            "agentId": str(link.agent_id),
+            "providerKey": link.provider_key,
+            "providerName": provider.name if provider else link.provider_key,
+            "providerType": provider.provider_type if provider else None,
+            "baseUrl": provider.base_url if provider else None,
+            "openApiUrl": provider.openapi_url if provider else None,
+            "enabled": link.enabled,
+            "allowRead": link.allow_read,
+            "allowWrite": link.allow_write,
+            "allowAdmin": link.allow_admin,
+            "requiresConfirmationForWrite": link.requires_confirmation_for_write,
+            "actionCount": action_count,
+            "createdAt": link.created_at.isoformat(),
+            "updatedAt": link.updated_at.isoformat(),
+        }
 
     def _action_to_dict(self, action: AiChatAgentActionModel) -> dict:
         return {

@@ -483,3 +483,47 @@
   font: inherit;
   padding: 0.7rem 0.8rem;
 }
+
+.mdc-chat-agent-builder__provider-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.mdc-chat-agent-builder__provider-list article {
+  display: grid;
+  gap: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 65%, transparent);
+  border-radius: 1rem;
+  padding: 0.85rem;
+}
+
+.mdc-chat-agent-builder__provider-list article > label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.mdc-chat-agent-builder__provider-list strong,
+.mdc-chat-agent-builder__provider-list small {
+  display: block;
+}
+
+.mdc-chat-agent-builder__provider-list small {
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-agent-builder__provider-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding-left: 1.7rem;
+}
+
+.mdc-chat-agent-builder__provider-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.86rem;
+}

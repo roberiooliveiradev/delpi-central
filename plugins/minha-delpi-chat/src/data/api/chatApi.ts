@@ -1,6 +1,8 @@
 import type {
   ChatActionCatalogItem,
+  ChatActionProvider,
   ChatAgent,
+  ChatAgentActionProvider,
   ChatAgentAction,
   ChatArtifact,
   ChatAttachment,
@@ -718,4 +720,49 @@ export async function listChatAgentActions(
   });
 
   return parseJsonResponse<ChatAgentAction[]>(response);
+}
+
+
+export async function listActionProviders(
+  options: ChatApiOptions = {},
+): Promise<ChatActionProvider[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/action-providers`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatActionProvider[]>(response);
+}
+
+export async function listChatAgentActionProviders(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAgentActionProvider[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/providers`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAgentActionProvider[]>(response);
+}
+
+export async function saveChatAgentActionProvider(
+  agentId: string,
+  payload: {
+    providerKey: string;
+    enabled?: boolean;
+    allowRead?: boolean;
+    allowWrite?: boolean;
+    allowAdmin?: boolean;
+    requiresConfirmationForWrite?: boolean;
+  },
+  options: ChatApiOptions = {},
+): Promise<{ saved: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/providers`, {
+    method: "PUT",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<{ saved: boolean }>(response);
 }
