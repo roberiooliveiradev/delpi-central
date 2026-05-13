@@ -21,14 +21,13 @@
   line-height: 1.5;
   padding: 1rem 1.1rem;
   outline: none;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
 }
 
 .mdc-chat-input textarea:focus {
   border-color: color-mix(in srgb, var(--mdc-primary) 55%, var(--mdc-card-border));
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--mdc-primary) 14%, transparent),
-    0 16px 40px rgba(0, 0, 0, 0.16);
+    0 18px 50px color-mix(in srgb, var(--mdc-primary) 16%, transparent);
 }
 
 .mdc-chat-input button {
@@ -94,15 +93,4 @@
   .mdc-chat-input button {
     width: 100%;
   }
-}
-
-/* Sombra do composer apenas quando estiver selecionado/focado */
-.mdc-chat-input,
-.mdc-chat-input--center {
-  box-shadow: none !important;
-}
-
-.mdc-chat-input:focus-within,
-.mdc-chat-input--center:focus-within {
-  box-shadow: 0 18px 50px color-mix(in srgb, var(--mdc-primary) 16%, transparent) !important;
 }

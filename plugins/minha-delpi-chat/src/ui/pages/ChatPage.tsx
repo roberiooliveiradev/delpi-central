@@ -150,6 +150,14 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     await startSession();
   }
 
+  async function handleStartGeneralSession() {
+    setCanvasDocument(null);
+    setSelectedProjectId(null);
+    setSelectedAgentKey(null);
+    setCurrentView("chat");
+    await startSession();
+  }
+
   function handleSelectSession(session: typeof sessions[number]) {
     setCanvasDocument(null);
     selectSession(session);
@@ -187,7 +195,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           isLoadingArchivedSessions={isLoadingArchivedSessions}
           isLoadingAgents={isLoadingAgents}
           isLoadingProjects={isLoadingProjects}
-          onNewSession={handleStartSession}
+          onNewSession={handleStartGeneralSession}
           onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
           onDeleteSession={handleDeleteSession}
