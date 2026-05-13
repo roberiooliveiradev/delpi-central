@@ -160,6 +160,19 @@ class PostgresExternalActionRepository:
                     ExternalActionModel.description.ilike("%lmp%"),
                 )
             )
+        elif any(term in normalized for term in ["sql", "data", "dados", "query", "select "]):
+            db_query = db_query.filter(
+                db.or_(
+                    ExternalActionModel.path.ilike("%sql%"),
+                    ExternalActionModel.path.ilike("%data%"),
+                    ExternalActionModel.summary.ilike("%sql%"),
+                    ExternalActionModel.summary.ilike("%data%"),
+                    ExternalActionModel.description.ilike("%sql%"),
+                    ExternalActionModel.description.ilike("%data%"),
+                    ExternalActionModel.operation_id.ilike("%sql%"),
+                    ExternalActionModel.operation_id.ilike("%data%"),
+                )
+            )
         else:
             return []
 

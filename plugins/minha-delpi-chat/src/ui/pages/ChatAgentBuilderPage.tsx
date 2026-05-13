@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   createAgentTextSource,
+  createChatAgentActionProvider,
   deleteChatSource,
   listActionProviders,
   listAgentSources,
@@ -149,6 +150,11 @@ export function ChatAgentBuilderPage({
 
   const [availableProviders, setAvailableProviders] = useState<ChatActionProvider[]>([]);
   const [configuredProviders, setConfiguredProviders] = useState<ChatAgentActionProvider[]>([]);
+  const [newProviderName, setNewProviderName] = useState("");
+  const [newProviderBaseUrl, setNewProviderBaseUrl] = useState("");
+  const [newProviderOpenApiUrl, setNewProviderOpenApiUrl] = useState("");
+  const [newProviderSchema, setNewProviderSchema] = useState("");
+  const [isCreatingProvider, setIsCreatingProvider] = useState(false);
   const [agentSources, setAgentSources] = useState<ChatWorkspaceSource[]>([]);
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceContent, setSourceContent] = useState("");
@@ -214,6 +220,71 @@ export function ChatAgentBuilderPage({
     };
   }, [agent?.id, getAccessToken]);
 
+
+
+  async function createAgentProviderFromForm() {
+    if (!agent) {
+      setLocalError("Salve o agente antes de criar actions.");
+      return;
+    }
+
+    const name = newProviderName.trim();
+    const baseUrl = newProviderBaseUrl.trim();
+    const openApiUrl = newProviderOpenApiUrl.trim();
+    const schemaText = newProviderSchema.trim();
+
+    if (!name || !baseUrl) {
+      setLocalError("Informe nome e URL base da API.");
+      return;
+    }
+
+    let schema: Record<string, unknown> | null = null;
+
+    if (schemaText) {
+      try {
+        schema = JSON.parse(schemaText) as Record<string, unknown>;
+      } catch {
+        setLocalError("Schema OpenAPI inválido. Verifique o JSON informado.");
+        return;
+      }
+    }
+
+    const providerKey = createKeyFromName(name);
+
+    setIsCreatingProvider(true);
+    setLocalError(null);
+
+    try {
+      await createChatAgentActionProvider(
+        agent.id,
+        {
+          providerKey,
+          name,
+          type: "openapi",
+          baseUrl,
+          openApiUrl: openApiUrl || null,
+          schema,
+          authMode: "none",
+          enabled: true,
+          allowRead: true,
+          allowWrite: true,
+          allowAdmin: false,
+          requiresConfirmationForWrite: true,
+        },
+        { getAccessToken },
+      );
+
+      setNewProviderName("");
+      setNewProviderBaseUrl("");
+      setNewProviderOpenApiUrl("");
+      setNewProviderSchema("");
+
+      setAvailableProviders(await listActionProviders({ getAccessToken }));
+      setConfiguredProviders(await listChatAgentActionProviders(agent.id, { getAccessToken }));
+    } finally {
+      setIsCreatingProvider(false);
+    }
+  }
 
   async function toggleAgentProvider(provider: ChatActionProvider, enabled: boolean) {
     if (!agent) {
@@ -692,7 +763,62 @@ export function ChatAgentBuilderPage({
               </div>
 
               {agent ? (
-                <div className="mdc-chat-agent-builder__provider-list">
+                <>
+                  <div className="mdc-chat-agent-builder__action-create">
+                    <h3>Criar nova ação/API</h3>
+                    <p>Cadastre uma API OpenAPI diretamente neste agente. As rotas importadas ficarão disponíveis para ele.</p>
+
+                    <div className="mdc-chat-agent-builder__grid">
+                      <label>
+                        <span>Nome da API</span>
+                        <input
+                          value={newProviderName}
+                          onChange={(event) => setNewProviderName(event.target.value)}
+                          placeholder="API DELPI"
+                        />
+                      </label>
+
+                      <label>
+                        <span>URL base</span>
+                        <input
+                          value={newProviderBaseUrl}
+                          onChange={(event) => setNewProviderBaseUrl(event.target.value)}
+                          placeholder="https://api.exemplo.com.br"
+                        />
+                      </label>
+                    </div>
+
+                    <label>
+                      <span>URL OpenAPI</span>
+                      <input
+                        value={newProviderOpenApiUrl}
+                        onChange={(event) => setNewProviderOpenApiUrl(event.target.value)}
+                        placeholder="https://api.exemplo.com.br/openapi.json"
+                      />
+                    </label>
+
+                    <label>
+                      <span>Schema OpenAPI JSON</span>
+                      <textarea
+                        value={newProviderSchema}
+                        onChange={(event) => setNewProviderSchema(event.target.value)}
+                        rows={8}
+                        placeholder='{"openapi":"3.1.0","info":{"title":"Minha API","version":"1.0.0"},"paths":{...}}'
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      className="mdc-chat-agent-builder__secondary"
+                      disabled={isCreatingProvider}
+                      onClick={() => void createAgentProviderFromForm()}
+                    >
+                      <Plus size={16} aria-hidden="true" />
+                      <span>{isCreatingProvider ? "Criando..." : "Criar nova ação"}</span>
+                    </button>
+                  </div>
+
+                  <div className="mdc-chat-agent-builder__provider-list">
                   {availableProviders.map((provider) => {
                     const configured = configuredProviders.find(
                       (item) => item.providerKey === provider.providerKey,
@@ -771,6 +897,7 @@ export function ChatAgentBuilderPage({
                     </p>
                   ) : null}
                 </div>
+                </>
               ) : (
                 <p className="mdc-chat-muted">Salve o agente antes de conectar APIs.</p>
               )}

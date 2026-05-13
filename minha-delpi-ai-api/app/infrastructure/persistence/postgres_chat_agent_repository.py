@@ -340,10 +340,11 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         provider_action_ids: list[str] = []
 
         for link in provider_links:
-            sensitivity_allowed = ["read"]
+            sensitivity_allowed = ["read", "sql", "export"]
 
             if link.allow_write:
                 sensitivity_allowed.append("write")
+                sensitivity_allowed.append("destructive")
 
             if link.allow_admin:
                 sensitivity_allowed.append("admin")

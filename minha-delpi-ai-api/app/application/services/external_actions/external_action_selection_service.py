@@ -48,6 +48,99 @@ class ExternalActionSelectionService:
     def _looks_like_lmp_question(self, value: str) -> bool:
         return "lmp" in value or "lmps" in value
 
+
+    def _looks_like_sql_or_data_query(self, message: str) -> bool:
+        normalized = str(message or "").lower()
+
+        return any(
+            term in normalized
+            for term in [
+                "sql",
+                "consulta sql",
+                "rodar sql",
+                "executar sql",
+                "data",
+                "dados",
+                "query",
+                "select ",
+            ]
+        )
+
+    def _select_sql_or_data_action(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        if not allowed_action_ids:
+            return None
+
+        allowed = {str(item) for item in allowed_action_ids}
+
+        candidates = [
+            action for action in self.repository.find_candidate_actions(message, limit=120)
+            if str(action.get("actionId")) in allowed
+        ]
+
+        preferred = [
+            action for action in candidates
+            if any(
+                term in " ".join(
+                    [
+                        str(action.get("path") or ""),
+                        str(action.get("summary") or ""),
+                        str(action.get("description") or ""),
+                        str(action.get("operationId") or ""),
+                    ]
+                ).lower()
+                for term in ["sql", "data", "query"]
+            )
+        ]
+
+        action = preferred[0] if preferred else (candidates[0] if candidates else None)
+
+        if not action:
+            return None
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": action["actionId"],
+                "input": {
+                    "message": message,
+                },
+            },
+        }
+
+    def _select_generic_allowed_action(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        if not allowed_action_ids:
+            return None
+
+        allowed = {str(item) for item in allowed_action_ids}
+        candidates = [
+            action for action in self.repository.find_candidate_actions(message, limit=120)
+            if str(action.get("actionId")) in allowed
+        ]
+
+        if not candidates:
+            return None
+
+        action = candidates[0]
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": action["actionId"],
+                "input": {
+                    "message": message,
+                },
+            },
+        }
+
+
     def _select_product_action(
         self,
         message: str,

@@ -259,6 +259,99 @@ def share_agent(agent_id: str):
 
 
 
+
+
+@chat_bp.post("/agents/<agent_id>/providers/create")
+@require_permission("minha-delpi.chat.access")
+def create_agent_action_provider(agent_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    provider_key = payload.get("providerKey") or payload.get("provider_key")
+    name = payload.get("name")
+    provider_type = payload.get("type") or payload.get("providerType") or "openapi"
+    base_url = payload.get("baseUrl") or payload.get("base_url")
+    openapi_url = payload.get("openApiUrl") or payload.get("openapi_url")
+    schema_json = payload.get("schema") or payload.get("schemaJson") or payload.get("schema_json")
+
+    if not provider_key:
+        return bad_request("providerKey is required")
+
+    if not name:
+        return bad_request("name is required")
+
+    if not base_url:
+        return bad_request("baseUrl is required")
+
+    repository = PostgresExternalActionRepository()
+    upsert_use_case = make_upsert_chat_agent_action_provider_use_case()
+
+    try:
+        existing_provider = repository.get_provider_by_key(provider_key)
+
+        if not existing_provider:
+            provider = repository.create_provider(
+                {
+                    "providerKey": provider_key,
+                    "name": name,
+                    "type": provider_type,
+                    "baseUrl": base_url,
+                    "openApiUrl": openapi_url,
+                    "authMode": payload.get("authMode") or "none",
+                    "authConfig": payload.get("authConfig"),
+                    "enabled": True,
+                }
+            )
+        else:
+            provider = repository._provider_to_dict(existing_provider)
+
+        import_result = None
+
+        if isinstance(schema_json, dict):
+            import_result = repository.import_schema_from_json(
+                provider_key=provider_key,
+                schema_json=schema_json,
+                source_type="inline",
+            )
+        elif openapi_url:
+            import_result = repository.import_schema_from_url(provider_key=provider_key)
+
+        saved = upsert_use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            provider_key=provider_key,
+            enabled=bool(payload.get("enabled", True)),
+            allow_read=bool(payload.get("allowRead", True)),
+            allow_write=bool(payload.get("allowWrite", True)),
+            allow_admin=bool(payload.get("allowAdmin", False)),
+            requires_confirmation_for_write=bool(
+                payload.get("requiresConfirmationForWrite", True)
+            ),
+        )
+
+        if not saved:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(
+        {
+            "provider": provider,
+            "import": import_result,
+            "linked": True,
+        }
+    ), 201
+
+
 @chat_bp.get("/agents/<agent_id>/providers")
 @require_permission("minha-delpi.chat.access")
 def list_agent_action_providers(agent_id: str):

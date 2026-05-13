@@ -766,3 +766,40 @@ export async function saveChatAgentActionProvider(
 
   return parseJsonResponse<{ saved: boolean }>(response);
 }
+
+
+export async function createChatAgentActionProvider(
+  agentId: string,
+  payload: {
+    providerKey: string;
+    name: string;
+    type?: string;
+    baseUrl: string;
+    openApiUrl?: string | null;
+    schema?: Record<string, unknown> | null;
+    authMode?: string;
+    authConfig?: Record<string, unknown> | null;
+    enabled?: boolean;
+    allowRead?: boolean;
+    allowWrite?: boolean;
+    allowAdmin?: boolean;
+    requiresConfirmationForWrite?: boolean;
+  },
+  options: ChatApiOptions = {},
+): Promise<{
+  provider: ChatActionProvider;
+  import?: {
+    found?: boolean;
+    actionsImported?: number;
+    schemaHash?: string;
+  } | null;
+  linked: boolean;
+}> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/providers/create`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
+}
