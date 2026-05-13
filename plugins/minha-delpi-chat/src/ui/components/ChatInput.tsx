@@ -55,7 +55,32 @@ export function ChatInput({
         onSubmit();
       }}
     >
-      <div className="mdc-chat-input__box">
+      <div
+        className={
+          selectedAgent
+            ? "mdc-chat-input__box mdc-chat-input__box--with-agent"
+            : "mdc-chat-input__box"
+        }
+      >
+        {selectedAgent ? (
+          <div className="mdc-chat-input__agent-context">
+            <span className="mdc-chat-input__agent-avatar">
+              <Bot size={15} aria-hidden="true" />
+            </span>
+
+            <strong>{selectedAgent.name}</strong>
+
+            <button
+              type="button"
+              onClick={() => onSelectAgent?.(null)}
+              aria-label="Remover agente do contexto"
+              title="Remover agente do contexto"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
+
         <div className="mdc-chat-input__plus-wrap">
           <button
             type="button"

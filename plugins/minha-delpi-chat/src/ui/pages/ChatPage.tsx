@@ -15,6 +15,7 @@ import {
 } from "../../data/api/chatApi";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
+import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
 
@@ -41,6 +42,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [isAgentContextOnly, setIsAgentContextOnly] = useState(false);
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
   const [projectSettingsRequestKey, setProjectSettingsRequestKey] = useState(0);
+  const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
 
   const {
     sessions,
@@ -108,6 +110,25 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
       String(isSidebarCollapsed),
     );
   }, [isSidebarCollapsed]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadUserDisplayName() {
+      const token = await getAccessToken?.();
+      const displayName = getDisplayNameFromAccessToken(token);
+
+      if (isMounted) {
+        setUserDisplayName(displayName);
+      }
+    }
+
+    void loadUserDisplayName();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [getAccessToken]);
 
 
   async function saveCanvasDocument(document: ChatCanvasDocument) {
@@ -426,6 +447,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                       activeAgentName={
                         selectedAgent && isAgentContextOnly ? selectedAgent.name : null
                       }
+                      displayName={userDisplayName}
                       onUseSuggestion={setDraft}
                     />
                   )}
