@@ -1,7 +1,10 @@
 .mdc-chat-inline-error {
   position: relative;
+  height: auto;
+  min-height: 0;
   display: flex;
   align-items: flex-start;
+  align-self: center;
   gap: 16px;
   width: min(100%, 860px);
   max-width: calc(100vw - 48px);
@@ -152,4 +155,14 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+.mdc-chat-inline-error-shell {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 16px 24px 0;
+  box-sizing: border-box;
+  flex: 0 0 auto;
 }
