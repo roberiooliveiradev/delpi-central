@@ -191,3 +191,56 @@
   background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
   color: var(--mdc-primary);
 }
+
+/* Refinamento visual: títulos recolhíveis sem borda/focus box */
+.mdc-chat-sidebar__section-title button,
+.mdc-chat-sidebar__section-toggle,
+.mdc-chat-sidebar__section-title--button > button {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0.45rem;
+  background: transparent !important;
+}
+
+.mdc-chat-sidebar__section-title button:hover,
+.mdc-chat-sidebar__section-toggle:hover,
+.mdc-chat-sidebar__section-title--button > button:hover {
+  color: var(--mdc-primary);
+  background: transparent !important;
+}
+
+.mdc-chat-sidebar__section-title button:focus,
+.mdc-chat-sidebar__section-title button:focus-visible,
+.mdc-chat-sidebar__section-toggle:focus,
+.mdc-chat-sidebar__section-toggle:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Hover geral mais limpo */
+.mdc-chat-sidebar button {
+  transition:
+    background 0.14s ease,
+    color 0.14s ease,
+    opacity 0.14s ease;
+}
+
+.mdc-chat-sidebar__nav button:hover,
+.mdc-chat-sidebar__project-new button:hover,
+.mdc-sidebar-workspace-item:hover,
+.mdc-chat-project-card:hover,
+.mdc-chat-session-row:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 6%, transparent) !important;
+}
+
+.mdc-chat-sidebar__nav button:focus,
+.mdc-chat-sidebar__nav button:focus-visible,
+.mdc-chat-sidebar__project-new button:focus,
+.mdc-chat-sidebar__project-new button:focus-visible {
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: color-mix(in srgb, var(--mdc-primary) 6%, transparent) !important;
+}

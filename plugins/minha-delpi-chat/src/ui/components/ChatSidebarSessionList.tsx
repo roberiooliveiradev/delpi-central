@@ -1,10 +1,12 @@
 import { Archive, Check, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { ChatSession } from "../../data/api/chatTypes";
-import { ChatConversationMenu } from "./ChatConversationMenu";
 import { ChatConversationListItem } from "./ChatConversationListItem";
+import { ChatConversationMenu } from "./ChatConversationMenu";
 import { type SessionGroup } from "./chatSidebarUtils";
+
+const DEFAULT_VISIBLE_SESSIONS = 20;
 
 type ChatSidebarSessionListProps = {
   groupedSessions: SessionGroup[];
@@ -40,6 +42,46 @@ export function ChatSidebarSessionList({
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [openMenuSessionId, setOpenMenuSessionId] = useState<string | null>(null);
+  const [showAllSessions, setShowAllSessions] = useState(false);
+
+  const totalSessions = useMemo(
+    () => groupedSessions.reduce((total, group) => total + group.sessions.length, 0),
+    [groupedSessions],
+  );
+
+  const visibleGroups = useMemo(() => {
+    if (showAllSessions || searchTerm.trim()) {
+      return groupedSessions;
+    }
+
+    let remaining = DEFAULT_VISIBLE_SESSIONS;
+
+    return groupedSessions
+      .map((group) => {
+        if (remaining <= 0) {
+          return {
+            ...group,
+            sessions: [],
+          };
+        }
+
+        const sessions = group.sessions.slice(0, remaining);
+        remaining -= sessions.length;
+
+        return {
+          ...group,
+          sessions,
+        };
+      })
+      .filter((group) => group.sessions.length > 0);
+  }, [groupedSessions, searchTerm, showAllSessions]);
+
+  const visibleSessionsCount = useMemo(
+    () => visibleGroups.reduce((total, group) => total + group.sessions.length, 0),
+    [visibleGroups],
+  );
+
+  const hiddenSessionsCount = Math.max(0, totalSessions - visibleSessionsCount);
 
   function startEditingSession(session: ChatSession) {
     setEditingSessionId(session.id);
@@ -182,9 +224,7 @@ export function ChatSidebarSessionList({
               <Archive size={13} aria-hidden="true" />
             </button>
 
-            <small>
-              {groupedSessions.reduce((total, group) => total + group.sessions.length, 0)}
-            </small>
+            <small>{totalSessions}</small>
           </div>
         </div>
       ) : null}
@@ -201,12 +241,24 @@ export function ChatSidebarSessionList({
         </p>
       ) : (
         <div className="mdc-chat-session-list">
-          {groupedSessions.map((group) => (
+          {visibleGroups.map((group) => (
             <section key={group.label} className="mdc-chat-session-group">
               <h3>{group.label}</h3>
               {group.sessions.map(renderSessionRow)}
             </section>
           ))}
+
+          {hiddenSessionsCount > 0 ? (
+            <button
+              type="button"
+              className="mdc-chat-sidebar-more-button mdc-chat-sidebar-more-button--sessions"
+              onClick={() => setShowAllSessions((current) => !current)}
+            >
+              {showAllSessions
+                ? "Mostrar menos"
+                : `Mostrar mais ${hiddenSessionsCount}`}
+            </button>
+          ) : null}
         </div>
       )}
     </>

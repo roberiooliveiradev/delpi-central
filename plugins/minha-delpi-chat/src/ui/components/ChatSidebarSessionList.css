@@ -208,3 +208,47 @@
 .mdc-chat-session-group h3 {
   position: static !important;
 }
+
+/* Mostrar mais de conversas */
+.mdc-chat-sidebar-more-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: fit-content;
+  min-height: 1.8rem;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0.55rem;
+  background: transparent !important;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 760;
+  padding: 0.28rem 0.42rem;
+}
+
+.mdc-chat-sidebar-more-button:hover,
+.mdc-chat-sidebar-more-button:focus,
+.mdc-chat-sidebar-more-button:focus-visible {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent) !important;
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-sidebar-more-button--sessions {
+  margin: 0.18rem 0 0.35rem 0.3rem;
+}
+
+/* Remove qualquer borda visual no título/linha de conversas */
+.mdc-chat-sidebar__section-title--conversations,
+.mdc-chat-sidebar__section-title--conversations *,
+.mdc-chat-sidebar__section-title--conversations button {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.mdc-chat-sidebar__section-title--conversations button {
+  border: 0 !important;
+  background: transparent !important;
+}

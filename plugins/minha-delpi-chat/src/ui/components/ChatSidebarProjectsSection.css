@@ -126,3 +126,34 @@
 .mdc-chat-sidebar-project-children .mdc-chat-conversation-item--active {
   background: color-mix(in srgb, var(--mdc-primary) 12%, transparent) !important;
 }
+
+/* Mostrar mais: visual limpo, sem aparência de botão pesado */
+.mdc-chat-sidebar-project-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: fit-content;
+  min-height: 1.8rem;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0.55rem;
+  background: transparent !important;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 760;
+  padding: 0.28rem 0.42rem;
+}
+
+.mdc-chat-sidebar-project-more:hover,
+.mdc-chat-sidebar-project-more:focus,
+.mdc-chat-sidebar-project-more:focus-visible {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent) !important;
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-sidebar-project-more--root {
+  margin: 0.12rem 0 0.2rem 2.05rem;
+}
