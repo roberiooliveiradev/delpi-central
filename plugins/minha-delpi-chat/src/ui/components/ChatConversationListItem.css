@@ -1,0 +1,124 @@
+.mdc-chat-conversation-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.28rem;
+  width: 100%;
+  min-height: 2.12rem;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0.55rem;
+  background: transparent !important;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.24rem 0.32rem;
+  text-align: left;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease;
+}
+
+.mdc-chat-conversation-item:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent) !important;
+}
+
+.mdc-chat-conversation-item--active {
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent) !important;
+}
+
+.mdc-chat-conversation-item--project {
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 2.12rem;
+  padding: 0.24rem 0.32rem;
+}
+
+.mdc-chat-conversation-item--home {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 3.25rem;
+  border-radius: 0;
+  padding: 0.62rem 0.2rem;
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 65%, transparent) !important;
+}
+
+.mdc-chat-conversation-item--home:hover {
+  border-radius: 0.65rem;
+}
+
+.mdc-chat-conversation-item__leading,
+.mdc-chat-conversation-item__trailing {
+  display: inline-grid;
+  place-items: center;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-conversation-item__leading {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.mdc-chat-conversation-item__content {
+  display: grid;
+  min-width: 0;
+  gap: 0.02rem;
+}
+
+.mdc-chat-conversation-item__content strong,
+.mdc-chat-conversation-item__content small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-conversation-item__content strong {
+  color: var(--mdc-primary);
+  font-size: 0.78rem;
+  font-weight: 820;
+  line-height: 1.14;
+}
+
+.mdc-chat-conversation-item__content small {
+  color: var(--mdc-text-muted);
+  font-size: 0.63rem;
+  font-weight: 650;
+  line-height: 1.08;
+}
+
+/* Conversas dentro de projetos usam exatamente o mesmo visual das conversas comuns */
+.mdc-chat-conversation-item--project .mdc-chat-conversation-item__content strong {
+  color: var(--mdc-primary);
+  font-size: 0.78rem;
+  font-weight: 820;
+  line-height: 1.14;
+}
+
+.mdc-chat-conversation-item--project .mdc-chat-conversation-item__content small {
+  color: var(--mdc-text-muted);
+  font-size: 0.63rem;
+  font-weight: 650;
+  line-height: 1.08;
+}
+
+.mdc-chat-conversation-item--home .mdc-chat-conversation-item__content strong {
+  color: var(--mdc-title);
+  font-size: 0.9rem;
+  font-weight: 760;
+}
+
+.mdc-chat-conversation-item--home .mdc-chat-conversation-item__content small {
+  font-size: 0.74rem;
+}
+
+.mdc-chat-conversation-item__avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 15%, transparent);
+  color: var(--mdc-primary);
+  font-size: 0.7rem;
+  font-weight: 900;
+}

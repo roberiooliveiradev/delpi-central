@@ -1,7 +1,7 @@
 import { Folder, MessageSquare } from "lucide-react";
 
 import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
-import { formatSessionDate } from "./chatSidebarUtils";
+import { ChatConversationListItem } from "./ChatConversationListItem";
 
 import "./ChatProjectHome.css";
 
@@ -52,25 +52,14 @@ export function ChatProjectHome({
 
           <div className="mdc-chat-project-home__list">
             {recentSessions.map((session) => (
-              <button
+              <ChatConversationListItem
                 key={session.id}
-                type="button"
+                session={session}
+                variant="home"
+                leading={<span className="mdc-chat-conversation-item__avatar">D</span>}
+                trailing={<MessageSquare size={15} aria-hidden="true" />}
                 onClick={() => onSelectSession(session)}
-              >
-                <span className="mdc-chat-project-home__avatar">D</span>
-
-                <span>
-                  <strong>{session.title || "Conversa sem título"}</strong>
-                  <small>
-                    {session.context || "geral"}
-                    {formatSessionDate(session.updated_at) ? (
-                      <> · {formatSessionDate(session.updated_at)}</>
-                    ) : null}
-                  </small>
-                </span>
-
-                <MessageSquare size={15} aria-hidden="true" />
-              </button>
+              />
             ))}
           </div>
         </div>

@@ -114,7 +114,7 @@ export function ChatSidebar({
     const normalized = searchTerm.trim().toLowerCase();
 
     return sessions.filter((session) => {
-      if (selectedProjectId && session.project_id !== selectedProjectId) {
+      if (session.project_id) {
         return false;
       }
 
@@ -127,15 +127,12 @@ export function ChatSidebar({
 
       return `${title} ${context}`.toLowerCase().includes(normalized);
     });
-  }, [searchTerm, selectedProjectId, sessions]);
+  }, [searchTerm, sessions]);
 
   const groupedSessions = useMemo(
     () => groupSessions(filteredSessions),
     [filteredSessions],
   );
-
-  const selectedProjectName =
-    projects.find((project) => project.id === selectedProjectId)?.name ?? null;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -264,7 +261,6 @@ export function ChatSidebar({
           searchTerm={searchTerm}
           searchInputRef={searchInputRef}
           onNewSession={onNewSession}
-          onOpenArchived={() => void openArchivedSessions()}
           onToggleSearch={() => {
             setIsSearchOpen((current) => !current);
             setSearchTerm("");
@@ -303,7 +299,8 @@ export function ChatSidebar({
           activeSessionId={activeSessionId}
           isLoading={isLoading}
           searchTerm={searchTerm}
-          selectedProjectName={selectedProjectName}
+          selectedProjectName={null}
+          onOpenArchived={() => void openArchivedSessions()}
           onSelectSession={onSelectSession}
           onRenameSession={onRenameSession}
           onDeleteSessionRequest={setDeleteTargetSession}

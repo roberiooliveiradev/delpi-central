@@ -1,9 +1,10 @@
-import { Check, X } from "lucide-react";
+import { Archive, Check, X } from "lucide-react";
 import { useState } from "react";
 
 import type { ChatSession } from "../../data/api/chatTypes";
 import { ChatConversationMenu } from "./ChatConversationMenu";
-import { formatSessionDate, type SessionGroup } from "./chatSidebarUtils";
+import { ChatConversationListItem } from "./ChatConversationListItem";
+import { type SessionGroup } from "./chatSidebarUtils";
 
 type ChatSidebarSessionListProps = {
   groupedSessions: SessionGroup[];
@@ -17,6 +18,7 @@ type ChatSidebarSessionListProps = {
   onPinSession?: (sessionId: string) => Promise<ChatSession | null>;
   onUnpinSession?: (sessionId: string) => Promise<ChatSession | null>;
   onArchiveSession?: (sessionId: string) => Promise<ChatSession | null>;
+  onOpenArchived?: () => void;
 };
 
 export function ChatSidebarSessionList({
@@ -31,6 +33,7 @@ export function ChatSidebarSessionList({
   onPinSession,
   onUnpinSession,
   onArchiveSession,
+  onOpenArchived,
 }: ChatSidebarSessionListProps) {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -125,22 +128,16 @@ export function ChatSidebarSessionList({
           </div>
         ) : (
           <>
-            <button
-              type="button"
-              className="mdc-chat-session"
+            <ChatConversationListItem
+              session={{
+                ...session,
+                title: session.is_pinned
+                  ? `📌 ${session.title || "Conversa sem título"}`
+                  : session.title,
+              }}
+              active={session.id === activeSessionId}
               onClick={() => onSelectSession(session)}
-            >
-              <span>
-                {session.is_pinned ? "📌 " : ""}
-                {session.title || "Conversa sem título"}
-              </span>
-              <small>
-                {session.context || "geral"}
-                {formatSessionDate(session.updated_at) ? (
-                  <> · {formatSessionDate(session.updated_at)}</>
-                ) : null}
-              </small>
-            </button>
+            />
 
             <div className="mdc-chat-session-actions">
               <ChatConversationMenu
@@ -169,13 +166,23 @@ export function ChatSidebarSessionList({
 
   return (
     <>
-      <div className="mdc-chat-sidebar__section-title">
-        <span>
-          {selectedProjectName ? `Conversas · ${selectedProjectName}` : "Conversas"}
-        </span>
-        <small>
-          {groupedSessions.reduce((total, group) => total + group.sessions.length, 0)}
-        </small>
+      <div className="mdc-chat-sidebar__section-title mdc-chat-sidebar__section-title--conversations">
+        <span>Conversas</span>
+
+        <div className="mdc-chat-sidebar__section-actions">
+          <button
+            type="button"
+            onClick={onOpenArchived}
+            aria-label="Abrir conversas arquivadas"
+            title="Arquivadas"
+          >
+            <Archive size={13} aria-hidden="true" />
+          </button>
+
+          <small>
+            {groupedSessions.reduce((total, group) => total + group.sessions.length, 0)}
+          </small>
+        </div>
       </div>
 
       {isLoading ? (

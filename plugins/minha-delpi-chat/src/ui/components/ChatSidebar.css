@@ -4,9 +4,9 @@
   display: grid;
   grid-template-rows:
     auto
-    minmax(6rem, 0.5fr)
-    minmax(4.8rem, 0.34fr)
-    minmax(13rem, 1.55fr)
+    minmax(5rem, 0.34fr)
+    minmax(10rem, 0.95fr)
+    minmax(9rem, 1fr)
     auto;
   width: 17.25rem;
   min-width: 17.25rem;
@@ -15,7 +15,10 @@
   border-right: 1px solid color-mix(in srgb, var(--mdc-card-border) 72%, transparent);
   background: var(--mdc-card-bg);
   color: var(--mdc-text);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--mdc-primary) 38%, transparent) transparent;
 }
 
 .mdc-chat-sidebar__top {
@@ -154,9 +157,37 @@
   .mdc-chat-sidebar {
     grid-template-rows:
       auto
-      minmax(5.4rem, 0.46fr)
-      minmax(4.2rem, 0.3fr)
-      minmax(12rem, 1.65fr)
+      minmax(4.5rem, 0.3fr)
+      minmax(8.5rem, 0.9fr)
+      minmax(8rem, 1fr)
       auto;
   }
+}
+
+.mdc-chat-sidebar__section-title--conversations {
+  align-items: center;
+}
+
+.mdc-chat-sidebar__section-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.mdc-chat-sidebar__section-actions button {
+  display: inline-grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.mdc-chat-sidebar__section-actions button:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-primary);
 }

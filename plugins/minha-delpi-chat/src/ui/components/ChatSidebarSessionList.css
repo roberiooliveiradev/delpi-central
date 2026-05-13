@@ -50,41 +50,6 @@
   background: color-mix(in srgb, var(--mdc-primary) 13%, transparent);
 }
 
-.mdc-chat-session {
-  display: grid;
-  min-width: 0;
-  gap: 0.04rem;
-  border: 0;
-  background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.28rem 0.34rem;
-  text-align: left;
-}
-
-.mdc-chat-session span,
-.mdc-chat-session small {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mdc-chat-session span {
-  color: var(--mdc-primary);
-  font-size: 0.78rem;
-  font-weight: 820;
-  line-height: 1.15;
-}
-
-.mdc-chat-session small {
-  color: var(--mdc-text-muted);
-  font-size: 0.64rem;
-  font-weight: 650;
-  line-height: 1.1;
-}
-
 .mdc-chat-session-actions {
   display: inline-flex;
   justify-content: flex-end;
@@ -205,4 +170,31 @@
 .mdc-chat-sidebar .mdc-chat-session-row:has(.mdc-chat-conversation-menu__trigger[aria-expanded="true"]) .mdc-chat-session-actions {
   opacity: 1;
   pointer-events: auto;
+}
+
+
+/* Clean conversation rows using ChatConversationListItem */
+.mdc-chat-sidebar .mdc-chat-session-row {
+  grid-template-columns: minmax(0, 1fr) 1.85rem;
+  min-height: 2.18rem;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-radius: 0.58rem;
+  padding: 0.02rem;
+}
+
+.mdc-chat-sidebar .mdc-chat-session-row:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent) !important;
+}
+
+.mdc-chat-sidebar .mdc-chat-session-row--active {
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent) !important;
+}
+
+.mdc-chat-sidebar .mdc-chat-session-row .mdc-chat-conversation-item,
+.mdc-chat-sidebar .mdc-chat-session-row .mdc-chat-conversation-item:hover,
+.mdc-chat-sidebar .mdc-chat-session-row .mdc-chat-conversation-item--active {
+  background: transparent !important;
 }

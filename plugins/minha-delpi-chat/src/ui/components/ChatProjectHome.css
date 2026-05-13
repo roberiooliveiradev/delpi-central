@@ -69,63 +69,7 @@
 
 .mdc-chat-project-home__list {
   display: grid;
-}
-
-.mdc-chat-project-home__list button {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--mdc-space-3);
-  min-height: 3.55rem;
-  border: 0;
-  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 65%, transparent);
-  background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.65rem 0.2rem;
-  text-align: left;
-}
-
-.mdc-chat-project-home__list button:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
-}
-
-.mdc-chat-project-home__avatar {
-  display: inline-grid;
-  place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-primary) 15%, transparent);
-  color: var(--mdc-primary);
-  font-size: 0.72rem;
-  font-weight: 900;
-}
-
-.mdc-chat-project-home__list button > span:nth-child(2) {
-  display: grid;
-  min-width: 0;
-  gap: 0.1rem;
-}
-
-.mdc-chat-project-home__list strong,
-.mdc-chat-project-home__list small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mdc-chat-project-home__list strong {
-  color: var(--mdc-title);
-}
-
-.mdc-chat-project-home__list small {
-  color: var(--mdc-text-muted);
-}
-
-.mdc-chat-project-home__list svg {
-  color: var(--mdc-text-muted);
+  gap: 0.15rem;
 }
 
 .mdc-chat-project-home__empty {

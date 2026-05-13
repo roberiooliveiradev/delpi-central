@@ -2,16 +2,16 @@ import {
   ChevronDown,
   ChevronRight,
   Folder,
-  MessageSquare,
   Plus,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
+import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatSidebarWorkspaceItem } from "./ChatSidebarWorkspaceItem";
-import { formatSessionDate } from "./chatSidebarUtils";
 
 const PROJECT_SESSION_LIMIT = 5;
+const PROJECT_LIST_LIMIT = 5;
 
 type ChatSidebarProjectsSectionProps = {
   projects: ChatProject[];
@@ -35,6 +35,7 @@ export function ChatSidebarProjectsSection({
   onNewProject,
 }: ChatSidebarProjectsSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllByProject, setShowAllByProject] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -68,6 +69,24 @@ export function ChatSidebarProjectsSection({
 
     return map;
   }, [sessions]);
+
+  const orderedProjects = useMemo(() => {
+    return [...projects].sort((left, right) => {
+      const leftSessionDate = sessionsByProject.get(left.id)?.[0]?.updated_at;
+      const rightSessionDate = sessionsByProject.get(right.id)?.[0]?.updated_at;
+
+      const leftDate = new Date(leftSessionDate || left.updated_at || left.created_at || 0).getTime();
+      const rightDate = new Date(rightSessionDate || right.updated_at || right.created_at || 0).getTime();
+
+      return rightDate - leftDate;
+    });
+  }, [projects, sessionsByProject]);
+
+  const visibleProjects = showAllProjects
+    ? orderedProjects
+    : orderedProjects.slice(0, PROJECT_LIST_LIMIT);
+
+  const hiddenProjectsCount = Math.max(0, orderedProjects.length - PROJECT_LIST_LIMIT);
 
   function toggleShowAll(projectId: string) {
     setShowAllByProject((current) => ({
@@ -105,86 +124,77 @@ export function ChatSidebarProjectsSection({
           </div>
 
           <div className="mdc-chat-sidebar__link-list">
-            <ChatSidebarWorkspaceItem
-              icon={Folder}
-              title="Todos os projetos"
-              subtitle="Conversas sem filtro de projeto"
-              active={!selectedProjectId}
-              onClick={() => onSelectProject?.(null)}
-            />
-
             {isLoading ? (
               <p className="mdc-chat-muted">Carregando projetos...</p>
             ) : projects.length === 0 ? (
               <p className="mdc-chat-muted">Nenhum projeto criado.</p>
             ) : (
-              projects.map((project) => {
-                const projectSessions = sessionsByProject.get(project.id) ?? [];
-                const isProjectActive = project.id === selectedProjectId;
-                const showAll = Boolean(showAllByProject[project.id]);
-                const visibleSessions = showAll
-                  ? projectSessions
-                  : projectSessions.slice(0, PROJECT_SESSION_LIMIT);
-                const hiddenCount = Math.max(
-                  0,
-                  projectSessions.length - PROJECT_SESSION_LIMIT,
-                );
+              <>
+                {visibleProjects.map((project) => {
+                  const projectSessions = sessionsByProject.get(project.id) ?? [];
+                  const isProjectActive = project.id === selectedProjectId;
+                  const showAll = Boolean(showAllByProject[project.id]);
+                  const visibleSessions = showAll
+                    ? projectSessions
+                    : projectSessions.slice(0, PROJECT_SESSION_LIMIT);
+                  const hiddenCount = Math.max(
+                    0,
+                    projectSessions.length - PROJECT_SESSION_LIMIT,
+                  );
 
-                return (
-                  <div key={project.id} className="mdc-chat-sidebar-project-node">
-                    <ChatSidebarWorkspaceItem
-                      icon={Folder}
-                      title={project.name}
-                      subtitle={project.description || "Projeto de trabalho"}
-                      active={isProjectActive}
-                      onClick={() =>
-                        onSelectProject?.(
-                          project.id === selectedProjectId ? null : project.id,
-                        )
-                      }
-                    />
+                  return (
+                    <div key={project.id} className="mdc-chat-sidebar-project-node">
+                      <ChatSidebarWorkspaceItem
+                        icon={Folder}
+                        title={project.name}
+                        subtitle={project.description || "Projeto de trabalho"}
+                        active={isProjectActive}
+                        onClick={() =>
+                          onSelectProject?.(
+                            project.id === selectedProjectId ? null : project.id,
+                          )
+                        }
+                      />
 
-                    {isProjectActive && projectSessions.length > 0 ? (
-                      <div className="mdc-chat-sidebar-project-children">
-                        {visibleSessions.map((session) => (
-                          <button
-                            key={session.id}
-                            type="button"
-                            className={
-                              session.id === activeSessionId
-                                ? "mdc-chat-sidebar-project-session mdc-chat-sidebar-project-session--active"
-                                : "mdc-chat-sidebar-project-session"
-                            }
-                            onClick={() => onSelectSession?.(session)}
-                          >
-                            <MessageSquare size={13} aria-hidden="true" />
+                      {isProjectActive && projectSessions.length > 0 ? (
+                        <div className="mdc-chat-sidebar-project-children">
+                          {visibleSessions.map((session) => (
+                            <ChatConversationListItem
+                              key={session.id}
+                              session={session}
+                              variant="project"
+                              active={session.id === activeSessionId}
+                              onClick={() => onSelectSession?.(session)}
+                            />
+                          ))}
 
-                            <span>
-                              <strong>{session.title || "Conversa sem título"}</strong>
-                              <small>
-                                {session.context || "geral"}
-                                {formatSessionDate(session.updated_at) ? (
-                                  <> · {formatSessionDate(session.updated_at)}</>
-                                ) : null}
-                              </small>
-                            </span>
-                          </button>
-                        ))}
+                          {hiddenCount > 0 ? (
+                            <button
+                              type="button"
+                              className="mdc-chat-sidebar-project-more"
+                              onClick={() => toggleShowAll(project.id)}
+                            >
+                              {showAll ? "Mostrar menos" : `Mostrar mais ${hiddenCount}`}
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
 
-                        {hiddenCount > 0 ? (
-                          <button
-                            type="button"
-                            className="mdc-chat-sidebar-project-more"
-                            onClick={() => toggleShowAll(project.id)}
-                          >
-                            {showAll ? "Mostrar menos" : `Mostrar mais ${hiddenCount}`}
-                          </button>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })
+                {hiddenProjectsCount > 0 ? (
+                  <button
+                    type="button"
+                    className="mdc-chat-sidebar-project-more mdc-chat-sidebar-project-more--root"
+                    onClick={() => setShowAllProjects((current) => !current)}
+                  >
+                    {showAllProjects
+                      ? "Mostrar menos"
+                      : `Mostrar mais ${hiddenProjectsCount}`}
+                  </button>
+                ) : null}
+              </>
             )}
           </div>
         </>

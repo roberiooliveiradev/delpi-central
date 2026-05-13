@@ -1,4 +1,4 @@
-import { Archive, MessageSquarePlus, Search, X } from "lucide-react";
+import { MessageSquarePlus, Search, X } from "lucide-react";
 import type { RefObject } from "react";
 
 type ChatSidebarNavProps = {
@@ -6,7 +6,6 @@ type ChatSidebarNavProps = {
   searchTerm: string;
   searchInputRef: RefObject<HTMLInputElement | null>;
   onNewSession: () => void;
-  onOpenArchived: () => void;
   onToggleSearch: () => void;
   onClearSearch: () => void;
   onSearchChange: (value: string) => void;
@@ -17,7 +16,6 @@ export function ChatSidebarNav({
   searchTerm,
   searchInputRef,
   onNewSession,
-  onOpenArchived,
   onToggleSearch,
   onClearSearch,
   onSearchChange,
@@ -34,11 +32,6 @@ export function ChatSidebarNav({
           <Search size={17} aria-hidden="true" />
           <span>Buscar conversas</span>
           <kbd>Ctrl K</kbd>
-        </button>
-
-        <button type="button" onClick={onOpenArchived}>
-          <Archive size={17} aria-hidden="true" />
-          <span>Arquivadas</span>
         </button>
       </nav>
 

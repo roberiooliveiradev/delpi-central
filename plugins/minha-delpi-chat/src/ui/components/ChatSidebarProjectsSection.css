@@ -77,62 +77,6 @@
   border-left: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
 }
 
-.mdc-chat-sidebar-project-session {
-  display: grid;
-  grid-template-columns: 1.1rem minmax(0, 1fr);
-  align-items: center;
-  gap: 0.34rem;
-  width: 100%;
-  min-height: 2rem;
-  border: 0;
-  border-radius: 0.55rem;
-  background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.24rem 0.34rem;
-  text-align: left;
-}
-
-.mdc-chat-sidebar-project-session:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
-}
-
-.mdc-chat-sidebar-project-session--active {
-  background: color-mix(in srgb, var(--mdc-primary) 13%, transparent);
-}
-
-.mdc-chat-sidebar-project-session svg {
-  color: var(--mdc-text-muted);
-  justify-self: center;
-}
-
-.mdc-chat-sidebar-project-session span {
-  display: grid;
-  min-width: 0;
-  gap: 0.03rem;
-}
-
-.mdc-chat-sidebar-project-session strong,
-.mdc-chat-sidebar-project-session small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mdc-chat-sidebar-project-session strong {
-  color: var(--mdc-text);
-  font-size: 0.76rem;
-  font-weight: 760;
-  line-height: 1.12;
-}
-
-.mdc-chat-sidebar-project-session small {
-  color: var(--mdc-text-muted);
-  font-size: 0.61rem;
-  line-height: 1.08;
-}
-
 .mdc-chat-sidebar-project-more {
   justify-self: start;
   border: 0;
@@ -149,4 +93,36 @@
 .mdc-chat-sidebar-project-more:hover {
   color: var(--mdc-primary);
   background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+}
+
+.mdc-chat-sidebar-project-more--root {
+  margin: 0.1rem 0 0.2rem 1.95rem;
+}
+
+/* Conversas do projeto seguem o mesmo padrão clean da lista principal */
+.mdc-chat-sidebar-project-children {
+  gap: 0.08rem;
+  margin: 0.08rem 0 0.18rem 1.85rem;
+  padding-left: 0.35rem;
+  border-left: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+}
+
+.mdc-chat-sidebar-project-children .mdc-chat-conversation-item,
+.mdc-chat-sidebar-project-children .mdc-chat-conversation-item:hover,
+.mdc-chat-sidebar-project-children .mdc-chat-conversation-item--active {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.mdc-chat-sidebar-project-children .mdc-chat-conversation-item {
+  background: transparent !important;
+}
+
+.mdc-chat-sidebar-project-children .mdc-chat-conversation-item:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent) !important;
+}
+
+.mdc-chat-sidebar-project-children .mdc-chat-conversation-item--active {
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent) !important;
 }
