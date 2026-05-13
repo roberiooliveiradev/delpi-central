@@ -49,7 +49,8 @@ type AgentUpdatePayload = Partial<AgentPayload> & {
 type ChatAgentBuilderPageProps = {
   agent?: ChatAgent | null;
   onBack: () => void;
-  onManageActions?: (agent: ChatAgent) => void;
+  onCreateAction?: (agent: ChatAgent) => void;
+  onConfigureAction?: (agent: ChatAgent, providerKey: string) => void;
   onSelectAgent?: (agentKey: string | null) => void;
   onCreateAgent?: (payload: AgentPayload) => Promise<ChatAgent | null>;
   onUpdateAgent?: (
@@ -112,7 +113,8 @@ function getMetadataStringArray(
 export function ChatAgentBuilderPage({
   agent,
   onBack,
-  onManageActions,
+  onCreateAction,
+  onConfigureAction,
   onSelectAgent,
   onCreateAgent,
   onUpdateAgent,

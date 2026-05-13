@@ -1,6 +1,5 @@
 import {
   ArrowLeft,
-  CheckCircle2,
   DatabaseZap,
   Plus,
   RefreshCw,
@@ -62,6 +61,12 @@ function getAgentIcebreakers(agent: ChatAgent): string[] {
     .slice(0, 3);
 }
 
+function shouldConfirmAction(action: ChatActionCatalogItem): boolean {
+  return ["write", "destructive", "sql", "admin"].includes(
+    String(action.sensitivity ?? "read"),
+  );
+}
+
 export function ChatAgentActionsPage({
   agent,
   providerKey,
@@ -77,7 +82,7 @@ export function ChatAgentActionsPage({
   const [configuredActions, setConfiguredActions] = useState<ChatAgentAction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
-  const [isImportingProviderKey, setIsImportingProviderKey] = useState<string | null>(null);
+  const [isUpdatingRoutes, setIsUpdatingRoutes] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [newProviderName, setNewProviderName] = useState("");
@@ -88,12 +93,20 @@ export function ChatAgentActionsPage({
 
   const selectedProvider = useMemo(
     () =>
+      availableProviders.find((provider) => provider.providerKey === selectedProviderKey) ??
+      null,
+    [availableProviders, selectedProviderKey],
+  );
+
+  const selectedLink = useMemo(
+    () =>
       configuredProviders.find((provider) => provider.providerKey === selectedProviderKey) ??
       null,
     [configuredProviders, selectedProviderKey],
   );
 
   const icebreakers = getAgentIcebreakers(agent);
+  const isCreatingNewAction = !selectedProviderKey;
 
   async function reloadProviders() {
     const [providers, agentProviders] = await Promise.all([
@@ -103,24 +116,27 @@ export function ChatAgentActionsPage({
 
     setAvailableProviders(providers);
     setConfiguredProviders(agentProviders);
-
-    if (!selectedProviderKey && agentProviders.length > 0) {
-      setSelectedProviderKey(agentProviders[0].providerKey);
-    }
   }
 
-  async function reloadRoutes(providerKey: string) {
+  async function reloadRoutes(nextProviderKey: string) {
     setIsLoadingRoutes(true);
+    setError(null);
 
     try {
       const [actions, overrides] = await Promise.all([
-        listChatActions({ providerKey, getAccessToken }),
+        listChatActions({ providerKey: nextProviderKey, getAccessToken }),
         listChatAgentActions(agent.id, { getAccessToken }),
       ]);
 
       setProviderActions(actions);
       setConfiguredActions(
-        overrides.filter((item) => item.providerKey === providerKey),
+        overrides.filter((item) => item.providerKey === nextProviderKey),
+      );
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Não foi possível carregar as rotas desta action.",
       );
     } finally {
       setIsLoadingRoutes(false);
@@ -130,7 +146,7 @@ export function ChatAgentActionsPage({
   useEffect(() => {
     let mounted = true;
 
-    async function load() {
+    async function loadInitialData() {
       setIsLoading(true);
       setError(null);
 
@@ -140,20 +156,22 @@ export function ChatAgentActionsPage({
           listChatAgentActionProviders(agent.id, { getAccessToken }),
         ]);
 
-        if (mounted) {
-          setAvailableProviders(providers);
-          setConfiguredProviders(agentProviders);
+        if (!mounted) {
+          return;
+        }
 
-          if (!providerKey && !selectedProviderKey && agentProviders.length > 0) {
-            setSelectedProviderKey(agentProviders[0].providerKey);
-          }
+        setAvailableProviders(providers);
+        setConfiguredProviders(agentProviders);
+
+        if (providerKey) {
+          setSelectedProviderKey(providerKey);
         }
       } catch (loadError) {
         if (mounted) {
           setError(
             loadError instanceof Error
               ? loadError.message
-              : "Não foi possível carregar as actions do agente.",
+              : "Não foi possível carregar a action.",
           );
         }
       } finally {
@@ -163,12 +181,12 @@ export function ChatAgentActionsPage({
       }
     }
 
-    void load();
+    void loadInitialData();
 
     return () => {
       mounted = false;
     };
-  }, [agent.id, getAccessToken, providerKey, selectedProviderKey]);
+  }, [agent.id, getAccessToken, providerKey]);
 
   useEffect(() => {
     if (!selectedProviderKey) {
@@ -186,28 +204,7 @@ export function ChatAgentActionsPage({
     return override?.enabled ?? true;
   }
 
-  async function toggleProvider(provider: ChatActionProvider, enabled: boolean) {
-    setError(null);
-
-    await saveChatAgentActionProvider(
-      agent.id,
-      {
-        providerKey: provider.providerKey,
-        enabled,
-        allowRead: true,
-        allowWrite: true,
-        allowAdmin: false,
-        requiresConfirmationForWrite: true,
-      },
-      { getAccessToken },
-    );
-
-    await reloadProviders();
-    setSelectedProviderKey(provider.providerKey);
-  }
-
   async function updateProviderPermissions(
-    providerKey: string,
     patch: Partial<
       Pick<
         ChatAgentActionProvider,
@@ -215,19 +212,21 @@ export function ChatAgentActionsPage({
       >
     >,
   ) {
-    const current = configuredProviders.find((item) => item.providerKey === providerKey);
+    if (!selectedProviderKey) {
+      return;
+    }
 
     await saveChatAgentActionProvider(
       agent.id,
       {
-        providerKey,
-        enabled: patch.enabled ?? current?.enabled ?? true,
-        allowRead: patch.allowRead ?? current?.allowRead ?? true,
-        allowWrite: patch.allowWrite ?? current?.allowWrite ?? true,
-        allowAdmin: patch.allowAdmin ?? current?.allowAdmin ?? false,
+        providerKey: selectedProviderKey,
+        enabled: patch.enabled ?? selectedLink?.enabled ?? true,
+        allowRead: patch.allowRead ?? selectedLink?.allowRead ?? true,
+        allowWrite: patch.allowWrite ?? selectedLink?.allowWrite ?? true,
+        allowAdmin: patch.allowAdmin ?? selectedLink?.allowAdmin ?? false,
         requiresConfirmationForWrite:
           patch.requiresConfirmationForWrite ??
-          current?.requiresConfirmationForWrite ??
+          selectedLink?.requiresConfirmationForWrite ??
           true,
       },
       { getAccessToken },
@@ -247,11 +246,7 @@ export function ChatAgentActionsPage({
         providerKey: selectedProviderKey,
         actionId: action.actionId,
         sensitivity: action.sensitivity || "read",
-        requiresConfirmation:
-          action.sensitivity === "write" ||
-          action.sensitivity === "destructive" ||
-          action.sensitivity === "sql" ||
-          action.sensitivity === "admin",
+        requiresConfirmation: shouldConfirmAction(action),
         enabled,
       },
       { getAccessToken },
@@ -260,25 +255,30 @@ export function ChatAgentActionsPage({
     await reloadRoutes(selectedProviderKey);
   }
 
-  async function importProvider(providerKey: string) {
-    setIsImportingProviderKey(providerKey);
+  async function updateRoutes() {
+    if (!selectedProviderKey) {
+      setError("Selecione ou crie uma action antes de atualizar rotas.");
+      return;
+    }
+
+    setIsUpdatingRoutes(true);
     setError(null);
 
     try {
-      await importChatAgentActionProviderSchema(agent.id, providerKey, { getAccessToken });
-      await reloadProviders();
+      await importChatAgentActionProviderSchema(agent.id, selectedProviderKey, {
+        getAccessToken,
+      });
 
-      if (selectedProviderKey === providerKey) {
-        await reloadRoutes(providerKey);
-      }
-    } catch (importError) {
+      await reloadProviders();
+      await reloadRoutes(selectedProviderKey);
+    } catch (updateError) {
       setError(
-        importError instanceof Error
-          ? importError.message
-          : "Não foi possível atualizar o schema da API.",
+        updateError instanceof Error
+          ? updateError.message
+          : "Não foi possível atualizar as rotas desta action.",
       );
     } finally {
-      setIsImportingProviderKey(null);
+      setIsUpdatingRoutes(false);
     }
   }
 
@@ -304,16 +304,21 @@ export function ChatAgentActionsPage({
       }
     }
 
+    const nextProviderKey = createKeyFromName(name);
+
+    if (!nextProviderKey) {
+      setError("Informe um nome válido para gerar a chave da action.");
+      return;
+    }
+
     setIsCreatingProvider(true);
     setError(null);
 
     try {
-      const providerKey = createKeyFromName(name);
-
       await createChatAgentActionProvider(
         agent.id,
         {
-          providerKey,
+          providerKey: nextProviderKey,
           name,
           type: "openapi",
           baseUrl,
@@ -333,10 +338,10 @@ export function ChatAgentActionsPage({
       setNewProviderBaseUrl("");
       setNewProviderOpenApiUrl("");
       setNewProviderSchema("");
-      setSelectedProviderKey(providerKey);
+      setSelectedProviderKey(nextProviderKey);
 
       await reloadProviders();
-      await reloadRoutes(providerKey);
+      await reloadRoutes(nextProviderKey);
     } catch (createError) {
       setError(
         createError instanceof Error
@@ -357,24 +362,18 @@ export function ChatAgentActionsPage({
         </button>
 
         <div>
-          <span>{agent.name}</span>
-          <small>Editar ações</small>
+          <span>{selectedProvider?.name ?? "Nova action"}</span>
+          <small>{agent.name}</small>
         </div>
 
         <button
           type="button"
           className="mdc-chat-agent-actions-page__primary"
-          disabled={!selectedProviderKey || isImportingProviderKey !== null}
-          onClick={() => {
-            if (selectedProviderKey) {
-              void importProvider(selectedProviderKey);
-            }
-          }}
+          disabled={!selectedProviderKey || isUpdatingRoutes}
+          onClick={() => void updateRoutes()}
         >
           <RefreshCw size={16} aria-hidden="true" />
-          <span>
-            {isImportingProviderKey ? "Atualizando..." : "Atualizar rotas"}
-          </span>
+          <span>{isUpdatingRoutes ? "Atualizando..." : "Atualizar rotas"}</span>
         </button>
       </header>
 
@@ -387,7 +386,7 @@ export function ChatAgentActionsPage({
               </button>
             </div>
 
-            <h1>{selectedProvider ? "Editar ação" : "Criar nova ação"}</h1>
+            <h1>{isCreatingNewAction ? "Criar nova ação" : "Editar ação"}</h1>
             <p>
               Configure uma API OpenAPI específica deste agente: autenticação,
               schema, rotas disponíveis e política de privacidade.
@@ -398,292 +397,275 @@ export function ChatAgentActionsPage({
             <div className="mdc-chat-agent-actions-page__error">{error}</div>
           ) : null}
 
-          <section className="mdc-chat-agent-actions-page__block">
-            <div className="mdc-chat-agent-actions-page__block-title">
-              <Shield size={18} aria-hidden="true" />
-              <div>
-                <h2>Autenticação</h2>
-                <p>Configuração visual inicial. O armazenamento seguro de segredo pode ser conectado depois.</p>
-              </div>
-            </div>
-
-            <div className="mdc-chat-agent-actions-page__auth-card">
-              <span>Tipo de autenticação</span>
-              <div>
-                <label><input type="radio" checked readOnly /> Nenhum</label>
-                <label><input type="radio" readOnly /> Chave API</label>
-                <label><input type="radio" readOnly /> OAuth</label>
-              </div>
-            </div>
-          </section>
-
-          {!providerKey ? (
-          <section className="mdc-chat-agent-actions-page__block">
-            <div className="mdc-chat-agent-actions-page__block-title">
-              <Zap size={18} aria-hidden="true" />
-              <div>
-                <h2>Actions conectadas</h2>
-                <p>Escolha uma API existente ou crie uma nova action.</p>
-              </div>
-            </div>
-
-            <div className="mdc-chat-agent-actions-page__provider-list">
-              {isLoading ? (
-                <p className="mdc-chat-muted">Carregando APIs...</p>
-              ) : null}
-
-              {availableProviders.map((provider) => {
-                const configured = configuredProviders.find(
-                  (item) => item.providerKey === provider.providerKey,
-                );
-                const isEnabled = Boolean(configured?.enabled);
-                const isSelected = selectedProviderKey === provider.providerKey;
-
-                return (
-                  <article
-                    key={provider.providerKey}
-                    className={isSelected ? "is-selected" : ""}
-                  >
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={isEnabled}
-                        onChange={(event) =>
-                          void toggleProvider(provider, event.target.checked)
-                        }
-                      />
-
-                      <span>
-                        <strong>{provider.name}</strong>
-                        <small>
-                          {provider.providerKey}
-                          {configured ? ` · ${configured.actionCount} rota(s)` : ""}
-                        </small>
-                      </span>
-                    </label>
-
-                    <button
-                      type="button"
-                      onClick={() => setSelectedProviderKey(provider.providerKey)}
-                    >
-                      <Settings2 size={16} aria-hidden="true" />
-                      <span>Configurar</span>
-                    </button>
-                  </article>
-                );
-              })}
-
-              {availableProviders.length === 0 ? (
-                <div className="mdc-chat-agent-actions-page__empty">
-                  <DatabaseZap size={24} aria-hidden="true" />
-                  <strong>Nenhuma API cadastrada</strong>
-                  <p>Crie uma action para começar.</p>
-                </div>
-              ) : null}
-            </div>
-          </section>
-
-          </section>
+          {isLoading ? (
+            <p className="mdc-chat-muted">Carregando action...</p>
           ) : null}
 
-          {!selectedProvider ? (
-          <section className="mdc-chat-agent-actions-page__block">
-            <div className="mdc-chat-agent-actions-page__block-title">
-              <Plus size={18} aria-hidden="true" />
-              <div>
-                <h2>Criar nova ação</h2>
-                <p>Cadastre uma API OpenAPI diretamente neste agente.</p>
-              </div>
-            </div>
-
-            <div className="mdc-chat-agent-actions-page__create">
-              <div className="mdc-chat-agent-actions-page__grid">
-                <label>
-                  <span>Nome da API</span>
-                  <input
-                    value={newProviderName}
-                    onChange={(event) => setNewProviderName(event.target.value)}
-                    placeholder="API DELPI"
-                  />
-                </label>
-
-                <label>
-                  <span>URL base</span>
-                  <input
-                    value={newProviderBaseUrl}
-                    onChange={(event) => setNewProviderBaseUrl(event.target.value)}
-                    placeholder="https://api.exemplo.com.br"
-                  />
-                </label>
-              </div>
-
-              <label>
-                <span>URL OpenAPI</span>
-                <input
-                  value={newProviderOpenApiUrl}
-                  onChange={(event) => setNewProviderOpenApiUrl(event.target.value)}
-                  placeholder="https://api.exemplo.com.br/openapi.json"
-                />
-              </label>
-
-              <label>
-                <span>Schema</span>
-                <textarea
-                  value={newProviderSchema}
-                  onChange={(event) => setNewProviderSchema(event.target.value)}
-                  placeholder='{"openapi":"3.1.0","info":{"title":"Minha API","version":"1.0.0"},"paths":{...}}'
-                  rows={10}
-                />
-              </label>
-
-              <button
-                type="button"
-                onClick={() => void createProvider()}
-                disabled={isCreatingProvider}
-              >
-                <Plus size={16} aria-hidden="true" />
-                <span>{isCreatingProvider ? "Criando..." : "Criar nova ação"}</span>
-              </button>
-            </div>
-          </section>
-
-          </section>
-          ) : null}
-
-          <section className="mdc-chat-agent-actions-page__block">
-            <div className="mdc-chat-agent-actions-page__block-title">
-              <Route size={18} aria-hidden="true" />
-              <div>
-                <h2>Ações disponíveis</h2>
-                <p>
-                  {selectedProvider
-                    ? `${selectedProvider.providerName} · ${providerActions.length} rota(s)`
-                    : "Selecione uma API para ver as rotas"}
-                </p>
-              </div>
-            </div>
-
-            {selectedProvider ? (
-              <div className="mdc-chat-agent-actions-page__permissions">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={selectedProvider.allowRead}
-                    onChange={(event) =>
-                      void updateProviderPermissions(selectedProvider.providerKey, {
-                        allowRead: event.target.checked,
-                      })
-                    }
-                  />
-                  Leitura
-                </label>
-
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={selectedProvider.allowWrite}
-                    onChange={(event) =>
-                      void updateProviderPermissions(selectedProvider.providerKey, {
-                        allowWrite: event.target.checked,
-                      })
-                    }
-                  />
-                  Escrita
-                </label>
-
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={selectedProvider.allowAdmin}
-                    onChange={(event) =>
-                      void updateProviderPermissions(selectedProvider.providerKey, {
-                        allowAdmin: event.target.checked,
-                      })
-                    }
-                  />
-                  Admin
-                </label>
-
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={selectedProvider.requiresConfirmationForWrite}
-                    onChange={(event) =>
-                      void updateProviderPermissions(selectedProvider.providerKey, {
-                        requiresConfirmationForWrite: event.target.checked,
-                      })
-                    }
-                  />
-                  Confirmar escrita
-                </label>
-              </div>
-            ) : null}
-
-            {!selectedProviderKey ? (
-              <div className="mdc-chat-agent-actions-page__empty">
-                <DatabaseZap size={24} aria-hidden="true" />
-                <strong>Nenhuma API selecionada</strong>
-                <p>Escolha uma API conectada para configurar suas rotas.</p>
-              </div>
-            ) : isLoadingRoutes ? (
-              <p className="mdc-chat-muted">Carregando rotas...</p>
-            ) : (
-              <div className="mdc-chat-agent-actions-page__route-table">
+          {isCreatingNewAction ? (
+            <section className="mdc-chat-agent-actions-page__block">
+              <div className="mdc-chat-agent-actions-page__block-title">
+                <Plus size={18} aria-hidden="true" />
                 <div>
-                  <span>Nome</span>
-                  <span>Método</span>
-                  <span>Caminho</span>
-                  <span>Status</span>
+                  <h2>Criar nova ação/API</h2>
+                  <p>Cadastre uma API OpenAPI diretamente neste agente.</p>
+                </div>
+              </div>
+
+              <div className="mdc-chat-agent-actions-page__create">
+                <div className="mdc-chat-agent-actions-page__grid">
+                  <label>
+                    <span>Nome da API</span>
+                    <input
+                      value={newProviderName}
+                      onChange={(event) => setNewProviderName(event.target.value)}
+                      placeholder="API DELPI"
+                    />
+                  </label>
+
+                  <label>
+                    <span>URL base</span>
+                    <input
+                      value={newProviderBaseUrl}
+                      onChange={(event) => setNewProviderBaseUrl(event.target.value)}
+                      placeholder="https://api.exemplo.com.br"
+                    />
+                  </label>
                 </div>
 
-                {providerActions.map((action) => (
-                  <article key={action.actionId}>
+                <label>
+                  <span>URL OpenAPI</span>
+                  <input
+                    value={newProviderOpenApiUrl}
+                    onChange={(event) => setNewProviderOpenApiUrl(event.target.value)}
+                    placeholder="https://api.exemplo.com.br/openapi.json"
+                  />
+                </label>
+
+                <label>
+                  <span>Schema OpenAPI JSON</span>
+                  <textarea
+                    value={newProviderSchema}
+                    onChange={(event) => setNewProviderSchema(event.target.value)}
+                    placeholder='{"openapi":"3.1.0","info":{"title":"Minha API","version":"1.0.0"},"paths":{}}'
+                    rows={12}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => void createProvider()}
+                  disabled={isCreatingProvider}
+                >
+                  <Plus size={16} aria-hidden="true" />
+                  <span>{isCreatingProvider ? "Criando..." : "Criar nova ação"}</span>
+                </button>
+              </div>
+            </section>
+          ) : (
+            <>
+              <section className="mdc-chat-agent-actions-page__block">
+                <div className="mdc-chat-agent-actions-page__block-title">
+                  <Shield size={18} aria-hidden="true" />
+                  <div>
+                    <h2>Autenticação</h2>
+                    <p>Configuração da autenticação desta API/action.</p>
+                  </div>
+                </div>
+
+                <div className="mdc-chat-agent-actions-page__auth-card">
+                  <span>Tipo de autenticação</span>
+                  <div>
+                    <label>
+                      <input type="radio" checked readOnly />
+                      Nenhum
+                    </label>
+                    <label>
+                      <input type="radio" readOnly />
+                      Chave API
+                    </label>
+                    <label>
+                      <input type="radio" readOnly />
+                      OAuth
+                    </label>
+                  </div>
+
+                  <button type="button">
+                    <Settings2 size={16} aria-hidden="true" />
+                    <span>Configurar autenticação</span>
+                  </button>
+                </div>
+              </section>
+
+              <section className="mdc-chat-agent-actions-page__block">
+                <div className="mdc-chat-agent-actions-page__block-title">
+                  <Zap size={18} aria-hidden="true" />
+                  <div>
+                    <h2>Schema</h2>
+                    <p>Origem OpenAPI usada para importar e atualizar rotas.</p>
+                  </div>
+                </div>
+
+                <div className="mdc-chat-agent-actions-page__create">
+                  <div className="mdc-chat-agent-actions-page__grid">
+                    <label>
+                      <span>URL base</span>
+                      <input value={selectedProvider?.baseUrl ?? ""} readOnly />
+                    </label>
+
+                    <label>
+                      <span>URL OpenAPI</span>
+                      <input value={selectedProvider?.openApiUrl ?? ""} readOnly />
+                    </label>
+                  </div>
+
+                  <label>
+                    <span>Schema OpenAPI JSON</span>
+                    <textarea
+                      value={
+                        selectedProvider?.openApiUrl
+                          ? `// Schema importado de ${selectedProvider.openApiUrl}\n// Use "Atualizar rotas" para reimportar o OpenAPI desta action.`
+                          : "// Schema cadastrado nesta action.\n// Use \"Atualizar rotas\" para reprocessar as rotas disponíveis."
+                      }
+                      readOnly
+                      rows={10}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => void updateRoutes()}
+                    disabled={!selectedProviderKey || isUpdatingRoutes}
+                  >
+                    <RefreshCw size={16} aria-hidden="true" />
+                    <span>{isUpdatingRoutes ? "Atualizando..." : "Atualizar rotas"}</span>
+                  </button>
+                </div>
+              </section>
+
+              <section className="mdc-chat-agent-actions-page__block">
+                <div className="mdc-chat-agent-actions-page__block-title">
+                  <Route size={18} aria-hidden="true" />
+                  <div>
+                    <h2>Ações disponíveis</h2>
+                    <p>
+                      {selectedProvider
+                        ? `${selectedProvider.name} · ${providerActions.length} rota(s)`
+                        : "Action não encontrada"}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedLink ? (
+                  <div className="mdc-chat-agent-actions-page__permissions">
                     <label>
                       <input
                         type="checkbox"
-                        checked={isActionEnabled(action)}
+                        checked={selectedLink.allowRead}
                         onChange={(event) =>
-                          void toggleAction(action, event.target.checked)
+                          void updateProviderPermissions({
+                            allowRead: event.target.checked,
+                          })
                         }
                       />
-                      <span>{action.operationId || action.actionId}</span>
+                      Leitura
                     </label>
 
-                    <span>{action.method}</span>
-                    <span>{action.path}</span>
-                    <small>{action.sensitivity || "read"}</small>
-                  </article>
-                ))}
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={selectedLink.allowWrite}
+                        onChange={(event) =>
+                          void updateProviderPermissions({
+                            allowWrite: event.target.checked,
+                          })
+                        }
+                      />
+                      Escrita
+                    </label>
 
-                {providerActions.length === 0 ? (
-                  <div className="mdc-chat-agent-actions-page__empty">
-                    <CheckCircle2 size={24} aria-hidden="true" />
-                    <strong>Nenhuma rota importada</strong>
-                    <p>Atualize o schema da API para importar rotas OpenAPI.</p>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={selectedLink.allowAdmin}
+                        onChange={(event) =>
+                          void updateProviderPermissions({
+                            allowAdmin: event.target.checked,
+                          })
+                        }
+                      />
+                      Admin
+                    </label>
+
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={selectedLink.requiresConfirmationForWrite}
+                        onChange={(event) =>
+                          void updateProviderPermissions({
+                            requiresConfirmationForWrite: event.target.checked,
+                          })
+                        }
+                      />
+                      Confirmar escrita
+                    </label>
                   </div>
                 ) : null}
-              </div>
-            )}
-          </section>
 
-          <section className="mdc-chat-agent-actions-page__block">
-            <div className="mdc-chat-agent-actions-page__block-title">
-              <Shield size={18} aria-hidden="true" />
-              <div>
-                <h2>Política de privacidade</h2>
-                <p>URL exibida para usuários quando esta action acessar serviços externos.</p>
-              </div>
-            </div>
+                {isLoadingRoutes ? (
+                  <p className="mdc-chat-muted">Carregando rotas...</p>
+                ) : providerActions.length > 0 ? (
+                  <div className="mdc-chat-agent-actions-page__route-table">
+                    <div>
+                      <span>Nome</span>
+                      <span>Método</span>
+                      <span>Caminho</span>
+                      <span>Status</span>
+                    </div>
 
-            <label>
-              <span>URL da política</span>
-              <input
-                placeholder="https://app.example.com/privacy"
-                defaultValue=""
-              />
-            </label>
-          </section>
+                    {providerActions.map((action) => (
+                      <article key={action.actionId}>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={isActionEnabled(action)}
+                            onChange={(event) =>
+                              void toggleAction(action, event.target.checked)
+                            }
+                          />
+                          <span>{action.operationId || action.actionId}</span>
+                        </label>
 
+                        <span>{action.method ?? "-"}</span>
+                        <span>{action.path ?? "-"}</span>
+                        <small>{action.sensitivity || "read"}</small>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mdc-chat-agent-actions-page__empty">
+                    <DatabaseZap size={24} aria-hidden="true" />
+                    <strong>Nenhuma rota importada</strong>
+                    <p>Use “Atualizar rotas” para importar as rotas desta action.</p>
+                  </div>
+                )}
+              </section>
+
+              <section className="mdc-chat-agent-actions-page__block">
+                <div className="mdc-chat-agent-actions-page__block-title">
+                  <Shield size={18} aria-hidden="true" />
+                  <div>
+                    <h2>Política de privacidade</h2>
+                    <p>URL exibida para usuários quando esta action acessar serviços externos.</p>
+                  </div>
+                </div>
+
+                <label>
+                  <span>URL da política</span>
+                  <input placeholder="https://app.example.com/privacy" />
+                </label>
+              </section>
+            </>
+          )}
         </main>
 
         <aside className="mdc-chat-agent-actions-page__preview">
