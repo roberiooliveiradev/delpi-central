@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { ChatConfirmDialog } from "./ChatConfirmDialog";
-import { ChatProjectsModal } from "./ChatProjectsModal";
+import { ChatProjectCreateModal } from "./ChatProjectCreateModal";
 import { ChatSidebarAgentsSection } from "./ChatSidebarAgentsSection";
 import { ChatSidebarArchivedDialog } from "./ChatSidebarArchivedDialog";
 import { ChatSidebarBrand } from "./ChatSidebarBrand";
@@ -26,6 +26,8 @@ import "./ChatSidebarAgentsSection.css";
 import "./ChatSidebarProjectsSection.css";
 import "./ChatSidebarSessionList.css";
 import "./ChatSidebarArchivedDialog.css";
+import "./ChatProjectCreateModal.css";
+import "./ChatProjectCard.css";
 
 export type ChatSidebarView = "chat" | "agents";
 
@@ -53,20 +55,12 @@ type ChatSidebarProps = {
   onArchiveSession?: (sessionId: string) => Promise<ChatSession | null>;
   onUnarchiveSession?: (sessionId: string) => Promise<ChatSession | null>;
   onLoadArchivedSessions?: () => Promise<void>;
-  onCreateProject?: (payload: { name: string; description?: string | null }) => Promise<ChatProject | null>;
-  onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
-  onUpdateProject?: (projectId: string, payload: {
-    name?: string;
+  onCreateProject?: (payload: {
+    name: string;
     description?: string | null;
     instructions?: string | null;
-    defaultAgentKey?: string | null;
-    visibility?: string;
-    icon?: string | null;
-    color?: string | null;
-    archived?: boolean;
   }) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
-  onShareProject?: (projectId: string, payload: { targetUserId: string; role: string }) => Promise<boolean>;
   onSelectProject?: (projectId: string | null) => void;
   onSelectAgent?: (agentKey: string | null) => void;
 };
@@ -96,10 +90,7 @@ export function ChatSidebar({
   onUnarchiveSession,
   onLoadArchivedSessions,
   onCreateProject,
-  onRenameProject,
-  onUpdateProject,
   onDeleteProject,
-  onShareProject,
   onSelectProject,
   onSelectAgent,
 }: ChatSidebarProps) {
@@ -290,6 +281,7 @@ export function ChatSidebar({
           onSelectProject={onSelectProject}
           onSelectSession={onSelectSession}
           onNewProject={() => setIsProjectsModalOpen(true)}
+          onDeleteProject={onDeleteProject}
         />
       </div>
 
@@ -315,19 +307,11 @@ export function ChatSidebar({
         <small>APIs, conhecimento e ações autorizadas</small>
       </div>
 
-      <ChatProjectsModal
+      <ChatProjectCreateModal
         open={isProjectsModalOpen}
-        projects={projects}
-        agents={agents}
-        selectedProjectId={selectedProjectId}
-        isLoading={isLoadingProjects}
         onClose={() => setIsProjectsModalOpen(false)}
-        onSelectProject={onSelectProject}
         onCreateProject={onCreateProject}
-        onUpdateProject={onUpdateProject}
-        onRenameProject={onRenameProject}
-        onDeleteProject={onDeleteProject}
-        onShareProject={onShareProject}
+        onSelectProject={onSelectProject}
       />
 
       <ChatConfirmDialog

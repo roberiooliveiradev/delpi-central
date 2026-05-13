@@ -71,7 +71,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     addProject,
     editProject,
     removeProject,
-    shareProject,
   } = useChatWorkspace({ getAccessToken });
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
@@ -198,10 +197,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onUnarchiveSession={unarchiveSession}
           onLoadArchivedSessions={loadArchivedSessions}
           onCreateProject={addProject}
-          onRenameProject={(projectId, name) => editProject(projectId, { name })}
-          onUpdateProject={editProject}
           onDeleteProject={removeProject}
-          onShareProject={shareProject}
           onSelectProject={(projectId) => {
             setSelectedProjectId(projectId);
             void handleStartSession();
@@ -267,20 +263,48 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                   project={selectedProject}
                   sessions={selectedProjectSessions}
                   onSelectSession={handleSelectSession}
+                  onUpdateProject={editProject}
+                  onDeleteProject={async (projectId) => {
+                    const deleted = await removeProject(projectId);
+
+                    if (deleted) {
+                      setSelectedProjectId(null);
+                      await handleStartSession();
+                    }
+
+                    return deleted;
+                  }}
+                  onClearProject={() => {
+                    setSelectedProjectId(null);
+                    void handleStartSession();
+                  }}
+                  composer={
+                    <ChatInput
+                      value={draft}
+                      disabled={false}
+                      isSending={isStreaming}
+                      variant="center"
+                      onChange={setDraft}
+                      onSubmit={sendMessage}
+                      onCancel={cancelStreaming}
+                    />
+                  }
                 />
               ) : (
-                <ChatEmptyState onUseSuggestion={setDraft} />
-              )}
+                <>
+                  <ChatEmptyState onUseSuggestion={setDraft} />
 
-              <ChatInput
-                value={draft}
-                disabled={false}
-                isSending={isStreaming}
-                variant="center"
-                onChange={setDraft}
-                onSubmit={sendMessage}
-                onCancel={cancelStreaming}
-              />
+                  <ChatInput
+                    value={draft}
+                    disabled={false}
+                    isSending={isStreaming}
+                    variant="center"
+                    onChange={setDraft}
+                    onSubmit={sendMessage}
+                    onCancel={cancelStreaming}
+                  />
+                </>
+              )}
             </section>
           ) : (
             <>

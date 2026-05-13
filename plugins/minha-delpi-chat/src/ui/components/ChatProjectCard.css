@@ -1,0 +1,162 @@
+.mdc-chat-project-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1.75rem;
+  align-items: center;
+  gap: 0.08rem;
+  min-height: 2.08rem;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0.58rem;
+  background: transparent !important;
+  transition: background 0.14s ease;
+}
+
+.mdc-chat-project-card:hover,
+.mdc-chat-project-card--active {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent) !important;
+}
+
+.mdc-chat-project-card__main {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.48rem;
+  min-width: 0;
+  min-height: 2.08rem;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0.58rem;
+  background: transparent !important;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.28rem 0.42rem;
+  text-align: left;
+}
+
+.mdc-chat-project-card__main:hover,
+.mdc-chat-project-card__main:focus,
+.mdc-chat-project-card__main:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.mdc-chat-project-card__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 0 !important;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-project-card__content {
+  display: grid;
+  min-width: 0;
+}
+
+.mdc-chat-project-card__content strong {
+  overflow: hidden;
+  color: var(--mdc-primary);
+  font-size: 0.82rem;
+  font-weight: 820;
+  line-height: 1.16;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-project-card--active .mdc-chat-project-card__content strong {
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-project-card__options {
+  display: inline-grid;
+  place-items: center;
+  width: 1.72rem;
+  height: 1.72rem;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0.52rem;
+  background: transparent !important;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.mdc-chat-project-card:hover .mdc-chat-project-card__options,
+.mdc-chat-project-card__options[aria-expanded="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mdc-chat-project-card__options:hover,
+.mdc-chat-project-card__options:focus,
+.mdc-chat-project-card__options:focus-visible,
+.mdc-chat-project-card__options[aria-expanded="true"] {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent) !important;
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-project-card-menu__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.mdc-chat-project-card-menu__panel {
+  position: fixed;
+  z-index: 9991;
+  display: grid;
+  width: 13.1rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, black);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34);
+  padding: 0.35rem;
+}
+
+.mdc-chat-project-card-menu__panel button {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.62rem;
+  width: 100%;
+  border: 0 !important;
+  border-radius: 0.62rem;
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.86rem;
+  padding: 0.58rem 0.62rem;
+  text-align: left;
+}
+
+.mdc-chat-project-card-menu__panel button:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
+}
+
+.mdc-chat-project-card-menu__danger {
+  color: var(--mdc-danger) !important;
+}
+
+.mdc-chat-project-card-menu__danger:hover {
+  background: color-mix(in srgb, var(--mdc-danger) 10%, transparent) !important;
+}

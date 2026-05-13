@@ -1,14 +1,13 @@
 import {
   ChevronDown,
   ChevronRight,
-  Folder,
   Plus,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { ChatConversationListItem } from "./ChatConversationListItem";
-import { ChatSidebarWorkspaceItem } from "./ChatSidebarWorkspaceItem";
+import { ChatProjectCard } from "./ChatProjectCard";
 
 const PROJECT_SESSION_LIMIT = 5;
 const PROJECT_LIST_LIMIT = 5;
@@ -22,6 +21,7 @@ type ChatSidebarProjectsSectionProps = {
   onSelectProject?: (projectId: string | null) => void;
   onSelectSession?: (session: ChatSession) => void;
   onNewProject: () => void;
+  onDeleteProject?: (projectId: string) => Promise<boolean>;
 };
 
 export function ChatSidebarProjectsSection({
@@ -33,6 +33,7 @@ export function ChatSidebarProjectsSection({
   onSelectProject,
   onSelectSession,
   onNewProject,
+  onDeleteProject,
 }: ChatSidebarProjectsSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAllProjects, setShowAllProjects] = useState(false);
@@ -144,16 +145,24 @@ export function ChatSidebarProjectsSection({
 
                   return (
                     <div key={project.id} className="mdc-chat-sidebar-project-node">
-                      <ChatSidebarWorkspaceItem
-                        icon={Folder}
-                        title={project.name}
-                        subtitle={project.description || "Projeto de trabalho"}
+                      <ChatProjectCard
+                        project={project}
                         active={isProjectActive}
-                        onClick={() =>
+                        onSelect={() =>
                           onSelectProject?.(
                             project.id === selectedProjectId ? null : project.id,
                           )
                         }
+                        onOpenSettings={() => onSelectProject?.(project.id)}
+                        onDelete={() => {
+                          const confirmed = window.confirm(
+                            `Excluir o projeto "${project.name}"?`,
+                          );
+
+                          if (confirmed) {
+                            void onDeleteProject?.(project.id);
+                          }
+                        }}
                       />
 
                       {isProjectActive && projectSessions.length > 0 ? (
