@@ -24,13 +24,18 @@ class ChatToolContextService:
         user_id: str,
         access_token: str,
         message: str,
+        allowed_action_ids: list[str] | None = None,
+        actions_enabled: bool = True,
     ) -> dict:
         selected_tools = self.tool_selection_service.select_tools(message)
 
-        if self.external_action_selection_service:
+        if self.external_action_selection_service and actions_enabled:
             selected_external_action = self.external_action_selection_service.select_action(message)
 
-            if selected_external_action:
+            if selected_external_action and self._is_external_action_allowed(
+                selected_external_action,
+                allowed_action_ids,
+            ):
                 selected_tools.append(selected_external_action)
 
         if not selected_tools:

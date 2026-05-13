@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.services.chat_tool_context_service import ChatToolContextService
+from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.rag_context_service import RagContextService
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
@@ -30,6 +31,7 @@ class StreamChatMessageUseCase:
         chat_tool_context_service: ChatToolContextService,
         agent_repository: ChatAgentRepositoryPort | None = None,
         attachment_repository: ChatAttachmentRepositoryPort | None = None,
+        workspace_context_service: ChatWorkspaceContextService | None = None,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
@@ -39,6 +41,7 @@ class StreamChatMessageUseCase:
         self.chat_tool_context_service = chat_tool_context_service
         self.agent_repository = agent_repository
         self.attachment_repository = attachment_repository
+        self.workspace_context_service = workspace_context_service
 
     def stream(self, request: SendChatMessageRequest) -> Iterator[dict]:
         message = self._validate_message(request.message)
@@ -54,7 +57,7 @@ class StreamChatMessageUseCase:
         if session.user_id != user_id:
             raise ChatSessionAccessDeniedError()
 
-        selected_agent = self._get_session_agent(session, user_id)
+        workspace_context = self._build_workspace_context(session, user_id)
         attachments = self._get_message_attachments(request, user_id, session_id)
 
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
@@ -71,7 +74,11 @@ class StreamChatMessageUseCase:
         rag = self.rag_context_service.build_context(message)
         sources = rag["sources"]
 
-        tool_context = self._build_tool_context(request)
+        tool_context = self._build_tool_context(
+            request,
+            allowed_action_ids=workspace_context.get("allowedActionIds"),
+            capabilities=workspace_context.get("capabilities") or {},
+        )
         tool_calls = tool_context["toolCalls"]
 
         user_message = self.chat_repository.create_message(
@@ -80,8 +87,9 @@ class StreamChatMessageUseCase:
             content=message,
             metadata={
                 "context": request.context,
-                "agentKey": session.agent_key,
-                "agent": self._agent_metadata(selected_agent),
+                "agentKey": workspace_context.get("agentKey"),
+                "agent": workspace_context.get("agent"),
+                "project": workspace_context.get("project"),
                 "attachments": attachments,
                 "stream": True,
                 "rag": {
@@ -103,7 +111,8 @@ class StreamChatMessageUseCase:
             current_message=message,
             rag_context=rag["context"],
             tool_context=tool_context["context"],
-            agent_prompt=selected_agent.system_prompt if selected_agent else None,
+            project_prompt=workspace_context.get("projectPrompt"),
+            agent_prompt=workspace_context.get("agentPrompt"),
             attachments=attachments,
         )
 
@@ -135,8 +144,9 @@ class StreamChatMessageUseCase:
             metadata={
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
-                "agentKey": session.agent_key,
-                "agent": self._agent_metadata(selected_agent),
+                "agentKey": workspace_context.get("agentKey"),
+                "agent": workspace_context.get("agent"),
+                "project": workspace_context.get("project"),
                 "attachments": attachments,
                 "sources": sources,
                 "toolCalls": tool_calls,
@@ -158,14 +168,15 @@ class StreamChatMessageUseCase:
                 "session_id": str(session_id),
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
-                "agentKey": session.agent_key,
-                "agent": self._agent_metadata(selected_agent),
+                "agentKey": workspace_context.get("agentKey"),
+                "agent": workspace_context.get("agent"),
+                "project": workspace_context.get("project"),
                 "attachments": attachments,
                 "sources": sources,
                 "rag_enabled": True,
                 "tool_count": len(tool_calls),
-                "agent_key": session.agent_key,
-                "agent": self._agent_metadata(selected_agent),
+                "agent_key": workspace_context.get("agentKey"),
+                "agent": workspace_context.get("agent"),
             },
         )
 
@@ -178,10 +189,10 @@ class StreamChatMessageUseCase:
         }
 
     def _get_session_agent(self, session, user_id: UUID):
-        if not self.agent_repository or not session.agent_key:
+        if not self.agent_repository or not workspace_context.get("agentKey"):
             return None
 
-        return self.agent_repository.get_enabled_by_key(session.agent_key, user_id=user_id)
+        return self.agent_repository.get_enabled_by_key(workspace_context.get("agentKey"), user_id=user_id)
 
     def _agent_metadata(self, agent) -> dict | None:
         if not agent:
@@ -264,17 +275,28 @@ class StreamChatMessageUseCase:
 
         return normalized[:48].rstrip() + "..."
 
-    def _build_tool_context(self, request: SendChatMessageRequest) -> dict:
+    def _build_tool_context(
+        self,
+        request: SendChatMessageRequest,
+        allowed_action_ids: list[str] | None = None,
+        capabilities: dict | None = None,
+    ) -> dict:
         if not request.access_token:
             return {
                 "context": "",
                 "toolCalls": [],
             }
 
+        actions_enabled = True
+        if capabilities and capabilities.get("actions") is False:
+            actions_enabled = False
+
         return self.chat_tool_context_service.build_context(
             user_id=request.user_id,
             access_token=request.access_token,
             message=request.message,
+            allowed_action_ids=allowed_action_ids,
+            actions_enabled=actions_enabled,
         )
 
     def _validate_message(self, value: str) -> str:
@@ -297,6 +319,7 @@ class StreamChatMessageUseCase:
         current_message: str,
         rag_context: str,
         tool_context: str,
+        project_prompt: str | None = None,
         agent_prompt: str | None = None,
         attachments: list[dict] | None = None,
     ) -> list[dict]:
@@ -304,6 +327,13 @@ class StreamChatMessageUseCase:
             rag_context=rag_context,
             tool_context=tool_context,
         )
+
+        if project_prompt:
+            base_prompt = (
+                f"{base_prompt}\n\n"
+                "Contexto e instruções do projeto atual:\n"
+                f"{project_prompt}"
+            )
 
         if agent_prompt:
             base_prompt = (

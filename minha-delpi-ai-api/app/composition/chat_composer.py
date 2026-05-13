@@ -3,6 +3,7 @@ from app.application.use_cases.delete_chat_session_use_case import DeleteChatSes
 from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
 from app.application.services.external_actions.external_action_selection_service import ExternalActionSelectionService
 from app.application.services.chat_tool_context_service import ChatToolContextService
+from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.rag_context_service import RagContextService
 from app.application.use_cases.create_chat_session_use_case import CreateChatSessionUseCase
 from app.application.use_cases.chat_agents_use_cases import (
@@ -64,7 +65,11 @@ from app.infrastructure.persistence.postgres_knowledge_repository import (
 
 
 def make_create_chat_session_use_case() -> CreateChatSessionUseCase:
-    return CreateChatSessionUseCase(PostgresChatSessionRepository())
+    return CreateChatSessionUseCase(
+        repository=PostgresChatSessionRepository(),
+        project_repository=PostgresChatProjectRepository(),
+        agent_repository=PostgresChatAgentRepository(),
+    )
 
 
 def make_list_chat_sessions_use_case() -> ListChatSessionsUseCase:
@@ -81,6 +86,15 @@ def make_rag_context_service() -> RagContextService:
             knowledge_repository=PostgresKnowledgeRepository(),
             embedding_gateway=LocalEmbeddingGateway(),
         )
+    )
+
+
+
+
+def make_chat_workspace_context_service() -> ChatWorkspaceContextService:
+    return ChatWorkspaceContextService(
+        project_repository=PostgresChatProjectRepository(),
+        agent_repository=PostgresChatAgentRepository(),
     )
 
 
@@ -104,6 +118,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
         chat_tool_context_service=make_chat_tool_context_service(),
         agent_repository=PostgresChatAgentRepository(),
         attachment_repository=PostgresChatAttachmentRepository(),
+        workspace_context_service=make_chat_workspace_context_service(),
     )
 
 
@@ -117,6 +132,7 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
         chat_tool_context_service=make_chat_tool_context_service(),
         agent_repository=PostgresChatAgentRepository(),
         attachment_repository=PostgresChatAttachmentRepository(),
+        workspace_context_service=make_chat_workspace_context_service(),
     )
 
 def make_rename_chat_session_use_case() -> RenameChatSessionUseCase:
@@ -208,6 +224,7 @@ def make_share_chat_project_use_case() -> ShareChatProjectUseCase:
 def make_create_chat_attachment_use_case() -> CreateChatAttachmentUseCase:
     return CreateChatAttachmentUseCase(
         attachment_repository=PostgresChatAttachmentRepository(),
+        workspace_context_service=make_chat_workspace_context_service(),
         session_repository=PostgresChatSessionRepository(),
     )
 
@@ -215,6 +232,7 @@ def make_create_chat_attachment_use_case() -> CreateChatAttachmentUseCase:
 def make_list_chat_attachments_use_case() -> ListChatAttachmentsUseCase:
     return ListChatAttachmentsUseCase(
         attachment_repository=PostgresChatAttachmentRepository(),
+        workspace_context_service=make_chat_workspace_context_service(),
         session_repository=PostgresChatSessionRepository(),
     )
 

@@ -4,6 +4,7 @@ from dataclasses import asdict
 from flask import Blueprint, Response, g, jsonify, request, stream_with_context
 
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
 from app.interfaces.http.rate_limit_decorators import rate_limit
 
 from app.application.dto.create_chat_artifact_request import CreateChatArtifactRequest
@@ -72,6 +73,18 @@ def status():
     return jsonify(result), 200
 
 
+
+
+
+
+@chat_bp.get("/actions")
+@require_permission("minha-delpi.chat.access")
+def list_actions():
+    provider_key = request.args.get("providerKey") or request.args.get("provider_key")
+    repository = PostgresExternalActionRepository()
+    actions = repository.list_actions(provider_key=provider_key)
+
+    return jsonify(actions), 200
 
 
 @chat_bp.get("/agents")
