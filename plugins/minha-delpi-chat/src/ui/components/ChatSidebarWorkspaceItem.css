@@ -5,8 +5,8 @@
   gap: 0.48rem;
   width: 100%;
   min-height: 2.12rem;
-  border: 1px solid transparent;
-  border-radius: 0.68rem;
+  border: 0;
+  border-radius: 0.62rem;
   background: transparent;
   color: var(--mdc-text);
   cursor: pointer;
@@ -14,8 +14,8 @@
   padding: 0.32rem 0.42rem;
   text-align: left;
   transition:
-    background 0.15s ease,
-    color 0.15s ease;
+    background 0.14s ease,
+    color 0.14s ease;
 }
 
 .mdc-sidebar-workspace-item:hover {
@@ -27,7 +27,7 @@
 }
 
 .mdc-sidebar-workspace-item--active {
-  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  background: color-mix(in srgb, var(--mdc-primary) 13%, transparent);
   color: var(--mdc-primary);
 }
 
@@ -37,14 +37,14 @@
   justify-content: center;
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: 0.52rem;
-  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
   color: var(--mdc-primary);
 }
 
 .mdc-sidebar-workspace-item__icon svg {
-  width: 0.92rem;
-  height: 0.92rem;
+  width: 0.9rem;
+  height: 0.9rem;
 }
 
 .mdc-sidebar-workspace-item__content {
@@ -78,7 +78,7 @@
   max-width: 2.35rem;
   height: 1.05rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-primary) 13%, transparent);
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
   color: var(--mdc-primary);
   font-size: 0.56rem;
   font-style: normal;
@@ -87,4 +87,28 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Clean override: agentes/projetos sem cards/bordas */
+.mdc-chat-sidebar .mdc-sidebar-workspace-item,
+.mdc-chat-sidebar .mdc-sidebar-workspace-item:hover,
+.mdc-chat-sidebar .mdc-sidebar-workspace-item:focus,
+.mdc-chat-sidebar .mdc-sidebar-workspace-item:focus-visible,
+.mdc-chat-sidebar .mdc-sidebar-workspace-item--active {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.mdc-chat-sidebar .mdc-sidebar-workspace-item {
+  background: transparent !important;
+  border-radius: 0.58rem;
+}
+
+.mdc-chat-sidebar .mdc-sidebar-workspace-item:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent) !important;
+}
+
+.mdc-chat-sidebar .mdc-sidebar-workspace-item--active {
+  background: color-mix(in srgb, var(--mdc-primary) 13%, transparent) !important;
 }

@@ -7,12 +7,12 @@
   overflow-y: auto;
   padding: 0 var(--mdc-sidebar-pad-x) 0.55rem;
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--mdc-primary) 45%, transparent) transparent;
+  scrollbar-color: color-mix(in srgb, var(--mdc-primary) 42%, transparent) transparent;
 }
 
 .mdc-chat-session-group {
   display: grid;
-  gap: 0.1rem;
+  gap: 0.08rem;
 }
 
 .mdc-chat-session-group h3 {
@@ -31,30 +31,29 @@
 
 .mdc-chat-session-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 1.9rem;
   align-items: center;
-  gap: 0.16rem;
-  min-height: 2.28rem;
-  border: 1px solid transparent;
-  border-radius: 0.68rem;
-  padding: 0.06rem;
-  transition:
-    background 0.14s ease,
-    border-color 0.14s ease;
+  gap: 0.1rem;
+  min-height: 2.25rem;
+  border: 0;
+  border-radius: 0.62rem;
+  padding: 0.04rem;
+  background: transparent;
+  transition: background 0.14s ease;
 }
 
 .mdc-chat-session-row:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
 }
 
 .mdc-chat-session-row--active {
-  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  background: color-mix(in srgb, var(--mdc-primary) 13%, transparent);
 }
 
 .mdc-chat-session {
   display: grid;
   min-width: 0;
-  gap: 0.05rem;
+  gap: 0.04rem;
   border: 0;
   background: transparent;
   color: var(--mdc-text);
@@ -87,13 +86,15 @@
 }
 
 .mdc-chat-session-actions {
+  display: inline-flex;
+  justify-content: flex-end;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.14s ease;
 }
 
 .mdc-chat-session-row:hover .mdc-chat-session-actions,
-.mdc-chat-session-row--active .mdc-chat-session-actions {
+.mdc-chat-session-row:has(.mdc-chat-conversation-menu__trigger[aria-expanded="true"]) .mdc-chat-session-actions {
   opacity: 1;
   pointer-events: auto;
 }
@@ -127,9 +128,81 @@
   place-items: center;
   width: 1.78rem;
   height: 1.78rem;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: 0.62rem;
-  background: var(--mdc-bg);
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
   color: var(--mdc-text-muted);
   cursor: pointer;
+}
+
+.mdc-chat-session-action:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-primary);
+}
+
+/* Clean override: conversas como lista simples, sem cards/bordas */
+.mdc-chat-sidebar .mdc-chat-session-row {
+  grid-template-columns: minmax(0, 1fr) 1.85rem;
+  min-height: 2.18rem;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-radius: 0.58rem;
+  padding: 0.02rem;
+}
+
+.mdc-chat-sidebar .mdc-chat-session-row:hover {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent) !important;
+}
+
+.mdc-chat-sidebar .mdc-chat-session-row--active {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: color-mix(in srgb, var(--mdc-primary) 13%, transparent) !important;
+}
+
+.mdc-chat-sidebar .mdc-chat-session {
+  width: 100%;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0.26rem 0.34rem;
+}
+
+.mdc-chat-sidebar .mdc-chat-session:hover,
+.mdc-chat-sidebar .mdc-chat-session:focus,
+.mdc-chat-sidebar .mdc-chat-session:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.mdc-chat-sidebar .mdc-chat-session span {
+  font-size: 0.78rem;
+  font-weight: 820;
+  line-height: 1.15;
+}
+
+.mdc-chat-sidebar .mdc-chat-session small {
+  font-size: 0.63rem;
+  line-height: 1.08;
+}
+
+.mdc-chat-sidebar .mdc-chat-session-actions {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mdc-chat-sidebar .mdc-chat-session-row:hover .mdc-chat-session-actions,
+.mdc-chat-sidebar .mdc-chat-session-row:has(.mdc-chat-conversation-menu__trigger[aria-expanded="true"]) .mdc-chat-session-actions {
+  opacity: 1;
+  pointer-events: auto;
 }
