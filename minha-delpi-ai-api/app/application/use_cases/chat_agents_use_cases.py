@@ -16,6 +16,10 @@ ALLOWED_SHARE_ROLES = {"viewer", "editor"}
 ALLOWED_SENSITIVITY = {"read", "write", "admin"}
 
 
+class ChatAgentPermissionDeniedError(Exception):
+    pass
+
+
 def _to_response(agent: ChatAgent, access_role: str = "viewer") -> ChatAgentResponse:
     return ChatAgentResponse(
         id=str(agent.id),
@@ -119,9 +123,18 @@ class UpdateChatAgentUseCase:
         if fields["visibility"] is not None and fields["visibility"] not in ALLOWED_VISIBILITY:
             raise InvalidChatSessionInputError("Invalid agent visibility")
 
+        agent_id = UUID(request.agent_id)
+        user_id = UUID(request.user_id)
+
+        if not self.repository.exists_by_id(agent_id):
+            return None
+
+        if not self.repository.can_edit(agent_id, user_id):
+            raise ChatAgentPermissionDeniedError("You do not have permission to edit this agent")
+
         agent = self.repository.update(
-            agent_id=UUID(request.agent_id),
-            user_id=UUID(request.user_id),
+            agent_id=agent_id,
+            user_id=user_id,
             **fields,
         )
 

@@ -179,6 +179,9 @@ def update_agent(agent_id: str):
             return _not_found_response()
 
         db.session.commit()
+    except ChatAgentPermissionDeniedError as exc:
+        db.session.rollback()
+        return forbidden(str(exc))
     except Exception:
         db.session.rollback()
         raise
@@ -923,6 +926,20 @@ def delete_session(session_id: str):
     return "", 204
 
 
+
+
+def forbidden(message: str = "Forbidden"):
+    return jsonify(
+        {
+            "errors": [
+                {
+                    "code": "forbidden",
+                    "message": message,
+                    "path": "_global",
+                }
+            ]
+        }
+    ), 403
 
 def _not_found_response():
     return jsonify(

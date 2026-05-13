@@ -39,6 +39,27 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         return result
 
+
+    def exists_by_id(self, agent_id: UUID) -> bool:
+        return (
+            db.session.query(AiChatAgentModel.id)
+            .filter(AiChatAgentModel.id == agent_id)
+            .first()
+            is not None
+        )
+
+    def can_edit(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+    ) -> bool:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model:
+            return False
+
+        return self._can_edit(model, user_id)
+
     def get_accessible_by_id(
         self,
         agent_id: UUID,
