@@ -38,11 +38,13 @@ type ChatPageProps = {
 
 export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [selectedAgentKey, setSelectedAgentKey] = useState<string | null>(null);
-  const [isAgentContextOnly, setIsAgentContextOnly] = useState(false);
+  const [activeAgentPageKey, setActiveAgentPageKey] = useState<string | null>(null);
+  const [contextAgentKey, setContextAgentKey] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
   const [projectSettingsRequestKey, setProjectSettingsRequestKey] = useState(0);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
+
+  const effectiveAgentKey = contextAgentKey ?? activeAgentPageKey;
 
   const {
     sessions,
@@ -76,7 +78,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   } = useChatSession({
     getAccessToken,
     projectId: selectedProjectId,
-    agentKey: selectedAgentKey,
+    agentKey: effectiveAgentKey,
   });
 
   const {
@@ -95,7 +97,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
-  const selectedAgent = agents.find((agent) => agent.key === selectedAgentKey);
+  const activeAgentPage = agents.find((agent) => agent.key === activeAgentPageKey);
+  const contextAgent = agents.find((agent) => agent.key === contextAgentKey);
   const selectedProjectSessions = selectedProjectId
     ? sessions.filter((session) => session.project_id === selectedProjectId)
     : [];
@@ -190,8 +193,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   async function handleStartGeneralSession() {
     setCanvasDocument(null);
     setSelectedProjectId(null);
-    setSelectedAgentKey(null);
-    setIsAgentContextOnly(false);
+    setActiveAgentPageKey(null);
+    setContextAgentKey(null);
     setCurrentView("chat");
     await startSession();
   }
@@ -199,8 +202,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   function handleSelectSession(session: typeof sessions[number]) {
     setCanvasDocument(null);
     setSelectedProjectId(session.project_id ?? null);
-    setSelectedAgentKey(session.agent_key ?? null);
-    setIsAgentContextOnly(Boolean(session.agent_key));
+    setActiveAgentPageKey(null);
+    setContextAgentKey(session.agent_key ?? null);
     setCurrentView("chat");
     selectSession(session);
   }
@@ -217,34 +220,38 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     !isStreaming;
 
   function getComposerPlaceholder() {
-    if (selectedProject && selectedAgent) {
-      return `Novo chat em ${selectedProject.name} usando ${selectedAgent.name}`;
+    if (selectedProject && contextAgent) {
+      return `Novo chat em ${selectedProject.name} usando ${contextAgent.name}`;
     }
 
     if (selectedProject) {
       return `Novo chat em ${selectedProject.name}`;
     }
 
-    if (selectedAgent) {
-      return `Pergunte ao agente ${selectedAgent.name}`;
+    if (contextAgent) {
+      return `Pergunte usando ${contextAgent.name}`;
+    }
+
+    if (activeAgentPage) {
+      return `Pergunte ao agente ${activeAgentPage.name}`;
     }
 
     return "Pergunte alguma coisa";
   }
 
   async function handleSelectContextAgent(agentKey: string | null) {
-    setSelectedAgentKey(agentKey);
-    setIsAgentContextOnly(Boolean(agentKey));
+    setContextAgentKey(agentKey);
   }
 
   async function handleSelectContextProject(projectId: string | null) {
     setSelectedProjectId(projectId);
+    setActiveAgentPageKey(null);
   }
 
   const composerContextProps = {
     agents,
     projects,
-    selectedAgentKey,
+    activeAgentPageKey: contextAgentKey,
     selectedProjectId,
     onSelectAgent: handleSelectContextAgent,
     onSelectProject: handleSelectContextProject,
@@ -266,7 +273,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           projects={projects}
           activeSessionId={activeSession?.id}
           selectedProjectId={selectedProjectId}
-          selectedAgentKey={selectedAgentKey}
+          selectedAgentKey={activeAgentPageKey}
           isLoading={isLoadingSessions}
           isLoadingArchivedSessions={isLoadingArchivedSessions}
           isLoadingAgents={isLoadingAgents}
@@ -284,15 +291,18 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onRenameProject={(projectId, name) => editProject(projectId, { name })}
           onDeleteProject={removeProject}
           onSelectProject={(projectId) => {
+            setCanvasDocument(null);
             setSelectedProjectId(projectId);
-            setIsAgentContextOnly(false);
+            setActiveAgentPageKey(null);
+            setContextAgentKey(null);
             setCurrentView("chat");
+            void startSession();
           }}
           onSelectAgent={(agentKey) => {
             setCanvasDocument(null);
             setSelectedProjectId(null);
-            setSelectedAgentKey(agentKey);
-            setIsAgentContextOnly(false);
+            setActiveAgentPageKey(agentKey);
+            setContextAgentKey(null);
             setCurrentView("chat");
             void startSession();
           }}
@@ -305,14 +315,14 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           <section className="mdc-chat-main" aria-label="Gerenciar agentes">
             <ChatAgentsPage
               agents={agents}
-              selectedAgentKey={selectedAgentKey}
+              selectedAgentKey={activeAgentPageKey}
               isLoading={isLoadingAgents}
               onBack={() => setCurrentView("chat")}
               onSelectAgent={(agentKey) => {
                 setCanvasDocument(null);
                 setSelectedProjectId(null);
-                setSelectedAgentKey(agentKey);
-                setIsAgentContextOnly(false);
+                setActiveAgentPageKey(agentKey);
+                setContextAgentKey(null);
                 setCurrentView("chat");
                 void startSession();
               }}
@@ -324,24 +334,28 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
         ) : (
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
           <ChatContextTopbar
-            mode={selectedProject ? "project" : selectedAgent ? "agent" : "general"}
+            mode={selectedProject ? "project" : activeAgentPage ? "agent" : "general"}
             title={
               selectedProject?.name ||
-              selectedAgent?.name ||
+              activeAgentPage?.name ||
               "Minha DELPI Chat"
             }
             subtitle={
               selectedProject
-                ? "Projeto selecionado"
-                : selectedAgent
-                  ? "Chat com agente"
-                  : "Assistente corporativo"
+                ? contextAgent
+                  ? `Projeto usando ${contextAgent.name}`
+                  : "Projeto selecionado"
+                : activeAgentPage
+                  ? "Página do agente"
+                  : contextAgent
+                    ? `Chat usando ${contextAgent.name}`
+                    : "Assistente corporativo"
             }
             badge={
               selectedProject
                 ? `${selectedProjectSessions.length} chats`
-                : selectedAgent
-                  ? `${getAgentIcebreakerCount(selectedAgent)} quebra-gelos`
+                : activeAgentPage
+                  ? `${getAgentIcebreakerCount(activeAgentPage)} quebra-gelos`
                   : undefined
             }
             onOpenAdmin={onOpenAdmin}
@@ -379,14 +393,15 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
               if (deleted) {
                 setSelectedProjectId(null);
-                setIsAgentContextOnly(false);
+                setContextAgentKey(null);
                 await handleStartSession();
               }
             }}
             onManageAgents={() => setCurrentView("agents")}
             onClearAgent={() => {
-              setSelectedAgentKey(null);
-              setIsAgentContextOnly(false);
+              setActiveAgentPageKey(null);
+              setContextAgentKey(null);
+              void startSession();
             }}
           />
 
@@ -416,6 +431,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
                     if (deleted) {
                       setSelectedProjectId(null);
+                      setContextAgentKey(null);
                       await handleStartSession();
                     }
 
@@ -423,6 +439,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                   }}
                   onClearProject={() => {
                     setSelectedProjectId(null);
+                    setContextAgentKey(null);
                     void handleStartSession();
                   }}
                   composer={
@@ -441,9 +458,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 />
               ) : (
                 <>
-                  {selectedAgent && !isAgentContextOnly ? (
+                  {activeAgentPage ? (
                     <ChatAgentHome
-                      agent={selectedAgent}
+                      agent={activeAgentPage}
                       onUseSuggestion={setDraft}
                     />
                   ) : (

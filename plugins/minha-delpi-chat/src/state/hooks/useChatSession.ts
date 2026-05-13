@@ -72,7 +72,13 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
       setSessions(data);
 
-      setActiveSession((current) => current ?? data[0] ?? null);
+      setActiveSession((current) => {
+        if (!current) {
+          return null;
+        }
+
+        return data.some((session) => session.id === current.id) ? current : null;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar sessões.");
     } finally {
