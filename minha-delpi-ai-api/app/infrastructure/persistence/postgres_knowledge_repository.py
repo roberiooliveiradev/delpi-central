@@ -152,6 +152,50 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         return int(query.count())
 
+
+    def list_documents_by_metadata(
+        self,
+        *,
+        filters: dict,
+        limit: int = 100,
+        active: bool | None = True,
+    ) -> list[tuple[KnowledgeDocument, int]]:
+        query = (
+            db.session.query(
+                AiKnowledgeDocumentModel,
+                db.func.count(AiKnowledgeChunkModel.id).label("chunk_count"),
+            )
+            .outerjoin(
+                AiKnowledgeChunkModel,
+                AiKnowledgeChunkModel.document_id == AiKnowledgeDocumentModel.id,
+            )
+        )
+
+        if active is not None:
+            query = query.filter(AiKnowledgeDocumentModel.active.is_(active))
+
+        for key, value in filters.items():
+            if value is None:
+                continue
+
+            query = query.filter(
+                AiKnowledgeDocumentModel.document_metadata[key].astext == str(value)
+            )
+
+        rows = (
+            query
+            .group_by(AiKnowledgeDocumentModel.id)
+            .order_by(AiKnowledgeDocumentModel.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+        return [
+            (self._to_document_entity(document_model), int(chunk_count or 0))
+            for document_model, chunk_count in rows
+        ]
+
+
     def get_document_by_id(self, document_id: UUID) -> KnowledgeDocument | None:
         model = AiKnowledgeDocumentModel.query.filter(
             AiKnowledgeDocumentModel.id == document_id

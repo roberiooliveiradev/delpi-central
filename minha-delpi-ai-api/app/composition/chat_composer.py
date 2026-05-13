@@ -25,6 +25,13 @@ from app.application.use_cases.chat_projects_use_cases import (
 from app.application.use_cases.index_chat_attachment_use_case import IndexChatAttachmentUseCase
 from app.application.use_cases.ingest_knowledge_document_use_case import IngestKnowledgeDocumentUseCase
 from app.domain.services.text_chunker_service import TextChunkerService
+from app.application.use_cases.chat_sources_use_cases import (
+    CreateAgentSourceUseCase,
+    CreateProjectSourceUseCase,
+    DeleteChatSourceUseCase,
+    ListAgentSourcesUseCase,
+    ListProjectSourcesUseCase,
+)
 from app.application.use_cases.chat_attachments_use_cases import (
     CreateChatAttachmentUseCase,
     DeleteChatAttachmentUseCase,
@@ -262,3 +269,39 @@ def make_list_chat_attachments_use_case() -> ListChatAttachmentsUseCase:
 
 def make_delete_chat_attachment_use_case() -> DeleteChatAttachmentUseCase:
     return DeleteChatAttachmentUseCase(PostgresChatAttachmentRepository())
+
+
+def make_create_project_source_use_case() -> CreateProjectSourceUseCase:
+    return CreateProjectSourceUseCase(
+        project_repository=PostgresChatProjectRepository(),
+        knowledge_repository=PostgresKnowledgeRepository(),
+        ingest_use_case=make_ingest_knowledge_document_use_case(),
+        text_extractor=ChatAttachmentTextExtractor(),
+    )
+
+
+def make_list_project_sources_use_case() -> ListProjectSourcesUseCase:
+    return ListProjectSourcesUseCase(
+        project_repository=PostgresChatProjectRepository(),
+        knowledge_repository=PostgresKnowledgeRepository(),
+    )
+
+
+def make_create_agent_source_use_case() -> CreateAgentSourceUseCase:
+    return CreateAgentSourceUseCase(
+        agent_repository=PostgresChatAgentRepository(),
+        knowledge_repository=PostgresKnowledgeRepository(),
+        ingest_use_case=make_ingest_knowledge_document_use_case(),
+        text_extractor=ChatAttachmentTextExtractor(),
+    )
+
+
+def make_list_agent_sources_use_case() -> ListAgentSourcesUseCase:
+    return ListAgentSourcesUseCase(
+        agent_repository=PostgresChatAgentRepository(),
+        knowledge_repository=PostgresKnowledgeRepository(),
+    )
+
+
+def make_delete_chat_source_use_case() -> DeleteChatSourceUseCase:
+    return DeleteChatSourceUseCase(PostgresKnowledgeRepository())

@@ -60,6 +60,16 @@ class KnowledgeRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_documents_by_metadata(
+        self,
+        *,
+        filters: dict,
+        limit: int = 100,
+        active: bool | None = True,
+    ) -> list[tuple[KnowledgeDocument, int]]:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_document_by_id(self, document_id: UUID) -> KnowledgeDocument | None:
         raise NotImplementedError
 

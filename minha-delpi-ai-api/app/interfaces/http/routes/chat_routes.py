@@ -34,6 +34,11 @@ from app.composition.chat_composer import (
     make_list_chat_attachments_use_case,
     make_create_chat_session_use_case,
     make_delete_chat_artifact_use_case,
+    make_create_project_source_use_case,
+    make_list_project_sources_use_case,
+    make_create_agent_source_use_case,
+    make_list_agent_sources_use_case,
+    make_delete_chat_source_use_case,
     make_create_chat_project_use_case,
     make_delete_chat_project_use_case,
     make_create_chat_agent_use_case,
@@ -264,6 +269,135 @@ def upsert_agent_action(agent_id: str):
         raise
 
     return jsonify({"ok": True}), 200
+
+
+
+
+def _create_source_from_request(use_case, *, user_id: str, owner_id_name: str, owner_id: str):
+    if request.files.get("file"):
+        file = request.files["file"]
+        content = file.read()
+
+        return use_case.execute_file(
+            user_id=user_id,
+            **{owner_id_name: owner_id},
+            original_filename=file.filename or "arquivo",
+            content_type=file.content_type,
+            content=content,
+        )
+
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        raise ValueError("Request body must be a JSON object")
+
+    return use_case.execute_text(
+        user_id=user_id,
+        **{owner_id_name: owner_id},
+        title=payload.get("title") or "Fonte sem título",
+        content=payload.get("content") or "",
+        metadata=payload.get("metadata"),
+    )
+
+
+@chat_bp.get("/projects/<project_id>/sources")
+@require_permission("minha-delpi.chat.access")
+def list_project_sources(project_id: str):
+    use_case = make_list_project_sources_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            project_id=project_id,
+        )
+    except ValueError as exc:
+        return bad_request(str(exc))
+
+    return jsonify([asdict(source) for source in result]), 200
+
+
+@chat_bp.post("/projects/<project_id>/sources")
+@require_permission("minha-delpi.chat.ask")
+def create_project_source(project_id: str):
+    use_case = make_create_project_source_use_case()
+
+    try:
+        result = _create_source_from_request(
+            use_case,
+            user_id=g.current_user.sub,
+            owner_id_name="project_id",
+            owner_id=project_id,
+        )
+
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 201
+
+
+@chat_bp.get("/agents/<agent_id>/sources")
+@require_permission("minha-delpi.chat.access")
+def list_agent_sources(agent_id: str):
+    use_case = make_list_agent_sources_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+        )
+    except ValueError as exc:
+        return bad_request(str(exc))
+
+    return jsonify([asdict(source) for source in result]), 200
+
+
+@chat_bp.post("/agents/<agent_id>/sources")
+@require_permission("minha-delpi.chat.ask")
+def create_agent_source(agent_id: str):
+    use_case = make_create_agent_source_use_case()
+
+    try:
+        result = _create_source_from_request(
+            use_case,
+            user_id=g.current_user.sub,
+            owner_id_name="agent_id",
+            owner_id=agent_id,
+        )
+
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 201
+
+
+@chat_bp.delete("/sources/<source_id>")
+@require_permission("minha-delpi.chat.ask")
+def delete_chat_source(source_id: str):
+    use_case = make_delete_chat_source_use_case()
+
+    try:
+        deleted = use_case.execute(source_id=source_id)
+
+        if not deleted:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return "", 204
 
 
 @chat_bp.get("/projects")
@@ -934,6 +1068,7 @@ def stream_message(session_id: str):
         message=payload.get("message", ""),
         context=payload.get("context"),
         access_token=g.access_token,
+        attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
     )
 
     use_case = make_stream_chat_message_use_case()
