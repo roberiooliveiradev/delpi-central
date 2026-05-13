@@ -33,6 +33,7 @@ class KnowledgeRepositoryPort(ABC):
         self,
         embedding: list[float],
         limit: int,
+        filters: dict | None = None,
     ) -> list[KnowledgeChunk]:
         raise NotImplementedError
 

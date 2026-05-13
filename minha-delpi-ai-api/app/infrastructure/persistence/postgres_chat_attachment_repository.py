@@ -106,6 +106,33 @@ class PostgresChatAttachmentRepository(ChatAttachmentRepositoryPort):
 
         return [self._to_entity(model) for model in models]
 
+
+    def update_status(
+        self,
+        *,
+        attachment_id: UUID,
+        status: str,
+        metadata: dict | None = None,
+    ) -> ChatAttachment | None:
+        model = AiChatAttachmentModel.query.filter(
+            AiChatAttachmentModel.id == attachment_id
+        ).first()
+
+        if not model:
+            return None
+
+        model.status = status
+        model.updated_at = datetime.now(timezone.utc)
+
+        if metadata is not None:
+            next_metadata = dict(model.attachment_metadata or {})
+            next_metadata.update(metadata)
+            model.attachment_metadata = next_metadata
+
+        db.session.flush()
+
+        return self._to_entity(model)
+
     def delete_attachment(
         self,
         *,

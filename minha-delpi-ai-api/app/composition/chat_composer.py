@@ -2,6 +2,7 @@ from app.application.use_cases.update_chat_message_use_case import UpdateChatMes
 from app.application.use_cases.delete_chat_session_use_case import DeleteChatSessionUseCase
 from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
 from app.application.services.external_actions.external_action_selection_service import ExternalActionSelectionService
+from app.application.services.chat_attachment_text_extractor import ChatAttachmentTextExtractor
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.rag_context_service import RagContextService
@@ -21,6 +22,9 @@ from app.application.use_cases.chat_projects_use_cases import (
     ShareChatProjectUseCase,
     UpdateChatProjectUseCase,
 )
+from app.application.use_cases.index_chat_attachment_use_case import IndexChatAttachmentUseCase
+from app.application.use_cases.ingest_knowledge_document_use_case import IngestKnowledgeDocumentUseCase
+from app.domain.services.text_chunker_service import TextChunkerService
 from app.application.use_cases.chat_attachments_use_cases import (
     CreateChatAttachmentUseCase,
     DeleteChatAttachmentUseCase,
@@ -219,6 +223,25 @@ def make_upsert_chat_agent_action_use_case() -> UpsertChatAgentActionUseCase:
 
 def make_share_chat_project_use_case() -> ShareChatProjectUseCase:
     return ShareChatProjectUseCase(PostgresChatProjectRepository())
+
+
+
+
+def make_ingest_knowledge_document_use_case() -> IngestKnowledgeDocumentUseCase:
+    return IngestKnowledgeDocumentUseCase(
+        knowledge_repository=PostgresKnowledgeRepository(),
+        embedding_gateway=LocalEmbeddingGateway(),
+        chunker=TextChunkerService(),
+        audit_repository=PostgresAuditRepository(),
+    )
+
+
+def make_index_chat_attachment_use_case() -> IndexChatAttachmentUseCase:
+    return IndexChatAttachmentUseCase(
+        attachment_repository=PostgresChatAttachmentRepository(),
+        ingest_knowledge_document_use_case=make_ingest_knowledge_document_use_case(),
+        text_extractor=ChatAttachmentTextExtractor(),
+    )
 
 
 def make_create_chat_attachment_use_case() -> CreateChatAttachmentUseCase:

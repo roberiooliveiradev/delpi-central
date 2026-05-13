@@ -59,8 +59,9 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         self,
         embedding: list[float],
         limit: int,
+        filters: dict | None = None,
     ) -> list[KnowledgeChunk]:
-        rows = (
+        query = (
             db.session.query(
                 AiKnowledgeChunkModel,
                 AiKnowledgeDocumentModel,
@@ -71,6 +72,12 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
                 AiKnowledgeDocumentModel.id == AiKnowledgeChunkModel.document_id,
             )
             .filter(AiKnowledgeDocumentModel.active.is_(True))
+        )
+
+        query = self._apply_scope_filters(query, filters or {})
+
+        rows = (
+            query
             .order_by(AiKnowledgeChunkModel.embedding.cosine_distance(embedding))
             .limit(limit)
             .all()

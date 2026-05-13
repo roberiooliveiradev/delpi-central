@@ -26,6 +26,7 @@ class SearchKnowledgeUseCase:
         chunks = self.knowledge_repository.search_similar_chunks(
             embedding=embedding,
             limit=limit,
+            filters=request.filters,
         )
 
         return [

@@ -63,7 +63,14 @@ class SendChatMessageUseCase:
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
         history = previous_messages[-Settings.CHAT_HISTORY_MAX_MESSAGES:]
 
-        rag = self.rag_context_service.build_context(message)
+        rag = self.rag_context_service.build_context(
+            message,
+            filters=self._build_rag_filters(
+                user_id=user_id,
+                session=session,
+                workspace_context=workspace_context,
+            ),
+        )
         sources = rag["sources"]
 
         tool_context = self._build_tool_context(

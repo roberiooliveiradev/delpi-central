@@ -59,6 +59,7 @@ class CreateChatAttachmentUseCase:
         attachment_repository: ChatAttachmentRepositoryPort,
         session_repository: ChatSessionRepositoryPort,
         storage_root: str | None = None,
+        index_attachment_use_case=None,
     ):
         self.attachment_repository = attachment_repository
         self.session_repository = session_repository
@@ -67,6 +68,7 @@ class CreateChatAttachmentUseCase:
             or os.getenv("CHAT_ATTACHMENT_STORAGE_PATH")
             or "/tmp/minha-delpi-chat-attachments"
         )
+        self.index_attachment_use_case = index_attachment_use_case
 
     def execute(self, request: CreateChatAttachmentRequest) -> ChatAttachmentResponse:
         user_id = UUID(request.user_id)
@@ -118,6 +120,21 @@ class CreateChatAttachmentUseCase:
             storage_path=str(storage_path),
             metadata=metadata,
         )
+
+        if self.index_attachment_use_case:
+            self.index_attachment_use_case.execute(
+                user_id=request.user_id,
+                attachment=attachment,
+            )
+
+            refreshed = self.attachment_repository.list_attachments_by_ids(
+                user_id=user_id,
+                session_id=session_id,
+                attachment_ids=[attachment.id],
+            )
+
+            if refreshed:
+                attachment = refreshed[0]
 
         return _attachment_to_response(attachment)
 

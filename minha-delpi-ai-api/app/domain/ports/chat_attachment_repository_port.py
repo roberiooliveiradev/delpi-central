@@ -53,6 +53,16 @@ class ChatAttachmentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def update_status(
+        self,
+        *,
+        attachment_id: UUID,
+        status: str,
+        metadata: dict | None = None,
+    ) -> ChatAttachment | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def delete_attachment(
         self,
         *,

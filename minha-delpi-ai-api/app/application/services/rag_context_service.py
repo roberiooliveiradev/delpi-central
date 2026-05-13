@@ -7,11 +7,12 @@ class RagContextService:
     def __init__(self, search_knowledge_use_case: SearchKnowledgeUseCase):
         self.search_knowledge_use_case = search_knowledge_use_case
 
-    def build_context(self, query: str) -> dict:
+    def build_context(self, query: str, filters: dict | None = None) -> dict:
         chunks = self.search_knowledge_use_case.execute(
             SearchKnowledgeRequest(
                 query=query,
                 limit=Settings.MAX_CONTEXT_CHUNKS,
+                filters=filters,
             )
         )
 
