@@ -95,3 +95,14 @@
     width: 100%;
   }
 }
+
+/* Sombra do composer apenas quando estiver selecionado/focado */
+.mdc-chat-input,
+.mdc-chat-input--center {
+  box-shadow: none !important;
+}
+
+.mdc-chat-input:focus-within,
+.mdc-chat-input--center:focus-within {
+  box-shadow: 0 18px 50px color-mix(in srgb, var(--mdc-primary) 16%, transparent) !important;
+}
