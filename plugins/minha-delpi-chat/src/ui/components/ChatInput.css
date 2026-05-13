@@ -255,3 +255,31 @@
   grid-column: 2;
   grid-row: 2;
 }
+
+.mdc-chat-input__agent-menu-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.mdc-chat-input__agent-menu-row > button:first-child {
+  min-width: 0;
+}
+
+.mdc-chat-input__open-agent {
+  display: inline-grid !important;
+  grid-template-columns: 1fr !important;
+  place-items: center;
+  width: 2.1rem !important;
+  height: 2.1rem !important;
+  min-height: 0 !important;
+  border-radius: 999px !important;
+  color: var(--mdc-text-muted) !important;
+  padding: 0 !important;
+}
+
+.mdc-chat-input__open-agent:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent) !important;
+  color: var(--mdc-primary) !important;
+}

@@ -1,4 +1,4 @@
-import { Bot, Folder, Plus, Sparkles, X } from "lucide-react";
+import { ArrowUpRight, Bot, Folder, Plus, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 
 import type { ChatAgent, ChatProject } from "../../data/api/chatTypes";
@@ -19,6 +19,7 @@ type ChatInputProps = {
   onSubmit: () => void;
   onCancel?: () => void;
   onSelectAgent?: (agentKey: string | null) => void;
+  onOpenAgentPage?: (agentKey: string) => void;
   onSelectProject?: (projectId: string | null) => void;
 };
 
@@ -36,6 +37,7 @@ export function ChatInput({
   onSubmit,
   onCancel,
   onSelectAgent,
+  onOpenAgentPage,
   onSelectProject,
 }: ChatInputProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -111,22 +113,36 @@ export function ChatInput({
                 ) : null}
 
                 {agents.map((agent) => (
-                  <button
-                    key={agent.id}
-                    type="button"
-                    className={
-                      agent.key === selectedAgentKey
-                        ? "mdc-chat-input__menu-item--active"
-                        : undefined
-                    }
-                    onClick={() => {
-                      onSelectAgent?.(agent.key);
-                      setIsMenuOpen(false);
-                    }}
-                  >
-                    <Bot size={16} aria-hidden="true" />
-                    <span>{agent.name}</span>
-                  </button>
+                  <div key={agent.id} className="mdc-chat-input__agent-menu-row">
+                    <button
+                      type="button"
+                      className={
+                        agent.key === selectedAgentKey
+                          ? "mdc-chat-input__menu-item--active"
+                          : undefined
+                      }
+                      onClick={() => {
+                        onSelectAgent?.(agent.key);
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      <Bot size={16} aria-hidden="true" />
+                      <span>{agent.name}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="mdc-chat-input__open-agent"
+                      onClick={() => {
+                        onOpenAgentPage?.(agent.key);
+                        setIsMenuOpen(false);
+                      }}
+                      title={`Abrir página de ${agent.name}`}
+                      aria-label={`Abrir página de ${agent.name}`}
+                    >
+                      <ArrowUpRight size={15} aria-hidden="true" />
+                    </button>
+                  </div>
                 ))}
               </div>
 

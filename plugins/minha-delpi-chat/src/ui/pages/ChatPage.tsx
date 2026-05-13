@@ -254,6 +254,14 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     selectedAgentKey: contextAgentKey,
     selectedProjectId,
     onSelectAgent: handleSelectContextAgent,
+    onOpenAgentPage: (agentKey: string) => {
+      setCanvasDocument(null);
+      setSelectedProjectId(null);
+      setContextAgentKey(null);
+      setActiveAgentPageKey(agentKey);
+      setCurrentView("chat");
+      void startSession();
+    },
     onSelectProject: handleSelectContextProject,
   };
 
@@ -477,6 +485,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                     <ChatAgentHome
                       agent={activeAgentPage}
                       onUseSuggestion={setDraft}
+                      onUseAgent={() => void handleStartSession()}
+                      onManageAgent={() => setCurrentView("agents")}
                     />
                   ) : (
                     <ChatEmptyState
