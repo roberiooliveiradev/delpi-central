@@ -70,7 +70,7 @@ export function ChatInput({
           {isMenuOpen ? (
             <div className="mdc-chat-input__menu">
               <div className="mdc-chat-input__menu-section">
-                <strong>Usar agente</strong>
+                <strong>Usar agente neste contexto</strong>
 
                 {selectedAgent ? (
                   <button
@@ -81,7 +81,7 @@ export function ChatInput({
                     }}
                   >
                     <X size={16} aria-hidden="true" />
-                    <span>Sair do agente</span>
+                    <span>Remover agente deste contexto</span>
                   </button>
                 ) : null}
 
@@ -106,7 +106,7 @@ export function ChatInput({
               </div>
 
               <div className="mdc-chat-input__menu-section">
-                <strong>Projeto</strong>
+                <strong>Usar projeto neste contexto</strong>
 
                 {selectedProject ? (
                   <button
@@ -117,7 +117,7 @@ export function ChatInput({
                     }}
                   >
                     <X size={16} aria-hidden="true" />
-                    <span>Sair do projeto</span>
+                    <span>Remover projeto deste contexto</span>
                   </button>
                 ) : null}
 
