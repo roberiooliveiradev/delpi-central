@@ -771,3 +771,14 @@
     grid-column: 1 / -1;
   }
 }
+
+.mdc-chat-project-agent-card footer button svg {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 980px) {
+  .mdc-chat-project-agent-card footer {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}

@@ -103,6 +103,14 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     ? sessions.filter((session) => session.project_id === selectedProjectId)
     : [];
 
+  function getProjectDefaultAgentKey(projectId: string | null): string | null {
+    if (!projectId) {
+      return null;
+    }
+
+    return projects.find((project) => project.id === projectId)?.default_agent_key ?? null;
+  }
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true";
   });
@@ -246,6 +254,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   async function handleSelectContextProject(projectId: string | null) {
     setSelectedProjectId(projectId);
     setActiveAgentPageKey(null);
+    setContextAgentKey(getProjectDefaultAgentKey(projectId));
   }
 
   const composerContextProps = {
@@ -311,7 +320,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             setCanvasDocument(null);
             setSelectedProjectId(projectId);
             setActiveAgentPageKey(null);
-            setContextAgentKey(null);
+            setContextAgentKey(getProjectDefaultAgentKey(projectId));
             setCurrentView("chat");
             void startSession();
           }}
@@ -446,9 +455,25 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                   onUnpinSession={unpinSession}
                   onUpdateProject={editProject}
                   onUseAgent={handleSelectContextAgent}
-                  onSetDefaultAgent={(agentKey) =>
-                    editProject(selectedProject.id, { defaultAgentKey: agentKey })
-                  }
+                  onOpenAgentPage={(agentKey) => {
+                    setCanvasDocument(null);
+                    setSelectedProjectId(null);
+                    setContextAgentKey(null);
+                    setActiveAgentPageKey(agentKey);
+                    setCurrentView("chat");
+                    void startSession();
+                  }}
+                  onSetDefaultAgent={async (agentKey) => {
+                    const updated = await editProject(selectedProject.id, {
+                      defaultAgentKey: agentKey,
+                    });
+
+                    if (updated) {
+                      setContextAgentKey(agentKey);
+                    }
+
+                    return updated;
+                  }}
                   onDeleteProject={async (projectId) => {
                     const deleted = await removeProject(projectId);
 

@@ -1,4 +1,5 @@
 import {
+  ArrowUpRight,
   Bot,
   Database,
   FileText,
@@ -51,6 +52,7 @@ type ChatProjectHomeProps = {
     },
   ) => Promise<ChatProject | null>;
   onUseAgent?: (agentKey: string | null) => void;
+  onOpenAgentPage?: (agentKey: string) => void;
   onSetDefaultAgent?: (agentKey: string | null) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onClearProject?: () => void;
@@ -103,6 +105,7 @@ export function ChatProjectHome({
   onUnpinSession,
   onUpdateProject,
   onUseAgent,
+  onOpenAgentPage,
   onSetDefaultAgent,
   onDeleteProject,
   onClearProject,
@@ -467,6 +470,15 @@ export function ChatProjectHome({
                           disabled={isDefault}
                         >
                           {isDefault ? "Padrão" : "Definir padrão"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => onOpenAgentPage?.(agent.key)}
+                          title={`Abrir página de ${agent.name}`}
+                        >
+                          <ArrowUpRight size={15} aria-hidden="true" />
+                          <span>Abrir</span>
                         </button>
                       </footer>
                     </article>
