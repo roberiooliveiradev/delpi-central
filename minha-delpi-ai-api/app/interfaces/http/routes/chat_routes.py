@@ -352,6 +352,43 @@ def create_agent_action_provider(agent_id: str):
     ), 201
 
 
+
+
+@chat_bp.post("/agents/<agent_id>/providers/<provider_key>/import")
+@require_permission("minha-delpi.chat.access")
+def import_agent_action_provider_schema(agent_id: str, provider_key: str):
+    agent_repository = make_list_chat_agent_action_providers_use_case()
+    providers = agent_repository.execute(
+        user_id=g.current_user.sub,
+        agent_id=agent_id,
+    )
+
+    provider = next(
+        (
+            item for item in providers
+            if item.get("providerKey") == provider_key
+        ),
+        None,
+    )
+
+    if not provider:
+        return _not_found_response()
+
+    repository = PostgresExternalActionRepository()
+
+    try:
+        result = repository.import_schema_from_url(provider_key=provider_key)
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
 @chat_bp.get("/agents/<agent_id>/providers")
 @require_permission("minha-delpi.chat.access")
 def list_agent_action_providers(agent_id: str):

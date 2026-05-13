@@ -7,10 +7,12 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
+  Zap,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
+import { ChatAgentActionsPage } from "./ChatAgentActionsPage";
 import { ChatAgentBuilderPage } from "./ChatAgentBuilderPage";
 
 import "./ChatAgentsPage.css";
@@ -88,6 +90,7 @@ export function ChatAgentsPage({
   getAccessToken,
 }: ChatAgentsPageProps) {
   const [editingAgent, setEditingAgent] = useState<ChatAgent | null | undefined>(undefined);
+  const [actionsAgent, setActionsAgent] = useState<ChatAgent | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredAgents = useMemo(() => {
@@ -111,6 +114,16 @@ export function ChatAgentsPage({
         .includes(normalized);
     });
   }, [agents, searchTerm]);
+
+  if (actionsAgent) {
+    return (
+      <ChatAgentActionsPage
+        agent={actionsAgent}
+        onBack={() => setActionsAgent(null)}
+        getAccessToken={getAccessToken}
+      />
+    );
+  }
 
   if (editingAgent !== undefined) {
     return (
@@ -243,13 +256,23 @@ export function ChatAgentsPage({
                       </button>
 
                       {canEditAgent(agent) ? (
-                        <button
-                          type="button"
-                          onClick={() => setEditingAgent(agent)}
-                          title="Editar agente"
-                        >
-                          <Pencil size={16} aria-hidden="true" />
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setActionsAgent(agent)}
+                            title="Actions do agente"
+                          >
+                            <Zap size={16} aria-hidden="true" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setEditingAgent(agent)}
+                            title="Editar agente"
+                          >
+                            <Pencil size={16} aria-hidden="true" />
+                          </button>
+                        </>
                       ) : null}
 
                       {canDeleteAgent(agent) ? (

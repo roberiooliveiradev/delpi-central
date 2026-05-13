@@ -803,3 +803,24 @@ export async function createChatAgentActionProvider(
 
   return parseJsonResponse(response);
 }
+
+
+export async function importChatAgentActionProviderSchema(
+  agentId: string,
+  providerKey: string,
+  options: ChatApiOptions = {},
+): Promise<{
+  found?: boolean;
+  actionsImported?: number;
+  schemaHash?: string;
+}> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}/import`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse(response);
+}
