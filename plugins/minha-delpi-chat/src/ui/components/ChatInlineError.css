@@ -1,0 +1,97 @@
+.mdc-chat-inline-error {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: min(100%, 48rem);
+  margin: 0.75rem auto 0;
+  border: 1px solid color-mix(in srgb, #ef4444 45%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, #ef4444 8%, var(--mdc-surface, #fff));
+  color: var(--mdc-text);
+  padding: 0.85rem 0.95rem;
+  box-shadow: 0 1.2rem 3rem color-mix(in srgb, #000 8%, transparent);
+}
+
+.mdc-chat-inline-error__icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #ef4444 12%, transparent);
+  color: #ef4444;
+}
+
+.mdc-chat-inline-error__body {
+  min-width: 0;
+}
+
+.mdc-chat-inline-error strong {
+  display: block;
+  color: var(--mdc-text);
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.mdc-chat-inline-error p {
+  margin: 0.2rem 0 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.mdc-chat-inline-error__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.mdc-chat-inline-error button {
+  border: 0;
+  background: transparent;
+  color: var(--mdc-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 760;
+}
+
+.mdc-chat-inline-error__actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.4rem 0.55rem;
+}
+
+.mdc-chat-inline-error__actions button:hover,
+.mdc-chat-inline-error__close:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
+}
+
+.mdc-chat-inline-error__actions .is-open {
+  transform: rotate(180deg);
+}
+
+.mdc-chat-inline-error__close {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-inline-error__details {
+  max-height: 12rem;
+  overflow: auto;
+  margin: 0.65rem 0 0;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, #000 8%, transparent);
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  padding: 0.7rem;
+  white-space: pre-wrap;
+}

@@ -4,6 +4,7 @@ import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
 import "./ChatPage.css";
 import { ChatInput, type ChatInputAttachment } from "../components/ChatInput";
+import { ChatInlineError } from "../components/ChatInlineError";
 import { ChatMessageList } from "../components/ChatMessageList";
 import { ChatContextTopbar } from "../components/ChatContextTopbar";
 import { ChatProjectHome } from "../components/ChatProjectHome";
@@ -68,6 +69,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     isLoadingMessages,
     isStreaming,
     error,
+    clearError,
     setDraft,
     sendMessage,
     cancelStreaming,
@@ -231,6 +233,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
   async function handleStartGeneralSession() {
     clearWorkspaceError();
+    clearError();
     setCanvasDocument(null);
     setSelectedProjectId(null);
     setActiveAgentPageKey(null);
@@ -241,6 +244,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
   function handleSelectSession(session: typeof sessions[number]) {
     clearWorkspaceError();
+    clearError();
     setCanvasDocument(null);
     setComposerAttachments([]);
     setSelectedProjectId(session.project_id ?? null);
@@ -387,6 +391,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onDeleteProject={removeProject}
           onSelectProject={(projectId) => {
             clearWorkspaceError();
+            clearError();
             setCanvasDocument(null);
             setSelectedProjectId(projectId);
             setActiveAgentPageKey(null);
@@ -396,6 +401,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           }}
           onSelectAgent={(agentKey) => {
             clearWorkspaceError();
+            clearError();
             setCanvasDocument(null);
             setSelectedProjectId(null);
             setActiveAgentPageKey(agentKey);
@@ -420,6 +426,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               }}
               onSelectAgent={(agentKey) => {
                 clearWorkspaceError();
+                clearError();
                 setCanvasDocument(null);
                 setSelectedProjectId(null);
                 setActiveAgentPageKey(agentKey);
@@ -512,9 +519,23 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           />
 
           {error || workspaceError ? (
-            <div className="mdc-chat-alert" role="alert">
-              {error || workspaceError}
-            </div>
+            <ChatInlineError
+              message={
+                error ||
+                workspaceError ||
+                "Tente novamente em alguns instantes."
+              }
+              details={error || workspaceError}
+              onRetry={() => {
+                if (draft.trim()) {
+                  void handleSubmitMessage();
+                }
+              }}
+              onDismiss={() => {
+                clearWorkspaceError();
+                clearError();
+              }}
+            />
           ) : null}
 
           {isConversationEmpty ? (

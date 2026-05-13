@@ -196,18 +196,25 @@ export async function streamChatMessage(
         continue;
       }
 
-      const data = JSON.parse(rawData);
+      let data: Record<string, unknown>;
+
+      try {
+        data = JSON.parse(rawData) as Record<string, unknown>;
+      } catch {
+        callbacks.onError?.("Recebi uma resposta de streaming em formato inválido.");
+        continue;
+      }
 
       if (event === "sources") {
-        callbacks.onSources?.(data.sources ?? []);
+        callbacks.onSources?.((data.sources as SendChatMessageResponse["sources"]) ?? []);
       }
 
       if (event === "tool_calls") {
-        callbacks.onToolCalls?.(data.toolCalls ?? []);
+        callbacks.onToolCalls?.((data.toolCalls as SendChatMessageResponse["toolCalls"]) ?? []);
       }
 
       if (event === "token") {
-        callbacks.onToken?.(data.content ?? "");
+        callbacks.onToken?.(typeof data.content === "string" ? data.content : "");
       }
 
       if (event === "done") {
@@ -215,7 +222,11 @@ export async function streamChatMessage(
       }
 
       if (event === "error") {
-        callbacks.onError?.(data.message ?? "Erro durante streaming.");
+        callbacks.onError?.(
+          typeof data.message === "string"
+            ? data.message
+            : "Erro durante streaming.",
+        );
       }
     }
   }

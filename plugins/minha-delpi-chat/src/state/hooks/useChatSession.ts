@@ -14,6 +14,7 @@ import {
   uploadChatAttachment,
 } from "../../data/api/chatApi";
 import type {
+  ChatAttachment,
   ChatMessage,
   ChatSession,
   ChatSource,
@@ -225,6 +226,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setDraft(content);
   }, []);
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   function replaceSession(updatedSession: ChatSession) {
     setSessions((current) =>
       current.map((session) =>
@@ -423,7 +428,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         setMessages([]);
       }
 
-      const uploadedAttachments = [];
+      const uploadedAttachments: ChatAttachment[] = [];
 
       for (const file of params.attachments ?? []) {
         setStreamingStatus(`Enviando arquivo ${file.name}...`);
@@ -543,6 +548,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isLoadingMessages,
     isStreaming,
     error,
+    clearError,
     setDraft,
     sendMessage,
     cancelStreaming,
