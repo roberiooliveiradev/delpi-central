@@ -1,9 +1,16 @@
 import {
+  Database,
+  FileText,
   Folder,
+  Link,
   MoreHorizontal,
   Pencil,
+  Pin,
+  Plus,
   Settings,
+  Text,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -15,6 +22,8 @@ import { ChatConversationMenu } from "./ChatConversationMenu";
 import { formatSessionDate } from "./chatSidebarUtils";
 
 import "./ChatProjectHome.css";
+
+type ProjectTab = "chats" | "sources";
 
 type ChatProjectHomeProps = {
   project: ChatProject;
@@ -40,6 +49,37 @@ type ChatProjectHomeProps = {
   onClearProject?: () => void;
 };
 
+const sourceTypes = [
+  {
+    key: "file",
+    title: "Enviar arquivos",
+    description: "PDF, planilhas, documentos e materiais do projeto.",
+    icon: Upload,
+    disabled: true,
+  },
+  {
+    key: "link",
+    title: "Adicionar link",
+    description: "Referências externas, páginas internas e documentação.",
+    icon: Link,
+    disabled: true,
+  },
+  {
+    key: "text",
+    title: "Criar nota",
+    description: "Texto livre com regras, contexto ou conhecimento manual.",
+    icon: Text,
+    disabled: true,
+  },
+  {
+    key: "knowledge",
+    title: "Base de conhecimento",
+    description: "Conectar documentos já indexados pela plataforma.",
+    icon: Database,
+    disabled: true,
+  },
+];
+
 export function ChatProjectHome({
   project,
   sessions,
@@ -54,6 +94,7 @@ export function ChatProjectHome({
   onDeleteProject,
   onClearProject,
 }: ChatProjectHomeProps) {
+  const [activeTab, setActiveTab] = useState<ProjectTab>("chats");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [openSessionMenuId, setOpenSessionMenuId] = useState<string | null>(null);
@@ -157,6 +198,7 @@ export function ChatProjectHome({
             <div className="mdc-chat-project-home__meta">
               <span>{project.visibility === "public" ? "Público" : "Privado"}</span>
               <span>{recentSessions.length} chats</span>
+              <span>0 fontes</span>
               {project.default_agent_key ? (
                 <span>Agente: {project.default_agent_key}</span>
               ) : (
@@ -222,63 +264,160 @@ export function ChatProjectHome({
         <div className="mdc-chat-project-home__composer">{composer}</div>
       ) : null}
 
-      <div className="mdc-chat-project-home__sessions">
-        <div className="mdc-chat-project-home__tabs">
-          <strong>Chats</strong>
-          <span>Fontes</span>
+      <div className="mdc-chat-project-home__workspace">
+        <div className="mdc-chat-project-home__tabs" role="tablist" aria-label="Áreas do projeto">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "chats"}
+            className={activeTab === "chats" ? "is-active" : undefined}
+            onClick={() => setActiveTab("chats")}
+          >
+            Chats
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "sources"}
+            className={activeTab === "sources" ? "is-active" : undefined}
+            onClick={() => setActiveTab("sources")}
+          >
+            Fontes
+          </button>
         </div>
 
-        {recentSessions.length > 0 ? (
-          <div className="mdc-chat-project-home__list">
-            {recentSessions.map((session) => (
-              <div
-                key={session.id}
-                className={
-                  session.id === activeSessionId
-                    ? "mdc-chat-project-home-session-row mdc-chat-project-home-session-row--active"
-                    : "mdc-chat-project-home-session-row"
-                }
-              >
-                <ChatConversationListItem
-                  session={session}
-                  variant="home"
-                  leading={
-                    <span className="mdc-chat-conversation-item__avatar">
-                      D
-                    </span>
-                  }
-                  trailing={
-                    <span className="mdc-chat-project-home-session-date">
-                      {formatSessionDate(session.updated_at)}
-                    </span>
-                  }
-                  onClick={() => onSelectSession(session)}
-                />
+        {activeTab === "chats" ? (
+          <div className="mdc-chat-project-home__sessions" role="tabpanel">
+            {recentSessions.length > 0 ? (
+              <div className="mdc-chat-project-home__list">
+                {recentSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className={
+                      session.id === activeSessionId
+                        ? "mdc-chat-project-home-session-row mdc-chat-project-home-session-row--active"
+                        : "mdc-chat-project-home-session-row"
+                    }
+                  >
+                    <ChatConversationListItem
+                      session={session}
+                      variant="home"
+                      leading={
+                        <span className="mdc-chat-conversation-item__avatar">
+                          D
+                        </span>
+                      }
+                      trailing={
+                        <span className="mdc-chat-project-home-session-date">
+                          {formatSessionDate(session.updated_at)}
+                        </span>
+                      }
+                      onClick={() => onSelectSession(session)}
+                    />
 
-                <div className="mdc-chat-project-home-session-actions">
-                  <ChatConversationMenu
-                    open={openSessionMenuId === session.id}
-                    onOpenChange={(open) =>
-                      setOpenSessionMenuId(open ? session.id : null)
-                    }
-                    onRename={() => void renameSession(session)}
-                    pinLabel={session.is_pinned ? "Desfixar chat" : "Fixar chat"}
-                    onPin={() =>
-                      session.is_pinned
-                        ? void onUnpinSession?.(session.id)
-                        : void onPinSession?.(session.id)
-                    }
-                    archiveLabel="Arquivar"
-                    onDelete={() => void deleteSession(session)}
-                  />
-                </div>
+                    <div className="mdc-chat-project-home-session-actions">
+                      <ChatConversationMenu
+                        open={openSessionMenuId === session.id}
+                        onOpenChange={(open) =>
+                          setOpenSessionMenuId(open ? session.id : null)
+                        }
+                        onRename={() => void renameSession(session)}
+                        pinLabel={session.is_pinned ? "Desfixar chat" : "Fixar chat"}
+                        onPin={() =>
+                          session.is_pinned
+                            ? void onUnpinSession?.(session.id)
+                            : void onPinSession?.(session.id)
+                        }
+                        archiveLabel="Arquivar"
+                        onDelete={() => void deleteSession(session)}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <p className="mdc-chat-project-home__empty">
+                Nenhuma conversa neste projeto ainda. Escreva acima para começar.
+              </p>
+            )}
           </div>
         ) : (
-          <p className="mdc-chat-project-home__empty">
-            Nenhuma conversa neste projeto ainda. Escreva acima para começar.
-          </p>
+          <div className="mdc-chat-project-sources" role="tabpanel">
+            <div className="mdc-chat-project-sources__hero">
+              <span>
+                <FileText size={26} aria-hidden="true" />
+              </span>
+
+              <div>
+                <h3>Fontes do projeto</h3>
+                <p>
+                  Adicione arquivos, links e notas para que o assistente use como
+                  contexto exclusivo deste projeto.
+                </p>
+              </div>
+
+              <button type="button" disabled title="Em breve">
+                <Plus size={16} aria-hidden="true" />
+                <span>Adicionar fonte</span>
+              </button>
+            </div>
+
+            <div className="mdc-chat-project-sources__grid">
+              {sourceTypes.map((sourceType) => {
+                const Icon = sourceType.icon;
+
+                return (
+                  <button
+                    key={sourceType.key}
+                    type="button"
+                    disabled={sourceType.disabled}
+                    title="Em breve"
+                  >
+                    <span>
+                      <Icon size={19} aria-hidden="true" />
+                    </span>
+
+                    <strong>{sourceType.title}</strong>
+                    <small>{sourceType.description}</small>
+
+                    <em>Em breve</em>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mdc-chat-project-sources__empty">
+              <div>
+                <FileText size={22} aria-hidden="true" />
+              </div>
+
+              <strong>Nenhuma fonte adicionada</strong>
+              <p>
+                Quando a funcionalidade estiver ativa, os documentos adicionados aqui
+                serão usados apenas neste projeto.
+              </p>
+            </div>
+
+            <div className="mdc-chat-project-sources__rules">
+              <h4>Como as fontes serão usadas</h4>
+
+              <ul>
+                <li>
+                  <Pin size={15} aria-hidden="true" />
+                  <span>As fontes ficam vinculadas ao projeto atual.</span>
+                </li>
+                <li>
+                  <Database size={15} aria-hidden="true" />
+                  <span>O assistente poderá buscar trechos relevantes durante a conversa.</span>
+                </li>
+                <li>
+                  <Folder size={15} aria-hidden="true" />
+                  <span>Outros projetos não herdam essas fontes automaticamente.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         )}
       </div>
 
