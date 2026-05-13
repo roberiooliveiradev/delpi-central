@@ -1,7 +1,152 @@
+.mdc-chat-sidebar__section-title--button {
+  padding-right: var(--mdc-sidebar-pad-x);
+}
+
+.mdc-chat-sidebar__section-title--button > button {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.28rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  padding: 0;
+}
+
+.mdc-chat-sidebar__section-title--button > button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-sidebar__project-new {
+  padding: 0.22rem var(--mdc-sidebar-pad-x) 0.28rem;
+}
+
+.mdc-chat-sidebar__project-new button {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.48rem;
+  width: 100%;
+  min-height: 2.1rem;
+  border: 0;
+  border-radius: 0.62rem;
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 820;
+  padding: 0.3rem 0.42rem;
+  text-align: left;
+}
+
+.mdc-chat-sidebar__project-new button:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+}
+
+.mdc-chat-sidebar__project-new svg {
+  justify-self: center;
+  color: var(--mdc-primary);
+}
+
 .mdc-chat-sidebar__projects-pane .mdc-chat-sidebar__link-list {
   overflow: visible;
 }
 
-.mdc-chat-sidebar__projects-pane .mdc-sidebar-workspace-item + .mdc-sidebar-workspace-item {
-  margin-top: 0;
+.mdc-chat-sidebar-project-node {
+  display: grid;
+  gap: 0.04rem;
+}
+
+.mdc-chat-sidebar-project-node + .mdc-chat-sidebar-project-node {
+  margin-top: 0.02rem;
+}
+
+.mdc-chat-sidebar-project-children {
+  display: grid;
+  gap: 0.02rem;
+  margin: 0.05rem 0 0.15rem 1.95rem;
+  padding-left: 0.3rem;
+  border-left: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
+}
+
+.mdc-chat-sidebar-project-session {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.34rem;
+  width: 100%;
+  min-height: 2rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.24rem 0.34rem;
+  text-align: left;
+}
+
+.mdc-chat-sidebar-project-session:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+}
+
+.mdc-chat-sidebar-project-session--active {
+  background: color-mix(in srgb, var(--mdc-primary) 13%, transparent);
+}
+
+.mdc-chat-sidebar-project-session svg {
+  color: var(--mdc-text-muted);
+  justify-self: center;
+}
+
+.mdc-chat-sidebar-project-session span {
+  display: grid;
+  min-width: 0;
+  gap: 0.03rem;
+}
+
+.mdc-chat-sidebar-project-session strong,
+.mdc-chat-sidebar-project-session small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-sidebar-project-session strong {
+  color: var(--mdc-text);
+  font-size: 0.76rem;
+  font-weight: 760;
+  line-height: 1.12;
+}
+
+.mdc-chat-sidebar-project-session small {
+  color: var(--mdc-text-muted);
+  font-size: 0.61rem;
+  line-height: 1.08;
+}
+
+.mdc-chat-sidebar-project-more {
+  justify-self: start;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 720;
+  padding: 0.28rem 0.34rem;
+}
+
+.mdc-chat-sidebar-project-more:hover {
+  color: var(--mdc-primary);
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
 }

@@ -4,6 +4,7 @@ import { ChatEmptyState } from "../components/ChatEmptyState";
 import "./ChatPage.css";
 import { ChatInput } from "../components/ChatInput";
 import { ChatMessageList } from "../components/ChatMessageList";
+import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import {
@@ -78,6 +79,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const selectedAgent = agents.find((agent) => agent.key === selectedAgentKey);
   const selectedProjectName = selectedProject?.name ?? null;
   const selectedAgentName = selectedAgent?.name ?? null;
+  const selectedProjectSessions = selectedProjectId
+    ? sessions.filter((session) => session.project_id === selectedProjectId)
+    : [];
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true";
@@ -258,7 +262,15 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
           {isConversationEmpty ? (
             <section className="mdc-chat-empty-composer">
-              <ChatEmptyState onUseSuggestion={setDraft} />
+              {selectedProject ? (
+                <ChatProjectHome
+                  project={selectedProject}
+                  sessions={selectedProjectSessions}
+                  onSelectSession={handleSelectSession}
+                />
+              ) : (
+                <ChatEmptyState onUseSuggestion={setDraft} />
+              )}
 
               <ChatInput
                 value={draft}

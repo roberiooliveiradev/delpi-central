@@ -287,10 +287,13 @@ export function ChatSidebar({
       <div className="mdc-chat-sidebar__projects-pane">
         <ChatSidebarProjectsSection
           projects={projects}
+          sessions={sessions}
           selectedProjectId={selectedProjectId}
+          activeSessionId={activeSessionId}
           isLoading={isLoadingProjects}
           onSelectProject={onSelectProject}
-          onManageProjects={() => setIsProjectsModalOpen(true)}
+          onSelectSession={onSelectSession}
+          onNewProject={() => setIsProjectsModalOpen(true)}
         />
       </div>
 
