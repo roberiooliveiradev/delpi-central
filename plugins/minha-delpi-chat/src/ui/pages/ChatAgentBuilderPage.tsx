@@ -4,9 +4,11 @@ import {
   Check,
   FileText,
   Plus,
+  Send,
   Sparkles,
   Trash2,
   Upload,
+  Wand2,
   X,
   Zap,
 } from "lucide-react";
@@ -113,6 +115,14 @@ export function ChatAgentBuilderPage({
   getAccessToken,
 }: ChatAgentBuilderPageProps) {
   const isEditing = Boolean(agent);
+  const [builderMode, setBuilderMode] = useState<"create" | "configure">(
+    agent ? "configure" : "create",
+  );
+  const [createBrief, setCreateBrief] = useState("");
+  const [previewInput, setPreviewInput] = useState("");
+  const [previewMessages, setPreviewMessages] = useState<
+    Array<{ role: "user" | "assistant"; content: string }>
+  >([]);
 
   const [key, setKey] = useState(agent?.key ?? "");
   const [name, setName] = useState(agent?.name ?? "");
@@ -254,6 +264,83 @@ export function ChatAgentBuilderPage({
     });
   }
 
+  function generateDraftFromBrief() {
+    const brief = createBrief.trim();
+
+    if (!brief) {
+      setLocalError("Descreva o agente que deseja criar.");
+      return;
+    }
+
+    const firstSentence = brief.split(/[.!?\n]/).find(Boolean)?.trim() || brief;
+    const generatedName =
+      name.trim() ||
+      firstSentence
+        .replace(/^crie\s+(um|uma)?\s*/i, "")
+        .replace(/^agente\s+(para|de)?\s*/i, "")
+        .slice(0, 80);
+
+    const finalName = generatedName || "Novo agente";
+
+    setName(finalName);
+    setKey((current) => current.trim() || createKeyFromName(finalName));
+    setDescription((current) => current.trim() || firstSentence.slice(0, 240));
+    setSystemPrompt((current) => {
+      if (current.trim()) {
+        return current;
+      }
+
+      return [
+        `Você é ${finalName}, um agente especializado da Minha DELPI.`,
+        "",
+        "Objetivo:",
+        brief,
+        "",
+        "Regras:",
+        "- Responda com clareza e objetividade.",
+        "- Use fontes, arquivos e actions autorizadas quando estiverem configuradas.",
+        "- Não invente dados operacionais; quando precisar, consulte as ferramentas disponíveis.",
+        "- Explique limitações quando uma informação não estiver disponível.",
+      ].join("\n");
+    });
+
+    setIcebreakers((current) => {
+      const filled = current.map((item) => item.trim()).filter(Boolean);
+
+      if (filled.length > 0) {
+        return current;
+      }
+
+      return [
+        "O que você consegue fazer?",
+        "Quais informações você pode consultar?",
+        "Me ajude com uma análise inicial.",
+      ];
+    });
+
+    setBuilderMode("configure");
+    setLocalError(null);
+  }
+
+  function sendPreviewMessage(content?: string) {
+    const message = (content ?? previewInput).trim();
+
+    if (!message) {
+      return;
+    }
+
+    setPreviewMessages((current) => [
+      ...current,
+      { role: "user", content: message },
+      {
+        role: "assistant",
+        content:
+          "Pré-visualização local: quando o agente estiver salvo, esta conversa usará as instruções, fontes e actions configuradas.",
+      },
+    ]);
+    setPreviewInput("");
+  }
+
   async function submitForm() {
     const normalizedName = name.trim();
 
@@ -383,11 +470,59 @@ export function ChatAgentBuilderPage({
             void submitForm();
           }}
         >
-          <div className="mdc-chat-agent-builder__switch">
-            <span>Criar</span>
-            <strong>Configurar</strong>
+          <div className="mdc-chat-agent-builder__switch" role="tablist" aria-label="Modo de edição">
+            <button
+              type="button"
+              className={builderMode === "create" ? "is-active" : ""}
+              onClick={() => setBuilderMode("create")}
+            >
+              Criar
+            </button>
+            <button
+              type="button"
+              className={builderMode === "configure" ? "is-active" : ""}
+              onClick={() => setBuilderMode("configure")}
+            >
+              Configurar
+            </button>
           </div>
 
+          {builderMode === "create" ? (
+            <section className="mdc-chat-agent-builder__section mdc-chat-agent-builder__create-mode">
+              <div className="mdc-chat-agent-builder__section-title">
+                <Wand2 size={18} aria-hidden="true" />
+                <div>
+                  <h2>Criar com orientação</h2>
+                  <p>Descreva o especialista que você quer criar. Vamos gerar um rascunho editável.</p>
+                </div>
+              </div>
+
+              <label>
+                <span>O que este agente deve fazer?</span>
+                <textarea
+                  value={createBrief}
+                  rows={8}
+                  onChange={(event) => setCreateBrief(event.target.value)}
+                  placeholder="Ex.: Crie um agente especialista em produtos DELPI, capaz de consultar API, interpretar estoque, analisar estrutura e explicar próximos passos."
+                />
+              </label>
+
+              <button
+                type="button"
+                className="mdc-chat-agent-builder__secondary"
+                onClick={generateDraftFromBrief}
+              >
+                <Wand2 size={16} aria-hidden="true" />
+                <span>Gerar rascunho</span>
+              </button>
+
+              <div className="mdc-chat-agent-builder__placeholder">
+                <strong>Depois de gerar o rascunho</strong>
+                <p>Revise nome, instruções, fontes e actions na aba Configurar antes de salvar.</p>
+              </div>
+            </section>
+          ) : (
+            <>
           <section className="mdc-chat-agent-builder__section">
             <div className="mdc-chat-agent-builder__section-title">
               <Bot size={18} aria-hidden="true" />
@@ -668,6 +803,9 @@ export function ChatAgentBuilderPage({
             )}
           </section>
 
+            </>
+          )}
+
           {localError ? (
             <p className="mdc-chat-agent-builder__error">{localError}</p>
           ) : null}
@@ -691,15 +829,49 @@ export function ChatAgentBuilderPage({
             {normalizedIcebreakers.length > 0 ? (
               <div className="mdc-chat-agent-builder__preview-icebreakers">
                 {normalizedIcebreakers.slice(0, 3).map((icebreaker) => (
-                  <button key={icebreaker} type="button">
+                  <button
+                    key={icebreaker}
+                    type="button"
+                    onClick={() => sendPreviewMessage(icebreaker)}
+                  >
                     {icebreaker}
                   </button>
                 ))}
               </div>
             ) : null}
 
+            {previewMessages.length > 0 ? (
+              <div className="mdc-chat-agent-builder__preview-messages">
+                {previewMessages.map((message, index) => (
+                  <div
+                    key={`${message.role}-${index}`}
+                    className={
+                      message.role === "user"
+                        ? "mdc-chat-agent-builder__preview-message mdc-chat-agent-builder__preview-message--user"
+                        : "mdc-chat-agent-builder__preview-message"
+                    }
+                  >
+                    {message.content}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
             <div className="mdc-chat-agent-builder__preview-input">
-              Pergunte alguma coisa
+              <input
+                value={previewInput}
+                onChange={(event) => setPreviewInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    sendPreviewMessage();
+                  }
+                }}
+                placeholder="Pergunte alguma coisa"
+              />
+              <button type="button" onClick={() => sendPreviewMessage()}>
+                <Send size={16} aria-hidden="true" />
+              </button>
             </div>
           </div>
         </aside>

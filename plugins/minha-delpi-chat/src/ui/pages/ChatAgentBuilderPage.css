@@ -565,3 +565,87 @@
   color: var(--mdc-text-muted);
   font-size: 0.76rem;
 }
+
+.mdc-chat-agent-builder__switch button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 820;
+}
+
+.mdc-chat-agent-builder__switch button.is-active {
+  background: var(--mdc-bg);
+  color: var(--mdc-title);
+}
+
+.mdc-chat-agent-builder__create-mode {
+  min-height: 28rem;
+  align-content: center;
+}
+
+.mdc-chat-agent-builder__preview-messages {
+  display: grid;
+  gap: 0.55rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.mdc-chat-agent-builder__preview-message {
+  justify-self: start;
+  max-width: 85%;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 72%, transparent);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
+  color: var(--mdc-text);
+  padding: 0.65rem 0.8rem;
+  text-align: left;
+}
+
+.mdc-chat-agent-builder__preview-message--user {
+  justify-self: end;
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-card-border));
+}
+
+.mdc-chat-agent-builder__preview-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  width: min(100%, 32rem);
+  min-height: 3.8rem;
+  margin-top: auto;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
+  border-radius: 999px;
+  color: var(--mdc-text-muted);
+  padding: 0.35rem 0.45rem 0.35rem 1rem;
+  text-align: left;
+}
+
+.mdc-chat-agent-builder__preview-input input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--mdc-text);
+  outline: none;
+  font: inherit;
+}
+
+.mdc-chat-agent-builder__preview-input button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--mdc-primary);
+  color: white;
+  cursor: pointer;
+}
