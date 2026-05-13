@@ -19,8 +19,7 @@ export function ChatInlineError({
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   return (
-    <div className="mdc-chat-inline-error-shell">
-      <aside className="mdc-chat-inline-error" role="alert">
+    <aside className="mdc-chat-inline-error" role="alert">
       <div className="mdc-chat-inline-error__icon">
         <AlertTriangle size={17} aria-hidden="true" />
       </div>
@@ -41,6 +40,7 @@ export function ChatInlineError({
             <button
               type="button"
               onClick={() => setIsDetailsOpen((current) => !current)}
+              aria-expanded={isDetailsOpen}
             >
               <ChevronDown
                 size={14}
@@ -67,7 +67,6 @@ export function ChatInlineError({
           <X size={16} aria-hidden="true" />
         </button>
       ) : null}
-      </aside>
-    </div>
+    </aside>
   );
 }
