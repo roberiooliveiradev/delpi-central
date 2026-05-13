@@ -202,7 +202,6 @@ export function ChatProjectHome({
       }
       aria-label={`Projeto ${project.name}`}
     >
-      {!compact ? (
       <div className="mdc-chat-project-home__topbar">
         <div className="mdc-chat-project-home__header">
           <span>
@@ -277,7 +276,6 @@ export function ChatProjectHome({
           ) : null}
         </div>
       </div>
-      ) : null}
 
       {composer ? (
         <div className="mdc-chat-project-home__composer">{composer}</div>

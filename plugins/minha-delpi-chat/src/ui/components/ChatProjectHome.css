@@ -558,3 +558,66 @@
 .mdc-chat-project-home--compact .mdc-chat-project-home__composer {
   margin-inline: auto;
 }
+
+/* Home do projeto mantém visual de página, mesmo com topbar global */
+.mdc-chat-project-home--compact {
+  width: min(100%, 860px);
+  padding-top: clamp(2.25rem, 7vh, 5.25rem);
+}
+
+.mdc-chat-project-home--compact .mdc-chat-project-home__topbar {
+  align-items: center;
+}
+
+.mdc-chat-project-home--compact .mdc-chat-project-home__header {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.mdc-chat-project-home--compact .mdc-chat-project-home__header > span {
+  width: 2.45rem;
+  height: 2.45rem;
+  border-radius: 0.85rem;
+}
+
+.mdc-chat-project-home--compact .mdc-chat-eyebrow {
+  display: none;
+}
+
+.mdc-chat-project-home--compact h2 {
+  margin: 0;
+  font-size: clamp(1.9rem, 3.4vw, 2.75rem);
+  line-height: 1.04;
+}
+
+.mdc-chat-project-home--compact .mdc-chat-project-home__meta,
+.mdc-chat-project-home--compact .mdc-chat-project-home__header p {
+  display: none;
+}
+
+.mdc-chat-project-home--compact .mdc-chat-project-home__actions {
+  align-self: start;
+}
+
+.mdc-chat-project-home--compact .mdc-chat-project-home__actions > button {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.mdc-chat-project-home--compact .mdc-chat-project-home__composer {
+  width: min(100%, 760px);
+  margin-inline: auto;
+  margin-top: 0.35rem;
+}
+
+.mdc-chat-project-home--compact .mdc-chat-project-home__workspace {
+  margin-top: 0.1rem;
+}
+
+.mdc-chat-project-home--compact .mdc-chat-project-home__tabs {
+  padding-left: 0;
+}
+
+.mdc-chat-project-home--compact .mdc-chat-project-home__list {
+  border-top: 0;
+}

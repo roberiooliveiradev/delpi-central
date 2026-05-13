@@ -160,3 +160,28 @@
     display: none;
   }
 }
+
+/* A topbar indica contexto, mas não compete com a home do projeto */
+.mdc-chat-context-topbar {
+  min-height: 2.7rem;
+  padding-block: 0.35rem;
+}
+
+.mdc-chat-context-topbar__icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.62rem;
+}
+
+.mdc-chat-context-topbar__identity strong {
+  font-size: 0.9rem;
+}
+
+.mdc-chat-context-topbar__identity small {
+  display: none;
+}
+
+.mdc-chat-context-topbar__identity em {
+  height: 1.18rem;
+  font-size: 0.62rem;
+}
