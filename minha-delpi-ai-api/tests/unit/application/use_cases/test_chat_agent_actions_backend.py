@@ -49,6 +49,9 @@ class FakeAgentRepository:
     def list_enabled_action_ids(self, agent_id, user_id):
         return ["real.action.one", "real.action.two"]
 
+    def list_enabled_provider_keys(self, agent_id, user_id):
+        return ["api-delpi"]
+
 
 def test_workspace_context_uses_agent_action_table_before_metadata_fallback():
     service = ChatWorkspaceContextService(
@@ -67,6 +70,9 @@ def test_workspace_context_uses_agent_action_table_before_metadata_fallback():
 
 class FakeAgentRepositoryWithoutRows(FakeAgentRepository):
     def list_enabled_action_ids(self, agent_id, user_id):
+        return []
+
+    def list_enabled_provider_keys(self, agent_id, user_id):
         return []
 
 

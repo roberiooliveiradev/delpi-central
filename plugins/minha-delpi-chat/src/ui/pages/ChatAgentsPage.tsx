@@ -43,16 +43,6 @@ type ChatAgentsPageProps = {
     payload: AgentUpdatePayload,
   ) => Promise<ChatAgent | null>;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
-  onSaveAgentAction?: (
-    agentId: string,
-    payload: {
-      providerKey: string;
-      actionId: string;
-      sensitivity?: string;
-      requiresConfirmation?: boolean;
-      enabled?: boolean;
-    },
-  ) => Promise<boolean>;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
@@ -95,7 +85,6 @@ export function ChatAgentsPage({
   onCreateAgent,
   onUpdateAgent,
   onDeleteAgent,
-  onSaveAgentAction,
   getAccessToken,
 }: ChatAgentsPageProps) {
   const [editingAgent, setEditingAgent] = useState<ChatAgent | null | undefined>(undefined);
@@ -132,7 +121,6 @@ export function ChatAgentsPage({
         onCreateAgent={onCreateAgent}
         onUpdateAgent={onUpdateAgent}
         onDeleteAgent={onDeleteAgent}
-        onSaveAgentAction={onSaveAgentAction}
         getAccessToken={getAccessToken}
       />
     );

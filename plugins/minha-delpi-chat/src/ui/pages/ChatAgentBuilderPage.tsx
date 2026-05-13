@@ -12,8 +12,21 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { listAgentSources, listActionProviders, listChatAgentActionProviders, listChatActions, listChatAgentActions, saveChatAgentActionProvider, uploadAgentSource, createAgentTextSource, deleteChatSource } from "../../data/api/chatApi";
-import type { ChatActionCatalogItem, ChatActionProvider, ChatAgent, ChatAgentAction, ChatAgentActionProvider, ChatWorkspaceSource } from "../../data/api/chatTypes";
+import {
+  createAgentTextSource,
+  deleteChatSource,
+  listActionProviders,
+  listAgentSources,
+  listChatAgentActionProviders,
+  saveChatAgentActionProvider,
+  uploadAgentSource,
+} from "../../data/api/chatApi";
+import type {
+  ChatActionProvider,
+  ChatAgent,
+  ChatAgentActionProvider,
+  ChatWorkspaceSource,
+} from "../../data/api/chatTypes";
 
 import "./ChatAgentBuilderPage.css";
 
@@ -43,16 +56,6 @@ type ChatAgentBuilderPageProps = {
     payload: AgentUpdatePayload,
   ) => Promise<ChatAgent | null>;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
-  onSaveAgentAction?: (
-    agentId: string,
-    payload: {
-      providerKey: string;
-      actionId: string;
-      sensitivity?: string;
-      requiresConfirmation?: boolean;
-      enabled?: boolean;
-    },
-  ) => Promise<boolean>;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
@@ -112,7 +115,6 @@ export function ChatAgentBuilderPage({
   onCreateAgent,
   onUpdateAgent,
   onDeleteAgent,
-  onSaveAgentAction,
   getAccessToken,
 }: ChatAgentBuilderPageProps) {
   const isEditing = Boolean(agent);
@@ -145,14 +147,11 @@ export function ChatAgentBuilderPage({
     getMetadataStringArray(agent?.metadata, "allowed_actions"),
   );
 
-  const [availableActions, setAvailableActions] = useState<ChatActionCatalogItem[]>([]);
-  const [configuredActions, setConfiguredActions] = useState<ChatAgentAction[]>([]);
   const [availableProviders, setAvailableProviders] = useState<ChatActionProvider[]>([]);
   const [configuredProviders, setConfiguredProviders] = useState<ChatAgentActionProvider[]>([]);
   const [agentSources, setAgentSources] = useState<ChatWorkspaceSource[]>([]);
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceContent, setSourceContent] = useState("");
-  const [isLoadingActions, setIsLoadingActions] = useState(false);
   const [isSavingSource, setIsSavingSource] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -161,31 +160,31 @@ export function ChatAgentBuilderPage({
   useEffect(() => {
     let isMounted = true;
 
-    async function loadActions() {
-      setIsLoadingActions(true);
-
+    async function loadProviders() {
       try {
-        const [catalog, configured, providers, agentProviders] = await Promise.all(
-          listChatActions({ getAccessToken }),
-          agent ? listChatAgentActions(agent.id, { getAccessToken }) : Promise.resolve([]),
+        const [providers, agentProviders] = await Promise.all([
           listActionProviders({ getAccessToken }),
-          agent ? listChatAgentActionProviders(agent.id, { getAccessToken }) : Promise.resolve([]),
+          agent
+            ? listChatAgentActionProviders(agent.id, { getAccessToken })
+            : Promise.resolve([]),
         ]);
 
         if (isMounted) {
-          setAvailableActions(catalog);
-          setConfiguredActions(configured);
           setAvailableProviders(providers);
           setConfiguredProviders(agentProviders);
         }
-      } finally {
+      } catch (error) {
         if (isMounted) {
-          setIsLoadingActions(false);
+          setLocalError(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível carregar as APIs do agente.",
+          );
         }
       }
     }
 
-    void loadActions();
+    void loadProviders();
 
     return () => {
       isMounted = false;
@@ -265,28 +264,6 @@ export function ChatAgentBuilderPage({
     );
 
     setConfiguredProviders(await listChatAgentActionProviders(agent.id, { getAccessToken }));
-  }
-
-  async function toggleAgentAction(action: ChatActionCatalogItem, enabled: boolean) {
-    if (!agent) {
-      setLocalError("Salve o agente antes de configurar actions.");
-      return;
-    }
-
-    const providerKey = action.actionId.split(".")[0] || "api-delpi";
-
-    const saved = await onSaveAgentAction?.(agent.id, {
-      providerKey,
-      actionId: action.actionId,
-      sensitivity: action.sensitivity || "read",
-      requiresConfirmation: action.sensitivity === "write" || action.sensitivity === "admin",
-      enabled,
-    });
-
-    if (saved) {
-      const configured = await listChatAgentActions(agent.id, { getAccessToken });
-      setConfiguredActions(configured);
-    }
   }
 
   async function uploadAgentKnowledgeFile(file: File | null | undefined) {

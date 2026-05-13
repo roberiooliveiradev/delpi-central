@@ -103,7 +103,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     addProject,
     editProject,
     removeProject,
-    saveAgentAction,
   } = useChatWorkspace({ getAccessToken });
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
@@ -437,7 +436,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               onCreateAgent={addAgent}
               onUpdateAgent={editAgent}
               onDeleteAgent={removeAgent}
-              onSaveAgentAction={saveAgentAction}
               getAccessToken={getAccessToken}
             />
           </section>

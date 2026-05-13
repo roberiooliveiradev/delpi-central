@@ -7,7 +7,7 @@ class FakeToolSelectionService:
 
 
 class FakeExternalActionSelectionService:
-    def select_action(self, message):
+    def select_action(self, message, allowed_action_ids=None):
         return {
             "name": "execute_external_action",
             "arguments": {
