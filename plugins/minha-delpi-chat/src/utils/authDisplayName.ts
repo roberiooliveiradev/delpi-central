@@ -3,7 +3,6 @@ type JwtPayload = {
   given_name?: string;
   preferred_username?: string;
   email?: string;
-  sub?: string;
 };
 
 function decodeBase64Url(value: string): string {
@@ -16,11 +15,29 @@ function decodeBase64Url(value: string): string {
   return atob(padded);
 }
 
+function fixMojibake(value: string): string {
+  try {
+    // Corrige casos como "RobÃ©rio" -> "Robério"
+    return decodeURIComponent(
+      value
+        .split("")
+        .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, "0")}`)
+        .join(""),
+    );
+  } catch {
+    return value;
+  }
+}
+
 function cleanName(value: string | undefined): string | null {
-  const normalized = value?.trim();
+  let normalized = value?.trim();
 
   if (!normalized) {
     return null;
+  }
+
+  if (/Ã.|Â./.test(normalized)) {
+    normalized = fixMojibake(normalized);
   }
 
   if (normalized.includes("@")) {
@@ -57,7 +74,7 @@ export function getDisplayNameFromAccessToken(token?: string | null): string | n
 }
 
 export function getFirstDisplayName(displayName?: string | null): string | null {
-  const normalized = displayName?.trim();
+  const normalized = cleanName(displayName ?? undefined);
 
   if (!normalized) {
     return null;
