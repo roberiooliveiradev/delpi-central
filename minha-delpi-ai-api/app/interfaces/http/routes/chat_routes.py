@@ -148,6 +148,15 @@ def update_agent(agent_id: str):
 
     use_case = make_update_chat_agent_use_case()
 
+    metadata = dict(payload.get("metadata") or {})
+
+    for visual_key in ["color", "avatar", "badge", "theme"]:
+        if payload.get(visual_key) is not None:
+            metadata[visual_key] = payload.get(visual_key)
+
+    if payload.get("archived") is not None:
+        metadata["archived"] = payload.get("archived")
+
     try:
         result = use_case.execute(
             UpdateChatAgentRequest(
@@ -157,9 +166,7 @@ def update_agent(agent_id: str):
                 description=payload.get("description"),
                 visibility=payload.get("visibility"),
                 icon=payload.get("icon"),
-                color=payload.get("color"),
-                metadata=payload.get("metadata"),
-                archived=payload.get("archived"),
+                metadata=metadata,
                 system_prompt=payload.get("systemPrompt") or payload.get("system_prompt"),
                 category=payload.get("category"),
                 response_style=payload.get("responseStyle") or payload.get("response_style"),
