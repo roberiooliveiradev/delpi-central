@@ -51,3 +51,33 @@
   font-weight: 800;
   padding: 0.3rem 0.6rem;
 }
+
+/* Topo compacto substitui o header grande antigo */
+.mdc-chat-main {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.mdc-chat-main > .mdc-chat-alert {
+  margin: 0.75rem clamp(1rem, 2vw, 1.75rem);
+}
+
+.mdc-chat-empty-composer {
+  align-content: start;
+  padding-top: clamp(1rem, 3vh, 2rem);
+}
+
+/* Mantém compatibilidade caso o header antigo ainda exista em algum fluxo */
+.mdc-chat-header {
+  min-height: unset;
+  padding: 0.75rem clamp(1rem, 2vw, 1.75rem);
+}
+
+.mdc-chat-header h1 {
+  font-size: 1.45rem;
+}
+
+.mdc-chat-header p {
+  margin-block: 0.15rem;
+}

@@ -4,6 +4,7 @@ import { ChatEmptyState } from "../components/ChatEmptyState";
 import "./ChatPage.css";
 import { ChatInput } from "../components/ChatInput";
 import { ChatMessageList } from "../components/ChatMessageList";
+import { ChatContextTopbar } from "../components/ChatContextTopbar";
 import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
 import { ChatAgentsPage } from "./ChatAgentsPage";
@@ -26,6 +27,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedAgentKey, setSelectedAgentKey] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
+  const [projectSettingsRequestKey, setProjectSettingsRequestKey] = useState(0);
 
   const {
     sessions,
@@ -76,8 +78,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
   const selectedAgent = agents.find((agent) => agent.key === selectedAgentKey);
-  const selectedProjectName = selectedProject?.name ?? null;
-  const selectedAgentName = selectedAgent?.name ?? null;
   const selectedProjectSessions = selectedProjectId
     ? sessions.filter((session) => session.project_id === selectedProjectId)
     : [];
@@ -235,31 +235,71 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           </section>
         ) : (
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
-          {!selectedProject ? (
-          <header className="mdc-chat-header">
-            <div>
-              <p className="mdc-chat-eyebrow">Plugin oficial</p>
-              <h1>Minha DELPI Chat</h1>
-              <p>
-                Assistente conversacional corporativo integrado à Minha DELPI.
-              </p>
+          <ChatContextTopbar
+            mode={selectedProject ? "project" : selectedAgent ? "agent" : "general"}
+            title={
+              selectedProject?.name ||
+              selectedAgent?.name ||
+              "Minha DELPI Chat"
+            }
+            subtitle={
+              selectedProject
+                ? "Projeto selecionado"
+                : selectedAgent
+                  ? "Agente selecionado"
+                  : "Assistente corporativo"
+            }
+            badge={
+              selectedProject
+                ? `${selectedProjectSessions.length} chats`
+                : selectedAgent
+                  ? "Agente"
+                  : "MVP"
+            }
+            onOpenAdmin={onOpenAdmin}
+            onRenameProject={async () => {
+              if (!selectedProject) {
+                return;
+              }
 
-              {selectedProjectName || selectedAgentName ? (
-                <div className="mdc-chat-context-chips" aria-label="Contexto selecionado">
-                  {selectedProjectName ? <span>Projeto: {selectedProjectName}</span> : null}
-                  {selectedAgentName ? <span>Agente: {selectedAgentName}</span> : null}
-                </div>
-              ) : null}
-            </div>
+              const nextName = window.prompt(
+                "Novo nome do projeto",
+                selectedProject.name,
+              )?.trim();
 
-            <div className="mdc-chat-header-actions">
-              <button type="button" onClick={onOpenAdmin}>
-                Admin
-              </button>
-              <span className="mdc-chat-status">MVP</span>
-            </div>
-          </header>
-          ) : null}
+              if (nextName && nextName !== selectedProject.name) {
+                await editProject(selectedProject.id, { name: nextName });
+              }
+            }}
+            onOpenProjectSettings={() =>
+              setProjectSettingsRequestKey((current) => current + 1)
+            }
+            onDeleteProject={async () => {
+              if (!selectedProject) {
+                return;
+              }
+
+              const confirmed = window.confirm(
+                `Excluir o projeto "${selectedProject.name}"?`,
+              );
+
+              if (!confirmed) {
+                return;
+              }
+
+              const deleted = await removeProject(selectedProject.id);
+
+              if (deleted) {
+                setSelectedProjectId(null);
+                await handleStartSession();
+              }
+            }}
+            onManageAgents={() => setCurrentView("agents")}
+            onClearAgent={() => {
+              setSelectedAgentKey(null);
+              void handleStartSession();
+            }}
+          />
 
           {error || workspaceError ? (
             <div className="mdc-chat-alert" role="alert">
@@ -273,6 +313,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 <ChatProjectHome
                   project={selectedProject}
                   sessions={selectedProjectSessions}
+                  compact
+                  settingsRequestKey={projectSettingsRequestKey}
                   activeSessionId={activeSession?.id}
                   onSelectSession={handleSelectSession}
                   onRenameSession={renameSession}

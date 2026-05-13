@@ -47,6 +47,8 @@ type ChatProjectHomeProps = {
   ) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onClearProject?: () => void;
+  compact?: boolean;
+  settingsRequestKey?: number;
 };
 
 const sourceTypes = [
@@ -93,6 +95,8 @@ export function ChatProjectHome({
   onUpdateProject,
   onDeleteProject,
   onClearProject,
+  compact,
+  settingsRequestKey,
 }: ChatProjectHomeProps) {
   const [activeTab, setActiveTab] = useState<ProjectTab>("chats");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -108,6 +112,12 @@ export function ChatProjectHome({
     setDescription(project.description || "");
     setInstructions(project.instructions || "");
   }, [project.description, project.instructions, project.name]);
+
+  useEffect(() => {
+    if (settingsRequestKey) {
+      setIsSettingsOpen(true);
+    }
+  }, [settingsRequestKey]);
 
   const recentSessions = [...sessions].sort((left, right) => {
     const leftDate = new Date(left.updated_at || left.created_at || 0).getTime();
@@ -184,7 +194,15 @@ export function ChatProjectHome({
   }
 
   return (
-    <section className="mdc-chat-project-home" aria-label={`Projeto ${project.name}`}>
+    <section
+      className={
+        compact
+          ? "mdc-chat-project-home mdc-chat-project-home--compact"
+          : "mdc-chat-project-home"
+      }
+      aria-label={`Projeto ${project.name}`}
+    >
+      {!compact ? (
       <div className="mdc-chat-project-home__topbar">
         <div className="mdc-chat-project-home__header">
           <span>
@@ -259,6 +277,7 @@ export function ChatProjectHome({
           ) : null}
         </div>
       </div>
+      ) : null}
 
       {composer ? (
         <div className="mdc-chat-project-home__composer">{composer}</div>

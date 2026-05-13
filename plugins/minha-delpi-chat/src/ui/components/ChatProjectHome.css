@@ -548,3 +548,13 @@
   border-bottom: 0 !important;
   box-shadow: none !important;
 }
+
+/* Quando a topbar de contexto existe, a página do projeto não duplica cabeçalho */
+.mdc-chat-project-home--compact {
+  padding-top: clamp(0.9rem, 2.2vh, 1.6rem);
+  gap: var(--mdc-space-4);
+}
+
+.mdc-chat-project-home--compact .mdc-chat-project-home__composer {
+  margin-inline: auto;
+}
