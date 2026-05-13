@@ -17,6 +17,17 @@ import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
 
+
+function getAgentIcebreakerCount(agent: { metadata: Record<string, unknown> | null } | null | undefined): number {
+  const value = agent?.metadata?.icebreakers;
+
+  if (!Array.isArray(value)) {
+    return 0;
+  }
+
+  return value.filter((item) => typeof item === "string" && item.trim()).length;
+}
+
 type ChatPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   onOpenAdmin?: () => void;
@@ -70,6 +81,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     isLoadingAgents,
     isLoadingProjects,
     workspaceError,
+    addAgent,
+    editAgent,
+    removeAgent,
     addProject,
     editProject,
     removeProject,
@@ -231,7 +245,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 setSelectedAgentKey(agentKey);
                 void handleStartSession();
               }}
-                            />
+              onCreateAgent={addAgent}
+              onUpdateAgent={editAgent}
+              onDeleteAgent={removeAgent}
+            />
           </section>
         ) : (
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
@@ -246,14 +263,14 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               selectedProject
                 ? "Projeto selecionado"
                 : selectedAgent
-                  ? "Agente selecionado"
+                  ? "Chat com agente"
                   : "Assistente corporativo"
             }
             badge={
               selectedProject
                 ? `${selectedProjectSessions.length} chats`
                 : selectedAgent
-                  ? "Agente"
+                  ? `${getAgentIcebreakerCount(selectedAgent)} quebra-gelos`
                   : "MVP"
             }
             onOpenAdmin={onOpenAdmin}
@@ -350,7 +367,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 />
               ) : (
                 <>
-                  <ChatEmptyState onUseSuggestion={setDraft} />
+                  <ChatEmptyState
+                    agent={selectedAgent ?? null}
+                    onUseSuggestion={setDraft}
+                  />
 
                   <ChatInput
                     value={draft}
