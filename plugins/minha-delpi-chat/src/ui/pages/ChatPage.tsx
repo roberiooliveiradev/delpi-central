@@ -197,6 +197,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onUnarchiveSession={unarchiveSession}
           onLoadArchivedSessions={loadArchivedSessions}
           onCreateProject={addProject}
+          onRenameProject={(projectId, name) => editProject(projectId, { name })}
           onDeleteProject={removeProject}
           onSelectProject={(projectId) => {
             setSelectedProjectId(projectId);
@@ -226,6 +227,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           </section>
         ) : (
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
+          {!selectedProject ? (
           <header className="mdc-chat-header">
             <div>
               <p className="mdc-chat-eyebrow">Plugin oficial</p>
@@ -249,6 +251,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               <span className="mdc-chat-status">MVP</span>
             </div>
           </header>
+          ) : null}
 
           {error || workspaceError ? (
             <div className="mdc-chat-alert" role="alert">
@@ -262,7 +265,12 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 <ChatProjectHome
                   project={selectedProject}
                   sessions={selectedProjectSessions}
+                  activeSessionId={activeSession?.id}
                   onSelectSession={handleSelectSession}
+                  onRenameSession={renameSession}
+                  onDeleteSession={handleDeleteSession}
+                  onPinSession={pinSession}
+                  onUnpinSession={unpinSession}
                   onUpdateProject={editProject}
                   onDeleteProject={async (projectId) => {
                     const deleted = await removeProject(projectId);

@@ -14,9 +14,6 @@
 
 .mdc-chat-project-card:hover,
 .mdc-chat-project-card--active {
-  border: 0 !important;
-  outline: 0 !important;
-  box-shadow: none !important;
   background: color-mix(in srgb, var(--mdc-primary) 9%, transparent) !important;
 }
 
@@ -74,10 +71,6 @@
   white-space: nowrap;
 }
 
-.mdc-chat-project-card--active .mdc-chat-project-card__content strong {
-  color: var(--mdc-primary);
-}
-
 .mdc-chat-project-card__options {
   display: inline-grid;
   place-items: center;
@@ -105,9 +98,6 @@
 .mdc-chat-project-card__options:focus,
 .mdc-chat-project-card__options:focus-visible,
 .mdc-chat-project-card__options[aria-expanded="true"] {
-  border: 0 !important;
-  outline: 0 !important;
-  box-shadow: none !important;
   background: color-mix(in srgb, var(--mdc-primary) 10%, transparent) !important;
   color: var(--mdc-primary);
 }
@@ -124,7 +114,7 @@
   position: fixed;
   z-index: 9991;
   display: grid;
-  width: 13.1rem;
+  width: 14rem;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
   border-radius: 0.9rem;
   background: color-mix(in srgb, var(--mdc-card-bg) 94%, black);

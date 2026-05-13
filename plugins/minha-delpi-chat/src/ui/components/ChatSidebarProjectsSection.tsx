@@ -21,6 +21,7 @@ type ChatSidebarProjectsSectionProps = {
   onSelectProject?: (projectId: string | null) => void;
   onSelectSession?: (session: ChatSession) => void;
   onNewProject: () => void;
+  onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
 };
 
@@ -33,6 +34,7 @@ export function ChatSidebarProjectsSection({
   onSelectProject,
   onSelectSession,
   onNewProject,
+  onRenameProject,
   onDeleteProject,
 }: ChatSidebarProjectsSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -153,6 +155,16 @@ export function ChatSidebarProjectsSection({
                             project.id === selectedProjectId ? null : project.id,
                           )
                         }
+                        onRename={() => {
+                          const nextName = window.prompt(
+                            "Novo nome do projeto",
+                            project.name,
+                          )?.trim();
+
+                          if (nextName && nextName !== project.name) {
+                            void onRenameProject?.(project.id, nextName);
+                          }
+                        }}
                         onOpenSettings={() => onSelectProject?.(project.id)}
                         onDelete={() => {
                           const confirmed = window.confirm(

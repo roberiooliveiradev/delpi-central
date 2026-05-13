@@ -60,6 +60,7 @@ type ChatSidebarProps = {
     description?: string | null;
     instructions?: string | null;
   }) => Promise<ChatProject | null>;
+  onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onSelectProject?: (projectId: string | null) => void;
   onSelectAgent?: (agentKey: string | null) => void;
@@ -90,6 +91,7 @@ export function ChatSidebar({
   onUnarchiveSession,
   onLoadArchivedSessions,
   onCreateProject,
+  onRenameProject,
   onDeleteProject,
   onSelectProject,
   onSelectAgent,
@@ -281,6 +283,7 @@ export function ChatSidebar({
           onSelectProject={onSelectProject}
           onSelectSession={onSelectSession}
           onNewProject={() => setIsProjectsModalOpen(true)}
+          onRenameProject={onRenameProject}
           onDeleteProject={onDeleteProject}
         />
       </div>

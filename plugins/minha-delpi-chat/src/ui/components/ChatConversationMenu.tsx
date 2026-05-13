@@ -214,6 +214,7 @@ export function ChatConversationMenu({
           onOpenChange(!open);
         }}
         aria-label="Abrir opções da conversa"
+        aria-expanded={open}
         title="Opções"
       >
         <MoreHorizontal size={17} aria-hidden="true" />

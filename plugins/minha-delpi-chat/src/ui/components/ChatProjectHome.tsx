@@ -1,24 +1,31 @@
 import {
   Folder,
-  MessageSquare,
   MoreHorizontal,
+  Pencil,
   Settings,
   Trash2,
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { ChatConversationListItem } from "./ChatConversationListItem";
+import { ChatConversationMenu } from "./ChatConversationMenu";
+import { formatSessionDate } from "./chatSidebarUtils";
 
 import "./ChatProjectHome.css";
 
 type ChatProjectHomeProps = {
   project: ChatProject;
   sessions: ChatSession[];
+  activeSessionId?: string;
   composer?: ReactNode;
   onSelectSession: (session: ChatSession) => void;
+  onRenameSession?: (sessionId: string, title: string) => Promise<ChatSession | null>;
+  onDeleteSession?: (sessionId: string) => Promise<boolean>;
+  onPinSession?: (sessionId: string) => Promise<ChatSession | null>;
+  onUnpinSession?: (sessionId: string) => Promise<ChatSession | null>;
   onUpdateProject?: (
     projectId: string,
     payload: {
@@ -36,18 +43,30 @@ type ChatProjectHomeProps = {
 export function ChatProjectHome({
   project,
   sessions,
+  activeSessionId,
   composer,
   onSelectSession,
+  onRenameSession,
+  onDeleteSession,
+  onPinSession,
+  onUnpinSession,
   onUpdateProject,
   onDeleteProject,
   onClearProject,
 }: ChatProjectHomeProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [openSessionMenuId, setOpenSessionMenuId] = useState<string | null>(null);
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description || "");
   const [instructions, setInstructions] = useState(project.instructions || "");
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setName(project.name);
+    setDescription(project.description || "");
+    setInstructions(project.instructions || "");
+  }, [project.description, project.instructions, project.name]);
 
   const recentSessions = [...sessions].sort((left, right) => {
     const leftDate = new Date(left.updated_at || left.created_at || 0).getTime();
@@ -72,10 +91,20 @@ export function ChatProjectHome({
     }
   }
 
+  async function renameProject() {
+    const nextName = window.prompt("Novo nome do projeto", project.name)?.trim();
+
+    if (!nextName || nextName === project.name) {
+      return;
+    }
+
+    await onUpdateProject?.(project.id, {
+      name: nextName,
+    });
+  }
+
   async function deleteProject() {
-    const confirmed = window.confirm(
-      `Excluir o projeto "${project.name}"? As conversas não serão excluídas agora, mas perderão o vínculo com este projeto se o backend aplicar essa regra.`,
-    );
+    const confirmed = window.confirm(`Excluir o projeto "${project.name}"?`);
 
     if (!confirmed) {
       return;
@@ -86,6 +115,31 @@ export function ChatProjectHome({
     if (deleted) {
       onClearProject?.();
     }
+  }
+
+  async function renameSession(session: ChatSession) {
+    const nextTitle = window.prompt(
+      "Novo título da conversa",
+      session.title || "Conversa sem título",
+    )?.trim();
+
+    if (!nextTitle || nextTitle === session.title) {
+      return;
+    }
+
+    await onRenameSession?.(session.id, nextTitle);
+  }
+
+  async function deleteSession(session: ChatSession) {
+    const confirmed = window.confirm(
+      `Excluir a conversa "${session.title || "sem título"}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    await onDeleteSession?.(session.id);
   }
 
   return (
@@ -99,6 +153,17 @@ export function ChatProjectHome({
           <div>
             <p className="mdc-chat-eyebrow">Projeto</p>
             <h2>{project.name}</h2>
+
+            <div className="mdc-chat-project-home__meta">
+              <span>{project.visibility === "public" ? "Público" : "Privado"}</span>
+              <span>{recentSessions.length} chats</span>
+              {project.default_agent_key ? (
+                <span>Agente: {project.default_agent_key}</span>
+              ) : (
+                <span>Sem agente padrão</span>
+              )}
+            </div>
+
             {project.description ? <p>{project.description}</p> : null}
           </div>
         </div>
@@ -115,6 +180,17 @@ export function ChatProjectHome({
 
           {isMenuOpen ? (
             <div className="mdc-chat-project-home__menu">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  void renameProject();
+                }}
+              >
+                <Pencil size={18} aria-hidden="true" />
+                <span>Renomear</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -155,14 +231,48 @@ export function ChatProjectHome({
         {recentSessions.length > 0 ? (
           <div className="mdc-chat-project-home__list">
             {recentSessions.map((session) => (
-              <ChatConversationListItem
+              <div
                 key={session.id}
-                session={session}
-                variant="home"
-                leading={<span className="mdc-chat-conversation-item__avatar">D</span>}
-                trailing={<MessageSquare size={15} aria-hidden="true" />}
-                onClick={() => onSelectSession(session)}
-              />
+                className={
+                  session.id === activeSessionId
+                    ? "mdc-chat-project-home-session-row mdc-chat-project-home-session-row--active"
+                    : "mdc-chat-project-home-session-row"
+                }
+              >
+                <ChatConversationListItem
+                  session={session}
+                  variant="home"
+                  leading={
+                    <span className="mdc-chat-conversation-item__avatar">
+                      D
+                    </span>
+                  }
+                  trailing={
+                    <span className="mdc-chat-project-home-session-date">
+                      {formatSessionDate(session.updated_at)}
+                    </span>
+                  }
+                  onClick={() => onSelectSession(session)}
+                />
+
+                <div className="mdc-chat-project-home-session-actions">
+                  <ChatConversationMenu
+                    open={openSessionMenuId === session.id}
+                    onOpenChange={(open) =>
+                      setOpenSessionMenuId(open ? session.id : null)
+                    }
+                    onRename={() => void renameSession(session)}
+                    pinLabel={session.is_pinned ? "Desfixar chat" : "Fixar chat"}
+                    onPin={() =>
+                      session.is_pinned
+                        ? void onUnpinSession?.(session.id)
+                        : void onPinSession?.(session.id)
+                    }
+                    archiveLabel="Arquivar"
+                    onDelete={() => void deleteSession(session)}
+                  />
+                </div>
+              </div>
             ))}
           </div>
         ) : (

@@ -4,6 +4,7 @@
   gap: var(--mdc-space-5);
   width: min(100%, 860px);
   margin: 0 auto;
+  padding-top: clamp(1rem, 4vh, 3rem);
 }
 
 .mdc-chat-project-home__topbar {
@@ -42,6 +43,22 @@
   margin: 0;
   color: var(--mdc-text-muted);
   line-height: 1.45;
+}
+
+.mdc-chat-project-home__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.35rem 0 0.25rem;
+}
+
+.mdc-chat-project-home__meta span {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
+  color: var(--mdc-primary);
+  font-size: 0.72rem;
+  font-weight: 780;
+  padding: 0.22rem 0.48rem;
 }
 
 .mdc-chat-project-home__actions {
@@ -104,7 +121,6 @@
 
 .mdc-chat-project-home__composer {
   width: min(100%, 760px);
-  margin: 0 auto;
 }
 
 .mdc-chat-project-home__composer .mdc-chat-input {
@@ -133,7 +149,50 @@
 
 .mdc-chat-project-home__list {
   display: grid;
-  gap: 0.15rem;
+}
+
+.mdc-chat-project-home-session-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2rem;
+  align-items: center;
+  min-height: 3.45rem;
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 65%, transparent);
+}
+
+.mdc-chat-project-home-session-row:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 5%, transparent);
+}
+
+.mdc-chat-project-home-session-row--active {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+}
+
+.mdc-chat-project-home-session-row .mdc-chat-conversation-item {
+  background: transparent !important;
+  border-radius: 0;
+}
+
+.mdc-chat-project-home-session-row .mdc-chat-conversation-item:hover {
+  background: transparent !important;
+}
+
+.mdc-chat-project-home-session-date {
+  color: var(--mdc-text-muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.mdc-chat-project-home-session-actions {
+  display: inline-flex;
+  justify-content: flex-end;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mdc-chat-project-home-session-row:hover .mdc-chat-project-home-session-actions,
+.mdc-chat-project-home-session-row:has(.mdc-chat-conversation-menu__trigger[aria-expanded="true"]) .mdc-chat-project-home-session-actions {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .mdc-chat-project-home__empty {

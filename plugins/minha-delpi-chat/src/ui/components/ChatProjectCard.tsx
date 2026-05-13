@@ -2,6 +2,7 @@ import {
   Folder,
   MoreHorizontal,
   Pencil,
+  Settings,
   Trash2,
 } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -15,6 +16,7 @@ type ChatProjectCardProps = {
   project: ChatProject;
   active?: boolean;
   onSelect: () => void;
+  onRename?: () => void;
   onOpenSettings?: () => void;
   onDelete?: () => void;
 };
@@ -24,13 +26,14 @@ type MenuPosition = {
   left: number;
 };
 
-const MENU_WIDTH = 210;
+const MENU_WIDTH = 224;
 const MENU_MARGIN = 8;
 
 export function ChatProjectCard({
   project,
   active,
   onSelect,
+  onRename,
   onOpenSettings,
   onDelete,
 }: ChatProjectCardProps) {
@@ -104,11 +107,24 @@ export function ChatProjectCard({
           onClick={(event) => {
             event.stopPropagation();
             setIsMenuOpen(false);
-            onOpenSettings?.();
+            onRename?.();
           }}
         >
           <Pencil size={17} aria-hidden="true" />
           <span>Renomear</span>
+        </button>
+
+        <button
+          type="button"
+          role="menuitem"
+          onClick={(event) => {
+            event.stopPropagation();
+            setIsMenuOpen(false);
+            onOpenSettings?.();
+          }}
+        >
+          <Settings size={17} aria-hidden="true" />
+          <span>Configurações</span>
         </button>
 
         <button
