@@ -448,9 +448,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                     />
                   ) : (
                     <ChatEmptyState
-                      activeAgentName={
-                        selectedAgent && isAgentContextOnly ? selectedAgent.name : null
-                      }
                       displayName={userDisplayName}
                       onUseSuggestion={setDraft}
                     />

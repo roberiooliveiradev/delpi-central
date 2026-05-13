@@ -5,7 +5,6 @@ import { getFirstDisplayName } from "../../utils/authDisplayName";
 import "./ChatEmptyState.css";
 
 type ChatEmptyStateProps = {
-  activeAgentName?: string | null;
   displayName?: string | null;
   onUseSuggestion?: (value: string) => void;
 };
