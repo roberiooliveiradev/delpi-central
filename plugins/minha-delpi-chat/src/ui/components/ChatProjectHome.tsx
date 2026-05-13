@@ -1,4 +1,5 @@
 import {
+  Bot,
   Database,
   FileText,
   Folder,
@@ -12,22 +13,25 @@ import {
   Trash2,
   Upload,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
-import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
+import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { formatSessionDate } from "./chatSidebarUtils";
 
 import "./ChatProjectHome.css";
 
-type ProjectTab = "chats" | "sources";
+type ProjectTab = "chats" | "sources" | "agents";
 
 type ChatProjectHomeProps = {
   project: ChatProject;
   sessions: ChatSession[];
+  agents?: ChatAgent[];
+  contextAgentKey?: string | null;
   activeSessionId?: string;
   composer?: ReactNode;
   onSelectSession: (session: ChatSession) => void;
@@ -41,10 +45,13 @@ type ChatProjectHomeProps = {
       name?: string;
       description?: string | null;
       instructions?: string | null;
+      defaultAgentKey?: string | null;
       visibility?: string;
       archived?: boolean;
     },
   ) => Promise<ChatProject | null>;
+  onUseAgent?: (agentKey: string | null) => void;
+  onSetDefaultAgent?: (agentKey: string | null) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onClearProject?: () => void;
   compact?: boolean;
@@ -85,6 +92,8 @@ const sourceTypes = [
 export function ChatProjectHome({
   project,
   sessions,
+  agents = [],
+  contextAgentKey,
   activeSessionId,
   composer,
   onSelectSession,
@@ -93,6 +102,8 @@ export function ChatProjectHome({
   onPinSession,
   onUnpinSession,
   onUpdateProject,
+  onUseAgent,
+  onSetDefaultAgent,
   onDeleteProject,
   onClearProject,
   compact,
@@ -118,6 +129,9 @@ export function ChatProjectHome({
       setIsSettingsOpen(true);
     }
   }, [settingsRequestKey]);
+
+  const defaultAgent = agents.find((agent) => agent.key === project.default_agent_key);
+  const contextAgent = agents.find((agent) => agent.key === contextAgentKey);
 
   const recentSessions = [...sessions].sort((left, right) => {
     const leftDate = new Date(left.updated_at || left.created_at || 0).getTime();
@@ -216,11 +230,12 @@ export function ChatProjectHome({
               <span>{project.visibility === "public" ? "Público" : "Privado"}</span>
               <span>{recentSessions.length} chats</span>
               <span>0 fontes</span>
-              {project.default_agent_key ? (
-                <span>Agente: {project.default_agent_key}</span>
+              {defaultAgent ? (
+                <span>Agente padrão: {defaultAgent.name}</span>
               ) : (
                 <span>Sem agente padrão</span>
               )}
+              {contextAgent ? <span>Usando: {contextAgent.name}</span> : null}
             </div>
 
             {project.description ? <p>{project.description}</p> : null}
@@ -302,6 +317,16 @@ export function ChatProjectHome({
           >
             Fontes
           </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "agents"}
+            className={activeTab === "agents" ? "is-active" : undefined}
+            onClick={() => setActiveTab("agents")}
+          >
+            Agentes
+          </button>
         </div>
 
         {activeTab === "chats" ? (
@@ -358,6 +383,101 @@ export function ChatProjectHome({
                 Nenhuma conversa neste projeto ainda. Escreva acima para começar.
               </p>
             )}
+          </div>
+        ) : activeTab === "agents" ? (
+          <div className="mdc-chat-project-agents" role="tabpanel">
+            <div className="mdc-chat-project-agents__hero">
+              <span>
+                <Bot size={26} aria-hidden="true" />
+              </span>
+
+              <div>
+                <h3>Agentes do projeto</h3>
+                <p>
+                  Escolha um agente para usar neste projeto ou defina um agente
+                  padrão para novas conversas.
+                </p>
+              </div>
+
+              {contextAgent ? (
+                <button
+                  type="button"
+                  onClick={() => onUseAgent?.(null)}
+                  title="Remover agente do contexto atual"
+                >
+                  <X size={16} aria-hidden="true" />
+                  <span>Remover agente atual</span>
+                </button>
+              ) : null}
+            </div>
+
+            {defaultAgent ? (
+              <div className="mdc-chat-project-agents__default">
+                <ShieldCheck size={18} aria-hidden="true" />
+                <span>Agente padrão do projeto: <strong>{defaultAgent.name}</strong></span>
+                <button type="button" onClick={() => void onSetDefaultAgent?.(null)}>
+                  Remover padrão
+                </button>
+              </div>
+            ) : (
+              <div className="mdc-chat-project-agents__default">
+                <ShieldCheck size={18} aria-hidden="true" />
+                <span>Este projeto ainda não possui agente padrão.</span>
+              </div>
+            )}
+
+            <div className="mdc-chat-project-agents__list">
+              {agents.length > 0 ? (
+                agents.map((agent) => {
+                  const isDefault = agent.key === project.default_agent_key;
+                  const isContext = agent.key === contextAgentKey;
+
+                  return (
+                    <article
+                      key={agent.id}
+                      className={
+                        isContext
+                          ? "mdc-chat-project-agent-card mdc-chat-project-agent-card--active"
+                          : "mdc-chat-project-agent-card"
+                      }
+                    >
+                      <span className="mdc-chat-project-agent-card__icon">
+                        <Bot size={18} aria-hidden="true" />
+                      </span>
+
+                      <div>
+                        <strong>{agent.name}</strong>
+                        <p>{agent.description || agent.category || "Agente configurável"}</p>
+
+                        <div>
+                          {isDefault ? <em>Padrão</em> : null}
+                          {isContext ? <em>Em uso neste contexto</em> : null}
+                          <em>{agent.visibility === "public" ? "Público" : "Privado"}</em>
+                        </div>
+                      </div>
+
+                      <footer>
+                        <button type="button" onClick={() => onUseAgent?.(agent.key)}>
+                          Usar neste projeto
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => void onSetDefaultAgent?.(agent.key)}
+                          disabled={isDefault}
+                        >
+                          {isDefault ? "Padrão" : "Definir padrão"}
+                        </button>
+                      </footer>
+                    </article>
+                  );
+                })
+              ) : (
+                <p className="mdc-chat-project-home__empty">
+                  Nenhum agente disponível para este projeto.
+                </p>
+              )}
+            </div>
           </div>
         ) : (
           <div className="mdc-chat-project-sources" role="tabpanel">

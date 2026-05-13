@@ -251,10 +251,19 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const composerContextProps = {
     agents,
     projects,
-    activeAgentPageKey: contextAgentKey,
+    selectedAgentKey: contextAgentKey,
     selectedProjectId,
     onSelectAgent: handleSelectContextAgent,
     onSelectProject: handleSelectContextProject,
+  };
+
+  const agentPageComposerContextProps = {
+    agents: [],
+    projects: [],
+    selectedAgentKey: null,
+    selectedProjectId: null,
+    onSelectAgent: () => undefined,
+    onSelectProject: () => undefined,
   };
 
   return (
@@ -417,6 +426,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 <ChatProjectHome
                   project={selectedProject}
                   sessions={selectedProjectSessions}
+                  agents={agents}
+                  contextAgentKey={contextAgentKey}
                   compact
                   settingsRequestKey={projectSettingsRequestKey}
                   activeSessionId={activeSession?.id}
@@ -426,6 +437,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                   onPinSession={pinSession}
                   onUnpinSession={unpinSession}
                   onUpdateProject={editProject}
+                  onUseAgent={handleSelectContextAgent}
+                  onSetDefaultAgent={(agentKey) =>
+                    editProject(selectedProject.id, { defaultAgentKey: agentKey })
+                  }
                   onDeleteProject={async (projectId) => {
                     const deleted = await removeProject(projectId);
 
@@ -476,7 +491,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                     isSending={isStreaming}
                     variant="center"
                     placeholder={getComposerPlaceholder()}
-                    {...composerContextProps}
+                    {...(activeAgentPage ? agentPageComposerContextProps : composerContextProps)}
                     onChange={setDraft}
                     onSubmit={sendMessage}
                     onCancel={cancelStreaming}
