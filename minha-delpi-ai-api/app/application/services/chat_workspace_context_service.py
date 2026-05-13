@@ -37,7 +37,7 @@ class ChatWorkspaceContextService:
             "projectPrompt": self._project_prompt(project),
             "agentPrompt": agent.system_prompt if agent else None,
             "agentKey": agent.key if agent else None,
-            "allowedActionIds": self._allowed_action_ids(agent),
+            "allowedActionIds": self._allowed_action_ids(agent, user_id),
             "capabilities": self._capabilities(agent),
         }
 
@@ -88,12 +88,20 @@ class ChatWorkspaceContextService:
 
         return "\n".join(parts)
 
-    def _allowed_action_ids(self, agent) -> list[str] | None:
+    def _allowed_action_ids(self, agent, user_id: UUID) -> list[str] | None:
         if not agent:
             return None
 
+        configured_actions = self.agent_repository.list_enabled_action_ids(
+            agent_id=agent.id,
+            user_id=user_id,
+        )
+
+        if configured_actions:
+            return configured_actions
+
         metadata = agent.metadata or {}
-        allowed = metadata.get("allowed_actions")
+        allowed = metadata.get("allowed_actions") or metadata.get("allowedActions")
 
         if isinstance(allowed, list):
             return [str(item) for item in allowed if str(item).strip()]

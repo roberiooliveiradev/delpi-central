@@ -9,3 +9,6 @@ Flask-Migrate==4.0.7
 psycopg[binary]==3.2.3
 pgvector==0.3.6
 pytest==8.3.4
+
+pypdf>=5.0.0
+openpyxl>=3.1.0

@@ -164,6 +164,49 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         return True
 
+
+    def list_actions(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+    ) -> list[dict]:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_access(model, user_id):
+            return []
+
+        actions = (
+            AiChatAgentActionModel.query
+            .filter(AiChatAgentActionModel.agent_id == agent_id)
+            .order_by(
+                AiChatAgentActionModel.provider_key.asc(),
+                AiChatAgentActionModel.action_id.asc(),
+            )
+            .all()
+        )
+
+        return [self._action_to_dict(action) for action in actions]
+
+    def list_enabled_action_ids(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+    ) -> list[str]:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_access(model, user_id):
+            return []
+
+        rows = (
+            AiChatAgentActionModel.query
+            .filter(AiChatAgentActionModel.agent_id == agent_id)
+            .filter(AiChatAgentActionModel.enabled.is_(True))
+            .order_by(AiChatAgentActionModel.action_id.asc())
+            .all()
+        )
+
+        return [row.action_id for row in rows]
+
     def upsert_action(
         self,
         agent_id: UUID,
@@ -206,6 +249,19 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         db.session.flush()
 
         return True
+
+    def _action_to_dict(self, action: AiChatAgentActionModel) -> dict:
+        return {
+            "id": str(action.id),
+            "agentId": str(action.agent_id),
+            "providerKey": action.provider_key,
+            "actionId": action.action_id,
+            "enabled": action.enabled,
+            "sensitivity": action.sensitivity,
+            "requiresConfirmation": action.requires_confirmation,
+            "createdAt": action.created_at.isoformat(),
+            "updatedAt": action.updated_at.isoformat(),
+        }
 
     def _can_access(self, model: AiChatAgentModel, user_id: UUID) -> bool:
         if model.visibility in {"system", "public"}:

@@ -10,6 +10,7 @@ from app.application.use_cases.create_chat_session_use_case import CreateChatSes
 from app.application.use_cases.chat_agents_use_cases import (
     CreateChatAgentUseCase,
     DeleteChatAgentUseCase,
+    ListChatAgentActionsUseCase,
     ListChatAgentsUseCase,
     ShareChatAgentUseCase,
     UpdateChatAgentUseCase,
@@ -224,6 +225,12 @@ def make_share_chat_agent_use_case() -> ShareChatAgentUseCase:
     return ShareChatAgentUseCase(PostgresChatAgentRepository())
 
 
+
+
+def make_list_chat_agent_actions_use_case() -> ListChatAgentActionsUseCase:
+    return ListChatAgentActionsUseCase(PostgresChatAgentRepository())
+
+
 def make_upsert_chat_agent_action_use_case() -> UpsertChatAgentActionUseCase:
     return UpsertChatAgentActionUseCase(PostgresChatAgentRepository())
 
@@ -303,4 +310,8 @@ def make_list_agent_sources_use_case() -> ListAgentSourcesUseCase:
 
 
 def make_delete_chat_source_use_case() -> DeleteChatSourceUseCase:
-    return DeleteChatSourceUseCase(PostgresKnowledgeRepository())
+    return DeleteChatSourceUseCase(
+        knowledge_repository=PostgresKnowledgeRepository(),
+        project_repository=PostgresChatProjectRepository(),
+        agent_repository=PostgresChatAgentRepository(),
+    )

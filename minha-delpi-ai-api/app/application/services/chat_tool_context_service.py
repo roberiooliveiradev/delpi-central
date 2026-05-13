@@ -88,6 +88,27 @@ class ChatToolContextService:
             "toolCalls": safe_tool_calls,
         }
 
+
+    def _is_external_action_allowed(
+        self,
+        selected_external_action: dict,
+        allowed_action_ids: list[str] | None,
+    ) -> bool:
+        if allowed_action_ids is None:
+            return True
+
+        action_id = (
+            selected_external_action.get("arguments", {}).get("actionId")
+            or selected_external_action.get("arguments", {}).get("action_id")
+            or selected_external_action.get("actionId")
+            or selected_external_action.get("action_id")
+        )
+
+        if not action_id:
+            return False
+
+        return str(action_id) in {str(item) for item in allowed_action_ids}
+
     def _format_tool_context(
         self,
         name: str,

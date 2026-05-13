@@ -179,3 +179,14 @@ class UpsertChatAgentActionUseCase:
             requires_confirmation=request.requires_confirmation,
             enabled=request.enabled,
         )
+
+
+class ListChatAgentActionsUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(self, *, user_id: str, agent_id: str) -> list[dict]:
+        return self.repository.list_actions(
+            agent_id=UUID(agent_id),
+            user_id=UUID(user_id),
+        )

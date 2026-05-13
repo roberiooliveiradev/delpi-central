@@ -378,8 +378,15 @@ class ListAgentSourcesUseCase:
 
 
 class DeleteChatSourceUseCase:
-    def __init__(self, knowledge_repository: KnowledgeRepositoryPort):
+    def __init__(
+        self,
+        knowledge_repository: KnowledgeRepositoryPort,
+        project_repository: ChatProjectRepositoryPort | None = None,
+        agent_repository: ChatAgentRepositoryPort | None = None,
+    ):
         self.knowledge_repository = knowledge_repository
+        self.project_repository = project_repository
+        self.agent_repository = agent_repository
 
     def execute(self, *, user_id: str, source_id: str) -> bool:
         document_id = UUID(source_id)
@@ -390,9 +397,51 @@ class DeleteChatSourceUseCase:
 
         metadata = document.metadata or {}
 
-        if metadata.get("userId") and str(metadata.get("userId")) != str(user_id):
+        if not self._can_delete(user_id=user_id, metadata=metadata):
             return False
 
         deactivated = self.knowledge_repository.deactivate_document(document_id)
 
         return deactivated is not None
+
+    def _can_delete(self, *, user_id: str, metadata: dict) -> bool:
+        scope = metadata.get("scope")
+        user_uuid = UUID(user_id)
+
+        if scope == "project_source":
+            project_id = metadata.get("projectId")
+
+            if not project_id or not self.project_repository:
+                return False
+
+            result = self.project_repository.get_accessible_by_id(
+                project_id=UUID(project_id),
+                user_id=user_uuid,
+            )
+
+            if not result:
+                return False
+
+            _project, role = result
+
+            return role in {"owner", "editor"}
+
+        if scope == "agent_source":
+            agent_id = metadata.get("agentId")
+
+            if not agent_id or not self.agent_repository:
+                return False
+
+            result = self.agent_repository.get_accessible_by_id(
+                agent_id=UUID(agent_id),
+                user_id=user_uuid,
+            )
+
+            if not result:
+                return False
+
+            _agent, role = result
+
+            return role in {"owner", "editor", "system"}
+
+        return str(metadata.get("userId") or "") == str(user_id)

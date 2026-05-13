@@ -43,6 +43,7 @@ from app.composition.chat_composer import (
     make_delete_chat_project_use_case,
     make_create_chat_agent_use_case,
     make_delete_chat_agent_use_case,
+    make_list_chat_agent_actions_use_case,
     make_list_chat_agents_use_case,
     make_share_chat_agent_use_case,
     make_share_chat_project_use_case,
@@ -234,6 +235,20 @@ def share_agent(agent_id: str):
         raise
 
     return jsonify({"ok": True}), 200
+
+
+
+
+@chat_bp.get("/agents/<agent_id>/actions")
+@require_permission("minha-delpi.chat.access")
+def list_agent_actions(agent_id: str):
+    use_case = make_list_chat_agent_actions_use_case()
+    result = use_case.execute(
+        user_id=g.current_user.sub,
+        agent_id=agent_id,
+    )
+
+    return jsonify(result), 200
 
 
 @chat_bp.put("/agents/<agent_id>/actions")
@@ -543,6 +558,67 @@ def share_project(project_id: str):
     return jsonify({"ok": True}), 200
 
 
+
+
+
+
+@chat_bp.post("/attachments")
+@require_permission("minha-delpi.chat.ask")
+def upload_attachment_with_session():
+    if "file" not in request.files:
+        return bad_request("File is required")
+
+    file = request.files["file"]
+
+    if not file or not file.filename:
+        return bad_request("File is required")
+
+    project_id = request.form.get("projectId") or request.form.get("project_id")
+    agent_key = request.form.get("agentKey") or request.form.get("agent_key")
+    context = request.form.get("context")
+
+    session_use_case = make_create_chat_session_use_case()
+    attachment_use_case = make_create_chat_attachment_use_case()
+
+    try:
+        session = session_use_case.execute(
+            CreateChatSessionRequest(
+                user_id=g.current_user.sub,
+                title="Nova conversa",
+                context=context,
+                project_id=project_id,
+                agent_key=agent_key,
+            )
+        )
+
+        content = file.read()
+
+        attachment = attachment_use_case.execute(
+            CreateChatAttachmentRequest(
+                user_id=g.current_user.sub,
+                session_id=session.id,
+                original_filename=file.filename,
+                content_type=file.content_type,
+                size_bytes=len(content),
+                content=content,
+                metadata={
+                    "source": "composer",
+                    "createdSession": True,
+                },
+            )
+        )
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(
+        {
+            "session": asdict(session),
+            "attachment": asdict(attachment),
+        }
+    ), 201
 
 
 @chat_bp.get("/sessions/<session_id>/attachments")
