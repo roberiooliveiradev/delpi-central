@@ -325,3 +325,74 @@
     width: 100%;
   }
 }
+
+/* Clean UX layer — agents directory */
+.mdc-chat-agents-directory__main {
+  width: min(100%, 960px);
+  padding-top: clamp(2rem, 4vw, 3rem);
+}
+
+.mdc-chat-agents-directory__hero {
+  justify-items: start;
+  text-align: left;
+}
+
+.mdc-chat-agents-directory__hero h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.mdc-chat-agents-directory__hero p:not(.mdc-chat-eyebrow) {
+  max-width: 42rem;
+}
+
+.mdc-chat-agents-directory__search {
+  width: min(100%, 520px);
+  min-height: 3rem;
+  margin-top: 0.7rem;
+  border-color: color-mix(in srgb, var(--mdc-card-border) 56%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 64%, transparent);
+}
+
+.mdc-chat-agents-directory__list {
+  border-top-color: color-mix(in srgb, var(--mdc-card-border) 48%, transparent);
+}
+
+.mdc-chat-agents-directory__item {
+  min-height: 4.85rem;
+  border-bottom-color: color-mix(in srgb, var(--mdc-card-border) 45%, transparent);
+  padding: 0.75rem 0.5rem;
+}
+
+.mdc-chat-agents-directory__item:hover,
+.mdc-chat-agents-directory__item--active {
+  background: color-mix(in srgb, var(--mdc-primary) 4%, transparent);
+}
+
+.mdc-chat-agents-directory__avatar {
+  width: 2.35rem;
+  height: 2.35rem;
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+}
+
+.mdc-chat-agents-directory__item-copy strong {
+  font-size: 0.96rem;
+}
+
+.mdc-chat-agents-directory__item-copy small {
+  max-width: 34rem;
+  color: color-mix(in srgb, var(--mdc-text-muted) 84%, var(--mdc-text));
+}
+
+.mdc-chat-agents-directory__meta {
+  color: color-mix(in srgb, var(--mdc-text-muted) 86%, var(--mdc-text));
+}
+
+.mdc-chat-agents-directory__actions button {
+  min-height: 2.1rem;
+  border-color: color-mix(in srgb, var(--mdc-card-border) 54%, transparent);
+  font-size: 0.8rem;
+}
+
+.mdc-chat-agents-directory__action-primary {
+  box-shadow: none;
+}

@@ -678,3 +678,158 @@
 .mdc-chat-agent-builder__actions-empty strong {
   color: var(--mdc-title);
 }
+
+/* Clean UX layer — agent builder */
+.mdc-chat-agent-builder {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mdc-bg) 96%, #ffffff 4%), var(--mdc-bg));
+}
+
+.mdc-chat-agent-builder__topbar {
+  min-height: 3rem;
+  background: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
+}
+
+.mdc-chat-agent-builder__layout {
+  grid-template-columns: minmax(0, 1fr) minmax(25rem, 34rem);
+}
+
+.mdc-chat-agent-builder__form {
+  gap: 1.65rem;
+  padding: clamp(1.25rem, 2vw, 2rem) clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.mdc-chat-agent-builder__section {
+  gap: 0.85rem;
+  max-width: 50rem;
+}
+
+.mdc-chat-agent-builder__section + .mdc-chat-agent-builder__section {
+  padding-top: 0.35rem;
+}
+
+.mdc-chat-agent-builder__section-title {
+  gap: 0.55rem;
+}
+
+.mdc-chat-agent-builder__section-title svg {
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.85;
+}
+
+.mdc-chat-agent-builder__section-title h2 {
+  color: var(--mdc-title);
+  font-size: 1.02rem;
+  letter-spacing: -0.015em;
+}
+
+.mdc-chat-agent-builder__section-title p {
+  max-width: 42rem;
+  color: color-mix(in srgb, var(--mdc-text-muted) 88%, var(--mdc-text));
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.mdc-chat-agent-builder label span {
+  color: color-mix(in srgb, var(--mdc-text) 92%, var(--mdc-title));
+  font-size: 0.84rem;
+}
+
+.mdc-chat-agent-builder input,
+.mdc-chat-agent-builder textarea,
+.mdc-chat-agent-builder select {
+  border-color: color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 72%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 3%, transparent);
+}
+
+.mdc-chat-agent-builder input:hover,
+.mdc-chat-agent-builder textarea:hover,
+.mdc-chat-agent-builder select:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
+}
+
+.mdc-chat-agent-builder__switch {
+  width: min(100%, 24rem);
+  margin-inline: auto;
+  background: color-mix(in srgb, var(--mdc-text) 7%, transparent);
+}
+
+.mdc-chat-agent-builder__switch button,
+.mdc-chat-agent-builder__switch span,
+.mdc-chat-agent-builder__switch strong {
+  min-height: 2rem;
+  font-size: 0.9rem;
+}
+
+.mdc-chat-agent-builder__secondary {
+  min-height: 2.4rem;
+  border-color: color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
+  color: color-mix(in srgb, var(--mdc-text) 86%, var(--mdc-primary));
+}
+
+.mdc-chat-agent-builder__actions-summary {
+  gap: 0.45rem;
+}
+
+.mdc-chat-agent-builder__actions-summary article {
+  min-height: 3.25rem;
+  border-color: color-mix(in srgb, var(--mdc-card-border) 56%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 58%, transparent);
+}
+
+.mdc-chat-agent-builder__actions-icon {
+  width: 2rem;
+  height: 2rem;
+  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
+}
+
+.mdc-chat-agent-builder__actions-summary strong {
+  font-size: 0.9rem;
+}
+
+.mdc-chat-agent-builder__actions-summary small {
+  font-size: 0.75rem;
+}
+
+.mdc-chat-agent-builder__actions-summary article > button {
+  border-color: color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  background: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
+}
+
+.mdc-chat-agent-builder__source-list article,
+.mdc-chat-agent-builder__action-list label {
+  border-bottom-color: color-mix(in srgb, var(--mdc-card-border) 38%, transparent);
+}
+
+.mdc-chat-agent-builder__preview {
+  background: color-mix(in srgb, var(--mdc-card-bg) 30%, var(--mdc-bg));
+  padding: clamp(1.25rem, 2vw, 2rem);
+}
+
+.mdc-chat-agent-builder__preview-card {
+  min-height: 24rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 45%, transparent);
+  background: color-mix(in srgb, var(--mdc-bg) 84%, transparent);
+  box-shadow: 0 18px 60px color-mix(in srgb, #000 10%, transparent);
+}
+
+.mdc-chat-agent-builder__preview-card h2 {
+  color: color-mix(in srgb, var(--mdc-primary) 78%, var(--mdc-title));
+}
+
+.mdc-chat-agent-builder__preview-card p {
+  color: color-mix(in srgb, var(--mdc-text-muted) 78%, var(--mdc-text));
+}
+
+.mdc-chat-agent-builder__preview-input {
+  border-color: color-mix(in srgb, var(--mdc-card-border) 58%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 48%, transparent);
+}
+
+@media (min-width: 1181px) {
+  .mdc-chat-agent-builder__form {
+    scrollbar-gutter: stable;
+  }
+}

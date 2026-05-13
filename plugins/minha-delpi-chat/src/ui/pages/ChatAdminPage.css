@@ -250,3 +250,56 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Clean UX layer — admin */
+.mdc-admin-shell {
+  gap: 1rem;
+  background: var(--mdc-bg);
+}
+
+.mdc-admin-header,
+.mdc-admin-metric-card,
+.mdc-admin-card {
+  border-color: color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 68%, transparent);
+  box-shadow: none;
+}
+
+.mdc-admin-header {
+  border-radius: 1rem;
+}
+
+.mdc-admin-header h1 {
+  font-size: clamp(1.65rem, 2.5vw, 2.4rem);
+}
+
+.mdc-admin-metrics {
+  gap: 0.6rem;
+}
+
+.mdc-admin-metric-card {
+  min-height: 4.35rem;
+}
+
+.mdc-admin-metric-card strong {
+  font-size: 1.35rem;
+}
+
+.mdc-admin-card {
+  border-radius: 0.95rem;
+}
+
+.mdc-admin-table-wrap {
+  border-color: color-mix(in srgb, var(--mdc-card-border) 50%, transparent);
+}
+
+.mdc-admin-table th,
+.mdc-admin-table td {
+  border-bottom-color: color-mix(in srgb, var(--mdc-card-border) 38%, transparent);
+}
+
+.mdc-admin-actions button,
+.mdc-admin-card button,
+.mdc-admin-pagination button {
+  border-color: color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+}
