@@ -81,3 +81,9 @@
 .mdc-chat-header p {
   margin-block: 0.15rem;
 }
+
+.mdc-chat-empty-composer {
+  align-content: center;
+  gap: var(--mdc-space-5);
+  padding-bottom: clamp(2rem, 8vh, 7rem);
+}

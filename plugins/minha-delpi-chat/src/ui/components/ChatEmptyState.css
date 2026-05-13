@@ -7,153 +7,35 @@
   text-align: center;
 }
 
-.mdc-chat-empty-state h2 {
-  margin: 0.2rem 0 0.4rem;
+.mdc-chat-empty-state__hero h2 {
+  margin: 0;
   color: var(--mdc-title);
-  font-size: clamp(1.55rem, 2.8vw, 2.4rem);
-  letter-spacing: -0.04em;
+  font-size: clamp(1.75rem, 3vw, 2.55rem);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
 }
 
-.mdc-chat-empty-state p {
-  max-width: 38rem;
-  margin: 0 auto;
-  color: var(--mdc-text-muted);
-  line-height: 1.55;
-}
-
-.mdc-chat-empty-state__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--mdc-space-3);
-  width: min(100%, 680px);
-}
-
-.mdc-chat-empty-state__grid button {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.35rem 0.75rem;
-  align-items: start;
-  min-height: 4.8rem;
-  text-align: left;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-lg);
-  background: color-mix(in srgb, var(--mdc-card-bg) 72%, transparent);
-  color: var(--mdc-text);
-  cursor: pointer;
-  padding: var(--mdc-space-4);
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    transform 0.2s ease;
-}
-
-.mdc-chat-empty-state__grid button:hover {
-  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
-  background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-card-bg));
-  transform: translateY(-1px);
-}
-
-.mdc-chat-empty-state__grid svg {
-  color: var(--mdc-primary);
-  margin-top: 0.1rem;
-}
-
-.mdc-chat-empty-state__grid span {
-  color: var(--mdc-title);
-  font-weight: 850;
-}
-
-.mdc-chat-empty-state__grid small {
-  grid-column: 2;
-  color: var(--mdc-text-muted);
-  line-height: 1.35;
-}
-
-@media (max-width: 720px) {
-  .mdc-chat-empty-state__grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.mdc-chat-empty-state--agent {
-  gap: var(--mdc-space-4);
-  padding-top: clamp(0.5rem, 2vh, 1.5rem);
-}
-
-.mdc-chat-empty-state__hero {
-  display: grid;
-  justify-items: center;
-}
-
-.mdc-chat-empty-state__agent-icon {
-  display: inline-grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  margin-bottom: 0.75rem;
-  border-radius: 0.95rem;
-  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
-  color: var(--mdc-primary);
-}
-
-.mdc-chat-empty-state__agent-meta {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.4rem;
-  margin-top: 0.85rem;
-}
-
-.mdc-chat-empty-state__agent-meta span {
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
-  color: var(--mdc-primary);
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 0.24rem 0.55rem;
-}
-
-.mdc-chat-empty-state--agent .mdc-chat-empty-state__grid button {
-  min-height: 4.4rem;
-}
-
-.mdc-chat-empty-state__no-icebreakers {
+.mdc-chat-empty-state__knowledge-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
-  color: var(--mdc-text-muted);
-  font-size: 0.86rem;
-  font-weight: 680;
-  padding: 0.6rem 0.8rem;
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 760;
+  padding: 0.7rem 1rem;
 }
 
-.mdc-chat-empty-state__no-icebreakers svg {
+.mdc-chat-empty-state__knowledge-pill:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 5%, transparent);
   color: var(--mdc-primary);
 }
 
-/* Chat comum: home mais compacta e alinhada à nova topbar */
-.mdc-chat-empty-state:not(.mdc-chat-empty-state--agent) {
-  padding-top: clamp(0.8rem, 3vh, 2rem);
-}
-
-.mdc-chat-empty-state:not(.mdc-chat-empty-state--agent) h2 {
-  font-size: clamp(1.8rem, 3.1vw, 2.65rem);
-}
-
-.mdc-chat-empty-state:not(.mdc-chat-empty-state--agent) .mdc-chat-empty-state__grid {
-  margin-top: -0.25rem;
-}
-
-.mdc-chat-empty-state:not(.mdc-chat-empty-state--agent) .mdc-chat-empty-state__grid button {
-  min-height: 4.45rem;
-  border-color: color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
-  background: transparent;
-}
-
-.mdc-chat-empty-state:not(.mdc-chat-empty-state--agent) .mdc-chat-empty-state__grid button:hover {
-  border-color: color-mix(in srgb, var(--mdc-primary) 24%, var(--mdc-card-border));
-  background: color-mix(in srgb, var(--mdc-primary) 5%, transparent);
-  transform: none;
+.mdc-chat-empty-state__knowledge-pill svg {
+  color: var(--mdc-primary);
 }

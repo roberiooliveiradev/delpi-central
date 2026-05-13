@@ -2,7 +2,6 @@ import {
   ArrowLeft,
   Bot,
   Check,
-  MessageSquarePlus,
   Pencil,
   Plus,
   Settings,
@@ -175,6 +174,14 @@ export function ChatAgentsPage({
     const nextMetadata = {
       ...(editingAgent?.metadata ?? {}),
       icebreakers: normalizedIcebreakers,
+      capabilities: {
+        ...((editingAgent?.metadata?.capabilities as Record<string, unknown> | undefined) ?? {}),
+        actions: true,
+        files: true,
+        canvas: true,
+      },
+      allowed_actions:
+        (editingAgent?.metadata?.allowed_actions as string[] | undefined) ?? [],
     };
 
     const payload: AgentPayload = {
@@ -264,25 +271,6 @@ export function ChatAgentsPage({
               <Plus size={17} aria-hidden="true" />
             </button>
           </div>
-
-          <button
-            type="button"
-            className={
-              selectedAgentKey
-                ? "mdc-chat-agent-list-item"
-                : "mdc-chat-agent-list-item mdc-chat-agent-list-item--active"
-            }
-            onClick={() => {
-              onSelectAgent?.(null);
-              resetForm();
-            }}
-          >
-            <span>
-              <MessageSquarePlus size={16} aria-hidden="true" />
-            </span>
-            <strong>Chat comum</strong>
-            <small>Sem agente ativo</small>
-          </button>
 
           {isLoading ? (
             <p className="mdc-chat-muted">Carregando agentes...</p>
@@ -530,6 +518,20 @@ export function ChatAgentsPage({
                   <option value="detalhado">Detalhado</option>
                 </select>
               </label>
+            </div>
+
+            <div className="mdc-chat-agent-form__resources">
+              <strong>Recursos preparados</strong>
+              <small>Esses campos já ficam salvos em metadata para conexão com o backend depois.</small>
+              <span>Actions habilitadas</span>
+              <span>Documentos/fontes preparados</span>
+              <span>Lousa/canvas preparado</span>
+            </div>
+
+            <div className="mdc-chat-agent-form__resources">
+              <strong>Actions</strong>
+              <small>Integração visual preparada. A listagem real de actions virá do backend.</small>
+              <span>metadata.allowed_actions</span>
             </div>
 
             {localError ? (

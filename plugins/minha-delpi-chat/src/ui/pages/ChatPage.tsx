@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
+import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
 import "./ChatPage.css";
 import { ChatInput } from "../components/ChatInput";
@@ -188,6 +189,41 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     !streamingAnswer &&
     !isStreaming;
 
+  function getComposerPlaceholder() {
+    if (selectedProject && selectedAgent) {
+      return `Novo chat em ${selectedProject.name} usando ${selectedAgent.name}`;
+    }
+
+    if (selectedProject) {
+      return `Novo chat em ${selectedProject.name}`;
+    }
+
+    if (selectedAgent) {
+      return `Pergunte ao agente ${selectedAgent.name}`;
+    }
+
+    return "Pergunte alguma coisa";
+  }
+
+  async function handleSelectContextAgent(agentKey: string | null) {
+    setSelectedAgentKey(agentKey);
+    await startSession();
+  }
+
+  async function handleSelectContextProject(projectId: string | null) {
+    setSelectedProjectId(projectId);
+    await startSession();
+  }
+
+  const composerContextProps = {
+    agents,
+    projects,
+    selectedAgentKey,
+    selectedProjectId,
+    onSelectAgent: handleSelectContextAgent,
+    onSelectProject: handleSelectContextProject,
+  };
+
   return (
     <main className="minha-delpi-chat">
       <section
@@ -223,11 +259,11 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onDeleteProject={removeProject}
           onSelectProject={(projectId) => {
             setSelectedProjectId(projectId);
-            void handleStartSession();
+            setCurrentView("chat");
           }}
           onSelectAgent={(agentKey) => {
             setSelectedAgentKey(agentKey);
-            void handleStartSession();
+            setCurrentView("chat");
           }}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
@@ -243,7 +279,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               onBack={() => setCurrentView("chat")}
               onSelectAgent={(agentKey) => {
                 setSelectedAgentKey(agentKey);
-                void handleStartSession();
+                setCurrentView("chat");
               }}
               onCreateAgent={addAgent}
               onUpdateAgent={editAgent}
@@ -359,6 +395,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                       disabled={false}
                       isSending={isStreaming}
                       variant="center"
+                      placeholder={getComposerPlaceholder()}
+                      {...composerContextProps}
                       onChange={setDraft}
                       onSubmit={sendMessage}
                       onCancel={cancelStreaming}
@@ -367,16 +405,22 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 />
               ) : (
                 <>
-                  <ChatEmptyState
-                    agent={selectedAgent ?? null}
-                    onUseSuggestion={setDraft}
-                  />
+                  {selectedAgent ? (
+                    <ChatAgentHome
+                      agent={selectedAgent}
+                      onUseSuggestion={setDraft}
+                    />
+                  ) : (
+                    <ChatEmptyState onUseSuggestion={setDraft} />
+                  )}
 
                   <ChatInput
                     value={draft}
                     disabled={false}
                     isSending={isStreaming}
                     variant="center"
+                    placeholder={getComposerPlaceholder()}
+                    {...composerContextProps}
                     onChange={setDraft}
                     onSubmit={sendMessage}
                     onCancel={cancelStreaming}
@@ -403,6 +447,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 value={draft}
                 disabled={false}
                 isSending={isStreaming}
+                placeholder={getComposerPlaceholder()}
+                {...composerContextProps}
                 onChange={setDraft}
                 onSubmit={sendMessage}
                 onCancel={cancelStreaming}
