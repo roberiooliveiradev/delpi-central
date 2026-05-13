@@ -453,17 +453,6 @@ export function ChatAgentBuilderPage({
           {agent ? (
             <button
               type="button"
-              className="mdc-chat-agent-builder__secondary"
-              onClick={() => onManageActions?.(agent)}
-            >
-              <Zap size={17} aria-hidden="true" />
-              <span>Actions</span>
-            </button>
-          ) : null}
-
-          {agent ? (
-            <button
-              type="button"
               className="mdc-chat-agent-builder__danger"
               onClick={() => void deleteCurrentAgent()}
             >
@@ -775,7 +764,7 @@ export function ChatAgentBuilderPage({
 
                       <button
                         type="button"
-                        onClick={() => onManageActions?.(agent)}
+                        onClick={() => onConfigureAction?.(agent, provider.providerKey)}
                         title="Configurar action"
                       >
                         <Settings2 size={16} aria-hidden="true" />
@@ -792,7 +781,7 @@ export function ChatAgentBuilderPage({
                 <button
                   type="button"
                   className="mdc-chat-agent-builder__secondary"
-                  onClick={() => onManageActions?.(agent)}
+                  onClick={() => onCreateAction?.(agent)}
                 >
                   <Plus size={16} aria-hidden="true" />
                   <span>Criar nova ação</span>

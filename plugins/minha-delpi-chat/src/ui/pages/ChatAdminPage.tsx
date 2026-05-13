@@ -2,6 +2,8 @@ import { useState } from "react";
 
 import { useChatAdmin } from "../../state/hooks/useChatAdmin";
 
+import "./ChatAdminPage.css";
+
 type ChatAdminPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   onBack: () => void;

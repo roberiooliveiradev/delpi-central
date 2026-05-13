@@ -33,6 +33,7 @@ import "./ChatAgentActionsPage.css";
 
 type ChatAgentActionsPageProps = {
   agent: ChatAgent;
+  providerKey?: string | null;
   onBack: () => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
@@ -63,12 +64,15 @@ function getAgentIcebreakers(agent: ChatAgent): string[] {
 
 export function ChatAgentActionsPage({
   agent,
+  providerKey,
   onBack,
   getAccessToken,
 }: ChatAgentActionsPageProps) {
   const [availableProviders, setAvailableProviders] = useState<ChatActionProvider[]>([]);
   const [configuredProviders, setConfiguredProviders] = useState<ChatAgentActionProvider[]>([]);
-  const [selectedProviderKey, setSelectedProviderKey] = useState<string | null>(null);
+  const [selectedProviderKey, setSelectedProviderKey] = useState<string | null>(
+    providerKey ?? null,
+  );
   const [providerActions, setProviderActions] = useState<ChatActionCatalogItem[]>([]);
   const [configuredActions, setConfiguredActions] = useState<ChatAgentAction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -140,7 +144,7 @@ export function ChatAgentActionsPage({
           setAvailableProviders(providers);
           setConfiguredProviders(agentProviders);
 
-          if (!selectedProviderKey && agentProviders.length > 0) {
+          if (!providerKey && !selectedProviderKey && agentProviders.length > 0) {
             setSelectedProviderKey(agentProviders[0].providerKey);
           }
         }
@@ -164,7 +168,7 @@ export function ChatAgentActionsPage({
     return () => {
       mounted = false;
     };
-  }, [agent.id, getAccessToken]);
+  }, [agent.id, getAccessToken, providerKey, selectedProviderKey]);
 
   useEffect(() => {
     if (!selectedProviderKey) {
@@ -369,7 +373,7 @@ export function ChatAgentActionsPage({
         >
           <RefreshCw size={16} aria-hidden="true" />
           <span>
-            {isImportingProviderKey ? "Atualizando..." : "Atualizar"}
+            {isImportingProviderKey ? "Atualizando..." : "Atualizar rotas"}
           </span>
         </button>
       </header>
@@ -383,9 +387,10 @@ export function ChatAgentActionsPage({
               </button>
             </div>
 
-            <h1>Editar ações</h1>
+            <h1>{selectedProvider ? "Editar ação" : "Criar nova ação"}</h1>
             <p>
-              Permita que o agente recupere informações ou realize ações fora do chat.
+              Configure uma API OpenAPI específica deste agente: autenticação,
+              schema, rotas disponíveis e política de privacidade.
             </p>
           </section>
 
@@ -412,12 +417,13 @@ export function ChatAgentActionsPage({
             </div>
           </section>
 
+          {!providerKey ? (
           <section className="mdc-chat-agent-actions-page__block">
             <div className="mdc-chat-agent-actions-page__block-title">
               <Zap size={18} aria-hidden="true" />
               <div>
                 <h2>Actions conectadas</h2>
-                <p>Escolha uma API para configurar schema, rotas e permissões.</p>
+                <p>Escolha uma API existente ou crie uma nova action.</p>
               </div>
             </div>
 
@@ -477,6 +483,10 @@ export function ChatAgentActionsPage({
             </div>
           </section>
 
+          </section>
+          ) : null}
+
+          {!selectedProvider ? (
           <section className="mdc-chat-agent-actions-page__block">
             <div className="mdc-chat-agent-actions-page__block-title">
               <Plus size={18} aria-hidden="true" />
@@ -536,6 +546,9 @@ export function ChatAgentActionsPage({
               </button>
             </div>
           </section>
+
+          </section>
+          ) : null}
 
           <section className="mdc-chat-agent-actions-page__block">
             <div className="mdc-chat-agent-actions-page__block-title">
@@ -652,6 +665,25 @@ export function ChatAgentActionsPage({
               </div>
             )}
           </section>
+
+          <section className="mdc-chat-agent-actions-page__block">
+            <div className="mdc-chat-agent-actions-page__block-title">
+              <Shield size={18} aria-hidden="true" />
+              <div>
+                <h2>Política de privacidade</h2>
+                <p>URL exibida para usuários quando esta action acessar serviços externos.</p>
+              </div>
+            </div>
+
+            <label>
+              <span>URL da política</span>
+              <input
+                placeholder="https://app.example.com/privacy"
+                defaultValue=""
+              />
+            </label>
+          </section>
+
         </main>
 
         <aside className="mdc-chat-agent-actions-page__preview">

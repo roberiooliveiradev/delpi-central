@@ -1,0 +1,252 @@
+.mdc-admin-shell {
+  display: grid;
+  gap: 1.25rem;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--mdc-primary) 12%, transparent), transparent 28rem),
+    var(--mdc-bg);
+  color: var(--mdc-text);
+  padding: clamp(1rem, 2vw, 1.75rem);
+}
+
+.mdc-admin-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 82%, transparent);
+  padding: clamp(1rem, 2vw, 1.4rem);
+}
+
+.mdc-admin-header h1 {
+  margin: 0.15rem 0;
+  color: var(--mdc-title);
+  font-size: clamp(1.9rem, 3vw, 3rem);
+  letter-spacing: -0.05em;
+}
+
+.mdc-admin-header p {
+  margin: 0;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.mdc-admin-actions button,
+.mdc-admin-card button,
+.mdc-admin-pagination button {
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 74%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.58rem 0.85rem;
+}
+
+.mdc-admin-actions button:first-child {
+  background: var(--mdc-primary);
+  border-color: var(--mdc-primary);
+  color: white;
+}
+
+.mdc-admin-actions button:disabled,
+.mdc-admin-card button:disabled,
+.mdc-admin-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.mdc-admin-metrics {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.mdc-admin-metric-card,
+.mdc-admin-card {
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 86%, transparent);
+  box-shadow: 0 18px 50px color-mix(in srgb, #000 10%, transparent);
+}
+
+.mdc-admin-metric-card {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 5rem;
+  padding: 0.85rem;
+}
+
+.mdc-admin-metric-card span {
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.mdc-admin-metric-card strong {
+  color: var(--mdc-title);
+  font-size: 1.55rem;
+}
+
+.mdc-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.mdc-admin-card {
+  display: grid;
+  gap: 0.85rem;
+  align-content: start;
+  padding: 1rem;
+}
+
+.mdc-admin-card--wide {
+  grid-column: 1 / -1;
+}
+
+.mdc-admin-card h2 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 1.08rem;
+}
+
+.mdc-admin-kv {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+}
+
+.mdc-admin-kv div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 52%, transparent);
+  padding-bottom: 0.5rem;
+}
+
+.mdc-admin-kv dt {
+  color: var(--mdc-text-muted);
+  font-weight: 800;
+}
+
+.mdc-admin-kv dd {
+  margin: 0;
+  color: var(--mdc-title);
+  font-weight: 850;
+}
+
+.mdc-admin-form,
+.mdc-admin-filters {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.mdc-admin-form label,
+.mdc-admin-filters label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--mdc-text-muted);
+  font-weight: 800;
+}
+
+.mdc-admin-form input,
+.mdc-admin-form textarea,
+.mdc-admin-filters input,
+.mdc-admin-filters select {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 76%, transparent);
+  border-radius: 0.78rem;
+  background: color-mix(in srgb, var(--mdc-bg) 82%, transparent);
+  color: var(--mdc-text);
+  font: inherit;
+  outline: 0;
+  padding: 0.72rem 0.82rem;
+}
+
+.mdc-admin-card-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.mdc-admin-table-wrap {
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 60%, transparent);
+  border-radius: 0.9rem;
+}
+
+.mdc-admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.mdc-admin-table th,
+.mdc-admin-table td {
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 50%, transparent);
+  padding: 0.72rem 0.8rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.mdc-admin-table th {
+  color: var(--mdc-text-muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mdc-admin-table td {
+  color: var(--mdc-text);
+}
+
+.mdc-admin-row-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.mdc-admin-row-actions button {
+  padding: 0.42rem 0.62rem;
+}
+
+.mdc-admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  color: var(--mdc-text-muted);
+}
+
+@media (max-width: 1180px) {
+  .mdc-admin-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mdc-admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .mdc-admin-header,
+  .mdc-admin-card-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mdc-admin-metrics {
+    grid-template-columns: 1fr;
+  }
+}

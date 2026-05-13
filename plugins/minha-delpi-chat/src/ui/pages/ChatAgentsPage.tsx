@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
-  Zap,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -103,7 +102,10 @@ export function ChatAgentsPage({
   getAccessToken,
 }: ChatAgentsPageProps) {
   const [editingAgent, setEditingAgent] = useState<ChatAgent | null | undefined>(undefined);
-  const [actionsAgent, setActionsAgent] = useState<ChatAgent | null>(null);
+  const [actionEditor, setActionEditor] = useState<{
+    agent: ChatAgent;
+    providerKey?: string | null;
+  } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredAgents = useMemo(() => {
@@ -128,11 +130,12 @@ export function ChatAgentsPage({
     });
   }, [agents, searchTerm]);
 
-  if (actionsAgent) {
+  if (actionEditor) {
     return (
       <ChatAgentActionsPage
-        agent={actionsAgent}
-        onBack={() => setActionsAgent(null)}
+        agent={actionEditor.agent}
+        providerKey={actionEditor.providerKey}
+        onBack={() => setActionEditor(null)}
         getAccessToken={getAccessToken}
       />
     );
@@ -143,10 +146,18 @@ export function ChatAgentsPage({
       <ChatAgentBuilderPage
         agent={editingAgent}
         onBack={() => setEditingAgent(undefined)}
-        onManageActions={
+        onCreateAction={
           editingAgent
             ? () => {
-                setActionsAgent(editingAgent);
+                setActionEditor({ agent: editingAgent, providerKey: null });
+                setEditingAgent(undefined);
+              }
+            : undefined
+        }
+        onConfigureAction={
+          editingAgent
+            ? (_agent, providerKey) => {
+                setActionEditor({ agent: editingAgent, providerKey });
                 setEditingAgent(undefined);
               }
             : undefined
@@ -297,16 +308,6 @@ export function ChatAgentsPage({
 
                       {editable ? (
                         <>
-                          <button
-                            type="button"
-                            className="mdc-chat-agents-directory__action-pill"
-                            onClick={() => setActionsAgent(agent)}
-                            title="Actions do agente"
-                          >
-                            <Zap size={15} aria-hidden="true" />
-                            <span>Actions</span>
-                          </button>
-
                           <button
                             type="button"
                             className="mdc-chat-agents-directory__action-pill"
