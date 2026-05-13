@@ -549,3 +549,58 @@
   color: var(--mdc-text-muted);
   font-size: 0.9rem;
 }
+
+.mdc-chat-agent-builder__routes-toggle {
+  justify-self: flex-start;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  color: var(--mdc-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 850;
+  padding: 0.42rem 0.7rem;
+}
+
+.mdc-chat-agent-builder__routes-toggle:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
+}
+
+.mdc-chat-agent-builder__route-list {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 24rem;
+  overflow: auto;
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 65%, transparent);
+  padding-top: 0.7rem;
+}
+
+.mdc-chat-agent-builder__route-list article {
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  background: color-mix(in srgb, var(--mdc-surface) 70%, transparent);
+}
+
+.mdc-chat-agent-builder__route-list label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.mdc-chat-agent-builder__route-list strong,
+.mdc-chat-agent-builder__route-list small {
+  display: block;
+}
+
+.mdc-chat-agent-builder__route-list strong {
+  color: var(--mdc-text);
+  font-size: 0.82rem;
+}
+
+.mdc-chat-agent-builder__route-list small {
+  color: var(--mdc-text-muted);
+  font-size: 0.76rem;
+}

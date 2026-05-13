@@ -18,13 +18,18 @@ import {
   deleteChatSource,
   listActionProviders,
   listAgentSources,
+  listChatActions,
+  listChatAgentActions,
   listChatAgentActionProviders,
+  upsertChatAgentAction,
   saveChatAgentActionProvider,
   uploadAgentSource,
 } from "../../data/api/chatApi";
 import type {
+  ChatActionCatalogItem,
   ChatActionProvider,
   ChatAgent,
+  ChatAgentAction,
   ChatAgentActionProvider,
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
@@ -150,6 +155,10 @@ export function ChatAgentBuilderPage({
 
   const [availableProviders, setAvailableProviders] = useState<ChatActionProvider[]>([]);
   const [configuredProviders, setConfiguredProviders] = useState<ChatAgentActionProvider[]>([]);
+  const [selectedProviderKey, setSelectedProviderKey] = useState<string | null>(null);
+  const [providerActions, setProviderActions] = useState<ChatActionCatalogItem[]>([]);
+  const [configuredActions, setConfiguredActions] = useState<ChatAgentAction[]>([]);
+  const [isLoadingProviderActions, setIsLoadingProviderActions] = useState(false);
   const [newProviderName, setNewProviderName] = useState("");
   const [newProviderBaseUrl, setNewProviderBaseUrl] = useState("");
   const [newProviderOpenApiUrl, setNewProviderOpenApiUrl] = useState("");
@@ -196,6 +205,53 @@ export function ChatAgentBuilderPage({
       isMounted = false;
     };
   }, [agent?.id, getAccessToken]);
+
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProviderActions() {
+      if (!agent || !selectedProviderKey) {
+        setProviderActions([]);
+        setConfiguredActions([]);
+        return;
+      }
+
+      setIsLoadingProviderActions(true);
+
+      try {
+        const [actions, overrides] = await Promise.all([
+          listChatActions({ providerKey: selectedProviderKey, getAccessToken }),
+          listChatAgentActions(agent.id, { getAccessToken }),
+        ]);
+
+        if (isMounted) {
+          setProviderActions(actions);
+          setConfiguredActions(
+            overrides.filter((item) => item.providerKey === selectedProviderKey),
+          );
+        }
+      } catch (error) {
+        if (isMounted) {
+          setLocalError(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível carregar as rotas da API.",
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingProviderActions(false);
+        }
+      }
+    }
+
+    void loadProviderActions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [agent?.id, selectedProviderKey, getAccessToken]);
 
   useEffect(() => {
     let isMounted = true;
@@ -335,6 +391,40 @@ export function ChatAgentBuilderPage({
     );
 
     setConfiguredProviders(await listChatAgentActionProviders(agent.id, { getAccessToken }));
+  }
+
+
+  function isActionEnabledByOverride(action: ChatActionCatalogItem): boolean {
+    const override = configuredActions.find((item) => item.actionId === action.actionId);
+
+    return override?.enabled ?? true;
+  }
+
+  async function toggleProviderAction(action: ChatActionCatalogItem, enabled: boolean) {
+    if (!agent || !selectedProviderKey) {
+      return;
+    }
+
+    await upsertChatAgentAction(
+      agent.id,
+      {
+        providerKey: selectedProviderKey,
+        actionId: action.actionId,
+        sensitivity: action.sensitivity || "read",
+        requiresConfirmation:
+          action.sensitivity === "write" ||
+          action.sensitivity === "destructive" ||
+          action.sensitivity === "sql" ||
+          action.sensitivity === "admin",
+        enabled,
+      },
+      { getAccessToken },
+    );
+
+    const overrides = await listChatAgentActions(agent.id, { getAccessToken });
+    setConfiguredActions(
+      overrides.filter((item) => item.providerKey === selectedProviderKey),
+    );
   }
 
   async function uploadAgentKnowledgeFile(file: File | null | undefined) {
@@ -846,46 +936,105 @@ export function ChatAgentBuilderPage({
                         </label>
 
                         {configured ? (
-                          <div className="mdc-chat-agent-builder__provider-options">
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={configured.allowRead}
-                                onChange={(event) =>
-                                  void updateAgentProviderPermissions(provider.providerKey, {
-                                    allowRead: event.target.checked,
-                                  })
-                                }
-                              />
-                              Leitura
-                            </label>
+                          <>
+                            <div className="mdc-chat-agent-builder__provider-options">
+                              <label>
+                                <input
+                                  type="checkbox"
+                                  checked={configured.allowRead}
+                                  onChange={(event) =>
+                                    void updateAgentProviderPermissions(provider.providerKey, {
+                                      allowRead: event.target.checked,
+                                    })
+                                  }
+                                />
+                                Leitura
+                              </label>
 
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={configured.allowWrite}
-                                onChange={(event) =>
-                                  void updateAgentProviderPermissions(provider.providerKey, {
-                                    allowWrite: event.target.checked,
-                                  })
-                                }
-                              />
-                              Escrita
-                            </label>
+                              <label>
+                                <input
+                                  type="checkbox"
+                                  checked={configured.allowWrite}
+                                  onChange={(event) =>
+                                    void updateAgentProviderPermissions(provider.providerKey, {
+                                      allowWrite: event.target.checked,
+                                    })
+                                  }
+                                />
+                                Escrita
+                              </label>
 
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={configured.requiresConfirmationForWrite}
-                                onChange={(event) =>
-                                  void updateAgentProviderPermissions(provider.providerKey, {
-                                    requiresConfirmationForWrite: event.target.checked,
-                                  })
-                                }
-                              />
-                              Confirmar escrita
-                            </label>
-                          </div>
+                              <label>
+                                <input
+                                  type="checkbox"
+                                  checked={configured.requiresConfirmationForWrite}
+                                  onChange={(event) =>
+                                    void updateAgentProviderPermissions(provider.providerKey, {
+                                      requiresConfirmationForWrite: event.target.checked,
+                                    })
+                                  }
+                                />
+                                Confirmar escrita
+                              </label>
+                            </div>
+
+                            <button
+                              type="button"
+                              className="mdc-chat-agent-builder__routes-toggle"
+                              onClick={() =>
+                                setSelectedProviderKey((current) =>
+                                  current === provider.providerKey
+                                    ? null
+                                    : provider.providerKey,
+                                )
+                              }
+                            >
+                              {selectedProviderKey === provider.providerKey
+                                ? "Ocultar rotas"
+                                : `Ver rotas (${configured.actionCount})`}
+                            </button>
+
+                            {selectedProviderKey === provider.providerKey ? (
+                              <div className="mdc-chat-agent-builder__route-list">
+                                {isLoadingProviderActions ? (
+                                  <p className="mdc-chat-muted">Carregando rotas...</p>
+                                ) : null}
+
+                                {!isLoadingProviderActions && providerActions.length === 0 ? (
+                                  <p className="mdc-chat-muted">Nenhuma rota importada para esta API.</p>
+                                ) : null}
+
+                                {providerActions.map((action) => (
+                                  <article key={action.actionId}>
+                                    <label>
+                                      <input
+                                        type="checkbox"
+                                        checked={isActionEnabledByOverride(action)}
+                                        onChange={(event) =>
+                                          void toggleProviderAction(
+                                            action,
+                                            event.target.checked,
+                                          )
+                                        }
+                                      />
+
+                                      <span>
+                                        <strong>
+                                          {action.method} {action.path}
+                                        </strong>
+                                        <small>
+                                          {action.summary || action.operationId}
+                                          {action.sensitivity
+                                            ? ` · ${action.sensitivity}`
+                                            : ""}
+                                        </small>
+                                      </span>
+                                    </label>
+                                  </article>
+                                ))}
+                              </div>
+                            ) : null}
+                          </>
                         ) : null}
                       </article>
                     );

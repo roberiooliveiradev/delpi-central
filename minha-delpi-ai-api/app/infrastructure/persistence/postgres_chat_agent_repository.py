@@ -365,14 +365,27 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         explicit_rows = (
             AiChatAgentActionModel.query
             .filter(AiChatAgentActionModel.agent_id == agent_id)
-            .filter(AiChatAgentActionModel.enabled.is_(True))
             .order_by(AiChatAgentActionModel.action_id.asc())
             .all()
         )
 
-        explicit_action_ids = [row.action_id for row in explicit_rows]
+        enabled_overrides = {
+            row.action_id
+            for row in explicit_rows
+            if row.enabled
+        }
 
-        return sorted({*provider_action_ids, *explicit_action_ids})
+        disabled_overrides = {
+            row.action_id
+            for row in explicit_rows
+            if not row.enabled
+        }
+
+        allowed_action_ids = set(provider_action_ids)
+        allowed_action_ids.update(enabled_overrides)
+        allowed_action_ids.difference_update(disabled_overrides)
+
+        return sorted(allowed_action_ids)
 
     def upsert_action(
         self,
