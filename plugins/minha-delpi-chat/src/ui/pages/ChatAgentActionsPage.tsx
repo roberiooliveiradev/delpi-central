@@ -7,7 +7,6 @@ import {
   Route,
   Settings2,
   Shield,
-  Trash2,
   Zap,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -88,13 +87,6 @@ export function ChatAgentActionsPage({
       configuredProviders.find((provider) => provider.providerKey === selectedProviderKey) ??
       null,
     [configuredProviders, selectedProviderKey],
-  );
-
-  const selectedCatalogProvider = useMemo(
-    () =>
-      availableProviders.find((provider) => provider.providerKey === selectedProviderKey) ??
-      null,
-    [availableProviders, selectedProviderKey],
   );
 
   const icebreakers = getAgentIcebreakers(agent);
