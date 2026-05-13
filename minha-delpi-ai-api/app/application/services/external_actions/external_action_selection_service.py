@@ -26,7 +26,16 @@ class ExternalActionSelectionService:
                 allowed_action_ids=allowed_action_ids or [],
             )
 
-        return None
+        if self._looks_like_sql_or_data_query(message):
+            return self._select_sql_or_data_action(
+                message,
+                allowed_action_ids=allowed_action_ids or [],
+            )
+
+        return self._select_generic_allowed_action(
+            message,
+            allowed_action_ids=allowed_action_ids or [],
+        )
 
     def _looks_like_product_question(self, value: str) -> bool:
         terms = [
@@ -66,6 +75,23 @@ class ExternalActionSelectionService:
             ]
         )
 
+    def _extract_sql_query(self, message: str) -> str | None:
+        raw = str(message or "").strip()
+
+        quoted = re.search(r'["“](.+?)["”]', raw, flags=re.S)
+        if quoted:
+            return quoted.group(1).strip()
+
+        marker = re.search(r"sql\s*:\s*(.+)$", raw, flags=re.I | re.S)
+        if marker:
+            return marker.group(1).strip().strip('"').strip("'")
+
+        select_match = re.search(r"(select\s+.+)$", raw, flags=re.I | re.S)
+        if select_match:
+            return select_match.group(1).strip().strip('"').strip("'")
+
+        return None
+
     def _select_sql_or_data_action(
         self,
         message: str,
@@ -101,14 +127,17 @@ class ExternalActionSelectionService:
         if not action:
             return None
 
+        sql_query = self._extract_sql_query(message)
+
+        body = {"query": sql_query} if sql_query else {"message": message}
+
         return {
             "name": "execute_external_action",
             "arguments": {
                 "actionId": action["actionId"],
-                "input": {
-                    "message": message,
-                },
+                "body": body,
             },
+            "reason": "A pergunta solicita execução de consulta SQL via action OpenAPI autorizada do agente.",
         }
 
     def _select_generic_allowed_action(
