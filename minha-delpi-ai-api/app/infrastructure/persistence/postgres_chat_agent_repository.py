@@ -204,7 +204,7 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             db.session.query(
                 AiChatAgentActionProviderModel,
                 ExternalActionProviderModel,
-                db.func.count(ExternalActionModel.id).label("action_count"),
+                db.func.count(db.distinct(ExternalActionModel.id)).label("action_count"),
             )
             .outerjoin(
                 ExternalActionProviderModel,

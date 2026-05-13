@@ -10,6 +10,7 @@ class ExternalActionSelectionService:
         message: str,
         allowed_action_ids: list[str] | None = None,
     ) -> dict | None:
+        allowed_action_ids = allowed_action_ids or []
         normalized = str(message or "").lower()
         product_code = self._extract_numeric_code(message)
 
@@ -17,24 +18,24 @@ class ExternalActionSelectionService:
             return self._select_product_action(
                 message,
                 product_code,
-                allowed_action_ids=allowed_action_ids or [],
+                allowed_action_ids=allowed_action_ids,
             )
 
         if self._looks_like_lmp_question(normalized):
             return self._select_lmp_action(
                 message,
-                allowed_action_ids=allowed_action_ids or [],
+                allowed_action_ids=allowed_action_ids,
             )
 
         if self._looks_like_sql_or_data_query(message):
             return self._select_sql_or_data_action(
                 message,
-                allowed_action_ids=allowed_action_ids or [],
+                allowed_action_ids=allowed_action_ids,
             )
 
         return self._select_generic_allowed_action(
             message,
-            allowed_action_ids=allowed_action_ids or [],
+            allowed_action_ids=allowed_action_ids,
         )
 
     def _looks_like_product_question(self, value: str) -> bool:
@@ -57,7 +58,6 @@ class ExternalActionSelectionService:
     def _looks_like_lmp_question(self, value: str) -> bool:
         return "lmp" in value or "lmps" in value
 
-
     def _looks_like_sql_or_data_query(self, message: str) -> bool:
         normalized = str(message or "").lower()
 
@@ -68,8 +68,8 @@ class ExternalActionSelectionService:
                 "consulta sql",
                 "rodar sql",
                 "executar sql",
-                "data",
-                "dados",
+                "execute o sql",
+                "data/sql",
                 "query",
                 "select ",
             ]
@@ -103,14 +103,17 @@ class ExternalActionSelectionService:
         allowed = {str(item) for item in allowed_action_ids}
 
         candidates = [
-            action for action in self.repository.find_candidate_actions(message, limit=120)
+            action
+            for action in self.repository.find_candidate_actions(message, limit=120)
             if str(action.get("actionId")) in allowed
         ]
 
         preferred = [
-            action for action in candidates
+            action
+            for action in candidates
             if any(
-                term in " ".join(
+                term
+                in " ".join(
                     [
                         str(action.get("path") or ""),
                         str(action.get("summary") or ""),
@@ -128,8 +131,11 @@ class ExternalActionSelectionService:
             return None
 
         sql_query = self._extract_sql_query(message)
-
-        body = {"query": sql_query} if sql_query else {"message": message}
+        body = {
+            "query": sql_query,
+            "sql": sql_query,
+            "statement": sql_query,
+        } if sql_query else {"message": message}
 
         return {
             "name": "execute_external_action",
@@ -149,8 +155,10 @@ class ExternalActionSelectionService:
             return None
 
         allowed = {str(item) for item in allowed_action_ids}
+
         candidates = [
-            action for action in self.repository.find_candidate_actions(message, limit=120)
+            action
+            for action in self.repository.find_candidate_actions(message, limit=120)
             if str(action.get("actionId")) in allowed
         ]
 
@@ -163,12 +171,11 @@ class ExternalActionSelectionService:
             "name": "execute_external_action",
             "arguments": {
                 "actionId": action["actionId"],
-                "input": {
+                "body": {
                     "message": message,
                 },
             },
         }
-
 
     def _select_product_action(
         self,
@@ -180,8 +187,10 @@ class ExternalActionSelectionService:
             return None
 
         allowed = {str(item) for item in allowed_action_ids}
+
         candidates = [
-            action for action in self.repository.find_candidate_actions(message, limit=80)
+            action
+            for action in self.repository.find_candidate_actions(message, limit=80)
             if str(action.get("actionId")) in allowed
         ]
 
@@ -189,7 +198,8 @@ class ExternalActionSelectionService:
             return None
 
         candidates = [
-            action for action in candidates
+            action
+            for action in candidates
             if action.get("method") == "GET"
         ] or candidates
 
@@ -217,8 +227,10 @@ class ExternalActionSelectionService:
             return None
 
         allowed = {str(item) for item in allowed_action_ids}
+
         candidates = [
-            action for action in self.repository.find_candidate_actions(message, limit=80)
+            action
+            for action in self.repository.find_candidate_actions(message, limit=80)
             if str(action.get("actionId")) in allowed
         ]
 
