@@ -5,6 +5,7 @@ import {
   FileText,
   Plus,
   Send,
+  Settings2,
   Sparkles,
   Trash2,
   Upload,
@@ -18,10 +19,12 @@ import {
   createAgentTextSource,
   deleteChatSource,
   listAgentSources,
+  listChatAgentActionProviders,
   uploadAgentSource,
 } from "../../data/api/chatApi";
 import type {
   ChatAgent,
+  ChatAgentActionProvider,
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
 
@@ -154,6 +157,7 @@ export function ChatAgentBuilderPage({
     getMetadataStringArray(agent?.metadata, "allowed_actions"),
   );
 
+  const [agentActionProviders, setAgentActionProviders] = useState<ChatAgentActionProvider[]>([]);
   const [agentSources, setAgentSources] = useState<ChatWorkspaceSource[]>([]);
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceContent, setSourceContent] = useState("");
@@ -165,20 +169,25 @@ export function ChatAgentBuilderPage({
   useEffect(() => {
     let isMounted = true;
 
-    async function loadSources() {
+    async function loadAgentResources() {
       if (!agent) {
         setAgentSources([]);
+        setAgentActionProviders([]);
         return;
       }
 
-      const sources = await listAgentSources(agent.id, { getAccessToken });
+      const [sources, actionProviders] = await Promise.all([
+        listAgentSources(agent.id, { getAccessToken }),
+        listChatAgentActionProviders(agent.id, { getAccessToken }),
+      ]);
 
       if (isMounted) {
         setAgentSources(sources);
+        setAgentActionProviders(actionProviders);
       }
     }
 
-    void loadSources();
+    void loadAgentResources();
 
     return () => {
       isMounted = false;
@@ -737,6 +746,66 @@ export function ChatAgentBuilderPage({
             </div>
           </section>
           
+          <section className="mdc-chat-agent-builder__section">
+            <div className="mdc-chat-agent-builder__section-title">
+              <Zap size={18} aria-hidden="true" />
+              <div>
+                <h2>Ações</h2>
+                <p>APIs e actions que este agente pode usar. Configure schemas, autenticação e rotas em uma tela própria.</p>
+              </div>
+            </div>
+
+            {agent ? (
+              <div className="mdc-chat-agent-builder__actions-summary">
+                {agentActionProviders.length > 0 ? (
+                  agentActionProviders.map((provider) => (
+                    <article key={provider.providerKey}>
+                      <span className="mdc-chat-agent-builder__actions-icon">
+                        <Zap size={16} aria-hidden="true" />
+                      </span>
+
+                      <span>
+                        <strong>{provider.providerName || provider.providerKey}</strong>
+                        <small>
+                          {provider.providerKey}
+                          {provider.enabled ? " · ativo" : " · desativado"}
+                          {` · ${provider.actionCount} rota(s)`}
+                        </small>
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => onManageActions?.(agent)}
+                        title="Configurar action"
+                      >
+                        <Settings2 size={16} aria-hidden="true" />
+                      </button>
+                    </article>
+                  ))
+                ) : (
+                  <div className="mdc-chat-agent-builder__actions-empty">
+                    <strong>Nenhuma action configurada</strong>
+                    <p>Crie uma action para conectar este agente a uma API OpenAPI.</p>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className="mdc-chat-agent-builder__secondary"
+                  onClick={() => onManageActions?.(agent)}
+                >
+                  <Plus size={16} aria-hidden="true" />
+                  <span>Criar nova ação</span>
+                </button>
+              </div>
+            ) : (
+              <div className="mdc-chat-agent-builder__actions-empty">
+                <strong>Salve o agente para configurar actions</strong>
+                <p>Depois de criar o agente, você poderá cadastrar APIs OpenAPI e escolher rotas.</p>
+              </div>
+            )}
+          </section>
+
           <section className="mdc-chat-agent-builder__section">
             <div className="mdc-chat-agent-builder__section-title">
               <FileText size={18} aria-hidden="true" />

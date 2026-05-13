@@ -669,3 +669,78 @@
   background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
   border-color: color-mix(in srgb, var(--mdc-primary) 38%, var(--mdc-card-border));
 }
+
+.mdc-chat-agent-builder__actions-summary {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.mdc-chat-agent-builder__actions-summary article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.6rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 72%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 78%, transparent);
+  padding: 0.65rem 0.75rem;
+}
+
+.mdc-chat-agent-builder__actions-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-agent-builder__actions-summary strong,
+.mdc-chat-agent-builder__actions-summary small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mdc-chat-agent-builder__actions-summary strong {
+  color: var(--mdc-title);
+  font-weight: 850;
+}
+
+.mdc-chat-agent-builder__actions-summary small {
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+}
+
+.mdc-chat-agent-builder__actions-summary article > button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+}
+
+.mdc-chat-agent-builder__actions-summary article > button:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 38%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-agent-builder__actions-empty {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px dashed color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
+  border-radius: 0.9rem;
+  color: var(--mdc-text-muted);
+  padding: 0.85rem;
+}
+
+.mdc-chat-agent-builder__actions-empty strong {
+  color: var(--mdc-title);
+}
