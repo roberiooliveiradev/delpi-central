@@ -240,7 +240,7 @@ class SendChatMessageUseCase:
                 "Arquivos anexados pelo usuário nesta mensagem:\n"
                 f"{attachment_lines}\n"
                 "Observação: nesta etapa os arquivos estão vinculados à mensagem, "
-                "mas o conteúdo ainda não foi extraído/indexado."
+                "o conteúdo será usado pelo RAG quando estiver indexado."
             )
 
         messages = [

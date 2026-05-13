@@ -386,7 +386,10 @@ def delete_chat_source(source_id: str):
     use_case = make_delete_chat_source_use_case()
 
     try:
-        deleted = use_case.execute(source_id=source_id)
+        deleted = use_case.execute(
+            user_id=g.current_user.sub,
+            source_id=source_id,
+        )
 
         if not deleted:
             db.session.rollback()

@@ -254,15 +254,14 @@ def make_index_chat_attachment_use_case() -> IndexChatAttachmentUseCase:
 def make_create_chat_attachment_use_case() -> CreateChatAttachmentUseCase:
     return CreateChatAttachmentUseCase(
         attachment_repository=PostgresChatAttachmentRepository(),
-        workspace_context_service=make_chat_workspace_context_service(),
         session_repository=PostgresChatSessionRepository(),
+        index_attachment_use_case=make_index_chat_attachment_use_case(),
     )
 
 
 def make_list_chat_attachments_use_case() -> ListChatAttachmentsUseCase:
     return ListChatAttachmentsUseCase(
         attachment_repository=PostgresChatAttachmentRepository(),
-        workspace_context_service=make_chat_workspace_context_service(),
         session_repository=PostgresChatSessionRepository(),
     )
 

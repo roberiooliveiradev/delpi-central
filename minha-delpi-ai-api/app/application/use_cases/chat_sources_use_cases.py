@@ -381,6 +381,18 @@ class DeleteChatSourceUseCase:
     def __init__(self, knowledge_repository: KnowledgeRepositoryPort):
         self.knowledge_repository = knowledge_repository
 
-    def execute(self, *, source_id: str) -> bool:
-        document = self.knowledge_repository.deactivate_document(UUID(source_id))
-        return document is not None
+    def execute(self, *, user_id: str, source_id: str) -> bool:
+        document_id = UUID(source_id)
+        document = self.knowledge_repository.get_document_by_id(document_id)
+
+        if not document:
+            return False
+
+        metadata = document.metadata or {}
+
+        if metadata.get("userId") and str(metadata.get("userId")) != str(user_id):
+            return False
+
+        deactivated = self.knowledge_repository.deactivate_document(document_id)
+
+        return deactivated is not None

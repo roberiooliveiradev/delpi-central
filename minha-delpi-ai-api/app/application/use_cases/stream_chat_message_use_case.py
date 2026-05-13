@@ -195,12 +195,6 @@ class StreamChatMessageUseCase:
             "toolCalls": tool_calls,
         }
 
-    def _get_session_agent(self, session, user_id: UUID):
-        if not self.agent_repository or not workspace_context.get("agentKey"):
-            return None
-
-        return self.agent_repository.get_enabled_by_key(workspace_context.get("agentKey"), user_id=user_id)
-
     def _agent_metadata(self, agent) -> dict | None:
         if not agent:
             return None
@@ -359,7 +353,7 @@ class StreamChatMessageUseCase:
                 "Arquivos anexados pelo usuário nesta mensagem:\n"
                 f"{attachment_lines}\n"
                 "Observação: nesta etapa os arquivos estão vinculados à mensagem, "
-                "mas o conteúdo ainda não foi extraído/indexado."
+                "o conteúdo será usado pelo RAG quando estiver indexado."
             )
 
         messages = [
