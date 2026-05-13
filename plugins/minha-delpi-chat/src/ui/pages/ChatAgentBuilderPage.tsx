@@ -588,6 +588,7 @@ export function ChatAgentBuilderPage({
               </label>
             </div>
           </section>
+          
           <section className="mdc-chat-agent-builder__section">
             <div className="mdc-chat-agent-builder__section-title">
               <FileText size={18} aria-hidden="true" />
