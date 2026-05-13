@@ -1,16 +1,17 @@
 import {
   ArrowLeft,
   Bot,
-  Check,
   Pencil,
   Plus,
-  Settings,
+  Search,
+  ShieldCheck,
   Sparkles,
   Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
+import { ChatAgentBuilderPage } from "./ChatAgentBuilderPage";
 
 import "./ChatAgentsPage.css";
 
@@ -44,8 +45,6 @@ type ChatAgentsPageProps = {
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
 };
 
-type AgentFormMode = "create" | "edit";
-
 function canEditAgent(agent: ChatAgent): boolean {
   return ["owner", "editor", "system"].includes(agent.access_role);
 }
@@ -54,27 +53,26 @@ function canDeleteAgent(agent: ChatAgent): boolean {
   return agent.access_role === "owner";
 }
 
-function getAgentIcebreakers(agent: ChatAgent | null): string[] {
-  const value = agent?.metadata?.icebreakers;
+function getAgentIcebreakerCount(agent: ChatAgent): number {
+  const value = agent.metadata?.icebreakers;
 
   if (!Array.isArray(value)) {
+    return 0;
+  }
+
+  return value.filter((item) => typeof item === "string" && item.trim()).length;
+}
+
+function getAgentCapabilities(agent: ChatAgent): string[] {
+  const capabilities = agent.metadata?.capabilities;
+
+  if (!capabilities || typeof capabilities !== "object" || Array.isArray(capabilities)) {
     return [];
   }
 
-  return value
-    .filter((item): item is string => typeof item === "string")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function createKeyFromName(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
+  return Object.entries(capabilities)
+    .filter(([, enabled]) => enabled === true)
+    .map(([name]) => name);
 }
 
 export function ChatAgentsPage({
@@ -87,169 +85,49 @@ export function ChatAgentsPage({
   onUpdateAgent,
   onDeleteAgent,
 }: ChatAgentsPageProps) {
-  const selectedAgent = useMemo(
-    () => agents.find((agent) => agent.key === selectedAgentKey) ?? null,
-    [agents, selectedAgentKey],
-  );
+  const [editingAgent, setEditingAgent] = useState<ChatAgent | null | undefined>(undefined);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const [mode, setMode] = useState<AgentFormMode>("create");
-  const [editingAgent, setEditingAgent] = useState<ChatAgent | null>(null);
-  const [localError, setLocalError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const filteredAgents = useMemo(() => {
+    const normalized = searchTerm.trim().toLowerCase();
 
-  const [key, setKey] = useState("");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [systemPrompt, setSystemPrompt] = useState("");
-  const [visibility, setVisibility] = useState("private");
-  const [category, setCategory] = useState("");
-  const [icon, setIcon] = useState("bot");
-  const [responseStyle, setResponseStyle] = useState("objetivo");
-  const [icebreakers, setIcebreakers] = useState("");
-
-  const previewIcebreakers = useMemo(() => {
-    const currentLines = icebreakers
-      .split("\n")
-      .map((item) => item.trim())
-      .filter(Boolean);
-
-    if (currentLines.length > 0) {
-      return currentLines.slice(0, 6);
+    if (!normalized) {
+      return agents;
     }
 
-    return getAgentIcebreakers(selectedAgent).slice(0, 6);
-  }, [icebreakers, selectedAgent]);
+    return agents.filter((agent) => {
+      return [
+        agent.name,
+        agent.description,
+        agent.category,
+        agent.visibility,
+        agent.response_style,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(normalized);
+    });
+  }, [agents, searchTerm]);
 
-  useEffect(() => {
-    if (selectedAgent && mode === "create") {
-      fillFormFromAgent(selectedAgent);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAgentKey]);
-
-  function resetForm() {
-    setMode("create");
-    setEditingAgent(null);
-    setKey("");
-    setName("");
-    setDescription("");
-    setSystemPrompt("");
-    setVisibility("private");
-    setCategory("");
-    setIcon("bot");
-    setResponseStyle("objetivo");
-    setIcebreakers("");
-    setLocalError(null);
-  }
-
-  function fillFormFromAgent(agent: ChatAgent) {
-    setMode("edit");
-    setEditingAgent(agent);
-    setKey(agent.key);
-    setName(agent.name);
-    setDescription(agent.description ?? "");
-    setSystemPrompt("");
-    setVisibility(agent.visibility === "public" ? "public" : "private");
-    setCategory(agent.category ?? "");
-    setIcon(agent.icon ?? "bot");
-    setResponseStyle(agent.response_style ?? "objetivo");
-    setIcebreakers(getAgentIcebreakers(agent).join("\n"));
-    setLocalError(null);
-  }
-
-  async function submitForm() {
-    const normalizedName = name.trim();
-
-    if (!normalizedName) {
-      setLocalError("Informe o nome do agente.");
-      return;
-    }
-
-    const normalizedIcebreakers = icebreakers
-      .split("\n")
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .slice(0, 8);
-
-    const nextMetadata = {
-      ...(editingAgent?.metadata ?? {}),
-      icebreakers: normalizedIcebreakers,
-      capabilities: {
-        ...((editingAgent?.metadata?.capabilities as Record<string, unknown> | undefined) ?? {}),
-        actions: true,
-        files: true,
-        canvas: true,
-      },
-      allowed_actions:
-        (editingAgent?.metadata?.allowed_actions as string[] | undefined) ?? [],
-    };
-
-    const payload: AgentPayload = {
-      key: key.trim() || createKeyFromName(normalizedName) || null,
-      name: normalizedName,
-      description: description.trim() || null,
-      systemPrompt: systemPrompt.trim() || null,
-      visibility,
-      category: category.trim() || null,
-      icon: icon.trim() || null,
-      responseStyle: responseStyle.trim() || null,
-      metadata: nextMetadata,
-    };
-
-    setIsSaving(true);
-    setLocalError(null);
-
-    try {
-      if (mode === "create") {
-        const created = await onCreateAgent?.(payload);
-
-        if (created) {
-          onSelectAgent?.(created.key);
-          fillFormFromAgent(created);
-        }
-
-        return;
-      }
-
-      if (!editingAgent) {
-        setLocalError("Agente inválido para edição.");
-        return;
-      }
-
-      const updated = await onUpdateAgent?.(editingAgent.id, payload);
-
-      if (updated) {
-        onSelectAgent?.(updated.key);
-        fillFormFromAgent(updated);
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  async function deleteAgent(agent: ChatAgent) {
-    const confirmed = window.confirm(`Excluir o agente "${agent.name}"?`);
-
-    if (!confirmed) {
-      return;
-    }
-
-    const deleted = await onDeleteAgent?.(agent.id);
-
-    if (deleted) {
-      if (selectedAgentKey === agent.key) {
-        onSelectAgent?.(null);
-      }
-
-      resetForm();
-    }
+  if (editingAgent !== undefined) {
+    return (
+      <ChatAgentBuilderPage
+        agent={editingAgent}
+        onBack={() => setEditingAgent(undefined)}
+        onSelectAgent={onSelectAgent}
+        onCreateAgent={onCreateAgent}
+        onUpdateAgent={onUpdateAgent}
+        onDeleteAgent={onDeleteAgent}
+      />
+    );
   }
 
   return (
-    <section className="mdc-chat-agents-page" aria-label="Gerenciamento de agentes">
-      <header className="mdc-chat-agents-page__topbar">
+    <section className="mdc-chat-agents-directory" aria-label="Agentes">
+      <header className="mdc-chat-agents-directory__topbar">
         <button type="button" onClick={onBack}>
-          <ArrowLeft size={17} aria-hidden="true" />
+          <ArrowLeft size={18} aria-hidden="true" />
           <span>Voltar ao chat</span>
         </button>
 
@@ -259,73 +137,134 @@ export function ChatAgentsPage({
         </div>
       </header>
 
-      <div className="mdc-chat-agents-page__layout">
-        <aside className="mdc-chat-agents-page__sidebar">
-          <div className="mdc-chat-agents-page__sidebar-header">
+      <main className="mdc-chat-agents-directory__main">
+        <section className="mdc-chat-agents-directory__hero">
+          <p className="mdc-chat-eyebrow">Especialistas</p>
+          <h1>Agentes</h1>
+          <p>
+            Crie e configure especialistas com instruções, quebra-gelos, recursos
+            e actions autorizadas.
+          </p>
+
+          <div className="mdc-chat-agents-directory__search">
+            <Search size={18} aria-hidden="true" />
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Buscar agentes"
+            />
+          </div>
+        </section>
+
+        <section className="mdc-chat-agents-directory__mine">
+          <div className="mdc-chat-agents-directory__section-header">
             <div>
-              <p className="mdc-chat-eyebrow">Especialistas</p>
-              <h1>Agentes</h1>
+              <h2>Meus agentes</h2>
+              <p>{agents.length} agente(s) disponível(is)</p>
             </div>
 
-            <button type="button" onClick={resetForm} title="Novo agente">
-              <Plus size={17} aria-hidden="true" />
+            <button
+              type="button"
+              className="mdc-chat-agents-directory__create"
+              onClick={() => setEditingAgent(null)}
+            >
+              <Plus size={18} aria-hidden="true" />
+              <span>Criar agente</span>
             </button>
           </div>
 
           {isLoading ? (
             <p className="mdc-chat-muted">Carregando agentes...</p>
-          ) : agents.length === 0 ? (
-            <p className="mdc-chat-muted">Nenhum agente disponível.</p>
+          ) : filteredAgents.length === 0 ? (
+            <div className="mdc-chat-agents-directory__empty">
+              <Bot size={22} aria-hidden="true" />
+              <strong>Nenhum agente encontrado</strong>
+              <p>Crie um especialista ou ajuste a busca.</p>
+            </div>
           ) : (
-            <div className="mdc-chat-agents-page__list">
-              {agents.map((agent) => {
-                const icebreakerCount = getAgentIcebreakers(agent).length;
+            <div className="mdc-chat-agents-directory__list">
+              {filteredAgents.map((agent) => {
+                const icebreakerCount = getAgentIcebreakerCount(agent);
+                const capabilities = getAgentCapabilities(agent);
 
                 return (
                   <article
                     key={agent.id}
                     className={
                       agent.key === selectedAgentKey
-                        ? "mdc-chat-agent-list-item mdc-chat-agent-list-item--active"
-                        : "mdc-chat-agent-list-item"
+                        ? "mdc-chat-agents-directory__item mdc-chat-agents-directory__item--active"
+                        : "mdc-chat-agents-directory__item"
                     }
                   >
                     <button
                       type="button"
-                      onClick={() => {
-                        onSelectAgent?.(agent.key);
-                        fillFormFromAgent(agent);
-                      }}
+                      className="mdc-chat-agents-directory__item-main"
+                      onClick={() => onSelectAgent?.(agent.key)}
                     >
-                      <span>
-                        <Bot size={16} aria-hidden="true" />
+                      <span className="mdc-chat-agents-directory__avatar">
+                        <Bot size={20} aria-hidden="true" />
                       </span>
 
-                      <strong>{agent.name}</strong>
-                      <small>
-                        {agent.category || agent.visibility}
-                        {icebreakerCount > 0 ? ` · ${icebreakerCount} quebra-gelos` : ""}
-                      </small>
+                      <span>
+                        <strong>{agent.name}</strong>
+                        <small>
+                          {agent.description ||
+                            agent.category ||
+                            "Especialista configurável"}
+                        </small>
+                      </span>
                     </button>
 
-                    <div className="mdc-chat-agent-list-item__actions">
+                    <div className="mdc-chat-agents-directory__meta">
+                      <span>
+                        <Sparkles size={14} aria-hidden="true" />
+                        {icebreakerCount} quebra-gelos
+                      </span>
+
+                      <span>
+                        <ShieldCheck size={14} aria-hidden="true" />
+                        {agent.visibility === "public" ? "Público" : "Privado"}
+                      </span>
+
+                      {capabilities.length > 0 ? (
+                        <span>{capabilities.length} recursos</span>
+                      ) : null}
+                    </div>
+
+                    <div className="mdc-chat-agents-directory__actions">
+                      <button
+                        type="button"
+                        onClick={() => onSelectAgent?.(agent.key)}
+                      >
+                        Usar
+                      </button>
+
                       {canEditAgent(agent) ? (
                         <button
                           type="button"
-                          onClick={() => fillFormFromAgent(agent)}
-                          title="Editar"
+                          onClick={() => setEditingAgent(agent)}
+                          title="Editar agente"
                         >
-                          <Pencil size={14} aria-hidden="true" />
+                          <Pencil size={16} aria-hidden="true" />
                         </button>
                       ) : null}
 
                       {canDeleteAgent(agent) ? (
                         <button
                           type="button"
-                          onClick={() => void deleteAgent(agent)}
-                          title="Excluir"
+                          className="mdc-chat-agents-directory__danger"
+                          onClick={() => {
+                            const confirmed = window.confirm(
+                              `Excluir o agente "${agent.name}"?`,
+                            );
+
+                            if (confirmed) {
+                              void onDeleteAgent?.(agent.id);
+                            }
+                          }}
+                          title="Excluir agente"
                         >
-                          <Trash2 size={14} aria-hidden="true" />
+                          <Trash2 size={16} aria-hidden="true" />
                         </button>
                       ) : null}
                     </div>
@@ -334,235 +273,8 @@ export function ChatAgentsPage({
               })}
             </div>
           )}
-        </aside>
-
-        <main className="mdc-chat-agents-page__main">
-          <section className="mdc-chat-agent-preview">
-            <div className="mdc-chat-agent-preview__hero">
-              <span>
-                <Bot size={24} aria-hidden="true" />
-              </span>
-
-              <div>
-                <p className="mdc-chat-eyebrow">Agente</p>
-                <h2>{name.trim() || selectedAgent?.name || "Novo agente"}</h2>
-                <p>
-                  {description.trim() ||
-                    selectedAgent?.description ||
-                    "Configure comportamento, instruções e quebra-gelos deste especialista."}
-                </p>
-              </div>
-            </div>
-
-            <div className="mdc-chat-agent-preview__composer">
-              <span>Pergunte a este agente...</span>
-            </div>
-
-            {previewIcebreakers.length > 0 ? (
-              <div className="mdc-chat-agent-preview__icebreakers">
-                <strong>Quebra-gelos</strong>
-
-                <div>
-                  {previewIcebreakers.map((icebreaker) => (
-                    <button
-                      key={icebreaker}
-                      type="button"
-                      title="Preview do quebra-gelo"
-                    >
-                      <Sparkles size={14} aria-hidden="true" />
-                      <span>{icebreaker}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="mdc-chat-agent-preview__empty">
-                <Sparkles size={18} aria-hidden="true" />
-                <span>Este agente ainda não possui quebra-gelos.</span>
-              </div>
-            )}
-          </section>
-
-          <form
-            className="mdc-chat-agent-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void submitForm();
-            }}
-          >
-            <div className="mdc-chat-agent-form__title">
-              {mode === "create" ? (
-                <Plus size={18} aria-hidden="true" />
-              ) : (
-                <Settings size={18} aria-hidden="true" />
-              )}
-
-              <div>
-                <h3>{mode === "create" ? "Criar agente" : "Configurar agente"}</h3>
-                <p>
-                  Defina como o especialista se comporta e quais perguntas iniciais
-                  aparecem para o usuário.
-                </p>
-              </div>
-            </div>
-
-            <div className="mdc-chat-agent-form__grid">
-              <label>
-                <span>Nome</span>
-                <input
-                  value={name}
-                  maxLength={120}
-                  onChange={(event) => {
-                    setName(event.target.value);
-
-                    if (mode === "create" && !key.trim()) {
-                      setKey(createKeyFromName(event.target.value));
-                    }
-                  }}
-                  placeholder="Ex.: Produtos e estoque"
-                />
-              </label>
-
-              <label>
-                <span>Chave</span>
-                <input
-                  value={key}
-                  maxLength={80}
-                  disabled={mode === "edit"}
-                  onChange={(event) => setKey(event.target.value)}
-                  placeholder="produtos-estoque"
-                />
-              </label>
-            </div>
-
-            <label>
-              <span>Descrição</span>
-              <textarea
-                value={description}
-                maxLength={800}
-                rows={3}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="Explique quando este agente deve ser usado..."
-              />
-            </label>
-
-            <label>
-              <span>Instruções do agente</span>
-              <textarea
-                value={systemPrompt}
-                className="mdc-chat-agent-form__prompt"
-                maxLength={12000}
-                onChange={(event) => setSystemPrompt(event.target.value)}
-                placeholder="Defina comportamento, tom, limites, regras e ações permitidas..."
-              />
-              <small>
-                Ao editar um agente, preencha apenas se quiser substituir as instruções atuais.
-              </small>
-            </label>
-
-            <label>
-              <span>Quebra-gelos</span>
-              <textarea
-                value={icebreakers}
-                rows={5}
-                maxLength={1600}
-                onChange={(event) => setIcebreakers(event.target.value)}
-                placeholder={"Um por linha. Ex.:\nConsultar produto 10080022\nQuais apps eu tenho acesso?\nListe minhas LMPs recentes"}
-              />
-              <small>
-                Opcional. Se vazio, o agente não exibirá quebra-gelos próprios.
-              </small>
-            </label>
-
-            <div className="mdc-chat-agent-form__grid">
-              <label>
-                <span>Visibilidade</span>
-                <select
-                  value={visibility}
-                  onChange={(event) => setVisibility(event.target.value)}
-                >
-                  <option value="private">Privado</option>
-                  <option value="public">Público interno</option>
-                </select>
-              </label>
-
-              <label>
-                <span>Categoria</span>
-                <input
-                  value={category}
-                  maxLength={80}
-                  onChange={(event) => setCategory(event.target.value)}
-                  placeholder="Ex.: Estoque"
-                />
-              </label>
-
-              <label>
-                <span>Ícone</span>
-                <input
-                  value={icon}
-                  maxLength={60}
-                  onChange={(event) => setIcon(event.target.value)}
-                  placeholder="bot"
-                />
-              </label>
-
-              <label>
-                <span>Estilo</span>
-                <select
-                  value={responseStyle}
-                  onChange={(event) => setResponseStyle(event.target.value)}
-                >
-                  <option value="objetivo">Objetivo</option>
-                  <option value="tecnico">Técnico</option>
-                  <option value="executivo">Executivo</option>
-                  <option value="detalhado">Detalhado</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="mdc-chat-agent-form__resources">
-              <strong>Recursos preparados</strong>
-              <small>Esses campos já ficam salvos em metadata para conexão com o backend depois.</small>
-              <span>Actions habilitadas</span>
-              <span>Documentos/fontes preparados</span>
-              <span>Lousa/canvas preparado</span>
-            </div>
-
-            <div className="mdc-chat-agent-form__resources">
-              <strong>Actions</strong>
-              <small>Integração visual preparada. A listagem real de actions virá do backend.</small>
-              <span>metadata.allowed_actions</span>
-            </div>
-
-            {localError ? (
-              <p className="mdc-chat-agent-form__error">{localError}</p>
-            ) : null}
-
-            <footer>
-              {mode === "edit" ? (
-                <button type="button" onClick={resetForm}>
-                  Novo agente
-                </button>
-              ) : null}
-
-              <button
-                type="submit"
-                className="mdc-chat-agent-form__primary"
-                disabled={isSaving}
-              >
-                <Check size={16} aria-hidden="true" />
-                <span>
-                  {isSaving
-                    ? "Salvando..."
-                    : mode === "create"
-                      ? "Criar agente"
-                      : "Salvar agente"}
-                </span>
-              </button>
-            </footer>
-          </form>
-        </main>
-      </div>
+        </section>
+      </main>
     </section>
   );
 }
