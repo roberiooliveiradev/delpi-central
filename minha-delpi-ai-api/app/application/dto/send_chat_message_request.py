@@ -8,3 +8,4 @@ class SendChatMessageRequest:
     message: str
     context: str | None = None
     access_token: str | None = None
+    attachment_ids: list[str] | None = None

@@ -11,6 +11,8 @@ from app.domain.exceptions.chat_exceptions import (
     InvalidChatSessionInputError,
 )
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
+from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
+from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepositoryPort
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.prompt_policy_service import PromptPolicyService
@@ -26,6 +28,8 @@ class SendChatMessageUseCase:
         prompt_policy_service: PromptPolicyService,
         rag_context_service: RagContextService,
         chat_tool_context_service: ChatToolContextService,
+        agent_repository: ChatAgentRepositoryPort | None = None,
+        attachment_repository: ChatAttachmentRepositoryPort | None = None,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
@@ -33,6 +37,8 @@ class SendChatMessageUseCase:
         self.prompt_policy_service = prompt_policy_service
         self.rag_context_service = rag_context_service
         self.chat_tool_context_service = chat_tool_context_service
+        self.agent_repository = agent_repository
+        self.attachment_repository = attachment_repository
 
     def execute(self, request: SendChatMessageRequest) -> SendChatMessageResponse:
         message = self._validate_message(request.message)
@@ -48,6 +54,9 @@ class SendChatMessageUseCase:
         if session.user_id != user_id:
             raise ChatSessionAccessDeniedError()
 
+        selected_agent = self._get_session_agent(session, user_id)
+        attachments = self._get_message_attachments(request, user_id, session_id)
+
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
         history = previous_messages[-Settings.CHAT_HISTORY_MAX_MESSAGES:]
 
@@ -57,12 +66,15 @@ class SendChatMessageUseCase:
         tool_context = self._build_tool_context(request)
         tool_calls = tool_context["toolCalls"]
 
-        self.chat_repository.create_message(
+        user_message = self.chat_repository.create_message(
             session_id=session_id,
             role="user",
             content=message,
             metadata={
                 "context": request.context,
+                "agentKey": session.agent_key,
+                "agent": self._agent_metadata(selected_agent),
+                "attachments": attachments,
                 "rag": {
                     "sources": sources,
                 },
@@ -70,11 +82,20 @@ class SendChatMessageUseCase:
             },
         )
 
+        self._attach_files_to_message(
+            request=request,
+            user_id=user_id,
+            session_id=session_id,
+            message_id=user_message.id,
+        )
+
         llm_messages = self._build_llm_messages(
             history=history,
             current_message=message,
             rag_context=rag["context"],
             tool_context=tool_context["context"],
+            agent_prompt=selected_agent.system_prompt if selected_agent else None,
+            attachments=attachments,
         )
 
         answer = self.llm_gateway.generate(llm_messages)
@@ -86,6 +107,9 @@ class SendChatMessageUseCase:
             metadata={
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
+                "agentKey": session.agent_key,
+                "agent": self._agent_metadata(selected_agent),
+                "attachments": attachments,
                 "sources": sources,
                 "toolCalls": tool_calls,
                 "rag": {
@@ -105,6 +129,9 @@ class SendChatMessageUseCase:
                 "session_id": str(session_id),
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
+                "agentKey": session.agent_key,
+                "agent": self._agent_metadata(selected_agent),
+                "attachments": attachments,
                 "sources": sources,
                 "rag_enabled": True,
                 "tool_count": len(tool_calls),
@@ -151,14 +178,38 @@ class SendChatMessageUseCase:
         current_message: str,
         rag_context: str,
         tool_context: str,
+        agent_prompt: str | None = None,
+        attachments: list[dict] | None = None,
     ) -> list[dict]:
+        base_prompt = self.prompt_policy_service.build_contextual_prompt(
+            rag_context=rag_context,
+            tool_context=tool_context,
+        )
+
+        if agent_prompt:
+            base_prompt = (
+                f"{base_prompt}\n\n"
+                "Instruções do agente selecionado:\n"
+                f"{agent_prompt}"
+            )
+
+        if attachments:
+            attachment_lines = "\n".join(
+                f"- {item.get('original_filename')} ({item.get('content_type') or 'tipo desconhecido'})"
+                for item in attachments
+            )
+            base_prompt = (
+                f"{base_prompt}\n\n"
+                "Arquivos anexados pelo usuário nesta mensagem:\n"
+                f"{attachment_lines}\n"
+                "Observação: nesta etapa os arquivos estão vinculados à mensagem, "
+                "mas o conteúdo ainda não foi extraído/indexado."
+            )
+
         messages = [
             {
                 "role": "system",
-                "content": self.prompt_policy_service.build_contextual_prompt(
-                    rag_context=rag_context,
-                    tool_context=tool_context,
-                ),
+                "content": base_prompt,
             }
         ]
 

@@ -12,6 +12,7 @@ from app.domain.exceptions.chat_exceptions import (
 )
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
+from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepositoryPort
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.prompt_policy_service import PromptPolicyService
@@ -28,6 +29,7 @@ class StreamChatMessageUseCase:
         rag_context_service: RagContextService,
         chat_tool_context_service: ChatToolContextService,
         agent_repository: ChatAgentRepositoryPort | None = None,
+        attachment_repository: ChatAttachmentRepositoryPort | None = None,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
@@ -36,6 +38,7 @@ class StreamChatMessageUseCase:
         self.rag_context_service = rag_context_service
         self.chat_tool_context_service = chat_tool_context_service
         self.agent_repository = agent_repository
+        self.attachment_repository = attachment_repository
 
     def stream(self, request: SendChatMessageRequest) -> Iterator[dict]:
         message = self._validate_message(request.message)
@@ -52,6 +55,7 @@ class StreamChatMessageUseCase:
             raise ChatSessionAccessDeniedError()
 
         selected_agent = self._get_session_agent(session, user_id)
+        attachments = self._get_message_attachments(request, user_id, session_id)
 
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
 
@@ -70,7 +74,7 @@ class StreamChatMessageUseCase:
         tool_context = self._build_tool_context(request)
         tool_calls = tool_context["toolCalls"]
 
-        self.chat_repository.create_message(
+        user_message = self.chat_repository.create_message(
             session_id=session_id,
             role="user",
             content=message,
@@ -78,6 +82,7 @@ class StreamChatMessageUseCase:
                 "context": request.context,
                 "agentKey": session.agent_key,
                 "agent": self._agent_metadata(selected_agent),
+                "attachments": attachments,
                 "stream": True,
                 "rag": {
                     "sources": sources,
@@ -86,12 +91,20 @@ class StreamChatMessageUseCase:
             },
         )
 
+        self._attach_files_to_message(
+            request=request,
+            user_id=user_id,
+            session_id=session_id,
+            message_id=user_message.id,
+        )
+
         llm_messages = self._build_llm_messages(
             history=history,
             current_message=message,
             rag_context=rag["context"],
             tool_context=tool_context["context"],
             agent_prompt=selected_agent.system_prompt if selected_agent else None,
+            attachments=attachments,
         )
 
         answer_parts: list[str] = []
@@ -124,6 +137,7 @@ class StreamChatMessageUseCase:
                 "model": Settings.OLLAMA_MODEL,
                 "agentKey": session.agent_key,
                 "agent": self._agent_metadata(selected_agent),
+                "attachments": attachments,
                 "sources": sources,
                 "toolCalls": tool_calls,
                 "stream": True,
@@ -146,6 +160,7 @@ class StreamChatMessageUseCase:
                 "model": Settings.OLLAMA_MODEL,
                 "agentKey": session.agent_key,
                 "agent": self._agent_metadata(selected_agent),
+                "attachments": attachments,
                 "sources": sources,
                 "rag_enabled": True,
                 "tool_count": len(tool_calls),
@@ -283,6 +298,7 @@ class StreamChatMessageUseCase:
         rag_context: str,
         tool_context: str,
         agent_prompt: str | None = None,
+        attachments: list[dict] | None = None,
     ) -> list[dict]:
         base_prompt = self.prompt_policy_service.build_contextual_prompt(
             rag_context=rag_context,
@@ -294,6 +310,19 @@ class StreamChatMessageUseCase:
                 f"{base_prompt}\n\n"
                 "Instruções do agente selecionado:\n"
                 f"{agent_prompt}"
+            )
+
+        if attachments:
+            attachment_lines = "\n".join(
+                f"- {item.get('original_filename')} ({item.get('content_type') or 'tipo desconhecido'})"
+                for item in attachments
+            )
+            base_prompt = (
+                f"{base_prompt}\n\n"
+                "Arquivos anexados pelo usuário nesta mensagem:\n"
+                f"{attachment_lines}\n"
+                "Observação: nesta etapa os arquivos estão vinculados à mensagem, "
+                "mas o conteúdo ainda não foi extraído/indexado."
             )
 
         messages = [

@@ -20,6 +20,11 @@ from app.application.use_cases.chat_projects_use_cases import (
     ShareChatProjectUseCase,
     UpdateChatProjectUseCase,
 )
+from app.application.use_cases.chat_attachments_use_cases import (
+    CreateChatAttachmentUseCase,
+    DeleteChatAttachmentUseCase,
+    ListChatAttachmentsUseCase,
+)
 from app.application.use_cases.chat_artifacts_use_cases import (
     CreateChatArtifactUseCase,
     DeleteChatArtifactUseCase,
@@ -46,6 +51,9 @@ from app.infrastructure.persistence.postgres_chat_agent_repository import Postgr
 from app.infrastructure.persistence.postgres_chat_project_repository import PostgresChatProjectRepository
 from app.infrastructure.persistence.postgres_chat_artifact_repository import (
     PostgresChatArtifactRepository,
+)
+from app.infrastructure.persistence.postgres_chat_attachment_repository import (
+    PostgresChatAttachmentRepository,
 )
 from app.infrastructure.persistence.postgres_chat_session_repository import (
     PostgresChatSessionRepository,
@@ -95,6 +103,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
         rag_context_service=make_rag_context_service(),
         chat_tool_context_service=make_chat_tool_context_service(),
         agent_repository=PostgresChatAgentRepository(),
+        attachment_repository=PostgresChatAttachmentRepository(),
     )
 
 
@@ -107,6 +116,7 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
         rag_context_service=make_rag_context_service(),
         chat_tool_context_service=make_chat_tool_context_service(),
         agent_repository=PostgresChatAgentRepository(),
+        attachment_repository=PostgresChatAttachmentRepository(),
     )
 
 def make_rename_chat_session_use_case() -> RenameChatSessionUseCase:
@@ -193,3 +203,21 @@ def make_upsert_chat_agent_action_use_case() -> UpsertChatAgentActionUseCase:
 
 def make_share_chat_project_use_case() -> ShareChatProjectUseCase:
     return ShareChatProjectUseCase(PostgresChatProjectRepository())
+
+
+def make_create_chat_attachment_use_case() -> CreateChatAttachmentUseCase:
+    return CreateChatAttachmentUseCase(
+        attachment_repository=PostgresChatAttachmentRepository(),
+        session_repository=PostgresChatSessionRepository(),
+    )
+
+
+def make_list_chat_attachments_use_case() -> ListChatAttachmentsUseCase:
+    return ListChatAttachmentsUseCase(
+        attachment_repository=PostgresChatAttachmentRepository(),
+        session_repository=PostgresChatSessionRepository(),
+    )
+
+
+def make_delete_chat_attachment_use_case() -> DeleteChatAttachmentUseCase:
+    return DeleteChatAttachmentUseCase(PostgresChatAttachmentRepository())

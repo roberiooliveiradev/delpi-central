@@ -7,6 +7,7 @@ from app.infrastructure.config.settings import Settings
 from app.interfaces.http.rate_limit_decorators import rate_limit
 
 from app.application.dto.create_chat_artifact_request import CreateChatArtifactRequest
+from app.application.dto.create_chat_attachment_request import CreateChatAttachmentRequest
 from app.application.dto.create_chat_agent_request import CreateChatAgentRequest
 from app.application.dto.create_chat_project_request import CreateChatProjectRequest
 from app.application.dto.share_chat_agent_request import ShareChatAgentRequest
@@ -27,6 +28,9 @@ from app.composition.chat_composer import (
     make_delete_chat_session_use_case,
     make_update_chat_message_use_case,
     make_create_chat_artifact_use_case,
+    make_create_chat_attachment_use_case,
+    make_delete_chat_attachment_use_case,
+    make_list_chat_attachments_use_case,
     make_create_chat_session_use_case,
     make_delete_chat_artifact_use_case,
     make_create_chat_project_use_case,
@@ -387,6 +391,81 @@ def share_project(project_id: str):
         raise
 
     return jsonify({"ok": True}), 200
+
+
+
+
+@chat_bp.get("/sessions/<session_id>/attachments")
+@require_permission("minha-delpi.chat.access")
+def list_attachments(session_id: str):
+    use_case = make_list_chat_attachments_use_case()
+    result = use_case.execute(
+        user_id=g.current_user.sub,
+        session_id=session_id,
+    )
+
+    return jsonify([asdict(attachment) for attachment in result]), 200
+
+
+@chat_bp.post("/sessions/<session_id>/attachments")
+@require_permission("minha-delpi.chat.ask")
+def upload_attachment(session_id: str):
+    if "file" not in request.files:
+        return bad_request("File is required")
+
+    file = request.files["file"]
+
+    if not file or not file.filename:
+        return bad_request("File is required")
+
+    content = file.read()
+
+    use_case = make_create_chat_attachment_use_case()
+
+    try:
+        result = use_case.execute(
+            CreateChatAttachmentRequest(
+                user_id=g.current_user.sub,
+                session_id=session_id,
+                original_filename=file.filename,
+                content_type=file.content_type,
+                size_bytes=len(content),
+                content=content,
+                metadata={
+                    "source": "composer",
+                },
+            )
+        )
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 201
+
+
+@chat_bp.delete("/attachments/<attachment_id>")
+@require_permission("minha-delpi.chat.ask")
+def delete_attachment(attachment_id: str):
+    use_case = make_delete_chat_attachment_use_case()
+
+    try:
+        deleted = use_case.execute(
+            user_id=g.current_user.sub,
+            attachment_id=attachment_id,
+        )
+
+        if not deleted:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return "", 204
 
 
 @chat_bp.get("/sessions/<session_id>/artifacts")
@@ -815,6 +894,7 @@ def send_message(session_id: str):
                 message=payload.get("message", ""),
                 context=payload.get("context"),
                 access_token=g.access_token,
+                attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
             )
         )
 
