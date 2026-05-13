@@ -9,6 +9,7 @@ type ChatSidebarAgentsSectionProps = {
   isLoading?: boolean;
   onSelectAgent?: (agentKey: string | null) => void;
   onManageAgents: () => void;
+  hideTitle?: boolean;
 };
 
 export function ChatSidebarAgentsSection({
@@ -17,13 +18,16 @@ export function ChatSidebarAgentsSection({
   isLoading,
   onSelectAgent,
   onManageAgents,
+  hideTitle,
 }: ChatSidebarAgentsSectionProps) {
   return (
     <>
-      <div className="mdc-chat-sidebar__section-title">
-        <span>Apps e agentes</span>
-        <small>{agents.length}</small>
-      </div>
+      {!hideTitle ? (
+        <div className="mdc-chat-sidebar__section-title">
+          <span>Apps e agentes</span>
+          <small>{agents.length}</small>
+        </div>
+      ) : null}
 
       <div className="mdc-chat-sidebar__link-list">
         {isLoading ? (

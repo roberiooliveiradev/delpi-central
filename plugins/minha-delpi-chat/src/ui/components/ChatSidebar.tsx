@@ -1,6 +1,7 @@
 import {
   Archive,
   Box,
+  ChevronDown,
   ChevronRight,
   Folder,
   MessageSquarePlus,
@@ -100,6 +101,8 @@ export function ChatSidebar({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isArchivedOpen, setIsArchivedOpen] = useState(false);
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
+  const [isAgentsSectionOpen, setIsAgentsSectionOpen] = useState(true);
+  const [isConversationsSectionOpen, setIsConversationsSectionOpen] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -116,9 +119,8 @@ export function ChatSidebar({
       }
 
       const title = session.title || "Conversa sem título";
-      const context = session.context || "geral";
 
-      return `${title} ${context}`.toLowerCase().includes(normalized);
+      return title.toLowerCase().includes(normalized);
     });
   }, [searchTerm, sessions]);
 
@@ -264,13 +266,33 @@ export function ChatSidebar({
       </div>
 
       <div className="mdc-chat-sidebar__agents-pane">
-        <ChatSidebarAgentsSection
-          agents={agents}
-          selectedAgentKey={selectedAgentKey}
-          isLoading={isLoadingAgents}
-          onSelectAgent={onSelectAgent}
-          onManageAgents={() => onViewChange?.("agents")}
-        />
+        <div className="mdc-chat-sidebar__section-title mdc-chat-sidebar__section-title--button">
+          <button
+            type="button"
+            onClick={() => setIsAgentsSectionOpen((current) => !current)}
+            aria-expanded={isAgentsSectionOpen}
+          >
+            {isAgentsSectionOpen ? (
+              <ChevronDown size={13} aria-hidden="true" />
+            ) : (
+              <ChevronRight size={13} aria-hidden="true" />
+            )}
+            <span>Apps e agentes</span>
+          </button>
+
+          <small>{agents.length}</small>
+        </div>
+
+        {isAgentsSectionOpen ? (
+          <ChatSidebarAgentsSection
+            agents={agents}
+            selectedAgentKey={selectedAgentKey}
+            isLoading={isLoadingAgents}
+            onSelectAgent={onSelectAgent}
+            onManageAgents={() => onViewChange?.("agents")}
+            hideTitle
+          />
+        ) : null}
       </div>
 
       <div className="mdc-chat-sidebar__projects-pane">
@@ -289,20 +311,54 @@ export function ChatSidebar({
       </div>
 
       <div className="mdc-chat-sidebar__sessions-pane">
-        <ChatSidebarSessionList
-          groupedSessions={groupedSessions}
-          activeSessionId={activeSessionId}
-          isLoading={isLoading}
-          searchTerm={searchTerm}
-          selectedProjectName={null}
-          onOpenArchived={() => void openArchivedSessions()}
-          onSelectSession={onSelectSession}
-          onRenameSession={onRenameSession}
-          onDeleteSessionRequest={setDeleteTargetSession}
-          onPinSession={onPinSession}
-          onUnpinSession={onUnpinSession}
-          onArchiveSession={onArchiveSession}
-        />
+        <div className="mdc-chat-sidebar__section-title mdc-chat-sidebar__section-title--conversations">
+          <button
+            type="button"
+            className="mdc-chat-sidebar__section-toggle"
+            onClick={() => setIsConversationsSectionOpen((current) => !current)}
+            aria-expanded={isConversationsSectionOpen}
+          >
+            {isConversationsSectionOpen ? (
+              <ChevronDown size={13} aria-hidden="true" />
+            ) : (
+              <ChevronRight size={13} aria-hidden="true" />
+            )}
+            <span>Conversas</span>
+          </button>
+
+          <div className="mdc-chat-sidebar__section-actions">
+            <button
+              type="button"
+              onClick={() => void openArchivedSessions()}
+              aria-label="Abrir conversas arquivadas"
+              title="Arquivadas"
+            >
+              <Archive size={13} aria-hidden="true" />
+            </button>
+
+            <small>
+              {groupedSessions.reduce((total, group) => total + group.sessions.length, 0)}
+            </small>
+          </div>
+        </div>
+
+        {isConversationsSectionOpen ? (
+          <ChatSidebarSessionList
+            groupedSessions={groupedSessions}
+            activeSessionId={activeSessionId}
+            isLoading={isLoading}
+            searchTerm={searchTerm}
+            selectedProjectName={null}
+            hideTitle
+            onOpenArchived={() => void openArchivedSessions()}
+            onSelectSession={onSelectSession}
+            onRenameSession={onRenameSession}
+            onDeleteSessionRequest={setDeleteTargetSession}
+            onPinSession={onPinSession}
+            onUnpinSession={onUnpinSession}
+            onArchiveSession={onArchiveSession}
+          />
+        ) : null}
       </div>
 
       <div className="mdc-chat-sidebar__footer">

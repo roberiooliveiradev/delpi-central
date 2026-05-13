@@ -198,3 +198,13 @@
 .mdc-chat-sidebar .mdc-chat-session-row .mdc-chat-conversation-item--active {
   background: transparent !important;
 }
+
+/* Sidebar agora tem scroll geral; a lista não deve ter scroll próprio */
+.mdc-chat-session-list {
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+.mdc-chat-session-group h3 {
+  position: static !important;
+}

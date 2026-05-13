@@ -19,6 +19,7 @@ type ChatSidebarSessionListProps = {
   onUnpinSession?: (sessionId: string) => Promise<ChatSession | null>;
   onArchiveSession?: (sessionId: string) => Promise<ChatSession | null>;
   onOpenArchived?: () => void;
+  hideTitle?: boolean;
 };
 
 export function ChatSidebarSessionList({
@@ -34,6 +35,7 @@ export function ChatSidebarSessionList({
   onUnpinSession,
   onArchiveSession,
   onOpenArchived,
+  hideTitle,
 }: ChatSidebarSessionListProps) {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -166,24 +168,26 @@ export function ChatSidebarSessionList({
 
   return (
     <>
-      <div className="mdc-chat-sidebar__section-title mdc-chat-sidebar__section-title--conversations">
-        <span>Conversas</span>
+      {!hideTitle ? (
+        <div className="mdc-chat-sidebar__section-title mdc-chat-sidebar__section-title--conversations">
+          <span>Conversas</span>
 
-        <div className="mdc-chat-sidebar__section-actions">
-          <button
-            type="button"
-            onClick={onOpenArchived}
-            aria-label="Abrir conversas arquivadas"
-            title="Arquivadas"
-          >
-            <Archive size={13} aria-hidden="true" />
-          </button>
+          <div className="mdc-chat-sidebar__section-actions">
+            <button
+              type="button"
+              onClick={onOpenArchived}
+              aria-label="Abrir conversas arquivadas"
+              title="Arquivadas"
+            >
+              <Archive size={13} aria-hidden="true" />
+            </button>
 
-          <small>
-            {groupedSessions.reduce((total, group) => total + group.sessions.length, 0)}
-          </small>
+            <small>
+              {groupedSessions.reduce((total, group) => total + group.sessions.length, 0)}
+            </small>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {isLoading ? (
         <p className="mdc-chat-muted">Carregando sessões...</p>

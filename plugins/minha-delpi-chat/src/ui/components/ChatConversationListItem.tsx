@@ -44,10 +44,7 @@ export function ChatConversationListItem({
 
       <span className="mdc-chat-conversation-item__content">
         <strong>{session.title || "Conversa sem título"}</strong>
-        <small>
-          {session.context || "geral"}
-          {date ? <> · {date}</> : null}
-        </small>
+        {date ? <small>{date}</small> : null}
       </span>
 
       {trailing ? (
