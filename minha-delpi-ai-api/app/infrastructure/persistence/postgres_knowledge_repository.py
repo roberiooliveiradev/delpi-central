@@ -255,6 +255,55 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         return self._to_document_entity(model)
 
 
+
+    def _apply_scope_filters(self, query, filters: dict):
+        if not filters:
+            return query
+
+        allowed_clauses = []
+
+        if filters.get("include_global", True):
+            allowed_clauses.append(
+                db.or_(
+                    AiKnowledgeDocumentModel.document_metadata.is_(None),
+                    AiKnowledgeDocumentModel.document_metadata["scope"].astext.is_(None),
+                    AiKnowledgeDocumentModel.document_metadata["scope"].astext == "global",
+                )
+            )
+
+        session_id = filters.get("session_id")
+        if session_id:
+            allowed_clauses.append(
+                AiKnowledgeDocumentModel.document_metadata["sessionId"].astext == str(session_id)
+            )
+
+        project_id = filters.get("project_id")
+        if project_id:
+            allowed_clauses.append(
+                AiKnowledgeDocumentModel.document_metadata["projectId"].astext == str(project_id)
+            )
+
+        agent_key = filters.get("agent_key")
+        if agent_key:
+            allowed_clauses.append(
+                AiKnowledgeDocumentModel.document_metadata["agentKey"].astext == str(agent_key)
+            )
+
+        user_id = filters.get("user_id")
+        if user_id:
+            query = query.filter(
+                db.or_(
+                    AiKnowledgeDocumentModel.document_metadata["userId"].astext.is_(None),
+                    AiKnowledgeDocumentModel.document_metadata["userId"].astext == str(user_id),
+                )
+            )
+
+        if not allowed_clauses:
+            return query
+
+        return query.filter(db.or_(*allowed_clauses))
+
+
     def _apply_document_filters(self, query, search: str | None, active: bool | None):
         if active is not None:
             query = query.filter(AiKnowledgeDocumentModel.active.is_(active))

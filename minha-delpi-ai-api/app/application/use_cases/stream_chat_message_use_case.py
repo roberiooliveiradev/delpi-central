@@ -195,6 +195,93 @@ class StreamChatMessageUseCase:
             "toolCalls": tool_calls,
         }
 
+
+    def _build_rag_filters(self, user_id: UUID, session, workspace_context: dict) -> dict:
+        return {
+            "user_id": str(user_id),
+            "session_id": str(session.id),
+            "project_id": str(session.project_id) if session.project_id else None,
+            "agent_key": workspace_context.get("agentKey"),
+            "include_global": True,
+        }
+
+    def _build_workspace_context(self, session, user_id: UUID) -> dict:
+        if self.workspace_context_service:
+            return self.workspace_context_service.build_context(
+                session=session,
+                user_id=user_id,
+            )
+
+        agent = self._get_session_agent(session, user_id)
+
+        return {
+            "project": None,
+            "agent": self._agent_metadata(agent),
+            "projectPrompt": None,
+            "agentPrompt": agent.system_prompt if agent else None,
+            "agentKey": agent.key if agent else session.agent_key,
+            "allowedActionIds": None,
+            "capabilities": {},
+        }
+
+    def _get_session_agent(self, session, user_id: UUID):
+        if not self.agent_repository or not session.agent_key:
+            return None
+
+        return self.agent_repository.get_enabled_by_key(
+            session.agent_key,
+            user_id=user_id,
+        )
+
+    def _get_message_attachments(
+        self,
+        request: SendChatMessageRequest,
+        user_id: UUID,
+        session_id: UUID,
+    ) -> list[dict]:
+        if not self.attachment_repository or not request.attachment_ids:
+            return []
+
+        attachment_ids = [UUID(value) for value in request.attachment_ids]
+
+        attachments = self.attachment_repository.list_attachments_by_ids(
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+        )
+
+        return [
+            {
+                "id": str(attachment.id),
+                "filename": attachment.filename,
+                "original_filename": attachment.original_filename,
+                "content_type": attachment.content_type,
+                "size_bytes": attachment.size_bytes,
+                "status": attachment.status,
+                "metadata": attachment.metadata,
+            }
+            for attachment in attachments
+        ]
+
+    def _attach_files_to_message(
+        self,
+        request: SendChatMessageRequest,
+        user_id: UUID,
+        session_id: UUID,
+        message_id: UUID,
+    ) -> None:
+        if not self.attachment_repository or not request.attachment_ids:
+            return
+
+        attachment_ids = [UUID(value) for value in request.attachment_ids]
+
+        self.attachment_repository.attach_to_message(
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+            message_id=message_id,
+        )
+
     def _agent_metadata(self, agent) -> dict | None:
         if not agent:
             return None

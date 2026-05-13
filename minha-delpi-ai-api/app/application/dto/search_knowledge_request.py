@@ -5,3 +5,4 @@ from dataclasses import dataclass
 class SearchKnowledgeRequest:
     query: str
     limit: int = 6
+    filters: dict | None = None
