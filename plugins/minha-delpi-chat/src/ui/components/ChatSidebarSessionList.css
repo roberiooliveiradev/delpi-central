@@ -5,27 +5,27 @@
 .mdc-chat-session-list {
   min-height: 0;
   overflow-y: auto;
-  padding: 0 var(--mdc-sidebar-pad-x) 0.65rem;
+  padding: 0 var(--mdc-sidebar-pad-x) 0.55rem;
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--mdc-primary) 50%, transparent) transparent;
+  scrollbar-color: color-mix(in srgb, var(--mdc-primary) 45%, transparent) transparent;
 }
 
 .mdc-chat-session-group {
   display: grid;
-  gap: 0.28rem;
+  gap: 0.1rem;
 }
 
 .mdc-chat-session-group h3 {
   position: sticky;
   top: 0;
   z-index: 1;
-  margin: 0.25rem 0 0.18rem;
-  padding: 0.38rem 0.22rem 0.28rem;
+  margin: 0.18rem 0 0.08rem;
+  padding: 0.3rem 0.18rem 0.2rem;
   background: var(--mdc-card-bg);
   color: var(--mdc-text-muted);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 900;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -33,11 +33,11 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.35rem;
-  min-height: 3.15rem;
+  gap: 0.16rem;
+  min-height: 2.28rem;
   border: 1px solid transparent;
-  border-radius: 0.82rem;
-  padding: 0.22rem;
+  border-radius: 0.68rem;
+  padding: 0.06rem;
   transition:
     background 0.14s ease,
     border-color 0.14s ease;
@@ -45,25 +45,22 @@
 
 .mdc-chat-session-row:hover {
   background: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
-  border-color: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
 }
 
 .mdc-chat-session-row--active {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--mdc-primary) 18%, transparent), transparent 105%);
-  border-color: color-mix(in srgb, var(--mdc-primary) 50%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
 }
 
 .mdc-chat-session {
   display: grid;
   min-width: 0;
-  gap: 0.1rem;
+  gap: 0.05rem;
   border: 0;
   background: transparent;
   color: var(--mdc-text);
   cursor: pointer;
   font: inherit;
-  padding: 0.42rem 0.38rem;
+  padding: 0.28rem 0.34rem;
   text-align: left;
 }
 
@@ -77,57 +74,61 @@
 
 .mdc-chat-session span {
   color: var(--mdc-primary);
-  font-size: 0.86rem;
-  font-weight: 900;
+  font-size: 0.78rem;
+  font-weight: 820;
+  line-height: 1.15;
 }
 
 .mdc-chat-session small {
   color: var(--mdc-text-muted);
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   font-weight: 650;
+  line-height: 1.1;
 }
 
 .mdc-chat-session-actions {
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.14s ease;
 }
 
 .mdc-chat-session-row:hover .mdc-chat-session-actions,
 .mdc-chat-session-row--active .mdc-chat-session-actions {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .mdc-chat-session-edit-card {
   display: grid;
   grid-column: 1 / -1;
-  gap: 0.45rem;
-  padding: 0.35rem;
+  gap: 0.35rem;
+  padding: 0.25rem;
 }
 
 .mdc-chat-session-edit-input {
   width: 100%;
   border: 1px solid var(--mdc-card-border);
-  border-radius: 0.65rem;
+  border-radius: 0.62rem;
   background: var(--mdc-bg);
   color: var(--mdc-text);
   font: inherit;
-  padding: 0.55rem 0.65rem;
+  padding: 0.42rem 0.52rem;
   outline: none;
 }
 
 .mdc-chat-session-edit-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.35rem;
+  gap: 0.28rem;
 }
 
 .mdc-chat-session-action {
   display: inline-grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.78rem;
+  height: 1.78rem;
   border: 1px solid var(--mdc-card-border);
-  border-radius: 0.65rem;
+  border-radius: 0.62rem;
   background: var(--mdc-bg);
   color: var(--mdc-text-muted);
   cursor: pointer;

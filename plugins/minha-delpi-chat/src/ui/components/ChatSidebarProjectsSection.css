@@ -3,5 +3,5 @@
 }
 
 .mdc-chat-sidebar__projects-pane .mdc-sidebar-workspace-item + .mdc-sidebar-workspace-item {
-  margin-top: 0.05rem;
+  margin-top: 0;
 }
