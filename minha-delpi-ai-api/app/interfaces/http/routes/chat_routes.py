@@ -8,11 +8,13 @@ from app.application.security.chat_permissions import (
     CHAT_TOOLS_USE_PERMISSION,
 )
 import json
+from uuid import UUID
 from dataclasses import asdict
 
 from flask import Blueprint, Response, g, jsonify, request, stream_with_context
 
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.persistence.postgres_chat_agent_repository import PostgresChatAgentRepository
 from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
 from app.infrastructure.external_actions.external_action_test_executor import ExternalActionTestExecutor
 from app.interfaces.http.rate_limit_decorators import rate_limit
@@ -74,6 +76,7 @@ from app.composition.chat_composer import (
     make_stream_chat_message_use_case,
 )
 from app.extensions.db import db
+from app.application.use_cases.chat_agents_use_cases import ChatAgentPermissionDeniedError
 from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.interfaces.http.auth_decorators import require_permission
 from app.infrastructure.gateways.core_me_gateway import CoreMeGateway
@@ -85,6 +88,39 @@ chat_bp = Blueprint("chat", __name__, url_prefix="/chat")
 
 def _sse(event: str, payload: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+def _can_manage_agent_configuration(agent_id: str) -> tuple[bool, dict]:
+    capabilities = _get_chat_capabilities_from_request()
+
+    if not capabilities["canManageAgents"]:
+        return False, capabilities
+
+    try:
+        agent_uuid = UUID(agent_id)
+        user_uuid = UUID(g.current_user.sub)
+    except ValueError:
+        return False, capabilities
+
+    record = PostgresChatAgentRepository().get_accessible_by_id(
+        agent_uuid,
+        user_uuid,
+    )
+
+    if not record:
+        return False, capabilities
+
+    agent, access_role = record
+    is_official_agent = (
+        agent.visibility == "system"
+        or agent.owner_user_id is None
+        or access_role == "system"
+    )
+
+    if is_official_agent:
+        return bool(capabilities["canManageOfficialAgents"]), capabilities
+
+    return access_role in {"owner", "editor"}, capabilities
 
 
 def _get_chat_capabilities_from_request() -> dict:
@@ -347,7 +383,7 @@ def _find_linked_agent_provider(agent_id: str, provider_key: str):
 
 
 @chat_bp.post("/agents/<agent_id>/providers/create")
-@require_permission(CHAT_ACCESS_PERMISSION)
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def create_agent_action_provider(agent_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -370,9 +406,13 @@ def create_agent_action_provider(agent_id: str):
     if not base_url:
         return bad_request("baseUrl is required")
 
+    can_manage_agent, capabilities = _can_manage_agent_configuration(agent_id)
+
+    if not can_manage_agent:
+        return forbidden("You do not have permission to configure actions for this agent")
+
     repository = PostgresExternalActionRepository()
     upsert_use_case = make_upsert_chat_agent_action_provider_use_case()
-    capabilities = _get_chat_capabilities_from_request()
 
     try:
         existing_provider = repository.get_provider_by_key(provider_key)
@@ -461,12 +501,17 @@ def get_agent_action_provider(agent_id: str, provider_key: str):
 
 
 @chat_bp.patch("/agents/<agent_id>/providers/<provider_key>")
-@require_permission(CHAT_ACCESS_PERMISSION)
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def update_agent_action_provider(agent_id: str, provider_key: str):
     payload = request.get_json(silent=True) or {}
 
     if not isinstance(payload, dict):
         return bad_request("Request body must be a JSON object")
+
+    can_manage_agent, _capabilities = _can_manage_agent_configuration(agent_id)
+
+    if not can_manage_agent:
+        return forbidden("You do not have permission to configure actions for this agent")
 
     linked = _find_linked_agent_provider(agent_id, provider_key)
 
@@ -508,8 +553,13 @@ def update_agent_action_provider(agent_id: str, provider_key: str):
 
 
 @chat_bp.post("/agents/<agent_id>/providers/<provider_key>/import")
-@require_permission(CHAT_ACCESS_PERMISSION)
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def import_agent_action_provider_schema(agent_id: str, provider_key: str):
+    can_manage_agent, _capabilities = _can_manage_agent_configuration(agent_id)
+
+    if not can_manage_agent:
+        return forbidden("You do not have permission to configure actions for this agent")
+
     agent_repository = make_list_chat_agent_action_providers_use_case()
     providers = agent_repository.execute(
         user_id=g.current_user.sub,
@@ -623,15 +673,19 @@ def list_agent_action_providers(agent_id: str):
 
 
 @chat_bp.put("/agents/<agent_id>/providers")
-@require_permission(CHAT_ACCESS_PERMISSION)
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def upsert_agent_action_provider(agent_id: str):
     payload = request.get_json(silent=True) or {}
 
     if not isinstance(payload, dict):
         return bad_request("Request body must be a JSON object")
 
+    can_manage_agent, capabilities = _can_manage_agent_configuration(agent_id)
+
+    if not can_manage_agent:
+        return forbidden("You do not have permission to configure actions for this agent")
+
     use_case = make_upsert_chat_agent_action_provider_use_case()
-    capabilities = _get_chat_capabilities_from_request()
 
     try:
         saved = use_case.execute(
@@ -673,15 +727,19 @@ def list_agent_actions(agent_id: str):
 
 
 @chat_bp.put("/agents/<agent_id>/actions")
-@require_permission(CHAT_ACCESS_PERMISSION)
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def upsert_agent_action(agent_id: str):
     payload = request.get_json(silent=True) or {}
 
     if not isinstance(payload, dict):
         return bad_request("Request body must be a JSON object")
 
+    can_manage_agent, capabilities = _can_manage_agent_configuration(agent_id)
+
+    if not can_manage_agent:
+        return forbidden("You do not have permission to configure actions for this agent")
+
     use_case = make_upsert_chat_agent_action_use_case()
-    capabilities = _get_chat_capabilities_from_request()
 
     try:
         saved = use_case.execute(

@@ -461,6 +461,9 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         return True
 
+    def _safe_isoformat(self, value) -> str | None:
+        return value.isoformat() if value else None
+
     def _provider_link_to_dict(
         self,
         link: AiChatAgentActionProviderModel,
@@ -481,8 +484,8 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             "allowAdmin": link.allow_admin,
             "requiresConfirmationForWrite": link.requires_confirmation_for_write,
             "actionCount": action_count,
-            "createdAt": link.created_at.isoformat(),
-            "updatedAt": link.updated_at.isoformat(),
+            "createdAt": self._safe_isoformat(link.created_at),
+            "updatedAt": self._safe_isoformat(link.updated_at),
         }
 
     def _action_to_dict(self, action: AiChatAgentActionModel) -> dict:
@@ -494,8 +497,8 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             "enabled": action.enabled,
             "sensitivity": action.sensitivity,
             "requiresConfirmation": action.requires_confirmation,
-            "createdAt": action.created_at.isoformat(),
-            "updatedAt": action.updated_at.isoformat(),
+            "createdAt": self._safe_isoformat(action.created_at),
+            "updatedAt": self._safe_isoformat(action.updated_at),
         }
 
     def _can_access(self, model: AiChatAgentModel, user_id: UUID) -> bool:

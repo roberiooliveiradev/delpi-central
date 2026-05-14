@@ -285,6 +285,9 @@ class PostgresExternalActionRepository:
         data["timeoutSeconds"] = 30
         return data
 
+    def _safe_isoformat(self, value) -> str | None:
+        return value.isoformat() if value else None
+
     def _provider_to_dict(self, provider: ExternalActionProviderModel) -> dict:
         return {
             "id": str(provider.id),
@@ -296,8 +299,8 @@ class PostgresExternalActionRepository:
             "privacyPolicyUrl": provider.privacy_policy_url,
             "authMode": provider.auth_mode,
             "enabled": provider.enabled,
-            "createdAt": provider.created_at.isoformat(),
-            "updatedAt": provider.updated_at.isoformat(),
+            "createdAt": self._safe_isoformat(provider.created_at),
+            "updatedAt": self._safe_isoformat(provider.updated_at),
         }
 
     def _action_to_dict(self, action: ExternalActionModel) -> dict:
