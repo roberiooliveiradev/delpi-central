@@ -1,14 +1,62 @@
 from app.domain.services.prompt_policy_service import PromptPolicyService
 
 
-def test_contextual_prompt_includes_rag_and_tool_sections():
+def test_contextual_prompt_always_includes_base_and_response_style():
     service = PromptPolicyService()
 
     prompt = service.build_contextual_prompt(
-        rag_context="[Fonte 1] Minha DELPI é uma plataforma.",
-        tool_context="[Ferramenta: get_allowed_apps] Resultado autorizado: []",
+        rag_context="Documento relevante",
+        tool_context="",
     )
 
+    assert "Você é o assistente Minha DELPI" in prompt
     assert "Contexto documental autorizado" in prompt
-    assert "Resultados de ferramentas internas autorizadas" in prompt
-    assert "Não extrapole" in prompt
+    assert "Documento relevante" in prompt
+    assert "Instruções gerais para resposta" in prompt
+
+
+def test_contextual_prompt_does_not_include_external_action_policy_without_tool_context():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="Documento relevante",
+        tool_context="",
+    )
+
+    assert "Instruções para resultados de `execute_external_action`" not in prompt
+
+
+def test_contextual_prompt_includes_external_action_policy_when_tool_context_mentions_action():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context="tool=execute_external_action statusCode=200 ok=true",
+    )
+
+    assert "Instruções para resultados de `execute_external_action`" in prompt
+    assert "statusCode estiver entre 200 e 299" in prompt
+
+
+def test_contextual_prompt_includes_platform_tools_policy_when_tool_context_mentions_allowed_apps():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context="tool=get_allowed_apps result=...",
+    )
+
+    assert "Instruções para ferramentas internas da plataforma" in prompt
+    assert "liste os aplicativos autorizados" in prompt
+
+
+def test_contextual_prompt_includes_product_policy_when_tool_context_mentions_products():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context="Consulta de produtos em estoque com NCM",
+    )
+
+    assert "Instruções para dados de produtos" in prompt
+    assert "código, descrição, tipo" in prompt

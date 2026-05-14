@@ -49,6 +49,33 @@ Regras obrigatórias:
 - Use nomes como: código, descrição, tipo, unidade, grupo, ativo, armazém padrão, último preço de compra, custo padrão, última revisão e NCM.
 - Não exponha nomes técnicos de campos se houver alias claro em português."""
 
+    EXTERNAL_ACTION_MARKERS = (
+        "execute_external_action",
+        "authorizedResult",
+        "humanizedSummary",
+        "technicalSummary",
+        "statusCode",
+    )
+
+    PLATFORM_TOOL_MARKERS = (
+        "get_current_user",
+        "get_allowed_apps",
+        "get_allowed_routes",
+    )
+
+    PRODUCT_MARKERS = (
+        "produto",
+        "produtos",
+        "estoque",
+        "armazém",
+        "armazem",
+        "ncm",
+        "último preço",
+        "ultimo preco",
+        "custo padrão",
+        "custo padrao",
+    )
+
     def build_system_prompt(self) -> str:
         return self._load_policy("base.md", self.BASE_POLICY_FALLBACK)
 
@@ -82,7 +109,7 @@ Regras obrigatórias:
                 f"{tool_context}"
             )
 
-        sections.extend(self._response_policy_sections())
+        sections.extend(self._response_policy_sections(tool_context=tool_context))
 
         return "\n\n".join(
             section.strip()
@@ -90,25 +117,47 @@ Regras obrigatórias:
             if section and section.strip()
         )
 
-    def _response_policy_sections(self) -> list[str]:
-        return [
+    def _response_policy_sections(self, *, tool_context: str) -> list[str]:
+        sections = [
             self._load_policy(
                 "response-style.md",
                 self.RESPONSE_STYLE_POLICY_FALLBACK,
-            ),
-            self._load_policy(
-                "external-actions.md",
-                self.EXTERNAL_ACTIONS_POLICY_FALLBACK,
-            ),
-            self._load_policy(
-                "platform-tools.md",
-                self.PLATFORM_TOOLS_POLICY_FALLBACK,
-            ),
-            self._load_policy(
-                "product-fields.md",
-                self.PRODUCT_FIELDS_POLICY_FALLBACK,
-            ),
+            )
         ]
+
+        normalized_tool_context = self._normalize(tool_context)
+
+        if self._contains_any(normalized_tool_context, self.EXTERNAL_ACTION_MARKERS):
+            sections.append(
+                self._load_policy(
+                    "external-actions.md",
+                    self.EXTERNAL_ACTIONS_POLICY_FALLBACK,
+                )
+            )
+
+        if self._contains_any(normalized_tool_context, self.PLATFORM_TOOL_MARKERS):
+            sections.append(
+                self._load_policy(
+                    "platform-tools.md",
+                    self.PLATFORM_TOOLS_POLICY_FALLBACK,
+                )
+            )
+
+        if self._contains_any(normalized_tool_context, self.PRODUCT_MARKERS):
+            sections.append(
+                self._load_policy(
+                    "product-fields.md",
+                    self.PRODUCT_FIELDS_POLICY_FALLBACK,
+                )
+            )
+
+        return sections
+
+    def _contains_any(self, value: str, markers: tuple[str, ...]) -> bool:
+        return any(self._normalize(marker) in value for marker in markers)
+
+    def _normalize(self, value: str | None) -> str:
+        return str(value or "").casefold()
 
     @classmethod
     @lru_cache(maxsize=32)
