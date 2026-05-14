@@ -14,6 +14,17 @@ export type ChatPermission =
 type JwtPayload = {
   permissions?: string[];
   scope?: string;
+  roles?: string[];
+  role?: string;
+  is_superadmin?: boolean;
+  isSuperAdmin?: boolean;
+  superadmin?: boolean;
+  user?: {
+    is_superadmin?: boolean;
+    isSuperAdmin?: boolean;
+    role?: string;
+    roles?: string[];
+  };
   realm_access?: {
     roles?: string[];
   };
@@ -38,6 +49,55 @@ function decodeJwtPayload(token: string): JwtPayload | null {
   } catch {
     return null;
   }
+}
+
+function isElevatedChatAdmin(payload: JwtPayload | null): boolean {
+  if (!payload) {
+    return false;
+  }
+
+  const roles = new Set<string>();
+
+  for (const role of payload.roles ?? []) {
+    roles.add(role);
+  }
+
+  if (payload.role) {
+    roles.add(payload.role);
+  }
+
+  for (const role of payload.user?.roles ?? []) {
+    roles.add(role);
+  }
+
+  if (payload.user?.role) {
+    roles.add(payload.user.role);
+  }
+
+  for (const role of payload.realm_access?.roles ?? []) {
+    roles.add(role);
+  }
+
+  for (const access of Object.values(payload.resource_access ?? {})) {
+    for (const role of access.roles ?? []) {
+      roles.add(role);
+    }
+  }
+
+  const normalizedRoles = Array.from(roles).map((role) =>
+    role.toLowerCase().replace(/[\s_-]+/g, ""),
+  );
+
+  return (
+    payload.is_superadmin === true ||
+    payload.isSuperAdmin === true ||
+    payload.superadmin === true ||
+    payload.user?.is_superadmin === true ||
+    payload.user?.isSuperAdmin === true ||
+    normalizedRoles.some((role) =>
+      ["superadmin", "superadministrador", "platformadmin", "admin"].includes(role),
+    )
+  );
 }
 
 function collectTokenPermissions(payload: JwtPayload | null): Set<string> {
@@ -94,7 +154,19 @@ export async function userHasChatPermission(
     | null
     | Promise<string | undefined | null>,
 ): Promise<boolean> {
-  const permissions = await getCurrentChatPermissions(getAccessToken);
+  const token = await getAccessToken?.();
+
+  if (!token) {
+    return false;
+  }
+
+  const payload = decodeJwtPayload(token);
+
+  if (isElevatedChatAdmin(payload)) {
+    return true;
+  }
+
+  const permissions = collectTokenPermissions(payload);
 
   return permissions.has(permission);
 }
