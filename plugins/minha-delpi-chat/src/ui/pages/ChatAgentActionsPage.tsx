@@ -23,7 +23,6 @@ import {
   updateChatAgentActionProvider,
   upsertChatAgentAction,
   testChatAgentAction,
-  listChatAgentActionTestLogs,
 } from "../../data/api/chatApi";
 import type {
   ChatActionCatalogItem,
@@ -31,8 +30,10 @@ import type {
   ChatAgent,
   ChatAgentAction,
   ChatAgentActionProvider,
-  ChatActionTestLog,
 } from "../../data/api/chatTypes";
+
+import { ActionTestPanel } from "./agent-actions/ActionTestPanel";
+import type { ActionTestPayload } from "./agent-actions/types";
 
 import "./ChatAgentActionsPage.css";
 
@@ -54,13 +55,6 @@ type AuthConfigForm = {
   authorizationUrl: string;
   tokenUrl: string;
   scope: string;
-};
-
-type TestActionDraft = {
-  action: ChatActionCatalogItem;
-  pathParamsText: string;
-  queryText: string;
-  bodyText: string;
 };
 
 function createKeyFromName(value: string): string {
@@ -173,9 +167,7 @@ export function ChatAgentActionsPage({
   const [isUpdatingRoutes, setIsUpdatingRoutes] = useState(false);
   const [isSavingProvider, setIsSavingProvider] = useState(false);
   const [testingActionId, setTestingActionId] = useState<string | null>(null);
-  const [testDraft, setTestDraft] = useState<TestActionDraft | null>(null);
   const [testResult, setTestResult] = useState<string | null>(null);
-  const [testLogs, setTestLogs] = useState<ChatActionTestLog[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [newProviderName, setNewProviderName] = useState("");
@@ -364,90 +356,55 @@ export function ChatAgentActionsPage({
     await reloadProviders();
   }
 
-  function buildPathParamsText(action: ChatActionCatalogItem): string {
-    const actionPath = action.path ?? "";
-    const placeholders = Array.from(actionPath.matchAll(/\{([^}]+)\}/g));
-    const params = Object.fromEntries(
-      placeholders.map((match) => [match[1], ""]),
-    );
-
-    return JSON.stringify(params, null, 2);
-  }
-
-  function parseJsonObject(value: string, label: string): Record<string, unknown> {
-    const trimmed = value.trim();
-
-    if (!trimmed) {
-      return {};
-    }
-
-    const parsed = JSON.parse(trimmed) as unknown;
-
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw new Error(`${label} deve ser um objeto JSON.`);
-    }
-
-    return parsed as Record<string, unknown>;
-  }
-
-  async function loadActionLogs(action: ChatActionCatalogItem) {
+  async function testAction(action: ChatActionCatalogItem) {
     if (!selectedProviderKey) {
       return;
     }
 
-    const logs = await listChatAgentActionTestLogs(
-      agent.id,
-      selectedProviderKey,
-      action.actionId,
-      { getAccessToken },
-    );
-
-    setTestLogs(logs);
-  }
-
-  async function openTestPanel(action: ChatActionCatalogItem) {
-    setTestResult(null);
-    setError(null);
-    setTestDraft({
-      action,
-      pathParamsText: buildPathParamsText(action),
-      queryText: "{}",
-      bodyText: ["GET", "HEAD"].includes(String(action.method).toUpperCase())
-        ? ""
-        : "{}",
-    });
-
-    await loadActionLogs(action);
-  }
-
-  async function runTestDraft() {
-    if (!selectedProviderKey || !testDraft) {
-      return;
-    }
-
-    setTestingActionId(testDraft.action.actionId);
+    setTestingActionId(action.actionId);
     setTestResult(null);
     setError(null);
 
     try {
-      const pathParams = parseJsonObject(testDraft.pathParamsText, "Path params");
-      const query = parseJsonObject(testDraft.queryText, "Query params");
-      const body =
-        testDraft.bodyText.trim()
-          ? JSON.parse(testDraft.bodyText) as unknown
-          : undefined;
+      const actionPath = action.path ?? "";
+      const pathParams: Record<string, string> = {};
+      const placeholders = Array.from(actionPath.matchAll(/\{([^}]+)\}/g));
+
+      for (const match of placeholders) {
+        const key = match[1];
+        const value = window.prompt(`Valor para {${key}}`, "");
+
+        if (value === null) {
+          setTestingActionId(null);
+          return;
+        }
+
+        pathParams[key] = value;
+      }
+
+      let body: unknown = undefined;
+
+      if (!["GET", "HEAD"].includes(String(action.method).toUpperCase())) {
+        const rawBody = window.prompt(
+          "Body JSON para teste",
+          "{}",
+        );
+
+        if (rawBody === null) {
+          setTestingActionId(null);
+          return;
+        }
+
+        body = rawBody.trim() ? JSON.parse(rawBody) : undefined;
+      }
 
       const result = await testChatAgentAction(
         agent.id,
         selectedProviderKey,
-        testDraft.action.actionId,
+        action.actionId,
         {
-          pathParams: Object.fromEntries(
-            Object.entries(pathParams).map(([key, value]) => [key, String(value)]),
-          ),
-          query: Object.fromEntries(
-            Object.entries(query).map(([key, value]) => [key, String(value)]),
-          ),
+          pathParams,
+          query: {},
           body,
         },
         { getAccessToken },
@@ -466,8 +423,6 @@ export function ChatAgentActionsPage({
           .filter(Boolean)
           .join("\n"),
       );
-
-      await loadActionLogs(testDraft.action);
     } catch (testError) {
       setError(
         testError instanceof Error
@@ -1093,103 +1048,6 @@ export function ChatAgentActionsPage({
                   </div>
                 ) : null}
 
-                {testDraft ? (
-                  <div className="mdc-chat-agent-actions-page__test-panel">
-                    <div className="mdc-chat-agent-actions-page__test-panel-header">
-                      <div>
-                        <strong>Testar rota</strong>
-                        <span>
-                          {testDraft.action.method} {testDraft.action.path}
-                        </span>
-                      </div>
-
-                      <button type="button" onClick={() => setTestDraft(null)}>
-                        Fechar
-                      </button>
-                    </div>
-
-                    <label>
-                      <span>Path params JSON</span>
-                      <textarea
-                        value={testDraft.pathParamsText}
-                        onChange={(event) =>
-                          setTestDraft((current) =>
-                            current
-                              ? { ...current, pathParamsText: event.target.value }
-                              : current,
-                          )
-                        }
-                        rows={4}
-                      />
-                    </label>
-
-                    <label>
-                      <span>Query params JSON</span>
-                      <textarea
-                        value={testDraft.queryText}
-                        onChange={(event) =>
-                          setTestDraft((current) =>
-                            current
-                              ? { ...current, queryText: event.target.value }
-                              : current,
-                          )
-                        }
-                        rows={4}
-                      />
-                    </label>
-
-                    {!["GET", "HEAD"].includes(String(testDraft.action.method).toUpperCase()) ? (
-                      <label>
-                        <span>Body JSON</span>
-                        <textarea
-                          value={testDraft.bodyText}
-                          onChange={(event) =>
-                            setTestDraft((current) =>
-                              current
-                                ? { ...current, bodyText: event.target.value }
-                                : current,
-                            )
-                          }
-                          rows={7}
-                        />
-                      </label>
-                    ) : null}
-
-                    <div className="mdc-chat-agent-actions-page__inline-actions">
-                      <button
-                        type="button"
-                        onClick={() => void runTestDraft()}
-                        disabled={testingActionId === testDraft.action.actionId}
-                      >
-                        <Route size={16} aria-hidden="true" />
-                        <span>
-                          {testingActionId === testDraft.action.actionId
-                            ? "Testando..."
-                            : "Executar teste"}
-                        </span>
-                      </button>
-                    </div>
-
-                    {testLogs.length > 0 ? (
-                      <div className="mdc-chat-agent-actions-page__test-logs">
-                        <strong>Últimos testes</strong>
-
-                        {testLogs.slice(0, 5).map((log) => (
-                          <article key={log.id}>
-                            <span>{log.ok ? "OK" : "Erro"}</span>
-                            <small>
-                              {log.statusCode ?? "-"} · {log.durationMs}ms ·{" "}
-                              {log.createdAt
-                                ? new Date(log.createdAt).toLocaleString()
-                                : "-"}
-                            </small>
-                          </article>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-
                 {testResult ? (
                   <pre className="mdc-chat-agent-actions-page__test-result">
                     {testResult}
@@ -1226,7 +1084,7 @@ export function ChatAgentActionsPage({
                         <small>{action.sensitivity || "read"}</small>
                         <button
                           type="button"
-                          onClick={() => void openTestPanel(action)}
+                          onClick={() => void testAction(action)}
                           disabled={testingActionId === action.actionId}
                         >
                           {testingActionId === action.actionId ? "Testando..." : "Testar"}
