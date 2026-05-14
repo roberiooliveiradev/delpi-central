@@ -407,9 +407,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
       return;
     }
 
-    await sendMessage({ attachments: files });
-
     setComposerAttachments([]);
+
+    await sendMessage({ attachments: files });
   }
 
   const isConversationEmpty =
