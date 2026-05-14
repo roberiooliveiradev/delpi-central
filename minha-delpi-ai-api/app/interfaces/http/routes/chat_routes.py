@@ -8,6 +8,7 @@ from app.application.security.chat_permissions import (
     CHAT_TOOLS_USE_PERMISSION,
 )
 import json
+import logging
 from uuid import UUID
 from dataclasses import asdict
 
@@ -81,6 +82,9 @@ from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.interfaces.http.auth_decorators import require_permission
 from app.infrastructure.gateways.core_me_gateway import CoreMeGateway
 from app.interfaces.http.utils.errors import bad_request, forbidden
+
+
+logger = logging.getLogger("minha-delpi-ai-api.chat")
 
 
 chat_bp = Blueprint("chat", __name__, url_prefix="/chat")
@@ -1679,10 +1683,20 @@ def stream_message(session_id: str):
 
         except Exception as exc:
             db.session.rollback()
+            logger.exception(
+                "chat_stream_failed",
+                extra={
+                    "session_id": session_id,
+                    "user_id": getattr(g.current_user, "sub", None),
+                    "error_type": exc.__class__.__name__,
+                },
+            )
             yield _sse(
                 "error",
                 {
-                    "message": getattr(exc, "message", "Erro ao gerar resposta em streaming."),
+                    "message": "Erro ao gerar resposta em streaming.",
+                    "detail": str(exc),
+                    "errorType": exc.__class__.__name__,
                 },
             )
 

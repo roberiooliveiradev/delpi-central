@@ -51,14 +51,40 @@ class ChatToolContextService:
         safe_tool_calls: list[dict] = []
 
         for selected_tool in selected_tools:
-            result = self.execute_tool_use_case.execute(
-                ExecuteToolRequest(
-                    user_id=user_id,
-                    access_token=access_token,
-                    tool_name=selected_tool["name"],
-                    arguments=selected_tool.get("arguments") or {},
+            try:
+                result = self.execute_tool_use_case.execute(
+                    ExecuteToolRequest(
+                        user_id=user_id,
+                        access_token=access_token,
+                        tool_name=selected_tool["name"],
+                        arguments=selected_tool.get("arguments") or {},
+                    )
                 )
-            )
+            except Exception as exc:
+                tool_name = selected_tool.get("name") or "unknown_tool"
+                error_metadata = {
+                    "ok": False,
+                    "error": str(exc),
+                    "errorType": exc.__class__.__name__,
+                }
+
+                safe_tool_calls.append(
+                    {
+                        "name": tool_name,
+                        "arguments": selected_tool.get("arguments") or {},
+                        "reason": selected_tool.get("reason"),
+                        "metadata": error_metadata,
+                    }
+                )
+
+                context_blocks.append(
+                    self._format_tool_error_context(
+                        name=tool_name,
+                        reason=selected_tool.get("reason"),
+                        error=exc,
+                    )
+                )
+                continue
 
             # Safe metadata returned to the client and persisted in chat metadata.
             # Do not include raw tool data here. Raw data may contain user profile,
@@ -91,6 +117,22 @@ class ChatToolContextService:
             "toolCalls": safe_tool_calls,
         }
 
+
+    def _format_tool_error_context(self, name: str, reason: str | None, error: Exception) -> str:
+        payload = {
+            "tool": name,
+            "reason": reason,
+            "ok": False,
+            "errorType": error.__class__.__name__,
+            "error": str(error),
+        }
+
+        return (
+            f"[Ferramenta autorizada com erro: {name}]\n"
+            "A ferramenta foi selecionada, mas não conseguiu retornar dados.\n"
+            "Regra obrigatória: não invente o resultado. Explique o erro em português simples e peça apenas os parâmetros faltantes quando aplicável.\n"
+            f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
+        )
 
     def _is_external_action_allowed(
         self,

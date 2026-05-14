@@ -33,6 +33,7 @@ type ChatInputProps = {
   agents?: ChatAgent[];
   projects?: ChatProject[];
   selectedAgentKey?: string | null;
+  isAgentLocked?: boolean;
   selectedProjectId?: string | null;
   attachments?: ChatInputAttachment[];
   onChange: (value: string) => void;
@@ -67,6 +68,7 @@ export function ChatInput({
   agents = [],
   projects = [],
   selectedAgentKey,
+  isAgentLocked = false,
   selectedProjectId,
   attachments = [],
   onChange,

@@ -117,7 +117,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
   const activeAgentPage = agents.find((agent) => agent.key === activeAgentPageKey);
-  const contextAgent = agents.find((agent) => agent.key === contextAgentKey);
+  const sessionAgentKey = activeSession?.agent_key ?? null;
+  const effectiveComposerAgentKey = sessionAgentKey ?? contextAgentKey;
+  const contextAgent = agents.find((agent) => agent.key === effectiveComposerAgentKey);
+  const isAgentConversation = Boolean(sessionAgentKey);
   const selectedProjectSessions = selectedProjectId
     ? sessions.filter((session) => session.project_id === selectedProjectId)
     : [];
@@ -302,7 +305,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     setComposerAttachments([]);
     setSelectedProjectId(session.project_id ?? null);
     setActiveAgentPageKey(null);
-    setContextAgentKey(session.agent_key ?? null);
+    setContextAgentKey(null);
     setCurrentView("chat");
     selectSession(session);
   }
@@ -379,7 +382,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const composerContextProps = {
     agents,
     projects,
-    selectedAgentKey: contextAgentKey,
+    selectedAgentKey: effectiveComposerAgentKey,
     selectedProjectId,
     onSelectAgent: handleSelectContextAgent,
     onOpenAgentPage: (agentKey: string) => {

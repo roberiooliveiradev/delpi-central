@@ -240,9 +240,11 @@ export async function streamChatMessage(
 
       if (event === "error") {
         callbacks.onError?.(
-          typeof data.message === "string"
-            ? data.message
-            : "Erro durante streaming.",
+          typeof data.detail === "string" && data.detail.trim()
+            ? data.detail
+            : typeof data.message === "string"
+              ? data.message
+              : "Erro durante streaming.",
         );
       }
     }
