@@ -61,7 +61,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
 
-  const effectiveAgentKey = contextAgentKey ?? activeAgentPageKey;
+  const requestedAgentKey = contextAgentKey ?? activeAgentPageKey;
 
   const {
     sessions,
@@ -96,7 +96,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   } = useChatSession({
     getAccessToken,
     projectId: selectedProjectId,
-    agentKey: effectiveAgentKey,
+    agentKey: requestedAgentKey,
   });
 
   const {
@@ -118,7 +118,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
   const activeAgentPage = agents.find((agent) => agent.key === activeAgentPageKey);
   const sessionAgentKey = activeSession?.agent_key ?? null;
-  const effectiveComposerAgentKey = sessionAgentKey ?? contextAgentKey;
+  const effectiveComposerAgentKey = sessionAgentKey ?? contextAgentKey ?? activeAgentPageKey;
   const contextAgent = agents.find((agent) => agent.key === effectiveComposerAgentKey);
   const isAgentConversation = Boolean(sessionAgentKey);
   const selectedProjectSessions = selectedProjectId
@@ -384,7 +384,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     projects,
     selectedAgentKey: effectiveComposerAgentKey,
     selectedProjectId,
-    onSelectAgent: handleSelectContextAgent,
+    isAgentLocked: isAgentConversation,
+    onSelectAgent: isAgentConversation ? undefined : handleSelectContextAgent,
     onOpenAgentPage: (agentKey: string) => {
       setCanvasDocument(null);
       setSelectedProjectId(null);
