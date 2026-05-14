@@ -53,19 +53,30 @@ class RagContextService:
                 )
             )
 
-            sources.append(
-                {
-                    "id": chunk.get("id"),
-                    "documentId": chunk.get("documentId"),
-                    "title": chunk.get("title"),
-                    "sourceType": chunk.get("sourceType"),
-                    "sourceRef": chunk.get("sourceRef"),
-                    "chunkIndex": chunk.get("chunkIndex"),
-                    "score": chunk.get("score"),
-                }
-            )
+            sources.append(self._source_from_chunk(chunk))
 
         return {
             "context": "\n\n".join(context_parts),
             "sources": sources,
+        }
+
+    def _source_from_chunk(self, chunk: dict) -> dict:
+        metadata = chunk.get("metadata") or {}
+
+        return {
+            "id": chunk.get("id"),
+            "documentId": chunk.get("documentId"),
+            "title": chunk.get("title"),
+            "sourceType": chunk.get("sourceType"),
+            "sourceRef": chunk.get("sourceRef"),
+            "chunkIndex": chunk.get("chunkIndex"),
+            "score": chunk.get("score"),
+            "scope": metadata.get("scope"),
+            "userId": metadata.get("userId"),
+            "sessionId": metadata.get("sessionId"),
+            "projectId": metadata.get("projectId"),
+            "agentKey": metadata.get("agentKey"),
+            "attachmentId": metadata.get("attachmentId"),
+            "originalFilename": metadata.get("originalFilename"),
+            "contentType": metadata.get("contentType"),
         }
