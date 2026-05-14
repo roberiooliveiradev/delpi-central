@@ -76,6 +76,7 @@ from app.composition.chat_composer import (
 from app.extensions.db import db
 from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.interfaces.http.auth_decorators import require_permission
+from app.infrastructure.gateways.core_me_gateway import CoreMeGateway
 from app.interfaces.http.utils.errors import bad_request
 
 
@@ -119,9 +120,20 @@ def list_actions():
 @chat_bp.get("/capabilities")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def get_chat_capabilities():
+    authorization_header = request.headers.get("Authorization")
+    core_user = CoreMeGateway().get_me(authorization_header)
+
     user = g.current_user
-    permissions = set(getattr(user, "permissions", []) or [])
-    is_superadmin = bool(getattr(user, "is_superadmin", False))
+
+    permissions = set()
+    is_superadmin = False
+
+    if core_user:
+        permissions = set(core_user.get("permissions") or [])
+        is_superadmin = bool(core_user.get("is_superadmin"))
+    else:
+        permissions = set(getattr(user, "permissions", []) or [])
+        is_superadmin = bool(getattr(user, "is_superadmin", False))
 
     can_manage_tools = (
         is_superadmin
