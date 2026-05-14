@@ -36,6 +36,7 @@ type AgentUpdatePayload = Partial<AgentPayload> & {
 type ChatAgentsPageProps = {
   agents: ChatAgent[];
   selectedAgentKey?: string | null;
+  canManageAgents?: boolean;
   editAgentKey?: string | null;
   editRequestKey?: number;
   isLoading?: boolean;
@@ -95,6 +96,7 @@ function getOwnerLabel(agent: ChatAgent): string {
 export function ChatAgentsPage({
   agents,
   selectedAgentKey,
+  canManageAgents = false,
   editAgentKey,
   editRequestKey,
   isLoading,
@@ -157,7 +159,7 @@ export function ChatAgentsPage({
     );
   }
 
-  if (editingAgent !== undefined) {
+  if (editingAgent !== undefined && (editingAgent !== null || canManageAgents)) {
     return (
       <ChatAgentBuilderPage
         agent={editingAgent}
@@ -229,31 +231,33 @@ export function ChatAgentsPage({
           </div>
 
           <div className="mdc-chat-agents-directory__list">
-            <article
-              className="mdc-chat-agents-directory__item mdc-chat-agents-directory__item--create"
-              role="button"
-              tabIndex={0}
-              onClick={() => setEditingAgent(null)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  setEditingAgent(null);
-                }
-              }}
-            >
-              <span className="mdc-chat-agents-directory__avatar mdc-chat-agents-directory__avatar--create">
-                <Plus size={20} aria-hidden="true" />
-              </span>
+            {canManageAgents ? (
+              <article
+                className="mdc-chat-agents-directory__item mdc-chat-agents-directory__item--create"
+                role="button"
+                tabIndex={0}
+                onClick={() => setEditingAgent(null)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setEditingAgent(null);
+                  }
+                }}
+              >
+                <span className="mdc-chat-agents-directory__avatar mdc-chat-agents-directory__avatar--create">
+                  <Plus size={20} aria-hidden="true" />
+                </span>
 
-              <span className="mdc-chat-agents-directory__item-copy">
-                <strong>Criar um agente</strong>
-                <small>Configure um especialista para um processo, API ou área específica.</small>
-              </span>
+                <span className="mdc-chat-agents-directory__item-copy">
+                  <strong>Criar um agente</strong>
+                  <small>Configure um especialista para um processo, API ou área específica.</small>
+                </span>
 
-              <span className="mdc-chat-agents-directory__item-arrow">
-                <ChevronRight size={18} aria-hidden="true" />
-              </span>
-            </article>
+                <span className="mdc-chat-agents-directory__item-arrow">
+                  <ChevronRight size={18} aria-hidden="true" />
+                </span>
+              </article>
+            ) : null}
 
             {isLoading ? (
               <p className="mdc-chat-muted">Carregando agentes...</p>

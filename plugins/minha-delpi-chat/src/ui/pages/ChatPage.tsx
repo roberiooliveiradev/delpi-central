@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
@@ -108,6 +108,11 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     editProject,
     removeProject,
   } = useChatWorkspace({ getAccessToken });
+
+  const canManageAgents = useMemo(
+    () => agents.some((agent) => ["owner", "editor"].includes(agent.access_role)),
+    [agents],
+  );
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
@@ -422,6 +427,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             <ChatAgentsPage
               agents={agents}
               selectedAgentKey={activeAgentPageKey}
+              canManageAgents={canManageAgents}
               editAgentKey={agentEditRequest?.key ?? null}
               editRequestKey={agentEditRequest?.requestKey ?? 0}
               isLoading={isLoadingAgents}
@@ -633,7 +639,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                     <ChatAgentHome
                       agent={activeAgentPage}
                       onUseSuggestion={setDraft}
-                      onUseAgent={() => void handleStartSession()}
                       onManageAgent={() => {
                         if (!activeAgentPage?.key) {
                           return;

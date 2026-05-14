@@ -9,6 +9,7 @@ type ChatSidebarAgentsSectionProps = {
   isLoading?: boolean;
   onSelectAgent?: (agentKey: string | null) => void;
   onManageAgents: () => void;
+  canManageAgents?: boolean;
   hideTitle?: boolean;
 };
 
@@ -18,6 +19,7 @@ export function ChatSidebarAgentsSection({
   isLoading,
   onSelectAgent,
   onManageAgents,
+  canManageAgents = false,
   hideTitle,
 }: ChatSidebarAgentsSectionProps) {
   return (
@@ -55,12 +57,14 @@ export function ChatSidebarAgentsSection({
         )}
       </div>
 
-      <div className="mdc-chat-sidebar__project-manage">
-        <button type="button" onClick={onManageAgents}>
-          <Settings size={15} aria-hidden="true" />
-          <span>Gerenciar agentes</span>
-        </button>
-      </div>
+      {canManageAgents ? (
+        <div className="mdc-chat-sidebar__project-manage">
+          <button type="button" onClick={onManageAgents}>
+            <Settings size={15} aria-hidden="true" />
+            <span>Gerenciar agentes</span>
+          </button>
+        </div>
+      ) : null}
     </>
   );
 }

@@ -44,6 +44,7 @@ type ChatSidebarProps = {
   isLoadingArchivedSessions?: boolean;
   isLoadingAgents?: boolean;
   isLoadingProjects?: boolean;
+  canManageAgents?: boolean;
   isCollapsed?: boolean;
   onToggleCollapsed?: () => void;
   onViewChange?: (view: ChatSidebarView) => void;
@@ -79,6 +80,7 @@ export function ChatSidebar({
   isLoadingArchivedSessions,
   isLoadingAgents,
   isLoadingProjects,
+  canManageAgents = false,
   isCollapsed,
   onToggleCollapsed,
   onViewChange,
@@ -289,6 +291,7 @@ export function ChatSidebar({
             selectedAgentKey={selectedAgentKey}
             isLoading={isLoadingAgents}
             onSelectAgent={onSelectAgent}
+            canManageAgents={canManageAgents}
             onManageAgents={() => onViewChange?.("agents")}
             hideTitle
           />

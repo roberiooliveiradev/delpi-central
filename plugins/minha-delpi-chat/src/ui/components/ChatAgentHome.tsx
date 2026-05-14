@@ -1,4 +1,4 @@
-import { Bot, Settings, Share2, Sparkles, Zap } from "lucide-react";
+import { Bot, Settings, Share2, Sparkles } from "lucide-react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
 
@@ -7,7 +7,6 @@ import "./ChatAgentHome.css";
 type ChatAgentHomeProps = {
   agent: ChatAgent;
   onUseSuggestion: (value: string) => void;
-  onUseAgent?: () => void;
   onManageAgent?: () => void;
 };
 
@@ -32,7 +31,6 @@ function canManageAgent(agent: ChatAgent): boolean {
 export function ChatAgentHome({
   agent,
   onUseSuggestion,
-  onUseAgent,
   onManageAgent,
 }: ChatAgentHomeProps) {
   const icebreakers = getAgentIcebreakers(agent);
@@ -57,11 +55,6 @@ export function ChatAgentHome({
       </div>
 
       <div className="mdc-chat-agent-home__actions">
-        <button type="button" onClick={onUseAgent}>
-          <Zap size={16} aria-hidden="true" />
-          <span>Usar este agente</span>
-        </button>
-
         {canManageAgent(agent) ? (
           <button type="button" onClick={onManageAgent}>
             <Settings size={16} aria-hidden="true" />
