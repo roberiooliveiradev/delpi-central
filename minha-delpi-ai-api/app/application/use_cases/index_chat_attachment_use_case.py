@@ -62,7 +62,7 @@ class IndexChatAttachmentUseCase:
             }
 
         metadata = {
-            "scope": "chat_attachment",
+            "scope": "session_source",
             "userId": str(attachment.user_id),
             "sessionId": str(attachment.session_id),
             "messageId": str(attachment.message_id) if attachment.message_id else None,
