@@ -427,6 +427,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           isLoadingArchivedSessions={isLoadingArchivedSessions}
           isLoadingAgents={isLoadingAgents}
           isLoadingProjects={isLoadingProjects}
+          canManageAgents={canManageAgents}
           onNewSession={handleStartGeneralSession}
           onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
