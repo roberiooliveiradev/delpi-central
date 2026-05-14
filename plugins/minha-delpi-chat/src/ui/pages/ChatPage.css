@@ -89,3 +89,41 @@
   gap: var(--mdc-space-5);
   padding-bottom: clamp(2rem, 8vh, 7rem);
 }
+
+.minha-delpi-chat--dragging {
+  position: relative;
+}
+
+.mdc-chat-drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--mdc-bg) 72%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.mdc-chat-drop-overlay > div {
+  display: grid;
+  gap: 0.35rem;
+  min-width: min(28rem, calc(100vw - 3rem));
+  border: 1px dashed color-mix(in srgb, var(--mdc-primary) 75%, var(--mdc-card-border));
+  border-radius: var(--mdc-radius-xl);
+  background: color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-card-bg));
+  color: var(--mdc-text);
+  padding: 1.4rem;
+  text-align: center;
+  box-shadow: var(--mdc-shadow-lg);
+}
+
+.mdc-chat-drop-overlay strong {
+  color: var(--mdc-primary);
+  font-size: 1rem;
+}
+
+.mdc-chat-drop-overlay span {
+  color: var(--mdc-text-muted);
+  font-size: 0.9rem;
+}

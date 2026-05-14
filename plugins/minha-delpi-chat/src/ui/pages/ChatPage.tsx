@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type DragEvent, useEffect, useState } from "react";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
@@ -60,6 +60,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [composerAttachments, setComposerAttachments] = useState<ChatInputAttachment[]>([]);
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   const requestedAgentKey = activeAgentPageKey ?? null;
 
@@ -336,6 +337,62 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     setComposerAttachments((current) => [...current, ...nextAttachments].slice(0, 10));
   }
 
+  function hasDraggedFiles(event: DragEvent<HTMLElement>) {
+    return Array.from(event.dataTransfer.types).includes("Files");
+  }
+
+  function handleChatDragEnter(event: DragEvent<HTMLElement>) {
+    if (!hasDraggedFiles(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = "copy";
+    setIsDraggingFile(true);
+  }
+
+  function handleChatDragOver(event: DragEvent<HTMLElement>) {
+    if (!hasDraggedFiles(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = "copy";
+    setIsDraggingFile(true);
+  }
+
+  function handleChatDragLeave(event: DragEvent<HTMLElement>) {
+    if (!hasDraggedFiles(event)) {
+      return;
+    }
+
+    const relatedTarget = event.relatedTarget;
+
+    if (relatedTarget instanceof Node && event.currentTarget.contains(relatedTarget)) {
+      return;
+    }
+
+    setIsDraggingFile(false);
+  }
+
+  function handleChatDrop(event: DragEvent<HTMLElement>) {
+    if (!hasDraggedFiles(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDraggingFile(false);
+
+    const files = Array.from(event.dataTransfer.files ?? []);
+
+    if (files.length > 0) {
+      handleAttachFiles(files);
+    }
+  }
+
   function handleRemoveAttachment(attachmentId: string) {
     setComposerAttachments((current) =>
       current.filter((attachment) => attachment.id !== attachmentId),
@@ -425,7 +482,21 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   };
 
   return (
-    <main className="minha-delpi-chat">
+    <main
+      className={isDraggingFile ? "minha-delpi-chat minha-delpi-chat--dragging" : "minha-delpi-chat"}
+      onDragEnterCapture={handleChatDragEnter}
+      onDragOverCapture={handleChatDragOver}
+      onDragLeaveCapture={handleChatDragLeave}
+      onDropCapture={handleChatDrop}
+    >
+      {isDraggingFile ? (
+        <div className="mdc-chat-drop-overlay" aria-hidden="true">
+          <div>
+            <strong>Solte o arquivo para anexar</strong>
+            <span>Ele será enviado junto com a próxima pergunta.</span>
+          </div>
+        </div>
+      ) : null}
       <section
         className={
           isSidebarCollapsed
