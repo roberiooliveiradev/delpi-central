@@ -19,19 +19,21 @@ import {
   listChatActions,
   listChatAgentActions,
   listChatAgentActionProviders,
+  listChatAgentActionTestLogs,
   saveChatAgentActionProvider,
+  testChatAgentAction,
   updateChatAgentActionProvider,
   upsertChatAgentAction,
-  testChatAgentAction,
 } from "../../data/api/chatApi";
 import type {
   ChatActionCatalogItem,
   ChatActionProvider,
+  ChatActionTestLog,
+  ChatActionTestResult,
   ChatAgent,
   ChatAgentAction,
   ChatAgentActionProvider,
 } from "../../data/api/chatTypes";
-
 import { ActionTestPanel } from "./agent-actions/ActionTestPanel";
 import type { ActionTestPayload } from "./agent-actions/types";
 
@@ -167,7 +169,9 @@ export function ChatAgentActionsPage({
   const [isUpdatingRoutes, setIsUpdatingRoutes] = useState(false);
   const [isSavingProvider, setIsSavingProvider] = useState(false);
   const [testingActionId, setTestingActionId] = useState<string | null>(null);
-  const [testResult, setTestResult] = useState<string | null>(null);
+  const [testAction, setTestAction] = useState<ChatActionCatalogItem | null>(null);
+  const [testResult, setTestResult] = useState<ChatActionTestResult | null>(null);
+  const [testLogs, setTestLogs] = useState<ChatActionTestLog[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [newProviderName, setNewProviderName] = useState("");
@@ -356,73 +360,49 @@ export function ChatAgentActionsPage({
     await reloadProviders();
   }
 
-  async function testAction(action: ChatActionCatalogItem) {
+  async function loadActionLogs(action: ChatActionCatalogItem) {
     if (!selectedProviderKey) {
       return;
     }
 
-    setTestingActionId(action.actionId);
+    const logs = await listChatAgentActionTestLogs(
+      agent.id,
+      selectedProviderKey,
+      action.actionId,
+      { getAccessToken },
+    );
+
+    setTestLogs(logs);
+  }
+
+  async function openTestPanel(action: ChatActionCatalogItem) {
+    setTestResult(null);
+    setError(null);
+    setTestAction(action);
+
+    await loadActionLogs(action);
+  }
+
+  async function runActionTest(payload: ActionTestPayload) {
+    if (!selectedProviderKey || !testAction) {
+      return;
+    }
+
+    setTestingActionId(testAction.actionId);
     setTestResult(null);
     setError(null);
 
     try {
-      const actionPath = action.path ?? "";
-      const pathParams: Record<string, string> = {};
-      const placeholders = Array.from(actionPath.matchAll(/\{([^}]+)\}/g));
-
-      for (const match of placeholders) {
-        const key = match[1];
-        const value = window.prompt(`Valor para {${key}}`, "");
-
-        if (value === null) {
-          setTestingActionId(null);
-          return;
-        }
-
-        pathParams[key] = value;
-      }
-
-      let body: unknown = undefined;
-
-      if (!["GET", "HEAD"].includes(String(action.method).toUpperCase())) {
-        const rawBody = window.prompt(
-          "Body JSON para teste",
-          "{}",
-        );
-
-        if (rawBody === null) {
-          setTestingActionId(null);
-          return;
-        }
-
-        body = rawBody.trim() ? JSON.parse(rawBody) : undefined;
-      }
-
       const result = await testChatAgentAction(
         agent.id,
         selectedProviderKey,
-        action.actionId,
-        {
-          pathParams,
-          query: {},
-          body,
-        },
+        testAction.actionId,
+        payload,
         { getAccessToken },
       );
 
-      setTestResult(
-        [
-          result.ok ? "Teste executado com sucesso." : "Teste retornou erro.",
-          `Status: ${result.statusCode ?? "-"}`,
-          `Duração: ${result.durationMs}ms`,
-          `URL: ${result.url}`,
-          "",
-          result.errorMessage ? `Erro: ${result.errorMessage}` : "",
-          result.responsePreview || "",
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      );
+      setTestResult(result);
+      await loadActionLogs(testAction);
     } catch (testError) {
       setError(
         testError instanceof Error
@@ -792,6 +772,7 @@ export function ChatAgentActionsPage({
                       />
                       Nenhum
                     </label>
+
                     <label>
                       <input
                         type="radio"
@@ -800,6 +781,7 @@ export function ChatAgentActionsPage({
                       />
                       Chave API
                     </label>
+
                     <label>
                       <input
                         type="radio"
@@ -964,7 +946,9 @@ export function ChatAgentActionsPage({
                       disabled={isSavingProvider}
                     >
                       <Save size={16} aria-hidden="true" />
-                      <span>{isSavingProvider ? "Salvando..." : "Salvar configuração"}</span>
+                      <span>
+                        {isSavingProvider ? "Salvando..." : "Salvar configuração"}
+                      </span>
                     </button>
 
                     <button
@@ -1048,10 +1032,19 @@ export function ChatAgentActionsPage({
                   </div>
                 ) : null}
 
-                {testResult ? (
-                  <pre className="mdc-chat-agent-actions-page__test-result">
-                    {testResult}
-                  </pre>
+                {testAction ? (
+                  <ActionTestPanel
+                    action={testAction}
+                    isRunning={testingActionId === testAction.actionId}
+                    result={testResult}
+                    logs={testLogs}
+                    onRun={runActionTest}
+                    onClose={() => {
+                      setTestAction(null);
+                      setTestResult(null);
+                      setTestLogs([]);
+                    }}
+                  />
                 ) : null}
 
                 {isLoadingRoutes ? (
@@ -1082,9 +1075,10 @@ export function ChatAgentActionsPage({
                         <span>{action.method ?? "-"}</span>
                         <span>{action.path ?? "-"}</span>
                         <small>{action.sensitivity || "read"}</small>
+
                         <button
                           type="button"
-                          onClick={() => void testAction(action)}
+                          onClick={() => void openTestPanel(action)}
                           disabled={testingActionId === action.actionId}
                         >
                           {testingActionId === action.actionId ? "Testando..." : "Testar"}
