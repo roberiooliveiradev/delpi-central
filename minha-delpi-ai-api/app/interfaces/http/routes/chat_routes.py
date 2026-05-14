@@ -407,19 +407,23 @@ def update_agent_action_provider(agent_id: str, provider_key: str):
     repository = PostgresExternalActionRepository()
 
     try:
+        update_payload = {
+            "name": payload.get("name"),
+            "baseUrl": payload.get("baseUrl") or payload.get("base_url"),
+            "openApiUrl": payload.get("openApiUrl") or payload.get("openapi_url"),
+            "privacyPolicyUrl": (
+                payload.get("privacyPolicyUrl") or payload.get("privacy_policy_url")
+            ),
+            "authMode": payload.get("authMode") or payload.get("auth_mode"),
+            "authConfig": payload.get("authConfig") or payload.get("auth_config"),
+        }
+
+        if "enabled" in payload:
+            update_payload["enabled"] = payload.get("enabled")
+
         provider = repository.update_provider(
             provider_key,
-            {
-                "name": payload.get("name"),
-                "baseUrl": payload.get("baseUrl") or payload.get("base_url"),
-                "openApiUrl": payload.get("openApiUrl") or payload.get("openapi_url"),
-                "privacyPolicyUrl": (
-                    payload.get("privacyPolicyUrl") or payload.get("privacy_policy_url")
-                ),
-                "authMode": payload.get("authMode") or payload.get("auth_mode"),
-                "authConfig": payload.get("authConfig") or payload.get("auth_config"),
-                "enabled": payload.get("enabled"),
-            },
+            update_payload,
         )
 
         if not provider:

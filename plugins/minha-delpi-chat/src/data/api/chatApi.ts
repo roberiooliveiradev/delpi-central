@@ -915,3 +915,20 @@ export async function testChatAgentAction(
 
   return responsePayload as ChatActionTestResult;
 }
+
+export async function listChatAgentActionTestLogs(
+  agentId: string,
+  providerKey: string,
+  actionId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatActionTestLog[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/agents/${encodeURIComponent(agentId)}/providers/${encodeURIComponent(providerKey)}/actions/${encodeURIComponent(actionId)}/logs`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<ChatActionTestLog[]>(response);
+}

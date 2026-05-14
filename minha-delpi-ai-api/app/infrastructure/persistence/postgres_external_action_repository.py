@@ -76,7 +76,7 @@ class PostgresExternalActionRepository:
         if "authConfig" in payload:
             provider.auth_config = payload.get("authConfig") or {}
 
-        if "enabled" in payload:
+        if "enabled" in payload and payload.get("enabled") is not None:
             provider.enabled = bool(payload.get("enabled"))
 
         db.session.flush()
