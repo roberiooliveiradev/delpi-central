@@ -6,14 +6,18 @@ from pathlib import Path
 
 
 class ChatAttachmentTextExtractor:
-    SUPPORTED_TEXT_EXTENSIONS = {".txt", ".md", ".csv", ".json"}
+    SUPPORTED_TEXT_EXTENSIONS = {".txt", ".md", ".markdown", ".csv", ".json"}
     SUPPORTED_OPTIONAL_EXTENSIONS = {".docx", ".xlsx", ".pdf"}
+
+    @classmethod
+    def supported_extensions(cls) -> set[str]:
+        return set(cls.SUPPORTED_TEXT_EXTENSIONS) | set(cls.SUPPORTED_OPTIONAL_EXTENSIONS)
 
     def extract(self, *, storage_path: str, filename: str, content_type: str | None) -> dict:
         path = Path(storage_path)
         extension = path.suffix.lower() or Path(filename).suffix.lower()
 
-        if extension in {".txt", ".md"}:
+        if extension in {".txt", ".md", ".markdown"}:
             return self._extract_plain_text(path, extension)
 
         if extension == ".json":
