@@ -153,10 +153,21 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         return self._to_entity(model)
 
-    def delete(self, agent_id: UUID, user_id: UUID) -> bool:
+    def delete(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
         model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
 
-        if not model or model.owner_user_id != user_id:
+        if not model:
+            return False
+
+        is_owner = model.owner_user_id == user_id
+        is_official_agent = model.visibility == "system" or model.owner_user_id is None
+
+        if not is_owner and not (can_manage_official_agents and is_official_agent):
             return False
 
         db.session.delete(model)

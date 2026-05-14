@@ -53,7 +53,12 @@ class ChatAgentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, agent_id: UUID, user_id: UUID) -> bool:
+    def delete(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
         raise NotImplementedError
 
     @abstractmethod

@@ -153,10 +153,16 @@ class DeleteChatAgentUseCase:
     def __init__(self, repository: ChatAgentRepositoryPort):
         self.repository = repository
 
-    def execute(self, user_id: str, agent_id: str) -> bool:
+    def execute(
+        self,
+        user_id: str,
+        agent_id: str,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
         return self.repository.delete(
             agent_id=UUID(agent_id),
             user_id=UUID(user_id),
+            can_manage_official_agents=can_manage_official_agents,
         )
 
 

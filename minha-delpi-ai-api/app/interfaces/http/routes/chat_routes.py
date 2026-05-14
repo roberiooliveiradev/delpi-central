@@ -266,11 +266,13 @@ def update_agent(agent_id: str):
 @require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def delete_agent(agent_id: str):
     use_case = make_delete_chat_agent_use_case()
+    capabilities = _get_chat_capabilities_from_request()
 
     try:
         deleted = use_case.execute(
             user_id=g.current_user.sub,
             agent_id=agent_id,
+            can_manage_official_agents=capabilities["canManageOfficialAgents"],
         )
 
         if not deleted:
