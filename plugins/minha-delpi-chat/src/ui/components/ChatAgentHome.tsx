@@ -7,6 +7,7 @@ import "./ChatAgentHome.css";
 type ChatAgentHomeProps = {
   agent: ChatAgent;
   onUseSuggestion: (value: string) => void;
+  canManageAgent?: boolean;
   onManageAgent?: () => void;
 };
 
@@ -24,13 +25,10 @@ function getAgentIcebreakers(agent: ChatAgent): string[] {
     .slice(0, 8);
 }
 
-function canManageAgent(agent: ChatAgent): boolean {
-  return ["owner", "editor"].includes(agent.access_role);
-}
-
 export function ChatAgentHome({
   agent,
   onUseSuggestion,
+  canManageAgent = false,
   onManageAgent,
 }: ChatAgentHomeProps) {
   const icebreakers = getAgentIcebreakers(agent);
@@ -55,7 +53,7 @@ export function ChatAgentHome({
       </div>
 
       <div className="mdc-chat-agent-home__actions">
-        {canManageAgent(agent) ? (
+        {canManageAgent ? (
           <button type="button" onClick={onManageAgent}>
             <Settings size={16} aria-hidden="true" />
             <span>Gerenciar agente</span>

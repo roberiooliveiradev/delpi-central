@@ -140,6 +140,14 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   }, [isSidebarCollapsed]);
 
   useEffect(() => {
+    if (currentView === "agents" && !canManageAgents) {
+      setAgentEditRequest(null);
+      setCurrentView("chat");
+    }
+  }, [currentView, canManageAgents]);
+
+
+  useEffect(() => {
     let isMounted = true;
 
     async function loadUserDisplayName() {
@@ -660,8 +668,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                     <ChatAgentHome
                       agent={activeAgentPage}
                       onUseSuggestion={setDraft}
+                      canManageAgent={canManageAgents}
                       onManageAgent={() => {
-                        if (!activeAgentPage?.key) {
+                        if (!canManageAgents || !activeAgentPage?.key) {
                           return;
                         }
 
