@@ -4,6 +4,7 @@ import {
   Plus,
   RefreshCw,
   Route,
+  Save,
   Settings2,
   Shield,
   Zap,
@@ -12,12 +13,14 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   createChatAgentActionProvider,
+  getChatAgentActionProvider,
   importChatAgentActionProviderSchema,
   listActionProviders,
   listChatActions,
   listChatAgentActions,
   listChatAgentActionProviders,
   saveChatAgentActionProvider,
+  updateChatAgentActionProvider,
   upsertChatAgentAction,
 } from "../../data/api/chatApi";
 import type {
@@ -35,6 +38,19 @@ type ChatAgentActionsPageProps = {
   providerKey?: string | null;
   onBack: () => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
+};
+
+type AuthMode = "none" | "api_key" | "oauth";
+
+type AuthConfigForm = {
+  apiKey: string;
+  headerName: string;
+  scheme: "basic" | "bearer" | "custom";
+  clientId: string;
+  clientSecret: string;
+  authorizationUrl: string;
+  tokenUrl: string;
+  scope: string;
 };
 
 function createKeyFromName(value: string): string {
@@ -67,6 +83,67 @@ function shouldConfirmAction(action: ChatActionCatalogItem): boolean {
   );
 }
 
+function stringifySchema(schema: Record<string, unknown> | null | undefined): string {
+  if (!schema) {
+    return "";
+  }
+
+  try {
+    return JSON.stringify(schema, null, 2);
+  } catch {
+    return "";
+  }
+}
+
+function normalizeAuthMode(value: string | null | undefined): AuthMode {
+  if (value === "api_key" || value === "oauth") {
+    return value;
+  }
+
+  return "none";
+}
+
+function buildAuthConfig(mode: AuthMode, form: AuthConfigForm): Record<string, unknown> {
+  if (mode === "api_key") {
+    return {
+      apiKey: form.apiKey,
+      headerName: form.headerName || "Authorization",
+      scheme: form.scheme,
+    };
+  }
+
+  if (mode === "oauth") {
+    return {
+      clientId: form.clientId,
+      clientSecret: form.clientSecret,
+      authorizationUrl: form.authorizationUrl,
+      tokenUrl: form.tokenUrl,
+      scope: form.scope,
+    };
+  }
+
+  return {};
+}
+
+function readAuthConfig(provider: ChatActionProvider | null): AuthConfigForm {
+  const config = provider?.authConfig ?? {};
+
+  return {
+    apiKey: typeof config.apiKey === "string" ? config.apiKey : "",
+    headerName: typeof config.headerName === "string" ? config.headerName : "Authorization",
+    scheme:
+      config.scheme === "basic" || config.scheme === "custom"
+        ? config.scheme
+        : "bearer",
+    clientId: typeof config.clientId === "string" ? config.clientId : "",
+    clientSecret: typeof config.clientSecret === "string" ? config.clientSecret : "",
+    authorizationUrl:
+      typeof config.authorizationUrl === "string" ? config.authorizationUrl : "",
+    tokenUrl: typeof config.tokenUrl === "string" ? config.tokenUrl : "",
+    scope: typeof config.scope === "string" ? config.scope : "",
+  };
+}
+
 export function ChatAgentActionsPage({
   agent,
   providerKey,
@@ -78,24 +155,45 @@ export function ChatAgentActionsPage({
   const [selectedProviderKey, setSelectedProviderKey] = useState<string | null>(
     providerKey ?? null,
   );
+  const [providerDetails, setProviderDetails] = useState<ChatActionProvider | null>(null);
   const [providerActions, setProviderActions] = useState<ChatActionCatalogItem[]>([]);
   const [configuredActions, setConfiguredActions] = useState<ChatAgentAction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
   const [isUpdatingRoutes, setIsUpdatingRoutes] = useState(false);
+  const [isSavingProvider, setIsSavingProvider] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [newProviderName, setNewProviderName] = useState("");
   const [newProviderBaseUrl, setNewProviderBaseUrl] = useState("");
   const [newProviderOpenApiUrl, setNewProviderOpenApiUrl] = useState("");
   const [newProviderSchema, setNewProviderSchema] = useState("");
+  const [newProviderPrivacyPolicyUrl, setNewProviderPrivacyPolicyUrl] = useState("");
   const [isCreatingProvider, setIsCreatingProvider] = useState(false);
+
+  const [providerName, setProviderName] = useState("");
+  const [providerBaseUrl, setProviderBaseUrl] = useState("");
+  const [providerOpenApiUrl, setProviderOpenApiUrl] = useState("");
+  const [providerPrivacyPolicyUrl, setProviderPrivacyPolicyUrl] = useState("");
+  const [providerSchemaText, setProviderSchemaText] = useState("");
+  const [authMode, setAuthMode] = useState<AuthMode>("none");
+  const [authConfig, setAuthConfig] = useState<AuthConfigForm>({
+    apiKey: "",
+    headerName: "Authorization",
+    scheme: "bearer",
+    clientId: "",
+    clientSecret: "",
+    authorizationUrl: "",
+    tokenUrl: "",
+    scope: "",
+  });
 
   const selectedProvider = useMemo(
     () =>
+      providerDetails ??
       availableProviders.find((provider) => provider.providerKey === selectedProviderKey) ??
       null,
-    [availableProviders, selectedProviderKey],
+    [availableProviders, providerDetails, selectedProviderKey],
   );
 
   const selectedLink = useMemo(
@@ -116,6 +214,21 @@ export function ChatAgentActionsPage({
 
     setAvailableProviders(providers);
     setConfiguredProviders(agentProviders);
+  }
+
+  async function reloadProviderDetails(nextProviderKey: string) {
+    const details = await getChatAgentActionProvider(agent.id, nextProviderKey, {
+      getAccessToken,
+    });
+
+    setProviderDetails(details);
+    setProviderName(details.name ?? "");
+    setProviderBaseUrl(details.baseUrl ?? "");
+    setProviderOpenApiUrl(details.openApiUrl ?? "");
+    setProviderPrivacyPolicyUrl(details.privacyPolicyUrl ?? "");
+    setProviderSchemaText(stringifySchema(details.latestSchema));
+    setAuthMode(normalizeAuthMode(details.authMode));
+    setAuthConfig(readAuthConfig(details));
   }
 
   async function reloadRoutes(nextProviderKey: string) {
@@ -190,11 +303,13 @@ export function ChatAgentActionsPage({
 
   useEffect(() => {
     if (!selectedProviderKey) {
+      setProviderDetails(null);
       setProviderActions([]);
       setConfiguredActions([]);
       return;
     }
 
+    void reloadProviderDetails(selectedProviderKey);
     void reloadRoutes(selectedProviderKey);
   }, [selectedProviderKey]);
 
@@ -270,6 +385,7 @@ export function ChatAgentActionsPage({
       });
 
       await reloadProviders();
+      await reloadProviderDetails(selectedProviderKey);
       await reloadRoutes(selectedProviderKey);
     } catch (updateError) {
       setError(
@@ -279,6 +395,48 @@ export function ChatAgentActionsPage({
       );
     } finally {
       setIsUpdatingRoutes(false);
+    }
+  }
+
+  async function saveProviderConfig() {
+    if (!selectedProviderKey) {
+      return;
+    }
+
+    if (!providerName.trim() || !providerBaseUrl.trim()) {
+      setError("Informe nome e URL base da API.");
+      return;
+    }
+
+    setIsSavingProvider(true);
+    setError(null);
+
+    try {
+      const updated = await updateChatAgentActionProvider(
+        agent.id,
+        selectedProviderKey,
+        {
+          name: providerName.trim(),
+          baseUrl: providerBaseUrl.trim(),
+          openApiUrl: providerOpenApiUrl.trim() || null,
+          privacyPolicyUrl: providerPrivacyPolicyUrl.trim() || null,
+          authMode,
+          authConfig: buildAuthConfig(authMode, authConfig),
+        },
+        { getAccessToken },
+      );
+
+      setProviderDetails(updated);
+      await reloadProviders();
+      await reloadProviderDetails(selectedProviderKey);
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Não foi possível salvar a configuração desta action.",
+      );
+    } finally {
+      setIsSavingProvider(false);
     }
   }
 
@@ -323,6 +481,7 @@ export function ChatAgentActionsPage({
           type: "openapi",
           baseUrl,
           openApiUrl: openApiUrl || null,
+          privacyPolicyUrl: newProviderPrivacyPolicyUrl.trim() || null,
           schema,
           authMode: "none",
           enabled: true,
@@ -338,9 +497,11 @@ export function ChatAgentActionsPage({
       setNewProviderBaseUrl("");
       setNewProviderOpenApiUrl("");
       setNewProviderSchema("");
+      setNewProviderPrivacyPolicyUrl("");
       setSelectedProviderKey(nextProviderKey);
 
       await reloadProviders();
+      await reloadProviderDetails(nextProviderKey);
       await reloadRoutes(nextProviderKey);
     } catch (createError) {
       setError(
@@ -432,14 +593,27 @@ export function ChatAgentActionsPage({
                   </label>
                 </div>
 
-                <label>
-                  <span>URL OpenAPI</span>
-                  <input
-                    value={newProviderOpenApiUrl}
-                    onChange={(event) => setNewProviderOpenApiUrl(event.target.value)}
-                    placeholder="https://api.exemplo.com.br/openapi.json"
-                  />
-                </label>
+                <div className="mdc-chat-agent-actions-page__grid">
+                  <label>
+                    <span>URL OpenAPI</span>
+                    <input
+                      value={newProviderOpenApiUrl}
+                      onChange={(event) => setNewProviderOpenApiUrl(event.target.value)}
+                      placeholder="https://api.exemplo.com.br/openapi.json"
+                    />
+                  </label>
+
+                  <label>
+                    <span>Política de privacidade</span>
+                    <input
+                      value={newProviderPrivacyPolicyUrl}
+                      onChange={(event) =>
+                        setNewProviderPrivacyPolicyUrl(event.target.value)
+                      }
+                      placeholder="https://app.example.com/privacy"
+                    />
+                  </label>
+                </div>
 
                 <label>
                   <span>Schema OpenAPI JSON</span>
@@ -465,10 +639,61 @@ export function ChatAgentActionsPage({
             <>
               <section className="mdc-chat-agent-actions-page__block">
                 <div className="mdc-chat-agent-actions-page__block-title">
+                  <Settings2 size={18} aria-hidden="true" />
+                  <div>
+                    <h2>Informações da action</h2>
+                    <p>Nome, endpoint base e origem do schema OpenAPI.</p>
+                  </div>
+                </div>
+
+                <div className="mdc-chat-agent-actions-page__create">
+                  <div className="mdc-chat-agent-actions-page__grid">
+                    <label>
+                      <span>Nome da API</span>
+                      <input
+                        value={providerName}
+                        onChange={(event) => setProviderName(event.target.value)}
+                      />
+                    </label>
+
+                    <label>
+                      <span>URL base</span>
+                      <input
+                        value={providerBaseUrl}
+                        onChange={(event) => setProviderBaseUrl(event.target.value)}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mdc-chat-agent-actions-page__grid">
+                    <label>
+                      <span>URL OpenAPI</span>
+                      <input
+                        value={providerOpenApiUrl}
+                        onChange={(event) => setProviderOpenApiUrl(event.target.value)}
+                      />
+                    </label>
+
+                    <label>
+                      <span>Política de privacidade</span>
+                      <input
+                        value={providerPrivacyPolicyUrl}
+                        onChange={(event) =>
+                          setProviderPrivacyPolicyUrl(event.target.value)
+                        }
+                        placeholder="https://app.example.com/privacy"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </section>
+
+              <section className="mdc-chat-agent-actions-page__block">
+                <div className="mdc-chat-agent-actions-page__block-title">
                   <Shield size={18} aria-hidden="true" />
                   <div>
                     <h2>Autenticação</h2>
-                    <p>Configuração da autenticação desta API/action.</p>
+                    <p>Configuração real salva junto desta API/action.</p>
                   </div>
                 </div>
 
@@ -476,23 +701,152 @@ export function ChatAgentActionsPage({
                   <span>Tipo de autenticação</span>
                   <div>
                     <label>
-                      <input type="radio" checked readOnly />
+                      <input
+                        type="radio"
+                        checked={authMode === "none"}
+                        onChange={() => setAuthMode("none")}
+                      />
                       Nenhum
                     </label>
                     <label>
-                      <input type="radio" readOnly />
+                      <input
+                        type="radio"
+                        checked={authMode === "api_key"}
+                        onChange={() => setAuthMode("api_key")}
+                      />
                       Chave API
                     </label>
                     <label>
-                      <input type="radio" readOnly />
+                      <input
+                        type="radio"
+                        checked={authMode === "oauth"}
+                        onChange={() => setAuthMode("oauth")}
+                      />
                       OAuth
                     </label>
                   </div>
 
-                  <button type="button">
-                    <Settings2 size={16} aria-hidden="true" />
-                    <span>Configurar autenticação</span>
-                  </button>
+                  {authMode === "api_key" ? (
+                    <div className="mdc-chat-agent-actions-page__grid">
+                      <label>
+                        <span>Chave API</span>
+                        <input
+                          value={authConfig.apiKey}
+                          onChange={(event) =>
+                            setAuthConfig((current) => ({
+                              ...current,
+                              apiKey: event.target.value,
+                            }))
+                          }
+                          placeholder="[OCULTO]"
+                          type="password"
+                        />
+                      </label>
+
+                      <label>
+                        <span>Nome do cabeçalho</span>
+                        <input
+                          value={authConfig.headerName}
+                          onChange={(event) =>
+                            setAuthConfig((current) => ({
+                              ...current,
+                              headerName: event.target.value,
+                            }))
+                          }
+                          placeholder="Authorization"
+                        />
+                      </label>
+
+                      <label>
+                        <span>Formato</span>
+                        <select
+                          value={authConfig.scheme}
+                          onChange={(event) =>
+                            setAuthConfig((current) => ({
+                              ...current,
+                              scheme: event.target.value as AuthConfigForm["scheme"],
+                            }))
+                          }
+                        >
+                          <option value="bearer">Bearer</option>
+                          <option value="basic">Basic</option>
+                          <option value="custom">Personalizado</option>
+                        </select>
+                      </label>
+                    </div>
+                  ) : null}
+
+                  {authMode === "oauth" ? (
+                    <div className="mdc-chat-agent-actions-page__create">
+                      <div className="mdc-chat-agent-actions-page__grid">
+                        <label>
+                          <span>ID do cliente</span>
+                          <input
+                            value={authConfig.clientId}
+                            onChange={(event) =>
+                              setAuthConfig((current) => ({
+                                ...current,
+                                clientId: event.target.value,
+                              }))
+                            }
+                          />
+                        </label>
+
+                        <label>
+                          <span>Segredo do cliente</span>
+                          <input
+                            value={authConfig.clientSecret}
+                            onChange={(event) =>
+                              setAuthConfig((current) => ({
+                                ...current,
+                                clientSecret: event.target.value,
+                              }))
+                            }
+                            type="password"
+                          />
+                        </label>
+                      </div>
+
+                      <label>
+                        <span>URL de autorização</span>
+                        <input
+                          value={authConfig.authorizationUrl}
+                          onChange={(event) =>
+                            setAuthConfig((current) => ({
+                              ...current,
+                              authorizationUrl: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+
+                      <label>
+                        <span>Token URL</span>
+                        <input
+                          value={authConfig.tokenUrl}
+                          onChange={(event) =>
+                            setAuthConfig((current) => ({
+                              ...current,
+                              tokenUrl: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+
+                      <label>
+                        <span>Escopo</span>
+                        <input
+                          value={authConfig.scope}
+                          onChange={(event) =>
+                            setAuthConfig((current) => ({
+                              ...current,
+                              scope: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                    </div>
+                  ) : null}
                 </div>
               </section>
 
@@ -501,44 +855,43 @@ export function ChatAgentActionsPage({
                   <Zap size={18} aria-hidden="true" />
                   <div>
                     <h2>Schema</h2>
-                    <p>Origem OpenAPI usada para importar e atualizar rotas.</p>
+                    <p>
+                      Schema OpenAPI salvo. Use Atualizar rotas para reimportar da URL.
+                    </p>
                   </div>
                 </div>
 
                 <div className="mdc-chat-agent-actions-page__create">
-                  <div className="mdc-chat-agent-actions-page__grid">
-                    <label>
-                      <span>URL base</span>
-                      <input value={selectedProvider?.baseUrl ?? ""} readOnly />
-                    </label>
-
-                    <label>
-                      <span>URL OpenAPI</span>
-                      <input value={selectedProvider?.openApiUrl ?? ""} readOnly />
-                    </label>
-                  </div>
-
                   <label>
                     <span>Schema OpenAPI JSON</span>
                     <textarea
-                      value={
-                        selectedProvider?.openApiUrl
-                          ? `// Schema importado de ${selectedProvider.openApiUrl}\n// Use "Atualizar rotas" para reimportar o OpenAPI desta action.`
-                          : "// Schema cadastrado nesta action.\n// Use \"Atualizar rotas\" para reprocessar as rotas disponíveis."
-                      }
+                      value={providerSchemaText}
+                      onChange={(event) => setProviderSchemaText(event.target.value)}
+                      placeholder="Nenhum schema importado ainda."
+                      rows={14}
                       readOnly
-                      rows={10}
                     />
                   </label>
 
-                  <button
-                    type="button"
-                    onClick={() => void updateRoutes()}
-                    disabled={!selectedProviderKey || isUpdatingRoutes}
-                  >
-                    <RefreshCw size={16} aria-hidden="true" />
-                    <span>{isUpdatingRoutes ? "Atualizando..." : "Atualizar rotas"}</span>
-                  </button>
+                  <div className="mdc-chat-agent-actions-page__inline-actions">
+                    <button
+                      type="button"
+                      onClick={() => void saveProviderConfig()}
+                      disabled={isSavingProvider}
+                    >
+                      <Save size={16} aria-hidden="true" />
+                      <span>{isSavingProvider ? "Salvando..." : "Salvar configuração"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => void updateRoutes()}
+                      disabled={!selectedProviderKey || isUpdatingRoutes}
+                    >
+                      <RefreshCw size={16} aria-hidden="true" />
+                      <span>{isUpdatingRoutes ? "Atualizando..." : "Atualizar rotas"}</span>
+                    </button>
+                  </div>
                 </div>
               </section>
 
@@ -648,21 +1001,6 @@ export function ChatAgentActionsPage({
                     <p>Use “Atualizar rotas” para importar as rotas desta action.</p>
                   </div>
                 )}
-              </section>
-
-              <section className="mdc-chat-agent-actions-page__block">
-                <div className="mdc-chat-agent-actions-page__block-title">
-                  <Shield size={18} aria-hidden="true" />
-                  <div>
-                    <h2>Política de privacidade</h2>
-                    <p>URL exibida para usuários quando esta action acessar serviços externos.</p>
-                  </div>
-                </div>
-
-                <label>
-                  <span>URL da política</span>
-                  <input placeholder="https://app.example.com/privacy" />
-                </label>
               </section>
             </>
           )}
