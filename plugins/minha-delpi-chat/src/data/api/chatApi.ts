@@ -884,7 +884,7 @@ export async function testChatAgentAction(
   options: ChatApiOptions = {},
 ): Promise<ChatActionTestResult> {
   const response = await fetch(
-    `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}/actions/${actionId}/test`,
+    `${API_BASE_URL}/chat/agents/${encodeURIComponent(agentId)}/providers/${encodeURIComponent(providerKey)}/actions/${encodeURIComponent(actionId)}/test`,
     {
       method: "POST",
       headers: await getAuthHeaders(options),
@@ -892,22 +892,26 @@ export async function testChatAgentAction(
     },
   );
 
-  return parseJsonResponse<ChatActionTestResult>(response);
-}
+  const responsePayload = await response.json().catch(() => null);
 
-export async function listChatAgentActionTestLogs(
-  agentId: string,
-  providerKey: string,
-  actionId: string,
-  options: ChatApiOptions = {},
-): Promise<ChatActionTestLog[]> {
-  const response = await fetch(
-    `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}/actions/${actionId}/logs`,
-    {
-      method: "GET",
-      headers: await getAuthHeaders(options),
-    },
-  );
+  if (!response.ok) {
+    const message =
+      responsePayload?.errors?.[0]?.message ??
+      responsePayload?.message ??
+      "Não foi possível testar esta rota.";
 
-  return parseJsonResponse<ChatActionTestLog[]>(response);
+    return {
+      ok: false,
+      statusCode: response.status,
+      durationMs: 0,
+      url: "",
+      responsePreview:
+        responsePayload && typeof responsePayload === "object"
+          ? JSON.stringify(responsePayload, null, 2)
+          : null,
+      errorMessage: message,
+    };
+  }
+
+  return responsePayload as ChatActionTestResult;
 }

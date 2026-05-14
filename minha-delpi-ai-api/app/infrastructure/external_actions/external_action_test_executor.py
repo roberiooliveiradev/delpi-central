@@ -33,22 +33,38 @@ class ExternalActionTestExecutor:
         query: dict[str, Any] | None = None,
         body: Any = None,
     ) -> ExternalActionTestResult:
+        normalized_provider_key = str(provider_key or "").strip()
+        normalized_action_id = str(action_id or "").strip()
+
         provider = ExternalActionProviderModel.query.filter_by(
-            provider_key=provider_key,
-            enabled=True,
+            provider_key=normalized_provider_key,
         ).first()
 
         if not provider:
-            raise ValueError("Provider/action não encontrado ou desativado.")
+            raise ValueError(
+                f"Provider/action não encontrado: {normalized_provider_key}."
+            )
+
+        if not provider.enabled:
+            raise ValueError(
+                f"Provider/action está desativado: {normalized_provider_key}."
+            )
 
         action = (
             ExternalActionModel.query
-            .filter_by(provider_id=provider.id, action_id=action_id, enabled=True)
+            .filter_by(provider_id=provider.id, action_id=normalized_action_id)
             .first()
         )
 
         if not action:
-            raise ValueError("Rota/action não encontrada ou desativada.")
+            raise ValueError(
+                f"Rota/action não encontrada neste provider: {normalized_action_id}."
+            )
+
+        if not action.enabled:
+            raise ValueError(
+                f"Rota/action está desativada: {normalized_action_id}."
+            )
 
         url = self._build_url(provider.base_url, action.path, path_params or {}, query or {})
         method = action.method.upper()
