@@ -303,3 +303,34 @@
 .mdc-admin-pagination button {
   border-color: color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
 }
+
+.mdc-admin-segmented {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-card-bg) 92%, transparent);
+  padding: 0.25rem;
+}
+
+.mdc-admin-segmented button {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.45rem 0.8rem;
+}
+
+.mdc-admin-segmented button.is-active {
+  background: var(--mdc-primary);
+  color: var(--mdc-bg);
+}
+
+.mdc-admin-form input[type="file"] {
+  border: 1px dashed color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 6%, var(--mdc-card-bg));
+  cursor: pointer;
+}

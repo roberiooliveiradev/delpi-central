@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useChatAdmin } from "../../state/hooks/useChatAdmin";
 
@@ -28,6 +28,8 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
     goToNextDocumentsPage,
     goToPreviousDocumentsPage,
     createDocument,
+    uploadDocumentFile,
+    deleteDocument,
     deactivateDocument,
     reactivateDocument,
     reindexDocument,
@@ -37,25 +39,47 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
   const [sourceType, setSourceType] = useState("manual");
   const [sourceRef, setSourceRef] = useState("");
   const [content, setContent] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [ingestMode, setIngestMode] = useState<"text" | "file">("file");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const canSubmitDocument =
-    title.trim().length > 0 && sourceType.trim().length > 0 && content.trim().length > 0;
+    title.trim().length > 0 &&
+    sourceType.trim().length > 0 &&
+    (ingestMode === "text" ? content.trim().length > 0 : Boolean(selectedFile));
 
   async function handleCreateDocument() {
     if (!canSubmitDocument || isMutating) {
       return;
     }
 
-    await createDocument({
-      title: title.trim(),
-      sourceType: sourceType.trim(),
-      sourceRef: sourceRef.trim() || undefined,
-      content: content.trim(),
-    });
+    if (ingestMode === "file") {
+      if (!selectedFile) {
+        return;
+      }
+
+      await uploadDocumentFile({
+        file: selectedFile,
+        title: title.trim() || selectedFile.name,
+        sourceType: sourceType.trim() || "admin_upload",
+        sourceRef: sourceRef.trim() || undefined,
+      });
+    } else {
+      await createDocument({
+        title: title.trim(),
+        sourceType: sourceType.trim(),
+        sourceRef: sourceRef.trim() || undefined,
+        content: content.trim(),
+      });
+    }
 
     setTitle("");
     setSourceRef("");
     setContent("");
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   return (
@@ -170,6 +194,22 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
                 void handleCreateDocument();
               }}
             >
+              <div className="mdc-admin-segmented" role="tablist" aria-label="Modo de ingestão">
+                <button
+                  type="button"
+                  className={ingestMode === "file" ? "is-active" : undefined}
+                  onClick={() => setIngestMode("file")}
+                >
+                  Arquivo
+                </button>
+                <button
+                  type="button"
+                  className={ingestMode === "text" ? "is-active" : undefined}
+                  onClick={() => setIngestMode("text")}
+                >
+                  Texto
+                </button>
+              </div>
               <label>
                 <span>Título</span>
                 <input
@@ -200,16 +240,43 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
                 />
               </label>
 
-              <label>
-                <span>Conteúdo</span>
-                <textarea
-                  value={content}
-                  disabled={isMutating}
-                  rows={8}
-                  placeholder="Cole aqui o conteúdo que será indexado no RAG."
-                  onChange={(event) => setContent(event.target.value)}
-                />
-              </label>
+              {ingestMode === "file" ? (
+                <label>
+                  <span>Arquivo</span>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    disabled={isMutating}
+                    accept=".pdf,.txt,.md,.doc,.docx,.xls,.xlsx,.csv,.json"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      setSelectedFile(file);
+
+                      if (file && !title.trim()) {
+                        setTitle(file.name);
+                      }
+                    }}
+                  />
+                  {selectedFile ? (
+                    <small>
+                      Selecionado: {selectedFile.name} ({selectedFile.size} bytes)
+                    </small>
+                  ) : (
+                    <small>Formatos: txt, md, csv, json, docx, xlsx e pdf.</small>
+                  )}
+                </label>
+              ) : (
+                <label>
+                  <span>Conteúdo</span>
+                  <textarea
+                    value={content}
+                    disabled={isMutating}
+                    rows={8}
+                    placeholder="Cole aqui o conteúdo que será indexado no RAG."
+                    onChange={(event) => setContent(event.target.value)}
+                  />
+                </label>
+              )}
 
               <button type="submit" disabled={!canSubmitDocument || isMutating}>
                 {isMutating ? "Processando..." : "Ingerir documento"}
@@ -290,6 +357,18 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
                               onClick={() => reindexDocument(document.id)}
                             >
                               Reindexar
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={isMutating}
+                              onClick={() => {
+                                if (window.confirm(`Excluir definitivamente "${document.title}" da base de conhecimento?`)) {
+                                  void deleteDocument(document.id);
+                                }
+                              }}
+                            >
+                              Excluir
                             </button>
                           </div>
                         </td>

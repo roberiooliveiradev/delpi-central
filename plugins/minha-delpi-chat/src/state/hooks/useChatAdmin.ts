@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   createKnowledgeDocument,
+  deleteKnowledgeDocument,
   deactivateKnowledgeDocument,
   getAdminMetricsSummary,
   getLlmStatus,
@@ -9,7 +10,9 @@ import {
   listKnowledgeDocuments,
   reactivateKnowledgeDocument,
   reindexKnowledgeDocument,
+  uploadKnowledgeDocumentFile,
   type CreateKnowledgeDocumentPayload,
+  type UploadKnowledgeDocumentFilePayload,
 } from "../../data/api/adminApi";
 import type {
   AdminAuditLog,
@@ -136,6 +139,54 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     [loadAdminData, options.getAccessToken],
   );
 
+  const uploadDocumentFile = useCallback(
+    async (payload: UploadKnowledgeDocumentFilePayload) => {
+      setIsMutating(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        const result = await uploadKnowledgeDocumentFile(payload, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setSuccessMessage(
+          `Arquivo "${result.title}" ingerido com ${result.chunks} chunk(s).`,
+        );
+
+        setDocumentOffset(0);
+        await loadAdminData();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao ingerir arquivo.");
+      } finally {
+        setIsMutating(false);
+      }
+    },
+    [loadAdminData, options.getAccessToken],
+  );
+
+  const deleteDocument = useCallback(
+    async (documentId: string) => {
+      setIsMutating(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        const result = await deleteKnowledgeDocument(documentId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setSuccessMessage(`Documento "${result.title}" excluído da base.`);
+        await loadAdminData();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao excluir documento.");
+      } finally {
+        setIsMutating(false);
+      }
+    },
+    [loadAdminData, options.getAccessToken],
+  );
+
   const deactivateDocument = useCallback(
     async (documentId: string) => {
       setIsMutating(true);
@@ -227,6 +278,8 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     goToPreviousDocumentsPage,
     loadAdminData,
     createDocument,
+    uploadDocumentFile,
+    deleteDocument,
     deactivateDocument,
     reactivateDocument,
     reindexDocument,

@@ -28,6 +28,26 @@ export type CreateKnowledgeDocumentResponse = {
   chunks: number;
 };
 
+export type UploadKnowledgeDocumentFilePayload = {
+  file: File;
+  title?: string;
+  sourceType?: string;
+  sourceRef?: string;
+  metadata?: Record<string, unknown>;
+};
+
+async function getMultipartAuthHeaders(options: AdminApiOptions): Promise<HeadersInit> {
+  const token = await options.getAccessToken?.();
+
+  if (!token) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
+
 async function getAuthHeaders(options: AdminApiOptions): Promise<HeadersInit> {
   const token = await options.getAccessToken?.();
 
@@ -119,6 +139,51 @@ export async function createKnowledgeDocument(
   });
 
   return parseJsonResponse<CreateKnowledgeDocumentResponse>(response);
+}
+
+export async function uploadKnowledgeDocumentFile(
+  payload: UploadKnowledgeDocumentFilePayload,
+  options: AdminApiOptions = {},
+): Promise<CreateKnowledgeDocumentResponse> {
+  const formData = new FormData();
+
+  formData.set("file", payload.file);
+
+  if (payload.title?.trim()) {
+    formData.set("title", payload.title.trim());
+  }
+
+  if (payload.sourceType?.trim()) {
+    formData.set("sourceType", payload.sourceType.trim());
+  }
+
+  if (payload.sourceRef?.trim()) {
+    formData.set("sourceRef", payload.sourceRef.trim());
+  }
+
+  if (payload.metadata) {
+    formData.set("metadata", JSON.stringify(payload.metadata));
+  }
+
+  const response = await fetch(`${API_BASE_URL}/admin/knowledge/documents/upload`, {
+    method: "POST",
+    headers: await getMultipartAuthHeaders(options),
+    body: formData,
+  });
+
+  return parseJsonResponse<CreateKnowledgeDocumentResponse>(response);
+}
+
+export async function deleteKnowledgeDocument(
+  documentId: string,
+  options: AdminApiOptions = {},
+): Promise<{ id: string; title: string; deleted: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/admin/knowledge/documents/${documentId}`, {
+    method: "DELETE",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<{ id: string; title: string; deleted: boolean }>(response);
 }
 
 export async function deactivateKnowledgeDocument(

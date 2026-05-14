@@ -3,9 +3,13 @@ from app.domain.services.external_actions.external_provider_url_policy import Ex
 from app.application.use_cases.list_external_actions_use_case import ListExternalActionsUseCase
 from app.application.use_cases.list_external_action_providers_use_case import ListExternalActionProvidersUseCase
 from app.application.use_cases.import_external_actions_schema_use_case import ImportExternalActionsSchemaUseCase
+from app.application.use_cases.ingest_knowledge_document_use_case import IngestKnowledgeDocumentUseCase
 from app.application.use_cases.create_external_action_provider_use_case import CreateExternalActionProviderUseCase
 from app.application.use_cases.deactivate_knowledge_document_use_case import (
     DeactivateKnowledgeDocumentUseCase,
+)
+from app.application.use_cases.delete_knowledge_document_use_case import (
+    DeleteKnowledgeDocumentUseCase,
 )
 from app.application.use_cases.get_admin_metrics_summary_use_case import GetAdminMetricsSummaryUseCase
 from app.application.use_cases.get_admin_system_check_use_case import GetAdminSystemCheckUseCase
@@ -62,6 +66,25 @@ def make_reindex_knowledge_document_use_case() -> ReindexKnowledgeDocumentUseCas
         knowledge_repository=PostgresKnowledgeRepository(),
         embedding_gateway=LocalEmbeddingGateway(),
         chunker=TextChunkerService(chunk_size=Settings.KNOWLEDGE_CHUNK_SIZE, overlap=Settings.KNOWLEDGE_CHUNK_OVERLAP),
+        audit_repository=PostgresAuditRepository(),
+    )
+
+
+def make_ingest_admin_knowledge_document_use_case() -> IngestKnowledgeDocumentUseCase:
+    return IngestKnowledgeDocumentUseCase(
+        knowledge_repository=PostgresKnowledgeRepository(),
+        embedding_gateway=LocalEmbeddingGateway(),
+        chunker=TextChunkerService(
+            chunk_size=Settings.KNOWLEDGE_CHUNK_SIZE,
+            overlap=Settings.KNOWLEDGE_CHUNK_OVERLAP,
+        ),
+        audit_repository=PostgresAuditRepository(),
+    )
+
+
+def make_delete_knowledge_document_use_case() -> DeleteKnowledgeDocumentUseCase:
+    return DeleteKnowledgeDocumentUseCase(
+        knowledge_repository=PostgresKnowledgeRepository(),
         audit_repository=PostgresAuditRepository(),
     )
 

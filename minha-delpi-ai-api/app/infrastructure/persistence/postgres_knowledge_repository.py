@@ -213,6 +213,15 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         db.session.flush()
 
+    def delete_document(self, document_id: UUID) -> None:
+        self.delete_chunks_by_document_id(document_id)
+
+        AiKnowledgeDocumentModel.query.filter(
+            AiKnowledgeDocumentModel.id == document_id
+        ).delete(synchronize_session=False)
+
+        db.session.flush()
+
     def list_documents(self, limit: int = 100) -> list[KnowledgeDocument]:
         models = (
             AiKnowledgeDocumentModel.query
@@ -307,15 +316,6 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
                     metadata["userId"].astext == str(user_id),
                 )
             )
-
-        attachment_ids = [
-            str(item)
-            for item in (filters.get("attachment_ids") or [])
-            if item
-        ]
-
-        if attachment_ids:
-            query = query.filter(metadata["attachmentId"].astext.in_(attachment_ids))
 
         attachment_ids = [
             str(item)

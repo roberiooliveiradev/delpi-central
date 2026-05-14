@@ -78,6 +78,10 @@ class KnowledgeRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def delete_document(self, document_id: UUID) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def deactivate_document(self, document_id: UUID) -> KnowledgeDocument | None:
         raise NotImplementedError
 
