@@ -88,3 +88,46 @@
     min-width: 46rem;
   }
 }
+
+/* UX fix — compact checkboxes in action permissions and routes */
+.mdc-chat-agent-actions-page__permissions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 42%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 35%, transparent);
+  padding: 0.7rem 0.8rem;
+}
+
+.mdc-chat-agent-actions-page__permissions label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.15rem;
+  color: var(--mdc-text);
+  font-size: 0.84rem;
+  font-weight: 780;
+  line-height: 1.2;
+}
+
+.mdc-chat-agent-actions-page__permissions input[type="checkbox"],
+.mdc-action-routes-table__row input[type="checkbox"] {
+  appearance: auto;
+  flex: 0 0 auto;
+  width: 1rem !important;
+  min-width: 1rem;
+  height: 1rem !important;
+  min-height: 1rem;
+  margin: 0;
+  padding: 0;
+  border-radius: 0.2rem;
+}
+
+.mdc-action-routes-table__row label {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.48rem;
+}

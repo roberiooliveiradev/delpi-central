@@ -110,7 +110,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   } = useChatWorkspace({ getAccessToken });
 
   const canManageAgents = useMemo(
-    () => agents.some((agent) => ["owner", "editor"].includes(agent.access_role)),
+    () =>
+      agents.some((agent) =>
+        ["owner", "editor", "system"].includes(agent.access_role),
+      ),
     [agents],
   );
 
