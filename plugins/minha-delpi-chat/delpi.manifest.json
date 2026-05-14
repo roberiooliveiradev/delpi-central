@@ -45,6 +45,12 @@
       "name": "Usar ferramentas internas no Minha DELPI Chat",
       "description": "Permite que o chat consulte ferramentas internas autorizadas.",
       "module": "minha-delpi-chat"
+    },
+    {
+      "code": "minha-delpi.chat.tools.manage",
+      "name": "Gerenciar ferramentas e agentes do Minha DELPI Chat",
+      "description": "Permite criar, editar e configurar agentes, tools, actions OpenAPI e integrações do chat.",
+      "module": "minha-delpi-chat"
     }
   ],
   "routes": [

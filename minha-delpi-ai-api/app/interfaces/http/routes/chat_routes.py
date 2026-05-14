@@ -69,6 +69,9 @@ from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.interfaces.http.auth_decorators import require_permission
 from app.interfaces.http.utils.errors import bad_request
 
+CHAT_ACCESS_PERMISSION = "minha-delpi.chat.access"
+CHAT_TOOLS_MANAGE_PERMISSION = "minha-delpi.chat.tools.manage"
+
 chat_bp = Blueprint("chat", __name__, url_prefix="/chat")
 
 
@@ -77,7 +80,7 @@ def _sse(event: str, payload: dict) -> str:
 
 
 @chat_bp.get("/status")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def status():
     result = GetChatStatusUseCase().execute(g.current_user)
     return jsonify(result), 200
@@ -90,14 +93,14 @@ def status():
 
 
 @chat_bp.get("/action-providers")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_action_providers():
     repository = PostgresExternalActionRepository()
     return jsonify(repository.list_providers()), 200
 
 
 @chat_bp.get("/actions")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_actions():
     provider_key = request.args.get("providerKey") or request.args.get("provider_key")
     repository = PostgresExternalActionRepository()
@@ -107,7 +110,7 @@ def list_actions():
 
 
 @chat_bp.get("/agents")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_agents():
     use_case = make_list_chat_agents_use_case()
     result = use_case.execute(g.current_user.sub)
@@ -116,7 +119,7 @@ def list_agents():
 
 
 @chat_bp.post("/agents")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def create_agent():
     payload = request.get_json(silent=True) or {}
 
@@ -151,7 +154,7 @@ def create_agent():
 
 
 @chat_bp.patch("/agents/<agent_id>")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def update_agent(agent_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -202,7 +205,7 @@ def update_agent(agent_id: str):
 
 
 @chat_bp.delete("/agents/<agent_id>")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def delete_agent(agent_id: str):
     use_case = make_delete_chat_agent_use_case()
 
@@ -225,7 +228,7 @@ def delete_agent(agent_id: str):
 
 
 @chat_bp.post("/agents/<agent_id>/share")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def share_agent(agent_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -280,7 +283,7 @@ def _find_linked_agent_provider(agent_id: str, provider_key: str):
 
 
 @chat_bp.post("/agents/<agent_id>/providers/create")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def create_agent_action_provider(agent_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -375,7 +378,7 @@ def create_agent_action_provider(agent_id: str):
 
 
 @chat_bp.get("/agents/<agent_id>/providers/<provider_key>")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def get_agent_action_provider(agent_id: str, provider_key: str):
     linked = _find_linked_agent_provider(agent_id, provider_key)
 
@@ -392,7 +395,7 @@ def get_agent_action_provider(agent_id: str, provider_key: str):
 
 
 @chat_bp.patch("/agents/<agent_id>/providers/<provider_key>")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def update_agent_action_provider(agent_id: str, provider_key: str):
     payload = request.get_json(silent=True) or {}
 
@@ -439,7 +442,7 @@ def update_agent_action_provider(agent_id: str, provider_key: str):
 
 
 @chat_bp.post("/agents/<agent_id>/providers/<provider_key>/import")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def import_agent_action_provider_schema(agent_id: str, provider_key: str):
     agent_repository = make_list_chat_agent_action_providers_use_case()
     providers = agent_repository.execute(
@@ -475,7 +478,7 @@ def import_agent_action_provider_schema(agent_id: str, provider_key: str):
 
 
 @chat_bp.post("/agents/<agent_id>/providers/<provider_key>/actions/<action_id>/test")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def test_agent_action(agent_id: str, provider_key: str, action_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -522,7 +525,7 @@ def test_agent_action(agent_id: str, provider_key: str, action_id: str):
 
 
 @chat_bp.get("/agents/<agent_id>/providers/<provider_key>/actions/<action_id>/logs")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_agent_action_test_logs(agent_id: str, provider_key: str, action_id: str):
     linked = _find_linked_agent_provider(agent_id, provider_key)
 
@@ -542,7 +545,7 @@ def list_agent_action_test_logs(agent_id: str, provider_key: str, action_id: str
 
 
 @chat_bp.get("/agents/<agent_id>/providers")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_agent_action_providers(agent_id: str):
     use_case = make_list_chat_agent_action_providers_use_case()
     result = use_case.execute(
@@ -554,7 +557,7 @@ def list_agent_action_providers(agent_id: str):
 
 
 @chat_bp.put("/agents/<agent_id>/providers")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def upsert_agent_action_provider(agent_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -590,7 +593,7 @@ def upsert_agent_action_provider(agent_id: str):
 
 
 @chat_bp.get("/agents/<agent_id>/actions")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_agent_actions(agent_id: str):
     use_case = make_list_chat_agent_actions_use_case()
     result = use_case.execute(
@@ -602,7 +605,7 @@ def list_agent_actions(agent_id: str):
 
 
 @chat_bp.put("/agents/<agent_id>/actions")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def upsert_agent_action(agent_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -666,7 +669,7 @@ def _create_source_from_request(use_case, *, user_id: str, owner_id_name: str, o
 
 
 @chat_bp.get("/projects/<project_id>/sources")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_project_sources(project_id: str):
     use_case = make_list_project_sources_use_case()
 
@@ -706,7 +709,7 @@ def create_project_source(project_id: str):
 
 
 @chat_bp.get("/agents/<agent_id>/sources")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_agent_sources(agent_id: str):
     use_case = make_list_agent_sources_use_case()
 
@@ -769,7 +772,7 @@ def delete_chat_source(source_id: str):
 
 
 @chat_bp.get("/projects")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_projects():
     use_case = make_list_chat_projects_use_case()
     result = use_case.execute(
@@ -781,7 +784,7 @@ def list_projects():
 
 
 @chat_bp.post("/projects")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def create_project():
     payload = request.get_json(silent=True) or {}
 
@@ -812,7 +815,7 @@ def create_project():
 
 
 @chat_bp.patch("/projects/<project_id>")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def update_project(project_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -849,7 +852,7 @@ def update_project(project_id: str):
 
 
 @chat_bp.delete("/projects/<project_id>")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def delete_project(project_id: str):
     use_case = make_delete_chat_project_use_case()
 
@@ -873,7 +876,7 @@ def delete_project(project_id: str):
 
 
 @chat_bp.post("/projects/<project_id>/share")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def share_project(project_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -968,7 +971,7 @@ def upload_attachment_with_session():
 
 
 @chat_bp.get("/sessions/<session_id>/attachments")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_attachments(session_id: str):
     use_case = make_list_chat_attachments_use_case()
     result = use_case.execute(
@@ -1041,7 +1044,7 @@ def delete_attachment(attachment_id: str):
 
 
 @chat_bp.get("/sessions/<session_id>/artifacts")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_artifacts(session_id: str):
     use_case = make_list_chat_artifacts_use_case()
     result = use_case.execute(
@@ -1053,7 +1056,7 @@ def list_artifacts(session_id: str):
 
 
 @chat_bp.post("/sessions/<session_id>/artifacts")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def create_artifact(session_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -1084,7 +1087,7 @@ def create_artifact(session_id: str):
 
 
 @chat_bp.patch("/artifacts/<artifact_id>")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def update_artifact(artifact_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -1117,7 +1120,7 @@ def update_artifact(artifact_id: str):
 
 
 @chat_bp.delete("/artifacts/<artifact_id>")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def delete_artifact(artifact_id: str):
     use_case = make_delete_chat_artifact_use_case()
 
@@ -1140,7 +1143,7 @@ def delete_artifact(artifact_id: str):
 
 
 @chat_bp.post("/sessions")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def create_session():
     payload = request.get_json(silent=True) or {}
 
@@ -1172,7 +1175,7 @@ def create_session():
 
 
 @chat_bp.get("/sessions")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def list_sessions():
     archived = request.args.get("archived", "false").lower() == "true"
 
@@ -1236,7 +1239,7 @@ def rename_session(session_id: str):
 
 
 @chat_bp.delete("/sessions/<session_id>")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def delete_session(session_id: str):
     use_case = make_delete_chat_session_use_case()
 
@@ -1453,7 +1456,7 @@ def update_message(message_id: str):
 
 
 @chat_bp.get("/sessions/<session_id>/messages")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def get_history(session_id: str):
     use_case = make_get_chat_history_use_case()
     result = use_case.execute(

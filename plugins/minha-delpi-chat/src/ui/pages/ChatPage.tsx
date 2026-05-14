@@ -48,6 +48,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     key: string;
     requestKey: number;
   } | null>(null);
+  const [canManageAgents, setCanManageAgents] = useState(false);
+
   const [contextAgentKey, setContextAgentKey] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
   const [projectSettingsRequestKey, setProjectSettingsRequestKey] = useState(0);
@@ -108,14 +110,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     editProject,
     removeProject,
   } = useChatWorkspace({ getAccessToken });
-
-  const canManageAgents = useMemo(
-    () =>
-      agents.some((agent) =>
-        ["owner", "editor", "system"].includes(agent.access_role),
-      ),
-    [agents],
-  );
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
