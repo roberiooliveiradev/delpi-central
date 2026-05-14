@@ -562,3 +562,66 @@
   line-height: 1.45;
   padding: 0.75rem;
 }
+
+/* UX fix — action editor controls */
+.mdc-chat-agent-actions-page__editor {
+  scrollbar-gutter: stable;
+}
+
+.mdc-chat-agent-actions-page__block {
+  max-width: 48rem;
+}
+
+.mdc-chat-agent-actions-page__create {
+  max-width: 46rem;
+}
+
+.mdc-chat-agent-actions-page__grid {
+  align-items: start;
+}
+
+.mdc-chat-agent-actions-page label {
+  gap: 0.32rem;
+}
+
+.mdc-chat-agent-actions-page label > span,
+.mdc-chat-agent-actions-page__auth-card > span {
+  color: color-mix(in srgb, var(--mdc-primary) 82%, var(--mdc-title));
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.mdc-chat-agent-actions-page input,
+.mdc-chat-agent-actions-page select,
+.mdc-chat-agent-actions-page textarea {
+  min-height: 2.7rem;
+}
+
+.mdc-chat-agent-actions-page__auth-card > div:first-of-type {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  align-items: center;
+}
+
+.mdc-chat-agent-actions-page__auth-card > div:first-of-type label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  min-height: 2rem;
+}
+
+.mdc-chat-agent-actions-page__auth-card input[type="radio"] {
+  width: 1rem;
+  height: 1rem;
+  min-height: auto;
+  margin: 0;
+}
+
+.mdc-chat-agent-actions-page__inline-actions {
+  align-items: center;
+}
+
+.mdc-chat-agent-actions-page__inline-actions button {
+  min-height: 2.35rem;
+}

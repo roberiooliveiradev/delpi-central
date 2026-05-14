@@ -44,6 +44,10 @@ type ChatPageProps = {
 export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [activeAgentPageKey, setActiveAgentPageKey] = useState<string | null>(null);
+  const [agentEditRequest, setAgentEditRequest] = useState<{
+    key: string;
+    requestKey: number;
+  } | null>(null);
   const [contextAgentKey, setContextAgentKey] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
   const [projectSettingsRequestKey, setProjectSettingsRequestKey] = useState(0);
@@ -418,9 +422,12 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             <ChatAgentsPage
               agents={agents}
               selectedAgentKey={activeAgentPageKey}
+              editAgentKey={agentEditRequest?.key ?? null}
+              editRequestKey={agentEditRequest?.requestKey ?? 0}
               isLoading={isLoadingAgents}
               onBack={() => {
                 clearWorkspaceError();
+                setAgentEditRequest(null);
                 setCurrentView("chat");
               }}
               onSelectAgent={(agentKey) => {
@@ -627,7 +634,17 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                       agent={activeAgentPage}
                       onUseSuggestion={setDraft}
                       onUseAgent={() => void handleStartSession()}
-                      onManageAgent={() => setCurrentView("agents")}
+                      onManageAgent={() => {
+                        if (!activeAgentPage?.key) {
+                          return;
+                        }
+
+                        setAgentEditRequest({
+                          key: activeAgentPage.key,
+                          requestKey: Date.now(),
+                        });
+                        setCurrentView("agents");
+                      }}
                     />
                   ) : (
                     <ChatEmptyState

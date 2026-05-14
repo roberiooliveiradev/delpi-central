@@ -26,7 +26,7 @@ function getAgentIcebreakers(agent: ChatAgent): string[] {
 }
 
 function canManageAgent(agent: ChatAgent): boolean {
-  return ["owner", "editor", "system"].includes(agent.access_role);
+  return ["owner", "editor"].includes(agent.access_role);
 }
 
 export function ChatAgentHome({

@@ -596,15 +596,17 @@ export function ChatAgentActionsPage({
           <small>{agent.name}</small>
         </div>
 
-        <button
-          type="button"
-          className="mdc-chat-agent-actions-page__primary"
-          disabled={!selectedProviderKey || isUpdatingRoutes}
-          onClick={() => void updateRoutes()}
-        >
-          <RefreshCw size={16} aria-hidden="true" />
-          <span>{isUpdatingRoutes ? "Atualizando..." : "Atualizar rotas"}</span>
-        </button>
+        {selectedProviderKey ? (
+          <button
+            type="button"
+            className="mdc-chat-agent-actions-page__primary"
+            disabled={isSavingProvider}
+            onClick={() => void saveProviderConfig()}
+          >
+            <Save size={16} aria-hidden="true" />
+            <span>{isSavingProvider ? "Salvando..." : "Salvar configuração"}</span>
+          </button>
+        ) : null}
       </header>
 
       <div className="mdc-chat-agent-actions-page__layout">

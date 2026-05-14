@@ -9,7 +9,7 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
 import { ChatAgentActionsPage } from "./ChatAgentActionsPage";
@@ -36,6 +36,8 @@ type AgentUpdatePayload = Partial<AgentPayload> & {
 type ChatAgentsPageProps = {
   agents: ChatAgent[];
   selectedAgentKey?: string | null;
+  editAgentKey?: string | null;
+  editRequestKey?: number;
   isLoading?: boolean;
   onBack: () => void;
   onSelectAgent?: (agentKey: string | null) => void;
@@ -49,7 +51,7 @@ type ChatAgentsPageProps = {
 };
 
 function canEditAgent(agent: ChatAgent): boolean {
-  return ["owner", "editor", "system"].includes(agent.access_role);
+  return ["owner", "editor"].includes(agent.access_role);
 }
 
 function canDeleteAgent(agent: ChatAgent): boolean {
@@ -93,6 +95,8 @@ function getOwnerLabel(agent: ChatAgent): string {
 export function ChatAgentsPage({
   agents,
   selectedAgentKey,
+  editAgentKey,
+  editRequestKey,
   isLoading,
   onBack,
   onSelectAgent,
@@ -129,6 +133,18 @@ export function ChatAgentsPage({
         .includes(normalized);
     });
   }, [agents, searchTerm]);
+
+  useEffect(() => {
+    if (!editAgentKey) {
+      return;
+    }
+
+    const targetAgent = agents.find((agent) => agent.key === editAgentKey);
+
+    if (targetAgent && canEditAgent(targetAgent)) {
+      setEditingAgent(targetAgent);
+    }
+  }, [agents, editAgentKey, editRequestKey]);
 
   if (actionEditor) {
     return (
