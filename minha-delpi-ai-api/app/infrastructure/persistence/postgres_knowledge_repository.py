@@ -260,41 +260,51 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         if not filters:
             return query
 
+        metadata = AiKnowledgeDocumentModel.document_metadata
         allowed_clauses = []
 
         if filters.get("include_global", True):
             allowed_clauses.append(
                 db.or_(
-                    AiKnowledgeDocumentModel.document_metadata.is_(None),
-                    AiKnowledgeDocumentModel.document_metadata["scope"].astext.is_(None),
-                    AiKnowledgeDocumentModel.document_metadata["scope"].astext == "global",
+                    metadata.is_(None),
+                    metadata["scope"].astext.is_(None),
+                    metadata["scope"].astext == "global",
                 )
             )
 
         session_id = filters.get("session_id")
         if session_id:
             allowed_clauses.append(
-                AiKnowledgeDocumentModel.document_metadata["sessionId"].astext == str(session_id)
+                db.and_(
+                    metadata["scope"].astext == "session_source",
+                    metadata["sessionId"].astext == str(session_id),
+                )
             )
 
         project_id = filters.get("project_id")
         if project_id:
             allowed_clauses.append(
-                AiKnowledgeDocumentModel.document_metadata["projectId"].astext == str(project_id)
+                db.and_(
+                    metadata["scope"].astext == "project_source",
+                    metadata["projectId"].astext == str(project_id),
+                )
             )
 
         agent_key = filters.get("agent_key")
         if agent_key:
             allowed_clauses.append(
-                AiKnowledgeDocumentModel.document_metadata["agentKey"].astext == str(agent_key)
+                db.and_(
+                    metadata["scope"].astext == "agent_source",
+                    metadata["agentKey"].astext == str(agent_key),
+                )
             )
 
         user_id = filters.get("user_id")
         if user_id:
             query = query.filter(
                 db.or_(
-                    AiKnowledgeDocumentModel.document_metadata["userId"].astext.is_(None),
-                    AiKnowledgeDocumentModel.document_metadata["userId"].astext == str(user_id),
+                    metadata["userId"].astext.is_(None),
+                    metadata["userId"].astext == str(user_id),
                 )
             )
 
