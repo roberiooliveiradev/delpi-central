@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
@@ -21,6 +21,7 @@ import {
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
+import { userCanManageChatTools } from "../../security/permissions";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
 
@@ -151,6 +152,29 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     }
 
     void loadUserDisplayName();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [getAccessToken]);
+
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadToolManagementPermission() {
+      const allowed = await userCanManageChatTools(async () => {
+        const token = await getAccessToken?.();
+
+        return token ?? null;
+      });
+
+      if (isMounted) {
+        setCanManageAgents(allowed);
+      }
+    }
+
+    void loadToolManagementPermission();
 
     return () => {
       isMounted = false;
