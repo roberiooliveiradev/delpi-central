@@ -864,3 +864,67 @@
   font-size: 0.88rem;
   font-weight: 750;
 }
+
+/* UX fix — keep resource checkboxes inline with labels */
+.mdc-chat-agent-builder__toggles {
+  display: grid;
+  gap: 0.55rem;
+  max-width: 36rem;
+}
+
+.mdc-chat-agent-builder__toggles label {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 2.65rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 42%, transparent);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 35%, transparent);
+  padding: 0.62rem 0.78rem;
+}
+
+.mdc-chat-agent-builder__toggles label input[type="checkbox"] {
+  appearance: auto;
+  flex: 0 0 auto;
+  width: 1rem !important;
+  min-width: 1rem;
+  height: 1rem !important;
+  min-height: 1rem;
+  margin: 0;
+  padding: 0;
+  border-radius: 0.2rem;
+}
+
+.mdc-chat-agent-builder__toggles label span {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  color: var(--mdc-text);
+  font-size: 0.88rem;
+  font-weight: 760;
+  line-height: 1.25;
+}
+
+/* UX fix — icon-only buttons alignment in builder */
+.mdc-chat-agent-builder__icebreakers > div > button,
+.mdc-chat-agent-builder__actions-summary article > button,
+.mdc-chat-agent-builder__preview-input button,
+.mdc-chat-agent-builder__source-list article > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.mdc-chat-agent-builder__icebreakers > div > button svg,
+.mdc-chat-agent-builder__actions-summary article > button svg,
+.mdc-chat-agent-builder__preview-input button svg,
+.mdc-chat-agent-builder__source-list article > button svg {
+  display: block;
+  flex: 0 0 auto;
+  margin: 0;
+}
