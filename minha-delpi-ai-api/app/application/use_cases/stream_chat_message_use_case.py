@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from uuid import UUID
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
+from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
@@ -39,6 +40,7 @@ class StreamChatMessageUseCase:
         self.llm_gateway = llm_gateway
         self.prompt_policy_service = prompt_policy_service
         self.prompt_builder_service = ChatPromptBuilderService(prompt_policy_service)
+        self.knowledge_scope_service = ChatKnowledgeScopeService()
         self.rag_context_service = rag_context_service
         self.chat_tool_context_service = chat_tool_context_service
         self.agent_repository = agent_repository
@@ -75,7 +77,7 @@ class StreamChatMessageUseCase:
 
         rag = self.rag_context_service.build_context(
             message,
-            filters=self._build_rag_filters(
+            filters=self.knowledge_scope_service.build_filters(
                 user_id=user_id,
                 session=session,
                 workspace_context=workspace_context,
@@ -197,15 +199,6 @@ class StreamChatMessageUseCase:
             "toolCalls": tool_calls,
         }
 
-
-    def _build_rag_filters(self, user_id: UUID, session, workspace_context: dict) -> dict:
-        return {
-            "user_id": str(user_id),
-            "session_id": str(session.id),
-            "project_id": str(session.project_id) if session.project_id else None,
-            "agent_key": workspace_context.get("agentKey"),
-            "include_global": True,
-        }
 
     def _build_workspace_context(self, session, user_id: UUID) -> dict:
         if self.workspace_context_service:
