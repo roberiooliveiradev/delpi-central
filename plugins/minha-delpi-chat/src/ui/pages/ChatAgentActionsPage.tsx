@@ -1,9 +1,7 @@
 import {
   ArrowLeft,
-  DatabaseZap,
   Plus,
   RefreshCw,
-  Route,
   Save,
   Settings2,
   Shield,
@@ -34,7 +32,7 @@ import type {
   ChatAgentAction,
   ChatAgentActionProvider,
 } from "../../data/api/chatTypes";
-import { ActionTestPanel } from "./agent-actions/ActionTestPanel";
+import { ActionRoutesSection } from "./agent-actions/ActionRoutesSection";
 import type { ActionTestPayload } from "./agent-actions/types";
 
 import "./ChatAgentActionsPage.css";
@@ -963,136 +961,30 @@ export function ChatAgentActionsPage({
                 </div>
               </section>
 
-              <section className="mdc-chat-agent-actions-page__block">
-                <div className="mdc-chat-agent-actions-page__block-title">
-                  <Route size={18} aria-hidden="true" />
-                  <div>
-                    <h2>Ações disponíveis</h2>
-                    <p>
-                      {selectedProvider
-                        ? `${selectedProvider.name} · ${providerActions.length} rota(s)`
-                        : "Action não encontrada"}
-                    </p>
-                  </div>
-                </div>
-
-                {selectedLink ? (
-                  <div className="mdc-chat-agent-actions-page__permissions">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={selectedLink.allowRead}
-                        onChange={(event) =>
-                          void updateProviderPermissions({
-                            allowRead: event.target.checked,
-                          })
-                        }
-                      />
-                      Leitura
-                    </label>
-
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={selectedLink.allowWrite}
-                        onChange={(event) =>
-                          void updateProviderPermissions({
-                            allowWrite: event.target.checked,
-                          })
-                        }
-                      />
-                      Escrita
-                    </label>
-
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={selectedLink.allowAdmin}
-                        onChange={(event) =>
-                          void updateProviderPermissions({
-                            allowAdmin: event.target.checked,
-                          })
-                        }
-                      />
-                      Admin
-                    </label>
-
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={selectedLink.requiresConfirmationForWrite}
-                        onChange={(event) =>
-                          void updateProviderPermissions({
-                            requiresConfirmationForWrite: event.target.checked,
-                          })
-                        }
-                      />
-                      Confirmar escrita
-                    </label>
-                  </div>
-                ) : null}
-
-                {testAction ? (
-                  <ActionTestPanel
-                    action={testAction}
-                    isRunning={testingActionId === testAction.actionId}
-                    result={testResult}
-                    logs={testLogs}
-                    onRun={runActionTest}
-                    onClose={() => {
-                      setTestAction(null);
-                      setTestResult(null);
-                      setTestLogs([]);
-                    }}
-                  />
-                ) : null}
-
-                {isLoadingRoutes ? (
-                  <p className="mdc-chat-muted">Carregando rotas...</p>
-                ) : providerActions.length > 0 ? (
-                  <div className="mdc-chat-agent-actions-page__route-table">
-                    <div>
-                      <span>Nome</span>
-                      <span>Método</span>
-                      <span>Caminho</span>
-                      <span>Status</span>
-                      <span>Teste</span>
-                    </div>
-
-                    {providerActions.map((action) => (
-                      <article key={action.actionId}>
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={isActionEnabled(action)}
-                            onChange={(event) =>
-                              void toggleAction(action, event.target.checked)
-                            }
-                          />
-                          <span>{action.operationId || action.actionId}</span>
-                        </label>
-
-                        <span>{action.method ?? "-"}</span>
-                        <span>{action.path ?? "-"}</span>
-                        <small>{action.sensitivity || "read"}</small>
-
-                        <button
-                          type="button"
-                          onClick={() => void openTestPanel(action)}
-                          disabled={testingActionId === action.actionId}
-                        >
-                          {testingActionId === action.actionId ? "Testando..." : "Testar"}
-                        </button>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mdc-chat-agent-actions-page__empty">
-                    <DatabaseZap size={24} aria-hidden="true" />
-                    <strong>Nenhuma rota importada</strong>
-                    <p>Use “Atualizar rotas” para importar as rotas desta action.</p>
-                  </div>
-                )}
+              <ActionRoutesSection
+                selectedProvider={selectedProvider}
+                selectedLink={selectedLink}
+                providerActions={providerActions}
+                isLoadingRoutes={isLoadingRoutes}
+                testingActionId={testingActionId}
+                testAction={testAction}
+                testResult={testResult}
+                testLogs={testLogs}
+                isActionEnabled={isActionEnabled}
+                onToggleAction={(action, enabled) =>
+                  void toggleAction(action, enabled)
+                }
+                onOpenTestPanel={(action) => void openTestPanel(action)}
+                onRunActionTest={runActionTest}
+                onCloseTestPanel={() => {
+                  setTestAction(null);
+                  setTestResult(null);
+                  setTestLogs([]);
+                }}
+                onUpdateProviderPermissions={(patch) =>
+                  void updateProviderPermissions(patch)
+                }
+              />
               </section>
             </>
           )}

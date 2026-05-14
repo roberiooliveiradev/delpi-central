@@ -1,0 +1,90 @@
+.mdc-action-routes-table {
+  display: grid;
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 45%, transparent);
+}
+
+.mdc-action-routes-table__header,
+.mdc-action-routes-table__row {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1.35fr) 4.5rem minmax(12rem, 1fr) 5rem 5.5rem;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.2rem;
+}
+
+.mdc-action-routes-table__header {
+  color: color-mix(in srgb, var(--mdc-text-muted) 92%, var(--mdc-text));
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.mdc-action-routes-table__group {
+  display: grid;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 38%, transparent);
+}
+
+.mdc-action-routes-table__row label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mdc-action-routes-table__row span,
+.mdc-action-routes-table__row small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-action-routes-table__row label span {
+  color: color-mix(in srgb, var(--mdc-text) 90%, var(--mdc-primary));
+  font-size: 0.84rem;
+}
+
+.mdc-action-routes-table__row > span,
+.mdc-action-routes-table__row small {
+  color: color-mix(in srgb, var(--mdc-text-muted) 86%, var(--mdc-text));
+  font-size: 0.8rem;
+}
+
+.mdc-action-routes-table__row:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 5%, transparent);
+}
+
+.mdc-action-routes-table__row > button {
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.35rem 0.62rem;
+}
+
+.mdc-action-routes-table__row > button:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-action-routes-table__row > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.mdc-action-routes-table__group > .mdc-action-test-panel {
+  margin: 0.25rem 0 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .mdc-action-routes-table {
+    overflow-x: auto;
+  }
+
+  .mdc-action-routes-table__header,
+  .mdc-action-routes-table__row {
+    min-width: 46rem;
+  }
+}

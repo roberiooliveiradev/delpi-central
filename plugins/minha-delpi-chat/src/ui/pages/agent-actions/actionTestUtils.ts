@@ -30,7 +30,6 @@ function getSchemaType(schema: unknown): string | null {
   }
 
   const type = (schema as Record<string, unknown>).type;
-
   return typeof type === "string" ? type : null;
 }
 
@@ -52,20 +51,6 @@ function getParameters(action: ChatActionCatalogItem): OpenApiParameter[] {
   return (action.parametersSchema ?? [])
     .map(asParameter)
     .filter((parameter): parameter is OpenApiParameter => Boolean(parameter));
-}
-
-export function getPathParameterNames(action: ChatActionCatalogItem): string[] {
-  const fromSchema = getParameters(action)
-    .filter((parameter) => parameter.in === "path")
-    .map((parameter) => String(parameter.name ?? ""))
-    .filter(Boolean);
-
-  const path = action.path ?? "";
-  const fromPath = Array.from(path.matchAll(/\{([^}]+)\}/g))
-    .map((match) => match[1])
-    .filter(Boolean);
-
-  return Array.from(new Set([...fromSchema, ...fromPath]));
 }
 
 export function isBodyMethod(method: string | null | undefined): boolean {
@@ -92,9 +77,18 @@ export function parseBodyJson(value: string): unknown {
 
 export function createInitialPathFields(action: ChatActionCatalogItem): TestField[] {
   const parameters = getParameters(action);
-  const pathParameters = getPathParameterNames(action);
+  const fromSchema = parameters
+    .filter((parameter) => parameter.in === "path")
+    .map((parameter) => String(parameter.name ?? ""))
+    .filter(Boolean);
 
-  return pathParameters.map((key) => {
+  const fromPath = Array.from((action.path ?? "").matchAll(/\{([^}]+)\}/g))
+    .map((match) => match[1])
+    .filter(Boolean);
+
+  const names = Array.from(new Set([...fromSchema, ...fromPath]));
+
+  return names.map((key) => {
     const parameter = parameters.find(
       (item) => item.in === "path" && item.name === key,
     );
@@ -199,7 +193,5 @@ export function createInitialBodyText(action: ChatActionCatalogItem): string {
   }
 
   const schema = (jsonContent as Record<string, unknown>).schema;
-  const example = schemaExample(schema);
-
-  return JSON.stringify(example, null, 2);
+  return JSON.stringify(schemaExample(schema), null, 2);
 }
