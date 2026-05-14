@@ -743,3 +743,24 @@
 
 
 
+
+.mdc-chat-agent-actions-page__route-row-group {
+  display: grid;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 38%, transparent);
+}
+
+.mdc-chat-agent-actions-page__route-row-group > article {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1.35fr) 4.5rem minmax(12rem, 1fr) 5rem 5.5rem;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.2rem;
+}
+
+.mdc-chat-agent-actions-page__route-row-group > .mdc-action-test-panel {
+  margin: 0.2rem 0 0.9rem;
+}
+
+.mdc-chat-agent-actions-page__route-table > article {
+  display: none;
+}

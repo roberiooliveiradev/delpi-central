@@ -255,6 +255,9 @@ export type ChatActionCatalogItem = {
   summary?: string | null;
   description?: string | null;
   tags?: string[];
+  parametersSchema?: Array<Record<string, unknown>>;
+  requestBodySchema?: Record<string, unknown> | null;
+  responseSchema?: Record<string, unknown> | null;
   sensitivity?: "read" | "write" | "admin" | string;
   enabled?: boolean;
   deprecated?: boolean;

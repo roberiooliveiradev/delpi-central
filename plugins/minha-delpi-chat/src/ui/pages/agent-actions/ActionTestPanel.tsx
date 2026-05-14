@@ -2,7 +2,9 @@ import { Plus, Route, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
+  createInitialBodyText,
   createInitialPathFields,
+  createInitialQueryFields,
   fieldsToRecord,
   isBodyMethod,
   parseBodyJson,
@@ -22,6 +24,33 @@ function updateField(
   );
 }
 
+function ParameterField({
+  field,
+  index,
+  onChange,
+}: {
+  field: TestField;
+  index: number;
+  onChange: (index: number, patch: Partial<TestField>) => void;
+}) {
+  return (
+    <label className="mdc-action-test-panel__parameter">
+      <span>
+        {field.key}
+        {field.required ? <em>obrigatório</em> : null}
+      </span>
+
+      <input
+        value={field.value}
+        onChange={(event) => onChange(index, { value: event.target.value })}
+        placeholder={`Valor para ${field.key}`}
+      />
+
+      {field.description ? <small>{field.description}</small> : null}
+    </label>
+  );
+}
+
 export function ActionTestPanel({
   action,
   isRunning,
@@ -33,10 +62,10 @@ export function ActionTestPanel({
   const [pathFields, setPathFields] = useState<TestField[]>(() =>
     createInitialPathFields(action),
   );
-  const [queryFields, setQueryFields] = useState<TestField[]>([]);
-  const [bodyText, setBodyText] = useState(() =>
-    isBodyMethod(action.method) ? "{}" : "",
+  const [queryFields, setQueryFields] = useState<TestField[]>(() =>
+    createInitialQueryFields(action),
   );
+  const [bodyText, setBodyText] = useState(() => createInitialBodyText(action));
   const [localError, setLocalError] = useState<string | null>(null);
 
   const hasBody = isBodyMethod(action.method);
@@ -80,21 +109,17 @@ export function ActionTestPanel({
       {pathFields.length > 0 ? (
         <div className="mdc-action-test-panel__group">
           <h3>Parâmetros da rota</h3>
-          <p>Valores que substituem os trechos entre chaves no caminho da URL.</p>
+          <p>Campos exigidos pelo caminho da URL.</p>
 
           {pathFields.map((field, index) => (
-            <label key={field.key}>
-              <span>{field.key}</span>
-              <input
-                value={field.value}
-                onChange={(event) =>
-                  setPathFields((current) =>
-                    updateField(current, index, { value: event.target.value }),
-                  )
-                }
-                placeholder={`Valor para ${field.key}`}
-              />
-            </label>
+            <ParameterField
+              key={field.key}
+              field={field}
+              index={index}
+              onChange={(fieldIndex, patch) =>
+                setPathFields((current) => updateField(current, fieldIndex, patch))
+              }
+            />
           ))}
         </div>
       ) : null}
@@ -103,13 +128,16 @@ export function ActionTestPanel({
         <div className="mdc-action-test-panel__group-title">
           <div>
             <h3>Query params</h3>
-            <p>Filtros enviados depois do ponto de interrogação da URL.</p>
+            <p>Filtros e paginação descritos no OpenAPI.</p>
           </div>
 
           <button
             type="button"
             onClick={() =>
-              setQueryFields((current) => [...current, { key: "", value: "" }])
+              setQueryFields((current) => [
+                ...current,
+                { key: "", value: "", location: "query" },
+              ])
             }
           >
             <Plus size={15} aria-hidden="true" />
@@ -119,12 +147,12 @@ export function ActionTestPanel({
 
         {queryFields.length === 0 ? (
           <div className="mdc-action-test-panel__empty">
-            Nenhum filtro informado.
+            Nenhum query param exigido por esta rota.
           </div>
         ) : null}
 
         {queryFields.map((field, index) => (
-          <div className="mdc-action-test-panel__query-row" key={index}>
+          <div className="mdc-action-test-panel__query-row" key={`${field.key}-${index}`}>
             <input
               value={field.key}
               onChange={(event) =>
@@ -133,6 +161,7 @@ export function ActionTestPanel({
                 )
               }
               placeholder="Nome. Ex.: page"
+              readOnly={Boolean(field.required)}
             />
 
             <input
@@ -142,7 +171,7 @@ export function ActionTestPanel({
                   updateField(current, index, { value: event.target.value }),
                 )
               }
-              placeholder="Valor. Ex.: 1"
+              placeholder={field.required ? "Obrigatório" : "Valor"}
             />
 
             <button
@@ -153,9 +182,16 @@ export function ActionTestPanel({
                 )
               }
               aria-label="Remover query param"
+              disabled={Boolean(field.required)}
             >
               <Trash2 size={15} aria-hidden="true" />
             </button>
+
+            {field.description ? (
+              <small className="mdc-action-test-panel__query-description">
+                {field.description}
+              </small>
+            ) : null}
           </div>
         ))}
       </div>
@@ -163,7 +199,7 @@ export function ActionTestPanel({
       {hasBody ? (
         <div className="mdc-action-test-panel__group">
           <h3>Body JSON</h3>
-          <p>Corpo enviado para rotas POST, PUT ou PATCH.</p>
+          <p>Corpo gerado a partir do schema OpenAPI da rota.</p>
 
           <textarea
             value={bodyText}
