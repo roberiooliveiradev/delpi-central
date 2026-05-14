@@ -58,6 +58,7 @@ type ChatAgentBuilderPageProps = {
     payload: AgentUpdatePayload,
   ) => Promise<ChatAgent | null>;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
+  canManageOfficialAgents?: boolean;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
@@ -119,6 +120,7 @@ export function ChatAgentBuilderPage({
   onCreateAgent,
   onUpdateAgent,
   onDeleteAgent,
+  canManageOfficialAgents = false,
   getAccessToken,
 }: ChatAgentBuilderPageProps) {
   const isEditing = Boolean(agent);
@@ -135,7 +137,13 @@ export function ChatAgentBuilderPage({
   const [name, setName] = useState(agent?.name ?? "");
   const [description, setDescription] = useState(agent?.description ?? "");
   const [systemPrompt, setSystemPrompt] = useState("");
-  const [visibility, setVisibility] = useState(agent?.visibility === "public" ? "public" : "private");
+  const [visibility, setVisibility] = useState(
+    agent?.visibility === "system"
+      ? "system"
+      : agent?.visibility === "public"
+        ? "public"
+        : "private",
+  );
   const [category, setCategory] = useState(agent?.category ?? "");
   const [icon, setIcon] = useState(agent?.icon ?? "bot");
   const [responseStyle, setResponseStyle] = useState(agent?.response_style ?? "objetivo");
@@ -595,6 +603,9 @@ export function ChatAgentBuilderPage({
                 >
                   <option value="private">Privado</option>
                   <option value="public">Público interno</option>
+                  {canManageOfficialAgents ? (
+                    <option value="system">Oficial</option>
+                  ) : null}
                 </select>
               </label>
 

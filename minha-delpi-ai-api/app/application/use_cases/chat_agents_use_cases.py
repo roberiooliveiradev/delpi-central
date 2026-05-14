@@ -11,7 +11,7 @@ from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 
 
-ALLOWED_VISIBILITY = {"private", "public"}
+ALLOWED_VISIBILITY = {"private", "public", "system"}
 ALLOWED_SHARE_ROLES = {"viewer", "editor"}
 ALLOWED_SENSITIVITY = {"read", "write", "admin"}
 
@@ -85,10 +85,16 @@ class CreateChatAgentUseCase:
         if visibility not in ALLOWED_VISIBILITY:
             raise InvalidChatSessionInputError("Invalid agent visibility")
 
+        if visibility == "system" and not request.can_manage_official_agents:
+            raise ChatAgentPermissionDeniedError(
+                "You do not have permission to create official agents"
+            )
+
         key = _slugify(request.key or name)
+        owner_user_id = None if visibility == "system" else UUID(request.user_id)
 
         agent = self.repository.create(
-            owner_user_id=UUID(request.user_id),
+            owner_user_id=owner_user_id,
             key=key,
             name=name,
             description=_normalize_text(request.description, 800),

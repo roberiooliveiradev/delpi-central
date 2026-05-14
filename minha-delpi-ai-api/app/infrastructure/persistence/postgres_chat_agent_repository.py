@@ -99,7 +99,7 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
     def create(
         self,
-        owner_user_id: UUID,
+        owner_user_id: UUID | None,
         key: str,
         name: str,
         description: str | None,

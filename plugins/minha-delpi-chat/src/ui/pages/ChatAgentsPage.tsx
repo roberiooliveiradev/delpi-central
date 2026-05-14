@@ -209,6 +209,7 @@ export function ChatAgentsPage({
         onCreateAgent={onCreateAgent}
         onUpdateAgent={onUpdateAgent}
         onDeleteAgent={onDeleteAgent}
+        canManageOfficialAgents={canManageOfficialAgents}
         getAccessToken={getAccessToken}
       />
     );
@@ -250,7 +251,7 @@ export function ChatAgentsPage({
         <section className="mdc-chat-agents-directory__mine">
           <div className="mdc-chat-agents-directory__section-header">
             <div>
-              <h2>Meus agentes</h2>
+              <h2>Agentes disponíveis</h2>
               <p>{agents.length} agente(s) disponível(is)</p>
             </div>
           </div>

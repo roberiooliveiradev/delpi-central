@@ -29,7 +29,7 @@ class ChatAgentRepositoryPort(ABC):
     @abstractmethod
     def create(
         self,
-        owner_user_id: UUID,
+        owner_user_id: UUID | None,
         key: str,
         name: str,
         description: str | None,

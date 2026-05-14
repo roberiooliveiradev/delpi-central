@@ -77,7 +77,7 @@ from app.extensions.db import db
 from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.interfaces.http.auth_decorators import require_permission
 from app.infrastructure.gateways.core_me_gateway import CoreMeGateway
-from app.interfaces.http.utils.errors import bad_request
+from app.interfaces.http.utils.errors import bad_request, forbidden
 
 
 chat_bp = Blueprint("chat", __name__, url_prefix="/chat")
@@ -183,6 +183,7 @@ def create_agent():
         return bad_request("Request body must be a JSON object")
 
     use_case = make_create_chat_agent_use_case()
+    capabilities = _get_chat_capabilities_from_request()
 
     try:
         result = use_case.execute(
@@ -193,15 +194,18 @@ def create_agent():
                 description=payload.get("description"),
                 visibility=payload.get("visibility", "private"),
                 icon=payload.get("icon"),
-                color=payload.get("color"),
                 metadata=payload.get("metadata"),
                 system_prompt=payload.get("systemPrompt") or payload.get("system_prompt"),
                 category=payload.get("category"),
                 response_style=payload.get("responseStyle") or payload.get("response_style"),
+                can_manage_official_agents=capabilities["canManageOfficialAgents"],
             )
         )
 
         db.session.commit()
+    except ChatAgentPermissionDeniedError as exc:
+        db.session.rollback()
+        return forbidden(str(exc))
     except Exception:
         db.session.rollback()
         raise
@@ -867,7 +871,6 @@ def create_project():
                 description=payload.get("description"),
                 visibility=payload.get("visibility", "private"),
                 icon=payload.get("icon"),
-                color=payload.get("color"),
                 metadata=payload.get("metadata"),
             )
         )
@@ -899,7 +902,6 @@ def update_project(project_id: str):
                 description=payload.get("description"),
                 visibility=payload.get("visibility"),
                 icon=payload.get("icon"),
-                color=payload.get("color"),
                 metadata=payload.get("metadata"),
                 archived=payload.get("archived"),
             )
