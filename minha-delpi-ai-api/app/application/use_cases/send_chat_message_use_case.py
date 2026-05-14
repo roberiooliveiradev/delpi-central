@@ -73,6 +73,7 @@ class SendChatMessageUseCase:
                 user_id=user_id,
                 session=session,
                 workspace_context=workspace_context,
+                attachment_ids=getattr(request, "attachment_ids", None),
             ),
         )
         sources = rag["sources"]

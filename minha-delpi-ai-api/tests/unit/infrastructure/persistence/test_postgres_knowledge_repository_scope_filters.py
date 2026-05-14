@@ -171,3 +171,28 @@ def test_scope_filters_without_allowed_clauses_only_applies_user_guard():
     assert "project_source" not in rendered
     assert "agent_source" not in rendered
     assert "global" not in rendered
+
+
+def test_scope_filters_include_attachment_ids_when_present():
+    repository = PostgresKnowledgeRepository()
+    query = FakeQuery()
+
+    result = repository._apply_scope_filters(
+        query,
+        {
+            "include_global": False,
+            "user_id": "user-1",
+            "session_id": "session-1",
+            "attachment_ids": ["attachment-1", "attachment-2"],
+        },
+    )
+
+    assert result is query
+
+    rendered = _render_filters(query)
+
+    assert "attachmentId" in rendered
+    assert "attachment-1" in rendered
+    assert "attachment-2" in rendered
+    assert "session_source" in rendered
+    assert "session-1" in rendered

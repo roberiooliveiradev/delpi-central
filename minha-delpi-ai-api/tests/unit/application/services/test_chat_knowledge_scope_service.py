@@ -88,3 +88,22 @@ def test_build_filters_without_project_keeps_project_id_none():
     assert filters["project_id"] is None
     assert filters["agent_key"] is None
     assert filters["include_global"] is True
+
+
+def test_build_filters_includes_attachment_ids_when_present():
+    user_id = uuid4()
+    session_id = uuid4()
+
+    service = ChatKnowledgeScopeService()
+
+    filters = service.build_filters(
+        user_id=user_id,
+        session=FakeSession(
+            id=session_id,
+            project_id=None,
+        ),
+        workspace_context={},
+        attachment_ids=["attachment-1", "attachment-2"],
+    )
+
+    assert filters["attachment_ids"] == ["attachment-1", "attachment-2"]

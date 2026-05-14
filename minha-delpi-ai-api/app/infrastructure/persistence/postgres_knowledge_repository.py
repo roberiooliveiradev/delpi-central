@@ -308,6 +308,15 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
                 )
             )
 
+        attachment_ids = [
+            str(item)
+            for item in (filters.get("attachment_ids") or [])
+            if item
+        ]
+
+        if attachment_ids:
+            query = query.filter(metadata["attachmentId"].astext.in_(attachment_ids))
+
         if not allowed_clauses:
             return query
 
