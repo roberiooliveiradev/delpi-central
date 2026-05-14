@@ -336,6 +336,8 @@ export type ChatCapabilities = {
   permissions: string[];
   isSuperadmin: boolean;
   canManageAgents: boolean;
+  canManageOwnAgents: boolean;
+  canManageOfficialAgents: boolean;
   canManageTools: boolean;
   canUseTools: boolean;
 };

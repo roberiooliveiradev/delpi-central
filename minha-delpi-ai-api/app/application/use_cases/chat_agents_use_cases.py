@@ -129,12 +129,17 @@ class UpdateChatAgentUseCase:
         if not self.repository.exists_by_id(agent_id):
             return None
 
-        if not self.repository.can_edit(agent_id, user_id):
+        if not self.repository.can_edit(
+            agent_id,
+            user_id,
+            can_manage_official_agents=request.can_manage_official_agents,
+        ):
             raise ChatAgentPermissionDeniedError("You do not have permission to edit this agent")
 
         agent = self.repository.update(
             agent_id=agent_id,
             user_id=user_id,
+            can_manage_official_agents=request.can_manage_official_agents,
             **fields,
         )
 
@@ -191,6 +196,7 @@ class UpsertChatAgentActionUseCase:
             sensitivity=sensitivity,
             requires_confirmation=request.requires_confirmation,
             enabled=request.enabled,
+            can_manage_official_agents=getattr(request, "can_manage_official_agents", False),
         )
 
 
@@ -231,6 +237,7 @@ class UpsertChatAgentActionProviderUseCase:
         allow_write: bool = False,
         allow_admin: bool = False,
         requires_confirmation_for_write: bool = True,
+        can_manage_official_agents: bool = False,
     ) -> bool:
         return self.repository.upsert_action_provider(
             agent_id=UUID(agent_id),
@@ -241,4 +248,5 @@ class UpsertChatAgentActionProviderUseCase:
             allow_write=allow_write,
             allow_admin=allow_admin,
             requires_confirmation_for_write=requires_confirmation_for_write,
+            can_manage_official_agents=can_manage_official_agents,
         )

@@ -50,6 +50,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     requestKey: number;
   } | null>(null);
   const [canManageAgents, setCanManageAgents] = useState(false);
+  const [canManageOfficialAgents, setCanManageOfficialAgents] = useState(false);
   const [hasLoadedManageAgentsPermission, setHasLoadedManageAgentsPermission] = useState(false);
 
   const [contextAgentKey, setContextAgentKey] = useState<string | null>(null);
@@ -183,10 +184,12 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
         if (isMounted) {
           setCanManageAgents(capabilities.canManageAgents);
+          setCanManageOfficialAgents(capabilities.canManageOfficialAgents);
         }
       } catch {
         if (isMounted) {
           setCanManageAgents(false);
+          setCanManageOfficialAgents(false);
         }
       } finally {
         if (isMounted) {
@@ -471,6 +474,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               agents={agents}
               selectedAgentKey={activeAgentPageKey}
               canManageAgents={canManageAgents}
+              canManageOfficialAgents={canManageOfficialAgents}
               editAgentKey={agentEditRequest?.key ?? null}
               editRequestKey={agentEditRequest?.requestKey ?? 0}
               isLoading={isLoadingAgents}

@@ -37,6 +37,7 @@ type ChatAgentsPageProps = {
   agents: ChatAgent[];
   selectedAgentKey?: string | null;
   canManageAgents?: boolean;
+  canManageOfficialAgents?: boolean;
   editAgentKey?: string | null;
   editRequestKey?: number;
   isLoading?: boolean;
@@ -51,12 +52,32 @@ type ChatAgentsPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
-function canEditAgent(agent: ChatAgent): boolean {
-  return ["owner", "editor"].includes(agent.access_role);
+function isOfficialAgent(agent: ChatAgent): boolean {
+  return agent.visibility === "system" || agent.access_role === "system";
 }
 
-function canDeleteAgent(agent: ChatAgent): boolean {
-  return agent.access_role === "owner";
+function canEditAgent(
+  agent: ChatAgent,
+  canManageOwnAgents: boolean,
+  canManageOfficialAgents: boolean,
+): boolean {
+  if (isOfficialAgent(agent)) {
+    return canManageOfficialAgents;
+  }
+
+  return canManageOwnAgents && ["owner", "editor"].includes(agent.access_role);
+}
+
+function canDeleteAgent(
+  agent: ChatAgent,
+  canManageOwnAgents: boolean,
+  canManageOfficialAgents: boolean,
+): boolean {
+  if (isOfficialAgent(agent)) {
+    return canManageOfficialAgents;
+  }
+
+  return canManageOwnAgents && agent.access_role === "owner";
 }
 
 function getAgentIcebreakerCount(agent: ChatAgent): number {
@@ -97,6 +118,7 @@ export function ChatAgentsPage({
   agents,
   selectedAgentKey,
   canManageAgents = false,
+  canManageOfficialAgents = false,
   editAgentKey,
   editRequestKey,
   isLoading,
@@ -143,10 +165,13 @@ export function ChatAgentsPage({
 
     const targetAgent = agents.find((agent) => agent.key === editAgentKey);
 
-    if (targetAgent && canEditAgent(targetAgent)) {
+    if (
+      targetAgent &&
+      canEditAgent(targetAgent, canManageAgents, canManageOfficialAgents)
+    ) {
       setEditingAgent(targetAgent);
     }
-  }, [agents, editAgentKey, editRequestKey]);
+  }, [agents, editAgentKey, editRequestKey, canManageAgents, canManageOfficialAgents]);
 
   if (actionEditor) {
     return (
@@ -271,7 +296,11 @@ export function ChatAgentsPage({
               filteredAgents.map((agent) => {
                 const icebreakerCount = getAgentIcebreakerCount(agent);
                 const capabilities = getAgentCapabilities(agent);
-                const editable = canEditAgent(agent);
+                const editable = canEditAgent(
+                  agent,
+                  canManageAgents,
+                  canManageOfficialAgents,
+                );
 
                 return (
                   <article
@@ -340,7 +369,7 @@ export function ChatAgentsPage({
                         </>
                       ) : null}
 
-                      {canDeleteAgent(agent) ? (
+                      {canDeleteAgent(agent, canManageAgents, canManageOfficialAgents) ? (
                         <button
                           type="button"
                           className="mdc-chat-agents-directory__danger"

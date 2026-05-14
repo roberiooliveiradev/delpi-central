@@ -10,6 +10,15 @@ class ChatAgentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def can_edit(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_accessible_by_id(self, agent_id: UUID, user_id: UUID) -> tuple[ChatAgent, str] | None:
         raise NotImplementedError
 
@@ -38,6 +47,7 @@ class ChatAgentRepositoryPort(ABC):
         self,
         agent_id: UUID,
         user_id: UUID,
+        can_manage_official_agents: bool = False,
         **fields,
     ) -> ChatAgent | None:
         raise NotImplementedError
@@ -69,6 +79,7 @@ class ChatAgentRepositoryPort(ABC):
         allow_write: bool,
         allow_admin: bool,
         requires_confirmation_for_write: bool,
+        can_manage_official_agents: bool = False,
     ) -> bool:
         raise NotImplementedError
 
@@ -106,5 +117,6 @@ class ChatAgentRepositoryPort(ABC):
         sensitivity: str,
         requires_confirmation: bool,
         enabled: bool,
+        can_manage_official_agents: bool = False,
     ) -> bool:
         raise NotImplementedError

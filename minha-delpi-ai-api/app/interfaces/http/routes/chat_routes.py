@@ -87,6 +87,48 @@ def _sse(event: str, payload: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
 
+def _get_chat_capabilities_from_request() -> dict:
+    authorization_header = request.headers.get("Authorization")
+    core_user = CoreMeGateway().get_me(authorization_header)
+
+    user = g.current_user
+    permissions = set()
+    is_superadmin = False
+
+    if core_user:
+        permissions = set(core_user.get("permissions") or [])
+        is_superadmin = bool(core_user.get("is_superadmin"))
+    else:
+        permissions = set(getattr(user, "permissions", []) or [])
+        is_superadmin = bool(getattr(user, "is_superadmin", False))
+
+    can_manage_own_agents = (
+        is_superadmin
+        or CHAT_TOOLS_MANAGE_PERMISSION in permissions
+        or CHAT_ADMIN_PERMISSION in permissions
+    )
+    can_manage_official_agents = (
+        is_superadmin
+        or CHAT_ADMIN_PERMISSION in permissions
+    )
+    can_manage_tools = can_manage_own_agents
+
+    return {
+        "permissions": sorted(permissions),
+        "isSuperadmin": is_superadmin,
+        "canManageAgents": can_manage_own_agents,
+        "canManageOwnAgents": can_manage_own_agents,
+        "canManageOfficialAgents": can_manage_official_agents,
+        "canManageTools": can_manage_tools,
+        "canUseTools": (
+            can_manage_tools
+            or CHAT_TOOLS_USE_PERMISSION in permissions
+        ),
+    }
+
+
+
+
 @chat_bp.get("/status")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def status():
@@ -120,39 +162,7 @@ def list_actions():
 @chat_bp.get("/capabilities")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def get_chat_capabilities():
-    authorization_header = request.headers.get("Authorization")
-    core_user = CoreMeGateway().get_me(authorization_header)
-
-    user = g.current_user
-
-    permissions = set()
-    is_superadmin = False
-
-    if core_user:
-        permissions = set(core_user.get("permissions") or [])
-        is_superadmin = bool(core_user.get("is_superadmin"))
-    else:
-        permissions = set(getattr(user, "permissions", []) or [])
-        is_superadmin = bool(getattr(user, "is_superadmin", False))
-
-    can_manage_tools = (
-        is_superadmin
-        or CHAT_TOOLS_MANAGE_PERMISSION in permissions
-        or CHAT_ADMIN_PERMISSION in permissions
-    )
-
-    return jsonify(
-        {
-            "permissions": sorted(permissions),
-            "isSuperadmin": is_superadmin,
-            "canManageAgents": can_manage_tools,
-            "canManageTools": can_manage_tools,
-            "canUseTools": (
-                can_manage_tools
-                or CHAT_TOOLS_USE_PERMISSION in permissions
-            ),
-        }
-    ), 200
+    return jsonify(_get_chat_capabilities_from_request()), 200
 
 
 @chat_bp.get("/agents")
@@ -208,6 +218,7 @@ def update_agent(agent_id: str):
         return bad_request("Request body must be a JSON object")
 
     use_case = make_update_chat_agent_use_case()
+    capabilities = _get_chat_capabilities_from_request()
 
     metadata = dict(payload.get("metadata") or {})
 
@@ -232,6 +243,7 @@ def update_agent(agent_id: str):
                 category=payload.get("category"),
                 response_style=payload.get("responseStyle") or payload.get("response_style"),
                 enabled=payload.get("enabled"),
+                can_manage_official_agents=capabilities["canManageOfficialAgents"],
             )
         )
 
@@ -354,6 +366,7 @@ def create_agent_action_provider(agent_id: str):
 
     repository = PostgresExternalActionRepository()
     upsert_use_case = make_upsert_chat_agent_action_provider_use_case()
+    capabilities = _get_chat_capabilities_from_request()
 
     try:
         existing_provider = repository.get_provider_by_key(provider_key)
@@ -397,6 +410,7 @@ def create_agent_action_provider(agent_id: str):
             requires_confirmation_for_write=bool(
                 payload.get("requiresConfirmationForWrite", True)
             ),
+            can_manage_official_agents=capabilities["canManageOfficialAgents"],
         )
 
         if not saved:
@@ -611,6 +625,7 @@ def upsert_agent_action_provider(agent_id: str):
         return bad_request("Request body must be a JSON object")
 
     use_case = make_upsert_chat_agent_action_provider_use_case()
+    capabilities = _get_chat_capabilities_from_request()
 
     try:
         saved = use_case.execute(
@@ -624,6 +639,7 @@ def upsert_agent_action_provider(agent_id: str):
             requires_confirmation_for_write=bool(
                 payload.get("requiresConfirmationForWrite", True)
             ),
+            can_manage_official_agents=capabilities["canManageOfficialAgents"],
         )
 
         if not saved:
@@ -659,6 +675,7 @@ def upsert_agent_action(agent_id: str):
         return bad_request("Request body must be a JSON object")
 
     use_case = make_upsert_chat_agent_action_use_case()
+    capabilities = _get_chat_capabilities_from_request()
 
     try:
         saved = use_case.execute(
@@ -670,6 +687,7 @@ def upsert_agent_action(agent_id: str):
                 sensitivity=payload.get("sensitivity", "read"),
                 requires_confirmation=bool(payload.get("requiresConfirmation") or payload.get("requires_confirmation")),
                 enabled=payload.get("enabled", True),
+                can_manage_official_agents=capabilities["canManageOfficialAgents"],
             )
         )
 

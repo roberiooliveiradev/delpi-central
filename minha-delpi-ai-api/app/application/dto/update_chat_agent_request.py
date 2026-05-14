@@ -14,3 +14,4 @@ class UpdateChatAgentRequest:
     response_style: str | None = None
     metadata: dict | None = None
     enabled: bool | None = None
+    can_manage_official_agents: bool = False

@@ -10,3 +10,4 @@ class UpsertChatAgentActionRequest:
     sensitivity: str = "read"
     requires_confirmation: bool = False
     enabled: bool = True
+    can_manage_official_agents: bool = False

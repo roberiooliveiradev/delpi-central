@@ -55,13 +55,18 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         self,
         agent_id: UUID,
         user_id: UUID,
+        can_manage_official_agents: bool = False,
     ) -> bool:
         model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
 
         if not model:
             return False
 
-        return self._can_edit(model, user_id)
+        return self._can_edit(
+            model,
+            user_id,
+            can_manage_official_agents=can_manage_official_agents,
+        )
 
     def get_accessible_by_id(
         self,
@@ -128,11 +133,16 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         self,
         agent_id: UUID,
         user_id: UUID,
+        can_manage_official_agents: bool = False,
         **fields,
     ) -> ChatAgent | None:
         model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
 
-        if not model or not self._can_edit(model, user_id):
+        if not model or not self._can_edit(
+            model,
+            user_id,
+            can_manage_official_agents=can_manage_official_agents,
+        ):
             return None
 
         for key, value in fields.items():
@@ -235,10 +245,15 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         allow_write: bool,
         allow_admin: bool,
         requires_confirmation_for_write: bool,
+        can_manage_official_agents: bool = False,
     ) -> bool:
         model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
 
-        if not model or not self._can_edit(model, user_id):
+        if not model or not self._can_edit(
+            model,
+            user_id,
+            can_manage_official_agents=can_manage_official_agents,
+        ):
             return False
 
         provider = ExternalActionProviderModel.query.filter(
@@ -396,10 +411,15 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         sensitivity: str,
         requires_confirmation: bool,
         enabled: bool,
+        can_manage_official_agents: bool = False,
     ) -> bool:
         model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
 
-        if not model or not self._can_edit(model, user_id):
+        if not model or not self._can_edit(
+            model,
+            user_id,
+            can_manage_official_agents=can_manage_official_agents,
+        ):
             return False
 
         action = (
@@ -482,7 +502,17 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             is not None
         )
 
-    def _can_edit(self, model: AiChatAgentModel, user_id: UUID) -> bool:
+    def _can_edit(
+        self,
+        model: AiChatAgentModel,
+        user_id: UUID,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
+        if can_manage_official_agents and (
+            model.visibility == "system" or model.owner_user_id is None
+        ):
+            return True
+
         if model.owner_user_id == user_id:
             return True
 
