@@ -1,3 +1,12 @@
+from app.application.security.chat_permissions import (
+    CHAT_ACCESS_PERMISSION,
+    CHAT_ADMIN_PERMISSION,
+    CHAT_ASK_PERMISSION,
+    CHAT_HISTORY_VIEW_PERMISSION,
+    CHAT_KNOWLEDGE_MANAGE_PERMISSION,
+    CHAT_TOOLS_MANAGE_PERMISSION,
+    CHAT_TOOLS_USE_PERMISSION,
+)
 import json
 from dataclasses import asdict
 
@@ -69,8 +78,6 @@ from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.interfaces.http.auth_decorators import require_permission
 from app.interfaces.http.utils.errors import bad_request
 
-CHAT_ACCESS_PERMISSION = "minha-delpi.chat.access"
-CHAT_TOOLS_MANAGE_PERMISSION = "minha-delpi.chat.tools.manage"
 
 chat_bp = Blueprint("chat", __name__, url_prefix="/chat")
 
@@ -685,7 +692,7 @@ def list_project_sources(project_id: str):
 
 
 @chat_bp.post("/projects/<project_id>/sources")
-@require_permission("minha-delpi.chat.ask")
+@require_permission(CHAT_ASK_PERMISSION)
 def create_project_source(project_id: str):
     use_case = make_create_project_source_use_case()
 
@@ -725,7 +732,7 @@ def list_agent_sources(agent_id: str):
 
 
 @chat_bp.post("/agents/<agent_id>/sources")
-@require_permission("minha-delpi.chat.ask")
+@require_permission(CHAT_ASK_PERMISSION)
 def create_agent_source(agent_id: str):
     use_case = make_create_agent_source_use_case()
 
@@ -749,7 +756,7 @@ def create_agent_source(agent_id: str):
 
 
 @chat_bp.delete("/sources/<source_id>")
-@require_permission("minha-delpi.chat.ask")
+@require_permission(CHAT_ASK_PERMISSION)
 def delete_chat_source(source_id: str):
     use_case = make_delete_chat_source_use_case()
 
@@ -912,7 +919,7 @@ def share_project(project_id: str):
 
 
 @chat_bp.post("/attachments")
-@require_permission("minha-delpi.chat.ask")
+@require_permission(CHAT_ASK_PERMISSION)
 def upload_attachment_with_session():
     if "file" not in request.files:
         return bad_request("File is required")
@@ -983,7 +990,7 @@ def list_attachments(session_id: str):
 
 
 @chat_bp.post("/sessions/<session_id>/attachments")
-@require_permission("minha-delpi.chat.ask")
+@require_permission(CHAT_ASK_PERMISSION)
 def upload_attachment(session_id: str):
     if "file" not in request.files:
         return bad_request("File is required")
@@ -1021,7 +1028,7 @@ def upload_attachment(session_id: str):
 
 
 @chat_bp.delete("/attachments/<attachment_id>")
-@require_permission("minha-delpi.chat.ask")
+@require_permission(CHAT_ASK_PERMISSION)
 def delete_attachment(attachment_id: str):
     use_case = make_delete_chat_attachment_use_case()
 
@@ -1191,7 +1198,7 @@ def list_sessions():
 
 
 @chat_bp.patch("/sessions/<session_id>")
-@require_permission("minha-delpi.chat.history.view")
+@require_permission(CHAT_HISTORY_VIEW_PERMISSION)
 def rename_session(session_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -1302,7 +1309,7 @@ def _not_found_response():
 
 
 @chat_bp.patch("/sessions/<session_id>/pin")
-@require_permission("minha-delpi.chat.history.view")
+@require_permission(CHAT_HISTORY_VIEW_PERMISSION)
 def pin_session(session_id: str):
     use_case = make_set_chat_session_pinned_use_case()
 
@@ -1329,7 +1336,7 @@ def pin_session(session_id: str):
 
 
 @chat_bp.patch("/sessions/<session_id>/unpin")
-@require_permission("minha-delpi.chat.history.view")
+@require_permission(CHAT_HISTORY_VIEW_PERMISSION)
 def unpin_session(session_id: str):
     use_case = make_set_chat_session_pinned_use_case()
 
@@ -1356,7 +1363,7 @@ def unpin_session(session_id: str):
 
 
 @chat_bp.patch("/sessions/<session_id>/archive")
-@require_permission("minha-delpi.chat.history.view")
+@require_permission(CHAT_HISTORY_VIEW_PERMISSION)
 def archive_session(session_id: str):
     use_case = make_set_chat_session_archived_use_case()
 
@@ -1383,7 +1390,7 @@ def archive_session(session_id: str):
 
 
 @chat_bp.patch("/sessions/<session_id>/unarchive")
-@require_permission("minha-delpi.chat.history.view")
+@require_permission(CHAT_HISTORY_VIEW_PERMISSION)
 def unarchive_session(session_id: str):
     use_case = make_set_chat_session_archived_use_case()
 
@@ -1410,7 +1417,7 @@ def unarchive_session(session_id: str):
 
 
 @chat_bp.patch("/messages/<message_id>")
-@require_permission("minha-delpi.chat.ask")
+@require_permission(CHAT_ASK_PERMISSION)
 def update_message(message_id: str):
     payload = request.get_json(silent=True) or {}
 
@@ -1468,7 +1475,7 @@ def get_history(session_id: str):
 
 
 @chat_bp.post("/sessions/<session_id>/messages")
-@require_permission("minha-delpi.chat.ask")
+@require_permission(CHAT_ASK_PERMISSION)
 @rate_limit("chat_messages", Settings.RATE_LIMIT_CHAT_MESSAGES_PER_WINDOW)
 def send_message(session_id: str):
     payload = request.get_json(silent=True) or {}
@@ -1499,7 +1506,7 @@ def send_message(session_id: str):
 
 
 @chat_bp.post("/sessions/<session_id>/messages/stream")
-@require_permission("minha-delpi.chat.ask")
+@require_permission(CHAT_ASK_PERMISSION)
 @rate_limit("chat_messages", Settings.RATE_LIMIT_CHAT_MESSAGES_PER_WINDOW)
 def stream_message(session_id: str):
     payload = request.get_json(silent=True) or {}

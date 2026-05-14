@@ -21,7 +21,7 @@ import {
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
-import { userCanManageChatTools } from "../../security/permissions";
+import { userCanManageChatTools } from "../../security/chatPermissions";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
 

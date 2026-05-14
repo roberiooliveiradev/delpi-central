@@ -1,3 +1,12 @@
+from app.application.security.chat_permissions import (
+    CHAT_ACCESS_PERMISSION,
+    CHAT_ADMIN_PERMISSION,
+    CHAT_ASK_PERMISSION,
+    CHAT_HISTORY_VIEW_PERMISSION,
+    CHAT_KNOWLEDGE_MANAGE_PERMISSION,
+    CHAT_TOOLS_MANAGE_PERMISSION,
+    CHAT_TOOLS_USE_PERMISSION,
+)
 from flask import Blueprint, g, jsonify, request
 
 from app.composition.admin_composer import (
@@ -29,14 +38,14 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
 @admin_bp.get("/external-action-providers")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 def list_external_action_providers():
     use_case = make_list_external_action_providers_use_case()
     return jsonify(use_case.execute()), 200
 
 
 @admin_bp.post("/external-action-providers")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 def create_external_action_provider():
     payload = request.get_json(silent=True) or {}
 
@@ -59,7 +68,7 @@ def create_external_action_provider():
 
 
 @admin_bp.post("/external-action-providers/<provider_key>/schema")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 def import_external_action_schema(provider_key: str):
     payload = request.get_json(silent=True) or {}
 
@@ -89,7 +98,7 @@ def import_external_action_schema(provider_key: str):
 
 
 @admin_bp.post("/external-action-providers/<provider_key>/reload-schema")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 def reload_external_action_schema(provider_key: str):
     use_case = make_import_external_actions_schema_use_case()
 
@@ -112,7 +121,7 @@ def reload_external_action_schema(provider_key: str):
 
 
 @admin_bp.get("/external-actions")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 def list_external_actions():
     provider_key = request.args.get("provider")
     use_case = make_list_external_actions_use_case()
@@ -120,26 +129,26 @@ def list_external_actions():
 
 
 @admin_bp.get("/system-check")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 def admin_system_check():
     use_case = make_get_admin_system_check_use_case()
     return jsonify(use_case.execute()), 200
 
 @admin_bp.get("/metrics/summary")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 def admin_metrics_summary():
     use_case = make_get_admin_metrics_summary_use_case()
     return jsonify(use_case.execute()), 200
 
 @admin_bp.get("/llm/status")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 def llm_status():
     use_case = make_get_llm_provider_status_use_case()
     return jsonify(use_case.execute()), 200
 
 
 @admin_bp.get("/knowledge/documents")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 def list_knowledge_documents():
     use_case = make_list_admin_knowledge_documents_use_case()
 
@@ -154,7 +163,7 @@ def list_knowledge_documents():
 
 
 @admin_bp.post("/knowledge/documents/<document_id>/deactivate")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 @rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
 def deactivate_knowledge_document(document_id: str):
     use_case = make_deactivate_knowledge_document_use_case()
@@ -173,7 +182,7 @@ def deactivate_knowledge_document(document_id: str):
 
 
 @admin_bp.post("/knowledge/documents/<document_id>/reactivate")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 @rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
 def reactivate_knowledge_document(document_id: str):
     use_case = make_reactivate_knowledge_document_use_case()
@@ -192,7 +201,7 @@ def reactivate_knowledge_document(document_id: str):
 
 
 @admin_bp.post("/knowledge/documents/<document_id>/reindex")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 @rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
 def reindex_knowledge_document(document_id: str):
     use_case = make_reindex_knowledge_document_use_case()
@@ -211,7 +220,7 @@ def reindex_knowledge_document(document_id: str):
 
 
 @admin_bp.get("/audit-logs")
-@require_permission("minha-delpi.chat.admin")
+@require_permission(CHAT_ADMIN_PERMISSION)
 def list_audit_logs():
     limit = request.args.get("limit", 100)
     use_case = make_list_admin_audit_logs_use_case()

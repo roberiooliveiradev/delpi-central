@@ -1,3 +1,12 @@
+from app.application.security.chat_permissions import (
+    CHAT_ACCESS_PERMISSION,
+    CHAT_ADMIN_PERMISSION,
+    CHAT_ASK_PERMISSION,
+    CHAT_HISTORY_VIEW_PERMISSION,
+    CHAT_KNOWLEDGE_MANAGE_PERMISSION,
+    CHAT_TOOLS_MANAGE_PERMISSION,
+    CHAT_TOOLS_USE_PERMISSION,
+)
 from app.application.use_cases.execute_external_action_use_case import (
     ExecuteExternalActionUseCase,
 )
@@ -9,7 +18,7 @@ from app.domain.ports.internal_tool_port import InternalToolPort
 class ExecuteExternalActionTool(InternalToolPort):
     name = "execute_external_action"
     description = "Executa uma action HTTP importada de um schema OpenAPI cadastrado no Minha DELPI Chat."
-    required_permission = "minha-delpi.chat.tools.use"
+    required_permission = CHAT_TOOLS_USE_PERMISSION
 
     def __init__(self, use_case: ExecuteExternalActionUseCase):
         self.use_case = use_case

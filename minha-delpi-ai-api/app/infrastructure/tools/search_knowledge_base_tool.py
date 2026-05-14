@@ -1,3 +1,12 @@
+from app.application.security.chat_permissions import (
+    CHAT_ACCESS_PERMISSION,
+    CHAT_ADMIN_PERMISSION,
+    CHAT_ASK_PERMISSION,
+    CHAT_HISTORY_VIEW_PERMISSION,
+    CHAT_KNOWLEDGE_MANAGE_PERMISSION,
+    CHAT_TOOLS_MANAGE_PERMISSION,
+    CHAT_TOOLS_USE_PERMISSION,
+)
 from app.application.dto.search_knowledge_request import SearchKnowledgeRequest
 from app.application.use_cases.search_knowledge_use_case import SearchKnowledgeUseCase
 from app.domain.entities.tool_result import ToolResult
@@ -8,7 +17,7 @@ from app.domain.ports.internal_tool_port import InternalToolPort
 class SearchKnowledgeBaseTool(InternalToolPort):
     name = "search_knowledge_base"
     description = "Busca trechos relevantes na base documental autorizada do Minha DELPI Chat."
-    required_permission = "minha-delpi.chat.access"
+    required_permission = CHAT_ACCESS_PERMISSION
 
     def __init__(self, search_knowledge_use_case: SearchKnowledgeUseCase):
         self.search_knowledge_use_case = search_knowledge_use_case

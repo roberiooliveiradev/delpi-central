@@ -1,0 +1,120 @@
+export const CHAT_PERMISSIONS = {
+  ACCESS: "minha-delpi.chat.access",
+  ASK: "minha-delpi.chat.ask",
+  HISTORY_VIEW: "minha-delpi.chat.history.view",
+  ADMIN: "minha-delpi.chat.admin",
+  KNOWLEDGE_MANAGE: "minha-delpi.chat.knowledge.manage",
+  TOOLS_USE: "minha-delpi.chat.tools.use",
+  TOOLS_MANAGE: "minha-delpi.chat.tools.manage",
+} as const;
+
+export type ChatPermission =
+  (typeof CHAT_PERMISSIONS)[keyof typeof CHAT_PERMISSIONS];
+
+type JwtPayload = {
+  permissions?: string[];
+  scope?: string;
+  realm_access?: {
+    roles?: string[];
+  };
+  resource_access?: Record<string, { roles?: string[] }>;
+};
+
+function decodeJwtPayload(token: string): JwtPayload | null {
+  const [, payload] = token.split(".");
+
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+
+    return JSON.parse(atob(padded)) as JwtPayload;
+  } catch {
+    return null;
+  }
+}
+
+function collectTokenPermissions(payload: JwtPayload | null): Set<string> {
+  const permissions = new Set<string>();
+
+  if (!payload) {
+    return permissions;
+  }
+
+  for (const permission of payload.permissions ?? []) {
+    permissions.add(permission);
+  }
+
+  for (const scope of payload.scope?.split(" ") ?? []) {
+    if (scope.trim()) {
+      permissions.add(scope.trim());
+    }
+  }
+
+  for (const role of payload.realm_access?.roles ?? []) {
+    permissions.add(role);
+  }
+
+  for (const access of Object.values(payload.resource_access ?? {})) {
+    for (const role of access.roles ?? []) {
+      permissions.add(role);
+    }
+  }
+
+  return permissions;
+}
+
+export async function getCurrentChatPermissions(
+  getAccessToken?: () =>
+    | string
+    | undefined
+    | null
+    | Promise<string | undefined | null>,
+): Promise<Set<string>> {
+  const token = await getAccessToken?.();
+
+  if (!token) {
+    return new Set();
+  }
+
+  return collectTokenPermissions(decodeJwtPayload(token));
+}
+
+export async function userHasChatPermission(
+  permission: ChatPermission,
+  getAccessToken?: () =>
+    | string
+    | undefined
+    | null
+    | Promise<string | undefined | null>,
+): Promise<boolean> {
+  const permissions = await getCurrentChatPermissions(getAccessToken);
+
+  return permissions.has(permission);
+}
+
+export async function userCanManageChatTools(
+  getAccessToken?: () =>
+    | string
+    | undefined
+    | null
+    | Promise<string | undefined | null>,
+): Promise<boolean> {
+  return userHasChatPermission(CHAT_PERMISSIONS.TOOLS_MANAGE, getAccessToken);
+}
+
+export async function userCanUseChatTools(
+  getAccessToken?: () =>
+    | string
+    | undefined
+    | null
+    | Promise<string | undefined | null>,
+): Promise<boolean> {
+  return userHasChatPermission(CHAT_PERMISSIONS.TOOLS_USE, getAccessToken);
+}

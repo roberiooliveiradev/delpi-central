@@ -1,3 +1,12 @@
+from app.application.security.chat_permissions import (
+    CHAT_ACCESS_PERMISSION,
+    CHAT_ADMIN_PERMISSION,
+    CHAT_ASK_PERMISSION,
+    CHAT_HISTORY_VIEW_PERMISSION,
+    CHAT_KNOWLEDGE_MANAGE_PERMISSION,
+    CHAT_TOOLS_MANAGE_PERMISSION,
+    CHAT_TOOLS_USE_PERMISSION,
+)
 from flask import Blueprint, g, jsonify, request
 
 from app.application.dto.ingest_document_request import IngestDocumentRequest
@@ -16,7 +25,7 @@ knowledge_bp = Blueprint("knowledge", __name__, url_prefix="/knowledge")
 
 
 @knowledge_bp.post("/documents")
-@require_permission("minha-delpi.chat.knowledge.manage")
+@require_permission(CHAT_KNOWLEDGE_MANAGE_PERMISSION)
 @rate_limit("knowledge_writes", Settings.RATE_LIMIT_KNOWLEDGE_WRITES_PER_WINDOW)
 def ingest_document():
     payload = request.get_json(silent=True) or {}
@@ -47,7 +56,7 @@ def ingest_document():
 
 
 @knowledge_bp.post("/search")
-@require_permission("minha-delpi.chat.access")
+@require_permission(CHAT_ACCESS_PERMISSION)
 def search_knowledge():
     payload = request.get_json(silent=True) or {}
 

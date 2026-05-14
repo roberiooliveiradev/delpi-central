@@ -1,0 +1,7 @@
+CHAT_ACCESS_PERMISSION = "minha-delpi.chat.access"
+CHAT_ASK_PERMISSION = "minha-delpi.chat.ask"
+CHAT_HISTORY_VIEW_PERMISSION = "minha-delpi.chat.history.view"
+CHAT_ADMIN_PERMISSION = "minha-delpi.chat.admin"
+CHAT_KNOWLEDGE_MANAGE_PERMISSION = "minha-delpi.chat.knowledge.manage"
+CHAT_TOOLS_USE_PERMISSION = "minha-delpi.chat.tools.use"
+CHAT_TOOLS_MANAGE_PERMISSION = "minha-delpi.chat.tools.manage"

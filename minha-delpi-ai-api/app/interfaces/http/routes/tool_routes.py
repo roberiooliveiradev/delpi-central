@@ -1,3 +1,12 @@
+from app.application.security.chat_permissions import (
+    CHAT_ACCESS_PERMISSION,
+    CHAT_ADMIN_PERMISSION,
+    CHAT_ASK_PERMISSION,
+    CHAT_HISTORY_VIEW_PERMISSION,
+    CHAT_KNOWLEDGE_MANAGE_PERMISSION,
+    CHAT_TOOLS_MANAGE_PERMISSION,
+    CHAT_TOOLS_USE_PERMISSION,
+)
 from dataclasses import asdict
 
 from flask import Blueprint, g, jsonify, request
@@ -14,7 +23,7 @@ tool_bp = Blueprint("tools", __name__, url_prefix="/tools")
 
 
 @tool_bp.post("/execute")
-@require_permission("minha-delpi.chat.tools.use")
+@require_permission(CHAT_TOOLS_USE_PERMISSION)
 @rate_limit("tool_calls", Settings.RATE_LIMIT_TOOL_CALLS_PER_WINDOW)
 def execute_tool():
     payload = request.get_json(silent=True) or {}
