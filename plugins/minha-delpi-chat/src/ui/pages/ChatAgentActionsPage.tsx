@@ -985,7 +985,6 @@ export function ChatAgentActionsPage({
                   void updateProviderPermissions(patch)
                 }
               />
-              </section>
             </>
           )}
         </main>
