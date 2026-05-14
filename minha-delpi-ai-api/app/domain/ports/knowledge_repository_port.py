@@ -48,6 +48,7 @@ class KnowledgeRepositoryPort(ABC):
         offset: int = 0,
         search: str | None = None,
         active: bool | None = None,
+        scope: str | None = None,
     ) -> list[tuple[KnowledgeDocument, int]]:
         raise NotImplementedError
 
@@ -56,6 +57,7 @@ class KnowledgeRepositoryPort(ABC):
         self,
         search: str | None = None,
         active: bool | None = None,
+        scope: str | None = None,
     ) -> int:
         raise NotImplementedError
 

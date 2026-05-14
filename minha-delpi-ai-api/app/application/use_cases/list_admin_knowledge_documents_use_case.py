@@ -21,11 +21,13 @@ class ListAdminKnowledgeDocumentsUseCase:
             offset=safe_offset,
             search=search,
             active=active_filter,
+            scope="global",
         )
 
         total = self.knowledge_repository.count_documents(
             search=search,
             active=active_filter,
+            scope="global",
         )
 
         return {

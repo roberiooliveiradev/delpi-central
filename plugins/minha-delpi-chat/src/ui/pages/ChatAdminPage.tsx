@@ -70,6 +70,10 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
         sourceType: sourceType.trim(),
         sourceRef: sourceRef.trim() || undefined,
         content: content.trim(),
+        metadata: {
+          scope: "global",
+          origin: "admin_manual",
+        },
       });
     }
 

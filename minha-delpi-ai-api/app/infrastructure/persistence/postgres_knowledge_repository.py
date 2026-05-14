@@ -114,6 +114,7 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         offset: int = 0,
         search: str | None = None,
         active: bool | None = None,
+        scope: str | None = None,
     ) -> list[tuple[KnowledgeDocument, int]]:
         query = (
             db.session.query(
@@ -126,7 +127,7 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
             )
         )
 
-        query = self._apply_document_filters(query, search=search, active=active)
+        query = self._apply_document_filters(query, search=search, active=active, scope=scope)
 
         rows = (
             query
@@ -146,9 +147,10 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         self,
         search: str | None = None,
         active: bool | None = None,
+        scope: str | None = None,
     ) -> int:
         query = db.session.query(AiKnowledgeDocumentModel)
-        query = self._apply_document_filters(query, search=search, active=active)
+        query = self._apply_document_filters(query, search=search, active=active, scope=scope)
 
         return int(query.count())
 
@@ -332,9 +334,31 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         return query.filter(db.or_(*allowed_clauses))
 
 
-    def _apply_document_filters(self, query, search: str | None, active: bool | None):
+    def _apply_document_filters(
+        self,
+        query,
+        search: str | None,
+        active: bool | None,
+        scope: str | None = None,
+    ):
         if active is not None:
             query = query.filter(AiKnowledgeDocumentModel.active.is_(active))
+
+        normalized_scope = str(scope or "").strip()
+
+        if normalized_scope == "global":
+            metadata = AiKnowledgeDocumentModel.document_metadata
+            query = query.filter(
+                db.or_(
+                    metadata.is_(None),
+                    metadata["scope"].astext.is_(None),
+                    metadata["scope"].astext == "global",
+                )
+            )
+        elif normalized_scope:
+            query = query.filter(
+                AiKnowledgeDocumentModel.document_metadata["scope"].astext == normalized_scope
+            )
 
         normalized_search = str(search or "").strip()
 
