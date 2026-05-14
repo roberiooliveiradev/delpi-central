@@ -363,8 +363,9 @@ export function ChatAgentActionsPage({
     setError(null);
 
     try {
+      const actionPath = action.path ?? "";
       const pathParams: Record<string, string> = {};
-      const placeholders = Array.from(action.path.matchAll(/\{([^}]+)\}/g));
+      const placeholders = Array.from(actionPath.matchAll(/\{([^}]+)\}/g));
 
       for (const match of placeholders) {
         const key = match[1];
@@ -1042,6 +1043,12 @@ export function ChatAgentActionsPage({
                       Confirmar escrita
                     </label>
                   </div>
+                ) : null}
+
+                {testResult ? (
+                  <pre className="mdc-chat-agent-actions-page__test-result">
+                    {testResult}
+                  </pre>
                 ) : null}
 
                 {isLoadingRoutes ? (
