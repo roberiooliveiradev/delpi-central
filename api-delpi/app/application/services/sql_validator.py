@@ -1,6 +1,7 @@
 # app/application/services/sql_validator.py
 import re
 import json
+import os
 from pathlib import Path
 from app.utils.logger import log_error
 
@@ -40,7 +41,14 @@ class SqlValidator:
     # ------------------------------------------------------------------
     def _load_allowed_tables(self) -> set[str]:
         try:
-            config_path = Path(__file__).parent.parent / "config" / "allowed_tables.json"
+            configured_path = os.getenv("ALLOWED_TABLES_PATH")
+
+            config_path = (
+                Path(configured_path)
+                if configured_path
+                else Path(__file__).resolve().parents[2] / "config" / "allowed_tables.json"
+            )
+
             with open(config_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 return {t.upper() for t in data.get("allowed_tables", [])}
