@@ -36,6 +36,7 @@ class ExecuteExternalActionUseCase:
         provider = action_bundle["provider"]
         action = action_bundle["action"]
         arguments = self._normalize_arguments_for_method(action, arguments)
+        arguments = self._drop_internal_unknown_parameters(action, arguments)
 
         self.policy.validate(provider, action, arguments)
 
@@ -46,6 +47,47 @@ class ExecuteExternalActionUseCase:
             body=arguments.get("body"),
             access_token=access_token,
         )
+
+    INTERNAL_PARAMETER_NAMES = {
+        "message",
+        "prompt",
+        "question",
+        "input",
+        "text",
+        "queryText",
+        "query_text",
+        "userMessage",
+        "user_message",
+    }
+
+    def _drop_internal_unknown_parameters(self, action: dict, arguments: dict) -> dict:
+        normalized = dict(arguments or {})
+        parameters = dict(normalized.get("parameters") or {})
+
+        if not parameters:
+            normalized["parameters"] = parameters
+            return normalized
+
+        allowed_parameter_names = {
+            parameter.get("name")
+            for parameter in action.get("parametersSchema") or []
+            if parameter.get("name")
+        }
+
+        cleaned_parameters = {}
+
+        for key, value in parameters.items():
+            if key in allowed_parameter_names:
+                cleaned_parameters[key] = value
+                continue
+
+            if key in self.INTERNAL_PARAMETER_NAMES:
+                continue
+
+            cleaned_parameters[key] = value
+
+        normalized["parameters"] = cleaned_parameters
+        return normalized
 
     def _normalize_arguments_for_method(self, action: dict, arguments: dict) -> dict:
         normalized = dict(arguments or {})

@@ -77,3 +77,59 @@ def test_normalize_get_non_dict_body_is_removed():
 
     assert arguments["parameters"] == {"produto": "10080014"}
     assert arguments["body"] is None
+
+
+def test_drop_internal_unknown_parameters_before_policy_validation():
+    use_case = _use_case()
+
+    arguments = use_case._drop_internal_unknown_parameters(
+        {
+            "parametersSchema": [
+                {
+                    "name": "produto",
+                    "in": "query",
+                    "required": False,
+                }
+            ]
+        },
+        {
+            "parameters": {
+                "produto": "10080014",
+                "message": "use a tabela de produtos",
+                "prompt": "consulta produto",
+            },
+            "body": None,
+        },
+    )
+
+    assert arguments["parameters"] == {
+        "produto": "10080014",
+    }
+
+
+def test_drop_internal_unknown_parameters_keeps_non_internal_unknown_parameter():
+    use_case = _use_case()
+
+    arguments = use_case._drop_internal_unknown_parameters(
+        {
+            "parametersSchema": [
+                {
+                    "name": "produto",
+                    "in": "query",
+                    "required": False,
+                }
+            ]
+        },
+        {
+            "parameters": {
+                "produto": "10080014",
+                "campo_incorreto": "valor",
+            },
+            "body": None,
+        },
+    )
+
+    assert arguments["parameters"] == {
+        "produto": "10080014",
+        "campo_incorreto": "valor",
+    }
