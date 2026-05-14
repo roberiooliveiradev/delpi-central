@@ -11,6 +11,7 @@ from app.infrastructure.db.models.chat_message_model import AiChatMessageModel
 from app.infrastructure.db.models.chat_session_model import AiChatSessionModel
 from app.infrastructure.db.models.knowledge_chunk_model import AiKnowledgeChunkModel
 from app.infrastructure.db.models.knowledge_document_model import AiKnowledgeDocumentModel
+from app.infrastructure.db.models.external_action_test_log_model import ExternalActionTestLogModel
 
 __all__ = [
     "AiChatProjectShareModel",
@@ -26,4 +27,5 @@ __all__ = [
     "AiChatSessionModel",
     "AiKnowledgeChunkModel",
     "AiKnowledgeDocumentModel",
+    "ExternalActionTestLogModel",
 ]

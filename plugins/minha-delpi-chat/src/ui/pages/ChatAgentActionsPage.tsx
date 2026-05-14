@@ -22,6 +22,7 @@ import {
   saveChatAgentActionProvider,
   updateChatAgentActionProvider,
   upsertChatAgentAction,
+  testChatAgentAction,
 } from "../../data/api/chatApi";
 import type {
   ChatActionCatalogItem,
@@ -162,6 +163,8 @@ export function ChatAgentActionsPage({
   const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
   const [isUpdatingRoutes, setIsUpdatingRoutes] = useState(false);
   const [isSavingProvider, setIsSavingProvider] = useState(false);
+  const [testingActionId, setTestingActionId] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [newProviderName, setNewProviderName] = useState("");
@@ -348,6 +351,83 @@ export function ChatAgentActionsPage({
     );
 
     await reloadProviders();
+  }
+
+  async function testAction(action: ChatActionCatalogItem) {
+    if (!selectedProviderKey) {
+      return;
+    }
+
+    setTestingActionId(action.actionId);
+    setTestResult(null);
+    setError(null);
+
+    try {
+      const pathParams: Record<string, string> = {};
+      const placeholders = Array.from(action.path.matchAll(/\{([^}]+)\}/g));
+
+      for (const match of placeholders) {
+        const key = match[1];
+        const value = window.prompt(`Valor para {${key}}`, "");
+
+        if (value === null) {
+          setTestingActionId(null);
+          return;
+        }
+
+        pathParams[key] = value;
+      }
+
+      let body: unknown = undefined;
+
+      if (!["GET", "HEAD"].includes(String(action.method).toUpperCase())) {
+        const rawBody = window.prompt(
+          "Body JSON para teste",
+          "{}",
+        );
+
+        if (rawBody === null) {
+          setTestingActionId(null);
+          return;
+        }
+
+        body = rawBody.trim() ? JSON.parse(rawBody) : undefined;
+      }
+
+      const result = await testChatAgentAction(
+        agent.id,
+        selectedProviderKey,
+        action.actionId,
+        {
+          pathParams,
+          query: {},
+          body,
+        },
+        { getAccessToken },
+      );
+
+      setTestResult(
+        [
+          result.ok ? "Teste executado com sucesso." : "Teste retornou erro.",
+          `Status: ${result.statusCode ?? "-"}`,
+          `Duração: ${result.durationMs}ms`,
+          `URL: ${result.url}`,
+          "",
+          result.errorMessage ? `Erro: ${result.errorMessage}` : "",
+          result.responsePreview || "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      );
+    } catch (testError) {
+      setError(
+        testError instanceof Error
+          ? testError.message
+          : "Não foi possível testar esta rota.",
+      );
+    } finally {
+      setTestingActionId(null);
+    }
   }
 
   async function toggleAction(action: ChatActionCatalogItem, enabled: boolean) {
@@ -973,6 +1053,7 @@ export function ChatAgentActionsPage({
                       <span>Método</span>
                       <span>Caminho</span>
                       <span>Status</span>
+                      <span>Teste</span>
                     </div>
 
                     {providerActions.map((action) => (
@@ -991,6 +1072,13 @@ export function ChatAgentActionsPage({
                         <span>{action.method ?? "-"}</span>
                         <span>{action.path ?? "-"}</span>
                         <small>{action.sensitivity || "read"}</small>
+                        <button
+                          type="button"
+                          onClick={() => void testAction(action)}
+                          disabled={testingActionId === action.actionId}
+                        >
+                          {testingActionId === action.actionId ? "Testando..." : "Testar"}
+                        </button>
                       </article>
                     ))}
                   </div>

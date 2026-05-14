@@ -1,6 +1,8 @@
 import type {
   ChatActionCatalogItem,
   ChatActionProvider,
+  ChatActionTestLog,
+  ChatActionTestResult,
   ChatAgent,
   ChatAgentActionProvider,
   ChatAgentAction,
@@ -867,4 +869,45 @@ export async function updateChatAgentActionProvider(
   );
 
   return parseJsonResponse<ChatActionProvider>(response);
+}
+
+
+export async function testChatAgentAction(
+  agentId: string,
+  providerKey: string,
+  actionId: string,
+  payload: {
+    pathParams?: Record<string, string>;
+    query?: Record<string, string>;
+    body?: unknown;
+  },
+  options: ChatApiOptions = {},
+): Promise<ChatActionTestResult> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}/actions/${actionId}/test`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(options),
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return parseJsonResponse<ChatActionTestResult>(response);
+}
+
+export async function listChatAgentActionTestLogs(
+  agentId: string,
+  providerKey: string,
+  actionId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatActionTestLog[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}/actions/${actionId}/logs`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<ChatActionTestLog[]>(response);
 }

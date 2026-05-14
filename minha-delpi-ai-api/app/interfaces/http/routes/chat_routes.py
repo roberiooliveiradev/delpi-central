@@ -5,6 +5,7 @@ from flask import Blueprint, Response, g, jsonify, request, stream_with_context
 
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
+from app.infrastructure.external_actions.external_action_test_executor import ExternalActionTestExecutor
 from app.interfaces.http.rate_limit_decorators import rate_limit
 
 from app.application.dto.create_chat_artifact_request import CreateChatArtifactRequest
@@ -466,6 +467,73 @@ def import_agent_action_provider_schema(agent_id: str, provider_key: str):
         raise
 
     return jsonify(result), 200
+
+
+
+@chat_bp.post("/agents/<agent_id>/providers/<provider_key>/actions/<action_id>/test")
+@require_permission("minha-delpi.chat.access")
+def test_agent_action(agent_id: str, provider_key: str, action_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    linked = _find_linked_agent_provider(agent_id, provider_key)
+
+    if not linked:
+        return _not_found_response()
+
+    executor = ExternalActionTestExecutor()
+
+    try:
+        result = executor.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            provider_key=provider_key,
+            action_id=action_id,
+            path_params=payload.get("pathParams") or payload.get("path_params") or {},
+            query=payload.get("query") or {},
+            body=payload.get("body"),
+        )
+
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(
+        {
+            "ok": result.ok,
+            "statusCode": result.status_code,
+            "durationMs": result.duration_ms,
+            "url": result.url,
+            "responsePreview": result.response_preview,
+            "errorMessage": result.error_message,
+        }
+    ), 200
+
+
+@chat_bp.get("/agents/<agent_id>/providers/<provider_key>/actions/<action_id>/logs")
+@require_permission("minha-delpi.chat.access")
+def list_agent_action_test_logs(agent_id: str, provider_key: str, action_id: str):
+    linked = _find_linked_agent_provider(agent_id, provider_key)
+
+    if not linked:
+        return _not_found_response()
+
+    executor = ExternalActionTestExecutor()
+    logs = executor.list_logs(
+        user_id=g.current_user.sub,
+        agent_id=agent_id,
+        provider_key=provider_key,
+        action_id=action_id,
+        limit=int(request.args.get("limit") or 20),
+    )
+
+    return jsonify(logs), 200
 
 
 @chat_bp.get("/agents/<agent_id>/providers")

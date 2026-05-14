@@ -309,3 +309,21 @@ export type ChatAgentActionProvider = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type ChatActionTestResult = {
+  ok: boolean;
+  statusCode: number | null;
+  durationMs: number;
+  url: string;
+  responsePreview: string | null;
+  errorMessage: string | null;
+};
+
+export type ChatActionTestLog = ChatActionTestResult & {
+  id: string;
+  providerKey: string;
+  actionId: string;
+  method: string;
+  requestPayload: Record<string, unknown> | null;
+  createdAt: string | null;
+};
