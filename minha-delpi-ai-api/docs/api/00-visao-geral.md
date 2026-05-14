@@ -1,0 +1,116 @@
+# 00 — Visão geral, autenticação e convenções
+
+## Base URL
+
+```text
+/apps/minha-delpi-ai/api
+```
+
+Os blueprints atuais expõem:
+
+| Prefixo | Responsabilidade |
+|---|---|
+| `/health` | Health check público. |
+| `/chat` | Chat, sessões, agentes, projects, sources, anexos, artefatos e actions por agente. |
+| `/knowledge` | Ingestão e busca na base de conhecimento. |
+| `/tools` | Execução direta de tools internas. |
+| `/admin` | Administração, métricas, providers globais, audit logs e documentos de knowledge. |
+
+## Autenticação
+
+A API usa Bearer Token Keycloak/core-api na maioria das rotas:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+Os decorators de permissão usam constantes centralizadas, por exemplo:
+
+```python
+CHAT_ACCESS_PERMISSION = "minha-delpi.chat.access"
+CHAT_TOOLS_MANAGE_PERMISSION = "minha-delpi.chat.tools.manage"
+```
+
+## Formato de erro
+
+Erros seguem o padrão:
+
+```json
+{
+  "errors": [
+    {
+      "code": "invalid_request",
+      "message": "Request body must be a JSON object",
+      "path": "_global"
+    }
+  ]
+}
+```
+
+Códigos HTTP comuns:
+
+| Código | Uso típico |
+|---|---|
+| `200` | Operação concluída com payload. |
+| `201` | Recurso criado. |
+| `204` | Recurso removido sem payload. |
+| `400` | Payload inválido, JSON ausente ou parâmetro obrigatório. |
+| `403` | Permissão insuficiente. |
+| `404` | Recurso inexistente ou inacessível ao usuário. |
+| `429` | Rate limit, quando configurado. |
+| `500` | Erro interno não tratado. |
+
+## Permissões
+
+| Constante | Valor | Uso |
+|---|---|---|
+| `CHAT_ACCESS_PERMISSION` | `minha-delpi.chat.access` | Leitura/uso básico do módulo. |
+| `CHAT_ASK_PERMISSION` | `minha-delpi.chat.ask` | Envio de mensagens, fontes e anexos. |
+| `CHAT_HISTORY_VIEW_PERMISSION` | `minha-delpi.chat.history.view` | Histórico, quando aplicável. |
+| `CHAT_KNOWLEDGE_MANAGE_PERMISSION` | `minha-delpi.chat.knowledge.manage` | Ingestão/gestão de conhecimento. |
+| `CHAT_TOOLS_USE_PERMISSION` | `minha-delpi.chat.tools.use` | Uso de ferramentas/actions. |
+| `CHAT_TOOLS_MANAGE_PERMISSION` | `minha-delpi.chat.tools.manage` | Gerenciar agentes/actions próprios. |
+| `CHAT_ADMIN_PERMISSION` | `minha-delpi.chat.admin` | Administração, inclusive agentes oficiais/system. |
+
+## Agentes oficiais vs próprios
+
+- `visibility = "system"` ou `owner_user_id = null`: agente oficial/system.
+- Agente próprio: tem `owner_user_id` e visibilidade `private` ou `public`.
+- `tools.manage`: gerencia agentes próprios e suas actions.
+- `chat.admin` ou superadmin: gerencia agentes oficiais/system.
+
+## Capabilities
+
+O frontend deve consultar:
+
+```http
+GET /chat/capabilities
+```
+
+Retorno típico:
+
+```json
+{
+  "permissions": ["minha-delpi.chat.access"],
+  "isSuperadmin": false,
+  "canManageAgents": true,
+  "canManageOwnAgents": true,
+  "canManageOfficialAgents": false,
+  "canManageTools": true,
+  "canUseTools": true
+}
+```
+
+## Streaming SSE
+
+`POST /chat/sessions/{sessionId}/messages/stream` usa Server-Sent Events.
+
+Eventos esperados:
+
+| Evento | Payload |
+|---|---|
+| `sources` | `{ "sources": [...] }` |
+| `tool_calls` | `{ "toolCalls": [...] }` |
+| `token` | `{ "content": "..." }` |
+| `done` | payload compatível com `SendChatMessageResponse` |
+| `error` | `{ "message": "..." }` |
