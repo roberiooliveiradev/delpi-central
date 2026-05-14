@@ -20,13 +20,6 @@ def create_application() -> Flask:
     app = Flask(__name__)
     app.config["SERVICE_NAME"] = Settings.SERVICE_NAME
     app.config["ENV"] = Settings.ENV
-    if not Settings.DATABASE_URL:
-        raise RuntimeError(
-            "DATABASE_URL is not configured. "
-            "Set DATABASE_URL or configure PLUGINS_DB_USER, PLUGINS_DB_PASSWORD, "
-            "PLUGINS_DB_NAME, PLUGINS_DB_HOST and PLUGINS_DB_PORT."
-        )
-
     app.config["SQLALCHEMY_DATABASE_URI"] = Settings.DATABASE_URL
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 

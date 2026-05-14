@@ -1,46 +1,12 @@
 import os
 
-from app.infrastructure.config.env_loader import load_env_file
-
-load_env_file()
-
-
-def _build_database_url() -> str:
-    explicit_url = os.getenv("DATABASE_URL", "").strip()
-
-    if explicit_url:
-        return explicit_url
-
-    plugins_user = os.getenv("PLUGINS_DB_USER", "").strip()
-    plugins_password = os.getenv("PLUGINS_DB_PASSWORD", "").strip()
-    plugins_name = os.getenv("PLUGINS_DB_NAME", "").strip()
-    plugins_host = (
-        os.getenv("PLUGINS_DB_HOST", "").strip()
-        or os.getenv("DB_HOST", "").strip()
-        or "postgres-plugins"
-    )
-    plugins_port = (
-        os.getenv("PLUGINS_DB_PORT", "").strip()
-        or os.getenv("DB_PORT", "").strip()
-        or "5432"
-    )
-
-    if plugins_user and plugins_password and plugins_name:
-        return (
-            f"postgresql+psycopg://{plugins_user}:{plugins_password}"
-            f"@{plugins_host}:{plugins_port}/{plugins_name}"
-        )
-
-    return ""
-
-
 
 class Settings:
     SERVICE_NAME = os.getenv("SERVICE_NAME", "minha-delpi-ai-api")
     ENV = os.getenv("FLASK_ENV", "development")
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
-    DATABASE_URL = _build_database_url()
+    DATABASE_URL = os.getenv("DATABASE_URL", "")
 
     KEYCLOAK_JWKS_URL = os.getenv("KEYCLOAK_JWKS_URL", "")
     KEYCLOAK_ISSUER = os.getenv("KEYCLOAK_ISSUER", "")
