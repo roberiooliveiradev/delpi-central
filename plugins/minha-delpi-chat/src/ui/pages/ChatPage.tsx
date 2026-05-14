@@ -61,7 +61,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
 
-  const requestedAgentKey = contextAgentKey ?? activeAgentPageKey;
+  const requestedAgentKey = activeAgentPageKey ?? null;
 
   const {
     sessions,
@@ -117,10 +117,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
   const activeAgentPage = agents.find((agent) => agent.key === activeAgentPageKey);
-  const sessionAgentKey = activeSession?.agent_key ?? null;
-  const effectiveComposerAgentKey = sessionAgentKey ?? contextAgentKey ?? activeAgentPageKey;
-  const contextAgent = agents.find((agent) => agent.key === effectiveComposerAgentKey);
-  const isAgentConversation = Boolean(sessionAgentKey);
+  const conversationAgentKey = activeSession?.agent_key ?? activeAgentPageKey;
+  const conversationAgent = agents.find((agent) => agent.key === conversationAgentKey);
+  const contextAgent = agents.find((agent) => agent.key === contextAgentKey);
   const selectedProjectSessions = selectedProjectId
     ? sessions.filter((session) => session.project_id === selectedProjectId)
     : [];
@@ -362,8 +361,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
       return `Pergunte usando ${contextAgent.name}`;
     }
 
-    if (activeAgentPage) {
-      return `Pergunte ao agente ${activeAgentPage.name}`;
+    if (conversationAgent) {
+      return `Pergunte ao agente ${conversationAgent.name}`;
     }
 
     return "Pergunte alguma coisa";
@@ -382,10 +381,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const composerContextProps = {
     agents,
     projects,
-    selectedAgentKey: effectiveComposerAgentKey,
+    selectedAgentKey: contextAgentKey,
     selectedProjectId,
-    isAgentLocked: isAgentConversation,
-    onSelectAgent: isAgentConversation ? undefined : handleSelectContextAgent,
+    onSelectAgent: handleSelectContextAgent,
     onOpenAgentPage: (agentKey: string) => {
       setCanvasDocument(null);
       setSelectedProjectId(null);
@@ -506,10 +504,10 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
         ) : (
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
           <ChatContextTopbar
-            mode={selectedProject ? "project" : activeAgentPage ? "agent" : "general"}
+            mode={selectedProject ? "project" : conversationAgent ? "agent" : "general"}
             title={
               selectedProject?.name ||
-              activeAgentPage?.name ||
+              conversationAgent?.name ||
               "Minha DELPI Chat"
             }
             subtitle={
@@ -517,8 +515,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 ? contextAgent
                   ? `Projeto usando ${contextAgent.name}`
                   : "Projeto selecionado"
-                : activeAgentPage
-                  ? "Página do agente"
+                : conversationAgent
+                  ? "Conversa do agente"
                   : contextAgent
                     ? `Chat usando ${contextAgent.name}`
                     : "Assistente corporativo"
@@ -526,8 +524,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             badge={
               selectedProject
                 ? `${selectedProjectSessions.length} chats`
-                : activeAgentPage
-                  ? `${getAgentIcebreakerCount(activeAgentPage)} quebra-gelos`
+                : conversationAgent
+                  ? `${getAgentIcebreakerCount(conversationAgent)} quebra-gelos`
                   : undefined
             }
             onOpenAdmin={onOpenAdmin}
