@@ -50,6 +50,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     requestKey: number;
   } | null>(null);
   const [canManageAgents, setCanManageAgents] = useState(false);
+  const [hasLoadedManageAgentsPermission, setHasLoadedManageAgentsPermission] = useState(false);
 
   const [contextAgentKey, setContextAgentKey] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
@@ -140,11 +141,15 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   }, [isSidebarCollapsed]);
 
   useEffect(() => {
-    if (currentView === "agents" && !canManageAgents) {
+    if (
+      hasLoadedManageAgentsPermission &&
+      currentView === "agents" &&
+      !canManageAgents
+    ) {
       setAgentEditRequest(null);
       setCurrentView("chat");
     }
-  }, [currentView, canManageAgents]);
+  }, [currentView, canManageAgents, hasLoadedManageAgentsPermission]);
 
 
   useEffect(() => {
@@ -171,6 +176,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     let isMounted = true;
 
     async function loadToolManagementPermission() {
+      setHasLoadedManageAgentsPermission(false);
+
       const allowed = await userCanManageChatTools(async () => {
         const token = await getAccessToken?.();
 
@@ -179,6 +186,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
       if (isMounted) {
         setCanManageAgents(allowed);
+        setHasLoadedManageAgentsPermission(true);
       }
     }
 
@@ -547,10 +555,14 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 await handleStartSession();
               }
             }}
-            onManageAgents={() => {
-              clearWorkspaceError();
-              setCurrentView("agents");
-            }}
+            onManageAgents={
+              canManageAgents
+                ? () => {
+                    clearWorkspaceError();
+                    setCurrentView("agents");
+                  }
+                : undefined
+            }
             onClearAgent={() => {
               setActiveAgentPageKey(null);
               setContextAgentKey(null);
