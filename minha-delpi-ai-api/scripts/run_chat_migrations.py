@@ -316,6 +316,74 @@ MIGRATIONS: list[Migration] = [
             on ai_chat_agent_actions (action_id);
         """,
     ),
+    Migration(
+        "060_external_action_test_logs_table",
+        "Cria tabela de logs de teste de actions",
+        """
+        create table if not exists ai_external_action_test_logs (
+            id uuid primary key default gen_random_uuid(),
+            user_id varchar(120) not null,
+            agent_id uuid not null,
+            provider_key varchar(120) not null,
+            action_id varchar(220) not null,
+            method varchar(10) not null,
+            url text not null,
+            request_payload jsonb null,
+            status_code integer null,
+            ok boolean not null default false,
+            duration_ms integer null,
+            response_preview text null,
+            error_message text null,
+            created_at timestamptz not null default now()
+        );
+        """,
+    ),
+
+    Migration(
+        "061_external_action_test_logs_columns",
+        "Atualiza colunas de logs de teste de actions",
+        """
+        alter table ai_external_action_test_logs
+            add column if not exists user_id varchar(120) not null default '',
+            add column if not exists agent_id uuid null,
+            add column if not exists provider_key varchar(120) not null default '',
+            add column if not exists action_id varchar(220) not null default '',
+            add column if not exists method varchar(10) not null default 'GET',
+            add column if not exists url text not null default '',
+            add column if not exists request_payload jsonb null,
+            add column if not exists status_code integer null,
+            add column if not exists ok boolean not null default false,
+            add column if not exists duration_ms integer null,
+            add column if not exists response_preview text null,
+            add column if not exists error_message text null,
+            add column if not exists created_at timestamptz not null default now();
+        """,
+    ),
+
+    Migration(
+        "062_external_action_test_logs_indexes",
+        "Cria índices de logs de teste de actions",
+        """
+        create index if not exists ix_ai_external_action_test_logs_user_id
+            on ai_external_action_test_logs (user_id);
+
+        create index if not exists ix_ai_external_action_test_logs_agent_id
+            on ai_external_action_test_logs (agent_id);
+
+        create index if not exists ix_ai_external_action_test_logs_provider_key
+            on ai_external_action_test_logs (provider_key);
+
+        create index if not exists ix_ai_external_action_test_logs_action_id
+            on ai_external_action_test_logs (action_id);
+
+        create index if not exists ix_ai_external_action_test_logs_ok
+            on ai_external_action_test_logs (ok);
+
+        create index if not exists ix_ai_external_action_test_logs_created_at
+            on ai_external_action_test_logs (created_at);
+        """,
+    ),
+
 ]
 
 
@@ -326,6 +394,7 @@ CHECK_TABLES = [
     "ai_external_actions",
     "ai_chat_agent_action_providers",
     "ai_chat_agent_actions",
+    "ai_external_action_test_logs",
 ]
 
 
@@ -348,6 +417,7 @@ CHECK_COLUMNS = [
     ("ai_chat_agent_actions", "provider_key"),
     ("ai_chat_agent_actions", "action_id"),
     ("ai_chat_agent_actions", "requires_confirmation"),
+    ("ai_external_action_test_logs", "user_id"),
 ]
 
 
