@@ -66,8 +66,62 @@ def test_build_context_includes_scope_metadata_in_sources():
             "attachmentId": "attachment-1",
             "originalFilename": "manual.md",
             "contentType": "text/markdown",
+            "chunks": [0],
         }
     ]
+
+
+def test_build_context_limits_chunks_per_document_and_deduplicates_sources():
+    service = RagContextService(
+        FakeSearchKnowledgeUseCase(
+            [
+                {
+                    "id": "chunk-1",
+                    "documentId": "doc-1",
+                    "title": "Documento SQL",
+                    "sourceType": "agent_source",
+                    "sourceRef": "arquivo.txt",
+                    "chunkIndex": 1,
+                    "content": "Trecho 1 SELECT * FROM X",
+                    "score": 0.50,
+                    "metadata": {"scope": "agent_source"},
+                },
+                {
+                    "id": "chunk-2",
+                    "documentId": "doc-1",
+                    "title": "Documento SQL",
+                    "sourceType": "agent_source",
+                    "sourceRef": "arquivo.txt",
+                    "chunkIndex": 2,
+                    "content": "Trecho 2 SELECT * FROM Y",
+                    "score": 0.60,
+                    "metadata": {"scope": "agent_source"},
+                },
+                {
+                    "id": "chunk-3",
+                    "documentId": "doc-1",
+                    "title": "Documento SQL",
+                    "sourceType": "agent_source",
+                    "sourceRef": "arquivo.txt",
+                    "chunkIndex": 3,
+                    "content": "Trecho 3 SELECT * FROM Z",
+                    "score": 0.99,
+                    "metadata": {"scope": "agent_source"},
+                },
+            ]
+        )
+    )
+
+    result = service.build_context("produto 10080014")
+
+    assert "Trecho 1" in result["context"]
+    assert "Trecho 2" in result["context"]
+    assert "Trecho 3" not in result["context"]
+
+    assert len(result["sources"]) == 1
+    assert result["sources"][0]["documentId"] == "doc-1"
+    assert result["sources"][0]["chunks"] == [1, 2]
+    assert result["sources"][0]["score"] == 0.60
 
 
 def test_build_context_returns_empty_sources_when_no_chunks():

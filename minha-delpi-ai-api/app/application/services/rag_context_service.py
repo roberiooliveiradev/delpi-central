@@ -4,6 +4,8 @@ from app.infrastructure.config.settings import Settings
 
 
 class RagContextService:
+    MAX_CHUNKS_PER_DOCUMENT = 2
+
     def __init__(self, search_knowledge_use_case: SearchKnowledgeUseCase):
         self.search_knowledge_use_case = search_knowledge_use_case
 
@@ -23,13 +25,23 @@ class RagContextService:
             }
 
         context_parts: list[str] = []
-        sources: list[dict] = []
+        sources_by_document: dict[str, dict] = {}
+        chunks_by_document: dict[str, int] = {}
         total_chars = 0
+        source_index = 0
 
-        for index, chunk in enumerate(chunks, start=1):
+        for chunk in chunks:
             content = chunk.get("content") or ""
 
             if not content:
+                continue
+
+            document_key = str(chunk.get("documentId") or chunk.get("id") or "")
+            if not document_key:
+                continue
+
+            used_count = chunks_by_document.get(document_key, 0)
+            if used_count >= self.MAX_CHUNKS_PER_DOCUMENT:
                 continue
 
             remaining = Settings.MAX_CONTEXT_CHARS - total_chars
@@ -39,8 +51,10 @@ class RagContextService:
 
             clipped_content = content[:remaining]
             total_chars += len(clipped_content)
+            chunks_by_document[document_key] = used_count + 1
+            source_index += 1
 
-            label = f"[Fonte {index}]"
+            label = f"[Fonte {source_index}]"
 
             context_parts.append(
                 "\n".join(
@@ -53,11 +67,23 @@ class RagContextService:
                 )
             )
 
-            sources.append(self._source_from_chunk(chunk))
+            source = self._source_from_chunk(chunk)
+            existing = sources_by_document.get(document_key)
+
+            if not existing:
+                source["chunks"] = [chunk.get("chunkIndex")]
+                sources_by_document[document_key] = source
+            else:
+                existing.setdefault("chunks", []).append(chunk.get("chunkIndex"))
+                existing["score"] = max(
+                    value
+                    for value in [existing.get("score"), chunk.get("score")]
+                    if value is not None
+                ) if any(value is not None for value in [existing.get("score"), chunk.get("score")]) else None
 
         return {
             "context": "\n\n".join(context_parts),
-            "sources": sources,
+            "sources": list(sources_by_document.values()),
         }
 
     def _source_from_chunk(self, chunk: dict) -> dict:

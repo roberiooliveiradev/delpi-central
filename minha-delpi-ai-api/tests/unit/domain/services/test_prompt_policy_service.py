@@ -60,3 +60,15 @@ def test_contextual_prompt_includes_product_policy_when_tool_context_mentions_pr
 
     assert "Instruções para dados de produtos" in prompt
     assert "código, descrição, tipo" in prompt
+
+
+def test_contextual_prompt_includes_sql_policy_when_rag_context_has_sql():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="SELECT * FROM SD4010 WHERE D4_PRODUTO = '10080014'",
+        tool_context="",
+    )
+
+    assert "Instruções para contexto documental com SQL" in prompt
+    assert "Não reproduza SQL bruto" in prompt
