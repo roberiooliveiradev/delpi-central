@@ -48,6 +48,8 @@ def test_build_context_includes_scope_metadata_in_sources():
     )
 
     assert "Conteúdo relevante" in result["context"]
+    assert "Escopo: session_source" in result["context"]
+    assert "Arquivo: manual.md" in result["context"]
 
     assert result["sources"] == [
         {

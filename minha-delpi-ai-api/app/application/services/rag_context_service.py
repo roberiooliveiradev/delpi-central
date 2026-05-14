@@ -56,12 +56,16 @@ class RagContextService:
 
             label = f"[Fonte {source_index}]"
 
+            metadata = chunk.get("metadata") or {}
+
             context_parts.append(
                 "\n".join(
                     [
                         label,
                         f"Título: {chunk.get('title') or 'Documento sem título'}",
                         f"Origem: {chunk.get('sourceRef') or chunk.get('sourceType') or 'desconhecida'}",
+                        f"Escopo: {metadata.get('scope') or 'desconhecido'}",
+                        f"Arquivo: {metadata.get('originalFilename') or chunk.get('title') or 'não informado'}",
                         f"Trecho: {clipped_content}",
                     ]
                 )

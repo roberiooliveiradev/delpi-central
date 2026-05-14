@@ -331,7 +331,7 @@ export function ChatInput({
 
       <small>
         {hasAttachments
-          ? "Arquivos preparados no composer. O envio real será conectado no backend."
+          ? "Arquivos anexados serão usados como fonte de conhecimento desta conversa."
           : "A resposta será exibida em tempo real e salva no histórico ao concluir."}
       </small>
     </form>

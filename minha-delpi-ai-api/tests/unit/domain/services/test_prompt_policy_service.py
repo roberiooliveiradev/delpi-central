@@ -72,3 +72,15 @@ def test_contextual_prompt_includes_sql_policy_when_rag_context_has_sql():
 
     assert "Instruções para contexto documental com SQL" in prompt
     assert "Não reproduza SQL bruto" in prompt
+
+
+def test_contextual_prompt_includes_session_knowledge_policy_for_attachment_context():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="[Fonte 1]\nTítulo: manual.pdf\nEscopo: session_source\nArquivo: manual.pdf\nTrecho: conteúdo do arquivo",
+        tool_context="",
+    )
+
+    assert "Instruções para fontes anexadas à conversa" in prompt
+    assert "fontes de conhecimento da sessão atual" in prompt
