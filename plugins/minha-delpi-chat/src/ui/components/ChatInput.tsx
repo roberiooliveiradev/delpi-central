@@ -134,14 +134,18 @@ export function ChatInput({
 
             <strong>{selectedAgent.name}</strong>
 
-            <button
-              type="button"
-              onClick={() => onSelectAgent?.(null)}
-              aria-label="Remover agente do contexto"
-              title="Remover agente do contexto"
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
+            {isAgentLocked ? (
+              <small>Agente da conversa</small>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onSelectAgent?.(null)}
+                aria-label="Remover agente do contexto"
+                title="Remover agente do contexto"
+              >
+                <X size={16} aria-hidden="true" />
+              </button>
+            )}
           </div>
         ) : null}
 
@@ -211,51 +215,60 @@ export function ChatInput({
               <div className="mdc-chat-input__menu-section">
                 <strong>Usar agente neste contexto</strong>
 
-                {selectedAgent ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectAgent?.(null);
-                      setIsMenuOpen(false);
-                    }}
-                  >
-                    <X size={16} aria-hidden="true" />
-                    <span>Remover agente deste contexto</span>
+                {isAgentLocked ? (
+                  <button type="button" disabled>
+                    <Bot size={16} aria-hidden="true" />
+                    <span>Esta conversa já pertence ao agente selecionado</span>
                   </button>
-                ) : null}
+                ) : (
+                  <>
+                    {selectedAgent ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSelectAgent?.(null);
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        <X size={16} aria-hidden="true" />
+                        <span>Remover agente deste contexto</span>
+                      </button>
+                    ) : null}
 
-                {agents.map((agent) => (
-                  <div key={agent.id} className="mdc-chat-input__agent-menu-row">
-                    <button
-                      type="button"
-                      className={
-                        agent.key === selectedAgentKey
-                          ? "mdc-chat-input__menu-item--active"
-                          : undefined
-                      }
-                      onClick={() => {
-                        onSelectAgent?.(agent.key);
-                        setIsMenuOpen(false);
-                      }}
-                    >
-                      <Bot size={16} aria-hidden="true" />
-                      <span>{agent.name}</span>
-                    </button>
+                    {agents.map((agent) => (
+                      <div key={agent.id} className="mdc-chat-input__agent-menu-row">
+                        <button
+                          type="button"
+                          className={
+                            agent.key === selectedAgentKey
+                              ? "mdc-chat-input__menu-item--active"
+                              : undefined
+                          }
+                          onClick={() => {
+                            onSelectAgent?.(agent.key);
+                            setIsMenuOpen(false);
+                          }}
+                        >
+                          <Bot size={16} aria-hidden="true" />
+                          <span>{agent.name}</span>
+                        </button>
 
-                    <button
-                      type="button"
-                      className="mdc-chat-input__open-agent"
-                      onClick={() => {
-                        onOpenAgentPage?.(agent.key);
-                        setIsMenuOpen(false);
-                      }}
-                      title={`Abrir página de ${agent.name}`}
-                      aria-label={`Abrir página de ${agent.name}`}
-                    >
-                      <ArrowUpRight size={15} aria-hidden="true" />
-                    </button>
-                  </div>
-                ))}
+                        <button
+                          type="button"
+                          className="mdc-chat-input__open-agent"
+                          onClick={() => {
+                            onOpenAgentPage?.(agent.key);
+                            setIsMenuOpen(false);
+                          }}
+                          title={`Abrir página de ${agent.name}`}
+                          aria-label={`Abrir página de ${agent.name}`}
+                        >
+                          <ArrowUpRight size={15} aria-hidden="true" />
+                        </button>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
 
               <div className="mdc-chat-input__menu-section">
