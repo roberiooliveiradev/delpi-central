@@ -3,6 +3,7 @@ from uuid import UUID
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.dto.send_chat_message_response import SendChatMessageResponse
+from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.rag_context_service import RagContextService
@@ -37,6 +38,7 @@ class SendChatMessageUseCase:
         self.audit_repository = audit_repository
         self.llm_gateway = llm_gateway
         self.prompt_policy_service = prompt_policy_service
+        self.prompt_builder_service = ChatPromptBuilderService(prompt_policy_service)
         self.rag_context_service = rag_context_service
         self.chat_tool_context_service = chat_tool_context_service
         self.agent_repository = agent_repository
@@ -104,7 +106,7 @@ class SendChatMessageUseCase:
             message_id=user_message.id,
         )
 
-        llm_messages = self._build_llm_messages(
+        llm_messages = self.prompt_builder_service.build_messages(
             history=history,
             current_message=message,
             rag_context=rag["context"],
@@ -200,75 +202,6 @@ class SendChatMessageUseCase:
             raise InvalidChatSessionInputError("Message exceeds maximum length")
 
         return normalized
-
-    def _build_llm_messages(
-        self,
-        history,
-        current_message: str,
-        rag_context: str,
-        tool_context: str,
-        project_prompt: str | None = None,
-        agent_prompt: str | None = None,
-        attachments: list[dict] | None = None,
-    ) -> list[dict]:
-        base_prompt = self.prompt_policy_service.build_contextual_prompt(
-            rag_context=rag_context,
-            tool_context=tool_context,
-        )
-
-        if project_prompt:
-            base_prompt = (
-                f"{base_prompt}\n\n"
-                "Contexto e instruções do projeto atual:\n"
-                f"{project_prompt}"
-            )
-
-        if agent_prompt:
-            base_prompt = (
-                f"{base_prompt}\n\n"
-                "Instruções do agente selecionado:\n"
-                f"{agent_prompt}"
-            )
-
-        if attachments:
-            attachment_lines = "\n".join(
-                f"- {item.get('original_filename')} ({item.get('content_type') or 'tipo desconhecido'})"
-                for item in attachments
-            )
-            base_prompt = (
-                f"{base_prompt}\n\n"
-                "Arquivos anexados pelo usuário nesta mensagem:\n"
-                f"{attachment_lines}\n"
-                "Observação: nesta etapa os arquivos estão vinculados à mensagem, "
-                "o conteúdo será usado pelo RAG quando estiver indexado."
-            )
-
-        messages = [
-            {
-                "role": "system",
-                "content": base_prompt,
-            }
-        ]
-
-        for item in history:
-            if item.role not in {"user", "assistant", "system"}:
-                continue
-
-            messages.append(
-                {
-                    "role": item.role,
-                    "content": item.content,
-                }
-            )
-
-        messages.append(
-            {
-                "role": "user",
-                "content": current_message,
-            }
-        )
-
-        return messages
 
     def _hash_prompt(self, prompt: str) -> str:
         return hashlib.sha256(prompt.encode("utf-8")).hexdigest()
