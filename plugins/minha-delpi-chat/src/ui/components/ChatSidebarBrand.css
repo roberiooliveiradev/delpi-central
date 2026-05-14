@@ -40,3 +40,36 @@
   color: var(--mdc-primary);
   border-color: color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
 }
+
+/* UX fix — align brand collapse button with logo text block */
+.mdc-chat-sidebar__brand {
+  align-items: center;
+  padding-top: 0.85rem;
+  padding-bottom: 0.72rem;
+}
+
+.mdc-chat-sidebar__brand > div {
+  align-self: center;
+}
+
+.mdc-chat-sidebar__collapse-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.mdc-chat-sidebar__collapse-button svg {
+  display: block;
+  flex: 0 0 auto;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+}
