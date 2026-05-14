@@ -315,13 +315,23 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   }
 
   function handleAttachFiles(files: File[]) {
-    const nextAttachments = files.map((file) => ({
+    const validFiles = files.filter((file) => file.size > 0);
+
+    if (validFiles.length < files.length) {
+      window.alert("Arquivos vazios não podem ser anexados.");
+    }
+
+    const nextAttachments = validFiles.map((file) => ({
       id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
       name: file.name,
       size: file.size,
       type: file.type,
       file,
     }));
+
+    if (nextAttachments.length === 0) {
+      return;
+    }
 
     setComposerAttachments((current) => [...current, ...nextAttachments].slice(0, 10));
   }
@@ -333,13 +343,16 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   }
 
   async function handleSubmitMessage() {
+    const messageToSend = draft.trim();
     const files = composerAttachments.map((attachment) => attachment.file);
+
+    if (!messageToSend) {
+      return;
+    }
 
     await sendMessage({ attachments: files });
 
-    if (draft.trim()) {
-      setComposerAttachments([]);
-    }
+    setComposerAttachments([]);
   }
 
   const isConversationEmpty =
