@@ -32,6 +32,7 @@ class ExternalActionTestExecutor:
         path_params: dict[str, Any] | None = None,
         query: dict[str, Any] | None = None,
         body: Any = None,
+        user_authorization_header: str | None = None,
     ) -> ExternalActionTestResult:
         normalized_provider_key = str(provider_key or "").strip()
         normalized_action_id = str(action_id or "").strip()
@@ -79,7 +80,12 @@ class ExternalActionTestExecutor:
             payload_bytes = json.dumps(body).encode("utf-8")
             headers["Content-Type"] = "application/json"
 
-        self._apply_auth(headers, provider.auth_mode, provider.auth_config or {})
+        self._apply_auth(
+            headers,
+            provider.auth_mode,
+            provider.auth_config or {},
+            user_authorization_header=user_authorization_header,
+        )
 
         started = time.monotonic()
         status_code = None
@@ -213,7 +219,14 @@ class ExternalActionTestExecutor:
         headers: dict[str, str],
         auth_mode: str | None,
         auth_config: dict[str, Any],
+        *,
+        user_authorization_header: str | None = None,
     ) -> None:
+        if auth_mode == "user_token":
+            if user_authorization_header:
+                headers["Authorization"] = user_authorization_header
+            return
+
         if auth_mode == "api_key":
             api_key = str(auth_config.get("apiKey") or "")
             header_name = str(auth_config.get("headerName") or "Authorization")

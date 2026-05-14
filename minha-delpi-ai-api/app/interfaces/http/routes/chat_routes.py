@@ -498,6 +498,7 @@ def test_agent_action(agent_id: str, provider_key: str, action_id: str):
             path_params=payload.get("pathParams") or payload.get("path_params") or {},
             query=payload.get("query") or {},
             body=payload.get("body"),
+            user_authorization_header=request.headers.get("Authorization"),
         )
 
         db.session.commit()

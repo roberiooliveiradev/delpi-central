@@ -44,7 +44,7 @@ type ChatAgentActionsPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
-type AuthMode = "none" | "api_key" | "oauth";
+type AuthMode = "none" | "user_token" | "api_key" | "oauth";
 
 type AuthConfigForm = {
   apiKey: string;
@@ -100,7 +100,7 @@ function stringifySchema(schema: Record<string, unknown> | null | undefined): st
 }
 
 function normalizeAuthMode(value: string | null | undefined): AuthMode {
-  if (value === "api_key" || value === "oauth") {
+  if (value === "user_token" || value === "api_key" || value === "oauth") {
     return value;
   }
 
@@ -108,6 +108,13 @@ function normalizeAuthMode(value: string | null | undefined): AuthMode {
 }
 
 function buildAuthConfig(mode: AuthMode, form: AuthConfigForm): Record<string, unknown> {
+  if (mode === "user_token") {
+    return {
+      source: "current_user",
+      headerName: "Authorization",
+    };
+  }
+
   if (mode === "api_key") {
     return {
       apiKey: form.apiKey,
@@ -774,6 +781,15 @@ export function ChatAgentActionsPage({
                     <label>
                       <input
                         type="radio"
+                        checked={authMode === "user_token"}
+                        onChange={() => setAuthMode("user_token")}
+                      />
+                      Token do usuário atual
+                    </label>
+
+                    <label>
+                      <input
+                        type="radio"
                         checked={authMode === "api_key"}
                         onChange={() => setAuthMode("api_key")}
                       />
@@ -789,6 +805,14 @@ export function ChatAgentActionsPage({
                       OAuth
                     </label>
                   </div>
+
+                  {authMode === "user_token" ? (
+                    <div className="mdc-chat-agent-actions-page__auth-note">
+                      Esta action encaminhará o token do usuário logado para a API.
+                      Use este modo para APIs internas da Minha DELPI que validam permissões
+                      por usuário.
+                    </div>
+                  ) : null}
 
                   {authMode === "api_key" ? (
                     <div className="mdc-chat-agent-actions-page__grid">
