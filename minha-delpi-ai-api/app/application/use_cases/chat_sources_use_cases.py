@@ -21,6 +21,7 @@ MAX_SOURCE_SIZE_BYTES = 25 * 1024 * 1024
 
 def _source_response(document, chunk_count: int | None = None) -> ChatSourceResponse:
     metadata = document.metadata or {}
+    extractor = metadata.get("extractor")
 
     return ChatSourceResponse(
         id=str(document.id),
@@ -38,6 +39,9 @@ def _source_response(document, chunk_count: int | None = None) -> ChatSourceResp
         created_at=document.created_at.isoformat(),
         updated_at=document.updated_at.isoformat(),
         chunk_count=chunk_count,
+        indexed=(chunk_count or 0) > 0,
+        extractor=extractor if isinstance(extractor, dict) else None,
+        index_reason=metadata.get("indexReason"),
     )
 
 

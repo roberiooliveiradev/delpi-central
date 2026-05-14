@@ -18,3 +18,6 @@ class ChatSourceResponse:
     created_at: str
     updated_at: str
     chunk_count: int | None = None
+    indexed: bool | None = None
+    extractor: dict | None = None
+    index_reason: str | dict | None = None
