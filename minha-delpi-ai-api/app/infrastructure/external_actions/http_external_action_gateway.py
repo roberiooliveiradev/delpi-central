@@ -103,19 +103,20 @@ class HttpExternalActionGateway:
         return headers
 
     def _should_send_json_body(self, action: dict, body) -> bool:
-        if body is None:
+        method = str(action.get("method") or "").upper()
+
+        if method not in {"POST", "PUT", "PATCH"}:
             return False
 
-        return action["method"] in {"POST", "PUT", "PATCH"} and isinstance(
-            body,
-            (dict, list),
-        )
+        return body not in (None, "", {}, []) and isinstance(body, (dict, list))
 
     def _should_send_raw_body(self, action: dict, body) -> bool:
-        if body is None:
+        method = str(action.get("method") or "").upper()
+
+        if method not in {"POST", "PUT", "PATCH"}:
             return False
 
-        return action["method"] in {"POST", "PUT", "PATCH"} and isinstance(body, str)
+        return body not in (None, "", {}, []) and isinstance(body, str)
 
     def _parse_response(self, response):
         content_type = response.headers.get("content-type", "")

@@ -35,6 +35,7 @@ class ExecuteExternalActionUseCase:
 
         provider = action_bundle["provider"]
         action = action_bundle["action"]
+        arguments = self._normalize_arguments_for_method(action, arguments)
 
         self.policy.validate(provider, action, arguments)
 
@@ -45,6 +46,34 @@ class ExecuteExternalActionUseCase:
             body=arguments.get("body"),
             access_token=access_token,
         )
+
+    def _normalize_arguments_for_method(self, action: dict, arguments: dict) -> dict:
+        normalized = dict(arguments or {})
+        method = str(action.get("method") or "").upper()
+
+        parameters = dict(normalized.get("parameters") or {})
+        body = normalized.get("body")
+
+        if method not in {"GET", "HEAD", "DELETE"}:
+            normalized["parameters"] = parameters
+            return normalized
+
+        if body in (None, "", {}, []):
+            normalized["parameters"] = parameters
+            normalized["body"] = None
+            return normalized
+
+        if isinstance(body, dict):
+            for key, value in body.items():
+                if value in (None, ""):
+                    continue
+
+                parameters.setdefault(key, value)
+
+        normalized["parameters"] = parameters
+        normalized["body"] = None
+
+        return normalized
 
         sanitized_data = self.policy.sanitize_response(result["data"])
         presentation = self.presenter.build_presentation(sanitized_data)

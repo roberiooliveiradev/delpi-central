@@ -47,9 +47,9 @@ class ExternalActionExecutionPolicy:
                 raise ValueError(f"Missing path parameter: {name}")
 
     def _validate_body(self, action: dict, body) -> None:
-        method = action.get("method")
+        method = str(action.get("method") or "").upper()
 
-        if method in {"GET", "DELETE"} and body is not None:
+        if method in {"GET", "HEAD", "DELETE"} and body not in (None, "", {}, []):
             raise ValueError("body is not allowed for this method")
 
     def _sanitize(self, value):
