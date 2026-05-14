@@ -2,6 +2,7 @@ import type {
   ChatActionCatalogItem,
   ChatActionProvider,
   ChatActionTestLog,
+  ChatCapabilities,
   ChatActionTestResult,
   ChatAgent,
   ChatAgentActionProvider,
@@ -83,6 +84,18 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
 
   return payload as T;
 }
+
+export async function getChatCapabilities(
+  options: ChatApiOptions = {},
+): Promise<ChatCapabilities> {
+  const response = await fetch(`${API_BASE_URL}/chat/capabilities`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatCapabilities>(response);
+}
+
 
 export async function createChatSession(
   payload: CreateChatSessionPayload,

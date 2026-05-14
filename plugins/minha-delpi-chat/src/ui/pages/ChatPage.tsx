@@ -14,6 +14,7 @@ import {
   createChatArtifact,
   createProjectTextSource,
   deleteChatSource,
+  getChatCapabilities,
   listProjectSources,
   updateChatArtifact,
   uploadProjectSource,
@@ -21,7 +22,6 @@ import {
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
-import { userCanManageChatTools } from "../../security/chatPermissions";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
 
@@ -178,15 +178,20 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     async function loadToolManagementPermission() {
       setHasLoadedManageAgentsPermission(false);
 
-      const allowed = await userCanManageChatTools(async () => {
-        const token = await getAccessToken?.();
+      try {
+        const capabilities = await getChatCapabilities({ getAccessToken });
 
-        return token ?? null;
-      });
-
-      if (isMounted) {
-        setCanManageAgents(allowed);
-        setHasLoadedManageAgentsPermission(true);
+        if (isMounted) {
+          setCanManageAgents(capabilities.canManageAgents);
+        }
+      } catch {
+        if (isMounted) {
+          setCanManageAgents(false);
+        }
+      } finally {
+        if (isMounted) {
+          setHasLoadedManageAgentsPermission(true);
+        }
       }
     }
 

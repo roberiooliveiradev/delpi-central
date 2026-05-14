@@ -116,6 +116,33 @@ def list_actions():
     return jsonify(actions), 200
 
 
+@chat_bp.get("/capabilities")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def get_chat_capabilities():
+    user = g.current_user
+    permissions = set(getattr(user, "permissions", []) or [])
+    is_superadmin = bool(getattr(user, "is_superadmin", False))
+
+    can_manage_tools = (
+        is_superadmin
+        or CHAT_TOOLS_MANAGE_PERMISSION in permissions
+        or CHAT_ADMIN_PERMISSION in permissions
+    )
+
+    return jsonify(
+        {
+            "permissions": sorted(permissions),
+            "isSuperadmin": is_superadmin,
+            "canManageAgents": can_manage_tools,
+            "canManageTools": can_manage_tools,
+            "canUseTools": (
+                can_manage_tools
+                or CHAT_TOOLS_USE_PERMISSION in permissions
+            ),
+        }
+    ), 200
+
+
 @chat_bp.get("/agents")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def list_agents():

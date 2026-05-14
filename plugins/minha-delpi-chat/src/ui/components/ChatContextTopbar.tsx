@@ -121,16 +121,18 @@ export function ChatContextTopbar({
 
             {isMenuOpen && mode === "agent" ? (
               <div className="mdc-chat-context-topbar__menu">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onManageAgents?.();
-                  }}
-                >
-                  <Settings size={17} aria-hidden="true" />
-                  <span>Gerenciar agentes</span>
-                </button>
+                {onManageAgents ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onManageAgents();
+                    }}
+                  >
+                    <Settings size={17} aria-hidden="true" />
+                    <span>Gerenciar agentes</span>
+                  </button>
+                ) : null}
 
                 <button
                   type="button"

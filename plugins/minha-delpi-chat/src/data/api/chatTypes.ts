@@ -330,3 +330,12 @@ export type ChatActionTestLog = ChatActionTestResult & {
   requestPayload: Record<string, unknown> | null;
   createdAt: string | null;
 };
+
+
+export type ChatCapabilities = {
+  permissions: string[];
+  isSuperadmin: boolean;
+  canManageAgents: boolean;
+  canManageTools: boolean;
+  canUseTools: boolean;
+};
