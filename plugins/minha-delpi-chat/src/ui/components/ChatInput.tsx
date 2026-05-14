@@ -1,5 +1,6 @@
 import {
   ArrowUpRight,
+  ArrowUp,
   Bot,
   FileText,
   Folder,
@@ -317,17 +318,29 @@ export function ChatInput({
             }
           }}
         />
-      </div>
 
-      {isSending ? (
-        <button type="button" onClick={onCancel}>
-          Cancelar
-        </button>
-      ) : (
-        <button type="submit" disabled={disabled || !value.trim()}>
-          Enviar
-        </button>
-      )}
+        {isSending ? (
+          <button
+            type="button"
+            className="mdc-chat-input__send mdc-chat-input__send--cancel"
+            onClick={onCancel}
+            aria-label="Cancelar resposta"
+            title="Cancelar"
+          >
+            <span aria-hidden="true" />
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className="mdc-chat-input__send"
+            disabled={disabled || !value.trim()}
+            aria-label="Enviar mensagem"
+            title="Enviar"
+          >
+            <ArrowUp size={18} aria-hidden="true" />
+          </button>
+        )}
+      </div>
 
       <small>
         {hasAttachments
