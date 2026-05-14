@@ -312,3 +312,37 @@
 .mdc-chat-message-edit-actions button:hover {
   transform: translateY(-1px);
 }
+
+.mdc-chat-message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: var(--mdc-space-3);
+}
+
+.mdc-chat-message-attachment {
+  display: inline-flex;
+  align-items: center;
+  max-width: min(22rem, 100%);
+  gap: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 10%, var(--mdc-bg));
+  color: var(--mdc-text);
+  font-size: 0.82rem;
+  padding: 0.35rem 0.55rem;
+}
+
+.mdc-chat-message-attachment strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--mdc-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-message-attachment small {
+  flex: 0 0 auto;
+  color: var(--mdc-text-muted);
+  font-size: 0.76rem;
+}

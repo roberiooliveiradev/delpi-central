@@ -1,4 +1,4 @@
-import { Check, Copy, Pencil, RotateCcw } from "lucide-react";
+import { Check, Copy, FileText, Pencil, RotateCcw } from "lucide-react";
 import { useState } from "react";
 
 import type {
@@ -50,6 +50,73 @@ function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
   }
 
   return [];
+}
+
+type MessageAttachment = {
+  id?: string;
+  filename?: string;
+  original_filename?: string;
+  content_type?: string | null;
+  size_bytes?: number;
+  status?: string;
+};
+
+function getMessageAttachments(message: ChatMessage): MessageAttachment[] {
+  const attachments = message.metadata?.attachments;
+
+  if (!Array.isArray(attachments)) {
+    return [];
+  }
+
+  return attachments.filter((attachment): attachment is MessageAttachment => {
+    return Boolean(attachment && typeof attachment === "object");
+  });
+}
+
+function formatAttachmentSize(size?: number): string {
+  if (!size || size < 0) {
+    return "";
+  }
+
+  if (size < 1024) {
+    return `${size} B`;
+  }
+
+  if (size < 1024 * 1024) {
+    return `${(size / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(size / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function ChatMessageAttachments({ attachments }: { attachments: MessageAttachment[] }) {
+  if (attachments.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mdc-chat-message-attachments" aria-label="Arquivos anexados">
+      {attachments.map((attachment, index) => {
+        const filename =
+          attachment.original_filename ||
+          attachment.filename ||
+          `Arquivo ${index + 1}`;
+        const size = formatAttachmentSize(attachment.size_bytes);
+
+        return (
+          <span
+            key={attachment.id || `${filename}-${index}`}
+            className="mdc-chat-message-attachment"
+            title={filename}
+          >
+            <FileText size={14} aria-hidden="true" />
+            <strong>{filename}</strong>
+            {size ? <small>{size}</small> : null}
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 async function copyTextToClipboard(text: string): Promise<void> {
@@ -246,10 +313,13 @@ export function ChatMessageList({
                 </div>
               </div>
             ) : (
-              <ChatMarkdown
-                content={message.content}
-                compact={message.role === "user"}
-              />
+              <>
+                <ChatMessageAttachments attachments={getMessageAttachments(message)} />
+                <ChatMarkdown
+                  content={message.content}
+                  compact={message.role === "user"}
+                />
+              </>
             )}
 
             {message.role === "assistant" ? (
