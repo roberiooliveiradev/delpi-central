@@ -4,13 +4,27 @@ import {
   getAdminToolHealth,
   listAdminExternalActions,
 } from "../../../../data/api/adminApi";
-import { getChatCapabilities } from "../../../../data/api/chatApi";
+import {
+  getChatCapabilities,
+  listActionProviders,
+  listChatActions,
+  listChatAgentActions,
+  listChatAgentActionProviders,
+  listChatAgents,
+} from "../../../../data/api/chatApi";
 import type {
   AdminExternalActionCatalogItem,
   AdminLlmStatus,
   AdminToolHealthResponse,
 } from "../../../../data/api/adminTypes";
-import type { ChatCapabilities } from "../../../../data/api/chatTypes";
+import type {
+  ChatActionCatalogItem,
+  ChatActionProvider,
+  ChatAgent,
+  ChatAgentAction,
+  ChatAgentActionProvider,
+  ChatCapabilities,
+} from "../../../../data/api/chatTypes";
 
 import "./AdminToolsTab.css";
 
@@ -23,6 +37,13 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
   const [health, setHealth] = useState<AdminToolHealthResponse | null>(null);
   const [actions, setActions] = useState<AdminExternalActionCatalogItem[]>([]);
   const [capabilities, setCapabilities] = useState<ChatCapabilities | null>(null);
+  const [chatProviders, setChatProviders] = useState<ChatActionProvider[]>([]);
+  const [chatActions, setChatActions] = useState<ChatActionCatalogItem[]>([]);
+  const [agents, setAgents] = useState<ChatAgent[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState("");
+  const [agentProviders, setAgentProviders] = useState<ChatAgentActionProvider[]>([]);
+  const [agentActions, setAgentActions] = useState<ChatAgentAction[]>([]);
+  const [isLoadingAgentTools, setIsLoadingAgentTools] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,15 +52,28 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
     setError(null);
 
     try {
-      const [healthResponse, actionsResponse, capabilitiesResponse] = await Promise.all([
+      const [
+        healthResponse,
+        actionsResponse,
+        capabilitiesResponse,
+        providersResponse,
+        chatActionsResponse,
+        agentsResponse,
+      ] = await Promise.all([
         getAdminToolHealth({ getAccessToken }),
         listAdminExternalActions({ getAccessToken }),
         getChatCapabilities({ getAccessToken }),
+        listActionProviders({ getAccessToken }),
+        listChatActions({ getAccessToken }),
+        listChatAgents({ getAccessToken }),
       ]);
 
       setHealth(healthResponse);
       setActions(actionsResponse);
       setCapabilities(capabilitiesResponse);
+      setChatProviders(providersResponse);
+      setChatActions(chatActionsResponse);
+      setAgents(agentsResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar ferramentas.");
     } finally {
@@ -50,6 +84,37 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
   useEffect(() => {
     void loadTools();
   }, []);
+
+  async function loadAgentTools(agentId: string) {
+    setSelectedAgentId(agentId);
+    setAgentProviders([]);
+    setAgentActions([]);
+
+    if (!agentId) {
+      return;
+    }
+
+    setIsLoadingAgentTools(true);
+    setError(null);
+
+    try {
+      const [providersResponse, actionsResponse] = await Promise.all([
+        listChatAgentActionProviders(agentId, { getAccessToken }),
+        listChatAgentActions(agentId, { getAccessToken }),
+      ]);
+
+      setAgentProviders(providersResponse);
+      setAgentActions(actionsResponse);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erro ao carregar ferramentas do agente.",
+      );
+    } finally {
+      setIsLoadingAgentTools(false);
+    }
+  }
 
   return (
     <section className="mdc-admin-tools-tab">
@@ -116,6 +181,154 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
           )}
         </article>
       </div>
+
+      <article className="mdc-admin-tools-card">
+        <div>
+          <p className="mdc-chat-eyebrow">Providers OpenAPI</p>
+          <h3>Providers cadastrados</h3>
+        </div>
+
+        {chatProviders.length === 0 ? (
+          <p>Nenhum provider real retornado pelo backend.</p>
+        ) : (
+          <div className="mdc-admin-tools-tab__providers">
+            {chatProviders.map((provider) => (
+              <section key={provider.providerKey}>
+                <div>
+                  <strong>{provider.name}</strong>
+                  <small>{provider.providerKey}</small>
+                </div>
+
+                <dl>
+                  <div>
+                    <dt>Tipo</dt>
+                    <dd>{provider.type ?? "openapi"}</dd>
+                  </div>
+                  <div>
+                    <dt>Status</dt>
+                    <dd className={provider.enabled ? "is-ok" : "is-warning"}>
+                      {provider.enabled ? "ativo" : "inativo"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Base URL</dt>
+                    <dd>{provider.baseUrl ?? "não informado"}</dd>
+                  </div>
+                </dl>
+              </section>
+            ))}
+          </div>
+        )}
+      </article>
+
+      <article className="mdc-admin-tools-card">
+        <div>
+          <p className="mdc-chat-eyebrow">Catálogo real</p>
+          <h3>Actions disponíveis</h3>
+        </div>
+
+        {chatActions.length === 0 ? (
+          <p>Nenhuma action real retornada pelo backend.</p>
+        ) : (
+          <div className="mdc-admin-tools-tab__actions">
+            {chatActions.map((action) => (
+              <section key={action.id}>
+                <div>
+                  <strong>{action.summary ?? action.operationId ?? action.actionId}</strong>
+                  <small>{action.actionId}</small>
+                </div>
+
+                <dl>
+                  <div>
+                    <dt>Método</dt>
+                    <dd>{action.method ?? "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Path</dt>
+                    <dd>{action.path ?? "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Risco</dt>
+                    <dd>{action.sensitivity ?? "não informado"}</dd>
+                  </div>
+                </dl>
+              </section>
+            ))}
+          </div>
+        )}
+      </article>
+
+      <article className="mdc-admin-tools-card">
+        <div>
+          <p className="mdc-chat-eyebrow">Por agente</p>
+          <h3>Providers e actions vinculadas</h3>
+        </div>
+
+        <label className="mdc-admin-tools-tab__agent-select">
+          <span>Agente</span>
+          <select
+            value={selectedAgentId}
+            onChange={(event) => {
+              void loadAgentTools(event.target.value);
+            }}
+          >
+            <option value="">Selecione um agente</option>
+            {agents.map((agent) => (
+              <option key={agent.id} value={agent.id}>
+                {agent.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {isLoadingAgentTools ? <p>Carregando tools do agente...</p> : null}
+
+        {selectedAgentId && !isLoadingAgentTools ? (
+          <div className="mdc-admin-tools-tab__agent-grid">
+            <section>
+              <h4>Providers do agente</h4>
+              {agentProviders.length === 0 ? (
+                <p>Nenhum provider vinculado.</p>
+              ) : (
+                <ul>
+                  {agentProviders.map((provider) => (
+                    <li key={provider.providerKey}>
+                      <div>
+                        <strong>{provider.providerName ?? provider.providerKey}</strong>
+                        <small>{provider.providerKey}</small>
+                      </div>
+                      <span className={provider.enabled ? "is-ok" : "is-warning"}>
+                        {provider.enabled ? "ativo" : "inativo"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section>
+              <h4>Actions do agente</h4>
+              {agentActions.length === 0 ? (
+                <p>Nenhuma action vinculada.</p>
+              ) : (
+                <ul>
+                  {agentActions.map((action) => (
+                    <li key={action.actionId}>
+                      <div>
+                        <strong>{action.actionId}</strong>
+                        <small>{action.providerKey}</small>
+                      </div>
+                      <span className={action.enabled ? "is-ok" : "is-warning"}>
+                        {action.enabled ? "ativa" : "inativa"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+        ) : null}
+      </article>
 
       <article className="mdc-admin-tools-card">
         <div>

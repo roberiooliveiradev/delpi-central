@@ -166,11 +166,12 @@ Transformar a aba Ferramentas em painel operacional real.
 - Exibição de capabilities reais do usuário atual
 - Exibição de permissões reais retornadas pelo backend
 - Exibição de permissão para uso/gestão de tools e agentes
+- Listagem de providers OpenAPI reais
+- Listagem de actions reais disponíveis
+- Exibição de providers/actions por agente selecionado
 
 ### Ainda falta
 
-- Listar providers OpenAPI reais com detalhes completos
-- Mostrar actions por agente
 - Mostrar erros recentes por action/provider
 
 ---
