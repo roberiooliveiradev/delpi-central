@@ -371,6 +371,61 @@ services:
     networks:
       - delpi-network
 
+  strategic-indicators-api:
+    build:
+      context: ..
+      dockerfile: strategic-indicators-api/Dockerfile
+    container_name: delpi-strategic-indicators-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      DB_HOST: ${TOTVS_DB_HOST}
+      DB_PORT: ${TOTVS_DB_PORT}
+      DB_USER: ${TOTVS_DB_USER}
+      DB_PASSWORD: ${TOTVS_DB_PASSWORD}
+      DB_DATABASE: ${TOTVS_DB_DATABASE}
+
+      PORT: "8000"
+      SI_API_ROOT_PATH: /apps/strategic-indicators-api
+
+      ENV: ${API_DELPI_ENV}
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+      PORTAL_RH_DB_HOST: ${PORTAL_RH_DB_HOST}
+      PORTAL_RH_DB_PORT: ${PORTAL_RH_DB_PORT}
+      PORTAL_RH_DB_NAME: ${PORTAL_RH_DB_NAME}
+      PORTAL_RH_DB_USER: ${PORTAL_RH_DB_USER}
+      PORTAL_RH_DB_PASSWORD: ${PORTAL_RH_DB_PASSWORD}
+      PORTAL_RH_DB_CONNECT_TIMEOUT: ${PORTAL_RH_DB_CONNECT_TIMEOUT}
+      PORTAL_RH_DB_SSLMODE: ${PORTAL_RH_DB_SSLMODE}
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+
+    networks:
+      - delpi-network
+
   gateway:
     build:
       context: ../gateway
@@ -387,6 +442,7 @@ services:
       - core-api
       - keycloak
       - api-delpi
+      - strategic-indicators-api
       - strategic-indicators
       - dashboard-lmps
       - minha-delpi-ai-api

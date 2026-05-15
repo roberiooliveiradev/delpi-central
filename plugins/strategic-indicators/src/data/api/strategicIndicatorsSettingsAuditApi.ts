@@ -3,7 +3,9 @@ import type {
   StrategicIndicatorsSettingsAuditResponse,
 } from "../types/settingsAudit";
 
-const BASE_URL = "/apps/api-delpi/strategic-indicators";
+import { STRATEGIC_INDICATORS_API_BASE } from "./strategicIndicatorsApiBase";
+
+const BASE_URL = STRATEGIC_INDICATORS_API_BASE;
 
 type GetToken = (() => string | undefined) | undefined;
 

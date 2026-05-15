@@ -83,16 +83,16 @@ Arquivo: `me_controller.py` — todas exigem `@require_auth()`.
   "id": "strategic-indicators",
   "name": "Indicadores Estratégicos",
   "basePath": "/apps/strategic-indicators",
-  "type": "microfrontend",
+    "type": "microfrontend",
   "entryUrl": "/apps/strategic-indicators/assets/remoteEntry.js",
-  "renderMode": "federated",
-  "routes": [
-    {
+    "renderMode": "federated",
+    "routes": [
+      {
       "app": "strategic-indicators",
       "path": "/apps/strategic-indicators",
       "permission": "strategic-indicators.view",
       "label": "...",
-      "showInMenu": true,
+        "showInMenu": true,
       "order": 1
     }
   ]

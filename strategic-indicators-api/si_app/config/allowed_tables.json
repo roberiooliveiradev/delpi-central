@@ -1,0 +1,99 @@
+{
+  "allowed_tables": [
+    "SB1010",
+    "SG1010",
+    "SG2010",
+    "SH1010",
+
+    "QP6010",
+    "QP7010",
+    "QP8010",
+
+    "SC1010",
+    "SC2010",
+    "SC7010",
+    "SF1010",
+    "SH8010",
+    "SH6010",
+
+    "SH4010",
+
+    "SD4010",
+    "SD3010",
+    "SB2010",
+    "SBC010",
+
+    "SD1010",
+
+    "SA1010",
+    "SA2010",
+    "SA3010",
+    "SA5010",
+
+    "SC5010",
+    "SC6010",
+
+    "AD1010",
+    "ADJ010",
+    "AIJ010",
+    "AC1010",
+    "AC2010",
+
+    "QI2010",
+
+    "SX2010",
+    "SX3010",
+    "SIX010",
+    "SX9010"
+  ],
+  "_notes": {
+    "SB1010": "Cadastro de Produtos — usado para descrição, unidade, tipo, grupo e dados cadastrais dos produtos.",
+    "SG1010": "Estrutura de Produtos / BOM — usada para consultar componentes, produto pai e composição do produto.",
+    "SG2010": "Roteiro de Operações — usada para operações, recursos, centros de trabalho e identificação da operação final.",
+    "SH1010": "Cadastro de Recursos — usada para consultar dados de recursos produtivos/máquinas.",
+
+    "QP6010": "Inspeções / Plano de Controle — usada em validações de inspeção e qualidade do produto.",
+    "QP7010": "Características de Inspeção — usada para critérios, características e requisitos de inspeção.",
+    "QP8010": "Resultados/Itens de Inspeção — usada para detalhes vinculados aos planos e inspeções.",
+
+    "SC1010": "Solicitações de Compra — usada para consultas de suprimentos e requisições de compra.",
+    "SC2010": "Ordens de Produção — usada para OPs, produto da OP, quantidade prevista, datas e status.",
+    "SC7010": "Pedidos de Compra — usada para análise de pedidos de compra e suprimentos.",
+    "SF1010": "Cabeçalho de Nota Fiscal — usada apenas quando necessário cruzar documentos fiscais autorizados.",
+    "SH8010": "Apontamentos / Produção — usada em cenários de produção, apontamento e histórico produtivo.",
+    "SH6010": "Movimentação da Produção — tabela principal para apontamentos de produção e cálculo de produção realizada.",
+
+    "SH4010": "Calendário / Turnos / Recursos Produtivos — usada em análises de capacidade, agenda ou programação produtiva.",
+
+    "SD4010": "Empenhos / Requisições da OP — usada para componentes empenhados, consumo previsto e saldo de empenho.",
+    "SD3010": "Movimentações Internas — usada para consumo, movimentação de estoque, apontamentos e validações de produção.",
+    "SB2010": "Saldos em Estoque — usada para consulta de estoque por filial, local e produto.",
+    "SBC010": "Perda por OP — usada para refugo, scrap, perdas por OP e análises internas de qualidade.",
+
+    "SD1010": "⚠️ Itens de Notas Fiscais de Entrada — contém dados fiscais; usada para compras, entradas e histórico de aquisição.",
+
+    "SA1010": "⚠️ Cadastro de Clientes — liberado por exceção DELPI, acesso controlado.",
+    "SA2010": "⚠️ Cadastro de Fornecedores — liberado por exceção DELPI, acesso controlado.",
+    "SA3010": "Cadastro de Vendedores — usada para identificar vendedor ou responsável comercial vinculado à OV/LMP.",
+    "SA5010": "Amarração Produto x Fornecedor — usada para vínculo de fornecedores, partnumber e dados comerciais de suprimentos.",
+
+    "SC5010": "Pedidos de Venda — usada para análises comerciais ou vínculos de demanda quando autorizado.",
+    "SC6010": "Itens de Pedido de Venda — usada para itens vendidos, produtos, quantidades e vínculos comerciais quando autorizado.",
+
+    "AD1010": "Cabeçalho da OV/LMP — usada para consultar número da OV, filial, revisão, descrição e dados principais da LMP.",
+    "ADJ010": "Itens/produtos vinculados à OV/LMP — usada para consultar produtos, revisões e itens relacionados à LMP.",
+    "AIJ010": "Histórico/eventos da OV/LMP — usada para consultar processos, etapas, datas, passagens e status da engenharia.",
+    "AC1010": "Processos de Venda / Funil de Vendas — usada para identificar a descrição do processo vinculado à OV/LMP.",
+    "AC2010": "Estágios do Processo de Vendas — usada para identificar a descrição do estágio da OV/LMP, como AC2_STAGE e AC2_DESCRI.",
+
+    "QI2010": "Não Conformidades — necessária para cálculo do PPM interno/externo e análise de FNCs.",
+
+    "SX2010": "Dicionário de Tabelas Protheus — usada para localizar e descrever tabelas do sistema.",
+    "SX3010": "Dicionário de Campos Protheus — usada para consultar colunas, tipos, tamanhos e descrições.",
+    "SIX010": "Dicionário de Índices Protheus — usada para consultar chaves e índices das tabelas.",
+    "SX9010": "Dicionário de Relacionamentos Protheus — usada para consultar relações entre tabelas.",
+
+    "SD2010": "⚠️ Itens de Notas Fiscais de Saída — contém dados fiscais. Não está liberada em allowed_tables neste objeto.",
+    "_policy": "Essas tabelas são liberadas apenas sob auditoria e controle interno de segurança. Consultas devem respeitar D_E_L_E_T_ = ' ' e evitar dados sensíveis quando não necessários."
+  }
+}

@@ -1,3 +1,7 @@
+import { STRATEGIC_INDICATORS_API_BASE } from "./strategicIndicatorsApiBase";
+
+const BASE_URL = STRATEGIC_INDICATORS_API_BASE;
+
 export type StrategicIndicatorsPresentationRequest = {
   competence?: string;
   branch?: string;
@@ -7,8 +11,6 @@ export type StrategicIndicatorsPresentationRequest = {
   getAccessToken?: () => string | undefined;
   signal?: AbortSignal;
 };
-
-const BASE_URL = "/apps/api-delpi/strategic-indicators";
 
 type Severity = "low" | "medium" | "high";
 type TrendDirection = "up" | "down" | "stable";

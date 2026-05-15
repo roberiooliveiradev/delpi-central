@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Request, Query
 
 from delpi_auth.authorization import require_permission
 
-from app.interface.http.schemas.strategic_indicators_settings_schema import (
+from si_app.interface.http.schemas.strategic_indicators_settings_schema import (
     UpdateStrategicIndicatorsSettingsBodySchema,
     CreateChangeRequestBody,
     AddCommentBody,
@@ -17,41 +17,41 @@ from app.interface.http.schemas.strategic_indicators_settings_schema import (
     FillMissingIndicatorGoalsBodySchema,
 )
 
-from app.application.dto.strategic_indicators.update_settings_request import (
+from si_app.application.dto.strategic_indicators.update_settings_request import (
     UpdateStrategicIndicatorsSettingsRequest,
 )
-from app.application.dto.strategic_indicators.add_change_request_comment_request import (
+from si_app.application.dto.strategic_indicators.add_change_request_comment_request import (
     AddStrategicIndicatorsChangeRequestCommentRequest,
 )
-from app.application.dto.strategic_indicators.create_change_request_request import (
+from si_app.application.dto.strategic_indicators.create_change_request_request import (
     CreateStrategicIndicatorsChangeRequestRequest,
 )
-from app.application.dto.strategic_indicators.get_executive_summary_real_request import (
+from si_app.application.dto.strategic_indicators.get_executive_summary_real_request import (
     GetExecutiveSummaryRealRequest,
 )
-from app.application.dto.strategic_indicators.create_indicator_goal_request import (
+from si_app.application.dto.strategic_indicators.create_indicator_goal_request import (
     CreateStrategicIndicatorsIndicatorGoalRequest,
 )
-from app.application.dto.strategic_indicators.update_indicator_goal_request import (
+from si_app.application.dto.strategic_indicators.update_indicator_goal_request import (
     UpdateStrategicIndicatorsIndicatorGoalRequest,
 )
 
-from app.application.use_cases.strategic_indicators.update_settings_use_case import (
+from si_app.application.use_cases.strategic_indicators.update_settings_use_case import (
     StrategicIndicatorsSettingsValidationError,
 )
-from app.application.use_cases.strategic_indicators.create_indicator_goal_use_case import (
+from si_app.application.use_cases.strategic_indicators.create_indicator_goal_use_case import (
     StrategicIndicatorsIndicatorGoalValidationError,
 )
 
-from app.application.dto.strategic_indicators.get_trends_real_request import (
+from si_app.application.dto.strategic_indicators.get_trends_real_request import (
     GetStrategicIndicatorsTrendsRealRequest,
 )
 
-from app.application.dto.strategic_indicators.get_presentation_request import (
+from si_app.application.dto.strategic_indicators.get_presentation_request import (
     GetStrategicIndicatorsPresentationRequest,
 )
 
-from app.composition.strategic_indicators_composer import (
+from si_app.composition.strategic_indicators_composer import (
     build_get_strategic_indicators_executive_summary_use_case,
     build_get_strategic_indicators_settings_use_case,
     build_list_strategic_indicators_settings_audit_use_case,
@@ -812,7 +812,7 @@ def get_strategic_indicators_departments(
     end_date: str | None = Query(None),
 ):
     try:
-        from app.application.use_cases.strategic_indicators.get_departments_real_use_case import (
+        from si_app.application.use_cases.strategic_indicators.get_departments_real_use_case import (
             GetStrategicIndicatorsDepartmentsRealRequest,
         )
 
@@ -845,7 +845,7 @@ def get_strategic_indicators_department_details(
     end_date: str | None = Query(None),
 ):
     try:
-        from app.application.use_cases.strategic_indicators.get_department_details_real_use_case import (
+        from si_app.application.use_cases.strategic_indicators.get_department_details_real_use_case import (
             DepartmentNotFoundError,
             GetStrategicIndicatorsDepartmentDetailsRealRequest,
         )
@@ -948,7 +948,7 @@ def get_strategic_indicators_alerts(
     end_date: str | None = Query(None),
 ):
     try:
-        from app.application.use_cases.strategic_indicators.get_alerts_real_use_case import (
+        from si_app.application.use_cases.strategic_indicators.get_alerts_real_use_case import (
             GetStrategicIndicatorsAlertsRealRequest,
         )
 

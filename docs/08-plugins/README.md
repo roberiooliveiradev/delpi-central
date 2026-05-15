@@ -40,7 +40,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 
 | Plugin | API principal |
 |---|---|
-| Indicadores Estratégicos | `/apps/api-delpi/strategic-indicators/*` |
+| Indicadores Estratégicos | `/apps/strategic-indicators-api/strategic-indicators/*` |
 | Dashboard LMPs | `/apps/api-delpi/engineering/lmps/*` |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |

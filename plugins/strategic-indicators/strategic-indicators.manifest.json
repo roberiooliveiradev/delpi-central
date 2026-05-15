@@ -182,10 +182,10 @@
   ],
   "backend": {
     "audience": "delpi-central",
-    "baseUrl": "/apps/api-delpi/strategic-indicators",
+    "baseUrl": "/apps/strategic-indicators-api/strategic-indicators",
     "issuer": "https://www.minhadelpi.com.br/auth",
     "required": true,
-    "serviceName": "api-delpi",
+    "serviceName": "strategic-indicators-api",
     "validateJwt": true
   },
   "ui": {
