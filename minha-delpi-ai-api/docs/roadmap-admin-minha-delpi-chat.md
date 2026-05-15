@@ -498,3 +498,12 @@ Sempre consultar este documento antes de:
 Objetivo:
 
 garantir consistência arquitetural e evolução controlada do Minha DELPI Chat.
+
+### Variáveis de custo LLM
+
+Para habilitar custo estimado nas métricas avançadas, configurar:
+
+    LLM_PROMPT_TOKEN_COST_PER_1K=0
+    LLM_COMPLETION_TOKEN_COST_PER_1K=0
+
+Os valores representam custo por 1.000 tokens estimados. Com 0, o custo fica indisponível.
