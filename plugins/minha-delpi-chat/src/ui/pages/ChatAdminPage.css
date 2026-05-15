@@ -16,7 +16,6 @@
   display: grid;
   gap: var(--mdc-space-5);
   width: min(100%, 1720px);
-  min-height: 100vh;
   margin: 0 auto;
   padding: clamp(var(--mdc-space-4), 1.6vw, var(--mdc-space-6));
 }

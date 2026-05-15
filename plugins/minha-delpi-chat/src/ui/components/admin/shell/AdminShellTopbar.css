@@ -1,32 +1,32 @@
 .mdc-admin-topbar {
   display: grid;
-  gap: var(--mdc-space-4);
+  gap: var(--mdc-space-3);
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-xl);
   background: var(--mdc-card-bg);
   box-shadow: var(--mdc-card-shadow);
-  padding: var(--mdc-space-5);
+  padding: var(--mdc-space-4);
 }
 
 .mdc-admin-topbar__content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
+  align-items: start;
   gap: var(--mdc-space-4);
 }
 
 .mdc-admin-topbar h1 {
   margin: 0;
   color: var(--mdc-primary);
-  font-size: clamp(1.6rem, 2.2vw, 2.25rem);
-  letter-spacing: -0.045em;
+  font-size: clamp(1.45rem, 1.8vw, 1.95rem);
+  letter-spacing: -0.04em;
   line-height: 1.05;
 }
 
 .mdc-admin-topbar p {
-  margin: var(--mdc-space-1) 0 0;
+  margin: 0.25rem 0 0;
   color: var(--mdc-text-muted);
-  line-height: 1.45;
+  line-height: 1.35;
 }
 
 .mdc-admin-topbar__actions {
@@ -37,10 +37,10 @@
 }
 
 .mdc-admin-topbar__actions button {
-  min-height: 2.4rem;
+  min-height: 2.25rem;
   border-radius: 999px;
   font-weight: 800;
-  padding: 0.55rem 0.9rem;
+  padding: 0.45rem 0.85rem;
 }
 
 .mdc-admin-topbar__actions button:first-child {
@@ -51,25 +51,26 @@
 
 .mdc-admin-tabs {
   display: inline-flex;
-  gap: var(--mdc-space-1);
+  align-items: center;
+  gap: 0.2rem;
   width: fit-content;
   max-width: 100%;
   overflow-x: auto;
   border: 1px solid var(--mdc-card-border);
   border-radius: 999px;
   background: var(--mdc-bg-muted);
-  padding: 0.28rem;
+  padding: 0.22rem;
 }
 
 .mdc-admin-tabs button {
-  min-height: 2.25rem;
+  min-height: 2rem;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: var(--mdc-text-muted);
   font-weight: 800;
   line-height: 1;
-  padding: 0.55rem 0.9rem;
+  padding: 0.45rem 0.78rem;
   white-space: nowrap;
 }
 
@@ -95,10 +96,6 @@
 }
 
 @media (max-width: 640px) {
-  .mdc-admin-topbar {
-    padding: var(--mdc-space-4);
-  }
-
   .mdc-admin-tabs {
     width: 100%;
   }
