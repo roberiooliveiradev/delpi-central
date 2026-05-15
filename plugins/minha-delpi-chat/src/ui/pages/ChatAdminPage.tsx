@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { AdminAuditTab } from "../components/admin/AdminAuditTab";
-import { AdminGuidelinesTab } from "../components/admin/AdminGuidelinesTab";
+import { AdminGuidelinesTab } from "../components/admin/guidelines/AdminGuidelinesTab";
 import { AdminKnowledgeTab } from "../components/admin/knowledge/AdminKnowledgeTab";
 import { AdminMetrics } from "../components/admin/AdminMetrics";
 import { AdminToolsTab } from "../components/admin/AdminToolsTab";

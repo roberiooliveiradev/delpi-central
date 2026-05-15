@@ -1,14 +1,6 @@
-.mdc-admin-guidelines {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--mdc-space-5);
-  align-items: stretch;
-}
-
-.mdc-admin-guidelines__card {
+.mdc-guideline-test-panel {
   display: grid;
   gap: var(--mdc-space-4);
-  align-content: start;
   min-width: 0;
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-xl);
@@ -17,14 +9,13 @@
   padding: var(--mdc-space-5);
 }
 
-.mdc-admin-guidelines__card h2 {
+.mdc-guideline-test-panel h2 {
   margin: 0;
   color: var(--mdc-primary);
   font-size: 1.08rem;
-  line-height: 1.2;
 }
 
-.mdc-admin-guidelines__card textarea {
+.mdc-guideline-test-panel textarea {
   width: 100%;
   min-width: 0;
   border: 1px solid var(--mdc-control-border);
@@ -37,34 +28,36 @@
   resize: vertical;
 }
 
-.mdc-admin-guideline-list {
-  display: grid;
-  gap: var(--mdc-space-3);
+.mdc-guideline-test-panel textarea:focus {
+  border-color: var(--mdc-primary);
+  box-shadow: var(--mdc-focus-ring);
 }
 
-.mdc-admin-guideline-list div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mdc-space-4);
+.mdc-guideline-test-panel button {
+  justify-self: start;
+  min-height: 2.35rem;
+  border-color: var(--mdc-primary);
+  border-radius: 999px;
+  background: var(--mdc-primary);
+  color: var(--mdc-bg);
+  font-weight: 800;
+  padding: 0.5rem 0.8rem;
+}
+
+.mdc-guideline-test-panel__placeholder {
+  display: grid;
+  gap: var(--mdc-space-1);
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-md);
   background: var(--mdc-bg-muted);
   padding: var(--mdc-space-3);
 }
 
-.mdc-admin-guideline-list strong {
+.mdc-guideline-test-panel__placeholder strong {
   color: var(--mdc-title);
 }
 
-.mdc-admin-guideline-list span {
-  color: var(--mdc-primary);
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-@media (max-width: 920px) {
-  .mdc-admin-guidelines {
-    grid-template-columns: 1fr;
-  }
+.mdc-guideline-test-panel__placeholder small {
+  color: var(--mdc-text-muted);
+  line-height: 1.45;
 }

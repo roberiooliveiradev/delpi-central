@@ -1,0 +1,20 @@
+.mdc-admin-guidelines {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(22rem, 0.72fr);
+  gap: var(--mdc-space-5);
+  align-items: start;
+}
+
+.mdc-admin-guidelines > :first-child {
+  grid-row: span 2;
+}
+
+@media (max-width: 1120px) {
+  .mdc-admin-guidelines {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-admin-guidelines > :first-child {
+    grid-row: auto;
+  }
+}
