@@ -7,6 +7,58 @@ import "./GuidelineTestPanel.css";
 
 type GuidelineTestPanelProps = Pick<GuidelineBackendPlaceholders, "testGuidelines">;
 
+type SourceVisualKind = "global" | "guideline" | "attachment" | "tool";
+
+function getSourceVisualKind(sourceType?: string | null): SourceVisualKind {
+  const normalized = String(sourceType ?? "").toLowerCase();
+
+  if (
+    normalized.includes("diretriz") ||
+    normalized.includes("guideline") ||
+    normalized.includes("admin_guideline")
+  ) {
+    return "guideline";
+  }
+
+  if (
+    normalized.includes("attachment") ||
+    normalized.includes("session_source") ||
+    normalized.includes("chat_attachment") ||
+    normalized.includes("anexo")
+  ) {
+    return "attachment";
+  }
+
+  if (
+    normalized.includes("tool") ||
+    normalized.includes("action") ||
+    normalized.includes("external_action") ||
+    normalized.includes("ferramenta")
+  ) {
+    return "tool";
+  }
+
+  return "global";
+}
+
+function getSourceVisualLabel(sourceType?: string | null): string {
+  const kind = getSourceVisualKind(sourceType);
+
+  if (kind === "guideline") {
+    return "Diretriz";
+  }
+
+  if (kind === "attachment") {
+    return "Anexo";
+  }
+
+  if (kind === "tool") {
+    return "Ferramenta";
+  }
+
+  return "Conhecimento";
+}
+
 export function GuidelineTestPanel({ testGuidelines }: GuidelineTestPanelProps) {
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<AdminRagTestResponse | null>(null);
@@ -113,9 +165,13 @@ export function GuidelineTestPanel({ testGuidelines }: GuidelineTestPanelProps) 
                     <li key={document.id}>
                       <div>
                         <strong>{document.title}</strong>
-                        {document.sourceType ? <small>{document.sourceType}</small> : null}
+                        <small>{getSourceVisualLabel(document.sourceType)}</small>
                       </div>
-                      <span>{Math.round(document.score * 100)}%</span>
+                      <span
+                        className={`is-${getSourceVisualKind(document.sourceType)}`}
+                      >
+                        {Math.round(document.score * 100)}%
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -208,7 +264,12 @@ export function GuidelineTestPanel({ testGuidelines }: GuidelineTestPanelProps) 
                   <section key={chunk.id}>
                     <div>
                       <strong>{chunk.title}</strong>
-                      <span>{Math.round(chunk.score * 100)}%</span>
+                      <span
+                        className={`is-${getSourceVisualKind(chunk.sourceType)}`}
+                      >
+                        {getSourceVisualLabel(chunk.sourceType)} ·{" "}
+                        {Math.round(chunk.score * 100)}%
+                      </span>
                     </div>
                     <p>{chunk.preview}</p>
                   </section>

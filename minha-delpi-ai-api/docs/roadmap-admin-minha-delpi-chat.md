@@ -113,7 +113,7 @@ Permitir comportamento diferente por ambiente.
 
 ## 5. Melhorar Teste RAG
 
-**Status: Parcialmente concluído**
+**Status: Concluído**
 
 ### Objetivo
 
@@ -133,12 +133,10 @@ Explicar por que o agente respondeu algo durante o teste de assertividade.
 - `/admin/rag/test` retorna `debugContext` seguro
 - Frontend exibe contexto seguro com contagem de diretrizes, documentos e chunks
 - Frontend exibe preview sanitizado do contexto usado no teste
-
-### Ainda falta
-
-- Comparar resposta com e sem diretrizes
-- Comparar resposta com e sem RAG
-- Diferenciar visualmente:
+- `/admin/rag/test` retorna comparação estrutural com/sem diretrizes
+- `/admin/rag/test` retorna comparação estrutural com/sem RAG
+- Frontend exibe comparação de contexto com/sem diretrizes e com/sem RAG
+- Frontend diferencia visualmente:
   - conhecimento global;
   - diretrizes administrativas;
   - anexos de conversa;
@@ -389,14 +387,15 @@ Blindar comportamento da IA.
 - Teste RAG exibindo documentos acionados
 - Teste RAG exibindo chunks usados
 - Teste RAG exibindo contexto seguro de depuração
+- Teste RAG comparando contexto com e sem diretrizes
+- Teste RAG comparando contexto com e sem RAG
+- Teste RAG diferenciando visualmente tipos de fonte
 - Refatoração visual da aba Diretrizes
 - Auditoria inicial
 - Métricas iniciais
 
 ## Em andamento
 
-- Comparação com e sem diretrizes
-- Comparação com e sem RAG
 - Melhor explicabilidade do comportamento do agente
 
 ## Pendente

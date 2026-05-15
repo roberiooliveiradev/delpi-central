@@ -267,3 +267,23 @@
     grid-template-columns: 1fr;
   }
 }
+
+.mdc-guideline-test-panel__result span.is-global,
+.mdc-guideline-test-panel__chunks span.is-global {
+  color: var(--mdc-primary);
+}
+
+.mdc-guideline-test-panel__result span.is-guideline,
+.mdc-guideline-test-panel__chunks span.is-guideline {
+  color: var(--mdc-success);
+}
+
+.mdc-guideline-test-panel__result span.is-attachment,
+.mdc-guideline-test-panel__chunks span.is-attachment {
+  color: var(--mdc-warning);
+}
+
+.mdc-guideline-test-panel__result span.is-tool,
+.mdc-guideline-test-panel__chunks span.is-tool {
+  color: var(--mdc-info, var(--mdc-primary));
+}
