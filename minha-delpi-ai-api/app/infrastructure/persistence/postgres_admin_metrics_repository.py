@@ -38,6 +38,32 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             .count()
         )
 
+        recent_audit_logs = (
+            db.session.query(AiAuditLogModel)
+            .filter(AiAuditLogModel.created_at >= since)
+            .count()
+        )
+
+        action_distribution = self._count_by_field(
+            AiAuditLogModel.action,
+            since=since,
+            limit=10,
+        )
+        context_distribution = self._count_by_field(
+            AiAuditLogModel.context,
+            since=since,
+            limit=10,
+        )
+        error_distribution = self._count_by_field(
+            AiAuditLogModel.action,
+            since=since,
+            limit=10,
+            only_errors=True,
+        )
+
+        tool_usage_rate = self._safe_rate(recent_tool_calls, recent_audit_logs)
+        error_rate = self._safe_rate(recent_errors, recent_audit_logs)
+
         return {
             "sessions": sessions,
             "messages": messages,
@@ -47,4 +73,61 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             "auditLogs": audit_logs,
             "recentToolCalls24h": recent_tool_calls,
             "recentErrors24h": recent_errors,
+            "recentAuditLogs24h": recent_audit_logs,
+            "toolUsageRate24h": tool_usage_rate,
+            "errorRate24h": error_rate,
+            "actionDistribution24h": action_distribution,
+            "contextDistribution24h": context_distribution,
+            "errorDistribution24h": error_distribution,
+            "advanced": {
+                "latencyAvgMs": None,
+                "tokensUsed": None,
+                "estimatedCost": None,
+                "ragFailures": None,
+                "assertivenessRate": None,
+                "agentMetrics": [],
+                "userProfileMetrics": [],
+                "notes": [
+                    "Latência, tokens e custo dependem de instrumentação adicional no fluxo de mensagens.",
+                    "Métricas por agente e usuário/perfil dependem de eventos auditáveis padronizados.",
+                ],
+            },
         }
+
+    def _safe_rate(self, value: int, total: int) -> float:
+        if total <= 0:
+            return 0.0
+
+        return round(value / total, 4)
+
+    def _count_by_field(
+        self,
+        field,
+        *,
+        since: datetime,
+        limit: int,
+        only_errors: bool = False,
+    ) -> list[dict]:
+        query = (
+            db.session.query(field.label("key"), db.func.count().label("count"))
+            .filter(AiAuditLogModel.created_at >= since)
+        )
+
+        if only_errors:
+            query = query.filter(AiAuditLogModel.action.ilike("%error%"))
+
+        rows = (
+            query
+            .group_by(field)
+            .order_by(db.func.count().desc())
+            .limit(limit)
+            .all()
+        )
+
+        return [
+            {
+                "key": row.key or "sem_contexto",
+                "count": int(row.count or 0),
+            }
+            for row in rows
+        ]

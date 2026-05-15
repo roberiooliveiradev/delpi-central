@@ -43,6 +43,11 @@ export type AdminAuditLog = {
   createdAt: string;
 };
 
+export type AdminMetricsDistributionItem = {
+  key: string;
+  count: number;
+};
+
 export type AdminMetricsSummary = {
   sessions: number;
   messages: number;
@@ -52,6 +57,22 @@ export type AdminMetricsSummary = {
   auditLogs: number;
   recentToolCalls24h: number;
   recentErrors24h: number;
+  recentAuditLogs24h?: number;
+  toolUsageRate24h?: number;
+  errorRate24h?: number;
+  actionDistribution24h?: AdminMetricsDistributionItem[];
+  contextDistribution24h?: AdminMetricsDistributionItem[];
+  errorDistribution24h?: AdminMetricsDistributionItem[];
+  advanced?: {
+    latencyAvgMs?: number | null;
+    tokensUsed?: number | null;
+    estimatedCost?: number | null;
+    ragFailures?: number | null;
+    assertivenessRate?: number | null;
+    agentMetrics?: AdminMetricsDistributionItem[];
+    userProfileMetrics?: AdminMetricsDistributionItem[];
+    notes?: string[];
+  };
 };
 
 

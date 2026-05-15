@@ -211,20 +211,28 @@ Controlar acesso granular às ações administrativas.
 
 ## 8. Métricas avançadas
 
-**Status: Pendente**
+**Status: Parcialmente concluído**
 
 ### Objetivo
 
 Melhorar observabilidade do chat.
 
-### Implementar
+### Entregue
+
+- Total de eventos auditáveis nas últimas 24h
+- Taxa de uso de ferramentas nas últimas 24h
+- Taxa de erro nas últimas 24h
+- Distribuição de eventos por ação
+- Distribuição de eventos por contexto
+- Distribuição de erros por ação
+- Aba de métricas reorganizada para observabilidade operacional
+
+### Ainda falta
 
 - Latência média
 - Tokens usados
 - Custo estimado
 - Falhas RAG
-- Taxa de uso de ferramentas
-- Taxa de erro por endpoint
 - Assertividade por teste
 - Métricas por agente
 - Métricas por usuário/perfil
