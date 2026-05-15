@@ -1,7 +1,7 @@
 # Minha DELPI — Visão Geral da Plataforma
 
 > **Arquivo:** `docs/00-visao-geral/minha-delpi-visao-geral.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial  
 > **Produto:** Minha DELPI  
 > **Escopo:** visão funcional e técnica de alto nível
 
@@ -29,7 +29,7 @@ Ela atua como um portal único de entrada para o ecossistema digital da empresa,
 - separação entre governança da plataforma e domínios de negócio;
 - base para expansão incremental de novos módulos.
 
-A plataforma não é apenas um frontend. Ela é um ecossistema composto por Portal, Core API, API DELPI, Keycloak, bancos de dados, gateway e plugins.
+A plataforma não é apenas um frontend. Ela é um ecossistema composto por Portal, Core API, API DELPI, Minha DELPI AI API (chat e agentes), Keycloak, bancos de dados, gateway e plugins.
 
 ---
 
@@ -109,14 +109,15 @@ Responsabilidades:
 - concentrar configuração de proxy reverso;
 - permitir publicação por path.
 
-Exemplos de destinos esperados:
+Exemplos de destinos (gateway):
 
 ```text
-/                     → Portal
-/core-api/*           → Core API
-/auth/*               → Keycloak
-/apps/api-delpi/*     → API DELPI
-/apps/<plugin>/*      → Plugins/microfrontends
+/                              → Portal
+/core-api/*                    → Core API (+ /socket.io)
+/auth/*                        → Keycloak
+/apps/api-delpi/*              → API DELPI
+/apps/minha-delpi-ai/api/*     → Minha DELPI AI API
+/apps/<plugin-id>/*            → Microfrontends (assets + shell)
 ```
 
 A configuração exata de rotas deve ser documentada no arquivo específico do gateway.
@@ -195,9 +196,19 @@ O JWT identifica o usuário. A Core API resolve permissões efetivas internament
 
 ---
 
-## 5.5 API DELPI
+## 5.5 Minha DELPI AI API
 
-A **API DELPI** é o backend operacional da plataforma.
+Backend FastAPI do módulo **Minha DELPI** (chat, agentes, conhecimento, tools, admin).
+
+- Exposta em `/apps/minha-delpi-ai/api`
+- Documentação de rotas: `minha-delpi-ai-api/docs/api/`
+- Separada da Core API (governança) e da API DELPI (TOTVS/operacional)
+
+---
+
+## 5.6 API DELPI
+
+A **API DELPI** é o backend operacional integrado ao TOTVS e domínios analíticos.
 
 Ela é separada da Core API.
 
@@ -221,7 +232,7 @@ API DELPI → dados e regras operacionais de negócio
 
 ---
 
-## 5.6 Plugins e microfrontends
+## 5.7 Plugins e microfrontends
 
 Plugins são módulos integrados à Minha DELPI por manifesto.
 
@@ -272,7 +283,7 @@ Apps, rotas, permissões  │
   ↓                     │
 Portal carrega plugins   │
   ↓                     │
-API DELPI / Plugins / Postgres Plugins
+API DELPI / AI API / Plugins / Postgres Plugins
 ```
 
 ---
@@ -585,11 +596,10 @@ A Minha DELPI deve evoluir seguindo estes princípios:
 
 ## 16. Próximas leituras
 
-Após esta visão geral, os próximos documentos recomendados são:
-
-1. `docs/01-arquitetura/arquitetura-geral.md`
-2. `docs/02-infraestrutura/docker-compose.md`
-3. `docs/03-autenticacao-autorizacao/rbac.md`
-4. `docs/04-core-api/visao-geral-core-api.md`
-5. `docs/05-plugin-system/manifesto-plugin.md`
+1. [Mapa da plataforma](./mapa-da-plataforma.md)
+2. [README da documentação](../README.md)
+3. [Portal — visão geral](../06-portal-frontend/visao-geral-portal.md)
+4. [Core API — visão geral](../04-core-api/visao-geral-core-api.md)
+5. [API DELPI — documentação de rotas](../../api-delpi/docs/api/README.md)
+6. [Plugin system — manifesto](../05-plugin-system/manifesto-plugin.md)
 

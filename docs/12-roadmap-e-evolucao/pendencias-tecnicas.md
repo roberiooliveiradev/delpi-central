@@ -15,26 +15,31 @@ A intenção é manter uma lista controlada de pontos que ainda precisam de conf
 
 ---
 
-## 2. API DELPI — inventário completo de rotas
+## 2. API DELPI — manter documentação alinhada ao código
 
 Tipo:
 
 ```text
-Código / Documento
+Documento / Código
 ```
 
-Pendência:
+Estado:
 
 ```text
-Inventariar rotas reais da api-delpi diretamente nos routers/controllers atuais.
+Existe pacote oficial em api-delpi/docs/api/ (guias + referência rápida).
+```
+
+Pendência residual:
+
+```text
+Revisar periodicamente routers FastAPI vs markdown após mudanças grandes (PRs que alterem prefixos ou nomenclatura).
 ```
 
 Motivo:
 
-- documentação atual não deve inventar endpoints;
-- rotas TOTVS precisam ser confirmadas;
-- contratos consumidos pelos plugins precisam ser listados;
-- permissões operacionais precisam ser associadas às rotas.
+- evitar drift entre documentação e código;
+- contratos consumidos pelos plugins devem permanecer rastreáveis;
+- rotas TOTVS continuam sensíveis a ambiente (VPN, credenciais).
 
 ---
 
@@ -118,7 +123,9 @@ Pendência:
 Padronizar permission code do dashboard-lmps.
 ```
 
-Códigos que precisam ser unificados, se aparecerem no código/manifestos:
+Manifesto atual do repositório (`plugins/dashboard-lmps/dash-lmps.manifest.json`): permission `dash-lmps.access`, `id` `dash-lmps`.
+
+Códigos legados que podem aparecer em docs ou código antigo:
 
 ```text
 dashboard-lmps.view
@@ -142,14 +149,17 @@ Pendência:
 Confirmar rotas reais do Gateway para todos os plugins e API DELPI.
 ```
 
-Verificar:
+Verificar (conferir `gateway/nginx.conf` e manifestos):
 
 - `/apps/dashboard-delpi`;
 - `/apps/strategic-indicators`;
-- `/apps/dashboard-lmps`;
+- `/dash-lmps` (plugin iframe `dash-lmps` — não usar `/apps/dashboard-lmps` salvo novo manifesto);
+- `/apps/minha-delpi-chat`;
+- `/apps/minha-delpi-ai/api/`;
 - `/apps/api-delpi`;
 - `/core-api`;
-- `/auth`.
+- `/auth`;
+- `/socket.io/` (upgrade WebSocket).
 
 ---
 
@@ -161,17 +171,22 @@ Tipo:
 Infra / Operação
 ```
 
-Pendência:
+Estado:
 
 ```text
-Confirmar suporte completo a Socket.IO/WebSocket no Gateway.
+Stack dev documentada em gateway-nginx.md com location /socket.io/ → core-api.
+```
+
+Pendência residual:
+
+```text
+Validar paridade nos ambientes não-dev (proxies adicionais, WAF, timeouts de upgrade).
 ```
 
 Motivo:
 
-- Portal depende de eventos em tempo real;
-- Core API usa Socket.IO;
-- proxy precisa preservar upgrade headers.
+- Portal depende de `admin.changed` e notificações;
+- proxies intermediários podem truncar upgrade se mal configurados.
 
 ---
 
@@ -218,18 +233,24 @@ Motivo:
 
 ---
 
-## 11. Notificações — contrato repository
+## 11. Notificações — port mínimo do repository
 
 Tipo:
 
 ```text
-Código
+Código (baixa prioridade)
 ```
 
-Pendência:
+Estado:
 
 ```text
-Confirmar se notifications.get(notification_id) existe no port e no repository concreto.
+O port expõe create, list_unread, mark_read, mark_all_read. mark_read usa Session.get() na implementação SQLAlchemy — não é obrigatório expor get(id) no Protocol.
+```
+
+Pendência opcional:
+
+```text
+Se surgir necessidade de ler uma notificação específica por id fora de mark_read, estender o port com método explícito e cobrir por teste.
 ```
 
 ---
@@ -329,9 +350,10 @@ Complementar documentação funcional dos plugins existentes.
 Plugins:
 
 ```text
+minha-delpi-chat
 dashboard-delpi
 strategic-indicators
-dashboard-lmps
+dashboard-lmps (dash-lmps)
 ```
 
 Faltam:
@@ -343,6 +365,8 @@ Faltam:
 - contratos de resposta;
 - estados de loading/erro;
 - componentes principais.
+
+Documentação de inventário: [../08-plugins/README.md](../08-plugins/README.md).
 
 ---
 
@@ -393,17 +417,17 @@ Motivo:
 
 Prioridade alta:
 
-1. Inventário real de rotas da `api-delpi`.
-2. Manifestos reais dos plugins existentes.
-3. Permission code final do `dashboard-lmps`.
-4. Strategy de migrations do `postgres-plugins`.
+1. Manter `api-delpi/docs/api/` revisado após mudanças em routers.
+2. Manifestos reais dos plugins existentes vs registrados em cada ambiente.
+3. Permission codes legados (`dashboard-lmps.*` vs `dash-lmps.*` no manifesto atual).
+4. Strategy de migrations do `postgres-plugins` (compartilhado com AI API).
 5. Healthchecks/readiness no Compose.
-6. Gateway para Socket.IO e plugins.
+6. Gateway em produção (timeouts, WebSocket, TLS).
 
 Prioridade média:
 
 1. Cache RBAC distribuído.
-2. Automação Keycloak.
+2. Automação / export reproduzível Keycloak.
 3. Auditoria final.
 4. Testes automatizados por camada.
 
@@ -411,8 +435,7 @@ Prioridade média:
 
 ## 19. Documentos relacionados
 
-```text
-docs/12-roadmap-e-evolucao/status-atual.md
-docs/12-roadmap-e-evolucao/decisoes-tecnicas.md
-docs/12-roadmap-e-evolucao/roadmap.md
-```
+- [status-atual.md](./status-atual.md)
+- [decisoes-tecnicas.md](./decisoes-tecnicas.md)
+- [roadmap.md](./roadmap.md)
+- [../../api-delpi/docs/api/README.md](../../api-delpi/docs/api/README.md)

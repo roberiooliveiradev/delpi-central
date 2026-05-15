@@ -50,18 +50,24 @@ keycloak-db
 postgres-core
 api-delpi
 postgres-plugins
+minha-delpi-ai-api
+ollama
+minha-delpi-chat
 dashboard-delpi
 strategic-indicators
 dashboard-lmps
 ```
 
-Plugins/módulos documentados:
+Plugins/módulos (inventário): [../08-plugins/README.md](../08-plugins/README.md).
+
+Plugins citados na documentação operacional:
 
 ```text
 dashboard-delpi
 strategic-indicators
 dashboard-lmps
-qualidade / external-nc
+minha-delpi-chat
+qualidade / external-nc (API DELPI / roadmap)
 ```
 
 ---
@@ -71,7 +77,7 @@ qualidade / external-nc
 Status:
 
 ```text
-Implementada e documentada em nível arquitetural, de rotas, use cases, repositories, migrations, models, notificações e erros.
+Documentada em pacote modular (controllers-e-rotas, use-cases, migrations, etc.) + visão enxuta em visao-geral-core-api.md.
 ```
 
 Responsabilidades atuais:
@@ -93,18 +99,16 @@ Responsabilidades atuais:
 
 Documentos:
 
-```text
-docs/04-core-api/visao-geral-core-api.md
-docs/04-core-api/bootstrap-da-aplicacao.md
-docs/04-core-api/controllers-e-rotas.md
-docs/04-core-api/use-cases.md
-docs/04-core-api/unit-of-work.md
-docs/04-core-api/repositories.md
-docs/04-core-api/modelos-de-banco.md
-docs/04-core-api/migrations.md
-docs/04-core-api/erros-api.md
-docs/04-core-api/notificacoes.md
-```
+- [04-core-api/README.md](../04-core-api/README.md)
+- [04-core-api/visao-geral-core-api.md](../04-core-api/visao-geral-core-api.md)
+- [04-core-api/controllers-e-rotas.md](../04-core-api/controllers-e-rotas.md)
+- [04-core-api/use-cases.md](../04-core-api/use-cases.md)
+- [04-core-api/unit-of-work.md](../04-core-api/unit-of-work.md)
+- [04-core-api/repositories.md](../04-core-api/repositories.md)
+- [04-core-api/modelos-de-banco.md](../04-core-api/modelos-de-banco.md)
+- [04-core-api/migrations.md](../04-core-api/migrations.md)
+- [04-core-api/erros-api.md](../04-core-api/erros-api.md)
+- [04-core-api/notificacoes.md](../04-core-api/notificacoes.md)
 
 ---
 
@@ -201,9 +205,9 @@ Responsabilidades:
 - backend do plugin de qualidade;
 - endpoints operacionais para plugins.
 
-Pendência controlada:
+Pendência controlada (evolução):
 
-> O inventário completo de rotas reais da `api-delpi` ainda depende da leitura direta dos routers/controllers atuais do código.
+> Rotas e contratos finos da API DELPI mudam com o código; a referência mantida no repositório está em `api-delpi/docs/api/` (OpenAPI + guias por domínio).
 
 ---
 
@@ -239,11 +243,13 @@ Bancos:
 
 ```text
 postgres-core
-postgres-plugins
+postgres-plugins  (API DELPI + Minha DELPI AI API / pgvector)
 keycloak-db
 TOTVS externo
 Portal RH externo
 ```
+
+Documentação: [../09-banco-de-dados/README.md](../09-banco-de-dados/README.md) · [../02-infraestrutura/bancos-de-dados.md](../02-infraestrutura/bancos-de-dados.md).
 
 ---
 
@@ -254,19 +260,20 @@ Portal RH externo
 | `dashboard-delpi` | Documentado com base na infraestrutura | Detalhes funcionais dependem do código real do plugin |
 | `strategic-indicators` | Documentado com base na infraestrutura | Detalhes funcionais dependem do código real do plugin |
 | `dashboard-lmps` | Documentado com manifesto e contexto LMP | APIs/telas finais dependem do código real |
-| `qualidade` | Documentado como especificação técnica | Requer implementação/evolução conforme roadmap |
+| `minha-delpi-chat` | Documentado (chat + AI API) | Ver [08-plugins/README.md](../08-plugins/README.md) |
+| `qualidade` | Documentado na API DELPI (`api-delpi/docs/api`) | NC / rotas — conforme código |
 
 ---
 
-## 12. Pontos que ainda exigem confirmação de código
+## 12. Pendências controladas (evolução contínua)
 
-1. Rotas completas da `api-delpi`.
-2. Implementação final dos plugins `dashboard-delpi`, `strategic-indicators` e `dashboard-lmps`.
-3. Manifestos reais finais de todos os plugins.
+1. Manter `api-delpi/docs/api/` alinhado a novo código (revisão periódica).
+2. Implementação e telas finais dos MFEs `dashboard-delpi`, `strategic-indicators`, `dashboard-lmps`.
+3. Manifestos e versões registradas em homologação/produção.
 4. Configuração final do Gateway em produção.
-5. Implementação final do módulo de qualidade.
-6. Estratégia definitiva de migrations para `postgres-plugins`.
-7. Contratos finais de APIs operacionais consumidas pelos plugins.
+5. Módulo de qualidade / NC conforme roadmap.
+6. Estratégia de schema/migrations compartilhada para dados em `postgres-plugins` (AI API + API DELPI).
+7. Contratos de APIs externas consumidas pelos plugins (quando aplicável).
 
 ---
 
@@ -277,28 +284,26 @@ Portal RH externo
 - Gateway não servir `remoteEntry.js` esperado;
 - cache RBAC em memória em cenário multi-réplica;
 - `depends_on` não garantir readiness;
-- rotas da `api-delpi` ainda não totalmente inventariadas;
+- rotas da `api-delpi` descritas em `api-delpi/docs/api` — revisar após mudanças grandes no código;
 - reset local pode apagar Keycloak e exigir reconfiguração.
 
 ---
 
 ## 14. Próximas ações recomendadas
 
-1. Commitar documentação central.
-2. Validar links internos.
-3. Comparar manifestos reais com documentação.
-4. Inventariar rotas reais da `api-delpi`.
-5. Inventariar APIs consumidas por plugins existentes.
-6. Definir migrations do `postgres-plugins`.
-7. Executar revisão técnica por pasta.
+1. Validar links internos da pasta `docs/` após mudanças grandes.
+2. Comparar manifestos do repositório com o que está registrado em cada ambiente.
+3. Revisar periodicamente `api-delpi/docs/api/` vs routers FastAPI.
+4. Inventariar chamadas HTTP feitas por cada plugin (consumo de APIs).
+5. Definir ou documentar evolução do schema em `postgres-plugins` (AI + domínio).
+6. Revisão técnica por pasta do monorepo conforme necessidade.
 
 ---
 
 ## 15. Documentos relacionados
 
-```text
-docs/12-roadmap-e-evolucao/decisoes-tecnicas.md
-docs/12-roadmap-e-evolucao/pendencias-tecnicas.md
-docs/12-roadmap-e-evolucao/roadmap.md
-docs/00-visao-geral/mapa-da-plataforma.md
-```
+- [decisoes-tecnicas.md](./decisoes-tecnicas.md)
+- [pendencias-tecnicas.md](./pendencias-tecnicas.md)
+- [roadmap.md](./roadmap.md)
+- [../00-visao-geral/mapa-da-plataforma.md](../00-visao-geral/mapa-da-plataforma.md)
+- [../README.md](../README.md)

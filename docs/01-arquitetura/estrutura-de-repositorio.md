@@ -1,7 +1,7 @@
 # Minha DELPI — Estrutura de Repositório
 
 > **Arquivo:** `docs/01-arquitetura/estrutura-de-repositorio.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** organização do monorepo, responsabilidades por pasta e relação entre aplicações
 
@@ -27,9 +27,10 @@ A plataforma é organizada como um conjunto de aplicações e serviços independ
 Estrutura de alto nível:
 
 ```text
-minha-delpi/
+delpi-central/          # monorepo (nome legado do repositório)
   api-delpi/
   core-api/
+  minha-delpi-ai-api/
   gateway/
   infra/
   plugins/
@@ -44,6 +45,7 @@ Responsabilidade por pasta:
 | `core-api/` | API Flask de governança: usuários, RBAC, apps, plugins, manifestos, favoritos, notificações e eventos |
 | `portal/` | Frontend React/Vite principal, autenticação SSO, menu dinâmico e carregamento de plugins |
 | `api-delpi/` | API operacional para domínios, integrações, TOTVS, Portal RH e dados de plugins |
+| `minha-delpi-ai-api/` | Chat, agentes, RAG; FastAPI + pgvector |
 | `plugins/` | Microfrontends e aplicações plugáveis |
 | `gateway/` | Nginx/reverse proxy e entrada HTTP única |
 | `infra/` | Docker Compose, inicialização de bancos, Keycloak themes e configuração local |
@@ -79,6 +81,7 @@ Responsabilidades:
 - subir plugins;
 - subir `postgres-plugins`;
 - subir `api-delpi`;
+- subir `minha-delpi-ai-api` e `ollama`;
 - subir `gateway`;
 - manter scripts de inicialização dos bancos;
 - manter temas customizados do Keycloak.

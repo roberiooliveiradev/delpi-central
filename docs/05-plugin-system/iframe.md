@@ -1,7 +1,7 @@
 # Minha DELPI — Plugins Iframe
 
 > **Arquivo:** `docs/05-plugin-system/iframe.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** plugins do tipo `iframe`
 

@@ -1,7 +1,7 @@
 # Minha DELPI — Registro de Plugin
 
 > **Arquivo:** `docs/05-plugin-system/registro-de-plugin.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** fluxo técnico de registro de plugins na Core API
 
@@ -13,11 +13,8 @@ Este documento descreve como funciona o registro de plugins na **Minha DELPI**.
 
 O registro de plugin é o processo pelo qual a Core API recebe um manifesto JSON, valida seu contrato, cria ou atualiza o app correspondente, registra permissões, cria rotas, salva o manifesto vigente e mantém histórico versionado.
 
-Este documento complementa:
-
-```text
-docs/05-plugin-system/manifesto-plugin.md
-```
+- Contrato: [manifesto-plugin.md](./manifesto-plugin.md)
+- Runbook: [../10-guias-operacionais/registrar-plugin.md](../10-guias-operacionais/registrar-plugin.md)
 
 ---
 
@@ -103,42 +100,23 @@ apps.manage
 
 O body da requisição deve ser um JSON válido contendo o manifesto do plugin.
 
-Exemplo mínimo para microfrontend:
+Exemplo mínimo para **microfrontend** (ver manifesto real em `plugins/strategic-indicators/strategic-indicators.manifest.json`):
 
 ```json
 {
   "schemaVersion": "1.0.0",
-  "id": "dashboard-lmps",
-  "name": "Dashboard LMPs",
-  "description": "Painel de acompanhamento de LMPs.",
+  "id": "strategic-indicators",
+  "name": "Indicadores Estratégicos",
   "version": "1.0.0",
   "type": "microfrontend",
-  "basePath": "/apps/dashboard-lmps",
-  "entry": "/apps/dashboard-lmps/assets/remoteEntry.js",
-  "icon": "bar-chart3",
-  "ui": {
-    "renderMode": "federated"
-  },
-  "permissions": [
-    {
-      "code": "dashboard-lmps.access",
-      "name": "Acessar Dashboard LMPs",
-      "description": "Permite acessar o dashboard de LMPs.",
-      "module": "dashboard-lmps"
-    }
-  ],
-  "routes": [
-    {
-      "path": "/apps/dashboard-lmps",
-      "label": "Dashboard LMPs",
-      "icon": "bar-chart3",
-      "permission": "dashboard-lmps.access",
-      "showInMenu": true,
-      "order": 1
-    }
-  ]
+  "basePath": "/apps/strategic-indicators",
+  "entry": "/apps/strategic-indicators/assets/remoteEntry.js",
+  "permissions": [{ "code": "strategic-indicators.view", "name": "Ver", "module": "strategic-indicators" }],
+  "routes": [{ "path": "/apps/strategic-indicators", "permission": "strategic-indicators.view", "showInMenu": true }]
 }
 ```
+
+Exemplo **iframe** (LMPs no repositório — `plugins/dashboard-lmps/dash-lmps.manifest.json`): `id` `dash-lmps`, `basePath` `/dash-lmps`, `type` `iframe`, permission `dash-lmps.access`.
 
 Se o body não for um objeto JSON, a API deve retornar erro de validação.
 
@@ -376,10 +354,10 @@ Cada item de `permissions[]` deve conter:
 
 ```json
 {
-  "code": "dashboard-lmps.access",
+  "code": "dash-lmps.access",
   "name": "Acessar Dashboard LMPs",
   "description": "Permite acessar o dashboard de LMPs.",
-  "module": "dashboard-lmps"
+      "module": "dash-lmps"
 }
 ```
 
@@ -425,7 +403,7 @@ Exemplo:
 
 ```json
 {
-  "permission": "dashboard-lmps.access"
+  "permission": "dash-lmps.access"
 }
 ```
 
@@ -624,7 +602,7 @@ Depois disso, administradores podem:
 Exemplo:
 
 ```text
-dashboard-lmps.access
+dash-lmps.access
 ```
 
 Pode ser associada a:

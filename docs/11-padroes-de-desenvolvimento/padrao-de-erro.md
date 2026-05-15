@@ -301,7 +301,6 @@ Vazar token, senha, SQL ou stack trace.
 
 ## 17. Documentos relacionados
 
-```text
-docs/04-core-api/erros-api.md
-docs/11-padroes-de-desenvolvimento/padrao-de-rota.md
-```
+- [../04-core-api/erros-api.md](../04-core-api/erros-api.md)
+- [padrao-de-rota.md](./padrao-de-rota.md)
+- [README.md](./README.md)

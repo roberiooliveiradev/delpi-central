@@ -1,7 +1,7 @@
 # Minha DELPI — Core API: Padrão de Erros da API
 
 > **Arquivo:** `docs/04-core-api/erros-api.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** formato de erro, status HTTP, códigos e boas práticas de tratamento de erro na Core API
 
@@ -10,6 +10,8 @@
 ## 1. Objetivo
 
 Este documento descreve o padrão de erros usado pela **Core API** da Minha DELPI.
+
+**Implementação:** `core-api/app/interfaces/http/utils/errors.py`
 
 A padronização de erros é importante para:
 
@@ -148,21 +150,18 @@ A Core API possui helpers em:
 app/interfaces/http/utils/errors.py
 ```
 
-Helpers conhecidos:
+| Helper | HTTP | `code` padrão |
+|---|---|---|
+| `unauthorized()` | 401 | `unauthorized` |
+| `forbidden()` | 403 | `forbidden` |
+| `not_found()` | 404 | `not_found` |
+| `bad_request()` | 400 | `validation_error` (customizável) |
+| `unprocessable()` | 422 | `unprocessable_entity` |
+| `conflict()` | 409 | `conflict` |
+| `server_error()` | 500 | `internal_error` |
+| `api_error()` / `error_response()` | qualquer | explícito |
 
-```text
-api_error
-error_response
-unauthorized
-forbidden
-not_found
-bad_request
-unprocessable
-conflict
-server_error
-```
-
-Esses helpers devem ser preferidos em controllers para manter formato consistente.
+Registro de plugin com erros de validação pode retornar **400** com `{"errors": [...]}` (lista múltipla) sem usar os helpers acima.
 
 ---
 

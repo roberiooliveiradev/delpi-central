@@ -1,558 +1,209 @@
-# Minha DELPI — Variáveis de Ambiente
+# Minha DELPI — Variáveis de ambiente
 
 > **Arquivo:** `docs/02-infraestrutura/variaveis-de-ambiente.md`  
-> **Status:** documentação oficial em construção  
-> **Produto:** Minha DELPI  
-> **Escopo:** variáveis de ambiente usadas por Docker Compose, Core API, Portal, Keycloak, API DELPI e bancos
+> **Status:** documentação oficial  
+> **Fonte:** `infra/.env`, `infra/docker-compose*.yml`, Compose de cada serviço
 
 ---
 
-## 1. Objetivo
+## 1. Onde configurar
 
-Este documento consolida as variáveis de ambiente usadas pela infraestrutura atual da Minha DELPI.
-
-As variáveis aparecem principalmente em:
-
-```text
-infra/.env
-infra/docker-compose.yml
-infra/docker-compose.dev.yml
-core-api/app/infrastructure/config/settings.py
-```
-
-Este documento não deve conter valores reais de produção.
-
----
-
-## 2. Regra de segurança
-
-Nunca versionar secrets reais.
-
-Variáveis sensíveis incluem:
-
-```text
-POSTGRES_*_PASSWORD
-DB_PASSWORD
-SECRET_KEY
-KEYCLOAK_ADMIN_PASSWORD
-KEYCLOAK_ADMIN_CLIENT_SECRET
-API_DELPI_JWT_SECRET
-TOTVS_DB_PASSWORD
-PLUGINS_DB_PASSWORD
-PORTAL_RH_DB_PASSWORD
-```
-
-Usar exemplos seguros em `.env.example`.
-
----
-
-## 3. Variáveis gerais
-
-```env
-TZ=America/Sao_Paulo
-LOG_LEVEL=
-```
-
-| Variável | Uso |
+| Arquivo | Uso |
 |---|---|
-| `TZ` | Timezone dos containers |
-| `LOG_LEVEL` | Nível de log da API DELPI e serviços que adotarem essa variável |
+| `infra/.env` | Valores locais/dev (não versionar com secrets reais) |
+| `infra/.env.prod` | Referência de produção (proteger) |
+| `infra/docker-compose.dev.yml` | Injeta env nos containers |
+
+Crie `infra/.env.example` apenas com chaves e comentários, sem valores de produção.
 
 ---
 
-## 4. PostgreSQL da Core API — criação do container
+## 2. Segurança
 
-Usadas pelo serviço `postgres-core`:
+Nunca commitar:
 
-```env
-POSTGRES_CORE_DB=
-POSTGRES_CORE_USER=
-POSTGRES_CORE_PASSWORD=
+```text
+*_PASSWORD, SECRET_KEY, *_CLIENT_SECRET
+API_DELPI_JWT_SECRET, TOTVS_DB_PASSWORD
 ```
+
+Variáveis `VITE_*` são **públicas** (embutidas no build do Portal).
+
+---
+
+## 3. Referência rápida por serviço
+
+### Geral
+
+| Variável | Exemplo dev | Descrição |
+|---|---|---|
+| `PUBLIC_BASE_URL` | `http://localhost` | URL pública do gateway (issuer, redirects) |
+| `TZ` | `America/Sao_Paulo` | Timezone dos containers |
+
+### Postgres Core + Core API
+
+| Variável | Container alvo |
+|---|---|
+| `POSTGRES_CORE_*` | Criação do `postgres-core` |
+| `DB_HOST` | `postgres-core` (rede Docker) |
+| `DB_PORT` | `5432` |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Conexão SQLAlchemy |
+| `SECRET_KEY` | Flask |
+| `FLASK_APP` | `app.create_app:create_app` |
+| `FLASK_ENV` | `development` / `production` |
+| `INITIAL_SUPERADMIN_EMAIL` | Bootstrap do primeiro admin |
+| `INITIAL_SUPERADMIN_NAME` | Nome exibido |
+
+### JWT / OIDC (Core API, API DELPI, AI API)
 
 | Variável | Descrição |
 |---|---|
-| `POSTGRES_CORE_DB` | Nome do banco criado no container |
-| `POSTGRES_CORE_USER` | Usuário PostgreSQL do banco core |
-| `POSTGRES_CORE_PASSWORD` | Senha do usuário PostgreSQL do banco core |
+| `KEYCLOAK_REALM` | Realm (ex.: `delpi`) |
+| `KEYCLOAK_AUDIENCE` | Claim `aud` esperada (ex.: `delpi-central`) |
+| `KEYCLOAK_ISSUER` | Issuer **público** — ex.: `${PUBLIC_BASE_URL}/auth/realms/${KEYCLOAK_REALM}` |
+| `KEYCLOAK_JWKS_URL` | JWKS **interno** — ex.: `http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/certs` |
+| `KEYCLOAK_ISSUER_INTERNAL` | Opcional, validação interna |
+| `JWT_ALGORITHMS` | Ex.: `RS256` |
 
-Em produção, o Compose também define:
+Regra crítica: o token emitido ao browser usa o issuer **público** (`localhost/auth/...`); containers validam via JWKS na rede Docker (`keycloak:8080/auth/...`).
+
+### Keycloak server
+
+| Variável | Dev típico |
+|---|---|
+| `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` | Console admin |
+| `POSTGRES_KC_*` | Banco `keycloak-db` |
+| `KC_HTTP_RELATIVE_PATH` | `/auth` |
+| `KC_HOSTNAME` | `localhost` (dev) / domínio real (prod) |
+| `KC_PROXY` | `edge` |
+| `KC_PROXY_HEADERS` | `xforwarded` |
+| `KC_HOSTNAME_STRICT` | `false` (dev), `true` (prod) |
+
+### Portal (build-time)
+
+| Variável | Descrição |
+|---|---|
+| `VITE_KC_URL` | `${PUBLIC_BASE_URL}/auth` |
+| `VITE_KC_REALM` | Igual `KEYCLOAK_REALM` |
+| `VITE_KC_CLIENT_ID` | Client público (ex.: `delpi-central`) |
+| `VITE_KC_REDIRECT_URI` | `${PUBLIC_BASE_URL}/` |
+| `VITE_FRONT_CHANNEL_LOGOUT_URLS` | CSV opcional de URLs de logout em iframes |
+
+### API DELPI
+
+| Variável | Descrição |
+|---|---|
+| `TOTVS_DB_*` | SQL Server Protheus (mapeado para `DB_*` no container) |
+| `PLUGINS_DB_*` | PostgreSQL plugins (`postgres-plugins`) |
+| `PORTAL_RH_DB_*` | PostgreSQL RH (opcional) |
+| `API_DELPI_PORT` | Porta interna (8000) |
+| `API_DELPI_ENV` | `development` |
+| `API_DELPI_JWT_SECRET` | Legado/auxiliar — validação principal é Keycloak |
+| `GOOGLE_SHEETS_*`, `TRANSFORMA_MAIS_*`, `QUALITY_*`, `FINANCIAL_*`, etc. | Integrações planilhas (indicadores) |
+
+### Minha DELPI AI API
+
+Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
+
+| Variável | Descrição |
+|---|---|
+| `DATABASE_URL` | Montada no Compose → `postgres-plugins` |
+| `CORE_API_BASE_URL` | `http://core-api:8000` |
+| `LLM_PROVIDER` | `ollama` ou `vllm` |
+| `OLLAMA_BASE_URL` | `http://ollama:11434` |
+| `OLLAMA_MODEL` | Ex.: `qwen2.5:1.5b` |
+| `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` | Ex.: `bge-m3` |
+| `RATE_LIMIT_*` | Limites por janela |
+| `KNOWLEDGE_*` | Limites de ingestão RAG |
+| `VLLM_*` | Produção com profile GPU |
+
+### Keycloak Admin (Core API backend)
 
 ```env
-POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+KEYCLOAK_ADMIN_CLIENT_ID=
+KEYCLOAK_ADMIN_CLIENT_SECRET=
+KEYCLOAK_ADMIN_REALM=
+KEYCLOAK_ADMIN_URL=http://keycloak:8080
 ```
 
 ---
 
-## 5. Core API — conexão com banco
+## 4. Armadilha: dois significados de `DB_*`
 
-Usadas pelo serviço `core-api`:
+| Serviço | `DB_HOST` aponta para |
+|---|---|
+| **Core API** | `postgres-core` |
+| **API DELPI** (via Compose) | `TOTVS_DB_HOST` → mapeado para `DB_*` = SQL Server |
 
-```env
-DB_HOST=
-DB_PORT=
-DB_NAME=
-DB_USER=
-DB_PASSWORD=
-```
+Sempre conferir o **serviço** antes de alterar `DB_HOST`.
 
-No código da Core API, a URI é montada como:
+---
 
-```text
-postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:<DB_PORT>/<DB_NAME>
-```
-
-Essas variáveis devem apontar para `postgres-core`.
-
-Exemplo conceitual em Docker:
+## 5. Exemplo `.env.example` (estrutura)
 
 ```env
+# Geral
+PUBLIC_BASE_URL=http://localhost
+TZ=America/Sao_Paulo
+
+# Keycloak
+KEYCLOAK_REALM=delpi
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=change-me
+KC_HTTP_RELATIVE_PATH=/auth
+KC_HOSTNAME=localhost
+KC_PROXY=edge
+KC_PROXY_HEADERS=xforwarded
+
+# Postgres Core
+POSTGRES_CORE_DB=delpi_core
+POSTGRES_CORE_USER=delpi
+POSTGRES_CORE_PASSWORD=change-me
 DB_HOST=postgres-core
 DB_PORT=5432
-```
+DB_NAME=delpi_core
+DB_USER=delpi
+DB_PASSWORD=change-me
+SECRET_KEY=change-me
 
----
+# JWT
+KEYCLOAK_AUDIENCE=delpi-central
+KEYCLOAK_ISSUER=http://localhost/auth/realms/delpi
+KEYCLOAK_JWKS_URL=http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/certs
+JWT_ALGORITHMS=RS256
 
-## 6. Core API — Flask e segurança
+# Portal
+VITE_KC_URL=http://localhost/auth
+VITE_KC_REALM=delpi
+VITE_KC_CLIENT_ID=delpi-central
+VITE_KC_REDIRECT_URI=http://localhost/
 
-```env
-FLASK_APP=app.create_app:create_app
-FLASK_ENV=development|production
-SECRET_KEY=
-```
-
-| Variável | Uso |
-|---|---|
-| `FLASK_APP` | Factory Flask usada pelo container |
-| `FLASK_ENV` | Modo da aplicação |
-| `SECRET_KEY` | Chave de segurança usada pelo Flask/aplicação |
-
-Regra:
-
-> `SECRET_KEY` deve ser forte e exclusiva por ambiente.
-
----
-
-## 7. Core API — Keycloak/JWT
-
-```env
-KEYCLOAK_JWKS_URL=
-KEYCLOAK_ISSUER=
-KEYCLOAK_AUDIENCE=
-```
-
-| Variável | Uso |
-|---|---|
-| `KEYCLOAK_JWKS_URL` | Endpoint JWKS usado para validar assinatura JWT |
-| `KEYCLOAK_ISSUER` | Issuer esperado no claim `iss` |
-| `KEYCLOAK_AUDIENCE` | Audience esperada no claim `aud` |
-
-Pontos de atenção:
-
-- `KEYCLOAK_JWKS_URL` precisa ser acessível de dentro do container da Core API;
-- `KEYCLOAK_ISSUER` precisa bater exatamente com o `iss` do token;
-- `KEYCLOAK_AUDIENCE` precisa estar no token emitido pelo Keycloak.
-
----
-
-## 8. Core API — bootstrap inicial
-
-```env
-INITIAL_SUPERADMIN_EMAIL=
-INITIAL_SUPERADMIN_NAME=
-```
-
-Uso esperado:
-
-- identificar/criar superadmin inicial;
-- permitir bootstrap de governança;
-- evitar ambiente sem usuário administrativo.
-
-Regras:
-
-- email deve corresponder ao usuário autenticado via Keycloak;
-- não usar conta genérica sem controle;
-- validar após primeiro login.
-
----
-
-## 9. Core API — Admin API do Keycloak
-
-```env
-KEYCLOAK_ADMIN_CLIENT_ID=
-KEYCLOAK_ADMIN_CLIENT_SECRET=
-KEYCLOAK_ADMIN_REALM=
-KEYCLOAK_ADMIN_URL=
-```
-
-Uso esperado:
-
-- integração backend com Admin API do Keycloak;
-- automações administrativas futuras;
-- service account controlado.
-
-Segurança:
-
-> Essas variáveis são de backend. Nunca expor no Portal ou em variáveis `VITE_*`.
-
----
-
-## 10. Keycloak DB
-
-Usadas pelo serviço `keycloak-db`:
-
-```env
-POSTGRES_KC_DB=
-POSTGRES_KC_USER=
-POSTGRES_KC_PASSWORD=
-```
-
-Essas variáveis criam o banco usado internamente pelo Keycloak.
-
----
-
-## 11. Keycloak runtime
-
-Usadas pelo serviço `keycloak`:
-
-```env
-KC_DB=postgres
-KC_DB_URL=
-KC_DB_USERNAME=
-KC_DB_PASSWORD=
-KEYCLOAK_ADMIN=
-KEYCLOAK_ADMIN_PASSWORD=
-KC_HTTP_ENABLED=
-KC_HTTP_PORT=
-KC_HTTP_RELATIVE_PATH=
-KC_HOSTNAME=
-KC_HOSTNAME_STRICT=
-KC_HOSTNAME_STRICT_HTTPS=
-KC_PROXY=
-KC_PROXY_HEADERS=
-```
-
-| Grupo | Variáveis |
-|---|---|
-| Banco | `KC_DB`, `KC_DB_URL`, `KC_DB_USERNAME`, `KC_DB_PASSWORD` |
-| Admin | `KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD` |
-| HTTP/path | `KC_HTTP_ENABLED`, `KC_HTTP_PORT`, `KC_HTTP_RELATIVE_PATH` |
-| Hostname/proxy | `KC_HOSTNAME`, `KC_HOSTNAME_STRICT`, `KC_HOSTNAME_STRICT_HTTPS`, `KC_PROXY`, `KC_PROXY_HEADERS` |
-
-Ponto crítico:
-
-> Configuração incorreta de hostname/proxy pode gerar issuer errado e quebrar validação JWT na Core API/API DELPI.
-
----
-
-## 12. Portal frontend
-
-Variáveis usadas pelo Portal:
-
-```env
-VITE_KC_URL=
-VITE_KC_REALM=
-VITE_KC_CLIENT_ID=
-VITE_KC_REDIRECT_URI=
-```
-
-| Variável | Uso |
-|---|---|
-| `VITE_KC_URL` | URL pública do Keycloak usada no navegador |
-| `VITE_KC_REALM` | Realm do Keycloak |
-| `VITE_KC_CLIENT_ID` | Client público do Portal |
-| `VITE_KC_REDIRECT_URI` | URL de retorno após login |
-
-Regra:
-
-> Variáveis `VITE_*` são públicas e embutidas no build. Não usar secrets.
-
----
-
-## 13. API DELPI — runtime
-
-```env
-API_DELPI_PORT=
-API_DELPI_ENV=
-API_DELPI_JWT_SECRET=
-```
-
-No container, o Compose mapeia:
-
-```env
-PORT=${API_DELPI_PORT}
-ENV=${API_DELPI_ENV}
-JWT_SECRET=${API_DELPI_JWT_SECRET}
-```
-
----
-
-## 14. API DELPI — Keycloak/JWT
-
-```env
-KEYCLOAK_REALM=
-KEYCLOAK_AUDIENCE=
-KEYCLOAK_JWKS_URL=
-KEYCLOAK_ISSUER=
-JWT_ALGORITHMS=
-```
-
-Uso:
-
-- validar token em endpoints protegidos;
-- garantir issuer/audience corretos;
-- selecionar algoritmos aceitos.
-
----
-
-## 15. API DELPI — TOTVS
-
-Variáveis externas:
-
-```env
+# TOTVS + Plugins DB (preencher conforme ambiente)
 TOTVS_DB_HOST=
-TOTVS_DB_PORT=
-TOTVS_DB_USER=
-TOTVS_DB_PASSWORD=
-TOTVS_DB_DATABASE=
-```
-
-Dentro do container `api-delpi`, o Compose mapeia para:
-
-```env
-DB_HOST=${TOTVS_DB_HOST}
-DB_PORT=${TOTVS_DB_PORT}
-DB_USER=${TOTVS_DB_USER}
-DB_PASSWORD=${TOTVS_DB_PASSWORD}
-DB_DATABASE=${TOTVS_DB_DATABASE}
-```
-
-Atenção:
-
-> Na API DELPI, `DB_*` é TOTVS. Na Core API, `DB_*` é `postgres-core`.
-
----
-
-## 16. PostgreSQL de plugins
-
-Criação do container `postgres-plugins`:
-
-```env
-PLUGINS_DB_NAME=
-PLUGINS_DB_USER=
-PLUGINS_DB_PASSWORD=
-```
-
-Conexão usada pela API DELPI:
-
-```env
-PLUGINS_DB_HOST=
-PLUGINS_DB_PORT=
-PLUGINS_DB_NAME=
-PLUGINS_DB_USER=
-PLUGINS_DB_PASSWORD=
-PLUGINS_DB_CONNECT_TIMEOUT=
-PLUGINS_DB_SSLMODE=
-```
-
-Em Docker, o host esperado normalmente é:
-
-```env
 PLUGINS_DB_HOST=postgres-plugins
-PLUGINS_DB_PORT=5432
+PLUGINS_DB_NAME=plugins_hub
+PLUGINS_DB_USER=plugins_user
+PLUGINS_DB_PASSWORD=change-me
 ```
 
 ---
 
-## 17. Portal RH DB
+## 6. Troubleshooting por variável
 
-Variáveis usadas pela API DELPI:
-
-```env
-PORTAL_RH_DB_HOST=
-PORTAL_RH_DB_PORT=
-PORTAL_RH_DB_NAME=
-PORTAL_RH_DB_USER=
-PORTAL_RH_DB_PASSWORD=
-PORTAL_RH_DB_CONNECT_TIMEOUT=
-PORTAL_RH_DB_SSLMODE=
-```
-
-Uso esperado:
-
-- integração com banco do Portal RH;
-- rotas e módulos operacionais da API DELPI.
-
-O código real da API DELPI deve ser consultado para documentar as rotas que usam essas variáveis.
+| Sintoma | Verificar |
+|---|---|
+| Core API não conecta | `DB_HOST=postgres-core`, credenciais = `POSTGRES_CORE_*` |
+| 401 após login | `KEYCLOAK_ISSUER` = `iss` do token; `KEYCLOAK_AUDIENCE` no `aud` |
+| JWKS timeout | `KEYCLOAK_JWKS_URL` usa hostname `keycloak`, não `localhost` |
+| Portal redirect | `VITE_KC_*` + Valid Redirect URIs no client |
+| API DELPI TOTVS | VPN, `TOTVS_DB_*`, firewall 1433 |
+| Chat sem LLM | `OLLAMA_BASE_URL`, modelos baixados no container |
 
 ---
 
-## 18. Variáveis por serviço
+## 7. Documentos relacionados
 
-### 18.1 `postgres-core`
-
-```env
-POSTGRES_CORE_DB=
-POSTGRES_CORE_USER=
-POSTGRES_CORE_PASSWORD=
-TZ=
-```
-
-### 18.2 `core-api`
-
-```env
-FLASK_APP=
-FLASK_ENV=
-TZ=
-DB_HOST=
-DB_PORT=
-DB_NAME=
-DB_USER=
-DB_PASSWORD=
-SECRET_KEY=
-KEYCLOAK_JWKS_URL=
-KEYCLOAK_ISSUER=
-KEYCLOAK_AUDIENCE=
-INITIAL_SUPERADMIN_EMAIL=
-INITIAL_SUPERADMIN_NAME=
-KEYCLOAK_ADMIN_CLIENT_ID=
-KEYCLOAK_ADMIN_CLIENT_SECRET=
-KEYCLOAK_ADMIN_REALM=
-KEYCLOAK_ADMIN_URL=
-```
-
-### 18.3 `portal`
-
-```env
-TZ=
-VITE_KC_URL=
-VITE_KC_REALM=
-VITE_KC_CLIENT_ID=
-VITE_KC_REDIRECT_URI=
-```
-
-### 18.4 `api-delpi`
-
-```env
-DB_HOST=
-DB_PORT=
-DB_USER=
-DB_PASSWORD=
-DB_DATABASE=
-PORT=
-ENV=
-JWT_SECRET=
-KEYCLOAK_REALM=
-KEYCLOAK_AUDIENCE=
-KEYCLOAK_JWKS_URL=
-KEYCLOAK_ISSUER=
-JWT_ALGORITHMS=
-LOG_LEVEL=
-TZ=
-PLUGINS_DB_HOST=
-PLUGINS_DB_PORT=
-PLUGINS_DB_NAME=
-PLUGINS_DB_USER=
-PLUGINS_DB_PASSWORD=
-PLUGINS_DB_CONNECT_TIMEOUT=
-PLUGINS_DB_SSLMODE=
-PORTAL_RH_DB_HOST=
-PORTAL_RH_DB_PORT=
-PORTAL_RH_DB_NAME=
-PORTAL_RH_DB_USER=
-PORTAL_RH_DB_PASSWORD=
-PORTAL_RH_DB_CONNECT_TIMEOUT=
-PORTAL_RH_DB_SSLMODE=
-```
-
----
-
-## 19. Checklist de `.env.example`
-
-Um `.env.example` deve conter todas as variáveis sem valores reais.
-
-Checklist:
-
-- [ ] Variáveis do `postgres-core`.
-- [ ] Variáveis de conexão da Core API.
-- [ ] `SECRET_KEY` sem valor real.
-- [ ] Variáveis de Keycloak runtime.
-- [ ] Variáveis de JWT/OIDC.
-- [ ] Variáveis Vite do Portal.
-- [ ] Variáveis da API DELPI.
-- [ ] Variáveis TOTVS.
-- [ ] Variáveis do `postgres-plugins`.
-- [ ] Variáveis Portal RH.
-- [ ] Comentários sobre quais valores são públicos e quais são secrets.
-
----
-
-## 20. Troubleshooting
-
-### 20.1 Core API não conecta ao banco
-
-Verificar:
-
-- `DB_HOST` aponta para `postgres-core` dentro do Docker;
-- `DB_PORT=5432` dentro da rede Docker;
-- `DB_NAME` bate com `POSTGRES_CORE_DB`;
-- usuário e senha conferem;
-- volume não está corrompido;
-- migrations foram aplicadas.
-
-### 20.2 Login funciona, mas Core API retorna 401
-
-Verificar:
-
-- `KEYCLOAK_JWKS_URL` acessível pela Core API;
-- `KEYCLOAK_ISSUER` igual ao `iss` do token;
-- `KEYCLOAK_AUDIENCE` presente no token;
-- token não expirou;
-- `KC_HTTP_RELATIVE_PATH` e hostname estão coerentes.
-
-### 20.3 Portal não redireciona corretamente
-
-Verificar:
-
-- `VITE_KC_URL` é a URL pública correta;
-- `VITE_KC_REALM` existe;
-- `VITE_KC_CLIENT_ID` é client público;
-- `VITE_KC_REDIRECT_URI` está cadastrado no Keycloak;
-- produção foi rebuildada após alterar `VITE_*`.
-
-### 20.4 API DELPI conecta no banco errado
-
-Verificar:
-
-- `TOTVS_DB_*` está correto;
-- mapeamento para `DB_*` no Compose está claro;
-- `PLUGINS_DB_*` aponta para `postgres-plugins`;
-- não confundir Core API `DB_*` com API DELPI `DB_*`.
-
----
-
-## 21. Boas práticas
-
-1. Usar `.env.example` sem secrets.
-2. Usar valores diferentes por ambiente.
-3. Não misturar variáveis da Core API com variáveis da API DELPI.
-4. Não colocar secrets em `VITE_*`.
-5. Validar issuer/audience com token real.
-6. Usar nomes de host Docker para comunicação entre containers.
-7. Expor portas de banco apenas em desenvolvimento.
-8. Rotacionar secrets quando necessário.
-9. Documentar novas variáveis no mesmo PR que adiciona código.
-10. Revisar logs para garantir que secrets não são impressos.
-
----
-
-## 22. Documentos relacionados
-
-```text
-docs/02-infraestrutura/docker-compose.md
-docs/02-infraestrutura/ambientes-dev-prod.md
-docs/02-infraestrutura/bancos-de-dados.md
-docs/03-autenticacao-autorizacao/jwt.md
-docs/03-autenticacao-autorizacao/keycloak-sso.md
-docs/07-api-delpi/visao-geral-api-delpi.md
-```
+- [docker-compose.md](./docker-compose.md)
+- [../03-autenticacao-autorizacao/jwt.md](../03-autenticacao-autorizacao/jwt.md)
+- [../03-autenticacao-autorizacao/keycloak-sso.md](../03-autenticacao-autorizacao/keycloak-sso.md)
+- [../10-guias-operacionais/configurar-keycloak.md](../10-guias-operacionais/configurar-keycloak.md)

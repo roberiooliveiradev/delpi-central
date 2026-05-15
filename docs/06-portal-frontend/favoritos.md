@@ -1,7 +1,8 @@
 # Minha DELPI — Favoritos no Portal
 
 > **Arquivo:** `docs/06-portal-frontend/favoritos.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial  
+> **Implementação:** `AuthContext.addFavorite/removeFavorite`, `coreApi.ts`, `Sidebar` / `AppLauncher`  
 > **Produto:** Minha DELPI  
 > **Escopo:** favoritos de apps no Portal e Core API
 
@@ -111,10 +112,10 @@ Exemplo:
 ```json
 [
   {
-    "id": "dashboard-lmps",
+    "id": "dash-lmps",
     "name": "Dashboard LMPs",
     "description": "Painel de acompanhamento de LMPs.",
-    "basePath": "/apps/dashboard-lmps",
+    "basePath": "/dash-lmps",
     "icon": "bar-chart3",
     "type": "microfrontend",
     "version": "1.0.0",
@@ -308,15 +309,15 @@ Favoritos não devem furar autorização.
 Cenário:
 
 ```text
-Usuário favorita dashboard-lmps
+Usuário favorita dash-lmps
   ↓
-Depois perde dashboard-lmps.access
+Depois perde dash-lmps.access
   ↓
 Favorito permanece persistido
   ↓
 ListFavoriteAppsUseCase filtra contra apps autorizados
   ↓
-Portal não recebe dashboard-lmps nos favoritos
+Portal não recebe dash-lmps nos favoritos
 ```
 
 Se o usuário recuperar a permissão, o favorito pode voltar a aparecer.

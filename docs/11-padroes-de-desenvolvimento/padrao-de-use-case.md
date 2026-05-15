@@ -346,9 +346,8 @@ UseCase que retorna tupla HTTP.
 
 ## 18. Documentos relacionados
 
-```text
-docs/04-core-api/use-cases.md
-docs/04-core-api/unit-of-work.md
-docs/11-padroes-de-desenvolvimento/padrao-de-rota.md
-docs/11-padroes-de-desenvolvimento/padrao-de-repository.md
-```
+- [../04-core-api/use-cases.md](../04-core-api/use-cases.md)
+- [../04-core-api/unit-of-work.md](../04-core-api/unit-of-work.md)
+- [padrao-de-rota.md](./padrao-de-rota.md)
+- [padrao-de-repository.md](./padrao-de-repository.md)
+- [README.md](./README.md)

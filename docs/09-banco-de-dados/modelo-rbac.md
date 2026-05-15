@@ -1,7 +1,7 @@
 # Minha DELPI — Modelo de Banco do RBAC
 
 > **Arquivo:** `docs/09-banco-de-dados/modelo-rbac.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** modelo relacional de usuários, grupos, roles, permissões e overrides
 
@@ -25,6 +25,8 @@ Este documento detalha:
 - overrides individuais;
 - resolução de permissões efetivas;
 - impactos em apps, rotas e Portal.
+
+**Complementos:** [permission-resolver.md](../03-autenticacao-autorizacao/permission-resolver.md) · [rbac.md](../03-autenticacao-autorizacao/rbac.md) · API HTTP [controllers-e-rotas.md](../04-core-api/controllers-e-rotas.md) (`/admin/rbac/*`).
 
 ---
 
@@ -205,7 +207,7 @@ users.manage
 apps.view
 apps.manage
 routes.manage
-dashboard-lmps.access
+dash-lmps.access
 ```
 
 Permissões do sistema usam normalmente:
@@ -341,7 +343,7 @@ Definir quais permissões uma role concede.
 Exemplo:
 
 ```text
-Role Analista LMP recebe dashboard-lmps.access.
+Role Analista LMP recebe dash-lmps.access.
 ```
 
 ---
@@ -436,7 +438,7 @@ Permissões:
 
 ```text
 Gestor de Apps → apps.view, apps.manage
-Analista LMP   → dashboard-lmps.access
+Analista LMP   → dash-lmps.access
 ```
 
 Overrides:
@@ -449,7 +451,7 @@ Resultado efetivo:
 
 ```text
 apps.view
-dashboard-lmps.access
+dash-lmps.access
 ```
 
 A permissão `apps.manage` foi removida pelo override individual.
@@ -506,9 +508,9 @@ Exemplo:
 
 ```json
 {
-  "code": "dashboard-lmps.access",
+  "code": "dash-lmps.access",
   "name": "Acessar Dashboard LMPs",
-  "module": "dashboard-lmps"
+  "module": "dash-lmps"
 }
 ```
 
@@ -729,12 +731,9 @@ WHERE up.user_id = :user_id;
 
 ## 25. Documentos relacionados
 
-```text
-docs/09-banco-de-dados/core-db.md
-docs/03-autenticacao-autorizacao/rbac.md
-docs/03-autenticacao-autorizacao/permission-resolver.md
-docs/04-core-api/modelos-de-banco.md
-docs/04-core-api/repositories.md
-docs/05-plugin-system/manifesto-plugin.md
-```
+- [README.md](./README.md)
+- [core-db.md](./core-db.md)
+- [../03-autenticacao-autorizacao/rbac.md](../03-autenticacao-autorizacao/rbac.md)
+- [../03-autenticacao-autorizacao/permission-resolver.md](../03-autenticacao-autorizacao/permission-resolver.md)
+- [../04-core-api/controllers-e-rotas.md](../04-core-api/controllers-e-rotas.md)
 

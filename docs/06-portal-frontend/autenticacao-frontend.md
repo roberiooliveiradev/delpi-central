@@ -1,601 +1,165 @@
-# Minha DELPI — Autenticação Frontend
+# Minha DELPI — Autenticação no Portal
 
 > **Arquivo:** `docs/06-portal-frontend/autenticacao-frontend.md`  
-> **Status:** documentação oficial em construção  
-> **Produto:** Minha DELPI  
-> **Escopo:** autenticação do Portal com Keycloak e uso de token nas APIs
+> **Status:** documentação oficial  
+> **Implementação:** `portal/src/data/keycloakClient.ts`, `portal/src/state/AuthContext.tsx`, `portal/src/data/apiClient.ts`
 
 ---
 
-## 1. Objetivo
-
-Este documento descreve como o **Portal** da Minha DELPI deve lidar com autenticação no frontend.
-
-Ele explica:
-
-- o papel do Keycloak no frontend;
-- quais variáveis configuram o client;
-- como o token é obtido;
-- como o token é enviado para a Core API;
-- como tratar expiração e renovação;
-- quais cuidados de segurança devem ser seguidos.
-
----
-
-## 2. Princípio central
-
-O Portal autentica o usuário via Keycloak e usa o access token para consumir APIs protegidas.
+## 1. Princípio
 
 ```text
-Portal → Keycloak → access token → Core API / API DELPI / plugins
+Keycloak autentica  →  JWT no Portal  →  Core API / API DELPI validam e autorizam
 ```
 
-A autenticação acontece no Keycloak.
-
-A autorização funcional da plataforma é calculada pela Core API.
-
-Regra:
-
-> O frontend não deve considerar o JWT como fonte final de autorização. Ele deve consultar `/me` e `/me/apps` na Core API.
+O Portal usa o access token apenas como credencial. Permissões efetivas vêm de `GET /core-api/me`.
 
 ---
 
-## 3. Componentes envolvidos
+## 2. Inicialização Keycloak
 
-| Componente | Responsabilidade |
-|---|---|
-| Portal | Iniciar login, manter sessão frontend, enviar token |
-| Keycloak | Autenticar usuário e emitir tokens |
-| Core API | Validar token, sincronizar usuário e resolver permissões |
-| API DELPI | Validar token em endpoints operacionais protegidos |
-| Gateway | Roteamento HTTP entre navegador e serviços |
+```typescript
+// keycloakClient.ts
+keycloak.init({
+  onLoad: "check-sso",
+  pkceMethod: "S256",
+  checkLoginIframe: true,
+});
+```
 
----
+- **check-sso:** tenta restaurar sessão sem redirect agressivo.
+- **PKCE:** fluxo público do client SPA (sem client secret no browser).
+- `initPromise` singleton evita dupla inicialização.
 
-## 4. Variáveis de ambiente
-
-O Portal usa variáveis Vite para configurar o client Keycloak.
+Variáveis obrigatórias em build:
 
 ```env
-VITE_KC_URL=
+VITE_KC_URL=        # ex.: https://minhadelpi.com.br/auth
 VITE_KC_REALM=
-VITE_KC_CLIENT_ID=
-VITE_KC_REDIRECT_URI=
+VITE_KC_CLIENT_ID=  # client público do Portal
 ```
 
-Descrição:
+---
 
-| Variável | Descrição |
+## 3. Estados no `AuthContext`
+
+| Estado | Significado |
 |---|---|
-| `VITE_KC_URL` | URL base do Keycloak exposta ao navegador |
-| `VITE_KC_REALM` | Realm usado pela Minha DELPI |
-| `VITE_KC_CLIENT_ID` | Client público do Portal |
-| `VITE_KC_REDIRECT_URI` | URI de redirecionamento após login |
+| `initialized` | Keycloak terminou `init` |
+| `isAuthenticated` | Sessão Keycloak ativa |
+| `loading` | Carregando identidade |
+| `coreLoaded` | `/me` e `/me/apps` concluídos (shell pode renderizar rotas protegidas) |
+| `tokenRef` | Access token atual (não exposto em re-render desnecessário) |
 
-Atenção:
+Fluxo em `App.tsx`:
 
-> Variáveis `VITE_*` são embutidas no build frontend. Não colocar segredos nelas.
-
----
-
-## 5. Fluxo de login
-
-Fluxo geral:
-
-```text
-Usuário acessa Portal
-  ↓
-Portal inicializa client Keycloak
-  ↓
-Portal verifica se há sessão ativa
-  ↓
-Se não autenticado, redireciona para login
-  ↓
-Usuário autentica no Keycloak
-  ↓
-Keycloak redireciona para Portal
-  ↓
-Portal recebe tokens
-  ↓
-Portal chama Core API
-```
+1. `!initialized || loading` → `<Loader />`
+2. `!isAuthenticated` → apenas `/login`
+3. Autenticado → `AppShell` com sidebar e rotas
 
 ---
 
-## 6. Fluxo pós-login
+## 4. Envio do token às APIs
 
-Após login, o Portal deve inicializar o estado da plataforma.
-
-Fluxo recomendado:
-
-```text
-Token disponível
-  ↓
-GET /me
-  ↓
-GET /me/apps
-  ↓
-GET /me/apps/favorites
-  ↓
-GET /me/notifications
-  ↓
-Conectar Socket.IO com token
-  ↓
-Renderizar shell autenticado
-```
-
-O Portal deve evitar renderizar áreas autenticadas antes de confirmar o estado mínimo do usuário.
-
----
-
-## 7. Envio do token para APIs
-
-Todas as chamadas protegidas devem enviar o token no header:
+`ApiClient` monta:
 
 ```http
 Authorization: Bearer <access_token>
+Content-Type: application/json
 ```
 
-Exemplo conceitual:
+Base URL vazia (`""`): endpoints são paths absolutos no mesmo origin do gateway (`/core-api/...`).
+
+Opções do construtor:
 
 ```typescript
-fetch("/core-api/me", {
-  headers: {
-    Authorization: `Bearer ${accessToken}`,
-  },
-})
+new ApiClient("", () => tokenRef.current, {
+  refreshToken: refreshTokenSilently,  // keycloak.updateToken(60)
+  onUnauthorized: handleUnauthorized, // keycloak.login()
+});
 ```
 
-O mesmo padrão deve ser usado para Core API, API DELPI e APIs de plugins que exigem autenticação.
+### Tratamento de 401
+
+1. Primeira resposta `401` → chama `refreshTokenSilently()`
+2. Se refresh OK → repete a requisição **uma vez**
+3. Se ainda falhar → `onUnauthorized` → redirect login Keycloak
 
 ---
 
-## 8. Endpoint `/me`
+## 5. Carga pós-login
 
-Após autenticação, o Portal deve consultar:
-
-```http
-GET /me
-```
-
-Esse endpoint retorna a identidade local e as permissões efetivas calculadas pela Core API.
-
-Exemplo:
-
-```json
-{
-  "id": "uuid",
-  "name": "Usuário",
-  "email": "usuario@empresa.com",
-  "is_superadmin": false,
-  "permissions": [
-    "apps.view",
-    "dashboard-lmps.access"
-  ]
-}
-```
-
-Uso no Portal:
-
-- exibir usuário;
-- habilitar áreas administrativas;
-- adaptar UI;
-- passar contexto a plugins quando necessário.
-
----
-
-## 9. Endpoint `/me/apps`
-
-Após `/me`, o Portal deve consultar:
-
-```http
-GET /me/apps
-```
-
-Esse endpoint retorna apps e rotas autorizados.
-
-O Portal deve montar menu e rotas plugáveis a partir dessa resposta.
-
-Regra:
-
-> A lista de apps autorizados vem da Core API, não do token nem de configuração fixa no frontend.
-
----
-
-## 10. Expiração do token
-
-O Portal deve tratar expiração de token.
-
-Cenários:
-
-- access token expirou;
-- refresh falhou;
-- sessão Keycloak expirou;
-- usuário fez logout em outra aba;
-- Core API retornou 401.
-
-Comportamento recomendado:
-
-```text
-Antes de chamada protegida
-  ↓
-Verificar/renovar token se necessário
-  ↓
-Se renovação falhar, redirecionar para login
-```
-
----
-
-## 11. Renovação de token
-
-Se o client Keycloak usado no Portal suportar renovação, o Portal deve renovar token antes de chamadas protegidas ou periodicamente.
-
-Fluxo conceitual:
-
-```text
-Token perto de expirar
-  ↓
-updateToken / refresh
-  ↓
-Se sucesso, atualizar token em memória
-  ↓
-Se falha, limpar sessão e redirecionar login
-```
-
-A política exata depende da biblioteca usada no frontend.
-
----
-
-## 12. Tratamento de 401
-
-Se uma chamada protegida retorna 401:
-
-```text
-API retorna 401
-  ↓
-Portal tenta renovar token, se possível
-  ↓
-Repete chamada uma vez
-  ↓
-Se continuar 401, redireciona para login
-```
-
-Evitar loops infinitos de retry.
-
----
-
-## 13. Tratamento de 403
-
-Se uma chamada retorna 403:
-
-```text
-Usuário autenticado, mas sem permissão
-```
-
-Comportamento recomendado:
-
-- exibir mensagem de acesso negado;
-- não redirecionar necessariamente para login;
-- recarregar `/me` e `/me/apps` se a autorização pode ter mudado;
-- redirecionar para rota segura se a rota atual não for mais autorizada.
-
----
-
-## 14. Logout
-
-O logout deve encerrar a sessão no Portal e no Keycloak.
-
-Fluxo:
-
-```text
-Usuário clica sair
-  ↓
-Portal chama logout do Keycloak
-  ↓
-Portal limpa estado local
-  ↓
-Redireciona para tela pública/login
-```
-
-O Portal deve limpar:
-
-- dados do usuário;
-- apps carregados;
-- favoritos;
-- notificações;
-- conexão Socket.IO;
-- cache em memória relacionado à sessão.
-
----
-
-## 15. Socket.IO autenticado
-
-O Portal deve conectar ao Socket.IO usando token.
-
-Exemplo conceitual:
+Função `loadIdentityAndNavigation`:
 
 ```typescript
-const socket = io("/", {
-  auth: {
-    token: accessToken,
-  },
-})
+const [me, appsResponse] = await Promise.all([
+  coreApi.getMe(),
+  coreApi.getApps(),
+]);
+setRoutes(appsResponse.flatMap((app) => app.routes ?? []));
 ```
 
-A Core API valida o token no handshake e coloca o cliente em uma sala baseada no `sub` do usuário.
+Outras cargas (paralelas após identidade):
 
-Se o token expirar, o Portal deve reconectar com token válido.
+- `loadFavoritesData` → `GET /core-api/me/apps/favorites`
+- `loadNotificationsData` → `GET /core-api/me/notifications`
+- `loadDashboardData` → `GET /core-api/me/dashboard`
 
----
-
-## 16. Armazenamento do token
-
-O armazenamento do token deve minimizar exposição.
-
-Recomendações:
-
-- preferir token em memória quando possível;
-- evitar localStorage se não for necessário;
-- não armazenar client secret;
-- não expor token em URL/query string;
-- limpar token no logout;
-- tratar múltiplas abas com cuidado.
-
-Atenção:
-
-> Como aplicação frontend pública, o Portal não deve conter segredos. O client Keycloak do Portal deve ser público.
+Método público `reload()` reexecuta essas cargas (usado após `admin.changed`).
 
 ---
 
-## 17. Tokens em plugins
+## 6. Refresh periódico
 
-Microfrontends podem precisar chamar APIs protegidas.
+Intervalo configurado no `AuthContext` chama `keycloak.updateToken(60)` antes da expiração.
 
-Opções:
+Plugins em iframe recebem token atualizado via `postMessage` (`DELPI_AUTH`) no `AppHost`.
 
-- receber token via contexto do Portal;
-- usar um client HTTP compartilhado;
-- receber callback para obter token atualizado;
-- depender de APIs chamadas pelo shell.
-
-Regra:
-
-> Evitar passar token para plugins sem necessidade. Quando necessário, passar de forma controlada e documentada.
-
-Para iframes, evitar token em query string.
+Swagger da API DELPI usa o mesmo contrato (`DELPI_AUTH` / `DELPI_REFRESH_REQUEST`).
 
 ---
 
-## 18. Separação entre autenticação e autorização
+## 7. Logout
 
-O Portal pode autenticar o usuário, mas não deve decidir sozinho permissões finais.
+Sequência em `logout()`:
 
-Fluxo correto:
+1. `runGlobalFrontChannelLogout()` — iframes para URLs configuradas (RH, controle MP, etc.)
+2. `keycloak.logout({ redirectUri })`
+3. `clearSessionState()` — zera apps, routes, user, token
 
-```text
-JWT válido
-  ↓
-Core API sincroniza usuário
-  ↓
-Core API resolve permissões
-  ↓
-Portal recebe /me e /me/apps
-```
-
-Fluxo incorreto:
-
-```text
-Portal lê roles do token
-  ↓
-Portal decide sozinho apps e rotas
-```
-
-Esse fluxo é incorreto porque a autorização vigente está no RBAC interno da Core API.
-
----
-
-## 19. Proteção de rotas frontend
-
-Rotas autenticadas devem exigir sessão válida.
-
-Rotas plugáveis devem exigir que o path esteja presente em `/me/apps`.
-
-Pseudocódigo:
-
-```typescript
-if (!auth.isAuthenticated) {
-  redirectToLogin()
-}
-
-const match = findAuthorizedRoute(apps, location.pathname)
-
-if (!match) {
-  showNotFoundOrForbidden()
-}
-```
-
----
-
-## 20. Proteção de áreas administrativas
-
-Áreas administrativas do Portal podem usar permissões de `/me` para UX.
-
-Exemplo:
-
-```typescript
-const canManageApps = user.permissions.includes("apps.manage")
-```
-
-Mas o backend deve continuar protegendo endpoints administrativos.
-
-Regra:
-
-> Ocultar botão no frontend não substitui `@require_permission` no backend.
-
----
-
-## 21. Estados de autenticação
-
-O Portal deve tratar estados:
-
-```text
-initializing
-authenticated
-unauthenticated
-refreshing_token
-expired
-error
-```
-
-Estados recomendados de UI:
-
-- tela de carregamento durante inicialização;
-- redirecionamento para login quando não autenticado;
-- mensagem de erro se Keycloak indisponível;
-- reconexão ou logout se token expirou.
-
----
-
-## 22. Erros comuns
-
-### 22.1 `invalid_token`
-
-Possíveis causas:
-
-- token expirado;
-- issuer errado;
-- audience errada;
-- JWKS inacessível;
-- token de outro realm/client.
-
-Ação:
-
-- renovar token;
-- validar variáveis Keycloak;
-- verificar configuração da Core API.
-
----
-
-### 22.2 `unauthorized`
-
-Possíveis causas:
-
-- header ausente;
-- token ausente;
-- sessão expirada;
-- handshake Socket.IO sem token.
-
-Ação:
-
-- enviar `Authorization: Bearer`;
-- redirecionar login;
-- reconectar socket.
-
----
-
-### 22.3 `forbidden`
-
-Possíveis causas:
-
-- usuário autenticado sem permissão;
-- role/grupo não atribuído;
-- app/rota exige permissão ausente;
-- usuário perdeu acesso durante a sessão.
-
-Ação:
-
-- recarregar `/me` e `/me/apps`;
-- exibir acesso negado;
-- redirecionar para rota segura.
-
----
-
-## 23. Desenvolvimento local
-
-No Docker Compose dev, o Portal recebe:
+URLs padrão embutidas; sobrescrever com:
 
 ```env
-VITE_KC_URL=
-VITE_KC_REALM=
-VITE_KC_CLIENT_ID=
-VITE_KC_REDIRECT_URI=
+VITE_FRONT_CHANNEL_LOGOUT_URLS=https://app1/logout,https://app2/logout
 ```
-
-O Keycloak roda com:
-
-```text
-start-dev
-```
-
-O Gateway expõe a plataforma em:
-
-```text
-http://localhost/
-```
-
-O redirect URI deve ser compatível com a URL usada no navegador.
 
 ---
 
-## 24. Produção
+## 8. Socket.IO
 
-Em produção, o Portal recebe variáveis Vite como build args.
+Após token válido:
 
-Atenção:
-
-> Mudanças em variáveis `VITE_*` podem exigir rebuild do Portal, porque são incorporadas no build.
-
-Keycloak roda com:
-
-```text
-start
+```typescript
+socket.auth = { token };
+socket.connect();  // path /socket.io → core-api
 ```
 
-E deve ter hostname, proxy e redirect URIs configurados corretamente.
+Eventos: `notification`, `admin.changed`.
 
 ---
 
-## 25. Checklist de implementação
+## 9. Segurança — checklist
 
-- [ ] Keycloak inicializa corretamente no Portal.
-- [ ] Login redireciona para realm correto.
-- [ ] Redirect URI está configurada no client.
-- [ ] Token é enviado em `Authorization: Bearer`.
-- [ ] `/me` é chamado após login.
-- [ ] `/me/apps` é chamado após login.
-- [ ] 401 dispara renovação ou login.
-- [ ] 403 exibe acesso negado, não login automático.
-- [ ] Logout limpa estado local.
-- [ ] Socket.IO envia token no handshake.
-- [ ] Token não é colocado em query string de iframe.
-- [ ] Áreas admin usam permissões de `/me` para UX.
+- Não colocar `client_secret` em variáveis `VITE_*`
+- Não usar JWT como única fonte de menu (sempre `/me/apps`)
+- `ProtectedRoute` é UX; Core API deve bloquear no servidor
+- Evitar token em query string de iframes (usar `postMessage`)
 
 ---
 
-## 26. Pontos de atenção
+## 10. Documentos relacionados
 
-1. `VITE_*` não pode conter segredo.
-2. O client do Portal deve ser público.
-3. Keycloak autentica, Core API autoriza.
-4. `/me` é a fonte do usuário efetivo na plataforma.
-5. `/me/apps` é a fonte dos apps autorizados.
-6. Token expirado deve ser tratado sem loop infinito.
-7. Iframes não devem receber token em URL.
-8. Microfrontends devem receber contexto de forma controlada.
-9. Logout deve fechar Socket.IO.
-10. Mudança de variáveis Vite em produção pode exigir rebuild.
-
----
-
-## 27. Documentos relacionados
-
-```text
-docs/06-portal-frontend/visao-geral-portal.md
-docs/06-portal-frontend/menu-dinamico.md
-docs/06-portal-frontend/app-authorization.md
-docs/06-portal-frontend/consumo-de-plugins.md
-docs/03-autenticacao-autorizacao/rbac.md
-docs/03-autenticacao-autorizacao/jwt.md
-docs/03-autenticacao-autorizacao/keycloak-sso.md
-```
-
+- [visao-geral-portal.md](./visao-geral-portal.md)
+- [menu-dinamico.md](./menu-dinamico.md)
+- [../03-autenticacao-autorizacao/keycloak-sso.md](../03-autenticacao-autorizacao/keycloak-sso.md)
+- [../03-autenticacao-autorizacao/jwt.md](../03-autenticacao-autorizacao/jwt.md)

@@ -1,7 +1,7 @@
 # Minha DELPI — Versionamento e Rollback de Plugins
 
 > **Arquivo:** `docs/05-plugin-system/versionamento-e-rollback.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** histórico de versões, registro de nova versão e rollback de plugins
 
@@ -190,9 +190,9 @@ Criar nova versão quando houver mudança estrutural.
 Exemplos:
 
 ```text
-Adicionar dashboard-lmps.details
-Remover dashboard-lmps.access
-Trocar dashboard-lmps.access por dashboard-lmps.view
+Adicionar dash-lmps.details
+Remover dash-lmps.access
+Trocar dash-lmps.access por dash-lmps.view
 ```
 
 Motivo:
@@ -209,9 +209,9 @@ Motivo:
 Exemplos:
 
 ```text
-Adicionar /apps/dashboard-lmps/detalhes
-Remover /apps/dashboard-lmps
-Alterar /apps/dashboard-lmps para /apps/lmps
+Adicionar /apps/dash-lmps/detalhes
+Remover /apps/dash-lmps
+Alterar /apps/dash-lmps para /apps/lmps
 ```
 
 Motivo:
@@ -228,7 +228,7 @@ Motivo:
 Exemplo:
 
 ```text
-/apps/dashboard-lmps → /apps/lmps
+/apps/dash-lmps → /apps/lmps
 ```
 
 Motivo:
@@ -333,8 +333,8 @@ Erro:
 Exemplo:
 
 ```text
-Plugin dashboard-lmps já possui 1.0.0.
-Tentar registrar dashboard-lmps 1.0.0 novamente será bloqueado.
+Plugin dash-lmps já possui 1.0.0.
+Tentar registrar dash-lmps 1.0.0 novamente será bloqueado.
 ```
 
 ---
@@ -572,8 +572,8 @@ Isso pode impactar roles existentes.
 Exemplo:
 
 ```text
-Versão 1.1.0 adicionou dashboard-lmps.details.
-Role Analista recebeu dashboard-lmps.details.
+Versão 1.1.0 adicionou dash-lmps.details.
+Role Analista recebeu dash-lmps.details.
 Rollback para 1.0.0 remove essa permissão do cadastro.
 ```
 

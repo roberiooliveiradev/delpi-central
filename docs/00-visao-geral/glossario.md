@@ -1,7 +1,7 @@
 # Minha DELPI — Glossário
 
 > **Arquivo:** `docs/00-visao-geral/glossario.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** termos técnicos, funcionais e arquiteturais usados na plataforma
 
@@ -320,7 +320,7 @@ Exemplos:
 apps.view
 apps.manage
 routes.manage
-dashboard-lmps.access
+dash-lmps.access
 ```
 
 ---
@@ -521,7 +521,7 @@ Caminho base do app/plugin.
 Exemplo:
 
 ```text
-/apps/dashboard-lmps
+/dash-lmps
 ```
 
 Rotas do plugin devem iniciar com esse caminho.

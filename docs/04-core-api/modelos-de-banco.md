@@ -1,7 +1,7 @@
 # Minha DELPI — Core API: Modelos de Banco
 
 > **Arquivo:** `docs/04-core-api/modelos-de-banco.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** models SQLAlchemy da Core API e relação com o schema `postgres-core`
 
@@ -13,11 +13,19 @@ Este documento descreve os modelos de banco da **Core API** da Minha DELPI.
 
 Os models SQLAlchemy representam o schema do banco `postgres-core`, usado para governança da plataforma: usuários, RBAC, apps, plugins, rotas, manifestos, versões, favoritos, notificações e auditoria.
 
-Este documento complementa a documentação do banco:
+- Banco: [../09-banco-de-dados/core-db.md](../09-banco-de-dados/core-db.md)
+- Rotas que persistem dados: [controllers-e-rotas.md](./controllers-e-rotas.md)
 
-```text
-docs/09-banco-de-dados/core-db.md
-```
+**Nota:** o model `App` está em `app_module.py` (tabela `apps`).
+
+### Onde ler o quê
+
+| Precisa de… | Documento |
+|---|---|
+| Tabelas, FKs, índices e visão relacional do `postgres-core` | [../09-banco-de-dados/core-db.md](../09-banco-de-dados/core-db.md) |
+| RBAC só no modelo de dados | [../09-banco-de-dados/modelo-rbac.md](../09-banco-de-dados/modelo-rbac.md) |
+| Plugin System só no modelo de dados | [../09-banco-de-dados/modelo-plugin-system.md](../09-banco-de-dados/modelo-plugin-system.md) |
+| Arquivos `.py` dos models, mixin, boas práticas Alembic | este arquivo |
 
 ---
 
@@ -271,7 +279,7 @@ Exemplos:
 rbac.manage
 apps.view
 apps.manage
-dashboard-lmps.access
+dash-lmps.access
 ```
 
 Regra para plugins:
@@ -897,13 +905,12 @@ Regra:
 
 ## 28. Documentos relacionados
 
-```text
-docs/09-banco-de-dados/core-db.md
-docs/09-banco-de-dados/modelo-rbac.md
-docs/09-banco-de-dados/modelo-plugin-system.md
-docs/04-core-api/migrations.md
-docs/04-core-api/repositories.md
-docs/03-autenticacao-autorizacao/rbac.md
-docs/05-plugin-system/manifesto-plugin.md
-```
+- [../09-banco-de-dados/README.md](../09-banco-de-dados/README.md)
+- [../09-banco-de-dados/core-db.md](../09-banco-de-dados/core-db.md)
+- [../09-banco-de-dados/modelo-rbac.md](../09-banco-de-dados/modelo-rbac.md)
+- [../09-banco-de-dados/modelo-plugin-system.md](../09-banco-de-dados/modelo-plugin-system.md)
+- [migrations.md](./migrations.md)
+- [repositories.md](./repositories.md)
+- [../03-autenticacao-autorizacao/rbac.md](../03-autenticacao-autorizacao/rbac.md)
+- [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md)
 

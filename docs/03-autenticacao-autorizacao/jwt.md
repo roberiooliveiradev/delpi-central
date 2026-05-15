@@ -1,7 +1,7 @@
 # Minha DELPI — JWT, Claims e Validação de Token
 
 > **Arquivo:** `docs/03-autenticacao-autorizacao/jwt.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial  
 > **Produto:** Minha DELPI  
 > **Escopo:** validação de JWT, claims, JWKS, issuer, audience e integração com Keycloak
 
@@ -64,9 +64,10 @@ A Core API e a API DELPI validam o token antes de aceitar chamadas protegidas.
 |---|---|
 | Portal | Obtém e envia token |
 | Core API | Valida token, sincroniza usuário e resolve permissões |
-| API DELPI | Valida token para endpoints operacionais protegidos |
-| Socket.IO | Valida token no handshake |
-| Plugins | Podem receber/usar token para consumir APIs protegidas |
+| API DELPI | Valida token (`delpi_auth`) em rotas protegidas |
+| Minha DELPI AI API | Valida token via `KeycloakJwtValidator` (JWKS + issuer + audience) |
+| Socket.IO | Valida token no handshake (`auth.token`) |
+| Plugins | Recebem token do Portal para chamar APIs |
 | Keycloak | Emite tokens e expõe JWKS |
 
 ---
@@ -76,18 +77,20 @@ A Core API e a API DELPI validam o token antes de aceitar chamadas protegidas.
 A Core API usa variáveis para validar tokens do Keycloak:
 
 ```env
-KEYCLOAK_JWKS_URL=
-KEYCLOAK_ISSUER=
-KEYCLOAK_AUDIENCE=
+KEYCLOAK_JWKS_URL=http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/certs
+KEYCLOAK_ISSUER=http://localhost/auth/realms/delpi
+KEYCLOAK_AUDIENCE=delpi-central
+JWT_ALGORITHMS=RS256
 ```
-
-Descrição:
 
 | Variável | Descrição |
 |---|---|
-| `KEYCLOAK_JWKS_URL` | URL do endpoint JWKS usado para validar assinatura |
-| `KEYCLOAK_ISSUER` | Issuer esperado no claim `iss` |
-| `KEYCLOAK_AUDIENCE` | Audience esperada no claim `aud` |
+| `KEYCLOAK_JWKS_URL` | JWKS **na rede Docker** (`keycloak:8080`) |
+| `KEYCLOAK_ISSUER` | Issuer **público** — deve igualar o claim `iss` do token (`localhost/auth/...`) |
+| `KEYCLOAK_AUDIENCE` | Valor esperado em `aud` (ex.: `delpi-central`) |
+| `JWT_ALGORITHMS` | Ex.: `RS256` |
+
+**Dois mundos:** o browser recebe token com `iss` via gateway; containers buscam chaves em `keycloak:8080`. Detalhes: [../02-infraestrutura/variaveis-de-ambiente.md](../02-infraestrutura/variaveis-de-ambiente.md).
 
 ---
 
@@ -96,29 +99,26 @@ Descrição:
 A API DELPI também recebe variáveis de JWT/OIDC:
 
 ```env
-KEYCLOAK_REALM=
-KEYCLOAK_AUDIENCE=
 KEYCLOAK_JWKS_URL=
 KEYCLOAK_ISSUER=
-JWT_ALGORITHMS=
-JWT_SECRET=
-API_DELPI_JWT_SECRET=
+KEYCLOAK_AUDIENCE=
+JWT_ALGORITHMS=RS256
 ```
 
-No Compose, o segredo específico da API DELPI é mapeado para:
+Validação principal: pacote **`delpi_auth`** (middleware FastAPI) com JWKS, issuer e audience — mesmo padrão da Core API.
 
-```yaml
-JWT_SECRET: ${API_DELPI_JWT_SECRET}
-```
+`API_DELPI_JWT_SECRET` / `JWT_SECRET` no Compose são legado/auxiliar; não substituem validação OIDC em rotas protegidas atuais.
 
-Quando a API DELPI valida JWT emitido pelo Keycloak, deve usar:
+---
 
-```text
-JWKS
-issuer
-audience
-algorithms
-```
+## 6.1 Minha DELPI AI API
+
+`minha-delpi-ai-api/app/infrastructure/security/jwt_validator.py`:
+
+- `KEYCLOAK_JWKS_URL`, `KEYCLOAK_ISSUER`, `KEYCLOAK_AUDIENCE`
+- `PyJWKClient` + `jwt.decode` com algoritmos permitidos
+
+Rotas do chat exigem `Authorization: Bearer` igual às demais APIs.
 
 ---
 
@@ -737,12 +737,11 @@ Verificar:
 
 ## 29. Documentos relacionados
 
-```text
-docs/03-autenticacao-autorizacao/rbac.md
-docs/03-autenticacao-autorizacao/keycloak-sso.md
-docs/03-autenticacao-autorizacao/permission-resolver.md
-docs/06-portal-frontend/autenticacao-frontend.md
-docs/07-api-delpi/visao-geral-api-delpi.md
-docs/04-core-api/controllers-e-rotas.md
-```
+- [rbac.md](./rbac.md)
+- [keycloak-sso.md](./keycloak-sso.md)
+- [permission-resolver.md](./permission-resolver.md)
+- [../02-infraestrutura/variaveis-de-ambiente.md](../02-infraestrutura/variaveis-de-ambiente.md)
+- [../10-guias-operacionais/configurar-keycloak.md](../10-guias-operacionais/configurar-keycloak.md)
+- [../06-portal-frontend/autenticacao-frontend.md](../06-portal-frontend/autenticacao-frontend.md)
+- [../04-core-api/controllers-e-rotas.md](../04-core-api/controllers-e-rotas.md)
 

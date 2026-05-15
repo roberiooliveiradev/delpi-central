@@ -11,18 +11,9 @@
 
 Este guia reúne procedimentos de diagnóstico para problemas comuns na Minha DELPI.
 
-Ele cobre:
+Cobre: Docker Compose, gateway, Portal, Core API, Keycloak, AI API, Ollama, bancos, JWT, RBAC, plugins, API DELPI, Socket.IO.
 
-- Docker Compose;
-- Gateway;
-- Portal;
-- Core API;
-- Keycloak;
-- bancos;
-- JWT;
-- RBAC;
-- plugins;
-- API DELPI.
+**Ordem sugerida:** containers → gateway → `/core-api/health` → Keycloak → login → `/me` → plugins → APIs de domínio.
 
 ---
 
@@ -79,8 +70,10 @@ sudo lsof -i :80
 Teste:
 
 ```bash
-curl http://localhost/core-api/health
+curl -s http://localhost/core-api/health
 ```
+
+Esperado: `{"status":"Api rodando!"}`.
 
 Se falhar, verificar:
 
@@ -311,7 +304,52 @@ Verificar:
 
 ---
 
-## 14. Postgres Plugins não conecta
+## 14. Minha DELPI AI API / Chat
+
+Sintomas: chat não responde, 502 em `/apps/minha-delpi-ai/api/`, erro de modelo.
+
+```bash
+docker compose -f docker-compose.dev.yml logs -f minha-delpi-ai-api
+docker compose -f docker-compose.dev.yml logs -f ollama
+```
+
+Checklist:
+
+- [ ] `delpi-ollama` está Up
+- [ ] Modelos baixados: `docker exec -it delpi-ollama ollama list`
+- [ ] `curl http://localhost:11434/api/tags` lista modelos
+- [ ] `DATABASE_URL` aponta para `postgres-plugins` (pgvector)
+- [ ] Migrations/schema do AI API aplicadas se necessário
+- [ ] Token JWT válido nas chamadas do plugin chat
+- [ ] `CORE_API_BASE_URL=http://core-api:8000` responde de dentro da rede Docker
+
+Pull manual:
+
+```bash
+docker exec -it delpi-ollama ollama pull qwen2.5:1.5b
+docker exec -it delpi-ollama ollama pull bge-m3
+```
+
+---
+
+## 15. Socket.IO não conecta
+
+Sintoma: notificações/admin.changed não chegam; console `WebSocket erro`.
+
+Verificar:
+
+- Portal usa `path: /socket.io` (mesma origem do gateway)
+- Token em `socket.auth = { token }` após login
+- Gateway location `/socket.io/` → `core-api:8000`
+- Token não expirado — refresh no Portal (`keycloak.updateToken`)
+
+```bash
+docker compose -f docker-compose.dev.yml logs -f core-api | grep -i socket
+```
+
+---
+
+## 16. Postgres Plugins não conecta
 
 Verificar:
 
@@ -341,7 +379,7 @@ Verificar:
 
 ---
 
-## 15. Reset completo local
+## 17. Reset completo local
 
 Se o ambiente estiver inconsistente e for aceitável apagar dados:
 
@@ -361,7 +399,7 @@ E reconfigurar Keycloak.
 
 ---
 
-## 16. Logs por serviço
+## 18. Logs por serviço
 
 Gateway:
 
@@ -405,9 +443,21 @@ Postgres Plugins:
 docker compose -f docker-compose.dev.yml logs -f postgres-plugins
 ```
 
+AI API:
+
+```bash
+docker compose -f docker-compose.dev.yml logs -f minha-delpi-ai-api
+```
+
+Ollama:
+
+```bash
+docker compose -f docker-compose.dev.yml logs -f ollama
+```
+
 ---
 
-## 17. Ordem recomendada de diagnóstico
+## 19. Ordem recomendada de diagnóstico
 
 1. Verificar containers.
 2. Verificar Gateway.
@@ -420,10 +470,11 @@ docker compose -f docker-compose.dev.yml logs -f postgres-plugins
 9. Verificar `/me/apps`.
 10. Verificar plugin/Gateway.
 11. Verificar API DELPI.
+12. Verificar Ollama / AI API (se usar chat).
 
 ---
 
-## 18. Checklist rápido
+## 20. Checklist rápido
 
 - [ ] Containers estão `Up`.
 - [ ] Gateway responde.
@@ -439,10 +490,13 @@ docker compose -f docker-compose.dev.yml logs -f postgres-plugins
 - [ ] Plugin está registrado.
 - [ ] `remoteEntry.js` responde.
 - [ ] API DELPI conecta nos datasources.
+- [ ] Ollama tem modelos (`ollama list`).
+- [ ] AI API health responde (se habilitada).
+- [ ] Socket.IO conecta após login.
 
 ---
 
-## 19. Pontos de atenção
+## 21. Pontos de atenção
 
 1. `depends_on` não garante prontidão real.
 2. Reset com `down -v` apaga bancos.
@@ -457,7 +511,7 @@ docker compose -f docker-compose.dev.yml logs -f postgres-plugins
 
 ---
 
-## 20. Documentos relacionados
+## 22. Documentos relacionados
 
 ```text
 docs/10-guias-operacionais/subir-ambiente-dev.md

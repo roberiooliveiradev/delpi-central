@@ -79,19 +79,16 @@ Atividades:
 Objetivo:
 
 ```text
-Mapear completamente endpoints, módulos, datasources e contratos da api-delpi.
+Manter o pacote api-delpi/docs/api/ completo e fiel aos routers FastAPI (revisão contínua).
 ```
 
 Atividades:
 
-- listar todas as rotas reais;
-- classificar por domínio;
-- identificar uso de TOTVS;
-- identificar uso de `postgres-plugins`;
-- mapear autenticação;
-- mapear permissões;
-- mapear consumidores;
-- documentar respostas e erros.
+- usar `api-delpi/docs/api/` como referência viva;
+- após alterações em routers, atualizar guias ou referência rápida;
+- classificar por datasource (TOTVS vs `postgres-plugins`);
+- mapear autenticação e dependências de plugins;
+- documentar respostas e erros relevantes.
 
 ---
 
@@ -108,7 +105,8 @@ Plugins:
 ```text
 dashboard-delpi
 strategic-indicators
-dashboard-lmps
+dash-lmps (dashboard-lmps)
+minha-delpi-chat
 ```
 
 Atividades:
@@ -344,9 +342,8 @@ Começar por:
 
 ## 17. Documentos relacionados
 
-```text
-docs/12-roadmap-e-evolucao/status-atual.md
-docs/12-roadmap-e-evolucao/pendencias-tecnicas.md
-docs/12-roadmap-e-evolucao/decisoes-tecnicas.md
-docs/08-plugins/qualidade.md
-```
+- [status-atual.md](./status-atual.md)
+- [pendencias-tecnicas.md](./pendencias-tecnicas.md)
+- [decisoes-tecnicas.md](./decisoes-tecnicas.md)
+- [../00-visao-geral/mapa-da-plataforma.md](../00-visao-geral/mapa-da-plataforma.md)
+- [../../api-delpi/docs/api/07-qualidade-nc.md](../../api-delpi/docs/api/07-qualidade-nc.md)

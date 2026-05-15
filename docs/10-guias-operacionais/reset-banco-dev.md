@@ -1,333 +1,227 @@
-# Minha DELPI — Guia Operacional: Reset de Banco em Desenvolvimento
+# Guia: reset de banco em desenvolvimento
 
 > **Arquivo:** `docs/10-guias-operacionais/reset-banco-dev.md`  
 > **Status:** documentação oficial  
-> **Produto:** Minha DELPI  
-> **Escopo:** reset destrutivo dos bancos locais de desenvolvimento
+> **Escopo:** reset destrutivo dos volumes Docker locais
 
 ---
 
 ## 1. Objetivo
 
-Este guia descreve como resetar o ambiente local da Minha DELPI em desenvolvimento.
+Recriar do zero os dados locais quando migrations, RBAC, Keycloak ou plugins ficaram inconsistentes.
 
-O reset remove volumes Docker e recria o estado dos bancos. Ele é útil durante fases estruturais de desenvolvimento, especialmente quando há mudanças profundas em migrations, RBAC, Plugin System ou Keycloak.
-
----
-
-## 2. Atenção: operação destrutiva
-
-Este procedimento remove dados locais.
-
-Ao executar reset com volumes, você perde:
-
-- dados do `postgres-core`;
-- dados do `keycloak-db`;
-- dados do `postgres-plugins`;
-- realm/client/usuários do Keycloak;
-- apps/plugins registrados;
-- permissões e vínculos RBAC locais;
-- notificações, favoritos e auditoria locais.
-
-Não executar em produção.
+**Não usar em produção nem em ambientes com dados que precisam ser preservados.**
 
 ---
 
-## 3. Quando usar
+## 2. O que é apagado com `down -v`
 
-Use este guia quando:
+| Volume / dado | Conteúdo perdido |
+|---|---|
+| `postgres-core` | Usuários, apps, RBAC, favoritos, notificações |
+| `keycloak-db` | Realm, clients, usuários Keycloak |
+| `postgres-plugins` | Dados do AI API / pgvector (se existirem) |
+| Volume Ollama | Modelos baixados localmente |
 
-- migrations locais estão quebradas;
-- Alembic está com revision inválida;
-- banco local está inconsistente;
-- Keycloak local precisa ser recriado;
-- dados de teste ficaram inválidos;
-- você quer reconstruir o ambiente do zero.
-
-Não use para:
-
-- atualizar ambiente com dados importantes;
-- produção;
-- homologação com dados compartilhados;
-- problemas simples que podem ser resolvidos com migration.
+O **código** e as **migrations versionadas** em `core-api/migrations/` **não** são apagados pelo Compose.
 
 ---
 
-## 4. Entrar na pasta `infra`
+## 3. Caminho recomendado (padrão)
 
-A partir da raiz do repositório:
+Na maioria dos casos, **não** apague a pasta `core-api/migrations`. O entrypoint da Core API já executa `flask db upgrade` ao subir.
 
 ```bash
 cd infra
-```
-
----
-
-## 5. Derrubar containers e volumes
-
-Execute:
-
-```bash
 docker compose -f docker-compose.dev.yml down -v
-```
-
-Isso remove containers e volumes associados ao Compose.
-
----
-
-## 6. Remover migrations somente quando necessário
-
-Se o objetivo for recriar Alembic do zero em desenvolvimento, volte para a raiz:
-
-```bash
-cd ..
-```
-
-Remova a pasta de migrations da Core API:
-
-```bash
-rm -rf core-api/migrations
-```
-
-Atenção:
-
-> Remover migrations é uma medida extrema de desenvolvimento. Em produção, migrations nunca devem ser apagadas para resolver inconsistência.
-
----
-
-## 7. Subir novamente a stack
-
-Volte para `infra`:
-
-```bash
-cd infra
-```
-
-Suba a stack:
-
-```bash
-docker compose -f docker-compose.dev.yml up --build
-```
-
-Ou em segundo plano:
-
-```bash
 docker compose -f docker-compose.dev.yml up --build -d
 ```
 
----
+Aguardar containers saudáveis (Keycloak pode levar 1–2 min na primeira subida).
 
-## 8. Entrar no container da Core API
-
-```bash
-docker exec -it delpi-core-api sh
-```
-
-ou:
+Validar:
 
 ```bash
-docker compose -f docker-compose.dev.yml exec core-api sh
-```
-
----
-
-## 9. Recriar Alembic do zero
-
-Dentro do container:
-
-```bash
-flask db init
+curl -s http://localhost/core-api/health
+# {"status":"Api rodando!"}
 ```
 
 Depois:
 
-```bash
-flask db migrate -m "initial full schema"
-```
-
-Depois:
-
-```bash
-flask db upgrade
-```
-
-Se tudo estiver correto, o Alembic deve executar o upgrade sem erro.
+1. [configurar-keycloak.md](./configurar-keycloak.md) — realm, client, audience
+2. Login no Portal com usuário cujo e-mail = `INITIAL_SUPERADMIN_EMAIL` (promoção a superadmin no primeiro `/me`)
+3. [registrar-plugin.md](./registrar-plugin.md) — manifestos dos plugins
 
 ---
 
-## 10. Validar estrutura do banco Core
+## 4. Migrations
 
-Abra outro terminal e entre no Postgres Core:
+### Automático (normal)
 
-```bash
-docker exec -it delpi-postgres-core psql -U <usuario> -d <database>
-```
-
-Liste as tabelas:
-
-```sql
-\dt
-```
-
-Você deve ver tabelas como:
+`core-api/docker-entrypoint.sh`:
 
 ```text
-users
-roles
-permissions
-groups
-apps
-app_routes
-app_manifests
-app_versions
-user_favorite_apps
-notifications
-audit_logs
+aguarda DB → flask db upgrade → inicia app
 ```
 
-Sair:
+Conferir:
+
+```bash
+docker compose -f docker-compose.dev.yml exec core-api flask db current
+docker compose -f docker-compose.dev.yml logs core-api | tail -20
+```
+
+### Manual (se o entrypoint falhou)
+
+```bash
+docker compose -f docker-compose.dev.yml exec core-api flask db upgrade
+```
+
+---
+
+## 5. Recriar Alembic do zero (só emergência local)
+
+Use **apenas** se a pasta `migrations/` foi corrompida ou revisions estão irreconciliáveis — e **nunca** em produção.
+
+```bash
+cd infra
+docker compose -f docker-compose.dev.yml down -v
+
+cd ..
+rm -rf core-api/migrations
+
+cd infra
+docker compose -f docker-compose.dev.yml up --build -d
+
+docker compose -f docker-compose.dev.yml exec core-api sh -c "
+  flask db init &&
+  flask db migrate -m 'initial schema' &&
+  flask db upgrade
+"
+```
+
+O repositório já versiona `migrations/versions/7aa51b680332_*.py`; prefira sempre `flask db upgrade` sem apagar migrations.
+
+---
+
+## 6. Validar Postgres Core
+
+Use credenciais de `POSTGRES_CORE_*` no `infra/.env`:
+
+```bash
+docker exec -it delpi-postgres-core psql -U "$POSTGRES_CORE_USER" -d "$POSTGRES_CORE_DB" -c '\dt'
+```
+
+Tabelas esperadas (entre outras): `users`, `roles`, `permissions`, `apps`, `app_routes`, `app_manifests`, `app_versions`, `notifications`, `audit_logs`.
+
+---
+
+## 7. Postgres Plugins (pgvector)
+
+O init script só garante extensão básica:
 
 ```sql
-\q
+-- infra/docker/postgres/plugins-init.sql
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 ```
 
----
+Schema do **Minha DELPI AI API** pode exigir migrations próprias após reset — ver documentação em `minha-delpi-ai-api/`.
 
-## 11. Reconfigurar Keycloak
-
-Como os volumes foram apagados, o Keycloak perdeu:
-
-- realm;
-- client;
-- usuários;
-- mappers;
-- audience;
-- configurações de redirect.
-
-Recriar no Keycloak:
-
-1. Realm da Minha DELPI.
-2. Client do Portal.
-3. Authorization Code Flow.
-4. PKCE, se configurado no padrão local.
-5. Audience esperada pela Core API.
-6. Usuário inicial.
-7. Claims `email`, `name` e `sub`.
-8. Redirect URIs do Portal.
-
----
-
-## 12. Validar Core API
-
-Teste:
+Teste de conexão:
 
 ```bash
-curl http://localhost/core-api/health
-```
-
-Resposta esperada:
-
-```json
-{
-  "status": "ok"
-}
+docker exec -it delpi-postgres-plugins psql -U plugins_user -d plugins_hub -c '\dx'
 ```
 
 ---
 
-## 13. Validar login
+## 8. Ollama após reset
 
-Após reconfigurar Keycloak:
-
-1. Acesse `http://localhost`.
-2. Faça login.
-3. Verifique se o Portal retorna após autenticação.
-4. Verifique se `/me` funciona.
-5. Verifique se `/me/apps` retorna apps para usuário autorizado.
-
----
-
-## 14. Registrar plugins novamente
-
-Após reset, a tabela `apps`, manifestos, versões, rotas e permissões de plugins são apagadas.
-
-Registre novamente os plugins necessários usando os manifestos oficiais.
-
-Exemplo conceitual:
+Modelos precisam ser baixados de novo:
 
 ```bash
-curl -X POST http://localhost/core-api/admin/apps/register \
-  -H "Authorization: Bearer <token>" \
+docker exec -it delpi-ollama ollama pull qwen2.5:1.5b
+docker exec -it delpi-ollama ollama pull bge-m3
+```
+
+---
+
+## 9. Keycloak
+
+Volumes apagados = realm, client `delpi-central`, mappers e usuários sumiram.
+
+Siga [configurar-keycloak.md](./configurar-keycloak.md).
+
+Checklist mínimo:
+
+- [ ] Realm `delpi` (ou valor do `.env`)
+- [ ] Client público + redirect `http://localhost/*`
+- [ ] Audience `delpi-central` no token
+- [ ] Usuário com e-mail do superadmin
+
+---
+
+## 10. Registrar plugins novamente
+
+Registros em `apps` / `app_manifests` foram perdidos. Exemplos com manifestos do monorepo (token de superadmin ou role com `apps.manage`):
+
+```bash
+TOKEN="<access_token>"
+
+curl -s -X POST http://localhost/core-api/admin/apps/register \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d @delpi.manifest.json
+  -d @../plugins/strategic-indicators/strategic-indicators.manifest.json
+
+curl -s -X POST http://localhost/core-api/admin/apps/register \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @../plugins/minha-delpi-chat/delpi.manifest.json
+
+curl -s -X POST http://localhost/core-api/admin/apps/register \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @../plugins/dashboard-delpi/dashboard-delpi.manifest.json
 ```
 
-O path exato deve seguir a rota atual da Core API.
+Inventário completo: [../08-plugins/README.md](../08-plugins/README.md).
+
+Associar permissões a roles em `/admin` ou via API RBAC (`/core-api/admin/rbac/*`).
 
 ---
 
-## 15. Checklist final
+## 11. Checklist pós-reset
 
-Após reset completo, verificar:
-
-- [ ] Containers estão rodando.
-- [ ] Core API responde em `/core-api/health`.
-- [ ] Portal carrega em `http://localhost`.
-- [ ] Keycloak está acessível.
-- [ ] Banco Core possui tabelas.
-- [ ] Keycloak foi reconfigurado.
-- [ ] Usuário inicial consegue autenticar.
-- [ ] `/me` responde.
-- [ ] `/me/apps` responde.
-- [ ] Plugins necessários foram registrados.
-- [ ] Permissões foram associadas a roles/grupos.
+- [ ] `docker compose ps` — containers Up
+- [ ] `/core-api/health` → `Api rodando!`
+- [ ] `/auth` abre Keycloak
+- [ ] Login Portal OK
+- [ ] `GET /core-api/me` → 200
+- [ ] `GET /core-api/me/apps` → plugins (após registro + RBAC)
+- [ ] `remoteEntry.js` de um MFE retorna JS
+- [ ] Ollama com modelos (se usar chat)
+- [ ] AI API health OK (se habilitada)
 
 ---
 
-## 16. Comando rápido
-
-Resumo destrutivo local:
+## 12. Comando rápido (resumo)
 
 ```bash
 cd infra
 docker compose -f docker-compose.dev.yml down -v
-
-cd ..
-rm -rf core-api/migrations
-
-cd infra
 docker compose -f docker-compose.dev.yml up --build -d
 
-docker exec -it delpi-core-api sh
-
-flask db init
-flask db migrate -m "initial full schema"
-flask db upgrade
+# aguardar; depois Keycloak + login + registrar plugins
+curl -s http://localhost/core-api/health
 ```
 
 ---
 
-## 17. Pontos de atenção
+## 13. Documentos relacionados
 
-1. Nunca usar este procedimento em produção.
-2. `down -v` remove dados dos bancos.
-3. Remover migrations é aceitável apenas em fase estrutural/local.
-4. Após reset, Keycloak precisa ser reconfigurado.
-5. Após reset, plugins precisam ser registrados novamente.
-6. Após reset, roles e permissões precisam ser reassociadas.
-7. A Core API pode subir antes do banco estar pronto; aguarde ou reinicie.
-8. `plugins-init.sql` só roda na criação inicial do volume.
-9. Validar healthcheck antes de investigar frontend.
-10. Documentar alterações se o procedimento mudar.
-
----
-
-## 18. Documentos relacionados
-
-```text
-docs/10-guias-operacionais/subir-ambiente-dev.md
-docs/10-guias-operacionais/configurar-keycloak.md
-docs/10-guias-operacionais/registrar-plugin.md
-docs/02-infraestrutura/docker-compose.md
-docs/04-core-api/migrations.md
-```
+- [subir-ambiente-dev.md](./subir-ambiente-dev.md)
+- [configurar-keycloak.md](./configurar-keycloak.md)
+- [registrar-plugin.md](./registrar-plugin.md)
+- [troubleshooting.md](./troubleshooting.md)
+- [../02-infraestrutura/docker-compose.md](../02-infraestrutura/docker-compose.md)
+- [../04-core-api/migrations.md](../04-core-api/migrations.md)

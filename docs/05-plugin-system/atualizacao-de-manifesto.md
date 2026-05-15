@@ -1,7 +1,9 @@
 # Minha DELPI — Atualização de Manifesto de Plugin
 
 > **Arquivo:** `docs/05-plugin-system/atualizacao-de-manifesto.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
+
+URLs de admin usam o `id` do manifesto (ex.: `PUT /core-api/admin/apps/dash-lmps/manifest`). Exemplos com `dashboard-lmps` podem ser legado MFE — ver manifesto atual em `plugins/dashboard-lmps/dash-lmps.manifest.json`.
 > **Produto:** Minha DELPI  
 > **Escopo:** atualização não estrutural de manifesto de plugin
 

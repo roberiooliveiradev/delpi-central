@@ -1,7 +1,7 @@
 # Minha DELPI — Core API: Unit of Work
 
 > **Arquivo:** `docs/04-core-api/unit-of-work.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** padrão Unit of Work, transações, repositories e eventos
 
@@ -44,7 +44,19 @@ app/domain/events/admin_events.py
 
 O arquivo de aplicação define o contrato/abstração.
 
-O arquivo de infraestrutura implementa o Unit of Work usando SQLAlchemy e repositories concretos.
+Implementação: `app/infrastructure/persistence/sqlalchemy/unit_of_work.py`.
+
+### Atributos expostos no `SqlAlchemyUnitOfWork`
+
+| Grupo | Atributos |
+|---|---|
+| RBAC | `users`, `roles`, `groups`, `permissions`, `user_roles`, `user_groups`, `group_roles`, `role_permissions`, `rbac_queries`, `permission_queries`, `cache` |
+| Apps | `admin_apps`, `admin_routes`, `app_queries` |
+| Plugins | `plugins`, `plugin_manifests`, `plugin_versions`, `plugin_routes`, `plugin_permissions` |
+| Outros | `notifications`, `favorites` (`favorite_apps`), `audits` (`audit_repo`) |
+| Infra | `events` (`SocketIOEventDispatcher`), `collect_event()` |
+
+Aliases legados: `plugin_repo`, `manifest_repo`, `version_repo`, `route_repo`, `permission_repo`.
 
 ---
 

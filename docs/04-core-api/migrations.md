@@ -1,7 +1,7 @@
 # Minha DELPI — Core API: Migrations
 
 > **Arquivo:** `docs/04-core-api/migrations.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** migrations da Core API com Flask-Migrate/Alembic
 
@@ -332,21 +332,25 @@ flask db downgrade -1
 
 ## 14. Execução dentro do Docker
 
-Em ambiente Docker, os comandos devem ser executados no container da Core API ou em ambiente equivalente com variáveis corretas.
+### Automático no boot
 
-Exemplo conceitual:
-
-```bash
-docker compose -f docker-compose.dev.yml exec core-api flask db upgrade
-```
-
-A partir da pasta:
+`core-api/docker-entrypoint.sh`:
 
 ```text
-infra/
+aguarda DB_HOST:DB_PORT → flask db upgrade → python -m app.main
 ```
 
-O comando exato pode variar conforme entrypoint, ambiente e configuração do Flask.
+Na primeira subida do Compose, as migrations aplicam-se sem comando manual.
+
+### Manual
+
+```bash
+cd infra
+docker compose -f docker-compose.dev.yml exec core-api flask db upgrade
+docker compose -f docker-compose.dev.yml exec core-api flask db current
+```
+
+Reset destrutivo: [../10-guias-operacionais/reset-banco-dev.md](../10-guias-operacionais/reset-banco-dev.md).
 
 ---
 
@@ -532,12 +536,8 @@ Recomendação:
 
 ## 25. Documentos relacionados
 
-```text
-docs/04-core-api/modelos-de-banco.md
-docs/09-banco-de-dados/core-db.md
-docs/09-banco-de-dados/modelo-rbac.md
-docs/09-banco-de-dados/modelo-plugin-system.md
-docs/04-core-api/repositories.md
-docs/02-infraestrutura/docker-compose.md
-```
+- [modelos-de-banco.md](./modelos-de-banco.md)
+- [README.md](./README.md)
+- [../09-banco-de-dados/core-db.md](../09-banco-de-dados/core-db.md)
+- [../10-guias-operacionais/reset-banco-dev.md](../10-guias-operacionais/reset-banco-dev.md)
 

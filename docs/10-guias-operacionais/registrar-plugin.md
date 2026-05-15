@@ -1,368 +1,180 @@
-# Minha DELPI — Guia Operacional: Registrar Plugin
+# Guia: registrar plugin
 
 > **Arquivo:** `docs/10-guias-operacionais/registrar-plugin.md`  
 > **Status:** documentação oficial  
-> **Produto:** Minha DELPI  
-> **Escopo:** registro operacional de plugins na Core API
+> **API:** Core API `POST /admin/apps/register`
 
 ---
 
 ## 1. Objetivo
 
-Este guia descreve como registrar um plugin na Minha DELPI.
+Persistir na Core API um plugin a partir do manifesto JSON: app, manifesto vigente, versão, permissões e rotas.
 
-O registro de plugin é feito na Core API a partir de um manifesto JSON válido. Após o registro, a plataforma persiste app, manifesto, versão, permissões e rotas.
+O registro **não** concede acesso aos usuários — é necessário RBAC depois.
 
 ---
 
 ## 2. Pré-requisitos
 
-Antes de registrar um plugin, confirme:
-
-- Core API está rodando;
-- banco `postgres-core` está migrado;
-- Keycloak está configurado;
-- usuário autenticado possui permissão administrativa;
-- manifesto segue o schema oficial;
-- Gateway serve os assets/backend do plugin;
-- plugin foi buildado/deployado quando aplicável.
+- Stack up ([subir-ambiente-dev.md](./subir-ambiente-dev.md))
+- `flask db upgrade` aplicado (automático no boot da Core API)
+- Keycloak configurado; usuário autenticado
+- Permissão `apps.manage` **ou** `is_superadmin=true`
+- Container do plugin no Compose (para MFE/iframe com assets)
+- Gateway roteando `/apps/<id>/` para o container
 
 ---
 
-## 3. Manifesto oficial
+## 3. Manifestos no monorepo
 
-O arquivo esperado é:
+O nome do arquivo **varia**; o campo `id` no JSON é a chave estável.
 
-```text
-delpi.manifest.json
-```
+| Plugin | Arquivo |
+|---|---|
+| Indicadores Estratégicos | `plugins/strategic-indicators/strategic-indicators.manifest.json` |
+| Minha DELPI Chat | `plugins/minha-delpi-chat/delpi.manifest.json` |
+| Dashboard DELPI | `plugins/dashboard-delpi/dashboard-delpi.manifest.json` |
+| Dashboard LMPs | `plugins/dashboard-lmps/dash-lmps.manifest.json` |
+| API DELPI (app admin) | `api-delpi/api-delpi.manifest.json` |
 
-O contrato vigente exige:
+Contrato: [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md).  
+Inventário: [../08-plugins/README.md](../08-plugins/README.md).
 
-```json
-{
-  "schemaVersion": "1.0.0"
-}
-```
+Campos obrigatórios no schema `1.0.0`: `schemaVersion`, `id`, `name`, `version`, `type`, `basePath`, `permissions` (com `code`, `name`, `module`).
 
-Tipos suportados:
-
-```text
-microfrontend
-iframe
-backend-only
-```
+Tipos: `microfrontend` | `iframe` | `backend-only`.
 
 ---
 
-## 4. Validar campos principais
+## 4. Endpoints
 
-Antes de registrar, validar:
+| Método | Path (Core API) | Path público (gateway) | Permissão |
+|---|---|---|---|
+| `POST` | `/admin/apps/register` | `/core-api/admin/apps/register` | `apps.manage` |
+| `PUT` | `/admin/apps/<plugin_id>/manifest` | `/core-api/admin/apps/<id>/manifest` | `apps.manage` |
+| `GET` | `/admin/apps/<plugin_id>/manifest` | idem | `apps.view` |
 
-```text
-id
-name
-version
-type
-basePath
-permissions
-routes
-entry
-ui.renderMode
-backend
-```
-
-Regras importantes:
-
-- `id` deve ser estável;
-- `version` deve seguir SemVer;
-- `permissions` deve ter ao menos uma permissão;
-- cada permissão precisa de `code`, `name` e `module`;
-- `module` deve ser igual ao plugin;
-- rotas devem declarar permissões existentes;
-- microfrontend precisa de entry global ou entry por rota;
-- backend-only não pode ter UI nem rotas.
+Superadmin ignora checagem de permissão nos decorators.
 
 ---
 
-## 5. Endpoint de registro
+## 5. Registrar (curl)
 
-Endpoint administrativo atual:
-
-```http
-POST /admin/apps/register
-```
-
-Dependendo do Gateway, o path público pode ser:
-
-```text
-/core-api/admin/apps/register
-```
-
-Permissão esperada:
-
-```text
-apps.manage
-```
-
----
-
-## 6. Exemplo de chamada
+Na raiz do repositório, com token do Portal (DevTools → rede → header `Authorization`):
 
 ```bash
-curl -X POST http://localhost/core-api/admin/apps/register \
-  -H "Authorization: Bearer <token>" \
+export TOKEN="<access_token>"
+
+curl -s -X POST http://localhost/core-api/admin/apps/register \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d @delpi.manifest.json
+  -d @plugins/strategic-indicators/strategic-indicators.manifest.json
 ```
 
-Substituir `<token>` por access token de usuário autorizado.
+Resposta de sucesso: **201** `{"ok": true}`.
+
+Erros de validação: **400** com `{"errors": [...]}`.
 
 ---
 
-## 7. O que acontece no registro
+## 6. Via Portal Admin
 
-Fluxo interno:
+Com superadmin ou `apps.manage`:
+
+1. `http://localhost/admin` → área **Apps**
+2. Upload ou colar JSON do manifesto
+3. Confirmar registro
+
+Útil quando não quiser montar curl manualmente.
+
+---
+
+## 7. Fluxo interno (register)
 
 ```text
-Recebe manifesto
-  ↓
-Normaliza manifesto
-  ↓
-Resolve schemaVersion
-  ↓
-Valida JSON Schema
-  ↓
-Aplica strategy por type
-  ↓
-Aplica regras de domínio
-  ↓
-Calcula checksum
-  ↓
-Cria/atualiza app
-  ↓
-Salva manifesto vigente
-  ↓
-Cria versão histórica
-  ↓
-Cria permissões
-  ↓
-Cria rotas
-  ↓
-Emite evento plugin_registered
+JSON → ManifestValidator → RegisterPluginUseCase
+  → app + app_manifests + app_versions
+  → permissions + app_routes
+  → audit plugin_registered
 ```
+
+**Plugin novo:** insert completo.  
+**Mesmo `id`, nova `version`:** atualiza manifesto vigente, histórico de versão, recria permissões/rotas do módulo.  
+**Versão já existente:** erro `plugin.version_already_exists`.
 
 ---
 
-## 8. Plugin novo
+## 8. Atualização sem nova versão
 
-Se o plugin ainda não existe:
+Alterações **não estruturais** (nome, ícone, `showInMenu`, labels de rota):
+
+```http
+PUT /core-api/admin/apps/<plugin_id>/manifest
+```
+
+Não use este endpoint para mudar `version`, `basePath`, lista de permissões ou rotas — isso exige novo `POST /register` com versão SemVer maior.
+
+---
+
+## 9. RBAC após registro
 
 ```text
-apps insert
-app_manifests insert
-app_versions insert
-permissions insert
-app_routes insert
+register cria permissions
+  → associar permission à role (/admin/rbac)
+  → associar role ao usuário ou grupo
+  → GET /me/apps passa a listar o plugin
 ```
 
-Depois do commit, o Portal pode atualizar `/me/apps` e passar a exibir o plugin para usuários autorizados.
+Superadmin vê todos os apps ativos em `/me/apps` sem precisar de cada permission.
 
 ---
 
-## 9. Nova versão de plugin existente
+## 10. Validar carregamento
 
-Se o plugin já existe com outra versão:
+1. `GET /core-api/me/apps` — plugin na lista
+2. Menu do Portal — item visível (`showInMenu`, permissão)
+3. Assets MFE:
 
-```text
-Verifica versão duplicada
-  ↓
-Atualiza apps.version
-  ↓
-Atualiza app_manifests
-  ↓
-Insere app_versions
-  ↓
-Remove rotas antigas
-  ↓
-Remove permissões do módulo
-  ↓
-Recria permissões
-  ↓
-Recria rotas
+```bash
+curl -sI http://localhost/apps/strategic-indicators/assets/remoteEntry.js | head -5
 ```
 
-Usar nova versão quando houver alteração estrutural.
+Deve retornar `200` e `Content-Type` JavaScript, não HTML do Portal.
+
+4. Module Federation: export `mount` / `unmount` no remote.
 
 ---
 
-## 10. Não usar register para alteração visual simples
+## 11. Erros comuns
 
-Para alterações não estruturais, usar o fluxo de atualização de manifesto.
-
-Exemplos de alteração não estrutural:
-
-- nome;
-- descrição;
-- ícone;
-- label de rota;
-- ícone de rota;
-- ordem;
-- `showInMenu`.
-
-Não alterar por esse fluxo:
-
-- version;
-- basePath;
-- conjunto de permissões;
-- conjunto de rotas.
+| Sintoma | Causa provável | Ação |
+|---|---|---|
+| 401 | Token ausente/expirado | Renovar login |
+| 403 | Sem `apps.manage` | Role ou superadmin |
+| 400 `schema_validation_error` | JSON fora do schema | Conferir manifesto |
+| 400 `version_already_exists` | Bump `version` ou PUT não estrutural | |
+| Menu vazio | Plugin não registrado ou sem RBAC | Register + roles |
+| 404 em `remoteEntry.js` | Container `delpi-<id>` down ou id ≠ manifesto | Compose + gateway |
+| HTML no lugar de JS | URL errada ou gateway 502 | Logs do plugin |
 
 ---
 
-## 11. Associar permissões a roles
+## 12. Checklist
 
-Registrar o plugin cria permissões, mas não concede acesso automaticamente.
-
-Depois do registro:
-
-1. Acesse administração RBAC.
-2. Associe a permissão do plugin a uma role.
-3. Associe role ao usuário ou grupo.
-4. Recarregue `/me` e `/me/apps`.
-
-Fluxo:
-
-```text
-manifesto cria permission
-  ↓
-role recebe permission
-  ↓
-usuário recebe role
-  ↓
-PermissionResolver calcula acesso
-  ↓
-/me/apps retorna plugin
-```
+- [ ] Manifesto válido (`schemaVersion: "1.0.0"`)
+- [ ] `id` = nome do serviço Docker / location Nginx
+- [ ] `basePath` e `entry` coerentes com build Vite
+- [ ] `POST /register` → 201
+- [ ] Permissões em roles (ou superadmin)
+- [ ] `/me/apps` lista o plugin
+- [ ] `remoteEntry.js` acessível (se MFE)
 
 ---
 
-## 12. Validar no Portal
+## 13. Documentos relacionados
 
-Após registro e RBAC:
-
-1. Faça login no Portal.
-2. Chame `/me`.
-3. Chame `/me/apps`.
-4. Confirme se o plugin aparece.
-5. Clique no menu.
-6. Confirme carregamento do plugin.
-
-Para microfrontend, testar diretamente:
-
-```text
-http://localhost/apps/<plugin>/assets/remoteEntry.js
-```
-
-Deve retornar JavaScript, não HTML.
-
----
-
-## 13. Erros comuns
-
-### 13.1 `schema_validation_error`
-
-Manifesto não respeita o schema.
-
-Ação:
-
-- revisar campos obrigatórios;
-- revisar tipos;
-- revisar `additionalProperties`;
-- revisar `ui`;
-- revisar `backend`.
-
----
-
-### 13.2 `plugin.version_already_exists`
-
-A versão já foi registrada.
-
-Ação:
-
-- alterar `version`;
-- ou usar atualização não estrutural;
-- ou executar rollback para versão existente, se esse for o objetivo.
-
----
-
-### 13.3 Rota não aparece no menu
-
-Verificar:
-
-- app está ativo;
-- rota está ativa;
-- `showInMenu=true`;
-- usuário possui permissão;
-- permissão foi associada à role;
-- cache RBAC foi invalidado;
-- Portal recarregou `/me/apps`.
-
----
-
-### 13.4 Plugin aparece mas não carrega
-
-Verificar:
-
-- Gateway serve `entry`;
-- `remoteEntry.js` retorna JavaScript;
-- base pública do build está correta;
-- assets existem;
-- CORS/headers;
-- Module Federation exporta `mount`/`unmount`.
-
----
-
-## 14. Checklist de registro
-
-- [ ] Manifesto existe.
-- [ ] `schemaVersion` é `1.0.0`.
-- [ ] `id` está correto.
-- [ ] `version` está correta.
-- [ ] `type` é suportado.
-- [ ] `basePath` está correto.
-- [ ] `entry` está correto.
-- [ ] Permissões possuem `code`, `name` e `module`.
-- [ ] Rotas apontam para permissões declaradas.
-- [ ] Gateway serve o plugin.
-- [ ] Usuário tem `apps.manage`.
-- [ ] Registro retorna sucesso.
-- [ ] Permissões foram atribuídas via RBAC.
-- [ ] `/me/apps` retorna o plugin.
-- [ ] Portal carrega o plugin.
-
----
-
-## 15. Pontos de atenção
-
-1. Manifesto é fonte de verdade do contrato.
-2. Registro não concede acesso automaticamente.
-3. Permissões precisam ser atribuídas no RBAC.
-4. Gateway precisa publicar o plugin.
-5. Rollback não garante assets antigos disponíveis.
-6. `module` da permissão deve bater com plugin.
-7. Não registrar campos fora do schema.
-8. Não usar version antiga já registrada.
-9. Não hardcodar plugin no Portal.
-10. Backend do plugin deve validar JWT quando aplicável.
-
----
-
-## 16. Documentos relacionados
-
-```text
-docs/05-plugin-system/manifesto-plugin.md
-docs/05-plugin-system/registro-de-plugin.md
-docs/05-plugin-system/versionamento-e-rollback.md
-docs/06-portal-frontend/consumo-de-plugins.md
-docs/03-autenticacao-autorizacao/rbac.md
-```
+- [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md)
+- [../05-plugin-system/registro-de-plugin.md](../05-plugin-system/registro-de-plugin.md)
+- [../06-portal-frontend/consumo-de-plugins.md](../06-portal-frontend/consumo-de-plugins.md)
+- [../03-autenticacao-autorizacao/rbac.md](../03-autenticacao-autorizacao/rbac.md)
+- [reset-banco-dev.md](./reset-banco-dev.md)

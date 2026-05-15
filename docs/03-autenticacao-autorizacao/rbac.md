@@ -1,7 +1,7 @@
 # Minha DELPI — RBAC, Autenticação e Autorização
 
 > **Arquivo:** `docs/03-autenticacao-autorizacao/rbac.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial  
 > **Produto:** Minha DELPI  
 > **Escopo:** autenticação, autorização, RBAC, permissões efetivas e superadmin
 
@@ -10,6 +10,8 @@
 ## 1. Objetivo
 
 Este documento descreve como funciona a autenticação e autorização da **Minha DELPI**, com foco no modelo RBAC implementado pela Core API.
+
+**Referência HTTP completa:** [../04-core-api/controllers-e-rotas.md](../04-core-api/controllers-e-rotas.md) (seções `/me`, `/admin/apps`, `/admin/rbac`).
 
 Ele explica:
 
@@ -270,7 +272,7 @@ Exemplo de permission code:
 apps.view
 rbac.manage
 users.manage
-dashboard-lmps.access
+dash-lmps.access
 ```
 
 ---
@@ -348,7 +350,20 @@ Retorna lista de permission codes
 
 ---
 
-## 11. Regra de superadmin
+## 11. Bootstrap do primeiro superadmin (dev)
+
+```env
+INITIAL_SUPERADMIN_EMAIL=usuario@empresa.com.br
+INITIAL_SUPERADMIN_NAME=Nome Exibido
+```
+
+No primeiro login com esse e-mail, a Core API promove `users.is_superadmin=true` (`bootstrap_service.py`). Criar o usuário no Keycloak com o **mesmo e-mail**.
+
+Ver [configurar-keycloak.md](../10-guias-operacionais/configurar-keycloak.md).
+
+---
+
+## 12. Regra de superadmin
 
 Superadmin possui bypass amplo na plataforma.
 
@@ -366,9 +381,7 @@ is_superadmin = true → bypass de require_permission, require_any_permission e 
 
 O decorator `require_superadmin()` exige explicitamente que o usuário seja superadmin.
 
----
-
-## 12. Proteções para superadmin
+### Proteções para alteração de superadmin
 
 A alteração da flag `is_superadmin` possui regras próprias.
 
@@ -798,7 +811,7 @@ Exemplos:
 ```text
 crm.leads.read
 crm.leads.write
-dashboard-lmps.access
+dash-lmps.access
 apps.manage
 users.view
 ```
@@ -829,16 +842,12 @@ Regras:
 
 ---
 
-## 26. Próximos documentos relacionados
+## 26. Documentos relacionados
 
-```text
-docs/03-autenticacao-autorizacao/keycloak-sso.md
-docs/03-autenticacao-autorizacao/jwt.md
-docs/03-autenticacao-autorizacao/permission-resolver.md
-docs/03-autenticacao-autorizacao/superadmin.md
-docs/03-autenticacao-autorizacao/policies-e-decorators.md
-docs/04-core-api/controllers-e-rotas.md
-docs/04-core-api/modelos-de-banco.md
-docs/05-plugin-system/manifesto-plugin.md
-```
+- [jwt.md](./jwt.md)
+- [keycloak-sso.md](./keycloak-sso.md)
+- [permission-resolver.md](./permission-resolver.md)
+- [../04-core-api/controllers-e-rotas.md](../04-core-api/controllers-e-rotas.md)
+- [../09-banco-de-dados/modelo-rbac.md](../09-banco-de-dados/modelo-rbac.md)
+- [../10-guias-operacionais/registrar-plugin.md](../10-guias-operacionais/registrar-plugin.md)
 

@@ -300,9 +300,8 @@ Evento que substitui regra de negócio.
 
 ## 16. Documentos relacionados
 
-```text
-docs/01-arquitetura/event-driven-e-socket.md
-docs/04-core-api/unit-of-work.md
-docs/04-core-api/notificacoes.md
-docs/11-padroes-de-desenvolvimento/padrao-de-use-case.md
-```
+- [../01-arquitetura/event-driven-e-socket.md](../01-arquitetura/event-driven-e-socket.md)
+- [../04-core-api/unit-of-work.md](../04-core-api/unit-of-work.md)
+- [../04-core-api/notificacoes.md](../04-core-api/notificacoes.md)
+- [padrao-de-use-case.md](./padrao-de-use-case.md)
+- [README.md](./README.md)

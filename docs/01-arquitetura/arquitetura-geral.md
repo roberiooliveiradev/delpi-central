@@ -1,7 +1,7 @@
 # Minha DELPI — Arquitetura Geral
 
 > **Arquivo:** `docs/01-arquitetura/arquitetura-geral.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** arquitetura técnica macro da plataforma
 
@@ -23,11 +23,11 @@ A Minha DELPI é uma plataforma corporativa modular composta por:
 - Portal React/Vite;
 - Core API Flask;
 - Keycloak;
-- API DELPI;
+- API DELPI (operacional / TOTVS);
+- Minha DELPI AI API (chat, RAG, agentes);
+- Ollama (LLM local em dev);
 - Plugins/microfrontends;
-- PostgreSQL para Core;
-- PostgreSQL para Keycloak;
-- PostgreSQL para plugins/domínios.
+- PostgreSQL Core, Keycloak e Plugins (pgvector).
 
 Visão macro:
 
@@ -148,15 +148,19 @@ Implementação:
 Nginx
 ```
 
-Paths esperados:
+Paths esperados (dev):
 
 ```text
-/                     → portal
-/core-api/*           → core-api
-/auth/*               → keycloak
-/apps/api-delpi/*     → api-delpi
-/apps/<plugin>/*      → plugins/microfrontends
+/                              → portal
+/core-api/*                    → core-api
+/auth/*                        → keycloak
+/socket.io/*                   → core-api (WebSocket)
+/apps/api-delpi/*              → api-delpi
+/apps/minha-delpi-ai/api/*     → minha-delpi-ai-api
+/apps/<plugin-id>/*            → container do plugin (assets MFE)
 ```
+
+Detalhe: [../02-infraestrutura/gateway-nginx.md](../02-infraestrutura/gateway-nginx.md).
 
 A documentação detalhada do gateway deve ficar em:
 
@@ -246,10 +250,13 @@ Plugins são módulos plugáveis da plataforma.
 Serviços identificados na stack atual:
 
 ```text
-dashboard-delpi
 strategic-indicators
+minha-delpi-chat
+dashboard-delpi
 dashboard-lmps
 ```
+
+Inventário: [../08-plugins/README.md](../08-plugins/README.md).
 
 Tipos de plugin suportados pelo contrato de manifesto:
 
@@ -351,6 +358,28 @@ API DELPI → operação, TOTVS, módulos e dados de negócio
 
 ---
 
+## 10.1 AI Layer — Minha DELPI AI API
+
+Serviços Docker (dev):
+
+```text
+minha-delpi-ai-api
+ollama
+```
+
+Responsabilidades:
+
+- chat e agentes com LLM (Ollama em dev, vLLM em prod opcional);
+- embeddings e base de conhecimento (pgvector em `postgres-plugins`);
+- validação JWT Keycloak (mesmo padrão issuer/JWKS);
+- integração com Core API para contexto de usuário.
+
+O plugin **minha-delpi-chat** consome esta API em `/apps/minha-delpi-ai/api/*`, não a Core API.
+
+Documentação: `minha-delpi-ai-api/docs/api/`.
+
+---
+
 ## 11. Data Layer — Bancos
 
 A arquitetura usa bancos separados.
@@ -408,7 +437,10 @@ postgres-plugins
 
 Responsável por persistência de módulos/plugins/domínios que não pertencem ao banco core.
 
-Consumido principalmente pela API DELPI por variáveis `PLUGINS_DB_*`.
+Consumido por:
+
+- **API DELPI** (`PLUGINS_DB_*`) — módulos operacionais;
+- **Minha DELPI AI API** (`DATABASE_URL`) — schema RAG/pgvector.
 
 ---
 

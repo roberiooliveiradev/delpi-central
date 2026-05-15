@@ -1,7 +1,7 @@
 # Minha DELPI — Clean Architecture
 
 > **Arquivo:** `docs/01-arquitetura/clean-architecture.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** aplicação de Clean Architecture na Core API, API DELPI, Portal e plugins
 

@@ -1,7 +1,7 @@
 # Minha DELPI — Keycloak e SSO
 
 > **Arquivo:** `docs/03-autenticacao-autorizacao/keycloak-sso.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial  
 > **Produto:** Minha DELPI  
 > **Escopo:** autenticação SSO com Keycloak, configuração, integração com Portal, Core API e Gateway
 
@@ -737,12 +737,10 @@ Correção:
 
 ## 30. Documentos relacionados
 
-```text
-docs/03-autenticacao-autorizacao/jwt.md
-docs/03-autenticacao-autorizacao/rbac.md
-docs/03-autenticacao-autorizacao/permission-resolver.md
-docs/06-portal-frontend/autenticacao-frontend.md
-docs/02-infraestrutura/docker-compose.md
-docs/02-infraestrutura/gateway-nginx.md
-```
+- [jwt.md](./jwt.md)
+- [rbac.md](./rbac.md)
+- [permission-resolver.md](./permission-resolver.md)
+- [../10-guias-operacionais/configurar-keycloak.md](../10-guias-operacionais/configurar-keycloak.md)
+- [../06-portal-frontend/autenticacao-frontend.md](../06-portal-frontend/autenticacao-frontend.md)
+- [../02-infraestrutura/variaveis-de-ambiente.md](../02-infraestrutura/variaveis-de-ambiente.md)
 

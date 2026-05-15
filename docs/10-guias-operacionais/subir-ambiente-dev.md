@@ -1,257 +1,110 @@
-# Minha DELPI — Guia Operacional: Subir Ambiente de Desenvolvimento
+# Guia: subir ambiente de desenvolvimento
 
 > **Arquivo:** `docs/10-guias-operacionais/subir-ambiente-dev.md`  
 > **Status:** documentação oficial  
-> **Produto:** Minha DELPI  
-> **Escopo:** subida local da stack de desenvolvimento com Docker Compose
+> **Compose:** `infra/docker-compose.dev.yml`
 
 ---
 
-## 1. Objetivo
+## 1. Pré-requisitos
 
-Este guia descreve como subir o ambiente de desenvolvimento da **Minha DELPI**.
-
-O ambiente local usa Docker Compose e sobe os principais serviços da plataforma:
-
-- Gateway;
-- Portal;
-- Core API;
-- Keycloak;
-- Postgres da Core API;
-- Postgres do Keycloak;
-- API DELPI;
-- Postgres de plugins;
-- plugins/microfrontends.
+- Docker e Docker Compose v2
+- Repositório clonado (`delpi-central`)
+- Arquivo `infra/.env` configurado (copiar de exemplo interno ou `.env.prod` como referência de chaves)
+- Portas livres: **80**, **5432**, **5433** (e **11434** se usar Ollama direto do host)
+- Acesso de rede ao **SQL Server TOTVS** e demais DBs externos configurados em `.env` (API DELPI falha sem TOTVS se rotas Protheus forem usadas)
 
 ---
 
-## 2. Pré-requisitos
-
-Antes de executar a stack, garanta que você tenha:
-
-- Docker instalado;
-- Docker Compose disponível;
-- repositório clonado;
-- arquivo `.env` configurado na pasta `infra`;
-- portas locais livres, especialmente `80`, `5432` e `5433`;
-- acesso aos bancos externos necessários, quando aplicável, como TOTVS e Portal RH.
-
----
-
-## 3. Estrutura esperada do repositório
-
-A pasta `infra` fica no mesmo nível dos principais projetos.
-
-Estrutura esperada:
+## 2. Estrutura mínima do monorepo
 
 ```text
-/minha-delpi
-  /api-delpi
-  /core-api
-  /gateway
-  /infra
-    docker-compose.yml
+delpi-central/
+  api-delpi/
+  core-api/
+  minha-delpi-ai-api/
+  portal/
+  gateway/
+  plugins/
+  infra/
+    .env
     docker-compose.dev.yml
-    /docker
-      /postgres
-        init.sql
-        plugins-init.sql
-    /keycloak
-      /themes
-  /plugins
-    /dashboard-delpi
-    /dashboard-lmps
-    /strategic-indicators
-  /portal
 ```
-
-Os arquivos Compose usam caminhos relativos a partir de `infra`.
 
 ---
 
-## 4. Arquivo Compose de desenvolvimento
-
-O arquivo de desenvolvimento é:
-
-```text
-infra/docker-compose.dev.yml
-```
-
-Características principais:
-
-- usa Dockerfiles de desenvolvimento;
-- Keycloak executa com `start-dev`;
-- monta código local como volume;
-- expõe os bancos localmente;
-- Gateway usa configuração de desenvolvimento;
-- facilita hot reload e alterações locais.
-
----
-
-## 5. Acessar a pasta `infra`
-
-A partir da raiz do repositório:
+## 3. Subir a stack
 
 ```bash
 cd infra
-```
-
-Todos os comandos deste guia assumem execução a partir da pasta `infra`.
-
----
-
-## 6. Subir a stack
-
-Execute:
-
-```bash
-docker compose -f docker-compose.dev.yml up --build
-```
-
-Para subir em segundo plano:
-
-```bash
 docker compose -f docker-compose.dev.yml up --build -d
 ```
 
----
+Primeira subida pode levar vários minutos (build de plugins + portal).
 
-## 7. Serviços esperados
-
-A stack de desenvolvimento deve subir, no mínimo:
-
-```text
-postgres-core
-keycloak-db
-keycloak
-core-api
-portal
-dashboard-delpi
-strategic-indicators
-dashboard-lmps
-postgres-plugins
-api-delpi
-gateway
-```
-
-Todos os serviços usam a rede:
-
-```text
-delpi-network
-```
-
----
-
-## 8. Portas em desenvolvimento
-
-Portas esperadas no ambiente local:
-
-| Serviço | Porta local |
-|---|---:|
-| Gateway | `80` |
-| Postgres Core | `5432` |
-| Postgres Plugins | `5433` |
-
-O Portal, Core API, Keycloak, API DELPI e plugins devem ser acessados pelo Gateway.
-
----
-
-## 9. Validar Gateway
-
-Após subir a stack, acesse:
-
-```text
-http://localhost
-```
-
-Resultado esperado:
-
-- Portal carregando;
-- nenhuma tela de erro do Nginx;
-- assets do frontend respondendo.
-
----
-
-## 10. Validar Core API
-
-Teste o healthcheck:
+Acompanhar logs:
 
 ```bash
-curl http://localhost/core-api/health
+docker compose -f docker-compose.dev.yml logs -f
 ```
-
-Resposta esperada:
-
-```json
-{
-  "status": "ok"
-}
-```
-
-ou resposta equivalente definida no controller de health.
 
 ---
 
-## 11. Validar Keycloak
+## 4. Containers esperados
 
-Acesse:
-
-```text
-http://localhost/auth
+```bash
+docker ps --format "table {{.Names}}\t{{.Status}}"
 ```
 
-ou o path configurado conforme `KC_HTTP_RELATIVE_PATH`.
+Lista típica:
+
+```text
+delpi-gateway
+delpi-portal
+delpi-core-api
+delpi-keycloak
+delpi-keycloak-db
+delpi-postgres-core
+delpi-postgres-plugins
+delpi-api-delpi
+delpi-minha-delpi-ai-api
+delpi-ollama
+delpi-strategic-indicators
+delpi-minha-delpi-chat
+delpi-dashboard-lmps
+delpi-dashboard-delpi
+```
+
+---
+
+## 5. Ollama (chat / IA)
+
+O serviço `minha-delpi-ai-api` depende do **Ollama** em dev. Após os containers estarem up:
+
+```bash
+docker exec -it delpi-ollama ollama pull qwen2.5:1.5b
+docker exec -it delpi-ollama ollama pull bge-m3
+```
 
 Verificar:
 
-- Keycloak responde;
-- admin console acessível;
-- realm configurado;
-- client do Portal configurado.
+```bash
+curl http://localhost:11434/api/tags
+```
+
+Sem modelos, o chat retorna erro de LLM indisponível.
 
 ---
 
-## 12. Validar bancos
+## 6. Migrations da Core API
 
-### 12.1 Postgres Core
-
-Conectar via container:
-
-```bash
-docker exec -it delpi-postgres-core psql -U <usuario> -d <database>
-```
-
-Ou, em desenvolvimento, via porta local:
-
-```text
-localhost:5432
-```
-
-### 12.2 Postgres Plugins
-
-Em desenvolvimento:
-
-```text
-localhost:5433
-```
-
-Container:
-
-```bash
-docker exec -it delpi-postgres-plugins psql -U <usuario> -d <database>
-```
-
----
-
-## 13. Aplicar migrations da Core API
-
-Se o banco estiver limpo ou desatualizado:
+Com banco core vazio ou após `down -v`:
 
 ```bash
 docker compose -f docker-compose.dev.yml exec core-api flask db upgrade
 ```
 
-Se necessário, verificar o estado:
+Estado atual:
 
 ```bash
 docker compose -f docker-compose.dev.yml exec core-api flask db current
@@ -259,176 +112,154 @@ docker compose -f docker-compose.dev.yml exec core-api flask db current
 
 ---
 
-## 14. Logs
+## 7. Validar endpoints
 
-Ver todos os logs:
+### Gateway e Portal
 
-```bash
-docker compose -f docker-compose.dev.yml logs -f
+```text
+http://localhost/
 ```
 
-Ver logs da Core API:
+### Core API
 
 ```bash
-docker compose -f docker-compose.dev.yml logs -f core-api
+curl -s http://localhost/core-api/health
 ```
 
-Ver logs do Gateway:
+Resposta:
 
-```bash
-docker compose -f docker-compose.dev.yml logs -f gateway
+```json
+{"status": "Api rodando!"}
 ```
 
-Ver logs do Keycloak:
+### Keycloak
+
+```text
+http://localhost/auth
+```
+
+### API DELPI
 
 ```bash
-docker compose -f docker-compose.dev.yml logs -f keycloak
+curl -s http://localhost/apps/api-delpi/health
+```
+
+### Minha DELPI AI API
+
+```bash
+curl -s http://localhost/apps/minha-delpi-ai/api/health
+```
+
+(Paths exatos podem variar — conferir `minha-delpi-ai-api/docs/api/01-health-status-capabilities.md`.)
+
+### Login no Portal
+
+1. Abrir `http://localhost`
+2. Login Keycloak
+3. DevTools → Network: `GET /core-api/me` e `/core-api/me/apps` com **200**
+
+---
+
+## 8. Registrar plugins (primeira vez)
+
+Se o menu não mostrar apps, registrar manifestos na Core API (usuário com `apps.manage`):
+
+```http
+POST http://localhost/core-api/admin/apps/register
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ ... conteúdo do delpi.manifest.json ... }
+```
+
+Ou usar a aba **Apps** em `http://localhost/admin`.
+
+Guia: [registrar-plugin.md](./registrar-plugin.md).
+
+---
+
+## 9. Portas locais
+
+| Porta | Uso |
+|---:|---|
+| 80 | Toda a plataforma via gateway |
+| 5432 | `psql` no Postgres Core |
+| 5433 | `psql` no Postgres Plugins (pgvector) |
+| 11434 | API Ollama (debug) |
+
+Exemplo:
+
+```bash
+psql -h localhost -p 5432 -U <POSTGRES_CORE_USER> -d <POSTGRES_CORE_DB>
 ```
 
 ---
 
-## 15. Rebuild de serviço específico
-
-Para rebuildar apenas a Core API:
+## 10. Rebuild seletivo
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build core-api
-```
+# Só Portal
+docker compose -f docker-compose.dev.yml up --build -d portal
 
-Para rebuildar o Portal:
+# Só Core API
+docker compose -f docker-compose.dev.yml up --build -d core-api
 
-```bash
-docker compose -f docker-compose.dev.yml up --build portal
-```
-
----
-
-## 16. Entrar em um container
-
-Core API:
-
-```bash
-docker compose -f docker-compose.dev.yml exec core-api sh
-```
-
-API DELPI:
-
-```bash
-docker compose -f docker-compose.dev.yml exec api-delpi sh
-```
-
-Portal:
-
-```bash
-docker compose -f docker-compose.dev.yml exec portal sh
+# Só plugin chat
+docker compose -f docker-compose.dev.yml up --build -d minha-delpi-chat
 ```
 
 ---
 
-## 17. Parar o ambiente
-
-Parar containers sem remover volumes:
+## 11. Parar e resetar
 
 ```bash
+# Parar, manter volumes
 docker compose -f docker-compose.dev.yml down
-```
 
-Parar e remover volumes:
-
-```bash
+# Apagar bancos e ollama (CUIDADO)
 docker compose -f docker-compose.dev.yml down -v
 ```
 
-Atenção:
+Após `down -v`: rodar migrations, reconfigurar Keycloak (realm/clients) e registrar plugins novamente.
 
-> `down -v` apaga volumes de banco. Use apenas em ambiente local e quando quiser resetar completamente o estado.
-
----
-
-## 18. Checklist de subida local
-
-- [ ] `.env` existe em `infra`.
-- [ ] Docker está rodando.
-- [ ] Porta `80` está livre.
-- [ ] Porta `5432` está livre, se usar Postgres Core local.
-- [ ] Porta `5433` está livre, se usar Postgres Plugins local.
-- [ ] `docker compose -f docker-compose.dev.yml up --build` executou.
-- [ ] Gateway responde em `http://localhost`.
-- [ ] Core API responde em `/core-api/health`.
-- [ ] Keycloak responde em `/auth`.
-- [ ] Migrations da Core API foram aplicadas.
-- [ ] Portal consegue autenticar.
-- [ ] `/me` responde após login.
-- [ ] `/me/apps` retorna apps autorizados.
+Detalhes: [reset-banco-dev.md](./reset-banco-dev.md).
 
 ---
 
-## 19. Problemas comuns
+## 12. Problemas comuns
 
-### 19.1 Porta 80 ocupada
+| Problema | Ação |
+|---|---|
+| Porta 80 ocupada | `sudo lsof -i :80` ou alterar mapeamento no Compose |
+| Core API crash loop | Ver logs; conferir `DB_HOST=postgres-core` no `.env` |
+| Keycloak lento no 1º boot | Aguardar 1–2 min; ver `docker logs delpi-keycloak` |
+| 502 no gateway | Container alvo down — `docker compose ps` |
+| Plugin 404 em assets | Container `delpi-<id>` rodando? Id na URL = id do manifesto |
+| Chat sem resposta | Modelos Ollama não baixados (passo 5) |
+| Portal login loop | Conferir `VITE_KC_*` e redirect URI no client Keycloak |
+| TOTVS timeout | VPN/rede; variáveis `TOTVS_DB_*` no `.env` |
 
-Verificar processo usando a porta:
-
-```bash
-sudo lsof -i :80
-```
-
-Ou alterar a porta publicada no Compose local.
-
-### 19.2 Core API sobe antes do banco
-
-`depends_on` não garante prontidão completa do Postgres.
-
-Solução:
-
-- aguardar banco;
-- reiniciar `core-api`;
-- adicionar healthchecks no futuro.
-
-### 19.3 Keycloak inacessível
-
-Verificar:
-
-- logs do `keycloak`;
-- logs do `keycloak-db`;
-- variáveis `POSTGRES_KC_*`;
-- `KC_HTTP_RELATIVE_PATH`;
-- Gateway.
-
-### 19.4 Portal não autentica
-
-Verificar:
-
-- `VITE_KC_URL`;
-- `VITE_KC_REALM`;
-- `VITE_KC_CLIENT_ID`;
-- `VITE_KC_REDIRECT_URI`;
-- redirect URI no client do Keycloak;
-- issuer/audience do token.
+Mais cenários: [troubleshooting.md](./troubleshooting.md).
 
 ---
 
-## 20. Pontos de atenção
+## 13. Checklist
 
-1. Execute comandos a partir de `infra`.
-2. O ambiente dev usa volumes de código.
-3. Keycloak em dev usa `start-dev`.
-4. Bancos ficam expostos localmente em dev.
-5. Core API usa `FLASK_APP=app.create_app:create_app`.
-6. API DELPI usa `DB_*` para TOTVS dentro do container.
-7. Gateway é a entrada HTTP principal.
-8. `down -v` apaga dados locais.
-9. Migrations devem ser aplicadas após reset de banco.
-10. O Keycloak precisa ser reconfigurado após reset de volume.
+- [ ] `infra/.env` preenchido
+- [ ] `docker compose ... up -d` sem erro fatal
+- [ ] `/core-api/health` OK
+- [ ] `/auth` abre Keycloak
+- [ ] `flask db upgrade` aplicado
+- [ ] Modelos Ollama baixados (se usar chat)
+- [ ] Login Portal OK
+- [ ] `/core-api/me/apps` retorna plugins
+- [ ] Pelo menos um `remoteEntry.js` acessível (ex. strategic-indicators)
 
 ---
 
-## 21. Documentos relacionados
+## 14. Documentos relacionados
 
-```text
-docs/02-infraestrutura/docker-compose.md
-docs/02-infraestrutura/ambientes-dev-prod.md
-docs/10-guias-operacionais/reset-banco-dev.md
-docs/10-guias-operacionais/configurar-keycloak.md
-docs/10-guias-operacionais/troubleshooting.md
-```
+- [../02-infraestrutura/docker-compose.md](../02-infraestrutura/docker-compose.md)
+- [../02-infraestrutura/gateway-nginx.md](../02-infraestrutura/gateway-nginx.md)
+- [configurar-keycloak.md](./configurar-keycloak.md)
+- [../08-plugins/README.md](../08-plugins/README.md)

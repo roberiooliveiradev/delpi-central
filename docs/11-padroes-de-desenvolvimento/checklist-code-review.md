@@ -197,10 +197,9 @@ Ele deve ser usado para revisar PRs e evitar regressões arquiteturais, problema
 
 ## 15. Documentos relacionados
 
-```text
-docs/11-padroes-de-desenvolvimento/padrao-de-rota.md
-docs/11-padroes-de-desenvolvimento/padrao-de-use-case.md
-docs/11-padroes-de-desenvolvimento/padrao-de-repository.md
-docs/11-padroes-de-desenvolvimento/padrao-de-erro.md
-docs/11-padroes-de-desenvolvimento/padrao-de-evento.md
-```
+- [padrao-de-rota.md](./padrao-de-rota.md)
+- [padrao-de-use-case.md](./padrao-de-use-case.md)
+- [padrao-de-repository.md](./padrao-de-repository.md)
+- [padrao-de-erro.md](./padrao-de-erro.md)
+- [padrao-de-evento.md](./padrao-de-evento.md)
+- [README.md](./README.md)

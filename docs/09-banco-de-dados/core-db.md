@@ -1,7 +1,7 @@
 # Minha DELPI — Banco de Dados da Core API
 
 > **Arquivo:** `docs/09-banco-de-dados/core-db.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** modelo de dados do banco `postgres-core`
 
@@ -13,7 +13,13 @@ Este documento descreve o banco de dados da **Core API** da Minha DELPI.
 
 O banco da Core API armazena os dados de governança da plataforma, incluindo usuários, RBAC, apps, rotas, manifestos, versões de plugins, favoritos, notificações e auditoria.
 
-Este documento não cobre bancos operacionais de negócio, TOTVS, Portal RH ou `postgres-plugins`.
+Não cobre: TOTVS, Portal RH, `postgres-plugins` (operacional/RAG), `keycloak-db`.
+
+**Índice da pasta:** [README.md](./README.md) · **RBAC:** [modelo-rbac.md](./modelo-rbac.md) · **Plugins:** [modelo-plugin-system.md](./modelo-plugin-system.md)
+
+**Convenções SQLAlchemy** (classes, mixin, lista de arquivos em `models/`): [../04-core-api/modelos-de-banco.md](../04-core-api/modelos-de-banco.md).
+
+**Schema versionado:** revision Alembic `7aa51b680332` (`core-api/migrations/versions/`).
 
 ---
 
@@ -255,16 +261,21 @@ unique(code)
 ix_permissions_module
 ```
 
-Exemplos:
+**Permissões de sistema** (seed no boot — `permissions_seed.py`, `module: system`):
 
 ```text
 rbac.manage
 users.view
 users.manage
+groups.manage
+roles.manage
+permissions.manage
 apps.manage
+apps.view
 routes.manage
-dashboard-lmps.access
 ```
+
+**Permissões de plugin** — criadas no `POST /admin/apps/register`; `module` = `id` do plugin (ex.: `strategic-indicators.view` com `module: strategic-indicators`).
 
 ---
 
@@ -465,7 +476,7 @@ Exemplos de IDs:
 ```text
 dashboard-delpi
 strategic-indicators
-dashboard-lmps
+dash-lmps
 api-delpi
 ```
 
@@ -797,13 +808,10 @@ DeleteRoleUseCase remove role_permissions, user_roles, group_roles antes de remo
 
 ## 30. Documentos relacionados
 
-```text
-docs/09-banco-de-dados/modelo-rbac.md
-docs/09-banco-de-dados/modelo-plugin-system.md
-docs/09-banco-de-dados/plugins-db.md
-docs/04-core-api/modelos-de-banco.md
-docs/04-core-api/migrations.md
-docs/03-autenticacao-autorizacao/rbac.md
-docs/05-plugin-system/manifesto-plugin.md
-```
+- [README.md](./README.md)
+- [modelo-rbac.md](./modelo-rbac.md)
+- [modelo-plugin-system.md](./modelo-plugin-system.md)
+- [../02-infraestrutura/bancos-de-dados.md](../02-infraestrutura/bancos-de-dados.md) (inclui `postgres-plugins`)
+- [../04-core-api/modelos-de-banco.md](../04-core-api/modelos-de-banco.md)
+- [../04-core-api/migrations.md](../04-core-api/migrations.md)
 

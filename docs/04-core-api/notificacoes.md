@@ -1,7 +1,7 @@
 # Minha DELPI — Core API: Notificações
 
 > **Arquivo:** `docs/04-core-api/notificacoes.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** notificações de usuário na Core API e integração com Portal
 
@@ -49,22 +49,43 @@ Campos principais:
 | `title` | Título opcional |
 | `message` | Mensagem da notificação |
 | `type` | Tipo/categoria |
-| `read_at` | Data/hora de leitura |
+| `read_at` | Data/hora de leitura (`NULL` = não lida) |
 | `created_at` | Data/hora de criação |
 
-Índice conhecido:
-
-```text
-ix_notifications_user_id
-```
-
-Ponto de atenção:
-
-> A migration inicial indica índice em `user_id`; confirmar se o model final possui FK explícita para `users.id`.
+Model: `app/infrastructure/db/models/notification.py`.
 
 ---
 
-## 4. Estado de leitura
+## 4. API HTTP (`me_controller`)
+
+Todas exigem `@require_auth()`.
+
+| Método | Path | Use case |
+|---|---|---|
+| GET | `/me/notifications` | `ListUnreadNotificationsUseCase` |
+| POST | `/me/notifications/<id>/read` | `MarkNotificationReadUseCase` |
+| POST | `/me/notifications/read-all` | `MarkAllNotificationsReadUseCase` |
+| POST | `/me/notifications/test` | `NotifyUserUseCase` (dev) |
+
+Resposta de listagem (campos expostos ao Portal):
+
+```json
+{
+  "id": "uuid",
+  "user_id": "uuid",
+  "title": "Título",
+  "message": "Texto",
+  "type": "info",
+  "read": false,
+  "createdAt": "2026-05-15T12:00:00Z"
+}
+```
+
+`read` é derivado de `read_at IS NOT NULL` no repository.
+
+---
+
+## 5. Estado de leitura
 
 Uma notificação é considerada não lida quando:
 
@@ -79,21 +100,6 @@ read_at IS NOT NULL
 ```
 
 Ao marcar como lida, a Core API deve preencher `read_at` com o timestamp atual.
-
----
-
-## 5. Endpoints HTTP
-
-Endpoints conhecidos:
-
-```http
-GET  /me/notifications
-POST /me/notifications/<notification_id>/read
-POST /me/notifications/read-all
-POST /me/notifications/test
-```
-
-Todos exigem usuário autenticado.
 
 ---
 
@@ -129,16 +135,18 @@ Repository busca notifications onde user_id = usuário e read_at IS NULL
 Retorna lista ao Portal
 ```
 
-Resposta conceitual:
+Resposta (implementação atual):
 
 ```json
 [
   {
     "id": "uuid",
+    "user_id": "uuid",
     "title": "Título",
-    "message": "Mensagem da notificação",
+    "message": "Mensagem",
     "type": "info",
-    "created_at": "2026-05-07T10:30:00"
+    "read": false,
+    "createdAt": "2026-05-07T10:30:00Z"
   }
 ]
 ```

@@ -1,7 +1,7 @@
 # Minha DELPI — Core API: Use Cases
 
 > **Arquivo:** `docs/04-core-api/use-cases.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** casos de uso da camada de aplicação da Core API
 
@@ -14,6 +14,22 @@ Este documento descreve os **use cases** da Core API da Minha DELPI.
 Use cases concentram as regras de aplicação e orquestram repositories, services, validações, eventos e Unit of Work.
 
 Eles representam ações de negócio como registrar plugin, listar apps do usuário, alterar roles, marcar notificação como lida ou executar rollback de plugin.
+
+**Código:** `core-api/app/application/use_cases/` (65+ arquivos).
+
+### Índice por pasta
+
+| Pasta / grupo | Exemplos |
+|---|---|
+| Raiz | `get_me_use_case`, `list_user_apps_use_case`, `register_plugin_use_case`, `notify_user_use_case` |
+| `admin/` | `list_users_use_case`, `create_group_use_case`, `bulk_delete_users_use_case` |
+| RBAC vínculos | `add_role_to_user_use_case`, `replace_role_permissions_use_case`, `set_user_superadmin_use_case` |
+| Plugins | `rollback_plugin_version_use_case`, `bulk_unregister_plugins_use_case`, `update_plugin_manifest_use_case` |
+| Rotas admin | `create_app_route_use_case`, `bulk_delete_routes_use_case` |
+| Notificações | `list_unread_notifications_use_case`, `mark_notification_read_use_case` |
+| Favoritos | `add_favorite_app_use_case`, `list_favorite_apps_use_case` |
+
+Controllers finos: `app/interfaces/http/*_controller.py` instanciam use cases dentro de `SqlAlchemyUnitOfWork`.
 
 ---
 

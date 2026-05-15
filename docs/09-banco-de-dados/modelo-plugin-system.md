@@ -1,7 +1,7 @@
 # Minha DELPI — Modelo de Banco do Plugin System
 
 > **Arquivo:** `docs/09-banco-de-dados/modelo-plugin-system.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** modelo relacional de apps, rotas, manifestos, versões e permissões de plugins
 
@@ -22,6 +22,8 @@ Este documento detalha:
 - permissões de plugins;
 - relacionamentos;
 - fluxos de registro, atualização, rollback e remoção.
+
+**Operação:** [registrar-plugin.md](../10-guias-operacionais/registrar-plugin.md) · **Contrato JSON:** [manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md) · **Inventário:** [../08-plugins/README.md](../08-plugins/README.md).
 
 ---
 
@@ -106,9 +108,10 @@ id
 Exemplos:
 
 ```text
-dashboard-delpi
 strategic-indicators
-dashboard-lmps
+minha-delpi-chat
+dashboard-delpi
+dash-lmps
 api-delpi
 ```
 
@@ -368,9 +371,9 @@ permissions.module = apps.id
 Exemplo:
 
 ```text
-apps.id = dashboard-lmps
-permissions.module = dashboard-lmps
-permissions.code = dashboard-lmps.access
+apps.id = dash-lmps
+permissions.module = dash-lmps
+permissions.code = dash-lmps.access
 ```
 
 Essa regra é fundamental para operações de lifecycle.
@@ -394,8 +397,8 @@ UpdatePluginManifestUseCase
 Exemplo:
 
 ```text
-Remover permissões do plugin dashboard-lmps:
-DELETE FROM permissions WHERE module = 'dashboard-lmps';
+Remover permissões do plugin dash-lmps:
+DELETE FROM permissions WHERE module = 'dash-lmps';
 ```
 
 Se `module` estiver errado, permissões podem não ser removidas ou podem ser removidas indevidamente.
@@ -613,9 +616,9 @@ routes[]
 Exemplo:
 
 ```text
-base_path = /apps/dashboard-lmps
-route.path = /apps/dashboard-lmps
-entry = /apps/dashboard-lmps/assets/remoteEntry.js
+base_path = /dash-lmps
+route.path = /dash-lmps
+entry = /dash-lmps/assets/remoteEntry.js
 ```
 
 Se o Gateway não servir esse path, o app pode aparecer no Portal, mas falhar ao carregar.
@@ -718,12 +721,10 @@ WHERE app_id = :plugin_id;
 
 ## 29. Documentos relacionados
 
-```text
-docs/09-banco-de-dados/core-db.md
-docs/09-banco-de-dados/modelo-rbac.md
-docs/05-plugin-system/manifesto-plugin.md
-docs/05-plugin-system/registro-de-plugin.md
-docs/05-plugin-system/versionamento-e-rollback.md
-docs/06-portal-frontend/consumo-de-plugins.md
-```
+- [README.md](./README.md)
+- [core-db.md](./core-db.md)
+- [modelo-rbac.md](./modelo-rbac.md)
+- [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md)
+- [../10-guias-operacionais/registrar-plugin.md](../10-guias-operacionais/registrar-plugin.md)
+- [../08-plugins/README.md](../08-plugins/README.md)
 

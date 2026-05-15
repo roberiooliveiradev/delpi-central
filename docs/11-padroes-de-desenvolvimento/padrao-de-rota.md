@@ -449,9 +449,7 @@ A rota pode registrar logs operacionais simples, mas não deve:
 
 ## 21. Documentos relacionados
 
-```text
-docs/04-core-api/controllers-e-rotas.md
-docs/04-core-api/erros-api.md
-docs/11-padroes-de-desenvolvimento/padrao-de-use-case.md
-docs/11-padroes-de-desenvolvimento/padrao-de-erro.md
-```
+- [../04-core-api/controllers-e-rotas.md](../04-core-api/controllers-e-rotas.md)
+- [padrao-de-erro.md](./padrao-de-erro.md)
+- [padrao-de-use-case.md](./padrao-de-use-case.md)
+- [README.md](./README.md)

@@ -145,7 +145,7 @@ Cada banco tem responsabilidade própria.
 |---|---|
 | `postgres-core` | governança da plataforma |
 | `keycloak-db` | dados internos do Keycloak |
-| `postgres-plugins` | domínios de plugins |
+| `postgres-plugins` | domínios de plugins e persistência auxiliar (ex.: RAG / AI API) |
 | TOTVS | fonte operacional externa/legada |
 | Portal RH | fonte externa específica |
 
@@ -327,9 +327,8 @@ Consequências:
 
 ## 19. Documentos relacionados
 
-```text
-docs/12-roadmap-e-evolucao/status-atual.md
-docs/12-roadmap-e-evolucao/pendencias-tecnicas.md
-docs/12-roadmap-e-evolucao/roadmap.md
-docs/01-arquitetura/arquitetura-geral.md
-```
+- [status-atual.md](./status-atual.md)
+- [pendencias-tecnicas.md](./pendencias-tecnicas.md)
+- [roadmap.md](./roadmap.md)
+- [../01-arquitetura/arquitetura-geral.md](../01-arquitetura/arquitetura-geral.md)
+- [../README.md](../README.md)

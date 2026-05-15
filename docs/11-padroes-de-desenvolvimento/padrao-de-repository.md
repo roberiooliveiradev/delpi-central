@@ -315,9 +315,8 @@ Repository que engole exceção silenciosamente.
 
 ## 18. Documentos relacionados
 
-```text
-docs/04-core-api/repositories.md
-docs/04-core-api/unit-of-work.md
-docs/07-api-delpi/banco-postgres-plugins.md
-docs/11-padroes-de-desenvolvimento/padrao-de-use-case.md
-```
+- [../04-core-api/repositories.md](../04-core-api/repositories.md)
+- [../04-core-api/unit-of-work.md](../04-core-api/unit-of-work.md)
+- [../07-api-delpi/README.md](../07-api-delpi/README.md)
+- [padrao-de-use-case.md](./padrao-de-use-case.md)
+- [README.md](./README.md)

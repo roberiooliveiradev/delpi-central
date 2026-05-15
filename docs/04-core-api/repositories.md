@@ -1,7 +1,7 @@
 # Minha DELPI — Core API: Repositories
 
 > **Arquivo:** `docs/04-core-api/repositories.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** repositories, ports, persistência SQLAlchemy e consultas da Core API
 
@@ -77,6 +77,18 @@ Implementações SQLAlchemy ficam na infraestrutura:
 ```text
 app/infrastructure/persistence/sqlalchemy/
 ```
+
+| Implementação | Domínio |
+|---|---|
+| `user_repository` | Usuários |
+| `role_repository`, `group_repository` | RBAC entidades |
+| `user_role_repository`, `user_group_repository`, `group_role_repository` | Vínculos |
+| `role_permission_repository`, `permission_repository` | Permissões |
+| `permission_query_repository`, `rbac_query_repository` | `PermissionResolver` |
+| `plugin_*_repository` | Apps, manifestos, versões, rotas, permissões |
+| `admin_app_repository`, `admin_route_repository` | Admin |
+| `app_query_repository` | `/me/apps` |
+| `favorite_app_repository`, `notification_repository`, `audit_repository` | Favoritos, notificações, auditoria |
 
 Models ficam em:
 

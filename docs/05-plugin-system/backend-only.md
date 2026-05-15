@@ -1,7 +1,7 @@
 # Minha DELPI — Plugins Backend-only
 
 > **Arquivo:** `docs/05-plugin-system/backend-only.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** plugins do tipo `backend-only`
 

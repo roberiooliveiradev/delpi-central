@@ -1,7 +1,7 @@
 # Minha DELPI — Fluxo de Requisição
 
 > **Arquivo:** `docs/01-arquitetura/fluxo-de-requisicao.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** fluxo de requisições HTTP, autenticação, autorização, Core API, Portal, plugins e eventos
 

@@ -1,7 +1,9 @@
 # Minha DELPI — Manifesto de Plugin
 
 > **Arquivo:** `docs/05-plugin-system/manifesto-plugin.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
+
+**Exemplos de plugin id no repositório:** `strategic-indicators` (microfrontend), `dash-lmps` (iframe, `basePath` `/dash-lmps`). Trechos genéricos com `dashboard-lmps` ilustram MFE — não confundir com o manifesto atual de LMPs.
 > **Produto:** Minha DELPI  
 > **Escopo:** contrato JSON de manifesto, validações e regras de domínio do Plugin System
 
@@ -10,6 +12,8 @@
 ## 1. Objetivo
 
 Este documento descreve o contrato de **manifesto de plugin** da Minha DELPI.
+
+**Operação:** [../10-guias-operacionais/registrar-plugin.md](../10-guias-operacionais/registrar-plugin.md) · **Inventário:** [../08-plugins/README.md](../08-plugins/README.md)
 
 O manifesto é o arquivo JSON usado para registrar plugins, microfrontends, iframes e módulos backend-only na Core API.
 

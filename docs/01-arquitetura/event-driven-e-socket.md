@@ -1,7 +1,7 @@
 # Minha DELPI — Event-driven e Socket.IO
 
 > **Arquivo:** `docs/01-arquitetura/event-driven-e-socket.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** eventos internos, publicação pós-commit, Socket.IO e atualização em tempo real do Portal
 

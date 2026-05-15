@@ -1,430 +1,178 @@
-# Minha DELPI — Guia Operacional: Configurar Keycloak
+# Guia: configurar Keycloak (desenvolvimento)
 
 > **Arquivo:** `docs/10-guias-operacionais/configurar-keycloak.md`  
 > **Status:** documentação oficial  
-> **Produto:** Minha DELPI  
-> **Escopo:** configuração operacional do Keycloak para desenvolvimento da Minha DELPI
+> **Stack local:** gateway + `KC_HTTP_RELATIVE_PATH=/auth`
 
 ---
 
-## 1. Objetivo
+## 1. Papéis
 
-Este guia descreve como configurar o Keycloak para autenticação da Minha DELPI.
+| Sistema | Função |
+|---|---|
+| **Keycloak** | Login, emissão de JWT |
+| **Core API / API DELPI / AI API** | Validam JWT (issuer, audience, JWKS) |
+| **Portal** | Client público OIDC (PKCE S256) |
 
-O Keycloak é responsável por autenticar usuários e emitir tokens JWT. A autorização funcional da plataforma é resolvida pela Core API com RBAC interno.
+Autorização de menu e permissões: **Core API** (`/me`, `/me/apps`), não o Keycloak.
 
 ---
 
-## 2. Acessar Keycloak
+## 2. Acesso admin
 
-Com o ambiente de desenvolvimento rodando, acesse:
+Com a stack up:
 
 ```text
 http://localhost/auth
 ```
 
-ou o path configurado em `KC_HTTP_RELATIVE_PATH`.
+Credenciais: `KEYCLOAK_ADMIN` e `KEYCLOAK_ADMIN_PASSWORD` do `infra/.env`.
 
-Entre com as credenciais administrativas definidas em:
+---
+
+## 3. Realm
+
+Criar realm com o mesmo nome de:
 
 ```env
-KEYCLOAK_ADMIN=
-KEYCLOAK_ADMIN_PASSWORD=
+KEYCLOAK_REALM=delpi
+VITE_KC_REALM=delpi
 ```
 
 ---
 
-## 3. Criar realm
+## 4. Client do Portal
 
-Criar o realm da plataforma.
+| Campo | Valor recomendado |
+|---|---|
+| Client ID | `delpi-central` (= `VITE_KC_CLIENT_ID`) |
+| Client authentication | **Off** (público) |
+| Standard flow | **On** |
+| Valid redirect URIs | `http://localhost/*` |
+| Web origins | `http://localhost` ou `+` |
 
-Nome recomendado em desenvolvimento:
+O Portal usa **PKCE** (`pkceMethod: S256` em `keycloakClient.ts`) — client público compatível com SPA.
 
-```text
-delpi
-```
+---
 
-O valor precisa estar alinhado com:
+## 5. Audience
+
+A Core API exige claim `aud` contendo:
 
 ```env
-VITE_KC_REALM=
-KEYCLOAK_REALM=
-KEYCLOAK_ADMIN_REALM=
+KEYCLOAK_AUDIENCE=delpi-central
 ```
+
+No Keycloak 24, adicionar mapper de audience no client ou client scope (ex.: hardcoded `delpi-central` ou audience do client).
+
+Validar decodificando o access token após login.
 
 ---
 
-## 4. Criar client do Portal
+## 6. Issuer e JWKS (dois “mundos”)
 
-Criar client para o Portal.
+| Contexto | URL |
+|---|---|
+| Browser / token `iss` | `http://localhost/auth/realms/delpi` |
+| Core API dentro do Docker | `http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/certs` |
 
-Nome conceitual:
-
-```text
-delpi-central
-```
-
-ou o valor definido em:
+Variáveis no `.env`:
 
 ```env
-VITE_KC_CLIENT_ID=
+KEYCLOAK_ISSUER=${PUBLIC_BASE_URL}/auth/realms/${KEYCLOAK_REALM}
+KEYCLOAK_JWKS_URL=http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/certs
 ```
 
-Tipo:
-
-```text
-public
-```
-
-O Portal é frontend público e não deve possuir client secret.
+Se `iss` no token for `http://localhost/...` mas `KEYCLOAK_ISSUER` apontar só para `keycloak:8080`, a validação falha.
 
 ---
 
-## 5. Configurar fluxo de autenticação
+## 7. Claims obrigatórias
 
-Habilitar:
+| Claim | Uso |
+|---|---|
+| `sub` | UUID do usuário (sala Socket.IO) |
+| `email` | Sincronização na Core API |
+| `name` | Exibição no Portal |
+| `iss` | Validação issuer |
+| `aud` | Validação audience |
+| `exp` | Expiração |
 
-```text
-Standard flow
-```
-
-Se a estratégia local usar PKCE, configurar o client conforme padrão do Keycloak para SPA/public client.
-
-Não habilitar fluxo desnecessário sem justificativa.
+Garantir scopes **email** e **profile** (ou mappers equivalentes) no client.
 
 ---
 
-## 6. Configurar redirect URIs
-
-Adicionar redirect URI compatível com o Portal local.
-
-Exemplos:
-
-```text
-http://localhost/*
-http://localhost/
-```
-
-O valor precisa ser compatível com:
+## 8. Superadmin local
 
 ```env
-VITE_KC_REDIRECT_URI=
+INITIAL_SUPERADMIN_EMAIL=usuario@empresa.com.br
 ```
 
-Erro comum quando divergente:
+Na primeira autenticação com esse e-mail, a Core API pode marcar `users.is_superadmin=true` (bootstrap). Criar o usuário no Keycloak com o **mesmo e-mail**.
 
-```text
-Invalid redirect_uri
+---
+
+## 9. Validar integração
+
+1. Login em `http://localhost`
+2. DevTools → request `GET /core-api/me` → **200**
+3. `GET /core-api/me/apps` → lista de plugins
+4. Token em [jwt.io](https://jwt.io): conferir `iss`, `aud`, `email`
+
+```bash
+# Health (sem auth)
+curl -s http://localhost/core-api/health
 ```
 
 ---
 
-## 7. Configurar Web Origins
+## 10. Client admin backend (opcional)
 
-Em desenvolvimento, configurar a origem do Portal:
-
-```text
-http://localhost
-```
-
-ou política equivalente definida pelo time.
-
-Em produção, restringir para domínio real.
-
----
-
-## 8. Configurar audience
-
-A Core API valida audience do JWT.
-
-A variável esperada é:
+Service account para automações:
 
 ```env
-KEYCLOAK_AUDIENCE=
+KEYCLOAK_ADMIN_CLIENT_ID=delpi-core-admin
+KEYCLOAK_ADMIN_CLIENT_SECRET=<secret>
+KEYCLOAK_ADMIN_URL=http://keycloak:8080
 ```
 
-O token emitido pelo Keycloak precisa conter esse valor em `aud`.
-
-Se necessário, configurar audience mapper no client ou client scope.
-
-Checklist:
-
-- [ ] `KEYCLOAK_AUDIENCE` definido no `.env`.
-- [ ] Token contém essa audience.
-- [ ] Core API aceita o token.
-- [ ] `/me` responde após login.
+Nunca expor no frontend.
 
 ---
 
-## 9. Configurar claims
+## 11. Após `docker compose down -v`
 
-A Core API precisa das claims:
-
-```text
-sub
-email
-name
-iss
-aud
-exp
-```
-
-Regras importantes:
-
-- `sub` deve ser UUID válido;
-- `email` deve estar presente;
-- `name` deve estar presente ou ter fallback;
-- `iss` deve bater com `KEYCLOAK_ISSUER`;
-- `aud` deve conter `KEYCLOAK_AUDIENCE`.
-
-Verificar client scopes e mappers para garantir `email` e `name`.
+Volumes do Keycloak são apagados. Refazer: realm, client, mappers, usuários, redirect URIs.
 
 ---
 
-## 10. Configurar issuer e JWKS
+## 12. Problemas comuns
 
-A Core API usa:
-
-```env
-KEYCLOAK_ISSUER=
-KEYCLOAK_JWKS_URL=
-KEYCLOAK_AUDIENCE=
-```
-
-O `KEYCLOAK_ISSUER` deve ser exatamente igual ao claim `iss` do token.
-
-O `KEYCLOAK_JWKS_URL` deve ser acessível de dentro do container da Core API.
-
-Exemplo conceitual de JWKS:
-
-```text
-http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/certs
-```
-
-O path exato depende de `KC_HTTP_RELATIVE_PATH`.
+| Erro | Correção |
+|---|---|
+| `Invalid redirect URI` | `http://localhost/*` no client; `VITE_KC_REDIRECT_URI` |
+| 401 `invalid_token` | Alinhar `iss` / `aud` / JWKS |
+| Token sem `email` | Client scopes + mapper |
+| Loop de login | Web origins; cookie third-party (raro em localhost) |
+| Issuer mismatch | `KEYCLOAK_ISSUER` = URL pública do realm, não interna |
 
 ---
 
-## 11. Criar usuário inicial
+## 13. Checklist
 
-Criar um usuário para acessar a plataforma.
-
-Configurar:
-
-- username;
-- email;
-- first name;
-- last name;
-- senha temporária ou definitiva;
-- email verified, se necessário para o fluxo.
-
-O email deve bater com o superadmin inicial configurado na Core API, quando aplicável:
-
-```env
-INITIAL_SUPERADMIN_EMAIL=
-INITIAL_SUPERADMIN_NAME=
-```
+- [ ] Realm `delpi` (ou valor do `.env`)
+- [ ] Client `delpi-central` público + Standard flow
+- [ ] Redirect `http://localhost/*`
+- [ ] Audience `delpi-central` no token
+- [ ] JWKS acessível de dentro do container `core-api`
+- [ ] Usuário com e-mail do superadmin
+- [ ] `/me` e `/me/apps` OK após login
 
 ---
 
-## 12. Relação com superadmin local
+## 14. Documentos relacionados
 
-O superadmin da Minha DELPI é uma flag local na tabela `users` da Core API:
-
-```text
-users.is_superadmin
-```
-
-O Keycloak autentica o usuário.
-
-A Core API decide se ele é superadmin.
-
-Portanto, criar usuário no Keycloak não é suficiente para conceder superadmin se a Core API não fizer o bootstrap ou atualização correspondente.
-
----
-
-## 13. Validar login no Portal
-
-Acesse:
-
-```text
-http://localhost
-```
-
-Fluxo esperado:
-
-```text
-Portal
-  ↓
-Keycloak
-  ↓
-Login
-  ↓
-Redirect para Portal
-  ↓
-Portal chama Core API
-  ↓
-/me responde
-```
-
----
-
-## 14. Validar token na Core API
-
-Após login, validar:
-
-```http
-GET /core-api/me
-Authorization: Bearer <token>
-```
-
-Se retornar 401, verificar:
-
-- issuer;
-- audience;
-- JWKS;
-- token expirado;
-- claims ausentes;
-- `sub` inválido;
-- redirect/client incorreto.
-
----
-
-## 15. Configuração administrativa da Core API
-
-A Core API possui variáveis para Keycloak Admin API:
-
-```env
-KEYCLOAK_ADMIN_CLIENT_ID=
-KEYCLOAK_ADMIN_CLIENT_SECRET=
-KEYCLOAK_ADMIN_REALM=
-KEYCLOAK_ADMIN_URL=
-```
-
-Essas variáveis são de backend.
-
-Não colocar no Portal.
-
----
-
-## 16. Após reset de banco
-
-Se você executou reset com `down -v`, o Keycloak perdeu:
-
-- realm;
-- client;
-- usuários;
-- mappers;
-- audience;
-- redirect URIs.
-
-Será necessário refazer a configuração.
-
----
-
-## 17. Problemas comuns
-
-### 17.1 `Invalid redirect_uri`
-
-Causa:
-
-```text
-Redirect URI do Portal não está permitido no client.
-```
-
-Correção:
-
-- ajustar `Valid Redirect URIs`;
-- ajustar `VITE_KC_REDIRECT_URI`;
-- verificar URL pública pelo Gateway.
-
----
-
-### 17.2 Core API retorna `invalid_token`
-
-Verificar:
-
-- `KEYCLOAK_ISSUER`;
-- `KEYCLOAK_JWKS_URL`;
-- `KEYCLOAK_AUDIENCE`;
-- claim `aud`;
-- claim `iss`;
-- expiração;
-- acesso da Core API ao JWKS.
-
----
-
-### 17.3 Token sem email
-
-Causa provável:
-
-```text
-Client scope/mappers incompletos.
-```
-
-Correção:
-
-- incluir email scope;
-- adicionar mapper de email;
-- validar token decodificado.
-
----
-
-### 17.4 Token sem audience
-
-Causa provável:
-
-```text
-Audience mapper ausente.
-```
-
-Correção:
-
-- configurar audience mapper;
-- alinhar `KEYCLOAK_AUDIENCE`.
-
----
-
-## 18. Checklist final
-
-- [ ] Realm criado.
-- [ ] Client público do Portal criado.
-- [ ] Standard flow habilitado.
-- [ ] Redirect URIs configurados.
-- [ ] Web Origins configurados.
-- [ ] Audience configurada.
-- [ ] Token contém `email`.
-- [ ] Token contém `name`.
-- [ ] Token contém `aud` esperado.
-- [ ] Issuer bate com `KEYCLOAK_ISSUER`.
-- [ ] JWKS acessível pela Core API.
-- [ ] Usuário inicial criado.
-- [ ] Portal autentica.
-- [ ] `/me` responde.
-- [ ] `/me/apps` responde.
-
----
-
-## 19. Pontos de atenção
-
-1. Keycloak autentica, Core API autoriza.
-2. Portal usa client público.
-3. `VITE_*` não pode conter segredo.
-4. Admin client é de backend.
-5. Audience divergente causa 401.
-6. Issuer divergente causa 401.
-7. JWKS precisa ser acessível pelo container.
-8. `sub` precisa ser UUID válido.
-9. Reset de volume apaga configuração do Keycloak.
-10. Produção exige HTTPS e redirect URIs restritos.
-
----
-
-## 20. Documentos relacionados
-
-```text
-docs/03-autenticacao-autorizacao/keycloak-sso.md
-docs/03-autenticacao-autorizacao/jwt.md
-docs/10-guias-operacionais/reset-banco-dev.md
-docs/02-infraestrutura/docker-compose.md
-```
+- [../02-infraestrutura/variaveis-de-ambiente.md](../02-infraestrutura/variaveis-de-ambiente.md)
+- [../03-autenticacao-autorizacao/keycloak-sso.md](../03-autenticacao-autorizacao/keycloak-sso.md)
+- [reset-banco-dev.md](./reset-banco-dev.md)
+- [subir-ambiente-dev.md](./subir-ambiente-dev.md)

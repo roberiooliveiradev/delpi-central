@@ -1,7 +1,9 @@
 # Minha DELPI — Microfrontends
 
 > **Arquivo:** `docs/05-plugin-system/microfrontends.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
+
+**Nota:** o plugin LMPs em produção no monorepo é **iframe** (`id` `dash-lmps`), não microfrontend. Os exemplos abaixo com `dashboard-lmps` são didáticos para MFE; use `strategic-indicators` como referência real de `remoteEntry.js`.
 > **Produto:** Minha DELPI  
 > **Escopo:** plugins visuais do tipo `microfrontend`
 

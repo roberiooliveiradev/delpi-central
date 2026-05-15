@@ -1,7 +1,7 @@
 # Minha DELPI — Permission Resolver
 
 > **Arquivo:** `docs/03-autenticacao-autorizacao/permission-resolver.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial  
 > **Produto:** Minha DELPI  
 > **Escopo:** cálculo de permissões efetivas na Core API
 
@@ -37,6 +37,10 @@ PermissionResolver calcula permissões efetivas.
 
 O token emitido pelo Keycloak não deve ser usado como fonte final de permissões da plataforma.
 
+**Implementação:** `core-api/app/domain/services/permission_resolver.py`  
+**Porta de dados:** `PermissionQueryPort` (SQLAlchemy em `infrastructure/repositories/`)  
+**Cache:** `PermissionCachePort` → `rbac_permission_cache_adapter` (memória por processo)
+
 ---
 
 ## 3. Responsabilidade do Permission Resolver
@@ -53,7 +57,7 @@ Ele retorna uma lista de códigos de permissão, por exemplo:
 apps.view
 apps.manage
 rbac.manage
-dashboard-lmps.access
+dash-lmps.access
 ```
 
 Esses códigos são usados por:
@@ -104,33 +108,22 @@ O resolver considera quatro fontes principais.
 
 ---
 
-## 6. Fluxo geral
+## 6. Fluxo geral (código atual)
 
-Fluxo conceitual:
+Ordem exata em `PermissionResolver.resolve()`:
 
-```text
-PermissionResolver.resolve(user_id, is_superadmin)
-  ↓
-Se is_superadmin = true:
-    retornar todas as permissões
-  ↓
-Se usuário comum:
-    tentar cache
-  ↓
-Buscar permissões por roles diretas
-  ↓
-Buscar permissões por groups → roles
-  ↓
-Unir permissões
-  ↓
-Aplicar overrides individuais
-  ↓
-Salvar no cache
-  ↓
-Retornar lista
-```
+| Passo | Condição | Ação |
+|---:|---|---|
+| 1 | `is_superadmin` | `list_all_permission_codes()` → cache → return |
+| 2 | cache hit | return lista em cache |
+| 3 | — | união de `list_direct_role_permissions` + `list_group_role_permissions` |
+| 4 | overrides | `user_permissions`: `granted=true` adiciona; `false` remove |
+| 5 | — | `sorted(effective)` → grava cache → return |
+
+Invalidação: `resolver.invalidate(user_id)` ou `RbacEventHandler` após mudanças RBAC; evento Socket `admin.changed` para o Portal recarregar `/me`.
 
 ---
+
 
 ## 7. Superadmin
 
@@ -239,10 +232,10 @@ Se a mesma permissão vier de múltiplas fontes, ela aparece apenas uma vez.
 Exemplo:
 
 ```text
-Role direta: apps.view, dashboard-lmps.access
+Role direta: apps.view, dash-lmps.access
 Grupo:       apps.view, users.view
 
-União:      apps.view, dashboard-lmps.access, users.view
+União:      apps.view, dash-lmps.access, users.view
 ```
 
 ---
@@ -582,7 +575,7 @@ routes.manage
 rbac.manage
 users.view
 users.manage
-dashboard-lmps.access
+dash-lmps.access
 ```
 
 Regras recomendadas:
@@ -623,9 +616,9 @@ Exemplo:
 
 ```json
 {
-  "code": "dashboard-lmps.access",
+  "code": "dash-lmps.access",
   "name": "Acessar Dashboard LMPs",
-  "module": "dashboard-lmps"
+  "module": "dash-lmps"
 }
 ```
 
@@ -669,7 +662,7 @@ Permissões por roles:
 
 ```text
 Gestor de Apps → apps.view, apps.manage
-Analista LMP   → dashboard-lmps.access
+Analista LMP   → dash-lmps.access
 ```
 
 Overrides:
@@ -683,7 +676,7 @@ Resultado efetivo:
 
 ```text
 apps.view
-dashboard-lmps.access
+dash-lmps.access
 users.view
 ```
 
@@ -781,7 +774,8 @@ Verificar:
 
 ## 33. Documentos relacionados
 
-```text
-docs/03-autenticacao-autorizacao/rbac.md
-docs/03-autenticacao-autorizacao/jwt.md
-docs/03-autenticacao-autorizacao/keyclo
+- [rbac.md](./rbac.md)
+- [jwt.md](./jwt.md)
+- [keycloak-sso.md](./keycloak-sso.md)
+- [../04-core-api/controllers-e-rotas.md](../04-core-api/controllers-e-rotas.md)
+- [../09-banco-de-dados/modelo-rbac.md](../09-banco-de-dados/modelo-rbac.md)

@@ -1,7 +1,7 @@
 # Minha DELPI — Bancos de Dados
 
 > **Arquivo:** `docs/02-infraestrutura/bancos-de-dados.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** bancos de dados usados pela plataforma, responsabilidades e limites entre dados de governança e dados operacionais
 
@@ -42,7 +42,7 @@ Portal RH
 |---|---|---|
 | `postgres-core` | PostgreSQL Docker | Governança da Core API |
 | `keycloak-db` | PostgreSQL Docker | Persistência interna do Keycloak |
-| `postgres-plugins` | PostgreSQL Docker | Dados de plugins/domínios operacionais |
+| `postgres-plugins` | PostgreSQL Docker | API DELPI (módulos) + Minha DELPI AI API (pgvector/RAG) — ver [../09-banco-de-dados/README.md](../09-banco-de-dados/README.md) |
 | TOTVS | Externo | Dados operacionais corporativos consumidos pela API DELPI |
 | Portal RH | Externo | Dados de RH consumidos pela API DELPI quando configurado |
 
@@ -498,11 +498,10 @@ Regras:
 
 ## 22. Documentos relacionados
 
-```text
-docs/02-infraestrutura/docker-compose.md
-docs/02-infraestrutura/variaveis-de-ambiente.md
-docs/09-banco-de-dados/core-db.md
-docs/09-banco-de-dados/plugins-db.md
-docs/09-banco-de-dados/keycloak-db.md
-docs/07-api-delpi/banco-postgres-plugins.md
-```
+- [docker-compose.md](./docker-compose.md)
+- [variaveis-de-ambiente.md](./variaveis-de-ambiente.md)
+- [../09-banco-de-dados/README.md](../09-banco-de-dados/README.md) (índice: core, plugins, keycloak)
+- [../09-banco-de-dados/core-db.md](../09-banco-de-dados/core-db.md) (`postgres-core`)
+- [../03-autenticacao-autorizacao/keycloak-sso.md](../03-autenticacao-autorizacao/keycloak-sso.md) (Keycloak — não acessar `keycloak-db` pela app)
+- [../07-api-delpi/visao-geral-api-delpi.md](../07-api-delpi/visao-geral-api-delpi.md) + pacote [api-delpi/docs/api](../../api-delpi/docs/api/README.md) (TOTVS, `postgres-plugins`)
+- [../10-guias-operacionais/subir-ambiente-dev.md](../10-guias-operacionais/subir-ambiente-dev.md)

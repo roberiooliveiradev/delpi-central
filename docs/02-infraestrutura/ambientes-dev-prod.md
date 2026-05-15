@@ -1,7 +1,7 @@
 # Minha DELPI — Ambientes Dev e Prod
 
 > **Arquivo:** `docs/02-infraestrutura/ambientes-dev-prod.md`  
-> **Status:** documentação oficial em construção  
+> **Status:** documentação oficial  
 > **Produto:** Minha DELPI  
 > **Escopo:** diferenças operacionais e técnicas entre os ambientes Docker de desenvolvimento e produção
 
@@ -44,33 +44,20 @@ infra/
 
 ## 3. Serviços comuns aos dois ambientes
 
-Os dois ambientes possuem a mesma base de serviços:
+Serviços presentes nos dois Compose (maio/2026):
 
 ```text
-postgres-core
-keycloak-db
-keycloak
-core-api
-portal
-dashboard-delpi
-strategic-indicators
-dashboard-lmps
-postgres-plugins
+postgres-core, keycloak-db, keycloak
+core-api, portal, gateway
+postgres-plugins (pgvector)
 api-delpi
-gateway
+minha-delpi-ai-api, ollama
+strategic-indicators, minha-delpi-chat, dashboard-lmps, dashboard-delpi
 ```
 
-Esses serviços compõem a plataforma atual:
+Apenas em **produção** (opcional): `vllm` com profile `docker compose --profile gpu`.
 
-- banco da Core API;
-- banco do Keycloak;
-- provedor de identidade;
-- backend de governança;
-- frontend shell;
-- plugins/microfrontends;
-- banco de plugins/domínios;
-- API operacional;
-- gateway Nginx.
+Detalhamento: [docker-compose.md](./docker-compose.md).
 
 ---
 
