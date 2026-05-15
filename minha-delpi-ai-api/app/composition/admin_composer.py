@@ -119,7 +119,7 @@ def make_list_external_actions_use_case() -> ListExternalActionsUseCase:
 
 
 
-def make_test_admin_rag_use_case() -> TestAdminRagUseCase:
+def make_test_admin_rag_use_case() -> AdminRagTestUseCase:
     return AdminRagTestUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
         embedding_gateway=LocalEmbeddingGateway(),
