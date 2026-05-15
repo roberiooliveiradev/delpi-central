@@ -150,7 +150,7 @@ Explicar por que o agente respondeu algo durante o teste de assertividade.
 
 ## 6. Ferramentas reais
 
-**Status: Parcialmente concluído**
+**Status: Concluído**
 
 ### Objetivo
 
@@ -169,10 +169,8 @@ Transformar a aba Ferramentas em painel operacional real.
 - Listagem de providers OpenAPI reais
 - Listagem de actions reais disponíveis
 - Exibição de providers/actions por agente selecionado
-
-### Ainda falta
-
-- Mostrar erros recentes por action/provider
+- Consulta de logs recentes por action/provider
+- Exibição de erros recentes por action/provider
 
 ---
 
@@ -417,7 +415,7 @@ Blindar comportamento da IA.
 
 - Edição completa de diretrizes
 - Diretrizes por ambiente
-- Ferramentas reais
+- Ferramentas reais no painel administrativo
 - RBAC administrativo avançado
 - Métricas avançadas
 - Auditoria avançada

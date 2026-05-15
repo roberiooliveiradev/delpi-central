@@ -10,6 +10,7 @@ import {
   listChatActions,
   listChatAgentActions,
   listChatAgentActionProviders,
+  listChatAgentActionTestLogs,
   listChatAgents,
 } from "../../../../data/api/chatApi";
 import type {
@@ -23,6 +24,7 @@ import type {
   ChatAgent,
   ChatAgentAction,
   ChatAgentActionProvider,
+  ChatActionTestLog,
   ChatCapabilities,
 } from "../../../../data/api/chatTypes";
 
@@ -43,7 +45,10 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
   const [selectedAgentId, setSelectedAgentId] = useState("");
   const [agentProviders, setAgentProviders] = useState<ChatAgentActionProvider[]>([]);
   const [agentActions, setAgentActions] = useState<ChatAgentAction[]>([]);
+  const [selectedAgentActionKey, setSelectedAgentActionKey] = useState("");
+  const [actionLogs, setActionLogs] = useState<ChatActionTestLog[]>([]);
   const [isLoadingAgentTools, setIsLoadingAgentTools] = useState(false);
+  const [isLoadingActionLogs, setIsLoadingActionLogs] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,10 +90,49 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
     void loadTools();
   }, []);
 
+  async function loadActionLogs(value: string) {
+    setSelectedAgentActionKey(value);
+    setActionLogs([]);
+
+    if (!selectedAgentId || !value) {
+      return;
+    }
+
+    const [providerKey, actionId] = value.split("::");
+
+    if (!providerKey || !actionId) {
+      return;
+    }
+
+    setIsLoadingActionLogs(true);
+    setError(null);
+
+    try {
+      const logs = await listChatAgentActionTestLogs(
+        selectedAgentId,
+        providerKey,
+        actionId,
+        { getAccessToken },
+      );
+
+      setActionLogs(logs);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erro ao carregar logs recentes da action.",
+      );
+    } finally {
+      setIsLoadingActionLogs(false);
+    }
+  }
+
   async function loadAgentTools(agentId: string) {
     setSelectedAgentId(agentId);
     setAgentProviders([]);
     setAgentActions([]);
+    setSelectedAgentActionKey("");
+    setActionLogs([]);
 
     if (!agentId) {
       return;
@@ -284,49 +328,121 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
         {isLoadingAgentTools ? <p>Carregando tools do agente...</p> : null}
 
         {selectedAgentId && !isLoadingAgentTools ? (
-          <div className="mdc-admin-tools-tab__agent-grid">
-            <section>
-              <h4>Providers do agente</h4>
-              {agentProviders.length === 0 ? (
-                <p>Nenhum provider vinculado.</p>
-              ) : (
-                <ul>
-                  {agentProviders.map((provider) => (
-                    <li key={provider.providerKey}>
-                      <div>
-                        <strong>{provider.providerName ?? provider.providerKey}</strong>
-                        <small>{provider.providerKey}</small>
-                      </div>
-                      <span className={provider.enabled ? "is-ok" : "is-warning"}>
-                        {provider.enabled ? "ativo" : "inativo"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+          <>
+            <div className="mdc-admin-tools-tab__agent-grid">
+              <section>
+                <h4>Providers do agente</h4>
+                {agentProviders.length === 0 ? (
+                  <p>Nenhum provider vinculado.</p>
+                ) : (
+                  <ul>
+                    {agentProviders.map((provider) => (
+                      <li key={provider.providerKey}>
+                        <div>
+                          <strong>{provider.providerName ?? provider.providerKey}</strong>
+                          <small>{provider.providerKey}</small>
+                        </div>
+                        <span className={provider.enabled ? "is-ok" : "is-warning"}>
+                          {provider.enabled ? "ativo" : "inativo"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
 
-            <section>
-              <h4>Actions do agente</h4>
-              {agentActions.length === 0 ? (
-                <p>Nenhuma action vinculada.</p>
-              ) : (
-                <ul>
+              <section>
+                <h4>Actions do agente</h4>
+                {agentActions.length === 0 ? (
+                  <p>Nenhuma action vinculada.</p>
+                ) : (
+                  <ul>
+                    {agentActions.map((action) => (
+                      <li key={`${action.providerKey}:${action.actionId}`}>
+                        <div>
+                          <strong>{action.actionId}</strong>
+                          <small>{action.providerKey}</small>
+                        </div>
+                        <span className={action.enabled ? "is-ok" : "is-warning"}>
+                          {action.enabled ? "ativa" : "inativa"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+
+            <section className="mdc-admin-tools-tab__logs">
+              <div>
+                <h4>Logs recentes por action</h4>
+                <p>Consulte os últimos testes registrados para uma action vinculada ao agente.</p>
+              </div>
+
+              <label className="mdc-admin-tools-tab__agent-select">
+                <span>Action</span>
+                <select
+                  value={selectedAgentActionKey}
+                  disabled={agentActions.length === 0}
+                  onChange={(event) => {
+                    void loadActionLogs(event.target.value);
+                  }}
+                >
+                  <option value="">Selecione uma action</option>
                   {agentActions.map((action) => (
-                    <li key={action.actionId}>
-                      <div>
-                        <strong>{action.actionId}</strong>
-                        <small>{action.providerKey}</small>
-                      </div>
-                      <span className={action.enabled ? "is-ok" : "is-warning"}>
-                        {action.enabled ? "ativa" : "inativa"}
-                      </span>
-                    </li>
+                    <option
+                      key={`${action.providerKey}:${action.actionId}`}
+                      value={`${action.providerKey}::${action.actionId}`}
+                    >
+                      {action.providerKey} · {action.actionId}
+                    </option>
                   ))}
-                </ul>
-              )}
+                </select>
+              </label>
+
+              {isLoadingActionLogs ? <p>Carregando logs...</p> : null}
+
+              {!isLoadingActionLogs && selectedAgentActionKey && actionLogs.length === 0 ? (
+                <p>Nenhum log recente retornado para esta action.</p>
+              ) : null}
+
+              {actionLogs.length > 0 ? (
+                <div className="mdc-admin-tools-tab__log-list">
+                  {actionLogs.map((log) => (
+                    <article key={log.id}>
+                      <div>
+                        <strong className={log.ok ? "is-ok" : "is-error"}>
+                          {log.ok ? "OK" : "Erro"}
+                        </strong>
+                        <span>{log.statusCode ?? "sem status"}</span>
+                      </div>
+
+                      <dl>
+                        <div>
+                          <dt>Provider</dt>
+                          <dd>{log.providerKey}</dd>
+                        </div>
+                        <div>
+                          <dt>Action</dt>
+                          <dd>{log.actionId}</dd>
+                        </div>
+                        <div>
+                          <dt>Duração</dt>
+                          <dd>{log.durationMs}ms</dd>
+                        </div>
+                        <div>
+                          <dt>Data</dt>
+                          <dd>{log.createdAt ?? "sem data"}</dd>
+                        </div>
+                      </dl>
+
+                      {log.errorMessage ? <p>{log.errorMessage}</p> : null}
+                    </article>
+                  ))}
+                </div>
+              ) : null}
             </section>
-          </div>
+          </>
         ) : null}
       </article>
 
