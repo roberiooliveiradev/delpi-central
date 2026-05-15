@@ -9,9 +9,13 @@ from app.application.security.chat_permissions import (
 
 
 class GetAdminRbacSummaryUseCase:
-    def execute(self, user) -> dict:
-        permissions = set(getattr(user, "permissions", []) or [])
-        is_superadmin = bool(getattr(user, "is_superadmin", False))
+    def execute(self, user, core_user: dict | None = None) -> dict:
+        if core_user:
+            permissions = set(core_user.get("permissions") or [])
+            is_superadmin = bool(core_user.get("is_superadmin"))
+        else:
+            permissions = set(getattr(user, "permissions", []) or [])
+            is_superadmin = bool(getattr(user, "is_superadmin", False))
 
         roles = self._roles_for(permissions=permissions, is_superadmin=is_superadmin)
         capabilities = self._capabilities_for(
@@ -20,7 +24,7 @@ class GetAdminRbacSummaryUseCase:
         )
 
         return {
-            "userId": getattr(user, "sub", None),
+            "userId": getattr(user, "sub", None) or (core_user or {}).get("id"),
             "isSuperadmin": is_superadmin,
             "roles": roles,
             "permissions": sorted(permissions),

@@ -42,6 +42,7 @@ from app.composition.admin_composer import (
 )
 from app.extensions.db import db
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.gateways.core_api_http_gateway import CoreMeGateway
 from app.interfaces.http.auth_decorators import require_permission
 from app.interfaces.http.rate_limit_decorators import rate_limit
 
@@ -61,8 +62,11 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @admin_bp.get("/rbac/summary")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def get_admin_rbac_summary():
+    authorization_header = request.headers.get("Authorization")
+    core_user = CoreMeGateway().get_me(authorization_header)
+
     use_case = make_get_admin_rbac_summary_use_case()
-    return jsonify(use_case.execute(g.current_user)), 200
+    return jsonify(use_case.execute(g.current_user, core_user=core_user)), 200
 
 
 @admin_bp.get("/guidelines")
