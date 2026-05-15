@@ -98,6 +98,11 @@ class AdminRagTestUseCase:
                 limit=safe_limit,
                 filters=filters,
             ),
+            "comparison": self._build_comparison(
+                chunks=chunk_results,
+                matched_documents=matched_documents,
+                applied_guidelines=applied_guidelines,
+            ),
         }
 
     def _build_answer_preview(self, chunks) -> str:
@@ -194,3 +199,64 @@ class AdminRagTestUseCase:
     def _safe_preview(self, value) -> str:
         normalized = " ".join(str(value or "").split())
         return normalized[:260]
+
+
+    def _build_comparison(
+        self,
+        *,
+        chunks: list[dict],
+        matched_documents: list[dict],
+        applied_guidelines: list[dict],
+    ) -> dict:
+        return {
+            "withGuidelines": {
+                "enabled": len(applied_guidelines) > 0,
+                "guidelineCount": len(applied_guidelines),
+                "summary": self._build_guideline_summary(applied_guidelines),
+            },
+            "withoutGuidelines": {
+                "enabled": False,
+                "guidelineCount": 0,
+                "summary": "Sem diretrizes administrativas, a resposta dependeria apenas das políticas base, do RAG e das instruções do agente/projeto.",
+            },
+            "withRag": {
+                "enabled": len(chunks) > 0,
+                "chunkCount": len(chunks),
+                "documentCount": len(matched_documents),
+                "summary": self._build_rag_summary(chunks, matched_documents),
+            },
+            "withoutRag": {
+                "enabled": False,
+                "chunkCount": 0,
+                "documentCount": 0,
+                "summary": "Sem RAG, o teste não teria trechos documentais recuperados para fundamentar a resposta.",
+            },
+        }
+
+    def _build_guideline_summary(self, applied_guidelines: list[dict]) -> str:
+        if not applied_guidelines:
+            return "Nenhuma diretriz administrativa ativa seria aplicada."
+
+        titles = [
+            str(item.get("title") or "Diretriz sem título")
+            for item in applied_guidelines[:3]
+        ]
+
+        suffix = ""
+        if len(applied_guidelines) > 3:
+            suffix = f" e mais {len(applied_guidelines) - 3}."
+
+        return f"Aplicaria {len(applied_guidelines)} diretriz(es): {', '.join(titles)}{suffix}"
+
+    def _build_rag_summary(
+        self,
+        chunks: list[dict],
+        matched_documents: list[dict],
+    ) -> str:
+        if not chunks:
+            return "Nenhum chunk documental seria usado."
+
+        return (
+            f"Usaria {len(chunks)} chunk(s) de "
+            f"{len(matched_documents)} documento(s) recuperado(s)."
+        )

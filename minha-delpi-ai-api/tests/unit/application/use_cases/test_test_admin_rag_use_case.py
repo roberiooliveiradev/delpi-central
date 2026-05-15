@@ -90,3 +90,6 @@ def test_admin_rag_test_returns_applied_guidelines():
     assert result["debugContext"]["guidelineCount"] == 1
     assert result["debugContext"]["hasActiveGuidelines"] is True
     assert "Não inventar respostas" in result["debugContext"]["safeContextPreview"]
+    assert result["comparison"]["withGuidelines"]["guidelineCount"] == 1
+    assert result["comparison"]["withoutGuidelines"]["guidelineCount"] == 0
+    assert result["comparison"]["withoutRag"]["chunkCount"] == 0

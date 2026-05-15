@@ -218,3 +218,52 @@
     grid-template-columns: 1fr;
   }
 }
+
+.mdc-guideline-test-panel__comparison {
+  display: grid;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-guideline-test-panel__comparison > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--mdc-space-3);
+}
+
+.mdc-guideline-test-panel__comparison section {
+  display: grid;
+  gap: var(--mdc-space-2);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-card-bg);
+  padding: var(--mdc-space-3);
+}
+
+.mdc-guideline-test-panel__comparison strong {
+  color: var(--mdc-title);
+  font-size: 0.85rem;
+}
+
+.mdc-guideline-test-panel__comparison span {
+  color: var(--mdc-primary);
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.mdc-guideline-test-panel__comparison p {
+  color: var(--mdc-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 1120px) {
+  .mdc-guideline-test-panel__comparison > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .mdc-guideline-test-panel__comparison > div {
+    grid-template-columns: 1fr;
+  }
+}

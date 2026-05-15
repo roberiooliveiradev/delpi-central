@@ -56,6 +56,30 @@ export type AdminRagTestResponse = {
     };
     safeContextPreview: string;
   };
+  comparison?: {
+    withGuidelines: {
+      enabled: boolean;
+      guidelineCount: number;
+      summary: string;
+    };
+    withoutGuidelines: {
+      enabled: boolean;
+      guidelineCount: number;
+      summary: string;
+    };
+    withRag: {
+      enabled: boolean;
+      chunkCount: number;
+      documentCount: number;
+      summary: string;
+    };
+    withoutRag: {
+      enabled: boolean;
+      chunkCount: number;
+      documentCount: number;
+      summary: string;
+    };
+  };
 };
 
 export type AdminGuidelinePayload = {

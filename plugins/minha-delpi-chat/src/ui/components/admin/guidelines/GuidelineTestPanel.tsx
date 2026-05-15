@@ -161,6 +161,38 @@ export function GuidelineTestPanel({ testGuidelines }: GuidelineTestPanelProps) 
             </article>
           ) : null}
 
+          {result.comparison ? (
+            <article className="mdc-guideline-test-panel__comparison">
+              <h4>Comparação de contexto</h4>
+
+              <div>
+                <section>
+                  <strong>Com diretrizes</strong>
+                  <span>{result.comparison.withGuidelines.guidelineCount}</span>
+                  <p>{result.comparison.withGuidelines.summary}</p>
+                </section>
+
+                <section>
+                  <strong>Sem diretrizes</strong>
+                  <span>{result.comparison.withoutGuidelines.guidelineCount}</span>
+                  <p>{result.comparison.withoutGuidelines.summary}</p>
+                </section>
+
+                <section>
+                  <strong>Com RAG</strong>
+                  <span>{result.comparison.withRag.chunkCount}</span>
+                  <p>{result.comparison.withRag.summary}</p>
+                </section>
+
+                <section>
+                  <strong>Sem RAG</strong>
+                  <span>{result.comparison.withoutRag.chunkCount}</span>
+                  <p>{result.comparison.withoutRag.summary}</p>
+                </section>
+              </div>
+            </article>
+          ) : null}
+
           <article className="mdc-guideline-test-panel__preview">
             <h4>Prévia da resposta</h4>
             <p>{result.answerPreview}</p>
