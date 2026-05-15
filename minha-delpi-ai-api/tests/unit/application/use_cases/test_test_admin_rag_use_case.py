@@ -56,7 +56,7 @@ def test_admin_rag_test_rejects_empty_question():
 
 
 class FakeGuidelineRepository:
-    def list_active(self):
+    def list_active(self, *, environment=None):
         return [
             {
                 "id": "guideline-1",

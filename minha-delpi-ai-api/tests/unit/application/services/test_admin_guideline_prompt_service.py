@@ -7,7 +7,7 @@ class FakeGuidelineRepository:
     def __init__(self, guidelines):
         self.guidelines = guidelines
 
-    def list_active(self):
+    def list_active(self, *, environment=None):
         return self.guidelines
 
 
