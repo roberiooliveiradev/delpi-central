@@ -408,7 +408,7 @@ export async function getAdminRbacSummary(
 export async function getAdminToolHealth(
   options: AdminApiOptions = {},
 ): Promise<AdminToolHealthResponse> {
-  const response = await fetch(`${API_BASE_URL}/admin/tools/health`, {
+  const response = await fetch(`${API_BASE_URL}/admin/external-action-providers`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -419,7 +419,7 @@ export async function getAdminToolHealth(
 export async function listAdminExternalActions(
   options: AdminApiOptions = {},
 ): Promise<AdminExternalActionCatalogItem[]> {
-  const response = await fetch(`${API_BASE_URL}/admin/tools/actions`, {
+  const response = await fetch(`${API_BASE_URL}/admin/external-actions`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
