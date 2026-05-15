@@ -42,10 +42,7 @@ export function AdminGuidelinesTab(props: AdminGuidelinesTabProps) {
 
       <GuidelineTestPanel testGuidelines={props.testGuidelines} />
 
-      <GuidelineVersionPanel
-        loadGuidelines={props.loadGuidelines}
-        saveGuideline={props.saveGuideline}
-      />
+      <GuidelineVersionPanel />
     </section>
   );
 }

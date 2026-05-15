@@ -4,6 +4,7 @@ import { AdminAuditTab } from "../components/admin/audit/AdminAuditTab";
 import { AdminGuidelinesTab } from "../components/admin/guidelines/AdminGuidelinesTab";
 import { AdminKnowledgeTab } from "../components/admin/knowledge/AdminKnowledgeTab";
 import { AdminMetrics } from "../components/admin/metrics/AdminMetrics";
+import { AdminMetricsTab } from "../components/admin/metrics-tab/AdminMetricsTab";
 import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
 import type { AdminTab, AdminTabItem } from "../components/admin/shell/adminShellTypes";
@@ -20,6 +21,7 @@ type ChatAdminPageProps = {
 
 const ADMIN_TABS: AdminTabItem[] = [
   { key: "knowledge", label: "Conhecimento" },
+  { key: "metrics", label: "Métricas" },
   { key: "guidelines", label: "Diretrizes" },
   { key: "tools", label: "Ferramentas" },
   { key: "audit", label: "Auditoria" },
@@ -67,6 +69,11 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
             reactivateDocument={admin.reactivateDocument}
             reindexDocument={admin.reindexDocument}
           />
+        ) : null}
+
+
+        {activeTab === "metrics" ? (
+          <AdminMetricsTab metricsSummary={admin.metricsSummary} />
         ) : null}
 
         {activeTab === "guidelines" ? (

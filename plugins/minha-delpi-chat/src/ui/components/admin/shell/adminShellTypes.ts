@@ -1,4 +1,4 @@
-export type AdminTab = "knowledge" | "guidelines" | "tools" | "audit";
+export type AdminTab = "knowledge" | "metrics" | "guidelines" | "tools" | "audit";
 
 export type AdminTabItem = {
   key: AdminTab;
