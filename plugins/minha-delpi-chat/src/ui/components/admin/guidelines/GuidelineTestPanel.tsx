@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import type { AdminRagTestResponse } from "../../../../data/api/adminFutureTypes";
 import type { GuidelineBackendPlaceholders } from "./guidelineTypes";
 
 import "./GuidelineTestPanel.css";
@@ -8,6 +9,30 @@ type GuidelineTestPanelProps = Pick<GuidelineBackendPlaceholders, "testGuideline
 
 export function GuidelineTestPanel({ testGuidelines }: GuidelineTestPanelProps) {
   const [question, setQuestion] = useState("");
+  const [result, setResult] = useState<AdminRagTestResponse | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleTest() {
+    const normalizedQuestion = question.trim();
+
+    if (!normalizedQuestion || !testGuidelines || isTesting) {
+      return;
+    }
+
+    setIsTesting(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await testGuidelines(normalizedQuestion);
+      setResult(response);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao testar diretrizes.");
+    } finally {
+      setIsTesting(false);
+    }
+  }
 
   return (
     <article className="mdc-guideline-test-panel">
@@ -17,33 +42,61 @@ export function GuidelineTestPanel({ testGuidelines }: GuidelineTestPanelProps) 
       </div>
 
       <p className="mdc-chat-muted">
-        Simule perguntas para validar se as diretrizes globais estão orientando a resposta do chat.
+        Simule perguntas para validar se a base global e as diretrizes estão orientando a resposta.
       </p>
 
       <textarea
         value={question}
         rows={8}
-        placeholder="Ex.: Quando eu perguntar sobre um produto, como o chat deve priorizar a fonte correta?"
+        placeholder="Ex.: Como o chat deve responder quando não encontrar fonte suficiente?"
         onChange={(event) => setQuestion(event.target.value)}
       />
 
       <button
         type="button"
-        disabled={!question.trim() || !testGuidelines}
-        title={testGuidelines ? "Testar diretrizes" : "Aguardando endpoint de teste"}
+        disabled={!question.trim() || !testGuidelines || isTesting}
         onClick={() => {
-          void testGuidelines?.(question.trim());
+          void handleTest();
         }}
       >
-        Testar diretrizes
+        {isTesting ? "Testando..." : "Testar diretrizes"}
       </button>
 
-      <div className="mdc-guideline-test-panel__placeholder">
-        <strong>Pronto para backend</strong>
-        <small>
-          Resultado esperado: fontes usadas, diretrizes acionadas, score de assertividade e pontos de melhoria.
-        </small>
-      </div>
+      {error ? (
+        <div className="mdc-guideline-test-panel__error" role="alert">
+          {error}
+        </div>
+      ) : null}
+
+      {result ? (
+        <section className="mdc-guideline-test-panel__result">
+          <div>
+            <span>Score</span>
+            <strong>{Math.round(result.score * 100)}%</strong>
+          </div>
+
+          <article>
+            <h3>Prévia da resposta</h3>
+            <p>{result.answerPreview}</p>
+          </article>
+
+          <article>
+            <h3>Documentos acionados</h3>
+            {result.matchedDocuments.length === 0 ? (
+              <p>Nenhum documento encontrado.</p>
+            ) : (
+              <ul>
+                {result.matchedDocuments.map((document) => (
+                  <li key={document.id}>
+                    <strong>{document.title}</strong>
+                    <span>{Math.round(document.score * 100)}%</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
+        </section>
+      ) : null}
     </article>
   );
 }

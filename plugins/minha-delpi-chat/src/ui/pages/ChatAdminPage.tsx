@@ -71,9 +71,9 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
 
         {activeTab === "guidelines" ? (
           <AdminGuidelinesTab
-            testGuidelines={async (question) => {
-              await testAdminRag({ question }, { getAccessToken });
-            }}
+            testGuidelines={(question) =>
+              testAdminRag({ question }, { getAccessToken })
+            }
           />
         ) : null}
 

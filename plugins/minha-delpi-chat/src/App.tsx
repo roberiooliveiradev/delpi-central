@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 
 import "./App.css";
 
 import { ChatPage } from "./ui/pages/ChatPage";
-import { ChatAdminPage } from "./ui/pages/ChatAdminPage";
+
+const ChatAdminPage = lazy(() =>
+  import("./ui/pages/ChatAdminPage").then((module) => ({
+    default: module.ChatAdminPage,
+  })),
+);
 
 export type AppProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -17,10 +22,18 @@ export default function App({ getAccessToken, pathname }: AppProps) {
 
   if (mode === "admin") {
     return (
-      <ChatAdminPage
-        getAccessToken={getAccessToken}
-        onBack={() => setMode("chat")}
-      />
+      <Suspense
+        fallback={
+          <div className="minha-delpi-chat__loading-page">
+            Carregando administração...
+          </div>
+        }
+      >
+        <ChatAdminPage
+          getAccessToken={getAccessToken}
+          onBack={() => setMode("chat")}
+        />
+      </Suspense>
     );
   }
 

@@ -1,3 +1,5 @@
+import type { AdminRagTestResponse } from "../../../../data/api/adminFutureTypes";
+
 export type AdminGuidelineStatus = "active" | "draft" | "review";
 
 export type AdminGuideline = {
@@ -13,5 +15,5 @@ export type GuidelineBackendPlaceholders = {
   saveGuideline?: (guideline: AdminGuideline) => Promise<void>;
   publishGuideline?: (guidelineId: string) => Promise<void>;
   archiveGuideline?: (guidelineId: string) => Promise<void>;
-  testGuidelines?: (question: string) => Promise<void>;
+  testGuidelines?: (question: string) => Promise<AdminRagTestResponse>;
 };
