@@ -216,3 +216,29 @@ export type AdminAuditQuery = {
 export type AdminAuditExportResponse = {
   downloadUrl: string;
 };
+
+
+export type AdminRbacSummary = {
+  userId?: string | null;
+  isSuperadmin: boolean;
+  roles: string[];
+  permissions: string[];
+  capabilities: {
+    canCreateGuidelines: boolean;
+    canPublishGuidelines: boolean;
+    canArchiveGuidelines: boolean;
+    canDeleteKnowledgeDocuments: boolean;
+    canReindexKnowledgeDocuments: boolean;
+    canViewAudit: boolean;
+    canExportAudit: boolean;
+    canManageTools: boolean;
+    canUseTools: boolean;
+    canViewAdmin: boolean;
+  };
+  matrix: Array<{
+    key: string;
+    label: string;
+    allowed: boolean;
+    requiredPermission: string;
+  }>;
+};

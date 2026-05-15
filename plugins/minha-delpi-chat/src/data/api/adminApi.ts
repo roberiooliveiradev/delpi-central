@@ -13,6 +13,7 @@ import type {
   AdminKnowledgeDocumentsResponse,
   AdminLlmStatus,
   AdminMetricsSummary,
+  AdminRbacSummary,
   AdminRagTestRequest,
   AdminRagTestResponse,
   AdminToolHealthResponse,
@@ -390,6 +391,18 @@ export async function testAdminRag(
   });
 
   return parseJsonResponse<AdminRagTestResponse>(response);
+}
+
+
+export async function getAdminRbacSummary(
+  options: AdminApiOptions = {},
+): Promise<AdminRbacSummary> {
+  const response = await fetch(`${API_BASE_URL}/admin/rbac/summary`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminRbacSummary>(response);
 }
 
 export async function getAdminToolHealth(

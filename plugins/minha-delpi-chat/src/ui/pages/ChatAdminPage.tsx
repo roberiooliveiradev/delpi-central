@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AdminAuditTab } from "../components/admin/audit/AdminAuditTab";
 import { AdminGuidelinesTab } from "../components/admin/guidelines/AdminGuidelinesTab";
@@ -8,6 +8,9 @@ import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
 import type { AdminTab, AdminTabItem } from "../components/admin/shell/adminShellTypes";
 import { AdminToolsTab } from "../components/admin/tools/AdminToolsTab";
+import { AdminRbacPanel } from "../components/admin/rbac/AdminRbacPanel";
+import { getAdminRbacSummary } from "../../data/api/adminApi";
+import type { AdminRbacSummary } from "../../data/api/adminTypes";
 import { testAdminRag } from "../../data/api/adminApi";
 import { useChatAdmin } from "../../state/hooks/useChatAdmin";
 
@@ -29,6 +32,20 @@ const ADMIN_TABS: AdminTabItem[] = [
 export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
   const admin = useChatAdmin({ getAccessToken });
   const [activeTab, setActiveTab] = useState<AdminTab>("knowledge");
+  const [adminRbac, setAdminRbac] = useState<AdminRbacSummary | null>(null);
+
+  useEffect(() => {
+    async function loadAdminRbac() {
+      try {
+        const summary = await getAdminRbacSummary({ getAccessToken });
+        setAdminRbac(summary);
+      } catch {
+        setAdminRbac(null);
+      }
+    }
+
+    void loadAdminRbac();
+  }, [getAccessToken]);
 
   return (
     <main className="minha-delpi-chat mdc-admin-root">
@@ -86,6 +103,8 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
             }
           />
         ) : null}
+
+        {activeTab === "tools" ? <AdminRbacPanel rbac={adminRbac} /> : null}
 
         {activeTab === "tools" ? <AdminToolsTab llmStatus={admin.llmStatus} getAccessToken={getAccessToken} /> : null}
 

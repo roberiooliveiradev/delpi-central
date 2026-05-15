@@ -19,6 +19,7 @@ from app.application.use_cases.delete_knowledge_document_use_case import (
     DeleteKnowledgeDocumentUseCase,
 )
 from app.application.use_cases.get_admin_metrics_summary_use_case import GetAdminMetricsSummaryUseCase
+from app.application.use_cases.get_admin_rbac_summary_use_case import GetAdminRbacSummaryUseCase
 from app.application.use_cases.get_admin_system_check_use_case import GetAdminSystemCheckUseCase
 from app.application.use_cases.get_llm_provider_status_use_case import (
     GetLlmProviderStatusUseCase,
@@ -175,3 +176,8 @@ def make_restore_admin_guideline_version_use_case() -> RestoreAdminGuidelineVers
         repository=PostgresAdminGuidelineRepository(),
         audit_repository=PostgresAuditRepository(),
     )
+
+
+
+def make_get_admin_rbac_summary_use_case() -> GetAdminRbacSummaryUseCase:
+    return GetAdminRbacSummaryUseCase()

@@ -27,6 +27,7 @@ from app.composition.admin_composer import (
     make_ingest_admin_knowledge_document_use_case,
     make_get_llm_provider_status_use_case,
     make_get_admin_metrics_summary_use_case,
+    make_get_admin_rbac_summary_use_case,
     make_get_admin_system_check_use_case,
     make_list_admin_audit_logs_use_case,
     make_list_admin_guidelines_use_case,
@@ -53,6 +54,15 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
 
+
+
+
+
+@admin_bp.get("/rbac/summary")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def get_admin_rbac_summary():
+    use_case = make_get_admin_rbac_summary_use_case()
+    return jsonify(use_case.execute(g.current_user)), 200
 
 
 @admin_bp.get("/guidelines")
