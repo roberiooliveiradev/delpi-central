@@ -114,3 +114,9 @@
   color: var(--mdc-text-muted);
   line-height: 1.45;
 }
+
+.mdc-guideline-list-panel__item small {
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}

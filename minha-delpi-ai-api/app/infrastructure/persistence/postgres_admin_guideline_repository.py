@@ -18,11 +18,22 @@ class PostgresAdminGuidelineRepository:
 
         return [self._to_dict(row) for row in rows]
 
-    def list_active(self) -> list[dict]:
+    def list_active(self, *, environment: str | None = None) -> list[dict]:
+        normalized_environment = self._normalize_environment(environment)
+        environments = ["global"]
+
+        if normalized_environment != "global":
+            environments.append(normalized_environment)
+
         rows = (
             AiAdminGuidelineModel.query
             .filter(AiAdminGuidelineModel.status == "active")
-            .order_by(AiAdminGuidelineModel.category.asc(), AiAdminGuidelineModel.created_at.asc())
+            .filter(AiAdminGuidelineModel.environment.in_(environments))
+            .order_by(
+                AiAdminGuidelineModel.environment.asc(),
+                AiAdminGuidelineModel.category.asc(),
+                AiAdminGuidelineModel.created_at.asc(),
+            )
             .all()
         )
 
@@ -38,6 +49,7 @@ class PostgresAdminGuidelineRepository:
         category: str,
         status: str,
         metadata: dict | None,
+        environment: str | None = None,
         user_id: str | None,
     ) -> dict:
         row = None
@@ -51,6 +63,7 @@ class PostgresAdminGuidelineRepository:
                 description=description,
                 content=content,
                 category=category,
+                environment=self._normalize_environment(environment),
                 status=status,
                 guideline_metadata=metadata or {},
                 created_by=user_id,
@@ -62,6 +75,7 @@ class PostgresAdminGuidelineRepository:
             row.description = description
             row.content = content
             row.category = category
+            row.environment = self._normalize_environment(environment)
             row.status = status
             row.guideline_metadata = metadata or {}
             row.updated_by = user_id
@@ -165,6 +179,7 @@ class PostgresAdminGuidelineRepository:
         row.description = target_version.description
         row.content = target_version.content
         row.category = target_version.category
+        row.environment = target_version.environment
         row.status = "draft"
         row.guideline_metadata = target_version.guideline_metadata or {}
         row.updated_by = user_id
@@ -210,6 +225,7 @@ class PostgresAdminGuidelineRepository:
                 description=row.description,
                 content=row.content,
                 category=row.category,
+                environment=row.environment,
                 status=row.status,
                 event=event,
                 guideline_metadata=row.guideline_metadata or {},
@@ -227,12 +243,30 @@ class PostgresAdminGuidelineRepository:
             "description": row.description,
             "content": row.content,
             "category": row.category,
+            "environment": row.environment,
             "status": row.status,
             "event": row.event,
             "metadata": row.guideline_metadata or {},
             "createdBy": row.created_by,
             "createdAt": row.created_at.isoformat() if row.created_at else None,
         }
+
+    def _normalize_environment(self, environment: str | None) -> str:
+        normalized = str(environment or "global").strip().lower()
+
+        if normalized in {"production", "prod"}:
+            return "prod"
+
+        if normalized in {"homolog", "homologation", "staging", "stage", "hml"}:
+            return "homolog"
+
+        if normalized in {"development", "dev", "local"}:
+            return "dev"
+
+        if normalized == "global":
+            return "global"
+
+        return "global"
 
     def _to_dict(self, row: AiAdminGuidelineModel) -> dict:
         return {
@@ -241,6 +275,7 @@ class PostgresAdminGuidelineRepository:
             "description": row.description,
             "content": row.content,
             "category": row.category,
+            "environment": row.environment,
             "status": row.status,
             "metadata": row.guideline_metadata or {},
             "createdBy": row.created_by,

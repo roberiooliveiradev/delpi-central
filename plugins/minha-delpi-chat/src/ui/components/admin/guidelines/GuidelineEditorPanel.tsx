@@ -21,6 +21,8 @@ export function GuidelineEditorPanel({
   const [content, setContent] = useState("");
   const [category, setCategory] =
     useState<SaveAdminGuidelinePayload["category"]>("behavior");
+  const [environment, setEnvironment] =
+    useState<SaveAdminGuidelinePayload["environment"]>("global");
   const [isSaving, setIsSaving] = useState(false);
 
   const isEditing = Boolean(editingGuideline);
@@ -32,6 +34,8 @@ export function GuidelineEditorPanel({
       setDescription("");
       setContent("");
       setCategory("behavior");
+      setEnvironment("global");
+      setEnvironment("global");
       return;
     }
 
@@ -39,6 +43,7 @@ export function GuidelineEditorPanel({
     setDescription(editingGuideline.description);
     setContent(editingGuideline.content);
     setCategory(editingGuideline.category);
+    setEnvironment(editingGuideline.environment ?? "global");
   }, [editingGuideline]);
 
   async function handleSave() {
@@ -55,6 +60,7 @@ export function GuidelineEditorPanel({
         description: description.trim(),
         content: content.trim(),
         category,
+        environment,
         status: "draft",
         metadata: {
           ...(editingGuideline?.metadata ?? {}),
@@ -68,6 +74,7 @@ export function GuidelineEditorPanel({
         setDescription("");
         setContent("");
         setCategory("behavior");
+        setEnvironment("global");
       }
 
       onCancelEdit?.();
@@ -144,6 +151,23 @@ export function GuidelineEditorPanel({
           <option value="rag">RAG</option>
           <option value="tools">Ferramentas</option>
           <option value="safety">Segurança</option>
+        </select>
+      </label>
+
+      <label>
+        <span>Ambiente</span>
+        <select
+          value={environment}
+          onChange={(event) =>
+            setEnvironment(
+              event.target.value as SaveAdminGuidelinePayload["environment"],
+            )
+          }
+        >
+          <option value="global">Global</option>
+          <option value="dev">DEV</option>
+          <option value="homolog">HOMOLOG</option>
+          <option value="prod">PROD</option>
         </select>
       </label>
 

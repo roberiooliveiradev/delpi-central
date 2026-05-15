@@ -14,6 +14,7 @@ class AiAdminGuidelineModel(db.Model):
     description = db.Column(db.Text, nullable=False, default="")
     content = db.Column(db.Text, nullable=False, default="")
     category = db.Column(db.String(40), nullable=False, default="behavior", index=True)
+    environment = db.Column(db.String(30), nullable=False, default="global", index=True)
     status = db.Column(db.String(30), nullable=False, default="draft", index=True)
     guideline_metadata = db.Column("metadata", JSONB, nullable=True)
     created_by = db.Column(db.String(120), nullable=True, index=True)

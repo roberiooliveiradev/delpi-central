@@ -94,7 +94,7 @@ Permitir manutenção contínua das diretrizes.
 
 ## 4. Diretrizes por ambiente
 
-**Status: Pendente**
+**Status: Concluído**
 
 ### Objetivo
 
@@ -106,7 +106,7 @@ Permitir comportamento diferente por ambiente.
 - HOMOLOG
 - PROD
 
-### Implementar
+### Entregue
 
 - Campo `environment`
 - Filtro por ambiente no backend
@@ -408,6 +408,7 @@ Blindar comportamento da IA.
 ## Pendente
 
 - Edição completa de diretrizes
+- Diretrizes por ambiente
 - Ferramentas reais
 - RBAC administrativo avançado
 - Métricas avançadas

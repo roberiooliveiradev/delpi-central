@@ -1,9 +1,14 @@
+import os
+
+
 class AdminGuidelinePromptService:
     def __init__(self, guideline_repository):
         self.guideline_repository = guideline_repository
 
     def build_active_guidelines_prompt(self) -> tuple[str, list[dict]]:
-        guidelines = self.guideline_repository.list_active()
+        guidelines = self.guideline_repository.list_active(
+            environment=self._current_environment()
+        )
 
         if not guidelines:
             return "", []
@@ -40,3 +45,25 @@ class AdminGuidelinePromptService:
 
     def _clean(self, value) -> str:
         return " ".join(str(value or "").split())
+
+
+    def _current_environment(self) -> str:
+        value = (
+            os.getenv("MINHA_DELPI_ENV")
+            or os.getenv("APP_ENV")
+            or os.getenv("FLASK_ENV")
+            or "prod"
+        )
+
+        normalized = str(value).strip().lower()
+
+        if normalized in {"production", "prod"}:
+            return "prod"
+
+        if normalized in {"homolog", "homologation", "staging", "stage", "hml"}:
+            return "homolog"
+
+        if normalized in {"development", "dev", "local"}:
+            return "dev"
+
+        return "prod"

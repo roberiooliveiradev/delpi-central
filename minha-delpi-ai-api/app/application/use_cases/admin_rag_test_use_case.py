@@ -1,3 +1,4 @@
+import os
 from app.domain.ports.embedding_gateway_port import EmbeddingGatewayPort
 from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
 
@@ -125,7 +126,9 @@ class AdminRagTestUseCase:
         if not self.guideline_repository:
             return []
 
-        guidelines = self.guideline_repository.list_active()
+        guidelines = self.guideline_repository.list_active(
+            environment=self._current_environment()
+        )
 
         return [
             {
@@ -260,3 +263,25 @@ class AdminRagTestUseCase:
             f"Usaria {len(chunks)} chunk(s) de "
             f"{len(matched_documents)} documento(s) recuperado(s)."
         )
+
+
+    def _current_environment(self) -> str:
+        value = (
+            os.getenv("MINHA_DELPI_ENV")
+            or os.getenv("APP_ENV")
+            or os.getenv("FLASK_ENV")
+            or "prod"
+        )
+
+        normalized = str(value).strip().lower()
+
+        if normalized in {"production", "prod"}:
+            return "prod"
+
+        if normalized in {"homolog", "homologation", "staging", "stage", "hml"}:
+            return "homolog"
+
+        if normalized in {"development", "dev", "local"}:
+            return "dev"
+
+        return "prod"

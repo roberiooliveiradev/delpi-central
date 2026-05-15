@@ -15,6 +15,13 @@ const STATUS_LABEL: Record<AdminGuideline["status"], string> = {
   archived: "Arquivada",
 };
 
+const ENVIRONMENT_LABEL: Record<string, string> = {
+  global: "Global",
+  dev: "DEV",
+  homolog: "HOMOLOG",
+  prod: "PROD",
+};
+
 export function GuidelineListPanel({
   guidelines,
   publishGuideline,
@@ -50,6 +57,9 @@ export function GuidelineListPanel({
               <div>
                 <strong>{guideline.title}</strong>
                 <p>{guideline.description || guideline.content}</p>
+                <small>
+                  Ambiente: {ENVIRONMENT_LABEL[guideline.environment ?? "global"] ?? "Global"}
+                </small>
               </div>
 
               <div className="mdc-guideline-list-panel__actions">

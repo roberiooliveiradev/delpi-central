@@ -58,6 +58,7 @@ export type AdminMetricsSummary = {
 export type AdminGuidelineStatus = "draft" | "active" | "archived";
 
 export type AdminGuidelineCategory = "behavior" | "rag" | "tools" | "safety";
+export type AdminGuidelineEnvironment = "global" | "dev" | "homolog" | "prod";
 
 export type AdminGuideline = {
   id: string;
@@ -65,6 +66,7 @@ export type AdminGuideline = {
   description: string;
   content: string;
   category: AdminGuidelineCategory;
+  environment?: AdminGuidelineEnvironment;
   status: AdminGuidelineStatus;
   metadata?: Record<string, unknown>;
   createdBy?: string | null;
@@ -84,6 +86,7 @@ export type AdminGuidelineVersion = {
   description: string;
   content: string;
   category: AdminGuidelineCategory;
+  environment?: AdminGuidelineEnvironment;
   status: AdminGuidelineStatus;
   event: "saved" | "published" | "archived" | string;
   metadata?: Record<string, unknown>;
