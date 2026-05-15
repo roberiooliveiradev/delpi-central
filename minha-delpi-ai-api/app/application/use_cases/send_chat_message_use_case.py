@@ -176,6 +176,23 @@ class SendChatMessageUseCase:
             toolCalls=tool_calls,
         )
 
+    def _build_admin_guidelines_prompt(self) -> tuple[str, list[dict]]:
+        if not self.admin_guideline_prompt_service:
+            return "", []
+
+        return self.admin_guideline_prompt_service.build_active_guidelines_prompt()
+
+    def _guideline_metadata(self, guidelines: list[dict]) -> list[dict]:
+        return [
+            {
+                "id": item.get("id"),
+                "title": item.get("title"),
+                "category": item.get("category"),
+                "status": item.get("status"),
+            }
+            for item in guidelines
+        ]
+
     def _build_tool_context(
         self,
         request: SendChatMessageRequest,
