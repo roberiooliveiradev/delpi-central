@@ -1,0 +1,106 @@
+.mdc-external-actions-panel {
+  display: grid;
+  gap: var(--mdc-space-4);
+  align-content: start;
+  min-width: 0;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+  padding: var(--mdc-space-5);
+}
+
+.mdc-external-actions-panel h2 {
+  margin: 0;
+  color: var(--mdc-primary);
+  font-size: 1.08rem;
+  line-height: 1.2;
+}
+
+.mdc-external-actions-panel__header,
+.mdc-external-actions-panel__item,
+.mdc-external-actions-panel__actions {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-external-actions-panel__header,
+.mdc-external-actions-panel__item {
+  justify-content: space-between;
+}
+
+.mdc-external-actions-panel__list {
+  display: grid;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-external-actions-panel__item {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: var(--mdc-bg-muted);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-external-actions-panel__item strong {
+  color: var(--mdc-title);
+}
+
+.mdc-external-actions-panel__item p {
+  margin: var(--mdc-space-1) 0 0;
+  color: var(--mdc-text-muted);
+  line-height: 1.45;
+}
+
+.mdc-external-actions-panel__actions {
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mdc-external-actions-panel__actions span {
+  border: 1px solid var(--mdc-badge-border);
+  border-radius: 999px;
+  background: var(--mdc-badge-bg);
+  color: var(--mdc-badge-text);
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.32rem 0.58rem;
+  white-space: nowrap;
+}
+
+.mdc-external-actions-panel__actions .is-ok {
+  color: var(--mdc-success);
+}
+
+.mdc-external-actions-panel__actions .is-warning,
+.mdc-external-actions-panel__actions .is-unknown {
+  color: var(--mdc-primary);
+}
+
+.mdc-external-actions-panel__actions .is-error {
+  color: var(--mdc-danger);
+}
+
+.mdc-external-actions-panel button {
+  min-height: 2.35rem;
+  border-radius: 999px;
+  font-weight: 800;
+  padding: 0.5rem 0.8rem;
+}
+
+.mdc-external-actions-panel > button {
+  justify-self: start;
+}
+
+@media (max-width: 760px) {
+  .mdc-external-actions-panel__header,
+  .mdc-external-actions-panel__item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mdc-external-actions-panel__actions {
+    justify-content: flex-start;
+  }
+}
