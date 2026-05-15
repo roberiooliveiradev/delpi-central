@@ -228,7 +228,7 @@ export function AdminKnowledgeTab({
         </form>
       </article>
 
-      <article className="mdc-admin-card mdc-admin-card--wide">
+      <article className="mdc-admin-card mdc-admin-knowledge-list-card">
         <div className="mdc-admin-card-header">
           <div>
             <h2>Base global de conhecimento</h2>
