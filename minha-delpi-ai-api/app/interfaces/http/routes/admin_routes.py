@@ -30,6 +30,7 @@ from app.composition.admin_composer import (
     make_list_admin_knowledge_documents_use_case,
     make_reactivate_knowledge_document_use_case,
     make_reindex_knowledge_document_use_case,
+    make_test_admin_rag_use_case,
 )
 from app.extensions.db import db
 from app.infrastructure.config.settings import Settings
@@ -134,6 +135,29 @@ def list_external_actions():
     provider_key = request.args.get("provider")
     use_case = make_list_external_actions_use_case()
     return jsonify(use_case.execute(provider_key=provider_key)), 200
+
+
+@admin_bp.post("/rag/test")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def test_admin_rag():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify({"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]}), 400
+
+    use_case = make_test_admin_rag_use_case()
+
+    try:
+        result = use_case.execute(
+            question=payload.get("question"),
+            document_id=payload.get("documentId"),
+            limit=payload.get("limit", 5),
+        )
+    except ValueError as exc:
+        return jsonify({"errors": [{"code": "invalid_request", "message": str(exc), "path": "question"}]}), 400
+
+    return jsonify(result), 200
 
 
 @admin_bp.get("/system-check")

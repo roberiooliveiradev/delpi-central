@@ -328,6 +328,10 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         if attachment_ids:
             query = query.filter(metadata["attachmentId"].astext.in_(attachment_ids))
 
+        document_id = filters.get("document_id")
+        if document_id:
+            query = query.filter(AiKnowledgeDocumentModel.id == str(document_id))
+
         if not allowed_clauses:
             return query
 

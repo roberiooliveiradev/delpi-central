@@ -28,6 +28,7 @@ from app.application.use_cases.reactivate_knowledge_document_use_case import (
 from app.application.use_cases.reindex_knowledge_document_use_case import (
     ReindexKnowledgeDocumentUseCase,
 )
+from app.application.use_cases.test_admin_rag_use_case import TestAdminRagUseCase
 from app.domain.services.text_chunker_service import TextChunkerService
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
@@ -116,3 +117,10 @@ def make_import_external_actions_schema_use_case() -> ImportExternalActionsSchem
 def make_list_external_actions_use_case() -> ListExternalActionsUseCase:
     return ListExternalActionsUseCase(PostgresExternalActionRepository())
 
+
+
+def make_test_admin_rag_use_case() -> TestAdminRagUseCase:
+    return TestAdminRagUseCase(
+        knowledge_repository=PostgresKnowledgeRepository(),
+        embedding_gateway=LocalEmbeddingGateway(),
+    )

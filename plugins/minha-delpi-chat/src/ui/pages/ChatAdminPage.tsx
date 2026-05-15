@@ -8,6 +8,7 @@ import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
 import type { AdminTab, AdminTabItem } from "../components/admin/shell/adminShellTypes";
 import { AdminToolsTab } from "../components/admin/tools/AdminToolsTab";
+import { testAdminRag } from "../../data/api/adminFutureApi";
 import { useChatAdmin } from "../../state/hooks/useChatAdmin";
 
 import "./ChatAdminPage.css";
@@ -68,7 +69,13 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
           />
         ) : null}
 
-        {activeTab === "guidelines" ? <AdminGuidelinesTab /> : null}
+        {activeTab === "guidelines" ? (
+          <AdminGuidelinesTab
+            testGuidelines={async (question) => {
+              await testAdminRag({ question }, { getAccessToken });
+            }}
+          />
+        ) : null}
 
         {activeTab === "tools" ? <AdminToolsTab llmStatus={admin.llmStatus} /> : null}
 
