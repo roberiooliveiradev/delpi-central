@@ -9,5 +9,6 @@ export type GuidelineBackendPlaceholders = {
   saveGuideline: (payload: SaveAdminGuidelinePayload) => Promise<void>;
   publishGuideline: (guidelineId: string) => Promise<void>;
   archiveGuideline: (guidelineId: string) => Promise<void>;
+  reloadAdminData?: () => Promise<void>;
   testGuidelines?: (question: string) => Promise<AdminRagTestResponse>;
 };

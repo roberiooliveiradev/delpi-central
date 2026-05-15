@@ -109,6 +109,85 @@ class PostgresAdminGuidelineRepository:
 
         return [self._version_to_dict(row) for row in rows]
 
+    def compare_versions(
+        self,
+        guideline_id: str,
+        *,
+        from_version: int,
+        to_version: int,
+    ) -> dict | None:
+        from_row = self._get_version_row(guideline_id, from_version)
+        to_row = self._get_version_row(guideline_id, to_version)
+
+        if from_row is None or to_row is None:
+            return None
+
+        from_dict = self._version_to_dict(from_row)
+        to_dict = self._version_to_dict(to_row)
+
+        fields = ["title", "description", "content", "category", "status"]
+        changes = []
+
+        for field in fields:
+            before = from_dict.get(field)
+            after = to_dict.get(field)
+
+            if before != after:
+                changes.append(
+                    {
+                        "field": field,
+                        "from": before,
+                        "to": after,
+                    }
+                )
+
+        return {
+            "guidelineId": str(guideline_id),
+            "fromVersion": from_dict,
+            "toVersion": to_dict,
+            "changes": changes,
+        }
+
+    def restore_version(
+        self,
+        guideline_id: str,
+        *,
+        version: int,
+        user_id: str | None,
+    ) -> dict | None:
+        target_version = self._get_version_row(guideline_id, version)
+        row = AiAdminGuidelineModel.query.filter_by(id=UUID(str(guideline_id))).first()
+
+        if target_version is None or row is None:
+            return None
+
+        row.title = target_version.title
+        row.description = target_version.description
+        row.content = target_version.content
+        row.category = target_version.category
+        row.status = "draft"
+        row.guideline_metadata = target_version.guideline_metadata or {}
+        row.updated_by = user_id
+
+        db.session.flush()
+        self._create_version(row, event="restored", user_id=user_id)
+
+        return self._to_dict(row)
+
+    def _get_version_row(
+        self,
+        guideline_id: str,
+        version: int,
+    ) -> AiAdminGuidelineVersionModel | None:
+        return (
+            AiAdminGuidelineVersionModel.query
+            .filter_by(
+                guideline_id=UUID(str(guideline_id)),
+                version=int(version),
+            )
+            .first()
+        )
+
     def _create_version(
         self,
         row: AiAdminGuidelineModel,

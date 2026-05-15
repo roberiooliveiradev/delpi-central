@@ -54,7 +54,7 @@ admin_guidelines:
 
 ## 2. Versionamento de diretrizes
 
-**Status: Parcialmente concluído**
+**Status: Concluído**
 
 ### Objetivo
 
@@ -67,10 +67,10 @@ Permitir histórico e rollback das diretrizes administrativas.
 - Listar histórico de versões por diretriz
 - Exibir histórico de versões no painel administrativo
 
-### Ainda falta
+### Entregue adicional
 
 - Comparar versões
-- Restaurar versão anterior
+- Restaurar versão anterior como novo rascunho
 
 ---
 
@@ -386,6 +386,9 @@ Blindar comportamento da IA.
 - Upload, exclusão e reindexação de documentos
 - Diretrizes persistentes
 - Publicação e arquivamento de diretrizes
+- Versionamento de diretrizes
+- Comparação de versões de diretrizes
+- Restauração de versões anteriores como rascunho
 - Aplicação de diretrizes ativas no prompt real
 - Teste RAG exibindo diretrizes aplicadas
 - Teste RAG exibindo documentos acionados
@@ -404,7 +407,6 @@ Blindar comportamento da IA.
 
 ## Pendente
 
-- Versionamento de diretrizes
 - Edição completa de diretrizes
 - Ferramentas reais
 - RBAC administrativo avançado

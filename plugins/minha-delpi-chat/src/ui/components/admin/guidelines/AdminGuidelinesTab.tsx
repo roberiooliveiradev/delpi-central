@@ -13,6 +13,7 @@ export function AdminGuidelinesTab({
   saveGuideline,
   publishGuideline,
   archiveGuideline,
+  reloadAdminData,
   testGuidelines,
   getAccessToken,
 }: AdminGuidelinesTabProps & {
@@ -34,6 +35,7 @@ export function AdminGuidelinesTab({
       <GuidelineVersionPanel
         guidelines={guidelines}
         getAccessToken={getAccessToken}
+        onRestored={reloadAdminData}
       />
     </section>
   );

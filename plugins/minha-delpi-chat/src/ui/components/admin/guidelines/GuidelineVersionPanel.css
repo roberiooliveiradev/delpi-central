@@ -91,3 +91,90 @@
   color: var(--mdc-text-muted);
   line-height: 1.45;
 }
+
+.mdc-guideline-version-panel__compare,
+.mdc-guideline-version-panel__diff {
+  display: grid;
+  gap: var(--mdc-space-3);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: var(--mdc-bg-muted);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-guideline-version-panel__compare h3,
+.mdc-guideline-version-panel__diff h3 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 0.95rem;
+}
+
+.mdc-guideline-version-panel__compare > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  gap: var(--mdc-space-3);
+  align-items: end;
+}
+
+.mdc-guideline-version-panel__compare button,
+.mdc-guideline-version-panel__list footer button {
+  min-height: 2.35rem;
+  border-radius: 999px;
+  border-color: var(--mdc-primary);
+  background: var(--mdc-primary);
+  color: var(--mdc-bg);
+  font-weight: 800;
+  padding: 0.5rem 0.8rem;
+}
+
+.mdc-guideline-version-panel__diff ul {
+  display: grid;
+  gap: var(--mdc-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mdc-guideline-version-panel__diff li {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--mdc-space-3);
+  border-top: 1px solid var(--mdc-card-border);
+  padding-top: var(--mdc-space-3);
+}
+
+.mdc-guideline-version-panel__diff li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.mdc-guideline-version-panel__diff span {
+  color: var(--mdc-primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.mdc-guideline-version-panel__diff p {
+  max-height: 10rem;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.mdc-guideline-version-panel__list footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+}
+
+@media (max-width: 760px) {
+  .mdc-guideline-version-panel__compare > div,
+  .mdc-guideline-version-panel__diff li {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-guideline-version-panel__list footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

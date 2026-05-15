@@ -17,6 +17,7 @@ from app.application.dto.ingest_document_request import IngestDocumentRequest
 from app.application.services.chat_attachment_text_extractor import ChatAttachmentTextExtractor
 from app.composition.admin_composer import (
     make_archive_admin_guideline_use_case,
+    make_compare_admin_guideline_versions_use_case,
     make_create_external_action_provider_use_case,
     make_import_external_actions_schema_use_case,
     make_list_external_action_providers_use_case,
@@ -34,6 +35,7 @@ from app.composition.admin_composer import (
     make_reactivate_knowledge_document_use_case,
     make_publish_admin_guideline_use_case,
     make_reindex_knowledge_document_use_case,
+    make_restore_admin_guideline_version_use_case,
     make_save_admin_guideline_use_case,
     make_test_admin_rag_use_case,
 )
@@ -60,6 +62,54 @@ def list_admin_guidelines():
     return jsonify(use_case.execute()), 200
 
 
+
+
+
+
+@admin_bp.get("/guidelines/<guideline_id>/versions/compare")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def compare_admin_guideline_versions(guideline_id: str):
+    from_version = request.args.get("fromVersion")
+    to_version = request.args.get("toVersion")
+
+    if not from_version or not to_version:
+        return jsonify({"errors": [{"code": "invalid_request", "message": "fromVersion and toVersion are required", "path": "_global"}]}), 400
+
+    use_case = make_compare_admin_guideline_versions_use_case()
+
+    try:
+        result = use_case.execute(
+            guideline_id,
+            from_version=int(from_version),
+            to_version=int(to_version),
+        )
+    except ValueError as exc:
+        return jsonify({"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]}), 400
+
+    return jsonify(result), 200
+
+
+@admin_bp.post("/guidelines/<guideline_id>/versions/<int:version>/restore")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def restore_admin_guideline_version(guideline_id: str, version: int):
+    use_case = make_restore_admin_guideline_version_use_case()
+
+    try:
+        result = use_case.execute(
+            guideline_id,
+            version=version,
+            user_id=g.current_user.sub,
+        )
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify({"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]}), 400
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
 
 
 @admin_bp.get("/guidelines/<guideline_id>/versions")

@@ -1,4 +1,5 @@
 from app.application.use_cases.archive_admin_guideline_use_case import ArchiveAdminGuidelineUseCase
+from app.application.use_cases.compare_admin_guideline_versions_use_case import CompareAdminGuidelineVersionsUseCase
 from app.application.use_cases.list_admin_guidelines_use_case import ListAdminGuidelinesUseCase
 from app.application.use_cases.list_admin_guideline_versions_use_case import ListAdminGuidelineVersionsUseCase
 from app.application.use_cases.publish_admin_guideline_use_case import PublishAdminGuidelineUseCase
@@ -31,6 +32,7 @@ from app.application.use_cases.list_admin_knowledge_documents_use_case import (
 from app.application.use_cases.reactivate_knowledge_document_use_case import (
     ReactivateKnowledgeDocumentUseCase,
 )
+from app.application.use_cases.restore_admin_guideline_version_use_case import RestoreAdminGuidelineVersionUseCase
 from app.application.use_cases.reindex_knowledge_document_use_case import (
     ReindexKnowledgeDocumentUseCase,
 )
@@ -161,3 +163,15 @@ def make_archive_admin_guideline_use_case() -> ArchiveAdminGuidelineUseCase:
 
 def make_list_admin_guideline_versions_use_case() -> ListAdminGuidelineVersionsUseCase:
     return ListAdminGuidelineVersionsUseCase(PostgresAdminGuidelineRepository())
+
+
+
+def make_compare_admin_guideline_versions_use_case() -> CompareAdminGuidelineVersionsUseCase:
+    return CompareAdminGuidelineVersionsUseCase(PostgresAdminGuidelineRepository())
+
+
+def make_restore_admin_guideline_version_use_case() -> RestoreAdminGuidelineVersionUseCase:
+    return RestoreAdminGuidelineVersionUseCase(
+        repository=PostgresAdminGuidelineRepository(),
+        audit_repository=PostgresAuditRepository(),
+    )

@@ -90,3 +90,15 @@ export type AdminGuidelineVersion = {
   createdBy?: string | null;
   createdAt?: string | null;
 };
+
+
+export type AdminGuidelineVersionComparison = {
+  guidelineId: string;
+  fromVersion: AdminGuidelineVersion;
+  toVersion: AdminGuidelineVersion;
+  changes: Array<{
+    field: string;
+    from: string | null;
+    to: string | null;
+  }>;
+};
