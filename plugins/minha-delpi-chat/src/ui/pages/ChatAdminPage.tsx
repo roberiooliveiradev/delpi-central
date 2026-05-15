@@ -99,6 +99,7 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
             archiveGuideline={admin.archiveGuideline}
             reloadAdminData={admin.loadAdminData}
             getAccessToken={getAccessToken}
+            rbac={adminRbac}
             testGuidelines={(question) =>
               testAdminRag({ question }, { getAccessToken })
             }

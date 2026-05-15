@@ -7,12 +7,14 @@ import "./GuidelineEditorPanel.css";
 
 type GuidelineEditorPanelProps = {
   editingGuideline?: AdminGuideline | null;
+  canCreateGuidelines: boolean;
   onCancelEdit?: () => void;
   onSave: (payload: SaveAdminGuidelinePayload) => Promise<void>;
 };
 
 export function GuidelineEditorPanel({
   editingGuideline,
+  canCreateGuidelines,
   onCancelEdit,
   onSave,
 }: GuidelineEditorPanelProps) {
@@ -35,7 +37,6 @@ export function GuidelineEditorPanel({
       setContent("");
       setCategory("behavior");
       setEnvironment("global");
-      setEnvironment("global");
       return;
     }
 
@@ -47,7 +48,7 @@ export function GuidelineEditorPanel({
   }, [editingGuideline]);
 
   async function handleSave() {
-    if (!canSave || isSaving) {
+    if (!canCreateGuidelines || !canSave || isSaving) {
       return;
     }
 
@@ -125,6 +126,7 @@ export function GuidelineEditorPanel({
         <span>Título</span>
         <input
           value={title}
+          disabled={!canCreateGuidelines}
           placeholder="Ex.: Não inventar respostas"
           onChange={(event) => setTitle(event.target.value)}
         />
@@ -134,6 +136,7 @@ export function GuidelineEditorPanel({
         <span>Descrição</span>
         <input
           value={description}
+          disabled={!canCreateGuidelines}
           placeholder="Resumo curto da diretriz"
           onChange={(event) => setDescription(event.target.value)}
         />
@@ -143,6 +146,7 @@ export function GuidelineEditorPanel({
         <span>Categoria</span>
         <select
           value={category}
+          disabled={!canCreateGuidelines}
           onChange={(event) =>
             setCategory(event.target.value as SaveAdminGuidelinePayload["category"])
           }
@@ -158,6 +162,7 @@ export function GuidelineEditorPanel({
         <span>Ambiente</span>
         <select
           value={environment}
+          disabled={!canCreateGuidelines}
           onChange={(event) =>
             setEnvironment(
               event.target.value as SaveAdminGuidelinePayload["environment"],
@@ -175,6 +180,7 @@ export function GuidelineEditorPanel({
         <span>Conteúdo</span>
         <textarea
           value={content}
+          disabled={!canCreateGuidelines}
           rows={7}
           placeholder="Escreva a regra operacional que deve orientar o chat."
           onChange={(event) => setContent(event.target.value)}
@@ -183,7 +189,12 @@ export function GuidelineEditorPanel({
 
       <button
         type="button"
-        disabled={!canSave || isSaving}
+        disabled={!canCreateGuidelines || !canSave || isSaving}
+        title={
+          canCreateGuidelines
+            ? undefined
+            : "Você não tem permissão para criar ou editar diretrizes."
+        }
         onClick={() => {
           void handleSave();
         }}

@@ -7,6 +7,9 @@ type GuidelineListPanelProps = {
   publishGuideline: (guidelineId: string) => Promise<void>;
   archiveGuideline: (guidelineId: string) => Promise<void>;
   onEditGuideline: (guideline: AdminGuideline) => void;
+  canCreateGuidelines: boolean;
+  canPublishGuidelines: boolean;
+  canArchiveGuidelines: boolean;
 };
 
 const STATUS_LABEL: Record<AdminGuideline["status"], string> = {
@@ -27,6 +30,9 @@ export function GuidelineListPanel({
   publishGuideline,
   archiveGuideline,
   onEditGuideline,
+  canCreateGuidelines,
+  canPublishGuidelines,
+  canArchiveGuidelines,
 }: GuidelineListPanelProps) {
   return (
     <article className="mdc-guideline-list-panel">
@@ -69,7 +75,12 @@ export function GuidelineListPanel({
 
                 <button
                   type="button"
-                  title="Editar diretriz"
+                  disabled={!canCreateGuidelines}
+                  title={
+                    canCreateGuidelines
+                      ? "Editar diretriz"
+                      : "Você não tem permissão para editar diretrizes."
+                  }
                   onClick={() => {
                     onEditGuideline(guideline);
                   }}
@@ -79,8 +90,12 @@ export function GuidelineListPanel({
 
                 <button
                   type="button"
-                  disabled={guideline.status === "active"}
-                  title="Publicar diretriz"
+                  disabled={guideline.status === "active" || !canPublishGuidelines}
+                  title={
+                    canPublishGuidelines
+                      ? "Publicar diretriz"
+                      : "Você não tem permissão para publicar diretrizes."
+                  }
                   onClick={() => {
                     void publishGuideline(guideline.id);
                   }}
@@ -90,8 +105,12 @@ export function GuidelineListPanel({
 
                 <button
                   type="button"
-                  disabled={guideline.status === "archived"}
-                  title="Arquivar diretriz"
+                  disabled={guideline.status === "archived" || !canArchiveGuidelines}
+                  title={
+                    canArchiveGuidelines
+                      ? "Arquivar diretriz"
+                      : "Você não tem permissão para arquivar diretrizes."
+                  }
                   onClick={() => {
                     void archiveGuideline(guideline.id);
                   }}

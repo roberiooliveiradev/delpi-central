@@ -17,12 +17,14 @@ type GuidelineVersionPanelProps = {
   guidelines: AdminGuideline[];
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   onRestored?: () => Promise<void>;
+  canCreateGuidelines: boolean;
 };
 
 export function GuidelineVersionPanel({
   guidelines,
   getAccessToken,
   onRestored,
+  canCreateGuidelines,
 }: GuidelineVersionPanelProps) {
   const [selectedGuidelineId, setSelectedGuidelineId] = useState("");
   const [versions, setVersions] = useState<AdminGuidelineVersion[]>([]);
@@ -252,7 +254,12 @@ export function GuidelineVersionPanel({
 
                 <button
                   type="button"
-                  disabled={isRestoring}
+                  disabled={isRestoring || !canCreateGuidelines}
+                  title={
+                    canCreateGuidelines
+                      ? "Restaurar versão como rascunho"
+                      : "Você não tem permissão para restaurar diretrizes."
+                  }
                   onClick={() => {
                     void handleRestoreVersion(version.version);
                   }}
