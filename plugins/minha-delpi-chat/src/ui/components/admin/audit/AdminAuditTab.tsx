@@ -7,14 +7,53 @@ type AdminAuditTabProps = {
   rbac?: AdminRbacSummary | null;
 };
 
-export function AdminAuditTab({ auditLogs, rbac }: AdminAuditTabProps) {
-  const canViewAudit = Boolean(rbac?.capabilities.canViewAudit);
+function formatDate(value?: string | null): string {
+  if (!value) {
+    return "—";
+  }
 
-  if (!canViewAudit) {
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "medium",
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
+function formatJson(value: unknown): string {
+  if (!value) {
+    return "—";
+  }
+
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+function shortValue(value?: string | null, size = 22): string {
+  if (!value) {
+    return "—";
+  }
+
+  if (value.length <= size) {
+    return value;
+  }
+
+  return `${value.slice(0, Math.floor(size / 2))}...${value.slice(-8)}`;
+}
+
+export function AdminAuditTab({ auditLogs, rbac }: AdminAuditTabProps) {
+  if (rbac && !rbac.capabilities.canViewAudit) {
     return (
       <section className="mdc-admin-audit-tab">
-        <article className="mdc-admin-audit-tab__empty">
-          Você não tem permissão para visualizar auditoria.
+        <article className="mdc-admin-audit-empty">
+          <p className="mdc-chat-eyebrow">Auditoria</p>
+          <h2>Acesso bloqueado</h2>
+          <p>Você não tem permissão para visualizar auditoria.</p>
         </article>
       </section>
     );
@@ -22,46 +61,52 @@ export function AdminAuditTab({ auditLogs, rbac }: AdminAuditTabProps) {
 
   return (
     <section className="mdc-admin-audit-tab">
-      <article className="mdc-admin-audit-tab__header">
+      <header className="mdc-admin-audit-hero">
         <div>
           <p className="mdc-chat-eyebrow">Auditoria</p>
           <h2>Eventos administrativos</h2>
+          <p>
+            Consulte ações registradas pelo Minha DELPI Chat para rastreabilidade operacional.
+          </p>
         </div>
 
-        <span>{auditLogs.length} evento(s)</span>
-      </article>
+        <strong>{auditLogs.length} evento(s)</strong>
+      </header>
 
       {auditLogs.length === 0 ? (
-        <article className="mdc-admin-audit-tab__empty">
-          Nenhum evento de auditoria encontrado.
+        <article className="mdc-admin-audit-empty">
+          <h3>Nenhum evento encontrado</h3>
+          <p>Os eventos administrativos aparecerão aqui conforme o chat for utilizado.</p>
         </article>
       ) : (
-        <div className="mdc-admin-audit-tab__list">
+        <div className="mdc-admin-audit-list">
           {auditLogs.map((log) => (
-            <article key={log.id} className="mdc-admin-audit-tab__item">
-              <div>
-                <strong>{log.action}</strong>
-                <span>{log.context ?? "sem contexto"}</span>
+            <article className="mdc-admin-audit-card" key={log.id}>
+              <div className="mdc-admin-audit-card__header">
+                <div>
+                  <p className="mdc-chat-eyebrow">{log.context || "geral"}</p>
+                  <h3>{log.action}</h3>
+                </div>
+
+                <time>{formatDate(log.createdAt)}</time>
               </div>
 
-              <dl>
+              <dl className="mdc-admin-audit-card__meta">
                 <div>
                   <dt>Usuário</dt>
-                  <dd>{log.userId ?? "sistema"}</dd>
+                  <dd title={log.userId || undefined}>{shortValue(log.userId, 28)}</dd>
                 </div>
+
                 <div>
                   <dt>Hash</dt>
-                  <dd>{log.promptHash ?? "—"}</dd>
-                </div>
-                <div>
-                  <dt>Data</dt>
-                  <dd>{new Date(log.createdAt).toLocaleString()}</dd>
+                  <dd title={log.promptHash || undefined}>{shortValue(log.promptHash, 30)}</dd>
                 </div>
               </dl>
 
-              {log.metadata ? (
-                <pre>{JSON.stringify(log.metadata, null, 2)}</pre>
-              ) : null}
+              <details className="mdc-admin-audit-card__details">
+                <summary>Ver metadata</summary>
+                <pre>{formatJson(log.metadata)}</pre>
+              </details>
             </article>
           ))}
         </div>
