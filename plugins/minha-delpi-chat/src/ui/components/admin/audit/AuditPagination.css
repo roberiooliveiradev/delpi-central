@@ -1,0 +1,26 @@
+.mdc-audit-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mdc-space-3);
+  color: var(--mdc-text-muted);
+}
+
+.mdc-audit-pagination > div {
+  display: inline-flex;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-audit-pagination button {
+  min-height: 2.35rem;
+  border-radius: 999px;
+  font-weight: 800;
+  padding: 0.5rem 0.8rem;
+}
+
+@media (max-width: 640px) {
+  .mdc-audit-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

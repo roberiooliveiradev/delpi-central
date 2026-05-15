@@ -1,0 +1,44 @@
+.mdc-admin-audit {
+  display: grid;
+  gap: var(--mdc-space-4);
+  min-width: 0;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+  padding: var(--mdc-space-5);
+}
+
+.mdc-admin-audit h2 {
+  margin: 0;
+  color: var(--mdc-primary);
+  font-size: 1.08rem;
+  line-height: 1.2;
+}
+
+.mdc-admin-audit__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mdc-space-4);
+}
+
+.mdc-admin-audit__header > span {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--mdc-badge-border);
+  border-radius: 999px;
+  background: var(--mdc-badge-bg);
+  color: var(--mdc-badge-text);
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.32rem 0.58rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 920px) {
+  .mdc-admin-audit__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
