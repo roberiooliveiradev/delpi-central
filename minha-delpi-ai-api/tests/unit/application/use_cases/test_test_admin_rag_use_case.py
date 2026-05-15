@@ -52,3 +52,38 @@ def test_admin_rag_test_rejects_empty_question():
             knowledge_repository=FakeKnowledgeRepository(),
             embedding_gateway=FakeEmbeddingGateway(),
         ).execute(question="   ")
+
+
+
+class FakeGuidelineRepository:
+    def list_active(self):
+        return [
+            {
+                "id": "guideline-1",
+                "title": "Não inventar respostas",
+                "category": "behavior",
+                "status": "active",
+                "description": "Se não houver fonte suficiente, admita limitação.",
+            }
+        ]
+
+
+def test_admin_rag_test_returns_applied_guidelines():
+    use_case = AdminRagTestUseCase(
+        knowledge_repository=FakeKnowledgeRepository([]),
+        embedding_gateway=FakeEmbeddingGateway(),
+        guideline_repository=FakeGuidelineRepository(),
+    )
+
+    result = use_case.execute(question="Quem sou eu?")
+
+    assert result["appliedGuidelines"] == [
+        {
+            "id": "guideline-1",
+            "title": "Não inventar respostas",
+            "category": "behavior",
+            "status": "active",
+            "description": "Se não houver fonte suficiente, admita limitação.",
+        }
+    ]
+    assert result["triggeredGuidelines"] == result["appliedGuidelines"]

@@ -128,6 +128,7 @@ def make_test_admin_rag_use_case() -> AdminRagTestUseCase:
     return AdminRagTestUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
         embedding_gateway=LocalEmbeddingGateway(),
+        guideline_repository=PostgresAdminGuidelineRepository(),
     )
 
 

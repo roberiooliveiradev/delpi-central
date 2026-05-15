@@ -118,3 +118,30 @@
   justify-content: space-between;
   gap: var(--mdc-space-3);
 }
+
+.mdc-guideline-test-panel__chunks {
+  display: grid;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-guideline-test-panel__chunks section {
+  display: grid;
+  gap: var(--mdc-space-2);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-card-bg);
+  padding: var(--mdc-space-3);
+}
+
+.mdc-guideline-test-panel__chunks section > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-guideline-test-panel__chunks p {
+  max-height: 9rem;
+  overflow: auto;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}

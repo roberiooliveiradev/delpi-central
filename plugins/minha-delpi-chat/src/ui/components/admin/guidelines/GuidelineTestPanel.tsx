@@ -81,6 +81,22 @@ export function GuidelineTestPanel({ testGuidelines }: GuidelineTestPanelProps) 
           </article>
 
           <article>
+            <h3>Diretrizes aplicadas</h3>
+            {(result.appliedGuidelines ?? result.triggeredGuidelines).length === 0 ? (
+              <p>Nenhuma diretriz ativa aplicada neste teste.</p>
+            ) : (
+              <ul>
+                {(result.appliedGuidelines ?? result.triggeredGuidelines).map((guideline) => (
+                  <li key={guideline.id}>
+                    <strong>{guideline.title}</strong>
+                    <span>{guideline.category ?? "global"}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
+
+          <article>
             <h3>Documentos acionados</h3>
             {result.matchedDocuments.length === 0 ? (
               <p>Nenhum documento encontrado.</p>
@@ -93,6 +109,25 @@ export function GuidelineTestPanel({ testGuidelines }: GuidelineTestPanelProps) 
                   </li>
                 ))}
               </ul>
+            )}
+          </article>
+
+          <article>
+            <h3>Chunks usados</h3>
+            {!result.chunks || result.chunks.length === 0 ? (
+              <p>Nenhum chunk retornado.</p>
+            ) : (
+              <div className="mdc-guideline-test-panel__chunks">
+                {result.chunks.map((chunk) => (
+                  <section key={chunk.id}>
+                    <div>
+                      <strong>{chunk.title}</strong>
+                      <span>{Math.round(chunk.score * 100)}%</span>
+                    </div>
+                    <p>{chunk.preview}</p>
+                  </section>
+                ))}
+              </div>
             )}
           </article>
         </section>

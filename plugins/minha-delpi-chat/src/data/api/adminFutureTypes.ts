@@ -15,10 +15,32 @@ export type AdminRagTestResponse = {
     id: string;
     title: string;
     score: number;
+    sourceType?: string | null;
+    sourceRef?: string | null;
   }>;
   triggeredGuidelines: Array<{
     id: string;
     title: string;
+    category?: string;
+    status?: string;
+    description?: string | null;
+  }>;
+  appliedGuidelines?: Array<{
+    id: string;
+    title: string;
+    category?: string;
+    status?: string;
+    description?: string | null;
+  }>;
+  chunks?: Array<{
+    id: string;
+    documentId: string;
+    title: string;
+    sourceType?: string | null;
+    sourceRef?: string | null;
+    chunkIndex?: number | null;
+    score: number;
+    preview: string;
   }>;
 };
 

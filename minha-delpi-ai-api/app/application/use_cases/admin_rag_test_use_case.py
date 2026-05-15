@@ -8,9 +8,11 @@ class AdminRagTestUseCase:
         *,
         knowledge_repository: KnowledgeRepositoryPort,
         embedding_gateway: EmbeddingGatewayPort,
+        guideline_repository=None,
     ):
         self.knowledge_repository = knowledge_repository
         self.embedding_gateway = embedding_gateway
+        self.guideline_repository = guideline_repository
 
     def execute(
         self,
@@ -78,6 +80,7 @@ class AdminRagTestUseCase:
         )
 
         top_score = matched_documents[0]["score"] if matched_documents else 0
+        applied_guidelines = self._list_applied_guidelines()
 
         return {
             "question": normalized_question,
@@ -85,7 +88,8 @@ class AdminRagTestUseCase:
             "answerPreview": self._build_answer_preview(chunks),
             "matchedDocuments": matched_documents,
             "chunks": chunk_results,
-            "triggeredGuidelines": [],
+            "triggeredGuidelines": applied_guidelines,
+            "appliedGuidelines": applied_guidelines,
         }
 
     def _build_answer_preview(self, chunks) -> str:
@@ -102,3 +106,21 @@ class AdminRagTestUseCase:
             previews.append(f"{index}. {title}: {content[:280]}")
 
         return "\n".join(previews)
+
+
+    def _list_applied_guidelines(self) -> list[dict]:
+        if not self.guideline_repository:
+            return []
+
+        guidelines = self.guideline_repository.list_active()
+
+        return [
+            {
+                "id": item.get("id"),
+                "title": item.get("title"),
+                "category": item.get("category"),
+                "status": item.get("status"),
+                "description": item.get("description"),
+            }
+            for item in guidelines
+        ]
