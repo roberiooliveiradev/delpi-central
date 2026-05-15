@@ -34,86 +34,102 @@ export function GuidelineTestPanel({ testGuidelines }: GuidelineTestPanelProps) 
     }
   }
 
+  const appliedGuidelines = result?.appliedGuidelines ?? result?.triggeredGuidelines ?? [];
+
   return (
     <article className="mdc-guideline-test-panel">
-      <div>
-        <p className="mdc-chat-eyebrow">Validação</p>
-        <h2>Teste de assertividade</h2>
-      </div>
-
-      <p className="mdc-chat-muted">
-        Simule perguntas para validar se a base global e as diretrizes estão orientando a resposta.
-      </p>
-
-      <textarea
-        value={question}
-        rows={8}
-        placeholder="Ex.: Como o chat deve responder quando não encontrar fonte suficiente?"
-        onChange={(event) => setQuestion(event.target.value)}
-      />
-
-      <button
-        type="button"
-        disabled={!question.trim() || !testGuidelines || isTesting}
-        onClick={() => {
-          void handleTest();
-        }}
-      >
-        {isTesting ? "Testando..." : "Testar diretrizes"}
-      </button>
-
-      {error ? (
-        <div className="mdc-guideline-test-panel__error" role="alert">
-          {error}
+      <div className="mdc-guideline-test-panel__form">
+        <div>
+          <p className="mdc-chat-eyebrow">Validação</p>
+          <h2>Teste de assertividade</h2>
         </div>
-      ) : null}
+
+        <p className="mdc-chat-muted">
+          Simule perguntas para validar se a base global e as diretrizes estão orientando a resposta.
+        </p>
+
+        <textarea
+          value={question}
+          rows={6}
+          placeholder="Ex.: Como o chat deve responder quando não encontrar fonte suficiente?"
+          onChange={(event) => setQuestion(event.target.value)}
+        />
+
+        <button
+          type="button"
+          disabled={!question.trim() || !testGuidelines || isTesting}
+          onClick={() => {
+            void handleTest();
+          }}
+        >
+          {isTesting ? "Testando..." : "Testar diretrizes"}
+        </button>
+
+        {error ? (
+          <div className="mdc-guideline-test-panel__error" role="alert">
+            {error}
+          </div>
+        ) : null}
+      </div>
 
       {result ? (
         <section className="mdc-guideline-test-panel__result">
-          <div>
-            <span>Score</span>
+          <header className="mdc-guideline-test-panel__result-header">
+            <div>
+              <p className="mdc-chat-eyebrow">Resultado</p>
+              <h3>Explicabilidade do teste</h3>
+            </div>
+
             <strong>{Math.round(result.score * 100)}%</strong>
+          </header>
+
+          <div className="mdc-guideline-test-panel__result-grid">
+            <article>
+              <h4>Diretrizes aplicadas</h4>
+              {appliedGuidelines.length === 0 ? (
+                <p>Nenhuma diretriz ativa aplicada neste teste.</p>
+              ) : (
+                <ul>
+                  {appliedGuidelines.map((guideline) => (
+                    <li key={guideline.id}>
+                      <div>
+                        <strong>{guideline.title}</strong>
+                        {guideline.description ? <small>{guideline.description}</small> : null}
+                      </div>
+                      <span>{guideline.category ?? "global"}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
+
+            <article>
+              <h4>Documentos acionados</h4>
+              {result.matchedDocuments.length === 0 ? (
+                <p>Nenhum documento encontrado.</p>
+              ) : (
+                <ul>
+                  {result.matchedDocuments.map((document) => (
+                    <li key={document.id}>
+                      <div>
+                        <strong>{document.title}</strong>
+                        {document.sourceType ? <small>{document.sourceType}</small> : null}
+                      </div>
+                      <span>{Math.round(document.score * 100)}%</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
           </div>
 
-          <article>
-            <h3>Prévia da resposta</h3>
+          <article className="mdc-guideline-test-panel__preview">
+            <h4>Prévia da resposta</h4>
             <p>{result.answerPreview}</p>
           </article>
 
           <article>
-            <h3>Diretrizes aplicadas</h3>
-            {(result.appliedGuidelines ?? result.triggeredGuidelines).length === 0 ? (
-              <p>Nenhuma diretriz ativa aplicada neste teste.</p>
-            ) : (
-              <ul>
-                {(result.appliedGuidelines ?? result.triggeredGuidelines).map((guideline) => (
-                  <li key={guideline.id}>
-                    <strong>{guideline.title}</strong>
-                    <span>{guideline.category ?? "global"}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </article>
-
-          <article>
-            <h3>Documentos acionados</h3>
-            {result.matchedDocuments.length === 0 ? (
-              <p>Nenhum documento encontrado.</p>
-            ) : (
-              <ul>
-                {result.matchedDocuments.map((document) => (
-                  <li key={document.id}>
-                    <strong>{document.title}</strong>
-                    <span>{Math.round(document.score * 100)}%</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </article>
-
-          <article>
-            <h3>Chunks usados</h3>
+            <h4>Chunks usados</h4>
             {!result.chunks || result.chunks.length === 0 ? (
               <p>Nenhum chunk retornado.</p>
             ) : (

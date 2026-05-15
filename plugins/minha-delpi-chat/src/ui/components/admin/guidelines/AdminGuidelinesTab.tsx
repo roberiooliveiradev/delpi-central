@@ -23,9 +23,10 @@ export function AdminGuidelinesTab({
         archiveGuideline={archiveGuideline}
       />
 
-      <GuidelineEditorPanel onSave={saveGuideline} />
-
-      <GuidelineTestPanel testGuidelines={testGuidelines} />
+      <div className="mdc-admin-guidelines__workbench">
+        <GuidelineEditorPanel onSave={saveGuideline} />
+        <GuidelineTestPanel testGuidelines={testGuidelines} />
+      </div>
 
       <GuidelineVersionPanel />
     </section>

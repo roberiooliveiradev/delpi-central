@@ -1,20 +1,19 @@
 .mdc-admin-guidelines {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(22rem, 0.72fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--mdc-space-5);
   align-items: start;
 }
 
-.mdc-admin-guidelines > :first-child {
-  grid-row: span 2;
+.mdc-admin-guidelines__workbench {
+  display: grid;
+  grid-template-columns: minmax(20rem, 0.85fr) minmax(24rem, 1.15fr);
+  gap: var(--mdc-space-5);
+  align-items: start;
 }
 
 @media (max-width: 1120px) {
-  .mdc-admin-guidelines {
+  .mdc-admin-guidelines__workbench {
     grid-template-columns: 1fr;
-  }
-
-  .mdc-admin-guidelines > :first-child {
-    grid-row: auto;
   }
 }
