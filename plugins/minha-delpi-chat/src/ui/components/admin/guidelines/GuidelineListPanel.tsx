@@ -1,15 +1,17 @@
-import type { AdminGuideline, GuidelineBackendPlaceholders } from "./guidelineTypes";
+import type { AdminGuideline } from "./guidelineTypes";
 
 import "./GuidelineListPanel.css";
 
-type GuidelineListPanelProps = GuidelineBackendPlaceholders & {
+type GuidelineListPanelProps = {
   guidelines: AdminGuideline[];
+  publishGuideline: (guidelineId: string) => Promise<void>;
+  archiveGuideline: (guidelineId: string) => Promise<void>;
 };
 
 const STATUS_LABEL: Record<AdminGuideline["status"], string> = {
   active: "Ativo",
   draft: "Rascunho",
-  review: "Revisar",
+  archived: "Arquivada",
 };
 
 export function GuidelineListPanel({
@@ -47,10 +49,10 @@ export function GuidelineListPanel({
 
               <button
                 type="button"
-                disabled={!publishGuideline}
-                title={publishGuideline ? "Publicar diretriz" : "Aguardando endpoint de publicação"}
+                disabled={false}
+                title="Publicar diretriz"
                 onClick={() => {
-                  void publishGuideline?.(guideline.id);
+                  void publishGuideline(guideline.id);
                 }}
               >
                 Publicar
@@ -58,10 +60,10 @@ export function GuidelineListPanel({
 
               <button
                 type="button"
-                disabled={!archiveGuideline}
-                title={archiveGuideline ? "Arquivar diretriz" : "Aguardando endpoint de arquivamento"}
+                disabled={false}
+                title="Arquivar diretriz"
                 onClick={() => {
-                  void archiveGuideline?.(guideline.id);
+                  void archiveGuideline(guideline.id);
                 }}
               >
                 Arquivar

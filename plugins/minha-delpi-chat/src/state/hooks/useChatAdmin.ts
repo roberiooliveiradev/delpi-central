@@ -1,25 +1,27 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  archiveAdminGuideline,
   createKnowledgeDocument,
   deleteKnowledgeDocument,
   deactivateKnowledgeDocument,
-  archiveAdminGuideline,
   getAdminMetricsSummary,
   getLlmStatus,
   listAdminGuidelines,
   listAuditLogs,
   listKnowledgeDocuments,
-  reactivateKnowledgeDocument,
   publishAdminGuideline,
+  reactivateKnowledgeDocument,
   reindexKnowledgeDocument,
   saveAdminGuideline,
   uploadKnowledgeDocumentFile,
   type CreateKnowledgeDocumentPayload,
+  type SaveAdminGuidelinePayload,
   type UploadKnowledgeDocumentFilePayload,
 } from "../../data/api/adminApi";
 import type {
   AdminAuditLog,
+  AdminGuideline,
   AdminKnowledgeDocument,
   AdminKnowledgeDocumentsResponse,
   AdminLlmStatus,
@@ -68,7 +70,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     setError(null);
 
     try {
-      const [status, metrics, docs, logs] = await Promise.all([
+      const [status, metrics, docs, logs, guidelinesResponse] = await Promise.all([
         getLlmStatus({ getAccessToken: options.getAccessToken }),
         getAdminMetricsSummary({ getAccessToken: options.getAccessToken }),
         listKnowledgeDocuments(
@@ -81,12 +83,14 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
           { getAccessToken: options.getAccessToken },
         ),
         listAuditLogs({ getAccessToken: options.getAccessToken }),
+        listAdminGuidelines({ getAccessToken: options.getAccessToken }),
       ]);
 
       setLlmStatus(status);
       setMetricsSummary(metrics);
       setDocumentsResponse(docs);
       setAuditLogs(logs);
+      setGuidelines(guidelinesResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar administração.");
     } finally {
@@ -99,6 +103,23 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     documentStatus,
     options.getAccessToken,
   ]);
+
+  const runAdminMutation = useCallback(
+    async (mutation: () => Promise<void>) => {
+      setIsMutating(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        await mutation();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao executar ação administrativa.");
+      } finally {
+        setIsMutating(false);
+      }
+    },
+    [],
+  );
 
   const updateDocumentSearch = useCallback((value: string) => {
     setDocumentSearch(value);
@@ -120,11 +141,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
 
   const createDocument = useCallback(
     async (payload: CreateKnowledgeDocumentPayload) => {
-      setIsMutating(true);
-      setError(null);
-      setSuccessMessage(null);
-
-      try {
+      await runAdminMutation(async () => {
         const result = await createKnowledgeDocument(payload, {
           getAccessToken: options.getAccessToken,
         });
@@ -135,22 +152,14 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
 
         setDocumentOffset(0);
         await loadAdminData();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao ingerir documento.");
-      } finally {
-        setIsMutating(false);
-      }
+      });
     },
-    [loadAdminData, options.getAccessToken],
+    [loadAdminData, options.getAccessToken, runAdminMutation],
   );
 
   const uploadDocumentFile = useCallback(
     async (payload: UploadKnowledgeDocumentFilePayload) => {
-      setIsMutating(true);
-      setError(null);
-      setSuccessMessage(null);
-
-      try {
+      await runAdminMutation(async () => {
         const result = await uploadKnowledgeDocumentFile(payload, {
           getAccessToken: options.getAccessToken,
         });
@@ -161,88 +170,56 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
 
         setDocumentOffset(0);
         await loadAdminData();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao ingerir arquivo.");
-      } finally {
-        setIsMutating(false);
-      }
+      });
     },
-    [loadAdminData, options.getAccessToken],
+    [loadAdminData, options.getAccessToken, runAdminMutation],
   );
 
   const deleteDocument = useCallback(
     async (documentId: string) => {
-      setIsMutating(true);
-      setError(null);
-      setSuccessMessage(null);
-
-      try {
+      await runAdminMutation(async () => {
         const result = await deleteKnowledgeDocument(documentId, {
           getAccessToken: options.getAccessToken,
         });
 
         setSuccessMessage(`Documento "${result.title}" excluído da base.`);
         await loadAdminData();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao excluir documento.");
-      } finally {
-        setIsMutating(false);
-      }
+      });
     },
-    [loadAdminData, options.getAccessToken],
+    [loadAdminData, options.getAccessToken, runAdminMutation],
   );
 
   const deactivateDocument = useCallback(
     async (documentId: string) => {
-      setIsMutating(true);
-      setError(null);
-      setSuccessMessage(null);
-
-      try {
+      await runAdminMutation(async () => {
         await deactivateKnowledgeDocument(documentId, {
           getAccessToken: options.getAccessToken,
         });
 
         setSuccessMessage("Documento desativado com sucesso.");
         await loadAdminData();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao desativar documento.");
-      } finally {
-        setIsMutating(false);
-      }
+      });
     },
-    [loadAdminData, options.getAccessToken],
+    [loadAdminData, options.getAccessToken, runAdminMutation],
   );
 
   const reactivateDocument = useCallback(
     async (documentId: string) => {
-      setIsMutating(true);
-      setError(null);
-      setSuccessMessage(null);
-
-      try {
+      await runAdminMutation(async () => {
         await reactivateKnowledgeDocument(documentId, {
           getAccessToken: options.getAccessToken,
         });
 
         setSuccessMessage("Documento reativado com sucesso.");
         await loadAdminData();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao reativar documento.");
-      } finally {
-        setIsMutating(false);
-      }
+      });
     },
-    [loadAdminData, options.getAccessToken],
+    [loadAdminData, options.getAccessToken, runAdminMutation],
   );
 
   const reindexDocument = useCallback(
     async (documentId: string) => {
-      setIsMutating(true);
-      setError(null);
-      setSuccessMessage(null);
-
-      try {
+      await runAdminMutation(async () => {
         const result = await reindexKnowledgeDocument(documentId, {
           getAccessToken: options.getAccessToken,
         });
@@ -252,53 +229,71 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
         );
 
         await loadAdminData();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao reindexar documento.");
-      } finally {
-        setIsMutating(false);
-      }
+      });
     },
-    [loadAdminData, options.getAccessToken],
+    [loadAdminData, options.getAccessToken, runAdminMutation],
+  );
+
+  const saveGuideline = useCallback(
+    async (payload: SaveAdminGuidelinePayload) => {
+      await runAdminMutation(async () => {
+        const saved = await saveAdminGuideline(payload, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setGuidelines((current) => {
+          const exists = current.some((item) => item.id === saved.id);
+
+          if (!exists) {
+            return [...current, saved];
+          }
+
+          return current.map((item) => (item.id === saved.id ? saved : item));
+        });
+
+        setSuccessMessage(`Diretriz "${saved.title}" salva.`);
+      });
+    },
+    [options.getAccessToken, runAdminMutation],
+  );
+
+  const publishGuideline = useCallback(
+    async (guidelineId: string) => {
+      await runAdminMutation(async () => {
+        const saved = await publishAdminGuideline(guidelineId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setGuidelines((current) =>
+          current.map((item) => (item.id === saved.id ? saved : item)),
+        );
+
+        setSuccessMessage(`Diretriz "${saved.title}" publicada.`);
+      });
+    },
+    [options.getAccessToken, runAdminMutation],
+  );
+
+  const archiveGuideline = useCallback(
+    async (guidelineId: string) => {
+      await runAdminMutation(async () => {
+        const saved = await archiveAdminGuideline(guidelineId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setGuidelines((current) =>
+          current.map((item) => (item.id === saved.id ? saved : item)),
+        );
+
+        setSuccessMessage(`Diretriz "${saved.title}" arquivada.`);
+      });
+    },
+    [options.getAccessToken, runAdminMutation],
   );
 
   useEffect(() => {
     void loadAdminData();
   }, [loadAdminData]);
-
-
-  async function saveGuideline(payload: Parameters<typeof saveAdminGuideline>[0]) {
-    await runMutation(async () => {
-      const saved = await saveAdminGuideline(payload, { getAccessToken });
-      setGuidelines((current) => {
-        const exists = current.some((item) => item.id === saved.id);
-        if (!exists) {
-          return [...current, saved];
-        }
-        return current.map((item) => (item.id === saved.id ? saved : item));
-      });
-      setSuccessMessage(`Diretriz "${saved.title}" salva.`);
-    });
-  }
-
-  async function publishGuideline(guidelineId: string) {
-    await runMutation(async () => {
-      const saved = await publishAdminGuideline(guidelineId, { getAccessToken });
-      setGuidelines((current) =>
-        current.map((item) => (item.id === saved.id ? saved : item)),
-      );
-      setSuccessMessage(`Diretriz "${saved.title}" publicada.`);
-    });
-  }
-
-  async function archiveGuideline(guidelineId: string) {
-    await runMutation(async () => {
-      const saved = await archiveAdminGuideline(guidelineId, { getAccessToken });
-      setGuidelines((current) =>
-        current.map((item) => (item.id === saved.id ? saved : item)),
-      );
-      setSuccessMessage(`Diretriz "${saved.title}" arquivada.`);
-    });
-  }
 
   return {
     llmStatus,
