@@ -16,6 +16,7 @@ from flask import Blueprint, g, jsonify, request
 from app.application.dto.ingest_document_request import IngestDocumentRequest
 from app.application.services.chat_attachment_text_extractor import ChatAttachmentTextExtractor
 from app.composition.admin_composer import (
+    make_archive_admin_guideline_use_case,
     make_create_external_action_provider_use_case,
     make_import_external_actions_schema_use_case,
     make_list_external_action_providers_use_case,
@@ -27,9 +28,12 @@ from app.composition.admin_composer import (
     make_get_admin_metrics_summary_use_case,
     make_get_admin_system_check_use_case,
     make_list_admin_audit_logs_use_case,
+    make_list_admin_guidelines_use_case,
     make_list_admin_knowledge_documents_use_case,
     make_reactivate_knowledge_document_use_case,
+    make_publish_admin_guideline_use_case,
     make_reindex_knowledge_document_use_case,
+    make_save_admin_guideline_use_case,
     make_test_admin_rag_use_case,
 )
 from app.extensions.db import db
@@ -44,6 +48,77 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
 
+
+
+
+
+@admin_bp.get("/guidelines")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def list_admin_guidelines():
+    use_case = make_list_admin_guidelines_use_case()
+    return jsonify(use_case.execute()), 200
+
+
+@admin_bp.post("/guidelines")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def save_admin_guideline():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify({"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]}), 400
+
+    use_case = make_save_admin_guideline_use_case()
+
+    try:
+        result = use_case.execute(payload, user_id=g.current_user.sub)
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify({"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]}), 400
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 201
+
+
+@admin_bp.post("/guidelines/<guideline_id>/publish")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def publish_admin_guideline(guideline_id: str):
+    use_case = make_publish_admin_guideline_use_case()
+
+    try:
+        result = use_case.execute(guideline_id, user_id=g.current_user.sub)
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify({"errors": [{"code": "not_found", "message": str(exc), "path": "guidelineId"}]}), 404
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@admin_bp.post("/guidelines/<guideline_id>/archive")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def archive_admin_guideline(guideline_id: str):
+    use_case = make_archive_admin_guideline_use_case()
+
+    try:
+        result = use_case.execute(guideline_id, user_id=g.current_user.sub)
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify({"errors": [{"code": "not_found", "message": str(exc), "path": "guidelineId"}]}), 404
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
 
 
 @admin_bp.get("/external-action-providers")

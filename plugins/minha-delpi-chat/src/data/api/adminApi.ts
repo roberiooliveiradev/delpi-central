@@ -1,5 +1,6 @@
 import type {
   AdminAuditLog,
+  AdminGuideline,
   AdminKnowledgeDocument,
   AdminKnowledgeDocumentsResponse,
   AdminLlmStatus,
@@ -76,6 +77,65 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
   }
 
   return payload as T;
+}
+
+
+export type SaveAdminGuidelinePayload = {
+  id?: string;
+  title: string;
+  description: string;
+  content: string;
+  category: "behavior" | "rag" | "tools" | "safety";
+  status: "draft" | "active" | "archived";
+  metadata?: Record<string, unknown>;
+};
+
+export async function listAdminGuidelines(
+  options: AdminApiOptions = {},
+): Promise<AdminGuideline[]> {
+  const response = await fetch(`${API_BASE_URL}/admin/guidelines`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminGuideline[]>(response);
+}
+
+export async function saveAdminGuideline(
+  payload: SaveAdminGuidelinePayload,
+  options: AdminApiOptions = {},
+): Promise<AdminGuideline> {
+  const response = await fetch(`${API_BASE_URL}/admin/guidelines`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<AdminGuideline>(response);
+}
+
+export async function publishAdminGuideline(
+  guidelineId: string,
+  options: AdminApiOptions = {},
+): Promise<AdminGuideline> {
+  const response = await fetch(`${API_BASE_URL}/admin/guidelines/${guidelineId}/publish`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminGuideline>(response);
+}
+
+export async function archiveAdminGuideline(
+  guidelineId: string,
+  options: AdminApiOptions = {},
+): Promise<AdminGuideline> {
+  const response = await fetch(`${API_BASE_URL}/admin/guidelines/${guidelineId}/archive`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminGuideline>(response);
 }
 
 export async function getLlmStatus(

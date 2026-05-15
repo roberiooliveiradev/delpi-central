@@ -4,12 +4,16 @@ import {
   createKnowledgeDocument,
   deleteKnowledgeDocument,
   deactivateKnowledgeDocument,
+  archiveAdminGuideline,
   getAdminMetricsSummary,
   getLlmStatus,
+  listAdminGuidelines,
   listAuditLogs,
   listKnowledgeDocuments,
   reactivateKnowledgeDocument,
+  publishAdminGuideline,
   reindexKnowledgeDocument,
+  saveAdminGuideline,
   uploadKnowledgeDocumentFile,
   type CreateKnowledgeDocumentPayload,
   type UploadKnowledgeDocumentFilePayload,
@@ -49,6 +53,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
   const [documentsResponse, setDocumentsResponse] =
     useState<AdminKnowledgeDocumentsResponse>(DEFAULT_DOCUMENTS_RESPONSE);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
+  const [guidelines, setGuidelines] = useState<AdminGuideline[]>([]);
   const [documentSearch, setDocumentSearch] = useState("");
   const [documentStatus, setDocumentStatus] = useState<DocumentStatusFilter>("all");
   const [documentOffset, setDocumentOffset] = useState(0);
@@ -260,12 +265,48 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     void loadAdminData();
   }, [loadAdminData]);
 
+
+  async function saveGuideline(payload: Parameters<typeof saveAdminGuideline>[0]) {
+    await runMutation(async () => {
+      const saved = await saveAdminGuideline(payload, { getAccessToken });
+      setGuidelines((current) => {
+        const exists = current.some((item) => item.id === saved.id);
+        if (!exists) {
+          return [...current, saved];
+        }
+        return current.map((item) => (item.id === saved.id ? saved : item));
+      });
+      setSuccessMessage(`Diretriz "${saved.title}" salva.`);
+    });
+  }
+
+  async function publishGuideline(guidelineId: string) {
+    await runMutation(async () => {
+      const saved = await publishAdminGuideline(guidelineId, { getAccessToken });
+      setGuidelines((current) =>
+        current.map((item) => (item.id === saved.id ? saved : item)),
+      );
+      setSuccessMessage(`Diretriz "${saved.title}" publicada.`);
+    });
+  }
+
+  async function archiveGuideline(guidelineId: string) {
+    await runMutation(async () => {
+      const saved = await archiveAdminGuideline(guidelineId, { getAccessToken });
+      setGuidelines((current) =>
+        current.map((item) => (item.id === saved.id ? saved : item)),
+      );
+      setSuccessMessage(`Diretriz "${saved.title}" arquivada.`);
+    });
+  }
+
   return {
     llmStatus,
     metricsSummary,
     documents: documentsResponse.items as AdminKnowledgeDocument[],
     documentsPagination: documentsResponse.pagination,
     auditLogs,
+    guidelines,
     documentSearch,
     documentStatus,
     isLoading,
@@ -283,5 +324,8 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     deactivateDocument,
     reactivateDocument,
     reindexDocument,
+    saveGuideline,
+    publishGuideline,
+    archiveGuideline,
   };
 }

@@ -1,3 +1,4 @@
+from app.infrastructure.db.models.admin_guideline_model import AiAdminGuidelineModel
 from app.infrastructure.db.models.audit_log_model import AiAuditLogModel
 from app.infrastructure.db.models.chat_agent_action_model import AiChatAgentActionModel
 from app.infrastructure.db.models.chat_agent_action_provider_model import AiChatAgentActionProviderModel
@@ -14,6 +15,7 @@ from app.infrastructure.db.models.knowledge_document_model import AiKnowledgeDoc
 from app.infrastructure.db.models.external_action_test_log_model import ExternalActionTestLogModel
 
 __all__ = [
+    "AiAdminGuidelineModel",
     "AiChatProjectShareModel",
     "AiChatAgentShareModel",
     "AiChatAgentActionModel",

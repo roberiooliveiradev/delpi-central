@@ -53,3 +53,24 @@ export type AdminMetricsSummary = {
   recentToolCalls24h: number;
   recentErrors24h: number;
 };
+
+
+export type AdminGuidelineStatus = "draft" | "active" | "archived";
+
+export type AdminGuidelineCategory = "behavior" | "rag" | "tools" | "safety";
+
+export type AdminGuideline = {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  category: AdminGuidelineCategory;
+  status: AdminGuidelineStatus;
+  metadata?: Record<string, unknown>;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  publishedAt?: string | null;
+  archivedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};

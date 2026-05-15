@@ -1,3 +1,8 @@
+from app.application.use_cases.archive_admin_guideline_use_case import ArchiveAdminGuidelineUseCase
+from app.application.use_cases.list_admin_guidelines_use_case import ListAdminGuidelinesUseCase
+from app.application.use_cases.publish_admin_guideline_use_case import PublishAdminGuidelineUseCase
+from app.application.use_cases.save_admin_guideline_use_case import SaveAdminGuidelineUseCase
+from app.infrastructure.persistence.postgres_admin_guideline_repository import PostgresAdminGuidelineRepository
 from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
 from app.domain.services.external_actions.external_provider_url_policy import ExternalProviderUrlPolicy
 from app.application.use_cases.list_external_actions_use_case import ListExternalActionsUseCase
@@ -123,4 +128,29 @@ def make_test_admin_rag_use_case() -> AdminRagTestUseCase:
     return AdminRagTestUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
         embedding_gateway=LocalEmbeddingGateway(),
+    )
+
+
+def make_list_admin_guidelines_use_case() -> ListAdminGuidelinesUseCase:
+    return ListAdminGuidelinesUseCase(PostgresAdminGuidelineRepository())
+
+
+def make_save_admin_guideline_use_case() -> SaveAdminGuidelineUseCase:
+    return SaveAdminGuidelineUseCase(
+        repository=PostgresAdminGuidelineRepository(),
+        audit_repository=PostgresAuditRepository(),
+    )
+
+
+def make_publish_admin_guideline_use_case() -> PublishAdminGuidelineUseCase:
+    return PublishAdminGuidelineUseCase(
+        repository=PostgresAdminGuidelineRepository(),
+        audit_repository=PostgresAuditRepository(),
+    )
+
+
+def make_archive_admin_guideline_use_case() -> ArchiveAdminGuidelineUseCase:
+    return ArchiveAdminGuidelineUseCase(
+        repository=PostgresAdminGuidelineRepository(),
+        audit_repository=PostgresAuditRepository(),
     )

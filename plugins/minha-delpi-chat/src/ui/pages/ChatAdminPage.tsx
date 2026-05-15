@@ -75,6 +75,10 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
 
         {activeTab === "guidelines" ? (
           <AdminGuidelinesTab
+            guidelines={admin.guidelines}
+            saveGuideline={admin.saveGuideline}
+            publishGuideline={admin.publishGuideline}
+            archiveGuideline={admin.archiveGuideline}
             testGuidelines={(question) =>
               testAdminRag({ question }, { getAccessToken })
             }
