@@ -2,7 +2,7 @@ from app.domain.ports.embedding_gateway_port import EmbeddingGatewayPort
 from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
 
 
-class TestAdminRagUseCase:
+class AdminRagTestUseCase:
     def __init__(
         self,
         *,

@@ -1,7 +1,7 @@
 import pytest
 from uuid import uuid4
 
-from app.application.use_cases.test_admin_rag_use_case import TestAdminRagUseCase
+from app.application.use_cases.admin_rag_test_use_case import AdminRagTestUseCase
 
 
 class FakeChunk:
@@ -35,7 +35,7 @@ class FakeEmbeddingGateway:
 def test_admin_rag_test_searches_global_scope():
     repository = FakeKnowledgeRepository()
 
-    result = TestAdminRagUseCase(
+    result = AdminRagTestUseCase(
         knowledge_repository=repository,
         embedding_gateway=FakeEmbeddingGateway(),
     ).execute(question="Como o chat deve responder?")
@@ -48,7 +48,7 @@ def test_admin_rag_test_searches_global_scope():
 
 def test_admin_rag_test_rejects_empty_question():
     with pytest.raises(ValueError, match="question is required"):
-        TestAdminRagUseCase(
+        AdminRagTestUseCase(
             knowledge_repository=FakeKnowledgeRepository(),
             embedding_gateway=FakeEmbeddingGateway(),
         ).execute(question="   ")

@@ -257,3 +257,12 @@
   background: color-mix(in srgb, var(--mdc-primary) 52%, transparent);
   background-clip: padding-box;
 }
+
+
+.minha-delpi-chat__loading-page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  color: var(--mdc-text-muted);
+  font-size: 0.95rem;
+}
