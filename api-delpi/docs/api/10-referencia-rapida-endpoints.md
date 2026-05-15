@@ -1,0 +1,217 @@
+# 10 — Referência rápida de endpoints
+
+Base: `/apps/api-delpi`
+
+Legenda de permissões:
+
+| Sigla | Permissão |
+|---|---|
+| **A** | `api-delpi.access` |
+| **AF** | `api-delpi.access.full` |
+| **S** | `api-delpi.system` |
+| **D** | `api-delpi.data` |
+| **Q** | `api-delpi.quality.access` |
+| **L** | `dashboard-lmps.view` |
+| **SI** | `strategic-indicators.view` |
+| **SIM** | `strategic-indicators.settings.manage` |
+| **SIT** | `strategic-indicators.trends.view` |
+
+---
+
+## Health
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/health` | — |
+| GET | `/strategic-indicators/health` | — |
+
+---
+
+## Produtos (`/products`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/products/search` | A |
+| GET | `/products/{code}/structure` | A |
+| GET | `/products/{code}/structure/excel` | A |
+| GET | `/products/{code}/parents` | A |
+| GET | `/products/{code}/suppliers` | A |
+| GET | `/products/{code}/customers` | A |
+| GET | `/products/{code}/inspection` | A |
+| GET | `/products/{code}/guide` | A |
+| GET | `/products/{code}/internal-movements` | A |
+| GET | `/products/{code}/stock` | A |
+| GET | `/products/{code}/inbound-invoice-items` | A |
+| GET | `/products/{code}/outbound-invoice-items` | A |
+| GET | `/products/{code}/purchases` | A |
+| GET | `/products/{code}/sales` | A |
+| GET | `/products/{code}/sales/open-orders` | A |
+| GET | `/products/{code}/sales/billing` | A |
+| GET | `/products/{code}/pricing` | A |
+| GET | `/products/{code}/analyser` | A |
+
+---
+
+## Vendas
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/sales/` | A |
+
+---
+
+## Sistema (`/system`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/system/tables/search` | AF ou S |
+| GET | `/system/tables/{tableName}` | AF ou S |
+| GET | `/system/tables/{tableName}/columns` | AF ou S |
+| GET | `/system/tables/{tableName}/indexes` | AF ou S |
+| GET | `/system/tables/{tableName}/relations` | AF ou S |
+| GET | `/system/tables/{tableName}/schema` | AF ou S |
+| GET | `/system/tables/{tableName}/columns/search` | AF ou S |
+| GET | `/system/columns/search` | AF ou S |
+
+---
+
+## Dados
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| POST | `/data/sql` | AF ou D |
+
+---
+
+## Financeiro
+
+> Prefixo real: `/finacial/financial` (typo em `main.py`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/finacial/financial/rol` | A |
+| GET | `/finacial/financial/ebitda_pct` | A |
+| GET | `/finacial/financial/fixed_cost_pct` | A |
+| GET | `/finacial/financial/pmr` | A |
+
+---
+
+## Comercial (`/commercial`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/commercial/head_office_rol_target_pct` | A |
+| GET | `/commercial/branch_rol_target_pct` | A |
+| GET | `/commercial/closing-rate` | A |
+| GET | `/commercial/new-clients-average` | A |
+| GET | `/commercial/new-clients-rol-pct` | A |
+
+---
+
+## Produção (`/production`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/production/direct_labor_cost_pct` | A |
+| GET | `/production/production_cost_pct` | A |
+| GET | `/production/depreciation_pct` | A |
+| GET | `/production/overall_equipment_effectiveness_pct` | A |
+| GET | `/production/on_time_delivery_pct` | A |
+
+---
+
+## Suprimentos (`/supplies`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/supplies/cpv` | A |
+| GET | `/supplies/otd` | A |
+| GET | `/supplies/stock-value` | A |
+| GET | `/supplies/inventory-turnover` | A |
+
+---
+
+## Engenharia (`/engineering`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/engineering/lmps` | A ou L |
+| GET | `/engineering/lmps/dashboard` | A ou L |
+| GET | `/engineering/lmps/{sale_number}` | A ou L |
+| GET | `/engineering/transforma-mais/processes` | A ou L |
+| GET | `/engineering/transforma-mais/processes/summary` | A ou L |
+
+---
+
+## Qualidade — métricas TOTVS (`/quality`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/quality/nonconformities` | Q |
+| GET | `/quality/kaizens/summary` | Q |
+| GET | `/quality/audit-5s/summary` | Q |
+| GET | `/quality/ppm/internal/summary` | Q |
+| GET | `/quality/ppm/external/summary` | Q |
+| GET | `/quality/ppm/internal` | Q |
+| GET | `/quality/ppm/external` | Q |
+
+---
+
+## Indicadores Estratégicos (`/strategic-indicators`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/strategic-indicators/executive-summary` | SI |
+| GET | `/strategic-indicators/departments` | SI |
+| GET | `/strategic-indicators/departments/{id}` | SI |
+| GET | `/strategic-indicators/indicators` | SI |
+| GET | `/strategic-indicators/alerts` | SI |
+| GET | `/strategic-indicators/trends` | SIT |
+| GET | `/strategic-indicators/presentation` | SI |
+| GET | `/strategic-indicators/settings` | SIM |
+| PUT | `/strategic-indicators/settings` | SIM |
+| GET | `/strategic-indicators/settings/audit` | SIM |
+| GET | `/strategic-indicators/change-requests` | SIM |
+| POST | `/strategic-indicators/change-requests` | SIM |
+| POST | `/strategic-indicators/change-requests/{id}/comments` | SIM |
+| POST | `/strategic-indicators/change-requests/{id}/submit` | SIM |
+| GET | `/strategic-indicators/admin/departments` | SIM |
+| POST | `/strategic-indicators/admin/departments` | SIM |
+| PUT | `/strategic-indicators/admin/departments/{id}` | SIM |
+| POST | `/strategic-indicators/admin/departments/{id}/activate` | SIM |
+| POST | `/strategic-indicators/admin/departments/{id}/deactivate` | SIM |
+| DELETE | `/strategic-indicators/admin/departments/{id}` | SIM |
+| GET | `/strategic-indicators/admin/departments/{id}/indicators` | SIM |
+| POST | `/strategic-indicators/admin/departments/{id}/indicators` | SIM |
+| PUT | `/strategic-indicators/admin/indicators/{id}` | SIM |
+| POST | `/strategic-indicators/admin/indicators/{id}/activate` | SIM |
+| POST | `/strategic-indicators/admin/indicators/{id}/deactivate` | SIM |
+| DELETE | `/strategic-indicators/admin/indicators/{id}` | SIM |
+| GET | `/strategic-indicators/indicator-goals` | SIM |
+| GET | `/strategic-indicators/indicator-goals/history` | SIM |
+| POST | `/strategic-indicators/indicator-goals` | SIM |
+| PUT | `/strategic-indicators/indicator-goals/{id}` | SIM |
+| POST | `/strategic-indicators/indicator-goals/{id}/activate` | SIM |
+| DELETE | `/strategic-indicators/indicator-goals/{id}` | SIM |
+| GET | `/strategic-indicators/admin/goal-years/overview` | SIM |
+| POST | `/strategic-indicators/admin/indicator-goals/bulk-create` | SIM |
+| POST | `/strategic-indicators/admin/indicator-goals/duplicate-year` | SIM |
+| POST | `/strategic-indicators/admin/indicator-goals/fill-missing` | SIM |
+
+---
+
+## Qualidade NC PostgreSQL (não montado)
+
+Ver [07-qualidade-nc.md](./07-qualidade-nc.md). Prefixos previstos:
+
+- `/quality/internal-nc/*`
+- `/quality/external-nc/*`
+
+---
+
+## Documentação e OpenAPI
+
+| Recurso | Endpoint |
+|---|---|
+| Swagger UI | `/docs` |
+| OpenAPI | `/openapi.json` |
