@@ -150,21 +150,26 @@ Explicar por que o agente respondeu algo durante o teste de assertividade.
 
 ## 6. Ferramentas reais
 
-**Status: Pendente**
+**Status: Parcialmente concluído**
 
 ### Objetivo
 
 Transformar a aba Ferramentas em painel operacional real.
 
-### Implementar
+### Entregue
 
-- Listar providers OpenAPI reais
-- Listar actions disponíveis
+- Aba Ferramentas conectada aos endpoints administrativos reais
+- Exibição de health checks de tools
+- Listagem de actions disponíveis
+- Exibição de status, provider, chamadas 24h e última execução
+- Resumo inicial de governança/permissões
+
+### Ainda falta
+
+- Listar providers OpenAPI reais com detalhes completos
 - Mostrar actions por agente
-- Mostrar permissões de tools
-- Mostrar health checks
-- Mostrar erros recentes
-- Mostrar uso nas últimas 24h
+- Mostrar permissões de tools vindas do backend
+- Mostrar erros recentes por action/provider
 
 ---
 

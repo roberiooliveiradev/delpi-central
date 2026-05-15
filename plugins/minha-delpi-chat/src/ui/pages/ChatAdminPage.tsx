@@ -87,7 +87,7 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
           />
         ) : null}
 
-        {activeTab === "tools" ? <AdminToolsTab llmStatus={admin.llmStatus} /> : null}
+        {activeTab === "tools" ? <AdminToolsTab llmStatus={admin.llmStatus} getAccessToken={getAccessToken} /> : null}
 
         {activeTab === "audit" ? <AdminAuditTab auditLogs={admin.auditLogs} /> : null}
       </section>
