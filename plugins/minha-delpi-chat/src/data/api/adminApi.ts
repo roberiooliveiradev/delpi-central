@@ -1,6 +1,9 @@
 import type {
   AdminAuditLog,
   AdminGuideline,
+  AdminGuidelineCategory,
+  AdminGuidelineEnvironment,
+  AdminGuidelineStatus,
   AdminGuidelineVersion,
   AdminGuidelineVersionComparison,
   AdminKnowledgeDocument,
@@ -87,8 +90,9 @@ export type SaveAdminGuidelinePayload = {
   title: string;
   description: string;
   content: string;
-  category: "behavior" | "rag" | "tools" | "safety";
-  status: "draft" | "active" | "archived";
+  category: AdminGuidelineCategory;
+  environment?: AdminGuidelineEnvironment;
+  status: AdminGuidelineStatus;
   metadata?: Record<string, unknown>;
 };
 
