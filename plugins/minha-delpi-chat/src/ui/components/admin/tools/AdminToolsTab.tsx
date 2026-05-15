@@ -81,7 +81,7 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
             <h3>Status do modelo</h3>
           </div>
 
-          <strong>{llmStatus?.available ? "Online" : "Indisponível"}</strong>
+          <strong>{llmStatus?.status ?? "Indisponível"}</strong>
           <p>{llmStatus?.model ?? "Modelo não informado"}</p>
         </article>
 
