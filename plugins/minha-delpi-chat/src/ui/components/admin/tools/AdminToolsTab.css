@@ -168,3 +168,41 @@
     grid-template-columns: 1fr;
   }
 }
+
+.mdc-admin-tools-tab__permission-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-tools-tab__permission-grid section {
+  display: grid;
+  gap: var(--mdc-space-1);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: var(--mdc-bg-muted);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-admin-tools-tab__permission-grid strong {
+  color: var(--mdc-primary);
+  font-size: 1.25rem;
+}
+
+.mdc-admin-tools-tab__permission-grid span {
+  color: var(--mdc-text-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+@media (max-width: 980px) {
+  .mdc-admin-tools-tab__permission-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .mdc-admin-tools-tab__permission-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -4,11 +4,13 @@ import {
   getAdminToolHealth,
   listAdminExternalActions,
 } from "../../../../data/api/adminApi";
+import { getChatCapabilities } from "../../../../data/api/chatApi";
 import type {
   AdminExternalActionCatalogItem,
   AdminLlmStatus,
   AdminToolHealthResponse,
 } from "../../../../data/api/adminTypes";
+import type { ChatCapabilities } from "../../../../data/api/chatTypes";
 
 import "./AdminToolsTab.css";
 
@@ -20,6 +22,7 @@ type AdminToolsTabProps = {
 export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps) {
   const [health, setHealth] = useState<AdminToolHealthResponse | null>(null);
   const [actions, setActions] = useState<AdminExternalActionCatalogItem[]>([]);
+  const [capabilities, setCapabilities] = useState<ChatCapabilities | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,13 +31,15 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
     setError(null);
 
     try {
-      const [healthResponse, actionsResponse] = await Promise.all([
+      const [healthResponse, actionsResponse, capabilitiesResponse] = await Promise.all([
         getAdminToolHealth({ getAccessToken }),
         listAdminExternalActions({ getAccessToken }),
+        getChatCapabilities({ getAccessToken }),
       ]);
 
       setHealth(healthResponse);
       setActions(actionsResponse);
+      setCapabilities(capabilitiesResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar ferramentas.");
     } finally {
@@ -152,27 +157,57 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
       <article className="mdc-admin-tools-card">
         <div>
           <p className="mdc-chat-eyebrow">Permissões</p>
-          <h3>Resumo de governança</h3>
+          <h3>Capacidades do usuário atual</h3>
         </div>
 
-        <p>
-          As tools devem ser vinculadas a agentes, providers e permissões administrativas antes de serem expostas ao chat.
-        </p>
+        {!capabilities ? (
+          <p>Capacidades ainda não carregadas.</p>
+        ) : (
+          <>
+            <div className="mdc-admin-tools-tab__permission-grid">
+              <section>
+                <strong>{capabilities.canManageTools ? "Sim" : "Não"}</strong>
+                <span>Gerencia tools</span>
+              </section>
 
-        <ul>
-          <li>
-            <strong>Execução controlada</strong>
-            <small>Actions devem passar pelo fluxo autorizado do agente.</small>
-          </li>
-          <li>
-            <strong>Auditoria obrigatória</strong>
-            <small>Chamadas devem gerar rastreabilidade operacional.</small>
-          </li>
-          <li>
-            <strong>Escopo por agente</strong>
-            <small>Cada agente deve acessar somente as actions permitidas.</small>
-          </li>
-        </ul>
+              <section>
+                <strong>{capabilities.canUseTools ? "Sim" : "Não"}</strong>
+                <span>Usa tools</span>
+              </section>
+
+              <section>
+                <strong>{capabilities.canManageAgents ? "Sim" : "Não"}</strong>
+                <span>Gerencia agentes</span>
+              </section>
+
+              <section>
+                <strong>{capabilities.canManageOfficialAgents ? "Sim" : "Não"}</strong>
+                <span>Agentes oficiais</span>
+              </section>
+            </div>
+
+            <ul>
+              <li>
+                <strong>Permissões detectadas</strong>
+                <small>
+                  {capabilities.permissions.length > 0
+                    ? capabilities.permissions.join(", ")
+                    : "Nenhuma permissão explícita retornada."}
+                </small>
+              </li>
+              <li>
+                <strong>Superadmin</strong>
+                <small>{capabilities.isSuperadmin ? "Sim" : "Não"}</small>
+              </li>
+              <li>
+                <strong>Escopo por agente</strong>
+                <small>
+                  Providers e actions continuam vinculados ao agente e às permissões do usuário.
+                </small>
+              </li>
+            </ul>
+          </>
+        )}
       </article>
     </section>
   );
