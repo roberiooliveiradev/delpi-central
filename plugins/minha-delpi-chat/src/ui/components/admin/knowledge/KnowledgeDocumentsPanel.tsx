@@ -10,7 +10,10 @@ import "./KnowledgeDocumentsPanel.css";
 
 type KnowledgeDocumentsPanelProps = KnowledgeDocumentsState &
   KnowledgeDocumentActions &
-  KnowledgeBackendPlaceholders;
+  KnowledgeBackendPlaceholders & {
+    canDeleteKnowledgeDocuments: boolean;
+    canReindexKnowledgeDocuments: boolean;
+  };
 
 export function KnowledgeDocumentsPanel({
   documents,
@@ -28,6 +31,8 @@ export function KnowledgeDocumentsPanel({
   reactivateDocument,
   reindexDocument,
   testDocument,
+  canDeleteKnowledgeDocuments,
+  canReindexKnowledgeDocuments,
 }: KnowledgeDocumentsPanelProps) {
   return (
     <article className="mdc-knowledge-documents">
@@ -73,6 +78,8 @@ export function KnowledgeDocumentsPanel({
               reactivateDocument={reactivateDocument}
               reindexDocument={reindexDocument}
               testDocument={testDocument}
+              canDeleteKnowledgeDocuments={canDeleteKnowledgeDocuments}
+              canReindexKnowledgeDocuments={canReindexKnowledgeDocuments}
             />
           ))}
         </div>

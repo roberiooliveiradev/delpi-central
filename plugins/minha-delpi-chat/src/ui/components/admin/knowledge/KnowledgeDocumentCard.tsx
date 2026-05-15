@@ -10,6 +10,8 @@ type KnowledgeDocumentCardProps = KnowledgeDocumentActions &
   KnowledgeBackendPlaceholders & {
     document: AdminKnowledgeDocument;
     isMutating: boolean;
+    canDeleteKnowledgeDocuments: boolean;
+    canReindexKnowledgeDocuments: boolean;
   };
 
 export function KnowledgeDocumentCard({
@@ -20,6 +22,8 @@ export function KnowledgeDocumentCard({
   reactivateDocument,
   reindexDocument,
   testDocument,
+  canDeleteKnowledgeDocuments,
+  canReindexKnowledgeDocuments,
 }: KnowledgeDocumentCardProps) {
   return (
     <article className="mdc-knowledge-document-card">
@@ -56,7 +60,12 @@ export function KnowledgeDocumentCard({
         {document.active ? (
           <button
             type="button"
-            disabled={isMutating}
+            disabled={isMutating || !canDeleteKnowledgeDocuments}
+            title={
+              canDeleteKnowledgeDocuments
+                ? "Desativar documento"
+                : "Você não tem permissão para alterar documentos."
+            }
             onClick={() => deactivateDocument(document.id)}
           >
             Desativar
@@ -64,7 +73,12 @@ export function KnowledgeDocumentCard({
         ) : (
           <button
             type="button"
-            disabled={isMutating}
+            disabled={isMutating || !canDeleteKnowledgeDocuments}
+            title={
+              canDeleteKnowledgeDocuments
+                ? "Reativar documento"
+                : "Você não tem permissão para alterar documentos."
+            }
             onClick={() => reactivateDocument(document.id)}
           >
             Reativar
@@ -73,7 +87,12 @@ export function KnowledgeDocumentCard({
 
         <button
           type="button"
-          disabled={isMutating}
+          disabled={isMutating || !canReindexKnowledgeDocuments}
+          title={
+            canReindexKnowledgeDocuments
+              ? "Reindexar documento"
+              : "Você não tem permissão para reindexar documentos."
+          }
           onClick={() => reindexDocument(document.id)}
         >
           Reindexar
@@ -82,7 +101,12 @@ export function KnowledgeDocumentCard({
         <button
           type="button"
           className="mdc-knowledge-document-card__danger"
-          disabled={isMutating}
+          disabled={isMutating || !canDeleteKnowledgeDocuments}
+          title={
+            canDeleteKnowledgeDocuments
+              ? "Excluir documento"
+              : "Você não tem permissão para excluir documentos."
+          }
           onClick={() => {
             if (
               window.confirm(

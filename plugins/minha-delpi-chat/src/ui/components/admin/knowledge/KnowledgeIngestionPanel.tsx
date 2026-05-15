@@ -9,6 +9,7 @@ import "./KnowledgeIngestionPanel.css";
 
 type KnowledgeIngestionPanelProps = KnowledgeIngestionActions & {
   isMutating: boolean;
+  canManageKnowledge: boolean;
 };
 
 const ACCEPTED_KNOWLEDGE_EXTENSIONS = ".pdf,.txt,.md,.doc,.docx,.xls,.xlsx,.csv,.json";
@@ -27,6 +28,7 @@ function formatFileSize(size: number): string {
 
 export function KnowledgeIngestionPanel({
   isMutating,
+  canManageKnowledge,
   createDocument,
   uploadDocumentFile,
 }: KnowledgeIngestionPanelProps) {
@@ -110,7 +112,7 @@ export function KnowledgeIngestionPanel({
   }
 
   async function handleSubmit() {
-    if (!canSubmitDocument || isMutating) {
+    if (!canManageKnowledge || !canSubmitDocument || isMutating) {
       return;
     }
 
@@ -155,7 +157,7 @@ export function KnowledgeIngestionPanel({
           <h2>Adicionar conhecimento</h2>
         </div>
 
-        <span>Global</span>
+        <span>{canManageKnowledge ? "Global" : "Somente leitura"}</span>
       </div>
 
       <p className="mdc-knowledge-ingestion__description">
@@ -202,7 +204,7 @@ export function KnowledgeIngestionPanel({
             <input
               ref={fileInputRef}
               type="file"
-              disabled={isMutating}
+              disabled={isMutating || !canManageKnowledge}
               accept={ACCEPTED_KNOWLEDGE_EXTENSIONS}
               onChange={(event) => {
                 selectFile(event.target.files?.[0] ?? null);
@@ -224,7 +226,7 @@ export function KnowledgeIngestionPanel({
             <span>Conteúdo</span>
             <textarea
               value={content}
-              disabled={isMutating}
+              disabled={isMutating || !canManageKnowledge}
               rows={8}
               placeholder="Cole aqui diretrizes, glossários ou instruções globais."
               onChange={(event) => setContent(event.target.value)}
@@ -237,7 +239,7 @@ export function KnowledgeIngestionPanel({
             <span>Título</span>
             <input
               value={title}
-              disabled={isMutating}
+              disabled={isMutating || !canManageKnowledge}
               placeholder="Ex.: Diretrizes gerais do atendimento"
               onChange={(event) => setTitle(event.target.value)}
             />
@@ -247,7 +249,7 @@ export function KnowledgeIngestionPanel({
             <span>Tipo</span>
             <select
               value={sourceType}
-              disabled={isMutating}
+              disabled={isMutating || !canManageKnowledge}
               onChange={(event) => setSourceType(event.target.value)}
             >
               <option value="diretriz">Diretriz</option>
@@ -276,7 +278,15 @@ export function KnowledgeIngestionPanel({
           </small>
         </div>
 
-        <button type="submit" disabled={!canSubmitDocument || isMutating}>
+        <button
+          type="submit"
+          disabled={!canManageKnowledge || !canSubmitDocument || isMutating}
+          title={
+            canManageKnowledge
+              ? undefined
+              : "Você não tem permissão para adicionar conhecimento global."
+          }
+        >
           {isMutating ? "Processando..." : "Ingerir na base global"}
         </button>
       </form>

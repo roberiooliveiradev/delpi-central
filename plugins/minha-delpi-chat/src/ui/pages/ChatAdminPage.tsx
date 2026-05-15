@@ -82,6 +82,7 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
             deactivateDocument={admin.deactivateDocument}
             reactivateDocument={admin.reactivateDocument}
             reindexDocument={admin.reindexDocument}
+            rbac={adminRbac}
           />
         ) : null}
 

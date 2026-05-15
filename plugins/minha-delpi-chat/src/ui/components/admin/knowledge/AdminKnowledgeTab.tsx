@@ -1,5 +1,6 @@
 import { KnowledgeDocumentsPanel } from "./KnowledgeDocumentsPanel";
 import { KnowledgeIngestionPanel } from "./KnowledgeIngestionPanel";
+import type { AdminRbacSummary } from "../../../../data/api/adminTypes";
 import type {
   KnowledgeBackendPlaceholders,
   KnowledgeDocumentActions,
@@ -12,7 +13,9 @@ import "./AdminKnowledgeTab.css";
 type AdminKnowledgeTabProps = KnowledgeDocumentsState &
   KnowledgeDocumentActions &
   KnowledgeIngestionActions &
-  KnowledgeBackendPlaceholders;
+  KnowledgeBackendPlaceholders & {
+    rbac?: AdminRbacSummary | null;
+  };
 
 export function AdminKnowledgeTab({
   documents,
@@ -32,13 +35,26 @@ export function AdminKnowledgeTab({
   reactivateDocument,
   reindexDocument,
   testDocument,
+  rbac,
 }: AdminKnowledgeTabProps) {
+  const canManageKnowledge = Boolean(
+    rbac?.capabilities.canDeleteKnowledgeDocuments ||
+      rbac?.capabilities.canReindexKnowledgeDocuments,
+  );
+  const canDeleteKnowledgeDocuments = Boolean(
+    rbac?.capabilities.canDeleteKnowledgeDocuments,
+  );
+  const canReindexKnowledgeDocuments = Boolean(
+    rbac?.capabilities.canReindexKnowledgeDocuments,
+  );
+
   return (
     <section className="mdc-admin-knowledge">
       <KnowledgeIngestionPanel
         isMutating={isMutating}
         createDocument={createDocument}
         uploadDocumentFile={uploadDocumentFile}
+        canManageKnowledge={canManageKnowledge}
       />
 
       <KnowledgeDocumentsPanel
@@ -57,6 +73,8 @@ export function AdminKnowledgeTab({
         reactivateDocument={reactivateDocument}
         reindexDocument={reindexDocument}
         testDocument={testDocument}
+        canDeleteKnowledgeDocuments={canDeleteKnowledgeDocuments}
+        canReindexKnowledgeDocuments={canReindexKnowledgeDocuments}
       />
     </section>
   );
