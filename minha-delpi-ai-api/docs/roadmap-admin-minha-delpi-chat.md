@@ -113,27 +113,30 @@ Permitir comportamento diferente por ambiente.
 
 ## 5. Melhorar Teste RAG
 
-**Status: Próxima implementação recomendada**
+**Status: Parcialmente concluído**
 
 ### Objetivo
 
 Explicar por que o agente respondeu algo durante o teste de assertividade.
 
-### Implementar no backend
+### Entregue
 
-- Fazer `/admin/rag/test` retornar diretrizes ativas aplicadas
-- Retornar chunks encontrados
-- Retornar documentos usados
-- Retornar score semântico
+- `/admin/rag/test` retorna diretrizes ativas aplicadas
+- `/admin/rag/test` retorna chunks encontrados
+- `/admin/rag/test` retorna documentos usados
+- `/admin/rag/test` retorna score semântico
+- Frontend exibe `Diretrizes aplicadas`
+- Frontend exibe `Documentos acionados`
+- Frontend exibe `Chunks usados`
+- Frontend exibe score e prévia da resposta
+- Layout da aba Diretrizes foi reorganizado para melhorar leitura do teste
+
+### Ainda falta
+
 - Retornar prompt/contexto usado no teste, se seguro para exibição administrativa
-
-### Implementar no frontend
-
-- Exibir seção `Diretrizes aplicadas`
-- Exibir chunks usados
-- Exibir documentos acionados
-- Exibir score por documento/chunk
-- Diferenciar:
+- Comparar resposta com e sem diretrizes
+- Comparar resposta com e sem RAG
+- Diferenciar visualmente:
   - conhecimento global;
   - diretrizes administrativas;
   - anexos de conversa;
@@ -380,13 +383,18 @@ Blindar comportamento da IA.
 - Diretrizes persistentes
 - Publicação e arquivamento de diretrizes
 - Aplicação de diretrizes ativas no prompt real
+- Teste RAG exibindo diretrizes aplicadas
+- Teste RAG exibindo documentos acionados
+- Teste RAG exibindo chunks usados
+- Refatoração visual da aba Diretrizes
 - Auditoria inicial
 - Métricas iniciais
 
 ## Em andamento
 
-- Teste RAG avançado
-- Exibição de diretrizes aplicadas no teste
+- Teste RAG avançado com prompt/contexto seguro
+- Comparação com e sem diretrizes
+- Comparação com e sem RAG
 - Melhor explicabilidade do comportamento do agente
 
 ## Pendente
