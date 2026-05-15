@@ -1,8 +1,8 @@
 import "./AdminGuidelinesTab.css";
 export function AdminGuidelinesTab() {
   return (
-    <section className="mdc-admin-grid">
-      <article className="mdc-admin-card">
+    <section className="mdc-admin-guidelines">
+      <article className="mdc-admin-guidelines__card">
         <h2>Diretrizes globais</h2>
         <p className="mdc-chat-muted">
           Próxima etapa: transformar diretrizes em documentos versionados e testáveis.
@@ -24,7 +24,7 @@ export function AdminGuidelinesTab() {
         </div>
       </article>
 
-      <article className="mdc-admin-card">
+      <article className="mdc-admin-guidelines__card">
         <h2>Teste de assertividade</h2>
         <p className="mdc-chat-muted">
           Próxima etapa: campo para simular perguntas e verificar quais documentos o RAG usaria.

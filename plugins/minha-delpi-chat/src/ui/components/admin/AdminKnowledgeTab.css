@@ -1,61 +1,61 @@
-.mdc-admin-knowledge-layout {
+.mdc-admin-knowledge {
   display: grid;
   grid-template-columns: minmax(22rem, 0.42fr) minmax(0, 1fr);
-  gap: 1rem;
+  gap: var(--mdc-space-5);
   align-items: start;
 }
 
-.mdc-admin-card {
+.mdc-admin-knowledge__ingest,
+.mdc-admin-knowledge__list-card {
   display: grid;
-  gap: 0.85rem;
-  align-content: start;
+  gap: var(--mdc-space-4);
   min-width: 0;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 52%, transparent);
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--mdc-card-bg) 68%, transparent);
-  box-shadow: none;
-  padding: 1rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+  padding: var(--mdc-space-5);
 }
 
-.mdc-admin-card h2 {
-  margin: 0;
-  color: var(--mdc-title);
-  font-size: 1.05rem;
-  line-height: 1.2;
-}
-
-.mdc-admin-ingest-card {
+.mdc-admin-knowledge__ingest {
   position: sticky;
-  top: 1rem;
-  max-height: calc(100vh - 2rem);
+  top: var(--mdc-space-5);
+  max-height: calc(100vh - 2 * var(--mdc-space-5));
   overflow: auto;
 }
 
-.mdc-admin-knowledge-list-card {
+.mdc-admin-knowledge__list-card {
   min-height: 32rem;
 }
 
-.mdc-admin-card-title,
-.mdc-admin-card-header {
+.mdc-admin-knowledge h2 {
+  margin: 0;
+  color: var(--mdc-primary);
+  font-size: 1.08rem;
+  line-height: 1.2;
+}
+
+.mdc-admin-knowledge__card-title,
+.mdc-admin-knowledge__card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--mdc-space-4);
 }
 
-.mdc-admin-card-description {
+.mdc-admin-knowledge__description {
   margin: 0;
   color: var(--mdc-text-muted);
   line-height: 1.55;
 }
 
-.mdc-admin-pill {
+.mdc-admin-knowledge__pill {
   display: inline-flex;
   align-items: center;
-  border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, transparent);
+  border: 1px solid var(--mdc-badge-border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
-  color: var(--mdc-primary);
+  background: var(--mdc-badge-bg);
+  color: var(--mdc-badge-text);
   font-size: 0.72rem;
   font-weight: 900;
   padding: 0.32rem 0.58rem;
@@ -65,21 +65,22 @@
 .mdc-admin-form,
 .mdc-admin-filters {
   display: grid;
-  gap: 0.7rem;
+  gap: var(--mdc-space-3);
 }
 
 .mdc-admin-form-grid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 0.7rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: var(--mdc-space-3);
 }
 
 .mdc-admin-form label,
 .mdc-admin-filters label {
   display: grid;
-  gap: 0.35rem;
-  color: var(--mdc-text-muted);
-  font-weight: 850;
+  gap: var(--mdc-space-2);
+  color: var(--mdc-title-soft);
+  font-size: 0.84rem;
+  font-weight: 800;
 }
 
 .mdc-admin-form input,
@@ -89,13 +90,22 @@
 .mdc-admin-filters select {
   width: 100%;
   min-width: 0;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 66%, transparent);
-  border-radius: 0.82rem;
-  background: color-mix(in srgb, var(--mdc-bg) 72%, transparent);
-  color: var(--mdc-text);
+  border: 1px solid var(--mdc-control-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-control-bg);
+  color: var(--mdc-control-text);
   font: inherit;
   outline: 0;
-  padding: 0.72rem 0.82rem;
+  padding: 0.75rem 0.85rem;
+}
+
+.mdc-admin-form input:focus,
+.mdc-admin-form select:focus,
+.mdc-admin-form textarea:focus,
+.mdc-admin-filters input:focus,
+.mdc-admin-filters select:focus {
+  border-color: var(--mdc-primary);
+  box-shadow: var(--mdc-focus-ring);
 }
 
 .mdc-admin-form textarea {
@@ -105,30 +115,19 @@
 .mdc-admin-segmented {
   display: inline-flex;
   width: fit-content;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 58%, transparent);
+  border: 1px solid var(--mdc-card-border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-bg) 48%, transparent);
+  background: var(--mdc-bg-muted);
   padding: 0.25rem;
 }
 
-.mdc-admin-segmented button,
-.mdc-admin-card button,
-.mdc-admin-pagination button {
-  min-height: 2.35rem;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 58%, transparent);
+.mdc-admin-segmented button {
+  min-height: 2.15rem;
+  border: 0;
   border-radius: 999px;
   background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 850;
-  padding: 0.5rem 0.8rem;
-}
-
-.mdc-admin-segmented button {
-  min-height: unset;
-  border: 0;
   color: var(--mdc-text-muted);
+  font-weight: 800;
   padding: 0.45rem 0.8rem;
 }
 
@@ -137,21 +136,15 @@
   color: var(--mdc-bg);
 }
 
-.mdc-admin-card button:disabled,
-.mdc-admin-pagination button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
 .mdc-admin-dropzone {
   border: 1px dashed color-mix(in srgb, var(--mdc-primary) 46%, var(--mdc-card-border));
-  border-radius: 1.05rem;
+  border-radius: var(--mdc-radius-lg);
   background: color-mix(in srgb, var(--mdc-primary) 7%, var(--mdc-card-bg));
-  padding: 1rem;
+  padding: var(--mdc-space-4);
 }
 
 .mdc-admin-dropzone input {
-  margin-top: 0.55rem;
+  margin-top: var(--mdc-space-2);
 }
 
 .mdc-admin-dropzone strong,
@@ -160,36 +153,52 @@
 }
 
 .mdc-admin-dropzone strong {
-  margin-top: 0.7rem;
+  margin-top: var(--mdc-space-3);
   color: var(--mdc-title);
 }
 
 .mdc-admin-dropzone small {
-  margin-top: 0.25rem;
+  margin-top: var(--mdc-space-1);
   color: var(--mdc-text-muted);
+}
+
+.mdc-admin-form button,
+.mdc-admin-row-actions button,
+.mdc-admin-pagination button {
+  min-height: 2.35rem;
+  border-radius: 999px;
+  font-weight: 800;
+  padding: 0.5rem 0.8rem;
+}
+
+.mdc-admin-form button[type="submit"] {
+  justify-self: start;
+  border-color: var(--mdc-primary);
+  background: var(--mdc-primary);
+  color: var(--mdc-bg);
 }
 
 .mdc-admin-document-list {
   display: grid;
-  gap: 0.7rem;
+  gap: var(--mdc-space-3);
 }
 
 .mdc-admin-document-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1rem;
+  gap: var(--mdc-space-4);
   align-items: center;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 45%, transparent);
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--mdc-bg) 32%, transparent);
-  padding: 0.9rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: var(--mdc-bg-muted);
+  padding: var(--mdc-space-4);
 }
 
 .mdc-admin-document-title {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--mdc-space-2);
 }
 
 .mdc-admin-document-title strong {
@@ -204,13 +213,13 @@
 }
 
 .mdc-admin-document-title span.is-active {
-  background: color-mix(in srgb, #22c55e 14%, transparent);
-  color: #86efac;
+  background: color-mix(in srgb, var(--mdc-success) 14%, transparent);
+  color: var(--mdc-success);
 }
 
 .mdc-admin-document-title span.is-inactive {
-  background: color-mix(in srgb, #f59e0b 14%, transparent);
-  color: #fcd34d;
+  background: color-mix(in srgb, var(--mdc-danger) 12%, transparent);
+  color: var(--mdc-danger);
 }
 
 .mdc-admin-document-row p,
@@ -220,61 +229,58 @@
 }
 
 .mdc-admin-document-row p {
-  margin-top: 0.3rem;
+  margin-top: var(--mdc-space-2);
   overflow-wrap: anywhere;
 }
 
 .mdc-admin-document-row small {
   display: block;
-  margin-top: 0.25rem;
+  margin-top: var(--mdc-space-1);
 }
 
 .mdc-admin-row-actions {
   display: inline-flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.4rem;
-}
-
-.mdc-admin-row-actions button {
-  padding: 0.42rem 0.62rem;
+  gap: var(--mdc-space-2);
 }
 
 .mdc-admin-danger-button {
-  border-color: color-mix(in srgb, #ef4444 45%, var(--mdc-card-border)) !important;
-  color: #fca5a5 !important;
+  border-color: color-mix(in srgb, var(--mdc-danger) 45%, var(--mdc-card-border)) !important;
+  color: var(--mdc-danger) !important;
 }
 
 .mdc-admin-pagination {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.6rem;
+  gap: var(--mdc-space-3);
   color: var(--mdc-text-muted);
 }
 
 .mdc-admin-pagination > div {
   display: inline-flex;
-  gap: 0.4rem;
+  gap: var(--mdc-space-2);
 }
 
 @media (max-width: 1360px) {
-  .mdc-admin-knowledge-layout {
+  .mdc-admin-knowledge {
     grid-template-columns: 1fr;
   }
 
-  .mdc-admin-ingest-card {
+  .mdc-admin-knowledge__ingest {
     position: static;
     max-height: none;
     overflow: visible;
   }
 }
 
-@media (max-width: 980px) {
-  .mdc-admin-card-header,
-  .mdc-admin-card-title,
+@media (max-width: 920px) {
+  .mdc-admin-knowledge__card-header,
+  .mdc-admin-knowledge__card-title,
   .mdc-admin-document-row {
     align-items: stretch;
+    flex-direction: column;
     grid-template-columns: 1fr;
   }
 

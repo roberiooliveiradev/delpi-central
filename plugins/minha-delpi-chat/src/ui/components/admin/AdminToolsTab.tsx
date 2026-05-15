@@ -7,8 +7,8 @@ type AdminToolsTabProps = {
 
 export function AdminToolsTab({ llmStatus }: AdminToolsTabProps) {
   return (
-    <section className="mdc-admin-grid">
-      <article className="mdc-admin-card">
+    <section className="mdc-admin-tools">
+      <article className="mdc-admin-tools__card">
         <h2>Provider LLM</h2>
 
         {llmStatus ? (
@@ -35,7 +35,7 @@ export function AdminToolsTab({ llmStatus }: AdminToolsTabProps) {
         )}
       </article>
 
-      <article className="mdc-admin-card">
+      <article className="mdc-admin-tools__card">
         <h2>Ferramentas e actions</h2>
         <p className="mdc-chat-muted">
           Próxima etapa: listar providers OpenAPI, actions disponíveis e status de uso nas últimas 24h.

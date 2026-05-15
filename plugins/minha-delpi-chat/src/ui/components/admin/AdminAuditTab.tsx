@@ -21,8 +21,8 @@ export function AdminAuditTab({ auditLogs }: AdminAuditTabProps) {
   }, [auditLogs, safePage]);
 
   return (
-    <article className="mdc-admin-card mdc-admin-card--wide">
-      <div className="mdc-admin-card-header">
+    <article className="mdc-admin-audit">
+      <div className="mdc-admin-audit__header">
         <div>
           <h2>Auditoria recente</h2>
           <p className="mdc-chat-muted">
@@ -30,7 +30,7 @@ export function AdminAuditTab({ auditLogs }: AdminAuditTabProps) {
           </p>
         </div>
 
-        <span className="mdc-admin-pill">{auditLogs.length} evento(s)</span>
+        <span className="mdc-admin-audit__pill">{auditLogs.length} evento(s)</span>
       </div>
 
       {auditLogs.length === 0 ? (

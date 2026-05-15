@@ -28,7 +28,7 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>("knowledge");
 
   return (
-    <main className="minha-delpi-chat">
+    <main className="minha-delpi-chat mdc-admin-root">
       <section className="mdc-admin-shell">
         <header className="mdc-admin-topbar">
           <div className="mdc-admin-topbar__content">

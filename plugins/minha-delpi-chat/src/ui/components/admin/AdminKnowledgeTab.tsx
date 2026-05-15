@@ -108,17 +108,17 @@ export function AdminKnowledgeTab({
   }
 
   return (
-    <section className="mdc-admin-knowledge-layout">
-      <article className="mdc-admin-card mdc-admin-ingest-card">
-        <div className="mdc-admin-card-title">
+    <section className="mdc-admin-knowledge">
+      <article className="mdc-admin-knowledge__ingest">
+        <div className="mdc-admin-knowledge__card-title">
           <div>
             <p className="mdc-chat-eyebrow">Base global</p>
             <h2>Adicionar conhecimento</h2>
           </div>
-          <span className="mdc-admin-pill">Global</span>
+          <span className="mdc-admin-knowledge__pill">Global</span>
         </div>
 
-        <p className="mdc-admin-card-description">
+        <p className="mdc-admin-knowledge__description">
           Use esta área somente para documentos que orientam todo o Minha DELPI Chat.
           Anexos de conversas não entram aqui.
         </p>
@@ -229,8 +229,8 @@ export function AdminKnowledgeTab({
         </form>
       </article>
 
-      <article className="mdc-admin-card mdc-admin-knowledge-list-card">
-        <div className="mdc-admin-card-header">
+      <article className="mdc-admin-knowledge__list-card">
+        <div className="mdc-admin-knowledge__card-header">
           <div>
             <h2>Base global de conhecimento</h2>
             <p className="mdc-chat-muted">

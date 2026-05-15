@@ -1,40 +1,35 @@
-.mdc-admin-card {
+.mdc-admin-audit {
   display: grid;
-  gap: 0.85rem;
-  align-content: start;
+  gap: var(--mdc-space-4);
   min-width: 0;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 52%, transparent);
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--mdc-card-bg) 68%, transparent);
-  box-shadow: none;
-  padding: 1rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+  padding: var(--mdc-space-5);
 }
 
-.mdc-admin-card--wide {
-  grid-column: 1 / -1;
-}
-
-.mdc-admin-card h2 {
+.mdc-admin-audit h2 {
   margin: 0;
-  color: var(--mdc-title);
-  font-size: 1.05rem;
+  color: var(--mdc-primary);
+  font-size: 1.08rem;
   line-height: 1.2;
 }
 
-.mdc-admin-card-header {
+.mdc-admin-audit__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--mdc-space-4);
 }
 
-.mdc-admin-pill {
+.mdc-admin-audit__pill {
   display: inline-flex;
   align-items: center;
-  border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, transparent);
+  border: 1px solid var(--mdc-badge-border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
-  color: var(--mdc-primary);
+  background: var(--mdc-badge-bg);
+  color: var(--mdc-badge-text);
   font-size: 0.72rem;
   font-weight: 900;
   padding: 0.32rem 0.58rem;
@@ -43,24 +38,20 @@
 
 .mdc-admin-table-wrap {
   overflow: auto;
-  max-height: min(58vh, 42rem);
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 48%, transparent);
-  border-radius: 0.9rem;
-}
-
-.mdc-admin-audit-table-wrap {
   max-height: min(56vh, 38rem);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
 }
 
 .mdc-admin-table {
   width: 100%;
-  border-collapse: collapse;
   min-width: 760px;
+  border-collapse: collapse;
 }
 
 .mdc-admin-table th,
 .mdc-admin-table td {
-  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 38%, transparent);
+  border-bottom: 1px solid var(--mdc-card-border);
   padding: 0.72rem 0.8rem;
   text-align: left;
   vertical-align: top;
@@ -70,49 +61,39 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: color-mix(in srgb, var(--mdc-card-bg) 94%, var(--mdc-bg));
-  color: var(--mdc-text-muted);
+  background: var(--mdc-card-bg);
+  color: var(--mdc-title-soft);
   font-size: 0.76rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .mdc-admin-table td {
-  color: var(--mdc-text);
+  color: var(--mdc-text-muted);
 }
 
 .mdc-admin-pagination {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.6rem;
+  gap: var(--mdc-space-3);
   color: var(--mdc-text-muted);
 }
 
 .mdc-admin-pagination > div {
   display: inline-flex;
-  gap: 0.4rem;
+  gap: var(--mdc-space-2);
 }
 
 .mdc-admin-pagination button {
   min-height: 2.35rem;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 58%, transparent);
   border-radius: 999px;
-  background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 850;
+  font-weight: 800;
   padding: 0.5rem 0.8rem;
 }
 
-.mdc-admin-pagination button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-@media (max-width: 980px) {
-  .mdc-admin-card-header {
+@media (max-width: 920px) {
+  .mdc-admin-audit__header {
     align-items: stretch;
     flex-direction: column;
   }
