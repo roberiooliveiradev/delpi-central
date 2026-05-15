@@ -226,12 +226,15 @@ Melhorar observabilidade do chat.
 - Distribuição de eventos por contexto
 - Distribuição de erros por ação
 - Aba de métricas reorganizada para observabilidade operacional
+- Instrumentação de latência no envio normal de mensagens
+- Instrumentação de latência no streaming de mensagens
+- Estimativa de tokens por prompt/resposta
+- Agregação de latência média nas últimas 24h
+- Agregação de tokens estimados nas últimas 24h
 
 ### Ainda falta
 
-- Latência média
-- Tokens usados
-- Custo estimado
+- Custo estimado com tabela por provider/modelo
 - Falhas RAG
 - Assertividade por teste
 - Métricas por agente

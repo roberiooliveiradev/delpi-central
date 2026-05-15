@@ -117,6 +117,30 @@ export function AdminMetricsTab({ metricsSummary }: AdminMetricsTabProps) {
             {formatNumber(metricsSummary.recentErrors24h)} erro(s) nas últimas 24h.
           </p>
         </article>
+
+        <article className="mdc-admin-metrics-card">
+          <h3>Latência média</h3>
+          <strong>{formatNumber(metricsSummary.advanced?.latencyAvgMs)}ms</strong>
+          <p>
+            {formatNumber(metricsSummary.advanced?.instrumentedMessages)} mensagem(ns) instrumentada(s).
+          </p>
+        </article>
+
+        <article className="mdc-admin-metrics-card">
+          <h3>Tokens estimados</h3>
+          <strong>{formatNumber(metricsSummary.advanced?.tokensUsed)}</strong>
+          <p>Total estimado nas mensagens instrumentadas das últimas 24h.</p>
+        </article>
+
+        <article className="mdc-admin-metrics-card">
+          <h3>Custo estimado</h3>
+          <strong>
+            {typeof metricsSummary.advanced?.estimatedCost === "number"
+              ? `R$ ${metricsSummary.advanced.estimatedCost.toFixed(4)}`
+              : "—"}
+          </strong>
+          <p>Aguardando tabela de custo por provider/modelo.</p>
+        </article>
       </div>
 
       <div className="mdc-admin-metrics-tab__columns">

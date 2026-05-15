@@ -67,6 +67,7 @@ export type AdminMetricsSummary = {
     latencyAvgMs?: number | null;
     tokensUsed?: number | null;
     estimatedCost?: number | null;
+    instrumentedMessages?: number | null;
     ragFailures?: number | null;
     assertivenessRate?: number | null;
     agentMetrics?: AdminMetricsDistributionItem[];

@@ -1,4 +1,5 @@
 import hashlib
+import time
 from uuid import UUID
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
@@ -124,7 +125,12 @@ class SendChatMessageUseCase:
             attachments=attachments,
         )
 
+        started_at = time.perf_counter()
         answer = self.llm_gateway.generate(llm_messages)
+        latency_ms = int((time.perf_counter() - started_at) * 1000)
+        prompt_tokens_estimated = self._estimate_tokens_from_messages(llm_messages)
+        completion_tokens_estimated = self._estimate_tokens(answer)
+        total_tokens_estimated = prompt_tokens_estimated + completion_tokens_estimated
 
         assistant_message = self.chat_repository.create_message(
             session_id=session_id,
@@ -144,6 +150,13 @@ class SendChatMessageUseCase:
                     "sourceCount": len(sources),
                 },
                 "adminGuidelines": self._guideline_metadata(active_guidelines),
+                "metrics": {
+                    "latencyMs": latency_ms,
+                    "promptTokensEstimated": prompt_tokens_estimated,
+                    "completionTokensEstimated": completion_tokens_estimated,
+                    "totalTokensEstimated": total_tokens_estimated,
+                    "estimatedCost": None,
+                },
             },
         )
 
@@ -166,6 +179,11 @@ class SendChatMessageUseCase:
                 "tool_count": len(tool_calls),
                 "admin_guideline_count": len(active_guidelines),
                 "admin_guidelines": self._guideline_metadata(active_guidelines),
+                "latency_ms": latency_ms,
+                "prompt_tokens_estimated": prompt_tokens_estimated,
+                "completion_tokens_estimated": completion_tokens_estimated,
+                "total_tokens_estimated": total_tokens_estimated,
+                "estimated_cost": None,
             },
         )
 
@@ -230,6 +248,23 @@ class SendChatMessageUseCase:
             raise InvalidChatSessionInputError("Message exceeds maximum length")
 
         return normalized
+
+    def _estimate_tokens_from_messages(self, messages: list[dict]) -> int:
+        total = 0
+
+        for item in messages:
+            if isinstance(item, dict):
+                total += self._estimate_tokens(str(item.get("content") or ""))
+
+        return total
+
+    def _estimate_tokens(self, value: str) -> int:
+        normalized = str(value or "").strip()
+
+        if not normalized:
+            return 0
+
+        return max(1, round(len(normalized) / 4))
 
     def _hash_prompt(self, prompt: str) -> str:
         return hashlib.sha256(prompt.encode("utf-8")).hexdigest()

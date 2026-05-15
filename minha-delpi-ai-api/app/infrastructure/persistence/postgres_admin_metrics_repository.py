@@ -44,6 +44,8 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             .count()
         )
 
+        message_metrics = self._message_metrics_24h(since=since)
+
         action_distribution = self._count_by_field(
             AiAuditLogModel.action,
             since=since,
@@ -80,15 +82,16 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             "contextDistribution24h": context_distribution,
             "errorDistribution24h": error_distribution,
             "advanced": {
-                "latencyAvgMs": None,
-                "tokensUsed": None,
-                "estimatedCost": None,
+                "latencyAvgMs": message_metrics["latencyAvgMs"],
+                "tokensUsed": message_metrics["tokensUsed"],
+                "estimatedCost": message_metrics["estimatedCost"],
+                "instrumentedMessages": message_metrics["instrumentedMessages"],
                 "ragFailures": None,
                 "assertivenessRate": None,
                 "agentMetrics": [],
                 "userProfileMetrics": [],
                 "notes": [
-                    "Latência, tokens e custo dependem de instrumentação adicional no fluxo de mensagens.",
+                    "Latência e tokens são estimativas registradas no fluxo de mensagens a partir desta versão.",
                     "Métricas por agente e usuário/perfil dependem de eventos auditáveis padronizados.",
                 ],
             },
@@ -131,3 +134,51 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             }
             for row in rows
         ]
+
+
+    def _metric_number_from_metadata(self, metadata: dict | None, key: str) -> float:
+        if not isinstance(metadata, dict):
+            return 0.0
+
+        value = metadata.get(key)
+
+        if value is None:
+            return 0.0
+
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _message_metrics_24h(self, *, since: datetime) -> dict:
+        rows = (
+            db.session.query(AiAuditLogModel)
+            .filter(AiAuditLogModel.created_at >= since)
+            .filter(AiAuditLogModel.action.in_(["chat.message.sent", "chat.message.streamed"]))
+            .all()
+        )
+
+        latencies = []
+        total_tokens = 0
+        estimated_cost = 0.0
+
+        for row in rows:
+            metadata = row.metadata or {}
+            latency = self._metric_number_from_metadata(metadata, "latency_ms")
+
+            if latency > 0:
+                latencies.append(latency)
+
+            total_tokens += int(
+                self._metric_number_from_metadata(metadata, "total_tokens_estimated")
+            )
+            estimated_cost += self._metric_number_from_metadata(metadata, "estimated_cost")
+
+        latency_avg = round(sum(latencies) / len(latencies), 2) if latencies else None
+
+        return {
+            "latencyAvgMs": latency_avg,
+            "tokensUsed": total_tokens,
+            "estimatedCost": round(estimated_cost, 6) if estimated_cost else None,
+            "instrumentedMessages": len(rows),
+        }
