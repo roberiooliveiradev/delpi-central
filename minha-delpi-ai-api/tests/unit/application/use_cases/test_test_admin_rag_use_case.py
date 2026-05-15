@@ -87,3 +87,6 @@ def test_admin_rag_test_returns_applied_guidelines():
         }
     ]
     assert result["triggeredGuidelines"] == result["appliedGuidelines"]
+    assert result["debugContext"]["guidelineCount"] == 1
+    assert result["debugContext"]["hasActiveGuidelines"] is True
+    assert "Não inventar respostas" in result["debugContext"]["safeContextPreview"]

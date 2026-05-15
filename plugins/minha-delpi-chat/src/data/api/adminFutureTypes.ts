@@ -42,6 +42,20 @@ export type AdminRagTestResponse = {
     score: number;
     preview: string;
   }>;
+  debugContext?: {
+    question: string;
+    guidelineCount: number;
+    documentCount: number;
+    chunkCount: number;
+    hasActiveGuidelines: boolean;
+    hasRagContext: boolean;
+    limit: number;
+    filters: {
+      includeGlobal: boolean;
+      documentId?: string | null;
+    };
+    safeContextPreview: string;
+  };
 };
 
 export type AdminGuidelinePayload = {

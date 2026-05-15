@@ -90,6 +90,14 @@ class AdminRagTestUseCase:
             "chunks": chunk_results,
             "triggeredGuidelines": applied_guidelines,
             "appliedGuidelines": applied_guidelines,
+            "debugContext": self._build_debug_context(
+                question=normalized_question,
+                chunks=chunk_results,
+                matched_documents=matched_documents,
+                applied_guidelines=applied_guidelines,
+                limit=safe_limit,
+                filters=filters,
+            ),
         }
 
     def _build_answer_preview(self, chunks) -> str:
@@ -124,3 +132,65 @@ class AdminRagTestUseCase:
             }
             for item in guidelines
         ]
+
+
+    def _build_debug_context(
+        self,
+        *,
+        question: str,
+        chunks: list[dict],
+        matched_documents: list[dict],
+        applied_guidelines: list[dict],
+        limit: int,
+        filters: dict,
+    ) -> dict:
+        context_lines = []
+
+        if applied_guidelines:
+            context_lines.append(
+                f"Diretrizes ativas consideradas: {len(applied_guidelines)}."
+            )
+            for guideline in applied_guidelines[:5]:
+                title = guideline.get("title") or "Diretriz sem título"
+                category = guideline.get("category") or "global"
+                context_lines.append(f"- {title} [{category}]")
+
+        if matched_documents:
+            context_lines.append(
+                f"Documentos globais encontrados: {len(matched_documents)}."
+            )
+            for document in matched_documents[:5]:
+                title = document.get("title") or "Documento sem título"
+                score = round(float(document.get("score") or 0) * 100)
+                context_lines.append(f"- {title}: {score}%")
+
+        if chunks:
+            context_lines.append(f"Chunks enviados ao teste: {len(chunks)}.")
+            for chunk in chunks[:3]:
+                title = chunk.get("title") or "Documento sem título"
+                preview = self._safe_preview(chunk.get("preview"))
+                context_lines.append(f"- {title}: {preview}")
+
+        if not context_lines:
+            context_lines.append(
+                "Nenhuma diretriz ativa ou trecho de conhecimento foi encontrado para esta pergunta."
+            )
+
+        return {
+            "question": question,
+            "guidelineCount": len(applied_guidelines),
+            "documentCount": len(matched_documents),
+            "chunkCount": len(chunks),
+            "hasActiveGuidelines": len(applied_guidelines) > 0,
+            "hasRagContext": len(chunks) > 0,
+            "limit": limit,
+            "filters": {
+                "includeGlobal": bool(filters.get("include_global")),
+                "documentId": filters.get("document_id"),
+            },
+            "safeContextPreview": "\n".join(context_lines),
+        }
+
+    def _safe_preview(self, value) -> str:
+        normalized = " ".join(str(value or "").split())
+        return normalized[:260]

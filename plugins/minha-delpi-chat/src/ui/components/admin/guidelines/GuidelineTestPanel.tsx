@@ -123,6 +123,44 @@ export function GuidelineTestPanel({ testGuidelines }: GuidelineTestPanelProps) 
             </article>
           </div>
 
+          {result.debugContext ? (
+            <article className="mdc-guideline-test-panel__debug">
+              <div>
+                <h4>Contexto seguro</h4>
+                <span>
+                  {result.debugContext.guidelineCount} diretriz(es) ·{" "}
+                  {result.debugContext.documentCount} documento(s) ·{" "}
+                  {result.debugContext.chunkCount} chunk(s)
+                </span>
+              </div>
+
+              <dl>
+                <div>
+                  <dt>RAG</dt>
+                  <dd>{result.debugContext.hasRagContext ? "Com contexto" : "Sem contexto"}</dd>
+                </div>
+                <div>
+                  <dt>Diretrizes</dt>
+                  <dd>
+                    {result.debugContext.hasActiveGuidelines
+                      ? "Aplicadas"
+                      : "Nenhuma ativa"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Escopo</dt>
+                  <dd>
+                    {result.debugContext.filters.includeGlobal
+                      ? "Base global"
+                      : "Escopo restrito"}
+                  </dd>
+                </div>
+              </dl>
+
+              <pre>{result.debugContext.safeContextPreview}</pre>
+            </article>
+          ) : null}
+
           <article className="mdc-guideline-test-panel__preview">
             <h4>Prévia da resposta</h4>
             <p>{result.answerPreview}</p>
