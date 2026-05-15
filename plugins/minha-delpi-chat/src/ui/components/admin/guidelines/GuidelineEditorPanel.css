@@ -51,3 +51,28 @@
   font-weight: 800;
   padding: 0.5rem 0.8rem;
 }
+
+.mdc-guideline-editor-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-guideline-editor-panel__ghost {
+  min-height: 2rem;
+  border-color: var(--mdc-card-border);
+  background: transparent;
+  color: var(--mdc-text-muted);
+  padding: 0.4rem 0.7rem;
+}
+
+.mdc-guideline-editor-panel__notice {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg-muted);
+  color: var(--mdc-text-muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  padding: var(--mdc-space-3);
+}

@@ -6,6 +6,7 @@ type GuidelineListPanelProps = {
   guidelines: AdminGuideline[];
   publishGuideline: (guidelineId: string) => Promise<void>;
   archiveGuideline: (guidelineId: string) => Promise<void>;
+  onEditGuideline: (guideline: AdminGuideline) => void;
 };
 
 const STATUS_LABEL: Record<AdminGuideline["status"], string> = {
@@ -18,6 +19,7 @@ export function GuidelineListPanel({
   guidelines,
   publishGuideline,
   archiveGuideline,
+  onEditGuideline,
 }: GuidelineListPanelProps) {
   return (
     <article className="mdc-guideline-list-panel">
@@ -54,6 +56,16 @@ export function GuidelineListPanel({
                 <span className={`is-${guideline.status}`}>
                   {STATUS_LABEL[guideline.status]}
                 </span>
+
+                <button
+                  type="button"
+                  title="Editar diretriz"
+                  onClick={() => {
+                    onEditGuideline(guideline);
+                  }}
+                >
+                  Editar
+                </button>
 
                 <button
                   type="button"

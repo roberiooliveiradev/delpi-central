@@ -1,12 +1,16 @@
+import { useState } from "react";
+
 import { GuidelineEditorPanel } from "./GuidelineEditorPanel";
 import { GuidelineListPanel } from "./GuidelineListPanel";
 import { GuidelineTestPanel } from "./GuidelineTestPanel";
 import { GuidelineVersionPanel } from "./GuidelineVersionPanel";
-import type { GuidelineBackendPlaceholders } from "./guidelineTypes";
+import type { AdminGuideline, GuidelineBackendPlaceholders } from "./guidelineTypes";
 
 import "./AdminGuidelinesTab.css";
 
-type AdminGuidelinesTabProps = GuidelineBackendPlaceholders;
+type AdminGuidelinesTabProps = GuidelineBackendPlaceholders & {
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
+};
 
 export function AdminGuidelinesTab({
   guidelines,
@@ -16,19 +20,26 @@ export function AdminGuidelinesTab({
   reloadAdminData,
   testGuidelines,
   getAccessToken,
-}: AdminGuidelinesTabProps & {
-  getAccessToken?: () => string | undefined | Promise<string | undefined>;
-}) {
+}: AdminGuidelinesTabProps) {
+  const [editingGuideline, setEditingGuideline] =
+    useState<AdminGuideline | null>(null);
+
   return (
     <section className="mdc-admin-guidelines">
       <GuidelineListPanel
         guidelines={guidelines}
         publishGuideline={publishGuideline}
         archiveGuideline={archiveGuideline}
+        onEditGuideline={setEditingGuideline}
       />
 
       <div className="mdc-admin-guidelines__workbench">
-        <GuidelineEditorPanel onSave={saveGuideline} />
+        <GuidelineEditorPanel
+          editingGuideline={editingGuideline}
+          onCancelEdit={() => setEditingGuideline(null)}
+          onSave={saveGuideline}
+        />
+
         <GuidelineTestPanel testGuidelines={testGuidelines} />
       </div>
 

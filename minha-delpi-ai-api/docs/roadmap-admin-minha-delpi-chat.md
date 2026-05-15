@@ -76,13 +76,13 @@ Permitir histórico e rollback das diretrizes administrativas.
 
 ## 3. Edição de diretrizes
 
-**Status: Pendente**
+**Status: Concluído**
 
 ### Objetivo
 
 Permitir manutenção contínua das diretrizes.
 
-### Implementar
+### Entregue
 
 - Botão `Editar`
 - Carregar dados atuais no formulário
