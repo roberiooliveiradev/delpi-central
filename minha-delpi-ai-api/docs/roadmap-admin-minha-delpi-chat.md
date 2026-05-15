@@ -176,7 +176,7 @@ Transformar a aba Ferramentas em painel operacional real.
 
 ## 7. RBAC administrativo
 
-**Status: Parcialmente concluído**
+**Status: Concluído no escopo atual**
 
 ### Objetivo
 
@@ -201,11 +201,11 @@ Controlar acesso granular às ações administrativas.
 - Bloqueios granulares na aba Ferramentas
 - Bloqueio de visualização da aba Auditoria sem permissão
 
-### Ainda falta
+### Evoluções futuras
 
 - Aplicar bloqueios granulares em exportação de auditoria quando a exportação avançada for implementada
 - Separar formalmente perfis Admin, Operador, Auditor e Viewer no backend/core
-- Controlar exportação e ações sensíveis por permissão granular
+- Controlar exportação e ações sensíveis por permissão granular conforme novas ações forem adicionadas
 
 ---
 
@@ -423,6 +423,7 @@ Blindar comportamento da IA.
 - Edição completa de diretrizes
 - Diretrizes por ambiente
 - Ferramentas reais no painel administrativo
+- RBAC administrativo aplicado ao painel atual
 - RBAC administrativo avançado
 - Métricas avançadas
 - Auditoria avançada
