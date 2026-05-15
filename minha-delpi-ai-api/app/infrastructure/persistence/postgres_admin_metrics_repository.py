@@ -45,6 +45,7 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
         )
 
         message_metrics = self._message_metrics_24h(since=since)
+        rag_failures = self._rag_failures_24h(since=since)
 
         action_distribution = self._count_by_field(
             AiAuditLogModel.action,
@@ -86,7 +87,7 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
                 "tokensUsed": message_metrics["tokensUsed"],
                 "estimatedCost": message_metrics["estimatedCost"],
                 "instrumentedMessages": message_metrics["instrumentedMessages"],
-                "ragFailures": None,
+                "ragFailures": rag_failures,
                 "assertivenessRate": None,
                 "agentMetrics": [],
                 "userProfileMetrics": [],
@@ -96,6 +97,31 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
                 ],
             },
         }
+
+
+    def _rag_failures_24h(self, *, since: datetime) -> int:
+        rows = (
+            db.session.query(AiAuditLogModel)
+            .filter(AiAuditLogModel.created_at >= since)
+            .filter(AiAuditLogModel.action.in_(["chat.message.sent", "chat.message.streamed"]))
+            .all()
+        )
+
+        failures = 0
+
+        for row in rows:
+            metadata = row.metadata or {}
+
+            if not isinstance(metadata, dict):
+                continue
+
+            rag_enabled = metadata.get("rag_enabled") is True
+            sources = metadata.get("sources") or []
+
+            if rag_enabled and len(sources) == 0:
+                failures += 1
+
+        return failures
 
     def _safe_rate(self, value: int, total: int) -> float:
         if total <= 0:
