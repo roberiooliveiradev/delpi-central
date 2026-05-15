@@ -231,10 +231,11 @@ Melhorar observabilidade do chat.
 - Estimativa de tokens por prompt/resposta
 - Agregação de latência média nas últimas 24h
 - Agregação de tokens estimados nas últimas 24h
+- Custo estimado configurável por 1K tokens de prompt/resposta
 
 ### Ainda falta
 
-- Custo estimado com tabela por provider/modelo
+- Tabela administrativa de custo por provider/modelo
 - Falhas RAG
 - Assertividade por teste
 - Métricas por agente

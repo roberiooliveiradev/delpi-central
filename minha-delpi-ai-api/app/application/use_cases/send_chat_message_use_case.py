@@ -131,6 +131,10 @@ class SendChatMessageUseCase:
         prompt_tokens_estimated = self._estimate_tokens_from_messages(llm_messages)
         completion_tokens_estimated = self._estimate_tokens(answer)
         total_tokens_estimated = prompt_tokens_estimated + completion_tokens_estimated
+        estimated_cost = self._estimate_cost(
+            prompt_tokens=prompt_tokens_estimated,
+            completion_tokens=completion_tokens_estimated,
+        )
 
         assistant_message = self.chat_repository.create_message(
             session_id=session_id,
@@ -155,7 +159,7 @@ class SendChatMessageUseCase:
                     "promptTokensEstimated": prompt_tokens_estimated,
                     "completionTokensEstimated": completion_tokens_estimated,
                     "totalTokensEstimated": total_tokens_estimated,
-                    "estimatedCost": None,
+                    "estimatedCost": estimated_cost,
                 },
             },
         )
@@ -183,7 +187,7 @@ class SendChatMessageUseCase:
                 "prompt_tokens_estimated": prompt_tokens_estimated,
                 "completion_tokens_estimated": completion_tokens_estimated,
                 "total_tokens_estimated": total_tokens_estimated,
-                "estimated_cost": None,
+                "estimated_cost": estimated_cost,
             },
         )
 
@@ -248,6 +252,20 @@ class SendChatMessageUseCase:
             raise InvalidChatSessionInputError("Message exceeds maximum length")
 
         return normalized
+
+    def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:
+        prompt_cost = (
+            prompt_tokens / 1000
+        ) * Settings.LLM_PROMPT_TOKEN_COST_PER_1K
+        completion_cost = (
+            completion_tokens / 1000
+        ) * Settings.LLM_COMPLETION_TOKEN_COST_PER_1K
+        total = prompt_cost + completion_cost
+
+        if total <= 0:
+            return None
+
+        return round(total, 6)
 
     def _estimate_tokens_from_messages(self, messages: list[dict]) -> int:
         total = 0

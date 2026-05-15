@@ -19,6 +19,12 @@ class Settings:
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama").lower().strip()
     LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.2"))
     LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "1024"))
+    LLM_PROMPT_TOKEN_COST_PER_1K = float(
+        os.getenv("LLM_PROMPT_TOKEN_COST_PER_1K", "0")
+    )
+    LLM_COMPLETION_TOKEN_COST_PER_1K = float(
+        os.getenv("LLM_COMPLETION_TOKEN_COST_PER_1K", "0")
+    )
 
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:1.5b")
