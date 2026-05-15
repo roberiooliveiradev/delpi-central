@@ -406,14 +406,18 @@ export async function getAdminRbacSummary(
 }
 
 export async function getAdminToolHealth(
-  options: AdminApiOptions = {},
+  _options: AdminApiOptions = {},
 ): Promise<AdminToolHealthResponse> {
-  const response = await fetch(`${API_BASE_URL}/admin/external-action-providers`, {
-    method: "GET",
-    headers: await getAuthHeaders(options),
-  });
-
-  return parseJsonResponse<AdminToolHealthResponse>(response);
+  return {
+    items: [
+      {
+        id: "external-actions-catalog",
+        label: "Catálogo de actions",
+        description: "Health técnico dedicado ainda não exposto pelo backend.",
+        status: "pending",
+      },
+    ],
+  };
 }
 
 export async function listAdminExternalActions(
