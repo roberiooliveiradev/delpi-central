@@ -95,3 +95,22 @@
     justify-content: flex-start;
   }
 }
+
+.mdc-guideline-list-panel__empty {
+  display: grid;
+  gap: var(--mdc-space-2);
+  border: 1px dashed var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: var(--mdc-bg-muted);
+  padding: var(--mdc-space-5);
+}
+
+.mdc-guideline-list-panel__empty strong {
+  color: var(--mdc-title);
+}
+
+.mdc-guideline-list-panel__empty p {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  line-height: 1.45;
+}

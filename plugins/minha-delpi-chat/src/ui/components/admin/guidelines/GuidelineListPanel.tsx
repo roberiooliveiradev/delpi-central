@@ -34,44 +34,53 @@ export function GuidelineListPanel({
         Diretrizes que moldam o comportamento geral do chat, antes de agentes, projetos e anexos de conversa.
       </p>
 
-      <div className="mdc-guideline-list-panel__list">
-        {guidelines.map((guideline) => (
-          <article key={guideline.id} className="mdc-guideline-list-panel__item">
-            <div>
-              <strong>{guideline.title}</strong>
-              <p>{guideline.description}</p>
-            </div>
+      {guidelines.length === 0 ? (
+        <div className="mdc-guideline-list-panel__empty">
+          <strong>Nenhuma diretriz cadastrada ainda.</strong>
+          <p>
+            Crie a primeira diretriz no painel ao lado para orientar o comportamento global do chat.
+          </p>
+        </div>
+      ) : (
+        <div className="mdc-guideline-list-panel__list">
+          {guidelines.map((guideline) => (
+            <article key={guideline.id} className="mdc-guideline-list-panel__item">
+              <div>
+                <strong>{guideline.title}</strong>
+                <p>{guideline.description || guideline.content}</p>
+              </div>
 
-            <div className="mdc-guideline-list-panel__actions">
-              <span className={`is-${guideline.status}`}>
-                {STATUS_LABEL[guideline.status]}
-              </span>
+              <div className="mdc-guideline-list-panel__actions">
+                <span className={`is-${guideline.status}`}>
+                  {STATUS_LABEL[guideline.status]}
+                </span>
 
-              <button
-                type="button"
-                disabled={false}
-                title="Publicar diretriz"
-                onClick={() => {
-                  void publishGuideline(guideline.id);
-                }}
-              >
-                Publicar
-              </button>
+                <button
+                  type="button"
+                  disabled={guideline.status === "active"}
+                  title="Publicar diretriz"
+                  onClick={() => {
+                    void publishGuideline(guideline.id);
+                  }}
+                >
+                  Publicar
+                </button>
 
-              <button
-                type="button"
-                disabled={false}
-                title="Arquivar diretriz"
-                onClick={() => {
-                  void archiveGuideline(guideline.id);
-                }}
-              >
-                Arquivar
-              </button>
-            </div>
-          </article>
-        ))}
-      </div>
+                <button
+                  type="button"
+                  disabled={guideline.status === "archived"}
+                  title="Arquivar diretriz"
+                  onClick={() => {
+                    void archiveGuideline(guideline.id);
+                  }}
+                >
+                  Arquivar
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </article>
   );
 }

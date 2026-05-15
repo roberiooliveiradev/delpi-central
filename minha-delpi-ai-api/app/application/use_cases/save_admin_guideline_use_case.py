@@ -1,3 +1,5 @@
+from uuid import UUID
+
 ALLOWED_CATEGORIES = {"behavior", "rag", "tools", "safety"}
 ALLOWED_STATUSES = {"draft", "active", "archived"}
 
@@ -38,11 +40,21 @@ class SaveAdminGuidelineUseCase:
             user_id=user_id,
         )
 
-        self.audit_repository.create(
+        self.audit_repository.log(
             action="chat.guideline.saved",
             context="admin",
-            user_id=user_id,
+            user_id=_parse_user_id(user_id),
             metadata={"guidelineId": result["id"], "status": result["status"]},
         )
 
         return result
+
+
+def _parse_user_id(user_id: str | None):
+    if not user_id:
+        return None
+
+    try:
+        return UUID(str(user_id))
+    except ValueError:
+        return None

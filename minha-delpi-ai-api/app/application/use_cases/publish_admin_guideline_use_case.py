@@ -1,3 +1,5 @@
+from uuid import UUID
+
 class PublishAdminGuidelineUseCase:
     def __init__(self, *, repository, audit_repository):
         self.repository = repository
@@ -9,11 +11,21 @@ class PublishAdminGuidelineUseCase:
         if result is None:
             raise ValueError("guideline not found")
 
-        self.audit_repository.create(
+        self.audit_repository.log(
             action="chat.guideline.published",
             context="admin",
-            user_id=user_id,
+            user_id=_parse_user_id(user_id),
             metadata={"guidelineId": result["id"]},
         )
 
         return result
+
+
+def _parse_user_id(user_id: str | None):
+    if not user_id:
+        return None
+
+    try:
+        return UUID(str(user_id))
+    except ValueError:
+        return None
