@@ -3,7 +3,6 @@ import { useState } from "react";
 import { AdminAuditTab } from "../components/admin/audit/AdminAuditTab";
 import { AdminGuidelinesTab } from "../components/admin/guidelines/AdminGuidelinesTab";
 import { AdminKnowledgeTab } from "../components/admin/knowledge/AdminKnowledgeTab";
-import { AdminMetrics } from "../components/admin/metrics/AdminMetrics";
 import { AdminMetricsTab } from "../components/admin/metrics-tab/AdminMetricsTab";
 import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
@@ -47,8 +46,6 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
           error={admin.error}
           successMessage={admin.successMessage}
         />
-
-        <AdminMetrics metricsSummary={admin.metricsSummary} />
 
         {activeTab === "knowledge" ? (
           <AdminKnowledgeTab

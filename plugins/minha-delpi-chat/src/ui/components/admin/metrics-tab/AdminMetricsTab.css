@@ -1,10 +1,9 @@
 .mdc-admin-metrics-tab {
   display: grid;
-  gap: var(--mdc-space-5);
+  gap: var(--mdc-space-4);
 }
 
-.mdc-admin-metrics-tab__hero,
-.mdc-admin-metrics-tab__grid article {
+.mdc-admin-metrics-tab__hero {
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-xl);
   background: var(--mdc-card-bg);
@@ -15,12 +14,14 @@
 .mdc-admin-metrics-tab__hero h2 {
   margin: 0;
   color: var(--mdc-primary);
-  font-size: 1.25rem;
+  font-size: 1.2rem;
 }
 
 .mdc-admin-metrics-tab__hero p {
+  max-width: 58rem;
   margin: var(--mdc-space-2) 0 0;
   color: var(--mdc-text-muted);
+  line-height: 1.45;
 }
 
 .mdc-admin-metrics-tab__grid {
@@ -32,16 +33,23 @@
 .mdc-admin-metrics-tab__grid article {
   display: grid;
   gap: var(--mdc-space-2);
+  min-height: 7rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: var(--mdc-card-bg);
+  padding: var(--mdc-space-4);
 }
 
 .mdc-admin-metrics-tab__grid span {
   color: var(--mdc-text-muted);
+  font-size: 0.82rem;
   font-weight: 800;
 }
 
 .mdc-admin-metrics-tab__grid strong {
   color: var(--mdc-title);
-  font-size: 1.7rem;
+  font-size: 1.55rem;
+  line-height: 1;
 }
 
 @media (max-width: 980px) {
