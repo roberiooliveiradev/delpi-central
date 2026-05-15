@@ -130,10 +130,12 @@ Explicar por que o agente respondeu algo durante o teste de assertividade.
 - Frontend exibe `Chunks usados`
 - Frontend exibe score e prévia da resposta
 - Layout da aba Diretrizes foi reorganizado para melhorar leitura do teste
+- `/admin/rag/test` retorna `debugContext` seguro
+- Frontend exibe contexto seguro com contagem de diretrizes, documentos e chunks
+- Frontend exibe preview sanitizado do contexto usado no teste
 
 ### Ainda falta
 
-- Retornar prompt/contexto usado no teste, se seguro para exibição administrativa
 - Comparar resposta com e sem diretrizes
 - Comparar resposta com e sem RAG
 - Diferenciar visualmente:
@@ -386,13 +388,13 @@ Blindar comportamento da IA.
 - Teste RAG exibindo diretrizes aplicadas
 - Teste RAG exibindo documentos acionados
 - Teste RAG exibindo chunks usados
+- Teste RAG exibindo contexto seguro de depuração
 - Refatoração visual da aba Diretrizes
 - Auditoria inicial
 - Métricas iniciais
 
 ## Em andamento
 
-- Teste RAG avançado com prompt/contexto seguro
 - Comparação com e sem diretrizes
 - Comparação com e sem RAG
 - Melhor explicabilidade do comportamento do agente
