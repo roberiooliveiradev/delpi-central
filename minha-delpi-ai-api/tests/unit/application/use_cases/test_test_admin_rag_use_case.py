@@ -70,7 +70,7 @@ class FakeGuidelineRepository:
 
 def test_admin_rag_test_returns_applied_guidelines():
     use_case = AdminRagTestUseCase(
-        knowledge_repository=FakeKnowledgeRepository([]),
+        knowledge_repository=FakeKnowledgeRepository(),
         embedding_gateway=FakeEmbeddingGateway(),
         guideline_repository=FakeGuidelineRepository(),
     )
