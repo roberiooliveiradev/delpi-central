@@ -1,5 +1,8 @@
 import type {
+  AdminAuditExportResponse,
   AdminAuditLog,
+  AdminAuditQuery,
+  AdminExternalActionCatalogItem,
   AdminGuideline,
   AdminGuidelineCategory,
   AdminGuidelineEnvironment,
@@ -10,6 +13,9 @@ import type {
   AdminKnowledgeDocumentsResponse,
   AdminLlmStatus,
   AdminMetricsSummary,
+  AdminRagTestRequest,
+  AdminRagTestResponse,
+  AdminToolHealthResponse,
 } from "./adminTypes";
 
 const API_BASE_URL = "/apps/minha-delpi-ai/api";
@@ -371,4 +377,62 @@ export async function getAdminMetricsSummary(
   });
 
   return parseJsonResponse<AdminMetricsSummary>(response);
+}
+
+export async function testAdminRag(
+  payload: AdminRagTestRequest,
+  options: AdminApiOptions = {},
+): Promise<AdminRagTestResponse> {
+  const response = await fetch(`${API_BASE_URL}/admin/rag/test`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<AdminRagTestResponse>(response);
+}
+
+export async function getAdminToolHealth(
+  options: AdminApiOptions = {},
+): Promise<AdminToolHealthResponse> {
+  const response = await fetch(`${API_BASE_URL}/admin/tools/health`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminToolHealthResponse>(response);
+}
+
+export async function listAdminExternalActions(
+  options: AdminApiOptions = {},
+): Promise<AdminExternalActionCatalogItem[]> {
+  const response = await fetch(`${API_BASE_URL}/admin/tools/actions`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminExternalActionCatalogItem[]>(response);
+}
+
+export async function exportAdminAuditLogs(
+  query: AdminAuditQuery,
+  options: AdminApiOptions = {},
+): Promise<AdminAuditExportResponse> {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  });
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/audit-logs/export?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<AdminAuditExportResponse>(response);
 }
