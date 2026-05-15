@@ -141,6 +141,12 @@ export function AdminMetricsTab({ metricsSummary }: AdminMetricsTabProps) {
           </strong>
           <p>Aguardando tabela de custo por provider/modelo.</p>
         </article>
+
+        <article className="mdc-admin-metrics-card">
+          <h3>Falhas RAG</h3>
+          <strong>{formatNumber(metricsSummary.advanced?.ragFailures)}</strong>
+          <p>Mensagens com RAG ativo, mas sem fontes recuperadas nas últimas 24h.</p>
+        </article>
       </div>
 
       <div className="mdc-admin-metrics-tab__columns">
