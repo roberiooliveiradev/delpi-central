@@ -15,6 +15,16 @@ class PostgresAdminGuidelineRepository:
 
         return [self._to_dict(row) for row in rows]
 
+    def list_active(self) -> list[dict]:
+        rows = (
+            AiAdminGuidelineModel.query
+            .filter(AiAdminGuidelineModel.status == "active")
+            .order_by(AiAdminGuidelineModel.category.asc(), AiAdminGuidelineModel.created_at.asc())
+            .all()
+        )
+
+        return [self._to_dict(row) for row in rows]
+
     def create_or_update(
         self,
         *,

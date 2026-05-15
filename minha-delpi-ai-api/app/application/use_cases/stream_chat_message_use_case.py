@@ -34,6 +34,7 @@ class StreamChatMessageUseCase:
         agent_repository: ChatAgentRepositoryPort | None = None,
         attachment_repository: ChatAttachmentRepositoryPort | None = None,
         workspace_context_service: ChatWorkspaceContextService | None = None,
+        admin_guideline_prompt_service=None,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
@@ -46,6 +47,7 @@ class StreamChatMessageUseCase:
         self.agent_repository = agent_repository
         self.attachment_repository = attachment_repository
         self.workspace_context_service = workspace_context_service
+        self.admin_guideline_prompt_service = admin_guideline_prompt_service
 
     def stream(self, request: SendChatMessageRequest) -> Iterator[dict]:
         message = self._validate_message(request.message)
@@ -118,6 +120,8 @@ class StreamChatMessageUseCase:
             message_id=user_message.id,
         )
 
+        admin_guidelines_prompt, active_guidelines = self._build_admin_guidelines_prompt()
+
         llm_messages = self.prompt_builder_service.build_messages(
             history=history,
             current_message=message,
@@ -125,6 +129,7 @@ class StreamChatMessageUseCase:
             tool_context=tool_context["context"],
             project_prompt=workspace_context.get("projectPrompt"),
             agent_prompt=workspace_context.get("agentPrompt"),
+            admin_guidelines_prompt=admin_guidelines_prompt,
             attachments=attachments,
         )
 
@@ -138,6 +143,12 @@ class StreamChatMessageUseCase:
         yield {
             "type": "tool_calls",
             "toolCalls": tool_calls,
+            "adminGuidelines": self._guideline_metadata(active_guidelines),
+        }
+
+        yield {
+            "type": "admin_guidelines",
+            "adminGuidelines": self._guideline_metadata(active_guidelines),
         }
 
         for token in self.llm_gateway.stream(llm_messages):
@@ -167,6 +178,7 @@ class StreamChatMessageUseCase:
                     "enabled": True,
                     "sourceCount": len(sources),
                 },
+                "adminGuidelines": self._guideline_metadata(active_guidelines),
             },
         )
 
@@ -187,6 +199,8 @@ class StreamChatMessageUseCase:
                 "sources": sources,
                 "rag_enabled": True,
                 "tool_count": len(tool_calls),
+                "admin_guideline_count": len(active_guidelines),
+                "admin_guidelines": self._guideline_metadata(active_guidelines),
                 "agent_key": workspace_context.get("agentKey"),
                 "agent": workspace_context.get("agent"),
             },

@@ -2,6 +2,7 @@ from app.application.use_cases.update_chat_message_use_case import UpdateChatMes
 from app.application.use_cases.delete_chat_session_use_case import DeleteChatSessionUseCase
 from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
 from app.application.services.external_actions.external_action_selection_service import ExternalActionSelectionService
+from app.application.services.admin_guideline_prompt_service import AdminGuidelinePromptService
 from app.application.services.chat_attachment_text_extractor import ChatAttachmentTextExtractor
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
@@ -61,6 +62,7 @@ from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
 from app.composition.llm_composer import make_llm_gateway
+from app.infrastructure.persistence.postgres_admin_guideline_repository import PostgresAdminGuidelineRepository
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.persistence.postgres_chat_agent_repository import PostgresChatAgentRepository
 from app.infrastructure.persistence.postgres_chat_project_repository import PostgresChatProjectRepository
@@ -122,6 +124,10 @@ def make_chat_tool_context_service() -> ChatToolContextService:
     )
 
 
+def make_admin_guideline_prompt_service() -> AdminGuidelinePromptService:
+    return AdminGuidelinePromptService(PostgresAdminGuidelineRepository())
+
+
 def make_send_chat_message_use_case() -> SendChatMessageUseCase:
     return SendChatMessageUseCase(
         chat_repository=PostgresChatSessionRepository(),
@@ -133,6 +139,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
         agent_repository=PostgresChatAgentRepository(),
         attachment_repository=PostgresChatAttachmentRepository(),
         workspace_context_service=make_chat_workspace_context_service(),
+        admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
     )
 
 
@@ -147,6 +154,7 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
         agent_repository=PostgresChatAgentRepository(),
         attachment_repository=PostgresChatAttachmentRepository(),
         workspace_context_service=make_chat_workspace_context_service(),
+        admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
     )
 
 def make_rename_chat_session_use_case() -> RenameChatSessionUseCase:

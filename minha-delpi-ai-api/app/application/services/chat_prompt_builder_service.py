@@ -11,12 +11,19 @@ class ChatPromptBuilderService:
         tool_context: str,
         project_prompt: str | None = None,
         agent_prompt: str | None = None,
+        admin_guidelines_prompt: str | None = None,
         attachments: list[dict] | None = None,
     ) -> list[dict]:
         base_prompt = self.prompt_policy_service.build_contextual_prompt(
             rag_context=rag_context,
             tool_context=tool_context,
         )
+
+        if admin_guidelines_prompt:
+            base_prompt = (
+                f"{base_prompt}\n\n"
+                f"{admin_guidelines_prompt}"
+            )
 
         if project_prompt:
             base_prompt = (
