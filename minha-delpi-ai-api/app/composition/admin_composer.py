@@ -1,5 +1,6 @@
 from app.application.use_cases.archive_admin_guideline_use_case import ArchiveAdminGuidelineUseCase
 from app.application.use_cases.list_admin_guidelines_use_case import ListAdminGuidelinesUseCase
+from app.application.use_cases.list_admin_guideline_versions_use_case import ListAdminGuidelineVersionsUseCase
 from app.application.use_cases.publish_admin_guideline_use_case import PublishAdminGuidelineUseCase
 from app.application.use_cases.save_admin_guideline_use_case import SaveAdminGuidelineUseCase
 from app.infrastructure.persistence.postgres_admin_guideline_repository import PostgresAdminGuidelineRepository
@@ -155,3 +156,8 @@ def make_archive_admin_guideline_use_case() -> ArchiveAdminGuidelineUseCase:
         repository=PostgresAdminGuidelineRepository(),
         audit_repository=PostgresAuditRepository(),
     )
+
+
+
+def make_list_admin_guideline_versions_use_case() -> ListAdminGuidelineVersionsUseCase:
+    return ListAdminGuidelineVersionsUseCase(PostgresAdminGuidelineRepository())

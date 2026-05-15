@@ -29,6 +29,7 @@ from app.composition.admin_composer import (
     make_get_admin_system_check_use_case,
     make_list_admin_audit_logs_use_case,
     make_list_admin_guidelines_use_case,
+    make_list_admin_guideline_versions_use_case,
     make_list_admin_knowledge_documents_use_case,
     make_reactivate_knowledge_document_use_case,
     make_publish_admin_guideline_use_case,
@@ -57,6 +58,15 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 def list_admin_guidelines():
     use_case = make_list_admin_guidelines_use_case()
     return jsonify(use_case.execute()), 200
+
+
+
+
+@admin_bp.get("/guidelines/<guideline_id>/versions")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def list_admin_guideline_versions(guideline_id: str):
+    use_case = make_list_admin_guideline_versions_use_case()
+    return jsonify(use_case.execute(guideline_id)), 200
 
 
 @admin_bp.post("/guidelines")

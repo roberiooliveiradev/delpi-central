@@ -74,3 +74,19 @@ export type AdminGuideline = {
   createdAt?: string | null;
   updatedAt?: string | null;
 };
+
+
+export type AdminGuidelineVersion = {
+  id: string;
+  guidelineId: string;
+  version: number;
+  title: string;
+  description: string;
+  content: string;
+  category: AdminGuidelineCategory;
+  status: AdminGuidelineStatus;
+  event: "saved" | "published" | "archived" | string;
+  metadata?: Record<string, unknown>;
+  createdBy?: string | null;
+  createdAt?: string | null;
+};

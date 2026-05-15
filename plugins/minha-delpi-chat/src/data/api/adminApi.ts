@@ -1,6 +1,7 @@
 import type {
   AdminAuditLog,
   AdminGuideline,
+  AdminGuidelineVersion,
   AdminKnowledgeDocument,
   AdminKnowledgeDocumentsResponse,
   AdminLlmStatus,
@@ -99,6 +100,19 @@ export async function listAdminGuidelines(
   });
 
   return parseJsonResponse<AdminGuideline[]>(response);
+}
+
+
+export async function listAdminGuidelineVersions(
+  guidelineId: string,
+  options: AdminApiOptions = {},
+): Promise<AdminGuidelineVersion[]> {
+  const response = await fetch(`${API_BASE_URL}/admin/guidelines/${guidelineId}/versions`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminGuidelineVersion[]>(response);
 }
 
 export async function saveAdminGuideline(

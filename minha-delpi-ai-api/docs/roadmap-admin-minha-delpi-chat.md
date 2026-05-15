@@ -54,17 +54,21 @@ admin_guidelines:
 
 ## 2. Versionamento de diretrizes
 
-**Status: Pendente**
+**Status: Parcialmente concluído**
 
 ### Objetivo
 
 Permitir histórico e rollback das diretrizes administrativas.
 
-### Implementar
+### Entregue
 
 - Criar tabela `ai_admin_guideline_versions`
-- Gerar versão ao criar/editar/publicar diretriz
-- Listar histórico
+- Gerar versão ao criar, editar, publicar e arquivar diretriz
+- Listar histórico de versões por diretriz
+- Exibir histórico de versões no painel administrativo
+
+### Ainda falta
+
 - Comparar versões
 - Restaurar versão anterior
 

@@ -15,39 +15,79 @@
   font-size: 1.08rem;
 }
 
-.mdc-guideline-version-panel__grid {
+.mdc-guideline-version-panel label {
+  display: grid;
+  gap: var(--mdc-space-2);
+  color: var(--mdc-title-soft);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.mdc-guideline-version-panel select {
+  width: 100%;
+  border: 1px solid var(--mdc-control-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-control-bg);
+  color: var(--mdc-control-text);
+  font: inherit;
+  outline: 0;
+  padding: 0.75rem 0.85rem;
+}
+
+.mdc-guideline-version-panel__error {
+  border: 1px solid var(--mdc-danger);
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-danger) 9%, transparent);
+  color: var(--mdc-danger);
+  padding: var(--mdc-space-3);
+}
+
+.mdc-guideline-version-panel__empty {
+  border: 1px dashed var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: var(--mdc-bg-muted);
+  color: var(--mdc-text-muted);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-guideline-version-panel__list {
   display: grid;
   gap: var(--mdc-space-3);
 }
 
-.mdc-guideline-version-panel__grid div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mdc-space-4);
+.mdc-guideline-version-panel__list section {
+  display: grid;
+  gap: var(--mdc-space-2);
   border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
+  border-radius: var(--mdc-radius-lg);
   background: var(--mdc-bg-muted);
-  padding: var(--mdc-space-3);
+  padding: var(--mdc-space-4);
 }
 
-.mdc-guideline-version-panel__grid strong {
+.mdc-guideline-version-panel__list section > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-guideline-version-panel__list strong,
+.mdc-guideline-version-panel__list h3 {
   color: var(--mdc-title);
 }
 
-.mdc-guideline-version-panel__grid span {
-  color: var(--mdc-text-muted);
+.mdc-guideline-version-panel__list h3,
+.mdc-guideline-version-panel__list p {
+  margin: 0;
 }
 
-.mdc-guideline-version-panel__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mdc-space-2);
-}
-
-.mdc-guideline-version-panel__actions button {
-  min-height: 2.35rem;
-  border-radius: 999px;
+.mdc-guideline-version-panel__list span {
+  color: var(--mdc-primary);
+  font-size: 0.8rem;
   font-weight: 800;
-  padding: 0.5rem 0.8rem;
+}
+
+.mdc-guideline-version-panel__list p,
+.mdc-guideline-version-panel__list small {
+  color: var(--mdc-text-muted);
+  line-height: 1.45;
 }

@@ -14,7 +14,10 @@ export function AdminGuidelinesTab({
   publishGuideline,
   archiveGuideline,
   testGuidelines,
-}: AdminGuidelinesTabProps) {
+  getAccessToken,
+}: AdminGuidelinesTabProps & {
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
+}) {
   return (
     <section className="mdc-admin-guidelines">
       <GuidelineListPanel
@@ -28,7 +31,10 @@ export function AdminGuidelinesTab({
         <GuidelineTestPanel testGuidelines={testGuidelines} />
       </div>
 
-      <GuidelineVersionPanel />
+      <GuidelineVersionPanel
+        guidelines={guidelines}
+        getAccessToken={getAccessToken}
+      />
     </section>
   );
 }

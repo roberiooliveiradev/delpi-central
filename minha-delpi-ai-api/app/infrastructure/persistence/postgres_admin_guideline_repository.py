@@ -5,6 +5,7 @@ from uuid import UUID
 
 from app.extensions.db import db
 from app.infrastructure.db.models.admin_guideline_model import AiAdminGuidelineModel
+from app.infrastructure.db.models.admin_guideline_version_model import AiAdminGuidelineVersionModel
 
 
 class PostgresAdminGuidelineRepository:
@@ -66,6 +67,7 @@ class PostgresAdminGuidelineRepository:
             row.updated_by = user_id
 
         db.session.flush()
+        self._create_version(row, event="saved", user_id=user_id)
         return self._to_dict(row)
 
     def publish(self, guideline_id: str, *, user_id: str | None) -> dict | None:
@@ -79,6 +81,7 @@ class PostgresAdminGuidelineRepository:
         row.archived_at = None
         row.updated_by = user_id
         db.session.flush()
+        self._create_version(row, event="published", user_id=user_id)
 
         return self._to_dict(row)
 
@@ -92,8 +95,65 @@ class PostgresAdminGuidelineRepository:
         row.archived_at = datetime.now(timezone.utc)
         row.updated_by = user_id
         db.session.flush()
+        self._create_version(row, event="archived", user_id=user_id)
 
         return self._to_dict(row)
+
+    def list_versions(self, guideline_id: str) -> list[dict]:
+        rows = (
+            AiAdminGuidelineVersionModel.query
+            .filter_by(guideline_id=UUID(str(guideline_id)))
+            .order_by(AiAdminGuidelineVersionModel.version.desc())
+            .all()
+        )
+
+        return [self._version_to_dict(row) for row in rows]
+
+    def _create_version(
+        self,
+        row: AiAdminGuidelineModel,
+        *,
+        event: str,
+        user_id: str | None,
+    ) -> None:
+        latest_version = (
+            db.session.query(db.func.max(AiAdminGuidelineVersionModel.version))
+            .filter(AiAdminGuidelineVersionModel.guideline_id == row.id)
+            .scalar()
+            or 0
+        )
+
+        db.session.add(
+            AiAdminGuidelineVersionModel(
+                guideline_id=row.id,
+                version=int(latest_version) + 1,
+                title=row.title,
+                description=row.description,
+                content=row.content,
+                category=row.category,
+                status=row.status,
+                event=event,
+                guideline_metadata=row.guideline_metadata or {},
+                created_by=user_id,
+            )
+        )
+        db.session.flush()
+
+    def _version_to_dict(self, row: AiAdminGuidelineVersionModel) -> dict:
+        return {
+            "id": str(row.id),
+            "guidelineId": str(row.guideline_id),
+            "version": row.version,
+            "title": row.title,
+            "description": row.description,
+            "content": row.content,
+            "category": row.category,
+            "status": row.status,
+            "event": row.event,
+            "metadata": row.guideline_metadata or {},
+            "createdBy": row.created_by,
+            "createdAt": row.created_at.isoformat() if row.created_at else None,
+        }
 
     def _to_dict(self, row: AiAdminGuidelineModel) -> dict:
         return {
