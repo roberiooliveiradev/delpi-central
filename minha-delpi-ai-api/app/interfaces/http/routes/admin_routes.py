@@ -62,8 +62,9 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @admin_bp.get("/rbac/summary")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def get_admin_rbac_summary():
-    authorization_header = request.headers.get("Authorization")
-    core_user = CoreApiHttpGateway().get_me(authorization_header)
+    authorization_header = request.headers.get("Authorization") or ""
+    access_token = authorization_header.removeprefix("Bearer ").strip()
+    core_user = CoreApiHttpGateway().get_me(access_token)
 
     use_case = make_get_admin_rbac_summary_use_case()
     return jsonify(use_case.execute(g.current_user, core_user=core_user)), 200
