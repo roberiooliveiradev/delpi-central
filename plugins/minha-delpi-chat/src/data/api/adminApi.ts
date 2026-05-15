@@ -414,7 +414,7 @@ export async function getAdminToolHealth(
         id: "external-actions-catalog",
         label: "Catálogo de actions",
         description: "Health técnico dedicado ainda não exposto pelo backend.",
-        status: "pending",
+        status: "unknown",
       },
     ],
   };
