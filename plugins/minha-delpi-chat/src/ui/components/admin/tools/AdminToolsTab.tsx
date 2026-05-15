@@ -81,8 +81,11 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
             <h3>Status do modelo</h3>
           </div>
 
-          <strong>{llmStatus?.status ?? "Indisponível"}</strong>
-          <p>{llmStatus?.model ?? "Modelo não informado"}</p>
+          <strong>{llmStatus?.provider || llmStatus?.model ? "Configurado" : "Indisponível"}</strong>
+          <p>
+            {llmStatus?.provider ?? "Provider não informado"} ·{" "}
+            {llmStatus?.model ?? "Modelo não informado"}
+          </p>
         </article>
 
         <article className="mdc-admin-tools-card">
