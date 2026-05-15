@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 
 import type { AdminKnowledgeDocument } from "../../../data/api/adminTypes";
 import type { CreateKnowledgeDocumentPayload, UploadKnowledgeDocumentFilePayload } from "../../../data/api/adminApi";
+import "./AdminKnowledgeTab.css";
 
 type DocumentStatusFilter = "all" | "active" | "inactive";
 

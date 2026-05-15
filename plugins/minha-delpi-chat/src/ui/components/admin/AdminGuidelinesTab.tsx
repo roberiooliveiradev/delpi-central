@@ -1,3 +1,4 @@
+import "./AdminGuidelinesTab.css";
 export function AdminGuidelinesTab() {
   return (
     <section className="mdc-admin-grid">

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import type { AdminAuditLog } from "../../../data/api/adminTypes";
+import "./AdminAuditTab.css";
 
 type AdminAuditTabProps = {
   auditLogs: AdminAuditLog[];

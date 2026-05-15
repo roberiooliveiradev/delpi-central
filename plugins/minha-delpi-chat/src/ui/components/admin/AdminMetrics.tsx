@@ -1,4 +1,5 @@
 import type { AdminMetricsSummary } from "../../../data/api/adminTypes";
+import "./AdminMetrics.css";
 
 type AdminMetricsProps = {
   metricsSummary: AdminMetricsSummary | null;

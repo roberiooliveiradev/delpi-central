@@ -1,4 +1,5 @@
 import type { AdminLlmStatus } from "../../../data/api/adminTypes";
+import "./AdminToolsTab.css";
 
 type AdminToolsTabProps = {
   llmStatus: AdminLlmStatus | null;
