@@ -108,9 +108,20 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
 
         {activeTab === "tools" ? <AdminRbacPanel rbac={adminRbac} /> : null}
 
-        {activeTab === "tools" ? <AdminToolsTab llmStatus={admin.llmStatus} getAccessToken={getAccessToken} /> : null}
+        {activeTab === "tools" ? (
+          <AdminToolsTab
+            llmStatus={admin.llmStatus}
+            getAccessToken={getAccessToken}
+            rbac={adminRbac}
+          />
+        ) : null}
 
-        {activeTab === "audit" ? <AdminAuditTab auditLogs={admin.auditLogs} /> : null}
+        {activeTab === "audit" ? (
+          <AdminAuditTab
+            auditLogs={admin.auditLogs}
+            rbac={adminRbac}
+          />
+        ) : null}
       </section>
     </main>
   );

@@ -16,6 +16,7 @@ import {
 import type {
   AdminExternalActionCatalogItem,
   AdminLlmStatus,
+  AdminRbacSummary,
   AdminToolHealthResponse,
 } from "../../../../data/api/adminTypes";
 import type {
@@ -33,9 +34,14 @@ import "./AdminToolsTab.css";
 type AdminToolsTabProps = {
   llmStatus?: AdminLlmStatus | null;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  rbac?: AdminRbacSummary | null;
 };
 
-export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps) {
+export function AdminToolsTab({
+  llmStatus,
+  getAccessToken,
+  rbac,
+}: AdminToolsTabProps) {
   const [health, setHealth] = useState<AdminToolHealthResponse | null>(null);
   const [actions, setActions] = useState<AdminExternalActionCatalogItem[]>([]);
   const [capabilities, setCapabilities] = useState<ChatCapabilities | null>(null);
@@ -51,6 +57,9 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
   const [isLoadingActionLogs, setIsLoadingActionLogs] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const canManageTools = Boolean(rbac?.capabilities.canManageTools);
+  const canUseTools = Boolean(rbac?.capabilities.canUseTools);
 
   async function loadTools() {
     setIsLoading(true);
@@ -173,7 +182,12 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
 
         <button
           type="button"
-          disabled={isLoading}
+          disabled={isLoading || !canUseTools}
+          title={
+            canUseTools
+              ? "Atualizar ferramentas"
+              : "Você não tem permissão para visualizar/usar ferramentas."
+          }
           onClick={() => {
             void loadTools();
           }}
@@ -308,10 +322,17 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
           <h3>Providers e actions vinculadas</h3>
         </div>
 
+        {!canManageTools ? (
+          <div className="mdc-admin-tools-tab__error" role="note">
+            Você não tem permissão para gerenciar ferramentas por agente.
+          </div>
+        ) : null}
+
         <label className="mdc-admin-tools-tab__agent-select">
           <span>Agente</span>
           <select
             value={selectedAgentId}
+            disabled={!canManageTools}
             onChange={(event) => {
               void loadAgentTools(event.target.value);
             }}
@@ -383,7 +404,7 @@ export function AdminToolsTab({ llmStatus, getAccessToken }: AdminToolsTabProps)
                 <span>Action</span>
                 <select
                   value={selectedAgentActionKey}
-                  disabled={agentActions.length === 0}
+                  disabled={!canManageTools || agentActions.length === 0}
                   onChange={(event) => {
                     void loadActionLogs(event.target.value);
                   }}

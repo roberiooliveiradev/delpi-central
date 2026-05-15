@@ -196,10 +196,14 @@ Controlar acesso granular às ações administrativas.
 - Matriz de permissões administrativas
 - Exibição de RBAC no painel administrativo
 - Exibição de permissões brutas do usuário atual
+- Bloqueios granulares na aba Conhecimento
+- Bloqueios granulares na aba Diretrizes
+- Bloqueios granulares na aba Ferramentas
+- Bloqueio de visualização da aba Auditoria sem permissão
 
 ### Ainda falta
 
-- Aplicar bloqueios granulares nos botões do frontend
+- Aplicar bloqueios granulares em exportação de auditoria quando a exportação avançada for implementada
 - Separar formalmente perfis Admin, Operador, Auditor e Viewer no backend/core
 - Controlar exportação e ações sensíveis por permissão granular
 
