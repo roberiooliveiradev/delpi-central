@@ -3,7 +3,10 @@ import { useState } from "react";
 import { AdminAuditTab } from "../components/admin/audit/AdminAuditTab";
 import { AdminGuidelinesTab } from "../components/admin/guidelines/AdminGuidelinesTab";
 import { AdminKnowledgeTab } from "../components/admin/knowledge/AdminKnowledgeTab";
-import { AdminMetrics } from "../components/admin/AdminMetrics";
+import { AdminMetrics } from "../components/admin/metrics/AdminMetrics";
+import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
+import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
+import type { AdminTab, AdminTabItem } from "../components/admin/shell/adminShellTypes";
 import { AdminToolsTab } from "../components/admin/tools/AdminToolsTab";
 import { useChatAdmin } from "../../state/hooks/useChatAdmin";
 
@@ -14,9 +17,7 @@ type ChatAdminPageProps = {
   onBack: () => void;
 };
 
-type AdminTab = "knowledge" | "guidelines" | "tools" | "audit";
-
-const ADMIN_TABS: Array<{ key: AdminTab; label: string }> = [
+const ADMIN_TABS: AdminTabItem[] = [
   { key: "knowledge", label: "Conhecimento" },
   { key: "guidelines", label: "Diretrizes" },
   { key: "tools", label: "Ferramentas" },
@@ -30,51 +31,19 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
   return (
     <main className="minha-delpi-chat mdc-admin-root">
       <section className="mdc-admin-shell">
-        <header className="mdc-admin-topbar">
-          <div className="mdc-admin-topbar__content">
-            <div>
-              <p className="mdc-chat-eyebrow">Administração</p>
-              <h1>Minha DELPI Chat</h1>
-              <p>
-                Curadoria da base global, diretrizes, ferramentas e auditoria operacional.
-              </p>
-            </div>
+        <AdminShellTopbar
+          activeTab={activeTab}
+          tabs={ADMIN_TABS}
+          isLoading={admin.isLoading}
+          onRefresh={admin.loadAdminData}
+          onBack={onBack}
+          onTabChange={setActiveTab}
+        />
 
-            <div className="mdc-admin-actions">
-              <button type="button" onClick={admin.loadAdminData} disabled={admin.isLoading}>
-                Atualizar
-              </button>
-              <button type="button" onClick={onBack}>
-                Voltar ao chat
-              </button>
-            </div>
-          </div>
-
-          <nav className="mdc-admin-tabs" aria-label="Administração do chat">
-            {ADMIN_TABS.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                className={activeTab === tab.key ? "is-active" : undefined}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </header>
-
-        {admin.error ? (
-          <div className="mdc-chat-alert" role="alert">
-            {admin.error}
-          </div>
-        ) : null}
-
-        {admin.successMessage ? (
-          <div className="mdc-chat-alert mdc-chat-alert--success" role="status">
-            {admin.successMessage}
-          </div>
-        ) : null}
+        <AdminShellAlerts
+          error={admin.error}
+          successMessage={admin.successMessage}
+        />
 
         <AdminMetrics metricsSummary={admin.metricsSummary} />
 

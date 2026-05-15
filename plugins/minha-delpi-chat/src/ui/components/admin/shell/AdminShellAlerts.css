@@ -1,0 +1,13 @@
+.mdc-admin-shell-alert {
+  border: 1px solid var(--mdc-danger);
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-danger) 9%, transparent);
+  color: var(--mdc-danger);
+  padding: var(--mdc-space-3) var(--mdc-space-4);
+}
+
+.mdc-admin-shell-alert--success {
+  border-color: var(--mdc-success);
+  background: color-mix(in srgb, var(--mdc-success) 9%, transparent);
+  color: var(--mdc-success);
+}
