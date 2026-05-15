@@ -334,3 +334,230 @@
   background: color-mix(in srgb, var(--mdc-primary) 6%, var(--mdc-card-bg));
   cursor: pointer;
 }
+
+/* Admin v2 — layout inspirado no ChatGPT */
+.mdc-admin-header--clean {
+  align-items: center;
+  border-radius: 1.45rem;
+  padding: clamp(1.15rem, 2vw, 1.7rem);
+}
+
+.mdc-admin-tabs {
+  display: inline-flex;
+  gap: 0.35rem;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-card-bg) 72%, transparent);
+  padding: 0.35rem;
+}
+
+.mdc-admin-tabs button {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 850;
+  padding: 0.6rem 0.95rem;
+  white-space: nowrap;
+}
+
+.mdc-admin-tabs button.is-active {
+  background: var(--mdc-primary);
+  color: var(--mdc-bg);
+}
+
+.mdc-admin-knowledge-layout {
+  display: grid;
+  grid-template-columns: minmax(20rem, 0.75fr) minmax(0, 1.25fr);
+  gap: 1rem;
+}
+
+.mdc-admin-ingest-card {
+  position: sticky;
+  top: 1rem;
+}
+
+.mdc-admin-card-title {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.mdc-admin-card-description {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  line-height: 1.55;
+}
+
+.mdc-admin-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  color: var(--mdc-primary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.35rem 0.6rem;
+  white-space: nowrap;
+}
+
+.mdc-admin-form-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 0.7rem;
+}
+
+.mdc-admin-form select,
+.mdc-admin-form textarea {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 76%, transparent);
+  border-radius: 0.78rem;
+  background: color-mix(in srgb, var(--mdc-bg) 82%, transparent);
+  color: var(--mdc-text);
+  font: inherit;
+  outline: 0;
+  padding: 0.72rem 0.82rem;
+}
+
+.mdc-admin-dropzone {
+  border: 1px dashed color-mix(in srgb, var(--mdc-primary) 46%, var(--mdc-card-border));
+  border-radius: 1.1rem;
+  background: color-mix(in srgb, var(--mdc-primary) 7%, var(--mdc-card-bg));
+  padding: 1rem;
+}
+
+.mdc-admin-dropzone input {
+  margin-top: 0.55rem;
+}
+
+.mdc-admin-dropzone strong,
+.mdc-admin-dropzone small {
+  display: block;
+}
+
+.mdc-admin-dropzone strong {
+  margin-top: 0.7rem;
+  color: var(--mdc-title);
+}
+
+.mdc-admin-dropzone small {
+  margin-top: 0.25rem;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-document-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.mdc-admin-document-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 48%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--mdc-bg) 34%, transparent);
+  padding: 0.9rem;
+}
+
+.mdc-admin-document-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mdc-admin-document-title strong {
+  color: var(--mdc-title);
+}
+
+.mdc-admin-document-title span {
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.25rem 0.5rem;
+}
+
+.mdc-admin-document-title span.is-active {
+  background: color-mix(in srgb, #22c55e 14%, transparent);
+  color: #86efac;
+}
+
+.mdc-admin-document-title span.is-inactive {
+  background: color-mix(in srgb, #f59e0b 14%, transparent);
+  color: #fcd34d;
+}
+
+.mdc-admin-document-row p,
+.mdc-admin-document-row small {
+  margin: 0;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-document-row p {
+  margin-top: 0.3rem;
+}
+
+.mdc-admin-document-row small {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.mdc-admin-danger-button {
+  border-color: color-mix(in srgb, #ef4444 45%, var(--mdc-card-border)) !important;
+  color: #fca5a5 !important;
+}
+
+.mdc-admin-guideline-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.mdc-admin-guideline-list div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 45%, transparent);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--mdc-bg) 38%, transparent);
+  padding: 0.85rem;
+}
+
+.mdc-admin-guideline-list strong {
+  color: var(--mdc-title);
+}
+
+.mdc-admin-guideline-list span {
+  color: var(--mdc-primary);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+@media (max-width: 1100px) {
+  .mdc-admin-knowledge-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-admin-ingest-card {
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .mdc-admin-document-row {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
