@@ -1,4 +1,4 @@
-import type { AdminRagTestResponse } from "../../../../data/api/adminFutureTypes";
+import type { AdminRagTestResponse } from "../../../../data/api/adminTypes";
 import type { AdminGuideline } from "../../../../data/api/adminTypes";
 import type { SaveAdminGuidelinePayload } from "../../../../data/api/adminApi";
 

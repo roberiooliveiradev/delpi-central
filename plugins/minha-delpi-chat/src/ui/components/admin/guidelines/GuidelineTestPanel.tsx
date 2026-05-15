@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import type { AdminRagTestResponse } from "../../../../data/api/adminFutureTypes";
+import type { AdminRagTestResponse } from "../../../../data/api/adminTypes";
 import type { GuidelineBackendPlaceholders } from "./guidelineTypes";
 
 import "./GuidelineTestPanel.css";
