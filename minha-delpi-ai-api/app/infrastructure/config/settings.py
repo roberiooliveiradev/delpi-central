@@ -18,7 +18,7 @@ class Settings:
 
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama").lower().strip()
     LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.2"))
-    LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "1024"))
+    LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "768"))
     LLM_PROMPT_TOKEN_COST_PER_1K = float(
         os.getenv("LLM_PROMPT_TOKEN_COST_PER_1K", "0")
     )
@@ -36,8 +36,10 @@ class Settings:
     )
 
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:1.5b")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
     OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "300"))
+    OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
+    OLLAMA_NUM_THREAD = int(os.getenv("OLLAMA_NUM_THREAD", "0"))
 
     VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://vllm:8000/v1")
     VLLM_MODEL = os.getenv("VLLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")
@@ -49,6 +51,9 @@ class Settings:
     EMBEDDING_DIMENSIONS = int(os.getenv("EMBEDDING_DIMENSIONS", "1024"))
     EMBEDDING_TIMEOUT_SECONDS = float(os.getenv("EMBEDDING_TIMEOUT_SECONDS", "120"))
 
+    CHAT_SESSION_TITLE_LLM_ENABLED = (
+        os.getenv("CHAT_SESSION_TITLE_LLM_ENABLED", "false").lower() == "true"
+    )
     CHAT_HISTORY_MAX_MESSAGES = int(os.getenv("CHAT_HISTORY_MAX_MESSAGES", "12"))
     CHAT_MESSAGE_MAX_CHARS = int(os.getenv("CHAT_MESSAGE_MAX_CHARS", "8000"))
     CHAT_INPUT_SECURITY_ENABLED = (

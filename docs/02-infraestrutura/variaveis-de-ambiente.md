@@ -111,7 +111,12 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `CORE_API_BASE_URL` | `http://core-api:8000` |
 | `LLM_PROVIDER` | `ollama` ou `vllm` |
 | `OLLAMA_BASE_URL` | `http://ollama:11434` |
-| `OLLAMA_MODEL` | Ex.: `qwen2.5:1.5b` |
+| `OLLAMA_MODEL` | Ex.: `qwen2.5:3b` (CPU); `qwen2.5:1.5b` só se precisar máxima velocidade |
+| `OLLAMA_NUM_CTX` | Janela de contexto (ex.: `4096` dev, `2048` prod CPU) |
+| `OLLAMA_NUM_THREAD` | Threads CPU (`0` = automático) |
+| `OLLAMA_NUM_PARALLEL` / `OLLAMA_MAX_LOADED_MODELS` / `OLLAMA_KEEP_ALIVE` | Serviço `ollama` no Compose |
+| `LLM_MAX_TOKENS` | `num_predict` Ollama (ex.: `768`) |
+| `CHAT_SESSION_TITLE_LLM_ENABLED` | `false` em prod recomendado (título rápido + refine opcional em background) |
 | `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` | Ex.: `bge-m3` |
 | `RATE_LIMIT_*` | Limites por janela |
 | `KNOWLEDGE_*` | Limites de ingestão RAG |

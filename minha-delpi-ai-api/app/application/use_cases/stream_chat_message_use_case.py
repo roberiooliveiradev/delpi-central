@@ -1,4 +1,6 @@
 import hashlib
+import logging
+import threading
 import time
 from collections.abc import Iterator
 from uuid import UUID
@@ -26,6 +28,9 @@ from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryP
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
+
+
+logger = logging.getLogger("minha-delpi-ai-api.stream_chat")
 
 
 class StreamChatMessageUseCase:
@@ -88,11 +93,15 @@ class StreamChatMessageUseCase:
 
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
 
-        if self._should_generate_session_title(session, previous_messages):
-            self._generate_and_apply_session_title(
+        should_generate_session_title = self._should_generate_session_title(
+            session,
+            previous_messages,
+        )
+        if should_generate_session_title:
+            self.chat_repository.rename_session(
                 session_id=session_id,
                 user_id=user_id,
-                message=message,
+                title=self._fallback_title_from_message(message),
             )
 
         history_summary, history = self._prepare_history(previous_messages)
@@ -287,6 +296,12 @@ class StreamChatMessageUseCase:
             "toolCalls": tool_calls,
         }
 
+        if should_generate_session_title and Settings.CHAT_SESSION_TITLE_LLM_ENABLED:
+            self._schedule_session_title_llm_refine(
+                session_id=session_id,
+                user_id=user_id,
+                message=message,
+            )
 
     def _build_admin_guidelines_prompt(self, workspace_context: dict) -> tuple[str, list[dict]]:
         if not self.admin_guideline_prompt_service:
@@ -431,6 +446,24 @@ class StreamChatMessageUseCase:
         title = (session.title or "").strip().lower()
 
         return title in {"", "nova conversa", "novo chat", "conversa sem título"}
+
+    def _schedule_session_title_llm_refine(
+        self,
+        session_id: UUID,
+        user_id: UUID,
+        message: str,
+    ) -> None:
+        def worker() -> None:
+            try:
+                self._generate_and_apply_session_title(
+                    session_id=session_id,
+                    user_id=user_id,
+                    message=message,
+                )
+            except Exception:
+                logger.exception("session_title_llm_refine_failed")
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def _generate_and_apply_session_title(
         self,

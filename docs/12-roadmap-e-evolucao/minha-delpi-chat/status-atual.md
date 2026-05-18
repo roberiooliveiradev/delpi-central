@@ -78,7 +78,7 @@ Local (WSL) com `DATABASE_URL` apontando para `localhost:5433` — ver [09-deplo
 
 ## LLM em produção (provisório)
 
-- Provider: **Ollama** (`qwen2.5:1.5b` + `bge-m3`)
+- Provider: **Ollama** (`qwen2.5:3b` + `bge-m3`; CPU sem GPU)
 - vLLM pendente de host com GPU — ver `homologacao-vllm-producao.md`
 
 ## Endpoints de verificação rápida

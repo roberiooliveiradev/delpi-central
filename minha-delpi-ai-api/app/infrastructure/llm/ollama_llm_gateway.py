@@ -20,6 +20,20 @@ class OllamaLlmGateway(LlmGatewayPort):
         self.model = Settings.OLLAMA_MODEL
         self.timeout = Settings.OLLAMA_TIMEOUT_SECONDS
 
+    def _build_options(self) -> dict:
+        options = {
+            "temperature": Settings.LLM_TEMPERATURE,
+            "num_predict": Settings.LLM_MAX_TOKENS,
+        }
+
+        if Settings.OLLAMA_NUM_CTX > 0:
+            options["num_ctx"] = Settings.OLLAMA_NUM_CTX
+
+        if Settings.OLLAMA_NUM_THREAD > 0:
+            options["num_thread"] = Settings.OLLAMA_NUM_THREAD
+
+        return options
+
     def supports_native_tools(self) -> bool:
         return True
 
@@ -35,10 +49,7 @@ class OllamaLlmGateway(LlmGatewayPort):
             "messages": messages,
             "tools": tools,
             "stream": False,
-            "options": {
-                "temperature": Settings.LLM_TEMPERATURE,
-                "num_predict": Settings.LLM_MAX_TOKENS,
-            },
+            "options": self._build_options(),
         }
 
         try:
@@ -80,10 +91,7 @@ class OllamaLlmGateway(LlmGatewayPort):
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "options": {
-                "temperature": Settings.LLM_TEMPERATURE,
-                "num_predict": Settings.LLM_MAX_TOKENS,
-            },
+            "options": self._build_options(),
         }
 
         try:
@@ -111,10 +119,7 @@ class OllamaLlmGateway(LlmGatewayPort):
             "model": self.model,
             "messages": messages,
             "stream": True,
-            "options": {
-                "temperature": Settings.LLM_TEMPERATURE,
-                "num_predict": Settings.LLM_MAX_TOKENS,
-            },
+            "options": self._build_options(),
         }
 
         try:
