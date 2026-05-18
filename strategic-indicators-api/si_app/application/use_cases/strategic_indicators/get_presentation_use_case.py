@@ -33,6 +33,25 @@ class _DepartmentContext:
     previous: StrategicDepartmentCalculatedValue | None
 
 
+_PRESENTATION_SECTIONS = frozenset(
+    {
+        "executive_summary",
+        "departments_overview",
+        "department_details_by_id",
+        "indicators_by_department_id",
+        "alerts",
+        "trends",
+    }
+)
+
+
+def _resolve_presentation_include(include: frozenset[str] | None) -> frozenset[str]:
+    if not include:
+        return _PRESENTATION_SECTIONS
+    resolved = {section for section in include if section in _PRESENTATION_SECTIONS}
+    return frozenset(resolved or _PRESENTATION_SECTIONS)
+
+
 class GetStrategicIndicatorsPresentationUseCase:
     def __init__(
         self,
@@ -50,6 +69,38 @@ class GetStrategicIndicatorsPresentationUseCase:
         request: GetStrategicIndicatorsPresentationRequest,
     ) -> dict:
         months = max(2, min(request.months, 12))
+        include_sections = _resolve_presentation_include(request.include)
+        needs_comparative = bool(include_sections - {"trends"})
+
+        if not needs_comparative:
+            trends = self._build_trends(
+                competence=request.competence,
+                months=months,
+                branch=request.branch,
+            )
+            return {
+                "executive_summary": {},
+                "departments_overview": [],
+                "department_details_by_id": {},
+                "indicators_by_department_id": {},
+                "alerts": self._empty_alerts_payload_from_competence(
+                    trends.get("competence")
+                ),
+                "trends": trends,
+                "meta": {
+                    "partial_success": trends.get("partial_success", False),
+                    "errors": [
+                        {
+                            "scope": "trend_series",
+                            "competence": error.get("competence"),
+                            "department_id": error.get("department_id"),
+                            "source": error.get("source"),
+                            "message": error.get("message"),
+                        }
+                        for error in trends.get("errors") or []
+                    ],
+                },
+            }
 
         comparative = self._snapshot_service.get_current_and_previous_snapshot(
             competence=request.competence,
@@ -81,45 +132,67 @@ class GetStrategicIndicatorsPresentationUseCase:
             for item in catalog_snapshot.indicators_catalog
         }
 
-        executive_summary = self._build_executive_summary(
-            current_snapshot=current_snapshot,
-            previous_snapshot=previous_snapshot,
-            goals_by_department=catalog_snapshot.goals_by_department,
-        )
-
-        departments_overview = [
-            self._build_department_overview_item(ctx)
-            for ctx in department_contexts
-        ]
-
-        indicators_by_department_id = self._build_indicators_by_department_id(
-            current_snapshot=current_snapshot,
-        )
-
-        department_details_by_id = {
-            ctx.current.department_id: self._build_department_details_item(
-                department_context=ctx,
-                start_date=current_snapshot.period.start_date,
-                end_date=current_snapshot.period.end_date,
-                competence=current_snapshot.period.competence,
+        executive_summary = (
+            self._build_executive_summary(
+                current_snapshot=current_snapshot,
+                previous_snapshot=previous_snapshot,
+                goals_by_department=catalog_snapshot.goals_by_department,
             )
-            for ctx in department_contexts
-        }
-
-        alerts = self._build_alerts(
-            current_snapshot=current_snapshot,
-            catalog_by_indicator_id=current_catalog_by_indicator_id,
+            if "executive_summary" in include_sections
+            else {}
         )
 
-        trends = self._build_trends(
-            competence=request.competence,
-            months=months,
-            branch=request.branch,
+        departments_overview = (
+            [
+                self._build_department_overview_item(ctx)
+                for ctx in department_contexts
+            ]
+            if "departments_overview" in include_sections
+            else []
+        )
+
+        indicators_by_department_id = (
+            self._build_indicators_by_department_id(current_snapshot=current_snapshot)
+            if "indicators_by_department_id" in include_sections
+            else {}
+        )
+
+        department_details_by_id = (
+            {
+                ctx.current.department_id: self._build_department_details_item(
+                    department_context=ctx,
+                    start_date=current_snapshot.period.start_date,
+                    end_date=current_snapshot.period.end_date,
+                    competence=current_snapshot.period.competence,
+                )
+                for ctx in department_contexts
+            }
+            if "department_details_by_id" in include_sections
+            else {}
+        )
+
+        alerts = (
+            self._build_alerts(
+                current_snapshot=current_snapshot,
+                catalog_by_indicator_id=current_catalog_by_indicator_id,
+            )
+            if "alerts" in include_sections
+            else self._empty_alerts_payload(current_snapshot)
+        )
+
+        trends = (
+            self._build_trends(
+                competence=request.competence,
+                months=months,
+                branch=request.branch,
+            )
+            if "trends" in include_sections
+            else self._empty_trends_payload(current_snapshot)
         )
 
         errors = self._merge_errors(
             current_errors=current_snapshot.measurement_errors,
-            trends_errors=trends["errors"],
+            trends_errors=trends.get("errors") or [],
         )
 
         partial_success = len(errors) > 0
@@ -135,6 +208,39 @@ class GetStrategicIndicatorsPresentationUseCase:
                 "partial_success": partial_success,
                 "errors": errors,
             },
+        }
+
+    def _empty_alerts_payload_from_competence(self, competence: str | None) -> dict:
+        return {
+            "competence": competence or "",
+            "executive_alerts": [],
+            "department_alerts": [],
+            "indicator_alerts": [],
+            "errors": [],
+            "partial_success": False,
+        }
+
+    def _empty_alerts_payload(self, current_snapshot) -> dict:
+        return {
+            "competence": current_snapshot.period.competence,
+            "executive_alerts": [],
+            "department_alerts": [],
+            "indicator_alerts": [],
+            "errors": current_snapshot.measurement_errors,
+            "partial_success": len(current_snapshot.measurement_errors) > 0,
+        }
+
+    def _empty_trends_payload(self, current_snapshot) -> dict:
+        return {
+            "competence": current_snapshot.period.competence,
+            "current_igd": 0.0,
+            "previous_igd": 0.0,
+            "current_classification": current_snapshot.classification,
+            "igd_series": [],
+            "departments": [],
+            "indicator_series_by_department_id": {},
+            "errors": [],
+            "partial_success": False,
         }
 
     def _build_executive_summary(

@@ -36,6 +36,18 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_resolved_goals_map(
+        self,
+        *,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        department_id: str | None = None,
+    ) -> dict[str, dict]:
+        """Metas ativas (versão mais recente) por ``indicator_id`` para o período."""
+        raise NotImplementedError
+
+    @abstractmethod
     def create_indicator_goal(
         self,
         *,

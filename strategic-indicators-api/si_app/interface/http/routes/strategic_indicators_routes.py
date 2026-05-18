@@ -1,6 +1,15 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Request, Query
 
 from delpi_auth.authorization import require_permission
+
+from si_app.application.services.strategic_indicators.snapshot_shared_cache import (
+    invalidate_strategic_indicators_snapshot_cache,
+)
+from si_app.interface.http.si_read_route_support import run_logged_read_route
+
+logger = logging.getLogger("strategic_indicators.http")
 
 from si_app.interface.http.schemas.strategic_indicators_settings_schema import (
     UpdateStrategicIndicatorsSettingsBodySchema,
@@ -96,6 +105,11 @@ router = APIRouter(
 )
 
 
+def _invalidate_read_cache_after_mutation(result):
+    invalidate_strategic_indicators_snapshot_cache()
+    return result
+
+
 def _extract_actor(request: Request) -> tuple[str | None, str | None]:
     user_context = getattr(request.state, "user", None)
     actor_user_id = None
@@ -153,17 +167,22 @@ def get_strategic_indicators_executive_summary(
     end_date: str | None = Query(None),
 ):
     try:
-        use_case = build_get_strategic_indicators_executive_summary_use_case()
-        result = use_case.execute(
-            GetExecutiveSummaryRealRequest(
-                department_id=department_id,
-                branch=branch,
-                competence=competence,
-                start_date=start_date,
-                end_date=end_date,
-            )
+        return run_logged_read_route(
+            route="executive-summary",
+            competence=competence,
+            department_id=department_id,
+            branch=branch,
+            months=None,
+            handler=lambda: build_get_strategic_indicators_executive_summary_use_case().execute(
+                GetExecutiveSummaryRealRequest(
+                    department_id=department_id,
+                    branch=branch,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            ),
         )
-        return result
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -215,7 +234,7 @@ async def update_strategic_indicators_settings(
         use_case = build_update_strategic_indicators_settings_use_case()
         result = use_case.execute(dto)
 
-        return result
+        return _invalidate_read_cache_after_mutation(result)
 
     except StrategicIndicatorsSettingsValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -612,7 +631,7 @@ def create_indicator_goal(
                 actor_email=actor_email,
             )
         )
-        return _serialize_goal_item(result)
+        return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
     except StrategicIndicatorsIndicatorGoalValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ValueError as exc:
@@ -652,7 +671,7 @@ def update_indicator_goal(
                 actor_email=actor_email,
             )
         )
-        return _serialize_goal_item(result)
+        return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
     except StrategicIndicatorsIndicatorGoalValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ValueError as exc:
@@ -679,7 +698,7 @@ def activate_indicator_goal(
             actor_user_id=actor_user_id,
             actor_email=actor_email,
         )
-        return _serialize_goal_item(result)
+        return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -704,7 +723,7 @@ def deactivate_indicator_goal(
             actor_user_id=actor_user_id,
             actor_email=actor_email,
         )
-        return _serialize_goal_item(result)
+        return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -742,7 +761,7 @@ def bulk_create_indicator_goals(
             actor_email=actor_email,
         )
         result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
-        return result
+        return _invalidate_read_cache_after_mutation(result)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -767,7 +786,7 @@ def duplicate_indicator_goals_year(
             actor_email=actor_email,
         )
         result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
-        return result
+        return _invalidate_read_cache_after_mutation(result)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -792,7 +811,7 @@ def fill_missing_indicator_goals(
             actor_email=actor_email,
         )
         result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
-        return result
+        return _invalidate_read_cache_after_mutation(result)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -816,18 +835,22 @@ def get_strategic_indicators_departments(
             GetStrategicIndicatorsDepartmentsRealRequest,
         )
 
-        use_case = build_get_strategic_indicators_departments_use_case()
-        result = use_case.execute(
-            GetStrategicIndicatorsDepartmentsRealRequest(
-                department_id=department_id,
-                branch=branch,
-                competence=competence,
-                start_date=start_date,
-                end_date=end_date,
-            )
+        return run_logged_read_route(
+            route="departments",
+            competence=competence,
+            department_id=department_id,
+            branch=branch,
+            months=None,
+            handler=lambda: build_get_strategic_indicators_departments_use_case().execute(
+                GetStrategicIndicatorsDepartmentsRealRequest(
+                    department_id=department_id,
+                    branch=branch,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            ),
         )
-
-        return result
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -850,17 +873,22 @@ def get_strategic_indicators_department_details(
             GetStrategicIndicatorsDepartmentDetailsRealRequest,
         )
 
-        use_case = build_get_strategic_indicators_department_details_use_case()
-        result = use_case.execute(
-            GetStrategicIndicatorsDepartmentDetailsRealRequest(
-                department_id=department_id,
-                branch=branch,
-                competence=competence,
-                start_date=start_date,
-                end_date=end_date,
-            )
+        return run_logged_read_route(
+            route="departments-detail",
+            competence=competence,
+            department_id=department_id,
+            branch=branch,
+            months=None,
+            handler=lambda: build_get_strategic_indicators_department_details_use_case().execute(
+                GetStrategicIndicatorsDepartmentDetailsRealRequest(
+                    department_id=department_id,
+                    branch=branch,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            ),
         )
-        return result
     except DepartmentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
@@ -880,8 +908,7 @@ def get_strategic_indicators(
     end_date: str | None = Query(None),
 ):
     try:
-        use_case = build_get_strategic_indicators_use_case()
-        result = use_case.execute(
+        result = build_get_strategic_indicators_use_case().execute(
             department_id=department_id,
             branch=branch,
             competence=competence,
@@ -889,7 +916,7 @@ def get_strategic_indicators(
             end_date=end_date,
         )
 
-        return {
+        payload = {
             "items": [
                 {
                     "department_id": item.department_id,
@@ -898,19 +925,31 @@ def get_strategic_indicators(
                     "indicator_name": item.indicator_name,
                     "weight_pct": item.weight_pct,
                     "goal_label": item.goal_label,
-                    "goal_value": item.goal_value,
+                    "goal_value": float(item.goal_value)
+                    if item.goal_value is not None
+                    else None,
                     "goal_periodicity": item.goal_periodicity,
                     "goal_mode": getattr(item, "goal_mode", "standard"),
-                    "monthly_targets": getattr(item, "monthly_targets", []) or [],
+                    "monthly_targets": [
+                        {
+                            **target,
+                            "target_value": float(target["target_value"])
+                            if target.get("target_value") is not None
+                            else None,
+                        }
+                        if isinstance(target, dict)
+                        else target
+                        for target in (getattr(item, "monthly_targets", []) or [])
+                    ],
                     "scope_type": item.scope_type,
                     "performance_direction": getattr(
                         item,
                         "performance_direction",
                         "higher_is_better",
                     ),
-                    "value": item.value,
-                    "score": item.score,
-                    "gap": item.gap,
+                    "value": float(item.value) if item.value is not None else None,
+                    "score": float(item.score) if item.score is not None else None,
+                    "gap": float(item.gap) if item.gap is not None else None,
                     "trend": item.trend,
                     "classification": item.classification,
                     "source": item.source,
@@ -931,6 +970,14 @@ def get_strategic_indicators(
             ],
             "partial_success": result.partial_success,
         }
+        return run_logged_read_route(
+            route="indicators",
+            competence=competence,
+            department_id=department_id,
+            branch=branch,
+            months=None,
+            handler=lambda: payload,
+        )
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -952,17 +999,22 @@ def get_strategic_indicators_alerts(
             GetStrategicIndicatorsAlertsRealRequest,
         )
 
-        use_case = build_get_strategic_indicators_alerts_use_case()
-        result = use_case.execute(
-            GetStrategicIndicatorsAlertsRealRequest(
-                department_id=department_id,
-                branch=branch,
-                competence=competence,
-                start_date=start_date,
-                end_date=end_date,
-            )
+        return run_logged_read_route(
+            route="alerts",
+            competence=competence,
+            department_id=department_id,
+            branch=branch,
+            months=None,
+            handler=lambda: build_get_strategic_indicators_alerts_use_case().execute(
+                GetStrategicIndicatorsAlertsRealRequest(
+                    department_id=department_id,
+                    branch=branch,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            ),
         )
-        return result
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -981,18 +1033,23 @@ def get_strategic_indicators_trends(
     months: int = Query(6, ge=2, le=12),
 ):
     try:
-        use_case = build_get_strategic_indicators_trends_use_case()
-        result = use_case.execute(
-            GetStrategicIndicatorsTrendsRealRequest(
-                department_id=department_id,
-                branch=branch,
-                competence=competence,
-                start_date=start_date,
-                end_date=end_date,
-                months=months,
-            )
+        return run_logged_read_route(
+            route="trends",
+            competence=competence,
+            department_id=department_id,
+            branch=branch,
+            months=months,
+            handler=lambda: build_get_strategic_indicators_trends_use_case().execute(
+                GetStrategicIndicatorsTrendsRealRequest(
+                    department_id=department_id,
+                    branch=branch,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
+                    months=months,
+                )
+            ),
         )
-        return result
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1028,19 +1085,42 @@ def get_strategic_indicators_presentation(
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
     months: int = Query(6, ge=2, le=12),
+    include: str | None = Query(
+        None,
+        description=(
+            "Seções separadas por vírgula: executive_summary, departments_overview, "
+            "department_details_by_id, indicators_by_department_id, alerts, trends"
+        ),
+    ),
 ):
     try:
-        use_case = build_get_strategic_indicators_presentation_use_case()
-        result = use_case.execute(
-            GetStrategicIndicatorsPresentationRequest(
-                branch=branch,
-                competence=competence,
-                start_date=start_date,
-                end_date=end_date,
-                months=months,
+        include_sections = (
+            frozenset(
+                section.strip()
+                for section in include.split(",")
+                if section.strip()
             )
+            if include
+            else None
         )
-        return result
+
+        return run_logged_read_route(
+            route="presentation",
+            competence=competence,
+            department_id=None,
+            branch=branch,
+            months=months,
+            handler=lambda: build_get_strategic_indicators_presentation_use_case().execute(
+                GetStrategicIndicatorsPresentationRequest(
+                    branch=branch,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
+                    months=months,
+                    include=include_sections,
+                )
+            ),
+        )
     except Exception as exc:
         raise HTTPException(
             status_code=500,

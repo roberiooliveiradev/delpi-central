@@ -78,6 +78,9 @@ class BaseRepository:
             ]
 
         except Exception as e:
+            message = str(e)
+            if "No results" in message and "not a query" in message:
+                return []
             log_error(f"Erro ao executar query: {e}")
             raise DatabaseConnectionError(str(e))
 
@@ -99,6 +102,9 @@ class BaseRepository:
             return self._normalize_row(dict(zip(columns, row)))
 
         except Exception as e:
+            message = str(e)
+            if "No results" in message and "not a query" in message:
+                return None
             log_error(f"Erro ao executar query única: {e}")
             raise DatabaseConnectionError(str(e))
 

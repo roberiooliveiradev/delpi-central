@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections.abc import Callable
 
@@ -60,6 +61,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
             tuple[str | None, str | None, str | None, str | None],
             tuple[list[StrategicIndicatorMeasuredValue], list[dict]],
         ] = {}
+        self._cache_lock = threading.Lock()
 
     def get_measurements(
         self,
@@ -86,7 +88,8 @@ class RealStrategicIndicatorsMeasurementsProvider(
         branch: str | None = None,
     ) -> tuple[list[StrategicIndicatorMeasuredValue], list[dict]]:
         cache_key = (start_date, end_date, department_id, branch)
-        cached = self._cache.get(cache_key)
+        with self._cache_lock:
+            cached = self._cache.get(cache_key)
         if cached is not None:
             return cached
 
@@ -110,7 +113,8 @@ class RealStrategicIndicatorsMeasurementsProvider(
             )
 
         final_result = (items, errors)
-        self._cache[cache_key] = final_result
+        with self._cache_lock:
+            self._cache[cache_key] = final_result
         return final_result
 
     def get_indicator_measurements_series(
@@ -283,6 +287,12 @@ class RealStrategicIndicatorsMeasurementsProvider(
 
             return result
 
+        if department_id in (None, ""):
+            return self._get_consolidated_indicator_measurements_series(
+                periods=periods,
+                branch=branch,
+            )
+
         for period in periods:
             result[period.competence] = self.get_indicator_measurements(
                 start_date=period.start_date,
@@ -292,6 +302,172 @@ class RealStrategicIndicatorsMeasurementsProvider(
             )
 
         return result
+
+    def _get_consolidated_indicator_measurements_series(
+        self,
+        *,
+        periods: list[ResolvedPeriod],
+        branch: str | None,
+    ) -> dict[str, tuple[list[StrategicIndicatorMeasuredValue], list[dict]]]:
+        series_collectors: list[tuple[str, Callable[[], dict[str, dict]]]] = []
+
+        if self._engineering_snapshot_port is not None and hasattr(
+            self._engineering_snapshot_port,
+            "get_engineering_indicators_snapshot_series",
+        ):
+            series_collectors.append(
+                (
+                    "engineering",
+                    lambda: self._engineering_snapshot_port.get_engineering_indicators_snapshot_series(
+                        periods=periods,
+                        branch=branch,
+                    ),
+                )
+            )
+
+        if self._production_snapshot_port is not None and hasattr(
+            self._production_snapshot_port,
+            "get_production_indicators_snapshot_series",
+        ):
+            series_collectors.append(
+                (
+                    "production",
+                    lambda: self._production_snapshot_port.get_production_indicators_snapshot_series(
+                        periods=periods,
+                        branch=branch,
+                    ),
+                )
+            )
+
+        if self._commercial_snapshot_port is not None and hasattr(
+            self._commercial_snapshot_port,
+            "get_commercial_indicators_snapshot_series",
+        ):
+            series_collectors.append(
+                (
+                    "commercial",
+                    lambda: self._commercial_snapshot_port.get_commercial_indicators_snapshot_series(
+                        periods=periods,
+                        branch=branch,
+                    ),
+                )
+            )
+
+        if self._quality_snapshot_port is not None and hasattr(
+            self._quality_snapshot_port,
+            "get_quality_indicators_snapshot_series",
+        ):
+            series_collectors.append(
+                (
+                    "quality",
+                    lambda: self._quality_snapshot_port.get_quality_indicators_snapshot_series(
+                        periods=periods,
+                        branch=branch,
+                    ),
+                )
+            )
+
+        if self._hr_snapshot_port is not None and hasattr(
+            self._hr_snapshot_port,
+            "get_hr_indicators_snapshot_series",
+        ):
+            series_collectors.append(
+                (
+                    "hr",
+                    lambda: self._hr_snapshot_port.get_hr_indicators_snapshot_series(
+                        periods=periods,
+                        branch=branch,
+                    ),
+                )
+            )
+
+        if self._financial_snapshot_port is not None and hasattr(
+            self._financial_snapshot_port,
+            "get_financial_indicators_snapshot_series",
+        ):
+            series_collectors.append(
+                (
+                    "financial",
+                    lambda: self._financial_snapshot_port.get_financial_indicators_snapshot_series(
+                        periods=periods,
+                        branch=branch,
+                    ),
+                )
+            )
+
+        if self._supplies_snapshot_port is not None and hasattr(
+            self._supplies_snapshot_port,
+            "get_supplies_indicators_snapshot_series",
+        ):
+            series_collectors.append(
+                (
+                    "supplies",
+                    lambda: self._supplies_snapshot_port.get_supplies_indicators_snapshot_series(
+                        periods=periods,
+                        branch=branch,
+                    ),
+                )
+            )
+
+        if not series_collectors:
+            merged: dict[str, tuple[list[StrategicIndicatorMeasuredValue], list[dict]]] = {}
+            for period in periods:
+                merged[period.competence] = self.get_indicator_measurements(
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                    department_id=None,
+                    branch=branch,
+                )
+            return merged
+
+        merged_results: dict[str, tuple[list[StrategicIndicatorMeasuredValue], list[dict]]] = {
+            period.competence: ([], []) for period in periods
+        }
+
+        if len(series_collectors) == 1:
+            dept_series = [series_collectors[0][1]()]
+        else:
+            dept_series = []
+            with ThreadPoolExecutor(max_workers=len(series_collectors)) as executor:
+                future_map = {
+                    executor.submit(fetcher): name
+                    for name, fetcher in series_collectors
+                }
+                for future in as_completed(future_map):
+                    name = future_map[future]
+                    try:
+                        dept_series.append(future.result())
+                    except Exception as exc:
+                        dept_series.append(
+                            {
+                                period.competence: {
+                                    "items": [],
+                                    "errors": [
+                                        {
+                                            "department_id": name,
+                                            "source": f"{name}_snapshot_series",
+                                            "message": str(exc),
+                                        }
+                                    ],
+                                }
+                                for period in periods
+                            }
+                        )
+
+        for raw_series in dept_series:
+            for competence, raw in raw_series.items():
+                items, errors = merged_results.setdefault(competence, ([], []))
+                bucket_items: list[StrategicIndicatorMeasuredValue] = []
+                bucket_errors: list[dict] = []
+                self._append_result(
+                    result=raw,
+                    items=bucket_items,
+                    errors=bucket_errors,
+                )
+                items.extend(bucket_items)
+                errors.extend(bucket_errors)
+
+        return merged_results
 
     def _build_collectors(
         self,

@@ -44,17 +44,9 @@ class GetStrategicIndicatorsAlertsRealUseCase:
         current_snapshot = comparative.current
         previous_snapshot = comparative.previous
 
-        catalog_snapshot = self._snapshot_service.get_catalog_snapshot(
-            competence=current_snapshot.period.competence,
-            start_date=current_snapshot.period.start_date,
-            end_date=current_snapshot.period.end_date,
-            department_id=request.department_id,
-            branch=request.branch,
-        )
-
         catalog_by_indicator_id = {
             item.indicator_id: item
-            for item in catalog_snapshot.indicators_catalog
+            for item in comparative.catalog.indicators_catalog
         }
 
         previous_departments_by_id = {

@@ -33,15 +33,17 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             department_id=department_id,
         )
 
+        goals_by_indicator = self._indicator_goals_repository.list_resolved_goals_map(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+            department_id=department_id,
+        )
+
         resolved: list[StrategicIndicatorCatalogItem] = []
 
         for item in structural_items:
-            goal = self._indicator_goals_repository.get_resolved_goal(
-                indicator_id=item.indicator_id,
-                competence=competence,
-                start_date=start_date,
-                end_date=end_date,
-            )
+            goal = goals_by_indicator.get(item.indicator_id)
             if not goal:
                 raise ValueError(
                     f"Meta não encontrada para indicator_id={item.indicator_id}"

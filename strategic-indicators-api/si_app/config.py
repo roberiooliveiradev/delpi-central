@@ -34,6 +34,9 @@ class Settings:
     JWT_SECRET: str = _get_env("JWT_SECRET", "API_DELPI_JWT_SECRET", default="secret")
     API_ENV: str = _get_env("API_DELPI_ENV", default="development")
     LOG_LEVEL: str = _get_env("LOG_LEVEL", default="INFO")
+    SI_SNAPSHOT_CACHE_TTL_SECONDS: int = int(
+        _get_env("SI_SNAPSHOT_CACHE_TTL_SECONDS", default="600") or "600"
+    )
 
     # ==========================
     # Auth / Keycloak

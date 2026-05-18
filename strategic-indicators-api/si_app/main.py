@@ -1,4 +1,6 @@
 # strategic-indicators-api — entrypoint FastAPI (só rotas /strategic-indicators + health).
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -11,6 +13,11 @@ from si_app.interface.http.routes.strategic_indicators_routes import (
     router as strategic_indicators_router,
 )
 from si_app.middleware.auth_middleware import jwt_middleware
+
+logging.basicConfig(
+    level=getattr(logging, str(settings.LOG_LEVEL).upper(), logging.INFO),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 
 def build_allowed_origins() -> list[str]:

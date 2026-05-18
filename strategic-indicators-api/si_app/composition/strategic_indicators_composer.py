@@ -216,6 +216,7 @@ def build_strategic_indicators_snapshot_service() -> StrategicIndicatorsSnapshot
         departments_catalog_repository=structural_catalog_repository,
         resolved_indicators_catalog_repository=resolved_catalog_repository,
         measurements_port=build_real_indicator_measurements_provider(),
+        measurements_port_factory=build_real_indicator_measurements_provider,
         calculator=StrategicIndicatorsCalculator(),
     )
 

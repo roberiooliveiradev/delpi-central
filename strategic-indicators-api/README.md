@@ -35,3 +35,7 @@ docker build -f strategic-indicators-api/Dockerfile -t strategic-indicators-api:
 ## Integração
 
 O MFE chama **`/apps/strategic-indicators-api/strategic-indicators`** através do gateway; a **api-delpi** já não monta estas rotas.
+
+## Performance (implementação)
+
+Roadmap e checklist de otimização das rotas de leitura: **[docs/PERFORMANCE_IMPLEMENTATION.md](docs/PERFORMANCE_IMPLEMENTATION.md)**.
