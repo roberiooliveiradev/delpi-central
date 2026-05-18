@@ -19,9 +19,14 @@ const CATEGORY_LABELS: Record<NotificationCategory, string> = {
 type Props = {
   coreApi?: CoreApi;
   onSaved?: () => void;
+  variant?: "embedded" | "page";
 };
 
-export function NotificationPreferencesPanel({ coreApi: coreApiProp, onSaved }: Props) {
+export function NotificationPreferencesPanel({
+  coreApi: coreApiProp,
+  onSaved,
+  variant = "embedded",
+}: Props) {
   const { getAccessToken, refreshToken } = useContext(AuthContext);
 
   const coreApi = useMemo(() => {
@@ -88,15 +93,32 @@ export function NotificationPreferencesPanel({ coreApi: coreApiProp, onSaved }: 
     }
   }
 
+  const rootClassName =
+    variant === "page"
+      ? "notification-preferences notification-preferences--page"
+      : "notification-preferences";
+
   return (
-    <section className="notification-preferences" aria-labelledby="notification-preferences-title">
-      <header className="notification-preferences__header">
-        <Settings2 size={18} aria-hidden="true" />
-        <div>
-          <h2 id="notification-preferences-title">Preferências</h2>
-          <p>Escolha quais tipos de mensagem você não deseja receber.</p>
-        </div>
-      </header>
+    <section className={rootClassName} aria-labelledby="notification-preferences-title">
+      {variant === "embedded" ? (
+        <header className="notification-preferences__header">
+          <Settings2 size={18} aria-hidden="true" />
+          <div>
+            <h2 id="notification-preferences-title">Preferências</h2>
+            <p>Escolha quais tipos de mensagem você não deseja receber.</p>
+          </div>
+        </header>
+      ) : (
+        <>
+          <h2 id="notification-preferences-title" className="visually-hidden">
+            Preferências de notificação
+          </h2>
+          <p className="notification-preferences__intro">
+            Marque as categorias que deseja <strong>silenciar</strong>. Você deixa de receber novos
+            envios desses tipos; o histórico anterior permanece disponível na aba Histórico.
+          </p>
+        </>
+      )}
 
       <p className="notification-preferences__note">
         Notificações de <strong>sistema</strong> não podem ser desativadas (segurança e avisos

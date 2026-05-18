@@ -1,3 +1,15 @@
+.notification-preferences .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .notification-preferences {
   display: grid;
   gap: 14px;
@@ -116,4 +128,53 @@
   margin: 0;
   font-size: 13px;
   color: var(--text-muted);
+}
+
+/* Variante na aba dedicada da página /notifications */
+.notification-preferences--page {
+  gap: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.notification-preferences__intro {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.notification-preferences--page .notification-preferences__note {
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+.notification-preferences--page .notification-preferences__list {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.notification-preferences--page .notification-preferences__item {
+  padding: 14px 16px;
+  border-radius: 12px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.notification-preferences--page .notification-preferences__item:hover {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+}
+
+.notification-preferences--page .notification-preferences__footer {
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .notification-preferences--page .notification-preferences__list {
+    grid-template-columns: 1fr;
+  }
 }

@@ -1,7 +1,7 @@
 // src/ui/NotificationsPage.tsx
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Bell, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { Bell, ChevronLeft, ChevronRight, Inbox, Settings2, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { AuthContext } from "../state/AuthContext";
@@ -19,6 +19,13 @@ import { NotificationPreferencesPanel } from "../components/notifications/Notifi
 import "./NotificationsPage.css";
 
 const PAGE_SIZE = 12;
+
+type PageSection = "inbox" | "preferences";
+
+const SECTION_TABS: { value: PageSection; label: string; icon: typeof Inbox }[] = [
+  { value: "inbox", label: "Histórico", icon: Inbox },
+  { value: "preferences", label: "Preferências", icon: Settings2 },
+];
 
 const STATUS_TABS: { value: NotificationHistoryStatus; label: string }[] = [
   { value: "all", label: "Todas" },
@@ -60,6 +67,7 @@ export function NotificationsPage() {
     [getAccessToken, refreshToken],
   );
 
+  const [section, setSection] = useState<PageSection>("inbox");
   const [status, setStatus] = useState<NotificationHistoryStatus>("all");
   const [category, setCategory] = useState<NotificationCategory | "">("");
   const [importantOnly, setImportantOnly] = useState(false);
@@ -96,8 +104,11 @@ export function NotificationsPage() {
   }, [category, coreApi, importantOnly, page, status]);
 
   useEffect(() => {
+    if (section !== "inbox") {
+      return;
+    }
     void loadHistory();
-  }, [loadHistory]);
+  }, [loadHistory, section]);
 
   useEffect(() => {
     setPage(1);
@@ -133,151 +144,221 @@ export function NotificationsPage() {
         ? "1 notificação"
         : `${total} notificações`;
 
+  const activeSection = SECTION_TABS.find((tab) => tab.value === section)!;
+
   return (
     <section className="notifications-page">
       <header className="notifications-page__header">
         <div className="notifications-page__header-icon" aria-hidden="true">
           <Bell size={22} />
         </div>
-        <div>
+        <div className="notifications-page__header-text">
           <h1>Notificações</h1>
-          <p>Histórico completo das suas mensagens na plataforma.</p>
+          <p>
+            {section === "inbox"
+              ? "Consulte, filtre e gerencie o histórico das suas mensagens."
+              : "Defina quais tipos de mensagem você deseja receber na plataforma."}
+          </p>
         </div>
       </header>
 
-      <NotificationPreferencesPanel
-        coreApi={coreApi}
-        onSaved={() => void reloadNotifications()}
-      />
+      <nav
+        className="notifications-page__sections"
+        role="tablist"
+        aria-label="Seções da página"
+      >
+        {SECTION_TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = section === tab.value;
 
-      <div className="notifications-page__toolbar">
-        <div className="notifications-page__tabs" role="tablist" aria-label="Filtro">
-          {STATUS_TABS.map((tab) => (
+          return (
             <button
               key={tab.value}
               type="button"
               role="tab"
-              aria-selected={status === tab.value}
+              id={`notifications-section-${tab.value}`}
+              aria-selected={isActive}
+              aria-controls={`notifications-panel-${tab.value}`}
               className={
-                status === tab.value
-                  ? "notifications-page__tab notifications-page__tab--active"
-                  : "notifications-page__tab"
+                isActive
+                  ? "notifications-page__section notifications-page__section--active"
+                  : "notifications-page__section"
               }
-              onClick={() => setStatus(tab.value)}
+              onClick={() => setSection(tab.value)}
             >
+              <Icon size={16} aria-hidden="true" />
               {tab.label}
             </button>
-          ))}
-        </div>
+          );
+        })}
+      </nav>
 
-        {status !== "read" && unreadOnPage > 0 ? (
-          <button
-            type="button"
-            className="notifications-page__mark-all"
-            onClick={() => void handleMarkAllRead()}
-          >
-            Marcar todas como lidas
-          </button>
-        ) : null}
-      </div>
-
-      <div className="notifications-page__filters">
-        <label className="notifications-page__filter-label">
-          <span className="notifications-page__filter-text">Categoria</span>
-          <select
-            className="notifications-page__select"
-            value={category}
-            onChange={(event) => setCategory(event.target.value as NotificationCategory | "")}
-            aria-label="Filtrar por categoria"
-          >
-            {CATEGORY_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <button
-          type="button"
-          className={
-            importantOnly
-              ? "notifications-page__important-toggle notifications-page__important-toggle--active"
-              : "notifications-page__important-toggle"
-          }
-          aria-pressed={importantOnly}
-          onClick={() => setImportantOnly((current) => !current)}
+      {section === "inbox" ? (
+        <div
+          id="notifications-panel-inbox"
+          role="tabpanel"
+          aria-labelledby="notifications-section-inbox"
+          className="notifications-page__panel"
         >
-          <Star size={14} aria-hidden="true" />
-          Importantes
-        </button>
-      </div>
+          <div className="notifications-page__controls">
+            <div className="notifications-page__controls-row">
+              <div
+                className="notifications-page__status-tabs"
+                role="tablist"
+                aria-label="Status das notificações"
+              >
+                {STATUS_TABS.map((tab) => (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={status === tab.value}
+                    className={
+                      status === tab.value
+                        ? "notifications-page__status-tab notifications-page__status-tab--active"
+                        : "notifications-page__status-tab"
+                    }
+                    onClick={() => setStatus(tab.value)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
 
-      <p className="notifications-page__summary" aria-live="polite">
-        {summaryLabel}
-        {!loading && status === "unread" ? " · não lidas" : null}
-        {!loading && status === "read" ? " · lidas" : null}
-        {!loading && importantOnly ? " · importantes" : null}
-        {!loading && category ? ` · ${CATEGORY_OPTIONS.find((o) => o.value === category)?.label ?? category}` : null}
-      </p>
+              {status !== "read" && unreadOnPage > 0 ? (
+                <button
+                  type="button"
+                  className="notifications-page__mark-all"
+                  onClick={() => void handleMarkAllRead()}
+                >
+                  Marcar todas como lidas
+                </button>
+              ) : null}
+            </div>
 
-      {error ? <p className="notifications-page__error">{error}</p> : null}
+            <div className="notifications-page__controls-divider" aria-hidden="true" />
 
-      <div className="notifications-page__feed">
-        {loading ? (
-          <p className="notifications-page__loading">Carregando notificações…</p>
-        ) : items.length === 0 ? (
-          <div className="notifications-page__empty">
-            <Bell size={32} aria-hidden="true" strokeWidth={1.5} />
-            <p>Nenhuma notificação neste filtro.</p>
+            <div className="notifications-page__filters">
+              <label className="notifications-page__filter-label">
+                <span className="notifications-page__filter-text">Categoria</span>
+                <select
+                  className="notifications-page__select"
+                  value={category}
+                  onChange={(event) =>
+                    setCategory(event.target.value as NotificationCategory | "")
+                  }
+                  aria-label="Filtrar por categoria"
+                >
+                  {CATEGORY_OPTIONS.map((option) => (
+                    <option key={option.value || "all"} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <button
+                type="button"
+                className={
+                  importantOnly
+                    ? "notifications-page__important-toggle notifications-page__important-toggle--active"
+                    : "notifications-page__important-toggle"
+                }
+                aria-pressed={importantOnly}
+                onClick={() => setImportantOnly((current) => !current)}
+              >
+                <Star size={14} aria-hidden="true" />
+                Importantes
+              </button>
+            </div>
           </div>
-        ) : (
-          <ul className="notifications-page__list">
-            {items.map((notification) => (
-              <li key={notification.id}>
-                <NotificationCard
-                  variant="page"
-                  notification={notification}
-                  onMarkRead={handleMarkRead}
-                  onDelete={(id) => void handleDeleteAndReload(id)}
-                  onToggleImportant={(id, isImportant) =>
-                    void handleToggleImportantAndReload(id, isImportant)
-                  }
-                  onNavigate={
-                    notification.action?.type === "portal_route"
-                      ? () => navigate(notification.action!.target)
-                      : undefined
-                  }
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
 
-      {totalPages > 1 ? (
-        <footer className="notifications-page__pagination">
-          <button
-            type="button"
-            disabled={page <= 1 || loading}
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-            aria-label="Página anterior"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <span>
-            Página {page} de {totalPages} · {total} no total
-          </span>
-          <button
-            type="button"
-            disabled={page >= totalPages || loading}
-            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-            aria-label="Próxima página"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </footer>
-      ) : null}
+          <p className="notifications-page__summary" aria-live="polite">
+            {summaryLabel}
+            {!loading && status === "unread" ? " · não lidas" : null}
+            {!loading && status === "read" ? " · lidas" : null}
+            {!loading && importantOnly ? " · importantes" : null}
+            {!loading && category
+              ? ` · ${CATEGORY_OPTIONS.find((o) => o.value === category)?.label ?? category}`
+              : null}
+          </p>
+
+          {error ? <p className="notifications-page__error">{error}</p> : null}
+
+          <div className="notifications-page__feed">
+            {loading ? (
+              <p className="notifications-page__loading">Carregando notificações…</p>
+            ) : items.length === 0 ? (
+              <div className="notifications-page__empty">
+                <Bell size={32} aria-hidden="true" strokeWidth={1.5} />
+                <p>Nenhuma notificação neste filtro.</p>
+              </div>
+            ) : (
+              <ul className="notifications-page__list">
+                {items.map((notification) => (
+                  <li key={notification.id}>
+                    <NotificationCard
+                      variant="page"
+                      notification={notification}
+                      onMarkRead={handleMarkRead}
+                      onDelete={(id) => void handleDeleteAndReload(id)}
+                      onToggleImportant={(id, isImportant) =>
+                        void handleToggleImportantAndReload(id, isImportant)
+                      }
+                      onNavigate={
+                        notification.action?.type === "portal_route"
+                          ? () => navigate(notification.action!.target)
+                          : undefined
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {totalPages > 1 ? (
+            <footer className="notifications-page__pagination">
+              <button
+                type="button"
+                disabled={page <= 1 || loading}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                aria-label="Página anterior"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <span>
+                Página {page} de {totalPages} · {total} no total
+              </span>
+              <button
+                type="button"
+                disabled={page >= totalPages || loading}
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                aria-label="Próxima página"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </footer>
+          ) : null}
+        </div>
+      ) : (
+        <div
+          id="notifications-panel-preferences"
+          role="tabpanel"
+          aria-labelledby="notifications-section-preferences"
+          className="notifications-page__panel notifications-page__panel--preferences"
+        >
+          <NotificationPreferencesPanel
+            variant="page"
+            coreApi={coreApi}
+            onSaved={() => void reloadNotifications()}
+          />
+        </div>
+      )}
+
+      <span className="visually-hidden" aria-live="polite">
+        Seção ativa: {activeSection.label}
+      </span>
     </section>
   );
 }
