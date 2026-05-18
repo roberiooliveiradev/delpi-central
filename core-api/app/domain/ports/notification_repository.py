@@ -8,13 +8,22 @@ from datetime import datetime
 
 @dataclass
 class NotificationDTO:
-    id: UUID
     user_id: str
     title: str | None
     message: str
     type: str
+    category: str
+    presentation: str
+    html_content: str | None
+    action_type: str | None
+    action_label: str | None
+    action_target: str | None
+    icon: str | None
+    metadata: dict | None
+    expires_at: datetime | None
     read: bool
-    created_at: datetime
+    id: UUID | None = None
+    created_at: datetime | None = None
 
 
 class NotificationRepository(Protocol):

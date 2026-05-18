@@ -193,7 +193,13 @@ O plugin `minha-delpi-chat` **não** implementa notificações; usuários usam o
 
 ---
 
-## 7. Referências
+## 7. Notificações ricas
+
+Ver [Notificações ricas](../../../docs/12-roadmap-e-evolucao/notificacoes-ricas.md).
+
+---
+
+## 8. Referências
 
 - [Notificações Core API](../../../docs/04-core-api/notificacoes.md)
 - [Clean Architecture](../../../docs/01-arquitetura/clean-architecture.md)

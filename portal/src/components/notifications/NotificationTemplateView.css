@@ -1,0 +1,35 @@
+.notification-template-view {
+  display: grid;
+  gap: 6px;
+}
+
+.notification-template-view--compact {
+  gap: 4px;
+}
+
+.notification-template-view__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.notification-template-view__message {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.notification-template-view__details {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.notification-template-view__hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--primary) 70%, var(--text-muted));
+}

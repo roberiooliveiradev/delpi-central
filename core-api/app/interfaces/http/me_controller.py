@@ -29,6 +29,7 @@ from app.application.use_cases.remove_favorite_app_use_case import (
 from app.application.use_cases.list_unread_notifications_use_case import (
     ListUnreadNotificationsUseCase,
 )
+from app.interfaces.http.serializers.notification_serializer import serialize_notification
 
 from app.application.use_cases.mark_notification_read_use_case import (
     MarkNotificationReadUseCase,
@@ -153,18 +154,7 @@ def list_notifications():
         uc = ListUnreadNotificationsUseCase(uow)
         result = uc.execute(user_id=user.id)
 
-    return jsonify([
-        {
-            "id": str(n.id),
-            "user_id": str(n.user_id),
-            "title": n.title,
-            "message": n.message,
-            "type": n.type,
-            "read": n.read,
-            "createdAt": n.created_at.isoformat() + "Z",
-        }
-        for n in result
-    ]), 200
+    return jsonify([serialize_notification(n) for n in result]), 200
 
 
 @me_bp.route("/me/notifications/<notification_id>/read", methods=["POST"])

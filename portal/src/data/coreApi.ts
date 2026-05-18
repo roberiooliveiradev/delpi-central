@@ -56,11 +56,38 @@ export interface DashboardResponse {
 
 export type NotificationType = "info" | "success" | "warning" | "error";
 
+export type NotificationCategory =
+  | "system"
+  | "welcome"
+  | "birthday"
+  | "company_event"
+  | "announcement"
+  | "custom";
+
+export type NotificationPresentation = "text" | "html" | "template";
+
+export type NotificationTemplateId = "welcome_v1" | "birthday_v1" | "company_event_v1";
+
+export type NotificationActionType = "portal_route" | "external_url";
+
+export interface NotificationAction {
+  type: NotificationActionType;
+  label: string;
+  target: string;
+}
+
 export interface NotificationItem {
   id: string;
   title?: string | null;
   message: string;
   type: NotificationType;
+  category: NotificationCategory;
+  presentation: NotificationPresentation;
+  htmlContent?: string | null;
+  icon?: string | null;
+  action?: NotificationAction | null;
+  metadata?: Record<string, unknown> | null;
+  expiresAt?: string | null;
   read: boolean;
   createdAt: string;
 }
@@ -72,6 +99,19 @@ export interface DispatchNotificationsPayload {
   title?: string | null;
   message: string;
   type?: NotificationType;
+  category?: NotificationCategory;
+  presentation?: NotificationPresentation;
+  htmlContent?: string | null;
+  templateId?: NotificationTemplateId;
+  templateVars?: Record<string, string>;
+  icon?: string | null;
+  action?: {
+    type: NotificationActionType | "none";
+    label?: string;
+    target?: string;
+  } | null;
+  metadata?: Record<string, unknown>;
+  expiresAt?: string | null;
   sourceApp?: string;
 }
 
@@ -158,10 +198,17 @@ export class CoreApi {
   // NOTIFICATIONS
   // -------------------------------------------------------
 
-  getNotifications() {
-    return this.client.get<NotificationItem[]>(
-      "/core-api/me/notifications"
-    );
+  async getNotifications(): Promise<NotificationItem[]> {
+    const data = await this.client.get<unknown>("/core-api/me/notifications");
+    const items = normalizeArray<NotificationItem>(data);
+
+    return items.map((item) => ({
+      ...item,
+      category: item.category ?? "system",
+      presentation: item.presentation ?? "text",
+      type: item.type ?? "info",
+      metadata: item.metadata ?? null,
+    }));
   }
 
   markNotificationRead(id: string) {

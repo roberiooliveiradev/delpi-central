@@ -41,6 +41,15 @@ def test_dispatch_targeted_user_ids(uow):
             title="Olá",
             message="Mensagem",
             type="info",
+            category="welcome",
+            presentation="text",
+            html_content=None,
+            action_type=None,
+            action_label=None,
+            action_target=None,
+            icon=None,
+            metadata=None,
+            expires_at=None,
             broadcast=False,
             user_ids=[str(user.id)],
             emails=[],
@@ -62,6 +71,15 @@ def test_dispatch_requires_recipients_when_not_broadcast(uow):
                 title=None,
                 message="Sem destinatário",
                 type="info",
+                category="system",
+                presentation="text",
+                html_content=None,
+                action_type=None,
+                action_label=None,
+                action_target=None,
+                icon=None,
+                metadata=None,
+                expires_at=None,
                 broadcast=False,
                 user_ids=[],
                 emails=[],
@@ -80,6 +98,15 @@ def test_dispatch_broadcast_active_users_only(uow):
             title="Geral",
             message="Para todos",
             type="warning",
+            category="announcement",
+            presentation="text",
+            html_content=None,
+            action_type=None,
+            action_label=None,
+            action_target=None,
+            icon=None,
+            metadata=None,
+            expires_at=None,
             broadcast=True,
             user_ids=[],
             emails=[],
@@ -88,3 +115,34 @@ def test_dispatch_broadcast_active_users_only(uow):
 
     assert result.created_count == 1
     uow.notifications.create.assert_called_once()
+
+
+def test_dispatch_welcome_template_uses_recipient_name(uow):
+    user = _user(name="Ana Paula")
+    uow.users.get_by_id.return_value = user
+
+    use_case = DispatchNotificationsUseCase(uow)
+    result = use_case.execute(
+        DispatchNotificationsRequest(
+            title=None,
+            message="",
+            type="info",
+            category="welcome",
+            presentation="template",
+            html_content=None,
+            action_type=None,
+            action_label=None,
+            action_target=None,
+            icon=None,
+            metadata={"templateId": "welcome_v1", "vars": {}},
+            expires_at=None,
+            broadcast=False,
+            user_ids=[str(user.id)],
+            emails=[],
+        )
+    )
+
+    assert result.created_count == 1
+    created = uow.notifications.create.call_args[0][0]
+    assert "Ana" in created.message
+    assert created.metadata["vars"]["userName"] == "Ana"

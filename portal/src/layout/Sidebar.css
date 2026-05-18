@@ -331,6 +331,15 @@
    DROPDOWNS (NOTIF + USER)
 ========================================= */
 
+.sidebar-notif__list {
+  display: grid;
+  gap: 10px;
+}
+
+.notif-dropdown.sidebar-notif {
+  width: min(380px, 92vw);
+}
+
 .dropdown,
 .notif-dropdown {
   position: absolute;

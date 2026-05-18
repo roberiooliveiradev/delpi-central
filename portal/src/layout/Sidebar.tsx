@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
+import { NotificationCard } from "../components/notifications/NotificationCard";
 
 type GroupedRoutes = Record<
   string,
@@ -372,15 +373,17 @@ export const Sidebar = () => {
                     </div>
                   )}
 
-                  {notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className={`notif-item ${!n.read ? "unread" : ""}`}
-                      onClick={() => markNotificationRead(n.id)}
-                    >
-                      {n.message}
-                    </div>
-                  ))}
+                  <div className="sidebar-notif__list">
+                    {notifications.map((n) => (
+                      <NotificationCard
+                        key={n.id}
+                        notification={n}
+                        compact
+                        onMarkRead={markNotificationRead}
+                        onNavigate={() => setNotifOpen(false)}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
 
