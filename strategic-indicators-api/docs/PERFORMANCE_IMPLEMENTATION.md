@@ -133,7 +133,8 @@ PROIBIDO:
 - [x] 3.3 Pool pyodbc TOTVS (`connection_pool.py`, `TOTVS_POOL_*`)
 - [x] 3.4 Coletores thin — produção consolidada (`get_consolidated_snapshot` → passagem única)
 - [x] 3.4b Transforma+ — cache TTL de `load_raw_data` (6 abas)
-- [ ] 3.4c Financial N×ROL / LMP agregado SQL (pendente)
+- [x] 3.4c Financial — `list_rol_by_branch` (1 query TOTVS por período)
+- [ ] 3.4d LMP agregado SQL (pendente)
 - [ ] 3.5 Warm-up cron (pendente)
 
 ### Fase 4 — MFE (`plugins/strategic-indicators`)
@@ -191,3 +192,4 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-18 | MFE: cache leitura, prefetch, split presentation, SWR em todas as páginas do painel |
 | 2026-05-18 | Pool pyodbc TOTVS com release no `BaseRepository` e discard em erro |
 | 2026-05-18 | Produção consolidada: elimina N×`get_unit_snapshot` por filial (thin SI) |
+| 2026-05-18 | Financial: `list_rol_by_branch` substitui N×`get_rol` no snapshot SI |

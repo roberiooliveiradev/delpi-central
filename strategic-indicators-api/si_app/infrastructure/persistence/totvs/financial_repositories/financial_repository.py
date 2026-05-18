@@ -1,32 +1,145 @@
 # app/infrastructure/persistence/totvs/financial_repositories/financial_repository.py
-from si_app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from si_app.application.dto.financial.get_rol_request import GetRolRequest
-from si_app.domain.ports.financial.financial_query_repository_port import FinancialQueryRepositoryPort
+from si_app.application.dto.financial.list_rol_by_branch_request import (
+    ListRolByBranchRequest,
+)
+from si_app.domain.ports.financial.financial_query_repository_port import (
+    FinancialQueryRepositoryPort,
+)
+from si_app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from si_app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
 class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
 
     def get_rol(self, request: GetRolRequest) -> dict:
+        where_clause, where_params, financeiro_where_clause, financeiro_where_params = (
+            self._build_rol_filters(
+                branch=request.branch,
+                branches=None,
+                start_date=request.start_date,
+                end_date=request.end_date,
+            )
+        )
+
+        branch_label = request.branch or "consolidated"
+        sql = self._sql_rol_aggregate(
+            where_clause=where_clause,
+            financeiro_where_clause=financeiro_where_clause,
+            group_by_branch=False,
+            branch_label=branch_label,
+        )
+        params = where_params + financeiro_where_params + (branch_label,)
+
+        with self as repo:
+            result = repo.execute_one(sql, params)
+
+        return result or self._empty_rol_row(
+            branch=branch_label,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
+
+    def list_rol_by_branch(self, request: ListRolByBranchRequest) -> dict[str, dict]:
+        branches = [
+            str(branch).strip()
+            for branch in request.branches
+            if branch is not None and str(branch).strip()
+        ]
+        if not branches:
+            return {}
+
+        where_clause, where_params, financeiro_where_clause, financeiro_where_params = (
+            self._build_rol_filters(
+                branch=None,
+                branches=branches,
+                start_date=request.start_date,
+                end_date=request.end_date,
+            )
+        )
+
+        sql = self._sql_rol_aggregate(
+            where_clause=where_clause,
+            financeiro_where_clause=financeiro_where_clause,
+            group_by_branch=True,
+            branch_label=None,
+        )
+        params = where_params + financeiro_where_params
+
+        with self as repo:
+            rows = repo.execute_query(sql, params)
+
+        result: dict[str, dict] = {}
+        for row in rows:
+            branch_code = str(row.get("branch") or "").strip()
+            if branch_code:
+                result[branch_code] = row
+
+        for branch_code in branches:
+            if branch_code in result:
+                continue
+            result[branch_code] = self._empty_rol_row(
+                branch=branch_code,
+                start_date=request.start_date,
+                end_date=request.end_date,
+            )
+
+        return result
+
+    def _build_rol_filters(
+        self,
+        *,
+        branch: str | None,
+        branches: list[str] | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> tuple[str, tuple, str, tuple]:
         qb = QueryBuilder()
         qb.raw("D2.D_E_L_E_T_ = ''")
 
-        if request.branch:
-            qb.eq("D2.D2_FILIAL", request.branch)
+        if branch:
+            qb.eq("D2.D2_FILIAL", branch)
+        elif branches:
+            qb.in_list("D2.D2_FILIAL", branches)
 
-        qb.date_range("D2.D2_EMISSAO", request.start_date, request.end_date)
-
+        qb.date_range("D2.D2_EMISSAO", start_date, end_date)
         where_clause, where_params = qb.build()
 
         financeiro_qb = QueryBuilder()
         financeiro_qb.raw("E1.D_E_L_E_T_ = ''")
 
-        if request.branch:
-            financeiro_qb.eq("E1.E1_FILIAL", request.branch)
+        if branch:
+            financeiro_qb.eq("E1.E1_FILIAL", branch)
+        elif branches:
+            financeiro_qb.in_list("E1.E1_FILIAL", branches)
 
         financeiro_where_clause, financeiro_where_params = financeiro_qb.build()
+        return where_clause, where_params, financeiro_where_clause, financeiro_where_params
 
-        sql = f"""
+    def _sql_rol_aggregate(
+        self,
+        *,
+        where_clause: str,
+        financeiro_where_clause: str,
+        group_by_branch: bool,
+        branch_label: str | None,
+    ) -> str:
+        if group_by_branch:
+            select_branch = "B.D2_FILIAL AS branch,"
+            group_by_clause = "GROUP BY B.D2_FILIAL"
+            date_select = """
+            ISNULL(MIN(B.D2_EMISSAO), '') AS start_date,
+            ISNULL(MAX(B.D2_EMISSAO), '') AS end_date,
+            """
+        else:
+            select_branch = f"? AS branch,"
+            group_by_clause = ""
+            date_select = """
+            ISNULL(MIN(B.D2_EMISSAO), '') AS start_date,
+            ISNULL(MAX(B.D2_EMISSAO), '') AS end_date,
+            """
+
+        return f"""
         WITH BaseFaturamento AS
         (
             SELECT
@@ -124,10 +237,8 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                 E1.E1_LOJA
         )
         SELECT
-            ? AS branch,
-            ISNULL(MIN(B.D2_EMISSAO), '') AS start_date,
-            ISNULL(MAX(B.D2_EMISSAO), '') AS end_date,
-
+            {select_branch}
+            {date_select}
             ISNULL(SUM(B.VALOR_FATURAMENTO), 0) AS gross_revenue,
             ISNULL(SUM(B.VALOR_OUTROS), 0) AS other_values,
             ISNULL(SUM(B.VALOR_SEM_TES), 0) AS items_without_tes,
@@ -162,18 +273,20 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
             AND F.E1_SERIE   = B.D2_SERIE
             AND F.E1_CLIENTE = B.D2_CLIENTE
             AND F.E1_LOJA    = B.D2_LOJA
+        {group_by_clause}
         """
 
-        branch_label = request.branch or "consolidated"
-        params = where_params + financeiro_where_params + (branch_label,)
-
-        with self as repo:
-            result = repo.execute_one(sql, params)
-
-        return result or {
-            "branch": branch_label,
-            "start_date": request.start_date or "",
-            "end_date": request.end_date or "",
+    @staticmethod
+    def _empty_rol_row(
+        *,
+        branch: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict:
+        return {
+            "branch": branch,
+            "start_date": start_date or "",
+            "end_date": end_date or "",
             "gross_revenue": 0,
             "other_values": 0,
             "items_without_tes": 0,

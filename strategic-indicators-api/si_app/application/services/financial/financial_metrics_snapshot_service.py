@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from si_app.application.dto.financial.get_rol_request import GetRolRequest
+from si_app.application.dto.financial.list_rol_by_branch_request import (
+    ListRolByBranchRequest,
+)
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
@@ -183,14 +185,16 @@ class FinancialMetricsSnapshotService:
 
         snapshots: list[FinancialBranchSnapshot] = []
 
-        for branch_code in branches:
-            rol_payload = self._financial_query_repository.get_rol(
-                GetRolRequest(
-                    branch=branch_code,
-                    start_date=start_date,
-                    end_date=end_date,
-                )
+        rol_by_branch = self._financial_query_repository.list_rol_by_branch(
+            ListRolByBranchRequest(
+                branches=branches,
+                start_date=start_date,
+                end_date=end_date,
             )
+        )
+
+        for branch_code in branches:
+            rol_payload = rol_by_branch.get(branch_code, {})
             rol_with_ipi = self._utils.to_float(rol_payload.get("rol_with_ipi")) or 0.0
 
             ebitda_value = self._average_numeric_field(
