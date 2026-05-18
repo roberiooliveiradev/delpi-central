@@ -1,0 +1,67 @@
+/* Camada de modais no document.body — evita que transform da sidebar quebre position:fixed */
+
+.mdc-modal-portal {
+  position: relative;
+  z-index: 1400;
+}
+
+.mdc-modal-portal .mdc-chat-project-create-backdrop,
+.mdc-modal-portal .mdc-chat-projects-modal-backdrop,
+.mdc-modal-portal .mdc-chat-agents-modal-backdrop,
+.mdc-modal-portal .mdc-chat-archived-backdrop,
+.mdc-modal-portal .mdc-chat-confirm-backdrop,
+.mdc-modal-portal .mdc-chat-canvas-backdrop,
+.mdc-modal-portal .mdc-chat-project-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  box-sizing: border-box;
+  width: 100vw;
+  max-width: 100vw;
+  height: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: var(--mdc-space-4);
+}
+
+.mdc-modal-portal .mdc-chat-project-create-modal,
+.mdc-modal-portal .mdc-chat-confirm,
+.mdc-modal-portal .mdc-chat-archived-dialog {
+  box-sizing: border-box;
+  max-width: min(100%, 42rem);
+}
+
+.mdc-modal-portal .mdc-chat-projects-modal,
+.mdc-modal-portal .mdc-chat-agents-modal {
+  box-sizing: border-box;
+  width: min(100%, 58rem);
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  .mdc-modal-portal .mdc-chat-project-create-backdrop,
+  .mdc-modal-portal .mdc-chat-projects-modal-backdrop,
+  .mdc-modal-portal .mdc-chat-agents-modal-backdrop,
+  .mdc-modal-portal .mdc-chat-archived-backdrop,
+  .mdc-modal-portal .mdc-chat-confirm-backdrop,
+  .mdc-modal-portal .mdc-chat-project-settings-backdrop {
+    align-items: flex-end;
+    justify-items: stretch;
+    padding: 0;
+  }
+
+  .mdc-modal-portal .mdc-chat-project-create-modal,
+  .mdc-modal-portal .mdc-chat-projects-modal,
+  .mdc-modal-portal .mdc-chat-agents-modal,
+  .mdc-modal-portal .mdc-chat-archived-dialog,
+  .mdc-modal-portal .mdc-chat-confirm,
+  .mdc-modal-portal .mdc-chat-project-settings {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .mdc-modal-portal .mdc-chat-confirm-backdrop {
+    padding: var(--mdc-space-3);
+    align-items: center;
+  }
+}

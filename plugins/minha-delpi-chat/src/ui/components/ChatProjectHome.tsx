@@ -22,6 +22,7 @@ import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { formatSessionDate } from "./chatSidebarUtils";
 
+import { ModalPortal } from "./ModalPortal";
 import "./ChatProjectHome.css";
 
 type ProjectTab = "chats" | "sources" | "agents";
@@ -630,7 +631,16 @@ export function ChatProjectHome({
       </div>
 
       {isSettingsOpen ? (
-        <div className="mdc-chat-project-settings-backdrop" role="presentation">
+        <ModalPortal>
+        <div
+          className="mdc-chat-project-settings-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setIsSettingsOpen(false);
+            }
+          }}
+        >
           <section
             className="mdc-chat-project-settings"
             role="dialog"
@@ -694,6 +704,7 @@ export function ChatProjectHome({
             </footer>
           </section>
         </div>
+        </ModalPortal>
       ) : null}
     </section>
   );

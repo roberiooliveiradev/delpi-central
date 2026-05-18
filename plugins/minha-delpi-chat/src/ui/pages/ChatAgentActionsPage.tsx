@@ -32,6 +32,7 @@ import type {
   ChatAgentAction,
   ChatAgentActionProvider,
 } from "../../data/api/chatTypes";
+import { useChatLayout } from "../../state/hooks/useChatLayout";
 import { ActionRoutesSection } from "./agent-actions/ActionRoutesSection";
 import type { ActionTestPayload } from "./agent-actions/types";
 
@@ -178,6 +179,9 @@ export function ChatAgentActionsPage({
   const [testResult, setTestResult] = useState<ChatActionTestResult | null>(null);
   const [testLogs, setTestLogs] = useState<ChatActionTestLog[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const { isDesktop } = useChatLayout();
+  const [showPreview, setShowPreview] = useState(false);
+  const isPreviewVisible = isDesktop || showPreview;
 
   const [newProviderName, setNewProviderName] = useState("");
   const [newProviderBaseUrl, setNewProviderBaseUrl] = useState("");
@@ -609,7 +613,24 @@ export function ChatAgentActionsPage({
         ) : null}
       </header>
 
-      <div className="mdc-chat-agent-actions-page__layout">
+      {!isDesktop ? (
+        <button
+          type="button"
+          className="mdc-chat-agent-actions-page__preview-toggle"
+          onClick={() => setShowPreview((current) => !current)}
+        >
+          {showPreview ? "Ocultar pré-visualização" : "Mostrar pré-visualização"}
+        </button>
+      ) : null}
+
+      <div
+        className={[
+          "mdc-chat-agent-actions-page__layout",
+          isDesktop ? "mdc-chat-agent-actions-page__layout--with-preview" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <main className="mdc-chat-agent-actions-page__editor">
           <section className="mdc-chat-agent-actions-page__headline">
             <div className="mdc-chat-agent-actions-page__round-back">
@@ -1015,7 +1036,8 @@ export function ChatAgentActionsPage({
           )}
         </main>
 
-        <aside className="mdc-chat-agent-actions-page__preview">
+        {isPreviewVisible ? (
+        <aside className="mdc-chat-agent-actions-page__preview mdc-chat-agent-actions-page__preview--visible">
           <div className="mdc-chat-agent-actions-page__preview-top">
             <strong>Pré-visualizar</strong>
             <button type="button">Modelo</button>
@@ -1049,6 +1071,7 @@ export function ChatAgentActionsPage({
             <span>Pergunte alguma coisa</span>
           </div>
         </aside>
+        ) : null}
       </div>
     </section>
   );

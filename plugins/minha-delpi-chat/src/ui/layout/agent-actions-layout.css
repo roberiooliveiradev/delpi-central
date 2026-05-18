@@ -1,0 +1,124 @@
+/* Aba Actions — prioriza formulário; preview opcional em telas estreitas */
+
+.mdc-chat-agent-actions-page__layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@container agent-workspace (min-width: 1120px) {
+  .mdc-chat-agent-actions-page__layout--with-preview {
+    grid-template-columns: minmax(0, 1fr) minmax(0, min(20rem, 30vw));
+  }
+}
+
+.mdc-chat-agent-actions-page__editor {
+  width: 100%;
+  max-width: 52rem;
+}
+
+.mdc-chat-agent-actions-page__block,
+.mdc-chat-agent-actions-page__create {
+  width: 100%;
+  max-width: none;
+}
+
+.mdc-chat-agent-actions-page__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mdc-space-3);
+}
+
+.mdc-chat-agent-actions-page__create {
+  display: grid;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-chat-agent-actions-page__inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-chat-agent-actions-page__preview-toggle {
+  display: none;
+  margin: 0 clamp(0.9rem, 2vw, 1.35rem) var(--mdc-space-3);
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 2.25rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.45rem 0.9rem;
+}
+
+.mdc-chat-agent-actions-page__preview-toggle:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 14%, transparent);
+}
+
+@container agent-workspace (max-width: 1119px) {
+  .mdc-chat-agent-actions-page__preview-toggle {
+    display: inline-flex;
+    margin-bottom: var(--mdc-space-3);
+  }
+
+  .mdc-chat-agent-actions-page__preview:not(.mdc-chat-agent-actions-page__preview--visible) {
+    display: none;
+  }
+
+  .mdc-chat-agent-actions-page__preview--visible {
+    display: grid;
+    order: 2;
+    position: static;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    max-height: min(48vh, 24rem);
+    overflow-y: auto;
+    border-left: 0;
+    border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 66%, transparent);
+  }
+}
+
+@media (max-width: 1023px) {
+  .mdc-chat-agent-actions-page__round-back {
+    display: none;
+  }
+
+  .mdc-chat-agent-actions-page__headline {
+    gap: var(--mdc-space-2);
+    margin-bottom: var(--mdc-space-3);
+  }
+
+  .mdc-chat-agent-actions-page__headline h1 {
+    font-size: clamp(1.35rem, 5vw, 1.85rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .mdc-chat-agent-actions-page__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-chat-agent-actions-page__inline-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mdc-chat-agent-actions-page__inline-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mdc-chat-agent-actions-page__primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mdc-chat-agent-actions-page__topbar > div {
+    width: 100%;
+  }
+}

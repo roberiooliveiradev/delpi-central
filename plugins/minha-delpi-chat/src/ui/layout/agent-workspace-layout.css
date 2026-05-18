@@ -1,0 +1,66 @@
+/* Layout editor + preview de agentes — usa container queries pela largura útil */
+
+.mdc-chat-agent-builder__layout,
+.mdc-chat-agent-actions-page__layout {
+  container-type: inline-size;
+  container-name: agent-workspace;
+}
+
+.mdc-chat-agent-builder__layout {
+  grid-template-columns: minmax(0, 1fr) minmax(0, min(22rem, 34vw));
+}
+
+/* Actions: colunas em agent-actions-layout.css (preview só em telas largas) */
+
+.mdc-chat-agent-builder__form,
+.mdc-chat-agent-actions-page__editor {
+  min-width: 0;
+}
+
+.mdc-chat-agent-builder__preview,
+.mdc-chat-agent-actions-page__preview {
+  min-width: 0;
+  max-width: 22rem;
+}
+
+@container agent-workspace (max-width: 960px) {
+  .mdc-chat-agent-builder__layout,
+  .mdc-chat-agent-actions-page__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mdc-chat-agent-builder__form,
+  .mdc-chat-agent-actions-page__editor {
+    order: 1;
+  }
+
+  .mdc-chat-agent-builder__preview {
+    order: 2;
+    position: static;
+    top: auto;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    max-height: min(52vh, 28rem);
+    overflow-y: auto;
+    border-left: 0;
+    border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 66%, transparent);
+  }
+}
+
+@media (max-width: 1180px) {
+  .mdc-chat-agent-builder__layout,
+  .mdc-chat-agent-actions-page__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mdc-chat-agent-builder__preview {
+    position: static;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    max-height: min(52vh, 28rem);
+    border-left: 0;
+    border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 66%, transparent);
+  }
+}

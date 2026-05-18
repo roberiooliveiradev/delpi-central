@@ -78,14 +78,68 @@
   margin: 0.25rem 0 0.9rem;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
+  .mdc-action-routes-table__header {
+    display: none;
+  }
+
+  .mdc-action-routes-table__group {
+    border: 1px solid color-mix(in srgb, var(--mdc-card-border) 50%, transparent);
+    border-radius: var(--mdc-radius-lg);
+    margin-bottom: var(--mdc-space-2);
+    padding: 0.15rem 0;
+    overflow: hidden;
+  }
+
+  .mdc-action-routes-table__row {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .mdc-action-routes-table__row > span,
+  .mdc-action-routes-table__row > small {
+    white-space: normal;
+  }
+
+  .mdc-action-routes-table__row > span::before,
+  .mdc-action-routes-table__row > small::before {
+    display: inline-block;
+    min-width: 4.5rem;
+    margin-right: 0.35rem;
+    color: var(--mdc-text-muted);
+    font-size: 0.72rem;
+    font-weight: 850;
+    text-transform: uppercase;
+  }
+
+  .mdc-action-routes-table__row > span:nth-of-type(1)::before {
+    content: "Método";
+  }
+
+  .mdc-action-routes-table__row > span:nth-of-type(2)::before {
+    content: "Caminho";
+  }
+
+  .mdc-action-routes-table__row > small::before {
+    content: "Status";
+  }
+
+  .mdc-action-routes-table__row > button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
   .mdc-action-routes-table {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .mdc-action-routes-table__header,
   .mdc-action-routes-table__row {
-    min-width: 46rem;
+    min-width: 40rem;
   }
 }
 

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { ChatAgent, ChatProject } from "../../data/api/chatTypes";
 import { ChatConfirmDialog } from "./ChatConfirmDialog";
+import { ModalPortal } from "./ModalPortal";
 
 import "./ChatProjectsModal.css";
 
@@ -211,6 +212,7 @@ export function ChatProjectsModal({
   }
 
   return (
+    <ModalPortal>
     <div
       className="mdc-chat-projects-modal-backdrop"
       role="presentation"
@@ -506,5 +508,6 @@ export function ChatProjectsModal({
         onCancel={() => setDeleteTarget(null)}
       />
     </div>
+    </ModalPortal>
   );
 }

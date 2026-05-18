@@ -2,6 +2,7 @@ import { Check, Copy, Edit3, Eye, Maximize2, Minimize2, Save, X } from "lucide-r
 import { useState } from "react";
 import { ChatMarkdown } from "./ChatMarkdown";
 
+import { ModalPortal } from "./ModalPortal";
 import "./ChatCanvas.css";
 
 export type ChatCanvasDocument = {
@@ -42,6 +43,7 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
   const isPreview = mode === "preview";
 
   return (
+    <ModalPortal>
     <div
       className="mdc-chat-canvas-backdrop"
       role="presentation"
@@ -172,5 +174,6 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
         </div>
       </aside>
     </div>
+    </ModalPortal>
   );
 }

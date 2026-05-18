@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 
 import type { ChatSession } from "../../data/api/chatTypes";
 import { formatSessionDate } from "./chatSidebarUtils";
+import { ModalPortal } from "./ModalPortal";
 
 type ChatSidebarArchivedDialogProps = {
   open: boolean;
@@ -23,6 +24,7 @@ export function ChatSidebarArchivedDialog({
   }
 
   return (
+    <ModalPortal>
     <div
       className="mdc-chat-archived-backdrop"
       role="presentation"
@@ -76,5 +78,6 @@ export function ChatSidebarArchivedDialog({
         )}
       </section>
     </div>
+    </ModalPortal>
   );
 }

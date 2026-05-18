@@ -1,4 +1,5 @@
 @import "../layout/workspace-responsive.css";
+@import "../layout/agent-workspace-layout.css";
 
 .mdc-chat-agent-builder {
   display: grid;
@@ -81,7 +82,6 @@
 
 .mdc-chat-agent-builder__layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(23rem, 36rem);
   min-height: 0;
 }
 
@@ -716,9 +716,7 @@
   background: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
 }
 
-.mdc-chat-agent-builder__layout {
-  grid-template-columns: minmax(0, 1fr) minmax(25rem, 34rem);
-}
+/* colunas definidas em agent-workspace-layout.css */
 
 .mdc-chat-agent-builder__form {
   gap: 1.65rem;

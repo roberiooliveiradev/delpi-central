@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
 import { ChatConfirmDialog } from "./ChatConfirmDialog";
+import { ModalPortal } from "./ModalPortal";
 
 import "./ChatAgentsModal.css";
 
@@ -210,6 +211,7 @@ export function ChatAgentsModal({
   }
 
   return (
+    <ModalPortal>
     <div
       className="mdc-chat-agents-modal-backdrop"
       role="presentation"
@@ -476,5 +478,6 @@ export function ChatAgentsModal({
         onCancel={() => setDeleteTarget(null)}
       />
     </div>
+    </ModalPortal>
   );
 }
