@@ -35,6 +35,7 @@ O nome do arquivo **varia**; o campo `id` no JSON é a chave estável.
 | Minha DELPI Chat | `plugins/minha-delpi-chat/delpi.manifest.json` |
 | Dashboard DELPI | `plugins/dashboard-delpi/dashboard-delpi.manifest.json` |
 | Dashboard LMPs | `plugins/dashboard-lmps/dash-lmps.manifest.json` |
+| Dashboard Qualidade | `plugins/dashboard-quality/dashboard-quality.manifest.json` |
 | API DELPI (app admin) | `api-delpi/api-delpi.manifest.json` |
 
 Contrato: [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md).  

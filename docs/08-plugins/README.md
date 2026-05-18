@@ -19,6 +19,10 @@ Manifesto JSON (delpi.manifest.json)
 
 Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md).
 
+**CI (build):** `./scripts/ci/build-dashboard-quality.sh` — lint + build do plugin Qualidade.
+
+**Homologação:** `./scripts/homologacao/check-dashboard-quality.sh` — smoke HTTP (assets + API com `TOKEN`).
+
 ---
 
 ## 2. Inventário no repositório

@@ -19,5 +19,9 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Padrão comum no plugin: reset de página/granularidade ao mudar filtros.
+      "react-hooks/set-state-in-effect": "warn",
+    },
   },
 ]);

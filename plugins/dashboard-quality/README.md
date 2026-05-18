@@ -18,6 +18,8 @@ Microfrontend (Module Federation) para visualização de **métricas de qualidad
 | [docs/ROADMAP.md](./docs/ROADMAP.md) | Fases de desenvolvimento, critérios de pronto, dependências |
 | [docs/API_MAPPING.md](./docs/API_MAPPING.md) | Rotas api-delpi consumidas pelo plugin |
 | [docs/STRUCTURE.md](./docs/STRUCTURE.md) | Árvore de pastas e convenções |
+| [docs/TESTING.md](./docs/TESTING.md) | Build, Docker, registro Core API e checklist manual |
+| [docs/IMPROVEMENTS_ROADMAP.md](./docs/IMPROVEMENTS_ROADMAP.md) | Ondas de melhorias (UX, performance, polish) |
 
 ## Backend
 
@@ -52,8 +54,12 @@ Rotas:
 
 ```bash
 cd plugins/dashboard-quality
-npm install && npm run build
+npm install && npm run ci
 ```
+
+Na raiz do monorepo: `./scripts/ci/build-dashboard-quality.sh`
+
+Guia completo: [docs/TESTING.md](./docs/TESTING.md)
 
 ## Testes manuais (API)
 
