@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { adaptDepartmentsToView } from "../../data/adapters/departmentsAdapter";
 import { fetchStrategicIndicatorsDepartments } from "../../data/api/strategicIndicatorsDepartmentsApi";
+import {
+  buildStrategicIndicatorsCacheKey,
+  getStrategicIndicatorsCachedValue,
+  setStrategicIndicatorsCachedValue,
+} from "../../data/cache/strategicIndicatorsReadCache";
 import type { DepartmentOverviewViewItem } from "../../data/types/departments";
+import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 
 type UseStrategicIndicatorsDepartmentsParams = {
   departmentId?: string;
@@ -44,11 +50,24 @@ export function useStrategicIndicatorsDepartments({
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      if (hasLoadedOnceRef.current) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+      const cacheKey = buildStrategicIndicatorsCacheKey("departments", {
+        competence,
+        branch,
+        departmentId,
+        startDate,
+        endDate,
+      });
+      const cached = getStrategicIndicatorsCachedValue<DepartmentOverviewViewItem[]>(
+        cacheKey,
+      );
+
+      beginStrategicIndicatorsLoad({
+        cached,
+        hasLoadedOnce: hasLoadedOnceRef.current,
+        setValue: setItems,
+        setLoading,
+        setRefreshing,
+      });
 
       setError(null);
 
@@ -67,7 +86,9 @@ export function useStrategicIndicatorsDepartments({
           return;
         }
 
-        setItems(adaptDepartmentsToView(response));
+        const viewItems = adaptDepartmentsToView(response);
+        setItems(viewItems);
+        setStrategicIndicatorsCachedValue(cacheKey, viewItems);
         hasLoadedOnceRef.current = true;
       } catch (err) {
         if (requestId !== requestIdRef.current || controller.signal.aborted) {

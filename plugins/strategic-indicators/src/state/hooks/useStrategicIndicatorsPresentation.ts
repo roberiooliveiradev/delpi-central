@@ -9,6 +9,7 @@ import {
   type PresentationWarningItem,
 } from "../../data/adapters/presentationPayloadAdapter";
 import type { PresentationViewData } from "../../data/types/presentation";
+import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 
 type UseStrategicIndicatorsPresentationParams = {
   competence?: string;
@@ -34,6 +35,7 @@ export function useStrategicIndicatorsPresentation({
   );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [trendsLoading, setTrendsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<PresentationWarningItem[]>([]);
 
@@ -55,21 +57,26 @@ export function useStrategicIndicatorsPresentation({
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      if (hasLoadedOnceRef.current) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+      beginStrategicIndicatorsLoad({
+        cached: payload,
+        hasLoadedOnce: hasLoadedOnceRef.current,
+        setValue: setPayload,
+        setLoading,
+        setRefreshing,
+      });
 
       setError(null);
+      setTrendsLoading(true);
 
       try {
-        const nextPayload = await fetchStrategicIndicatorsPresentation({
+        const overviewPayload = await fetchStrategicIndicatorsPresentation({
           competence,
           branch,
           startDate,
           endDate,
           months,
+          include:
+            "executive_summary,departments_overview,department_details_by_id,indicators_by_department_id,alerts",
           getAccessToken: getAccessTokenRef.current,
           signal: controller.signal,
         });
@@ -78,22 +85,53 @@ export function useStrategicIndicatorsPresentation({
           return;
         }
 
-        setPayload(nextPayload);
-        setWarnings(adaptPresentationWarnings(nextPayload));
+        setPayload(overviewPayload);
+        setWarnings(adaptPresentationWarnings(overviewPayload));
+        hasLoadedOnceRef.current = true;
+        setLoading(false);
+        setRefreshing(false);
 
-        const nextDepartmentIds = nextPayload.departments_overview.map(
+        const overviewDepartmentIds = overviewPayload.departments_overview.map(
           (department) => department.id,
         );
-
         setSelectedDepartmentId((current) => {
-          if (current && nextDepartmentIds.includes(current)) {
+          if (current && overviewDepartmentIds.includes(current)) {
             return current;
           }
-
-          return nextDepartmentIds[0] ?? null;
+          return overviewDepartmentIds[0] ?? null;
         });
 
-        hasLoadedOnceRef.current = true;
+        const trendsPayload = await fetchStrategicIndicatorsPresentation({
+          competence,
+          branch,
+          startDate,
+          endDate,
+          months,
+          include: "trends",
+          getAccessToken: getAccessTokenRef.current,
+          signal: controller.signal,
+        });
+
+        if (requestId !== requestIdRef.current || controller.signal.aborted) {
+          return;
+        }
+
+        const nextPayload: StrategicIndicatorsPresentationApiResponse = {
+          ...overviewPayload,
+          trends: trendsPayload.trends,
+          meta: {
+            partial_success:
+              overviewPayload.meta.partial_success ||
+              trendsPayload.meta.partial_success,
+            errors: [
+              ...overviewPayload.meta.errors,
+              ...trendsPayload.meta.errors,
+            ],
+          },
+        };
+
+        setPayload(nextPayload);
+        setWarnings(adaptPresentationWarnings(nextPayload));
       } catch (err) {
         if (requestId !== requestIdRef.current || controller.signal.aborted) {
           return;
@@ -108,6 +146,7 @@ export function useStrategicIndicatorsPresentation({
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
           setLoading(false);
           setRefreshing(false);
+          setTrendsLoading(false);
         }
       }
     };
@@ -154,6 +193,7 @@ export function useStrategicIndicatorsPresentation({
       data,
       loading,
       refreshing,
+      trendsLoading,
       error,
       warnings,
       departmentIds,
@@ -166,6 +206,7 @@ export function useStrategicIndicatorsPresentation({
       data,
       loading,
       refreshing,
+      trendsLoading,
       error,
       warnings,
       departmentIds,

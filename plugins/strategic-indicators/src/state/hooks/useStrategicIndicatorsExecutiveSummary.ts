@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { adaptExecutiveSummaryToView } from "../../data/adapters/executiveSummaryAdapter";
 import { fetchStrategicIndicatorsExecutiveSummary } from "../../data/api/strategicIndicatorsExecutiveSummaryApi";
+import {
+  buildStrategicIndicatorsCacheKey,
+  getStrategicIndicatorsCachedValue,
+  setStrategicIndicatorsCachedValue,
+} from "../../data/cache/strategicIndicatorsReadCache";
 import type { ExecutiveDashboardViewData } from "../../data/types/executiveSummary";
+import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
+import {
+  prefetchStrategicIndicatorsDepartments,
+  prefetchStrategicIndicatorsTrends,
+} from "./strategicIndicatorsPrefetch";
 
 type UseStrategicIndicatorsExecutiveSummaryParams = {
   departmentId?: string;
@@ -44,11 +54,24 @@ export function useStrategicIndicatorsExecutiveSummary({
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      if (hasLoadedOnceRef.current) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+      const cacheKey = buildStrategicIndicatorsCacheKey("executive-summary", {
+        competence,
+        branch,
+        departmentId,
+        startDate,
+        endDate,
+      });
+      const cached = getStrategicIndicatorsCachedValue<ExecutiveDashboardViewData>(
+        cacheKey,
+      );
+
+      beginStrategicIndicatorsLoad({
+        cached,
+        hasLoadedOnce: hasLoadedOnceRef.current,
+        setValue: setData,
+        setLoading,
+        setRefreshing,
+      });
 
       setError(null);
 
@@ -67,8 +90,26 @@ export function useStrategicIndicatorsExecutiveSummary({
           return;
         }
 
-        setData(adaptExecutiveSummaryToView(response));
+        const viewData = adaptExecutiveSummaryToView(response);
+        setData(viewData);
+        setStrategicIndicatorsCachedValue(cacheKey, viewData);
         hasLoadedOnceRef.current = true;
+
+        prefetchStrategicIndicatorsDepartments({
+          competence,
+          branch,
+          startDate,
+          endDate,
+          getAccessToken: getAccessTokenRef.current,
+        });
+        prefetchStrategicIndicatorsTrends({
+          competence,
+          branch,
+          startDate,
+          endDate,
+          months: 6,
+          getAccessToken: getAccessTokenRef.current,
+        });
       } catch (err) {
         if (requestId !== requestIdRef.current || controller.signal.aborted) {
           return;

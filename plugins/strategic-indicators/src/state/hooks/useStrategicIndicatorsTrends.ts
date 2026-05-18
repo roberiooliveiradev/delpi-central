@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { adaptTrendsToView } from "../../data/adapters/trendsAdapter";
 import { fetchStrategicIndicatorsTrends } from "../../data/api/strategicIndicatorsTrendsApi";
+import {
+  buildStrategicIndicatorsCacheKey,
+  getStrategicIndicatorsCachedValue,
+  setStrategicIndicatorsCachedValue,
+} from "../../data/cache/strategicIndicatorsReadCache";
 import type { TrendsDashboardViewData } from "../../data/types/trends";
+import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 
 type UseStrategicIndicatorsTrendsParams = {
   departmentId?: string;
@@ -46,11 +52,24 @@ export function useStrategicIndicatorsTrends({
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      if (hasLoadedOnceRef.current) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+      const cacheKey = buildStrategicIndicatorsCacheKey("trends", {
+        competence,
+        branch,
+        departmentId,
+        startDate,
+        endDate,
+        months,
+      });
+      const cached =
+        getStrategicIndicatorsCachedValue<TrendsDashboardViewData>(cacheKey);
+
+      beginStrategicIndicatorsLoad({
+        cached,
+        hasLoadedOnce: hasLoadedOnceRef.current,
+        setValue: setData,
+        setLoading,
+        setRefreshing,
+      });
 
       setError(null);
 
@@ -70,7 +89,9 @@ export function useStrategicIndicatorsTrends({
           return;
         }
 
-        setData(adaptTrendsToView(response));
+        const viewData = adaptTrendsToView(response);
+        setData(viewData);
+        setStrategicIndicatorsCachedValue(cacheKey, viewData);
         hasLoadedOnceRef.current = true;
       } catch (err) {
         if (requestId !== requestIdRef.current || controller.signal.aborted) {

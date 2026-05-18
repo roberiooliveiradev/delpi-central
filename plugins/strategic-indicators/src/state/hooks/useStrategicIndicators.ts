@@ -1,10 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { adaptIndicatorsToView } from "../../data/adapters/indicatorsAdapter";
 import { fetchStrategicIndicators } from "../../data/api/strategicIndicatorsApi";
+import {
+  buildStrategicIndicatorsCacheKey,
+  getStrategicIndicatorsCachedValue,
+  setStrategicIndicatorsCachedValue,
+} from "../../data/cache/strategicIndicatorsReadCache";
 import type {
   IndicatorFetchErrorViewItem,
   IndicatorViewItem,
 } from "../../data/types/indicators";
+import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
+
+type IndicatorsQueryState = {
+  items: IndicatorViewItem[];
+  fetchErrors: IndicatorFetchErrorViewItem[];
+  partialSuccess: boolean;
+};
 
 type UseStrategicIndicatorsParams = {
   departmentId?: string;
@@ -49,11 +61,33 @@ export function useStrategicIndicators({
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      if (hasLoadedOnceRef.current) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+      const cacheKey = buildStrategicIndicatorsCacheKey("indicators", {
+        competence,
+        branch,
+        departmentId,
+        startDate,
+        endDate,
+      });
+      const cached =
+        getStrategicIndicatorsCachedValue<IndicatorsQueryState>(cacheKey);
+
+      beginStrategicIndicatorsLoad({
+        cached: cached
+          ? {
+              items: cached.items,
+              fetchErrors: cached.fetchErrors,
+              partialSuccess: cached.partialSuccess,
+            }
+          : null,
+        hasLoadedOnce: hasLoadedOnceRef.current,
+        setValue: (value) => {
+          setItems(value.items);
+          setFetchErrors(value.fetchErrors);
+          setPartialSuccess(value.partialSuccess);
+        },
+        setLoading,
+        setRefreshing,
+      });
 
       setError(null);
 
@@ -72,15 +106,19 @@ export function useStrategicIndicators({
           return;
         }
 
-        setItems(adaptIndicatorsToView(response));
-        setFetchErrors(
-          (response.errors ?? []).map((item) => ({
+        const nextState: IndicatorsQueryState = {
+          items: adaptIndicatorsToView(response),
+          fetchErrors: (response.errors ?? []).map((item) => ({
             departmentId: item.department_id,
             source: item.source,
             message: item.message,
           })),
-        );
-        setPartialSuccess(Boolean(response.partial_success));
+          partialSuccess: Boolean(response.partial_success),
+        };
+        setItems(nextState.items);
+        setFetchErrors(nextState.fetchErrors);
+        setPartialSuccess(nextState.partialSuccess);
+        setStrategicIndicatorsCachedValue(cacheKey, nextState);
         hasLoadedOnceRef.current = true;
       } catch (err) {
         if (requestId !== requestIdRef.current || controller.signal.aborted) {

@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { adaptAlertsToView } from "../../data/adapters/alertsAdapter";
 import { fetchStrategicIndicatorsAlerts } from "../../data/api/strategicIndicatorsAlertsApi";
+import {
+  buildStrategicIndicatorsCacheKey,
+  getStrategicIndicatorsCachedValue,
+  setStrategicIndicatorsCachedValue,
+} from "../../data/cache/strategicIndicatorsReadCache";
 import type { AlertsDashboardViewData } from "../../data/types/alerts";
+import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 
 type UseStrategicIndicatorsAlertsParams = {
   departmentId?: string;
@@ -44,11 +50,23 @@ export function useStrategicIndicatorsAlerts({
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      if (hasLoadedOnceRef.current) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+      const cacheKey = buildStrategicIndicatorsCacheKey("alerts", {
+        competence,
+        branch,
+        departmentId,
+        startDate,
+        endDate,
+      });
+      const cached =
+        getStrategicIndicatorsCachedValue<AlertsDashboardViewData>(cacheKey);
+
+      beginStrategicIndicatorsLoad({
+        cached,
+        hasLoadedOnce: hasLoadedOnceRef.current,
+        setValue: setData,
+        setLoading,
+        setRefreshing,
+      });
 
       setError(null);
 
@@ -67,7 +85,9 @@ export function useStrategicIndicatorsAlerts({
           return;
         }
 
-        setData(adaptAlertsToView(response));
+        const viewData = adaptAlertsToView(response);
+        setData(viewData);
+        setStrategicIndicatorsCachedValue(cacheKey, viewData);
         hasLoadedOnceRef.current = true;
       } catch (err) {
         if (requestId !== requestIdRef.current || controller.signal.aborted) {

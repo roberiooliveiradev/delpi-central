@@ -887,6 +887,19 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
     const trend = data.trend;
 
+    if (presentation.trendsLoading) {
+      return (
+        <div className="si-presentation-loading-stage">
+          <LoadingActivityInline
+            title="Carregando tendências"
+            description="Aguarde enquanto a série histórica do IGD é preparada."
+            variant="panel"
+            tone="info"
+          />
+        </div>
+      );
+    }
+
     if (!trend) {
       return (
         <div className="si-presentation-loading-stage">
@@ -1245,7 +1258,11 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
           branchOptions={STRATEGIC_INDICATORS_BRANCH_OPTIONS}
           months={months}
           monthsOptions={[...PRESENTATION_MONTHS_OPTIONS]}
-          isRefreshing={presentation.refreshing || presentation.loading}
+          isRefreshing={
+            presentation.refreshing ||
+            presentation.loading ||
+            presentation.trendsLoading
+          }
           referenceMonth={referenceMonth}
           onReferenceMonthChange={handleReferenceMonthChange}
           onModeChange={handleModeChange}

@@ -8,6 +8,7 @@ export type StrategicIndicatorsPresentationRequest = {
   startDate?: string;
   endDate?: string;
   months?: number;
+  include?: string;
   getAccessToken?: () => string | undefined;
   signal?: AbortSignal;
 };
@@ -298,6 +299,9 @@ function buildQueryString(params: StrategicIndicatorsPresentationRequest) {
   if (params.endDate) searchParams.set("end_date", params.endDate);
   if (typeof params.months === "number") {
     searchParams.set("months", String(params.months));
+  }
+  if (params.include) {
+    searchParams.set("include", params.include);
   }
 
   const queryString = searchParams.toString();

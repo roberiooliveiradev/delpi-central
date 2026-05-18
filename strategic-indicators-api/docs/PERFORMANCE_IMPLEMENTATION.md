@@ -77,7 +77,7 @@ Rotas **admin/escrita** (grupo C) são secundárias — já são rápidas (Postg
 - [x] Comparativo: 2 períodos em paralelo com `measurements_port_factory` (instâncias isoladas)
 - [x] Trends: períodos da série em paralelo (`_load_measurements_by_period_parallel`, max 3 workers)
 - [x] Fix `Decimal` não serializável em `JSONResponse` (`to_json_safe` + normalização na rota `/indicators`)
-- [ ] MFE: stale-while-revalidate / prefetch / presentation split — **alterações no plugin, commit separado**
+- [x] MFE: stale-while-revalidate, prefetch e presentation split (plugin)
 
 ---
 
@@ -124,7 +124,7 @@ PROIBIDO:
 - [x] 2.2 Catálogo estrutural uma vez em `get_series_snapshot_optimized`
 - [ ] 2.3 Tabela `si_period_scores` (opcional, não implementado)
 - [x] 2.4 Presentation `?include=` (API); trends-only sem comparativo
-- [ ] 2.4b MFE split trends (pendente commit no plugin)
+- [x] 2.4b MFE split trends
 
 ### Fase 3 — Raiz das medições
 
@@ -134,11 +134,11 @@ PROIBIDO:
 - [ ] 3.4 Coletores thin (pendente)
 - [ ] 3.5 Warm-up cron (pendente)
 
-### Fase 4 — MFE (fora do pacote `strategic-indicators-api`)
+### Fase 4 — MFE (`plugins/strategic-indicators`)
 
-- [ ] 4.1 Stale-while-revalidate (executive, departments) — código no plugin, não commitado na API
-- [ ] 4.2 Prefetch departments após executive
-- [ ] 4.3 Presentation trends em segundo request
+- [x] 4.1 Stale-while-revalidate (executive, departments, trends, indicators, alerts, presentation)
+- [x] 4.2 Prefetch departments + trends após executive
+- [x] 4.3 Presentation: overview primeiro, trends em segundo request + `trendsLoading` na UI
 
 ### Fase 5 — Admin
 
@@ -185,3 +185,4 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-18 | Criação do plano |
 | 2026-05-18 | Implementação fases 0–2 e 3.1–3.2 (API); executive ~10s com paralelo seguro |
 | 2026-05-18 | Fix serialização `Decimal`; trends com períodos paralelos; roadmap atualizado |
+| 2026-05-18 | MFE: cache leitura, prefetch, split presentation, SWR em todas as páginas do painel |
