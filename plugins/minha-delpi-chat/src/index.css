@@ -64,6 +64,13 @@
   --mdc-space-5: 20px;
   --mdc-space-6: 24px;
   --mdc-space-8: 32px;
+
+  --mdc-bp-sm: 480px;
+  --mdc-bp-md: 768px;
+  --mdc-bp-lg: 1024px;
+  --mdc-sidebar-width: 17.25rem;
+  --mdc-sidebar-rail: 4.75rem;
+  --mdc-content-max: 980px;
 }
 
 /* =========================================

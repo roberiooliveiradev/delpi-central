@@ -5,11 +5,30 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
   min-height: 3.15rem;
   border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
   background: color-mix(in srgb, var(--mdc-bg) 92%, transparent);
   backdrop-filter: blur(14px);
   padding: 0.55rem clamp(1rem, 2vw, 1.75rem);
+}
+
+.mdc-chat-context-topbar__menu-trigger--sidebar {
+  display: none;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 0.78rem;
+  background: color-mix(in srgb, var(--mdc-bg) 88%, transparent);
+  color: var(--mdc-text);
+  padding: 0;
+}
+
+.mdc-chat-context-topbar__menu-trigger--sidebar:hover {
+  color: var(--mdc-primary);
+  border-color: color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
 }
 
 .mdc-chat-context-topbar__identity {
@@ -18,6 +37,7 @@
   align-items: center;
   gap: 0.65rem;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .mdc-chat-context-topbar__icon {

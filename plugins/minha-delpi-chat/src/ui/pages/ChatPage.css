@@ -1,27 +1,11 @@
 .mdc-chat-shell {
-  grid-template-columns: 280px minmax(0, 1fr);
   align-items: stretch;
   transition: grid-template-columns 0.22s ease;
-}
-
-.mdc-chat-shell--sidebar-collapsed {
-  grid-template-columns: 4.75rem minmax(0, 1fr);
 }
 
 .mdc-chat-main {
   position: relative;
   min-width: 0;
-}
-
-@media (max-width: 980px) {
-  .mdc-chat-shell,
-  .mdc-chat-shell--sidebar-collapsed {
-    grid-template-columns: 1fr;
-  }
-
-  .mdc-chat-sidebar {
-    display: none;
-  }
 }
 
 .mdc-chat-empty-composer {
@@ -51,14 +35,6 @@
   font-size: 0.78rem;
   font-weight: 800;
   padding: 0.3rem 0.6rem;
-}
-
-/* Topo compacto substitui o header grande antigo */
-.mdc-chat-main {
-  position: relative;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  min-height: 100vh;
 }
 
 .mdc-chat-main > .mdc-chat-alert {

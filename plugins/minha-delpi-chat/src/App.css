@@ -1,6 +1,7 @@
 .minha-delpi-chat {
   width: 100%;
-  height: 100vh;
+  height: 100%;
+  min-height: 100dvh;
   min-height: 100vh;
   padding: 0;
   overflow: hidden;
@@ -11,7 +12,6 @@
 
 .mdc-chat-shell {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -87,20 +87,6 @@
   border-radius: var(--mdc-radius-md);
   color: var(--mdc-danger);
   background: color-mix(in srgb, var(--mdc-danger) 9%, transparent);
-}
-
-@media (max-width: 920px) {
-  .mdc-chat-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .mdc-chat-sidebar {
-    display: none;
-  }
-
-  .mdc-chat-header {
-    padding-inline: var(--mdc-space-4);
-  }
 }
 
 .mdc-chat-alert--success {

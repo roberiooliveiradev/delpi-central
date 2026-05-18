@@ -190,6 +190,10 @@
   opacity: 0.5;
 }
 
+.mdc-chat-input {
+  padding-bottom: calc(var(--mdc-space-4) + env(safe-area-inset-bottom, 0px));
+}
+
 @media (max-width: 720px) {
   .mdc-chat-input {
     grid-template-columns: 1fr;

@@ -3,6 +3,7 @@ import {
   Folder,
   MessageSquare,
   MoreHorizontal,
+  PanelLeft,
   Pencil,
   Settings,
   Trash2,
@@ -25,6 +26,7 @@ type ChatContextTopbarProps = {
   onDeleteProject?: () => void;
   onManageAgents?: () => void;
   onClearAgent?: () => void;
+  onOpenSidebar?: () => void;
 };
 
 export function ChatContextTopbar({
@@ -38,6 +40,7 @@ export function ChatContextTopbar({
   onDeleteProject,
   onManageAgents,
   onClearAgent,
+  onOpenSidebar,
 }: ChatContextTopbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -46,6 +49,17 @@ export function ChatContextTopbar({
 
   return (
     <header className="mdc-chat-context-topbar">
+      {onOpenSidebar ? (
+        <button
+          type="button"
+          className="mdc-chat-context-topbar__menu-trigger mdc-chat-context-topbar__menu-trigger--sidebar"
+          onClick={onOpenSidebar}
+          aria-label="Abrir menu de conversas"
+        >
+          <PanelLeft size={18} aria-hidden="true" />
+        </button>
+      ) : null}
+
       <div className="mdc-chat-context-topbar__identity">
         <span className="mdc-chat-context-topbar__icon">
           <Icon size={18} aria-hidden="true" />

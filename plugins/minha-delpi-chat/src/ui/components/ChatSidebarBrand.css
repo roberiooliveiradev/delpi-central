@@ -79,3 +79,29 @@
   height: 1.05rem;
   margin: 0;
 }
+
+.mdc-chat-sidebar__close-mobile {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .mdc-chat-sidebar__close-mobile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    border: 1px solid var(--mdc-card-border);
+    border-radius: 0.78rem;
+    background: color-mix(in srgb, var(--mdc-bg) 82%, transparent);
+    color: var(--mdc-text);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .mdc-chat-sidebar__brand .mdc-chat-sidebar__collapse-button {
+    display: none;
+  }
+}
