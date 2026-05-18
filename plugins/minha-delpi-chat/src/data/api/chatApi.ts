@@ -9,6 +9,7 @@ import type {
   ChatAgentAction,
   ChatAgentPreviewResponse,
   ChatAgentShare,
+  ChatProjectShare,
   ChatDirectoryUser,
   ChatArtifact,
   ChatAttachment,
@@ -638,6 +639,36 @@ export async function deleteChatProject(
   }
 }
 
+
+export async function listChatProjectShares(
+  projectId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatProjectShare[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}/shares`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function revokeChatProjectShare(
+  projectId: string,
+  targetUserId: string,
+  options: ChatApiOptions = {},
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/projects/${projectId}/shares/${targetUserId}`,
+    {
+      method: "DELETE",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  if (!response.ok) {
+    await parseJsonResponse<unknown>(response);
+  }
+}
 
 export async function shareChatProject(
   projectId: string,

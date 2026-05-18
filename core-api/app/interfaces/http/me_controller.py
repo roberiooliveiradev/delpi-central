@@ -61,6 +61,9 @@ from app.application.use_cases.notify_user_use_case import (
     NotifyUserUseCase,
 )
 
+from app.application.use_cases.lookup_directory_users_use_case import (
+    LookupDirectoryUsersUseCase,
+)
 from app.application.use_cases.search_directory_users_use_case import (
     SearchDirectoryUsersUseCase,
 )
@@ -390,6 +393,26 @@ def search_directory_users():
         return api_error("validation_error", "limit must be a number", status=400)
     except Exception as exc:
         return api_error("search_directory_users_failed", str(exc))
+
+    return jsonify({"items": results}), 200
+
+
+@me_bp.route("/me/directory/users/lookup", methods=["POST"])
+@require_auth()
+def lookup_directory_users():
+    body = request.get_json(silent=True) or {}
+    raw_ids = body.get("ids") if isinstance(body, dict) else None
+
+    if not isinstance(raw_ids, list):
+        return api_error("validation_error", "ids must be an array", status=400)
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            results = LookupDirectoryUsersUseCase(uow).execute(
+                user_ids=[str(item) for item in raw_ids if item],
+            )
+    except Exception as exc:
+        return api_error("lookup_directory_users_failed", str(exc))
 
     return jsonify({"items": results}), 200
 

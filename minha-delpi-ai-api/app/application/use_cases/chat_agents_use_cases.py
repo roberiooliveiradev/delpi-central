@@ -253,11 +253,26 @@ class DuplicateChatAgentUseCase:
 
 
 class ListChatAgentSharesUseCase:
-    def __init__(self, repository: ChatAgentRepositoryPort):
+    def __init__(self, repository: ChatAgentRepositoryPort, share_profile_service=None):
         self.repository = repository
+        self.share_profile_service = share_profile_service
 
-    def execute(self, *, user_id: str, agent_id: str) -> list[dict]:
-        return self.repository.list_shares(UUID(agent_id), UUID(user_id))
+    def execute(
+        self,
+        *,
+        user_id: str,
+        agent_id: str,
+        access_token: str | None = None,
+    ) -> list[dict]:
+        shares = self.repository.list_shares(UUID(agent_id), UUID(user_id))
+
+        if self.share_profile_service:
+            return self.share_profile_service.enrich_shares(
+                shares,
+                access_token=access_token,
+            )
+
+        return shares
 
 
 class RevokeChatAgentShareUseCase:

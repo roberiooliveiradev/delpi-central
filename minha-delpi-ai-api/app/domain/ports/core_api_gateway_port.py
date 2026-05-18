@@ -23,3 +23,11 @@ class CoreApiGatewayPort(ABC):
         limit: int = 10,
     ) -> list[dict]:
         raise NotImplementedError
+
+    @abstractmethod
+    def lookup_directory_users(
+        self,
+        access_token: str,
+        user_ids: list[str],
+    ) -> list[dict]:
+        raise NotImplementedError

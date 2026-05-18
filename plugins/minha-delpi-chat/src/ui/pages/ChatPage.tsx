@@ -794,6 +794,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                     await loadProjectSources(selectedProject.id);
                   }}
                   onUpdateProject={editProject}
+                  getAccessToken={getAccessToken}
                   onUseAgent={handleSelectContextAgent}
                   onOpenAgentPage={(agentKey) => {
                     setCanvasDocument(null);

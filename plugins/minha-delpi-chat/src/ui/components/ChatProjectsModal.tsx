@@ -2,6 +2,7 @@ import { Check, Folder, Pencil, Plus, Share2, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ChatAgent, ChatProject } from "../../data/api/chatTypes";
+import { ChatUserSearchField } from "./ChatUserSearchField";
 import { ChatConfirmDialog } from "./ChatConfirmDialog";
 import { ModalPortal } from "./ModalPortal";
 
@@ -43,6 +44,7 @@ type ChatProjectsModalProps = {
     projectId: string,
     payload: { targetUserId: string; role: string },
   ) => Promise<boolean>;
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
 type ProjectFormMode = "create" | "edit";
@@ -68,6 +70,7 @@ export function ChatProjectsModal({
   onRenameProject,
   onDeleteProject,
   onShareProject,
+  getAccessToken,
 }: ChatProjectsModalProps) {
   const [mode, setMode] = useState<ProjectFormMode>("create");
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
@@ -194,7 +197,7 @@ export function ChatProjectsModal({
 
   async function submitShare() {
     if (!shareTarget || !targetUserId.trim()) {
-      setLocalError("Informe o ID do usuário que receberá acesso.");
+      setLocalError("Selecione um usuário para compartilhar.");
       return;
     }
 
@@ -440,13 +443,11 @@ export function ChatProjectsModal({
               <div className="mdc-chat-projects-modal__share">
                 <strong>Compartilhar: {shareTarget.name}</strong>
                 <div className="mdc-chat-projects-modal__grid">
-                  <label>
-                    <span>ID do usuário</span>
-                    <input
-                      value={targetUserId}
-                      onChange={(event) => setTargetUserId(event.target.value)}
-                    />
-                  </label>
+                  <ChatUserSearchField
+                    value={targetUserId}
+                    onChange={setTargetUserId}
+                    getAccessToken={getAccessToken}
+                  />
 
                   <label>
                     <span>Permissão</span>

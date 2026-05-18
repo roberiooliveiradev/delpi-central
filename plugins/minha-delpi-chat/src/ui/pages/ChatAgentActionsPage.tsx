@@ -179,6 +179,7 @@ export function ChatAgentActionsPage({
   const [testResult, setTestResult] = useState<ChatActionTestResult | null>(null);
   const [testLogs, setTestLogs] = useState<ChatActionTestLog[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { isDesktop } = useChatLayout();
   const [showPreview, setShowPreview] = useState(false);
   const isPreviewVisible = isDesktop || showPreview;
@@ -502,6 +503,7 @@ export function ChatAgentActionsPage({
       setProviderDetails(updated);
       await reloadProviders();
       await reloadProviderDetails(selectedProviderKey);
+      setSuccessMessage("Configuração salva com sucesso.");
     } catch (saveError) {
       setError(
         saveError instanceof Error
@@ -592,7 +594,7 @@ export function ChatAgentActionsPage({
       <header className="mdc-chat-agent-actions-page__topbar">
         <button type="button" onClick={onBack}>
           <ArrowLeft size={18} aria-hidden="true" />
-          <span>Voltar</span>
+          <span>Voltar ao agente</span>
         </button>
 
         <div>
@@ -648,6 +650,10 @@ export function ChatAgentActionsPage({
 
           {error ? (
             <div className="mdc-chat-agent-actions-page__error">{error}</div>
+          ) : null}
+
+          {successMessage ? (
+            <p className="mdc-chat-muted">{successMessage}</p>
           ) : null}
 
           {isLoading ? (

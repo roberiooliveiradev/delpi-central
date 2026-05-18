@@ -68,6 +68,8 @@ from app.composition.chat_composer import (
     make_preview_chat_agent_use_case,
     make_revoke_chat_agent_share_use_case,
     make_share_chat_agent_use_case,
+    make_list_chat_project_shares_use_case,
+    make_revoke_chat_project_share_use_case,
     make_share_chat_project_use_case,
     make_update_chat_agent_use_case,
     make_upsert_chat_agent_action_use_case,
@@ -475,8 +477,13 @@ def share_agent(agent_id: str):
 @chat_bp.get("/agents/<agent_id>/shares")
 @require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def list_agent_shares(agent_id: str):
+    access_token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip() or None
     use_case = make_list_chat_agent_shares_use_case()
-    shares = use_case.execute(user_id=g.current_user.sub, agent_id=agent_id)
+    shares = use_case.execute(
+        user_id=g.current_user.sub,
+        agent_id=agent_id,
+        access_token=access_token,
+    )
     return jsonify(shares), 200
 
 
@@ -1198,8 +1205,41 @@ def share_project(project_id: str):
     return jsonify({"ok": True}), 200
 
 
+@chat_bp.get("/projects/<project_id>/shares")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def list_project_shares(project_id: str):
+    access_token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip() or None
+    use_case = make_list_chat_project_shares_use_case()
+    shares = use_case.execute(
+        user_id=g.current_user.sub,
+        project_id=project_id,
+        access_token=access_token,
+    )
+    return jsonify(shares), 200
 
 
+@chat_bp.delete("/projects/<project_id>/shares/<target_user_id>")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def revoke_project_share(project_id: str, target_user_id: str):
+    use_case = make_revoke_chat_project_share_use_case()
+
+    try:
+        revoked = use_case.execute(
+            user_id=g.current_user.sub,
+            project_id=project_id,
+            target_user_id=target_user_id,
+        )
+
+        if not revoked:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return "", 204
 
 
 @chat_bp.post("/attachments")

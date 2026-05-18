@@ -1,10 +1,10 @@
 # app/infrastructure/persistence/sqlalchemy/user_repository.py
 
 from __future__ import annotations
-from sqlalchemy import or_
+from sqlalchemy import extract, or_
 from typing import Optional, List
 from uuid import UUID
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
@@ -28,6 +28,7 @@ class SqlAlchemyUserRepository(UserRepositoryPort):
             active=bool(getattr(row, "active", True)),
             is_superadmin=bool(getattr(row, "is_superadmin", False)),
             last_login_at=getattr(row, "last_login_at", None),
+            birth_date=getattr(row, "birth_date", None),
         )
 
     # =========================
@@ -42,9 +43,39 @@ class SqlAlchemyUserRepository(UserRepositoryPort):
         row = self.session.get(User, user_id)
         return self._to_dto(row) if row else None
 
+    def get_by_ids(self, user_ids: list[UUID]) -> list[UserDTO]:
+        if not user_ids:
+            return []
+
+        rows = self.session.query(User).filter(User.id.in_(user_ids)).all()
+
+        return [
+            self._to_dto(row)
+            for row in rows
+            if row and bool(getattr(row, "active", True))
+        ]
+
     def list_all(self) -> List[UserDTO]:
         rows = self.session.query(User).all()
         return [self._to_dto(r) for r in rows]
+
+    def list_active_ids_with_birthday_on(self, *, month: int, day: int) -> List[str]:
+        rows = (
+            self.session.query(User.id)
+            .filter(
+                User.active.is_(True),
+                User.birth_date.isnot(None),
+                extract("month", User.birth_date) == month,
+                extract("day", User.birth_date) == day,
+            )
+            .all()
+        )
+        return [str(row[0]) for row in rows]
+
+    def set_birth_date(self, user_id: UUID, birth_date: date | None) -> None:
+        row = self.session.get(User, user_id)
+        if row:
+            row.birth_date = birth_date
 
     # =========================
     # Commands

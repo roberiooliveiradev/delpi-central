@@ -15,9 +15,21 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import type { ChatAgent, ChatProject, ChatSession, ChatWorkspaceSource } from "../../data/api/chatTypes";
+import {
+  listChatProjectShares,
+  revokeChatProjectShare,
+  shareChatProject,
+} from "../../data/api/chatApi";
+import type {
+  ChatAgent,
+  ChatProject,
+  ChatProjectShare,
+  ChatSession,
+  ChatWorkspaceSource,
+} from "../../data/api/chatTypes";
+import { ChatUserSearchField } from "./ChatUserSearchField";
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { formatSessionDate } from "./chatSidebarUtils";
@@ -60,6 +72,7 @@ type ChatProjectHomeProps = {
   onDeleteSource?: (sourceId: string) => Promise<void>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onClearProject?: () => void;
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
   compact?: boolean;
   settingsRequestKey?: number;
 };
@@ -87,6 +100,7 @@ export function ChatProjectHome({
   onDeleteSource,
   onDeleteProject,
   onClearProject,
+  getAccessToken,
   compact,
   settingsRequestKey,
 }: ChatProjectHomeProps) {
@@ -101,6 +115,13 @@ export function ChatProjectHome({
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceContent, setSourceContent] = useState("");
   const [isSavingSource, setIsSavingSource] = useState(false);
+  const [projectShares, setProjectShares] = useState<ChatProjectShare[]>([]);
+  const [shareTargetUserId, setShareTargetUserId] = useState("");
+  const [shareRole, setShareRole] = useState<"viewer" | "editor">("viewer");
+  const [isSharingProject, setIsSharingProject] = useState(false);
+  const [isLoadingShares, setIsLoadingShares] = useState(false);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
+  const [revokingShareUserId, setRevokingShareUserId] = useState<string | null>(null);
 
   useEffect(() => {
     setName(project.name);
@@ -113,6 +134,79 @@ export function ChatProjectHome({
       setIsSettingsOpen(true);
     }
   }, [settingsRequestKey]);
+
+  const loadProjectShares = useCallback(async () => {
+    if (!getAccessToken || project.access_role !== "owner") {
+      setProjectShares([]);
+      return;
+    }
+
+    setIsLoadingShares(true);
+
+    try {
+      const shares = await listChatProjectShares(project.id, { getAccessToken });
+      setProjectShares(shares);
+    } catch {
+      setProjectShares([]);
+    } finally {
+      setIsLoadingShares(false);
+    }
+  }, [getAccessToken, project.access_role, project.id]);
+
+  useEffect(() => {
+    if (isSettingsOpen) {
+      void loadProjectShares();
+    }
+  }, [isSettingsOpen, loadProjectShares]);
+
+  async function shareCurrentProject() {
+    if (project.access_role !== "owner" || !getAccessToken) {
+      return;
+    }
+
+    const targetUserId = shareTargetUserId.trim();
+
+    if (!targetUserId) {
+      setShareMessage("Selecione um usuário para compartilhar.");
+      return;
+    }
+
+    setIsSharingProject(true);
+    setShareMessage(null);
+
+    try {
+      await shareChatProject(
+        project.id,
+        { targetUserId, role: shareRole },
+        { getAccessToken },
+      );
+      setShareMessage("Projeto compartilhado com sucesso.");
+      setShareTargetUserId("");
+      await loadProjectShares();
+    } catch {
+      setShareMessage("Não foi possível compartilhar o projeto.");
+    } finally {
+      setIsSharingProject(false);
+    }
+  }
+
+  async function revokeProjectShare(targetUserId: string) {
+    if (!getAccessToken) {
+      return;
+    }
+
+    setRevokingShareUserId(targetUserId);
+
+    try {
+      await revokeChatProjectShare(project.id, targetUserId, { getAccessToken });
+      setShareMessage("Acesso revogado.");
+      await loadProjectShares();
+    } catch {
+      setShareMessage("Não foi possível revogar o acesso.");
+    } finally {
+      setRevokingShareUserId(null);
+    }
+  }
 
   const defaultAgent = agents.find((agent) => agent.key === project.default_agent_key);
   const contextAgent = agents.find((agent) => agent.key === contextAgentKey);
@@ -684,6 +778,81 @@ export function ChatProjectHome({
                 placeholder="Defina o contexto e personalize como o assistente responde neste projeto."
               />
             </label>
+
+            {project.access_role === "owner" ? (
+              <section className="mdc-chat-project-settings__share">
+                <h4>Compartilhamento</h4>
+                <p className="mdc-chat-muted">
+                  Conceda acesso de visualização ou edição a outro usuário.
+                </p>
+
+                <div className="mdc-chat-project-settings__share-form">
+                  <ChatUserSearchField
+                    value={shareTargetUserId}
+                    onChange={setShareTargetUserId}
+                    getAccessToken={getAccessToken}
+                    disabled={isSharingProject}
+                  />
+
+                  <label>
+                    <span>Papel</span>
+                    <select
+                      value={shareRole}
+                      onChange={(event) =>
+                        setShareRole(event.target.value as "viewer" | "editor")
+                      }
+                    >
+                      <option value="viewer">Visualizador</option>
+                      <option value="editor">Editor</option>
+                    </select>
+                  </label>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={isSharingProject}
+                  onClick={() => void shareCurrentProject()}
+                >
+                  {isSharingProject ? "Compartilhando..." : "Compartilhar projeto"}
+                </button>
+
+                {shareMessage ? <p className="mdc-chat-muted">{shareMessage}</p> : null}
+
+                <div className="mdc-chat-project-settings__share-list">
+                  {isLoadingShares ? (
+                    <p className="mdc-chat-muted">Carregando compartilhamentos...</p>
+                  ) : projectShares.length === 0 ? (
+                    <p className="mdc-chat-muted">Nenhum compartilhamento ativo.</p>
+                  ) : (
+                    projectShares.map((share) => (
+                      <article key={share.id}>
+                        <span>
+                          <strong>
+                            {share.target_user_name ||
+                              share.target_user_email ||
+                              share.target_user_id}
+                          </strong>
+                          <small>
+                            {share.target_user_email
+                              ? `${share.target_user_email} · ${share.role}`
+                              : share.role}
+                          </small>
+                        </span>
+                        <button
+                          type="button"
+                          disabled={revokingShareUserId === share.target_user_id}
+                          onClick={() => void revokeProjectShare(share.target_user_id)}
+                        >
+                          {revokingShareUserId === share.target_user_id
+                            ? "Revogando..."
+                            : "Revogar"}
+                        </button>
+                      </article>
+                    ))
+                  )}
+                </div>
+              </section>
+            ) : null}
 
             <footer>
               <button

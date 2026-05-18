@@ -139,3 +139,38 @@ class ShareChatProjectUseCase:
             target_user_id=UUID(request.target_user_id),
             role=role,
         )
+
+
+class ListChatProjectSharesUseCase:
+    def __init__(self, repository: ChatProjectRepositoryPort, share_profile_service=None):
+        self.repository = repository
+        self.share_profile_service = share_profile_service
+
+    def execute(
+        self,
+        *,
+        user_id: str,
+        project_id: str,
+        access_token: str | None = None,
+    ) -> list[dict]:
+        shares = self.repository.list_shares(UUID(project_id), UUID(user_id))
+
+        if self.share_profile_service:
+            return self.share_profile_service.enrich_shares(
+                shares,
+                access_token=access_token,
+            )
+
+        return shares
+
+
+class RevokeChatProjectShareUseCase:
+    def __init__(self, repository: ChatProjectRepositoryPort):
+        self.repository = repository
+
+    def execute(self, *, user_id: str, project_id: str, target_user_id: str) -> bool:
+        return self.repository.revoke_share(
+            UUID(project_id),
+            UUID(user_id),
+            UUID(target_user_id),
+        )

@@ -976,8 +976,16 @@ export function ChatAgentBuilderPage({
                   agentShares.map((share) => (
                     <article key={share.id}>
                       <span>
-                        <strong>{share.target_user_id}</strong>
-                        <small>{share.role}</small>
+                        <strong>
+                          {share.target_user_name ||
+                            share.target_user_email ||
+                            share.target_user_id}
+                        </strong>
+                        <small>
+                          {share.target_user_email
+                            ? `${share.target_user_email} · ${share.role}`
+                            : share.role}
+                        </small>
                       </span>
                       <button
                         type="button"

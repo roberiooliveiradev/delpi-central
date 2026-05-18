@@ -309,9 +309,14 @@ def make_get_chat_agent_use_case():
 
 
 def make_list_chat_agent_shares_use_case():
+    from app.application.services.chat_share_profile_service import ChatShareProfileService
     from app.application.use_cases.chat_agents_use_cases import ListChatAgentSharesUseCase
+    from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
 
-    return ListChatAgentSharesUseCase(PostgresChatAgentRepository())
+    return ListChatAgentSharesUseCase(
+        PostgresChatAgentRepository(),
+        ChatShareProfileService(CoreApiHttpGateway()),
+    )
 
 
 def make_revoke_chat_agent_share_use_case():
@@ -383,6 +388,23 @@ def make_upsert_chat_agent_action_use_case() -> UpsertChatAgentActionUseCase:
 
 def make_share_chat_project_use_case() -> ShareChatProjectUseCase:
     return ShareChatProjectUseCase(PostgresChatProjectRepository())
+
+
+def make_list_chat_project_shares_use_case():
+    from app.application.services.chat_share_profile_service import ChatShareProfileService
+    from app.application.use_cases.chat_projects_use_cases import ListChatProjectSharesUseCase
+    from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
+
+    return ListChatProjectSharesUseCase(
+        PostgresChatProjectRepository(),
+        ChatShareProfileService(CoreApiHttpGateway()),
+    )
+
+
+def make_revoke_chat_project_share_use_case():
+    from app.application.use_cases.chat_projects_use_cases import RevokeChatProjectShareUseCase
+
+    return RevokeChatProjectShareUseCase(PostgresChatProjectRepository())
 
 
 

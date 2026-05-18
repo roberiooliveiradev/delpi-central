@@ -236,9 +236,13 @@ export type ChatDirectoryUser = {
 export type ChatAgentShare = {
   id: string;
   target_user_id: string;
+  target_user_name?: string | null;
+  target_user_email?: string | null;
   role: "viewer" | "editor" | string;
   created_at: string | null;
 };
+
+export type ChatProjectShare = ChatAgentShare;
 
 export type ChatAgentPreviewResponse = {
   answer?: string | null;

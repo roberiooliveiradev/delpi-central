@@ -31,3 +31,12 @@
 | 3.2 | Compartilhar com autocomplete no builder (sem UUID manual) | Concluído |
 | 3.3 | Duplicar agente (`POST /chat/agents/{id}/duplicate`) | Concluído |
 | 3.4 | Mensagem amigável para colisão de `key` na criação | Concluído |
+
+## Onda 4 — compartilhamento unificado
+
+| # | Entrega | Status |
+|---|---------|--------|
+| 4.1 | Lookup de usuários (`POST /me/directory/users/lookup`) e nomes na lista de shares | Concluído |
+| 4.2 | `GET/DELETE /chat/projects/{id}/shares` | Concluído |
+| 4.3 | Compartilhamento de projeto nas configurações + busca de usuário | Concluído |
+| 4.4 | Aba Actions: feedback de sucesso e navegação mais clara | Concluído |

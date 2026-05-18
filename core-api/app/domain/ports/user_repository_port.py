@@ -3,7 +3,7 @@
 from typing import Protocol, Optional, List
 from dataclasses import dataclass
 from uuid import UUID
-from datetime import datetime
+from datetime import date, datetime
 
 
 @dataclass(frozen=True)
@@ -14,6 +14,7 @@ class UserDTO:
     active: bool
     is_superadmin: bool
     last_login_at: datetime | None
+    birth_date: date | None = None
 
 
 class UserRepositoryPort(Protocol):
@@ -25,10 +26,19 @@ class UserRepositoryPort(Protocol):
     def get_by_id(self, user_id: UUID) -> Optional[UserDTO]:
         ...
 
+    def get_by_ids(self, user_ids: list[UUID]) -> list[UserDTO]:
+        ...
+
     def get_by_email(self, email: str) -> Optional[UserDTO]:
         ...
 
     def list_all(self) -> List[UserDTO]:
+        ...
+
+    def list_active_ids_with_birthday_on(self, *, month: int, day: int) -> List[str]:
+        ...
+
+    def set_birth_date(self, user_id: UUID, birth_date: date | None) -> None:
         ...
 
 

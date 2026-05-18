@@ -153,6 +153,46 @@ class PostgresChatProjectRepository(ChatProjectRepositoryPort):
 
         return True
 
+    def list_shares(self, project_id: UUID, user_id: UUID) -> list[dict]:
+        model = AiChatProjectModel.query.filter(AiChatProjectModel.id == project_id).first()
+
+        if not model or model.user_id != user_id:
+            return []
+
+        rows = (
+            AiChatProjectShareModel.query
+            .filter(AiChatProjectShareModel.project_id == project_id)
+            .order_by(AiChatProjectShareModel.created_at.asc())
+            .all()
+        )
+
+        return [
+            {
+                "id": str(row.id),
+                "target_user_id": str(row.target_user_id),
+                "role": row.role,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+            }
+            for row in rows
+        ]
+
+    def revoke_share(self, project_id: UUID, user_id: UUID, target_user_id: UUID) -> bool:
+        model = AiChatProjectModel.query.filter(AiChatProjectModel.id == project_id).first()
+
+        if not model or model.user_id != user_id:
+            return False
+
+        deleted = (
+            AiChatProjectShareModel.query
+            .filter(AiChatProjectShareModel.project_id == project_id)
+            .filter(AiChatProjectShareModel.target_user_id == target_user_id)
+            .delete()
+        )
+
+        db.session.flush()
+
+        return bool(deleted)
+
     def _can_access(self, model: AiChatProjectModel, user_id: UUID) -> bool:
         if model.visibility == "public":
             return True
