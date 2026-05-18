@@ -227,6 +227,12 @@ export type ShareChatAgentPayload = {
   role: "viewer" | "editor" | string;
 };
 
+export type ChatDirectoryUser = {
+  id: string;
+  name: string;
+  email: string;
+};
+
 export type ChatAgentShare = {
   id: string;
   target_user_id: string;

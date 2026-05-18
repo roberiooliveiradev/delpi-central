@@ -13,6 +13,7 @@ from uuid import UUID
 from dataclasses import asdict
 
 from flask import Blueprint, Response, g, jsonify, request, stream_with_context
+from sqlalchemy.exc import IntegrityError
 
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.persistence.postgres_chat_agent_repository import PostgresChatAgentRepository
@@ -56,6 +57,8 @@ from app.composition.chat_composer import (
     make_delete_chat_project_use_case,
     make_create_chat_agent_use_case,
     make_delete_chat_agent_use_case,
+    make_duplicate_chat_agent_use_case,
+    make_search_chat_directory_users_use_case,
     make_list_chat_agent_action_providers_use_case,
     make_upsert_chat_agent_action_provider_use_case,
     make_list_chat_agent_actions_use_case,
@@ -367,6 +370,62 @@ def delete_agent(agent_id: str):
         raise
 
     return "", 204
+
+
+@chat_bp.post("/agents/<agent_id>/duplicate")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def duplicate_agent(agent_id: str):
+    capabilities = _get_chat_capabilities_from_request()
+    use_case = make_duplicate_chat_agent_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            can_manage_official_agents=capabilities["canManageOfficialAgents"],
+        )
+
+        if not result:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except ChatAgentPermissionDeniedError as exc:
+        db.session.rollback()
+        return forbidden(str(exc))
+    except IntegrityError:
+        db.session.rollback()
+        return conflict("Agent key already exists")
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 201
+
+
+@chat_bp.get("/users/search")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def search_chat_users():
+    query = request.args.get("q") or request.args.get("query") or ""
+    limit = request.args.get("limit", 10)
+    access_token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
+
+    if not access_token:
+        return bad_request("Authorization header is required")
+
+    try:
+        limit_value = int(limit)
+    except (TypeError, ValueError):
+        return bad_request("limit must be a number")
+
+    use_case = make_search_chat_directory_users_use_case()
+    items = use_case.execute(
+        access_token=access_token,
+        query=query,
+        limit=limit_value,
+    )
+
+    return jsonify({"items": items}), 200
 
 
 @chat_bp.post("/agents/<agent_id>/share")

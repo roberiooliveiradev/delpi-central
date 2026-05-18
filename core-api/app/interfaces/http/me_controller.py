@@ -49,10 +49,20 @@ from app.application.use_cases.delete_notification_use_case import (
 from app.application.use_cases.set_notification_important_use_case import (
     SetNotificationImportantUseCase,
 )
+from app.application.use_cases.get_notification_preferences_use_case import (
+    GetNotificationPreferencesUseCase,
+)
+from app.application.use_cases.update_notification_preferences_use_case import (
+    UpdateNotificationPreferencesUseCase,
+)
 from app.domain.notifications.notification_constants import ALLOWED_NOTIFICATION_CATEGORIES
 
 from app.application.use_cases.notify_user_use_case import (
     NotifyUserUseCase,
+)
+
+from app.application.use_cases.search_directory_users_use_case import (
+    SearchDirectoryUsersUseCase,
 )
 
 me_bp = Blueprint("me", __name__)
@@ -309,6 +319,79 @@ def set_notification_important(notification_id: str):
         return api_error("forbidden", "Notification does not belong to current user", status=403)
     except Exception as e:
         return api_error("important_failed", str(e))
+
+
+# ==========================================================
+# NOTIFICATION PREFERENCES
+# ==========================================================
+
+@me_bp.route("/me/notifications/preferences", methods=["GET"])
+@require_auth()
+def get_notification_preferences():
+    user = g.current_user
+
+    with SqlAlchemyUnitOfWork() as uow:
+        result = GetNotificationPreferencesUseCase(uow).execute(str(user.id))
+
+    return jsonify(
+        {
+            "mutedCategories": result.muted_categories,
+            "mutableCategories": result.mutable_categories,
+        }
+    ), 200
+
+
+@me_bp.route("/me/notifications/preferences", methods=["PATCH"])
+@require_auth()
+def update_notification_preferences():
+    user = g.current_user
+    body = request.get_json(silent=True) or {}
+
+    muted = body.get("mutedCategories", body.get("muted_categories"))
+    if muted is None:
+        return api_error("validation_error", "mutedCategories is required", status=400)
+    if not isinstance(muted, list) or not all(isinstance(item, str) for item in muted):
+        return api_error("validation_error", "mutedCategories must be an array of strings", status=400)
+
+    with SqlAlchemyUnitOfWork() as uow:
+        result = UpdateNotificationPreferencesUseCase(uow).execute(
+            str(user.id),
+            muted_categories=muted,
+        )
+
+    return jsonify(
+        {
+            "mutedCategories": result.muted_categories,
+            "mutableCategories": result.mutable_categories,
+        }
+    ), 200
+
+
+# ==========================================================
+# GET /me/directory/users
+# ==========================================================
+
+
+@me_bp.route("/me/directory/users", methods=["GET"])
+@require_auth()
+def search_directory_users():
+    user = g.current_user
+    query = request.args.get("q") or request.args.get("query")
+    limit = request.args.get("limit", 10)
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            results = SearchDirectoryUsersUseCase(uow).execute(
+                current_user_id=str(user.id),
+                query=query,
+                limit=int(limit),
+            )
+    except ValueError:
+        return api_error("validation_error", "limit must be a number", status=400)
+    except Exception as exc:
+        return api_error("search_directory_users_failed", str(exc))
+
+    return jsonify({"items": results}), 200
 
 
 # ==========================================================

@@ -87,8 +87,13 @@ export function useChatWorkspace(options: UseChatWorkspaceOptions = {}) {
         setAgents((current) => [agent, ...current]);
         return agent;
       } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Erro ao criar agente.";
         setWorkspaceError(
-          err instanceof Error ? err.message : "Erro ao criar agente.",
+          message.toLowerCase().includes("already exists") ||
+            message.toLowerCase().includes("já exist")
+            ? "Já existe um agente com esta chave. Escolha outra chave."
+            : message,
         );
         return null;
       }

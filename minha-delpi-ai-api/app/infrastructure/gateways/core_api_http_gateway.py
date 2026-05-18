@@ -27,6 +27,24 @@ class CoreApiHttpGateway(CoreApiGatewayPort):
         data = self._get("me/routes", access_token)
         return data if isinstance(data, list) else []
 
+    def search_directory_users(
+        self,
+        access_token: str,
+        *,
+        query: str,
+        limit: int = 10,
+    ) -> list[dict]:
+        from urllib.parse import urlencode
+
+        params = urlencode({"q": query, "limit": max(1, min(limit, 20))})
+        data = self._get(f"me/directory/users?{params}", access_token)
+
+        if isinstance(data, dict):
+            items = data.get("items")
+            return items if isinstance(items, list) else []
+
+        return []
+
     def _get(self, path: str, access_token: str):
         url = urljoin(self.base_url, path)
 

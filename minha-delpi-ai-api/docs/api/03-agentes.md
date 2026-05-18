@@ -276,3 +276,48 @@ Simula uma pergunta ao agente (instruções, RAG de especialização, diretrizes
 ### Resposta `200`
 
 Mesmo formato de `POST /admin/agent/simulate` (`answerPreview`, `chunks`, `plannedToolCalls`, etc.).
+
+---
+
+## POST `/chat/agents/{agentId}/duplicate`
+
+Cria cópia privada do agente para o usuário atual (instruções, metadados e limites). Não copia fontes, actions nem compartilhamentos.
+
+### Permissão
+
+`minha-delpi.chat.tools.manage` + papel `owner`, `editor` ou `system`
+
+### Resposta `201`
+
+`ChatAgent` (novo registro com `key` única e nome com sufixo `(cópia)`)
+
+---
+
+## GET `/chat/users/search`
+
+Busca usuários do diretório corporativo para compartilhar agentes ou projetos.
+
+### Permissão
+
+`minha-delpi.chat.tools.manage`
+
+### Query
+
+| Parâmetro | Descrição |
+|-----------|-----------|
+| `q` | Termo de busca (mínimo 2 caracteres) |
+| `limit` | Máximo de resultados (padrão 10, máx. 20) |
+
+### Resposta `200`
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "name": "Nome",
+      "email": "email@empresa.com"
+    }
+  ]
+}
+```

@@ -9,6 +9,7 @@ import type {
   ChatAgentAction,
   ChatAgentPreviewResponse,
   ChatAgentShare,
+  ChatDirectoryUser,
   ChatArtifact,
   ChatAttachment,
   ChatMessage,
@@ -526,6 +527,35 @@ export async function revokeChatAgentShare(
   if (!response.ok) {
     await parseJsonResponse<unknown>(response);
   }
+}
+
+export async function searchChatUsers(
+  query: string,
+  options: ChatApiOptions & { limit?: number } = {},
+): Promise<ChatDirectoryUser[]> {
+  const params = new URLSearchParams({
+    q: query,
+    limit: String(options.limit ?? 10),
+  });
+  const response = await fetch(`${API_BASE_URL}/chat/users/search?${params}`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+  const payload = await parseJsonResponse<{ items: ChatDirectoryUser[] }>(response);
+
+  return payload.items ?? [];
+}
+
+export async function duplicateChatAgent(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAgent> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/duplicate`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAgent>(response);
 }
 
 export async function previewChatAgent(

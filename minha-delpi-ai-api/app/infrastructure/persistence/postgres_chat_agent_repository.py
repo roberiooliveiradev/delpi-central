@@ -118,6 +118,10 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         icon: str | None,
         response_style: str | None,
         metadata: dict | None,
+        *,
+        max_tool_calls: int | None = None,
+        requires_confirmation_for_write: bool | None = None,
+        enabled: bool | None = None,
     ) -> ChatAgent:
         model = AiChatAgentModel(
             owner_user_id=owner_user_id,
@@ -130,13 +134,73 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             icon=icon,
             response_style=response_style,
             agent_metadata=metadata,
-            enabled=True,
+            enabled=True if enabled is None else enabled,
+            max_tool_calls=5 if max_tool_calls is None else max_tool_calls,
+            requires_confirmation_for_write=(
+                True
+                if requires_confirmation_for_write is None
+                else requires_confirmation_for_write
+            ),
         )
 
         db.session.add(model)
         db.session.flush()
 
         return self._to_entity(model)
+
+    def duplicate(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        *,
+        can_manage_official_agents: bool = False,
+    ) -> ChatAgent | None:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_edit(
+            model,
+            user_id,
+            can_manage_official_agents=can_manage_official_agents,
+        ):
+            return None
+
+        duplicate_name = model.name.strip()
+
+        if not duplicate_name.endswith("(cópia)"):
+            duplicate_name = f"{duplicate_name} (cópia)"[:120]
+
+        return self.create(
+            owner_user_id=user_id,
+            key=self._generate_duplicate_key(model.key),
+            name=duplicate_name,
+            description=model.description,
+            system_prompt=model.system_prompt,
+            visibility="private",
+            category=model.category,
+            icon=model.icon,
+            response_style=model.response_style,
+            metadata=model.agent_metadata,
+            max_tool_calls=model.max_tool_calls,
+            requires_confirmation_for_write=model.requires_confirmation_for_write,
+            enabled=model.enabled,
+        )
+
+    def _generate_duplicate_key(self, base_key: str) -> str:
+        normalized = (base_key or "agente").strip() or "agente"
+        candidate = f"{normalized}-copia"[:80]
+        suffix = 2
+
+        while self._key_exists(candidate):
+            suffix_label = f"-{suffix}"
+            candidate = f"{normalized[: 80 - len(suffix_label)]}{suffix_label}"
+            suffix += 1
+
+        return candidate
+
+    def _key_exists(self, key: str) -> bool:
+        return (
+            AiChatAgentModel.query.filter(AiChatAgentModel.key == key).first() is not None
+        )
 
     def update(
         self,

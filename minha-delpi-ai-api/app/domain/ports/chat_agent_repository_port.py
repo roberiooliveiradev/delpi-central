@@ -52,7 +52,21 @@ class ChatAgentRepositoryPort(ABC):
         icon: str | None,
         response_style: str | None,
         metadata: dict | None,
+        *,
+        max_tool_calls: int | None = None,
+        requires_confirmation_for_write: bool | None = None,
+        enabled: bool | None = None,
     ) -> ChatAgent:
+        raise NotImplementedError
+
+    @abstractmethod
+    def duplicate(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        *,
+        can_manage_official_agents: bool = False,
+    ) -> ChatAgent | None:
         raise NotImplementedError
 
     @abstractmethod

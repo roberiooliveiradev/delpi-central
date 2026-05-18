@@ -1,6 +1,6 @@
 # Gestão de agentes — melhorias
 
-**Status:** ondas 1 e 2 implementadas (maio/2026)
+**Status:** ondas 1, 2 e 3 implementadas (maio/2026)
 
 ## Onda 1 — edição confiável
 
@@ -17,8 +17,17 @@
 | # | Entrega | Status |
 |---|---------|--------|
 | 2.1 | `GET/DELETE /chat/agents/{id}/shares` — listar e revogar acessos | Concluído |
-| 2.2 | Busca de usuário para compartilhar (em vez de UUID manual) | Pendente |
+| 2.2 | Busca de usuário para compartilhar (em vez de UUID manual) | Movido para Onda 3 |
 | 2.3 | Preview real (`POST /chat/agents/{id}/preview`) no builder | Concluído |
 | 2.4 | Especialização RAG acessível do builder (admin, aba Agentes) | Concluído |
 | 2.5 | Listar agentes desativados (`?includeDisabled=true`) | Concluído |
 | 2.6 | Colisão de `key` com HTTP 409 | Concluído |
+
+## Onda 3 — colaboração e produtividade
+
+| # | Entrega | Status |
+|---|---------|--------|
+| 3.1 | Busca de usuários (`GET /chat/users/search` → core-api `/me/directory/users`) | Concluído |
+| 3.2 | Compartilhar com autocomplete no builder (sem UUID manual) | Concluído |
+| 3.3 | Duplicar agente (`POST /chat/agents/{id}/duplicate`) | Concluído |
+| 3.4 | Mensagem amigável para colisão de `key` na criação | Concluído |

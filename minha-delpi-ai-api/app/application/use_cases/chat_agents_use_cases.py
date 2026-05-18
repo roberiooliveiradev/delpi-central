@@ -229,6 +229,29 @@ class DeleteChatAgentUseCase:
         )
 
 
+class DuplicateChatAgentUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(
+        self,
+        *,
+        user_id: str,
+        agent_id: str,
+        can_manage_official_agents: bool = False,
+    ) -> ChatAgentResponse | None:
+        agent = self.repository.duplicate(
+            UUID(agent_id),
+            UUID(user_id),
+            can_manage_official_agents=can_manage_official_agents,
+        )
+
+        if not agent:
+            return None
+
+        return _to_response(agent, "owner", include_system_prompt=True)
+
+
 class ListChatAgentSharesUseCase:
     def __init__(self, repository: ChatAgentRepositoryPort):
         self.repository = repository

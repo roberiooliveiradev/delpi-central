@@ -49,6 +49,7 @@ type ChatAgentsPageProps = {
     payload: AgentUpdatePayload,
   ) => Promise<ChatAgent | null>;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
+  onAgentDuplicated?: (agent: ChatAgent) => void;
   onReloadAgents?: (includeDisabled: boolean) => void | Promise<void>;
   onOpenRagAdmin?: (agentId: string) => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -129,6 +130,7 @@ export function ChatAgentsPage({
   onCreateAgent,
   onUpdateAgent,
   onDeleteAgent,
+  onAgentDuplicated,
   onReloadAgents,
   onOpenRagAdmin,
   getAccessToken,
@@ -214,6 +216,10 @@ export function ChatAgentsPage({
         onCreateAgent={onCreateAgent}
         onUpdateAgent={onUpdateAgent}
         onDeleteAgent={onDeleteAgent}
+        onDuplicateAgent={(duplicated) => {
+          onAgentDuplicated?.(duplicated);
+          setEditingAgent(duplicated);
+        }}
         canManageOfficialAgents={canManageOfficialAgents}
         onOpenRagAdmin={onOpenRagAdmin}
         getAccessToken={getAccessToken}

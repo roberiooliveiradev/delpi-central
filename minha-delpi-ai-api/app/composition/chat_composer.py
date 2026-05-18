@@ -342,6 +342,21 @@ def make_delete_chat_agent_use_case() -> DeleteChatAgentUseCase:
     return DeleteChatAgentUseCase(PostgresChatAgentRepository())
 
 
+def make_duplicate_chat_agent_use_case():
+    from app.application.use_cases.chat_agents_use_cases import DuplicateChatAgentUseCase
+
+    return DuplicateChatAgentUseCase(PostgresChatAgentRepository())
+
+
+def make_search_chat_directory_users_use_case():
+    from app.application.use_cases.search_chat_directory_users_use_case import (
+        SearchChatDirectoryUsersUseCase,
+    )
+    from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
+
+    return SearchChatDirectoryUsersUseCase(CoreApiHttpGateway())
+
+
 def make_share_chat_agent_use_case() -> ShareChatAgentUseCase:
     return ShareChatAgentUseCase(PostgresChatAgentRepository())
 

@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createAgentTextSource,
   deleteChatSource,
+  duplicateChatAgent,
   getChatAgent,
   listAgentSources,
   listChatAgentActionProviders,
@@ -27,6 +28,7 @@ import {
   shareChatAgent,
   uploadAgentSource,
 } from "../../data/api/chatApi";
+import { ChatUserSearchField } from "../components/ChatUserSearchField";
 import type {
   ChatAgent,
   ChatAgentActionProvider,
@@ -66,6 +68,7 @@ type ChatAgentBuilderPageProps = {
     payload: AgentUpdatePayload,
   ) => Promise<ChatAgent | null>;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
+  onDuplicateAgent?: (agent: ChatAgent) => void;
   canManageOfficialAgents?: boolean;
   onOpenRagAdmin?: (agentId: string) => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -129,6 +132,7 @@ export function ChatAgentBuilderPage({
   onCreateAgent,
   onUpdateAgent,
   onDeleteAgent,
+  onDuplicateAgent,
   canManageOfficialAgents = false,
   onOpenRagAdmin,
   getAccessToken,
@@ -198,6 +202,7 @@ export function ChatAgentBuilderPage({
   const [isSavingSource, setIsSavingSource] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
 
   useEffect(() => {
@@ -581,7 +586,7 @@ export function ChatAgentBuilderPage({
     const targetUserId = shareTargetUserId.trim();
 
     if (!targetUserId) {
-      setShareMessage("Informe o ID do usuário para compartilhar.");
+      setShareMessage("Selecione um usuário para compartilhar.");
       return;
     }
 
@@ -601,6 +606,24 @@ export function ChatAgentBuilderPage({
       setShareMessage("Não foi possível compartilhar o agente.");
     } finally {
       setIsSharing(false);
+    }
+  }
+
+  async function duplicateCurrentAgent() {
+    if (!agent?.id || !getAccessToken) {
+      return;
+    }
+
+    setIsDuplicating(true);
+    setLocalError(null);
+
+    try {
+      const duplicated = await duplicateChatAgent(agent.id, { getAccessToken });
+      onDuplicateAgent?.(duplicated);
+    } catch {
+      setLocalError("Não foi possível duplicar o agente.");
+    } finally {
+      setIsDuplicating(false);
     }
   }
 
@@ -638,14 +661,24 @@ export function ChatAgentBuilderPage({
 
         <div className="mdc-chat-agent-builder__topbar-actions">
           {agent ? (
-            <button
-              type="button"
-              className="mdc-chat-agent-builder__danger"
-              onClick={() => void deleteCurrentAgent()}
-            >
-              <Trash2 size={17} aria-hidden="true" />
-              <span>Excluir</span>
-            </button>
+            <>
+              <button
+                type="button"
+                className="mdc-chat-agent-builder__secondary"
+                disabled={isDuplicating}
+                onClick={() => void duplicateCurrentAgent()}
+              >
+                <span>{isDuplicating ? "Duplicando..." : "Duplicar"}</span>
+              </button>
+              <button
+                type="button"
+                className="mdc-chat-agent-builder__danger"
+                onClick={() => void deleteCurrentAgent()}
+              >
+                <Trash2 size={17} aria-hidden="true" />
+                <span>Excluir</span>
+              </button>
+            </>
           ) : null}
 
           <button
@@ -903,14 +936,12 @@ export function ChatAgentBuilderPage({
               </div>
 
               <div className="mdc-chat-agent-builder__grid">
-                <label>
-                  <span>ID do usuário (UUID)</span>
-                  <input
-                    value={shareTargetUserId}
-                    onChange={(event) => setShareTargetUserId(event.target.value)}
-                    placeholder="00000000-0000-0000-0000-000000000000"
-                  />
-                </label>
+                <ChatUserSearchField
+                  value={shareTargetUserId}
+                  onChange={setShareTargetUserId}
+                  getAccessToken={getAccessToken}
+                  disabled={isSharing}
+                />
 
                 <label>
                   <span>Papel</span>

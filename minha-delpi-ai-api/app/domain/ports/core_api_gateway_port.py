@@ -13,3 +13,13 @@ class CoreApiGatewayPort(ABC):
     @abstractmethod
     def get_routes(self, access_token: str) -> list[dict]:
         raise NotImplementedError
+
+    @abstractmethod
+    def search_directory_users(
+        self,
+        access_token: str,
+        *,
+        query: str,
+        limit: int = 10,
+    ) -> list[dict]:
+        raise NotImplementedError

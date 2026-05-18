@@ -651,6 +651,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               onCreateAgent={addAgent}
               onUpdateAgent={editAgent}
               onDeleteAgent={removeAgent}
+              onAgentDuplicated={() => {
+                void loadAgents();
+              }}
               onReloadAgents={loadAgents}
               onOpenRagAdmin={onOpenAdmin}
               getAccessToken={getAccessToken}
