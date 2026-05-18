@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Lightbulb, Wallet } from "lucide-react";
 import {
   Bar,
@@ -6,6 +6,8 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -15,6 +17,7 @@ import {
 } from "recharts";
 
 import { ChartCard } from "../components/ChartCard";
+import { ChartToolbar } from "../components/ChartToolbar";
 import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { KaizenFilters } from "../components/KaizenFilters";
 import { KpiCard } from "../components/KpiCard";
@@ -23,17 +26,23 @@ import { QualityPageHeader } from "../components/QualityPageHeader";
 import { CHART_COLORS } from "../constants/chartColors";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { useClientPagination } from "../hooks/useClientPagination";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useKaizenSummary } from "../hooks/useQualityQueries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
+import type { ChartGranularity } from "../types/chart";
 import type { Kaizen } from "../types/kaizen";
 import {
   aggregateKaizenByStatus,
+  aggregateKaizenCountByPeriod,
   aggregateKaizenSavingsBySector,
 } from "../utils/chartAggregation";
+import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import { formatCurrency, formatDecimal } from "../utils/format";
+import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
+import { suggestGranularity } from "../utils/periodBuckets";
 
 const PAGE_SIZE = 20;
 const CHART_HEIGHT = 300;
@@ -56,6 +65,7 @@ function renderPieLabel({
 export function KaizenPage({ pathname }: KaizenPageProps) {
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("");
+  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const {
     dateStart,
@@ -67,15 +77,18 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
     apiParams,
   } = useQualityFilters();
 
+  const debouncedTitle = useDebouncedValue(title);
+  const debouncedStatus = useDebouncedValue(status);
+
   const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
 
   const summaryParams = useMemo(
     () => ({
       ...apiParams,
-      title: title || undefined,
-      status: status || undefined,
+      title: debouncedTitle || undefined,
+      status: debouncedStatus || undefined,
     }),
-    [apiParams, title, status]
+    [apiParams, debouncedTitle, debouncedStatus]
   );
 
   const { data, loading, error, reload } = useKaizenSummary(summaryParams);
@@ -83,10 +96,19 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
 
   const { page, setPage, slice, total } = useClientPagination(items, PAGE_SIZE);
 
+  useEffect(() => {
+    setGranularity(suggestGranularity(dateStart, dateEnd));
+  }, [dateStart, dateEnd]);
+
   const statusChart = useMemo(() => aggregateKaizenByStatus(items), [items]);
   const sectorChart = useMemo(
     () => aggregateKaizenSavingsBySector(items),
     [items]
+  );
+  const periodChart = useMemo(
+    () =>
+      aggregateKaizenCountByPeriod(items, dateStart, dateEnd, granularity),
+    [items, dateStart, dateEnd, granularity]
   );
 
   const periodLabel = formatPeriodLabel(dateStart, dateEnd);
@@ -168,6 +190,24 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
     );
   };
 
+  const handleChartDrillDown = (point: TimeSeriesPoint) => {
+    if (!point.dateStart || !point.dateEnd) return;
+    setDateStart(point.dateStart);
+    setDateEnd(point.dateEnd);
+    setPage(1);
+  };
+
+  const handleExportPeriodCsv = () => {
+    downloadChartSeriesCsv(
+      "kaizens-por-periodo.csv",
+      periodChart.map((point) => ({
+        periodo: point.periodo,
+        value: point.value,
+        valueLabel: "Quantidade",
+      }))
+    );
+  };
+
   return (
     <div className="dashboard-quality dashboard-page">
       <QualityPageHeader
@@ -228,6 +268,62 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
           icon={<Wallet size={22} />}
           loading={loading && !data}
         />
+      </section>
+
+      <section className="dq-chart-section" aria-busy={loading}>
+        <ChartCard
+          title="Kaizens por período"
+          hint="Por data de implementação. Clique em um ponto para filtrar o período."
+        >
+          <ChartToolbar
+            idPrefix="kz-period"
+            granularity={granularity}
+            onGranularityChange={setGranularity}
+            onExportCsv={handleExportPeriodCsv}
+            exportDisabled={periodChart.length === 0}
+          />
+
+          {periodChart.length === 0 && !loading ? (
+            <div className="dq-state-box">Sem dados para o gráfico.</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+              <LineChart
+                data={periodChart}
+                onClick={(state) => {
+                  const rawIndex = state?.activeTooltipIndex;
+                  const index =
+                    typeof rawIndex === "number" ? rawIndex : Number(rawIndex);
+                  if (!Number.isFinite(index) || index < 0) return;
+                  const point = periodChart[index];
+                  if (point) handleChartDrillDown(point);
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="periodo"
+                  tick={{ fontSize: 11 }}
+                  interval="preserveStartEnd"
+                />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip
+                  formatter={(value) => [
+                    formatDecimal(Number(value)),
+                    "Kaizens",
+                  ]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={CHART_COLORS[2]}
+                  strokeWidth={2}
+                  dot={{ r: 4, cursor: "pointer" }}
+                  activeDot={{ r: 6, cursor: "pointer" }}
+                  name="Kaizens"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
       </section>
 
       <section className="dq-charts-grid" aria-busy={loading}>

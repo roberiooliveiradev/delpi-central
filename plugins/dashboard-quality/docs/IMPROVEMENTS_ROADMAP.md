@@ -29,7 +29,7 @@ Complementa [ROADMAP.md](./ROADMAP.md) (fases 0–6). Entregas em **ondas** com 
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 3.1 | Granularidade dia/semana/mês/ano em Kaizen e 5S | 📋 | Mesmo padrão PPM/NC |
+| 3.1 | Granularidade dia/semana/mês/ano em Kaizen e 5S | ✅ | Mesmo padrão PPM/NC |
 | 3.2 | Drill-down gráfico → tabela filtrada | ✅ | Clique no ponto aplica filtro de data |
 | 3.3 | Export CSV da série do gráfico | ✅ | PPM e devoluções NC |
 | 3.4 | `GET /quality/nonconformities/series` (agregado server-side) | ✅ | Gráfico NC sem limite de amostra |

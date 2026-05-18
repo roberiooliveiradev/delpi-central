@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ClipboardCheck, Download, Star } from "lucide-react";
 import {
   Bar,
@@ -14,6 +14,7 @@ import {
 
 import { Audit5sFilters } from "../components/Audit5sFilters";
 import { ChartCard } from "../components/ChartCard";
+import { ChartToolbar } from "../components/ChartToolbar";
 import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { KpiCard } from "../components/KpiCard";
 import { Pagination } from "../components/Pagination";
@@ -24,14 +25,19 @@ import { useAudit5sSummary } from "../hooks/useQualityQueries";
 import { useClientPagination } from "../hooks/useClientPagination";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
+import type { ChartGranularity } from "../types/chart";
 import type { Audit5s } from "../types/audit5s";
 import {
   aggregateAudit5sByArea,
-  aggregateAudit5sByMonth,
+  aggregateAudit5sScoreByPeriod,
 } from "../utils/chartAggregation";
+import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import { formatScore } from "../utils/format";
+import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
+import { suggestGranularity } from "../utils/periodBuckets";
+
 const PAGE_SIZE = 20;
 const CHART_HEIGHT = 300;
 
@@ -40,6 +46,8 @@ type Audit5sPageProps = {
 };
 
 export function Audit5sPage({ pathname }: Audit5sPageProps) {
+  const [granularity, setGranularity] = useState<ChartGranularity>("month");
+
   const {
     dateStart,
     dateEnd,
@@ -66,8 +74,16 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
 
   const { page, setPage, slice, total } = useClientPagination(items, PAGE_SIZE);
 
+  useEffect(() => {
+    setGranularity(suggestGranularity(dateStart, dateEnd));
+  }, [dateStart, dateEnd]);
+
   const areaChart = useMemo(() => aggregateAudit5sByArea(items), [items]);
-  const monthChart = useMemo(() => aggregateAudit5sByMonth(items), [items]);
+  const scoreChart = useMemo(
+    () =>
+      aggregateAudit5sScoreByPeriod(items, dateStart, dateEnd, granularity),
+    [items, dateStart, dateEnd, granularity]
+  );
 
   const periodLabel = formatPeriodLabel(dateStart, dateEnd);
 
@@ -144,6 +160,24 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         row.shift ?? "",
         row.inspection_number ?? "",
       ])
+    );
+  };
+
+  const handleChartDrillDown = (point: TimeSeriesPoint) => {
+    if (!point.dateStart || !point.dateEnd) return;
+    setDateStart(point.dateStart);
+    setDateEnd(point.dateEnd);
+    setPage(1);
+  };
+
+  const handleExportScoreCsv = () => {
+    downloadChartSeriesCsv(
+      "auditoria-5s-nota-media.csv",
+      scoreChart.map((point) => ({
+        periodo: point.periodo,
+        value: point.value,
+        valueLabel: "Nota média",
+      }))
     );
   };
 
@@ -229,14 +263,39 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
           )}
         </ChartCard>
 
-        <ChartCard title="Evolução da nota média (mensal)">
-          {monthChart.length === 0 && !loading ? (
+        <ChartCard
+          title="Evolução da nota média"
+          hint="Clique em um ponto para filtrar a tabela pelo intervalo."
+        >
+          <ChartToolbar
+            idPrefix="a5s-score"
+            granularity={granularity}
+            onGranularityChange={setGranularity}
+            onExportCsv={handleExportScoreCsv}
+            exportDisabled={scoreChart.length === 0}
+          />
+
+          {scoreChart.length === 0 && !loading ? (
             <div className="dq-state-box">Sem dados para o gráfico.</div>
           ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <LineChart data={monthChart}>
+              <LineChart
+                data={scoreChart}
+                onClick={(state) => {
+                  const rawIndex = state?.activeTooltipIndex;
+                  const index =
+                    typeof rawIndex === "number" ? rawIndex : Number(rawIndex);
+                  if (!Number.isFinite(index) || index < 0) return;
+                  const point = scoreChart[index];
+                  if (point) handleChartDrillDown(point);
+                }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <XAxis
+                  dataKey="periodo"
+                  tick={{ fontSize: 11 }}
+                  interval="preserveStartEnd"
+                />
                 <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} />
                 <Tooltip
                   formatter={(value) => [formatScore(Number(value)), "Nota média"]}
@@ -246,7 +305,8 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
                   dataKey="value"
                   stroke={CHART_COLORS[0]}
                   strokeWidth={2}
-                  dot={{ r: 4 }}
+                  dot={{ r: 4, cursor: "pointer" }}
+                  activeDot={{ r: 6, cursor: "pointer" }}
                 />
               </LineChart>
             </ResponsiveContainer>

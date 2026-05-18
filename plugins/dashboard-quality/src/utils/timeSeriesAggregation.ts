@@ -5,6 +5,8 @@ import { buildPeriodBuckets, type PeriodBucket } from "./periodBuckets";
 export type TimeSeriesPoint = {
   periodo: string;
   sortKey: string;
+  dateStart: string;
+  dateEnd: string;
   value: number;
   registros: number;
 };
@@ -93,8 +95,79 @@ export function aggregateQuantityByPeriod<T>({
     return {
       periodo: bucket.label,
       sortKey: bucket.key,
+      dateStart: bucket.date_start,
+      dateEnd: bucket.date_end,
       value: Number((aggregate?.value ?? 0).toFixed(2)),
       registros: aggregate?.registros ?? 0,
     };
   });
+}
+
+/** Contagem de registros por período. */
+export function aggregateCountByPeriod<T>(
+  params: Omit<
+    Parameters<typeof aggregateQuantityByPeriod<T>>[0],
+    "getQuantity"
+  >
+): TimeSeriesPoint[] {
+  return aggregateQuantityByPeriod({
+    ...params,
+    getQuantity: () => 1,
+  });
+}
+
+/** Média de um indicador numérico por período (ex.: nota 5S). */
+export function aggregateAverageByPeriod<T>({
+  items,
+  getDate,
+  getValue,
+  dateStart,
+  dateEnd,
+  granularity,
+}: {
+  items: T[];
+  getDate: (item: T) => string | null | undefined;
+  getValue: (item: T) => number | null | undefined;
+  dateStart?: string;
+  dateEnd?: string;
+  granularity: ChartGranularity;
+}): TimeSeriesPoint[] {
+  const { buckets } = buildPeriodBuckets(dateStart, dateEnd, granularity);
+  const labelByKey = new Map(buckets.map((bucket) => [bucket.key, bucket.label]));
+
+  const totals = new Map<string, { total: number; count: number }>();
+
+  for (const item of items) {
+    const bucketKey = dateToBucketKey(getDate(item), granularity);
+    if (!bucketKey || !labelByKey.has(bucketKey)) continue;
+
+    const current = totals.get(bucketKey) ?? { total: 0, count: 0 };
+    current.total += getValue(item) ?? 0;
+    current.count += 1;
+    totals.set(bucketKey, current);
+  }
+
+  return buckets.map((bucket) => {
+    const aggregate = totals.get(bucket.key);
+    const average =
+      aggregate && aggregate.count > 0
+        ? aggregate.total / aggregate.count
+        : 0;
+
+    return {
+      periodo: bucket.label,
+      sortKey: bucket.key,
+      dateStart: bucket.date_start,
+      dateEnd: bucket.date_end,
+      value: Number(average.toFixed(2)),
+      registros: aggregate?.count ?? 0,
+    };
+  });
+}
+
+/** Soma de economia (ou outro valor) por período. */
+export function aggregateSumByPeriod<T>(
+  params: Parameters<typeof aggregateQuantityByPeriod<T>>[0]
+): TimeSeriesPoint[] {
+  return aggregateQuantityByPeriod(params);
 }
