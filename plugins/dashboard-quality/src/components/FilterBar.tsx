@@ -1,3 +1,4 @@
+import { PrintReportButton } from "./PrintReportButton";
 import { QualityFilters } from "./QualityFilters";
 import { QualityPageHeader } from "./QualityPageHeader";
 import { QUALITY_ROUTES } from "../constants/routes";
@@ -37,8 +38,10 @@ export function FilterBar({
         currentPath={currentPath ?? QUALITY_ROUTES.home}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        actions={<PrintReportButton />}
       />
       <QualityFilters
+        className="dq-no-print"
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}

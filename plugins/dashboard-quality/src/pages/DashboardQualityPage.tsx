@@ -99,7 +99,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
   const isBusy = loading || refreshing;
 
   return (
-    <div className="dashboard-quality dashboard-page">
+    <div className="dashboard-quality dashboard-page dq-print-root">
       <FilterBar
         currentPath={pathname ?? QUALITY_ROUTES.home}
         dateStart={dateStart}

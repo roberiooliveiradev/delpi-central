@@ -8,6 +8,7 @@ type QualityFiltersProps = {
   onDateEndChange: (value: string) => void;
   onBranchChange: (value: string) => void;
   idPrefix?: string;
+  className?: string;
 };
 
 export function QualityFilters({
@@ -20,12 +21,13 @@ export function QualityFilters({
   onDateEndChange,
   onBranchChange,
   idPrefix = "dq",
+  className,
 }: QualityFiltersProps) {
   const branchOptions =
     branches.length > 0 ? branches : branch ? [branch] : [];
 
   return (
-    <section className="dq-filters-row">
+    <section className={["dq-filters-row", className].filter(Boolean).join(" ")}>
       <div className="dq-filter-box">
         <label htmlFor={`${idPrefix}-date-start`}>Data inicial</label>
         <input

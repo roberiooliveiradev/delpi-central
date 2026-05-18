@@ -75,6 +75,9 @@ export DATE_END="2025-12-31"
 | 5S | Nota média por período; drill-down |
 | Erros | Período muito grande → mensagem sugerindo intervalo menor |
 | Mobile | Largura ≤768px: toolbar empilhada, grids em 1 coluna |
+| PPM comparativo | Toggle **Comparar** → duas linhas (interno/externo), export CSV com duas colunas |
+| Metas PPM | Definir `target`/`limit` em `src/constants/ppmReferenceLines.ts` ou `VITE_DQ_PPM_TARGET` / `VITE_DQ_PPM_LIMIT` |
+| Impressão | Botão **Imprimir** na home e em PPM → visualizar PDF do navegador |
 
 ## 7. URLs úteis
 

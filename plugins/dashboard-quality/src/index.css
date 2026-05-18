@@ -434,6 +434,10 @@
 }
 
 .dashboard-quality .dq-ppm-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
   margin-bottom: var(--dq-section-gap);
 }
 
@@ -734,5 +738,31 @@
 
   .dashboard-quality .dq-shortcuts-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .dashboard-quality .dq-no-print,
+  .dashboard-quality .dq-nav,
+  .dashboard-quality .dq-header-actions,
+  .dashboard-quality .dq-pagination,
+  .dashboard-quality .dq-chart-toolbar {
+    display: none !important;
+  }
+
+  .dashboard-quality.dashboard-page,
+  .dashboard-quality.dq-print-root {
+    padding: 0;
+    background: #fff;
+  }
+
+  .dashboard-quality .dq-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+
+  .dashboard-quality .dq-chart-card__body {
+    min-height: 240px;
   }
 }

@@ -1,26 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Download, Factory, Truck } from "lucide-react";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
 import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { KpiCard } from "../components/KpiCard";
 import { Pagination } from "../components/Pagination";
+import { PpmCompareToggle } from "../components/PpmCompareToggle";
+import { PpmEvolutionChart } from "../components/PpmEvolutionChart";
 import { PpmTypeToggle } from "../components/PpmTypeToggle";
+import { PrintReportButton } from "../components/PrintReportButton";
 import { QualityFilters } from "../components/QualityFilters";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { QUALITY_ROUTES } from "../constants/routes";
-import { CHART_COLORS } from "../constants/chartColors";
-import { usePpmChartSeries, type PpmSeriesPoint } from "../hooks/usePpmChartSeries";
+import { getPpmChartReferenceLines } from "../constants/ppmReferenceLines";
+import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
 import { usePpmPage } from "../hooks/usePpmPage";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
@@ -29,10 +23,12 @@ import type { PpmItem, PpmType } from "../types/ppm";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import { formatDecimal, formatPpm } from "../utils/format";
-import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
+import {
+  downloadChartSeriesCsv,
+  downloadDualPpmSeriesCsv,
+} from "../utils/chartSeriesExport";
+import { mergePpmSeries } from "../utils/mergePpmSeries";
 import { suggestGranularity } from "../utils/periodBuckets";
-
-const CHART_HEIGHT = 320;
 
 type PpmPageProps = {
   pathname?: string;
@@ -40,6 +36,7 @@ type PpmPageProps = {
 
 export function PpmPage({ pathname }: PpmPageProps) {
   const [ppmType, setPpmType] = useState<PpmType>("internal");
+  const [compareChart, setCompareChart] = useState(false);
   const [page, setPage] = useState(1);
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
@@ -62,17 +59,43 @@ export function PpmPage({ pathname }: PpmPageProps) {
       page,
     });
 
-  const {
-    points: chartData,
-    loading: chartLoading,
-    truncated: chartTruncated,
-    error: chartError,
-    reload: reloadChart,
-  } = usePpmChartSeries({
-    type: ppmType,
+  const internalSeries = usePpmChartSeries({
+    type: "internal",
     filters: apiParams,
     granularity,
   });
+
+  const externalSeries = usePpmChartSeries({
+    type: "external",
+    filters: apiParams,
+    granularity,
+  });
+
+  const activeSeries = ppmType === "internal" ? internalSeries : externalSeries;
+
+  const compareChartData = useMemo(
+    () => mergePpmSeries(internalSeries.points, externalSeries.points),
+    [internalSeries.points, externalSeries.points]
+  );
+
+  const chartData = compareChart ? compareChartData : activeSeries.points;
+  const chartLoading = compareChart
+    ? internalSeries.loading || externalSeries.loading
+    : activeSeries.loading;
+  const chartTruncated = compareChart
+    ? internalSeries.truncated || externalSeries.truncated
+    : activeSeries.truncated;
+  const chartError = compareChart
+    ? internalSeries.error && externalSeries.error
+      ? internalSeries.error
+      : null
+    : activeSeries.error;
+
+  const referenceLines = useMemo(
+    () =>
+      getPpmChartReferenceLines(compareChart ? "compare" : ppmType),
+    [compareChart, ppmType]
+  );
 
   useEffect(() => {
     setPage(1);
@@ -154,25 +177,34 @@ export function PpmPage({ pathname }: PpmPageProps) {
 
   const handleRefresh = () => {
     reload();
-    reloadChart();
+    internalSeries.reload();
+    externalSeries.reload();
   };
 
   const isBusy = loading || refreshing;
   const isChartBusy = chartLoading || refreshing;
   const typeLabel = ppmType === "internal" ? "interno" : "externo";
-  const hasChartValues = chartData.some((point) => point.ppm > 0);
+  const hasChartValues = compareChart
+    ? compareChartData.some(
+        (point) => point.ppmInternal > 0 || point.ppmExternal > 0
+      )
+    : activeSeries.points.some((point) => point.ppm > 0);
 
-  const handleChartDrillDown = (point: PpmSeriesPoint) => {
-    if (!point.dateStart || !point.dateEnd) return;
-    setDateStart(point.dateStart);
-    setDateEnd(point.dateEnd);
+  const handleChartDrillDown = (dateStartValue: string, dateEndValue: string) => {
+    setDateStart(dateStartValue);
+    setDateEnd(dateEndValue);
     setPage(1);
   };
 
   const handleExportChartCsv = () => {
+    if (compareChart) {
+      downloadDualPpmSeriesCsv("ppm-comparativo-serie.csv", compareChartData);
+      return;
+    }
+
     downloadChartSeriesCsv(
       `ppm-${ppmType}-serie.csv`,
-      chartData.map((point) => ({
+      activeSeries.points.map((point) => ({
         periodo: point.periodo,
         value: point.ppm,
         valueLabel: "PPM",
@@ -180,29 +212,45 @@ export function PpmPage({ pathname }: PpmPageProps) {
     );
   };
 
+  const chartHint = compareChart
+    ? chartTruncated
+      ? "Comparativo interno × externo (período truncado nos primeiros 60 intervalos)."
+      : "PPM interno e externo no mesmo período. Clique em um ponto para filtrar a tabela."
+    : chartTruncated
+      ? "Período extenso: exibindo os primeiros 60 intervalos. Ajuste o filtro ou a granularidade."
+      : "PPM por intervalo (devolvido ÷ produzido). Clique em um ponto para filtrar a tabela.";
+
   return (
-    <div className="dashboard-quality dashboard-page">
+    <div className="dashboard-quality dashboard-page dq-print-root">
       <QualityPageHeader
         title="PPM"
-        subtitle={`Detalhamento ${typeLabel} — evolução do indicador e listagem`}
+        subtitle={
+          compareChart
+            ? "Comparativo interno × externo — evolução e listagem por tipo"
+            : `Detalhamento ${typeLabel} — evolução do indicador e listagem`
+        }
         currentPath={pathname ?? QUALITY_ROUTES.ppm}
         onRefresh={handleRefresh}
         refreshing={refreshing}
         actions={
-          <button
-            type="button"
-            className="dq-ghost-btn"
-            onClick={handleExportCsv}
-            disabled={!tablePage?.items.length}
-          >
-            <Download size={16} />
-            Exportar CSV
-          </button>
+          <>
+            <PrintReportButton />
+            <button
+              type="button"
+              className="dq-ghost-btn dq-no-print"
+              onClick={handleExportCsv}
+              disabled={!tablePage?.items.length}
+            >
+              <Download size={16} />
+              Exportar CSV
+            </button>
+          </>
         }
       />
 
       <QualityFilters
         idPrefix="ppm"
+        className="dq-no-print"
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
@@ -213,8 +261,9 @@ export function PpmPage({ pathname }: PpmPageProps) {
         onBranchChange={setBranch}
       />
 
-      <div className="dq-ppm-toolbar">
+      <div className="dq-ppm-toolbar dq-no-print">
         <PpmTypeToggle value={ppmType} onChange={setPpmType} />
+        <PpmCompareToggle compare={compareChart} onChange={setCompareChart} />
       </div>
 
       {error ? (
@@ -250,14 +299,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
       </section>
 
       <section className="dq-chart-section" aria-busy={isChartBusy}>
-        <ChartCard
-          title="Evolução do PPM"
-          hint={
-            chartTruncated
-              ? "Período extenso: exibindo os primeiros 60 intervalos. Ajuste o filtro ou a granularidade."
-              : "PPM por intervalo (devolvido ÷ produzido). Clique em um ponto para filtrar a tabela."
-          }
-        >
+        <ChartCard title={compareChart ? "PPM interno × externo" : "Evolução do PPM"} hint={chartHint}>
           <ChartToolbar
             idPrefix="ppm"
             granularity={granularity}
@@ -272,47 +314,15 @@ export function PpmPage({ pathname }: PpmPageProps) {
             </div>
           ) : null}
 
-          {!chartError && chartData.length === 0 && !chartLoading ? (
-            <div className="dq-state-box">Sem dados para o gráfico no período.</div>
-          ) : null}
-
           {!chartError && (chartData.length > 0 || chartLoading) ? (
-            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <LineChart
-                data={chartData}
-                onClick={(state) => {
-                  const rawIndex = state?.activeTooltipIndex;
-                  const index =
-                    typeof rawIndex === "number" ? rawIndex : Number(rawIndex);
-                  if (!Number.isFinite(index) || index < 0) return;
-                  const point = chartData[index];
-                  if (point) handleChartDrillDown(point);
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="periodo"
-                  tick={{ fontSize: 11 }}
-                  interval="preserveStartEnd"
-                />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  formatter={(value) => [
-                    formatDecimal(Number(value)),
-                    "PPM",
-                  ]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="ppm"
-                  stroke={CHART_COLORS[0]}
-                  strokeWidth={2}
-                  dot={{ r: 4, cursor: "pointer" }}
-                  activeDot={{ r: 6, cursor: "pointer" }}
-                  name="PPM"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <PpmEvolutionChart
+              compare={compareChart}
+              singleData={activeSeries.points}
+              compareData={compareChartData}
+              referenceLines={referenceLines}
+              loading={chartLoading}
+              onDrillDown={handleChartDrillDown}
+            />
           ) : null}
 
           {!chartError && chartData.length > 0 && !hasChartValues && !chartLoading ? (
@@ -320,12 +330,21 @@ export function PpmPage({ pathname }: PpmPageProps) {
               Todos os intervalos retornaram PPM zero no período filtrado.
             </p>
           ) : null}
+
+          {referenceLines.length > 0 ? (
+            <p className="dq-chart-card__hint dq-chart-card__hint--below dq-no-print">
+              Linhas de referência: {referenceLines.map((line) => line.label).join(" e ")}.
+              Configure em <code>ppmReferenceLines.ts</code> ou variáveis <code>VITE_DQ_PPM_*</code>.
+            </p>
+          ) : null}
         </ChartCard>
       </section>
 
       <section className="dq-table-section dq-card" aria-busy={isBusy}>
         <div className="dq-table-section__header">
-          <h2 className="dq-section-title">Registros de PPM</h2>
+          <h2 className="dq-section-title">
+            Registros de PPM {typeLabel}
+          </h2>
         </div>
 
         <DataTable
