@@ -200,6 +200,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         });
 
         if (activeSession?.id === sessionId) {
+          cancelStreaming();
+          activeSessionIdRef.current = null;
           setMessages([]);
         }
 
