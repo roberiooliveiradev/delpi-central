@@ -136,6 +136,12 @@ class Settings:
         os.getenv("CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED", "true").lower()
         == "true"
     )
+    CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS = int(
+        os.getenv("CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", "4")
+    )
+    CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS = float(
+        os.getenv("CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", "16")
+    )
     CHAT_TOOL_ROUTER_MAX_ACTIONS = int(os.getenv("CHAT_TOOL_ROUTER_MAX_ACTIONS", "20"))
 
     CHAT_HISTORY_SUMMARY_ENABLED = (

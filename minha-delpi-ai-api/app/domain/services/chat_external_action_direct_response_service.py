@@ -1,3 +1,5 @@
+import time
+
 from app.infrastructure.config.settings import Settings
 
 
@@ -37,14 +39,11 @@ class ChatExternalActionDirectResponseService:
         if not text:
             return
 
-        paragraphs = [part.strip() for part in text.split("\n\n") if part.strip()]
+        chunk_size = max(1, Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS)
+        delay_seconds = max(0.0, Settings.CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS) / 1000.0
 
-        if not paragraphs:
-            yield text
-            return
+        for index in range(0, len(text), chunk_size):
+            if index > 0 and delay_seconds > 0:
+                time.sleep(delay_seconds)
 
-        for index, paragraph in enumerate(paragraphs):
-            if index > 0:
-                yield "\n\n"
-
-            yield paragraph
+            yield text[index : index + chunk_size]

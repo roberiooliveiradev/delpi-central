@@ -17,11 +17,18 @@ def test_resolve_answer_returns_trimmed_text():
     assert answer == "Produto 10080055: cabo."
 
 
-def test_iter_stream_chunks_splits_paragraphs():
-    chunks = list(
-        ChatExternalActionDirectResponseService.iter_stream_chunks(
-            "Título\n\nLinha 1\n\nLinha 2"
-        )
+def test_iter_stream_chunks_streams_small_pieces(monkeypatch):
+    monkeypatch.setattr(
+        "app.domain.services.chat_external_action_direct_response_service.Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS",
+        3,
+    )
+    monkeypatch.setattr(
+        "app.domain.services.chat_external_action_direct_response_service.Settings.CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS",
+        0,
     )
 
-    assert chunks == ["Título", "\n\n", "Linha 1", "\n\n", "Linha 2"]
+    chunks = list(
+        ChatExternalActionDirectResponseService.iter_stream_chunks("Olá mundo")
+    )
+
+    assert chunks == ["Olá", " mu", "ndo"]
