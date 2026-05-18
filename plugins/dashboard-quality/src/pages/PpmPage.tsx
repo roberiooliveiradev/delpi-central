@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Download, Factory, Truck } from "lucide-react";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -11,6 +11,7 @@ import {
 } from "recharts";
 
 import { ChartCard } from "../components/ChartCard";
+import { ChartGranularityToggle } from "../components/ChartGranularityToggle";
 import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { KpiCard } from "../components/KpiCard";
 import { Pagination } from "../components/Pagination";
@@ -19,12 +20,15 @@ import { QualityFilters } from "../components/QualityFilters";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { CHART_COLORS } from "../constants/chartColors";
+import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
 import { usePpmPage } from "../hooks/usePpmPage";
 import { useQualityFilters } from "../hooks/useQualityFilters";
+import type { ChartGranularity } from "../types/chart";
 import type { PpmItem, PpmType } from "../types/ppm";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import { formatDecimal, formatPpm } from "../utils/format";
+import { suggestGranularity } from "../utils/periodBuckets";
 
 const CHART_HEIGHT = 320;
 
@@ -35,6 +39,7 @@ type PpmPageProps = {
 export function PpmPage({ pathname }: PpmPageProps) {
   const [ppmType, setPpmType] = useState<PpmType>("internal");
   const [page, setPage] = useState(1);
+  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const {
     dateStart,
@@ -46,16 +51,34 @@ export function PpmPage({ pathname }: PpmPageProps) {
     apiParams,
   } = useQualityFilters();
 
-  const { summary, page: tablePage, chartData, loading, refreshing, error, reload } =
+  const { summary, page: tablePage, loading, refreshing, error, reload } =
     usePpmPage({
       type: ppmType,
       filters: apiParams,
       page,
     });
 
+  const {
+    points: chartData,
+    loading: chartLoading,
+    truncated: chartTruncated,
+    error: chartError,
+    reload: reloadChart,
+  } = usePpmChartSeries({
+    type: ppmType,
+    filters: apiParams,
+    dateStart,
+    dateEnd,
+    granularity,
+  });
+
   useEffect(() => {
     setPage(1);
   }, [ppmType, apiParams.branch, apiParams.date_start, apiParams.date_end]);
+
+  useEffect(() => {
+    setGranularity(suggestGranularity(dateStart, dateEnd));
+  }, [dateStart, dateEnd]);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -127,16 +150,23 @@ export function PpmPage({ pathname }: PpmPageProps) {
     );
   };
 
+  const handleRefresh = () => {
+    reload();
+    reloadChart();
+  };
+
   const isBusy = loading || refreshing;
+  const isChartBusy = chartLoading || refreshing;
   const typeLabel = ppmType === "internal" ? "interno" : "externo";
+  const hasChartValues = chartData.some((point) => point.ppm > 0);
 
   return (
     <div className="dashboard-quality dashboard-page">
       <QualityPageHeader
         title="PPM"
-        subtitle={`Detalhamento ${typeLabel} — listagem e evolução mensal`}
+        subtitle={`Detalhamento ${typeLabel} — evolução do indicador e listagem`}
         currentPath={pathname ?? QUALITY_ROUTES.ppm}
-        onRefresh={reload}
+        onRefresh={handleRefresh}
         refreshing={refreshing}
         actions={
           <button
@@ -168,7 +198,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
       {error ? (
         <div className="dq-state dq-state--error" role="alert">
           <p>{error}</p>
-          <button className="dq-primary-btn" type="button" onClick={reload}>
+          <button className="dq-primary-btn" type="button" onClick={handleRefresh}>
             Tentar novamente
           </button>
         </div>
@@ -197,34 +227,66 @@ export function PpmPage({ pathname }: PpmPageProps) {
         />
       </section>
 
-      <section className="dq-chart-section" aria-busy={isBusy}>
+      <section className="dq-chart-section" aria-busy={isChartBusy}>
         <ChartCard
-          title="Devoluções por mês"
-          hint="Agregado dos registros carregados para o gráfico (amostra do período)."
+          title="Evolução do PPM"
+          hint={
+            chartTruncated
+              ? "Período extenso: exibindo os primeiros 60 intervalos. Ajuste o filtro ou a granularidade."
+              : "PPM calculado por intervalo (devolvido ÷ produzido), com a mesma regra do resumo."
+          }
         >
-          {chartData.length === 0 && !loading ? (
+          <div className="dq-chart-toolbar">
+            <ChartGranularityToggle
+              idPrefix="ppm"
+              value={granularity}
+              onChange={setGranularity}
+            />
+          </div>
+
+          {chartError ? (
+            <div className="dq-state dq-state--error" role="alert">
+              <p>{chartError}</p>
+            </div>
+          ) : null}
+
+          {!chartError && chartData.length === 0 && !chartLoading ? (
             <div className="dq-state-box">Sem dados para o gráfico no período.</div>
-          ) : (
+          ) : null}
+
+          {!chartError && (chartData.length > 0 || chartLoading) ? (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="periodo" tick={{ fontSize: 12 }} />
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="periodo"
+                  tick={{ fontSize: 11 }}
+                  interval="preserveStartEnd"
+                />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip
                   formatter={(value) => [
                     formatDecimal(Number(value)),
-                    "Qtd. devolvida (un)",
+                    "PPM",
                   ]}
                 />
-                <Bar
-                  dataKey="devolvido"
-                  fill={CHART_COLORS[0]}
-                  radius={[6, 6, 0, 0]}
-                  name="Devolvido (un)"
+                <Line
+                  type="monotone"
+                  dataKey="ppm"
+                  stroke={CHART_COLORS[0]}
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  name="PPM"
                 />
-              </BarChart>
+              </LineChart>
             </ResponsiveContainer>
-          )}
+          ) : null}
+
+          {!chartError && chartData.length > 0 && !hasChartValues && !chartLoading ? (
+            <p className="dq-chart-card__hint dq-chart-card__hint--below">
+              Todos os intervalos retornaram PPM zero no período filtrado.
+            </p>
+          ) : null}
         </ChartCard>
       </section>
 

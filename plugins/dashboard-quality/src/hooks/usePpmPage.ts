@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getPpmSummary, listPpm } from "../api/qualityApi";
 import type {
   PpmItem,
@@ -8,10 +8,8 @@ import type {
   ListPpmParams,
 } from "../types/ppm";
 import type { Page } from "../types/pagination";
-import { aggregatePpmByMonth, type PpmChartPoint } from "../utils/ppmAggregation";
 
 const TABLE_PAGE_SIZE = 20;
-const CHART_SAMPLE_SIZE = 300;
 
 type UsePpmPageParams = {
   type: PpmType;
@@ -22,7 +20,6 @@ type UsePpmPageParams = {
 type UsePpmPageResult = {
   summary: PpmSummary | null;
   page: Page<PpmItem> | null;
-  chartData: PpmChartPoint[];
   loading: boolean;
   refreshing: boolean;
   error: string | null;
@@ -37,25 +34,16 @@ export function usePpmPage({
 }: UsePpmPageParams): UsePpmPageResult {
   const [summary, setSummary] = useState<PpmSummary | null>(null);
   const [tablePage, setTablePage] = useState<Page<PpmItem> | null>(null);
-  const [chartItems, setChartItems] = useState<PpmItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const stableFilters = useMemo(
-    () => ({
-      branch: filters.branch,
-      date_start: filters.date_start,
-      date_end: filters.date_end,
-    }),
-    [filters.branch, filters.date_start, filters.date_end]
-  );
-
-  const chartData = useMemo(
-    () => aggregatePpmByMonth(chartItems),
-    [chartItems]
-  );
+  const stableFilters = {
+    branch: filters.branch,
+    date_start: filters.date_start,
+    date_end: filters.date_end,
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -78,21 +66,13 @@ export function usePpmPage({
           page_size: TABLE_PAGE_SIZE,
         };
 
-        const chartParams: ListPpmParams = {
-          ...stableFilters,
-          page: 1,
-          page_size: CHART_SAMPLE_SIZE,
-        };
-
-        const [summaryResult, tableResult, chartResult] = await Promise.all([
+        const [summaryResult, tableResult] = await Promise.all([
           getPpmSummary(type, stableFilters, controller.signal),
           listPpm(type, listParams, controller.signal),
-          listPpm(type, chartParams, controller.signal),
         ]);
 
         setSummary(summaryResult);
         setTablePage(tableResult);
-        setChartItems(chartResult.items);
       } catch (err) {
         if (controller.signal.aborted) return;
 
@@ -111,7 +91,7 @@ export function usePpmPage({
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, page, stableFilters, reloadKey]);
+  }, [type, page, stableFilters.branch, stableFilters.date_start, stableFilters.date_end, reloadKey]);
 
   const reload = useCallback(() => {
     setReloadKey((prev) => prev + 1);
@@ -120,7 +100,6 @@ export function usePpmPage({
   return {
     summary,
     page: tablePage,
-    chartData,
     loading,
     refreshing,
     error,

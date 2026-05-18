@@ -1,6 +1,6 @@
 import type { Audit5s } from "../types/audit5s";
 import type { Kaizen } from "../types/kaizen";
-import { monthKeyToLabel, protheusDateToMonthKey } from "./dates";
+import { dateToMonthKey, monthKeyToLabel } from "./dates";
 
 export type ChartDatum = {
   name: string;
@@ -62,7 +62,7 @@ export function aggregateAudit5sByMonth(items: Audit5s[]): ChartDatum[] {
   const buckets = new Map<string, { sortKey: string; total: number; count: number }>();
 
   for (const item of items) {
-    const monthKey = protheusDateToMonthKey(item.date);
+    const monthKey = dateToMonthKey(item.date);
     if (!monthKey) continue;
 
     const current = buckets.get(monthKey) ?? {

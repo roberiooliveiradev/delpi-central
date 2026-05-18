@@ -1,20 +1,36 @@
 import { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
+import { ChartCard } from "../components/ChartCard";
+import { ChartGranularityToggle } from "../components/ChartGranularityToggle";
 import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { NonconformityFilters } from "../components/NonconformityFilters";
 import { Pagination } from "../components/Pagination";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { QUALITY_ROUTES } from "../constants/routes";
+import { CHART_COLORS } from "../constants/chartColors";
+import { useNonconformitiesChart } from "../hooks/useNonconformitiesChart";
 import { useNonconformities } from "../hooks/useQualityQueries";
 import { useQualityFilters } from "../hooks/useQualityFilters";
+import type { ChartGranularity } from "../types/chart";
 import type { Nonconformity, NonconformityType } from "../types/nonconformity";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate } from "../utils/dates";
 import { formatDecimal } from "../utils/format";
+import { suggestGranularity } from "../utils/periodBuckets";
 
 const PAGE_SIZE = 20;
+const CHART_HEIGHT = 320;
 
 type NonconformitiesPageProps = {
   pathname?: string;
@@ -32,6 +48,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
   const [status, setStatus] = useState("");
   const [itemCode, setItemCode] = useState("");
   const [description, setDescription] = useState("");
+  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const {
     dateStart,
@@ -57,6 +74,44 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
   );
 
   const { data, loading, error, reload } = useNonconformities(listParams);
+
+  const chartFilters = useMemo(
+    () => ({
+      type,
+      branch: apiParams.branch,
+      date_start: apiParams.date_start,
+      date_end: apiParams.date_end,
+      status: status || undefined,
+      item_code: itemCode || undefined,
+      description: description || undefined,
+    }),
+    [
+      type,
+      apiParams.branch,
+      apiParams.date_start,
+      apiParams.date_end,
+      status,
+      itemCode,
+      description,
+    ]
+  );
+
+  const {
+    points: chartData,
+    sampleSize,
+    loading: chartLoading,
+    error: chartError,
+    reload: reloadChart,
+  } = useNonconformitiesChart({
+    filters: chartFilters,
+    dateStart,
+    dateEnd,
+    granularity,
+  });
+
+  useEffect(() => {
+    setGranularity(suggestGranularity(dateStart, dateEnd));
+  }, [dateStart, dateEnd]);
 
   useEffect(() => {
     setPage(1);
@@ -156,13 +211,20 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
     );
   };
 
+  const handleRefresh = () => {
+    reload();
+    reloadChart();
+  };
+
+  const hasChartValues = chartData.some((point) => point.value > 0);
+
   return (
     <div className="dashboard-quality dashboard-page">
       <QualityPageHeader
         title="Não conformidades"
         subtitle="Listagem analítica do Protheus (TOTVS)"
         currentPath={pathname ?? QUALITY_ROUTES.nonconformities}
-        onRefresh={reload}
+        onRefresh={handleRefresh}
         refreshing={loading && Boolean(data)}
         actions={
           <button
@@ -199,11 +261,68 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       {error ? (
         <div className="dq-state dq-state--error" role="alert">
           <p>{error}</p>
-          <button className="dq-primary-btn" type="button" onClick={reload}>
+          <button className="dq-primary-btn" type="button" onClick={handleRefresh}>
             Tentar novamente
           </button>
         </div>
       ) : null}
+
+      <section className="dq-chart-section" aria-busy={chartLoading}>
+        <ChartCard
+          title="Quantidade devolvida"
+          hint={`Agregado por data de registro (amostra de até ${sampleSize} registros).`}
+        >
+          <div className="dq-chart-toolbar">
+            <ChartGranularityToggle
+              idPrefix="nc"
+              value={granularity}
+              onChange={setGranularity}
+            />
+          </div>
+
+          {chartError ? (
+            <div className="dq-state dq-state--error" role="alert">
+              <p>{chartError}</p>
+            </div>
+          ) : null}
+
+          {!chartError && chartData.length === 0 && !chartLoading ? (
+            <div className="dq-state-box">Sem dados para o gráfico no período.</div>
+          ) : null}
+
+          {!chartError && (chartData.length > 0 || chartLoading) ? (
+            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis
+                  dataKey="periodo"
+                  tick={{ fontSize: 11 }}
+                  interval="preserveStartEnd"
+                />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip
+                  formatter={(value) => [
+                    formatDecimal(Number(value)),
+                    "Qtd. devolvida",
+                  ]}
+                />
+                <Bar
+                  dataKey="value"
+                  fill={CHART_COLORS[2]}
+                  radius={[6, 6, 0, 0]}
+                  name="Qtd. devolvida"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : null}
+
+          {!chartError && chartData.length > 0 && !hasChartValues && !chartLoading ? (
+            <p className="dq-chart-card__hint dq-chart-card__hint--below">
+              Nenhuma quantidade devolvida nos intervalos exibidos.
+            </p>
+          ) : null}
+        </ChartCard>
+      </section>
 
       <section className="dq-table-section dq-card" aria-busy={loading}>
         <div className="dq-table-section__header">

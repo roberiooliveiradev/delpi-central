@@ -456,6 +456,40 @@
   color: #fff;
 }
 
+.dashboard-quality .dq-segment-toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--dq-card-border);
+  background: var(--dq-card-bg);
+  gap: 4px;
+}
+
+.dashboard-quality .dq-segment-toggle__btn {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: var(--dq-font-xs);
+  color: var(--dq-text-muted);
+  cursor: pointer;
+}
+
+.dashboard-quality .dq-segment-toggle__btn--active {
+  background: var(--dq-accent);
+  color: #fff;
+}
+
+.dashboard-quality .dq-chart-toolbar {
+  margin-bottom: 12px;
+}
+
+.dashboard-quality .dq-chart-card__hint--below {
+  margin-top: 8px;
+}
+
 .dashboard-quality .dq-kpi-grid--single-row {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
