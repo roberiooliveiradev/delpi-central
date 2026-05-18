@@ -1,7 +1,7 @@
 // src/ui/admin/tabs/NotificationsTab.tsx
 
 import { useContext, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Bell, Send } from "lucide-react";
+import { Bell, History, Send } from "lucide-react";
 
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
@@ -25,8 +25,11 @@ import {
   resolvePreviewRecipientName,
 } from "../../../components/notifications/notificationTemplates";
 import { useNotificationTemplates } from "../../../components/notifications/useNotificationTemplates";
+import { NotificationDispatchHistory } from "../../../components/notifications/NotificationDispatchHistory";
 
 import "./NotificationsTab.css";
+
+type AdminNotificationsView = "send" | "history";
 
 const NOTIFICATION_TYPES: NotificationType[] = ["info", "success", "warning", "error"];
 
@@ -96,6 +99,9 @@ export function NotificationsTab() {
   >({});
   const [expiresEnabled, setExpiresEnabled] = useState(false);
   const [expiresInDays, setExpiresInDays] = useState(7);
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledAtLocal, setScheduledAtLocal] = useState("");
+  const [view, setView] = useState<AdminNotificationsView>("send");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -220,17 +226,36 @@ export function NotificationsTab() {
       expiresAt: expiresEnabled
         ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
         : null,
+      scheduledAt:
+        scheduleEnabled && scheduledAtLocal
+          ? new Date(scheduledAtLocal).toISOString()
+          : null,
       sourceApp: "portal-admin",
     };
 
+    if (scheduleEnabled && !scheduledAtLocal) {
+      setError("Informe data e hora do agendamento.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const result = await coreApi.dispatchNotifications(payload);
-      const count = result.createdCount;
-      setFeedback(
-        count === 1
-          ? "1 notificação enviada."
-          : `${count} notificações enviadas para ${count} destinatário(s).`,
-      );
+
+      if (result.status === "pending") {
+        setFeedback(
+          result.scheduledAt
+            ? `Envio agendado para ${new Date(result.scheduledAt).toLocaleString("pt-BR")}.`
+            : "Envio agendado com sucesso.",
+        );
+      } else {
+        const count = result.createdCount;
+        setFeedback(
+          count === 1
+            ? "1 notificação enviada."
+            : `${count} notificações enviadas para ${count} destinatário(s).`,
+        );
+      }
 
       if (!broadcast) {
         setSelectedUserIds([]);
@@ -239,6 +264,8 @@ export function NotificationsTab() {
 
       setMessage("");
       setHtmlContent("");
+      setScheduleEnabled(false);
+      setScheduledAtLocal("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao enviar notificações");
     } finally {
@@ -285,6 +312,40 @@ export function NotificationsTab() {
         </div>
       </header>
 
+      <nav className="admin-notifications__subnav" aria-label="Seções de notificações">
+        <button
+          type="button"
+          className={
+            view === "send"
+              ? "admin-notifications__subnav-btn admin-notifications__subnav-btn--active"
+              : "admin-notifications__subnav-btn"
+          }
+          onClick={() => setView("send")}
+        >
+          <Send size={16} aria-hidden="true" />
+          Novo envio
+        </button>
+        <button
+          type="button"
+          className={
+            view === "history"
+              ? "admin-notifications__subnav-btn admin-notifications__subnav-btn--active"
+              : "admin-notifications__subnav-btn"
+          }
+          onClick={() => setView("history")}
+        >
+          <History size={16} aria-hidden="true" />
+          Histórico
+        </button>
+      </nav>
+
+      {view === "history" ? (
+        <article className="admin-notifications__panel">
+          <NotificationDispatchHistory coreApi={coreApi} />
+        </article>
+      ) : null}
+
+      {view === "send" ? (
       <form className="admin-notifications__form" onSubmit={(event) => void handleSubmit(event)}>
         <div className="admin-notifications__shell">
           <article className="admin-notifications__panel">
@@ -413,6 +474,32 @@ export function NotificationsTab() {
                     action={actionForPreview}
                   />
                 ) : null}
+
+                <fieldset className="admin-notifications__fieldset admin-notifications__fieldset--expires">
+                  <legend>Agendamento (opcional)</legend>
+                  <label className="admin-notifications__broadcast admin-notifications__broadcast--inline">
+                    <input
+                      type="checkbox"
+                      checked={scheduleEnabled}
+                      onChange={(event) => setScheduleEnabled(event.target.checked)}
+                    />
+                    <span className="admin-notifications__broadcast-body">
+                      <strong>Agendar envio</strong>
+                      <span>Processar na data/hora indicada (cron ou botão no histórico)</span>
+                    </span>
+                  </label>
+                  {scheduleEnabled ? (
+                    <label className="admin-notifications__field">
+                      <span>Data e hora</span>
+                      <input
+                        type="datetime-local"
+                        value={scheduledAtLocal}
+                        onChange={(event) => setScheduledAtLocal(event.target.value)}
+                        required
+                      />
+                    </label>
+                  ) : null}
+                </fieldset>
 
                 <fieldset className="admin-notifications__fieldset admin-notifications__fieldset--expires">
                   <legend>Validade (opcional)</legend>
@@ -648,12 +735,17 @@ export function NotificationsTab() {
                 disabled={submitDisabled}
               >
                 <Send size={16} aria-hidden="true" />
-                {isSubmitting ? "Enviando…" : "Enviar notificações"}
+                {isSubmitting
+                  ? "Enviando…"
+                  : scheduleEnabled
+                    ? "Agendar envio"
+                    : "Enviar notificações"}
               </button>
             </div>
           </footer>
         </div>
       </form>
+      ) : null}
     </section>
   );
 }

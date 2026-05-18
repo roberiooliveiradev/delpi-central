@@ -52,6 +52,7 @@ from app.domain.ports.plugin_permission_repository_port import PluginPermissionR
 
 from app.domain.ports.favorite_app_repository import FavoriteAppRepository
 from app.domain.ports.notification_repository import NotificationRepository
+from app.domain.ports.notification_dispatch_repository import NotificationDispatchRepository
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.ports.cache_port import PermissionCachePort
 from app.domain.ports.event_dispatcher_port import EventDispatcherPort
@@ -100,6 +101,7 @@ class UnitOfWork(Protocol):
 
     favorites: FavoriteAppRepository
     notifications: NotificationRepository
+    notification_dispatches: NotificationDispatchRepository
     audits: AuditRepositoryPort
 
     cache: PermissionCachePort

@@ -2,12 +2,20 @@
 
 from datetime import datetime
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, g, jsonify, request
 
 from app.application.dto.dispatch_notifications_request import DispatchNotificationsRequest
+from app.application.use_cases.create_notification_dispatch_use_case import (
+    CreateNotificationDispatchUseCase,
+)
 from app.application.use_cases.dispatch_notifications_use_case import (
-    DispatchNotificationsUseCase,
     DispatchNotificationsValidationError,
+)
+from app.application.use_cases.list_notification_dispatches_use_case import (
+    ListNotificationDispatchesUseCase,
+)
+from app.application.use_cases.process_pending_notification_dispatches_use_case import (
+    ProcessPendingNotificationDispatchesUseCase,
 )
 from app.application.use_cases.manage_notification_templates_use_case import (
     CreateNotificationCustomTemplateUseCase,
@@ -19,6 +27,10 @@ from app.application.use_cases.manage_notification_templates_use_case import (
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 from app.interfaces.http.security.authorization import require_superadmin
 from app.interfaces.http.security.service_token import require_service_token
+from app.interfaces.http.serializers.notification_dispatch_serializer import (
+    serialize_dispatch_result,
+    serialize_notification_dispatch,
+)
 from app.interfaces.http.utils.errors import api_error
 
 admin_notifications_bp = Blueprint(
@@ -52,6 +64,22 @@ def _parse_action(payload: dict) -> tuple[str | None, str | None, str | None]:
         action.get("label"),
         action.get("target"),
     )
+
+
+def _parse_scheduled_at(value) -> datetime | None:
+    if not value:
+        return None
+
+    if isinstance(value, datetime):
+        return value.replace(tzinfo=None)
+
+    try:
+        normalized = str(value).replace("Z", "+00:00")
+        return datetime.fromisoformat(normalized).replace(tzinfo=None)
+    except ValueError as exc:
+        raise DispatchNotificationsValidationError(
+            "scheduledAt must be ISO-8601 datetime"
+        ) from exc
 
 
 def _parse_expires_at(value) -> datetime | None:
@@ -115,30 +143,138 @@ def _parse_dispatch_body(data: dict | None) -> DispatchNotificationsRequest:
     )
 
 
-def _dispatch_notifications(request_dto: DispatchNotificationsRequest):
+def _dispatch_notifications(request_dto: DispatchNotificationsRequest, scheduled_at=None):
     registry = build_template_registry()
-    with SqlAlchemyUnitOfWork() as uow:
-        use_case = DispatchNotificationsUseCase(uow, template_registry=registry)
-        result = use_case.execute(request_dto)
+    actor_id = str(g.current_user.id) if getattr(g, "current_user", None) else None
 
-    return jsonify(
-        {
-            "createdCount": result.created_count,
-            "notificationIds": result.notification_ids,
-        }
-    ), 201
+    with SqlAlchemyUnitOfWork() as uow:
+        result = CreateNotificationDispatchUseCase(
+            uow,
+            template_registry=registry,
+        ).execute(
+            request_dto,
+            created_by_user_id=actor_id,
+            scheduled_at=scheduled_at,
+        )
+
+    payload = serialize_dispatch_result(result)
+    payload["createdCount"] = result.created_count
+    payload["notificationIds"] = result.notification_ids
+
+    status_code = 202 if result.status == "pending" else 201
+    return jsonify(payload), status_code
+
+
+def _parse_scheduled_at_from_body(payload: dict) -> datetime | None:
+    return _parse_scheduled_at(payload.get("scheduledAt") or payload.get("scheduled_at"))
 
 
 @admin_notifications_bp.route("", methods=["POST"])
 @require_superadmin()
 def admin_dispatch_notifications():
     try:
-        request_dto = _parse_dispatch_body(request.get_json(silent=True))
-        return _dispatch_notifications(request_dto)
+        body = request.get_json(silent=True) or {}
+        request_dto = _parse_dispatch_body(body)
+        scheduled_at = _parse_scheduled_at_from_body(body)
+        return _dispatch_notifications(request_dto, scheduled_at=scheduled_at)
     except DispatchNotificationsValidationError as exc:
         return api_error("validation_error", str(exc), status=400)
     except Exception as exc:
         return api_error("dispatch_failed", str(exc))
+
+
+@admin_notifications_bp.route("/dispatches", methods=["GET"])
+@require_superadmin()
+def list_notification_dispatches():
+    try:
+        limit = int(request.args.get("limit", 20))
+        offset = int(request.args.get("offset", 0))
+    except ValueError:
+        return api_error("invalid_pagination", "limit and offset must be integers", status=400)
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = ListNotificationDispatchesUseCase(uow).execute(limit=limit, offset=offset)
+
+        return (
+            jsonify(
+                {
+                    "items": [
+                        serialize_notification_dispatch(item) for item in result.items
+                    ],
+                    "total": result.total,
+                    "limit": result.limit,
+                    "offset": result.offset,
+                }
+            ),
+            200,
+        )
+    except Exception as exc:
+        return api_error("list_dispatches_failed", str(exc))
+
+
+@admin_notifications_bp.route("/dispatches/process-pending", methods=["POST"])
+@require_superadmin()
+def process_pending_notification_dispatches():
+    try:
+        body = request.get_json(silent=True) or {}
+        limit = int(body.get("limit", 20))
+    except (TypeError, ValueError):
+        return api_error("invalid_limit", "limit must be an integer", status=400)
+
+    try:
+        registry = build_template_registry()
+        with SqlAlchemyUnitOfWork() as uow:
+            result = ProcessPendingNotificationDispatchesUseCase(
+                uow,
+                template_registry=registry,
+            ).execute(limit=limit)
+
+        return (
+            jsonify(
+                {
+                    "processed": result.processed,
+                    "completed": result.completed,
+                    "failed": result.failed,
+                    "errors": result.errors,
+                }
+            ),
+            200,
+        )
+    except Exception as exc:
+        return api_error("process_pending_failed", str(exc))
+
+
+@integrations_notifications_bp.route("/process-pending", methods=["POST"])
+@require_service_token()
+def integrations_process_pending_notification_dispatches():
+    try:
+        body = request.get_json(silent=True) or {}
+        limit = int(body.get("limit", 20))
+    except (TypeError, ValueError):
+        return api_error("invalid_limit", "limit must be an integer", status=400)
+
+    try:
+        registry = build_template_registry()
+        with SqlAlchemyUnitOfWork() as uow:
+            result = ProcessPendingNotificationDispatchesUseCase(
+                uow,
+                template_registry=registry,
+            ).execute(limit=limit)
+
+        return (
+            jsonify(
+                {
+                    "processed": result.processed,
+                    "completed": result.completed,
+                    "failed": result.failed,
+                    "errors": result.errors,
+                }
+            ),
+            200,
+        )
+    except Exception as exc:
+        return api_error("process_pending_failed", str(exc))
 
 
 @admin_notifications_bp.route("/templates", methods=["GET"])
@@ -180,8 +316,10 @@ def delete_notification_template(template_id: str):
 @require_service_token()
 def integrations_dispatch_notifications():
     try:
-        request_dto = _parse_dispatch_body(request.get_json(silent=True))
-        return _dispatch_notifications(request_dto)
+        body = request.get_json(silent=True) or {}
+        request_dto = _parse_dispatch_body(body)
+        scheduled_at = _parse_scheduled_at_from_body(body)
+        return _dispatch_notifications(request_dto, scheduled_at=scheduled_at)
     except DispatchNotificationsValidationError as exc:
         return api_error("validation_error", str(exc), status=400)
     except Exception as exc:

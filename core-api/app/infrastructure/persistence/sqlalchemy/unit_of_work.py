@@ -13,6 +13,9 @@ from app.infrastructure.persistence.sqlalchemy.user_repository import SqlAlchemy
 from app.infrastructure.persistence.sqlalchemy.permission_repository import SqlAlchemyPermissionRepository
 from app.infrastructure.persistence.sqlalchemy.permission_query_repository import SqlAlchemyPermissionQueryRepository
 from app.infrastructure.persistence.sqlalchemy.notification_repository import SqlAlchemyNotificationRepository
+from app.infrastructure.persistence.sqlalchemy.notification_dispatch_repository import (
+    SqlAlchemyNotificationDispatchRepository,
+)
 from app.infrastructure.persistence.sqlalchemy.app_query_repository import SqlAlchemyAppQueryRepository
 from app.infrastructure.persistence.sqlalchemy.favorite_app_repository import SqlAlchemyFavoriteAppRepository
 from app.infrastructure.persistence.sqlalchemy.role_repository import SqlAlchemyRoleRepository
@@ -59,6 +62,7 @@ class SqlAlchemyUnitOfWork:
         # Notifications
         # =========================
         self.notifications = SqlAlchemyNotificationRepository(self.session)
+        self.notification_dispatches = SqlAlchemyNotificationDispatchRepository(self.session)
 
         # =========================
         # Apps & Routes

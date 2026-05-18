@@ -69,7 +69,7 @@ Todas exigem `@require_auth()`.
 | POST | `/me/notifications/read-all` | `MarkAllNotificationsReadUseCase` |
 | POST | `/me/notifications/test` | `NotifyUserUseCase` (dev) |
 
-Admin e integrações: `POST /admin/notifications`, `POST /integrations/notifications`, templates em `/admin/notifications/templates` — ver roadmap.
+Admin e integrações: `POST /admin/notifications`, `POST /integrations/notifications`, templates em `/admin/notifications/templates`, auditoria em `GET /admin/notifications/dispatches`, processamento de agendados em `POST .../dispatches/process-pending` — ver [roadmap](../12-roadmap-e-evolucao/notificacoes-ricas.md).
 
 Resposta de listagem (campos expostos ao Portal):
 

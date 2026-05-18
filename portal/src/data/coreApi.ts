@@ -135,12 +135,52 @@ export interface DispatchNotificationsPayload {
   } | null;
   metadata?: Record<string, unknown>;
   expiresAt?: string | null;
+  scheduledAt?: string | null;
   sourceApp?: string;
 }
 
 export interface DispatchNotificationsResponse {
+  dispatchId?: string;
+  status?: string;
+  scheduledAt?: string | null;
   createdCount: number;
   notificationIds: string[];
+  recipientCount?: number;
+  errorMessage?: string | null;
+}
+
+export type NotificationDispatchStatus = "pending" | "processing" | "completed" | "failed";
+
+export interface NotificationDispatchItem {
+  id: string;
+  createdByUserId?: string | null;
+  status: NotificationDispatchStatus;
+  scheduledAt?: string | null;
+  processedAt?: string | null;
+  broadcast: boolean;
+  recipientCount: number;
+  createdCount: number;
+  title?: string | null;
+  category: NotificationCategory;
+  presentation: NotificationPresentation;
+  templateId?: string | null;
+  sourceApp?: string | null;
+  errorMessage?: string | null;
+  createdAt: string;
+}
+
+export interface NotificationDispatchListResponse {
+  items: NotificationDispatchItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ProcessPendingDispatchesResponse {
+  processed: number;
+  completed: number;
+  failed: number;
+  errors: { dispatchId: string; error: string }[];
 }
 
 export type NotificationHistoryStatus = "all" | "unread" | "read";
@@ -289,6 +329,27 @@ export class CoreApi {
     return this.client.post<DispatchNotificationsResponse>(
       "/core-api/admin/notifications",
       payload
+    );
+  }
+
+  listNotificationDispatches(params?: { limit?: number; offset?: number }) {
+    const search = new URLSearchParams();
+    if (params?.limit != null) {
+      search.set("limit", String(params.limit));
+    }
+    if (params?.offset != null) {
+      search.set("offset", String(params.offset));
+    }
+    const query = search.toString();
+    return this.client.get<NotificationDispatchListResponse>(
+      `/core-api/admin/notifications/dispatches${query ? `?${query}` : ""}`,
+    );
+  }
+
+  processPendingNotificationDispatches(body?: { limit?: number }) {
+    return this.client.post<ProcessPendingDispatchesResponse>(
+      "/core-api/admin/notifications/dispatches/process-pending",
+      body ?? {},
     );
   }
 

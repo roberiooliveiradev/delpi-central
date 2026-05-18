@@ -100,7 +100,19 @@ Histórico paginado.
 
 ### Envio `POST /admin/notifications` e `/integrations/notifications`
 
-Campos opcionais: `category`, `presentation`, `htmlContent`, `templateId`, `templateVars`, `icon`, `action`, `metadata`, `expiresAt`, `broadcast`, `userIds`, `emails`.
+Campos opcionais: `category`, `presentation`, `htmlContent`, `templateId`, `templateVars`, `icon`, `action`, `metadata`, `expiresAt`, `scheduledAt`, `broadcast`, `userIds`, `emails`.
+
+Resposta de envio imediato: `201` com `createdCount`. Agendado: `202` com `status: "pending"` e `scheduledAt`.
+
+### Auditoria e agendamento (Admin)
+
+| Método | Path | Descrição |
+|--------|------|-----------|
+| GET | `/admin/notifications/dispatches` | Lista campanhas (`limit`, `offset`) |
+| POST | `/admin/notifications/dispatches/process-pending` | Processa envios com `scheduledAt` vencido |
+| POST | `/integrations/notifications/process-pending` | Mesmo processamento (service token, para cron) |
+
+Tabela `notification_dispatches`: payload completo, status, contadores, erro.
 
 ---
 
@@ -111,7 +123,7 @@ Campos opcionais: `category`, `presentation`, `htmlContent`, `templateId`, `temp
 | **Sidebar (sino)** | Não lidas; link “Ver todas” → `/notifications` |
 | **Home** | Resumo + até 4 cards; clique no resumo → `/notifications` |
 | **`/notifications`** | Abas Todas / Não lidas / Lidas, paginação, marcar como lida |
-| **Admin → Notificações** | Envio em massa, preview por destinatário, expiração em dias |
+| **Admin → Notificações** | Envio em massa, agendamento, histórico de campanhas, preview por destinatário, expiração |
 
 ---
 
@@ -122,7 +134,7 @@ Campos opcionais: `category`, `presentation`, `htmlContent`, `templateId`, `temp
 | **1** | ✅ | Migration rica, HTML, action, category, UI base |
 | **2** | ✅ | Templates React + customizados + variáveis |
 | **2b** | ✅ | Layout admin em painéis, editor HTML com toolbar de variáveis |
-| **3** | 🟡 | `expiresAt` na UI + histórico paginado — **feito**; falta agendamento e auditoria de envios |
+| **3** | ✅ | `expiresAt`, histórico paginado, **agendamento** (`scheduledAt`) e **auditoria de envios** (`notification_dispatches`) |
 | **4** | ⬜ | Preferências do usuário (opt-out por categoria) |
 | **5** | 🟡 | Centro `/notifications` — **feito**; evoluir filtros por categoria |
 | **6** | ⬜ | Automação (aniversário, boas-vindas), destinatários por grupo/papel |

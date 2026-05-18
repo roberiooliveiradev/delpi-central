@@ -18,5 +18,6 @@ from .app_manifest import AppManifest
 from .app_versions import AppVersion
 
 from .notification import Notification
+from .notification_dispatch import NotificationDispatch
 
 from .audit_log import AuditLog
