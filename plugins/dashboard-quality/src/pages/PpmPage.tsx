@@ -9,7 +9,6 @@ import { Pagination } from "../components/Pagination";
 import { PpmCompareToggle } from "../components/PpmCompareToggle";
 import { PpmEvolutionChart } from "../components/PpmEvolutionChart";
 import { PpmTypeToggle } from "../components/PpmTypeToggle";
-import { PrintReportButton } from "../components/PrintReportButton";
 import { QualityFilters } from "../components/QualityFilters";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
@@ -49,6 +48,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
     setDateEnd,
     setBranch,
     apiParams,
+    filterState,
   } = useQualityFilters();
 
   const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
@@ -231,21 +231,20 @@ export function PpmPage({ pathname }: PpmPageProps) {
             : `Detalhamento ${typeLabel} — evolução do indicador e listagem`
         }
         currentPath={pathname ?? QUALITY_ROUTES.ppm}
+        filterState={filterState}
+        printDisabled={loading && !summary}
         onRefresh={handleRefresh}
         refreshing={refreshing}
         actions={
-          <>
-            <PrintReportButton />
-            <button
-              type="button"
-              className="dq-ghost-btn dq-no-print"
-              onClick={handleExportCsv}
-              disabled={!tablePage?.items.length}
-            >
-              <Download size={16} />
-              Exportar CSV
-            </button>
-          </>
+          <button
+            type="button"
+            className="dq-ghost-btn dq-no-print"
+            onClick={handleExportCsv}
+            disabled={!tablePage?.items.length}
+          >
+            <Download size={16} />
+            Exportar CSV
+          </button>
         }
       />
 

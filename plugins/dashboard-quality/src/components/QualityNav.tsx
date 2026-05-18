@@ -1,8 +1,11 @@
 import { QUALITY_ROUTES } from "../constants/routes";
+import type { QualityFilterUrlState } from "../utils/filterUrl";
+import { appendFiltersToPath, readQualityFilters } from "../utils/filterUrl";
 import { navigateQuality } from "../utils/navigation";
 
 type QualityNavProps = {
   currentPath?: string;
+  filterState?: QualityFilterUrlState;
 };
 
 const NAV_ITEMS = [
@@ -21,13 +24,15 @@ function isActive(path: string, currentPath?: string): boolean {
   return currentPath === path || currentPath.startsWith(`${path}/`);
 }
 
-export function QualityNav({ currentPath }: QualityNavProps) {
+export function QualityNav({ currentPath, filterState }: QualityNavProps) {
+  const filters = filterState ?? readQualityFilters();
+
   return (
     <nav className="dq-nav" aria-label="Navegação do dashboard de qualidade">
       {NAV_ITEMS.map((item) => (
         <a
           key={item.path}
-          href={item.path}
+          href={appendFiltersToPath(item.path, filters)}
           className={`dq-nav__link${isActive(item.path, currentPath) ? " dq-nav__link--active" : ""}`}
           aria-current={isActive(item.path, currentPath) ? "page" : undefined}
           onClick={(event) => {
@@ -42,7 +47,7 @@ export function QualityNav({ currentPath }: QualityNavProps) {
             }
 
             event.preventDefault();
-            navigateQuality(item.path);
+            navigateQuality(item.path, filters);
           }}
         >
           {item.label}

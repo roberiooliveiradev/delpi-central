@@ -5,18 +5,18 @@ import {
   inputDateToApi,
 } from "../utils/dates";
 import {
-  readFiltersFromUrl,
+  readQualityFilters,
   writeFiltersToUrl,
   type QualityFilterUrlState,
 } from "../utils/filterUrl";
 import type { DateRangeParams } from "../types/ppm";
 
 export function useQualityFilters() {
-  const [dateStart, setDateStartState] = useState(() =>
-    readFiltersFromUrl().dateStart
+  const [dateStart, setDateStartState] = useState(
+    () => readQualityFilters().dateStart
   );
-  const [dateEnd, setDateEndState] = useState(() => readFiltersFromUrl().dateEnd);
-  const [branch, setBranchState] = useState(() => readFiltersFromUrl().branch);
+  const [dateEnd, setDateEndState] = useState(() => readQualityFilters().dateEnd);
+  const [branch, setBranchState] = useState(() => readQualityFilters().branch);
 
   const syncToUrl = useCallback((state: QualityFilterUrlState) => {
     writeFiltersToUrl(state);
@@ -28,10 +28,10 @@ export function useQualityFilters() {
 
   useEffect(() => {
     const onPopState = () => {
-      const fromUrl = readFiltersFromUrl();
-      setDateStartState(fromUrl.dateStart);
-      setDateEndState(fromUrl.dateEnd);
-      setBranchState(fromUrl.branch);
+      const next = readQualityFilters();
+      setDateStartState(next.dateStart);
+      setDateEndState(next.dateEnd);
+      setBranchState(next.branch);
     };
 
     window.addEventListener("popstate", onPopState);

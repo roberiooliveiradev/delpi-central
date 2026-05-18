@@ -1,11 +1,18 @@
 import type { ReactNode } from "react";
 import { ListFilter, ShieldCheck } from "lucide-react";
+import type { QualityFilterUrlState } from "../utils/filterUrl";
+import { PrintReportButton } from "./PrintReportButton";
+import { PrintReportSummary } from "./PrintReportSummary";
 import { QualityNav } from "./QualityNav";
 
 type QualityPageHeaderProps = {
   title: string;
   subtitle: string;
   currentPath?: string;
+  filterState?: QualityFilterUrlState;
+  printFilters?: Pick<QualityFilterUrlState, "dateStart" | "dateEnd" | "branch">;
+  showPrint?: boolean;
+  printDisabled?: boolean;
   onRefresh?: () => void;
   refreshing?: boolean;
   actions?: ReactNode;
@@ -15,38 +22,56 @@ export function QualityPageHeader({
   title,
   subtitle,
   currentPath,
+  filterState,
+  printFilters,
+  showPrint = true,
+  printDisabled = false,
   onRefresh,
   refreshing = false,
   actions,
 }: QualityPageHeaderProps) {
-  return (
-    <header className="dq-page-header">
-      <div className="dq-page-header__brand">
-        <div className="dq-header__icon" aria-hidden="true">
-          <ShieldCheck size={28} strokeWidth={1.75} />
-        </div>
-        <div>
-          <p className="dq-eyebrow">DELPI • Qualidade</p>
-          <h1>{title}</h1>
-          <span className="dq-page-subtitle">{subtitle}</span>
-          <QualityNav currentPath={currentPath} />
-        </div>
-      </div>
+  const summaryFilters = printFilters ?? filterState;
 
-      <div className="dq-header-actions">
-        {actions}
-        {onRefresh ? (
-          <button
-            className="dq-primary-btn"
-            type="button"
-            onClick={onRefresh}
-            disabled={refreshing}
-          >
-            <ListFilter size={16} />
-            {refreshing ? "Atualizando…" : "Atualizar"}
-          </button>
-        ) : null}
-      </div>
-    </header>
+  return (
+    <>
+      {summaryFilters ? (
+        <PrintReportSummary
+          title={title}
+          dateStart={summaryFilters.dateStart}
+          dateEnd={summaryFilters.dateEnd}
+          branch={summaryFilters.branch}
+        />
+      ) : null}
+
+      <header className="dq-page-header">
+        <div className="dq-page-header__brand">
+          <div className="dq-header__icon" aria-hidden="true">
+            <ShieldCheck size={28} strokeWidth={1.75} />
+          </div>
+          <div>
+            <p className="dq-eyebrow">DELPI • Qualidade</p>
+            <h1>{title}</h1>
+            <span className="dq-page-subtitle">{subtitle}</span>
+            <QualityNav currentPath={currentPath} filterState={filterState} />
+          </div>
+        </div>
+
+        <div className="dq-header-actions">
+          {showPrint ? <PrintReportButton disabled={printDisabled} /> : null}
+          {actions}
+          {onRefresh ? (
+            <button
+              className="dq-primary-btn dq-no-print"
+              type="button"
+              onClick={onRefresh}
+              disabled={refreshing}
+            >
+              <ListFilter size={16} />
+              {refreshing ? "Atualizando…" : "Atualizar"}
+            </button>
+          ) : null}
+        </div>
+      </header>
+    </>
   );
 }

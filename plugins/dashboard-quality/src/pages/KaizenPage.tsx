@@ -75,6 +75,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
     setDateEnd,
     setBranch,
     apiParams,
+    filterState,
   } = useQualityFilters();
 
   const debouncedTitle = useDebouncedValue(title);
@@ -209,17 +210,19 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
   };
 
   return (
-    <div className="dashboard-quality dashboard-page">
+    <div className="dashboard-quality dashboard-page dq-print-root">
       <QualityPageHeader
         title="Kaizens"
         subtitle="Melhorias implementadas e economia gerada"
         currentPath={pathname ?? QUALITY_ROUTES.kaizen}
+        filterState={filterState}
+        printDisabled={loading && !data}
         onRefresh={reload}
         refreshing={loading && Boolean(data)}
         actions={
           <button
             type="button"
-            className="dq-ghost-btn"
+            className="dq-ghost-btn dq-no-print"
             onClick={handleExportCsv}
             disabled={items.length === 0}
           >
@@ -229,7 +232,8 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         }
       />
 
-      <KaizenFilters
+      <div className="dq-no-print">
+        <KaizenFilters
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
@@ -243,6 +247,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         onTitleChange={setTitle}
         onStatusChange={setStatus}
       />
+      </div>
 
       {error ? (
         <div className="dq-state dq-state--error" role="alert">

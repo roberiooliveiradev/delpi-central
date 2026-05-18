@@ -1,5 +1,9 @@
 import type { QualityFilterUrlState } from "./filterUrl";
-import { buildFilterSearchParams } from "./filterUrl";
+import {
+  buildFilterSearchParams,
+  readFiltersFromUrl,
+  readQualityFilters,
+} from "./filterUrl";
 
 /** Navegação client-side dentro do portal (evita reload completo do MFE). */
 export function navigateQuality(
@@ -8,11 +12,10 @@ export function navigateQuality(
 ) {
   const [rawPath, rawSearch] = path.split("?");
   const basePath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
-  const query = filters
-    ? buildFilterSearchParams(filters)
-    : rawSearch
-      ? `?${rawSearch}`
-      : "";
+  const resolvedFilters =
+    filters ??
+    (rawSearch ? readFiltersFromUrl(`?${rawSearch}`) : readQualityFilters());
+  const query = buildFilterSearchParams(resolvedFilters);
   const target = `${basePath}${query}`;
 
   if (

@@ -61,6 +61,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
     setDateEnd,
     setBranch,
     apiParams,
+    filterState,
   } = useQualityFilters();
 
   const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
@@ -251,17 +252,19 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
   };
 
   return (
-    <div className="dashboard-quality dashboard-page">
+    <div className="dashboard-quality dashboard-page dq-print-root">
       <QualityPageHeader
         title="Não conformidades"
         subtitle="Listagem analítica do Protheus (TOTVS)"
         currentPath={pathname ?? QUALITY_ROUTES.nonconformities}
+        filterState={filterState}
+        printDisabled={loading && !data}
         onRefresh={handleRefresh}
         refreshing={loading && Boolean(data)}
         actions={
           <button
             type="button"
-            className="dq-ghost-btn"
+            className="dq-ghost-btn dq-no-print"
             onClick={handleExportCsv}
             disabled={!data?.items.length}
           >
@@ -273,6 +276,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
 
       <TotvsSourceBanner />
 
+      <div className="dq-no-print">
       <NonconformityFilters
         dateStart={dateStart}
         dateEnd={dateEnd}
@@ -291,6 +295,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         onItemCodeChange={setItemCode}
         onDescriptionChange={setDescription}
       />
+      </div>
 
       {error ? (
         <div className="dq-state dq-state--error" role="alert">

@@ -79,6 +79,8 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
     reload,
   } = useQualityDashboard(apiParams);
 
+  const printDisabled = loading && !ppmInternal;
+
   const internalSparkline = usePpmChartSeries({
     type: "internal",
     filters: apiParams,
@@ -101,12 +103,14 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
   return (
     <div className="dashboard-quality dashboard-page dq-print-root">
       <FilterBar
+        filterState={filterState}
         currentPath={pathname ?? QUALITY_ROUTES.home}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
         branches={branches}
         branchesLoading={branchesLoading}
+        printDisabled={printDisabled}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}

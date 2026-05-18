@@ -56,6 +56,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
     setDateEnd,
     setBranch,
     apiParams,
+    filterState,
   } = useQualityFilters();
 
   const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
@@ -182,17 +183,19 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
   };
 
   return (
-    <div className="dashboard-quality dashboard-page">
+    <div className="dashboard-quality dashboard-page dq-print-root">
       <QualityPageHeader
         title="Auditoria 5S"
         subtitle="Notas e histórico de auditorias"
         currentPath={pathname ?? QUALITY_ROUTES.audit5s}
+        filterState={filterState}
+        printDisabled={loading && !data}
         onRefresh={reload}
         refreshing={loading && Boolean(data)}
         actions={
           <button
             type="button"
-            className="dq-ghost-btn"
+            className="dq-ghost-btn dq-no-print"
             onClick={handleExportCsv}
             disabled={items.length === 0}
           >
@@ -202,6 +205,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         }
       />
 
+      <div className="dq-no-print">
       <Audit5sFilters
         dateStart={dateStart}
         dateEnd={dateEnd}
@@ -212,6 +216,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}
       />
+      </div>
 
       {error ? (
         <div className="dq-state dq-state--error" role="alert">
