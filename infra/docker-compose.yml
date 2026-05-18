@@ -339,6 +339,24 @@ services:
     networks:
       - delpi-network
 
+  dashboard-commercial:
+    build:
+      context: ../plugins/dashboard-commercial
+      dockerfile: Dockerfile
+
+    container_name: delpi-dashboard-commercial
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/dashboard-commercial:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   postgres-plugins:
     image: pgvector/pgvector:pg15
     container_name: delpi-postgres-plugins
@@ -490,6 +508,7 @@ services:
       - strategic-indicators
       - dashboard-lmps
       - dashboard-quality
+      - dashboard-commercial
       - minha-delpi-ai-api
       - minha-delpi-chat
 

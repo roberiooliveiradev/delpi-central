@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from typing import Optional
 
-from delpi_auth.authorization import require_permission
+from delpi_auth.authorization import require_any_permission
 from app.core.responses import success_response, error_response
 from app.utils.logger import log_error
 
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/commercial", tags=["Comercial"])
 
 
 @router.get("/head_office_rol_target_pct")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
 def get_head_office_rol_target_pct(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
@@ -56,7 +56,7 @@ def get_head_office_rol_target_pct(
 
 
 @router.get("/branch_rol_target_pct")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
 def get_branch_rol_target_pct(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
@@ -90,7 +90,7 @@ def get_branch_rol_target_pct(
     
 
 @router.get("/closing-rate")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
 def get_sales_conversion_rate(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
@@ -125,7 +125,7 @@ def get_sales_conversion_rate(
     
 
 @router.get("/new-clients-average")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
 def get_new_clients_average(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
@@ -160,7 +160,7 @@ def get_new_clients_average(
     
 
 @router.get("/new-clients-rol-pct")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
 def get_new_clients_rol_pct(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),

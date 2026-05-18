@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "dashboard-commercial",
+  "name": "Dashboard Comercial",
+  "description": "Painel analítico comercial (ROL, conversão e clientes novos) via api-delpi",
+  "icon": "bar-chart3-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/dashboard-commercial",
+  "entry": "/apps/dashboard-commercial/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "dashboard-commercial.view",
+      "name": "Acesso ao dashboard comercial",
+      "description": "Permite visualizar indicadores comerciais (ROL, conversão, clientes novos)",
+      "module": "dashboard-commercial"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/dashboard-commercial",
+      "label": "Dashboard Comercial",
+      "permission": "dashboard-commercial.view",
+      "icon": "bar-chart3-icon",
+      "order": 15,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

@@ -1,0 +1,42 @@
+import { formatDisplayDate } from "../utils/dates";
+
+export type PrintReportSummaryProps = {
+  title: string;
+  dateStart: string;
+  dateEnd: string;
+  branch?: string;
+};
+
+export function PrintReportSummary({
+  title,
+  dateStart,
+  dateEnd,
+  branch,
+}: PrintReportSummaryProps) {
+  const printedAt = new Date().toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+
+  return (
+    <section className="dc-print-summary dc-print-only" aria-hidden="true">
+      <h2 className="dc-print-summary__title">{title}</h2>
+      <dl className="dc-print-summary__meta">
+        <div>
+          <dt>Período</dt>
+          <dd>
+            {formatDisplayDate(dateStart)} — {formatDisplayDate(dateEnd)}
+          </dd>
+        </div>
+        <div>
+          <dt>Filial</dt>
+          <dd>{branch?.trim() ? branch : "Todas"}</dd>
+        </div>
+        <div>
+          <dt>Emitido em</dt>
+          <dd>{printedAt}</dd>
+        </div>
+      </dl>
+    </section>
+  );
+}

@@ -1,0 +1,35 @@
+export function inputDateToApi(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  return value;
+}
+
+export function getTodayInputValue(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function getFirstDayOfMonthInputValue(reference = new Date()): string {
+  const year = reference.getFullYear();
+  const month = String(reference.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}-01`;
+}
+
+export function formatPeriodLabel(
+  dateStart?: string,
+  dateEnd?: string
+): string {
+  if (!dateStart && !dateEnd) return "Período não filtrado";
+  if (dateStart && dateEnd) return `${dateStart} → ${dateEnd}`;
+  if (dateStart) return `A partir de ${dateStart}`;
+  return `Até ${dateEnd}`;
+}
+
+export function formatDisplayDate(value: string | null | undefined): string {
+  if (!value) return "—";
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return value;
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
