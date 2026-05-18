@@ -34,7 +34,10 @@ from app.composition.admin_composer import (
     make_ingest_admin_knowledge_document_use_case,
     make_get_llm_provider_status_use_case,
     make_get_admin_metrics_summary_use_case,
+    make_get_admin_chat_intelligence_settings_use_case,
     make_get_admin_llm_cost_table_use_case,
+    make_reindex_external_action_embeddings_use_case,
+    make_save_admin_chat_intelligence_settings_use_case,
     make_save_admin_llm_cost_table_use_case,
     make_get_admin_tools_health_use_case,
     make_get_admin_rbac_summary_use_case,
@@ -493,6 +496,71 @@ def save_admin_llm_cost_table():
             action="admin.metrics.cost_table.updated",
             context="admin",
             metadata={"entryCount": len(result.get("entries") or [])},
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/chat/intelligence-settings")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def get_admin_chat_intelligence_settings():
+    use_case = make_get_admin_chat_intelligence_settings_use_case()
+    return jsonify(use_case.execute()), 200
+
+
+@admin_bp.put("/chat/intelligence-settings")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def save_admin_chat_intelligence_settings():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
+        ), 400
+
+    use_case = make_save_admin_chat_intelligence_settings_use_case()
+
+    try:
+        result = use_case.execute(payload)
+    except ValueError as exc:
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]},
+        ), 400
+
+    try:
+        PostgresAuditRepository().log(
+            user_id=UUID(str(g.current_user.sub)),
+            action="admin.chat.intelligence_settings.updated",
+            context="admin",
+            metadata={"keys": list(payload.keys())},
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    return jsonify(result), 200
+
+
+@admin_bp.post("/tools/actions/reindex-embeddings")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def reindex_external_action_embeddings():
+    payload = request.get_json(silent=True) or {}
+    provider_key = payload.get("providerKey") if isinstance(payload, dict) else None
+
+    use_case = make_reindex_external_action_embeddings_use_case()
+    result = use_case.execute(provider_key=str(provider_key).strip() if provider_key else None)
+
+    try:
+        PostgresAuditRepository().log(
+            user_id=UUID(str(g.current_user.sub)),
+            action="admin.tools.actions.reindex_embeddings",
+            context="admin",
+            metadata=result,
         )
         db.session.commit()
     except Exception:

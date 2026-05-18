@@ -10,8 +10,20 @@ logger = logging.getLogger("minha-delpi-ai-api.rag")
 class RagContextService:
     MAX_CHUNKS_PER_DOCUMENT = 2
 
-    def __init__(self, search_knowledge_use_case: SearchKnowledgeUseCase):
+    def __init__(
+        self,
+        search_knowledge_use_case: SearchKnowledgeUseCase,
+        intelligence_settings_service=None,
+    ):
         self.search_knowledge_use_case = search_knowledge_use_case
+        if intelligence_settings_service is None:
+            from app.application.services.chat_intelligence_settings_service import (
+                ChatIntelligenceSettingsService,
+            )
+
+            intelligence_settings_service = ChatIntelligenceSettingsService()
+
+        self.intelligence_settings_service = intelligence_settings_service
 
     def build_context(self, query: str, filters: dict | None = None) -> dict:
         chunks = self.search_knowledge_use_case.execute(
@@ -28,7 +40,7 @@ class RagContextService:
                 "sources": [],
             }
 
-        min_score = Settings.RAG_CONTEXT_MIN_SCORE
+        min_score = self.intelligence_settings_service.resolve().rag_context_min_score
         filtered_chunks = [
             chunk
             for chunk in chunks

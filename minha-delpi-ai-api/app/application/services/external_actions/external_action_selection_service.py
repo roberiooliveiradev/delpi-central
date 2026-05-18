@@ -126,7 +126,11 @@ class ExternalActionSelectionService:
             )
         ]
 
-        ranked = self._rank_candidates(message, preferred or candidates)
+        ranked = self._rank_candidates(
+            message,
+            preferred or candidates,
+            allowed_action_ids=allowed_action_ids,
+        )
         action = ranked[0] if ranked else None
 
         if not action:
@@ -165,7 +169,11 @@ class ExternalActionSelectionService:
         if not candidates:
             return None
 
-        ranked = self._rank_candidates(message, candidates)
+        ranked = self._rank_candidates(
+            message,
+            candidates,
+            allowed_action_ids=allowed_action_ids,
+        )
 
         if not ranked:
             return None
@@ -361,11 +369,21 @@ class ExternalActionSelectionService:
             if str(action.get("actionId")) in allowed
         ]
 
-    def _rank_candidates(self, message: str, candidates: list[dict]) -> list[dict]:
+    def _rank_candidates(
+        self,
+        message: str,
+        candidates: list[dict],
+        *,
+        allowed_action_ids: list[str] | None = None,
+    ) -> list[dict]:
         if not candidates:
             return []
 
         if self.semantic_ranker:
-            return self.semantic_ranker.rank(message, candidates)
+            return self.semantic_ranker.rank(
+                message,
+                candidates,
+                allowed_action_ids=allowed_action_ids,
+            )
 
         return candidates

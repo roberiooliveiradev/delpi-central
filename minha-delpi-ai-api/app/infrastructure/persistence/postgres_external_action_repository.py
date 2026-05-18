@@ -12,12 +12,15 @@ from app.infrastructure.db.models.external_action_provider_model import (
 from app.infrastructure.db.models.external_action_schema_model import (
     ExternalActionSchemaModel,
 )
+from app.infrastructure.config.settings import Settings
 from app.infrastructure.external_actions.openapi_action_importer import (
     OpenApiActionImporter,
 )
 
 
 class PostgresExternalActionRepository:
+    def __init__(self, embedding_service=None):
+        self.embedding_service = embedding_service
     def create_provider(self, payload: dict) -> dict:
         provider = ExternalActionProviderModel(
             provider_key=payload["providerKey"],
@@ -139,6 +142,21 @@ class PostgresExternalActionRepository:
         actions = importer.import_actions(provider.provider_key, schema_json)
 
         for action in actions:
+            embedding = None
+
+            if self.embedding_service and Settings.EXTERNAL_ACTION_EMBEDDING_ON_IMPORT:
+                embedding = self.embedding_service.embed_action(
+                    {
+                        "actionId": action["action_id"],
+                        "method": action["method"],
+                        "path": action["path"],
+                        "summary": action.get("summary"),
+                        "description": action.get("description"),
+                        "operationId": action.get("operation_id"),
+                        "tags": action.get("tags"),
+                    }
+                )
+
             db.session.add(
                 ExternalActionModel(
                     provider_id=provider.id,
@@ -153,6 +171,7 @@ class PostgresExternalActionRepository:
                     request_body_schema=action.get("request_body_schema"),
                     response_schema=action.get("response_schema"),
                     sensitivity=action.get("sensitivity") or "read",
+                    embedding=embedding,
                     enabled=bool(action.get("enabled", True)),
                     deprecated=bool(action.get("deprecated", False)),
                 )
@@ -249,6 +268,80 @@ class PostgresExternalActionRepository:
         ).limit(limit).all()
 
         return [self._action_to_dict(action) for action in actions]
+
+    def search_similar_actions(
+        self,
+        embedding: list[float],
+        *,
+        allowed_action_ids: list[str] | None = None,
+        limit: int = 20,
+    ) -> list[dict]:
+        allowed_ids = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
+
+        query = (
+            db.session.query(
+                ExternalActionModel,
+                ExternalActionModel.embedding.cosine_distance(embedding).label("distance"),
+            )
+            .join(ExternalActionProviderModel)
+            .filter(
+                ExternalActionModel.enabled.is_(True),
+                ExternalActionProviderModel.enabled.is_(True),
+                ExternalActionModel.embedding.isnot(None),
+            )
+        )
+
+        if allowed_ids:
+            query = query.filter(ExternalActionModel.action_id.in_(allowed_ids))
+
+        rows = (
+            query.order_by(ExternalActionModel.embedding.cosine_distance(embedding))
+            .limit(max(1, limit))
+            .all()
+        )
+
+        result: list[dict] = []
+
+        for action, distance in rows:
+            item = self._action_to_dict(action)
+            item["selectionScore"] = round(float(1 - distance), 4) if distance is not None else None
+            result.append(item)
+
+        return result
+
+    def backfill_action_embeddings(self, *, provider_key: str | None = None) -> dict:
+        if not self.embedding_service:
+            return {"updated": 0, "skipped": 0}
+
+        query = ExternalActionModel.query.join(ExternalActionProviderModel).filter(
+            ExternalActionModel.enabled.is_(True),
+            ExternalActionProviderModel.enabled.is_(True),
+            ExternalActionModel.embedding.is_(None),
+        )
+
+        if provider_key:
+            query = query.filter(ExternalActionProviderModel.provider_key == provider_key)
+
+        actions = query.all()
+        updated = 0
+        skipped = 0
+
+        for action in actions:
+            embedding = self.embedding_service.embed_action(self._action_to_dict(action))
+
+            if embedding:
+                action.embedding = embedding
+                updated += 1
+            else:
+                skipped += 1
+
+        db.session.flush()
+
+        return {
+            "updated": updated,
+            "skipped": skipped,
+            "total": len(actions),
+        }
 
     def get_action_for_execution(self, action_id: str) -> dict | None:
         action = ExternalActionModel.query.filter(

@@ -6,6 +6,7 @@ from app.infrastructure.db.models.admin_runtime_settings_model import (
 from app.extensions.db import db
 
 LLM_COST_TABLE_KEY = "llm_cost_table"
+CHAT_INTELLIGENCE_SETTINGS_KEY = "chat_intelligence_settings"
 
 
 class PostgresAdminRuntimeSettingsRepository:
@@ -45,3 +46,14 @@ class PostgresAdminRuntimeSettingsRepository:
 
     def save_llm_cost_table(self, entries: list[dict]) -> None:
         self.set_json(LLM_COST_TABLE_KEY, entries)
+
+    def get_chat_intelligence_settings(self) -> dict | None:
+        value = self.get_json(CHAT_INTELLIGENCE_SETTINGS_KEY)
+
+        if isinstance(value, dict):
+            return dict(value)
+
+        return None
+
+    def save_chat_intelligence_settings(self, payload: dict) -> None:
+        self.set_json(CHAT_INTELLIGENCE_SETTINGS_KEY, payload)

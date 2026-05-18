@@ -14,6 +14,7 @@ class ChatPromptBuilderService:
         admin_guidelines_prompt: str | None = None,
         attachments: list[dict] | None = None,
         attachment_context: str | None = None,
+        history_summary: str | None = None,
     ) -> list[dict]:
         base_prompt = self.prompt_policy_service.build_contextual_prompt(
             rag_context=rag_context,
@@ -38,6 +39,13 @@ class ChatPromptBuilderService:
                 f"{base_prompt}\n\n"
                 "Instruções do agente selecionado:\n"
                 f"{agent_prompt}"
+            )
+
+        if history_summary:
+            base_prompt = (
+                f"{base_prompt}\n\n"
+                "Resumo da conversa anterior:\n"
+                f"{history_summary}"
             )
 
         if attachment_context:

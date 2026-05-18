@@ -139,3 +139,45 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+.mdc-admin-metrics-tab__intelligence-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mdc-space-4);
+  margin-top: var(--mdc-space-4);
+}
+
+.mdc-admin-metrics-tab__intelligence-form label {
+  display: grid;
+  gap: var(--mdc-space-2);
+  font-size: 0.875rem;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-metrics-tab__intelligence-form input[type="number"] {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-surface);
+  color: var(--mdc-text);
+}
+
+.mdc-admin-metrics-tab__checkbox {
+  display: flex !important;
+  align-items: center;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-admin-metrics-tab__intelligence-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-3);
+  margin-top: var(--mdc-space-4);
+}
+
+@media (max-width: 767px) {
+  .mdc-admin-metrics-tab__intelligence-form {
+    grid-template-columns: 1fr;
+  }
+}

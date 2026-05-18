@@ -36,6 +36,7 @@ class SendChatMessageUseCase:
         agent_repository: ChatAgentRepositoryPort | None = None,
         attachment_repository: ChatAttachmentRepositoryPort | None = None,
         chat_attachment_context_service=None,
+        chat_history_summary_service=None,
         workspace_context_service: ChatWorkspaceContextService | None = None,
         admin_guideline_prompt_service=None,
         message_security_service: ChatMessageSecurityService | None = None,
@@ -54,6 +55,7 @@ class SendChatMessageUseCase:
         self.agent_repository = agent_repository
         self.attachment_repository = attachment_repository
         self.chat_attachment_context_service = chat_attachment_context_service
+        self.chat_history_summary_service = chat_history_summary_service
         self.workspace_context_service = workspace_context_service
         self.admin_guideline_prompt_service = admin_guideline_prompt_service
 
@@ -79,7 +81,7 @@ class SendChatMessageUseCase:
         attachments = self._get_message_attachments(request, user_id, session_id)
 
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
-        history = previous_messages[-Settings.CHAT_HISTORY_MAX_MESSAGES:]
+        history_summary, history = self._prepare_history(previous_messages)
 
         rag = self.rag_context_service.build_context(
             message,
@@ -142,6 +144,7 @@ class SendChatMessageUseCase:
                 session_id=session_id,
                 request=request,
             ),
+            history_summary=history_summary,
         )
 
         started_at = time.perf_counter()
@@ -297,6 +300,14 @@ class SendChatMessageUseCase:
 
     def _hash_prompt(self, prompt: str) -> str:
         return hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+
+    def _prepare_history(self, previous_messages) -> tuple[str, list]:
+        if self.chat_history_summary_service:
+            return self.chat_history_summary_service.prepare_history(previous_messages)
+
+        keep = Settings.CHAT_HISTORY_MAX_MESSAGES
+
+        return "", list(previous_messages[-keep:])
 
     def _get_message_attachments(
         self,

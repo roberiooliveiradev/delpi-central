@@ -119,3 +119,22 @@ class Settings:
     EXTERNAL_ACTION_SEMANTIC_MIN_SCORE = float(
         os.getenv("EXTERNAL_ACTION_SEMANTIC_MIN_SCORE", "0.42")
     )
+
+    CHAT_TOOL_ROUTER_ENABLED = (
+        os.getenv("CHAT_TOOL_ROUTER_ENABLED", "true").lower() == "true"
+    )
+    CHAT_TOOL_ROUTER_MAX_ACTIONS = int(os.getenv("CHAT_TOOL_ROUTER_MAX_ACTIONS", "20"))
+
+    CHAT_HISTORY_SUMMARY_ENABLED = (
+        os.getenv("CHAT_HISTORY_SUMMARY_ENABLED", "true").lower() == "true"
+    )
+    CHAT_HISTORY_SUMMARY_TRIGGER_MESSAGES = int(
+        os.getenv("CHAT_HISTORY_SUMMARY_TRIGGER_MESSAGES", "16")
+    )
+    CHAT_HISTORY_SUMMARY_MAX_CHARS = int(
+        os.getenv("CHAT_HISTORY_SUMMARY_MAX_CHARS", "1500")
+    )
+
+    EXTERNAL_ACTION_EMBEDDING_ON_IMPORT = (
+        os.getenv("EXTERNAL_ACTION_EMBEDDING_ON_IMPORT", "true").lower() == "true"
+    )

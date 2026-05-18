@@ -1,6 +1,6 @@
 from app.application.use_cases.update_chat_message_use_case import UpdateChatMessageUseCase
 from app.application.use_cases.delete_chat_session_use_case import DeleteChatSessionUseCase
-from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
+from app.composition.external_action_composer import make_postgres_external_action_repository
 from app.application.services.external_actions.external_action_semantic_ranker_service import (
     ExternalActionSemanticRankerService,
 )
@@ -8,6 +8,11 @@ from app.application.services.external_actions.external_action_selection_service
 from app.application.services.admin_guideline_prompt_service import AdminGuidelinePromptService
 from app.application.services.chat_attachment_context_service import ChatAttachmentContextService
 from app.application.services.chat_attachment_text_extractor import ChatAttachmentTextExtractor
+from app.application.services.chat_history_summary_service import ChatHistorySummaryService
+from app.application.services.chat_intelligence_settings_service import (
+    ChatIntelligenceSettingsService,
+)
+from app.application.services.chat_tool_router_service import ChatToolRouterService
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.rag_context_service import RagContextService
@@ -110,12 +115,17 @@ def make_upsert_chat_message_feedback_use_case():
     return UpsertChatMessageFeedbackUseCase(PostgresChatSessionRepository())
 
 
+def make_chat_intelligence_settings_service() -> ChatIntelligenceSettingsService:
+    return ChatIntelligenceSettingsService()
+
+
 def make_rag_context_service() -> RagContextService:
     return RagContextService(
         SearchKnowledgeUseCase(
             knowledge_repository=PostgresKnowledgeRepository(),
             embedding_gateway=LocalEmbeddingGateway(),
-        )
+        ),
+        intelligence_settings_service=make_chat_intelligence_settings_service(),
     )
 
 
@@ -136,9 +146,25 @@ def make_chat_attachment_context_service() -> ChatAttachmentContextService:
     )
 
 
+def make_chat_history_summary_service() -> ChatHistorySummaryService:
+    return ChatHistorySummaryService(
+        llm_gateway=make_llm_gateway(),
+        intelligence_settings_service=make_chat_intelligence_settings_service(),
+    )
+
+
+def make_chat_tool_router_service() -> ChatToolRouterService:
+    return ChatToolRouterService(
+        llm_gateway=make_llm_gateway(),
+        intelligence_settings_service=make_chat_intelligence_settings_service(),
+    )
+
+
 def make_external_action_semantic_ranker_service() -> ExternalActionSemanticRankerService:
     return ExternalActionSemanticRankerService(
         embedding_gateway=LocalEmbeddingGateway(),
+        external_action_repository=make_postgres_external_action_repository(),
+        intelligence_settings_service=make_chat_intelligence_settings_service(),
     )
 
 
@@ -147,9 +173,11 @@ def make_chat_tool_context_service() -> ChatToolContextService:
         tool_selection_service=ToolSelectionService(),
         execute_tool_use_case=make_execute_tool_use_case(),
         external_action_selection_service=ExternalActionSelectionService(
-            PostgresExternalActionRepository(),
+            make_postgres_external_action_repository(),
             semantic_ranker=make_external_action_semantic_ranker_service(),
         ),
+        tool_router_service=make_chat_tool_router_service(),
+        external_action_repository=make_postgres_external_action_repository(),
     )
 
 
@@ -168,6 +196,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
         agent_repository=PostgresChatAgentRepository(),
         attachment_repository=PostgresChatAttachmentRepository(),
         chat_attachment_context_service=make_chat_attachment_context_service(),
+        chat_history_summary_service=make_chat_history_summary_service(),
         workspace_context_service=make_chat_workspace_context_service(),
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
     )
@@ -184,6 +213,7 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
         agent_repository=PostgresChatAgentRepository(),
         attachment_repository=PostgresChatAttachmentRepository(),
         chat_attachment_context_service=make_chat_attachment_context_service(),
+        chat_history_summary_service=make_chat_history_summary_service(),
         workspace_context_service=make_chat_workspace_context_service(),
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
     )

@@ -1,5 +1,5 @@
 from app.infrastructure.tools.execute_external_action_tool import ExecuteExternalActionTool
-from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
+from app.composition.external_action_composer import make_postgres_external_action_repository
 from app.infrastructure.external_actions.http_external_action_gateway import HttpExternalActionGateway
 from app.domain.services.external_actions.external_action_execution_policy import ExternalActionExecutionPolicy
 from app.application.use_cases.execute_external_action_use_case import ExecuteExternalActionUseCase
@@ -28,7 +28,7 @@ def make_execute_tool_use_case() -> ExecuteToolUseCase:
     )
 
     execute_external_action_use_case = ExecuteExternalActionUseCase(
-        repository=PostgresExternalActionRepository(),
+        repository=make_postgres_external_action_repository(),
         gateway=HttpExternalActionGateway(),
         policy=ExternalActionExecutionPolicy(),
         audit_repository=PostgresAuditRepository(),

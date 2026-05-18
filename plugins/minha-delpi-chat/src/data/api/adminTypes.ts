@@ -290,6 +290,21 @@ export type AdminLlmCostTableResponse = {
   source: "database" | "env" | string;
 };
 
+export type AdminChatIntelligenceSettings = {
+  ragContextMinScore: number;
+  externalActionSemanticMinScore: number;
+  externalActionSemanticRankEnabled: boolean;
+  chatToolRouterEnabled: boolean;
+  chatHistorySummaryEnabled: boolean;
+  defaults: {
+    ragContextMinScore: number;
+    externalActionSemanticMinScore: number;
+    externalActionSemanticRankEnabled: boolean;
+    chatToolRouterEnabled: boolean;
+    chatHistorySummaryEnabled: boolean;
+  };
+};
+
 export type AdminMetricsTimeseriesBucket = {
   start: string;
   end: string;

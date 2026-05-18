@@ -30,6 +30,7 @@ import type {
   AdminResponseEvaluationContext,
   AdminResponseEvaluationSummary,
   UpdateKnowledgeDocumentMetadataPayload,
+  AdminChatIntelligenceSettings,
   AdminLlmCostTableEntry,
   AdminLlmCostTableResponse,
   AdminLlmStatus,
@@ -861,6 +862,43 @@ export async function saveAdminLlmCostTable(
   });
 
   return parseJsonResponse<AdminLlmCostTableResponse>(response);
+}
+
+export async function getAdminChatIntelligenceSettings(
+  options: AdminApiOptions = {},
+): Promise<AdminChatIntelligenceSettings> {
+  const response = await fetch(`${API_BASE_URL}/admin/chat/intelligence-settings`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminChatIntelligenceSettings>(response);
+}
+
+export async function saveAdminChatIntelligenceSettings(
+  payload: Partial<AdminChatIntelligenceSettings>,
+  options: AdminApiOptions = {},
+): Promise<AdminChatIntelligenceSettings> {
+  const response = await fetch(`${API_BASE_URL}/admin/chat/intelligence-settings`, {
+    method: "PUT",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<AdminChatIntelligenceSettings>(response);
+}
+
+export async function reindexExternalActionEmbeddings(
+  payload: { providerKey?: string } = {},
+  options: AdminApiOptions = {},
+): Promise<{ updated: number; skipped: number; total: number }> {
+  const response = await fetch(`${API_BASE_URL}/admin/tools/actions/reindex-embeddings`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
 }
 
 export async function simulateAdminAgent(

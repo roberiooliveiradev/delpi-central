@@ -1,7 +1,7 @@
 # Inteligência do chat — Onda 1
 
 Documento operacional para implementação no `minha-delpi-ai-api`.  
-**Status:** Onda 1 implementada (maio/2026) — validar com `pytest` no ambiente do projeto  
+**Status:** Onda 1 concluída (maio/2026). Continuação: [Onda 2](./inteligencia-chat-onda-2.md).  
 **Última revisão:** maio/2026
 
 Documentos relacionados:

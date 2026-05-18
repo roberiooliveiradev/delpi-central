@@ -5,7 +5,6 @@ from app.application.use_cases.list_admin_guideline_versions_use_case import Lis
 from app.application.use_cases.publish_admin_guideline_use_case import PublishAdminGuidelineUseCase
 from app.application.use_cases.save_admin_guideline_use_case import SaveAdminGuidelineUseCase
 from app.infrastructure.persistence.postgres_admin_guideline_repository import PostgresAdminGuidelineRepository
-from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
 from app.domain.services.external_actions.external_provider_url_policy import ExternalProviderUrlPolicy
 from app.application.use_cases.list_external_actions_use_case import ListExternalActionsUseCase
 from app.application.use_cases.list_external_action_providers_use_case import ListExternalActionProvidersUseCase
@@ -73,11 +72,17 @@ from app.application.use_cases.admin_response_evaluation_use_cases import (
     ListAdminResponseEvaluationsUseCase,
     SaveAdminResponseEvaluationUseCase,
 )
+from app.application.use_cases.admin_chat_intelligence_use_cases import (
+    GetAdminChatIntelligenceSettingsUseCase,
+    ReindexExternalActionEmbeddingsUseCase,
+    SaveAdminChatIntelligenceSettingsUseCase,
+)
 from app.composition.chat_composer import (
     make_admin_guideline_prompt_service,
     make_chat_tool_context_service,
     make_rag_context_service,
 )
+from app.composition.external_action_composer import make_postgres_external_action_repository
 from app.composition.llm_composer import make_llm_gateway
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.application.use_cases.preview_knowledge_ingestion_use_case import (
@@ -175,8 +180,20 @@ def make_get_admin_system_check_use_case() -> GetAdminSystemCheckUseCase:
 def make_get_admin_tools_health_use_case() -> GetAdminToolsHealthUseCase:
     return GetAdminToolsHealthUseCase(
         system_check_repository=PostgresAdminSystemCheckRepository(),
-        external_action_repository=PostgresExternalActionRepository(),
+        external_action_repository=make_postgres_external_action_repository(),
     )
+
+
+def make_get_admin_chat_intelligence_settings_use_case() -> GetAdminChatIntelligenceSettingsUseCase:
+    return GetAdminChatIntelligenceSettingsUseCase()
+
+
+def make_save_admin_chat_intelligence_settings_use_case() -> SaveAdminChatIntelligenceSettingsUseCase:
+    return SaveAdminChatIntelligenceSettingsUseCase()
+
+
+def make_reindex_external_action_embeddings_use_case() -> ReindexExternalActionEmbeddingsUseCase:
+    return ReindexExternalActionEmbeddingsUseCase()
 
 
 def make_get_admin_llm_cost_table_use_case() -> GetAdminLlmCostTableUseCase:
@@ -188,21 +205,21 @@ def make_save_admin_llm_cost_table_use_case() -> SaveAdminLlmCostTableUseCase:
 
 def make_create_external_action_provider_use_case() -> CreateExternalActionProviderUseCase:
     return CreateExternalActionProviderUseCase(
-        repository=PostgresExternalActionRepository(),
+        repository=make_postgres_external_action_repository(),
         url_policy=ExternalProviderUrlPolicy(),
     )
 
 
 def make_list_external_action_providers_use_case() -> ListExternalActionProvidersUseCase:
-    return ListExternalActionProvidersUseCase(PostgresExternalActionRepository())
+    return ListExternalActionProvidersUseCase(make_postgres_external_action_repository())
 
 
 def make_import_external_actions_schema_use_case() -> ImportExternalActionsSchemaUseCase:
-    return ImportExternalActionsSchemaUseCase(PostgresExternalActionRepository())
+    return ImportExternalActionsSchemaUseCase(make_postgres_external_action_repository())
 
 
 def make_list_external_actions_use_case() -> ListExternalActionsUseCase:
-    return ListExternalActionsUseCase(PostgresExternalActionRepository())
+    return ListExternalActionsUseCase(make_postgres_external_action_repository())
 
 
 

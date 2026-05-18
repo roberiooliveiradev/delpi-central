@@ -13,6 +13,7 @@ import type {
   AdminMetricsTimeseriesResponse,
 } from "../../../../data/api/adminTypes";
 
+import { ChatIntelligenceSettingsPanel } from "./ChatIntelligenceSettingsPanel";
 import "./AdminMetricsTab.css";
 
 type AdminMetricsTabProps = {
@@ -402,6 +403,8 @@ export function AdminMetricsTab({
           </p>
         </article>
       </div>
+
+      <ChatIntelligenceSettingsPanel getAccessToken={getAccessToken} />
 
       {effectiveCostTable.length > 0 ? (
         <CostTablePanel

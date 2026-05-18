@@ -13,10 +13,14 @@ class ChatToolContextService:
         tool_selection_service: ToolSelectionService,
         execute_tool_use_case: ExecuteToolUseCase,
         external_action_selection_service=None,
+        tool_router_service=None,
+        external_action_repository=None,
     ):
         self.tool_selection_service = tool_selection_service
         self.execute_tool_use_case = execute_tool_use_case
         self.external_action_selection_service = external_action_selection_service
+        self.tool_router_service = tool_router_service
+        self.external_action_repository = external_action_repository
         self.external_action_result_presenter = ExternalActionResultPresenter()
 
     def build_context(
@@ -36,6 +40,38 @@ class ChatToolContextService:
                 item for item in selected_tools if str(item.get("name") or "") in allowed
             ]
 
+        router_suggestion = {"tools": [], "actionId": None}
+
+        if self.tool_router_service and actions_enabled:
+            catalog_actions = []
+
+            if self.external_action_repository and allowed_action_ids:
+                catalog_actions = self.external_action_repository.find_candidate_actions(
+                    message,
+                    limit=Settings.CHAT_TOOL_ROUTER_MAX_ACTIONS,
+                    allowed_action_ids=allowed_action_ids,
+                )
+
+            router_suggestion = self.tool_router_service.suggest(
+                message=message,
+                allowed_tool_names=allowed_tool_names,
+                allowed_actions=catalog_actions,
+            )
+
+            for tool_name in router_suggestion.get("tools") or []:
+                if any(str(item.get("name")) == tool_name for item in selected_tools):
+                    continue
+
+                selected_tools.append(
+                    {
+                        "name": tool_name,
+                        "arguments": {},
+                        "reason": "Ferramenta sugerida pelo roteador inteligente do chat.",
+                    }
+                )
+
+        selected_external_action = None
+
         if self.external_action_selection_service and actions_enabled:
             selected_external_action = self.external_action_selection_service.select_action(
                 message,
@@ -47,6 +83,24 @@ class ChatToolContextService:
                 allowed_action_ids,
             ):
                 selected_tools.append(selected_external_action)
+
+        if (
+            actions_enabled
+            and not selected_external_action
+            and router_suggestion.get("actionId")
+            and allowed_action_ids
+            and str(router_suggestion["actionId"]) in {str(item) for item in allowed_action_ids}
+        ):
+            selected_tools.append(
+                {
+                    "name": "execute_external_action",
+                    "arguments": {
+                        "actionId": router_suggestion["actionId"],
+                        "body": {"message": message},
+                    },
+                    "reason": "Action sugerida pelo roteador inteligente do chat.",
+                }
+            )
 
         if not selected_tools:
             return {
