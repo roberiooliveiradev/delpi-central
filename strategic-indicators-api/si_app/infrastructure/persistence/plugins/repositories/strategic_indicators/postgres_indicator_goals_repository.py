@@ -232,6 +232,75 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             result[row["indicator_id"]] = item
         return result
 
+    def list_latest_active_goals_map(
+        self,
+        *,
+        indicator_ids: list[str],
+        department_id: str | None = None,
+    ) -> dict[str, dict]:
+        normalized_ids = [
+            str(indicator_id).strip()
+            for indicator_id in indicator_ids
+            if indicator_id is not None and str(indicator_id).strip()
+        ]
+        if not normalized_ids:
+            return {}
+
+        placeholders = ", ".join("%s" for _ in normalized_ids)
+        query = f"""
+            SELECT DISTINCT ON (ig.indicator_id)
+                ig.id,
+                ig.indicator_id,
+                ig.goal_year,
+                ig.goal_label,
+                ig.goal_value,
+                ig.goal_periodicity,
+                ig.goal_mode,
+                ig.version,
+                ig.is_active,
+                ig.valid_from,
+                ig.valid_to,
+                ig.notes,
+                ig.created_at,
+                ig.updated_at
+            FROM strategic_indicators.indicator_goals ig
+            INNER JOIN strategic_indicators.department_indicators di
+                ON di.indicator_id = ig.indicator_id
+            INNER JOIN strategic_indicators.departments d
+                ON d.department_id = di.department_id
+            WHERE ig.indicator_id IN ({placeholders})
+              AND ig.is_active = TRUE
+              AND di.is_active = TRUE
+              AND d.is_active = TRUE
+        """
+        params: list = list(normalized_ids)
+
+        if department_id:
+            query += " AND di.department_id = %s"
+            params.append(department_id)
+
+        query += """
+            ORDER BY
+                ig.indicator_id,
+                ig.goal_year DESC,
+                ig.version DESC,
+                ig.updated_at DESC
+        """
+
+        rows = self.fetch_all(query, tuple(params))
+        if not rows:
+            return {}
+
+        goal_ids = [row["id"] for row in rows]
+        monthly_by_goal = self._list_monthly_targets_batch(goal_ids)
+
+        result: dict[str, dict] = {}
+        for row in rows:
+            item = dict(row)
+            item["monthly_targets"] = monthly_by_goal.get(row["id"], [])
+            result[row["indicator_id"]] = item
+        return result
+
     def _attach_monthly_targets(self, rows: list[dict]) -> list[dict]:
         if not rows:
             return rows

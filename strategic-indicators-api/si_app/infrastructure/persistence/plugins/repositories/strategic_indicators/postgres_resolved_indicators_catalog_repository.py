@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicIndicatorCatalogItem,
 )
@@ -12,6 +14,8 @@ from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_indicator_goals_repository import (
     PostgresStrategicIndicatorsIndicatorGoalsRepository,
 )
+
+logger = logging.getLogger("strategic_indicators.catalog")
 
 
 class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
@@ -40,14 +44,37 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             department_id=department_id,
         )
 
+        missing_indicator_ids = [
+            item.indicator_id
+            for item in structural_items
+            if item.indicator_id not in goals_by_indicator
+        ]
+        if missing_indicator_ids:
+            fallback_goals = self._indicator_goals_repository.list_latest_active_goals_map(
+                indicator_ids=missing_indicator_ids,
+                department_id=department_id,
+            )
+            for indicator_id, goal in fallback_goals.items():
+                if indicator_id not in goals_by_indicator:
+                    goals_by_indicator[indicator_id] = goal
+                    logger.info(
+                        "si_goal_year_fallback indicator_id=%s competence=%s goal_year=%s",
+                        indicator_id,
+                        competence,
+                        goal.get("goal_year"),
+                    )
+
         resolved: list[StrategicIndicatorCatalogItem] = []
 
         for item in structural_items:
             goal = goals_by_indicator.get(item.indicator_id)
             if not goal:
-                raise ValueError(
-                    f"Meta não encontrada para indicator_id={item.indicator_id}"
+                logger.warning(
+                    "si_goal_missing indicator_id=%s competence=%s",
+                    item.indicator_id,
+                    competence,
                 )
+                continue
 
             resolved.append(
                 StrategicIndicatorCatalogItem(

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
+    from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
         StrategicIndicatorsPeriodSnapshot,
     )
 

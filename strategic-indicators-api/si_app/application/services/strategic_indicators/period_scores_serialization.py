@@ -7,7 +7,7 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicDepartmentCalculatedValue,
     StrategicIndicatorCalculatedValue,
 )
-from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
+from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
     StrategicIndicatorsPeriodSnapshot,
 )
 from si_app.application.use_cases.strategic_indicators.period_resolution import (

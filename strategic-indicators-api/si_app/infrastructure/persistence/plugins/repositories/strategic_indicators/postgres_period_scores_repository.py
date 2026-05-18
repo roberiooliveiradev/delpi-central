@@ -6,7 +6,7 @@ from si_app.application.services.strategic_indicators.period_scores_serializatio
     deserialize_period_snapshot,
     serialize_period_snapshot,
 )
-from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
+from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
     StrategicIndicatorsPeriodSnapshot,
 )
 from si_app.domain.ports.strategic_indicators.period_scores_repository_port import (

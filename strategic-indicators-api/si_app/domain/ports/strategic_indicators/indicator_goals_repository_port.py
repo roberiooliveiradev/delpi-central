@@ -48,6 +48,16 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_latest_active_goals_map(
+        self,
+        *,
+        indicator_ids: list[str],
+        department_id: str | None = None,
+    ) -> dict[str, dict]:
+        """Meta ativa mais recente por indicador (qualquer ano), para fallback em séries históricas."""
+        raise NotImplementedError
+
+    @abstractmethod
     def create_indicator_goal(
         self,
         *,

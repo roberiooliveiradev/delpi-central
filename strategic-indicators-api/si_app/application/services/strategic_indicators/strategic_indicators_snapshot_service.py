@@ -4,7 +4,6 @@ import logging
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
 from typing import Iterable
 
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
@@ -35,6 +34,11 @@ from si_app.application.services.strategic_indicators.period_scores_serializatio
     normalize_scope_branch,
     normalize_scope_department_id,
 )
+from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
+    StrategicIndicatorsCatalogSnapshot,
+    StrategicIndicatorsComparativeSnapshot,
+    StrategicIndicatorsPeriodSnapshot,
+)
 from si_app.application.services.strategic_indicators.snapshot_shared_cache import (
     _catalog_cache as shared_catalog_cache,
     _measurements_cache as shared_measurements_cache,
@@ -47,32 +51,6 @@ from si_app.domain.ports.strategic_indicators.period_scores_repository_port impo
 )
 
 logger = logging.getLogger("strategic_indicators.snapshot")
-
-
-@dataclass(frozen=True)
-class StrategicIndicatorsCatalogSnapshot:
-    departments_catalog: list[StrategicDepartmentCatalogItem]
-    indicators_catalog: list[StrategicIndicatorCatalogItem]
-    goals_by_department: dict[str, str]
-
-
-@dataclass(frozen=True)
-class StrategicIndicatorsPeriodSnapshot:
-    period: ResolvedPeriod
-    measurements: list[StrategicIndicatorMeasuredValue]
-    measurement_errors: list[dict]
-    calculated_indicators: list[StrategicIndicatorCalculatedValue]
-    calculated_departments: list[StrategicDepartmentCalculatedValue]
-    igd: float
-    igd_exact: float
-    classification: str
-
-
-@dataclass(frozen=True)
-class StrategicIndicatorsComparativeSnapshot:
-    catalog: StrategicIndicatorsCatalogSnapshot
-    current: StrategicIndicatorsPeriodSnapshot
-    previous: StrategicIndicatorsPeriodSnapshot
 
 
 class StrategicIndicatorsSnapshotService:
