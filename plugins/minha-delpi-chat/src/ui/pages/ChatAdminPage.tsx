@@ -28,6 +28,7 @@ type ChatAdminPageProps = {
 
 const ADMIN_TABS: AdminTabItem[] = [
   { key: "knowledge", label: "Conhecimento" },
+  { key: "notifications", label: "Notificações" },
   { key: "metrics", label: "Métricas" },
   { key: "guidelines", label: "Diretrizes" },
   { key: "simulate", label: "Simulação" },
@@ -36,7 +37,6 @@ const ADMIN_TABS: AdminTabItem[] = [
   { key: "security", label: "Segurança" },
   { key: "tools", label: "Ferramentas" },
   { key: "audit", label: "Auditoria" },
-  { key: "notifications", label: "Notificações" },
 ];
 
 export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {

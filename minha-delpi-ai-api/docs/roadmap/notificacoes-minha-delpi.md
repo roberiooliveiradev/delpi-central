@@ -98,11 +98,13 @@ Regras:
 
 `POST /integrations/notifications` — header `X-Delpi-Service-Token`
 
-Mesmo body da rota admin. Variável de ambiente:
+Mesmo body da rota admin. Variáveis de ambiente (adicionar em `infra/.env` e `infra/.env.prod`):
 
 ```text
-CORE_API_INTEGRATIONS_SERVICE_TOKEN
+CORE_API_INTEGRATIONS_SERVICE_TOKEN=<token-forte-64-chars>
 ```
+
+O `docker-compose.yml` e `docker-compose.dev.yml` já repassam a variável para o serviço `core-api`. Após alterar o `.env`, recriar o container: `docker compose up -d core-api --force-recreate`.
 
 Exemplo (curl):
 
