@@ -47,6 +47,7 @@ from app.application.use_cases.admin.bulk_delete_groups_use_case import BulkDele
 from app.application.use_cases.admin.delete_role_use_case import DeleteRoleUseCase
 from app.application.use_cases.admin.bulk_delete_roles_use_case import BulkDeleteRolesUseCase
 
+from app.interfaces.http.serializers.user_serializer import serialize_user_dto
 from app.interfaces.http.utils.errors import api_error, server_error
 from app.interfaces.http.security.authorization import (
     require_permission,
@@ -653,7 +654,7 @@ def list_users():
             )
 
         return jsonify({
-            "data": [u.__dict__ for u in result.data],
+            "data": [serialize_user_dto(u) for u in result.data],
             "pagination": result.pagination.__dict__,
         }), 200
 

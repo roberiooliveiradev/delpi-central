@@ -71,7 +71,7 @@ Todas exigem `@require_auth()`.
 | DELETE | `/me/notifications/<id>` | `DeleteNotificationUseCase` (soft delete: `deleted_at`) |
 | GET | `/me/notifications/preferences` | `GetNotificationPreferencesUseCase` |
 | PATCH | `/me/notifications/preferences` | `UpdateNotificationPreferencesUseCase` — body `{ "mutedCategories": ["announcement", ...] }` |
-| POST | `/me/notifications/test` | `NotifyUserUseCase` (dev) |
+| POST | `/me/notifications/test` | `NotifyUserUseCase` (desabilitado quando `FLASK_ENV=production`) |
 
 No dispatch (`POST /admin/notifications` e integrações), usuários que silenciaram a `category` do envio são ignorados. A categoria `system` não pode ser silenciada.
 

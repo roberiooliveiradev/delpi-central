@@ -1,6 +1,8 @@
 # app/interfaces/http/me_controller.py
 
+import os
 from uuid import UUID
+
 from flask import Blueprint, jsonify, g, request
 
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import (
@@ -424,6 +426,13 @@ def lookup_directory_users():
 @me_bp.route("/me/notifications/test", methods=["POST"])
 @require_auth()
 def test_notification():
+    if os.getenv("FLASK_ENV", "").lower() == "production":
+        return api_error(
+            "forbidden",
+            "Test notifications are disabled in production",
+            status=403,
+        )
+
     user = g.current_user
 
     try:

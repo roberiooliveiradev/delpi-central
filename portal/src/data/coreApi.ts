@@ -293,7 +293,14 @@ export class CoreApi {
     const data = await this.client.get<unknown>("/core-api/me/notifications");
     const items = normalizeArray<NotificationItem>(data);
 
-    return items.map((item) => this.normalizeNotificationItem(item));
+    return items
+      .map((item) => this.normalizeNotificationItem(item))
+      .sort((a, b) => {
+        if (Boolean(a.isImportant) !== Boolean(b.isImportant)) {
+          return a.isImportant ? -1 : 1;
+        }
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
   }
 
   async getNotificationHistory(params?: {

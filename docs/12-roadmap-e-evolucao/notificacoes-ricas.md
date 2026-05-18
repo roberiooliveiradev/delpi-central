@@ -158,6 +158,9 @@ export CORE_API_INTEGRATIONS_SERVICE_TOKEN="..."
 # Aniversários (1x/dia, requer `users.birth_date` preenchido no Admin):
 ./scripts/run-birthday-notifications.sh
 
+# Ambos (pending + aniversários):
+./scripts/run-notification-maintenance.sh
+
 # Ou curl direto:
 curl -s -X POST "https://<host>/core-api/integrations/notifications/process-pending" \
   -H "X-Delpi-Service-Token: $CORE_API_INTEGRATIONS_SERVICE_TOKEN"

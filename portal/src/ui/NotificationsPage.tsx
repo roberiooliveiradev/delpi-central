@@ -42,6 +42,7 @@ export function NotificationsPage() {
     getAccessToken,
     refreshToken,
     markAllNotificationsRead,
+    reloadNotifications,
   } = useContext(AuthContext);
 
   const { markNotificationRead, handleDelete, handleToggleImportant } = useNotificationActions();
@@ -144,7 +145,10 @@ export function NotificationsPage() {
         </div>
       </header>
 
-      <NotificationPreferencesPanel coreApi={coreApi} />
+      <NotificationPreferencesPanel
+        coreApi={coreApi}
+        onSaved={() => void reloadNotifications()}
+      />
 
       <div className="notifications-page__toolbar">
         <div className="notifications-page__tabs" role="tablist" aria-label="Filtro">

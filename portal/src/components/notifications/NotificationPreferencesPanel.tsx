@@ -18,9 +18,10 @@ const CATEGORY_LABELS: Record<NotificationCategory, string> = {
 
 type Props = {
   coreApi?: CoreApi;
+  onSaved?: () => void;
 };
 
-export function NotificationPreferencesPanel({ coreApi: coreApiProp }: Props) {
+export function NotificationPreferencesPanel({ coreApi: coreApiProp, onSaved }: Props) {
   const { getAccessToken, refreshToken } = useContext(AuthContext);
 
   const coreApi = useMemo(() => {
@@ -79,6 +80,7 @@ export function NotificationPreferencesPanel({ coreApi: coreApiProp }: Props) {
       const data = await coreApi.updateNotificationPreferences(mutedCategories);
       setMutedCategories(data.mutedCategories);
       setSaved(true);
+      onSaved?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao salvar preferências");
     } finally {
