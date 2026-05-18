@@ -1,4 +1,5 @@
 import { QUALITY_ROUTES } from "../constants/routes";
+import { navigateQuality } from "../utils/navigation";
 
 type QualityNavProps = {
   currentPath?: string;
@@ -29,6 +30,20 @@ export function QualityNav({ currentPath }: QualityNavProps) {
           href={item.path}
           className={`dq-nav__link${isActive(item.path, currentPath) ? " dq-nav__link--active" : ""}`}
           aria-current={isActive(item.path, currentPath) ? "page" : undefined}
+          onClick={(event) => {
+            if (
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey ||
+              event.button !== 0
+            ) {
+              return;
+            }
+
+            event.preventDefault();
+            navigateQuality(item.path);
+          }}
         >
           {item.label}
         </a>

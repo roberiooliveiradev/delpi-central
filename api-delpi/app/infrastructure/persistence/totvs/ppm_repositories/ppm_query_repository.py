@@ -32,6 +32,19 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
         parsed = datetime.strptime(protheus_date, "%Y%m%d")
         return (parsed + timedelta(days=1)).strftime("%Y%m%d")
 
+    def _map_ppm_item(self, row: dict) -> PpmItem:
+        """Mapeia linha SQL para entidade (ignora colunas extras do SELECT)."""
+        return PpmItem(
+            branch=str(row.get("branch") or "").strip(),
+            registered_date=row.get("registered_date"),
+            code=str(row.get("code") or "").strip(),
+            revision=str(row.get("revision") or "").strip(),
+            item_code=row.get("item_code"),
+            description=row.get("description"),
+            returned_quantity_original=row.get("returned_quantity_original"),
+            returned_quantity_un=float(row.get("returned_quantity_un") or 0),
+        )
+
     def get_summary(self, request) -> PpmSummary:
         date_start = self._to_protheus_date(request.date_start)
         date_end_exclusive = self._exclusive_end_date(request.date_end)
@@ -325,7 +338,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
             rows = repo.execute_query(sql, final_params)
 
-            items = [PpmItem(**row) for row in rows]
+            items = [self._map_ppm_item(row) for row in rows]
 
             return Page(
                 items=items,

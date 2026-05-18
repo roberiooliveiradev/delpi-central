@@ -1,4 +1,5 @@
 import { QUALITY_ROUTES } from "../constants/routes";
+import { navigateQuality } from "../utils/navigation";
 
 type ModuleShortcutProps = {
   title: string;
@@ -25,7 +26,24 @@ export function ModuleShortcut({
 
   if (href) {
     return (
-      <a href={href} className={className}>
+      <a
+        href={href}
+        className={className}
+        onClick={(event) => {
+          if (
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey ||
+            event.button !== 0
+          ) {
+            return;
+          }
+
+          event.preventDefault();
+          navigateQuality(href);
+        }}
+      >
         {content}
       </a>
     );

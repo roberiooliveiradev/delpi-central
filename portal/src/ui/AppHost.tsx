@@ -275,7 +275,39 @@ export const AppHost = () => {
         federatedHostRef.current.innerHTML = "";
       }
     };
-  }, [app, resolvedEntry, location.pathname, location.search, getAccessToken]);
+  }, [app?.id, app?.renderMode, resolvedEntry, getAccessToken]);
+
+  useEffect(() => {
+    if (!app) return;
+    if (app.renderMode !== "federated") return;
+    if (!federatedHostRef.current) return;
+    if (!mountedModuleRef.current) return;
+
+    const props = {
+      getAccessToken,
+      basePath: app.basePath,
+      pathname: location.pathname,
+      search: location.search,
+    };
+
+    const mod = mountedModuleRef.current;
+
+    if (typeof mod.updateRoute === "function") {
+      mod.updateRoute(federatedHostRef.current, props);
+      return;
+    }
+
+    if (typeof mod.mount === "function") {
+      mod.mount(federatedHostRef.current, props);
+    }
+  }, [
+    app?.id,
+    app?.renderMode,
+    app?.basePath,
+    location.pathname,
+    location.search,
+    getAccessToken,
+  ]);
 
   useEffect(() => {
     const forwardTokenUpdate = async () => {

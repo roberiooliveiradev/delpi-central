@@ -4,7 +4,7 @@ import "./index.css";
 
 const roots = new WeakMap<HTMLElement, ReactDOM.Root>();
 
-export function mount(el: HTMLElement, props: AppProps = {}) {
+function renderApp(el: HTMLElement, props: AppProps) {
   let root = roots.get(el);
 
   if (!root) {
@@ -13,6 +13,15 @@ export function mount(el: HTMLElement, props: AppProps = {}) {
   }
 
   root.render(<App {...props} />);
+}
+
+export function mount(el: HTMLElement, props: AppProps = {}) {
+  renderApp(el, props);
+}
+
+/** Atualiza rota sem desmontar o root React (navegação suave no portal). */
+export function updateRoute(el: HTMLElement, props: AppProps = {}) {
+  renderApp(el, props);
 }
 
 export function unmount(el?: HTMLElement) {

@@ -19,11 +19,7 @@ function normalizePath(pathname?: string): string {
   return pathname;
 }
 
-export default function App({ getAccessToken, pathname }: AppProps) {
-  configureHttpClient(() => getAccessToken?.());
-
-  const path = normalizePath(pathname);
-
+function renderPage(path: string, pathname?: string) {
   if (path === QUALITY_ROUTES.ppm || path.startsWith(`${QUALITY_ROUTES.ppm}/`)) {
     return <PpmPage pathname={path} />;
   }
@@ -43,5 +39,17 @@ export default function App({ getAccessToken, pathname }: AppProps) {
     return <Audit5sPage pathname={path} />;
   }
 
-  return <DashboardQualityPage pathname={path} />;
+  return <DashboardQualityPage pathname={pathname ?? path} />;
+}
+
+export default function App({ getAccessToken, pathname }: AppProps) {
+  configureHttpClient(() => getAccessToken?.());
+
+  const path = normalizePath(pathname);
+
+  return (
+    <div className="dq-app-shell" key={path}>
+      {renderPage(path, pathname)}
+    </div>
+  );
 }
