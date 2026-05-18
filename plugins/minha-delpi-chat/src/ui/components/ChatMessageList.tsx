@@ -24,6 +24,10 @@ type ChatMessageListProps = {
   isLoading?: boolean;
   onUseSuggestion?: (value: string) => void;
   onEditMessage?: (messageId: string, content: string) => Promise<ChatMessage | null>;
+  onEditAndResendMessage?: (
+    messageId: string,
+    content: string,
+  ) => Promise<ChatMessage | null>;
   onReuseMessage?: (content: string) => void;
   onMessageFeedback?: (messageId: string, rating: -1 | 1 | null) => Promise<void>;
 };
@@ -153,6 +157,7 @@ export function ChatMessageList({
   isLoading,
   onUseSuggestion,
   onEditMessage,
+  onEditAndResendMessage,
   onReuseMessage,
   onMessageFeedback,
 }: ChatMessageListProps) {
@@ -194,6 +199,15 @@ export function ChatMessageList({
 
   async function handleSaveEdit(messageId: string) {
     const updated = await onEditMessage?.(messageId, editingContent);
+
+    if (updated) {
+      setEditingMessageId(null);
+      setEditingContent("");
+    }
+  }
+
+  async function handleSaveAndResend(messageId: string) {
+    const updated = await onEditAndResendMessage?.(messageId, editingContent);
 
     if (updated) {
       setEditingMessageId(null);
@@ -376,11 +390,19 @@ export function ChatMessageList({
                 />
 
                 <div className="mdc-chat-message-edit-actions">
+                  <button type="button" onClick={cancelEditMessage}>
+                    Cancelar
+                  </button>
                   <button type="button" onClick={() => void handleSaveEdit(message.id)}>
                     Salvar
                   </button>
-                  <button type="button" onClick={cancelEditMessage}>
-                    Cancelar
+                  <button
+                    type="button"
+                    className="mdc-chat-message-edit-actions__primary"
+                    disabled={Boolean(isStreaming)}
+                    onClick={() => void handleSaveAndResend(message.id)}
+                  >
+                    Salvar e reenviar
                   </button>
                 </div>
               </div>

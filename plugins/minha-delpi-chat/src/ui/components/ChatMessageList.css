@@ -318,10 +318,16 @@
   padding: 0.65rem 0.9rem;
 }
 
-.mdc-chat-message-edit-actions button:first-child {
-  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
-  color: var(--mdc-primary);
-  background: color-mix(in srgb, var(--mdc-primary) 9%, var(--mdc-bg));
+.mdc-chat-message-edit-actions__primary {
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border)) !important;
+  color: #fff !important;
+  background: var(--mdc-primary) !important;
+}
+
+.mdc-chat-message-edit-actions__primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .mdc-chat-message-edit-actions button:hover {

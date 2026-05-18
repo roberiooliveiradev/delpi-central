@@ -8,6 +8,11 @@ class ChatSessionAccessDeniedError(Exception):
     message = "Chat session access denied"
 
 
+class ChatMessageNotFoundError(Exception):
+    code = "chat.message_not_found"
+    message = "Chat message not found"
+
+
 class InvalidChatSessionInputError(Exception):
     code = "chat.invalid_session_input"
 

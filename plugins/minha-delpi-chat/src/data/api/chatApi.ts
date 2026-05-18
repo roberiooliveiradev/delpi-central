@@ -222,47 +222,12 @@ export async function sendChatMessage(
   return parseJsonResponse<SendChatMessageResponse>(response);
 }
 
-export async function streamChatMessage(
-  sessionId: string,
-  payload: SendChatMessagePayload,
+async function consumeChatMessageStream(
+  response: Response,
   callbacks: StreamCallbacks,
-  options: ChatApiOptions & { signal?: AbortSignal } = {},
 ): Promise<void> {
-  const response = await fetch(
-    `${API_BASE_URL}/chat/sessions/${sessionId}/messages/stream`,
-    {
-      method: "POST",
-      headers: await getAuthHeaders(options),
-      body: JSON.stringify(payload),
-      signal: options.signal,
-    },
-  );
-
-  if (!response.ok || !response.body) {
-    const raw = await response.text();
-    let errorPayload: unknown = null;
-
-    if (raw) {
-      try {
-        errorPayload = JSON.parse(raw) as unknown;
-      } catch {
-        errorPayload = null;
-      }
-    }
-
-    if (!errorPayload && raw.trim()) {
-      throw new Error(
-        `Erro ao iniciar streaming do Minha DELPI Chat. (HTTP ${response.status}: ${raw.trim().slice(0, 180)})`,
-      );
-    }
-
-    throw new Error(
-      extractApiErrorMessage(
-        errorPayload,
-        response,
-        "Erro ao iniciar streaming do Minha DELPI Chat.",
-      ),
-    );
+  if (!response.body) {
+    throw new Error("Erro ao iniciar streaming do Minha DELPI Chat.");
   }
 
   const reader = response.body.getReader();
@@ -350,6 +315,81 @@ export async function streamChatMessage(
       "A conexão de streaming foi encerrada antes da resposta ser concluída.",
     );
   }
+}
+
+async function openChatMessageStream(
+  url: string,
+  body: Record<string, unknown>,
+  callbacks: StreamCallbacks,
+  options: ChatApiOptions & { signal?: AbortSignal } = {},
+): Promise<void> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+
+  if (!response.ok || !response.body) {
+    const raw = await response.text();
+    let errorPayload: unknown = null;
+
+    if (raw) {
+      try {
+        errorPayload = JSON.parse(raw) as unknown;
+      } catch {
+        errorPayload = null;
+      }
+    }
+
+    if (!errorPayload && raw.trim()) {
+      throw new Error(
+        `Erro ao iniciar streaming do Minha DELPI Chat. (HTTP ${response.status}: ${raw.trim().slice(0, 180)})`,
+      );
+    }
+
+    throw new Error(
+      extractApiErrorMessage(
+        errorPayload,
+        response,
+        "Erro ao iniciar streaming do Minha DELPI Chat.",
+      ),
+    );
+  }
+
+  await consumeChatMessageStream(response, callbacks);
+}
+
+export async function streamChatMessage(
+  sessionId: string,
+  payload: SendChatMessagePayload,
+  callbacks: StreamCallbacks,
+  options: ChatApiOptions & { signal?: AbortSignal } = {},
+): Promise<void> {
+  await openChatMessageStream(
+    `${API_BASE_URL}/chat/sessions/${sessionId}/messages/stream`,
+    payload,
+    callbacks,
+    options,
+  );
+}
+
+export async function resendChatMessage(
+  sessionId: string,
+  messageId: string,
+  content: string,
+  callbacks: StreamCallbacks,
+  options: ChatApiOptions & { signal?: AbortSignal; context?: string } = {},
+): Promise<void> {
+  await openChatMessageStream(
+    `${API_BASE_URL}/chat/sessions/${sessionId}/messages/${messageId}/resend/stream`,
+    {
+      content,
+      context: options.context,
+    },
+    callbacks,
+    options,
+  );
 }
 
 export async function renameChatSession(

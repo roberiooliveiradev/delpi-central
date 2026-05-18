@@ -24,8 +24,11 @@ class UpdateChatMessageUseCase:
         if len(content) > 8000:
             raise ValueError("content exceeds maximum length")
 
+        metadata_patch = {"editMode": "manual"}
+
         return self.repository.update_user_message(
             message_id=UUID(request.message_id),
             user_id=UUID(request.user_id),
             content=content,
+            metadata_patch=metadata_patch,
         )

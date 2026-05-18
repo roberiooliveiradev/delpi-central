@@ -71,6 +71,27 @@ class ChatSessionRepositoryPort(ABC):
         message_id: UUID,
         user_id: UUID,
         content: str,
+        metadata_patch: dict | None = None,
+    ) -> ChatMessage | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_messages_after(
+        self,
+        *,
+        session_id: UUID,
+        message_id: UUID,
+        user_id: UUID,
+    ) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_user_message_for_user(
+        self,
+        *,
+        message_id: UUID,
+        user_id: UUID,
+        session_id: UUID | None = None,
     ) -> ChatMessage | None:
         raise NotImplementedError
 

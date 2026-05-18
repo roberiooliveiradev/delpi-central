@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 
-import { streamChatMessage } from "../../data/api/chatApi";
+import { resendChatMessage, streamChatMessage } from "../../data/api/chatApi";
 import type {
   ChatSource,
   ChatToolCall,
@@ -34,6 +34,34 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
     setIsStreaming(false);
   }, []);
 
+  const runStream = useCallback(
+    async (
+      runner: (
+        callbacks: Pick<
+          StreamMessageParams,
+          "onStatus" | "onSources" | "onToolCalls" | "onToken" | "onDone" | "onError"
+        >,
+        signal: AbortSignal,
+      ) => Promise<void>,
+      callbacks: Pick<
+        StreamMessageParams,
+        "onStatus" | "onSources" | "onToolCalls" | "onToken" | "onDone" | "onError"
+      >,
+    ) => {
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+      setIsStreaming(true);
+
+      try {
+        await runner(callbacks, abortController.signal);
+      } finally {
+        abortControllerRef.current = null;
+        setIsStreaming(false);
+      }
+    },
+    [],
+  );
+
   const streamMessage = useCallback(
     async ({
       sessionId,
@@ -47,42 +75,82 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       onDone,
       onError,
     }: StreamMessageParams) => {
-      const abortController = new AbortController();
-      abortControllerRef.current = abortController;
-      setIsStreaming(true);
-
-      try {
-        await streamChatMessage(
-          sessionId,
-          {
-            message,
-            context,
-            attachmentIds,
-          },
-          {
-            onStatus,
-            onSources,
-            onToolCalls,
-            onToken,
-            onDone,
-            onError,
-          },
-          {
-            getAccessToken: options.getAccessToken,
-            signal: abortController.signal,
-          },
-        );
-      } finally {
-        abortControllerRef.current = null;
-        setIsStreaming(false);
-      }
+      await runStream(
+        (streamCallbacks, signal) =>
+          streamChatMessage(
+            sessionId,
+            {
+              message,
+              context,
+              attachmentIds,
+            },
+            streamCallbacks,
+            {
+              getAccessToken: options.getAccessToken,
+              signal,
+            },
+          ),
+        {
+          onStatus,
+          onSources,
+          onToolCalls,
+          onToken,
+          onDone,
+          onError,
+        },
+      );
     },
-    [options.getAccessToken],
+    [options.getAccessToken, runStream],
+  );
+
+  const resendMessage = useCallback(
+    async ({
+      sessionId,
+      messageId,
+      content,
+      context,
+      onStatus,
+      onSources,
+      onToolCalls,
+      onToken,
+      onDone,
+      onError,
+    }: {
+      sessionId: string;
+      messageId: string;
+      content: string;
+      context?: string;
+      onStatus?: (message: string) => void;
+      onSources?: (sources: ChatSource[]) => void;
+      onToolCalls?: (toolCalls: ChatToolCall[]) => void;
+      onToken?: (token: string) => void;
+      onDone?: (response: SendChatMessageResponse) => void;
+      onError?: (message: string) => void;
+    }) => {
+      await runStream(
+        (streamCallbacks, signal) =>
+          resendChatMessage(sessionId, messageId, content, streamCallbacks, {
+            getAccessToken: options.getAccessToken,
+            signal,
+            context,
+          }),
+        {
+          onStatus,
+          onSources,
+          onToolCalls,
+          onToken,
+          onDone,
+          onError,
+        },
+      );
+    },
+    [options.getAccessToken, runStream],
   );
 
   return {
     isStreaming,
     streamMessage,
+    resendMessage,
     cancelStreaming,
   };
 }

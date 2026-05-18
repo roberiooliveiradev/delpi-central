@@ -2019,6 +2019,28 @@ def send_message(session_id: str):
     return jsonify(asdict(result)), 200
 
 
+@chat_bp.post("/sessions/<session_id>/messages/<message_id>/resend/stream")
+@require_permission(CHAT_ASK_PERMISSION)
+@rate_limit("chat_messages", Settings.RATE_LIMIT_CHAT_MESSAGES_PER_WINDOW)
+def resend_message_stream(session_id: str, message_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    request_dto = SendChatMessageRequest(
+        user_id=g.current_user.sub,
+        session_id=session_id,
+        message=payload.get("content", payload.get("message", "")),
+        context=payload.get("context"),
+        access_token=g.access_token,
+        attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
+        resend_from_message_id=message_id,
+    )
+
+    return _stream_chat_response(session_id, request_dto)
+
+
 @chat_bp.post("/sessions/<session_id>/messages/stream")
 @require_permission(CHAT_ASK_PERMISSION)
 @rate_limit("chat_messages", Settings.RATE_LIMIT_CHAT_MESSAGES_PER_WINDOW)
@@ -2037,6 +2059,10 @@ def stream_message(session_id: str):
         attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
     )
 
+    return _stream_chat_response(session_id, request_dto)
+
+
+def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
     use_case = make_stream_chat_message_use_case()
 
     @stream_with_context

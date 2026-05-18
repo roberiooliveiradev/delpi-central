@@ -96,6 +96,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     archiveSession,
     unarchiveSession,
     editMessage,
+    editAndResendMessage,
     reuseMessage,
     setMessageFeedback,
   } = useChatSession({
@@ -903,6 +904,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 isLoading={isLoadingMessages && messages.length === 0}
                 onUseSuggestion={setDraft}
                 onEditMessage={editMessage}
+                onEditAndResendMessage={editAndResendMessage}
                 onReuseMessage={reuseMessage}
                 onMessageFeedback={setMessageFeedback}
               />

@@ -11,6 +11,7 @@ from app.domain.exceptions.authorization_exceptions import (
 )
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
+    ChatMessageNotFoundError,
     ChatSessionNotFoundError,
     InvalidChatSessionInputError,
 )
@@ -69,6 +70,14 @@ def register_error_handlers(app):
             status_code=404,
             code=getattr(error, "code", "chat.session_not_found"),
             message=getattr(error, "message", "Chat session not found"),
+        )
+
+    @app.errorhandler(ChatMessageNotFoundError)
+    def handle_chat_message_not_found(error):
+        return error_response(
+            status_code=404,
+            code=getattr(error, "code", "chat.message_not_found"),
+            message=getattr(error, "message", "Chat message not found"),
         )
 
     @app.errorhandler(ChatSessionAccessDeniedError)

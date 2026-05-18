@@ -18,6 +18,7 @@ from app.application.services.chat_workspace_context_service import ChatWorkspac
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
 from app.application.services.rag_context_service import RagContextService
 from app.domain.exceptions.chat_exceptions import (
+    ChatMessageNotFoundError,
     ChatSessionAccessDeniedError,
     ChatSessionNotFoundError,
 )
@@ -100,11 +101,43 @@ class StreamChatMessageUseCase:
         workspace_context = self._build_workspace_context(session, user_id)
         attachments = self._get_message_attachments(request, user_id, session_id)
 
-        previous_messages = self.chat_repository.list_messages_by_session(session_id)
+        resend_from_message_id = request.resend_from_message_id
+        existing_user_message = None
 
-        should_generate_session_title = self._should_generate_session_title(
-            session,
-            previous_messages,
+        if resend_from_message_id:
+            existing_user_message = self.chat_repository.update_user_message(
+                message_id=UUID(resend_from_message_id),
+                user_id=user_id,
+                content=message,
+                metadata_patch={"editMode": "resend"},
+            )
+
+            if not existing_user_message:
+                raise ChatMessageNotFoundError()
+
+            if existing_user_message.session_id != session_id:
+                raise ChatSessionAccessDeniedError()
+
+            self.chat_repository.delete_messages_after(
+                session_id=session_id,
+                message_id=existing_user_message.id,
+                user_id=user_id,
+            )
+
+            all_messages = self.chat_repository.list_messages_by_session(session_id)
+            history_messages = [
+                item
+                for item in all_messages
+                if item.id != existing_user_message.id
+            ]
+            previous_messages = all_messages
+        else:
+            history_messages = None
+            previous_messages = self.chat_repository.list_messages_by_session(session_id)
+
+        should_generate_session_title = (
+            not resend_from_message_id
+            and self._should_generate_session_title(session, previous_messages)
         )
         if should_generate_session_title:
             self.chat_repository.rename_session(
@@ -113,7 +146,8 @@ class StreamChatMessageUseCase:
                 title=self._fallback_title_from_message(message),
             )
 
-        history_summary, history = self._prepare_history(previous_messages)
+        history_source = history_messages if resend_from_message_id else previous_messages
+        history_summary, history = self._prepare_history(history_source)
         pipeline_timings = ChatPipelineTimings()
 
         attachment_ids = getattr(request, "attachment_ids", None)
@@ -124,7 +158,7 @@ class StreamChatMessageUseCase:
             attachment_ids=attachment_ids,
         )
 
-        conversation_context = self._build_conversation_context(previous_messages)
+        conversation_context = self._build_conversation_context(history_source)
 
         tool_context = self._build_tool_context(
             request,
@@ -168,31 +202,34 @@ class StreamChatMessageUseCase:
             pipeline_timings=pipeline_timings.to_dict(),
         )
 
-        user_message = self.chat_repository.create_message(
-            session_id=session_id,
-            role="user",
-            content=message,
-            metadata={
-                "context": request.context,
-                "agentKey": workspace_context.get("agentKey"),
-                "agent": workspace_context.get("agent"),
-                "project": workspace_context.get("project"),
-                "attachments": attachments,
-                "stream": True,
-                "rag": {
-                    "sources": sources,
+        if resend_from_message_id:
+            user_message = existing_user_message
+        else:
+            user_message = self.chat_repository.create_message(
+                session_id=session_id,
+                role="user",
+                content=message,
+                metadata={
+                    "context": request.context,
+                    "agentKey": workspace_context.get("agentKey"),
+                    "agent": workspace_context.get("agent"),
+                    "project": workspace_context.get("project"),
+                    "attachments": attachments,
+                    "stream": True,
+                    "rag": {
+                        "sources": sources,
+                    },
+                    "toolCalls": tool_calls,
+                    "intelligence": intelligence_metadata,
                 },
-                "toolCalls": tool_calls,
-                "intelligence": intelligence_metadata,
-            },
-        )
+            )
 
-        self._attach_files_to_message(
-            request=request,
-            user_id=user_id,
-            session_id=session_id,
-            message_id=user_message.id,
-        )
+            self._attach_files_to_message(
+                request=request,
+                user_id=user_id,
+                session_id=session_id,
+                message_id=user_message.id,
+            )
 
         admin_guidelines_prompt, active_guidelines = self._build_admin_guidelines_prompt(
             workspace_context,

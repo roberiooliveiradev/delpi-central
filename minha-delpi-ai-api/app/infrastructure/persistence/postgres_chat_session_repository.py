@@ -167,6 +167,7 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
         message_id: UUID,
         user_id: UUID,
         content: str,
+        metadata_patch: dict | None = None,
     ) -> ChatMessage | None:
         model = (
             AiChatMessageModel.query
@@ -184,7 +185,9 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
 
         metadata = dict(model.message_metadata or {})
         metadata["edited"] = True
-        metadata["editMode"] = "manual"
+        metadata.update(metadata_patch or {})
+        if "editMode" not in metadata:
+            metadata["editMode"] = "manual"
         model.message_metadata = metadata
 
         session = AiChatSessionModel.query.filter(
@@ -197,6 +200,73 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
         db.session.flush()
 
         return self._to_message_entity(model)
+
+    def get_user_message_for_user(
+        self,
+        *,
+        message_id: UUID,
+        user_id: UUID,
+        session_id: UUID | None = None,
+    ) -> ChatMessage | None:
+        query = (
+            AiChatMessageModel.query.join(
+                AiChatSessionModel,
+                AiChatSessionModel.id == AiChatMessageModel.session_id,
+            )
+            .filter(AiChatMessageModel.id == message_id)
+            .filter(AiChatMessageModel.role == "user")
+            .filter(AiChatSessionModel.user_id == user_id)
+        )
+
+        if session_id is not None:
+            query = query.filter(AiChatMessageModel.session_id == session_id)
+
+        model = query.first()
+
+        if not model:
+            return None
+
+        return self._to_message_entity(model)
+
+    def delete_messages_after(
+        self,
+        *,
+        session_id: UUID,
+        message_id: UUID,
+        user_id: UUID,
+    ) -> int:
+        anchor = self.get_user_message_for_user(
+            message_id=message_id,
+            user_id=user_id,
+            session_id=session_id,
+        )
+
+        if not anchor:
+            return 0
+
+        anchor_model = AiChatMessageModel.query.filter_by(id=message_id).first()
+
+        if not anchor_model:
+            return 0
+
+        deleted = (
+            AiChatMessageModel.query.filter(
+                AiChatMessageModel.session_id == session_id,
+                AiChatMessageModel.created_at > anchor_model.created_at,
+            ).delete(synchronize_session=False)
+        )
+
+        session = AiChatSessionModel.query.filter(
+            AiChatSessionModel.id == session_id,
+            AiChatSessionModel.user_id == user_id,
+        ).first()
+
+        if session:
+            session.updated_at = datetime.now(timezone.utc)
+
+        db.session.flush()
+
+        return int(deleted or 0)
 
     def list_messages_by_session(self, session_id: UUID) -> list[ChatMessage]:
         models = (

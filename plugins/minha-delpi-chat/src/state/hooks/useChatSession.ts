@@ -64,10 +64,14 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const skipNextSessionLoadRef = useRef(false);
 
-  const { isStreaming, streamMessage, cancelStreaming: cancelStreamingBase } =
-    useChatStreaming({
-      getAccessToken: options.getAccessToken,
-    });
+  const {
+    isStreaming,
+    streamMessage,
+    resendMessage,
+    cancelStreaming: cancelStreamingBase,
+  } = useChatStreaming({
+    getAccessToken: options.getAccessToken,
+  });
 
   const cancelStreaming = useCallback(() => {
     cancelStreamingBase();
@@ -427,6 +431,151 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setIsSending(false);
   }, []);
 
+  const buildStreamCallbacks = useCallback(
+    (sessionForMessage: ChatSession) => ({
+      onStatus: (statusMessage: string) => {
+        if (statusMessage.trim()) {
+          setStreamingStatus(statusMessage);
+        }
+      },
+      onSources: (sources: ChatSource[]) => {
+        setStreamingSources(sources);
+        setStreamingStatus(
+          sources.length > 0
+            ? "Consultando a base de conhecimento..."
+            : "Verificando contexto autorizado...",
+        );
+      },
+      onToolCalls: (toolCalls: ChatToolCall[]) => {
+        setStreamingToolCalls(toolCalls);
+        setStreamingStatus(
+          toolCalls.length > 0
+            ? "Consultando sistemas autorizados..."
+            : "Gerando resposta...",
+        );
+      },
+      onToken: (token: string) => {
+        setStreamingStatus(null);
+        setStreamingAnswer((current) => current + token);
+      },
+      onDone: async () => {
+        setDraft("");
+        setStreamingAnswer("");
+        setStreamingSources([]);
+        setStreamingToolCalls([]);
+        setStreamingStatus(null);
+        finishSending();
+        await loadMessages(sessionForMessage.id);
+        await loadSessions();
+      },
+      onError: (streamError: string) => {
+        setStreamingStatus(null);
+        setError(streamError);
+        finishSending();
+      },
+    }),
+    [finishSending, loadMessages, loadSessions],
+  );
+
+  const editAndResendMessage = useCallback(
+    async (messageId: string, content: string) => {
+      const normalizedContent = content.trim();
+
+      if (!activeSession) {
+        setError("Selecione uma conversa.");
+        return null;
+      }
+
+      if (!normalizedContent) {
+        setError("Informe uma mensagem.");
+        return null;
+      }
+
+      if (isSending || isStreaming) {
+        setError("Aguarde a resposta atual terminar.");
+        return null;
+      }
+
+      const messageIndex = messages.findIndex((message) => message.id === messageId);
+
+      if (messageIndex < 0) {
+        setError("Mensagem não encontrada.");
+        return null;
+      }
+
+      const targetMessage = messages[messageIndex];
+
+      if (targetMessage.role !== "user" || targetMessage.id.startsWith("optimistic-")) {
+        setError("Somente perguntas do usuário podem ser reenviadas.");
+        return null;
+      }
+
+      setError(null);
+      setIsSending(true);
+      setStreamingAnswer("");
+      setStreamingSources([]);
+      setStreamingToolCalls([]);
+      setStreamingStatus("Preparando novo envio...");
+
+      setMessages((current) =>
+        current
+          .slice(0, messageIndex + 1)
+          .map((message, index) =>
+            index === messageIndex
+              ? {
+                  ...message,
+                  content: normalizedContent,
+                  metadata: {
+                    ...message.metadata,
+                    edited: true,
+                  },
+                }
+              : message,
+          ),
+      );
+
+      try {
+        await resendMessage({
+          sessionId: activeSession.id,
+          messageId,
+          content: normalizedContent,
+          context: activeSession.context ?? "geral",
+          ...buildStreamCallbacks(activeSession),
+        });
+
+        return {
+          id: messageId,
+          session_id: activeSession.id,
+          role: "user" as const,
+          content: normalizedContent,
+          metadata: targetMessage.metadata,
+          created_at: targetMessage.created_at,
+        };
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          finishSending();
+          return null;
+        }
+
+        setStreamingStatus(null);
+        setError(err instanceof Error ? err.message : "Erro ao reenviar mensagem.");
+        finishSending();
+        await loadMessages(activeSession.id);
+        return null;
+      }
+    },
+    [
+      activeSession,
+      buildStreamCallbacks,
+      finishSending,
+      isSending,
+      isStreaming,
+      loadMessages,
+      messages,
+      resendMessage,
+    ],
+  );
+
   const sendMessage = useCallback(async (params: { attachments?: File[] } = {}) => {
     const message = draft.trim();
 
@@ -650,6 +799,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     archiveSession,
     unarchiveSession,
     editMessage,
+    editAndResendMessage,
     reuseMessage,
     setMessageFeedback,
   };
