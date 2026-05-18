@@ -1,4 +1,4 @@
-# app/application/use_cases/mark_notification_read_use_case.py
+# app/application/use_cases/delete_notification_use_case.py
 
 from uuid import UUID
 
@@ -7,32 +7,20 @@ from app.application.use_cases.notification_user_access import get_owned_notific
 from app.domain.events.admin_events import AdminChangedEvent
 
 
-class NotificationNotFoundError(ValueError):
-    pass
-
-
-class NotificationAccessDeniedError(ValueError):
-    pass
-
-
-class MarkNotificationReadUseCase:
+class DeleteNotificationUseCase:
 
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    def execute(self, notification_id: UUID, actor_user_id: str):
-
+    def execute(self, notification_id: UUID, actor_user_id: str) -> dict:
         notification = get_owned_notification(self.uow, notification_id, actor_user_id)
 
-        if notification.read:
-            return {"ok": True}
-
-        self.uow.notifications.mark_read(notification_id)
+        self.uow.notifications.soft_delete(notification_id)
 
         self.uow.collect_event(
             AdminChangedEvent(
                 entity="notifications",
-                action="notification_marked_read",
+                action="notification_deleted",
                 payload={"notificationId": str(notification_id)},
                 target_user_id=str(notification.user_id),
             )

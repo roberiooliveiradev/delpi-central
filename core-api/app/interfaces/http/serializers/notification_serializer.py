@@ -16,6 +16,7 @@ def serialize_notification(notification: NotificationDTO) -> dict:
         "icon": notification.icon,
         "metadata": notification.metadata,
         "read": notification.read,
+        "isImportant": bool(notification.is_important),
         "createdAt": notification.created_at.isoformat() + "Z",
     }
 

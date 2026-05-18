@@ -41,6 +41,9 @@ interface AuthContextType {
 
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+  setNotificationImportant: (id: string, isImportant: boolean) => Promise<void>;
+  reloadNotifications: () => Promise<void>;
 
   login: () => void;
   logout: () => void;
@@ -93,6 +96,9 @@ export const AuthContext = createContext<AuthContextType>({
   removeFavorite: async () => {},
   markNotificationRead: async () => {},
   markAllNotificationsRead: async () => {},
+  deleteNotification: async () => {},
+  setNotificationImportant: async () => {},
+  reloadNotifications: async () => {},
 
   login: () => {},
   logout: () => {},
@@ -404,6 +410,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }, [buildCoreApi]);
 
+  const deleteNotification = useCallback(
+    async (id: string) => {
+      const coreApi = buildCoreApi();
+      await coreApi.deleteNotification(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    },
+    [buildCoreApi],
+  );
+
+  const setNotificationImportant = useCallback(
+    async (id: string, isImportant: boolean) => {
+      const coreApi = buildCoreApi();
+      await coreApi.setNotificationImportant(id, isImportant);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isImportant } : n)),
+      );
+    },
+    [buildCoreApi],
+  );
+
   const startTokenRefresh = useCallback(() => {
     if (refreshIntervalRef.current) return;
 
@@ -507,6 +533,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       removeFavorite,
       markNotificationRead,
       markAllNotificationsRead,
+      deleteNotification,
+      setNotificationImportant,
+      reloadNotifications: loadNotificationsData,
 
       login,
       logout,
@@ -529,6 +558,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       removeFavorite,
       markNotificationRead,
       markAllNotificationsRead,
+      deleteNotification,
+      setNotificationImportant,
+      loadNotificationsData,
       login,
       logout,
       loadCoreData,

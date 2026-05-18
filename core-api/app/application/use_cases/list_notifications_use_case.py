@@ -27,6 +27,8 @@ class ListNotificationsUseCase:
         user_id: str,
         *,
         status: NotificationListStatus = "all",
+        category: str | None = None,
+        important_only: bool = False,
         limit: int = 20,
         offset: int = 0,
     ) -> ListNotificationsResult:
@@ -36,6 +38,8 @@ class ListNotificationsUseCase:
         items, total = self.uow.notifications.list_for_user(
             user_id,
             status=status,
+            category=category,
+            important_only=important_only,
             limit=safe_limit,
             offset=safe_offset,
         )

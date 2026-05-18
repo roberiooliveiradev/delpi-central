@@ -22,6 +22,7 @@ class NotificationDTO:
     metadata: dict | None
     expires_at: datetime | None
     read: bool
+    is_important: bool = False
     id: UUID | None = None
     created_at: datetime | None = None
 
@@ -42,9 +43,17 @@ class NotificationRepository(Protocol):
         user_id: str,
         *,
         status: Literal["all", "unread", "read"] = "all",
+        category: str | None = None,
+        important_only: bool = False,
         limit: int = 20,
         offset: int = 0,
     ) -> Tuple[List[NotificationDTO], int]:
+        ...
+
+    def soft_delete(self, notification_id: UUID) -> None:
+        ...
+
+    def set_important(self, notification_id: UUID, *, is_important: bool) -> None:
         ...
 
     def mark_read(self, notification_id: UUID) -> None:

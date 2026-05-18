@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.domain.notifications.notification_constants import ALLOWED_NOTIFICATION_CATEGORIES
 from app.domain.ports.notification_repository import (
     NotificationRepository,
     NotificationDTO,
@@ -43,7 +44,7 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
 
     def get(self, notification_id: UUID) -> NotificationDTO | None:
         row = self.session.get(Notification, notification_id)
-        if not row:
+        if not row or row.deleted_at is not None:
             return None
 
         return self._to_dto(row)
@@ -62,6 +63,8 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
         user_id: str,
         *,
         status: Literal["all", "unread", "read"] = "all",
+        category: str | None = None,
+        important_only: bool = False,
         limit: int = 20,
         offset: int = 0,
     ) -> Tuple[List[NotificationDTO], int]:
@@ -69,6 +72,7 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
 
         query = self.session.query(Notification).filter(
             Notification.user_id == user_id,
+            Notification.deleted_at.is_(None),
             or_(Notification.expires_at.is_(None), Notification.expires_at > now),
         )
 
@@ -77,16 +81,37 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
         elif status == "read":
             query = query.filter(Notification.read_at.isnot(None))
 
+        if category:
+            normalized = category.strip().lower()
+            if normalized in ALLOWED_NOTIFICATION_CATEGORIES:
+                query = query.filter(Notification.category == normalized)
+
+        if important_only:
+            query = query.filter(Notification.is_important.is_(True))
+
         total = query.count()
 
         rows = (
-            query.order_by(Notification.created_at.desc())
+            query.order_by(
+                Notification.is_important.desc(),
+                Notification.created_at.desc(),
+            )
             .limit(limit)
             .offset(offset)
             .all()
         )
 
         return [self._to_dto(row) for row in rows], total
+
+    def soft_delete(self, notification_id: UUID) -> None:
+        row = self.session.get(Notification, notification_id)
+        if row and row.deleted_at is None:
+            row.deleted_at = datetime.utcnow()
+
+    def set_important(self, notification_id: UUID, *, is_important: bool) -> None:
+        row = self.session.get(Notification, notification_id)
+        if row and row.deleted_at is None:
+            row.is_important = is_important
 
     def mark_read(self, notification_id: UUID) -> None:
         row = self.session.get(Notification, notification_id)
@@ -96,7 +121,11 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
     def mark_all_read(self, user_id: str) -> None:
         (
             self.session.query(Notification)
-            .filter_by(user_id=user_id, read_at=None)
+            .filter(
+                Notification.user_id == user_id,
+                Notification.read_at.is_(None),
+                Notification.deleted_at.is_(None),
+            )
             .update({"read_at": datetime.utcnow()}, synchronize_session=False)
         )
 
@@ -117,6 +146,7 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
             icon=getattr(row, "icon", None),
             metadata=getattr(row, "notification_metadata", None),
             expires_at=getattr(row, "expires_at", None),
+            is_important=bool(getattr(row, "is_important", False)),
             read=row.read_at is not None,
             created_at=row.created_at,
         )

@@ -43,6 +43,13 @@ from app.application.use_cases.mark_notification_read_use_case import (
 from app.application.use_cases.mark_all_notifications_read_use_case import (
     MarkAllNotificationsReadUseCase,
 )
+from app.application.use_cases.delete_notification_use_case import (
+    DeleteNotificationUseCase,
+)
+from app.application.use_cases.set_notification_important_use_case import (
+    SetNotificationImportantUseCase,
+)
+from app.domain.notifications.notification_constants import ALLOWED_NOTIFICATION_CATEGORIES
 
 from app.application.use_cases.notify_user_use_case import (
     NotifyUserUseCase,
@@ -175,10 +182,21 @@ def list_notifications_history():
     except ValueError:
         return api_error("invalid_pagination", "limit and offset must be integers", status=400)
 
+    category = request.args.get("category")
+    if category:
+        category = category.strip().lower()
+        if category not in ALLOWED_NOTIFICATION_CATEGORIES:
+            return api_error("invalid_category", "invalid notification category", status=400)
+
+    important_param = request.args.get("important", "").strip().lower()
+    important_only = important_param in ("1", "true", "yes")
+
     with SqlAlchemyUnitOfWork() as uow:
         result = ListNotificationsUseCase(uow).execute(
             user_id=user.id,
             status=status,
+            category=category or None,
+            important_only=important_only,
             limit=limit,
             offset=offset,
         )
@@ -235,6 +253,62 @@ def mark_all_notifications_read():
 
     except Exception as e:
         return api_error("mark_all_failed", str(e))
+
+
+@me_bp.route("/me/notifications/<notification_id>", methods=["DELETE"])
+@require_auth()
+def delete_notification(notification_id: str):
+    user = g.current_user
+
+    try:
+        notification_uuid = UUID(notification_id)
+    except ValueError:
+        return api_error("invalid_id", "Invalid notification id", status=400)
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            DeleteNotificationUseCase(uow).execute(notification_uuid, actor_user_id=str(user.id))
+        return jsonify({"ok": True}), 200
+    except NotificationNotFoundError:
+        return api_error("not_found", "Notification not found", status=404)
+    except NotificationAccessDeniedError:
+        return api_error("forbidden", "Notification does not belong to current user", status=403)
+    except Exception as e:
+        return api_error("delete_failed", str(e))
+
+
+@me_bp.route("/me/notifications/<notification_id>/important", methods=["PATCH"])
+@require_auth()
+def set_notification_important(notification_id: str):
+    user = g.current_user
+
+    try:
+        notification_uuid = UUID(notification_id)
+    except ValueError:
+        return api_error("invalid_id", "Invalid notification id", status=400)
+
+    body = request.get_json(silent=True) or {}
+    if "isImportant" not in body and "is_important" not in body:
+        return api_error("validation_error", "isImportant is required", status=400)
+
+    is_important = body.get("isImportant", body.get("is_important"))
+    if not isinstance(is_important, bool):
+        return api_error("validation_error", "isImportant must be a boolean", status=400)
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = SetNotificationImportantUseCase(uow).execute(
+                notification_uuid,
+                actor_user_id=str(user.id),
+                is_important=is_important,
+            )
+        return jsonify(result), 200
+    except NotificationNotFoundError:
+        return api_error("not_found", "Notification not found", status=404)
+    except NotificationAccessDeniedError:
+        return api_error("forbidden", "Notification does not belong to current user", status=403)
+    except Exception as e:
+        return api_error("important_failed", str(e))
 
 
 # ==========================================================

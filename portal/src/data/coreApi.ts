@@ -112,6 +112,7 @@ export interface NotificationItem {
   metadata?: Record<string, unknown> | null;
   expiresAt?: string | null;
   read: boolean;
+  isImportant?: boolean;
   createdAt: string;
 }
 
@@ -277,6 +278,7 @@ export class CoreApi {
       presentation: item.presentation ?? "text",
       type: item.type ?? "info",
       metadata: item.metadata ?? null,
+      isImportant: Boolean(item.isImportant),
     };
   }
 
@@ -289,12 +291,20 @@ export class CoreApi {
 
   async getNotificationHistory(params?: {
     status?: NotificationHistoryStatus;
+    category?: NotificationCategory | "";
+    importantOnly?: boolean;
     limit?: number;
     offset?: number;
   }): Promise<NotificationHistoryResponse> {
     const search = new URLSearchParams();
     if (params?.status) {
       search.set("status", params.status);
+    }
+    if (params?.category) {
+      search.set("category", params.category);
+    }
+    if (params?.importantOnly) {
+      search.set("important", "true");
     }
     if (params?.limit != null) {
       search.set("limit", String(params.limit));
@@ -322,6 +332,17 @@ export class CoreApi {
   markAllNotificationsRead() {
     return this.client.post<{ ok: boolean }>(
       "/core-api/me/notifications/read-all"
+    );
+  }
+
+  deleteNotification(id: string) {
+    return this.client.delete<{ ok: boolean }>(`/core-api/me/notifications/${id}`);
+  }
+
+  setNotificationImportant(id: string, isImportant: boolean) {
+    return this.client.patch<{ ok: boolean; isImportant: boolean }>(
+      `/core-api/me/notifications/${id}/important`,
+      { isImportant },
     );
   }
 

@@ -4,8 +4,11 @@ import {
   Bell,
   Cake,
   Calendar,
+  Check,
   Megaphone,
   Sparkles,
+  Star,
+  Trash2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -25,8 +28,45 @@ type NotificationCardProps = {
   notification: NotificationItem;
   onMarkRead: (id: string) => void;
   onNavigate?: () => void;
+  onDelete?: (id: string) => void;
+  onToggleImportant?: (id: string, isImportant: boolean) => void;
+  /** @deprecated use variant="compact" */
   compact?: boolean;
+  variant?: "compact" | "page";
 };
+
+function formatNotificationDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  if (diffMs < oneDay && date.getDate() === new Date(now).getDate()) {
+    return `Hoje, ${date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+  }
+
+  if (diffMs < 7 * oneDay) {
+    return date.toLocaleDateString("pt-BR", {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 const CATEGORY_ICONS: Record<NotificationCategory, LucideIcon> = {
   system: Bell,
@@ -50,29 +90,153 @@ export function NotificationCard({
   notification,
   onMarkRead,
   onNavigate,
+  onDelete,
+  onToggleImportant,
   compact = false,
+  variant,
 }: NotificationCardProps) {
+  const layout = variant ?? (compact ? "compact" : "page");
+  const isPage = layout === "page";
   const Icon = CATEGORY_ICONS[notification.category] ?? Bell;
   const templateId = getTemplateIdFromMetadata(notification.metadata);
   const templateDefinition =
     notification.presentation === "template"
       ? getTemplateDefinition(NOTIFICATION_TEMPLATE_DEFINITIONS, templateId)
       : null;
+  const formattedDate = formatNotificationDate(notification.createdAt);
 
-  function handleOpen() {
+  function handleMarkReadOnly() {
+    void onMarkRead(notification.id);
+  }
+
+  function handleAction() {
     if (notification.action) {
       executeNotificationAction(notification.action);
       onNavigate?.();
     }
-
     void onMarkRead(notification.id);
+  }
+
+  const content = templateDefinition ? (
+    <NotificationTemplateView
+      definition={templateDefinition}
+      vars={getTemplateVarsFromMetadata(notification.metadata)}
+      compact={!isPage}
+    />
+  ) : notification.presentation === "html" && notification.htmlContent ? (
+    <div
+      className="notification-card__html"
+      dangerouslySetInnerHTML={{ __html: notification.htmlContent }}
+    />
+  ) : (
+    <p className="notification-card__message">{notification.message}</p>
+  );
+
+  if (isPage) {
+    const isImportant = Boolean(notification.isImportant);
+
+    return (
+      <article
+        className={[
+          "notification-card",
+          "notification-card--page",
+          `notification-card--${notification.type}`,
+          notification.read ? "notification-card--read" : "notification-card--unread",
+          isImportant ? "notification-card--important" : "",
+        ].join(" ")}
+      >
+        <div className="notification-card__icon" aria-hidden="true">
+          <Icon size={20} />
+        </div>
+
+        <div className="notification-card__main">
+          <header className="notification-card__header">
+            <div className="notification-card__meta">
+              {isImportant ? (
+                <span className="notification-card__important-badge">
+                  <Star size={12} aria-hidden="true" />
+                  Importante
+                </span>
+              ) : null}
+              <span className="notification-card__category">
+                {CATEGORY_LABELS[notification.category]}
+              </span>
+              {formattedDate ? (
+                <time className="notification-card__time" dateTime={notification.createdAt}>
+                  {formattedDate}
+                </time>
+              ) : null}
+              {!notification.read ? <span className="notification-card__dot" aria-hidden="true" /> : null}
+            </div>
+
+            <div className="notification-card__actions">
+              {onToggleImportant ? (
+                <button
+                  type="button"
+                  className={
+                    isImportant
+                      ? "notification-card__icon-btn notification-card__icon-btn--active"
+                      : "notification-card__icon-btn"
+                  }
+                  onClick={() => onToggleImportant(notification.id, !isImportant)}
+                  aria-label={isImportant ? "Remover dos importantes" : "Marcar como importante"}
+                  title={isImportant ? "Remover dos importantes" : "Marcar como importante"}
+                >
+                  <Star size={16} aria-hidden="true" />
+                </button>
+              ) : null}
+
+              {!notification.read ? (
+                <button
+                  type="button"
+                  className="notification-card__icon-btn"
+                  onClick={handleMarkReadOnly}
+                  aria-label="Marcar como lida"
+                  title="Marcar como lida"
+                >
+                  <Check size={16} aria-hidden="true" />
+                </button>
+              ) : (
+                <span className="notification-card__read-badge">Lida</span>
+              )}
+
+              {onDelete ? (
+                <button
+                  type="button"
+                  className="notification-card__icon-btn notification-card__icon-btn--danger"
+                  onClick={() => onDelete(notification.id)}
+                  aria-label="Excluir notificação"
+                  title="Excluir"
+                >
+                  <Trash2 size={16} aria-hidden="true" />
+                </button>
+              ) : null}
+            </div>
+          </header>
+
+          {!templateDefinition && notification.title ? (
+            <h4 className="notification-card__title">{notification.title}</h4>
+          ) : null}
+
+          <div className="notification-card__content">{content}</div>
+
+          {notification.action ? (
+            <footer className="notification-card__footer">
+              <button type="button" className="notification-card__cta" onClick={handleAction}>
+                {notification.action.label}
+              </button>
+            </footer>
+          ) : null}
+        </div>
+      </article>
+    );
   }
 
   return (
     <article
-      className={`notification-card notification-card--${notification.type} ${
-        compact ? "notification-card--compact" : ""
-      } ${!notification.read ? "notification-card--unread" : ""}`}
+      className={`notification-card notification-card--compact notification-card--${notification.type} ${
+        !notification.read ? "notification-card--unread" : ""
+      }`}
     >
       <div className="notification-card__icon" aria-hidden="true">
         <Icon size={18} />
@@ -90,27 +254,18 @@ export function NotificationCard({
           <h4 className="notification-card__title">{notification.title}</h4>
         ) : null}
 
-        {templateDefinition ? (
-          <NotificationTemplateView
-            definition={templateDefinition}
-            vars={getTemplateVarsFromMetadata(notification.metadata)}
-            compact={compact}
-          />
-        ) : notification.presentation === "html" && notification.htmlContent ? (
-          <div
-            className="notification-card__html"
-            dangerouslySetInnerHTML={{ __html: notification.htmlContent }}
-          />
-        ) : (
-          <p className="notification-card__message">{notification.message}</p>
-        )}
+        {content}
 
         {notification.action ? (
-          <button type="button" className="notification-card__cta" onClick={handleOpen}>
+          <button type="button" className="notification-card__cta" onClick={handleAction}>
             {notification.action.label}
           </button>
         ) : (
-          <button type="button" className="notification-card__cta notification-card__cta--ghost" onClick={handleOpen}>
+          <button
+            type="button"
+            className="notification-card__cta notification-card__cta--ghost"
+            onClick={handleMarkReadOnly}
+          >
             Marcar como lida
           </button>
         )}

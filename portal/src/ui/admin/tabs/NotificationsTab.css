@@ -120,56 +120,138 @@
   line-height: 1.45;
 }
 
-/* Broadcast toggle card */
-.admin-notifications__broadcast {
+/* Toggle row — alinhado ao padrão AdminEntityList / checkbox-item */
+.admin-notifications__toggle {
   display: flex;
-  align-items: center;
+  flex-direction: row;
+  align-items: flex-start;
   gap: 12px;
+  margin: 0;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.admin-notifications__toggle--card {
   padding: 14px 16px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--bg);
-  cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.admin-notifications__broadcast:hover {
+.admin-notifications__toggle--card:hover {
   border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
 }
 
-.admin-notifications__broadcast:has(input:checked) {
+.admin-notifications__toggle--card:has(input:checked) {
   border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
   background: color-mix(in srgb, var(--primary) 8%, var(--bg));
 }
 
-.admin-notifications__broadcast--inline {
+.admin-notifications__toggle-control {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-top: -1px;
+  border-radius: 12px;
+  transition: background 0.15s ease;
+}
+
+.admin-notifications__toggle:hover .admin-notifications__toggle-control {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.admin-notifications__toggle-control input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
   margin: 0;
+  padding: 0;
+  display: grid;
+  place-content: center;
+  border: 1.5px solid color-mix(in srgb, var(--text-muted) 55%, var(--border));
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.admin-notifications__toggle-control input::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: #fff;
+  transform: scale(0);
+  transition: transform 0.16s ease;
+}
+
+.admin-notifications__toggle-control input:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.admin-notifications__toggle-control input:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--focus-2);
+}
+
+.admin-notifications__toggle-control input:checked {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.admin-notifications__toggle-control input:checked::before {
+  transform: scale(1);
+}
+
+.admin-notifications__toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+  padding-top: 6px;
+}
+
+.admin-notifications__toggle--card .admin-notifications__toggle-text {
+  padding-top: 5px;
+}
+
+.admin-notifications__toggle-text strong {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.admin-notifications__toggle-text > span {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.admin-notifications__fieldset .admin-notifications__toggle {
+  align-items: center;
+}
+
+.admin-notifications__fieldset .admin-notifications__toggle-control {
+  margin-top: 0;
+}
+
+.admin-notifications__fieldset .admin-notifications__toggle-text {
+  padding-top: 0;
 }
 
 .admin-notifications__fieldset--expires {
   margin-top: 4px;
-}
-
-.admin-notifications__broadcast input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary);
-  cursor: pointer;
-}
-
-.admin-notifications__broadcast-body {
-  display: grid;
-  gap: 2px;
-}
-
-.admin-notifications__broadcast-body strong {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.admin-notifications__broadcast-body span {
-  font-size: 12px;
-  color: var(--text-muted);
 }
 
 /* Main grid: content + optional preview column */

@@ -41,7 +41,31 @@ def test_list_notifications_use_case_returns_pagination():
     uow.notifications.list_for_user.assert_called_once_with(
         "user-1",
         status="unread",
+        category=None,
+        important_only=False,
         limit=10,
+        offset=0,
+    )
+
+
+def test_list_notifications_use_case_passes_category_and_important_filters():
+    uow = MagicMock()
+    uow.notifications.list_for_user.return_value = ([], 0)
+
+    ListNotificationsUseCase(uow).execute(
+        "user-1",
+        category="announcement",
+        important_only=True,
+        limit=20,
+        offset=0,
+    )
+
+    uow.notifications.list_for_user.assert_called_once_with(
+        "user-1",
+        status="all",
+        category="announcement",
+        important_only=True,
+        limit=20,
         offset=0,
     )
 

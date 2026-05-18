@@ -33,5 +33,7 @@ class Notification(db.Model):
     notification_metadata = db.Column("metadata", db.JSON, nullable=True)
     expires_at = db.Column(db.DateTime, nullable=True)
 
+    is_important = db.Column(db.Boolean, nullable=False, default=False, index=True)
     read_at = db.Column(db.DateTime, nullable=True)
+    deleted_at = db.Column(db.DateTime, nullable=True, index=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)

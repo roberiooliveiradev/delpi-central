@@ -361,13 +361,15 @@ export function NotificationsTab() {
               </div>
             </div>
 
-            <label className="admin-notifications__broadcast">
-              <input
-                type="checkbox"
-                checked={broadcast}
-                onChange={(event) => setBroadcast(event.target.checked)}
-              />
-              <span className="admin-notifications__broadcast-body">
+            <label className="admin-notifications__toggle admin-notifications__toggle--card">
+              <span className="admin-notifications__toggle-control">
+                <input
+                  type="checkbox"
+                  checked={broadcast}
+                  onChange={(event) => setBroadcast(event.target.checked)}
+                />
+              </span>
+              <span className="admin-notifications__toggle-text">
                 <strong>Notificação geral</strong>
                 <span>Todos os usuários ativos da plataforma</span>
               </span>
@@ -477,13 +479,15 @@ export function NotificationsTab() {
 
                 <fieldset className="admin-notifications__fieldset admin-notifications__fieldset--expires">
                   <legend>Agendamento (opcional)</legend>
-                  <label className="admin-notifications__broadcast admin-notifications__broadcast--inline">
-                    <input
-                      type="checkbox"
-                      checked={scheduleEnabled}
-                      onChange={(event) => setScheduleEnabled(event.target.checked)}
-                    />
-                    <span className="admin-notifications__broadcast-body">
+                  <label className="admin-notifications__toggle">
+                    <span className="admin-notifications__toggle-control">
+                      <input
+                        type="checkbox"
+                        checked={scheduleEnabled}
+                        onChange={(event) => setScheduleEnabled(event.target.checked)}
+                      />
+                    </span>
+                    <span className="admin-notifications__toggle-text">
                       <strong>Agendar envio</strong>
                       <span>Processar na data/hora indicada (cron ou botão no histórico)</span>
                     </span>
@@ -503,13 +507,15 @@ export function NotificationsTab() {
 
                 <fieldset className="admin-notifications__fieldset admin-notifications__fieldset--expires">
                   <legend>Validade (opcional)</legend>
-                  <label className="admin-notifications__broadcast admin-notifications__broadcast--inline">
-                    <input
-                      type="checkbox"
-                      checked={expiresEnabled}
-                      onChange={(event) => setExpiresEnabled(event.target.checked)}
-                    />
-                    <span className="admin-notifications__broadcast-body">
+                  <label className="admin-notifications__toggle">
+                    <span className="admin-notifications__toggle-control">
+                      <input
+                        type="checkbox"
+                        checked={expiresEnabled}
+                        onChange={(event) => setExpiresEnabled(event.target.checked)}
+                      />
+                    </span>
+                    <span className="admin-notifications__toggle-text">
                       <strong>Expirar automaticamente</strong>
                       <span>Some do sino após o prazo (notificações lidas permanecem no histórico até expirar)</span>
                     </span>
