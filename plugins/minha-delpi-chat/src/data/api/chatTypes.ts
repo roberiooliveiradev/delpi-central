@@ -155,6 +155,8 @@ export type ChatAgent = {
   system_prompt?: string | null;
   created_at: string;
   updated_at: string;
+  sessions_in_window?: number | null;
+  total_sessions?: number | null;
 };
 
 export type ChatProject = {

@@ -35,6 +35,7 @@ def _to_response(
     access_role: str = "viewer",
     *,
     include_system_prompt: bool = False,
+    usage_summary: dict[str, int] | None = None,
 ) -> ChatAgentResponse:
     return ChatAgentResponse(
         id=str(agent.id),
@@ -51,9 +52,13 @@ def _to_response(
         max_tool_calls=agent.max_tool_calls,
         requires_confirmation_for_write=agent.requires_confirmation_for_write,
         access_role=access_role,
-        system_prompt=agent.system_prompt if include_system_prompt else None,
         created_at=agent.created_at.isoformat(),
         updated_at=agent.updated_at.isoformat(),
+        system_prompt=agent.system_prompt if include_system_prompt else None,
+        sessions_in_window=(
+            usage_summary.get("sessionsInWindow") if usage_summary else None
+        ),
+        total_sessions=usage_summary.get("totalSessions") if usage_summary else None,
     )
 
 
@@ -90,12 +95,35 @@ class ListChatAgentsUseCase:
         user_id: str,
         *,
         include_disabled: bool = False,
+        include_stats: bool = False,
+        stats_hours: int = 168,
     ) -> list[ChatAgentResponse]:
         agents = self.repository.list_accessible(
             UUID(user_id),
             include_disabled=include_disabled,
         )
-        return [_to_response(agent, access_role) for agent, access_role in agents]
+
+        usage_by_key: dict[str, dict[str, int]] = {}
+
+        if include_stats:
+            stats_keys = [
+                agent.key
+                for agent, access_role in agents
+                if access_role in {"owner", "editor", "system"}
+            ]
+            usage_by_key = self.repository.list_usage_summaries(
+                stats_keys,
+                hours=stats_hours,
+            )
+
+        return [
+            _to_response(
+                agent,
+                access_role,
+                usage_summary=usage_by_key.get(agent.key) if include_stats else None,
+            )
+            for agent, access_role in agents
+        ]
 
 
 class CreateChatAgentUseCase:
@@ -230,8 +258,13 @@ class DeleteChatAgentUseCase:
 
 
 class DuplicateChatAgentUseCase:
-    def __init__(self, repository: ChatAgentRepositoryPort):
+    def __init__(
+        self,
+        repository: ChatAgentRepositoryPort,
+        source_copy_service=None,
+    ):
         self.repository = repository
+        self.source_copy_service = source_copy_service
 
     def execute(
         self,
@@ -240,7 +273,20 @@ class DuplicateChatAgentUseCase:
         agent_id: str,
         can_manage_official_agents: bool = False,
         copy_actions: bool = True,
+        copy_sources: bool = False,
     ) -> ChatAgentResponse | None:
+        source = self.repository.get_accessible_by_id(UUID(agent_id), UUID(user_id))
+
+        if not source:
+            return None
+
+        source_agent, access_role = source
+
+        if access_role not in {"owner", "editor", "system"}:
+            raise ChatAgentPermissionDeniedError(
+                "You do not have permission to duplicate this agent"
+            )
+
         agent = self.repository.duplicate(
             UUID(agent_id),
             UUID(user_id),
@@ -251,7 +297,40 @@ class DuplicateChatAgentUseCase:
         if not agent:
             return None
 
+        if copy_sources and self.source_copy_service:
+            self.source_copy_service.copy_agent_sources(
+                user_id=user_id,
+                source_agent=source_agent,
+                target_agent=agent,
+            )
+
         return _to_response(agent, "owner", include_system_prompt=True)
+
+
+class TransferChatAgentOwnershipUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(
+        self,
+        *,
+        user_id: str,
+        agent_id: str,
+        new_owner_user_id: str,
+    ) -> bool:
+        normalized_owner = (new_owner_user_id or "").strip()
+
+        if not normalized_owner:
+            raise InvalidChatSessionInputError("newOwnerUserId is required")
+
+        if normalized_owner == user_id:
+            raise InvalidChatSessionInputError("Cannot transfer an agent to yourself")
+
+        return self.repository.transfer_ownership(
+            UUID(agent_id),
+            UUID(user_id),
+            UUID(normalized_owner),
+        )
 
 
 class GetChatAgentStatsUseCase:

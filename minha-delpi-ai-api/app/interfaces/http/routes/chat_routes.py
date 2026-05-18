@@ -59,6 +59,7 @@ from app.composition.chat_composer import (
     make_delete_chat_agent_use_case,
     make_duplicate_chat_agent_use_case,
     make_get_chat_agent_stats_use_case,
+    make_transfer_chat_agent_ownership_use_case,
     make_search_chat_directory_users_use_case,
     make_list_chat_agent_action_providers_use_case,
     make_upsert_chat_agent_action_provider_use_case,
@@ -227,8 +228,25 @@ def list_agents():
         "true",
         "yes",
     }
+    include_stats = request.args.get("includeStats", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    hours = request.args.get("hours", 168)
+
+    try:
+        hours_value = int(hours)
+    except (TypeError, ValueError):
+        return bad_request("hours must be a number")
+
     use_case = make_list_chat_agents_use_case()
-    result = use_case.execute(g.current_user.sub, include_disabled=include_disabled)
+    result = use_case.execute(
+        g.current_user.sub,
+        include_disabled=include_disabled,
+        include_stats=include_stats,
+        stats_hours=hours_value,
+    )
 
     return jsonify([asdict(agent) for agent in result]), 200
 
@@ -383,9 +401,13 @@ def duplicate_agent(agent_id: str):
     use_case = make_duplicate_chat_agent_use_case()
 
     copy_actions = True
+    copy_sources = False
 
-    if isinstance(payload, dict) and "copyActions" in payload:
-        copy_actions = bool(payload.get("copyActions"))
+    if isinstance(payload, dict):
+        if "copyActions" in payload:
+            copy_actions = bool(payload.get("copyActions"))
+        if "copySources" in payload:
+            copy_sources = bool(payload.get("copySources"))
 
     try:
         result = use_case.execute(
@@ -393,6 +415,7 @@ def duplicate_agent(agent_id: str):
             agent_id=agent_id,
             can_manage_official_agents=capabilities["canManageOfficialAgents"],
             copy_actions=copy_actions,
+            copy_sources=copy_sources,
         )
 
         if not result:
@@ -411,6 +434,41 @@ def duplicate_agent(agent_id: str):
         raise
 
     return jsonify(asdict(result)), 201
+
+
+@chat_bp.post("/agents/<agent_id>/transfer")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def transfer_agent(agent_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_transfer_chat_agent_ownership_use_case()
+
+    try:
+        transferred = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            new_owner_user_id=str(payload.get("newOwnerUserId") or ""),
+        )
+
+        if not transferred:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except InvalidChatSessionInputError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except ChatAgentPermissionDeniedError as exc:
+        db.session.rollback()
+        return forbidden(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return "", 204
 
 
 @chat_bp.get("/agents/<agent_id>/stats")

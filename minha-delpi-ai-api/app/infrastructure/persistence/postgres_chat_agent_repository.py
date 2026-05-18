@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 
 from app.domain.entities.chat_agent import ChatAgent
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
@@ -254,6 +254,83 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             "actionProvidersCount": action_providers,
             "sharesCount": shares_count,
         }
+
+    def list_usage_summaries(
+        self,
+        agent_keys: list[str],
+        *,
+        hours: int = 168,
+    ) -> dict[str, dict[str, int]]:
+        normalized_keys = [key.strip() for key in agent_keys if key and key.strip()]
+
+        if not normalized_keys:
+            return {}
+
+        safe_hours = max(1, min(int(hours), 24 * 90))
+        since = datetime.now(timezone.utc) - timedelta(hours=safe_hours)
+
+        window_rows = (
+            db.session.query(
+                AiChatSessionModel.agent_key,
+                func.count(AiChatSessionModel.id),
+            )
+            .filter(AiChatSessionModel.agent_key.in_(normalized_keys))
+            .filter(AiChatSessionModel.created_at >= since)
+            .group_by(AiChatSessionModel.agent_key)
+            .all()
+        )
+
+        total_rows = (
+            db.session.query(
+                AiChatSessionModel.agent_key,
+                func.count(AiChatSessionModel.id),
+            )
+            .filter(AiChatSessionModel.agent_key.in_(normalized_keys))
+            .group_by(AiChatSessionModel.agent_key)
+            .all()
+        )
+
+        summaries: dict[str, dict[str, int]] = {
+            key: {
+                "sessionsInWindow": 0,
+                "totalSessions": 0,
+            }
+            for key in normalized_keys
+        }
+
+        for agent_key, count in window_rows:
+            summaries.setdefault(agent_key, {})["sessionsInWindow"] = int(count)
+
+        for agent_key, count in total_rows:
+            summaries.setdefault(agent_key, {})["totalSessions"] = int(count)
+
+        return summaries
+
+    def transfer_ownership(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        new_owner_id: UUID,
+    ) -> bool:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or model.owner_user_id != user_id:
+            return False
+
+        if new_owner_id == user_id:
+            return False
+
+        (
+            AiChatAgentShareModel.query
+            .filter(AiChatAgentShareModel.agent_id == agent_id)
+            .filter(AiChatAgentShareModel.target_user_id == new_owner_id)
+            .delete()
+        )
+
+        model.owner_user_id = new_owner_id
+        db.session.flush()
+
+        return True
 
     def _copy_action_configuration(self, source_agent_id: UUID, target_agent_id: UUID) -> None:
         provider_rows = (

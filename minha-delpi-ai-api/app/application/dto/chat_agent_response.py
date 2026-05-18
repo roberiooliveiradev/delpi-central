@@ -20,3 +20,5 @@ class ChatAgentResponse:
     created_at: str
     updated_at: str
     system_prompt: str | None = None
+    sessions_in_window: int | None = None
+    total_sessions: int | None = None

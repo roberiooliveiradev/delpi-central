@@ -55,12 +55,14 @@ Lista agentes acessíveis ao usuário.
 | Parâmetro | Descrição |
 |-----------|-----------|
 | `includeDisabled=true` | Inclui agentes com `enabled=false` (gestores com `tools.manage`) |
+| `includeStats=true` | Inclui `sessionsInWindow` e `totalSessions` (owner/editor/system) |
+| `hours` | Janela em horas para `sessionsInWindow` (padrão 168) |
 
 ### Resposta `200`
 
 `ChatAgent[]`
 
-> `system_prompt` não é retornado na listagem.
+> `system_prompt` não é retornado na listagem. Com `includeStats=true`, cada item pode trazer `sessionsInWindow` e `totalSessions`.
 
 ---
 
@@ -281,7 +283,7 @@ Mesmo formato de `POST /admin/agent/simulate` (`answerPreview`, `chunks`, `plann
 
 ## POST `/chat/agents/{agentId}/duplicate`
 
-Cria cópia privada do agente para o usuário atual (instruções, metadados e limites). Não copia fontes nem compartilhamentos.
+Cria cópia privada do agente para o usuário atual (instruções, metadados e limites). Não copia compartilhamentos.
 
 ### Permissão
 
@@ -291,11 +293,12 @@ Cria cópia privada do agente para o usuário atual (instruções, metadados e l
 
 ```json
 {
-  "copyActions": true
+  "copyActions": true,
+  "copySources": false
 }
 ```
 
-Quando `copyActions` é `true` (padrão), replica providers e actions configurados no agente de origem.
+Quando `copyActions` é `true` (padrão), replica providers e actions configurados no agente de origem. Com `copySources: true`, reingere as fontes de conhecimento vinculadas ao agente de origem.
 
 ### Resposta `201`
 
@@ -332,6 +335,28 @@ Estatísticas de uso do agente (sessões e mensagens por `agent_key`, providers/
 ```
 
 `sharesCount` só é preenchido para o dono do agente.
+
+---
+
+## POST `/chat/agents/{agentId}/transfer`
+
+Transfere a propriedade do agente para outro usuário.
+
+### Permissão
+
+`minha-delpi.chat.tools.manage` + papel `owner`
+
+### Body
+
+```json
+{
+  "newOwnerUserId": "uuid-do-novo-dono"
+}
+```
+
+### Resposta `204`
+
+Sem corpo. Remove compartilhamento prévio do novo dono, se existir.
 
 ---
 

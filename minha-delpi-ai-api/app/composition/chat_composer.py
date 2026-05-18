@@ -348,9 +348,27 @@ def make_delete_chat_agent_use_case() -> DeleteChatAgentUseCase:
 
 
 def make_duplicate_chat_agent_use_case():
+    from app.application.services.agent_source_copy_service import AgentSourceCopyService
     from app.application.use_cases.chat_agents_use_cases import DuplicateChatAgentUseCase
+    from app.infrastructure.persistence.postgres_knowledge_repository import (
+        PostgresKnowledgeRepository,
+    )
 
-    return DuplicateChatAgentUseCase(PostgresChatAgentRepository())
+    return DuplicateChatAgentUseCase(
+        PostgresChatAgentRepository(),
+        AgentSourceCopyService(
+            PostgresKnowledgeRepository(),
+            make_ingest_knowledge_document_use_case(),
+        ),
+    )
+
+
+def make_transfer_chat_agent_ownership_use_case():
+    from app.application.use_cases.chat_agents_use_cases import (
+        TransferChatAgentOwnershipUseCase,
+    )
+
+    return TransferChatAgentOwnershipUseCase(PostgresChatAgentRepository())
 
 
 def make_get_chat_agent_stats_use_case():

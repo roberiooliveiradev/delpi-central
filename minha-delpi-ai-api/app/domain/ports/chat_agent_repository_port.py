@@ -71,6 +71,24 @@ class ChatAgentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def transfer_ownership(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        new_owner_id: UUID,
+    ) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_usage_summaries(
+        self,
+        agent_keys: list[str],
+        *,
+        hours: int = 168,
+    ) -> dict[str, dict[str, int]]:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_usage_stats(
         self,
         agent_id: UUID,

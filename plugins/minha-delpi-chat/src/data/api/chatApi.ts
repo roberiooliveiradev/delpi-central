@@ -423,9 +423,24 @@ export async function deleteChatArtifact(
 
 
 export async function listChatAgents(
-  options: ChatApiOptions & { includeDisabled?: boolean } = {},
+  options: ChatApiOptions & {
+    includeDisabled?: boolean;
+    includeStats?: boolean;
+    statsHours?: number;
+  } = {},
 ): Promise<ChatAgent[]> {
-  const query = options.includeDisabled ? "?includeDisabled=true" : "";
+  const params = new URLSearchParams();
+
+  if (options.includeDisabled) {
+    params.set("includeDisabled", "true");
+  }
+
+  if (options.includeStats) {
+    params.set("includeStats", "true");
+    params.set("hours", String(options.statsHours ?? 168));
+  }
+
+  const query = params.toString() ? `?${params.toString()}` : "";
   const response = await fetch(`${API_BASE_URL}/chat/agents${query}`, {
     method: "GET",
     headers: await getAuthHeaders(options),
@@ -550,16 +565,32 @@ export async function searchChatUsers(
 
 export async function duplicateChatAgent(
   agentId: string,
-  options: ChatApiOptions & { copyActions?: boolean } = {},
+  options: ChatApiOptions & { copyActions?: boolean; copySources?: boolean } = {},
 ): Promise<ChatAgent> {
-  const { copyActions = true, ...apiOptions } = options;
+  const { copyActions = true, copySources = false, ...apiOptions } = options;
   const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/duplicate`, {
     method: "POST",
     headers: await getAuthHeaders(apiOptions),
-    body: JSON.stringify({ copyActions }),
+    body: JSON.stringify({ copyActions, copySources }),
   });
 
   return parseJsonResponse<ChatAgent>(response);
+}
+
+export async function transferChatAgentOwnership(
+  agentId: string,
+  newOwnerUserId: string,
+  options: ChatApiOptions = {},
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/transfer`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify({ newOwnerUserId }),
+  });
+
+  if (!response.ok) {
+    await parseJsonResponse<unknown>(response);
+  }
 }
 
 export async function getChatAgentStats(

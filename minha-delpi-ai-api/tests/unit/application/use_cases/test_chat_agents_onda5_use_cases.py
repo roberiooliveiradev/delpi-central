@@ -37,6 +37,7 @@ def _agent() -> ChatAgent:
 def test_duplicate_agent_passes_copy_actions_flag():
     agent = _agent()
     repository = MagicMock()
+    repository.get_accessible_by_id.return_value = (agent, "owner")
     repository.duplicate.return_value = agent
 
     DuplicateChatAgentUseCase(repository).execute(

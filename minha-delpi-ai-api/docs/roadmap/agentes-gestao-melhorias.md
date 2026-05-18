@@ -1,6 +1,6 @@
 # Gestão de agentes — melhorias
 
-**Status:** ondas 1–5 implementadas (maio/2026)
+**Status:** ondas 1–6 implementadas (maio/2026)
 
 ## Onda 1 — edição confiável
 
@@ -48,3 +48,12 @@
 | 5.1 | `GET /chat/agents/{id}/stats?hours=168` — sessões/mensagens no período | Concluído |
 | 5.2 | Duplicar com `copyActions` (providers/actions) | Concluído |
 | 5.3 | Builder: painel de estatísticas e opção ao duplicar | Concluído |
+
+## Onda 6 — governança e visibilidade
+
+| # | Entrega | Status |
+|---|---------|--------|
+| 6.1 | `GET /chat/agents?includeStats=true` — resumo de uso na listagem | Concluído |
+| 6.2 | `POST /chat/agents/{id}/transfer` — transferir propriedade | Concluído |
+| 6.3 | Duplicar com `copySources` (fontes de conhecimento do agente) | Concluído |
+| 6.4 | Builder: editar papel de shares, transferir dono, métricas na lista | Concluído |

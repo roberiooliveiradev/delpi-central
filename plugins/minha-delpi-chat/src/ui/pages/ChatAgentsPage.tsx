@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  BarChart3,
   Bot,
   ChevronRight,
   Pencil,
@@ -50,7 +51,10 @@ type ChatAgentsPageProps = {
   ) => Promise<ChatAgent | null>;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
   onAgentDuplicated?: (agent: ChatAgent) => void;
-  onReloadAgents?: (includeDisabled: boolean) => void | Promise<void>;
+  onReloadAgents?: (
+    includeDisabled: boolean,
+    includeStats?: boolean,
+  ) => void | Promise<void>;
   onOpenRagAdmin?: (agentId: string) => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
@@ -166,6 +170,12 @@ export function ChatAgentsPage({
   }, [agents, searchTerm]);
 
   useEffect(() => {
+    if (canManageAgents) {
+      void onReloadAgents?.(false, true);
+    }
+  }, [canManageAgents, onReloadAgents]);
+
+  useEffect(() => {
     if (!editAgentKey) {
       return;
     }
@@ -275,7 +285,7 @@ export function ChatAgentsPage({
                   onChange={(event) => {
                     const includeDisabled = event.target.checked;
                     setShowInactive(includeDisabled);
-                    void onReloadAgents?.(includeDisabled);
+                    void onReloadAgents?.(includeDisabled, canManageAgents);
                   }}
                 />
                 <span>Mostrar inativos</span>
@@ -373,6 +383,17 @@ export function ChatAgentsPage({
 
                       {capabilities.length > 0 ? (
                         <span>{capabilities.length} recursos</span>
+                      ) : null}
+
+                      {typeof agent.sessions_in_window === "number" ? (
+                        <span>
+                          <BarChart3 size={14} aria-hidden="true" />
+                          {agent.sessions_in_window} conversas (7d)
+                        </span>
+                      ) : null}
+
+                      {typeof agent.total_sessions === "number" && agent.total_sessions > 0 ? (
+                        <span>{agent.total_sessions} conversas no total</span>
                       ) : null}
                     </div>
 

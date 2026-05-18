@@ -486,6 +486,35 @@
 
 .mdc-chat-agent-builder__action-list label,
 .mdc-chat-agent-builder__source-list article,
+.mdc-chat-agent-builder__transfer {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+}
+
+.mdc-chat-agent-builder__transfer h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.mdc-chat-agent-builder__transfer p {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.85rem;
+}
+
+.mdc-chat-agent-builder__share-list article select {
+  min-width: 7.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--mdc-radius-sm);
+  border: 1px solid var(--mdc-card-border);
+  background: var(--mdc-surface);
+  color: var(--mdc-text);
+  font-size: 0.82rem;
+}
+
 .mdc-chat-agent-builder__share-list article {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

@@ -23,6 +23,7 @@ import {
   duplicateChatAgent,
   getChatAgent,
   getChatAgentStats,
+  transferChatAgentOwnership,
   listAgentSources,
   listChatAgentActionProviders,
   listChatAgentShares,
@@ -208,6 +209,11 @@ export function ChatAgentBuilderPage({
   const [isSaving, setIsSaving] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [copyActionsOnDuplicate, setCopyActionsOnDuplicate] = useState(true);
+  const [copySourcesOnDuplicate, setCopySourcesOnDuplicate] = useState(false);
+  const [transferTargetUserId, setTransferTargetUserId] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
+  const [transferMessage, setTransferMessage] = useState<string | null>(null);
+  const [updatingShareUserId, setUpdatingShareUserId] = useState<string | null>(null);
   const [agentStats, setAgentStats] = useState<ChatAgentStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
@@ -625,6 +631,64 @@ export function ChatAgentBuilderPage({
     }
   }
 
+  async function updateAgentShareRole(targetUserId: string, role: "viewer" | "editor") {
+    if (!agent?.id || !getAccessToken) {
+      return;
+    }
+
+    setUpdatingShareUserId(targetUserId);
+    setShareMessage(null);
+
+    try {
+      await shareChatAgent(
+        agent.id,
+        { targetUserId, role },
+        { getAccessToken },
+      );
+      setShareMessage("Papel atualizado.");
+      await loadAgentShares();
+    } catch {
+      setShareMessage("Não foi possível atualizar o papel.");
+    } finally {
+      setUpdatingShareUserId(null);
+    }
+  }
+
+  async function transferAgentOwnership() {
+    if (!agent?.id || !getAccessToken || agent.access_role !== "owner") {
+      return;
+    }
+
+    const newOwnerUserId = transferTargetUserId.trim();
+
+    if (!newOwnerUserId) {
+      setTransferMessage("Selecione o novo proprietário.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Transferir a propriedade deste agente? Você perderá o papel de dono.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsTransferring(true);
+    setTransferMessage(null);
+
+    try {
+      await transferChatAgentOwnership(agent.id, newOwnerUserId, { getAccessToken });
+      setTransferMessage("Propriedade transferida. Saindo do builder...");
+      setTransferTargetUserId("");
+      onBack();
+    } catch {
+      setTransferMessage("Não foi possível transferir a propriedade.");
+    } finally {
+      setIsTransferring(false);
+    }
+  }
+
   async function shareCurrentAgent() {
     if (!agent || agent.access_role !== "owner") {
       return;
@@ -668,6 +732,7 @@ export function ChatAgentBuilderPage({
       const duplicated = await duplicateChatAgent(agent.id, {
         getAccessToken,
         copyActions: copyActionsOnDuplicate,
+        copySources: copySourcesOnDuplicate,
       });
       onDuplicateAgent?.(duplicated);
     } catch {
@@ -968,14 +1033,24 @@ export function ChatAgentBuilderPage({
               )}
 
               {agent.access_role === "owner" ? (
-                <label className="mdc-chat-agent-builder__checkbox">
-                  <input
-                    type="checkbox"
-                    checked={copyActionsOnDuplicate}
-                    onChange={(event) => setCopyActionsOnDuplicate(event.target.checked)}
-                  />
-                  <span>Ao duplicar, copiar também APIs e actions configuradas</span>
-                </label>
+                <>
+                  <label className="mdc-chat-agent-builder__checkbox">
+                    <input
+                      type="checkbox"
+                      checked={copyActionsOnDuplicate}
+                      onChange={(event) => setCopyActionsOnDuplicate(event.target.checked)}
+                    />
+                    <span>Ao duplicar, copiar também APIs e actions configuradas</span>
+                  </label>
+                  <label className="mdc-chat-agent-builder__checkbox">
+                    <input
+                      type="checkbox"
+                      checked={copySourcesOnDuplicate}
+                      onChange={(event) => setCopySourcesOnDuplicate(event.target.checked)}
+                    />
+                    <span>Ao duplicar, copiar também fontes de conhecimento do agente</span>
+                  </label>
+                </>
               ) : null}
             </section>
           ) : null}
@@ -1081,12 +1156,24 @@ export function ChatAgentBuilderPage({
                             share.target_user_email ||
                             share.target_user_id}
                         </strong>
-                        <small>
-                          {share.target_user_email
-                            ? `${share.target_user_email} · ${share.role}`
-                            : share.role}
-                        </small>
+                        {share.target_user_email ? (
+                          <small>{share.target_user_email}</small>
+                        ) : null}
                       </span>
+                      <select
+                        value={share.role}
+                        disabled={updatingShareUserId === share.target_user_id}
+                        onChange={(event) =>
+                          void updateAgentShareRole(
+                            share.target_user_id,
+                            event.target.value as "viewer" | "editor",
+                          )
+                        }
+                        aria-label="Papel do compartilhamento"
+                      >
+                        <option value="viewer">Visualizador</option>
+                        <option value="editor">Editor</option>
+                      </select>
                       <button
                         type="button"
                         disabled={revokingShareUserId === share.target_user_id}
@@ -1099,6 +1186,26 @@ export function ChatAgentBuilderPage({
                     </article>
                   ))
                 )}
+              </div>
+
+              <div className="mdc-chat-agent-builder__transfer">
+                <h3>Transferir propriedade</h3>
+                <p>Defina outro usuário como dono deste agente.</p>
+                <ChatUserSearchField
+                  value={transferTargetUserId}
+                  onChange={setTransferTargetUserId}
+                  getAccessToken={getAccessToken}
+                  disabled={isTransferring}
+                />
+                <button
+                  type="button"
+                  className="mdc-chat-agent-builder__secondary"
+                  disabled={isTransferring}
+                  onClick={() => void transferAgentOwnership()}
+                >
+                  {isTransferring ? "Transferindo..." : "Transferir propriedade"}
+                </button>
+                {transferMessage ? <p className="mdc-chat-muted">{transferMessage}</p> : null}
               </div>
             </section>
           ) : null}
