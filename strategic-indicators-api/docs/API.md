@@ -185,3 +185,89 @@ Campos principais: `goal_year`, `goal_value`, `goal_periodicity`, `goal_mode`, `
 | `strategic-indicators.settings.manage` | Settings, admin, metas, change requests |
 
 Declaradas no manifesto do plugin e na Core API.
+
+---
+
+## Tabela rápida de endpoints
+
+Prefixo: `/apps/strategic-indicators-api/strategic-indicators`
+
+| Método | Endpoint | Permissão |
+|--------|----------|-----------|
+| GET | `/health` | — |
+| GET | `/executive-summary` | `strategic-indicators.view` |
+| GET | `/departments` | `strategic-indicators.view` |
+| GET | `/departments/{department_id}` | `strategic-indicators.view` |
+| GET | `/indicators` | `strategic-indicators.view` |
+| GET | `/alerts` | `strategic-indicators.view` |
+| GET | `/trends` | `strategic-indicators.trends.view` |
+| GET | `/presentation` | `strategic-indicators.view` |
+| GET | `/settings` | `strategic-indicators.settings.manage` |
+| PUT | `/settings` | `strategic-indicators.settings.manage` |
+| GET | `/settings/audit` | `strategic-indicators.settings.manage` |
+| GET | `/change-requests` | `strategic-indicators.settings.manage` |
+| POST | `/change-requests` | `strategic-indicators.settings.manage` |
+| POST | `/change-requests/{id}/comments` | `strategic-indicators.settings.manage` |
+| POST | `/change-requests/{id}/submit` | `strategic-indicators.settings.manage` |
+| GET | `/admin/departments` | `strategic-indicators.settings.manage` |
+| POST | `/admin/departments` | `strategic-indicators.settings.manage` |
+| PUT | `/admin/departments/{id}` | `strategic-indicators.settings.manage` |
+| POST | `/admin/departments/{id}/activate` | `strategic-indicators.settings.manage` |
+| POST | `/admin/departments/{id}/deactivate` | `strategic-indicators.settings.manage` |
+| DELETE | `/admin/departments/{id}` | `strategic-indicators.settings.manage` |
+| GET | `/admin/departments/{id}/indicators` | `strategic-indicators.settings.manage` |
+| POST | `/admin/departments/{id}/indicators` | `strategic-indicators.settings.manage` |
+| PUT | `/admin/indicators/{id}` | `strategic-indicators.settings.manage` |
+| POST | `/admin/indicators/{id}/activate` | `strategic-indicators.settings.manage` |
+| POST | `/admin/indicators/{id}/deactivate` | `strategic-indicators.settings.manage` |
+| DELETE | `/admin/indicators/{id}` | `strategic-indicators.settings.manage` |
+| GET | `/indicator-goals` | `strategic-indicators.settings.manage` |
+| GET | `/indicator-goals/history` | `strategic-indicators.settings.manage` |
+| POST | `/indicator-goals` | `strategic-indicators.settings.manage` |
+| PUT | `/indicator-goals/{goal_id}` | `strategic-indicators.settings.manage` |
+| POST | `/indicator-goals/{goal_id}/activate` | `strategic-indicators.settings.manage` |
+| DELETE | `/indicator-goals/{goal_id}` | `strategic-indicators.settings.manage` |
+| GET | `/admin/goal-years/overview` | `strategic-indicators.settings.manage` |
+| POST | `/admin/indicator-goals/bulk-create` | `strategic-indicators.settings.manage` |
+| POST | `/admin/indicator-goals/duplicate-year` | `strategic-indicators.settings.manage` |
+| POST | `/admin/indicator-goals/fill-missing` | `strategic-indicators.settings.manage` |
+
+---
+
+## Convenções de resposta
+
+### Leitura (grupo A/B)
+
+- JSON direto no corpo (sem `{ success, data }`).
+- Rotas via `run_logged_read_route` aplicam `to_json_safe` (suporte a `Decimal` do Postgres).
+- Headers: `Cache-Control: private, max-age=300`, `ETag` para revalidação.
+- Campo opcional `partial_success: true` quando há erros parciais de medição.
+
+### Escrita (admin)
+
+- Respostas conforme use case (objeto criado/atualizado ou `HTTPException`).
+- Mutações invalidam cache de snapshot in-process.
+
+### Códigos HTTP
+
+| Código | Situação |
+|--------|----------|
+| 200 | Sucesso |
+| 401 | JWT ausente/inválido |
+| 403 | Sem permissão RBAC |
+| 404 | Departamento/indicador/meta não encontrado |
+| 422 | Validação Pydantic (query/body) |
+| 500 | Erro não tratado (ver logs `*_failed`) |
+
+---
+
+## Autenticação
+
+Middleware `jwt_middleware` (`delpi_auth`) valida o token Keycloak.
+
+Decorators nas rotas:
+
+- `@require_permission("strategic-indicators.view")`
+- `@require_any_permission(...)` quando aplicável
+
+O Swagger em `/docs` aceita token via integração do portal (`postMessage` DELPI_AUTH), igual api-delpi.

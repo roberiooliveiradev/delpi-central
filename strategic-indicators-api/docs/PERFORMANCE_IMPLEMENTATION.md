@@ -211,4 +211,4 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-18 | Admin: batch monthly_targets; change-requests paginado; bench alerts |
 | 2026-05-18 | `period_scores` (V010): trends lê scores do Postgres quando todos os meses existem |
 | 2026-05-18 | Fallback metas + `snapshot_models` (fix série 6m e boot 502) |
-| 2026-05-18 | Docs SI: `docs/README`, `ARCHITECTURE`, `API`; README API e MFE atualizados |
+| 2026-05-18 | Documentação completa SI: OVERVIEW, DATABASE, MFE, DEPLOYMENT, DEVELOPMENT, OPERATIONS, CODE_STRUCTURE, DATA_SOURCES |

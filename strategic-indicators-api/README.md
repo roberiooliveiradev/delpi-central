@@ -2,86 +2,50 @@
 
 Serviço **FastAPI** dedicado ao módulo **Indicadores Estratégicos** (`/strategic-indicators/*`).
 
-- Pacote: `si_app` (imports `from si_app...`)
-- Entrypoint: `si_app/main.py` — `/health`, `/docs`, router estratégico
-- Código podado a partir da api-delpi: apenas composers e infra usados pelo painel SI
+## Documentação completa
 
-## Documentação
+**Índice:** [docs/README.md](docs/README.md)
 
-| Doc | Descrição |
-|-----|-----------|
-| [docs/README.md](docs/README.md) | Índice da documentação |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Gateway, fontes de dados, cache, paralelismo |
-| [docs/API.md](docs/API.md) | Rotas, permissões, query params |
-| [docs/PERFORMANCE_IMPLEMENTATION.md](docs/PERFORMANCE_IMPLEMENTATION.md) | Performance (fases 0–5), benchmark |
-| [migrations/README.md](migrations/README.md) | Migrations Postgres |
+| Guia | Link |
+|------|------|
+| Visão geral | [docs/OVERVIEW.md](docs/OVERVIEW.md) |
+| Arquitetura | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| API HTTP | [docs/API.md](docs/API.md) |
+| Banco de dados | [docs/DATABASE.md](docs/DATABASE.md) |
+| Fontes de dados | [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) |
+| Código (`si_app`) | [docs/CODE_STRUCTURE.md](docs/CODE_STRUCTURE.md) |
+| MFE | [docs/MFE.md](docs/MFE.md) |
+| Desenvolvimento | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) |
+| Deploy | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| Operação | [docs/OPERATIONS.md](docs/OPERATIONS.md) |
+| Performance | [docs/PERFORMANCE_IMPLEMENTATION.md](docs/PERFORMANCE_IMPLEMENTATION.md) |
 
-MFE: [plugins/strategic-indicators/README.md](../plugins/strategic-indicators/README.md)
-
-## URL no gateway
+## URLs (gateway)
 
 ```text
 /apps/strategic-indicators-api/strategic-indicators/*
+/apps/strategic-indicators-api/docs
+/apps/strategic-indicators-api/health
 ```
 
-A **api-delpi** não expõe mais estas rotas.
+A **api-delpi** não expõe mais o painel SI. Dados diretos (ROL, etc.) permanecem em `/apps/api-delpi/finacial/financial/*`.
 
-## Variáveis de ambiente
+## Início rápido (Docker)
 
-Ver `si_app/config.py`. Principais:
-
-| Variável | Descrição |
-|----------|-----------|
-| `SI_API_ROOT_PATH` | Prefixo atrás do gateway (padrão `/apps/strategic-indicators-api`) |
-| `PORT` / `STRATEGIC_INDICATORS_API_PORT` | Porta do processo |
-| `PLUGINS_DB_*` | Postgres (schema `strategic_indicators`) |
-| `DB_*` / `TOTVS_*` | SQL Server Protheus |
-| `TOTVS_POOL_ENABLED`, `TOTVS_POOL_MAX_SIZE` | Pool pyodbc (padrão `true` / `8`) |
-| `SI_SNAPSHOT_CACHE_TTL_SECONDS` | Cache in-process de snapshots (padrão `600`) |
-| `SI_WARMUP_ON_STARTUP` | Warm-up executive + trends no boot |
-| `SI_WARMUP_TRENDS_MONTHS` | Meses do warm-up (padrão `6`) |
-| `SI_PERIOD_SCORES_ENABLED` | Persistir scores por competência (trends) |
-| `SI_RUN_MIGRATIONS_ON_STARTUP` | Aplicar migrations no boot (`true` em dev Compose) |
-
-Exemplo: [../infra/env.strategic-indicators.example](../infra/env.strategic-indicators.example)
+```bash
+cd infra
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d strategic-indicators-api gateway
+curl -s http://localhost/apps/strategic-indicators-api/health
+```
 
 ## Migrations
 
-SQL em `migrations/V001`–`V010`. Runner: `scripts/run_migrations.py`.
-
 ```bash
-export PYTHONPATH="$(pwd)/strategic-indicators-api:$(pwd)/shared"
-python strategic-indicators-api/scripts/run_migrations.py status
 python strategic-indicators-api/scripts/run_migrations.py up
 ```
 
+Ver [migrations/README.md](migrations/README.md).
+
 ## Desenvolvimento local
 
-```bash
-export PYTHONPATH="$(pwd)/strategic-indicators-api:$(pwd)/shared"
-pip install -r strategic-indicators-api/requirements.txt
-pip install -e ./shared[fastapi]
-python -m uvicorn si_app.main:app --reload --app-dir strategic-indicators-api --port 8010
-```
-
-Docker (contexto = raiz do monorepo):
-
-```bash
-docker build -f strategic-indicators-api/Dockerfile -t strategic-indicators-api:dev .
-```
-
-Compose dev: serviço `strategic-indicators-api` em `infra/docker-compose.dev.yml`.
-
-## Scripts úteis
-
-| Script | Uso |
-|--------|-----|
-| `scripts/run_migrations.py` | `up`, `status`, `reset` |
-| `scripts/warmup_si_snapshots.py` | Aquecer cache manualmente |
-| `scripts/bench_si_routes.py` | Medir latência das rotas de leitura |
-
-## Performance (resumo)
-
-Baseline medido: executive-summary ~19s → ~10s; trends 3 meses ~28s → ~9–10s.
-
-Detalhes, checklist e regras de paralelismo: [docs/PERFORMANCE_IMPLEMENTATION.md](docs/PERFORMANCE_IMPLEMENTATION.md).
+Ver [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).

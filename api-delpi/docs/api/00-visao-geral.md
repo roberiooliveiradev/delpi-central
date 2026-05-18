@@ -2,7 +2,7 @@
 
 ## Propósito
 
-A **api-delpi** expõe dados e métricas do ERP **TOTVS Protheus** (SQL Server) e de bancos **PostgreSQL** de plugins (Indicadores Estratégicos, Qualidade NC), consumidos pelo portal DELPI e plugins federados.
+A **api-delpi** expõe dados e métricas do ERP **TOTVS Protheus** (SQL Server) e de bancos **PostgreSQL** de plugins (Qualidade NC), consumidos pelo portal DELPI e plugins federados. **Indicadores Estratégicos** usam a API dedicada `strategic-indicators-api` (ver [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md)).
 
 ## Base URL
 
@@ -15,7 +15,6 @@ A **api-delpi** expõe dados e métricas do ERP **TOTVS Protheus** (SQL Server) 
 | Prefixo na aplicação | Módulo |
 |---|---|
 | `/health` | Health global |
-| `/strategic-indicators` | Indicadores Estratégicos |
 | `/finacial` + `/financial` (router) | Financeiro — ver nota do typo |
 | `/supplies` | Suprimentos |
 | `/commercial` | Comercial |

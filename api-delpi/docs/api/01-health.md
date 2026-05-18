@@ -18,15 +18,6 @@ Health check global da API.
 
 ---
 
-## GET /strategic-indicators/health
+## Indicadores Estratégicos
 
-Health do módulo Indicadores Estratégicos.
-
-**Resposta `200`:**
-
-```json
-{
-  "status": "online",
-  "module": "strategic-indicators"
-}
-```
+Health do módulo SI: `GET /apps/strategic-indicators-api/health` — ver [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md).

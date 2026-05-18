@@ -12,10 +12,6 @@ Legenda de permissões:
 | **D** | `api-delpi.data` |
 | **Q** | `api-delpi.quality.access` |
 | **L** | `dashboard-lmps.view` |
-| **SI** | `strategic-indicators.view` |
-| **SIM** | `strategic-indicators.settings.manage` |
-| **SIT** | `strategic-indicators.trends.view` |
-
 ---
 
 ## Health
@@ -23,7 +19,6 @@ Legenda de permissões:
 | Método | Endpoint | Perm. |
 |---|---|---|
 | GET | `/health` | — |
-| GET | `/strategic-indicators/health` | — |
 
 ---
 
@@ -157,46 +152,9 @@ Legenda de permissões:
 
 ---
 
-## Indicadores Estratégicos (`/strategic-indicators`)
+## Indicadores Estratégicos
 
-| Método | Endpoint | Perm. |
-|---|---|---|
-| GET | `/strategic-indicators/executive-summary` | SI |
-| GET | `/strategic-indicators/departments` | SI |
-| GET | `/strategic-indicators/departments/{id}` | SI |
-| GET | `/strategic-indicators/indicators` | SI |
-| GET | `/strategic-indicators/alerts` | SI |
-| GET | `/strategic-indicators/trends` | SIT |
-| GET | `/strategic-indicators/presentation` | SI |
-| GET | `/strategic-indicators/settings` | SIM |
-| PUT | `/strategic-indicators/settings` | SIM |
-| GET | `/strategic-indicators/settings/audit` | SIM |
-| GET | `/strategic-indicators/change-requests` | SIM |
-| POST | `/strategic-indicators/change-requests` | SIM |
-| POST | `/strategic-indicators/change-requests/{id}/comments` | SIM |
-| POST | `/strategic-indicators/change-requests/{id}/submit` | SIM |
-| GET | `/strategic-indicators/admin/departments` | SIM |
-| POST | `/strategic-indicators/admin/departments` | SIM |
-| PUT | `/strategic-indicators/admin/departments/{id}` | SIM |
-| POST | `/strategic-indicators/admin/departments/{id}/activate` | SIM |
-| POST | `/strategic-indicators/admin/departments/{id}/deactivate` | SIM |
-| DELETE | `/strategic-indicators/admin/departments/{id}` | SIM |
-| GET | `/strategic-indicators/admin/departments/{id}/indicators` | SIM |
-| POST | `/strategic-indicators/admin/departments/{id}/indicators` | SIM |
-| PUT | `/strategic-indicators/admin/indicators/{id}` | SIM |
-| POST | `/strategic-indicators/admin/indicators/{id}/activate` | SIM |
-| POST | `/strategic-indicators/admin/indicators/{id}/deactivate` | SIM |
-| DELETE | `/strategic-indicators/admin/indicators/{id}` | SIM |
-| GET | `/strategic-indicators/indicator-goals` | SIM |
-| GET | `/strategic-indicators/indicator-goals/history` | SIM |
-| POST | `/strategic-indicators/indicator-goals` | SIM |
-| PUT | `/strategic-indicators/indicator-goals/{id}` | SIM |
-| POST | `/strategic-indicators/indicator-goals/{id}/activate` | SIM |
-| DELETE | `/strategic-indicators/indicator-goals/{id}` | SIM |
-| GET | `/strategic-indicators/admin/goal-years/overview` | SIM |
-| POST | `/strategic-indicators/admin/indicator-goals/bulk-create` | SIM |
-| POST | `/strategic-indicators/admin/indicator-goals/duplicate-year` | SIM |
-| POST | `/strategic-indicators/admin/indicator-goals/fill-missing` | SIM |
+Rotas do painel SI estão em **`/apps/strategic-indicators-api/strategic-indicators`** — ver [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) e [strategic-indicators-api/docs/API.md](../../strategic-indicators-api/docs/API.md).
 
 ---
 

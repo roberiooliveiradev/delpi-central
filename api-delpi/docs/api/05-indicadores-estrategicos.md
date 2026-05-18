@@ -19,13 +19,11 @@ GET /apps/strategic-indicators-api/docs
 
 A **api-delpi** (`/apps/api-delpi/`) **não** monta mais o prefixo `/strategic-indicators`.
 
-## Onde ler a referência completa
+## Documentação completa do módulo SI
 
-| Documento | Conteúdo |
-|-----------|----------|
-| [API.md](../../strategic-indicators-api/docs/API.md) | Todas as rotas, permissões, query params |
-| [ARCHITECTURE.md](../../strategic-indicators-api/docs/ARCHITECTURE.md) | Gateway, TOTVS, Postgres, cache |
-| [PERFORMANCE_IMPLEMENTATION.md](../../strategic-indicators-api/docs/PERFORMANCE_IMPLEMENTATION.md) | Performance e env |
+**Índice:** [strategic-indicators-api/docs/README.md](../../strategic-indicators-api/docs/README.md)
+
+Inclui: visão geral, arquitetura, API, banco, fontes de dados, MFE, deploy, desenvolvimento, operação e performance.
 
 ## Migrations
 
