@@ -1,8 +1,17 @@
 # app/application/use_cases/mark_notification_read_use_case.py
 
 from uuid import UUID
+
 from app.application.unit_of_work import UnitOfWork
-from app.domain.events.notification_events import NotificationMarkedReadEvent
+from app.domain.events.admin_events import AdminChangedEvent
+
+
+class NotificationNotFoundError(ValueError):
+    pass
+
+
+class NotificationAccessDeniedError(ValueError):
+    pass
 
 
 class MarkNotificationReadUseCase:
@@ -10,22 +19,27 @@ class MarkNotificationReadUseCase:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    def execute(self, notification_id: UUID):
+    def execute(self, notification_id: UUID, actor_user_id: str):
 
-        # 1️⃣ Descobrir user_id da notificação (precisa existir no repo)
         notification = self.uow.notifications.get(notification_id)
 
         if not notification:
-            raise ValueError("Notification not found")
+            raise NotificationNotFoundError("Notification not found")
 
-        # 2️⃣ Marcar como lida
+        if str(notification.user_id) != str(actor_user_id):
+            raise NotificationAccessDeniedError("Notification does not belong to current user")
+
+        if notification.read:
+            return {"ok": True}
+
         self.uow.notifications.mark_read(notification_id)
 
-        # 3️⃣ Registrar evento de domínio
         self.uow.collect_event(
-            NotificationMarkedReadEvent(
-                notification_id=str(notification_id),
-                user_id=notification.user_id,
+            AdminChangedEvent(
+                entity="notifications",
+                action="notification_marked_read",
+                payload={"notificationId": str(notification_id)},
+                target_user_id=str(notification.user_id),
             )
         )
 

@@ -420,7 +420,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     onNotification: (data) => {
       setNotifications((prev) => [data, ...prev]);
     },
-    onAdminChanged: async () => {
+    onAdminChanged: async (data) => {
+      if (data?.entity === "notifications") {
+        await loadNotificationsData();
+        return;
+      }
+
       await loadIdentityAndNavigation();
     },
   });

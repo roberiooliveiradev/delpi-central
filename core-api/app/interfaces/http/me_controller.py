@@ -32,6 +32,8 @@ from app.application.use_cases.list_unread_notifications_use_case import (
 
 from app.application.use_cases.mark_notification_read_use_case import (
     MarkNotificationReadUseCase,
+    NotificationAccessDeniedError,
+    NotificationNotFoundError,
 )
 
 from app.application.use_cases.mark_all_notifications_read_use_case import (
@@ -168,6 +170,8 @@ def list_notifications():
 @me_bp.route("/me/notifications/<notification_id>/read", methods=["POST"])
 @require_auth()
 def mark_notification_read(notification_id: str):
+    user = g.current_user
+
     try:
         notification_uuid = UUID(notification_id)
     except ValueError:
@@ -176,10 +180,14 @@ def mark_notification_read(notification_id: str):
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = MarkNotificationReadUseCase(uow)
-            uc.execute(notification_uuid)
+            uc.execute(notification_uuid, actor_user_id=str(user.id))
 
         return jsonify({"ok": True}), 200
 
+    except NotificationNotFoundError:
+        return api_error("not_found", "Notification not found", status=404)
+    except NotificationAccessDeniedError:
+        return api_error("forbidden", "Notification does not belong to current user", status=403)
     except Exception as e:
         return api_error("mark_failed", str(e))
 
@@ -213,14 +221,19 @@ def test_notification():
         with SqlAlchemyUnitOfWork() as uow:
             uc = NotifyUserUseCase(uow)
 
-            uc.execute(
-                user_id=user.id,
+            result = uc.execute(
+                user_id=str(user.id),
                 title="Teste tempo real",
                 message="Notificação disparada via endpoint",
                 type="success",
             )
 
-        return jsonify({"ok": True}), 200
+        return jsonify(
+            {
+                "ok": True,
+                "createdCount": result.created_count,
+            }
+        ), 200
 
     except Exception as e:
         return api_error("notify_failed", str(e))

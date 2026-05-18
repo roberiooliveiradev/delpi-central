@@ -30,6 +30,21 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
         self.session.add(model)
         return model.id
 
+    def get(self, notification_id: UUID) -> NotificationDTO | None:
+        row = self.session.get(Notification, notification_id)
+        if not row:
+            return None
+
+        return NotificationDTO(
+            id=row.id,
+            user_id=str(row.user_id),
+            title=row.title,
+            message=row.message,
+            type=row.type,
+            read=row.read_at is not None,
+            created_at=row.created_at,
+        )
+
     def list_unread(self, user_id: str) -> List[NotificationDTO]:
         rows = (
             self.session.query(Notification)

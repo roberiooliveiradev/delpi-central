@@ -7,6 +7,9 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")
+    CORE_API_INTEGRATIONS_SERVICE_TOKEN = os.getenv(
+        "CORE_API_INTEGRATIONS_SERVICE_TOKEN", ""
+    ).strip()
 
     DB_HOST = os.getenv("DB_HOST")
     DB_PORT = os.getenv("DB_PORT")

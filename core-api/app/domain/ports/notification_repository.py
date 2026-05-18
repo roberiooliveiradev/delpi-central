@@ -22,6 +22,9 @@ class NotificationRepository(Protocol):
     def create(self, notification: NotificationDTO) -> UUID:
         ...
 
+    def get(self, notification_id: UUID) -> NotificationDTO | None:
+        ...
+
     def list_unread(self, user_id: str) -> List[NotificationDTO]:
         ...
 

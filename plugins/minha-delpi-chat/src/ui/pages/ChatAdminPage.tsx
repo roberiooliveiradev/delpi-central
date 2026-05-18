@@ -12,6 +12,7 @@ import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
 import type { AdminTab, AdminTabItem } from "../components/admin/shell/adminShellTypes";
 import { AdminSimulateTab } from "../components/admin/simulate/AdminSimulateTab";
 import { AdminToolsTab } from "../components/admin/tools/AdminToolsTab";
+import { AdminNotificationsTab } from "../components/admin/notifications/AdminNotificationsTab";
 import { AdminRbacPanel } from "../components/admin/rbac/AdminRbacPanel";
 import { getAdminRbacSummary } from "../../data/api/adminApi";
 import type { AdminRbacSummary } from "../../data/api/adminTypes";
@@ -35,6 +36,7 @@ const ADMIN_TABS: AdminTabItem[] = [
   { key: "security", label: "Segurança" },
   { key: "tools", label: "Ferramentas" },
   { key: "audit", label: "Auditoria" },
+  { key: "notifications", label: "Notificações" },
 ];
 
 export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
@@ -115,7 +117,12 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
 
 
         {activeTab === "metrics" ? (
-          <AdminMetricsTab metricsSummary={admin.metricsSummary} />
+          <AdminMetricsTab
+            metricsSummary={admin.metricsSummary}
+            metricsHours={admin.metricsHours}
+            onMetricsHoursChange={admin.setMetricsHours}
+            getAccessToken={getAccessToken}
+          />
         ) : null}
 
         {activeTab === "guidelines" ? (
@@ -161,6 +168,10 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
 
         {activeTab === "audit" ? (
           <AdminAuditTab rbac={adminRbac} getAccessToken={getAccessToken} />
+        ) : null}
+
+        {activeTab === "notifications" ? (
+          <AdminNotificationsTab getAccessToken={getAccessToken} />
         ) : null}
       </section>
     </main>

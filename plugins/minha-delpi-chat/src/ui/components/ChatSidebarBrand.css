@@ -24,6 +24,12 @@
   font-size: 0.72rem;
 }
 
+.mdc-chat-sidebar__brand-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
 .mdc-chat-sidebar__collapse-button {
   display: inline-grid;
   place-items: center;

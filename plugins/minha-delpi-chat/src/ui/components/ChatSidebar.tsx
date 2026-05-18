@@ -7,7 +7,7 @@ import {
   MessageSquarePlus,
   Search,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { ChatConfirmDialog } from "./ChatConfirmDialog";
@@ -47,6 +47,7 @@ type ChatSidebarProps = {
   canManageAgents?: boolean;
   isCollapsed?: boolean;
   onToggleCollapsed?: () => void;
+  brandActions?: ReactNode;
   onViewChange?: (view: ChatSidebarView) => void;
   onNewSession: () => void;
   onSelectSession: (session: ChatSession) => void;
@@ -83,6 +84,7 @@ export function ChatSidebar({
   canManageAgents = false,
   isCollapsed,
   onToggleCollapsed,
+  brandActions,
   onViewChange,
   onNewSession,
   onSelectSession,
@@ -251,7 +253,7 @@ export function ChatSidebar({
   return (
     <aside className="mdc-chat-sidebar" aria-label="Conversas">
       <div className="mdc-chat-sidebar__top">
-        <ChatSidebarBrand onToggleCollapsed={onToggleCollapsed} />
+        <ChatSidebarBrand onToggleCollapsed={onToggleCollapsed} actions={brandActions} />
 
         <ChatSidebarNav
           isSearchOpen={isSearchOpen}

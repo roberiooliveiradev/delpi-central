@@ -19,8 +19,10 @@ import {
   updateChatArtifact,
   uploadProjectSource,
 } from "../../data/api/chatApi";
+import { useChatNotifications } from "../../state/hooks/useChatNotifications";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
+import { ChatNotificationBell } from "../components/notifications/ChatNotificationBell";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
@@ -64,6 +66,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
   const requestedAgentKey = activeAgentPageKey ?? null;
 
+  const chatNotifications = useChatNotifications({ getAccessToken });
+
   const {
     sessions,
     archivedSessions,
@@ -94,6 +98,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     unarchiveSession,
     editMessage,
     reuseMessage,
+    setMessageFeedback,
   } = useChatSession({
     getAccessToken,
     projectId: selectedProjectId,
@@ -549,6 +554,17 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             setCurrentView("chat");
             void startSession();
           }}
+          brandActions={
+            <ChatNotificationBell
+              notifications={chatNotifications.notifications}
+              unreadCount={chatNotifications.unreadCount}
+              isLoading={chatNotifications.isLoading}
+              error={chatNotifications.error}
+              onReload={chatNotifications.reload}
+              onMarkRead={chatNotifications.markRead}
+              onMarkAllRead={chatNotifications.markAllRead}
+            />
+          }
           isCollapsed={isSidebarCollapsed}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
           onViewChange={setCurrentView}
@@ -824,6 +840,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 onUseSuggestion={setDraft}
                 onEditMessage={editMessage}
                 onReuseMessage={reuseMessage}
+                onMessageFeedback={setMessageFeedback}
               />
 
               <ChatInput

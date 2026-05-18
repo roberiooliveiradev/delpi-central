@@ -1,0 +1,78 @@
+.mdc-admin-notifications {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.mdc-admin-notifications__header h2 {
+  margin: 0 0 6px;
+}
+
+.mdc-admin-notifications__header p {
+  margin: 0;
+  color: var(--mdc-text-muted, #6b7280);
+  font-size: 14px;
+}
+
+.mdc-admin-notifications__form {
+  display: grid;
+  gap: 14px;
+  max-width: 720px;
+}
+
+.mdc-admin-notifications__form label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mdc-admin-notifications__form input,
+.mdc-admin-notifications__form textarea,
+.mdc-admin-notifications__form select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--mdc-border, #d1d5db);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.mdc-admin-notifications__checkbox {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500 !important;
+}
+
+.mdc-admin-notifications__checkbox input {
+  width: auto;
+}
+
+.mdc-admin-notifications__form button {
+  justify-self: start;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--mdc-primary, #2563eb);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mdc-admin-notifications__form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mdc-admin-notifications__success {
+  margin: 0;
+  color: #047857;
+  font-size: 13px;
+}
+
+.mdc-admin-notifications__error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 13px;
+}
