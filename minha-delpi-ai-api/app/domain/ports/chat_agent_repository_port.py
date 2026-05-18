@@ -66,7 +66,18 @@ class ChatAgentRepositoryPort(ABC):
         user_id: UUID,
         *,
         can_manage_official_agents: bool = False,
+        copy_actions: bool = False,
     ) -> ChatAgent | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_usage_stats(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        *,
+        hours: int = 168,
+    ) -> dict | None:
         raise NotImplementedError
 
     @abstractmethod

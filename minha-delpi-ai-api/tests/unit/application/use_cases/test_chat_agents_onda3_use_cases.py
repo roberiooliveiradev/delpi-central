@@ -43,6 +43,7 @@ def test_duplicate_agent_returns_owner_response():
     )
 
     repository.duplicate.assert_called_once()
+    assert repository.duplicate.call_args.kwargs["copy_actions"] is True
     assert result is not None
     assert result.access_role == "owner"
     assert result.system_prompt == "prompt"

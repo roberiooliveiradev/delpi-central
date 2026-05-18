@@ -353,6 +353,12 @@ def make_duplicate_chat_agent_use_case():
     return DuplicateChatAgentUseCase(PostgresChatAgentRepository())
 
 
+def make_get_chat_agent_stats_use_case():
+    from app.application.use_cases.chat_agents_use_cases import GetChatAgentStatsUseCase
+
+    return GetChatAgentStatsUseCase(PostgresChatAgentRepository())
+
+
 def make_search_chat_directory_users_use_case():
     from app.application.use_cases.search_chat_directory_users_use_case import (
         SearchChatDirectoryUsersUseCase,

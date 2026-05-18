@@ -1,6 +1,6 @@
 # Gestão de agentes — melhorias
 
-**Status:** ondas 1, 2 e 3 implementadas (maio/2026)
+**Status:** ondas 1–5 implementadas (maio/2026)
 
 ## Onda 1 — edição confiável
 
@@ -40,3 +40,11 @@
 | 4.2 | `GET/DELETE /chat/projects/{id}/shares` | Concluído |
 | 4.3 | Compartilhamento de projeto nas configurações + busca de usuário | Concluído |
 | 4.4 | Aba Actions: feedback de sucesso e navegação mais clara | Concluído |
+
+## Onda 5 — uso e duplicação avançada
+
+| # | Entrega | Status |
+|---|---------|--------|
+| 5.1 | `GET /chat/agents/{id}/stats?hours=168` — sessões/mensagens no período | Concluído |
+| 5.2 | Duplicar com `copyActions` (providers/actions) | Concluído |
+| 5.3 | Builder: painel de estatísticas e opção ao duplicar | Concluído |

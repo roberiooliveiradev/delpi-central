@@ -227,6 +227,16 @@ export type ShareChatAgentPayload = {
   role: "viewer" | "editor" | string;
 };
 
+export type ChatAgentStats = {
+  agentKey: string;
+  windowHours: number;
+  sessionsInWindow: number;
+  messagesInWindow: number;
+  totalSessions: number;
+  actionProvidersCount: number;
+  sharesCount: number;
+};
+
 export type ChatDirectoryUser = {
   id: string;
   name: string;

@@ -1,7 +1,9 @@
 import {
   ArrowLeft,
+  BarChart3,
   Bot,
   Check,
+  Copy,
   FileText,
   Plus,
   Send,
@@ -20,6 +22,7 @@ import {
   deleteChatSource,
   duplicateChatAgent,
   getChatAgent,
+  getChatAgentStats,
   listAgentSources,
   listChatAgentActionProviders,
   listChatAgentShares,
@@ -33,6 +36,7 @@ import type {
   ChatAgent,
   ChatAgentActionProvider,
   ChatAgentShare,
+  ChatAgentStats,
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
 
@@ -203,6 +207,9 @@ export function ChatAgentBuilderPage({
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [copyActionsOnDuplicate, setCopyActionsOnDuplicate] = useState(true);
+  const [agentStats, setAgentStats] = useState<ChatAgentStats | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
 
 
   useEffect(() => {
@@ -490,6 +497,46 @@ export function ChatAgentBuilderPage({
     void loadAgentShares();
   }, [loadAgentShares]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadStats() {
+      if (!agent?.id || !getAccessToken) {
+        setAgentStats(null);
+        return;
+      }
+
+      if (!["owner", "editor", "system"].includes(agent.access_role)) {
+        setAgentStats(null);
+        return;
+      }
+
+      setIsLoadingStats(true);
+
+      try {
+        const stats = await getChatAgentStats(agent.id, { getAccessToken, hours: 168 });
+
+        if (isMounted) {
+          setAgentStats(stats);
+        }
+      } catch {
+        if (isMounted) {
+          setAgentStats(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingStats(false);
+        }
+      }
+    }
+
+    void loadStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [agent?.access_role, agent?.id, getAccessToken]);
+
   async function revokeAgentShare(targetUserId: string) {
     if (!agent?.id || !getAccessToken) {
       return;
@@ -618,7 +665,10 @@ export function ChatAgentBuilderPage({
     setLocalError(null);
 
     try {
-      const duplicated = await duplicateChatAgent(agent.id, { getAccessToken });
+      const duplicated = await duplicateChatAgent(agent.id, {
+        getAccessToken,
+        copyActions: copyActionsOnDuplicate,
+      });
       onDuplicateAgent?.(duplicated);
     } catch {
       setLocalError("Não foi possível duplicar o agente.");
@@ -667,7 +717,9 @@ export function ChatAgentBuilderPage({
                 className="mdc-chat-agent-builder__secondary"
                 disabled={isDuplicating}
                 onClick={() => void duplicateCurrentAgent()}
+                title="Cria cópia privada do agente"
               >
+                <Copy size={16} aria-hidden="true" />
                 <span>{isDuplicating ? "Duplicando..." : "Duplicar"}</span>
               </button>
               <button
@@ -879,6 +931,54 @@ export function ChatAgentBuilderPage({
               </select>
             </label>
           </section>
+
+          {agent && ["owner", "editor", "system"].includes(agent.access_role) ? (
+            <section className="mdc-chat-agent-builder__section">
+              <div className="mdc-chat-agent-builder__section-title">
+                <BarChart3 size={18} aria-hidden="true" />
+                <div>
+                  <h2>Uso (últimos 7 dias)</h2>
+                  <p>Resumo de conversas e configuração deste especialista.</p>
+                </div>
+              </div>
+
+              {isLoadingStats ? (
+                <p className="mdc-chat-muted">Carregando estatísticas...</p>
+              ) : agentStats ? (
+                <div className="mdc-chat-agent-builder__stats-grid">
+                  <article>
+                    <strong>{agentStats.sessionsInWindow}</strong>
+                    <small>Conversas no período</small>
+                  </article>
+                  <article>
+                    <strong>{agentStats.messagesInWindow}</strong>
+                    <small>Mensagens no período</small>
+                  </article>
+                  <article>
+                    <strong>{agentStats.totalSessions}</strong>
+                    <small>Total de conversas</small>
+                  </article>
+                  <article>
+                    <strong>{agentStats.actionProvidersCount}</strong>
+                    <small>APIs/actions vinculadas</small>
+                  </article>
+                </div>
+              ) : (
+                <p className="mdc-chat-muted">Sem dados de uso no período.</p>
+              )}
+
+              {agent.access_role === "owner" ? (
+                <label className="mdc-chat-agent-builder__checkbox">
+                  <input
+                    type="checkbox"
+                    checked={copyActionsOnDuplicate}
+                    onChange={(event) => setCopyActionsOnDuplicate(event.target.checked)}
+                  />
+                  <span>Ao duplicar, copiar também APIs e actions configuradas</span>
+                </label>
+              ) : null}
+            </section>
+          ) : null}
 
           <section className="mdc-chat-agent-builder__section">
             <div className="mdc-chat-agent-builder__section-title">

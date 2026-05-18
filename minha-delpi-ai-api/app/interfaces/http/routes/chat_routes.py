@@ -58,6 +58,7 @@ from app.composition.chat_composer import (
     make_create_chat_agent_use_case,
     make_delete_chat_agent_use_case,
     make_duplicate_chat_agent_use_case,
+    make_get_chat_agent_stats_use_case,
     make_search_chat_directory_users_use_case,
     make_list_chat_agent_action_providers_use_case,
     make_upsert_chat_agent_action_provider_use_case,
@@ -377,14 +378,21 @@ def delete_agent(agent_id: str):
 @chat_bp.post("/agents/<agent_id>/duplicate")
 @require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def duplicate_agent(agent_id: str):
+    payload = request.get_json(silent=True) or {}
     capabilities = _get_chat_capabilities_from_request()
     use_case = make_duplicate_chat_agent_use_case()
+
+    copy_actions = True
+
+    if isinstance(payload, dict) and "copyActions" in payload:
+        copy_actions = bool(payload.get("copyActions"))
 
     try:
         result = use_case.execute(
             user_id=g.current_user.sub,
             agent_id=agent_id,
             can_manage_official_agents=capabilities["canManageOfficialAgents"],
+            copy_actions=copy_actions,
         )
 
         if not result:
@@ -403,6 +411,33 @@ def duplicate_agent(agent_id: str):
         raise
 
     return jsonify(asdict(result)), 201
+
+
+@chat_bp.get("/agents/<agent_id>/stats")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def get_agent_stats(agent_id: str):
+    hours = request.args.get("hours", 168)
+
+    try:
+        hours_value = int(hours)
+    except (TypeError, ValueError):
+        return bad_request("hours must be a number")
+
+    use_case = make_get_chat_agent_stats_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            hours=hours_value,
+        )
+    except ChatAgentPermissionDeniedError as exc:
+        return forbidden(str(exc))
+
+    if not result:
+        return _not_found_response()
+
+    return jsonify(result), 200
 
 
 @chat_bp.get("/users/search")

@@ -239,17 +239,49 @@ class DuplicateChatAgentUseCase:
         user_id: str,
         agent_id: str,
         can_manage_official_agents: bool = False,
+        copy_actions: bool = True,
     ) -> ChatAgentResponse | None:
         agent = self.repository.duplicate(
             UUID(agent_id),
             UUID(user_id),
             can_manage_official_agents=can_manage_official_agents,
+            copy_actions=copy_actions,
         )
 
         if not agent:
             return None
 
         return _to_response(agent, "owner", include_system_prompt=True)
+
+
+class GetChatAgentStatsUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(
+        self,
+        *,
+        user_id: str,
+        agent_id: str,
+        hours: int = 168,
+    ) -> dict | None:
+        record = self.repository.get_accessible_by_id(UUID(agent_id), UUID(user_id))
+
+        if not record:
+            return None
+
+        _, access_role = record
+
+        if access_role not in {"owner", "editor", "system"}:
+            raise ChatAgentPermissionDeniedError(
+                "You do not have permission to view agent statistics"
+            )
+
+        return self.repository.get_usage_stats(
+            UUID(agent_id),
+            UUID(user_id),
+            hours=hours,
+        )
 
 
 class ListChatAgentSharesUseCase:

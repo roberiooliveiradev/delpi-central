@@ -9,6 +9,7 @@ import type {
   ChatAgentAction,
   ChatAgentPreviewResponse,
   ChatAgentShare,
+  ChatAgentStats,
   ChatProjectShare,
   ChatDirectoryUser,
   ChatArtifact,
@@ -549,14 +550,31 @@ export async function searchChatUsers(
 
 export async function duplicateChatAgent(
   agentId: string,
-  options: ChatApiOptions = {},
+  options: ChatApiOptions & { copyActions?: boolean } = {},
 ): Promise<ChatAgent> {
+  const { copyActions = true, ...apiOptions } = options;
   const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/duplicate`, {
     method: "POST",
-    headers: await getAuthHeaders(options),
+    headers: await getAuthHeaders(apiOptions),
+    body: JSON.stringify({ copyActions }),
   });
 
   return parseJsonResponse<ChatAgent>(response);
+}
+
+export async function getChatAgentStats(
+  agentId: string,
+  options: ChatApiOptions & { hours?: number } = {},
+): Promise<ChatAgentStats> {
+  const params = new URLSearchParams({
+    hours: String(options.hours ?? 168),
+  });
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/stats?${params}`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAgentStats>(response);
 }
 
 export async function previewChatAgent(

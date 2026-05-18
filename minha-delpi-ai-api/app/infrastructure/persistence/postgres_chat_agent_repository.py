@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy import or_
@@ -11,6 +12,8 @@ from app.infrastructure.db.models.external_action_model import ExternalActionMod
 from app.infrastructure.db.models.external_action_provider_model import ExternalActionProviderModel
 from app.infrastructure.db.models.chat_agent_model import AiChatAgentModel
 from app.infrastructure.db.models.chat_agent_share_model import AiChatAgentShareModel
+from app.infrastructure.db.models.chat_message_model import AiChatMessageModel
+from app.infrastructure.db.models.chat_session_model import AiChatSessionModel
 
 
 class PostgresChatAgentRepository(ChatAgentRepositoryPort):
@@ -154,6 +157,7 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         user_id: UUID,
         *,
         can_manage_official_agents: bool = False,
+        copy_actions: bool = False,
     ) -> ChatAgent | None:
         model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
 
@@ -169,7 +173,7 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         if not duplicate_name.endswith("(cópia)"):
             duplicate_name = f"{duplicate_name} (cópia)"[:120]
 
-        return self.create(
+        created = self.create(
             owner_user_id=user_id,
             key=self._generate_duplicate_key(model.key),
             name=duplicate_name,
@@ -184,6 +188,112 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             requires_confirmation_for_write=model.requires_confirmation_for_write,
             enabled=model.enabled,
         )
+
+        if copy_actions:
+            self._copy_action_configuration(agent_id, created.id)
+
+        return created
+
+    def get_usage_stats(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        *,
+        hours: int = 168,
+    ) -> dict | None:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_access(model, user_id):
+            return None
+
+        safe_hours = max(1, min(int(hours), 24 * 90))
+        since = datetime.now(timezone.utc) - timedelta(hours=safe_hours)
+        agent_key = model.key
+
+        sessions_in_window = (
+            AiChatSessionModel.query
+            .filter(AiChatSessionModel.agent_key == agent_key)
+            .filter(AiChatSessionModel.created_at >= since)
+            .count()
+        )
+
+        messages_in_window = (
+            db.session.query(AiChatMessageModel)
+            .join(AiChatSessionModel, AiChatMessageModel.session_id == AiChatSessionModel.id)
+            .filter(AiChatSessionModel.agent_key == agent_key)
+            .filter(AiChatMessageModel.created_at >= since)
+            .count()
+        )
+
+        total_sessions = (
+            AiChatSessionModel.query
+            .filter(AiChatSessionModel.agent_key == agent_key)
+            .count()
+        )
+
+        action_providers = (
+            AiChatAgentActionProviderModel.query
+            .filter(AiChatAgentActionProviderModel.agent_id == agent_id)
+            .count()
+        )
+
+        shares_count = (
+            AiChatAgentShareModel.query
+            .filter(AiChatAgentShareModel.agent_id == agent_id)
+            .count()
+            if model.owner_user_id == user_id
+            else 0
+        )
+
+        return {
+            "agentKey": agent_key,
+            "windowHours": safe_hours,
+            "sessionsInWindow": sessions_in_window,
+            "messagesInWindow": messages_in_window,
+            "totalSessions": total_sessions,
+            "actionProvidersCount": action_providers,
+            "sharesCount": shares_count,
+        }
+
+    def _copy_action_configuration(self, source_agent_id: UUID, target_agent_id: UUID) -> None:
+        provider_rows = (
+            AiChatAgentActionProviderModel.query
+            .filter(AiChatAgentActionProviderModel.agent_id == source_agent_id)
+            .all()
+        )
+
+        for row in provider_rows:
+            db.session.add(
+                AiChatAgentActionProviderModel(
+                    agent_id=target_agent_id,
+                    provider_key=row.provider_key,
+                    enabled=row.enabled,
+                    allow_read=row.allow_read,
+                    allow_write=row.allow_write,
+                    allow_admin=row.allow_admin,
+                    requires_confirmation_for_write=row.requires_confirmation_for_write,
+                )
+            )
+
+        action_rows = (
+            AiChatAgentActionModel.query
+            .filter(AiChatAgentActionModel.agent_id == source_agent_id)
+            .all()
+        )
+
+        for row in action_rows:
+            db.session.add(
+                AiChatAgentActionModel(
+                    agent_id=target_agent_id,
+                    provider_key=row.provider_key,
+                    action_id=row.action_id,
+                    enabled=row.enabled,
+                    sensitivity=row.sensitivity,
+                    requires_confirmation=row.requires_confirmation,
+                )
+            )
+
+        db.session.flush()
 
     def _generate_duplicate_key(self, base_key: str) -> str:
         normalized = (base_key or "agente").strip() or "agente"

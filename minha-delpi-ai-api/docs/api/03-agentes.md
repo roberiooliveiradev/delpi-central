@@ -281,15 +281,57 @@ Mesmo formato de `POST /admin/agent/simulate` (`answerPreview`, `chunks`, `plann
 
 ## POST `/chat/agents/{agentId}/duplicate`
 
-Cria cópia privada do agente para o usuário atual (instruções, metadados e limites). Não copia fontes, actions nem compartilhamentos.
+Cria cópia privada do agente para o usuário atual (instruções, metadados e limites). Não copia fontes nem compartilhamentos.
 
 ### Permissão
 
 `minha-delpi.chat.tools.manage` + papel `owner`, `editor` ou `system`
 
+### Body (opcional)
+
+```json
+{
+  "copyActions": true
+}
+```
+
+Quando `copyActions` é `true` (padrão), replica providers e actions configurados no agente de origem.
+
 ### Resposta `201`
 
 `ChatAgent` (novo registro com `key` única e nome com sufixo `(cópia)`)
+
+---
+
+## GET `/chat/agents/{agentId}/stats`
+
+Estatísticas de uso do agente (sessões e mensagens por `agent_key`, providers/actions vinculados).
+
+### Permissão
+
+`minha-delpi.chat.tools.manage` + papel `owner`, `editor` ou `system`
+
+### Query
+
+| Parâmetro | Descrição |
+|-----------|-----------|
+| `hours` | Janela em horas (padrão 168, máx. 2160) |
+
+### Resposta `200`
+
+```json
+{
+  "agentKey": "meu-agente",
+  "windowHours": 168,
+  "sessionsInWindow": 3,
+  "messagesInWindow": 42,
+  "totalSessions": 12,
+  "actionProvidersCount": 2,
+  "sharesCount": 1
+}
+```
+
+`sharesCount` só é preenchido para o dono do agente.
 
 ---
 
