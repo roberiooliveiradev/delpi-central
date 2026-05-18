@@ -2,6 +2,7 @@ import json
 
 from app.application.dto.execute_tool_request import ExecuteToolRequest
 from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
+from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntentService
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.config.settings import Settings
 from app.domain.services.external_actions.external_action_result_presenter import ExternalActionResultPresenter
@@ -34,6 +35,7 @@ class ChatToolContextService:
         actions_enabled: bool = True,
         allowed_tool_names: list[str] | None = None,
         fast_path: bool = False,
+        conversation_context: str | None = None,
     ) -> dict:
         if fast_path:
             return {
@@ -101,6 +103,7 @@ class ChatToolContextService:
             selected_external_action = self.external_action_selection_service.select_action(
                 message,
                 allowed_action_ids=allowed_action_ids or [],
+                conversation_context=conversation_context,
             )
 
             if selected_external_action and self._is_external_action_allowed(
@@ -220,7 +223,10 @@ class ChatToolContextService:
             and safe_tool_calls[0].get("name") == "execute_external_action"
             and self._is_successful_external_action(safe_tool_calls[0].get("metadata") or {})
         ):
-            direct_answer = self._build_direct_answer(last_external_action_data)
+            direct_answer = self._build_direct_answer(
+                last_external_action_data,
+                message=message,
+            )
 
         return {
             "context": context,
@@ -373,25 +379,17 @@ class ChatToolContextService:
         except (TypeError, ValueError):
             return False
 
-    def _build_direct_answer(self, data) -> str | None:
+    def _build_direct_answer(self, data, *, message: str) -> str | None:
         if not Settings.CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED:
             return None
 
         humanized = self.external_action_result_presenter.present(data)
-        lines = [
-            str(line).strip()
-            for line in (humanized.get("linhas") or [])
-            if str(line).strip()
-        ]
+        intent = ChatProductQueryIntentService.detect(message)
 
-        if not lines:
-            return None
-
-        title = str(humanized.get("titulo") or "").strip()
-        parts = [title] if title else []
-        parts.extend(lines)
-
-        return "\n\n".join(parts)
+        return ChatProductQueryIntentService.format_direct_answer(
+            humanized,
+            intent=intent,
+        )
 
     def _extract_external_action_summary(self, data):
         if not isinstance(data, dict):

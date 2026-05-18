@@ -69,4 +69,5 @@ def test_build_context_sets_direct_answer_for_successful_external_action():
     assert result["skipRag"] is True
     assert "10080055" in result["directAnswer"]
     assert "TERM. FASTON" in result["directAnswer"]
+    assert "Tipo ME" not in result["directAnswer"]
     assert len(result["toolCalls"]) == 1

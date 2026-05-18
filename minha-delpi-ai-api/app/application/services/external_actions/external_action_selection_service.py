@@ -1,5 +1,10 @@
 import re
 
+from app.domain.services.chat_product_query_intent_service import (
+    ChatProductQueryIntent,
+    ChatProductQueryIntentService,
+)
+
 
 class ExternalActionSelectionService:
     def __init__(self, repository, semantic_ranker=None):
@@ -10,16 +15,47 @@ class ExternalActionSelectionService:
         self,
         message: str,
         allowed_action_ids: list[str] | None = None,
+        conversation_context: str | None = None,
     ) -> dict | None:
         allowed_action_ids = allowed_action_ids or []
         normalized = str(message or "").lower()
-        product_code = self._extract_numeric_code(message)
+        product_code = ChatProductQueryIntentService.resolve_product_code(
+            message,
+            conversation_context,
+        )
+
+        if product_code and ChatProductQueryIntentService._looks_like_stock_question(
+            normalized
+        ):
+            selected = self._select_product_action(
+                message,
+                product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=ChatProductQueryIntent.STOCK,
+            )
+
+            if selected:
+                return selected
+
+        if product_code and ChatProductQueryIntentService._looks_like_description_question(
+            normalized
+        ):
+            selected = self._select_product_action(
+                message,
+                product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=ChatProductQueryIntent.DESCRIPTION,
+            )
+
+            if selected:
+                return selected
 
         if product_code and self._looks_like_product_question(normalized):
             return self._select_product_action(
                 message,
                 product_code,
                 allowed_action_ids=allowed_action_ids,
+                intent=ChatProductQueryIntent.FULL,
             )
 
         if self._looks_like_lmp_question(normalized):
@@ -197,6 +233,7 @@ class ExternalActionSelectionService:
         message: str,
         product_code: str,
         allowed_action_ids: list[str],
+        intent: str = ChatProductQueryIntent.FULL,
     ) -> dict | None:
         if not allowed_action_ids:
             return None
@@ -218,7 +255,7 @@ class ExternalActionSelectionService:
             if action.get("method") == "GET"
         ] or candidates
 
-        for action in self._rank_product_actions(candidates):
+        for action in self._rank_product_actions(candidates, intent=intent):
             parameters = self._build_product_parameters(action, product_code)
 
             if parameters:
@@ -267,23 +304,47 @@ class ExternalActionSelectionService:
 
         return None
 
-    def _rank_product_actions(self, candidates: list[dict]) -> list[dict]:
+    def _rank_product_actions(
+        self,
+        candidates: list[dict],
+        *,
+        intent: str = ChatProductQueryIntent.FULL,
+    ) -> list[dict]:
         def score(action: dict) -> int:
             haystack = " ".join(
                 str(action.get(key) or "")
                 for key in ["actionId", "operationId", "path", "summary", "description"]
             ).lower()
+            path = str(action.get("path") or "").lower()
 
             value = 0
 
-            if "/products/{code}/analyser" in haystack:
-                value += 100
+            if intent == ChatProductQueryIntent.STOCK:
+                if "/products/{code}/stock" in haystack or path.endswith("/stock"):
+                    value += 120
 
-            if "analyser" in haystack or "analyzer" in haystack:
-                value += 60
+                if "stock" in haystack or "estoque" in haystack:
+                    value += 40
 
-            if "/products/{code}" in haystack:
-                value += 25
+                if "analyser" in haystack:
+                    value -= 40
+
+            elif intent == ChatProductQueryIntent.DESCRIPTION:
+                if "analyser" in haystack or "analyzer" in haystack:
+                    value += 70
+
+                if "/products/{code}" in haystack and "stock" not in haystack:
+                    value += 20
+
+            else:
+                if "/products/{code}/analyser" in haystack:
+                    value += 100
+
+                if "analyser" in haystack or "analyzer" in haystack:
+                    value += 60
+
+                if "/products/{code}" in haystack:
+                    value += 25
 
             if "product" in haystack or "products" in haystack or "produto" in haystack:
                 value += 20
@@ -291,7 +352,9 @@ class ExternalActionSelectionService:
             if "search" in haystack or "buscar" in haystack or "busca" in haystack:
                 value += 8
 
-            if "stock" in haystack or "estoque" in haystack:
+            if intent != ChatProductQueryIntent.STOCK and (
+                "stock" in haystack or "estoque" in haystack
+            ):
                 value += 6
 
             if "structure" in haystack or "estrutura" in haystack:
@@ -343,12 +406,7 @@ class ExternalActionSelectionService:
         return parameters
 
     def _extract_numeric_code(self, message: str) -> str | None:
-        match = re.search(r"\b\d{4,}\b", message or "")
-
-        if not match:
-            return None
-
-        return match.group(0)
+        return ChatProductQueryIntentService.extract_product_code(message)
 
     def _list_allowed_candidates(
         self,

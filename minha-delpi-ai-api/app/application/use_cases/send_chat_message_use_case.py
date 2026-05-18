@@ -102,12 +102,15 @@ class SendChatMessageUseCase:
             attachment_ids=attachment_ids,
         )
 
+        conversation_context = self._build_conversation_context(previous_messages)
+
         tool_context = self._build_tool_context(
             request,
             allowed_action_ids=workspace_context.get("allowedActionIds"),
             capabilities=workspace_context.get("capabilities") or {},
             specialization=workspace_context.get("specialization"),
             fast_path=fast_path,
+            conversation_context=conversation_context,
         )
         tool_context = self._maybe_extend_tool_context(
             request=request,
@@ -333,6 +336,18 @@ class SendChatMessageUseCase:
         except Exception:
             return None
 
+    def _build_conversation_context(self, previous_messages, limit: int = 8) -> str:
+        parts: list[str] = []
+
+        for item in previous_messages[-limit:]:
+            role = str(getattr(item, "role", "") or "user").strip()
+            content = str(getattr(item, "content", "") or "").strip()
+
+            if content:
+                parts.append(f"{role}: {content}")
+
+        return "\n".join(parts)
+
     def _build_tool_context(
         self,
         request: SendChatMessageRequest,
@@ -340,6 +355,7 @@ class SendChatMessageUseCase:
         capabilities: dict | None = None,
         specialization: dict | None = None,
         fast_path: bool = False,
+        conversation_context: str | None = None,
     ) -> dict:
         if not request.access_token:
             return {
@@ -364,6 +380,7 @@ class SendChatMessageUseCase:
             actions_enabled=actions_enabled,
             allowed_tool_names=allowed_tool_names,
             fast_path=fast_path,
+            conversation_context=conversation_context,
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:
