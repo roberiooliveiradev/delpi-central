@@ -16,7 +16,7 @@ from app.application.use_cases.kaizen.get_kaizen_summary_use_case import (
 from app.application.use_cases.ppm.get_ppm_summary_use_case import (
     GetPpmSummaryUseCase,
 )
-from app.application.use_cases.strategic_indicators.period_resolution import (
+from app.application.shared.period_resolution import (
     ResolvedPeriod,
 )
 

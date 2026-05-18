@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.application.use_cases.strategic_indicators.period_resolution import (
+from app.application.shared.period_resolution import (
     ResolvedPeriod,
 )
 from app.infrastructure.persistence.portal_rh.hr_repositories.hr_metrics_repository import (

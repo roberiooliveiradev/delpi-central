@@ -7,7 +7,7 @@ from app.application.dto.transforma_mais.process_summary_request import ProcessS
 from app.application.use_cases.lmp.get_lmp_dashboard_summary_use_case import (
     GetLMPDashboardSummaryUseCase,
 )
-from app.application.use_cases.strategic_indicators.period_resolution import (
+from app.application.shared.period_resolution import (
     ResolvedPeriod,
 )
 from app.application.use_cases.transforma_mais.get_process_summary_use_case import (

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.application.dto.financial.get_rol_request import GetRolRequest
-from app.application.use_cases.strategic_indicators.period_resolution import (
+from app.application.shared.period_resolution import (
     ResolvedPeriod,
 )
 from app.domain.ports.financial.financial_query_repository_port import (

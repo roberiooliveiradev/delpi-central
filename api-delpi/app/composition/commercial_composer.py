@@ -9,10 +9,6 @@ from app.application.use_cases.commercial.get_new_clients_average_use_case impor
 from app.infrastructure.persistence.totvs.commercial_repositories.new_clients_average_repository import NewClientsAverageRepository
 from app.application.use_cases.commercial.get_new_clients_rol_pct_use_case import GetNewClientsRolPctUseCase
 from app.infrastructure.persistence.totvs.commercial_repositories.new_clients_rol_pct_repository import NewClientsRolPctRepository
-from app.infrastructure.providers.strategic_indicators.commercial_indicators_snapshot_provider import (
-    CommercialIndicatorsSnapshotProvider,
-)
-
 DEFAULT_HEAD_OFFICE_TARGET = 1.0
 DEFAULT_BRANCH_TARGET = 1.0
 
@@ -58,10 +54,4 @@ def build_commercial_metrics_snapshot_service() -> CommercialMetricsSnapshotServ
         sales_conversion_rate_use_case=build_get_sales_conversion_rate_use_case(),
         new_clients_average_use_case=build_get_new_clients_average_use_case(),
         new_clients_rol_pct_use_case=build_get_new_clients_rol_pct_use_case(),
-    )
-
-
-def build_commercial_indicators_snapshot_provider() -> CommercialIndicatorsSnapshotProvider:
-    return CommercialIndicatorsSnapshotProvider(
-        commercial_metrics_snapshot_service=build_commercial_metrics_snapshot_service(),
     )

@@ -34,11 +34,6 @@ from app.infrastructure.persistence.totvs.ppm_repositories.ppm_query_repository 
 from app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
 )
-from app.infrastructure.providers.strategic_indicators.quality_indicators_snapshot_provider import (
-    QualityIndicatorsSnapshotProvider,
-)
-
-
 def _build_google_sheets_client() -> GoogleSheetsClient:
     return GoogleSheetsClient(timeout=int(settings.GOOGLE_SHEETS_TIMEOUT))
 
@@ -101,8 +96,3 @@ def build_quality_metrics_snapshot_service() -> QualityMetricsSnapshotService:
         audit_5s_summary_use_case=build_get_audit_5s_summary_use_case(),
     )
 
-
-def build_get_quality_indicators_snapshot_port() -> QualityIndicatorsSnapshotProvider:
-    return QualityIndicatorsSnapshotProvider(
-        quality_metrics_snapshot_service=build_quality_metrics_snapshot_service(),
-    )

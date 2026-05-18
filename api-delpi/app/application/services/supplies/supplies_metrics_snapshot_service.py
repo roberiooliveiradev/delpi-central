@@ -8,7 +8,7 @@ from app.application.dto.supplies.get_inventory_turnover_request import (
 )
 from app.application.dto.supplies.get_otd_request import GetOTDRequest
 from app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
-from app.application.use_cases.strategic_indicators.period_resolution import (
+from app.application.shared.period_resolution import (
     ResolvedPeriod,
 )
 from app.application.use_cases.supplies.get_cpv_use_case import GetCPVUseCase

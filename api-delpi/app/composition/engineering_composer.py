@@ -30,9 +30,6 @@ from app.infrastructure.persistence.totvs.lmp_repositories.lmp_query_repository 
 from app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
 )
-from app.infrastructure.providers.strategic_indicators.engineering_indicators_snapshot_provider import (
-    EngineeringIndicatorsSnapshotProvider,
-)
 from app.config import settings
 
 
@@ -100,11 +97,6 @@ def build_engineering_metrics_snapshot_service() -> EngineeringMetricsSnapshotSe
         transforma_mais_summary_use_case=build_engineering_get_transforma_mais_summary_use_case(),
     )
 
-
-def build_engineering_indicators_snapshot_provider() -> EngineeringIndicatorsSnapshotProvider:
-    return EngineeringIndicatorsSnapshotProvider(
-        engineering_metrics_snapshot_service=build_engineering_metrics_snapshot_service(),
-    )
 
 def build_engineering_get_lmp_dashboard_summary_use_case() -> GetLMPDashboardSummaryUseCase:
     return GetLMPDashboardSummaryUseCase(_build_lmp_repository())

@@ -24,7 +24,7 @@ from app.application.use_cases.commercial.get_rol_target_pct_use_case import (
 from app.application.use_cases.commercial.get_sales_conversion_rate_use_case import (
     GetSalesConversionRateUseCase,
 )
-from app.application.use_cases.strategic_indicators.period_resolution import (
+from app.application.shared.period_resolution import (
     ResolvedPeriod,
 )
 

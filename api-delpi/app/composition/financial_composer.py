@@ -19,10 +19,6 @@ from app.infrastructure.persistence.totvs.financial_repositories.financial_repos
 from app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
 )
-from app.infrastructure.providers.strategic_indicators.financial_indicators_snapshot_provider import (
-    FinancialIndicatorsSnapshotProvider,
-)
-
 from app.application.use_cases.financial.get_financial_ebitda_pct_use_case import (
     GetFinancialEbitdaPctUseCase,
 )
@@ -76,12 +72,6 @@ def build_financial_metrics_snapshot_service() -> FinancialMetricsSnapshotServic
         fixed_cost_repository=_build_financial_fixed_cost_repository(client),
         receivables_repository=_build_financial_receivables_repository(client),
         financial_query_repository=FinancialRepository(),
-    )
-
-
-def build_get_financial_indicators_snapshot_port() -> FinancialIndicatorsSnapshotProvider:
-    return FinancialIndicatorsSnapshotProvider(
-        financial_metrics_snapshot_service=build_financial_metrics_snapshot_service(),
     )
 
 
