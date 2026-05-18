@@ -131,7 +131,8 @@ PROIBIDO:
 - [x] 3.1 Lock no cache do provider
 - [x] 3.2 Períodos paralelos com factory
 - [x] 3.3 Pool pyodbc TOTVS (`connection_pool.py`, `TOTVS_POOL_*`)
-- [ ] 3.4 Coletores thin (pendente)
+- [x] 3.4 Coletores thin — produção consolidada (`get_consolidated_snapshot` → passagem única)
+- [ ] 3.4b Engineering LMP / demais domínios (pendente)
 - [ ] 3.5 Warm-up cron (pendente)
 
 ### Fase 4 — MFE (`plugins/strategic-indicators`)
@@ -188,3 +189,4 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-18 | Fix serialização `Decimal`; trends com períodos paralelos; roadmap atualizado |
 | 2026-05-18 | MFE: cache leitura, prefetch, split presentation, SWR em todas as páginas do painel |
 | 2026-05-18 | Pool pyodbc TOTVS com release no `BaseRepository` e discard em erro |
+| 2026-05-18 | Produção consolidada: elimina N×`get_unit_snapshot` por filial (thin SI) |

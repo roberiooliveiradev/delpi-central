@@ -117,105 +117,12 @@ class ProductionMetricsSnapshotService:
         start_date: str | None,
         end_date: str | None,
     ) -> ProductionUnitMetricsSnapshot:
-        key = (None, start_date, end_date)
-        cached = self._cache.get(key)
-        if cached is not None:
-            return cached
-
-        production_request = ProductionRequest(
+        """Snapshot consolidado em passagem única (ROL + planilhas + OEE + OTD)."""
+        return self._build_snapshot(
             branch=None,
             start_date=start_date,
             end_date=end_date,
         )
-
-        direct_labor_items = self._direct_labor_repository.get_direct_labor_cost(
-            production_request
-        )
-        production_cost_items = self._production_cost_repository.get_production_cost(
-            production_request
-        )
-        depreciation_items = self._depreciation_repository.get_depreciation_cost(
-            production_request
-        )
-
-        oee_rows = self._overall_equipment_effectiveness_repository.list_overall_equipment_effectiveness_by_branch(
-            production_request
-        )
-        otd_rows = self._on_time_delivery_repository.list_on_time_delivery_by_branch(
-            production_request
-        )
-
-        sheet_branches = self._resolve_branches_from_items(
-            direct_labor_items,
-            production_cost_items,
-            depreciation_items,
-        )
-        totvs_branches = self._resolve_branches_from_rows(
-            oee_rows,
-            otd_rows,
-        )
-
-        branches = self._merge_branches(sheet_branches, totvs_branches)
-
-        if not branches:
-            snapshot = ProductionUnitMetricsSnapshot(
-                branch=None,
-                start_date=start_date,
-                end_date=end_date,
-                rol_with_ipi=0.0,
-                average_direct_labor_cost=0.0,
-                average_production_cost=0.0,
-                average_depreciation_cost=0.0,
-                direct_labor_cost_pct=None,
-                production_cost_pct=None,
-                depreciation_pct=None,
-                oee_pct=None,
-                otd_pct=None,
-            )
-            self._cache[key] = snapshot
-            return snapshot
-
-        branch_snapshots = [
-            self.get_unit_snapshot(
-                branch=branch_code,
-                start_date=start_date,
-                end_date=end_date,
-            )
-            for branch_code in branches
-        ]
-
-        snapshot = ProductionUnitMetricsSnapshot(
-            branch=None,
-            start_date=start_date,
-            end_date=end_date,
-            rol_with_ipi=sum(item.rol_with_ipi for item in branch_snapshots),
-            average_direct_labor_cost=self._average_cost(
-                [item.average_direct_labor_cost for item in branch_snapshots]
-            ),
-            average_production_cost=self._average_cost(
-                [item.average_production_cost for item in branch_snapshots]
-            ),
-            average_depreciation_cost=self._average_cost(
-                [item.average_depreciation_cost for item in branch_snapshots]
-            ),
-            direct_labor_cost_pct=self._average_optional_pct(
-                [item.direct_labor_cost_pct for item in branch_snapshots]
-            ),
-            production_cost_pct=self._average_optional_pct(
-                [item.production_cost_pct for item in branch_snapshots]
-            ),
-            depreciation_pct=self._average_optional_pct(
-                [item.depreciation_pct for item in branch_snapshots]
-            ),
-            oee_pct=self._average_optional_pct(
-                [item.oee_pct for item in branch_snapshots]
-            ),
-            otd_pct=self._average_optional_pct(
-                [item.otd_pct for item in branch_snapshots]
-            ),
-        )
-        self._cache[key] = snapshot
-        return snapshot
 
     def _build_snapshot(
         self,
@@ -294,59 +201,9 @@ class ProductionMetricsSnapshotService:
         self._cache[key] = snapshot
         return snapshot
 
-    def _resolve_branches_from_items(self, *collections) -> list[str]:
-        branches = set()
-
-        for collection in collections:
-            for item in collection:
-                branch = getattr(item, "branch", None)
-                if branch is None:
-                    continue
-
-                normalized_branch = str(branch).strip()
-                if normalized_branch:
-                    branches.add(normalized_branch)
-
-        return sorted(branches)
-
-    def _resolve_branches_from_rows(self, *collections) -> list[str]:
-        branches = set()
-
-        for collection in collections:
-            for row in collection:
-                branch = row.get("branch")
-                if branch is None:
-                    continue
-
-                normalized_branch = str(branch).strip()
-                if normalized_branch:
-                    branches.add(normalized_branch)
-
-        return sorted(branches)
-
-    def _merge_branches(self, *collections: list[str]) -> list[str]:
-        branches = set()
-
-        for collection in collections:
-            for branch in collection:
-                normalized_branch = str(branch).strip()
-                if normalized_branch:
-                    branches.add(normalized_branch)
-
-        return sorted(branches)
-
     def _average_cost(self, values: list[float]) -> float:
         if not values:
             return 0.0
-        return sum(values) / len(values)
-
-    def _average_optional_pct(self, values: list[float | None]) -> float | None:
-        if not values:
-            return None
-
-        if any(value is None for value in values):
-            return None
-
         return sum(values) / len(values)
 
     def _calculate_pct(
