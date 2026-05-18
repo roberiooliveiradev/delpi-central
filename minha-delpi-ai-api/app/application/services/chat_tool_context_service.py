@@ -33,7 +33,15 @@ class ChatToolContextService:
         allowed_action_ids: list[str] | None = None,
         actions_enabled: bool = True,
         allowed_tool_names: list[str] | None = None,
+        fast_path: bool = False,
     ) -> dict:
+        if fast_path:
+            return {
+                "context": "",
+                "toolCalls": [],
+                "nativeToolCalling": {"used": False, "providerSupports": False},
+            }
+
         native_meta = {"used": False, "providerSupports": False}
         native_selections: list[dict] = []
 

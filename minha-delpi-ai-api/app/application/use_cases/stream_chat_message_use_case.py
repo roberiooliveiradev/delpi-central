@@ -26,6 +26,7 @@ from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepositoryPort
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
+from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
 
@@ -107,15 +108,26 @@ class StreamChatMessageUseCase:
         history_summary, history = self._prepare_history(previous_messages)
         pipeline_timings = ChatPipelineTimings()
 
-        rag = self.rag_context_service.build_context(
+        attachment_ids = getattr(request, "attachment_ids", None)
+        fast_path = ChatFastPathService.should_use(
             message,
-            filters=self.knowledge_scope_service.build_filters(
-                user_id=user_id,
-                session=session,
-                workspace_context=workspace_context,
-                attachment_ids=getattr(request, "attachment_ids", None),
-            ),
+            enabled=Settings.CHAT_FAST_PATH_ENABLED,
+            max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
+            attachment_ids=attachment_ids,
         )
+
+        if fast_path:
+            rag = {"context": "", "sources": []}
+        else:
+            rag = self.rag_context_service.build_context(
+                message,
+                filters=self.knowledge_scope_service.build_filters(
+                    user_id=user_id,
+                    session=session,
+                    workspace_context=workspace_context,
+                    attachment_ids=attachment_ids,
+                ),
+            )
         sources = rag["sources"]
         pipeline_timings.mark("rag_done")
 
@@ -124,6 +136,7 @@ class StreamChatMessageUseCase:
             allowed_action_ids=workspace_context.get("allowedActionIds"),
             capabilities=workspace_context.get("capabilities") or {},
             specialization=workspace_context.get("specialization"),
+            fast_path=fast_path,
         )
         tool_context = self._maybe_extend_tool_context(
             request=request,
@@ -566,6 +579,7 @@ class StreamChatMessageUseCase:
         allowed_action_ids: list[str] | None = None,
         capabilities: dict | None = None,
         specialization: dict | None = None,
+        fast_path: bool = False,
     ) -> dict:
         if not request.access_token:
             return {
@@ -589,6 +603,7 @@ class StreamChatMessageUseCase:
             allowed_action_ids=allowed_action_ids,
             actions_enabled=actions_enabled,
             allowed_tool_names=allowed_tool_names,
+            fast_path=fast_path,
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:

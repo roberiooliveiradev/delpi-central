@@ -117,6 +117,10 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `OLLAMA_NUM_PARALLEL` / `OLLAMA_MAX_LOADED_MODELS` / `OLLAMA_KEEP_ALIVE` | Serviço `ollama` no Compose |
 | `LLM_MAX_TOKENS` | `num_predict` Ollama (ex.: `768`) |
 | `CHAT_SESSION_TITLE_LLM_ENABLED` | `false` em prod recomendado (título rápido + refine opcional em background) |
+| `CHAT_FAST_PATH_ENABLED` | `true` — pula RAG/tools em cumprimentos curtos (`olá`, `oi`) |
+| `CHAT_TOOL_ROUTER_ENABLED` | `false` em CPU — evita LLM extra antes de cada resposta |
+| `CHAT_RAG_HYBRID_ENABLED` | `false` em CPU — evita embedding `bge-m3` em toda pergunta |
+| `CHAT_RAG_PREFER_KEYWORD_SEARCH` | `true` com hybrid off — busca por FTS sem vetor |
 | `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` | Ex.: `bge-m3` |
 | `RATE_LIMIT_*` | Limites por janela |
 | `KNOWLEDGE_*` | Limites de ingestão RAG |

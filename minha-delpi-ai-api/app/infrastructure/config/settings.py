@@ -38,7 +38,7 @@ class Settings:
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
     OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "300"))
-    OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
+    OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "2048"))
     OLLAMA_NUM_THREAD = int(os.getenv("OLLAMA_NUM_THREAD", "0"))
 
     VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://vllm:8000/v1")
@@ -126,8 +126,12 @@ class Settings:
     )
 
     CHAT_TOOL_ROUTER_ENABLED = (
-        os.getenv("CHAT_TOOL_ROUTER_ENABLED", "true").lower() == "true"
+        os.getenv("CHAT_TOOL_ROUTER_ENABLED", "false").lower() == "true"
     )
+    CHAT_FAST_PATH_ENABLED = (
+        os.getenv("CHAT_FAST_PATH_ENABLED", "true").lower() == "true"
+    )
+    CHAT_FAST_PATH_MAX_CHARS = int(os.getenv("CHAT_FAST_PATH_MAX_CHARS", "48"))
     CHAT_TOOL_ROUTER_MAX_ACTIONS = int(os.getenv("CHAT_TOOL_ROUTER_MAX_ACTIONS", "20"))
 
     CHAT_HISTORY_SUMMARY_ENABLED = (
@@ -145,7 +149,10 @@ class Settings:
     )
 
     CHAT_RAG_HYBRID_ENABLED = (
-        os.getenv("CHAT_RAG_HYBRID_ENABLED", "true").lower() == "true"
+        os.getenv("CHAT_RAG_HYBRID_ENABLED", "false").lower() == "true"
+    )
+    CHAT_RAG_PREFER_KEYWORD_SEARCH = (
+        os.getenv("CHAT_RAG_PREFER_KEYWORD_SEARCH", "true").lower() == "true"
     )
     CHAT_RAG_HYBRID_VECTOR_WEIGHT = float(
         os.getenv("CHAT_RAG_HYBRID_VECTOR_WEIGHT", "0.7")

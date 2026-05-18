@@ -34,6 +34,13 @@ class SearchKnowledgeUseCase:
 
         if self._hybrid_enabled():
             chunks = self._hybrid_search(query, limit=limit, filters=filters)
+        elif Settings.CHAT_RAG_PREFER_KEYWORD_SEARCH and self._fts_enabled():
+            chunks = self.knowledge_repository.search_keyword_chunks(
+                query,
+                limit=limit,
+                filters=filters,
+                use_fts=True,
+            )
         else:
             chunks = self._vector_search(query, limit=limit, filters=filters)
 
