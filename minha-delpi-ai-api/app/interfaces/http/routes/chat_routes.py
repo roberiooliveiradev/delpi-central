@@ -2045,7 +2045,13 @@ def stream_message(session_id: str):
             for event in use_case.stream(request_dto):
                 event_type = event.get("type", "message")
 
-                if event_type == "sources":
+                if event_type == "status":
+                    yield _sse(
+                        "status",
+                        {"message": event.get("message", "")},
+                    )
+
+                elif event_type == "sources":
                     yield _sse("sources", {"sources": event.get("sources", [])})
 
                 elif event_type == "tool_calls":

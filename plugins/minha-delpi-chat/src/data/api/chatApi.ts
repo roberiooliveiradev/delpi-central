@@ -43,6 +43,7 @@ type ChatApiOptions = {
 };
 
 type StreamCallbacks = {
+  onStatus?: (message: string) => void;
   onSources?: (sources: SendChatMessageResponse["sources"]) => void;
   onToolCalls?: (toolCalls: SendChatMessageResponse["toolCalls"]) => void;
   onToken?: (token: string) => void;
@@ -77,16 +78,54 @@ async function getAuthHeaders(options: ChatApiOptions): Promise<HeadersInit> {
   };
 }
 
+function extractApiErrorMessage(
+  payload: unknown,
+  response: Response,
+  fallback: string,
+): string {
+  if (payload && typeof payload === "object") {
+    const errors = (payload as { errors?: Array<{ message?: string }> }).errors;
+
+    if (errors?.[0]?.message) {
+      return errors[0].message;
+    }
+
+    const message = (payload as { message?: string }).message;
+
+    if (message) {
+      return message;
+    }
+  }
+
+  return `${fallback} (HTTP ${response.status})`;
+}
+
 async function parseJsonResponse<T>(response: Response): Promise<T> {
-  const payload = await response.json().catch(() => null);
+  const raw = await response.text();
+  let payload: unknown = null;
+
+  if (raw) {
+    try {
+      payload = JSON.parse(raw) as unknown;
+    } catch {
+      payload = null;
+    }
+  }
 
   if (!response.ok) {
-    const message =
-      payload?.errors?.[0]?.message ??
-      payload?.message ??
-      "Erro ao comunicar com o Minha DELPI Chat.";
+    if (!payload && raw.trim()) {
+      throw new Error(
+        `Erro ao comunicar com o Minha DELPI Chat. (HTTP ${response.status}: ${raw.trim().slice(0, 180)})`,
+      );
+    }
 
-    throw new Error(message);
+    throw new Error(
+      extractApiErrorMessage(
+        payload,
+        response,
+        "Erro ao comunicar com o Minha DELPI Chat.",
+      ),
+    );
   }
 
   return payload as T;
@@ -200,17 +239,37 @@ export async function streamChatMessage(
   );
 
   if (!response.ok || !response.body) {
-    const errorPayload = await response.json().catch(() => null);
-    const message =
-      errorPayload?.errors?.[0]?.message ??
-      "Erro ao iniciar streaming do Minha DELPI Chat.";
+    const raw = await response.text();
+    let errorPayload: unknown = null;
 
-    throw new Error(message);
+    if (raw) {
+      try {
+        errorPayload = JSON.parse(raw) as unknown;
+      } catch {
+        errorPayload = null;
+      }
+    }
+
+    if (!errorPayload && raw.trim()) {
+      throw new Error(
+        `Erro ao iniciar streaming do Minha DELPI Chat. (HTTP ${response.status}: ${raw.trim().slice(0, 180)})`,
+      );
+    }
+
+    throw new Error(
+      extractApiErrorMessage(
+        errorPayload,
+        response,
+        "Erro ao iniciar streaming do Minha DELPI Chat.",
+      ),
+    );
   }
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder("utf-8");
   let buffer = "";
+  let receivedDone = false;
+  let streamErrorMessage: string | null = null;
 
   while (true) {
     const { value, done } = await reader.read();
@@ -247,6 +306,12 @@ export async function streamChatMessage(
         continue;
       }
 
+      if (event === "status") {
+        callbacks.onStatus?.(
+          typeof data.message === "string" ? data.message : "",
+        );
+      }
+
       if (event === "sources") {
         callbacks.onSources?.((data.sources as SendChatMessageResponse["sources"]) ?? []);
       }
@@ -260,19 +325,30 @@ export async function streamChatMessage(
       }
 
       if (event === "done") {
+        receivedDone = true;
         callbacks.onDone?.(data as SendChatMessageResponse);
       }
 
       if (event === "error") {
-        callbacks.onError?.(
+        streamErrorMessage =
           typeof data.detail === "string" && data.detail.trim()
             ? data.detail
             : typeof data.message === "string"
               ? data.message
-              : "Erro durante streaming.",
-        );
+              : "Erro durante streaming.";
+        callbacks.onError?.(streamErrorMessage);
       }
     }
+  }
+
+  if (streamErrorMessage) {
+    throw new Error(streamErrorMessage);
+  }
+
+  if (!receivedDone) {
+    throw new Error(
+      "A conexão de streaming foi encerrada antes da resposta ser concluída.",
+    );
   }
 }
 

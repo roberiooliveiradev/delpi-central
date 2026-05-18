@@ -2,26 +2,24 @@ import re
 import unicodedata
 
 
-_SMALL_TALK_RE = re.compile(
-    r"^("
-    r"ol[aá]|oi|opa|eae|e a[ií]|hey|hi|hello|"
+_SMALL_TALK_PATTERN = (
+    r"^(ol[aá]|oi|opa|eae|e a[ií]|hey|hi|hello|"
     r"bom dia|boa tarde|boa noite|"
     r"tudo bem|td bem|como vai|blz|beleza|"
     r"obrigad[oa]|valeu|vlw|brigad[oa]|"
     r"ok|okay|sim|n[aã]o|nao|"
-    r"at[eé]|tchau|flw|falou"
-    r")"
-    r"[\s!?.,:;…]*$"
-    re.IGNORECASE,
+    r"at[eé]|tchau|flw|falou)"
+    r"[\s!?.,:;]*$"
 )
+_SMALL_TALK_RE = re.compile(_SMALL_TALK_PATTERN, re.IGNORECASE)
 
-_KNOWLEDGE_HINT_RE = re.compile(
+_KNOWLEDGE_HINT_PATTERN = (
     r"\?|"
     r"\b(como|quando|onde|qual|quais|quanto|quantos|por que|porque|"
     r"explique|detalhe|liste|mostre|busque|consulte|informa|produto|"
-    r"estoque|pedido|nota|sql|api|relat[oó]rio|documento)\b",
-    re.IGNORECASE,
+    r"estoque|pedido|nota|sql|api|relat[oó]rio|documento)\b"
 )
+_KNOWLEDGE_HINT_RE = re.compile(_KNOWLEDGE_HINT_PATTERN, re.IGNORECASE)
 
 
 def _normalize_text(value: str) -> str:

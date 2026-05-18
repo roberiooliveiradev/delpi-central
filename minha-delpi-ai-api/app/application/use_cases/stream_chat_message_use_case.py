@@ -89,6 +89,11 @@ class StreamChatMessageUseCase:
         if session.user_id != user_id:
             raise ChatSessionAccessDeniedError()
 
+        yield {
+            "type": "status",
+            "message": "Conectado. Preparando resposta...",
+        }
+
         workspace_context = self._build_workspace_context(session, user_id)
         attachments = self._get_message_attachments(request, user_id, session_id)
 

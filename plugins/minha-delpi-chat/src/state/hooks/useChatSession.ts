@@ -536,6 +536,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         message,
         context: sessionForMessage.context ?? "geral",
         attachmentIds,
+        onStatus: (statusMessage) => {
+          if (statusMessage.trim()) {
+            setStreamingStatus(statusMessage);
+          }
+        },
         onSources: (sources) => {
           setStreamingSources(sources);
           setStreamingStatus(
