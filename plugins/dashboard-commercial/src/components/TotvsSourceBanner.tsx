@@ -7,8 +7,8 @@ export function TotvsSourceBanner() {
       <div>
         <strong>Origem: TOTVS Protheus</strong>
         <p>
-          Metas de ROL (matriz 01 e filial 02), conversão de vendas e indicadores
-          de clientes novos.
+          ROL em reais (matriz 01 e filial 02), taxa de conversão de vendas e
+          indicadores de clientes novos.
         </p>
       </div>
     </div>

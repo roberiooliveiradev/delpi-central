@@ -17,19 +17,21 @@ export function getFirstDayOfMonthInputValue(reference = new Date()): string {
   return `${year}-${month}-01`;
 }
 
-export function formatPeriodLabel(
-  dateStart?: string,
-  dateEnd?: string
-): string {
-  if (!dateStart && !dateEnd) return "Período não filtrado";
-  if (dateStart && dateEnd) return `${dateStart} → ${dateEnd}`;
-  if (dateStart) return `A partir de ${dateStart}`;
-  return `Até ${dateEnd}`;
-}
-
 export function formatDisplayDate(value: string | null | undefined): string {
   if (!value) return "—";
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return value;
   return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+export function formatPeriodLabel(
+  dateStart?: string,
+  dateEnd?: string
+): string {
+  if (!dateStart && !dateEnd) return "Período não filtrado";
+  if (dateStart && dateEnd) {
+    return `${formatDisplayDate(dateStart)} — ${formatDisplayDate(dateEnd)}`;
+  }
+  if (dateStart) return `A partir de ${formatDisplayDate(dateStart)}`;
+  return `Até ${formatDisplayDate(dateEnd)}`;
 }
