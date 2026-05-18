@@ -50,6 +50,10 @@ def previous_period(period: ResolvedPeriod) -> ResolvedPeriod:
     )
 
 
+def current_competence() -> str:
+    return date.today().strftime("%Y-%m")
+
+
 def previous_competence(competence: str) -> str:
     year_str, month_str = competence.split("-")
     year = int(year_str)

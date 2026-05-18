@@ -134,8 +134,8 @@ PROIBIDO:
 - [x] 3.4 Coletores thin — produção consolidada (`get_consolidated_snapshot` → passagem única)
 - [x] 3.4b Transforma+ — cache TTL de `load_raw_data` (6 abas)
 - [x] 3.4c Financial — `list_rol_by_branch` (1 query TOTVS por período)
-- [ ] 3.4d LMP agregado SQL (pendente)
-- [ ] 3.5 Warm-up cron (pendente)
+- [x] 3.4d LMP — cache TTL do resumo + `resolve_dashboard_status` (SI sem lead time)
+- [x] 3.5 Warm-up — `scripts/warmup_si_snapshots.py` + `SI_WARMUP_ON_STARTUP`
 
 ### Fase 4 — MFE (`plugins/strategic-indicators`)
 
@@ -158,6 +158,8 @@ PROIBIDO:
 | `LOG_LEVEL` | `INFO` | Logs `strategic_indicators.*` |
 | `TOTVS_POOL_ENABLED` | `true` | Reutiliza conexões pyodbc entre queries |
 | `TOTVS_POOL_MAX_SIZE` | `8` | Máx. conexões simultâneas (7 deptos + margem) |
+| `SI_WARMUP_ON_STARTUP` | `false` | Thread em background aquece executive + trends no boot |
+| `SI_WARMUP_TRENDS_MONTHS` | `6` | Meses pré-carregados no warm-up |
 
 ---
 
@@ -193,3 +195,5 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-18 | Pool pyodbc TOTVS com release no `BaseRepository` e discard em erro |
 | 2026-05-18 | Produção consolidada: elimina N×`get_unit_snapshot` por filial (thin SI) |
 | 2026-05-18 | Financial: `list_rol_by_branch` substitui N×`get_rol` no snapshot SI |
+| 2026-05-18 | LMP: cache TTL do dashboard summary; SI ignora avg lead time |
+| 2026-05-18 | Warm-up executive + trends (`warmup_si_snapshots.py`, `SI_WARMUP_ON_STARTUP`) |

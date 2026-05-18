@@ -37,6 +37,13 @@ class Settings:
     SI_SNAPSHOT_CACHE_TTL_SECONDS: int = int(
         _get_env("SI_SNAPSHOT_CACHE_TTL_SECONDS", default="600") or "600"
     )
+    SI_WARMUP_ON_STARTUP: bool = (
+        str(_get_env("SI_WARMUP_ON_STARTUP", default="false") or "false").lower()
+        in {"1", "true", "yes", "on"}
+    )
+    SI_WARMUP_TRENDS_MONTHS: int = int(
+        _get_env("SI_WARMUP_TRENDS_MONTHS", default="6") or "6"
+    )
 
     # ==========================
     # Auth / Keycloak
