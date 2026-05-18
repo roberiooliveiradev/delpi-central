@@ -1,6 +1,6 @@
 # Gestão de agentes — melhorias
 
-**Status:** onda 1 implementada (maio/2026)
+**Status:** ondas 1 e 2 implementadas (maio/2026)
 
 ## Onda 1 — edição confiável
 
@@ -12,13 +12,13 @@
 | 1.4 | Toggle agente ativo + compartilhamento no builder (owner) | Concluído |
 | 1.5 | Lista com badges de papel e inativo | Concluído |
 
-## Onda 2 — planejada
+## Onda 2 — compartilhamento, preview e listagem
 
-| # | Entrega |
-|---|---------|
-| 2.1 | `GET/DELETE /chat/agents/{id}/shares` — listar e revogar acessos |
-| 2.2 | Busca de usuário para compartilhar (em vez de UUID manual) |
-| 2.3 | Preview real do agente (`POST /admin/agent/simulate` no builder) |
-| 2.4 | Especialização RAG acessível do builder para admins |
-| 2.5 | Listar agentes desativados para gestores (`?includeDisabled=true`) |
-| 2.6 | Tratar colisão de `key` com HTTP 409 |
+| # | Entrega | Status |
+|---|---------|--------|
+| 2.1 | `GET/DELETE /chat/agents/{id}/shares` — listar e revogar acessos | Concluído |
+| 2.2 | Busca de usuário para compartilhar (em vez de UUID manual) | Pendente |
+| 2.3 | Preview real (`POST /chat/agents/{id}/preview`) no builder | Concluído |
+| 2.4 | Especialização RAG acessível do builder (admin, aba Agentes) | Concluído |
+| 2.5 | Listar agentes desativados (`?includeDisabled=true`) | Concluído |
+| 2.6 | Colisão de `key` com HTTP 409 | Concluído |

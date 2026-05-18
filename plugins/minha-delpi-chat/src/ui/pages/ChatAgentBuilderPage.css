@@ -444,7 +444,8 @@
 }
 
 .mdc-chat-agent-builder__action-list,
-.mdc-chat-agent-builder__source-list {
+.mdc-chat-agent-builder__source-list,
+.mdc-chat-agent-builder__share-list {
   display: grid;
   gap: 0.35rem;
   max-height: 20rem;
@@ -453,7 +454,8 @@
 }
 
 .mdc-chat-agent-builder__action-list label,
-.mdc-chat-agent-builder__source-list article {
+.mdc-chat-agent-builder__source-list article,
+.mdc-chat-agent-builder__share-list article {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -465,7 +467,9 @@
 .mdc-chat-agent-builder__action-list strong,
 .mdc-chat-agent-builder__action-list small,
 .mdc-chat-agent-builder__source-list strong,
-.mdc-chat-agent-builder__source-list small {
+.mdc-chat-agent-builder__source-list small,
+.mdc-chat-agent-builder__share-list strong,
+.mdc-chat-agent-builder__share-list small {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -473,7 +477,8 @@
 }
 
 .mdc-chat-agent-builder__action-list small,
-.mdc-chat-agent-builder__source-list small {
+.mdc-chat-agent-builder__source-list small,
+.mdc-chat-agent-builder__share-list small {
   color: var(--mdc-text-muted);
 }
 

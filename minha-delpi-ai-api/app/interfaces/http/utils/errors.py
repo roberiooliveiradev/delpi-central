@@ -27,5 +27,9 @@ def not_found(message: str = "Resource not found"):
     return error_response(404, "not_found", message)
 
 
+def conflict(message: str = "Conflict"):
+    return error_response(409, "conflict", message)
+
+
 def server_error(message: str = "Internal server error"):
     return error_response(500, "internal_error", message)

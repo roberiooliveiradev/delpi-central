@@ -40,7 +40,7 @@ function getAgentIcebreakerCount(agent: { metadata: Record<string, unknown> | nu
 
 type ChatPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
-  onOpenAdmin?: () => void;
+  onOpenAdmin?: (agentId?: string) => void;
 };
 
 
@@ -116,6 +116,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     addProject,
     editProject,
     removeProject,
+    loadAgents,
   } = useChatWorkspace({ getAccessToken });
 
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
@@ -650,6 +651,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               onCreateAgent={addAgent}
               onUpdateAgent={editAgent}
               onDeleteAgent={removeAgent}
+              onReloadAgents={loadAgents}
+              onOpenRagAdmin={onOpenAdmin}
               getAccessToken={getAccessToken}
             />
           </section>

@@ -13,7 +13,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   createAgentTextSource,
@@ -21,12 +21,16 @@ import {
   getChatAgent,
   listAgentSources,
   listChatAgentActionProviders,
+  listChatAgentShares,
+  previewChatAgent,
+  revokeChatAgentShare,
   shareChatAgent,
   uploadAgentSource,
 } from "../../data/api/chatApi";
 import type {
   ChatAgent,
   ChatAgentActionProvider,
+  ChatAgentShare,
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
 
@@ -63,6 +67,7 @@ type ChatAgentBuilderPageProps = {
   ) => Promise<ChatAgent | null>;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
   canManageOfficialAgents?: boolean;
+  onOpenRagAdmin?: (agentId: string) => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
@@ -125,6 +130,7 @@ export function ChatAgentBuilderPage({
   onUpdateAgent,
   onDeleteAgent,
   canManageOfficialAgents = false,
+  onOpenRagAdmin,
   getAccessToken,
 }: ChatAgentBuilderPageProps) {
   const isEditing = Boolean(agent);
@@ -160,6 +166,10 @@ export function ChatAgentBuilderPage({
   const [shareRole, setShareRole] = useState<"viewer" | "editor">("viewer");
   const [isSharing, setIsSharing] = useState(false);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
+  const [agentShares, setAgentShares] = useState<ChatAgentShare[]>([]);
+  const [isLoadingShares, setIsLoadingShares] = useState(false);
+  const [revokingShareUserId, setRevokingShareUserId] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isLoadingAgent, setIsLoadingAgent] = useState(false);
   const [icebreakers, setIcebreakers] = useState<string[]>(
     getAgentIcebreakers(agent).length > 0 ? getAgentIcebreakers(agent) : [""],
@@ -404,23 +414,93 @@ export function ChatAgentBuilderPage({
     setLocalError(null);
   }
 
-  function sendPreviewMessage(content?: string) {
+  async function sendPreviewMessage(content?: string) {
     const message = (content ?? previewInput).trim();
 
     if (!message) {
       return;
     }
 
-    setPreviewMessages((current) => [
-      ...current,
-      { role: "user", content: message },
-      {
-        role: "assistant",
-        content:
-          "Pré-visualização local: quando o agente estiver salvo, esta conversa usará as instruções, fontes e actions configuradas.",
-      },
-    ]);
+    setPreviewMessages((current) => [...current, { role: "user", content: message }]);
     setPreviewInput("");
+
+    if (!agent?.id || !getAccessToken) {
+      setPreviewMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content:
+            "Salve o agente para usar a pré-visualização com instruções, fontes e actions reais.",
+        },
+      ]);
+      return;
+    }
+
+    setIsPreviewLoading(true);
+
+    try {
+      const result = await previewChatAgent(
+        agent.id,
+        { message, generateAnswer: true },
+        { getAccessToken },
+      );
+      const answer =
+        (typeof result.answerPreview === "string" && result.answerPreview) ||
+        (typeof result.answer === "string" && result.answer) ||
+        "Sem resposta na pré-visualização.";
+
+      setPreviewMessages((current) => [...current, { role: "assistant", content: answer }]);
+    } catch {
+      setPreviewMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: "Não foi possível gerar a pré-visualização deste agente.",
+        },
+      ]);
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  }
+
+  const loadAgentShares = useCallback(async () => {
+    if (!agent?.id || agent.access_role !== "owner" || !getAccessToken) {
+      setAgentShares([]);
+      return;
+    }
+
+    setIsLoadingShares(true);
+
+    try {
+      const shares = await listChatAgentShares(agent.id, { getAccessToken });
+      setAgentShares(shares);
+    } catch {
+      setAgentShares([]);
+    } finally {
+      setIsLoadingShares(false);
+    }
+  }, [agent?.access_role, agent?.id, getAccessToken]);
+
+  useEffect(() => {
+    void loadAgentShares();
+  }, [loadAgentShares]);
+
+  async function revokeAgentShare(targetUserId: string) {
+    if (!agent?.id || !getAccessToken) {
+      return;
+    }
+
+    setRevokingShareUserId(targetUserId);
+
+    try {
+      await revokeChatAgentShare(agent.id, targetUserId, { getAccessToken });
+      setShareMessage("Acesso revogado.");
+      await loadAgentShares();
+    } catch {
+      setShareMessage("Não foi possível revogar o acesso.");
+    } finally {
+      setRevokingShareUserId(null);
+    }
   }
 
   async function submitForm() {
@@ -516,6 +596,7 @@ export function ChatAgentBuilderPage({
       );
       setShareMessage("Agente compartilhado com sucesso.");
       setShareTargetUserId("");
+      await loadAgentShares();
     } catch {
       setShareMessage("Não foi possível compartilhar o agente.");
     } finally {
@@ -854,6 +935,32 @@ export function ChatAgentBuilderPage({
               </button>
 
               {shareMessage ? <p className="mdc-chat-muted">{shareMessage}</p> : null}
+
+              <div className="mdc-chat-agent-builder__share-list">
+                {isLoadingShares ? (
+                  <p className="mdc-chat-muted">Carregando compartilhamentos...</p>
+                ) : agentShares.length === 0 ? (
+                  <p className="mdc-chat-muted">Nenhum compartilhamento ativo.</p>
+                ) : (
+                  agentShares.map((share) => (
+                    <article key={share.id}>
+                      <span>
+                        <strong>{share.target_user_id}</strong>
+                        <small>{share.role}</small>
+                      </span>
+                      <button
+                        type="button"
+                        disabled={revokingShareUserId === share.target_user_id}
+                        onClick={() => void revokeAgentShare(share.target_user_id)}
+                      >
+                        {revokingShareUserId === share.target_user_id
+                          ? "Revogando..."
+                          : "Revogar"}
+                      </button>
+                    </article>
+                  ))
+                )}
+              </div>
             </section>
           ) : null}
 
@@ -1008,6 +1115,16 @@ export function ChatAgentBuilderPage({
 
             {agent ? (
               <>
+                {onOpenRagAdmin ? (
+                  <button
+                    type="button"
+                    className="mdc-chat-agent-builder__secondary"
+                    onClick={() => onOpenRagAdmin(agent.id)}
+                  >
+                    Especialização RAG (admin)
+                  </button>
+                ) : null}
+
                 <label className="mdc-chat-agent-builder__source-upload">
                   <Upload size={16} aria-hidden="true" />
                   <span>{isSavingSource ? "Enviando..." : "Enviar arquivo"}</span>
@@ -1105,7 +1222,8 @@ export function ChatAgentBuilderPage({
                   <button
                     key={icebreaker}
                     type="button"
-                    onClick={() => sendPreviewMessage(icebreaker)}
+                    disabled={isPreviewLoading}
+                    onClick={() => void sendPreviewMessage(icebreaker)}
                   >
                     {icebreaker}
                   </button>
@@ -1137,12 +1255,17 @@ export function ChatAgentBuilderPage({
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
-                    sendPreviewMessage();
+                    void sendPreviewMessage();
                   }
                 }}
                 placeholder="Pergunte alguma coisa"
+                disabled={isPreviewLoading}
               />
-              <button type="button" onClick={() => sendPreviewMessage()}>
+              <button
+                type="button"
+                disabled={isPreviewLoading}
+                onClick={() => void sendPreviewMessage()}
+              >
                 <Send size={16} aria-hidden="true" />
               </button>
             </div>

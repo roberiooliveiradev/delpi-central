@@ -227,6 +227,22 @@ export type ShareChatAgentPayload = {
   role: "viewer" | "editor" | string;
 };
 
+export type ChatAgentShare = {
+  id: string;
+  target_user_id: string;
+  role: "viewer" | "editor" | string;
+  created_at: string | null;
+};
+
+export type ChatAgentPreviewResponse = {
+  answer?: string | null;
+  answerPreview?: string | null;
+  rag?: Record<string, unknown>;
+  toolCalls?: ChatToolCall[];
+  plannedToolCalls?: ChatToolCall[];
+  [key: string]: unknown;
+};
+
 export type UpsertChatAgentActionPayload = {
   providerKey: string;
   actionId: string;

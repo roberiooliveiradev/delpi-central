@@ -60,7 +60,10 @@ from app.composition.chat_composer import (
     make_upsert_chat_agent_action_provider_use_case,
     make_list_chat_agent_actions_use_case,
     make_get_chat_agent_use_case,
+    make_list_chat_agent_shares_use_case,
     make_list_chat_agents_use_case,
+    make_preview_chat_agent_use_case,
+    make_revoke_chat_agent_share_use_case,
     make_share_chat_agent_use_case,
     make_share_chat_project_use_case,
     make_update_chat_agent_use_case,
@@ -79,11 +82,14 @@ from app.composition.chat_composer import (
     make_stream_chat_message_use_case,
 )
 from app.extensions.db import db
-from app.application.use_cases.chat_agents_use_cases import ChatAgentPermissionDeniedError
+from app.application.use_cases.chat_agents_use_cases import (
+    ChatAgentKeyConflictError,
+    ChatAgentPermissionDeniedError,
+)
 from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.interfaces.http.auth_decorators import require_permission
 from app.infrastructure.gateways.core_me_gateway import CoreMeGateway
-from app.interfaces.http.utils.errors import bad_request, forbidden
+from app.interfaces.http.utils.errors import bad_request, conflict, forbidden
 
 
 logger = logging.getLogger("minha-delpi-ai-api.chat")
@@ -210,8 +216,13 @@ def get_chat_capabilities():
 @chat_bp.get("/agents")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def list_agents():
+    include_disabled = request.args.get("includeDisabled", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     use_case = make_list_chat_agents_use_case()
-    result = use_case.execute(g.current_user.sub)
+    result = use_case.execute(g.current_user.sub, include_disabled=include_disabled)
 
     return jsonify([asdict(agent) for agent in result]), 200
 
@@ -260,6 +271,12 @@ def create_agent():
     except ChatAgentPermissionDeniedError as exc:
         db.session.rollback()
         return forbidden(str(exc))
+    except ChatAgentKeyConflictError as exc:
+        db.session.rollback()
+        return conflict(str(exc))
+    except InvalidChatSessionInputError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
     except Exception:
         db.session.rollback()
         raise
@@ -377,6 +394,9 @@ def share_agent(agent_id: str):
             return _not_found_response()
 
         db.session.commit()
+    except InvalidChatSessionInputError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
     except Exception:
         db.session.rollback()
         raise
@@ -389,6 +409,67 @@ def share_agent(agent_id: str):
 
 
 
+
+
+
+
+@chat_bp.get("/agents/<agent_id>/shares")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def list_agent_shares(agent_id: str):
+    use_case = make_list_chat_agent_shares_use_case()
+    shares = use_case.execute(user_id=g.current_user.sub, agent_id=agent_id)
+    return jsonify(shares), 200
+
+
+@chat_bp.delete("/agents/<agent_id>/shares/<target_user_id>")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def revoke_agent_share(agent_id: str, target_user_id: str):
+    use_case = make_revoke_chat_agent_share_use_case()
+
+    try:
+        revoked = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            target_user_id=target_user_id,
+        )
+
+        if not revoked:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return "", 204
+
+
+@chat_bp.post("/agents/<agent_id>/preview")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def preview_agent(agent_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    access_token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip() or None
+    use_case = make_preview_chat_agent_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            message=payload.get("message") or payload.get("question") or "",
+            access_token=access_token,
+            generate_answer=bool(payload.get("generateAnswer", True)),
+        )
+    except ChatAgentPermissionDeniedError as exc:
+        return forbidden(str(exc))
+    except InvalidChatSessionInputError as exc:
+        return bad_request(str(exc))
+
+    return jsonify(result), 200
 
 
 def _find_linked_agent_provider(agent_id: str, provider_key: str):

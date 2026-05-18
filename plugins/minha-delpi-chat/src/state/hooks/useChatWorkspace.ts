@@ -36,13 +36,14 @@ export function useChatWorkspace(options: UseChatWorkspaceOptions = {}) {
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
 
-  const loadAgents = useCallback(async () => {
+  const loadAgents = useCallback(async (includeDisabled = false) => {
     setIsLoadingAgents(true);
     setWorkspaceError(null);
 
     try {
       const data = await listChatAgents({
         getAccessToken: options.getAccessToken,
+        includeDisabled,
       });
 
       setAgents(data);

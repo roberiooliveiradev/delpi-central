@@ -22,6 +22,8 @@ import "./ChatAdminPage.css";
 
 type ChatAdminPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  initialAgentId?: string | null;
+  initialTab?: AdminTab;
   onBack: () => void;
 };
 
@@ -37,9 +39,14 @@ const ADMIN_TABS: AdminTabItem[] = [
   { key: "audit", label: "Auditoria" },
 ];
 
-export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
+export function ChatAdminPage({
+  getAccessToken,
+  initialAgentId,
+  initialTab,
+  onBack,
+}: ChatAdminPageProps) {
   const admin = useChatAdmin({ getAccessToken });
-  const [activeTab, setActiveTab] = useState<AdminTab>("knowledge");
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab ?? "knowledge");
   const [adminRbac, setAdminRbac] = useState<AdminRbacSummary | null>(null);
 
   useEffect(() => {
@@ -147,7 +154,10 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
         ) : null}
 
         {activeTab === "agents" ? (
-          <AdminAgentsTab getAccessToken={getAccessToken} />
+          <AdminAgentsTab
+            getAccessToken={getAccessToken}
+            initialAgentId={initialAgentId}
+          />
         ) : null}
 
         {activeTab === "security" ? (

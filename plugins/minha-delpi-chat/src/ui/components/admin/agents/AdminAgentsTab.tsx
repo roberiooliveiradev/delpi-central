@@ -16,6 +16,7 @@ import "./AdminAgentsTab.css";
 
 type AdminAgentsTabProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  initialAgentId?: string | null;
 };
 
 const EMPTY_SPECIALIZATION: AdminAgentSpecialization = {
@@ -32,7 +33,7 @@ const EMPTY_SPECIALIZATION: AdminAgentSpecialization = {
   includeGlobalKnowledge: true,
 };
 
-export function AdminAgentsTab({ getAccessToken }: AdminAgentsTabProps) {
+export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTabProps) {
   const [agents, setAgents] = useState<AdminSpecializedAgent[]>([]);
   const [presets, setPresets] = useState<AdminAgentSpecializationPreset[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
@@ -86,6 +87,19 @@ export function AdminAgentsTab({ getAccessToken }: AdminAgentsTabProps) {
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (!initialAgentId || agents.length === 0) {
+      return;
+    }
+
+    const match = agents.find((item) => item.id === initialAgentId);
+
+    if (match) {
+      setSelectedAgentId(match.id);
+      void loadAgentSpecialization(match.id);
+    }
+  }, [agents, initialAgentId, loadAgentSpecialization]);
 
   useEffect(() => {
     if (!selectedAgentId) {

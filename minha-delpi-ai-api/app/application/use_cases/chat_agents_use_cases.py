@@ -1,6 +1,8 @@
 import re
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
+
 from app.application.dto.chat_agent_response import ChatAgentResponse
 from app.application.dto.create_chat_agent_request import CreateChatAgentRequest
 from app.application.dto.share_chat_agent_request import ShareChatAgentRequest
@@ -17,6 +19,10 @@ ALLOWED_SENSITIVITY = {"read", "write", "admin"}
 
 
 class ChatAgentPermissionDeniedError(Exception):
+    pass
+
+
+class ChatAgentKeyConflictError(Exception):
     pass
 
 
@@ -79,8 +85,16 @@ class ListChatAgentsUseCase:
     def __init__(self, repository: ChatAgentRepositoryPort):
         self.repository = repository
 
-    def execute(self, user_id: str) -> list[ChatAgentResponse]:
-        agents = self.repository.list_accessible(UUID(user_id))
+    def execute(
+        self,
+        user_id: str,
+        *,
+        include_disabled: bool = False,
+    ) -> list[ChatAgentResponse]:
+        agents = self.repository.list_accessible(
+            UUID(user_id),
+            include_disabled=include_disabled,
+        )
         return [_to_response(agent, access_role) for agent, access_role in agents]
 
 
@@ -103,18 +117,21 @@ class CreateChatAgentUseCase:
         key = _slugify(request.key or name)
         owner_user_id = None if visibility == "system" else UUID(request.user_id)
 
-        agent = self.repository.create(
-            owner_user_id=owner_user_id,
-            key=key,
-            name=name,
-            description=_normalize_text(request.description, 800),
-            system_prompt=_normalize_text(request.system_prompt, 12000),
-            visibility=visibility,
-            category=_normalize_text(request.category, 80),
-            icon=_normalize_text(request.icon, 60),
-            response_style=_normalize_text(request.response_style, 40),
-            metadata=request.metadata,
-        )
+        try:
+            agent = self.repository.create(
+                owner_user_id=owner_user_id,
+                key=key,
+                name=name,
+                description=_normalize_text(request.description, 800),
+                system_prompt=_normalize_text(request.system_prompt, 12000),
+                visibility=visibility,
+                category=_normalize_text(request.category, 80),
+                icon=_normalize_text(request.icon, 60),
+                response_style=_normalize_text(request.response_style, 40),
+                metadata=request.metadata,
+            )
+        except IntegrityError as exc:
+            raise ChatAgentKeyConflictError("Agent key already exists") from exc
 
         return _to_response(agent, "owner", include_system_prompt=True)
 
@@ -209,6 +226,70 @@ class DeleteChatAgentUseCase:
             agent_id=UUID(agent_id),
             user_id=UUID(user_id),
             can_manage_official_agents=can_manage_official_agents,
+        )
+
+
+class ListChatAgentSharesUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(self, *, user_id: str, agent_id: str) -> list[dict]:
+        return self.repository.list_shares(UUID(agent_id), UUID(user_id))
+
+
+class RevokeChatAgentShareUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(self, *, user_id: str, agent_id: str, target_user_id: str) -> bool:
+        return self.repository.revoke_share(
+            UUID(agent_id),
+            UUID(user_id),
+            UUID(target_user_id),
+        )
+
+
+class PreviewChatAgentUseCase:
+    def __init__(
+        self,
+        repository: ChatAgentRepositoryPort,
+        simulate_use_case,
+    ):
+        self.repository = repository
+        self.simulate_use_case = simulate_use_case
+
+    def execute(
+        self,
+        *,
+        user_id: str,
+        agent_id: str,
+        message: str,
+        access_token: str | None,
+        generate_answer: bool = True,
+    ) -> dict:
+        record = self.repository.get_accessible_by_id(UUID(agent_id), UUID(user_id))
+
+        if not record:
+            raise InvalidChatSessionInputError("Agent not found")
+
+        _, access_role = record
+
+        if access_role not in {"owner", "editor", "system"}:
+            raise ChatAgentPermissionDeniedError(
+                "You do not have permission to preview this agent"
+            )
+
+        normalized = str(message or "").strip()
+
+        if not normalized:
+            raise InvalidChatSessionInputError("message is required")
+
+        return self.simulate_use_case.execute(
+            question=normalized,
+            agent_id=agent_id,
+            generate_answer=generate_answer,
+            user_id=user_id,
+            access_token=access_token,
         )
 
 

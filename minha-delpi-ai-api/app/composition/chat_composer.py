@@ -308,6 +308,28 @@ def make_get_chat_agent_use_case():
     return GetChatAgentUseCase(PostgresChatAgentRepository())
 
 
+def make_list_chat_agent_shares_use_case():
+    from app.application.use_cases.chat_agents_use_cases import ListChatAgentSharesUseCase
+
+    return ListChatAgentSharesUseCase(PostgresChatAgentRepository())
+
+
+def make_revoke_chat_agent_share_use_case():
+    from app.application.use_cases.chat_agents_use_cases import RevokeChatAgentShareUseCase
+
+    return RevokeChatAgentShareUseCase(PostgresChatAgentRepository())
+
+
+def make_preview_chat_agent_use_case():
+    from app.application.use_cases.chat_agents_use_cases import PreviewChatAgentUseCase
+    from app.composition.admin_composer import make_admin_agent_simulate_use_case
+
+    return PreviewChatAgentUseCase(
+        PostgresChatAgentRepository(),
+        make_admin_agent_simulate_use_case(with_llm=True),
+    )
+
+
 def make_create_chat_agent_use_case() -> CreateChatAgentUseCase:
     return CreateChatAgentUseCase(PostgresChatAgentRepository())
 

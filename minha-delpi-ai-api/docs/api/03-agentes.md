@@ -50,6 +50,12 @@ Lista agentes acessíveis ao usuário.
 
 `minha-delpi.chat.access`
 
+### Query
+
+| Parâmetro | Descrição |
+|-----------|-----------|
+| `includeDisabled=true` | Inclui agentes com `enabled=false` (gestores com `tools.manage`) |
+
 ### Resposta `200`
 
 `ChatAgent[]`
@@ -122,6 +128,12 @@ Para `visibility = "system"`, o backend também exige `canManageOfficialAgents`,
 ### Resposta `201`
 
 `ChatAgent`
+
+### Erros
+
+| Status | Situação |
+|--------|----------|
+| `409` | `key` já existente para o escopo do agente |
 
 ---
 
@@ -204,3 +216,63 @@ Compartilha agente com outro usuário.
   "ok": true
 }
 ```
+
+---
+
+## GET `/chat/agents/{agentId}/shares`
+
+Lista compartilhamentos do agente (somente `owner`).
+
+### Permissão
+
+`minha-delpi.chat.tools.manage`
+
+### Resposta `200`
+
+```json
+[
+  {
+    "id": "uuid",
+    "target_user_id": "uuid",
+    "role": "viewer",
+    "created_at": "datetime|null"
+  }
+]
+```
+
+---
+
+## DELETE `/chat/agents/{agentId}/shares/{targetUserId}`
+
+Revoga compartilhamento (somente `owner`).
+
+### Permissão
+
+`minha-delpi.chat.tools.manage`
+
+### Resposta
+
+`204 No Content`
+
+---
+
+## POST `/chat/agents/{agentId}/preview`
+
+Simula uma pergunta ao agente (instruções, RAG de especialização, diretrizes e tools planejadas).
+
+### Permissão
+
+`minha-delpi.chat.tools.manage` + papel `owner`, `editor` ou `system`
+
+### Body
+
+```json
+{
+  "message": "O que você consegue fazer?",
+  "generateAnswer": true
+}
+```
+
+### Resposta `200`
+
+Mesmo formato de `POST /admin/agent/simulate` (`answerPreview`, `chunks`, `plannedToolCalls`, etc.).

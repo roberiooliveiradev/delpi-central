@@ -49,6 +49,8 @@ type ChatAgentsPageProps = {
     payload: AgentUpdatePayload,
   ) => Promise<ChatAgent | null>;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
+  onReloadAgents?: (includeDisabled: boolean) => void | Promise<void>;
+  onOpenRagAdmin?: (agentId: string) => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
@@ -127,8 +129,11 @@ export function ChatAgentsPage({
   onCreateAgent,
   onUpdateAgent,
   onDeleteAgent,
+  onReloadAgents,
+  onOpenRagAdmin,
   getAccessToken,
 }: ChatAgentsPageProps) {
+  const [showInactive, setShowInactive] = useState(false);
   const [editingAgent, setEditingAgent] = useState<ChatAgent | null | undefined>(undefined);
   const [actionEditor, setActionEditor] = useState<{
     agent: ChatAgent;
@@ -210,6 +215,7 @@ export function ChatAgentsPage({
         onUpdateAgent={onUpdateAgent}
         onDeleteAgent={onDeleteAgent}
         canManageOfficialAgents={canManageOfficialAgents}
+        onOpenRagAdmin={onOpenRagAdmin}
         getAccessToken={getAccessToken}
       />
     );
@@ -254,6 +260,21 @@ export function ChatAgentsPage({
               <h2>Agentes disponíveis</h2>
               <p>{agents.length} agente(s) disponível(is)</p>
             </div>
+
+            {canManageAgents ? (
+              <label className="mdc-chat-agents-directory__inactive-toggle">
+                <input
+                  type="checkbox"
+                  checked={showInactive}
+                  onChange={(event) => {
+                    const includeDisabled = event.target.checked;
+                    setShowInactive(includeDisabled);
+                    void onReloadAgents?.(includeDisabled);
+                  }}
+                />
+                <span>Mostrar inativos</span>
+              </label>
+            ) : null}
           </div>
 
           <div className="mdc-chat-agents-directory__list">

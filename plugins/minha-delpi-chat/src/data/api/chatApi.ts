@@ -7,6 +7,8 @@ import type {
   ChatAgent,
   ChatAgentActionProvider,
   ChatAgentAction,
+  ChatAgentPreviewResponse,
+  ChatAgentShare,
   ChatArtifact,
   ChatAttachment,
   ChatMessage,
@@ -418,9 +420,10 @@ export async function deleteChatArtifact(
 
 
 export async function listChatAgents(
-  options: ChatApiOptions = {},
+  options: ChatApiOptions & { includeDisabled?: boolean } = {},
 ): Promise<ChatAgent[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents`, {
+  const query = options.includeDisabled ? "?includeDisabled=true" : "";
+  const response = await fetch(`${API_BASE_URL}/chat/agents${query}`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -493,6 +496,50 @@ export async function shareChatAgent(
   });
 
   return parseJsonResponse<{ ok: boolean }>(response);
+}
+
+export async function listChatAgentShares(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAgentShare[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/shares`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function revokeChatAgentShare(
+  agentId: string,
+  targetUserId: string,
+  options: ChatApiOptions = {},
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/agents/${agentId}/shares/${targetUserId}`,
+    {
+      method: "DELETE",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  if (!response.ok) {
+    await parseJsonResponse<unknown>(response);
+  }
+}
+
+export async function previewChatAgent(
+  agentId: string,
+  payload: { message: string; generateAnswer?: boolean },
+  options: ChatApiOptions = {},
+): Promise<ChatAgentPreviewResponse> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/preview`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
 }
 
 export async function upsertChatAgentAction(

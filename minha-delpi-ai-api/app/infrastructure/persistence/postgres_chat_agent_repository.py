@@ -14,15 +14,24 @@ from app.infrastructure.db.models.chat_agent_share_model import AiChatAgentShare
 
 
 class PostgresChatAgentRepository(ChatAgentRepositoryPort):
-    def list_accessible(self, user_id: UUID) -> list[tuple[ChatAgent, str]]:
+    def list_accessible(
+        self,
+        user_id: UUID,
+        *,
+        include_disabled: bool = False,
+    ) -> list[tuple[ChatAgent, str]]:
         shared_agent_ids = (
             db.session.query(AiChatAgentShareModel.agent_id)
             .filter(AiChatAgentShareModel.target_user_id == user_id)
         )
 
+        query = AiChatAgentModel.query
+
+        if not include_disabled:
+            query = query.filter(AiChatAgentModel.enabled.is_(True))
+
         models = (
-            AiChatAgentModel.query
-            .filter(AiChatAgentModel.enabled.is_(True))
+            query
             .filter(
                 or_(
                     AiChatAgentModel.visibility == "system",
@@ -209,7 +218,45 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         return True
 
+    def list_shares(self, agent_id: UUID, user_id: UUID) -> list[dict]:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
 
+        if not model or model.owner_user_id != user_id:
+            return []
+
+        rows = (
+            AiChatAgentShareModel.query
+            .filter(AiChatAgentShareModel.agent_id == agent_id)
+            .order_by(AiChatAgentShareModel.created_at.asc())
+            .all()
+        )
+
+        return [
+            {
+                "id": str(row.id),
+                "target_user_id": str(row.target_user_id),
+                "role": row.role,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+            }
+            for row in rows
+        ]
+
+    def revoke_share(self, agent_id: UUID, user_id: UUID, target_user_id: UUID) -> bool:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or model.owner_user_id != user_id:
+            return False
+
+        deleted = (
+            AiChatAgentShareModel.query
+            .filter(AiChatAgentShareModel.agent_id == agent_id)
+            .filter(AiChatAgentShareModel.target_user_id == target_user_id)
+            .delete()
+        )
+
+        db.session.flush()
+
+        return bool(deleted)
 
     def list_action_providers(
         self,

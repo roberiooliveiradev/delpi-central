@@ -6,7 +6,20 @@ from app.domain.entities.chat_agent import ChatAgent
 
 class ChatAgentRepositoryPort(ABC):
     @abstractmethod
-    def list_accessible(self, user_id: UUID) -> list[tuple[ChatAgent, str]]:
+    def list_accessible(
+        self,
+        user_id: UUID,
+        *,
+        include_disabled: bool = False,
+    ) -> list[tuple[ChatAgent, str]]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_shares(self, agent_id: UUID, user_id: UUID) -> list[dict]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def revoke_share(self, agent_id: UUID, user_id: UUID, target_user_id: UUID) -> bool:
         raise NotImplementedError
 
     @abstractmethod

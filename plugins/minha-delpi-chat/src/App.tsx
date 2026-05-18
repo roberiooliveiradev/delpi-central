@@ -19,6 +19,7 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   const [mode, setMode] = useState<"chat" | "admin">(
     pathname?.includes("/admin") ? "admin" : "chat",
   );
+  const [adminInitialAgentId, setAdminInitialAgentId] = useState<string | null>(null);
 
   if (mode === "admin") {
     return (
@@ -31,7 +32,12 @@ export default function App({ getAccessToken, pathname }: AppProps) {
       >
         <ChatAdminPage
           getAccessToken={getAccessToken}
-          onBack={() => setMode("chat")}
+          initialAgentId={adminInitialAgentId}
+          initialTab={adminInitialAgentId ? "agents" : undefined}
+          onBack={() => {
+            setAdminInitialAgentId(null);
+            setMode("chat");
+          }}
         />
       </Suspense>
     );
@@ -40,7 +46,10 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   return (
     <ChatPage
       getAccessToken={getAccessToken}
-      onOpenAdmin={() => setMode("admin")}
+      onOpenAdmin={(agentId) => {
+        setAdminInitialAgentId(agentId ?? null);
+        setMode("admin");
+      }}
     />
   );
 }
