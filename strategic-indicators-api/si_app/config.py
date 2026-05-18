@@ -48,6 +48,10 @@ class Settings:
         str(_get_env("SI_PERIOD_SCORES_ENABLED", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}
     )
+    SI_RUN_MIGRATIONS_ON_STARTUP: bool = (
+        str(_get_env("SI_RUN_MIGRATIONS_ON_STARTUP", default="false") or "false").lower()
+        in {"1", "true", "yes", "on"}
+    )
 
     # ==========================
     # Auth / Keycloak

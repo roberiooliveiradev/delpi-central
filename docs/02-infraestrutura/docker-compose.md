@@ -148,6 +148,7 @@ docker exec -it delpi-ollama ollama pull bge-m3
 - **Portal RH (opcional):** `PORTAL_RH_DB_*`
 - **Performance (Compose):** `SI_WARMUP_ON_STARTUP=true` (padrão), `SI_WARMUP_TRENDS_MONTHS=6`, `SI_SNAPSHOT_CACHE_TTL_SECONDS=600`, `TOTVS_POOL_*`
 - Volume dev: `../strategic-indicators-api:/app`
+- Migrations: `migrations/` + `scripts/run_migrations.py` (`SI_RUN_MIGRATIONS_ON_STARTUP=true` em dev)
 - Warm-up manual: `docker exec delpi-strategic-indicators-api python3 scripts/warmup_si_snapshots.py`
 
 ### `postgres-plugins`

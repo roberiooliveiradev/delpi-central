@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from si_app.application.services.strategic_indicators.snapshot_warmup_service import (
     schedule_strategic_indicators_warmup,
 )
+from si_app.startup.run_migrations_on_startup import run_migrations_on_startup
 from si_app.config import settings
 from si_app.interface.http.routes.strategic_indicators_routes import (
     router as strategic_indicators_router,
@@ -49,6 +50,7 @@ ALLOWED_ORIGINS = build_allowed_origins()
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    run_migrations_on_startup()
     schedule_strategic_indicators_warmup()
     yield
 

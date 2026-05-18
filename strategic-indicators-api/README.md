@@ -20,8 +20,20 @@ Igual à api-delpi para dados operacionais: `PLUGINS_*`, TOTVS, Google Sheets, P
 | `SI_WARMUP_ON_STARTUP` | Aquece executive + trends em background no boot (`true` no Compose). |
 | `SI_WARMUP_TRENDS_MONTHS` | Meses carregados no warm-up (padrão `6`). |
 | `SI_PERIOD_SCORES_ENABLED` | Persiste scores por competência no Postgres para trends (padrão `true`). |
+| `SI_RUN_MIGRATIONS_ON_STARTUP` | Aplica migrations pendentes no boot (padrão `false`; `true` no Compose dev). |
 
-Migration **V010** (`period_scores`) em `api-delpi/migrations/plugins/strategic-indicators/` — executar via `run_plugins_migrations.py` antes de usar em produção.
+## Migrations (Postgres plugins)
+
+Arquivos em **`migrations/`** (V001–V010). Runner dedicado desta API — não depende mais da api-delpi.
+
+```bash
+export PYTHONPATH="$(pwd)/strategic-indicators-api:$(pwd)/shared"
+# Requer PLUGINS_DB_HOST, PLUGINS_DB_PORT, PLUGINS_DB_NAME, PLUGINS_DB_USER, PLUGINS_DB_PASSWORD
+python strategic-indicators-api/scripts/run_migrations.py up
+python strategic-indicators-api/scripts/run_migrations.py status
+```
+
+Detalhes: [migrations/README.md](migrations/README.md).
 
 ## Desenvolvimento local
 

@@ -31,6 +31,7 @@ Rotas **admin/escrita** (grupo C) são secundárias — já são rápidas (Postg
 | Catálogo + metas (Postgres) | `si_app/infrastructure/persistence/plugins/repositories/strategic_indicators/postgres_resolved_indicators_catalog_repository.py` |
 | Metas em lote | `postgres_indicator_goals_repository.py` (`list_resolved_goals_map`) |
 | Benchmark | `scripts/bench_si_routes.py` |
+| Migrations Postgres | `migrations/`, `scripts/run_migrations.py` |
 | JSON `Decimal` → resposta HTTP | `si_app/shared/json_encoding.py` (`to_json_safe`) |
 | MFE (commit separado) | `plugins/strategic-indicators/src/data/cache/` |
 
