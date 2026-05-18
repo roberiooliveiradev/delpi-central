@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useResizablePane } from "../../state/hooks/useResizablePane";
+
 import {
   createAgentTextSource,
   deleteChatSource,
@@ -829,15 +831,38 @@ export function ChatAgentBuilderPage({
     agent && ["owner", "editor", "system"].includes(agent.access_role);
   const canImportAgent = Boolean(onCreateAgent);
 
+  const {
+    layoutRef,
+    layoutStyle,
+    splitEnabled,
+    isDragging,
+    onSplitterPointerDown,
+  } = useResizablePane({
+    storageKey: "minha-delpi-chat.agent-builder.preview-width",
+    defaultWidth: 420,
+    minWidth: 300,
+    maxWidthRatio: 0.55,
+  });
+
+  const layoutClassName = [
+    "mdc-chat-agent-builder__layout",
+    splitEnabled ? "mdc-chat-agent-builder__layout--split" : "",
+    isDragging ? "mdc-chat-agent-builder__layout--dragging" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <section className="mdc-chat-agent-builder" aria-label="Configurar agente">
       <header className="mdc-chat-agent-builder__topbar">
-        <button type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          <span>Voltar para agentes</span>
-        </button>
+        <div className="mdc-chat-agent-builder__topbar-start">
+          <button type="button" onClick={onBack}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            <span>Voltar para agentes</span>
+          </button>
+        </div>
 
-        <div>
+        <div className="mdc-chat-agent-builder__topbar-title">
           <span>{isEditing ? "Configurar agente" : "Criar agente"}</span>
           {isEditing ? <small>Última edição salva no agente</small> : null}
         </div>
@@ -912,7 +937,7 @@ export function ChatAgentBuilderPage({
         </div>
       </header>
 
-      <div className="mdc-chat-agent-builder__layout">
+      <div ref={layoutRef} className={layoutClassName} style={layoutStyle}>
         <form
           className="mdc-chat-agent-builder__form"
           onSubmit={(event) => {
@@ -1548,6 +1573,20 @@ export function ChatAgentBuilderPage({
             <p className="mdc-chat-agent-builder__error">{localError}</p>
           ) : null}
         </form>
+
+        {splitEnabled ? (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Ajustar largura da pré-visualização"
+            className={
+              isDragging
+                ? "mdc-chat-agent-builder__splitter is-dragging"
+                : "mdc-chat-agent-builder__splitter"
+            }
+            onPointerDown={onSplitterPointerDown}
+          />
+        ) : null}
 
         <aside className="mdc-chat-agent-builder__preview">
           <div className="mdc-chat-agent-builder__preview-label">Pré-visualizar</div>
