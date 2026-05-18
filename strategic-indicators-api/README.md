@@ -16,6 +16,9 @@ Igual à api-delpi para dados operacionais: `PLUGINS_*`, TOTVS, Google Sheets, P
 | `STRATEGIC_INDICATORS_API_PORT` | Porta do processo (fallback para `PORT`). |
 | `TOTVS_POOL_ENABLED` | Reutilizar conexões SQL Server (`true` por padrão). |
 | `TOTVS_POOL_MAX_SIZE` | Tamanho do pool TOTVS (padrão `8`). |
+| `SI_SNAPSHOT_CACHE_TTL_SECONDS` | TTL do cache in-process de snapshots (padrão `600`). |
+| `SI_WARMUP_ON_STARTUP` | Aquece executive + trends em background no boot (`true` no Compose). |
+| `SI_WARMUP_TRENDS_MONTHS` | Meses carregados no warm-up (padrão `6`). |
 
 ## Desenvolvimento local
 

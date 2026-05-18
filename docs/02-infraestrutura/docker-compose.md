@@ -42,6 +42,7 @@ docker compose -f docker-compose.dev.yml up --build -d
 |---|---|---|
 | `postgres-plugins` | `delpi-postgres-plugins` | PostgreSQL **pgvector** — plugins + AI |
 | `api-delpi` | `delpi-api-delpi` | FastAPI TOTVS / domínios |
+| `strategic-indicators-api` | `delpi-strategic-indicators-api` | API Indicadores Estratégicos (`/strategic-indicators`) |
 | `minha-delpi-ai-api` | `delpi-minha-delpi-ai-api` | Chat, agentes, RAG |
 
 ### IA local (dev/prod)
@@ -139,6 +140,16 @@ docker exec -it delpi-ollama ollama pull bge-m3
 - **Portal RH (opcional):** `PORTAL_RH_DB_*`
 - Volume dev: `../api-delpi:/app`
 
+### `strategic-indicators-api`
+
+- **env_file:** `infra/.env`
+- **TOTVS:** `TOTVS_DB_*` → `DB_*` (mesmo padrão da api-delpi)
+- **Plugins DB:** `PLUGINS_DB_*` (catálogo, metas, settings)
+- **Portal RH (opcional):** `PORTAL_RH_DB_*`
+- **Performance (Compose):** `SI_WARMUP_ON_STARTUP=true` (padrão), `SI_WARMUP_TRENDS_MONTHS=6`, `SI_SNAPSHOT_CACHE_TTL_SECONDS=600`, `TOTVS_POOL_*`
+- Volume dev: `../strategic-indicators-api:/app`
+- Warm-up manual: `docker exec delpi-strategic-indicators-api python3 scripts/warmup_si_snapshots.py`
+
 ### `postgres-plugins`
 
 Imagem **pgvector** (não Postgres plain) — necessário para embeddings do chat/RAG.
@@ -148,7 +159,7 @@ Init: `infra/docker/postgres/plugins-init.sql`
 ### `gateway` (dev `depends_on`)
 
 ```text
-portal, core-api, keycloak, strategic-indicators, api-delpi,
+portal, core-api, keycloak, strategic-indicators, strategic-indicators-api, api-delpi,
 dashboard-lmps, minha-delpi-ai-api, minha-delpi-chat
 ```
 
