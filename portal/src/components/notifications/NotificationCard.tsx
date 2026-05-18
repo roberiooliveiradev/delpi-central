@@ -12,6 +12,7 @@ import {
 import type { NotificationCategory, NotificationItem } from "../../data/coreApi";
 import { executeNotificationAction } from "../../utils/notificationNavigation";
 import { NotificationTemplateView } from "./NotificationTemplateView";
+import { NOTIFICATION_TEMPLATE_DEFINITIONS } from "./notificationTemplates";
 import {
   getTemplateDefinition,
   getTemplateIdFromMetadata,
@@ -54,7 +55,9 @@ export function NotificationCard({
   const Icon = CATEGORY_ICONS[notification.category] ?? Bell;
   const templateId = getTemplateIdFromMetadata(notification.metadata);
   const templateDefinition =
-    notification.presentation === "template" ? getTemplateDefinition(templateId) : null;
+    notification.presentation === "template"
+      ? getTemplateDefinition(NOTIFICATION_TEMPLATE_DEFINITIONS, templateId)
+      : null;
 
   function handleOpen() {
     if (notification.action) {

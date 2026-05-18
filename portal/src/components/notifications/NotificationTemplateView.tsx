@@ -30,14 +30,8 @@ export function NotificationTemplateView({
         </ul>
       ) : null}
 
-      {definition.id === "welcome_v1" ? (
-        <p className="notification-template-view__hint">
-          Explore os aplicativos no menu lateral e personalize seus favoritos.
-        </p>
-      ) : null}
-
-      {definition.id === "birthday_v1" ? (
-        <p className="notification-template-view__hint">🎂 Um ótimo ano novo de conquistas!</p>
+      {definition.hint ? (
+        <p className="notification-template-view__hint">{definition.hint}</p>
       ) : null}
     </div>
   );

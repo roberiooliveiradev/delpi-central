@@ -9,6 +9,13 @@ from app.application.use_cases.dispatch_notifications_use_case import (
     DispatchNotificationsUseCase,
     DispatchNotificationsValidationError,
 )
+from app.application.use_cases.manage_notification_templates_use_case import (
+    CreateNotificationCustomTemplateUseCase,
+    DeleteNotificationCustomTemplateUseCase,
+    ListNotificationTemplatesUseCase,
+    ManageNotificationTemplatesValidationError,
+    build_template_registry,
+)
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 from app.interfaces.http.security.authorization import require_superadmin
 from app.interfaces.http.security.service_token import require_service_token
@@ -109,8 +116,9 @@ def _parse_dispatch_body(data: dict | None) -> DispatchNotificationsRequest:
 
 
 def _dispatch_notifications(request_dto: DispatchNotificationsRequest):
+    registry = build_template_registry()
     with SqlAlchemyUnitOfWork() as uow:
-        use_case = DispatchNotificationsUseCase(uow)
+        use_case = DispatchNotificationsUseCase(uow, template_registry=registry)
         result = use_case.execute(request_dto)
 
     return jsonify(
@@ -131,6 +139,41 @@ def admin_dispatch_notifications():
         return api_error("validation_error", str(exc), status=400)
     except Exception as exc:
         return api_error("dispatch_failed", str(exc))
+
+
+@admin_notifications_bp.route("/templates", methods=["GET"])
+@require_superadmin()
+def list_notification_templates():
+    try:
+        items = ListNotificationTemplatesUseCase().execute()
+        return jsonify(items), 200
+    except Exception as exc:
+        return api_error("list_templates_failed", str(exc))
+
+
+@admin_notifications_bp.route("/templates", methods=["POST"])
+@require_superadmin()
+def create_notification_template():
+    try:
+        payload = request.get_json(silent=True) or {}
+        item = CreateNotificationCustomTemplateUseCase().execute(payload)
+        return jsonify(item), 201
+    except ManageNotificationTemplatesValidationError as exc:
+        return api_error("validation_error", str(exc), status=400)
+    except Exception as exc:
+        return api_error("create_template_failed", str(exc))
+
+
+@admin_notifications_bp.route("/templates/<template_id>", methods=["DELETE"])
+@require_superadmin()
+def delete_notification_template(template_id: str):
+    try:
+        DeleteNotificationCustomTemplateUseCase().execute(template_id)
+        return jsonify({"ok": True}), 200
+    except ManageNotificationTemplatesValidationError as exc:
+        return api_error("validation_error", str(exc), status=400)
+    except Exception as exc:
+        return api_error("delete_template_failed", str(exc))
 
 
 @integrations_notifications_bp.route("", methods=["POST"])

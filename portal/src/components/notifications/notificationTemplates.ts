@@ -1,27 +1,11 @@
 // src/components/notifications/notificationTemplates.ts
 
-import type { NotificationCategory, NotificationType } from "../../data/coreApi";
+import type {
+  NotificationTemplateDefinition,
+  NotificationTemplateFieldSpec,
+} from "../../data/coreApi";
 
-export type NotificationTemplateId = "welcome_v1" | "birthday_v1" | "company_event_v1";
-
-export type TemplateFieldSpec = {
-  key: string;
-  label: string;
-  placeholder?: string;
-  required?: boolean;
-};
-
-export type NotificationTemplateDefinition = {
-  id: NotificationTemplateId;
-  label: string;
-  category: NotificationCategory;
-  defaultType: NotificationType;
-  defaultTitle: string;
-  defaultMessage: string;
-  /** Variáveis preenchidas automaticamente pelo backend para cada destinatário */
-  recipientAutoVars?: string[];
-  fields: TemplateFieldSpec[];
-};
+export type { NotificationTemplateDefinition, NotificationTemplateFieldSpec };
 
 export const NOTIFICATION_TEMPLATE_DEFINITIONS: NotificationTemplateDefinition[] = [
   {
@@ -32,6 +16,9 @@ export const NOTIFICATION_TEMPLATE_DEFINITIONS: NotificationTemplateDefinition[]
     defaultTitle: "Bem-vindo à Minha DELPI",
     defaultMessage: "Olá, {userName}! Sua conta está pronta para explorar os aplicativos.",
     recipientAutoVars: ["userName"],
+    recipientVars: ["userName"],
+    isSystem: true,
+    hint: "Explore os aplicativos no menu lateral e personalize seus favoritos.",
     fields: [],
   },
   {
@@ -42,6 +29,9 @@ export const NOTIFICATION_TEMPLATE_DEFINITIONS: NotificationTemplateDefinition[]
     defaultTitle: "Feliz aniversário!",
     defaultMessage: "A equipe DELPI deseja um excelente dia, {userName}!",
     recipientAutoVars: ["userName"],
+    recipientVars: ["userName"],
+    isSystem: true,
+    hint: "🎂 Um ótimo ano novo de conquistas!",
     fields: [],
   },
   {
@@ -51,6 +41,7 @@ export const NOTIFICATION_TEMPLATE_DEFINITIONS: NotificationTemplateDefinition[]
     defaultType: "info",
     defaultTitle: "Evento da empresa",
     defaultMessage: "Você está convidado(a) para {eventName}.",
+    isSystem: true,
     fields: [
       { key: "eventName", label: "Nome do evento", placeholder: "Confraternização", required: true },
       { key: "eventDate", label: "Data (opcional)", placeholder: "20/06/2026 às 19h" },
@@ -59,8 +50,11 @@ export const NOTIFICATION_TEMPLATE_DEFINITIONS: NotificationTemplateDefinition[]
   },
 ];
 
-export function getTemplateDefinition(templateId: string | undefined | null) {
-  return NOTIFICATION_TEMPLATE_DEFINITIONS.find((item) => item.id === templateId) ?? null;
+export function getTemplateDefinition(
+  templates: NotificationTemplateDefinition[],
+  templateId: string | undefined | null,
+) {
+  return templates.find((item) => item.id === templateId) ?? null;
 }
 
 export function renderTemplateText(template: string, vars: Record<string, string>) {
@@ -105,4 +99,8 @@ export function getTemplateVarsFromMetadata(metadata: Record<string, unknown> | 
 export function getTemplateIdFromMetadata(metadata: Record<string, unknown> | null | undefined) {
   const id = metadata?.templateId;
   return typeof id === "string" ? id : null;
+}
+
+export function isSystemTemplate(definition: NotificationTemplateDefinition | null) {
+  return Boolean(definition?.isSystem);
 }

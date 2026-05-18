@@ -1,0 +1,110 @@
+.custom-template-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.custom-template-modal {
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+}
+
+.custom-template-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.custom-template-modal__header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.custom-template-modal__close {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.custom-template-modal__form {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.custom-template-modal__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.custom-template-modal__field {
+  display: grid;
+  gap: 6px;
+}
+
+.custom-template-modal__field span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.custom-template-modal__field input,
+.custom-template-modal__field textarea,
+.custom-template-modal__field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  font: inherit;
+}
+
+.custom-template-modal__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.custom-template-modal__error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.custom-template-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.custom-template-modal__ghost,
+.custom-template-modal__submit {
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.custom-template-modal__ghost {
+  border: 1px solid var(--border);
+  background: transparent;
+}
+
+.custom-template-modal__submit {
+  border: none;
+  background: var(--primary);
+  color: #fff;
+}

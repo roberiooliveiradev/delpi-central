@@ -66,7 +66,30 @@ export type NotificationCategory =
 
 export type NotificationPresentation = "text" | "html" | "template";
 
-export type NotificationTemplateId = "welcome_v1" | "birthday_v1" | "company_event_v1";
+export type NotificationTemplateId = string;
+
+export type NotificationTemplateFieldSpec = {
+  key: string;
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+};
+
+export interface NotificationTemplateDefinition {
+  id: NotificationTemplateId;
+  label: string;
+  category: NotificationCategory;
+  defaultType: NotificationType;
+  defaultTitle: string;
+  defaultMessage: string;
+  requiredVars?: string[];
+  optionalVars?: string[];
+  recipientVars?: string[];
+  recipientAutoVars?: string[];
+  isSystem?: boolean;
+  hint?: string | null;
+  fields: NotificationTemplateFieldSpec[];
+}
 
 export type NotificationActionType = "portal_route" | "external_url";
 
@@ -227,6 +250,27 @@ export class CoreApi {
     return this.client.post<DispatchNotificationsResponse>(
       "/core-api/admin/notifications",
       payload
+    );
+  }
+
+  listNotificationTemplates() {
+    return this.client.get<NotificationTemplateDefinition[]>(
+      "/core-api/admin/notifications/templates",
+    );
+  }
+
+  createNotificationTemplate(
+    payload: Omit<NotificationTemplateDefinition, "id" | "isSystem">,
+  ) {
+    return this.client.post<NotificationTemplateDefinition>(
+      "/core-api/admin/notifications/templates",
+      payload,
+    );
+  }
+
+  deleteNotificationTemplate(templateId: string) {
+    return this.client.delete<{ ok: boolean }>(
+      `/core-api/admin/notifications/templates/${templateId}`,
     );
   }
 }

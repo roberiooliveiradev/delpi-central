@@ -8,11 +8,9 @@ from app.application.services.notification_content_service import (
 )
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
-from app.domain.notifications.notification_recipient_vars import (
-    build_recipient_template_vars,
-    template_requires_per_recipient_render,
-)
-from app.domain.notifications.notification_templates import NOTIFICATION_TEMPLATES
+from app.domain.notifications.notification_recipient_vars import build_recipient_template_vars
+from app.domain.notifications.notification_template_registry import NotificationTemplateRegistry
+from app.domain.notifications.per_recipient_policy import requires_per_recipient_render
 from app.domain.ports.notification_repository import NotificationDTO
 
 
@@ -22,9 +20,14 @@ class DispatchNotificationsValidationError(ValueError):
 
 class DispatchNotificationsUseCase:
 
-    def __init__(self, uow: UnitOfWork):
+    def __init__(
+        self,
+        uow: UnitOfWork,
+        template_registry: NotificationTemplateRegistry | None = None,
+    ):
         self.uow = uow
         self.content_service = NotificationContentService()
+        self.template_registry = template_registry or NotificationTemplateRegistry()
 
     def execute(self, request: DispatchNotificationsRequest) -> DispatchNotificationsResponse:
         target_user_ids = self._resolve_target_user_ids(request)
@@ -34,7 +37,14 @@ class DispatchNotificationsUseCase:
             )
 
         template_spec = self._resolve_template_spec(request)
-        per_recipient = template_requires_per_recipient_render(template_spec)
+        per_recipient = requires_per_recipient_render(
+            presentation=request.presentation,
+            template_spec=template_spec,
+            title=request.title,
+            message=request.message,
+            html_content=request.html_content,
+            action_label=request.action_label,
+        )
 
         prepared_shared = None
         if not per_recipient:
@@ -52,6 +62,7 @@ class DispatchNotificationsUseCase:
                     icon=request.icon,
                     metadata=request.metadata,
                     expires_at=request.expires_at,
+                    template_spec=template_spec,
                 )
             except NotificationContentValidationError as exc:
                 raise DispatchNotificationsValidationError(str(exc)) from exc
@@ -80,6 +91,7 @@ class DispatchNotificationsUseCase:
                         metadata=request.metadata,
                         expires_at=request.expires_at,
                         recipient_context=recipient_context,
+                        template_spec=template_spec,
                     )
                 except NotificationContentValidationError as exc:
                     raise DispatchNotificationsValidationError(str(exc)) from exc
@@ -128,8 +140,7 @@ class DispatchNotificationsUseCase:
             notification_ids=notification_ids,
         )
 
-    @staticmethod
-    def _resolve_template_spec(request: DispatchNotificationsRequest):
+    def _resolve_template_spec(self, request: DispatchNotificationsRequest):
         presentation = (request.presentation or "text").strip().lower()
         if presentation != "template" or not request.metadata:
             return None
@@ -138,7 +149,10 @@ class DispatchNotificationsUseCase:
         if not template_id or not isinstance(template_id, str):
             return None
 
-        return NOTIFICATION_TEMPLATES.get(template_id.strip())
+        spec = self.template_registry.get(template_id.strip())
+        if not spec:
+            raise DispatchNotificationsValidationError(f"unknown templateId: {template_id}")
+        return spec
 
     def _resolve_target_user_ids(self, request: DispatchNotificationsRequest) -> list[str]:
         if request.broadcast:

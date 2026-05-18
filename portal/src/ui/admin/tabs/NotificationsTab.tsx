@@ -1,7 +1,7 @@
 // src/ui/admin/tabs/NotificationsTab.tsx
 
-import { useContext, useEffect, useMemo, useState, type FormEvent } from "react";
-import { Bell } from "lucide-react";
+import { useContext, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Bell, Send } from "lucide-react";
 
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
@@ -15,13 +15,16 @@ import {
   type NotificationTemplateId,
   type NotificationType,
 } from "../../../data/coreApi";
+import { AdminNotificationTemplateSection } from "../../../components/notifications/AdminNotificationTemplateSection";
 import { NotificationCard } from "../../../components/notifications/NotificationCard";
+import { NotificationHtmlEditor } from "../../../components/notifications/NotificationHtmlEditor";
+import { NotificationVariableToolbar } from "../../../components/notifications/NotificationVariableToolbar";
+import { NotificationRecipientPicker } from "../../../components/notifications/NotificationRecipientPicker";
 import {
-  NOTIFICATION_TEMPLATE_DEFINITIONS,
   buildTemplatePreview,
   resolvePreviewRecipientName,
 } from "../../../components/notifications/notificationTemplates";
-import { NotificationRecipientPicker } from "../../../components/notifications/NotificationRecipientPicker";
+import { useNotificationTemplates } from "../../../components/notifications/useNotificationTemplates";
 
 import "./NotificationsTab.css";
 
@@ -36,10 +39,18 @@ const NOTIFICATION_CATEGORIES: { value: NotificationCategory; label: string }[] 
   { value: "custom", label: "Personalizada" },
 ];
 
-const PRESENTATION_MODES: { value: NotificationPresentation; label: string }[] = [
-  { value: "text", label: "Texto simples" },
-  { value: "template", label: "Template visual (recomendado)" },
-  { value: "html", label: "HTML personalizado (sanitizado)" },
+const PRESENTATION_MODES: {
+  value: NotificationPresentation;
+  label: string;
+  hint: string;
+}[] = [
+  { value: "text", label: "Texto simples", hint: "Título e mensagem curtos" },
+  {
+    value: "template",
+    label: "Template visual",
+    hint: "Cards prontos com variáveis",
+  },
+  { value: "html", label: "HTML", hint: "Conteúdo rico sanitizado" },
 ];
 
 const ACTION_TYPES: { value: NotificationActionType | "none"; label: string }[] = [
@@ -72,7 +83,7 @@ export function NotificationsTab() {
   const [message, setMessage] = useState("");
   const [type, setType] = useState<NotificationType>("info");
   const [category, setCategory] = useState<NotificationCategory>("announcement");
-  const [presentation, setPresentation] = useState<NotificationPresentation>("text");
+  const [presentation, setPresentation] = useState<NotificationPresentation>("template");
   const [htmlContent, setHtmlContent] = useState("");
   const [templateId, setTemplateId] = useState<NotificationTemplateId>("welcome_v1");
   const [templateVars, setTemplateVars] = useState<Record<string, string>>({});
@@ -84,10 +95,14 @@ export function NotificationsTab() {
   const [error, setError] = useState<string | null>(null);
 
   const isSuperadmin = Boolean(user?.is_superadmin);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+
+  const { templates } = useNotificationTemplates(coreApi);
 
   const selectedTemplate = useMemo(
-    () => NOTIFICATION_TEMPLATE_DEFINITIONS.find((item) => item.id === templateId) ?? null,
-    [templateId],
+    () => templates.find((item) => item.id === templateId) ?? null,
+    [templates, templateId],
   );
 
   const previewRecipientVars = useMemo(() => {
@@ -104,6 +119,26 @@ export function NotificationsTab() {
     return buildTemplatePreview(selectedTemplate, templateVars, previewRecipientVars);
   }, [selectedTemplate, templateVars, previewRecipientVars]);
 
+  const actionForPreview =
+    actionType === "none"
+      ? null
+      : {
+          type: actionType,
+          label: actionLabel.trim() || "Abrir",
+          target: actionTarget.trim(),
+        };
+
+  const recipientCount = broadcast
+    ? null
+    : selectedUserIds.length + extraEmails.length;
+
+  const showTextPreview =
+    presentation === "text" && Boolean(message.trim() || title.trim());
+
+  const showHtmlPreview = presentation === "html" && Boolean(htmlContent.trim() || message.trim());
+
+  const showSidePreview = showTextPreview || showHtmlPreview;
+
   useEffect(() => {
     if (!selectedTemplate || presentation !== "template") {
       return;
@@ -111,10 +146,6 @@ export function NotificationsTab() {
     setCategory(selectedTemplate.category);
     setType(selectedTemplate.defaultType);
   }, [selectedTemplate, presentation]);
-
-  function updateTemplateVar(key: string, value: string) {
-    setTemplateVars((current) => ({ ...current, [key]: value }));
-  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -137,10 +168,18 @@ export function NotificationsTab() {
     const isTemplate = presentation === "template";
     const fallbackMessage = isTemplate
       ? templatePreview?.message ?? "Notificação"
-      : message.trim();
+      : presentation === "html"
+        ? message.trim() || "Notificação em HTML"
+        : message.trim();
 
-    if (!fallbackMessage) {
+    if (!fallbackMessage && presentation !== "html") {
       setError("Informe a mensagem ou preencha o template.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (presentation === "html" && !htmlContent.trim()) {
+      setError("Informe o conteúdo HTML.");
       setIsSubmitting(false);
       return;
     }
@@ -191,6 +230,18 @@ export function NotificationsTab() {
     }
   }
 
+  const submitDisabled =
+    isSubmitting ||
+    (!broadcast && selectedUserIds.length === 0 && extraEmails.length === 0) ||
+    (presentation === "text" && !message.trim()) ||
+    (presentation === "html" && !htmlContent.trim()) ||
+    (presentation === "template" &&
+      Boolean(
+        selectedTemplate?.fields.some(
+          (field) => field.required && !(templateVars[field.key] ?? "").trim(),
+        ),
+      ));
+
   if (!isSuperadmin) {
     return (
       <section className="admin-notifications">
@@ -205,254 +256,355 @@ export function NotificationsTab() {
   return (
     <section className="admin-notifications">
       <header className="admin-notifications__header">
-        <h2>Notificações da plataforma</h2>
-        <p>
-          Envie para vários usuários de uma vez (seleção nos cards ou lista de e-mails/IDs). Cada
-          destinatário recebe sua própria notificação no sino da sidebar.
-        </p>
+        <div className="admin-notifications__header-icon" aria-hidden="true">
+          <Bell size={24} />
+        </div>
+        <div className="admin-notifications__header-text">
+          <h2>Notificações da plataforma</h2>
+          <p>
+            Envie para vários usuários de uma vez. Cada destinatário recebe sua própria
+            notificação no sino da sidebar, com variáveis preenchidas automaticamente quando
+            aplicável.
+          </p>
+        </div>
       </header>
 
       <form className="admin-notifications__form" onSubmit={(event) => void handleSubmit(event)}>
-        <label className="admin-notifications__checkbox">
-          <input
-            type="checkbox"
-            checked={broadcast}
-            onChange={(event) => setBroadcast(event.target.checked)}
-          />
-          Notificação geral (todos os usuários ativos)
-        </label>
+        <div className="admin-notifications__shell">
+          <article className="admin-notifications__panel">
+            <div className="admin-notifications__panel-head">
+              <span className="admin-notifications__step" aria-hidden="true">
+                1
+              </span>
+              <div>
+                <h3 className="admin-notifications__panel-title">Destinatários</h3>
+                <p className="admin-notifications__panel-desc">
+                  Escolha usuários nos cards, cole e-mails ou IDs, ou envie para todos.
+                </p>
+              </div>
+            </div>
 
-        {!broadcast ? (
-          <NotificationRecipientPicker
-            adminApi={adminApi}
-            selectedUserIds={selectedUserIds}
-            extraEmails={extraEmails}
-            onChangeSelectedUserIds={setSelectedUserIds}
-            onChangeExtraEmails={setExtraEmails}
-            disabled={isSubmitting}
-          />
-        ) : null}
-
-        <div className="admin-notifications__row">
-          <label className="admin-notifications__field">
-            <span>Categoria</span>
-            <select
-              value={category}
-              onChange={(event) => setCategory(event.target.value as NotificationCategory)}
-            >
-              {NOTIFICATION_CATEGORIES.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="admin-notifications__field">
-            <span>Apresentação</span>
-            <select
-              value={presentation}
-              onChange={(event) =>
-                setPresentation(event.target.value as NotificationPresentation)
-              }
-            >
-              {PRESENTATION_MODES.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="admin-notifications__field">
-            <span>Tipo visual</span>
-            <select value={type} onChange={(event) => setType(event.target.value as NotificationType)}>
-              {NOTIFICATION_TYPES.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <label className="admin-notifications__field">
-          <span>Título (opcional)</span>
-          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} />
-        </label>
-
-        {presentation === "template" && selectedTemplate ? (
-          <>
-            <label className="admin-notifications__field">
-              <span>Template</span>
-              <select
-                value={templateId}
-                onChange={(event) => {
-                  const nextId = event.target.value as NotificationTemplateId;
-                  setTemplateId(nextId);
-                  const nextTemplate = NOTIFICATION_TEMPLATE_DEFINITIONS.find(
-                    (item) => item.id === nextId,
-                  );
-                  if (nextTemplate) {
-                    const initialVars: Record<string, string> = {};
-                    for (const field of nextTemplate.fields) {
-                      initialVars[field.key] = templateVars[field.key] ?? "";
-                    }
-                    setTemplateVars(initialVars);
-                  }
-                }}
-              >
-                {NOTIFICATION_TEMPLATE_DEFINITIONS.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
+            <label className="admin-notifications__broadcast">
+              <input
+                type="checkbox"
+                checked={broadcast}
+                onChange={(event) => setBroadcast(event.target.checked)}
+              />
+              <span className="admin-notifications__broadcast-body">
+                <strong>Notificação geral</strong>
+                <span>Todos os usuários ativos da plataforma</span>
+              </span>
             </label>
 
-            {selectedTemplate.recipientAutoVars?.includes("userName") ? (
-              <p className="admin-notifications__auto-var-hint">
-                O nome de cada destinatário é preenchido automaticamente pelo sistema (primeiro
-                nome do cadastro).
-              </p>
-            ) : null}
-
-            {selectedTemplate.fields.map((field) => (
-              <label key={field.key} className="admin-notifications__field">
-                <span>
-                  {field.label}
-                  {field.required ? " *" : ""}
-                </span>
-                <input
-                  value={templateVars[field.key] ?? ""}
-                  onChange={(event) => updateTemplateVar(field.key, event.target.value)}
-                  placeholder={field.placeholder}
-                  required={field.required}
-                />
-              </label>
-            ))}
-
-            <div className="admin-notifications__preview">
-              <p className="admin-notifications__preview-label">Pré-visualização</p>
-              <NotificationCard
-                notification={{
-                  id: "preview",
-                  title: templatePreview?.title ?? null,
-                  message: templatePreview?.message ?? "",
-                  type,
-                  category,
-                  presentation: "template",
-                  metadata: {
-                    templateId,
-                    vars: { ...previewRecipientVars, ...templateVars },
-                  },
-                  read: false,
-                  createdAt: new Date().toISOString(),
-                  action:
-                    actionType === "none"
-                      ? null
-                      : {
-                          type: actionType,
-                          label: actionLabel.trim() || "Abrir",
-                          target: actionTarget.trim(),
-                        },
-                }}
-                onMarkRead={async () => {}}
+            {!broadcast ? (
+              <NotificationRecipientPicker
+                adminApi={adminApi}
+                selectedUserIds={selectedUserIds}
+                extraEmails={extraEmails}
+                onChangeSelectedUserIds={setSelectedUserIds}
+                onChangeExtraEmails={setExtraEmails}
+                disabled={isSubmitting}
               />
+            ) : null}
+          </article>
+
+          <article className="admin-notifications__panel admin-notifications__panel--muted">
+            <div className="admin-notifications__panel-head">
+              <span className="admin-notifications__step" aria-hidden="true">
+                2
+              </span>
+              <div>
+                <h3 className="admin-notifications__panel-title">Conteúdo e apresentação</h3>
+                <p className="admin-notifications__panel-desc">
+                  Defina o formato visual e os campos da mensagem.
+                </p>
+              </div>
             </div>
-          </>
-        ) : null}
 
-        {presentation === "html" ? (
-          <label className="admin-notifications__field">
-            <span>HTML personalizado</span>
-            <textarea
-              value={htmlContent}
-              onChange={(event) => setHtmlContent(event.target.value)}
-              rows={6}
-              required
-              placeholder="<p>Olá, <strong>nome</strong>!</p>"
-            />
-          </label>
-        ) : null}
+            <div className="admin-notifications__modes" role="group" aria-label="Apresentação">
+              <span className="admin-notifications__modes-label">Formato</span>
+              <div className="admin-notifications__modes-row">
+                {PRESENTATION_MODES.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    className={
+                      presentation === item.value
+                        ? "admin-notifications__mode admin-notifications__mode--active"
+                        : "admin-notifications__mode"
+                    }
+                    onClick={() => setPresentation(item.value)}
+                    aria-pressed={presentation === item.value}
+                  >
+                    <strong>{item.label}</strong>
+                    <span>{item.hint}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        {presentation === "text" ? (
-          <label className="admin-notifications__field">
-            <span>Mensagem</span>
-            <textarea
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              rows={3}
-              required
-              maxLength={500}
-            />
-          </label>
-        ) : null}
-
-        <fieldset className="admin-notifications__fieldset">
-          <legend>Ação (opcional)</legend>
-          <label className="admin-notifications__field">
-            <span>Tipo de ação</span>
-            <select
-              value={actionType}
-              onChange={(event) =>
-                setActionType(event.target.value as NotificationActionType | "none")
+            <div
+              className={
+                showSidePreview
+                  ? "admin-notifications__main-grid admin-notifications__main-grid--with-preview"
+                  : "admin-notifications__main-grid"
               }
             >
-              {ACTION_TYPES.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              <div className="admin-notifications__main-grid-content">
+                <div className="admin-notifications__row">
+                  <label className="admin-notifications__field">
+                    <span>Categoria</span>
+                    <select
+                      value={category}
+                      onChange={(event) => setCategory(event.target.value as NotificationCategory)}
+                    >
+                      {NOTIFICATION_CATEGORIES.map((item) => (
+                        <option key={item.value} value={item.value}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-          {actionType !== "none" ? (
-            <>
-              <label className="admin-notifications__field">
-                <span>Rótulo do botão</span>
-                <input
-                  value={actionLabel}
-                  onChange={(event) => setActionLabel(event.target.value)}
-                  placeholder="Abrir aplicativo"
-                  maxLength={80}
-                />
-              </label>
-              <label className="admin-notifications__field">
-                <span>Destino</span>
-                <input
-                  value={actionTarget}
-                  onChange={(event) => setActionTarget(event.target.value)}
-                  placeholder={
-                    actionType === "portal_route" ? "/apps/minha-delpi-ai" : "https://..."
-                  }
-                  maxLength={500}
-                />
-              </label>
-            </>
-          ) : null}
-        </fieldset>
+                  <label className="admin-notifications__field">
+                    <span>Tipo visual</span>
+                    <select
+                      value={type}
+                      onChange={(event) => setType(event.target.value as NotificationType)}
+                    >
+                      {NOTIFICATION_TYPES.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
 
-        {feedback ? <p className="admin-notifications__success">{feedback}</p> : null}
-        {error ? <p className="admin-notifications__error">{error}</p> : null}
+                {presentation === "template" ? (
+                  <AdminNotificationTemplateSection
+                    coreApi={coreApi}
+                    templateId={templateId}
+                    onTemplateIdChange={setTemplateId}
+                    templateVars={templateVars}
+                    onTemplateVarsChange={setTemplateVars}
+                    category={category}
+                    type={type}
+                    previewUserName={user?.name}
+                    action={actionForPreview}
+                  />
+                ) : null}
 
-        <button
-          type="submit"
-          className="admin-notifications__submit"
-          disabled={
-            isSubmitting ||
-            (!broadcast && selectedUserIds.length === 0 && extraEmails.length === 0) ||
-            (presentation === "text" && !message.trim()) ||
-            (presentation === "html" && !htmlContent.trim()) ||
-            (presentation === "template" &&
-              (selectedTemplate?.fields.some(
-                (field) => field.required && !(templateVars[field.key] ?? "").trim(),
-              ) ??
-                true))
-          }
-        >
-          {isSubmitting ? "Enviando..." : "Enviar notificações"}
-        </button>
+                {presentation === "html" ? (
+                  <label className="admin-notifications__field">
+                    <span>HTML personalizado</span>
+                    <NotificationHtmlEditor
+                      value={htmlContent}
+                      onChange={setHtmlContent}
+                      disabled={isSubmitting}
+                    />
+                  </label>
+                ) : null}
+
+                {presentation === "text" || presentation === "html" ? (
+                  <>
+                    <label className="admin-notifications__field">
+                      <span>Título (opcional)</span>
+                      <input
+                        ref={titleRef}
+                        value={title}
+                        onChange={(event) => setTitle(event.target.value)}
+                        maxLength={120}
+                      />
+                      <NotificationVariableToolbar
+                        targetRef={titleRef}
+                        value={title}
+                        onChange={setTitle}
+                        scopes={["recipient"]}
+                        disabled={isSubmitting}
+                      />
+                    </label>
+
+                    {presentation === "text" ? (
+                      <label className="admin-notifications__field">
+                        <span>Mensagem</span>
+                        <textarea
+                          ref={messageRef}
+                          value={message}
+                          onChange={(event) => setMessage(event.target.value)}
+                          rows={4}
+                          required
+                          maxLength={500}
+                        />
+                        <NotificationVariableToolbar
+                          targetRef={messageRef}
+                          value={message}
+                          onChange={setMessage}
+                          scopes={["recipient"]}
+                          disabled={isSubmitting}
+                        />
+                      </label>
+                    ) : (
+                      <label className="admin-notifications__field">
+                        <span>Mensagem (fallback em texto)</span>
+                        <textarea
+                          ref={messageRef}
+                          value={message}
+                          onChange={(event) => setMessage(event.target.value)}
+                          rows={2}
+                          maxLength={500}
+                          placeholder="Resumo exibido em clientes sem suporte a HTML"
+                        />
+                        <NotificationVariableToolbar
+                          targetRef={messageRef}
+                          value={message}
+                          onChange={setMessage}
+                          scopes={["recipient"]}
+                          disabled={isSubmitting}
+                        />
+                      </label>
+                    )}
+                  </>
+                ) : null}
+
+                <fieldset className="admin-notifications__fieldset">
+                  <legend>Ação (opcional)</legend>
+                  <div className="admin-notifications__fieldset-grid">
+                    <label className="admin-notifications__field">
+                      <span>Tipo de ação</span>
+                      <select
+                        value={actionType}
+                        onChange={(event) =>
+                          setActionType(event.target.value as NotificationActionType | "none")
+                        }
+                      >
+                        {ACTION_TYPES.map((item) => (
+                          <option key={item.value} value={item.value}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  {actionType !== "none" ? (
+                    <div className="admin-notifications__fieldset-grid admin-notifications__fieldset-grid--action">
+                      <label className="admin-notifications__field">
+                        <span>Rótulo do botão</span>
+                        <input
+                          value={actionLabel}
+                          onChange={(event) => setActionLabel(event.target.value)}
+                          placeholder="Abrir aplicativo"
+                          maxLength={80}
+                        />
+                      </label>
+                      <label className="admin-notifications__field">
+                        <span>Destino</span>
+                        <input
+                          value={actionTarget}
+                          onChange={(event) => setActionTarget(event.target.value)}
+                          placeholder={
+                            actionType === "portal_route" ? "/apps/minha-delpi-ai" : "https://..."
+                          }
+                          maxLength={500}
+                        />
+                      </label>
+                    </div>
+                  ) : null}
+                </fieldset>
+              </div>
+
+              {showTextPreview ? (
+                <aside
+                  className="admin-notifications__preview admin-notifications__preview--sticky"
+                  aria-label="Pré-visualização"
+                >
+                  <p className="admin-notifications__preview-label">Pré-visualização</p>
+                  <NotificationCard
+                    notification={{
+                      id: "preview",
+                      title: title.trim() || null,
+                      message: message.trim() || "…",
+                      type,
+                      category,
+                      presentation: "text",
+                      read: false,
+                      createdAt: new Date().toISOString(),
+                      action: actionForPreview,
+                    }}
+                    onMarkRead={async () => {}}
+                  />
+                </aside>
+              ) : null}
+
+              {showHtmlPreview ? (
+                <aside
+                  className="admin-notifications__preview admin-notifications__preview--sticky"
+                  aria-label="Pré-visualização"
+                >
+                  <p className="admin-notifications__preview-label">Pré-visualização</p>
+                  <NotificationCard
+                    notification={{
+                      id: "preview",
+                      title: title.trim() || null,
+                      message: message.trim() || "Notificação em HTML",
+                      type,
+                      category,
+                      presentation: "html",
+                      htmlContent,
+                      read: false,
+                      createdAt: new Date().toISOString(),
+                      action: actionForPreview,
+                    }}
+                    onMarkRead={async () => {}}
+                  />
+                </aside>
+              ) : null}
+            </div>
+          </article>
+
+          <footer className="admin-notifications__footer">
+            <div className="admin-notifications__footer-meta">
+              <strong>
+                {broadcast
+                  ? "Envio para todos os usuários ativos"
+                  : recipientCount === 0
+                    ? "Nenhum destinatário selecionado"
+                    : recipientCount === 1
+                      ? "1 destinatário selecionado"
+                      : `${recipientCount} destinatários selecionados`}
+              </strong>
+              <span>
+                {presentation === "template"
+                  ? "Modo template visual"
+                  : presentation === "html"
+                    ? "Modo HTML sanitizado"
+                    : "Modo texto simples"}
+              </span>
+              {feedback ? (
+                <p className="admin-notifications__alert admin-notifications__alert--success">
+                  {feedback}
+                </p>
+              ) : null}
+              {error ? (
+                <p className="admin-notifications__alert admin-notifications__alert--error">
+                  {error}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="admin-notifications__footer-actions">
+              <button
+                type="submit"
+                className="admin-notifications__submit"
+                disabled={submitDisabled}
+              >
+                <Send size={16} aria-hidden="true" />
+                {isSubmitting ? "Enviando…" : "Enviar notificações"}
+              </button>
+            </div>
+          </footer>
+        </div>
       </form>
     </section>
   );

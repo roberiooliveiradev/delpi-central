@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { getRecentAppIds } from "../utils/recentApps";
 import { AppLauncherCard } from "../components/AppLauncherCard";
+import { NotificationCard } from "../components/notifications/NotificationCard";
 import {
   Bell,
   Star,
@@ -33,7 +34,14 @@ const fadeUp = {
 };
 
 export const HomePage = () => {
-  const { user, favorites, notifications, apps} = useContext(AuthContext);
+  const {
+    user,
+    favorites,
+    notifications,
+    apps,
+    markNotificationRead,
+    markAllNotificationsRead,
+  } = useContext(AuthContext);
   const [openFavoriteAppId, setOpenFavoriteAppId] = useState<string | null>(null);
   const [openRecentAppId, setOpenRecentAppId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -236,28 +244,31 @@ export const HomePage = () => {
             hint="Acompanhe atualizações e ações pendentes"
           />
 
-          {topNotifications.length === 0 ? (
+          {notifications.length === 0 ? (
             <EmptyState text="Nenhuma notificação recente." />
           ) : (
-            <div className="home-notif-list">
-              {topNotifications.map((n, index) => (
-                <motion.div
-                  key={n.id ?? `notif-${index}`}
-                  className={`home-notif ${!n.read ? "unread" : ""}`}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.18, delay: 0.03 * index }}
+            <>
+              {unreadCount > 0 ? (
+                <button
+                  type="button"
+                  className="home-notif-mark-all"
+                  onClick={() => void markAllNotificationsRead()}
                 >
-                  <div className="home-notif-dot" />
-                  <div className="home-notif-body">
-                    <div className="home-notif-message">{n.message}</div>
-                    <div className="home-notif-meta">
-                      {!n.read ? "Não lida" : "Lida"}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                  Marcar todas como lidas
+                </button>
+              ) : null}
+
+              <div className="home-notif-list">
+                {topNotifications.map((n) => (
+                  <NotificationCard
+                    key={n.id}
+                    notification={n}
+                    compact
+                    onMarkRead={markNotificationRead}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </motion.section>
 

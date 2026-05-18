@@ -1,6 +1,9 @@
 .notification-recipients {
   display: grid;
   gap: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
 }
 
 .notification-recipients__quick {

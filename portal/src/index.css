@@ -1058,55 +1058,30 @@ body.portal-has-embedded-app .content {
   white-space: nowrap;
 }
 
-/* Notifications list */
-.home-notif-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.home-notif {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  border-radius: 14px;
-  padding: 12px;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-
-.home-notif.unread {
-  background: var(--alert-success-bg);
-  border: 1px solid var(--alert-success-border);
-}
-
-.home-notif-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  margin-top: 4px;
-  background: rgba(0, 0, 0, 0.15);
-}
-
-.home-notif.unread .home-notif-dot {
-  background: var(--primary);
-}
-
-.home-notif-body {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.home-notif-message {
-  color: var(--text);
+/* Notifications list (home — mesmo card da sidebar) */
+.home-notif-mark-all {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--primary);
   font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.home-notif-meta {
-  color: var(--text-muted);
-  font-size: 12px;
+.home-notif-mark-all:hover {
+  background: var(--surface-2);
+}
+
+.home-notif-list {
+  display: grid;
+  gap: 10px;
 }
 
 /* Admin */

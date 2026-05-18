@@ -15,7 +15,9 @@ from app.domain.notifications.notification_constants import (
     ALLOWED_PRESENTATION_MODES,
     CATEGORY_DEFAULT_ICONS,
 )
-from app.domain.notifications.notification_templates import NOTIFICATION_TEMPLATES
+from app.domain.notifications.notification_templates import NotificationTemplateSpec
+from app.domain.notifications.notification_variables import ALL_KNOWN_VARIABLE_KEYS
+from app.domain.notifications.template_rendering import TemplateRenderError, render_template_text
 
 
 class NotificationContentValidationError(ValueError):
@@ -85,6 +87,7 @@ class NotificationContentService:
         metadata: dict | None,
         expires_at: datetime | None,
         recipient_context: dict[str, str] | None = None,
+        template_spec: NotificationTemplateSpec | None = None,
     ) -> PreparedNotificationContent:
         normalized_presentation = (presentation or "text").strip().lower()
         if normalized_presentation not in ALLOWED_PRESENTATION_MODES:
@@ -96,12 +99,15 @@ class NotificationContentService:
             raise NotificationContentValidationError("metadata must be an object")
 
         if normalized_presentation == "template":
+            if template_spec is None:
+                raise NotificationContentValidationError("template_spec is required for template presentation")
             template_context = self._prepare_template(
                 metadata or {},
                 category,
                 type,
                 title,
                 message,
+                spec=template_spec,
                 recipient_context=recipient_context,
             )
             normalized_category = template_context["category"]
@@ -133,6 +139,14 @@ class NotificationContentService:
                     f"category must be one of: {', '.join(sorted(ALLOWED_NOTIFICATION_CATEGORIES))}"
                 )
 
+        if recipient_context and normalized_presentation in {"text", "html"}:
+            try:
+                if normalized_title:
+                    normalized_title = render_template_text(normalized_title, recipient_context)
+                normalized_message = render_template_text(normalized_message, recipient_context)
+            except TemplateRenderError as exc:
+                raise NotificationContentValidationError(str(exc)) from exc
+
         sanitized_html = None
         if normalized_presentation == "html":
             raw_html = (html_content or "").strip()
@@ -140,6 +154,11 @@ class NotificationContentService:
                 raise NotificationContentValidationError(
                     "htmlContent is required when presentation is html"
                 )
+            if recipient_context:
+                try:
+                    raw_html = render_template_text(raw_html, recipient_context)
+                except TemplateRenderError as exc:
+                    raise NotificationContentValidationError(str(exc)) from exc
             sanitized_html = self._sanitize_html(raw_html)
             if not sanitized_html:
                 raise NotificationContentValidationError("htmlContent is empty after sanitization")
@@ -147,6 +166,19 @@ class NotificationContentService:
         action = self._normalize_action(action_type, action_label, action_target)
 
         normalized_icon = (icon or "").strip() or CATEGORY_DEFAULT_ICONS.get(normalized_category)
+
+        if recipient_context and normalized_presentation == "html":
+            action_label_rendered = action.label
+            if action.label:
+                try:
+                    action_label_rendered = render_template_text(action.label, recipient_context)
+                except TemplateRenderError:
+                    action_label_rendered = action.label
+            action = NotificationActionDTO(
+                type=action.type,
+                label=action_label_rendered,
+                target=action.target,
+            )
 
         return PreparedNotificationContent(
             title=normalized_title,
@@ -228,18 +260,10 @@ class NotificationContentService:
         title: str | None,
         message: str,
         *,
+        spec: NotificationTemplateSpec,
         recipient_context: dict[str, str] | None = None,
     ) -> dict:
-        template_id = metadata.get("templateId") or metadata.get("template_id")
-        if not template_id or not isinstance(template_id, str):
-            raise NotificationContentValidationError(
-                "metadata.templateId is required when presentation is template"
-            )
-
-        template_id = template_id.strip()
-        spec = NOTIFICATION_TEMPLATES.get(template_id)
-        if not spec:
-            raise NotificationContentValidationError(f"unknown templateId: {template_id}")
+        template_id = spec.id
 
         raw_vars = metadata.get("vars") or metadata.get("templateVars") or {}
         if not isinstance(raw_vars, dict):
@@ -280,6 +304,7 @@ class NotificationContentService:
             set(spec.required_vars)
             | set(spec.optional_vars)
             | set(spec.recipient_vars)
+            | ALL_KNOWN_VARIABLE_KEYS
         )
         for key in vars_normalized:
             if key not in allowed_keys:
@@ -291,12 +316,10 @@ class NotificationContentService:
         rendered_message = (message or "").strip() or spec.default_message
 
         try:
-            rendered_title = rendered_title.format(**vars_normalized)
-            rendered_message = rendered_message.format(**vars_normalized)
-        except KeyError as exc:
-            raise NotificationContentValidationError(
-                f"template placeholder missing: {exc}"
-            ) from exc
+            rendered_title = render_template_text(rendered_title, vars_normalized)
+            rendered_message = render_template_text(rendered_message, vars_normalized)
+        except TemplateRenderError as exc:
+            raise NotificationContentValidationError(str(exc)) from exc
 
         if len(rendered_message) > 500:
             raise NotificationContentValidationError("rendered message must be at most 500 characters")
