@@ -1,7 +1,7 @@
 # app/infrastructure/persistence/sqlalchemy/notification_repository.py
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime, time
 from typing import List, Literal, Tuple
 from uuid import UUID
 
@@ -128,6 +128,27 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
             )
             .update({"read_at": datetime.utcnow()}, synchronize_session=False)
         )
+
+    def has_category_notification_on_date(
+        self,
+        user_id: str,
+        category: str,
+        on_date: date,
+    ) -> bool:
+        day_start = datetime.combine(on_date, time.min)
+        day_end = datetime.combine(on_date, time.max)
+        row = (
+            self.session.query(Notification.id)
+            .filter(
+                Notification.user_id == UUID(user_id),
+                Notification.category == category,
+                Notification.deleted_at.is_(None),
+                Notification.created_at >= day_start,
+                Notification.created_at <= day_end,
+            )
+            .first()
+        )
+        return row is not None
 
     @staticmethod
     def _to_dto(row: Notification) -> NotificationDTO:

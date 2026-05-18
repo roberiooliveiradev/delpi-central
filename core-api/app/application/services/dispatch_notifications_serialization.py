@@ -22,6 +22,8 @@ def request_to_payload_dict(request: DispatchNotificationsRequest) -> dict:
         "broadcast": request.broadcast,
         "userIds": list(request.user_ids),
         "emails": list(request.emails),
+        "roleIds": list(request.role_ids),
+        "groupIds": list(request.group_ids),
         "sourceApp": request.source_app,
     }
 
@@ -54,6 +56,8 @@ def payload_dict_to_request(data: dict) -> DispatchNotificationsRequest:
         broadcast=bool(data.get("broadcast", False)),
         user_ids=[str(item) for item in (data.get("userIds") or data.get("user_ids") or []) if item],
         emails=[str(item) for item in (data.get("emails") or []) if item],
+        role_ids=[str(item) for item in (data.get("roleIds") or data.get("role_ids") or []) if item],
+        group_ids=[str(item) for item in (data.get("groupIds") or data.get("group_ids") or []) if item],
         source_app=data.get("sourceApp") or data.get("source_app"),
     )
 

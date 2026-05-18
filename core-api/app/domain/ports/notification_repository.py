@@ -3,7 +3,7 @@
 from typing import Protocol, List, Tuple, Literal
 from uuid import UUID
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 
 
 @dataclass
@@ -60,4 +60,12 @@ class NotificationRepository(Protocol):
         ...
 
     def mark_all_read(self, user_id: str) -> None:
+        ...
+
+    def has_category_notification_on_date(
+        self,
+        user_id: str,
+        category: str,
+        on_date: date,
+    ) -> bool:
         ...

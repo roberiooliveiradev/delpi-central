@@ -19,6 +19,7 @@
 | **API envio** | `POST /admin/notifications`, `POST /integrations/notifications` |
 | **API leitura** | `GET /me/notifications` (não lidas), `GET /me/notifications/history` (paginado + filtros) |
 | **API usuário** | `PATCH /me/notifications/<id>/important`, `DELETE /me/notifications/<id>` (soft delete) |
+| **Preferências** | `GET/PATCH /me/notifications/preferences` (`mutedCategories`) |
 
 ---
 
@@ -103,7 +104,7 @@ Histórico paginado.
 
 ### Envio `POST /admin/notifications` e `/integrations/notifications`
 
-Campos opcionais: `category`, `presentation`, `htmlContent`, `templateId`, `templateVars`, `icon`, `action`, `metadata`, `expiresAt`, `scheduledAt`, `broadcast`, `userIds`, `emails`.
+Campos opcionais: `category`, `presentation`, `htmlContent`, `templateId`, `templateVars`, `icon`, `action`, `metadata`, `expiresAt`, `scheduledAt`, `broadcast`, `userIds`, `emails`, `roleIds`, `groupIds`.
 
 Resposta de envio imediato: `201` com `createdCount`. Agendado: `202` com `status: "pending"` e `scheduledAt`.
 
@@ -125,7 +126,7 @@ Tabela `notification_dispatches`: payload completo, status, contadores, erro.
 |------------|----------------|
 | **Sidebar (sino)** | Não lidas; marcar lida, importante e excluir; link “Ver todas” → `/notifications` |
 | **Home** | Resumo + até 4 cards com as mesmas ações rápidas |
-| **`/notifications`** | Abas status, filtro categoria/importantes, paginação, marcar lida, importante, excluir |
+| **`/notifications`** | Abas status, filtros, preferências (silenciar categorias), paginação, ações no card |
 | **Admin → Notificações** | Envio em massa, agendamento, histórico de campanhas, preview por destinatário, expiração |
 
 ---
@@ -138,19 +139,26 @@ Tabela `notification_dispatches`: payload completo, status, contadores, erro.
 | **2** | ✅ | Templates React + customizados + variáveis |
 | **2b** | ✅ | Layout admin em painéis, editor HTML com toolbar de variáveis |
 | **3** | ✅ | `expiresAt`, histórico paginado, **agendamento** (`scheduledAt`) e **auditoria de envios** (`notification_dispatches`) |
-| **4** | ⬜ | Preferências do usuário (opt-out por categoria) |
+| **4** | ✅ | Preferências do usuário (opt-out por categoria, exceto `system`) |
 | **5** | ✅ | Centro `/notifications` com filtros (status, categoria, importantes), excluir e marcar importante |
-| **6** | ⬜ | Automação (aniversário, boas-vindas), destinatários por grupo/papel |
+| **6** | ✅ | Automação (welcome no 1º login, aniversário via cron), destinatários por `roleIds`/`groupIds` |
 | **7** | ⬜ | Rate limit em integrações; preview WYSIWYG HTML |
 
 ---
 
 ## 8. Cron — envios agendados
 
-Campanhas com `scheduledAt` ficam `pending` até processamento. Em produção, agendar chamada periódica (ex.: a cada 1–5 min):
+Campanhas com `scheduledAt` ficam `pending` até processamento. Em produção, agendar chamada periódica (ex.: a cada 1–5 min). Script: `scripts/process-pending-notifications.sh`.
 
 ```bash
-# Com token de serviço (integrações)
+export DELPI_API_BASE_URL="https://<host>"
+export CORE_API_INTEGRATIONS_SERVICE_TOKEN="..."
+./scripts/process-pending-notifications.sh
+
+# Aniversários (1x/dia, requer `users.birth_date` preenchido no Admin):
+./scripts/run-birthday-notifications.sh
+
+# Ou curl direto:
 curl -s -X POST "https://<host>/core-api/integrations/notifications/process-pending" \
   -H "X-Delpi-Service-Token: $CORE_API_INTEGRATIONS_SERVICE_TOKEN"
 

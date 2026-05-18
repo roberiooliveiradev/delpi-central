@@ -1,0 +1,119 @@
+.notification-preferences {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg) 30%, var(--surface));
+}
+
+.notification-preferences__header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: var(--primary);
+}
+
+.notification-preferences__header h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.notification-preferences__header p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.notification-preferences__note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.notification-preferences__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notification-preferences__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.notification-preferences__item input {
+  margin-top: 3px;
+  accent-color: var(--primary);
+}
+
+.notification-preferences__label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notification-preferences__hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.notification-preferences__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.notification-preferences__save {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notification-preferences__save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.notification-preferences__saved {
+  font-size: 12px;
+  font-weight: 600;
+  color: #047857;
+}
+
+.notification-preferences__error {
+  margin: 0;
+  font-size: 12px;
+  color: #b91c1c;
+}
+
+.notification-preferences__loading {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}

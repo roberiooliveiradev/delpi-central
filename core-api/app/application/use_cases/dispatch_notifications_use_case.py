@@ -33,7 +33,17 @@ class DispatchNotificationsUseCase:
         target_user_ids = self._resolve_target_user_ids(request)
         if not target_user_ids:
             raise DispatchNotificationsValidationError(
-                "at least one recipient is required (broadcast, userIds or emails)"
+                "at least one recipient is required (broadcast, userIds, emails, roleIds or groupIds)"
+            )
+
+        dispatch_category = (request.category or "system").strip().lower()
+        target_user_ids = self.uow.notification_preferences.filter_user_ids_accepting_category(
+            target_user_ids,
+            dispatch_category,
+        )
+        if not target_user_ids:
+            raise DispatchNotificationsValidationError(
+                "no recipients accept this notification category (check user preferences)"
             )
 
         template_spec = self._resolve_template_spec(request)
@@ -179,7 +189,16 @@ class DispatchNotificationsUseCase:
                 )
             resolved.add(str(user.id))
 
-        return sorted(resolved)
+        for raw_role_id in request.role_ids:
+            role_id = self._normalize_user_id(raw_role_id)
+            resolved.update(self.uow.rbac_queries.list_user_ids_by_role(UUID(role_id)))
+            resolved.update(self.uow.rbac_queries.list_user_ids_by_group_role(UUID(role_id)))
+
+        for raw_group_id in request.group_ids:
+            group_id = self._normalize_user_id(raw_group_id)
+            resolved.update(self.uow.rbac_queries.list_user_ids_by_group(UUID(group_id)))
+
+        return self._filter_active_user_ids(resolved)
 
     def _list_active_user_ids(self) -> list[str]:
         return sorted(
@@ -187,6 +206,14 @@ class DispatchNotificationsUseCase:
             for user in self.uow.users.list_all()
             if user.active
         )
+
+    def _filter_active_user_ids(self, user_ids: set[str]) -> list[str]:
+        active: list[str] = []
+        for user_id in user_ids:
+            user = self.uow.users.get_by_id(UUID(user_id))
+            if user and user.active:
+                active.append(user_id)
+        return sorted(active)
 
     @staticmethod
     def _normalize_user_id(raw_user_id: str) -> str:

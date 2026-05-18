@@ -36,6 +36,8 @@ class NotifyUserUseCase:
                 broadcast=False,
                 user_ids=[user_id],
                 emails=[],
+                role_ids=[],
+                group_ids=[],
                 source_app="core-api",
             )
         )

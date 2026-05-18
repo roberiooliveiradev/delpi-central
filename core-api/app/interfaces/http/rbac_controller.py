@@ -663,11 +663,35 @@ def list_users():
 
 @rbac_bp.route("/admin/rbac/users/<user_id>", methods=["PUT"])
 @require_all_permissions(["rbac.manage", "users.manage"])
+def _parse_birth_date(value):
+    if value is None or value == "":
+        return None, False
+
+    from datetime import date
+
+    if isinstance(value, date):
+        return value, False
+
+    try:
+        return date.fromisoformat(str(value)[:10]), False
+    except ValueError as exc:
+        raise ValueError("birthDate must be YYYY-MM-DD") from exc
+
+
 def update_user(user_id: str):
     data = request.get_json(silent=True) or {}
 
     try:
         actor = g.current_user
+        birth_date = None
+        clear_birth_date = False
+
+        if "birthDate" in data or "birth_date" in data:
+            raw = data.get("birthDate", data.get("birth_date"))
+            if raw is None:
+                clear_birth_date = True
+            else:
+                birth_date, _ = _parse_birth_date(raw)
 
         with SqlAlchemyUnitOfWork() as uow:
             uc = UpdateUserAdminUseCase(uow)
@@ -678,6 +702,8 @@ def update_user(user_id: str):
                 role_ids=data.get("roleIds", None),
                 group_ids=data.get("groupIds", None),
                 is_superadmin=data.get("is_superadmin", None),
+                birth_date=birth_date,
+                clear_birth_date=clear_birth_date,
             )
 
         if isinstance(result, tuple):

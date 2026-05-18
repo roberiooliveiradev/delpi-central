@@ -1,5 +1,8 @@
 # app/application/use_cases/admin/update_user_admin_use_case.py
 
+from datetime import date
+from uuid import UUID
+
 from app.application.unit_of_work import UnitOfWork
 from app.application.use_cases.set_user_superadmin_use_case import SetUserSuperadminUseCase
 from app.application.use_cases.replace_user_roles_use_case import ReplaceUserRolesUseCase
@@ -19,7 +22,13 @@ class UpdateUserAdminUseCase:
         role_ids: list[str] | None = None,
         group_ids: list[str] | None = None,
         is_superadmin: bool | None = None,
+        birth_date: date | None = None,
+        clear_birth_date: bool = False,
     ) -> dict:
+        if clear_birth_date:
+            self.uow.users.set_birth_date(UUID(target_user_id), None)
+        elif birth_date is not None:
+            self.uow.users.set_birth_date(UUID(target_user_id), birth_date)
         if is_superadmin is not None:
             set_superadmin_use_case = SetUserSuperadminUseCase(self.uow)
 

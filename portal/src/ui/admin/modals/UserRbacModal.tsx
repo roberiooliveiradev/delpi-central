@@ -56,6 +56,7 @@ export const UserRbacModal = ({
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [birthDate, setBirthDate] = useState("");
 
   useEffect(() => {
     if (!open || !user) return;
@@ -85,6 +86,7 @@ export const UserRbacModal = ({
         setSelectedRoleIds(normalizeIds(userRolesRes.data ?? []));
         setSelectedGroupIds(normalizeIds(userGroupsRes.data ?? []));
         setIsSuperadmin(!!user.is_superadmin);
+        setBirthDate(user.birth_date ? String(user.birth_date).slice(0, 10) : "");
         setActiveTab("summary");
       } finally {
         if (!cancelled) setLoading(false);
@@ -108,6 +110,7 @@ export const UserRbacModal = ({
         roleIds: normalizeIds(selectedRoleIds),
         groupIds: normalizeIds(selectedGroupIds),
         is_superadmin: isSuperadmin,
+        birthDate: birthDate.trim() ? birthDate.trim() : null,
       });
 
       onSaved();
@@ -201,6 +204,17 @@ export const UserRbacModal = ({
                     <span>Status</span>
                     <strong>{userStatusLabel}</strong>
                   </div>
+
+                  <label className="user-rbac-info-item user-rbac-info-item--field">
+                    <span>Data de nascimento</span>
+                    <input
+                      type="date"
+                      value={birthDate}
+                      onChange={(event) => setBirthDate(event.target.value)}
+                      disabled={loading}
+                    />
+                    <small>Usada na automação de aniversário.</small>
+                  </label>
                 </div>
               </section>
 

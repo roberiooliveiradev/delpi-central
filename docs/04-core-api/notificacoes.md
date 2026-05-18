@@ -69,7 +69,23 @@ Todas exigem `@require_auth()`.
 | POST | `/me/notifications/read-all` | `MarkAllNotificationsReadUseCase` |
 | PATCH | `/me/notifications/<id>/important` | `SetNotificationImportantUseCase` — body `{ "isImportant": true \| false }` |
 | DELETE | `/me/notifications/<id>` | `DeleteNotificationUseCase` (soft delete: `deleted_at`) |
+| GET | `/me/notifications/preferences` | `GetNotificationPreferencesUseCase` |
+| PATCH | `/me/notifications/preferences` | `UpdateNotificationPreferencesUseCase` — body `{ "mutedCategories": ["announcement", ...] }` |
 | POST | `/me/notifications/test` | `NotifyUserUseCase` (dev) |
+
+No dispatch (`POST /admin/notifications` e integrações), usuários que silenciaram a `category` do envio são ignorados. A categoria `system` não pode ser silenciada.
+
+Destinatários adicionais no body: `roleIds` (papel direto + via grupo), `groupIds` (membros do grupo).
+
+### Automação (integrações, service token)
+
+| Método | Path | Descrição |
+|--------|------|-----------|
+| POST | `/integrations/notifications/automation/birthdays` | Envia `birthday_v1` para usuários ativos com `birth_date` = hoje (idempotente por dia) |
+
+Boas-vindas: no **primeiro login** (criação do usuário local), dispara `welcome_v1` automaticamente (respeita preferências).
+
+`users.birth_date` (YYYY-MM-DD): editável no Admin → usuário → data de nascimento.
 
 Admin e integrações: `POST /admin/notifications`, `POST /integrations/notifications`, templates em `/admin/notifications/templates`, auditoria em `GET /admin/notifications/dispatches`, processamento de agendados em `POST .../dispatches/process-pending` — ver [roadmap](../12-roadmap-e-evolucao/notificacoes-ricas.md).
 

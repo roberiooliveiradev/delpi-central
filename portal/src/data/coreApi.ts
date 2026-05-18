@@ -99,6 +99,11 @@ export interface NotificationAction {
   target: string;
 }
 
+export interface NotificationPreferencesResponse {
+  mutedCategories: NotificationCategory[];
+  mutableCategories: NotificationCategory[];
+}
+
 export interface NotificationItem {
   id: string;
   title?: string | null;
@@ -120,6 +125,8 @@ export interface DispatchNotificationsPayload {
   broadcast?: boolean;
   userIds?: string[];
   emails?: string[];
+  roleIds?: string[];
+  groupIds?: string[];
   title?: string | null;
   message: string;
   type?: NotificationType;
@@ -344,6 +351,28 @@ export class CoreApi {
       `/core-api/me/notifications/${id}/important`,
       { isImportant },
     );
+  }
+
+  getNotificationPreferences() {
+    return this.client.get<{
+      mutedCategories?: NotificationCategory[];
+      mutableCategories?: NotificationCategory[];
+    }>("/core-api/me/notifications/preferences").then((data) => ({
+      mutedCategories: data.mutedCategories ?? [],
+      mutableCategories: data.mutableCategories ?? [],
+    }));
+  }
+
+  updateNotificationPreferences(mutedCategories: NotificationCategory[]) {
+    return this.client
+      .patch<{
+        mutedCategories?: NotificationCategory[];
+        mutableCategories?: NotificationCategory[];
+      }>("/core-api/me/notifications/preferences", { mutedCategories })
+      .then((data) => ({
+        mutedCategories: data.mutedCategories ?? [],
+        mutableCategories: data.mutableCategories ?? [],
+      }));
   }
 
   dispatchNotifications(payload: DispatchNotificationsPayload) {

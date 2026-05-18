@@ -27,6 +27,8 @@ def test_request_roundtrip_preserves_template_metadata():
         broadcast=False,
         user_ids=["550e8400-e29b-41d4-a716-446655440000"],
         emails=[],
+        role_ids=[],
+        group_ids=[],
         source_app="portal-admin",
     )
 

@@ -19,4 +19,6 @@ class DispatchNotificationsRequest:
     broadcast: bool
     user_ids: list[str]
     emails: list[str]
+    role_ids: list[str]
+    group_ids: list[str]
     source_app: str | None = None

@@ -7,7 +7,13 @@ from types import SimpleNamespace
 from flask import request, g, jsonify
 
 from delpi_auth.jwt_validator import validate_token
+from app.application.use_cases.send_welcome_notification_use_case import (
+    SendWelcomeNotificationUseCase,
+)
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def authenticate():
@@ -47,10 +53,13 @@ def authenticate():
             ]
         }), 401
 
+    is_new_user = False
+
     with SqlAlchemyUnitOfWork() as uow:
         user = uow.users.get_by_email(email)
 
         if not user:
+            is_new_user = True
             uow.users.create(
                 id=user_uuid,
                 email=email,
@@ -66,6 +75,14 @@ def authenticate():
         roles = uow.rbac_queries.list_role_codes_by_user(user.id)
         groups = uow.rbac_queries.list_group_codes_by_user(user.id)
         permissions = uow.rbac_queries.list_permission_codes_by_user(user.id)
+
+    if is_new_user and user:
+        try:
+            with SqlAlchemyUnitOfWork() as welcome_uow:
+                SendWelcomeNotificationUseCase(welcome_uow).execute(str(user.id))
+                welcome_uow.commit()
+        except Exception:
+            logger.exception("welcome notification failed for user %s", user.id)
 
     g.current_user = SimpleNamespace(
         id=str(user.id),

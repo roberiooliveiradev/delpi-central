@@ -29,6 +29,7 @@ export type AdminUser = {
   active?: boolean;
   is_superadmin: boolean;
   last_login_at?: string | null;
+  birth_date?: string | null;
 };
 
 export type AdminRole = {
@@ -296,6 +297,7 @@ export class AdminApi {
       roleIds?: string[];
       groupIds?: string[];
       is_superadmin?: boolean;
+      birthDate?: string | null;
     }
   ) {
     return this.client.put<{ ok: boolean }>(

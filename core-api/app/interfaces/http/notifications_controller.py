@@ -17,6 +17,9 @@ from app.application.use_cases.list_notification_dispatches_use_case import (
 from app.application.use_cases.process_pending_notification_dispatches_use_case import (
     ProcessPendingNotificationDispatchesUseCase,
 )
+from app.application.use_cases.process_birthday_notifications_use_case import (
+    ProcessBirthdayNotificationsUseCase,
+)
 from app.application.use_cases.manage_notification_templates_use_case import (
     CreateNotificationCustomTemplateUseCase,
     DeleteNotificationCustomTemplateUseCase,
@@ -101,11 +104,17 @@ def _parse_dispatch_body(data: dict | None) -> DispatchNotificationsRequest:
 
     user_ids = payload.get("userIds") or payload.get("user_ids") or []
     emails = payload.get("emails") or []
+    role_ids = payload.get("roleIds") or payload.get("role_ids") or []
+    group_ids = payload.get("groupIds") or payload.get("group_ids") or []
 
     if not isinstance(user_ids, list):
         user_ids = []
     if not isinstance(emails, list):
         emails = []
+    if not isinstance(role_ids, list):
+        role_ids = []
+    if not isinstance(group_ids, list):
+        group_ids = []
 
     action_type, action_label, action_target = _parse_action(payload)
 
@@ -139,6 +148,8 @@ def _parse_dispatch_body(data: dict | None) -> DispatchNotificationsRequest:
         broadcast=bool(payload.get("broadcast", False)),
         user_ids=[str(item) for item in user_ids if item],
         emails=[str(item) for item in emails if item],
+        role_ids=[str(item) for item in role_ids if item],
+        group_ids=[str(item) for item in group_ids if item],
         source_app=payload.get("sourceApp") or payload.get("source_app"),
     )
 
@@ -310,6 +321,27 @@ def delete_notification_template(template_id: str):
         return api_error("validation_error", str(exc), status=400)
     except Exception as exc:
         return api_error("delete_template_failed", str(exc))
+
+
+@integrations_notifications_bp.route("/automation/birthdays", methods=["POST"])
+@require_service_token()
+def integrations_process_birthday_notifications():
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = ProcessBirthdayNotificationsUseCase(uow).execute()
+
+        return (
+            jsonify(
+                {
+                    "eligible": result.eligible,
+                    "sent": result.sent,
+                    "skipped": result.skipped,
+                }
+            ),
+            200,
+        )
+    except Exception as exc:
+        return api_error("birthday_automation_failed", str(exc))
 
 
 @integrations_notifications_bp.route("", methods=["POST"])

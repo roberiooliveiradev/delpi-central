@@ -17,6 +17,9 @@ from app.domain.ports.user_repository_port import UserDTO
 def uow():
     unit = MagicMock()
     unit.notifications.create.return_value = uuid4()
+    unit.notification_preferences.filter_user_ids_accepting_category.side_effect = (
+        lambda user_ids, _category: user_ids
+    )
     return unit
 
 
@@ -53,6 +56,8 @@ def test_dispatch_targeted_user_ids(uow):
             broadcast=False,
             user_ids=[str(user.id)],
             emails=[],
+            role_ids=[],
+            group_ids=[],
         )
     )
 
@@ -110,6 +115,8 @@ def test_dispatch_broadcast_active_users_only(uow):
             broadcast=True,
             user_ids=[],
             emails=[],
+            role_ids=[],
+            group_ids=[],
         )
     )
 
@@ -139,6 +146,8 @@ def test_dispatch_welcome_template_uses_recipient_name(uow):
             broadcast=False,
             user_ids=[str(user.id)],
             emails=[],
+            role_ids=[],
+            group_ids=[],
         )
     )
 

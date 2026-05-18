@@ -20,6 +20,7 @@ import { NotificationCard } from "../../../components/notifications/Notification
 import { NotificationHtmlEditor } from "../../../components/notifications/NotificationHtmlEditor";
 import { NotificationVariableToolbar } from "../../../components/notifications/NotificationVariableToolbar";
 import { NotificationRecipientPicker } from "../../../components/notifications/NotificationRecipientPicker";
+import { NotificationRoleGroupPicker } from "../../../components/notifications/NotificationRoleGroupPicker";
 import {
   buildTemplatePreview,
   resolvePreviewRecipientName,
@@ -81,6 +82,8 @@ export function NotificationsTab() {
 
   const [broadcast, setBroadcast] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [extraEmails, setExtraEmails] = useState<string[]>([]);
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -149,7 +152,10 @@ export function NotificationsTab() {
 
   const recipientCount = broadcast
     ? null
-    : selectedUserIds.length + extraEmails.length;
+    : selectedUserIds.length +
+      extraEmails.length +
+      selectedRoleIds.length +
+      selectedGroupIds.length;
 
   const showTextPreview =
     presentation === "text" && Boolean(message.trim() || title.trim());
@@ -178,8 +184,16 @@ export function NotificationsTab() {
     setFeedback(null);
     setError(null);
 
-    if (!broadcast && selectedUserIds.length === 0 && extraEmails.length === 0) {
-      setError("Selecione ao menos um destinatário (e-mail, ID ou card de usuário).");
+    if (
+      !broadcast &&
+      selectedUserIds.length === 0 &&
+      extraEmails.length === 0 &&
+      selectedRoleIds.length === 0 &&
+      selectedGroupIds.length === 0
+    ) {
+      setError(
+        "Selecione ao menos um destinatário (usuário, e-mail, papel ou grupo).",
+      );
       setIsSubmitting(false);
       return;
     }
@@ -207,6 +221,8 @@ export function NotificationsTab() {
       broadcast,
       userIds: broadcast ? undefined : selectedUserIds,
       emails: broadcast ? undefined : extraEmails,
+      roleIds: broadcast ? undefined : selectedRoleIds,
+      groupIds: broadcast ? undefined : selectedGroupIds,
       title: isTemplate ? title.trim() || templatePreview?.title || null : title.trim() || null,
       message: fallbackMessage,
       type,
@@ -275,7 +291,11 @@ export function NotificationsTab() {
 
   const submitDisabled =
     isSubmitting ||
-    (!broadcast && selectedUserIds.length === 0 && extraEmails.length === 0) ||
+    (!broadcast &&
+      selectedUserIds.length === 0 &&
+      extraEmails.length === 0 &&
+      selectedRoleIds.length === 0 &&
+      selectedGroupIds.length === 0) ||
     (presentation === "text" && !message.trim()) ||
     (presentation === "html" && !htmlContent.trim()) ||
     (presentation === "template" &&
@@ -376,17 +396,27 @@ export function NotificationsTab() {
             </label>
 
             {!broadcast ? (
-              <NotificationRecipientPicker
-                adminApi={adminApi}
-                selectedUserIds={selectedUserIds}
-                extraEmails={extraEmails}
-                onChangeSelectedUserIds={setSelectedUserIds}
-                onChangeExtraEmails={setExtraEmails}
-                disabled={isSubmitting}
-                previewUserId={previewUserId}
-                onPreviewUserIdChange={setPreviewUserId}
-                onRecipientLabelsChange={setRecipientLabels}
-              />
+              <>
+                <NotificationRecipientPicker
+                  adminApi={adminApi}
+                  selectedUserIds={selectedUserIds}
+                  extraEmails={extraEmails}
+                  onChangeSelectedUserIds={setSelectedUserIds}
+                  onChangeExtraEmails={setExtraEmails}
+                  disabled={isSubmitting}
+                  previewUserId={previewUserId}
+                  onPreviewUserIdChange={setPreviewUserId}
+                  onRecipientLabelsChange={setRecipientLabels}
+                />
+                <NotificationRoleGroupPicker
+                  adminApi={adminApi}
+                  selectedRoleIds={selectedRoleIds}
+                  selectedGroupIds={selectedGroupIds}
+                  onChangeRoleIds={setSelectedRoleIds}
+                  onChangeGroupIds={setSelectedGroupIds}
+                  disabled={isSubmitting}
+                />
+              </>
             ) : null}
           </article>
 

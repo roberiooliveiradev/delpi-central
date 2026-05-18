@@ -14,6 +14,7 @@ import {
 } from "../data/coreApi";
 import { NotificationCard } from "../components/notifications/NotificationCard";
 import { useNotificationActions } from "../components/notifications/useNotificationActions";
+import { NotificationPreferencesPanel } from "../components/notifications/NotificationPreferencesPanel";
 
 import "./NotificationsPage.css";
 
@@ -142,6 +143,8 @@ export function NotificationsPage() {
           <p>Histórico completo das suas mensagens na plataforma.</p>
         </div>
       </header>
+
+      <NotificationPreferencesPanel coreApi={coreApi} />
 
       <div className="notifications-page__toolbar">
         <div className="notifications-page__tabs" role="tablist" aria-label="Filtro">
