@@ -29,6 +29,7 @@ from app.application.use_cases.manage_notification_templates_use_case import (
 )
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 from app.interfaces.http.security.authorization import require_superadmin
+from app.extensions.integration_rate_limit import integration_rate_limit
 from app.interfaces.http.security.service_token import require_service_token
 from app.interfaces.http.serializers.notification_dispatch_serializer import (
     serialize_dispatch_result,
@@ -258,6 +259,7 @@ def process_pending_notification_dispatches():
 
 @integrations_notifications_bp.route("/process-pending", methods=["POST"])
 @require_service_token()
+@integration_rate_limit(key_prefix="notif-int-pending")
 def integrations_process_pending_notification_dispatches():
     try:
         body = request.get_json(silent=True) or {}
@@ -325,6 +327,7 @@ def delete_notification_template(template_id: str):
 
 @integrations_notifications_bp.route("/automation/birthdays", methods=["POST"])
 @require_service_token()
+@integration_rate_limit(key_prefix="notif-int-birthdays")
 def integrations_process_birthday_notifications():
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -346,6 +349,7 @@ def integrations_process_birthday_notifications():
 
 @integrations_notifications_bp.route("", methods=["POST"])
 @require_service_token()
+@integration_rate_limit(key_prefix="notif-int-dispatch")
 def integrations_dispatch_notifications():
     try:
         body = request.get_json(silent=True) or {}

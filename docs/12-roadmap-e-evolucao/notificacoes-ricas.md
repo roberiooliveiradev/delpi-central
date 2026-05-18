@@ -142,7 +142,7 @@ Tabela `notification_dispatches`: payload completo, status, contadores, erro.
 | **4** | ✅ | Preferências do usuário (opt-out por categoria, exceto `system`) |
 | **5** | ✅ | Centro `/notifications` com filtros (status, categoria, importantes), excluir e marcar importante |
 | **6** | ✅ | Automação (welcome no 1º login, aniversário via cron), destinatários por `roleIds`/`groupIds` |
-| **7** | ⬜ | Rate limit em integrações; preview WYSIWYG HTML |
+| **7** | ✅ | Rate limit em integrações; pré-visualização HTML no Admin |
 
 ---
 
@@ -174,7 +174,7 @@ curl -s -X POST "https://<host>/core-api/admin/notifications/dispatches/process-
 1. HTML sempre sanitizado na Core API.
 2. `portal_route` só paths relativos (`/...`), sem `//` externo.
 3. `external_url` só `https:`.
-4. Integrações externas: rate limit (**pendente**).
+4. Integrações externas: rate limit (`NOTIFICATIONS_INTEGRATION_RATE_LIMIT` / `NOTIFICATIONS_INTEGRATION_RATE_WINDOW_SECONDS`, default 60/min por IP e rota).
 
 ---
 
