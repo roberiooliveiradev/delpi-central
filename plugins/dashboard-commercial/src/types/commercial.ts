@@ -37,3 +37,18 @@ export type CommercialFilterParams = {
   end_date?: string;
   branch?: string;
 };
+
+export type CommercialRolSeriesPoint = {
+  periodo: string;
+  sort_key: string;
+  date_start: string;
+  date_end: string;
+  rol_matrix: number;
+  rol_branch: number;
+};
+
+export type CommercialRolSeriesData = {
+  granularity: string;
+  truncated: boolean;
+  points: CommercialRolSeriesPoint[];
+};

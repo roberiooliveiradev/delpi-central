@@ -1,7 +1,6 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Banknote,
-  BarChart3,
   Building2,
   Percent,
   Target,
@@ -12,7 +11,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Legend,
   ResponsiveContainer,
   Tooltip,
@@ -21,57 +19,31 @@ import {
 } from "recharts";
 
 import { ChartCard } from "../components/ChartCard";
+import { ChartToolbar } from "../components/ChartToolbar";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
+import { RolEvolutionChart } from "../components/RolEvolutionChart";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useCommercialDashboard } from "../hooks/useCommercialDashboard";
 import { useCommercialFilters } from "../hooks/useCommercialFilters";
+import { useCommercialRolSeries } from "../hooks/useCommercialRolSeries";
+import type { ChartGranularity } from "../types/chart";
+import { downloadRolSeriesCsv } from "../utils/chartSeriesExport";
 import { formatPeriodLabel } from "../utils/dates";
+import { suggestGranularity } from "../utils/periodBuckets";
 import {
-  buildRolKpiSubtitle,
-  formatChartCurrency,
-  formatCurrency,
-  formatCurrencyCompact,
-  formatDecimal,
   formatInteger,
+  formatCurrency,
+  formatDecimal,
   formatPercent,
-  isMeaningfulRolTarget,
 } from "../utils/format";
-import type { RolTargetData } from "../types/commercial";
 
 const CHART_HEIGHT = 280;
 
 type DashboardCommercialPageProps = {
   pathname?: string;
 };
-
-function rolPctValue(
-  rol: RolTargetData | null | undefined
-): number | null {
-  if (!rol || !isMeaningfulRolTarget(rol.target)) return null;
-  const pct = rol.rol_target_pct;
-  if (pct == null || Number.isNaN(pct) || pct < 0 || pct > 500) return null;
-  return pct;
-}
-
-function rolCurrencyChartRows(
-  headOffice: RolTargetData | null,
-  branch: RolTargetData | null
-) {
-  return [
-    {
-      name: "Matriz (01)",
-      rol: headOffice?.rol ?? 0,
-      pct: rolPctValue(headOffice),
-    },
-    {
-      name: "Filial (02)",
-      rol: branch?.rol ?? 0,
-      pct: rolPctValue(branch),
-    },
-  ];
-}
 
 export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
   const {
@@ -84,6 +56,8 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
     apiParams,
     filterState,
   } = useCommercialFilters();
+
+  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const {
     headOfficeRol,
@@ -98,6 +72,23 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
     reload,
   } = useCommercialDashboard(apiParams);
 
+  const periodParams = useMemo(
+    () => ({
+      start_date: apiParams.start_date,
+      end_date: apiParams.end_date,
+    }),
+    [apiParams.end_date, apiParams.start_date]
+  );
+
+  const rolSeries = useCommercialRolSeries({
+    filters: periodParams,
+    granularity,
+  });
+
+  useEffect(() => {
+    setGranularity(suggestGranularity(dateStart, dateEnd));
+  }, [dateStart, dateEnd]);
+
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
@@ -105,20 +96,7 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
 
   const isBusy = loading || refreshing;
   const hasData = headOfficeRol !== null || branchRol !== null;
-
-  const rolCurrencyChart = useMemo(
-    () => rolCurrencyChartRows(headOfficeRol, branchRol),
-    [headOfficeRol, branchRol]
-  );
-
-  const rolPctChart = useMemo(
-    () => rolCurrencyChart.filter((row) => row.pct != null),
-    [rolCurrencyChart]
-  );
-
-  const showRolPctChart =
-    isMeaningfulRolTarget(headOfficeRol?.target) ||
-    isMeaningfulRolTarget(branchRol?.target);
+  const isChartBusy = rolSeries.loading;
 
   const conversionChartData = useMemo(
     () =>
@@ -131,7 +109,26 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
     [closingRate]
   );
 
+  const hasChartValues = rolSeries.points.some(
+    (point) => point.rolMatrix > 0 || point.rolBranch > 0
+  );
+
   const printDisabled = loading && !hasData;
+
+  const handleChartDrillDown = useCallback(
+    (nextStart: string, nextEnd: string) => {
+      setDateStart(nextStart);
+      setDateEnd(nextEnd);
+    },
+    [setDateStart, setDateEnd]
+  );
+
+  const handleExportChartCsv = useCallback(() => {
+    downloadRolSeriesCsv("rol-evolucao.csv", rolSeries.points);
+  }, [rolSeries.points]);
+
+  const chartHint =
+    "Clique em um ponto para filtrar o período ao intervalo. Matriz (01) e filial (02).";
 
   return (
     <div className="dashboard-commercial dashboard-page dc-print-root">
@@ -177,24 +174,14 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
         <KpiCard
           title="ROL — Matriz (01)"
           value={formatCurrency(headOfficeRol?.rol)}
-          subtitle={buildRolKpiSubtitle(
-            headOfficeRol?.rol,
-            headOfficeRol?.target,
-            headOfficeRol?.rol_target_pct,
-            periodLabel
-          )}
+          subtitle={periodLabel}
           icon={<Banknote size={22} />}
           loading={isBusy && !headOfficeRol}
         />
         <KpiCard
           title="ROL — Filial (02)"
           value={formatCurrency(branchRol?.rol)}
-          subtitle={buildRolKpiSubtitle(
-            branchRol?.rol,
-            branchRol?.target,
-            branchRol?.rol_target_pct,
-            "Filial 02"
-          )}
+          subtitle={`Filial 02 · ${periodLabel}`}
           icon={<Building2 size={22} />}
           loading={isBusy && !branchRol}
         />
@@ -221,76 +208,55 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
         />
       </section>
 
-      <section className="dc-charts-grid">
-        <ChartCard
-          title="ROL realizada (R$)"
-          hint="Receita operacional líquida com IPI no período — matriz e filial."
-        >
-          <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-            <BarChart data={rolCurrencyChart}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis tickFormatter={(v) => formatCurrencyCompact(v)} width={72} />
-              <Tooltip
-                formatter={(value) => {
-                  if (value == null) return ["—", "ROL"];
-                  const n = typeof value === "number" ? value : Number(value);
-                  return [formatChartCurrency(n), "ROL"];
-                }}
-              />
-              <Bar dataKey="rol" name="ROL" radius={[8, 8, 0, 0]}>
-                {rolCurrencyChart.map((entry, index) => (
-                  <Cell
-                    key={entry.name}
-                    fill={CHART_COLORS[index % CHART_COLORS.length]}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
+      <section className="dc-chart-section dc-no-print" aria-busy={isChartBusy}>
+        <ChartCard title="Evolução do ROL (R$)" hint={chartHint}>
+          <ChartToolbar
+            idPrefix="rol"
+            granularity={granularity}
+            onGranularityChange={setGranularity}
+            onExportCsv={handleExportChartCsv}
+            exportDisabled={rolSeries.points.length === 0}
+          />
 
-        {showRolPctChart ? (
-          <ChartCard
-            title="% da meta ROL"
-            hint="Percentual do ROL realizado em relação à meta configurada."
-          >
-            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <BarChart data={rolPctChart}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis tickFormatter={(v) => `${v}%`} />
-                <Tooltip
-                  formatter={(value) => {
-                    if (value == null || typeof value !== "number") {
-                      return ["—", "% da meta"];
-                    }
-                    return [formatPercent(value), "% da meta"];
-                  }}
-                />
-                <Bar dataKey="pct" name="% da meta" radius={[8, 8, 0, 0]}>
-                  {rolPctChart.map((entry, index) => (
-                    <Cell
-                      key={entry.name}
-                      fill={CHART_COLORS[index % CHART_COLORS.length]}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        ) : (
-          <ChartCard
-            title="% da meta ROL"
-            hint="Meta de referência ainda não configurada no backend (valor simbólico)."
-          >
-            <div className="dc-state-box">
-              O percentual da meta será exibido quando os valores de meta (target)
-              estiverem configurados na api-delpi. O ROL em reais permanece acima.
+          {rolSeries.error ? (
+            <div className="dc-state dc-state--error" role="alert">
+              <p>{rolSeries.error}</p>
             </div>
-          </ChartCard>
-        )}
+          ) : null}
 
+          {!rolSeries.error &&
+          (rolSeries.points.length > 0 || rolSeries.loading) ? (
+            <RolEvolutionChart
+              data={rolSeries.points}
+              loading={rolSeries.loading}
+              onDrillDown={handleChartDrillDown}
+            />
+          ) : null}
+
+          {!rolSeries.error &&
+          rolSeries.points.length === 0 &&
+          !rolSeries.loading ? (
+            <div className="dc-state-box">Sem dados para o gráfico no período.</div>
+          ) : null}
+
+          {rolSeries.truncated ? (
+            <p className="dc-chart-card__hint dc-chart-card__hint--below">
+              Período limitado aos primeiros 60 intervalos para desempenho.
+            </p>
+          ) : null}
+
+          {!rolSeries.error &&
+          rolSeries.points.length > 0 &&
+          !hasChartValues &&
+          !rolSeries.loading ? (
+            <p className="dc-chart-card__hint dc-chart-card__hint--below">
+              Todos os intervalos retornaram ROL zero no período filtrado.
+            </p>
+          ) : null}
+        </ChartCard>
+      </section>
+
+      <section className="dc-charts-grid">
         <ChartCard
           title="Funil de conversão"
           hint="Propostas versus vendas ganhas no período."
@@ -316,19 +282,9 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
           </div>
           <p className="dc-summary-card__description">
             <strong>ROL</strong> é valor monetário (R$) com IPI. Matriz usa filial
-            01 e comparativo de filial 02. A taxa de conversão e os clientes novos
-            respeitam o filtro de filial quando informado.
-          </p>
-        </article>
-        <article className="dc-card">
-          <div className="dc-summary-card__header">
-            <BarChart3 size={22} aria-hidden />
-            <h2 className="dc-summary-card__title">Metas ROL</h2>
-          </div>
-          <p className="dc-summary-card__description">
-            O % da meta só aparece quando a meta cadastrada na API é representativa
-            (evita distorção com meta placeholder). Ajuste os valores DEFAULT_*_TARGET
-            no commercial_composer da api-delpi para habilitar o gráfico de %.
+            01 e comparativo de filial 02. Use dia, semana, mês ou ano no gráfico
+            de evolução. A taxa de conversão e os clientes novos respeitam o
+            filtro de filial quando informado.
           </p>
         </article>
       </section>

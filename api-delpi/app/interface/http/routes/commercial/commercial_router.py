@@ -9,12 +9,16 @@ from app.application.dto.commercial.commercial_target_request import CommercialT
 from app.application.dto.commercial.sales_conversion_rate_request import SalesConversionRateRequest
 from app.application.dto.commercial.new_clients_average_request import NewClientsAverageRequest
 from app.application.dto.commercial.new_clients_rol_pct_request import NewClientsRolPctRequest
+from app.application.dto.commercial.commercial_rol_series_request import (
+    CommercialRolSeriesRequest,
+)
 from app.composition.commercial_composer import (
     build_get_head_office_rol_target_pct_use_case,
     build_get_branch_rol_target_pct_use_case,
     build_get_sales_conversion_rate_use_case,
     build_get_new_clients_average_use_case,
     build_get_new_clients_rol_pct_use_case,
+    build_get_commercial_rol_series_use_case,
 )
 
 
@@ -88,6 +92,40 @@ def get_branch_rol_target_pct(
             status_code=500,
         )
     
+
+@router.get("/rol/series")
+@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+def get_commercial_rol_series(
+    granularity: str = Query(..., min_length=3, max_length=10),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+):
+    try:
+        request = CommercialRolSeriesRequest(
+            granularity=granularity,
+            date_start=start_date,
+            date_end=end_date,
+        )
+
+        use_case = build_get_commercial_rol_series_use_case()
+        result = use_case.execute(request)
+
+        return success_response(
+            data=result.to_dict(),
+            message="Commercial ROL series fetched successfully.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Validation error while fetching commercial ROL series: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while fetching commercial ROL series: {exc}")
+        return error_response(
+            "Internal error while fetching commercial ROL series.",
+            status_code=500,
+        )
+
 
 @router.get("/closing-rate")
 @require_any_permission(["api-delpi.access", "dashboard-commercial.view"])

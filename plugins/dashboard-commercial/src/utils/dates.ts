@@ -24,6 +24,22 @@ export function formatDisplayDate(value: string | null | undefined): string {
   return `${match[3]}/${match[2]}/${match[1]}`;
 }
 
+export function monthKeyToLabel(monthKey: string): string {
+  const match = monthKey.match(/^(\d{4})-(\d{2})$/);
+  if (!match) return monthKey;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const date = new Date(year, month - 1, 1);
+
+  if (Number.isNaN(date.getTime())) return monthKey;
+
+  return date.toLocaleDateString("pt-BR", {
+    month: "short",
+    year: "2-digit",
+  });
+}
+
 export function formatPeriodLabel(
   dateStart?: string,
   dateEnd?: string

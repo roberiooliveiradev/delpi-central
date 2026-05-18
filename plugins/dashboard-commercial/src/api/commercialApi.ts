@@ -1,8 +1,10 @@
 import { httpGet } from "./httpClient";
 import type { ApiSuccessResponse } from "../types/api";
+import type { ChartGranularity } from "../types/chart";
 import type {
   ClosingRateData,
   CommercialFilterParams,
+  CommercialRolSeriesData,
   NewClientsAverageData,
   NewClientsRolPctData,
   RolTargetData,
@@ -10,12 +12,15 @@ import type {
 
 export const COMMERCIAL_API_BASE = "/apps/api-delpi/commercial";
 
-function buildQuery(params: CommercialFilterParams): string {
+function buildQuery(
+  params: CommercialFilterParams & { granularity?: ChartGranularity }
+): string {
   const searchParams = new URLSearchParams();
 
   if (params.start_date) searchParams.set("start_date", params.start_date);
   if (params.end_date) searchParams.set("end_date", params.end_date);
   if (params.branch) searchParams.set("branch", params.branch);
+  if (params.granularity) searchParams.set("granularity", params.granularity);
 
   const query = searchParams.toString();
   return query ? `?${query}` : "";
@@ -84,6 +89,19 @@ export function getNewClientsRolPct(
 ) {
   return fetchCommercialData<NewClientsRolPctData>(
     "/new-clients-rol-pct",
+    params,
+    signal
+  );
+}
+
+export function getCommercialRolSeries(
+  params: Pick<CommercialFilterParams, "start_date" | "end_date"> & {
+    granularity: ChartGranularity;
+  },
+  signal?: AbortSignal
+) {
+  return fetchCommercialData<CommercialRolSeriesData>(
+    "/rol/series",
     params,
     signal
   );

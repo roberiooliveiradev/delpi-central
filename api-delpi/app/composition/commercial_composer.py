@@ -8,6 +8,9 @@ from app.infrastructure.persistence.totvs.commercial_repositories.sales_conversi
 from app.application.use_cases.commercial.get_new_clients_average_use_case import GetNewClientsAverageUseCase
 from app.infrastructure.persistence.totvs.commercial_repositories.new_clients_average_repository import NewClientsAverageRepository
 from app.application.use_cases.commercial.get_new_clients_rol_pct_use_case import GetNewClientsRolPctUseCase
+from app.application.use_cases.commercial.get_commercial_rol_series_use_case import (
+    GetCommercialRolSeriesUseCase,
+)
 from app.infrastructure.persistence.totvs.commercial_repositories.new_clients_rol_pct_repository import NewClientsRolPctRepository
 DEFAULT_HEAD_OFFICE_TARGET = 1.0
 DEFAULT_BRANCH_TARGET = 1.0
@@ -44,6 +47,12 @@ def build_get_new_clients_average_use_case() -> GetNewClientsAverageUseCase:
 def build_get_new_clients_rol_pct_use_case() -> GetNewClientsRolPctUseCase:
     return GetNewClientsRolPctUseCase(
         new_clients_rol_pct_repository=NewClientsRolPctRepository()
+    )
+
+
+def build_get_commercial_rol_series_use_case() -> GetCommercialRolSeriesUseCase:
+    return GetCommercialRolSeriesUseCase(
+        financial_query_repository=FinancialRepository()
     )
 
 
