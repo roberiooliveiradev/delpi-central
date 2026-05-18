@@ -53,7 +53,7 @@ function buildActionEntries(toolCalls: ChatToolCall[]): ActionResultEntry[] {
         responsePreview,
       };
     })
-    .filter((entry): entry is ActionResultEntry => entry !== null);
+    .filter((entry) => entry !== null);
 }
 
 export function ChatActionResults({ toolCalls }: ChatActionResultsProps) {
