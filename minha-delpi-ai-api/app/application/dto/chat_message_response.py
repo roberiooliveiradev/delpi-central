@@ -9,3 +9,4 @@ class ChatMessageResponse:
     content: str
     metadata: dict | None
     created_at: str
+    user_feedback: int | None = None

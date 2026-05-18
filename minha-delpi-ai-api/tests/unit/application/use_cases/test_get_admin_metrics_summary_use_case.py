@@ -4,7 +4,7 @@ from app.application.use_cases.get_admin_metrics_summary_use_case import (
 
 
 class FakeAdminMetricsRepository:
-    def get_summary(self):
+    def get_summary(self, *, hours: int = 24):
         return {
             "sessions": 1,
             "messages": 2,
@@ -15,6 +15,9 @@ class FakeAdminMetricsRepository:
             "recentToolCalls24h": 6,
             "recentErrors24h": 0,
         }
+
+    def get_timeseries(self, *, hours: int = 168, bucket_hours: int = 24):
+        return {"windowHours": hours, "bucketHours": bucket_hours, "buckets": []}
 
 
 def test_get_admin_metrics_summary():

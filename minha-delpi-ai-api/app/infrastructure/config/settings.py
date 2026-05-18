@@ -86,3 +86,13 @@ class Settings:
     KNOWLEDGE_PIPELINE_ENABLED = (
         os.getenv("KNOWLEDGE_PIPELINE_ENABLED", "true").lower() == "true"
     )
+    KNOWLEDGE_SEMANTIC_DEDUP_ENABLED = (
+        os.getenv("KNOWLEDGE_SEMANTIC_DEDUP_ENABLED", "true").lower() == "true"
+    )
+    KNOWLEDGE_SEMANTIC_DEDUP_THRESHOLD = float(
+        os.getenv("KNOWLEDGE_SEMANTIC_DEDUP_THRESHOLD", "0.92")
+    )
+    ADMIN_METRICS_MAX_HOURS = int(os.getenv("ADMIN_METRICS_MAX_HOURS", "720"))
+    RESPONSE_EVALUATION_LLM_SUGGESTIONS_ENABLED = (
+        os.getenv("RESPONSE_EVALUATION_LLM_SUGGESTIONS_ENABLED", "true").lower() == "true"
+    )

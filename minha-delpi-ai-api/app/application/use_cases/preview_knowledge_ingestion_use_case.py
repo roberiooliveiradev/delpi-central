@@ -1,13 +1,21 @@
 from app.application.services.knowledge_ingestion_pipeline_service import (
     KnowledgeIngestionPipelineService,
 )
+from app.application.services.knowledge_semantic_deduplicator_service import (
+    KnowledgeSemanticDeduplicatorService,
+)
 from app.domain.exceptions.knowledge_exceptions import InvalidKnowledgeDocumentInputError
 from app.infrastructure.config.settings import Settings
 
 
 class PreviewKnowledgeIngestionUseCase:
-    def __init__(self, pipeline: KnowledgeIngestionPipelineService | None = None):
+    def __init__(
+        self,
+        pipeline: KnowledgeIngestionPipelineService | None = None,
+        semantic_deduplicator: KnowledgeSemanticDeduplicatorService | None = None,
+    ):
         self.pipeline = pipeline or KnowledgeIngestionPipelineService()
+        self.semantic_deduplicator = semantic_deduplicator
 
     def execute(
         self,
@@ -17,6 +25,7 @@ class PreviewKnowledgeIngestionUseCase:
         source_type: str = "preview",
         source_ref: str | None = None,
         metadata: dict | None = None,
+        check_semantic_duplicates: bool = True,
     ) -> dict:
         normalized = str(content or "").strip()
 
@@ -36,6 +45,17 @@ class PreviewKnowledgeIngestionUseCase:
             document_metadata=metadata,
         )
 
+        semantic_duplicates: list[dict] = []
+
+        if (
+            check_semantic_duplicates
+            and Settings.KNOWLEDGE_SEMANTIC_DEDUP_ENABLED
+            and self.semantic_deduplicator
+        ):
+            semantic_duplicates = self.semantic_deduplicator.find_near_duplicates(
+                content=prepared.cleaned_content,
+            )
+
         return {
             "title": title,
             "sourceType": source_type,
@@ -54,4 +74,5 @@ class PreviewKnowledgeIngestionUseCase:
                 for index, chunk in enumerate(prepared.chunks)
             ],
             "pipeline": prepared.stats,
+            "semanticDuplicates": semantic_duplicates,
         }

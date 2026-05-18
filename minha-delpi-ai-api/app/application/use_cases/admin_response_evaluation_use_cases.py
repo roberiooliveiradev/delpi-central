@@ -1,5 +1,8 @@
 from uuid import UUID
 
+from app.application.services.response_evaluation_llm_suggestion_service import (
+    ResponseEvaluationLlmSuggestionService,
+)
 from app.application.services.response_evaluation_suggestion_service import (
     ResponseEvaluationSuggestionService,
 )
@@ -47,11 +50,19 @@ class GetAdminResponseEvaluationContextUseCase:
         self,
         repository: ResponseEvaluationRepositoryPort,
         suggestion_service: ResponseEvaluationSuggestionService | None = None,
+        llm_suggestion_service: ResponseEvaluationLlmSuggestionService | None = None,
     ):
         self.repository = repository
         self.suggestion_service = suggestion_service or ResponseEvaluationSuggestionService()
+        self.llm_suggestion_service = llm_suggestion_service
 
-    def execute(self, *, message_id: str, score: int | None = None) -> dict:
+    def execute(
+        self,
+        *,
+        message_id: str,
+        score: int | None = None,
+        use_llm_suggestions: bool = False,
+    ) -> dict:
         context = self.repository.get_assistant_message_context(UUID(str(message_id)))
 
         if not context:
@@ -69,6 +80,15 @@ class GetAdminResponseEvaluationContextUseCase:
             user_question=context.get("userQuestion"),
             assistant_answer=context.get("message", {}).get("content", ""),
         )
+
+        if use_llm_suggestions and self.llm_suggestion_service:
+            suggestions = self.llm_suggestion_service.enrich_suggestions(
+                base_suggestions=suggestions,
+                score=int(effective_score),
+                verdict=verdict,
+                user_question=context.get("userQuestion"),
+                assistant_answer=context.get("message", {}).get("content", ""),
+            )
 
         return {
             **context,

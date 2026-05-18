@@ -30,8 +30,11 @@ import type {
   AdminResponseEvaluationContext,
   AdminResponseEvaluationSummary,
   UpdateKnowledgeDocumentMetadataPayload,
+  AdminLlmCostTableEntry,
+  AdminLlmCostTableResponse,
   AdminLlmStatus,
   AdminMetricsSummary,
+  AdminMetricsTimeseriesResponse,
   AdminRbacSummary,
   AdminRagTestRequest,
   AdminRagTestResponse,
@@ -73,11 +76,13 @@ export type CreateKnowledgeDocumentResponse = {
 };
 
 export type PreviewKnowledgeIngestionPayload = {
-  content: string;
+  content?: string;
+  file?: File;
   title?: string;
   sourceType?: string;
   sourceRef?: string;
   metadata?: Record<string, unknown>;
+  checkSemanticDuplicates?: boolean;
 };
 
 export type UploadKnowledgeDocumentFilePayload = {
@@ -305,9 +310,36 @@ export async function previewKnowledgeIngestion(
   payload: PreviewKnowledgeIngestionPayload,
   options: AdminApiOptions = {},
 ): Promise<AdminKnowledgeIngestionPreviewResponse> {
+  const headers = await getAuthHeaders(options);
+
+  if (payload.file) {
+    const formData = new FormData();
+    formData.append("file", payload.file);
+    formData.append("title", payload.title ?? payload.file.name);
+    formData.append("sourceType", payload.sourceType ?? "admin_preview_upload");
+
+    if (payload.sourceRef) {
+      formData.append("sourceRef", payload.sourceRef);
+    }
+
+    if (payload.checkSemanticDuplicates === false) {
+      formData.append("checkSemanticDuplicates", "false");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/knowledge/ingest/preview`, {
+      method: "POST",
+      headers: {
+        Authorization: (headers as Record<string, string>).Authorization ?? "",
+      },
+      body: formData,
+    });
+
+    return parseJsonResponse<AdminKnowledgeIngestionPreviewResponse>(response);
+  }
+
   const response = await fetch(`${API_BASE_URL}/admin/knowledge/ingest/preview`, {
     method: "POST",
-    headers: await getAuthHeaders(options),
+    headers,
     body: JSON.stringify(payload),
   });
 
@@ -712,10 +744,14 @@ export async function listAdminResponseCandidates(
 export async function getAdminResponseEvaluationContext(
   messageId: string,
   score: number,
-  options: AdminApiOptions = {},
+  options: AdminApiOptions & { useLlmSuggestions?: boolean } = {},
 ): Promise<AdminResponseEvaluationContext> {
   const query = new URLSearchParams();
   query.set("score", String(score));
+
+  if (options.useLlmSuggestions) {
+    query.set("useLlmSuggestions", "true");
+  }
 
   const response = await fetch(
     `${API_BASE_URL}/admin/responses/messages/${messageId}/evaluation-context?${query.toString()}`,
@@ -776,14 +812,55 @@ export async function getAdminAuditLogDetail(
 
 
 export async function getAdminMetricsSummary(
+  hours = 24,
   options: AdminApiOptions = {},
 ): Promise<AdminMetricsSummary> {
-  const response = await fetch(`${API_BASE_URL}/admin/metrics/summary`, {
+  const response = await fetch(`${API_BASE_URL}/admin/metrics/summary?hours=${hours}`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
 
   return parseJsonResponse<AdminMetricsSummary>(response);
+}
+
+export async function getAdminMetricsTimeseries(
+  params: { hours?: number; bucketHours?: number } = {},
+  options: AdminApiOptions = {},
+): Promise<AdminMetricsTimeseriesResponse> {
+  const query = new URLSearchParams();
+  query.set("hours", String(params.hours ?? 168));
+  query.set("bucketHours", String(params.bucketHours ?? 24));
+
+  const response = await fetch(`${API_BASE_URL}/admin/metrics/timeseries?${query.toString()}`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminMetricsTimeseriesResponse>(response);
+}
+
+export async function getAdminLlmCostTable(
+  options: AdminApiOptions = {},
+): Promise<AdminLlmCostTableResponse> {
+  const response = await fetch(`${API_BASE_URL}/admin/metrics/cost-table`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminLlmCostTableResponse>(response);
+}
+
+export async function saveAdminLlmCostTable(
+  entries: AdminLlmCostTableEntry[],
+  options: AdminApiOptions = {},
+): Promise<AdminLlmCostTableResponse> {
+  const response = await fetch(`${API_BASE_URL}/admin/metrics/cost-table`, {
+    method: "PUT",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify({ entries }),
+  });
+
+  return parseJsonResponse<AdminLlmCostTableResponse>(response);
 }
 
 export async function simulateAdminAgent(
@@ -825,18 +902,14 @@ export async function getAdminRbacSummary(
 }
 
 export async function getAdminToolHealth(
-  _options: AdminApiOptions = {},
+  options: AdminApiOptions = {},
 ): Promise<AdminToolHealthResponse> {
-  return {
-    items: [
-      {
-        id: "external-actions-catalog",
-        label: "Catálogo de actions",
-        description: "Health técnico dedicado ainda não exposto pelo backend.",
-        status: "unknown",
-      },
-    ],
-  };
+  const response = await fetch(`${API_BASE_URL}/admin/tools/health`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminToolHealthResponse>(response);
 }
 
 export async function listAdminExternalActions(

@@ -1,4 +1,4 @@
-import { Check, Copy, FileText, Pencil, RotateCcw } from "lucide-react";
+import { Check, Copy, FileText, Pencil, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useState } from "react";
 
 import type {
@@ -24,6 +24,7 @@ type ChatMessageListProps = {
   onUseSuggestion?: (value: string) => void;
   onEditMessage?: (messageId: string, content: string) => Promise<ChatMessage | null>;
   onReuseMessage?: (content: string) => void;
+  onMessageFeedback?: (messageId: string, rating: -1 | 1 | null) => Promise<void>;
 };
 
 function getMessageSources(message: ChatMessage): ChatSource[] {
@@ -152,6 +153,7 @@ export function ChatMessageList({
   onUseSuggestion,
   onEditMessage,
   onReuseMessage,
+  onMessageFeedback,
 }: ChatMessageListProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -259,6 +261,41 @@ export function ChatMessageList({
                 ) : null}
 
                 {message.role === "assistant" ? (
+                  <>
+                    <button
+                      className={`mdc-chat-message-action${
+                        message.user_feedback === 1 ? " is-active" : ""
+                      }`}
+                      type="button"
+                      aria-label="Resposta útil"
+                      title="Resposta útil"
+                      onClick={() =>
+                        void onMessageFeedback?.(
+                          message.id,
+                          message.user_feedback === 1 ? null : 1,
+                        )
+                      }
+                    >
+                      <ThumbsUp size={15} aria-hidden="true" />
+                    </button>
+
+                    <button
+                      className={`mdc-chat-message-action${
+                        message.user_feedback === -1 ? " is-active" : ""
+                      }`}
+                      type="button"
+                      aria-label="Resposta não útil"
+                      title="Resposta não útil"
+                      onClick={() =>
+                        void onMessageFeedback?.(
+                          message.id,
+                          message.user_feedback === -1 ? null : -1,
+                        )
+                      }
+                    >
+                      <ThumbsDown size={15} aria-hidden="true" />
+                    </button>
+
                   <button
                     className="mdc-chat-message-action"
                     type="button"
@@ -280,6 +317,7 @@ export function ChatMessageList({
                       <Copy size={15} aria-hidden="true" />
                     )}
                   </button>
+                  </>
                 ) : null}
               </div>
             </div>

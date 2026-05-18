@@ -55,10 +55,22 @@ export function KnowledgeIngestionPanel({
     sourceType.trim().length > 0 &&
     (ingestMode === "text" ? content.trim().length > 0 : Boolean(selectedFile));
 
-  const canPreviewPipeline = ingestMode === "text" && content.trim().length > 0;
+  const canPreviewPipeline =
+    (ingestMode === "text" && content.trim().length > 0) ||
+    (ingestMode === "file" && Boolean(selectedFile));
 
   async function handlePreviewPipeline() {
     if (!canPreviewPipeline || isMutating) {
+      return;
+    }
+
+    if (ingestMode === "file" && selectedFile) {
+      await previewIngestion({
+        file: selectedFile,
+        title: title.trim() || selectedFile.name,
+        sourceType: sourceType.trim() || "admin_preview_upload",
+        sourceRef: sourceRef.trim() || undefined,
+      });
       return;
     }
 
@@ -378,6 +390,24 @@ export function KnowledgeIngestionPanel({
                 </li>
               ))}
             </ul>
+
+            {ingestionPreview.semanticDuplicates &&
+            ingestionPreview.semanticDuplicates.length > 0 ? (
+              <div className="mdc-knowledge-ingestion__semantic">
+                <strong>Possíveis duplicatas semânticas</strong>
+                <ul>
+                  {ingestionPreview.semanticDuplicates.map((duplicate) => (
+                    <li key={`${duplicate.chunkId}-${duplicate.similarity}`}>
+                      <span>
+                        {duplicate.title || duplicate.documentId} · similaridade{" "}
+                        {Math.round(duplicate.similarity * 100)}%
+                      </span>
+                      <p>{duplicate.preview}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </form>

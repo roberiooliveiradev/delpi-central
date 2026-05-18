@@ -12,8 +12,9 @@ from app.infrastructure.db.models.knowledge_document_model import AiKnowledgeDoc
 
 
 class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
-    def get_summary(self) -> dict:
-        since = datetime.now(timezone.utc) - timedelta(hours=24)
+    def get_summary(self, *, hours: int = 24) -> dict:
+        safe_hours = max(1, min(int(hours), Settings.ADMIN_METRICS_MAX_HOURS))
+        since = datetime.now(timezone.utc) - timedelta(hours=safe_hours)
 
         sessions = db.session.query(AiChatSessionModel).count()
         messages = db.session.query(AiChatMessageModel).count()
@@ -46,11 +47,11 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             .count()
         )
 
-        message_metrics = self._message_metrics_24h(since=since)
-        rag_failures = self._rag_failures_24h(since=since)
-        agent_metrics = self._agent_metrics_24h(since=since)
-        user_profile_metrics = self._user_profile_metrics_24h(since=since)
-        rag_test_metrics = self._rag_test_metrics_24h(since=since)
+        message_metrics = self._message_metrics_window(since=since)
+        rag_failures = self._rag_failures_window(since=since)
+        agent_metrics = self._agent_metrics_window(since=since)
+        user_profile_metrics = self._user_profile_metrics_window(since=since)
+        rag_test_metrics = self._rag_test_metrics_window(since=since)
         cost_estimator = LlmCostEstimatorService()
 
         action_distribution = self._count_by_field(
@@ -80,6 +81,7 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             "activeKnowledgeDocuments": active_documents,
             "knowledgeChunks": chunks,
             "auditLogs": audit_logs,
+            "windowHours": safe_hours,
             "recentToolCalls24h": recent_tool_calls,
             "recentErrors24h": recent_errors,
             "recentAuditLogs24h": recent_audit_logs,
@@ -105,19 +107,67 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
                     "Latência e tokens são estimativas registradas no fluxo de mensagens.",
                     "Assertividade RAG considera score mínimo "
                     f"{Settings.RAG_ASSERTIVENESS_MIN_SCORE} e chunks recuperados nos testes.",
-                    "Configure LLM_COST_TABLE_JSON para custos por provider/modelo.",
+                    "Tabela de custo: env (LLM_COST_TABLE_JSON) ou painel admin (persistida no banco).",
+                    f"Janela analisada: últimas {safe_hours} horas.",
                 ],
             },
         }
 
+    def get_timeseries(self, *, hours: int = 168, bucket_hours: int = 24) -> dict:
+        safe_hours = max(1, min(int(hours), Settings.ADMIN_METRICS_MAX_HOURS))
+        safe_bucket = max(1, min(int(bucket_hours), safe_hours))
+        end = datetime.now(timezone.utc)
+        start = end - timedelta(hours=safe_hours)
 
-    def _rag_failures_24h(self, *, since: datetime) -> int:
-        rows = (
-            db.session.query(AiAuditLogModel)
-            .filter(AiAuditLogModel.created_at >= since)
-            .filter(AiAuditLogModel.action.in_(["chat.message.sent", "chat.message.streamed"]))
-            .all()
+        buckets: list[dict] = []
+        cursor = start
+
+        while cursor < end:
+            bucket_end = min(cursor + timedelta(hours=safe_bucket), end)
+            since = cursor
+
+            message_metrics = self._message_metrics_window(since=since, until=bucket_end)
+            audit_count = (
+                db.session.query(AiAuditLogModel)
+                .filter(AiAuditLogModel.created_at >= since)
+                .filter(AiAuditLogModel.created_at < bucket_end)
+                .count()
+            )
+
+            buckets.append(
+                {
+                    "start": since.isoformat(),
+                    "end": bucket_end.isoformat(),
+                    "auditLogs": audit_count,
+                    "messagesInstrumented": message_metrics["instrumentedMessages"],
+                    "tokensUsed": message_metrics["tokensUsed"],
+                    "estimatedCost": message_metrics["estimatedCost"],
+                    "latencyAvgMs": message_metrics["latencyAvgMs"],
+                }
+            )
+
+            cursor = bucket_end
+
+        return {
+            "windowHours": safe_hours,
+            "bucketHours": safe_bucket,
+            "buckets": buckets,
+        }
+
+
+    def _apply_created_at_filters(self, query, *, since: datetime, until: datetime | None = None):
+        query = query.filter(AiAuditLogModel.created_at >= since)
+
+        if until is not None:
+            query = query.filter(AiAuditLogModel.created_at < until)
+
+        return query
+
+    def _rag_failures_window(self, *, since: datetime, until: datetime | None = None) -> int:
+        query = db.session.query(AiAuditLogModel).filter(
+            AiAuditLogModel.action.in_(["chat.message.sent", "chat.message.streamed"])
         )
+        rows = self._apply_created_at_filters(query, since=since, until=until).all()
 
         failures = 0
 
@@ -135,13 +185,14 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
 
         return failures
 
-    def _user_profile_metrics_24h(self, *, since: datetime) -> list[dict]:
-        rows = (
-            db.session.query(AiAuditLogModel)
-            .filter(AiAuditLogModel.created_at >= since)
-            .filter(AiAuditLogModel.user_id.isnot(None))
-            .all()
-        )
+    def _user_profile_metrics_window(
+        self,
+        *,
+        since: datetime,
+        until: datetime | None = None,
+    ) -> list[dict]:
+        query = db.session.query(AiAuditLogModel).filter(AiAuditLogModel.user_id.isnot(None))
+        rows = self._apply_created_at_filters(query, since=since, until=until).all()
 
         counts: dict[str, int] = {}
 
@@ -154,13 +205,16 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             for key, count in sorted(counts.items(), key=lambda item: item[1], reverse=True)[:10]
         ]
 
-    def _rag_test_metrics_24h(self, *, since: datetime) -> dict:
-        rows = (
-            db.session.query(AiAuditLogModel)
-            .filter(AiAuditLogModel.created_at >= since)
-            .filter(AiAuditLogModel.action == "admin.rag.tested")
-            .all()
+    def _rag_test_metrics_window(
+        self,
+        *,
+        since: datetime,
+        until: datetime | None = None,
+    ) -> dict:
+        query = db.session.query(AiAuditLogModel).filter(
+            AiAuditLogModel.action == "admin.rag.tested"
         )
+        rows = self._apply_created_at_filters(query, since=since, until=until).all()
 
         total_tests = len(rows)
         assertive_tests = 0
@@ -191,13 +245,16 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             "assertivenessRate": assertiveness_rate,
         }
 
-    def _agent_metrics_24h(self, *, since: datetime) -> list[dict]:
-        rows = (
-            db.session.query(AiAuditLogModel)
-            .filter(AiAuditLogModel.created_at >= since)
-            .filter(AiAuditLogModel.action.in_(["chat.message.sent", "chat.message.streamed"]))
-            .all()
+    def _agent_metrics_window(
+        self,
+        *,
+        since: datetime,
+        until: datetime | None = None,
+    ) -> list[dict]:
+        query = db.session.query(AiAuditLogModel).filter(
+            AiAuditLogModel.action.in_(["chat.message.sent", "chat.message.streamed"])
         )
+        rows = self._apply_created_at_filters(query, since=since, until=until).all()
 
         counts: dict[str, int] = {}
 
@@ -268,13 +325,16 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
         except (TypeError, ValueError):
             return 0.0
 
-    def _message_metrics_24h(self, *, since: datetime) -> dict:
-        rows = (
-            db.session.query(AiAuditLogModel)
-            .filter(AiAuditLogModel.created_at >= since)
-            .filter(AiAuditLogModel.action.in_(["chat.message.sent", "chat.message.streamed"]))
-            .all()
+    def _message_metrics_window(
+        self,
+        *,
+        since: datetime,
+        until: datetime | None = None,
+    ) -> dict:
+        query = db.session.query(AiAuditLogModel).filter(
+            AiAuditLogModel.action.in_(["chat.message.sent", "chat.message.streamed"])
         )
+        rows = self._apply_created_at_filters(query, since=since, until=until).all()
 
         latencies = []
         total_tokens = 0

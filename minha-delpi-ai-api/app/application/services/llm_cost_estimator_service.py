@@ -2,12 +2,21 @@ import json
 import os
 
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.persistence.postgres_admin_runtime_settings_repository import (
+    PostgresAdminRuntimeSettingsRepository,
+)
 
 
 class LlmCostEstimatorService:
     """Resolve custo estimado por provider/modelo a partir de tabela configurável."""
 
-    def __init__(self, *, entries: list[dict] | None = None):
+    def __init__(
+        self,
+        *,
+        entries: list[dict] | None = None,
+        settings_repository: PostgresAdminRuntimeSettingsRepository | None = None,
+    ):
+        self._settings_repository = settings_repository
         self._entries = entries if entries is not None else self._load_entries()
 
     def list_cost_table(self) -> list[dict]:
@@ -54,6 +63,18 @@ class LlmCostEstimatorService:
         return round(total, 6)
 
     def _load_entries(self) -> list[dict]:
+        if self._settings_repository is None:
+            self._settings_repository = PostgresAdminRuntimeSettingsRepository()
+
+        stored = self._settings_repository.get_llm_cost_table()
+
+        if stored:
+            return [
+                self._normalize_entry(item)
+                for item in stored
+                if isinstance(item, dict)
+            ]
+
         raw = os.getenv("LLM_COST_TABLE_JSON", "").strip()
         parsed: list[dict] = []
 

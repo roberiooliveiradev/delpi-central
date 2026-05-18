@@ -33,7 +33,9 @@ class AdminAgentSimulateUseCase:
         agent_id: str | None = None,
         agent_key: str | None = None,
         document_id: str | None = None,
+        session_id: str | None = None,
         generate_answer: bool = False,
+        execute_tools_in_sandbox: bool = False,
         user_id: str | None = None,
         access_token: str | None = None,
     ) -> dict:
@@ -62,15 +64,18 @@ class AdminAgentSimulateUseCase:
                 categories=guideline_categories,
             )
         )
+        history = self._load_session_history(session_id=session_id, user_id=user_id)
+
         tool_context, planned_tool_calls = self._build_tool_context(
             question=normalized_question,
             user_id=user_id,
             access_token=access_token,
             specialization=specialization,
+            execute_tools_in_sandbox=execute_tools_in_sandbox,
         )
 
         full_messages = self.prompt_builder_service.build_messages(
-            history=[],
+            history=history,
             current_message=normalized_question,
             rag_context=rag["context"],
             tool_context=tool_context,
@@ -79,7 +84,7 @@ class AdminAgentSimulateUseCase:
         )
 
         without_guidelines_messages = self.prompt_builder_service.build_messages(
-            history=[],
+            history=history,
             current_message=normalized_question,
             rag_context=rag["context"],
             tool_context=tool_context,
@@ -88,7 +93,7 @@ class AdminAgentSimulateUseCase:
         )
 
         without_rag_messages = self.prompt_builder_service.build_messages(
-            history=[],
+            history=history,
             current_message=normalized_question,
             rag_context="",
             tool_context=tool_context,
@@ -156,8 +161,17 @@ class AdminAgentSimulateUseCase:
                     extra={"chunkCount": 0, "documentCount": 0},
                 ),
             },
+            "sessionHistory": [
+                {
+                    "role": item.get("role"),
+                    "contentPreview": self._safe_preview(str(item.get("content") or ""), limit=240),
+                }
+                for item in history
+            ],
             "debugContext": {
                 "question": normalized_question,
+                "sessionId": session_id,
+                "historyMessageCount": len(history),
                 "guidelineCount": len(applied_guidelines),
                 "documentCount": len(rag.get("sources") or []),
                 "chunkCount": len(chunks),
@@ -165,6 +179,7 @@ class AdminAgentSimulateUseCase:
                 "toolsExecuted": any(
                     item.get("status") == "executed" for item in planned_tool_calls
                 ),
+                "executeToolsInSandbox": execute_tools_in_sandbox,
                 "generateAnswer": generate_answer,
                 "filters": filters,
                 "safeContextPreview": self._safe_preview(
@@ -182,6 +197,38 @@ class AdminAgentSimulateUseCase:
             },
         }
 
+    def _load_session_history(
+        self,
+        *,
+        session_id: str | None,
+        user_id: str | None,
+    ) -> list[dict]:
+        if not session_id or not user_id:
+            return []
+
+        from app.infrastructure.persistence.postgres_chat_session_repository import (
+            PostgresChatSessionRepository,
+        )
+
+        repository = PostgresChatSessionRepository()
+
+        try:
+            session = repository.get_session_by_id(UUID(str(session_id)))
+        except ValueError:
+            return []
+
+        if not session or str(session.user_id) != str(user_id):
+            return []
+
+        messages = repository.list_messages_by_session(UUID(str(session_id)))
+        tail = messages[-Settings.CHAT_HISTORY_MAX_MESSAGES :]
+
+        return [
+            {"role": message.role, "content": message.content}
+            for message in tail
+            if message.role in {"user", "assistant"}
+        ]
+
     def _build_tool_context(
         self,
         *,
@@ -189,8 +236,14 @@ class AdminAgentSimulateUseCase:
         user_id: str | None,
         access_token: str | None,
         specialization: dict | None = None,
+        execute_tools_in_sandbox: bool = False,
     ) -> tuple[str, list[dict]]:
-        if self.chat_tool_context_service and access_token and user_id:
+        if (
+            execute_tools_in_sandbox
+            and self.chat_tool_context_service
+            and access_token
+            and user_id
+        ):
             allowed_tool_names = (specialization or {}).get("allowedTools")
 
             result = self.chat_tool_context_service.build_context(
@@ -207,6 +260,7 @@ class AdminAgentSimulateUseCase:
                     "arguments": item.get("arguments") or {},
                     "reason": item.get("reason"),
                     "status": "executed",
+                    "sandbox": True,
                     "metadata": item.get("metadata"),
                 }
                 for item in (result.get("toolCalls") or [])

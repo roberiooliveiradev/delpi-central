@@ -32,6 +32,7 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [useLlmSuggestions, setUseLlmSuggestions] = useState(false);
 
   const loadCandidates = useCallback(async () => {
     setIsLoading(true);
@@ -57,6 +58,7 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
       try {
         const response = await getAdminResponseEvaluationContext(messageId, nextScore, {
           getAccessToken,
+          useLlmSuggestions,
         });
         setContext(response);
         setScore(response.evaluation?.score ?? nextScore);
@@ -65,7 +67,7 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
         setError(err instanceof Error ? err.message : "Erro ao carregar contexto da resposta.");
       }
     },
-    [getAccessToken],
+    [getAccessToken, useLlmSuggestions],
   );
 
   useEffect(() => {
@@ -234,6 +236,15 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
                   placeholder="Descreva o que faltou ou o que funcionou bem."
                   onChange={(event) => setComment(event.target.value)}
                 />
+              </label>
+
+              <label className="mdc-admin-evaluations__llm-toggle">
+                <input
+                  type="checkbox"
+                  checked={useLlmSuggestions}
+                  onChange={(event) => setUseLlmSuggestions(event.target.checked)}
+                />
+                <span>Enriquecer sugestões com LLM (mais lento)</span>
               </label>
 
               <div className="mdc-admin-evaluations__suggestions">

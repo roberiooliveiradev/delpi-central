@@ -1,14 +1,25 @@
+import { useEffect, useState } from "react";
+
+import {
+  getAdminLlmCostTable,
+  getAdminMetricsTimeseries,
+  saveAdminLlmCostTable,
+} from "../../../../data/api/adminApi";
 import type {
   AdminLlmCostBreakdownItem,
   AdminLlmCostTableEntry,
   AdminMetricsDistributionItem,
   AdminMetricsSummary,
+  AdminMetricsTimeseriesResponse,
 } from "../../../../data/api/adminTypes";
 
 import "./AdminMetricsTab.css";
 
 type AdminMetricsTabProps = {
   metricsSummary: AdminMetricsSummary | null;
+  metricsHours?: number;
+  onMetricsHoursChange?: (hours: number) => void;
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
 function formatPercent(value?: number | null): string {
@@ -64,11 +75,27 @@ function DistributionList({
   );
 }
 
-function CostTablePanel({ items }: { items: AdminLlmCostTableEntry[] }) {
+function CostTablePanel({
+  items,
+  editable = false,
+  onSave,
+  isSaving = false,
+}: {
+  items: AdminLlmCostTableEntry[];
+  editable?: boolean;
+  onSave?: (entries: AdminLlmCostTableEntry[]) => Promise<void>;
+  isSaving?: boolean;
+}) {
+  const [draft, setDraft] = useState(items);
+
+  useEffect(() => {
+    setDraft(items);
+  }, [items]);
+
   return (
     <article className="mdc-admin-metrics-card mdc-admin-metrics-card--wide">
       <h3>Tabela de custo por provider/modelo</h3>
-      <p>Valores por 1.000 tokens (prompt e completion). Configure via LLM_COST_TABLE_JSON.</p>
+      <p>Valores por 1.000 tokens (prompt e completion). Persistida no banco ou via env.</p>
 
       <div className="mdc-admin-metrics-tab__table-wrap">
         <table className="mdc-admin-metrics-tab__table">
@@ -82,18 +109,91 @@ function CostTablePanel({ items }: { items: AdminLlmCostTableEntry[] }) {
             </tr>
           </thead>
           <tbody>
-            {items.map((entry) => (
-              <tr key={`${entry.provider}-${entry.model}`}>
-                <td>{entry.provider}</td>
-                <td>{entry.model}</td>
-                <td>{formatCost(entry.promptCostPer1k)}</td>
-                <td>{formatCost(entry.completionCostPer1k)}</td>
+            {draft.map((entry, index) => (
+              <tr key={`${entry.provider}-${entry.model}-${index}`}>
+                <td>
+                  {editable ? (
+                    <input
+                      value={entry.provider}
+                      onChange={(event) => {
+                        const next = [...draft];
+                        next[index] = { ...entry, provider: event.target.value };
+                        setDraft(next);
+                      }}
+                    />
+                  ) : (
+                    entry.provider
+                  )}
+                </td>
+                <td>
+                  {editable ? (
+                    <input
+                      value={entry.model}
+                      onChange={(event) => {
+                        const next = [...draft];
+                        next[index] = { ...entry, model: event.target.value };
+                        setDraft(next);
+                      }}
+                    />
+                  ) : (
+                    entry.model
+                  )}
+                </td>
+                <td>
+                  {editable ? (
+                    <input
+                      type="number"
+                      step="0.0001"
+                      value={entry.promptCostPer1k}
+                      onChange={(event) => {
+                        const next = [...draft];
+                        next[index] = {
+                          ...entry,
+                          promptCostPer1k: Number(event.target.value),
+                        };
+                        setDraft(next);
+                      }}
+                    />
+                  ) : (
+                    formatCost(entry.promptCostPer1k)
+                  )}
+                </td>
+                <td>
+                  {editable ? (
+                    <input
+                      type="number"
+                      step="0.0001"
+                      value={entry.completionCostPer1k}
+                      onChange={(event) => {
+                        const next = [...draft];
+                        next[index] = {
+                          ...entry,
+                          completionCostPer1k: Number(event.target.value),
+                        };
+                        setDraft(next);
+                      }}
+                    />
+                  ) : (
+                    formatCost(entry.completionCostPer1k)
+                  )}
+                </td>
                 <td>{entry.currency}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {editable && onSave ? (
+        <button
+          type="button"
+          className="mdc-admin-metrics-tab__save-cost"
+          disabled={isSaving}
+          onClick={() => void onSave(draft)}
+        >
+          {isSaving ? "Salvando..." : "Salvar tabela de custo"}
+        </button>
+      ) : null}
     </article>
   );
 }
@@ -132,7 +232,40 @@ function CostBreakdownPanel({ items }: { items: AdminLlmCostBreakdownItem[] }) {
   );
 }
 
-export function AdminMetricsTab({ metricsSummary }: AdminMetricsTabProps) {
+export function AdminMetricsTab({
+  metricsSummary,
+  metricsHours = 24,
+  onMetricsHoursChange,
+  getAccessToken,
+}: AdminMetricsTabProps) {
+  const [timeseries, setTimeseries] = useState<AdminMetricsTimeseriesResponse | null>(null);
+  const [costTable, setCostTable] = useState<AdminLlmCostTableEntry[]>([]);
+  const [isSavingCostTable, setIsSavingCostTable] = useState(false);
+
+  useEffect(() => {
+    if (!getAccessToken || metricsHours <= 24) {
+      setTimeseries(null);
+      return;
+    }
+
+    void getAdminMetricsTimeseries(
+      { hours: metricsHours, bucketHours: metricsHours <= 168 ? 24 : 48 },
+      { getAccessToken },
+    )
+      .then(setTimeseries)
+      .catch(() => setTimeseries(null));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      return;
+    }
+
+    void getAdminLlmCostTable({ getAccessToken })
+      .then((response) => setCostTable(response.entries))
+      .catch(() => setCostTable(metricsSummary?.advanced?.costTable ?? []));
+  }, [getAccessToken, metricsSummary?.advanced?.costTable]);
+
   if (!metricsSummary) {
     return (
       <section className="mdc-admin-metrics-tab">
@@ -144,8 +277,25 @@ export function AdminMetricsTab({ metricsSummary }: AdminMetricsTabProps) {
   }
 
   const advanced = metricsSummary.advanced;
-  const costTable = advanced?.costTable ?? [];
+  const effectiveCostTable =
+    costTable.length > 0 ? costTable : (advanced?.costTable ?? []);
   const costBreakdown = advanced?.costBreakdown24h ?? [];
+  const windowLabel = metricsSummary.windowHours ?? metricsHours;
+
+  async function handleSaveCostTable(entries: AdminLlmCostTableEntry[]) {
+    if (!getAccessToken) {
+      return;
+    }
+
+    setIsSavingCostTable(true);
+
+    try {
+      const response = await saveAdminLlmCostTable(entries, { getAccessToken });
+      setCostTable(response.entries);
+    } finally {
+      setIsSavingCostTable(false);
+    }
+  }
 
   return (
     <section className="mdc-admin-metrics-tab">
@@ -158,6 +308,20 @@ export function AdminMetricsTab({ metricsSummary }: AdminMetricsTabProps) {
             agente e usuário.
           </p>
         </div>
+
+        {onMetricsHoursChange ? (
+          <label className="mdc-admin-metrics-tab__window">
+            <span>Janela</span>
+            <select
+              value={metricsHours}
+              onChange={(event) => onMetricsHoursChange(Number(event.target.value))}
+            >
+              <option value={24}>24 horas</option>
+              <option value={168}>7 dias</option>
+              <option value={720}>30 dias</option>
+            </select>
+          </label>
+        ) : null}
       </article>
 
       <div className="mdc-admin-metrics-tab__grid">
@@ -183,9 +347,9 @@ export function AdminMetricsTab({ metricsSummary }: AdminMetricsTabProps) {
         </article>
 
         <article className="mdc-admin-metrics-card">
-          <h3>Eventos 24h</h3>
+          <h3>Eventos ({windowLabel}h)</h3>
           <strong>{formatNumber(metricsSummary.recentAuditLogs24h)}</strong>
-          <p>Total de eventos auditáveis nas últimas 24h.</p>
+          <p>Total de eventos auditáveis na janela selecionada.</p>
         </article>
 
         <article className="mdc-admin-metrics-card">
@@ -239,7 +403,33 @@ export function AdminMetricsTab({ metricsSummary }: AdminMetricsTabProps) {
         </article>
       </div>
 
-      {costTable.length > 0 ? <CostTablePanel items={costTable} /> : null}
+      {effectiveCostTable.length > 0 ? (
+        <CostTablePanel
+          items={effectiveCostTable}
+          editable={Boolean(getAccessToken)}
+          isSaving={isSavingCostTable}
+          onSave={handleSaveCostTable}
+        />
+      ) : null}
+
+      {timeseries && timeseries.buckets.length > 0 ? (
+        <article className="mdc-admin-metrics-card mdc-admin-metrics-card--wide">
+          <h3>Série histórica ({timeseries.windowHours}h)</h3>
+          <ul className="mdc-admin-metrics-tab__timeseries">
+            {timeseries.buckets.map((bucket) => (
+              <li key={bucket.start}>
+                <span>
+                  {new Date(bucket.start).toLocaleDateString("pt-BR")} —{" "}
+                  {formatNumber(bucket.auditLogs)} eventos
+                </span>
+                <strong>
+                  {formatCost(bucket.estimatedCost)} · {formatNumber(bucket.tokensUsed)} tokens
+                </strong>
+              </li>
+            ))}
+          </ul>
+        </article>
+      ) : null}
 
       {costBreakdown.length > 0 ? <CostBreakdownPanel items={costBreakdown} /> : null}
 

@@ -34,6 +34,9 @@ from app.composition.admin_composer import (
     make_ingest_admin_knowledge_document_use_case,
     make_get_llm_provider_status_use_case,
     make_get_admin_metrics_summary_use_case,
+    make_get_admin_llm_cost_table_use_case,
+    make_save_admin_llm_cost_table_use_case,
+    make_get_admin_tools_health_use_case,
     make_get_admin_rbac_summary_use_case,
     make_get_admin_system_check_use_case,
     make_list_admin_audit_logs_use_case,
@@ -376,7 +379,9 @@ def simulate_admin_agent():
             agent_id=payload.get("agentId"),
             agent_key=payload.get("agentKey"),
             document_id=payload.get("documentId"),
+            session_id=payload.get("sessionId"),
             generate_answer=generate_answer,
+            execute_tools_in_sandbox=bool(payload.get("executeToolsInSandbox")),
             user_id=str(g.current_user.sub),
             access_token=getattr(g, "access_token", None),
         )
@@ -417,7 +422,92 @@ def admin_system_check():
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_metrics_summary():
     use_case = make_get_admin_metrics_summary_use_case()
+    hours_raw = request.args.get("hours", 24)
+
+    try:
+        hours = int(hours_raw)
+    except (TypeError, ValueError):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "hours must be an integer", "path": "hours"}]},
+        ), 400
+
+    return jsonify(use_case.execute(hours=hours)), 200
+
+
+@admin_bp.get("/metrics/timeseries")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_metrics_timeseries():
+    use_case = make_get_admin_metrics_summary_use_case()
+    hours_raw = request.args.get("hours", 168)
+    bucket_raw = request.args.get("bucketHours", 24)
+
+    try:
+        hours = int(hours_raw)
+        bucket_hours = int(bucket_raw)
+    except (TypeError, ValueError):
+        return jsonify(
+            {
+                "errors": [
+                    {
+                        "code": "invalid_request",
+                        "message": "hours and bucketHours must be integers",
+                        "path": "_global",
+                    }
+                ]
+            },
+        ), 400
+
+    return jsonify(use_case.execute_timeseries(hours=hours, bucket_hours=bucket_hours)), 200
+
+
+@admin_bp.get("/metrics/cost-table")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def get_admin_llm_cost_table():
+    use_case = make_get_admin_llm_cost_table_use_case()
     return jsonify(use_case.execute()), 200
+
+
+@admin_bp.put("/metrics/cost-table")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def save_admin_llm_cost_table():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
+        ), 400
+
+    use_case = make_save_admin_llm_cost_table_use_case()
+
+    try:
+        result = use_case.execute(entries=payload.get("entries") or [])
+    except ValueError as exc:
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": str(exc), "path": "entries"}]},
+        ), 400
+
+    try:
+        PostgresAuditRepository().log(
+            user_id=UUID(str(g.current_user.sub)),
+            action="admin.metrics.cost_table.updated",
+            context="admin",
+            metadata={"entryCount": len(result.get("entries") or [])},
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/tools/health")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_tools_health():
+    authorization_header = request.headers.get("Authorization") or ""
+    access_token = authorization_header.removeprefix("Bearer ").strip() or None
+    use_case = make_get_admin_tools_health_use_case()
+    return jsonify(use_case.execute(access_token=access_token)), 200
 
 @admin_bp.get("/llm/status")
 @require_permission(CHAT_ADMIN_PERMISSION)
@@ -430,22 +520,96 @@ def llm_status():
 @require_permission(CHAT_ADMIN_PERMISSION)
 @rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
 def preview_knowledge_ingestion():
-    payload = request.get_json(silent=True) or {}
-
-    if not isinstance(payload, dict):
-        return jsonify(
-            {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
-        ), 400
-
     use_case = make_preview_knowledge_ingestion_use_case()
+    extractor = ChatAttachmentTextExtractor()
+
+    if request.files.get("file"):
+        uploaded_file = request.files["file"]
+
+        if not uploaded_file.filename:
+            return jsonify(
+                {"errors": [{"code": "invalid_request", "message": "file is required", "path": "file"}]},
+            ), 400
+
+        raw_bytes = uploaded_file.read()
+
+        if not raw_bytes:
+            return jsonify(
+                {"errors": [{"code": "invalid_request", "message": "empty files cannot be previewed", "path": "file"}]},
+            ), 400
+
+        original_filename = Path(uploaded_file.filename).name
+        suffix = Path(original_filename).suffix
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp.write(raw_bytes)
+            tmp_path = tmp.name
+
+        try:
+            extracted = extractor.extract(
+                storage_path=tmp_path,
+                filename=original_filename,
+                content_type=uploaded_file.content_type,
+            )
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)
+
+        if not extracted.get("supported"):
+            return jsonify(
+                {
+                    "errors": [
+                        {
+                            "code": "knowledge.unsupported_file",
+                            "message": "file type is not supported for preview",
+                            "path": "file",
+                        }
+                    ]
+                },
+            ), 400
+
+        content = str(extracted.get("content") or "").strip()
+
+        if not content:
+            return jsonify(
+                {
+                    "errors": [
+                        {
+                            "code": "knowledge.empty_extracted_content",
+                            "message": "file did not produce indexable text",
+                            "path": "file",
+                        }
+                    ]
+                },
+            ), 400
+
+        title = (request.form.get("title") or original_filename).strip()
+        source_type = (request.form.get("sourceType") or "admin_preview_upload").strip()
+        source_ref = (request.form.get("sourceRef") or f"preview:{Path(uploaded_file.filename).name}").strip()
+        metadata = {"origin": "admin_preview_upload", "originalFilename": Path(uploaded_file.filename).name}
+        check_semantic = request.form.get("checkSemanticDuplicates", "true").lower() != "false"
+    else:
+        payload = request.get_json(silent=True) or {}
+
+        if not isinstance(payload, dict):
+            return jsonify(
+                {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
+            ), 400
+
+        content = payload.get("content", "")
+        title = payload.get("title")
+        source_type = payload.get("sourceType")
+        source_ref = payload.get("sourceRef")
+        metadata = payload.get("metadata")
+        check_semantic = payload.get("checkSemanticDuplicates", True) is not False
 
     try:
         result = use_case.execute(
-            content=payload.get("content", ""),
-            title=payload.get("title"),
-            source_type=payload.get("sourceType"),
-            source_ref=payload.get("sourceRef"),
-            metadata=payload.get("metadata"),
+            content=content,
+            title=title,
+            source_type=source_type,
+            source_ref=source_ref,
+            metadata=metadata,
+            check_semantic_duplicates=bool(check_semantic),
         )
     except InvalidKnowledgeDocumentInputError as exc:
         return jsonify(
@@ -790,7 +954,12 @@ def get_response_evaluation_context(message_id: str):
 
     try:
         score = int(score_raw) if score_raw is not None else None
-        result = use_case.execute(message_id=message_id, score=score)
+        use_llm = request.args.get("useLlmSuggestions", "false").lower() in {"1", "true", "yes"}
+        result = use_case.execute(
+            message_id=message_id,
+            score=score,
+            use_llm_suggestions=use_llm,
+        )
     except ValueError as exc:
         return jsonify(
             {"errors": [{"code": "not_found", "message": str(exc), "path": "messageId"}]},

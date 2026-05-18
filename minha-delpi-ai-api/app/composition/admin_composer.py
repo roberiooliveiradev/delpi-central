@@ -19,6 +19,17 @@ from app.application.use_cases.delete_knowledge_document_use_case import (
     DeleteKnowledgeDocumentUseCase,
 )
 from app.application.use_cases.get_admin_metrics_summary_use_case import GetAdminMetricsSummaryUseCase
+from app.application.use_cases.get_admin_tools_health_use_case import GetAdminToolsHealthUseCase
+from app.application.use_cases.admin_llm_cost_table_use_cases import (
+    GetAdminLlmCostTableUseCase,
+    SaveAdminLlmCostTableUseCase,
+)
+from app.application.services.knowledge_semantic_deduplicator_service import (
+    KnowledgeSemanticDeduplicatorService,
+)
+from app.application.services.response_evaluation_llm_suggestion_service import (
+    ResponseEvaluationLlmSuggestionService,
+)
 from app.application.use_cases.get_admin_rbac_summary_use_case import GetAdminRbacSummaryUseCase
 from app.application.use_cases.get_admin_system_check_use_case import GetAdminSystemCheckUseCase
 from app.application.use_cases.get_llm_provider_status_use_case import (
@@ -137,6 +148,10 @@ def make_ingest_admin_knowledge_document_use_case() -> IngestKnowledgeDocumentUs
 def make_preview_knowledge_ingestion_use_case() -> PreviewKnowledgeIngestionUseCase:
     return PreviewKnowledgeIngestionUseCase(
         pipeline=make_knowledge_ingestion_pipeline_service(),
+        semantic_deduplicator=KnowledgeSemanticDeduplicatorService(
+            embedding_gateway=LocalEmbeddingGateway(),
+            knowledge_repository=PostgresKnowledgeRepository(),
+        ),
     )
 
 
@@ -155,6 +170,21 @@ def make_get_admin_metrics_summary_use_case() -> GetAdminMetricsSummaryUseCase:
 
 def make_get_admin_system_check_use_case() -> GetAdminSystemCheckUseCase:
     return GetAdminSystemCheckUseCase(PostgresAdminSystemCheckRepository())
+
+
+def make_get_admin_tools_health_use_case() -> GetAdminToolsHealthUseCase:
+    return GetAdminToolsHealthUseCase(
+        system_check_repository=PostgresAdminSystemCheckRepository(),
+        external_action_repository=PostgresExternalActionRepository(),
+    )
+
+
+def make_get_admin_llm_cost_table_use_case() -> GetAdminLlmCostTableUseCase:
+    return GetAdminLlmCostTableUseCase()
+
+
+def make_save_admin_llm_cost_table_use_case() -> SaveAdminLlmCostTableUseCase:
+    return SaveAdminLlmCostTableUseCase()
 
 def make_create_external_action_provider_use_case() -> CreateExternalActionProviderUseCase:
     return CreateExternalActionProviderUseCase(
@@ -252,7 +282,12 @@ def make_list_admin_response_candidates_use_case() -> ListAdminResponseCandidate
 def make_get_admin_response_evaluation_context_use_case() -> (
     GetAdminResponseEvaluationContextUseCase
 ):
-    return GetAdminResponseEvaluationContextUseCase(_response_evaluation_repository())
+    return GetAdminResponseEvaluationContextUseCase(
+        _response_evaluation_repository(),
+        llm_suggestion_service=ResponseEvaluationLlmSuggestionService(
+            llm_gateway=make_llm_gateway(),
+        ),
+    )
 
 
 def make_save_admin_response_evaluation_use_case() -> SaveAdminResponseEvaluationUseCase:

@@ -69,6 +69,7 @@ from app.composition.chat_composer import (
     make_update_chat_project_use_case,
     make_update_chat_artifact_use_case,
     make_get_chat_history_use_case,
+    make_upsert_chat_message_feedback_use_case,
     make_list_chat_sessions_use_case,
     make_rename_chat_session_use_case,
     make_set_chat_session_archived_use_case,
@@ -1595,6 +1596,45 @@ def get_history(session_id: str):
     )
 
     return jsonify([asdict(message) for message in result]), 200
+
+
+@chat_bp.put("/sessions/<session_id>/messages/<message_id>/feedback")
+@require_permission(CHAT_ASK_PERMISSION)
+@rate_limit("chat_messages", Settings.RATE_LIMIT_CHAT_MESSAGES_PER_WINDOW)
+def upsert_message_feedback(session_id: str, message_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    rating_raw = payload.get("rating")
+
+    rating = None
+
+    if rating_raw is not None:
+        try:
+            rating = int(rating_raw)
+        except (TypeError, ValueError):
+            return bad_request("rating must be -1, 1 or null")
+
+    use_case = make_upsert_chat_message_feedback_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            session_id=session_id,
+            message_id=message_id,
+            rating=rating,
+        )
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
 
 
 @chat_bp.post("/sessions/<session_id>/messages")

@@ -61,6 +61,17 @@ export type ChatMessage = {
   content: string;
   metadata: ChatMessageMetadata | null;
   created_at: string;
+  user_feedback?: -1 | 1 | null;
+};
+
+export type ChatMessageFeedbackResponse = {
+  messageId: string;
+  userId: string;
+  rating: -1 | 1;
+  createdAt: string;
+  updatedAt: string;
+} | {
+  removed: boolean;
 };
 
 export type CreateChatSessionPayload = {

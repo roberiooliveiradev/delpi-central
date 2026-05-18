@@ -74,6 +74,15 @@ export type AdminKnowledgeIngestionPreviewChunk = {
   metadata: Record<string, unknown>;
 };
 
+export type AdminKnowledgeSemanticDuplicate = {
+  documentId?: string;
+  chunkId?: string;
+  title?: string | null;
+  sourceType?: string | null;
+  similarity: number;
+  preview: string;
+};
+
 export type AdminKnowledgeIngestionPreviewResponse = {
   title: string;
   sourceType: string;
@@ -83,6 +92,7 @@ export type AdminKnowledgeIngestionPreviewResponse = {
   cleanedPreview: string;
   chunks: AdminKnowledgeIngestionPreviewChunk[];
   pipeline: AdminKnowledgeIngestionPipelineStats;
+  semanticDuplicates?: AdminKnowledgeSemanticDuplicate[];
 };
 
 export type UpdateKnowledgeDocumentMetadataPayload = {
@@ -275,7 +285,29 @@ export type AdminLlmCostBreakdownItem = {
   estimatedCost: number | null;
 };
 
+export type AdminLlmCostTableResponse = {
+  entries: AdminLlmCostTableEntry[];
+  source: "database" | "env" | string;
+};
+
+export type AdminMetricsTimeseriesBucket = {
+  start: string;
+  end: string;
+  auditLogs: number;
+  messagesInstrumented: number;
+  tokensUsed: number | null;
+  estimatedCost: number | null;
+  latencyAvgMs: number | null;
+};
+
+export type AdminMetricsTimeseriesResponse = {
+  windowHours: number;
+  bucketHours: number;
+  buckets: AdminMetricsTimeseriesBucket[];
+};
+
 export type AdminMetricsSummary = {
+  windowHours?: number;
   sessions: number;
   messages: number;
   knowledgeDocuments: number;
@@ -370,7 +402,9 @@ export type AdminAgentSimulateRequest = {
   agentId?: string;
   agentKey?: string;
   documentId?: string;
+  sessionId?: string;
   generateAnswer?: boolean;
+  executeToolsInSandbox?: boolean;
 };
 
 export type AdminAgentSimulateResponse = AdminRagTestResponse & {
@@ -477,6 +511,7 @@ export type AdminExternalActionCatalogItem = {
 };
 
 export type AdminToolHealthResponse = {
+  status?: "ok" | "warning" | "error";
   items: Array<{
     id: string;
     label: string;

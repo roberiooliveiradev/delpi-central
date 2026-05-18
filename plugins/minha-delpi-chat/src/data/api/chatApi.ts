@@ -10,6 +10,7 @@ import type {
   ChatArtifact,
   ChatAttachment,
   ChatMessage,
+  ChatMessageFeedbackResponse,
   ChatProject,
   ChatSession,
   ChatWorkspaceSource,
@@ -142,6 +143,24 @@ export async function listChatMessages(
   });
 
   return parseJsonResponse<ChatMessage[]>(response);
+}
+
+export async function upsertChatMessageFeedback(
+  sessionId: string,
+  messageId: string,
+  rating: -1 | 1 | null,
+  options: ChatApiOptions = {},
+): Promise<ChatMessageFeedbackResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/sessions/${sessionId}/messages/${messageId}/feedback`,
+    {
+      method: "PUT",
+      headers: await getAuthHeaders(options),
+      body: JSON.stringify({ rating }),
+    },
+  );
+
+  return parseJsonResponse<ChatMessageFeedbackResponse>(response);
 }
 
 export async function sendChatMessage(

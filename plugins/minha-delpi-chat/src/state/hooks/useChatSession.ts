@@ -6,6 +6,7 @@ import {
   deleteChatSession,
   listChatMessages,
   listChatSessions,
+  upsertChatMessageFeedback,
   pinChatSession,
   renameChatSession,
   unarchiveChatSession,
@@ -185,6 +186,30 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       }
     },
     [activeSession?.id, options.getAccessToken, sessions],
+  );
+
+  const setMessageFeedback = useCallback(
+    async (messageId: string, rating: -1 | 1 | null) => {
+      if (!activeSession) {
+        return;
+      }
+
+      await upsertChatMessageFeedback(activeSession.id, messageId, rating, {
+        getAccessToken: options.getAccessToken,
+      });
+
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === messageId
+            ? {
+                ...message,
+                user_feedback: rating,
+              }
+            : message,
+        ),
+      );
+    },
+    [activeSession, options.getAccessToken],
   );
 
   const editMessage = useCallback(
@@ -564,5 +589,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     unarchiveSession,
     editMessage,
     reuseMessage,
+    setMessageFeedback,
   };
 }

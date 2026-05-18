@@ -104,6 +104,11 @@
     transform 0.18s ease;
 }
 
+.mdc-chat-message-action.is-active {
+  color: var(--mdc-accent, #2563eb);
+  background: color-mix(in srgb, var(--mdc-accent, #2563eb) 12%, transparent);
+}
+
 .mdc-chat-message-action:hover {
   transform: translateY(-1px);
   color: var(--mdc-primary);

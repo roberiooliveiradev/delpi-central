@@ -15,6 +15,8 @@ from app.infrastructure.db.models.knowledge_chunk_model import AiKnowledgeChunkM
 from app.infrastructure.db.models.knowledge_document_model import AiKnowledgeDocumentModel
 from app.infrastructure.db.models.response_evaluation_model import AiResponseEvaluationModel
 from app.infrastructure.db.models.external_action_test_log_model import ExternalActionTestLogModel
+from app.infrastructure.db.models.chat_message_feedback_model import AiChatMessageFeedbackModel
+from app.infrastructure.db.models.admin_runtime_settings_model import AiAdminRuntimeSettingsModel
 
 __all__ = [
     "AiAdminGuidelineModel",
@@ -34,4 +36,6 @@ __all__ = [
     "AiKnowledgeDocumentModel",
     "AiResponseEvaluationModel",
     "ExternalActionTestLogModel",
+    "AiChatMessageFeedbackModel",
+    "AiAdminRuntimeSettingsModel",
 ]

@@ -76,6 +76,7 @@ const EMPTY_FACETS: AdminKnowledgeCuratorialFacets = {
 export function useChatAdmin(options: UseChatAdminOptions = {}) {
   const [llmStatus, setLlmStatus] = useState<AdminLlmStatus | null>(null);
   const [metricsSummary, setMetricsSummary] = useState<AdminMetricsSummary | null>(null);
+  const [metricsHours, setMetricsHours] = useState(24);
   const [documentsResponse, setDocumentsResponse] =
     useState<AdminKnowledgeDocumentsResponse>(DEFAULT_DOCUMENTS_RESPONSE);
   const [guidelines, setGuidelines] = useState<AdminGuideline[]>([]);
@@ -123,7 +124,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     try {
       const [status, metrics, docs, guidelinesResponse] = await Promise.all([
         getLlmStatus({ getAccessToken: options.getAccessToken }),
-        getAdminMetricsSummary({ getAccessToken: options.getAccessToken }),
+        getAdminMetricsSummary(metricsHours, { getAccessToken: options.getAccessToken }),
         listKnowledgeDocuments(
           {
             search: documentSearch,
@@ -161,6 +162,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     documentDomain,
     documentTag,
     documentSourceType,
+    metricsHours,
     options.getAccessToken,
   ]);
 
@@ -444,6 +446,8 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
   return {
     llmStatus,
     metricsSummary,
+    metricsHours,
+    setMetricsHours,
     documents: documentsResponse.items as AdminKnowledgeDocument[],
     documentsPagination: documentsResponse.pagination,
     guidelines,

@@ -98,6 +98,14 @@ def make_get_chat_history_use_case() -> GetChatHistoryUseCase:
     return GetChatHistoryUseCase(PostgresChatSessionRepository())
 
 
+def make_upsert_chat_message_feedback_use_case():
+    from app.application.use_cases.upsert_chat_message_feedback_use_case import (
+        UpsertChatMessageFeedbackUseCase,
+    )
+
+    return UpsertChatMessageFeedbackUseCase(PostgresChatSessionRepository())
+
+
 def make_rag_context_service() -> RagContextService:
     return RagContextService(
         SearchKnowledgeUseCase(

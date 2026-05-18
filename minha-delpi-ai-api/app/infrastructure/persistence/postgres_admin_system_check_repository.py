@@ -9,11 +9,14 @@ from app.infrastructure.config.settings import Settings
 
 
 REQUIRED_TABLES = [
+    "ai_admin_runtime_settings",
     "ai_audit_logs",
+    "ai_chat_message_feedback",
     "ai_chat_messages",
     "ai_chat_sessions",
     "ai_knowledge_chunks",
     "ai_knowledge_documents",
+    "ai_response_evaluations",
 ]
 
 

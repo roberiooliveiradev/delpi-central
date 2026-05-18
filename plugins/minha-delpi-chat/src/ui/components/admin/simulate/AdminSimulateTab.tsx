@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { listChatAgents } from "../../../../data/api/chatApi";
+import { listChatAgents, listChatSessions } from "../../../../data/api/chatApi";
+import type { ChatSession } from "../../../../data/api/chatTypes";
 import type { ChatAgent } from "../../../../data/api/chatTypes";
 import { simulateAdminAgent } from "../../../../data/api/adminApi";
 import type { AdminAgentSimulateResponse } from "../../../../data/api/adminTypes";
@@ -14,7 +15,10 @@ type AdminSimulateTabProps = {
 export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
   const [question, setQuestion] = useState("");
   const [agentId, setAgentId] = useState("");
+  const [sessionId, setSessionId] = useState("");
+  const [executeToolsInSandbox, setExecuteToolsInSandbox] = useState(false);
   const [generateAnswer, setGenerateAnswer] = useState(false);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [agents, setAgents] = useState<ChatAgent[]>([]);
   const [result, setResult] = useState<AdminAgentSimulateResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,10 +27,15 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
   useEffect(() => {
     async function loadAgents() {
       try {
-        const response = await listChatAgents({ getAccessToken });
-        setAgents(response);
+        const [agentsResponse, sessionsResponse] = await Promise.all([
+          listChatAgents({ getAccessToken }),
+          listChatSessions({ getAccessToken }),
+        ]);
+        setAgents(agentsResponse);
+        setSessions(sessionsResponse);
       } catch {
         setAgents([]);
+        setSessions([]);
       }
     }
 
@@ -49,6 +58,8 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
         {
           question: normalized,
           agentId: agentId || undefined,
+          sessionId: sessionId || undefined,
+          executeToolsInSandbox,
           generateAnswer,
         },
         { getAccessToken },
@@ -94,6 +105,27 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
               </option>
             ))}
           </select>
+        </label>
+
+        <label>
+          <span>Sessão real (opcional)</span>
+          <select value={sessionId} onChange={(event) => setSessionId(event.target.value)}>
+            <option value="">Sem histórico de sessão</option>
+            {sessions.map((session) => (
+              <option key={session.id} value={session.id}>
+                {session.title || session.id}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="mdc-admin-simulate__checkbox">
+          <input
+            type="checkbox"
+            checked={executeToolsInSandbox}
+            onChange={(event) => setExecuteToolsInSandbox(event.target.checked)}
+          />
+          <span>Executar tools em sandbox (com token do admin)</span>
         </label>
 
         <label className="mdc-admin-simulate__checkbox">
