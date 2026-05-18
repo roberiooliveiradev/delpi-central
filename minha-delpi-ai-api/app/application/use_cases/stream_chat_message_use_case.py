@@ -26,6 +26,9 @@ from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepositoryPort
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
+from app.domain.services.chat_external_action_direct_response_service import (
+    ChatExternalActionDirectResponseService,
+)
 from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
@@ -121,21 +124,6 @@ class StreamChatMessageUseCase:
             attachment_ids=attachment_ids,
         )
 
-        if fast_path:
-            rag = {"context": "", "sources": []}
-        else:
-            rag = self.rag_context_service.build_context(
-                message,
-                filters=self.knowledge_scope_service.build_filters(
-                    user_id=user_id,
-                    session=session,
-                    workspace_context=workspace_context,
-                    attachment_ids=attachment_ids,
-                ),
-            )
-        sources = rag["sources"]
-        pipeline_timings.mark("rag_done")
-
         tool_context = self._build_tool_context(
             request,
             allowed_action_ids=workspace_context.get("allowedActionIds"),
@@ -150,6 +138,26 @@ class StreamChatMessageUseCase:
         )
         tool_calls = tool_context["toolCalls"]
         pipeline_timings.mark("tools_done")
+
+        skip_rag = fast_path or ChatExternalActionDirectResponseService.should_skip_rag(
+            tool_context
+        )
+        direct_answer = ChatExternalActionDirectResponseService.resolve_answer(tool_context)
+
+        if skip_rag:
+            rag = {"context": "", "sources": []}
+        else:
+            rag = self.rag_context_service.build_context(
+                message,
+                filters=self.knowledge_scope_service.build_filters(
+                    user_id=user_id,
+                    session=session,
+                    workspace_context=workspace_context,
+                    attachment_ids=attachment_ids,
+                ),
+            )
+        sources = rag["sources"]
+        pipeline_timings.mark("rag_done")
         intelligence_metadata = ChatIntelligenceMetadataService.build(
             sources=sources,
             tool_context=tool_context,
@@ -187,22 +195,25 @@ class StreamChatMessageUseCase:
             workspace_context,
         )
 
-        llm_messages = self.prompt_builder_service.build_messages(
-            history=history,
-            current_message=message,
-            rag_context=rag["context"],
-            tool_context=tool_context["context"],
-            project_prompt=workspace_context.get("projectPrompt"),
-            agent_prompt=workspace_context.get("agentPrompt"),
-            admin_guidelines_prompt=admin_guidelines_prompt,
-            attachments=attachments,
-            attachment_context=self._build_attachment_context(
-                user_id=user_id,
-                session_id=session_id,
-                request=request,
-            ),
-            history_summary=history_summary,
-        )
+        if direct_answer:
+            llm_messages = []
+        else:
+            llm_messages = self.prompt_builder_service.build_messages(
+                history=history,
+                current_message=message,
+                rag_context=rag["context"],
+                tool_context=tool_context["context"],
+                project_prompt=workspace_context.get("projectPrompt"),
+                agent_prompt=workspace_context.get("agentPrompt"),
+                admin_guidelines_prompt=admin_guidelines_prompt,
+                attachments=attachments,
+                attachment_context=self._build_attachment_context(
+                    user_id=user_id,
+                    session_id=session_id,
+                    request=request,
+                ),
+                history_summary=history_summary,
+            )
 
         answer_parts: list[str] = []
         started_at = time.perf_counter()
@@ -223,12 +234,22 @@ class StreamChatMessageUseCase:
             "adminGuidelines": self._guideline_metadata(active_guidelines),
         }
 
-        for token in self.llm_gateway.stream(llm_messages):
-            answer_parts.append(token)
-            yield {
-                "type": "token",
-                "content": token,
-            }
+        if direct_answer:
+            for chunk in ChatExternalActionDirectResponseService.iter_stream_chunks(
+                direct_answer
+            ):
+                answer_parts.append(chunk)
+                yield {
+                    "type": "token",
+                    "content": chunk,
+                }
+        else:
+            for token in self.llm_gateway.stream(llm_messages):
+                answer_parts.append(token)
+                yield {
+                    "type": "token",
+                    "content": token,
+                }
 
         answer = "".join(answer_parts).strip()
         pipeline_timings.mark("llm_done")
@@ -274,6 +295,7 @@ class StreamChatMessageUseCase:
                     "totalTokensEstimated": total_tokens_estimated,
                     "estimatedCost": estimated_cost,
                 },
+                "directResponse": bool(direct_answer),
             },
         )
 

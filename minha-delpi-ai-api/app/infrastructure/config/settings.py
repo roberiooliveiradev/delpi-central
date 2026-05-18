@@ -132,6 +132,10 @@ class Settings:
         os.getenv("CHAT_FAST_PATH_ENABLED", "true").lower() == "true"
     )
     CHAT_FAST_PATH_MAX_CHARS = int(os.getenv("CHAT_FAST_PATH_MAX_CHARS", "48"))
+    CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED = (
+        os.getenv("CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED", "true").lower()
+        == "true"
+    )
     CHAT_TOOL_ROUTER_MAX_ACTIONS = int(os.getenv("CHAT_TOOL_ROUTER_MAX_ACTIONS", "20"))
 
     CHAT_HISTORY_SUMMARY_ENABLED = (

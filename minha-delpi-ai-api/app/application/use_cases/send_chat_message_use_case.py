@@ -24,6 +24,9 @@ from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepositoryPort
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
+from app.domain.services.chat_external_action_direct_response_service import (
+    ChatExternalActionDirectResponseService,
+)
 from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
@@ -99,21 +102,6 @@ class SendChatMessageUseCase:
             attachment_ids=attachment_ids,
         )
 
-        if fast_path:
-            rag = {"context": "", "sources": []}
-        else:
-            rag = self.rag_context_service.build_context(
-                message,
-                filters=self.knowledge_scope_service.build_filters(
-                    user_id=user_id,
-                    session=session,
-                    workspace_context=workspace_context,
-                    attachment_ids=attachment_ids,
-                ),
-            )
-        sources = rag["sources"]
-        pipeline_timings.mark("rag_done")
-
         tool_context = self._build_tool_context(
             request,
             allowed_action_ids=workspace_context.get("allowedActionIds"),
@@ -128,6 +116,26 @@ class SendChatMessageUseCase:
         )
         tool_calls = tool_context["toolCalls"]
         pipeline_timings.mark("tools_done")
+
+        skip_rag = fast_path or ChatExternalActionDirectResponseService.should_skip_rag(
+            tool_context
+        )
+        direct_answer = ChatExternalActionDirectResponseService.resolve_answer(tool_context)
+
+        if skip_rag:
+            rag = {"context": "", "sources": []}
+        else:
+            rag = self.rag_context_service.build_context(
+                message,
+                filters=self.knowledge_scope_service.build_filters(
+                    user_id=user_id,
+                    session=session,
+                    workspace_context=workspace_context,
+                    attachment_ids=attachment_ids,
+                ),
+            )
+        sources = rag["sources"]
+        pipeline_timings.mark("rag_done")
         intelligence_metadata = ChatIntelligenceMetadataService.build(
             sources=sources,
             tool_context=tool_context,
@@ -164,25 +172,33 @@ class SendChatMessageUseCase:
             workspace_context,
         )
 
-        llm_messages = self.prompt_builder_service.build_messages(
-            history=history,
-            current_message=message,
-            rag_context=rag["context"],
-            tool_context=tool_context["context"],
-            project_prompt=workspace_context.get("projectPrompt"),
-            agent_prompt=workspace_context.get("agentPrompt"),
-            admin_guidelines_prompt=admin_guidelines_prompt,
-            attachments=attachments,
-            attachment_context=self._build_attachment_context(
-                user_id=user_id,
-                session_id=session_id,
-                request=request,
-            ),
-            history_summary=history_summary,
-        )
+        if direct_answer:
+            llm_messages = []
+        else:
+            llm_messages = self.prompt_builder_service.build_messages(
+                history=history,
+                current_message=message,
+                rag_context=rag["context"],
+                tool_context=tool_context["context"],
+                project_prompt=workspace_context.get("projectPrompt"),
+                agent_prompt=workspace_context.get("agentPrompt"),
+                admin_guidelines_prompt=admin_guidelines_prompt,
+                attachments=attachments,
+                attachment_context=self._build_attachment_context(
+                    user_id=user_id,
+                    session_id=session_id,
+                    request=request,
+                ),
+                history_summary=history_summary,
+            )
 
         started_at = time.perf_counter()
-        answer = self.llm_gateway.generate(llm_messages)
+
+        if direct_answer:
+            answer = direct_answer
+        else:
+            answer = self.llm_gateway.generate(llm_messages)
+
         pipeline_timings.mark("llm_done")
         intelligence_metadata = ChatIntelligenceMetadataService.build(
             sources=sources,

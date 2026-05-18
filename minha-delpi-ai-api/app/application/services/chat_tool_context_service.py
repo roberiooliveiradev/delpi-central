@@ -136,6 +136,9 @@ class ChatToolContextService:
 
         context_blocks: list[str] = []
         safe_tool_calls: list[dict] = []
+        direct_answer: str | None = None
+        skip_rag = False
+        last_external_action_data = None
 
         for selected_tool in selected_tools:
             try:
@@ -192,6 +195,12 @@ class ChatToolContextService:
                 }
             )
 
+            if result.name == "execute_external_action":
+                skip_rag = True
+
+                if self._is_successful_external_action(safe_metadata):
+                    last_external_action_data = result.data
+
             # Authorized data is only injected into the LLM context for this request.
             # It is not returned in toolCalls[] and is not persisted in chat metadata.
             context_blocks.append(
@@ -206,10 +215,19 @@ class ChatToolContextService:
         context = "\n\n".join(context_blocks)
         context = context[: Settings.MAX_CONTEXT_CHARS]
 
+        if (
+            len(safe_tool_calls) == 1
+            and safe_tool_calls[0].get("name") == "execute_external_action"
+            and self._is_successful_external_action(safe_tool_calls[0].get("metadata") or {})
+        ):
+            direct_answer = self._build_direct_answer(last_external_action_data)
+
         return {
             "context": context,
             "toolCalls": safe_tool_calls,
             "nativeToolCalling": native_meta,
+            "directAnswer": direct_answer,
+            "skipRag": skip_rag,
         }
 
 
@@ -314,7 +332,6 @@ class ChatToolContextService:
         path = metadata.get("path")
         provider = metadata.get("provider")
 
-        extracted = self._extract_external_action_summary(data)
         humanized = self.external_action_result_presenter.present(data)
 
         payload = {
@@ -325,8 +342,10 @@ class ChatToolContextService:
             "path": path,
             "statusCode": status_code,
             "ok": ok,
-            "humanizedSummary": humanized,
-            "technicalSummary": extracted,
+            "humanizedSummary": {
+                "titulo": humanized.get("titulo"),
+                "linhas": humanized.get("linhas"),
+            },
         }
 
         return (
@@ -342,6 +361,37 @@ class ChatToolContextService:
             "Se precisar de algum dado técnico, use apenas o resumo técnico compacto.\n"
             f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
         )
+
+    def _is_successful_external_action(self, metadata: dict) -> bool:
+        if not metadata.get("ok"):
+            return False
+
+        status_code = metadata.get("statusCode")
+
+        try:
+            return 200 <= int(status_code) < 300
+        except (TypeError, ValueError):
+            return False
+
+    def _build_direct_answer(self, data) -> str | None:
+        if not Settings.CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED:
+            return None
+
+        humanized = self.external_action_result_presenter.present(data)
+        lines = [
+            str(line).strip()
+            for line in (humanized.get("linhas") or [])
+            if str(line).strip()
+        ]
+
+        if not lines:
+            return None
+
+        title = str(humanized.get("titulo") or "").strip()
+        parts = [title] if title else []
+        parts.extend(lines)
+
+        return "\n\n".join(parts)
 
     def _extract_external_action_summary(self, data):
         if not isinstance(data, dict):
