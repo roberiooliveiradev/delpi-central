@@ -171,5 +171,5 @@ def test_build_context_filters_chunks_below_min_score():
 
     assert "Trecho relevante" in result["context"]
     assert "Trecho irrelevante" not in result["context"]
-    assert len(result["sources"]) == 1
-    assert result["sources"][0]["documentId"] == "doc-2"
+    # Fontes globais entram no contexto do LLM, mas não na lista exibida ao usuário.
+    assert result["sources"] == []

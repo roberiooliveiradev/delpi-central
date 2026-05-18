@@ -1,5 +1,14 @@
 import type { ChatSource } from "../../data/api/chatTypes";
 
+const GLOBAL_SOURCE_TYPES = new Set([
+  "global",
+  "admin_upload",
+  "admin_preview_upload",
+  "diretriz",
+  "guideline",
+  "admin_guideline",
+]);
+
 export function isGeneralChatSource(source: ChatSource): boolean {
   const scope = String(source.scope ?? "").trim().toLowerCase();
 
@@ -7,7 +16,29 @@ export function isGeneralChatSource(source: ChatSource): boolean {
     return true;
   }
 
+  if (scope === "agent_source" || scope === "project_source" || scope === "session_source") {
+    return false;
+  }
+
+  if (source.agentKey || source.projectId || source.sessionId || source.attachmentId) {
+    return false;
+  }
+
   const sourceType = String(source.sourceType ?? "").trim().toLowerCase();
+
+  if (GLOBAL_SOURCE_TYPES.has(sourceType)) {
+    return true;
+  }
+
+  const sourceRef = String(source.sourceRef ?? "").trim().toLowerCase();
+
+  if (sourceRef.startsWith("global:")) {
+    return true;
+  }
+
+  if (!scope) {
+    return true;
+  }
 
   return sourceType === "global";
 }

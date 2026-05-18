@@ -181,4 +181,5 @@ class SearchKnowledgeUseCase:
             "chunkIndex": chunk.chunk_index,
             "content": chunk.content,
             "score": chunk.score,
+            "metadata": dict(chunk.metadata or {}),
         }

@@ -2,6 +2,7 @@ import logging
 
 from app.application.dto.search_knowledge_request import SearchKnowledgeRequest
 from app.application.use_cases.search_knowledge_use_case import SearchKnowledgeUseCase
+from app.domain.services.chat_source_visibility_service import filter_client_visible_sources
 from app.infrastructure.config.settings import Settings
 
 logger = logging.getLogger("minha-delpi-ai-api.rag")
@@ -124,9 +125,11 @@ class RagContextService:
                     if value is not None
                 ) if any(value is not None for value in [existing.get("score"), chunk.get("score")]) else None
 
+        sources = filter_client_visible_sources(list(sources_by_document.values()))
+
         return {
             "context": "\n\n".join(context_parts),
-            "sources": list(sources_by_document.values()),
+            "sources": sources,
         }
 
     def _source_from_chunk(self, chunk: dict) -> dict:

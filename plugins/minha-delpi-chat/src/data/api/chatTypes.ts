@@ -20,6 +20,10 @@ export type ChatSource = {
   chunkIndex?: number | null;
   score?: number | null;
   scope?: string | null;
+  agentKey?: string | null;
+  projectId?: string | null;
+  sessionId?: string | null;
+  attachmentId?: string | null;
 };
 
 export type ChatPresentation =
