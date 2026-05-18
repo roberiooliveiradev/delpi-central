@@ -14,7 +14,11 @@ from si_app.application.dto.strategic_indicators.get_trends_real_request import 
 from si_app.application.use_cases.strategic_indicators.get_department_details_real_use_case import (
     GetStrategicIndicatorsDepartmentDetailsRealRequest,
 )
+from si_app.application.use_cases.strategic_indicators.get_alerts_real_use_case import (
+    GetStrategicIndicatorsAlertsRealRequest,
+)
 from si_app.composition.strategic_indicators_composer import (
+    build_get_strategic_indicators_alerts_use_case,
     build_get_strategic_indicators_department_details_use_case,
     build_get_strategic_indicators_executive_summary_use_case,
     build_get_strategic_indicators_trends_use_case,
@@ -63,6 +67,12 @@ def main() -> None:
                 competence=args.competence,
                 months=args.months,
             )
+        ),
+    )
+    _bench(
+        "alerts",
+        lambda: build_get_strategic_indicators_alerts_use_case().execute(
+            GetStrategicIndicatorsAlertsRealRequest(competence=args.competence)
         ),
     )
 

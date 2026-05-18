@@ -14,7 +14,20 @@ from si_app.infrastructure.persistence.plugins.plugin_base_repository import (
 class PostgresStrategicIndicatorsChangeRequestRepository(
     PluginBaseRepository, StrategicIndicatorsChangeRequestRepositoryPort
 ):
-    def list_change_requests(self) -> list[dict]:
+    def list_change_requests(
+        self,
+        *,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> tuple[list[dict], int]:
+        count_row = self.fetch_one(
+            """
+            SELECT COUNT(*) AS total
+            FROM strategic_indicators.settings_change_requests
+            """
+        )
+        total = int((count_row or {}).get("total") or 0)
+
         query = """
             SELECT
                 id,
@@ -34,7 +47,14 @@ class PostgresStrategicIndicatorsChangeRequestRepository(
             FROM strategic_indicators.settings_change_requests
             ORDER BY created_at DESC
         """
-        return self.fetch_all(query)
+        params: list = []
+
+        if limit is not None:
+            query += " LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
+
+        rows = self.fetch_all(query, tuple(params))
+        return rows, total
 
     def create_change_request(
         self,

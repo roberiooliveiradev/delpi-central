@@ -269,10 +269,19 @@ def get_strategic_indicators_settings_audit(
 
 @router.get("/change-requests")
 @require_permission("strategic-indicators.settings.manage")
-def list_change_requests():
+def list_change_requests(
+    limit: int = Query(100, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
     try:
         use_case = build_list_strategic_indicators_change_requests_use_case()
-        return {"items": use_case.execute()}
+        items, total = use_case.execute(limit=limit, offset=offset)
+        return {
+            "items": items,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

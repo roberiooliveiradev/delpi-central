@@ -74,11 +74,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         """
 
         rows = self.fetch_all(query, tuple(params))
-        for row in rows:
-            row["monthly_targets"] = self.list_monthly_targets(
-                indicator_goal_id=row["id"]
-            )
-        return rows
+        return self._attach_monthly_targets(rows)
 
     def list_indicator_goal_history(
         self,
@@ -121,11 +117,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         query += " ORDER BY ig.goal_year DESC, ig.version DESC, ig.created_at DESC"
 
         rows = self.fetch_all(query, tuple(params))
-        for row in rows:
-            row["monthly_targets"] = self.list_monthly_targets(
-                indicator_goal_id=row["id"]
-            )
-        return rows
+        return self._attach_monthly_targets(rows)
 
     def get_resolved_goal(
         self,
@@ -239,6 +231,18 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             item["monthly_targets"] = monthly_by_goal.get(row["id"], [])
             result[row["indicator_id"]] = item
         return result
+
+    def _attach_monthly_targets(self, rows: list[dict]) -> list[dict]:
+        if not rows:
+            return rows
+
+        goal_ids = [row["id"] for row in rows]
+        monthly_by_goal = self._list_monthly_targets_batch(goal_ids)
+
+        for row in rows:
+            row["monthly_targets"] = monthly_by_goal.get(row["id"], [])
+
+        return rows
 
     def _list_monthly_targets_batch(
         self,

@@ -5,7 +5,12 @@ from abc import ABC, abstractmethod
 
 class StrategicIndicatorsChangeRequestRepositoryPort(ABC):
     @abstractmethod
-    def list_change_requests(self) -> list[dict]:
+    def list_change_requests(
+        self,
+        *,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> tuple[list[dict], int]:
         raise NotImplementedError
 
     @abstractmethod

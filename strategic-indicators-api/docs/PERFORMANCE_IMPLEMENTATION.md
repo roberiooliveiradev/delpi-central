@@ -146,7 +146,8 @@ PROIBIDO:
 ### Fase 5 — Admin
 
 - [x] Invalidar cache em writes de metas/settings
-- [ ] Índices/paginação listas grandes (pendente)
+- [x] Metas admin: `monthly_targets` em lote (`_attach_monthly_targets`)
+- [x] Change-requests: paginação `limit`/`offset` + `total` (índices já em V007)
 
 ---
 
@@ -158,7 +159,7 @@ PROIBIDO:
 | `LOG_LEVEL` | `INFO` | Logs `strategic_indicators.*` |
 | `TOTVS_POOL_ENABLED` | `true` | Reutiliza conexões pyodbc entre queries |
 | `TOTVS_POOL_MAX_SIZE` | `8` | Máx. conexões simultâneas (7 deptos + margem) |
-| `SI_WARMUP_ON_STARTUP` | `false` | Thread em background aquece executive + trends no boot |
+| `SI_WARMUP_ON_STARTUP` | `true` no Compose | Thread em background aquece executive + trends no boot |
 | `SI_WARMUP_TRENDS_MONTHS` | `6` | Meses pré-carregados no warm-up |
 
 ---
@@ -178,9 +179,8 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 
 ## 9. Ordem restante sugerida
 
-1. Coletores thin (3.4)
-3. `si_period_scores` (2.3) se trends ainda > 25s
-4. Paginação admin (5)
+1. `si_period_scores` (2.3) — opcional, se trends ainda > 25s após warm-up
+2. Paginação em outras listas admin se o volume crescer (ex.: histórico de metas)
 
 ---
 
@@ -197,3 +197,4 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-18 | Financial: `list_rol_by_branch` substitui N×`get_rol` no snapshot SI |
 | 2026-05-18 | LMP: cache TTL do dashboard summary; SI ignora avg lead time |
 | 2026-05-18 | Warm-up executive + trends (`warmup_si_snapshots.py`, `SI_WARMUP_ON_STARTUP`) |
+| 2026-05-18 | Admin: batch monthly_targets; change-requests paginado; bench alerts |
