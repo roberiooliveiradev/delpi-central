@@ -12,6 +12,7 @@ import { PpmTypeToggle } from "../components/PpmTypeToggle";
 import { PrintReportButton } from "../components/PrintReportButton";
 import { QualityFilters } from "../components/QualityFilters";
 import { QualityPageHeader } from "../components/QualityPageHeader";
+import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { getPpmChartReferenceLines } from "../constants/ppmReferenceLines";
 import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
@@ -247,6 +248,8 @@ export function PpmPage({ pathname }: PpmPageProps) {
           </>
         }
       />
+
+      <TotvsSourceBanner description="Consulta analítica de PPM (interno e externo)." />
 
       <QualityFilters
         idPrefix="ppm"

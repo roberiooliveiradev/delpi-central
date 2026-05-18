@@ -1,15 +1,18 @@
 import { Database } from "lucide-react";
 
-export function TotvsSourceBanner() {
+type TotvsSourceBannerProps = {
+  description?: string;
+};
+
+export function TotvsSourceBanner({
+  description = "Consulta analítica de não conformidades.",
+}: TotvsSourceBannerProps) {
   return (
     <div className="dq-totvs-banner" role="note">
       <Database size={18} aria-hidden="true" />
       <div>
         <strong>Origem: TOTVS Protheus</strong>
-        <p>
-          Consulta analítica de não conformidades. Não confundir com o módulo de
-          gestão de NC em PostgreSQL (workflow interno).
-        </p>
+        <p>{description}</p>
       </div>
     </div>
   );
