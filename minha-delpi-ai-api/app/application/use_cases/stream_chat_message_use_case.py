@@ -122,6 +122,7 @@ class StreamChatMessageUseCase:
         intelligence_metadata = ChatIntelligenceMetadataService.build(
             sources=sources,
             tool_context=tool_context,
+            embedding_cache_stats=self._embedding_cache_stats(),
         )
 
         user_message = self.chat_repository.create_message(
@@ -505,6 +506,14 @@ class StreamChatMessageUseCase:
             allowed_tool_names=allowed_tool_names,
             allowed_action_ids=workspace_context.get("allowedActionIds"),
         )
+
+    def _embedding_cache_stats(self) -> dict | None:
+        try:
+            from app.composition.external_action_composer import get_embedding_cache_stats
+
+            return get_embedding_cache_stats()
+        except Exception:
+            return None
 
     def _build_tool_context(
         self,

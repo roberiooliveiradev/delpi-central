@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 4
 
-**Status:** em implementação  
+**Status:** concluída (maio/2026)  
 **Pré-requisitos:** [Ondas 1–3](./inteligencia-chat-onda-1.md)
 
 ## Objetivo
@@ -23,3 +23,14 @@ Refinar qualidade do RAG e do loop agentic sem exigir tool-calling nativo do pro
 | `CHAT_RAG_FTS_ENABLED` | `true` |
 
 Admin: `ragRerankEnabled`, `ragFtsEnabled`.
+
+## Critérios de aceite
+
+- [x] Rerank reordena chunks fusionados com boost por overlap de termos
+- [x] FTS usa `plainto_tsquery` com fallback ILIKE
+- [x] Loop agentic adiciona tools sem duplicar as já executadas
+- [x] Metadados `intelligence` em mensagens user/assistant (stream e send)
+
+## Próxima onda
+
+[Onda 5](./inteligencia-chat-onda-5.md)

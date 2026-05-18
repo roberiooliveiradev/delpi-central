@@ -297,6 +297,8 @@ export type AdminChatIntelligenceSettings = {
   chatToolRouterEnabled: boolean;
   chatHistorySummaryEnabled: boolean;
   ragHybridEnabled: boolean;
+  ragRerankEnabled: boolean;
+  ragFtsEnabled: boolean;
   agenticLoopEnabled: boolean;
   agenticLoopMaxSteps: number;
   defaults: {
@@ -306,6 +308,8 @@ export type AdminChatIntelligenceSettings = {
     chatToolRouterEnabled: boolean;
     chatHistorySummaryEnabled: boolean;
     ragHybridEnabled: boolean;
+    ragRerankEnabled: boolean;
+    ragFtsEnabled: boolean;
     agenticLoopEnabled: boolean;
     agenticLoopMaxSteps: number;
   };

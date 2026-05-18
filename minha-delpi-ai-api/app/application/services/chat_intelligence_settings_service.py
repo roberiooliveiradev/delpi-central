@@ -15,6 +15,8 @@ class ChatIntelligenceSettings:
     chat_tool_router_enabled: bool
     chat_history_summary_enabled: bool
     rag_hybrid_enabled: bool
+    rag_rerank_enabled: bool
+    rag_fts_enabled: bool
     agentic_loop_enabled: bool
     agentic_loop_max_steps: int
 
@@ -54,6 +56,14 @@ class ChatIntelligenceSettingsService:
                 stored.get("ragHybridEnabled"),
                 Settings.CHAT_RAG_HYBRID_ENABLED,
             ),
+            rag_rerank_enabled=self._bool(
+                stored.get("ragRerankEnabled"),
+                Settings.CHAT_RAG_RERANK_ENABLED,
+            ),
+            rag_fts_enabled=self._bool(
+                stored.get("ragFtsEnabled"),
+                Settings.CHAT_RAG_FTS_ENABLED,
+            ),
             agentic_loop_enabled=self._bool(
                 stored.get("agenticLoopEnabled"),
                 Settings.CHAT_AGENTIC_LOOP_ENABLED,
@@ -74,6 +84,8 @@ class ChatIntelligenceSettingsService:
             "chatToolRouterEnabled": resolved.chat_tool_router_enabled,
             "chatHistorySummaryEnabled": resolved.chat_history_summary_enabled,
             "ragHybridEnabled": resolved.rag_hybrid_enabled,
+            "ragRerankEnabled": resolved.rag_rerank_enabled,
+            "ragFtsEnabled": resolved.rag_fts_enabled,
             "agenticLoopEnabled": resolved.agentic_loop_enabled,
             "agenticLoopMaxSteps": resolved.agentic_loop_max_steps,
             "defaults": {
@@ -83,6 +95,8 @@ class ChatIntelligenceSettingsService:
                 "chatToolRouterEnabled": Settings.CHAT_TOOL_ROUTER_ENABLED,
                 "chatHistorySummaryEnabled": Settings.CHAT_HISTORY_SUMMARY_ENABLED,
                 "ragHybridEnabled": Settings.CHAT_RAG_HYBRID_ENABLED,
+                "ragRerankEnabled": Settings.CHAT_RAG_RERANK_ENABLED,
+                "ragFtsEnabled": Settings.CHAT_RAG_FTS_ENABLED,
                 "agenticLoopEnabled": Settings.CHAT_AGENTIC_LOOP_ENABLED,
                 "agenticLoopMaxSteps": Settings.CHAT_AGENTIC_LOOP_MAX_STEPS,
             },
@@ -114,6 +128,14 @@ class ChatIntelligenceSettingsService:
             "ragHybridEnabled": self._bool(
                 payload.get("ragHybridEnabled"),
                 current.rag_hybrid_enabled,
+            ),
+            "ragRerankEnabled": self._bool(
+                payload.get("ragRerankEnabled"),
+                current.rag_rerank_enabled,
+            ),
+            "ragFtsEnabled": self._bool(
+                payload.get("ragFtsEnabled"),
+                current.rag_fts_enabled,
             ),
             "agenticLoopEnabled": self._bool(
                 payload.get("agenticLoopEnabled"),

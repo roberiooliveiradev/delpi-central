@@ -45,6 +45,8 @@ export function ChatIntelligenceSettingsPanel({
           chatToolRouterEnabled: settings.chatToolRouterEnabled,
           chatHistorySummaryEnabled: settings.chatHistorySummaryEnabled,
           ragHybridEnabled: settings.ragHybridEnabled,
+          ragRerankEnabled: settings.ragRerankEnabled,
+          ragFtsEnabled: settings.ragFtsEnabled,
           agenticLoopEnabled: settings.agenticLoopEnabled,
           agenticLoopMaxSteps: settings.agenticLoopMaxSteps,
         },
@@ -76,7 +78,7 @@ export function ChatIntelligenceSettingsPanel({
     <article className="mdc-admin-metrics-card mdc-admin-metrics-card--wide">
       <h3>Inteligência do chat</h3>
       <p className="mdc-chat-muted">
-        Limiares e recursos da Onda 2 (RAG, actions semânticas, router e resumo de histórico).
+        Limiares e recursos de inteligência (RAG, actions, router, loop agentic).
       </p>
 
       <div className="mdc-admin-metrics-tab__intelligence-form">
@@ -168,6 +170,34 @@ export function ChatIntelligenceSettingsPanel({
             }
           />
           <span>RAG híbrido (vetor + palavras-chave)</span>
+        </label>
+
+        <label className="mdc-admin-metrics-tab__checkbox">
+          <input
+            type="checkbox"
+            checked={settings.ragRerankEnabled}
+            onChange={(event) =>
+              setSettings({
+                ...settings,
+                ragRerankEnabled: event.target.checked,
+              })
+            }
+          />
+          <span>Rerank pós-híbrido no RAG</span>
+        </label>
+
+        <label className="mdc-admin-metrics-tab__checkbox">
+          <input
+            type="checkbox"
+            checked={settings.ragFtsEnabled}
+            onChange={(event) =>
+              setSettings({
+                ...settings,
+                ragFtsEnabled: event.target.checked,
+              })
+            }
+          />
+          <span>Busca FTS no Postgres (keyword RAG)</span>
         </label>
 
         <label className="mdc-admin-metrics-tab__checkbox">

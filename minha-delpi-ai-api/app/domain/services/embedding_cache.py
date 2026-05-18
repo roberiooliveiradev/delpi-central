@@ -2,8 +2,10 @@ import hashlib
 import time
 from threading import Lock
 
+from app.domain.ports.embedding_cache_port import EmbeddingCachePort
 
-class EmbeddingCache:
+
+class EmbeddingCache(EmbeddingCachePort):
     def __init__(self, *, ttl_seconds: int, max_entries: int):
         self.ttl_seconds = max(60, ttl_seconds)
         self.max_entries = max(50, max_entries)

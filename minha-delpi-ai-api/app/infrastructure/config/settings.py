@@ -155,8 +155,10 @@ class Settings:
     EMBEDDING_CACHE_ENABLED = (
         os.getenv("EMBEDDING_CACHE_ENABLED", "true").lower() == "true"
     )
+    EMBEDDING_CACHE_BACKEND = os.getenv("EMBEDDING_CACHE_BACKEND", "memory")
     EMBEDDING_CACHE_TTL_SECONDS = int(os.getenv("EMBEDDING_CACHE_TTL_SECONDS", "3600"))
     EMBEDDING_CACHE_MAX_ENTRIES = int(os.getenv("EMBEDDING_CACHE_MAX_ENTRIES", "500"))
+    REDIS_URL = os.getenv("REDIS_URL", "").strip() or None
 
     CHAT_AGENTIC_LOOP_ENABLED = (
         os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "false").lower() == "true"
