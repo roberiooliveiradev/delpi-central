@@ -29,6 +29,7 @@
 | PATCH | `/chat/sessions/{sessionId}/archive` | `chat.access` |
 | PATCH | `/chat/sessions/{sessionId}/unarchive` | `chat.access` |
 | PATCH | `/chat/messages/{messageId}` | `chat.ask` |
+| PUT | `/chat/sessions/{sessionId}/messages/{messageId}/feedback` | `chat.ask` |
 
 ## Chat — Agentes
 
@@ -108,13 +109,20 @@
 | POST | `/admin/external-action-providers/{providerKey}/reload-schema` | `chat.admin` |
 | GET | `/admin/external-actions` | `chat.admin` |
 | GET | `/admin/system-check` | `chat.admin` |
+| GET | `/admin/tools/health` | `chat.admin` |
 | GET | `/admin/metrics/summary` | `chat.admin` |
+| GET | `/admin/metrics/timeseries` | `chat.admin` |
+| GET | `/admin/metrics/cost-table` | `chat.admin` |
+| PUT | `/admin/metrics/cost-table` | `chat.admin` |
 | GET | `/admin/llm/status` | `chat.admin` |
+| GET | `/admin/rbac/summary` | `chat.admin` |
 | GET | `/admin/knowledge/documents` | `chat.admin` |
 | PATCH | `/admin/knowledge/documents/{documentId}/metadata` | `chat.admin` |
 | POST | `/admin/knowledge/ingest/preview` | `chat.admin` |
 | GET | `/admin/responses/evaluations/summary` | `chat.admin` |
 | GET | `/admin/responses/candidates` | `chat.admin` |
+| GET | `/admin/responses/messages/{messageId}/evaluation-context` | `chat.admin` |
+| GET | `/admin/responses/evaluations` | `chat.admin` |
 | POST | `/admin/responses/evaluations` | `chat.admin` |
 | GET | `/admin/agents/specializations/catalog` | `chat.admin` |
 | GET | `/admin/agents/specialized` | `chat.admin` |

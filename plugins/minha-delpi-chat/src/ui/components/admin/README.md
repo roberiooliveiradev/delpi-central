@@ -5,11 +5,17 @@ A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo d
 ## Estrutura
 
 - `shell/`: topbar, abas e alertas do admin.
-- `metrics/`: resumo operacional.
-- `knowledge/`: base global de conhecimento.
+- `metrics/` e `metrics-tab/`: resumo operacional e métricas avançadas (janela, custo, série).
+- `knowledge/`: base global de conhecimento e pré-visualização de pipeline.
 - `guidelines/`: diretrizes globais de comportamento.
-- `tools/`: provider LLM, actions e health técnico.
-- `audit/`: auditoria, filtros, resumo, tabela e paginação.
+- `simulate/`: simulação do agente (sessão, sandbox, LLM).
+- `evaluations/`: avaliação de respostas e sugestões.
+- `agents/`: especialização por agente.
+- `security/`: segurança operacional de entrada.
+- `tools/`: provider LLM, actions e health (`GET /admin/tools/health`).
+- `audit/`: auditoria, timeline, export CSV, trace id.
+- `notifications/`: aba de notificações (quando habilitada).
+- `rbac/`: resumo de permissões do admin.
 
 ## Regras
 
@@ -17,5 +23,5 @@ A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo d
 2. Não usar seletores genéricos compartilhados entre abas quando o componente for isolado.
 3. Toda aba deve expor componentes menores para formulário, lista, tabela, filtros e ações.
 4. Contratos administrativos ficam centralizados em `data/api/adminApi.ts` e `adminTypes.ts`.
-5. Não chamar endpoints futuros até o backend implementar a rota.
+5. Endpoints documentados em `minha-delpi-ai-api/docs/api/08-admin.md`.
 6. A base de conhecimento do admin representa contexto global do chat; anexos de conversa não pertencem a essa tela.

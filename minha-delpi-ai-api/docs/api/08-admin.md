@@ -51,11 +51,42 @@ Query params:
 
 ### GET `/admin/system-check`
 
-Executa checks administrativos do sistema.
+Executa checks administrativos do sistema (banco, pgvector, tabelas obrigatórias, LLM).
+
+### GET `/admin/tools/health`
+
+Health consolidado para a aba **Ferramentas** do admin.
+
+Inclui status de banco, pgvector, schema, LLM, Core API (`/me` com token do admin), catálogo de external actions e providers.
+
+Resposta:
+
+```json
+{
+  "status": "ok",
+  "systemCheck": { },
+  "items": [
+    {
+      "id": "database",
+      "label": "Banco de dados",
+      "status": "ok",
+      "description": "..."
+    }
+  ]
+}
+```
 
 ### GET `/admin/metrics/summary`
 
-Resumo de métricas administrativas. O bloco `advanced` inclui:
+Resumo de métricas administrativas.
+
+Query:
+
+| Parâmetro | Default | Descrição |
+|-----------|---------|-----------|
+| `hours` | `24` | Janela analisada (máx. `ADMIN_METRICS_MAX_HOURS`, default 720). |
+
+Resposta inclui `windowHours`. O bloco `advanced` inclui:
 
 | Campo | Descrição |
 |---|---|
@@ -70,7 +101,64 @@ Resumo de métricas administrativas. O bloco `advanced` inclui:
 | `costTable` | Tabela configurada de custo por provider/modelo. |
 | `costBreakdown24h` | Uso e custo agregados por provider/modelo. |
 
-Variáveis de ambiente: `LLM_COST_TABLE_JSON`, `RAG_ASSERTIVENESS_MIN_SCORE`.
+Custo: prioridade para tabela persistida em `ai_admin_runtime_settings` (`llm_cost_table`); fallback `LLM_COST_TABLE_JSON`.
+
+### GET `/admin/metrics/timeseries`
+
+Série temporal agregada por buckets.
+
+Query:
+
+| Parâmetro | Default | Descrição |
+|-----------|---------|-----------|
+| `hours` | `168` | Janela total |
+| `bucketHours` | `24` | Tamanho de cada bucket |
+
+Resposta: `windowHours`, `bucketHours`, `buckets[]` com `auditLogs`, `tokensUsed`, `estimatedCost`, `latencyAvgMs` por intervalo.
+
+### GET `/admin/metrics/cost-table`
+
+Retorna tabela de custo por provider/modelo.
+
+```json
+{
+  "entries": [
+    {
+      "provider": "ollama",
+      "model": "qwen2.5:1.5b",
+      "promptCostPer1k": 0,
+      "completionCostPer1k": 0,
+      "currency": "BRL",
+      "source": "database"
+    }
+  ],
+  "source": "database"
+}
+```
+
+### PUT `/admin/metrics/cost-table`
+
+Persiste a tabela no banco (substitui env até novo deploy).
+
+Body:
+
+```json
+{
+  "entries": [
+    {
+      "provider": "ollama",
+      "model": "qwen2.5:1.5b",
+      "promptCostPer1k": 0.001,
+      "completionCostPer1k": 0.002,
+      "currency": "BRL"
+    }
+  ]
+}
+```
+
+Auditoria: `admin.metrics.cost_table.updated`.
+
+Variáveis de ambiente: `LLM_COST_TABLE_JSON`, `RAG_ASSERTIVENESS_MIN_SCORE`, `ADMIN_METRICS_MAX_HOURS`.
 
 ### GET `/admin/llm/status`
 
@@ -123,9 +211,9 @@ Body (todos opcionais):
 
 ### POST `/admin/knowledge/ingest/preview`
 
-Simula o pipeline de ingestão (limpeza, chunk adaptativo e deduplicação) sem persistir documento/chunks.
+Simula o pipeline de ingestão (limpeza, chunk adaptativo, deduplicação exata e **deduplicação semântica**) sem persistir documento/chunks.
 
-Body:
+**JSON** (`Content-Type: application/json`):
 
 ```json
 {
@@ -133,11 +221,18 @@ Body:
   "title": "opcional",
   "sourceType": "manual",
   "sourceRef": "global:exemplo",
-  "metadata": { "scope": "global" }
+  "metadata": { "scope": "global" },
+  "checkSemanticDuplicates": true
 }
 ```
 
-Resposta: `cleanedPreview`, lista de `chunks` com `preview`, e objeto `pipeline` com estatísticas (`chunkStrategy`, `duplicatesRemoved`, `charsRemoved`, etc.).
+**Multipart** (`file` + campos de formulário): extrai texto do arquivo (mesmos formatos do upload) e executa o mesmo pipeline.
+
+Campos multipart: `file`, `title`, `sourceType`, `sourceRef`, `checkSemanticDuplicates` (`false` para desligar).
+
+Resposta: `cleanedPreview`, `chunks[]`, `pipeline`, e opcionalmente `semanticDuplicates[]` (`documentId`, `chunkId`, `similarity`, `preview`).
+
+Env: `KNOWLEDGE_SEMANTIC_DEDUP_ENABLED`, `KNOWLEDGE_SEMANTIC_DEDUP_THRESHOLD` (default `0.92`).
 
 ### POST `/admin/knowledge/documents/upload`
 
@@ -175,7 +270,14 @@ Query: `search`, `limit`, `offset`.
 
 Retorna pergunta do usuário, resposta, metadados RAG/diretrizes/tools e **sugestões automáticas** para o score informado.
 
-Query: `score` (1-5, opcional).
+Query:
+
+| Parâmetro | Descrição |
+|-----------|-----------|
+| `score` | 1-5 (opcional; default da avaliação existente ou 3) |
+| `useLlmSuggestions` | `true` para enriquecer sugestões com LLM (mais lento) |
+
+Env: `RESPONSE_EVALUATION_LLM_SUGGESTIONS_ENABLED`.
 
 ### GET `/admin/responses/evaluations`
 
@@ -290,18 +392,26 @@ Body:
   "agentId": "uuid-opcional",
   "agentKey": "opcional",
   "documentId": "opcional",
-  "generateAnswer": false
+  "sessionId": "uuid-opcional",
+  "generateAnswer": false,
+  "executeToolsInSandbox": false
 }
 ```
 
+| Campo | Descrição |
+|-------|-----------|
+| `sessionId` | Carrega até `CHAT_HISTORY_MAX_MESSAGES` mensagens reais da sessão do admin no histórico do prompt |
+| `executeToolsInSandbox` | Se `true`, executa tools via `ChatToolContextService` com token do admin; senão apenas lista tools **planejadas** |
+| `generateAnswer` | Se `true`, chama LLM para `answerPreview` |
+
 Resposta inclui:
 
-- `finalPrompt` — system prompt montado e preview seguro
-- `appliedGuidelines` — diretrizes ativas
-- `chunks` / `matchedDocuments` — contexto RAG
-- `plannedToolCalls` — tools previstas (não executadas)
+- `finalPrompt`, `appliedGuidelines`, `chunks`, `matchedDocuments`
+- `plannedToolCalls` — planejadas ou executadas (sandbox)
+- `sessionHistory` — resumo do histórico injetado
 - `comparison` — com/sem diretrizes e com/sem RAG
-- `answerPreview` — prévia estrutural ou resposta LLM se `generateAnswer=true`
+- `answerPreview`
+- `debugContext` — inclui `historyMessageCount`, `executeToolsInSandbox`
 
 Registra auditoria `admin.agent.simulated`.
 

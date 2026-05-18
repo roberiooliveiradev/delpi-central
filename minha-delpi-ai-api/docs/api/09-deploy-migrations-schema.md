@@ -82,3 +82,20 @@ docker compose -f docker-compose.yml --env-file .env exec minha-delpi-ai-api \
 | `ai_chat_agent_actions` | Overrides de rotas/actions por agente. |
 | `ai_external_action_test_logs` | Logs de teste de rotas/actions. |
 | `ai_chat_attachments` | Anexos de chat. |
+| `ai_chat_message_feedback` | Thumbs up/down por mensagem e usuário. |
+| `ai_admin_runtime_settings` | Configuração runtime (ex.: `llm_cost_table`). |
+| `ai_response_evaluations` | Avaliações admin de respostas. |
+
+## Migrations locais (sem Docker)
+
+Com Postgres exposto em `localhost:5433` (`infra/docker-compose.dev.yml`):
+
+```bash
+cd minha-delpi-ai-api
+source .venv/bin/activate
+set -a && source ../infra/.env && set +a
+export DATABASE_URL="postgresql+psycopg://${PLUGINS_DB_USER}:${PLUGINS_DB_PASSWORD}@localhost:5433/${PLUGINS_DB_NAME}"
+flask --app app.main:app db upgrade
+```
+
+`DATABASE_URL` vazio causa `Could not parse SQLAlchemy URL from string ''`.

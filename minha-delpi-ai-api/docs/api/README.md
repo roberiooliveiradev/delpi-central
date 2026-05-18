@@ -30,7 +30,13 @@ Uploads multipart devem enviar apenas o header de autorização; não defina man
 
 ## Roadmap
 
-Evolução do painel administrativo: [`../roadmap/README.md`](../roadmap/README.md).
+| Documento | Conteúdo |
+|-----------|----------|
+| [`../roadmap/admin-minha-delpi-chat.md`](../roadmap/admin-minha-delpi-chat.md) | Itens 1–15 do painel admin (concluídos) |
+| [`../roadmap/melhorias-futuras.md`](../roadmap/melhorias-futuras.md) | Melhorias pós-roadmap (concluídas; RBAC core pendente) |
+| [`../roadmap/README.md`](../roadmap/README.md) | Índice do roadmap |
+
+Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/minha-delpi-chat/README.md).
 
 ## Arquivos deste pacote
 

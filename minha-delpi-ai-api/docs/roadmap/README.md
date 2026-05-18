@@ -5,7 +5,9 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | Documento | Conteúdo |
 |---|---|
 | [admin-minha-delpi-chat.md](./admin-minha-delpi-chat.md) | Roadmap detalhado por item (status, entregas, evidências). |
-| [melhorias-futuras.md](./melhorias-futuras.md) | Lacunas confirmadas, débitos técnicos e próximas ondas de implementação. |
+| [notificacoes-minha-delpi.md](./notificacoes-minha-delpi.md) | Notificações de plataforma: broadcast, integrações e UI no chat. |
+| [melhorias-futuras.md](./melhorias-futuras.md) | Melhorias pós-roadmap (implementadas; RBAC core externo pendente). |
+| [notificacoes-minha-delpi.md](./notificacoes-minha-delpi.md) | Notificações de plataforma no chat. |
 
 ## Regra operacional
 

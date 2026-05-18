@@ -81,7 +81,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 
 | Plugin | Doc específica |
 |---|---|
-| Chat / IA | [minha-delpi-ai-api/docs/api/](../../minha-delpi-ai-api/docs/api/README.md) |
+| Chat / IA | [Plugin README](../../plugins/minha-delpi-chat/README.md) · [API](../../minha-delpi-ai-api/docs/api/README.md) · [Status](../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md) |
 | Indicadores | [Documentação SI (completa)](../../strategic-indicators-api/docs/README.md) |
 | API operacional | [api-delpi/docs/api/](../../api-delpi/docs/api/README.md) |
 | Dashboard Qualidade | [plugins/dashboard-quality/docs/ROADMAP.md](../../plugins/dashboard-quality/docs/ROADMAP.md) |

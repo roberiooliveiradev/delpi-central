@@ -28,9 +28,14 @@
   "role": "user|assistant|system",
   "content": "string",
   "metadata": {},
-  "created_at": "datetime"
+  "created_at": "datetime",
+  "user_feedback": 1
 }
 ```
+
+| Campo | Descrição |
+|-------|-----------|
+| `user_feedback` | Presente em mensagens `assistant` do histórico do usuário: `1` (útil), `-1` (não útil) ou omitido/`null` se não avaliada. |
 
 ---
 
@@ -291,3 +296,58 @@ Atualiza conteúdo de uma mensagem.
 ### Resposta `200`
 
 `ChatMessage`
+
+---
+
+## PUT `/chat/sessions/{sessionId}/messages/{messageId}/feedback`
+
+Registra ou remove feedback do usuário em uma mensagem do **assistente**.
+
+### Permissão
+
+`minha-delpi.chat.ask`
+
+### Body
+
+```json
+{
+  "rating": 1
+}
+```
+
+| `rating` | Comportamento |
+|----------|----------------|
+| `1` | Resposta útil (thumbs up) |
+| `-1` | Resposta não útil (thumbs down) |
+| `null` | Remove feedback existente |
+
+### Resposta `200`
+
+Com rating:
+
+```json
+{
+  "messageId": "uuid",
+  "userId": "uuid",
+  "rating": 1,
+  "createdAt": "datetime",
+  "updatedAt": "datetime"
+}
+```
+
+Ao remover:
+
+```json
+{
+  "removed": true
+}
+```
+
+### Erros
+
+| Código | Situação |
+|--------|----------|
+| `400` | Mensagem inexistente na sessão, não é `assistant`, ou `rating` inválido |
+| `403` | Sessão de outro usuário |
+
+Persistência: tabela `ai_chat_message_feedback` (único por `message_id` + `user_id`).

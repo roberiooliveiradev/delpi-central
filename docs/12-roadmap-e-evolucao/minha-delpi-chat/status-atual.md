@@ -1,278 +1,94 @@
 # Status Atual — Minha DELPI Chat
 
+> Atualizado após conclusão do roadmap admin (itens 1–15) e melhorias futuras (maio/2026).
+
 ## Visão geral
 
-O Minha DELPI Chat está em estágio pós-MVP, com release `1.0.0` publicado na branch `chat` e tag `minha-delpi-chat-v1.0.0`.
+O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicado `minha-delpi-ai-api`, autenticação Keycloak, autorização Core API/RBAC, PostgreSQL + pgvector, streaming SSE, RAG, tools, auditoria e painel administrativo completo.
 
-O plugin está funcional como microfrontend oficial da Minha DELPI, com backend próprio `minha-delpi-ai-api`, autenticação via Keycloak, autorização via Core API/RBAC, histórico persistido, streaming SSE, RAG documental, tools internas autorizadas, auditoria e página administrativa.
+## Documentação oficial
 
-## Estado do MVP
+| Documento | Caminho |
+|-----------|---------|
+| API | [minha-delpi-ai-api/docs/api/README.md](../../../minha-delpi-ai-api/docs/api/README.md) |
+| Backend README | [minha-delpi-ai-api/README.md](../../../minha-delpi-ai-api/README.md) |
+| Plugin README | [plugins/minha-delpi-chat/README.md](../../../plugins/minha-delpi-chat/README.md) |
+| Roadmap admin | [minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
+| Melhorias futuras | [minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md) |
 
-Status: aprovado funcionalmente.
+## Estado funcional
 
-Entregas principais:
+### Chat (usuário final)
 
-- Microfrontend React + Vite + Module Federation.
-- Manifesto oficial `delpi.manifest.json`.
-- Backend Flask com Clean Architecture.
-- Autenticação JWT via Keycloak.
-- Autorização via Core API + RBAC.
-- PostgreSQL com pgvector.
-- Streaming SSE.
-- Sessões e histórico persistidos.
-- RAG documental com fontes.
-- Tools internas autorizadas.
-- Auditoria.
-- Admin MVP.
-- Testes unitários e contratos HTTP básicos.
-- Release versionada `1.0.0`.
+- Sessões, histórico, streaming, pin/arquivo, edição de mensagem
+- RAG com fontes, tools, anexos, projetos e agentes
+- **Feedback** thumbs up/down nas respostas do assistente
+- Segurança de entrada (sanitização, anti-injection, modo enforce/monitor)
 
-## Produção provisória
+### Painel administrativo
 
-Status: operando provisoriamente com Ollama.
+| Área | Status |
+|------|--------|
+| Conhecimento global | Upload, metadados curadoriais, pipeline, pré-visualização texto/arquivo, dedup semântica |
+| Diretrizes | CRUD, versões, ambientes, teste RAG |
+| Métricas | Janela 24h/7d/30d, timeseries, custo LLM editável no banco |
+| Simulação | Prompt/RAG/diretrizes/tools; histórico de sessão; sandbox de tools |
+| Avaliações | Nota, veredito, sugestões regras + LLM opcional |
+| Agentes | Especialização (escopo RAG, diretrizes, tools) |
+| Segurança | Config, summary, eventos, scan |
+| Ferramentas | Health consolidado, external actions, LLM |
+| Auditoria | Paginação, filtros, timeline, export CSV, trace id |
 
-A homologação produtiva com vLLM foi bloqueada no servidor `srv-api` por ausência de GPU NVIDIA detectada.
+### Roadmaps
 
-Evidências do servidor:
-
-    lspci | grep -i nvidia
-    # sem retorno
-
-    ls -l /dev/nvidia*
-    # No such file or directory
-
-Decisão temporária:
-
-- Usar Ollama em produção enquanto não houver host com GPU para vLLM.
-- Manter a solução 100% open source/self-hosted.
-- Não usar OpenAI, Azure OpenAI, Anthropic, Gemini ou serviços fechados.
-- Manter vLLM como pendência de infraestrutura produtiva.
-
-## Configuração produtiva provisória
-
-Variáveis principais:
-
-    LLM_PROVIDER=ollama
-    OLLAMA_BASE_URL=http://ollama:11434
-    OLLAMA_MODEL=qwen2.5:1.5b
-    OLLAMA_TIMEOUT_SECONDS=300
-    EMBEDDING_MODEL=bge-m3
-    EMBEDDING_TIMEOUT_SECONDS=120
-    LLM_TEMPERATURE=0.2
-    LLM_MAX_TOKENS=1024
-
-Modelos necessários no Ollama:
-
-    qwen2.5:1.5b
-    bge-m3
-
-Comandos úteis:
-
-    docker compose -f docker-compose.yml --env-file .env exec ollama ollama pull qwen2.5:1.5b
-    docker compose -f docker-compose.yml --env-file .env exec ollama ollama pull bge-m3
-    curl -s http://localhost:11434/api/tags | python3 -m json.tool
+- **Admin itens 1–15:** concluídos — ver `admin-minha-delpi-chat.md`
+- **Melhorias futuras:** concluídas neste repositório — ver `melhorias-futuras.md`
+- **Pendente externo:** RBAC com perfis formais no `core-api`
 
 ## Banco de dados
 
-Serviço produtivo:
+- Serviço: `postgres-plugins` (`pgvector/pgvector:pg15`)
+- Porta host dev: `5433`
+- Migrations: `flask --app app.main:app db upgrade`
 
-    postgres-plugins
+Tabelas principais (não exaustivo):
 
-Imagem obrigatória:
+```text
+ai_chat_sessions, ai_chat_messages, ai_chat_message_feedback
+ai_knowledge_documents, ai_knowledge_chunks
+ai_audit_logs, ai_admin_runtime_settings, ai_response_evaluations
+ai_external_action_*, ai_chat_agent_*, ai_admin_guideline*
+```
 
-    pgvector/pgvector:pg15
+## Deploy e migrations
 
-Estado validado em produção:
+```bash
+cd infra
+docker compose -f docker-compose.dev.yml --env-file .env exec minha-delpi-ai-api \
+  sh -lc "cd /app && flask --app app.main:app db upgrade"
+```
 
-- Container `delpi-postgres-plugins` usando `pgvector/pgvector:pg15`.
-- Extensão `vector` instalada.
-- Migrations do `minha-delpi-ai-api` aplicadas.
-- Tabelas `ai_*` criadas.
+Local (WSL) com `DATABASE_URL` apontando para `localhost:5433` — ver [09-deploy-migrations-schema.md](../../../minha-delpi-ai-api/docs/api/09-deploy-migrations-schema.md).
 
-Tabelas esperadas:
+## LLM em produção (provisório)
 
-    ai_audit_logs
-    ai_chat_messages
-    ai_chat_sessions
-    ai_knowledge_chunks
-    ai_knowledge_documents
+- Provider: **Ollama** (`qwen2.5:1.5b` + `bge-m3`)
+- vLLM pendente de host com GPU — ver `homologacao-vllm-producao.md`
 
-Validação:
+## Endpoints de verificação rápida
 
-    docker compose -f docker-compose.yml --env-file .env exec postgres-plugins \
-      sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt ai_*"'
+```text
+GET  /apps/minha-delpi-ai/api/health
+GET  /apps/minha-delpi-ai/api/admin/system-check
+GET  /apps/minha-delpi-ai/api/admin/tools/health
+GET  /apps/minha-delpi-ai/api/admin/metrics/summary?hours=24
+GET  /apps/minha-delpi-ai/api/chat/capabilities
+```
 
-    docker compose -f docker-compose.yml --env-file .env exec postgres-plugins \
-      sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "select extname, extversion from pg_extension where extname = '\''vector'\'';"'
+## Próximas evoluções sugeridas
 
-## Deploy e pós-deploy obrigatório
-
-Após subir o backend em ambiente novo ou banco novo, aplicar migrations:
-
-    docker compose -f docker-compose.yml --env-file .env exec minha-delpi-ai-api \
-      flask --app app.create_app:create_app db upgrade
-
-Conferir revision:
-
-    docker compose -f docker-compose.yml --env-file .env exec minha-delpi-ai-api \
-      flask --app app.create_app:create_app db current
-
-Conferir status do provider:
-
-    curl -s \
-      -H "Authorization: Bearer $TOKEN" \
-      http://localhost/apps/minha-delpi-ai/api/admin/llm/status | python3 -m json.tool
-
-Resultado provisório esperado:
-
-    {
-      "provider": "ollama",
-      "model": "qwen2.5:1.5b",
-      "temperature": 0.2,
-      "maxTokens": 1024
-    }
-
-## Endpoints principais
-
-Healthcheck:
-
-    GET /apps/minha-delpi-ai/api/health
-
-Status LLM:
-
-    GET /apps/minha-delpi-ai/api/admin/llm/status
-
-Resumo admin:
-
-    GET /apps/minha-delpi-ai/api/admin/metrics/summary
-
-Sessões:
-
-    GET /apps/minha-delpi-ai/api/chat/sessions
-    POST /apps/minha-delpi-ai/api/chat/sessions
-
-Mensagens:
-
-    GET /apps/minha-delpi-ai/api/chat/sessions/:sessionId/messages
-    POST /apps/minha-delpi-ai/api/chat/sessions/:sessionId/messages
-    POST /apps/minha-delpi-ai/api/chat/sessions/:sessionId/messages/stream
-
-Knowledge:
-
-    POST /apps/minha-delpi-ai/api/knowledge/documents
-    POST /apps/minha-delpi-ai/api/knowledge/search
-
-Tools:
-
-    POST /apps/minha-delpi-ai/api/tools/execute
-
-## Funcionalidades já implementadas
-
-- Chat conversacional.
-- Streaming SSE.
-- Histórico persistido.
-- RAG documental.
-- Fontes retornadas ao frontend.
-- Ingestão manual de documentos.
-- Listagem admin de documentos.
-- Filtro/paginação admin de documentos.
-- Ativação/desativação/reindexação de documentos.
-- Contagem de chunks por documento.
-- Auditoria.
-- Tools internas com allowlist/RBAC.
-- Página admin.
-- Métricas administrativas.
-- Testes unitários.
-- Testes de integração HTTP básicos.
-- Ambiente virtual local para testes (`.venv`, ignorado pelo Git).
-- `pytest.ini` com `pythonpath = .`.
-
-## Pendências técnicas
-
-- Homologar vLLM em host com GPU NVIDIA.
-- Corrigir warning de collation do banco `plugins_hub` em janela controlada.
-- Garantir `EMBEDDING_MODEL=bge-m3` explícito no Compose produtivo.
-- Documentar checklist final de pós-deploy em script executável.
-- Criar testes de integração com banco real para RAG ativo/inativo.
-- Criar testes de permissão negativa para admin/tools/sessões de outro usuário.
-- Criar teste do `LocalEmbeddingGateway`.
-- Criar teste de streaming com provider mockado.
-- Melhorar envelope de erro no streaming para logs técnicos internos e mensagem pública segura.
-
-## Pendências funcionais
-
-- Filtros avançados na auditoria administrativa.
-- Paginação da auditoria.
-- Confirmação modal antes de desativar/reativar/reindexar.
-- Upload de documentos `.txt` e `.md`.
-- Importação controlada de documentação oficial do repositório.
-- Evitar ou alertar duplicidade por `sourceRef`.
-- Renomear conversa.
-- Copiar resposta.
-- Melhorar visualização de fontes.
-- Feedback visual de rate limit.
-
-## Tools operacionais futuras
-
-Candidatas:
-
-- `search_lmp`
-- `get_lmp_details`
-- `search_products`
-- `get_product_structure`
-- `search_transforma_mais`
-- `search_quality_nc`
-
-Critérios antes de implementar qualquer tool operacional:
-
-- Permissão específica.
-- DTO de entrada.
-- Validação de entrada.
-- Use case.
-- Port.
-- Gateway.
-- Limite de resposta.
-- Auditoria.
-- Teste com usuário autorizado.
-- Teste com usuário sem permissão.
-- Sem acesso direto do LLM ao banco.
-
-## Observabilidade futura
-
-Já existe resumo administrativo, mas ainda falta observabilidade técnica completa:
-
-- `/metrics` Prometheus.
-- Contador por endpoint.
-- Latência por endpoint.
-- Erros por código.
-- Latência de LLM.
-- Latência de embedding.
-- Contagem de tool calls.
-- Dashboard Grafana.
-- Alertas de 5xx e LLM indisponível.
-
-## Segurança
-
-Regras mantidas:
-
-- Sem OpenAI, Azure OpenAI, Anthropic ou Gemini.
-- Sem APIs proprietárias de LLM.
-- LLM sem acesso direto ao banco.
-- Tools com allowlist.
-- Tools com RBAC.
-- Logs sem token.
-- Secrets fora do Git.
-- Erros em envelope `errors[]` nas rotas HTTP.
-- Frontend sem regra efetiva de permissão.
-- Toda regra sensível no backend/Core API.
-
-## Próxima ordem recomendada
-
-1. Fechar commit da UI de métricas admin.
-2. Garantir `EMBEDDING_MODEL=bge-m3` explícito no Compose.
-3. Criar checklist/script de pós-deploy.
-4. Criar testes de permissão negativa.
-5. Criar paginação/filtros de auditoria.
-6. Implementar primeira tool operacional: `search_lmp`.
-7. Criar `/metrics` Prometheus.
-8. Planejar vLLM em host com GPU.
+1. RBAC formal no Core API (perfis centralizados)
+2. Notificações — ver [notificacoes-minha-delpi.md](../../../minha-delpi-ai-api/docs/roadmap/notificacoes-minha-delpi.md)
+3. Observabilidade Prometheus/Grafana
+4. Homologação vLLM em GPU
+5. Tools operacionais (`search_lmp`, etc.) com RBAC dedicado
