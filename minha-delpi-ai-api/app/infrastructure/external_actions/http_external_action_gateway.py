@@ -76,10 +76,10 @@ class HttpExternalActionGateway:
             "Accept": "application/json",
         }
 
-        auth_mode = provider.get("authMode") or "none"
+        auth_mode = str(provider.get("authMode") or "none").strip().lower()
         auth_config = provider.get("authConfig") or {}
 
-        if auth_mode == "forward_user_bearer" and access_token:
+        if auth_mode in {"user_token", "forward_user_bearer"} and access_token:
             headers["Authorization"] = f"Bearer {access_token}"
 
         if auth_mode == "static_bearer":
@@ -88,12 +88,18 @@ class HttpExternalActionGateway:
             if token:
                 headers["Authorization"] = f"Bearer {token}"
 
-        if auth_mode == "api_key_header":
-            header_name = auth_config.get("headerName")
-            value = auth_config.get("value")
+        if auth_mode in {"api_key", "api_key_header"}:
+            header_name = auth_config.get("headerName") or "Authorization"
+            api_key = auth_config.get("apiKey") or auth_config.get("value")
+            scheme = str(auth_config.get("scheme") or "bearer").lower()
 
-            if header_name and value:
-                headers[header_name] = value
+            if api_key:
+                if scheme == "bearer":
+                    headers[header_name] = f"Bearer {api_key}"
+                elif scheme == "basic":
+                    headers[header_name] = f"Basic {api_key}"
+                else:
+                    headers[header_name] = str(api_key)
 
         if auth_mode == "custom_headers":
             for key, value in (auth_config.get("headers") or {}).items():
