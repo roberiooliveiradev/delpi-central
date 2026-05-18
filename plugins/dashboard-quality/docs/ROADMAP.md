@@ -107,14 +107,15 @@ Depois, atribuir `dashboard-quality.view` ao perfil/grupo desejado no Keycloak o
 
 ---
 
-## Fase 4 — Não conformidades (TOTVS)
+## Fase 4 — Não conformidades (TOTVS) ✅
 
 **Entregáveis**
 
-- [ ] Aba NC: tabela com colunas principais (tipo, filial, datas, status, item, descrição)
-- [ ] Filtros: `type` (`internal` | `external` | `all`), `status`, `item_code`, `description`
-- [ ] Paginação server-side
-- [ ] Link ou tooltip “origem TOTVS” (deixar claro que não é o módulo de gestão PostgreSQL)
+- [x] Rota `/apps/dashboard-quality/nonconformities` com tabela completa
+- [x] Filtros: `type`, `status`, `item_code`, `description` + período/filial
+- [x] Paginação server-side (20 por página)
+- [x] Banner “origem TOTVS” (distinto do módulo PostgreSQL)
+- [x] Exportação CSV da página atual
 
 **Critério de pronto:** listagem de NC Protheus utilizável pela equipe de qualidade no dia a dia analítico.
 

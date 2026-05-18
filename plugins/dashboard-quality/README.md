@@ -39,11 +39,13 @@ Implementação espelhada em `plugins/dashboard-lmps` (cliente HTTP, federation,
 **Fase 0 concluída:** Vite + Module Federation, Docker/compose, shell placeholder.  
 **Fase 1 concluída:** `qualityApi.ts`, tipos DTO, hooks (`useQualityQueries`).  
 **Fase 2 concluída:** home executiva com filtros, KPIs PPM, resumos Kaizen/5S.  
-**Fase 3 concluída:** rota `/apps/dashboard-quality/ppm` com tabela, gráfico e CSV.
+**Fase 3 concluída:** rota `/apps/dashboard-quality/ppm` com tabela, gráfico e CSV.  
+**Fase 4 concluída:** rota `/apps/dashboard-quality/nonconformities` (NC TOTVS).
 
 Rotas:
 - `/apps/dashboard-quality` — visão geral
 - `/apps/dashboard-quality/ppm` — PPM interno/externo
+- `/apps/dashboard-quality/nonconformities` — NC do Protheus
 
 ```bash
 cd plugins/dashboard-quality

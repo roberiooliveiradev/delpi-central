@@ -1,6 +1,7 @@
 import { configureHttpClient } from "./api/httpClient";
 import { QUALITY_ROUTES } from "./constants/routes";
 import { DashboardQualityPage } from "./pages/DashboardQualityPage";
+import { NonconformitiesPage } from "./pages/NonconformitiesPage";
 import { PpmPage } from "./pages/PpmPage";
 
 export type AppProps = {
@@ -23,6 +24,13 @@ export default function App({ getAccessToken, pathname }: AppProps) {
 
   if (path === QUALITY_ROUTES.ppm || path.startsWith(`${QUALITY_ROUTES.ppm}/`)) {
     return <PpmPage pathname={path} />;
+  }
+
+  if (
+    path === QUALITY_ROUTES.nonconformities ||
+    path.startsWith(`${QUALITY_ROUTES.nonconformities}/`)
+  ) {
+    return <NonconformitiesPage pathname={path} />;
   }
 
   return <DashboardQualityPage pathname={path} />;

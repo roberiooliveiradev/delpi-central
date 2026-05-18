@@ -35,6 +35,14 @@
       "icon": "shield-check-icon",
       "order": 11,
       "showInMenu": false
+    },
+    {
+      "path": "/apps/dashboard-quality/nonconformities",
+      "label": "NC TOTVS",
+      "permission": "dashboard-quality.view",
+      "icon": "shield-check-icon",
+      "order": 12,
+      "showInMenu": false
     }
   ],
 

@@ -7,6 +7,7 @@ type QualityNavProps = {
 const NAV_ITEMS = [
   { path: QUALITY_ROUTES.home, label: "Visão geral" },
   { path: QUALITY_ROUTES.ppm, label: "PPM" },
+  { path: QUALITY_ROUTES.nonconformities, label: "NC TOTVS" },
 ] as const;
 
 function isActive(path: string, currentPath?: string): boolean {

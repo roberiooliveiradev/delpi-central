@@ -31,7 +31,7 @@ const MODULE_SHORTCUTS = [
   {
     title: "Não conformidades",
     description: "Consulta analítica de NC no Protheus.",
-    phase: "Fase 4",
+    href: QUALITY_ROUTES.nonconformities,
   },
   {
     title: "Kaizens",
