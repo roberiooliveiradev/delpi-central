@@ -132,7 +132,8 @@ PROIBIDO:
 - [x] 3.2 Períodos paralelos com factory
 - [x] 3.3 Pool pyodbc TOTVS (`connection_pool.py`, `TOTVS_POOL_*`)
 - [x] 3.4 Coletores thin — produção consolidada (`get_consolidated_snapshot` → passagem única)
-- [ ] 3.4b Engineering LMP / demais domínios (pendente)
+- [x] 3.4b Transforma+ — cache TTL de `load_raw_data` (6 abas)
+- [ ] 3.4c Financial N×ROL / LMP agregado SQL (pendente)
 - [ ] 3.5 Warm-up cron (pendente)
 
 ### Fase 4 — MFE (`plugins/strategic-indicators`)
