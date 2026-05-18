@@ -7,7 +7,7 @@ import {
   MessageSquarePlus,
   Search,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { ChatConfirmDialog } from "./ChatConfirmDialog";
@@ -46,8 +46,9 @@ type ChatSidebarProps = {
   isLoadingProjects?: boolean;
   canManageAgents?: boolean;
   isCollapsed?: boolean;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
   onToggleCollapsed?: () => void;
-  brandActions?: ReactNode;
   onViewChange?: (view: ChatSidebarView) => void;
   onNewSession: () => void;
   onSelectSession: (session: ChatSession) => void;
@@ -83,8 +84,9 @@ export function ChatSidebar({
   isLoadingProjects,
   canManageAgents = false,
   isCollapsed,
+  isMobileOpen = false,
+  onCloseMobile,
   onToggleCollapsed,
-  brandActions,
   onViewChange,
   onNewSession,
   onSelectSession,
@@ -250,10 +252,20 @@ export function ChatSidebar({
     );
   }
 
+  const sidebarClassName = [
+    "mdc-chat-sidebar",
+    isMobileOpen ? "mdc-chat-sidebar--drawer-open" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <aside className="mdc-chat-sidebar" aria-label="Conversas">
+    <aside className={sidebarClassName} aria-label="Conversas">
       <div className="mdc-chat-sidebar__top">
-        <ChatSidebarBrand onToggleCollapsed={onToggleCollapsed} actions={brandActions} />
+        <ChatSidebarBrand
+          onToggleCollapsed={onToggleCollapsed}
+          onCloseMobile={onCloseMobile}
+        />
 
         <ChatSidebarNav
           isSearchOpen={isSearchOpen}

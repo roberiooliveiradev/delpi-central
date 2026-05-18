@@ -12,7 +12,6 @@ import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
 import type { AdminTab, AdminTabItem } from "../components/admin/shell/adminShellTypes";
 import { AdminSimulateTab } from "../components/admin/simulate/AdminSimulateTab";
 import { AdminToolsTab } from "../components/admin/tools/AdminToolsTab";
-import { AdminNotificationsTab } from "../components/admin/notifications/AdminNotificationsTab";
 import { AdminRbacPanel } from "../components/admin/rbac/AdminRbacPanel";
 import { getAdminRbacSummary } from "../../data/api/adminApi";
 import type { AdminRbacSummary } from "../../data/api/adminTypes";
@@ -28,7 +27,6 @@ type ChatAdminPageProps = {
 
 const ADMIN_TABS: AdminTabItem[] = [
   { key: "knowledge", label: "Conhecimento" },
-  { key: "notifications", label: "Notificações" },
   { key: "metrics", label: "Métricas" },
   { key: "guidelines", label: "Diretrizes" },
   { key: "simulate", label: "Simulação" },
@@ -168,10 +166,6 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
 
         {activeTab === "audit" ? (
           <AdminAuditTab rbac={adminRbac} getAccessToken={getAccessToken} />
-        ) : null}
-
-        {activeTab === "notifications" ? (
-          <AdminNotificationsTab getAccessToken={getAccessToken} />
         ) : null}
       </section>
     </main>

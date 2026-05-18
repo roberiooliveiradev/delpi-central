@@ -3,6 +3,8 @@ import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
 import "./ChatPage.css";
+import "../layout/chat-layout.css";
+import { useChatLayout } from "../../state/hooks/useChatLayout";
 import { ChatInput, type ChatInputAttachment } from "../components/ChatInput";
 import { ChatInlineError } from "../components/ChatInlineError";
 import { ChatMessageList } from "../components/ChatMessageList";
@@ -19,10 +21,8 @@ import {
   updateChatArtifact,
   uploadProjectSource,
 } from "../../data/api/chatApi";
-import { useChatNotifications } from "../../state/hooks/useChatNotifications";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
-import { ChatNotificationBell } from "../components/notifications/ChatNotificationBell";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
@@ -65,8 +65,6 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   const requestedAgentKey = activeAgentPageKey ?? null;
-
-  const chatNotifications = useChatNotifications({ getAccessToken });
 
   const {
     sessions,
@@ -138,9 +136,20 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     return projects.find((project) => project.id === projectId)?.default_agent_key ?? null;
   }
 
+  const { isDesktop, isLandscape } = useChatLayout();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true";
   });
+
+  function closeMobileSidebar() {
+    setIsMobileSidebarOpen(false);
+  }
+
+  function openMobileSidebar() {
+    setIsMobileSidebarOpen(true);
+  }
 
   useEffect(() => {
     localStorage.setItem(
@@ -148,6 +157,30 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
       String(isSidebarCollapsed),
     );
   }, [isSidebarCollapsed]);
+
+  useEffect(() => {
+    if (isDesktop) {
+      setIsMobileSidebarOpen(false);
+    }
+  }, [isDesktop]);
+
+  useEffect(() => {
+    if (!isMobileSidebarOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeMobileSidebar();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMobileSidebarOpen]);
 
   useEffect(() => {
     if (
@@ -313,6 +346,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     setContextAgentKey(null);
     setCurrentView("chat");
     selectSession(session);
+    closeMobileSidebar();
   }
 
   async function handleDeleteSession(sessionId: string) {
@@ -486,9 +520,25 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     onClearAttachments: () => setComposerAttachments([]),
   };
 
+  const shellClassName = [
+    "mdc-chat-shell",
+    isDesktop && isSidebarCollapsed ? "mdc-chat-shell--sidebar-collapsed" : "",
+    isLandscape ? "mdc-chat-shell--landscape" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const rootClassName = [
+    "minha-delpi-chat",
+    isDraggingFile ? "minha-delpi-chat--dragging" : "",
+    isMobileSidebarOpen ? "minha-delpi-chat--mobile-nav-open" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <main
-      className={isDraggingFile ? "minha-delpi-chat minha-delpi-chat--dragging" : "minha-delpi-chat"}
+      className={rootClassName}
       onDragEnterCapture={handleChatDragEnter}
       onDragOverCapture={handleChatDragOver}
       onDragLeaveCapture={handleChatDragLeave}
@@ -502,13 +552,15 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           </div>
         </div>
       ) : null}
-      <section
-        className={
-          isSidebarCollapsed
-            ? "mdc-chat-shell mdc-chat-shell--sidebar-collapsed"
-            : "mdc-chat-shell"
-        }
-      >
+      <section className={shellClassName}>
+        {isMobileSidebarOpen ? (
+          <button
+            type="button"
+            className="mdc-chat-sidebar-backdrop"
+            aria-label="Fechar menu de conversas"
+            onClick={closeMobileSidebar}
+          />
+        ) : null}
         <ChatSidebar
           sessions={sessions}
           archivedSessions={archivedSessions}
@@ -542,6 +594,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             setActiveAgentPageKey(null);
             setContextAgentKey(getProjectDefaultAgentKey(projectId));
             setCurrentView("chat");
+            closeMobileSidebar();
             void startSession();
           }}
           onSelectAgent={(agentKey) => {
@@ -552,26 +605,25 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
             setActiveAgentPageKey(agentKey);
             setContextAgentKey(null);
             setCurrentView("chat");
+            closeMobileSidebar();
             void startSession();
           }}
-          brandActions={
-            <ChatNotificationBell
-              notifications={chatNotifications.notifications}
-              unreadCount={chatNotifications.unreadCount}
-              isLoading={chatNotifications.isLoading}
-              error={chatNotifications.error}
-              onReload={chatNotifications.reload}
-              onMarkRead={chatNotifications.markRead}
-              onMarkAllRead={chatNotifications.markAllRead}
-            />
-          }
-          isCollapsed={isSidebarCollapsed}
+          isCollapsed={isDesktop && isSidebarCollapsed}
+          isMobileOpen={isMobileSidebarOpen}
+          onCloseMobile={closeMobileSidebar}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
           onViewChange={setCurrentView}
         />
 
         {currentView === "agents" ? (
           <section className="mdc-chat-main" aria-label="Gerenciar agentes">
+            {!isDesktop ? (
+              <div className="mdc-chat-mobile-nav" role="toolbar" aria-label="Navegação">
+                <button type="button" onClick={openMobileSidebar} aria-label="Abrir menu de conversas">
+                  Menu
+                </button>
+              </div>
+            ) : null}
             <ChatAgentsPage
               agents={agents}
               selectedAgentKey={activeAgentPageKey}
@@ -604,6 +656,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
         ) : (
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
           <ChatContextTopbar
+            onOpenSidebar={isDesktop ? undefined : openMobileSidebar}
             mode={selectedProject ? "project" : conversationAgent ? "agent" : "general"}
             title={
               selectedProject?.name ||

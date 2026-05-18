@@ -12,8 +12,8 @@
 | Camada | Repositório | Responsabilidade |
 |--------|-------------|------------------|
 | **Core API** | `core-api/` | Tabela `notifications`, use cases, rotas `/me/notifications` |
-| **Portal** | `portal/` | Sino na sidebar, `CoreApi.getNotifications()`, Socket.IO `admin.changed` |
-| **Chat** | `plugins/minha-delpi-chat/` | **Não** consumia notificações (lacuna) |
+| **Portal** | `portal/` | Sino na sidebar, listagem/leitura, **Admin → Notificações** (envio) |
+| **Chat** | `plugins/minha-delpi-chat/` | Sem UI de notificações (escopo do Portal) |
 | **AI API** | `minha-delpi-ai-api/` | Chat/LLM; **não** é dona de notificações de plataforma |
 
 ### Fluxo existente (usuário final)
@@ -149,16 +149,16 @@ Portal e chat recarregam `GET /me/notifications` ao receber `admin.changed` com 
 
 ---
 
-## 5. Frontend (plugin minha-delpi-chat)
+## 5. Frontend (Portal)
 
 | Artefato | Função |
 |---------|--------|
-| `data/api/coreApi.ts` | Cliente HTTP `/core-api/me/notifications` |
-| `state/hooks/useChatNotifications.ts` | Estado, polling leve, ações de leitura |
-| `ui/components/notifications/ChatNotificationBell.tsx` | Sino na sidebar do chat |
-| `ui/components/admin/notifications/AdminNotificationsTab.tsx` | Formulário broadcast/direcionado |
+| `portal/src/data/coreApi.ts` | `getNotifications`, `mark*`, `dispatchNotifications` |
+| `portal/src/state/AuthContext.tsx` | Estado global + Socket.IO |
+| `portal/src/layout/Sidebar.tsx` | Sino e dropdown de notificações |
+| `portal/src/ui/admin/tabs/NotificationsTab.tsx` | Envio broadcast/direcionado (superadmin) |
 
-O plugin recebe `getAccessToken` do Portal (`AppHost`) — mesmo padrão do `chatApi`.
+O plugin `minha-delpi-chat` **não** implementa notificações; usuários usam o Portal.
 
 ---
 
@@ -170,7 +170,8 @@ O plugin recebe `getAccessToken` do Portal (`AppHost`) — mesmo padrão do `cha
 - [x] `DispatchNotificationsUseCase` com broadcast e direcionado
 - [x] Rotas `/admin/notifications` e `/integrations/notifications`
 - [x] Correção de eventos Socket + ownership em mark read
-- [x] UI sino no chat + aba admin
+- [x] UI no Portal (sidebar + aba Admin)
+- [x] Removido UI de notificações do plugin chat
 - [x] Testes unitários (`test_dispatch_notifications_use_case`, `test_notifications_controller`)
 
 **Aceite:** superadmin envia broadcast pelo admin do chat; usuário vê no sino; app externo envia com service token; marcar lida só afeta notificações próprias.

@@ -7,6 +7,7 @@ import {
   Shield,
   UsersRound,
   KeyRound,
+  Bell,
   ChevronDown,
 } from "lucide-react";
 
@@ -15,8 +16,9 @@ import { RolesTab } from "./tabs/RolesTab";
 import { GroupsTab } from "./tabs/GroupsTab";
 import { PermissionsTab } from "./tabs/PermissionsTab";
 import { AppsTab } from "./tabs/AppsTab";
+import { NotificationsTab } from "./tabs/NotificationsTab";
 
-type AdminTab = "apps" | "users" | "roles" | "groups" | "permissions";
+type AdminTab = "apps" | "users" | "roles" | "groups" | "permissions" | "notifications";
 
 export const AdminPage = () => {
   const [tab, setTab] = useState<AdminTab>("users");
@@ -29,6 +31,7 @@ export const AdminPage = () => {
       { key: "roles" as const, label: "Papéis", icon: Shield },
       { key: "groups" as const, label: "Grupos", icon: UsersRound },
       { key: "permissions" as const, label: "Permissões", icon: KeyRound },
+      { key: "notifications" as const, label: "Notificações", icon: Bell },
     ],
     []
   );
@@ -101,6 +104,7 @@ export const AdminPage = () => {
           {tab === "roles" && <RolesTab />}
           {tab === "groups" && <GroupsTab />}
           {tab === "permissions" && <PermissionsTab />}
+          {tab === "notifications" && <NotificationsTab />}
         </div>
       </div>
     </div>

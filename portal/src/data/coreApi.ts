@@ -54,13 +54,30 @@ export interface DashboardResponse {
   recentActivity: string[];
 }
 
+export type NotificationType = "info" | "success" | "warning" | "error";
+
 export interface NotificationItem {
   id: string;
   title?: string | null;
   message: string;
-  type: "info" | "success" | "warning" | "error";
+  type: NotificationType;
   read: boolean;
   createdAt: string;
+}
+
+export interface DispatchNotificationsPayload {
+  broadcast?: boolean;
+  userIds?: string[];
+  emails?: string[];
+  title?: string | null;
+  message: string;
+  type?: NotificationType;
+  sourceApp?: string;
+}
+
+export interface DispatchNotificationsResponse {
+  createdCount: number;
+  notificationIds: string[];
 }
 
 export interface FavoriteAppItem {
@@ -156,6 +173,13 @@ export class CoreApi {
   markAllNotificationsRead() {
     return this.client.post<{ ok: boolean }>(
       "/core-api/me/notifications/read-all"
+    );
+  }
+
+  dispatchNotifications(payload: DispatchNotificationsPayload) {
+    return this.client.post<DispatchNotificationsResponse>(
+      "/core-api/admin/notifications",
+      payload
     );
   }
 }

@@ -14,8 +14,9 @@ A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo d
 - `security/`: segurança operacional de entrada.
 - `tools/`: provider LLM, actions e health (`GET /admin/tools/health`).
 - `audit/`: auditoria, timeline, export CSV, trace id.
-- `notifications/`: aba de notificações (quando habilitada).
 - `rbac/`: resumo de permissões do admin.
+
+Notificações de plataforma ficam no **Portal** (`/admin` → aba Notificações), não neste plugin.
 
 ## Regras
 

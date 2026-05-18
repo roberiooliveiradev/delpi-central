@@ -1,12 +1,14 @@
-import { ChevronLeft } from "lucide-react";
-import type { ReactNode } from "react";
+import { ChevronLeft, X } from "lucide-react";
 
 type ChatSidebarBrandProps = {
   onToggleCollapsed?: () => void;
-  actions?: ReactNode;
+  onCloseMobile?: () => void;
 };
 
-export function ChatSidebarBrand({ onToggleCollapsed, actions }: ChatSidebarBrandProps) {
+export function ChatSidebarBrand({
+  onToggleCollapsed,
+  onCloseMobile,
+}: ChatSidebarBrandProps) {
   return (
     <div className="mdc-chat-sidebar__brand">
       <div>
@@ -15,7 +17,17 @@ export function ChatSidebarBrand({ onToggleCollapsed, actions }: ChatSidebarBran
       </div>
 
       <div className="mdc-chat-sidebar__brand-actions">
-        {actions}
+        {onCloseMobile ? (
+          <button
+            type="button"
+            className="mdc-chat-sidebar__close-mobile"
+            onClick={onCloseMobile}
+            aria-label="Fechar menu"
+            title="Fechar"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        ) : null}
         <button
           type="button"
           className="mdc-chat-sidebar__collapse-button"

@@ -7,8 +7,7 @@ export type AdminTab =
   | "agents"
   | "security"
   | "tools"
-  | "audit"
-  | "notifications";
+  | "audit";
 
 export type AdminTabItem = {
   key: AdminTab;
