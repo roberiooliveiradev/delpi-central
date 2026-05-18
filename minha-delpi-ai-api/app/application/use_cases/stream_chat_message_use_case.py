@@ -31,6 +31,9 @@ from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
 from app.domain.services.chat_fast_path_service import ChatFastPathService
+from app.domain.services.chat_operational_pipeline_service import (
+    ChatOperationalPipelineService,
+)
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
 
@@ -147,10 +150,22 @@ class StreamChatMessageUseCase:
             )
 
         history_source = history_messages if resend_from_message_id else previous_messages
-        history_summary, history = self._prepare_history(history_source)
+        attachment_ids = getattr(request, "attachment_ids", None)
+        allowed_action_ids = workspace_context.get("allowedActionIds") or []
+        operational_optimize = ChatOperationalPipelineService.should_optimize(
+            message,
+            allowed_action_ids,
+            attachment_ids=attachment_ids,
+        )
+
+        if operational_optimize:
+            keep = max(1, Settings.CHAT_HISTORY_MAX_MESSAGES)
+            history_summary, history = "", list(history_source[-keep:])
+        else:
+            history_summary, history = self._prepare_history(history_source)
+
         pipeline_timings = ChatPipelineTimings()
 
-        attachment_ids = getattr(request, "attachment_ids", None)
         fast_path = ChatFastPathService.should_use(
             message,
             enabled=Settings.CHAT_FAST_PATH_ENABLED,
@@ -176,8 +191,10 @@ class StreamChatMessageUseCase:
         tool_calls = tool_context["toolCalls"]
         pipeline_timings.mark("tools_done")
 
-        skip_rag = fast_path or ChatExternalActionDirectResponseService.should_skip_rag(
-            tool_context
+        skip_rag = (
+            fast_path
+            or operational_optimize
+            or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
         )
         direct_answer = ChatExternalActionDirectResponseService.resolve_answer(tool_context)
 
@@ -231,9 +248,12 @@ class StreamChatMessageUseCase:
                 message_id=user_message.id,
             )
 
-        admin_guidelines_prompt, active_guidelines = self._build_admin_guidelines_prompt(
-            workspace_context,
-        )
+        if operational_optimize or direct_answer:
+            admin_guidelines_prompt, active_guidelines = "", []
+        else:
+            admin_guidelines_prompt, active_guidelines = self._build_admin_guidelines_prompt(
+                workspace_context,
+            )
 
         if direct_answer:
             llm_messages = []

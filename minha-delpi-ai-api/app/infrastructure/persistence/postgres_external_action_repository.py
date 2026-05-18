@@ -227,7 +227,20 @@ class PostgresExternalActionRepository:
         if allowed_ids:
             db_query = db_query.filter(ExternalActionModel.action_id.in_(allowed_ids))
 
-        if any(term in normalized for term in ["produto", "product", "item", "código", "codigo"]):
+        if any(
+            term in normalized
+            for term in [
+                "produto",
+                "product",
+                "item",
+                "código",
+                "codigo",
+                "estoque",
+                "stock",
+                "descrição",
+                "descricao",
+            ]
+        ):
             db_query = db_query.filter(
                 db.or_(
                     ExternalActionModel.path.ilike("%product%"),
