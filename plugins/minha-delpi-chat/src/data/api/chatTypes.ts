@@ -152,6 +152,7 @@ export type ChatAgent = {
   max_tool_calls: number;
   requires_confirmation_for_write: boolean;
   access_role: "system" | "owner" | "editor" | "viewer" | string;
+  system_prompt?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -217,6 +218,8 @@ export type UpdateChatAgentPayload = {
   responseStyle?: string | null;
   metadata?: Record<string, unknown> | null;
   enabled?: boolean;
+  maxToolCalls?: number;
+  requiresConfirmationForWrite?: boolean;
 };
 
 export type ShareChatAgentPayload = {

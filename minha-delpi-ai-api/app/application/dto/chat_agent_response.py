@@ -17,5 +17,6 @@ class ChatAgentResponse:
     max_tool_calls: int
     requires_confirmation_for_write: bool
     access_role: str
+    system_prompt: str | None = None
     created_at: str
     updated_at: str

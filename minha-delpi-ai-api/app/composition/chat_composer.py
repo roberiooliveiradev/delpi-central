@@ -302,6 +302,12 @@ def make_list_chat_agents_use_case() -> ListChatAgentsUseCase:
     return ListChatAgentsUseCase(PostgresChatAgentRepository())
 
 
+def make_get_chat_agent_use_case():
+    from app.application.use_cases.chat_agents_use_cases import GetChatAgentUseCase
+
+    return GetChatAgentUseCase(PostgresChatAgentRepository())
+
+
 def make_create_chat_agent_use_case() -> CreateChatAgentUseCase:
     return CreateChatAgentUseCase(PostgresChatAgentRepository())
 

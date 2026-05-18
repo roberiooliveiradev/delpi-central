@@ -20,7 +20,16 @@ class ChatAgentPermissionDeniedError(Exception):
     pass
 
 
-def _to_response(agent: ChatAgent, access_role: str = "viewer") -> ChatAgentResponse:
+def _can_view_system_prompt(access_role: str) -> bool:
+    return access_role in {"owner", "editor", "system"}
+
+
+def _to_response(
+    agent: ChatAgent,
+    access_role: str = "viewer",
+    *,
+    include_system_prompt: bool = False,
+) -> ChatAgentResponse:
     return ChatAgentResponse(
         id=str(agent.id),
         key=agent.key,
@@ -36,6 +45,7 @@ def _to_response(agent: ChatAgent, access_role: str = "viewer") -> ChatAgentResp
         max_tool_calls=agent.max_tool_calls,
         requires_confirmation_for_write=agent.requires_confirmation_for_write,
         access_role=access_role,
+        system_prompt=agent.system_prompt if include_system_prompt else None,
         created_at=agent.created_at.isoformat(),
         updated_at=agent.updated_at.isoformat(),
     )
@@ -106,7 +116,25 @@ class CreateChatAgentUseCase:
             metadata=request.metadata,
         )
 
-        return _to_response(agent, "owner")
+        return _to_response(agent, "owner", include_system_prompt=True)
+
+
+class GetChatAgentUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(self, user_id: str, agent_id: str) -> ChatAgentResponse | None:
+        record = self.repository.get_accessible_by_id(UUID(agent_id), UUID(user_id))
+
+        if not record:
+            return None
+
+        agent, access_role = record
+        return _to_response(
+            agent,
+            access_role,
+            include_system_prompt=_can_view_system_prompt(access_role),
+        )
 
 
 class UpdateChatAgentUseCase:
@@ -124,10 +152,15 @@ class UpdateChatAgentUseCase:
             "response_style": _normalize_text(request.response_style, 40) if request.response_style is not None else None,
             "agent_metadata": request.metadata,
             "enabled": request.enabled,
+            "max_tool_calls": request.max_tool_calls,
+            "requires_confirmation_for_write": request.requires_confirmation_for_write,
         }
 
         if fields["visibility"] is not None and fields["visibility"] not in ALLOWED_VISIBILITY:
             raise InvalidChatSessionInputError("Invalid agent visibility")
+
+        if fields["max_tool_calls"] is not None:
+            fields["max_tool_calls"] = max(1, min(int(fields["max_tool_calls"]), 20))
 
         agent_id = UUID(request.agent_id)
         user_id = UUID(request.user_id)
@@ -152,7 +185,14 @@ class UpdateChatAgentUseCase:
         if not agent:
             return None
 
-        return _to_response(agent, "editor")
+        access_record = self.repository.get_accessible_by_id(agent_id, user_id)
+        access_role = access_record[1] if access_record else "editor"
+
+        return _to_response(
+            agent,
+            access_role,
+            include_system_prompt=_can_view_system_prompt(access_role),
+        )
 
 
 class DeleteChatAgentUseCase:
@@ -182,10 +222,18 @@ class ShareChatAgentUseCase:
         if role not in ALLOWED_SHARE_ROLES:
             raise InvalidChatSessionInputError("Invalid share role")
 
+        target_user_id = (request.target_user_id or "").strip()
+
+        if not target_user_id:
+            raise InvalidChatSessionInputError("targetUserId is required")
+
+        if target_user_id == request.user_id:
+            raise InvalidChatSessionInputError("Cannot share an agent with yourself")
+
         return self.repository.share(
             agent_id=UUID(request.agent_id),
             user_id=UUID(request.user_id),
-            target_user_id=UUID(request.target_user_id),
+            target_user_id=UUID(target_user_id),
             role=role,
         )
 

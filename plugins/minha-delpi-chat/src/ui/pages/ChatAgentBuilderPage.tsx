@@ -18,8 +18,10 @@ import { useEffect, useMemo, useState } from "react";
 import {
   createAgentTextSource,
   deleteChatSource,
+  getChatAgent,
   listAgentSources,
   listChatAgentActionProviders,
+  shareChatAgent,
   uploadAgentSource,
 } from "../../data/api/chatApi";
 import type {
@@ -44,6 +46,8 @@ type AgentPayload = {
 
 type AgentUpdatePayload = Partial<AgentPayload> & {
   enabled?: boolean;
+  maxToolCalls?: number;
+  requiresConfirmationForWrite?: boolean;
 };
 
 type ChatAgentBuilderPageProps = {
@@ -147,6 +151,16 @@ export function ChatAgentBuilderPage({
   const [category, setCategory] = useState(agent?.category ?? "");
   const [icon, setIcon] = useState(agent?.icon ?? "bot");
   const [responseStyle, setResponseStyle] = useState(agent?.response_style ?? "objetivo");
+  const [enabled, setEnabled] = useState(agent?.enabled ?? true);
+  const [maxToolCalls, setMaxToolCalls] = useState(agent?.max_tool_calls ?? 5);
+  const [requiresConfirmationForWrite, setRequiresConfirmationForWrite] = useState(
+    agent?.requires_confirmation_for_write ?? false,
+  );
+  const [shareTargetUserId, setShareTargetUserId] = useState("");
+  const [shareRole, setShareRole] = useState<"viewer" | "editor">("viewer");
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
+  const [isLoadingAgent, setIsLoadingAgent] = useState(false);
   const [icebreakers, setIcebreakers] = useState<string[]>(
     getAgentIcebreakers(agent).length > 0 ? getAgentIcebreakers(agent) : [""],
   );
@@ -179,25 +193,72 @@ export function ChatAgentBuilderPage({
   useEffect(() => {
     let isMounted = true;
 
-    async function loadAgentResources() {
-      if (!agent) {
+    async function loadAgentDetails() {
+      if (!agent?.id || !getAccessToken) {
         setAgentSources([]);
         setAgentActionProviders([]);
         return;
       }
 
-      const [sources, actionProviders] = await Promise.all([
-        listAgentSources(agent.id, { getAccessToken }),
-        listChatAgentActionProviders(agent.id, { getAccessToken }),
-      ]);
+      setIsLoadingAgent(true);
+      setLocalError(null);
 
-      if (isMounted) {
+      try {
+        const [details, sources, actionProviders] = await Promise.all([
+          getChatAgent(agent.id, { getAccessToken }),
+          listAgentSources(agent.id, { getAccessToken }),
+          listChatAgentActionProviders(agent.id, { getAccessToken }),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setName(details.name);
+        setDescription(details.description ?? "");
+        setSystemPrompt(details.system_prompt ?? "");
+        setVisibility(
+          details.visibility === "system"
+            ? "system"
+            : details.visibility === "public"
+              ? "public"
+              : "private",
+        );
+        setCategory(details.category ?? "");
+        setIcon(details.icon ?? "bot");
+        setResponseStyle(details.response_style ?? "objetivo");
+        setEnabled(details.enabled);
+        setMaxToolCalls(details.max_tool_calls);
+        setRequiresConfirmationForWrite(details.requires_confirmation_for_write);
+        setIcebreakers(
+          getAgentIcebreakers(details).length > 0 ? getAgentIcebreakers(details) : [""],
+        );
+
+        const nextCapabilities = getMetadataRecord(details.metadata, "capabilities");
+        setCapActions(
+          typeof nextCapabilities.actions === "boolean" ? nextCapabilities.actions : true,
+        );
+        setCapFiles(
+          typeof nextCapabilities.files === "boolean" ? nextCapabilities.files : true,
+        );
+        setCapCanvas(
+          typeof nextCapabilities.canvas === "boolean" ? nextCapabilities.canvas : true,
+        );
+
         setAgentSources(sources);
         setAgentActionProviders(actionProviders);
+      } catch {
+        if (isMounted) {
+          setLocalError("Não foi possível carregar os detalhes completos do agente.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingAgent(false);
+        }
       }
     }
 
-    void loadAgentResources();
+    void loadAgentDetails();
 
     return () => {
       isMounted = false;
@@ -406,7 +467,12 @@ export function ChatAgentBuilderPage({
 
     try {
       if (agent) {
-        const updated = await onUpdateAgent?.(agent.id, payload);
+        const updated = await onUpdateAgent?.(agent.id, {
+          ...payload,
+          enabled,
+          maxToolCalls,
+          requiresConfirmationForWrite,
+        });
 
         if (updated) {
           onSelectAgent?.(updated.key);
@@ -424,6 +490,36 @@ export function ChatAgentBuilderPage({
       }
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function shareCurrentAgent() {
+    if (!agent || agent.access_role !== "owner") {
+      return;
+    }
+
+    const targetUserId = shareTargetUserId.trim();
+
+    if (!targetUserId) {
+      setShareMessage("Informe o ID do usuário para compartilhar.");
+      return;
+    }
+
+    setIsSharing(true);
+    setShareMessage(null);
+
+    try {
+      await shareChatAgent(
+        agent.id,
+        { targetUserId, role: shareRole },
+        { getAccessToken },
+      );
+      setShareMessage("Agente compartilhado com sucesso.");
+      setShareTargetUserId("");
+    } catch {
+      setShareMessage("Não foi possível compartilhar o agente.");
+    } finally {
+      setIsSharing(false);
     }
   }
 
@@ -650,7 +746,9 @@ export function ChatAgentBuilderPage({
                 placeholder="Defina comportamento, tom, limites, regras e ações permitidas..."
               />
               <small>
-                Ao editar, preencha apenas se quiser substituir as instruções atuais.
+                {isLoadingAgent
+                  ? "Carregando instruções salvas..."
+                  : "Instruções usadas pelo modelo em cada conversa com este agente."}
               </small>
             </label>
 
@@ -667,6 +765,97 @@ export function ChatAgentBuilderPage({
               </select>
             </label>
           </section>
+
+          <section className="mdc-chat-agent-builder__section">
+            <div className="mdc-chat-agent-builder__section-title">
+              <Settings2 size={18} aria-hidden="true" />
+              <div>
+                <h2>Execução</h2>
+                <p>Controle disponibilidade e limites de ferramentas por conversa.</p>
+              </div>
+            </div>
+
+            <label className="mdc-chat-agent-builder__checkbox">
+              <input
+                type="checkbox"
+                checked={enabled}
+                onChange={(event) => setEnabled(event.target.checked)}
+              />
+              <span>Agente ativo (visível para uso)</span>
+            </label>
+
+            <div className="mdc-chat-agent-builder__grid">
+              <label>
+                <span>Máximo de chamadas de ferramentas</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={maxToolCalls}
+                  onChange={(event) =>
+                    setMaxToolCalls(Math.max(1, Math.min(20, Number(event.target.value) || 5)))
+                  }
+                />
+              </label>
+
+              <label className="mdc-chat-agent-builder__checkbox">
+                <input
+                  type="checkbox"
+                  checked={requiresConfirmationForWrite}
+                  onChange={(event) =>
+                    setRequiresConfirmationForWrite(event.target.checked)
+                  }
+                />
+                <span>Exigir confirmação para ações de escrita</span>
+              </label>
+            </div>
+          </section>
+
+          {agent?.access_role === "owner" ? (
+            <section className="mdc-chat-agent-builder__section">
+              <div className="mdc-chat-agent-builder__section-title">
+                <Settings2 size={18} aria-hidden="true" />
+                <div>
+                  <h2>Compartilhamento</h2>
+                  <p>Conceda acesso de visualização ou edição a outro usuário.</p>
+                </div>
+              </div>
+
+              <div className="mdc-chat-agent-builder__grid">
+                <label>
+                  <span>ID do usuário (UUID)</span>
+                  <input
+                    value={shareTargetUserId}
+                    onChange={(event) => setShareTargetUserId(event.target.value)}
+                    placeholder="00000000-0000-0000-0000-000000000000"
+                  />
+                </label>
+
+                <label>
+                  <span>Papel</span>
+                  <select
+                    value={shareRole}
+                    onChange={(event) =>
+                      setShareRole(event.target.value as "viewer" | "editor")
+                    }
+                  >
+                    <option value="viewer">Visualizador</option>
+                    <option value="editor">Editor</option>
+                  </select>
+                </label>
+              </div>
+
+              <button
+                type="button"
+                disabled={isSharing}
+                onClick={() => void shareCurrentAgent()}
+              >
+                {isSharing ? "Compartilhando..." : "Compartilhar agente"}
+              </button>
+
+              {shareMessage ? <p className="mdc-chat-muted">{shareMessage}</p> : null}
+            </section>
+          ) : null}
 
           <section className="mdc-chat-agent-builder__section">
             <div className="mdc-chat-agent-builder__section-title">

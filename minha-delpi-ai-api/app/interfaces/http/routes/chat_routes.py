@@ -59,6 +59,7 @@ from app.composition.chat_composer import (
     make_list_chat_agent_action_providers_use_case,
     make_upsert_chat_agent_action_provider_use_case,
     make_list_chat_agent_actions_use_case,
+    make_get_chat_agent_use_case,
     make_list_chat_agents_use_case,
     make_share_chat_agent_use_case,
     make_share_chat_project_use_case,
@@ -215,6 +216,18 @@ def list_agents():
     return jsonify([asdict(agent) for agent in result]), 200
 
 
+@chat_bp.get("/agents/<agent_id>")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def get_agent(agent_id: str):
+    use_case = make_get_chat_agent_use_case()
+    result = use_case.execute(g.current_user.sub, agent_id)
+
+    if not result:
+        return _not_found_response()
+
+    return jsonify(asdict(result)), 200
+
+
 @chat_bp.post("/agents")
 @require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def create_agent():
@@ -288,6 +301,10 @@ def update_agent(agent_id: str):
                 category=payload.get("category"),
                 response_style=payload.get("responseStyle") or payload.get("response_style"),
                 enabled=payload.get("enabled"),
+                max_tool_calls=payload.get("maxToolCalls") or payload.get("max_tool_calls"),
+                requires_confirmation_for_write=payload.get("requiresConfirmationForWrite")
+                if payload.get("requiresConfirmationForWrite") is not None
+                else payload.get("requires_confirmation_for_write"),
                 can_manage_official_agents=capabilities["canManageOfficialAgents"],
             )
         )
@@ -300,6 +317,9 @@ def update_agent(agent_id: str):
     except ChatAgentPermissionDeniedError as exc:
         db.session.rollback()
         return forbidden(str(exc))
+    except InvalidChatSessionInputError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
     except Exception:
         db.session.rollback()
         raise

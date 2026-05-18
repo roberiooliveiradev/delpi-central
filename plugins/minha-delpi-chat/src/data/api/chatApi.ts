@@ -428,7 +428,17 @@ export async function listChatAgents(
   return parseJsonResponse<ChatAgent[]>(response);
 }
 
+export async function getChatAgent(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAgent> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
 
+  return parseJsonResponse<ChatAgent>(response);
+}
 
 export async function createChatAgent(
   payload: CreateChatAgentPayload,

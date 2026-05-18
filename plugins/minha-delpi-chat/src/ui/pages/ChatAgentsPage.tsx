@@ -332,6 +332,8 @@ export function ChatAgentsPage({
                     </button>
 
                     <div className="mdc-chat-agents-directory__meta">
+                      {!agent.enabled ? <span className="mdc-chat-agents-directory__badge">Inativo</span> : null}
+                      <span className="mdc-chat-agents-directory__badge">{agent.access_role}</span>
                       <span>
                         <Sparkles size={14} aria-hidden="true" />
                         {icebreakerCount} quebra-gelos

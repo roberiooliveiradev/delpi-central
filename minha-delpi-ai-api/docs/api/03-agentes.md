@@ -54,6 +54,31 @@ Lista agentes acessíveis ao usuário.
 
 `ChatAgent[]`
 
+> `system_prompt` não é retornado na listagem.
+
+---
+
+## GET `/chat/agents/{agentId}`
+
+Detalhe de um agente acessível ao usuário.
+
+### Permissão
+
+`minha-delpi.chat.access`
+
+### Resposta `200`
+
+`ChatAgent` com campos adicionais quando o usuário pode editar:
+
+- `system_prompt` — preenchido para `access_role` `owner`, `editor` ou `system`
+- omitido para `viewer`
+
+### Erros
+
+| Status | Situação |
+|--------|----------|
+| `404` | Agente inexistente ou sem acesso |
+
 ---
 
 ## POST `/chat/agents`
@@ -125,11 +150,15 @@ Todos os campos são opcionais:
   "systemPrompt": "Novo prompt",
   "category": "ações",
   "responseStyle": "detalhado",
-  "enabled": true
+  "enabled": true,
+  "maxToolCalls": 5,
+  "requiresConfirmationForWrite": true
 }
 ```
 
 ### Resposta `200`
+
+Inclui `system_prompt` quando o usuário tem papel `owner`, `editor` ou `system`.
 
 `ChatAgent`
 
