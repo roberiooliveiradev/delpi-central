@@ -21,8 +21,8 @@
 
 .mdc-chat-conversation .mdc-chat-input {
   border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
-  background: color-mix(in srgb, var(--mdc-bg) 94%, transparent);
-  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
+  backdrop-filter: blur(8px);
 }
 
 .mdc-chat-empty-composer {

@@ -32,7 +32,7 @@ import type {
   ChatAgentAction,
   ChatAgentActionProvider,
 } from "../../data/api/chatTypes";
-import { useChatLayout } from "../../state/hooks/useChatLayout";
+import { useResizablePane } from "../../state/hooks/useResizablePane";
 import { ActionRoutesSection } from "./agent-actions/ActionRoutesSection";
 import type { ActionTestPayload } from "./agent-actions/types";
 
@@ -180,9 +180,29 @@ export function ChatAgentActionsPage({
   const [testLogs, setTestLogs] = useState<ChatActionTestLog[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const { isDesktop } = useChatLayout();
   const [showPreview, setShowPreview] = useState(false);
-  const isPreviewVisible = isDesktop || showPreview;
+  const {
+    layoutRef,
+    layoutStyle,
+    splitEnabled,
+    isDragging,
+    onSplitterPointerDown,
+  } = useResizablePane({
+    storageKey: "minha-delpi-chat.agent-actions.preview-width",
+    defaultWidth: 380,
+    minWidth: 280,
+    maxWidthRatio: 0.5,
+    enabledMediaQuery: "(min-width: 1024px)",
+  });
+  const isPreviewVisible = splitEnabled || showPreview;
+
+  const layoutClassName = [
+    "mdc-chat-agent-actions-page__layout",
+    splitEnabled ? "mdc-chat-agent-actions-page__layout--split" : "",
+    isDragging ? "mdc-chat-agent-actions-page__layout--dragging" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const [newProviderName, setNewProviderName] = useState("");
   const [newProviderBaseUrl, setNewProviderBaseUrl] = useState("");
@@ -592,30 +612,34 @@ export function ChatAgentActionsPage({
   return (
     <section className="mdc-chat-agent-actions-page">
       <header className="mdc-chat-agent-actions-page__topbar">
-        <button type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          <span>Voltar ao agente</span>
-        </button>
+        <div className="mdc-chat-agent-actions-page__topbar-start">
+          <button type="button" onClick={onBack}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            <span>Voltar ao agente</span>
+          </button>
+        </div>
 
-        <div>
+        <div className="mdc-chat-agent-actions-page__topbar-title">
           <span>{selectedProvider?.name ?? "Nova action"}</span>
           <small>{agent.name}</small>
         </div>
 
-        {selectedProviderKey ? (
-          <button
-            type="button"
-            className="mdc-chat-agent-actions-page__primary"
-            disabled={isSavingProvider}
-            onClick={() => void saveProviderConfig()}
-          >
-            <Save size={16} aria-hidden="true" />
-            <span>{isSavingProvider ? "Salvando..." : "Salvar configuração"}</span>
-          </button>
-        ) : null}
+        <div className="mdc-chat-agent-actions-page__topbar-actions">
+          {selectedProviderKey ? (
+            <button
+              type="button"
+              className="mdc-chat-agent-actions-page__primary"
+              disabled={isSavingProvider}
+              onClick={() => void saveProviderConfig()}
+            >
+              <Save size={16} aria-hidden="true" />
+              <span>{isSavingProvider ? "Salvando..." : "Salvar configuração"}</span>
+            </button>
+          ) : null}
+        </div>
       </header>
 
-      {!isDesktop ? (
+      {!splitEnabled ? (
         <button
           type="button"
           className="mdc-chat-agent-actions-page__preview-toggle"
@@ -625,14 +649,7 @@ export function ChatAgentActionsPage({
         </button>
       ) : null}
 
-      <div
-        className={[
-          "mdc-chat-agent-actions-page__layout",
-          isDesktop ? "mdc-chat-agent-actions-page__layout--with-preview" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
+      <div ref={layoutRef} className={layoutClassName} style={layoutStyle}>
         <main className="mdc-chat-agent-actions-page__editor">
           <section className="mdc-chat-agent-actions-page__headline">
             <div className="mdc-chat-agent-actions-page__round-back">
@@ -1041,6 +1058,20 @@ export function ChatAgentActionsPage({
             </>
           )}
         </main>
+
+        {splitEnabled ? (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Ajustar largura da pré-visualização"
+            className={
+              isDragging
+                ? "mdc-chat-agent-actions-page__splitter is-dragging"
+                : "mdc-chat-agent-actions-page__splitter"
+            }
+            onPointerDown={onSplitterPointerDown}
+          />
+        ) : null}
 
         {isPreviewVisible ? (
         <aside className="mdc-chat-agent-actions-page__preview mdc-chat-agent-actions-page__preview--visible">

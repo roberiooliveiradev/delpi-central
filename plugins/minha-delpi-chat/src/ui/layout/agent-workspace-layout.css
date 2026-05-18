@@ -29,8 +29,8 @@
 }
 
 @container agent-workspace (max-width: 960px) {
-  .mdc-chat-agent-builder__layout,
-  .mdc-chat-agent-actions-page__layout {
+  .mdc-chat-agent-builder__layout:not(.mdc-chat-agent-builder__layout--split),
+  .mdc-chat-agent-actions-page__layout:not(.mdc-chat-agent-actions-page__layout--split) {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -68,8 +68,8 @@
 }
 
 @media (max-width: 1180px) {
-  .mdc-chat-agent-builder__layout,
-  .mdc-chat-agent-actions-page__layout {
+  .mdc-chat-agent-builder__layout:not(.mdc-chat-agent-builder__layout--split),
+  .mdc-chat-agent-actions-page__layout:not(.mdc-chat-agent-actions-page__layout--split) {
     grid-template-columns: minmax(0, 1fr);
   }
 

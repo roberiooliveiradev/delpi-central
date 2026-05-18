@@ -24,7 +24,7 @@ export function useResizablePane({
   defaultWidth = 420,
   minWidth = 300,
   maxWidthRatio = 0.52,
-  enabledMediaQuery = "(min-width: 1181px)",
+  enabledMediaQuery = "(min-width: 1024px)",
 }: UseResizablePaneOptions) {
   const layoutRef = useRef<HTMLDivElement>(null);
   const widthRef = useRef(readStoredWidth(storageKey, defaultWidth));

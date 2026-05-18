@@ -309,7 +309,7 @@ export function ChatInput({
           value={value}
           disabled={disabled || isSending}
           placeholder={placeholder}
-          rows={variant === "center" ? 1 : 3}
+          rows={1}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {

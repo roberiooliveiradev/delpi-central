@@ -12,8 +12,8 @@
   position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  min-height: 3.75rem;
+  align-items: end;
+  min-height: 3.25rem;
   border: 1px solid var(--mdc-card-border);
   border-radius: 1.6rem;
   background: color-mix(in srgb, var(--mdc-card-bg) 94%, transparent);
@@ -93,18 +93,16 @@
   width: 100%;
   min-height: 2.5rem;
   max-height: 11rem;
-  resize: vertical;
+  resize: none;
+  overflow-y: auto;
   border: 0;
   background: transparent;
   color: var(--mdc-text);
   font: inherit;
   line-height: 1.5;
-  padding: 0.8rem 0.55rem 0.8rem 0.75rem;
+  padding: 0.62rem 0.55rem 0.62rem 0.75rem;
   outline: none;
-}
-
-.mdc-chat-input--center textarea {
-  resize: none;
+  field-sizing: content;
 }
 
 
@@ -120,8 +118,25 @@
   padding: 0;
 }
 
+.mdc-chat-input--center .mdc-chat-input__box {
+  min-height: 3.25rem;
+}
+
 .mdc-chat-input--center small {
   text-align: center;
+}
+
+.mdc-chat-conversation .mdc-chat-input {
+  width: min(100%, 980px);
+  padding: var(--mdc-space-3) var(--mdc-space-5) calc(var(--mdc-space-4) + env(safe-area-inset-bottom, 0px));
+}
+
+.mdc-chat-conversation .mdc-chat-input__box {
+  min-height: 3.25rem;
+}
+
+.mdc-chat-conversation .mdc-chat-input small {
+  text-align: left;
 }
 
 .mdc-chat-input__menu {
