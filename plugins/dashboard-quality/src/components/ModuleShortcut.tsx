@@ -1,4 +1,6 @@
 import { QUALITY_ROUTES } from "../constants/routes";
+import type { QualityFilterUrlState } from "../utils/filterUrl";
+import { appendFiltersToPath } from "../utils/filterUrl";
 import { navigateQuality } from "../utils/navigation";
 
 type ModuleShortcutProps = {
@@ -6,6 +8,7 @@ type ModuleShortcutProps = {
   description: string;
   phase?: string;
   href?: string;
+  filterState?: QualityFilterUrlState;
 };
 
 export function ModuleShortcut({
@@ -13,8 +16,12 @@ export function ModuleShortcut({
   description,
   phase,
   href,
+  filterState,
 }: ModuleShortcutProps) {
-  const className = `dq-card dq-module-shortcut${href ? " dq-module-shortcut--link" : ""}`;
+  const resolvedHref =
+    href && filterState ? appendFiltersToPath(href, filterState) : href;
+
+  const className = `dq-card dq-module-shortcut${resolvedHref ? " dq-module-shortcut--link" : ""}`;
 
   const content = (
     <>
@@ -24,10 +31,10 @@ export function ModuleShortcut({
     </>
   );
 
-  if (href) {
+  if (resolvedHref) {
     return (
       <a
-        href={href}
+        href={resolvedHref}
         className={className}
         onClick={(event) => {
           if (
@@ -41,7 +48,7 @@ export function ModuleShortcut({
           }
 
           event.preventDefault();
-          navigateQuality(href);
+          navigateQuality(href ?? "", filterState);
         }}
       >
         {content}

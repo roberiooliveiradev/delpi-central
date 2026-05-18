@@ -6,6 +6,8 @@ type FilterBarProps = {
   dateStart: string;
   dateEnd: string;
   branch: string;
+  branches?: string[];
+  branchesLoading?: boolean;
   currentPath?: string;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
@@ -18,6 +20,8 @@ export function FilterBar({
   dateStart,
   dateEnd,
   branch,
+  branches,
+  branchesLoading,
   currentPath,
   onDateStartChange,
   onDateEndChange,
@@ -38,6 +42,8 @@ export function FilterBar({
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
+        branches={branches}
+        branchesLoading={branchesLoading}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
         onBranchChange={onBranchChange}

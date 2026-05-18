@@ -22,6 +22,7 @@ import { CHART_COLORS } from "../constants/chartColors";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { useAudit5sSummary } from "../hooks/useQualityQueries";
 import { useClientPagination } from "../hooks/useClientPagination";
+import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import type { Audit5s } from "../types/audit5s";
 import {
@@ -48,6 +49,8 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
     setBranch,
     apiParams,
   } = useQualityFilters();
+
+  const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
 
   const summaryParams = useMemo(
     () => ({
@@ -169,6 +172,8 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
+        branches={branches}
+        branchesLoading={branchesLoading}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}

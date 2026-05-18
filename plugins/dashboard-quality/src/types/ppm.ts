@@ -31,3 +31,20 @@ export type PpmItem = {
 };
 
 export type ListPpmParams = DateRangeParams & PaginationParams;
+
+export type PpmSeriesPoint = {
+  periodo: string;
+  sort_key: string;
+  date_start: string;
+  date_end: string;
+  ppm: number;
+  total_devolvido_un: number;
+  total_produzido_un: number;
+};
+
+export type PpmSeriesResponse = {
+  type: PpmType;
+  granularity: string;
+  truncated: boolean;
+  points: PpmSeriesPoint[];
+};

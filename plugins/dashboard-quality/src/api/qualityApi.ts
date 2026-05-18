@@ -14,13 +14,19 @@ import type {
   ListNonconformitiesParams,
   Nonconformity,
 } from "../types/nonconformity";
+import type { ChartGranularity } from "../types/chart";
 import type {
   DateRangeParams,
   ListPpmParams,
   PpmItem,
+  PpmSeriesResponse,
   PpmSummary,
   PpmType,
 } from "../types/ppm";
+
+export type QualityBranchesResponse = {
+  branches: string[];
+};
 
 export const QUALITY_API_BASE = "/apps/api-delpi/quality";
 
@@ -127,4 +133,28 @@ export async function listPpmExternal(
   signal?: AbortSignal
 ): Promise<Page<PpmItem>> {
   return listPpm("external", params, signal);
+}
+
+export async function listQualityBranches(
+  params: DateRangeParams = {},
+  signal?: AbortSignal
+): Promise<QualityBranchesResponse> {
+  return fetchQualityData<QualityBranchesResponse>("/branches", params, signal);
+}
+
+export async function getPpmSeries(
+  type: PpmType,
+  params: DateRangeParams & { granularity: ChartGranularity },
+  signal?: AbortSignal
+): Promise<PpmSeriesResponse> {
+  return fetchQualityData<PpmSeriesResponse>(
+    `/ppm/${type}/series`,
+    {
+      branch: params.branch,
+      date_start: params.date_start,
+      date_end: params.date_end,
+      granularity: params.granularity,
+    },
+    signal
+  );
 }

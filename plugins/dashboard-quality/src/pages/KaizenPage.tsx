@@ -24,6 +24,7 @@ import { CHART_COLORS } from "../constants/chartColors";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { useClientPagination } from "../hooks/useClientPagination";
 import { useKaizenSummary } from "../hooks/useQualityQueries";
+import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import type { Kaizen } from "../types/kaizen";
 import {
@@ -65,6 +66,8 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
     setBranch,
     apiParams,
   } = useQualityFilters();
+
+  const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
 
   const summaryParams = useMemo(
     () => ({
@@ -190,6 +193,8 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
+        branches={branches}
+        branchesLoading={branchesLoading}
         title={title}
         status={status}
         onDateStartChange={setDateStart}

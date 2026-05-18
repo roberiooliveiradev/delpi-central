@@ -12,11 +12,17 @@ from app.application.use_cases.kaizen.get_kaizen_summary_use_case import (
 from app.application.use_cases.nonconformity.list_nonconformity_use_case import (
     ListNonconformityUseCase,
 )
+from app.application.use_cases.ppm.get_ppm_series_use_case import (
+    GetPpmSeriesUseCase,
+)
 from app.application.use_cases.ppm.get_ppm_summary_use_case import (
     GetPpmSummaryUseCase,
 )
 from app.application.use_cases.ppm.list_ppm_use_case import (
     ListPpmUseCase,
+)
+from app.application.use_cases.quality.list_quality_branches_use_case import (
+    ListQualityBranchesUseCase,
 )
 from app.infrastructure.persistence.google_sheets.audit_5s.audit_5s_repository import (
     Audit5SRepository,
@@ -82,6 +88,14 @@ def build_get_ppm_summary_use_case() -> GetPpmSummaryUseCase:
 
 def build_list_ppm_use_case() -> ListPpmUseCase:
     return ListPpmUseCase(_build_ppm_repository())
+
+
+def build_get_ppm_series_use_case() -> GetPpmSeriesUseCase:
+    return GetPpmSeriesUseCase(_build_ppm_repository())
+
+
+def build_list_quality_branches_use_case() -> ListQualityBranchesUseCase:
+    return ListQualityBranchesUseCase(_build_ppm_repository())
 
 
 def build_list_nonconformity_use_case() -> ListNonconformityUseCase:

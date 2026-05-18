@@ -2,6 +2,8 @@ type Audit5sFiltersProps = {
   dateStart: string;
   dateEnd: string;
   branch: string;
+  branches?: string[];
+  branchesLoading?: boolean;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchChange: (value: string) => void;
@@ -11,10 +13,15 @@ export function Audit5sFilters({
   dateStart,
   dateEnd,
   branch,
+  branches = [],
+  branchesLoading = false,
   onDateStartChange,
   onDateEndChange,
   onBranchChange,
 }: Audit5sFiltersProps) {
+  const branchOptions =
+    branches.length > 0 ? branches : branch ? [branch] : [];
+
   return (
     <section className="dq-filters-row">
       <div className="dq-filter-box">
@@ -43,10 +50,14 @@ export function Audit5sFilters({
           id="a5s-branch"
           value={branch}
           onChange={(e) => onBranchChange(e.target.value)}
+          disabled={branchesLoading}
         >
           <option value="">Todas</option>
-          <option value="01">01</option>
-          <option value="02">02</option>
+          {branchOptions.map((code) => (
+            <option key={code} value={code}>
+              {code}
+            </option>
+          ))}
         </select>
       </div>
     </section>

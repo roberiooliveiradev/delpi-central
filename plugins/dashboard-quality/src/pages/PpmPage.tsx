@@ -22,6 +22,7 @@ import { QUALITY_ROUTES } from "../constants/routes";
 import { CHART_COLORS } from "../constants/chartColors";
 import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
 import { usePpmPage } from "../hooks/usePpmPage";
+import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import type { ChartGranularity } from "../types/chart";
 import type { PpmItem, PpmType } from "../types/ppm";
@@ -51,6 +52,8 @@ export function PpmPage({ pathname }: PpmPageProps) {
     apiParams,
   } = useQualityFilters();
 
+  const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
+
   const { summary, page: tablePage, loading, refreshing, error, reload } =
     usePpmPage({
       type: ppmType,
@@ -67,8 +70,6 @@ export function PpmPage({ pathname }: PpmPageProps) {
   } = usePpmChartSeries({
     type: ppmType,
     filters: apiParams,
-    dateStart,
-    dateEnd,
     granularity,
   });
 
@@ -186,6 +187,8 @@ export function PpmPage({ pathname }: PpmPageProps) {
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
+        branches={branches}
+        branchesLoading={branchesLoading}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}

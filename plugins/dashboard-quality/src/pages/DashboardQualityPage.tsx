@@ -11,6 +11,7 @@ import { KpiCard } from "../components/KpiCard";
 import { ModuleShortcut, PPM_SHORTCUT_HREF } from "../components/ModuleShortcut";
 import { SummaryCard } from "../components/SummaryCard";
 import { QUALITY_ROUTES } from "../constants/routes";
+import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityDashboard } from "../hooks/useQualityDashboard";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import {
@@ -58,7 +59,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
     setDateEnd,
     setBranch,
     apiParams,
+    filterState,
   } = useQualityFilters();
+
+  const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
 
   const {
     ppmInternal,
@@ -68,6 +72,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
     loading,
     refreshing,
     error,
+    sectionErrors,
     reload,
   } = useQualityDashboard(apiParams);
 
@@ -85,6 +90,8 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
+        branches={branches}
+        branchesLoading={branchesLoading}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}
@@ -98,6 +105,12 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           <button className="dq-primary-btn" type="button" onClick={reload}>
             Tentar novamente
           </button>
+        </div>
+      ) : null}
+
+      {Object.keys(sectionErrors).length > 0 ? (
+        <div className="dq-state dq-state--warning" role="status">
+          <p>Alguns indicadores não carregaram. Os demais permanecem disponíveis.</p>
         </div>
       ) : null}
 
@@ -171,7 +184,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         <h2 className="dq-section-title">Módulos</h2>
         <div className="dq-shortcuts-grid">
           {MODULE_SHORTCUTS.map((item) => (
-            <ModuleShortcut key={item.title} {...item} />
+            <ModuleShortcut key={item.title} {...item} filterState={filterState} />
           ))}
         </div>
       </section>

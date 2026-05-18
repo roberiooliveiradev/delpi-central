@@ -19,8 +19,10 @@ import { QualityPageHeader } from "../components/QualityPageHeader";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { CHART_COLORS } from "../constants/chartColors";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useNonconformitiesChart } from "../hooks/useNonconformitiesChart";
 import { useNonconformities } from "../hooks/useQualityQueries";
+import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import type { ChartGranularity } from "../types/chart";
 import type { Nonconformity, NonconformityType } from "../types/nonconformity";
@@ -60,17 +62,30 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
     apiParams,
   } = useQualityFilters();
 
+  const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
+
+  const debouncedStatus = useDebouncedValue(status);
+  const debouncedItemCode = useDebouncedValue(itemCode);
+  const debouncedDescription = useDebouncedValue(description);
+
   const listParams = useMemo(
     () => ({
       ...apiParams,
       type,
-      status: status || undefined,
-      item_code: itemCode || undefined,
-      description: description || undefined,
+      status: debouncedStatus || undefined,
+      item_code: debouncedItemCode || undefined,
+      description: debouncedDescription || undefined,
       page,
       page_size: PAGE_SIZE,
     }),
-    [apiParams, type, status, itemCode, description, page]
+    [
+      apiParams,
+      type,
+      debouncedStatus,
+      debouncedItemCode,
+      debouncedDescription,
+      page,
+    ]
   );
 
   const { data, loading, error, reload } = useNonconformities(listParams);
@@ -81,18 +96,18 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       branch: apiParams.branch,
       date_start: apiParams.date_start,
       date_end: apiParams.date_end,
-      status: status || undefined,
-      item_code: itemCode || undefined,
-      description: description || undefined,
+      status: debouncedStatus || undefined,
+      item_code: debouncedItemCode || undefined,
+      description: debouncedDescription || undefined,
     }),
     [
       type,
       apiParams.branch,
       apiParams.date_start,
       apiParams.date_end,
-      status,
-      itemCode,
-      description,
+      debouncedStatus,
+      debouncedItemCode,
+      debouncedDescription,
     ]
   );
 
@@ -245,6 +260,8 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
+        branches={branches}
+        branchesLoading={branchesLoading}
         type={type}
         status={status}
         itemCode={itemCode}

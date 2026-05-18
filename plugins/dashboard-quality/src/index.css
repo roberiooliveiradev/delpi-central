@@ -490,6 +490,12 @@
   margin-top: 8px;
 }
 
+.dashboard-quality .dq-state--warning {
+  background: color-mix(in srgb, var(--dq-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dq-accent) 35%, transparent);
+  color: var(--dq-text);
+}
+
 .dashboard-quality .dq-kpi-grid--single-row {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }

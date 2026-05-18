@@ -2,6 +2,8 @@ type KaizenFiltersProps = {
   dateStart: string;
   dateEnd: string;
   branch: string;
+  branches?: string[];
+  branchesLoading?: boolean;
   title: string;
   status: string;
   onDateStartChange: (value: string) => void;
@@ -15,6 +17,8 @@ export function KaizenFilters({
   dateStart,
   dateEnd,
   branch,
+  branches = [],
+  branchesLoading = false,
   title,
   status,
   onDateStartChange,
@@ -23,6 +27,9 @@ export function KaizenFilters({
   onTitleChange,
   onStatusChange,
 }: KaizenFiltersProps) {
+  const branchOptions =
+    branches.length > 0 ? branches : branch ? [branch] : [];
+
   return (
     <section className="dq-filters-row dq-filters-row--extended">
       <div className="dq-filter-box">
@@ -51,10 +58,14 @@ export function KaizenFilters({
           id="kz-branch"
           value={branch}
           onChange={(e) => onBranchChange(e.target.value)}
+          disabled={branchesLoading}
         >
           <option value="">Todas</option>
-          <option value="01">01</option>
-          <option value="02">02</option>
+          {branchOptions.map((code) => (
+            <option key={code} value={code}>
+              {code}
+            </option>
+          ))}
         </select>
       </div>
 

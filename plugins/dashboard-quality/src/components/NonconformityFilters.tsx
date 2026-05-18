@@ -4,6 +4,8 @@ type NonconformityFiltersProps = {
   dateStart: string;
   dateEnd: string;
   branch: string;
+  branches?: string[];
+  branchesLoading?: boolean;
   type: NonconformityType;
   status: string;
   itemCode: string;
@@ -21,6 +23,8 @@ export function NonconformityFilters({
   dateStart,
   dateEnd,
   branch,
+  branches = [],
+  branchesLoading = false,
   type,
   status,
   itemCode,
@@ -33,6 +37,9 @@ export function NonconformityFilters({
   onItemCodeChange,
   onDescriptionChange,
 }: NonconformityFiltersProps) {
+  const branchOptions =
+    branches.length > 0 ? branches : branch ? [branch] : [];
+
   return (
     <section className="dq-filters-row dq-filters-row--extended">
       <div className="dq-filter-box">
@@ -61,10 +68,14 @@ export function NonconformityFilters({
           id="nc-branch"
           value={branch}
           onChange={(e) => onBranchChange(e.target.value)}
+          disabled={branchesLoading}
         >
           <option value="">Todas</option>
-          <option value="01">01</option>
-          <option value="02">02</option>
+          {branchOptions.map((code) => (
+            <option key={code} value={code}>
+              {code}
+            </option>
+          ))}
         </select>
       </div>
 

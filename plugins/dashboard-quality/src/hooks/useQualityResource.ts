@@ -2,7 +2,20 @@ import { useCallback, useEffect, useState } from "react";
 
 type UseQualityResourceOptions = {
   enabled?: boolean;
+  /** TTL do cache em ms (stale-while-revalidate). */
+  cacheTtlMs?: number;
+  /** Chave estável; omitir desativa cache. */
+  cacheKey?: string;
 };
+
+type CacheEntry<T> = {
+  data: T;
+  fetchedAt: number;
+};
+
+const resourceCache = new Map<string, CacheEntry<unknown>>();
+
+const DEFAULT_CACHE_TTL_MS = 30_000;
 
 type UseQualityResourceResult<T> = {
   data: T | null;
@@ -21,6 +34,8 @@ export function useQualityResource<T>(
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const enabled = options.enabled !== false;
+  const cacheKey = options.cacheKey;
+  const cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
 
   useEffect(() => {
     if (!enabled) {
@@ -29,20 +44,46 @@ export function useQualityResource<T>(
     }
 
     const controller = new AbortController();
+    const cached = cacheKey
+      ? (resourceCache.get(cacheKey) as CacheEntry<T> | undefined)
+      : undefined;
+    const cacheAge = cached ? Date.now() - cached.fetchedAt : Number.POSITIVE_INFINITY;
+    const isCacheFresh = Boolean(cached && cacheAge < cacheTtlMs);
+
+    if (cached) {
+      setData(cached.data);
+    }
 
     async function run() {
       try {
         setError(null);
-        setLoading(true);
+
+        if (!cached) {
+          setLoading(true);
+        } else if (!isCacheFresh) {
+          setLoading(true);
+        }
 
         const result = await fetcher(controller.signal);
+
+        if (cacheKey) {
+          resourceCache.set(cacheKey, {
+            data: result,
+            fetchedAt: Date.now(),
+          });
+        }
+
         setData(result);
       } catch (err) {
         if (controller.signal.aborted) return;
 
-        setError(
-          err instanceof Error ? err.message : "Erro ao carregar dados de qualidade"
-        );
+        if (!cached) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Erro ao carregar dados de qualidade"
+          );
+        }
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
@@ -50,16 +91,24 @@ export function useQualityResource<T>(
       }
     }
 
+    if (isCacheFresh) {
+      setLoading(false);
+      return () => controller.abort();
+    }
+
     void run();
 
     return () => controller.abort();
     // fetcher é estável via deps primitivos passados pelo caller
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, reloadKey, ...deps]);
+  }, [enabled, reloadKey, cacheKey, cacheTtlMs, ...deps]);
 
   const reload = useCallback(() => {
+    if (cacheKey) {
+      resourceCache.delete(cacheKey);
+    }
     setReloadKey((prev) => prev + 1);
-  }, []);
+  }, [cacheKey]);
 
   return { data, loading, error, reload };
 }

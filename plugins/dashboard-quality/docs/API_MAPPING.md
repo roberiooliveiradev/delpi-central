@@ -40,6 +40,8 @@ Documentação oficial: `api-delpi/docs/api/06-modulos-departamentais.md` (seç�
 | `getPpmExternalSummary` | GET | `/quality/ppm/external/summary` | `branch`, `date_start`, `date_end` |
 | `listPpmInternal` | GET | `/quality/ppm/internal` | `branch`, `date_start`, `date_end`, `page`, `page_size` |
 | `listPpmExternal` | GET | `/quality/ppm/external` | `branch`, `date_start`, `date_end`, `page`, `page_size` |
+| `listQualityBranches` | GET | `/quality/branches` | `date_start`, `date_end` |
+| `getPpmSeries` | GET | `/quality/ppm/{type}/series` | `granularity`, `branch`, `date_start`, `date_end` |
 
 ---
 
