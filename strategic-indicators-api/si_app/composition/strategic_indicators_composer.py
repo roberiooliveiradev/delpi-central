@@ -126,6 +126,9 @@ from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_catalog_repository import (
     PostgresStrategicIndicatorsCatalogRepository,
 )
+from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_period_scores_repository import (
+    PostgresStrategicIndicatorsPeriodScoresRepository,
+)
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_resolved_indicators_catalog_repository import (
     PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository,
 )
@@ -208,6 +211,12 @@ def build_real_indicator_measurements_provider():
     )
 
 
+def build_strategic_indicators_period_scores_repository() -> (
+    PostgresStrategicIndicatorsPeriodScoresRepository
+):
+    return PostgresStrategicIndicatorsPeriodScoresRepository()
+
+
 def build_strategic_indicators_snapshot_service() -> StrategicIndicatorsSnapshotService:
     structural_catalog_repository = PostgresStrategicIndicatorsCatalogRepository()
     resolved_catalog_repository = PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository()
@@ -217,6 +226,7 @@ def build_strategic_indicators_snapshot_service() -> StrategicIndicatorsSnapshot
         resolved_indicators_catalog_repository=resolved_catalog_repository,
         measurements_port=build_real_indicator_measurements_provider(),
         measurements_port_factory=build_real_indicator_measurements_provider,
+        period_scores_repository=build_strategic_indicators_period_scores_repository(),
         calculator=StrategicIndicatorsCalculator(),
     )
 

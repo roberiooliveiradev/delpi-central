@@ -19,6 +19,9 @@ Igual à api-delpi para dados operacionais: `PLUGINS_*`, TOTVS, Google Sheets, P
 | `SI_SNAPSHOT_CACHE_TTL_SECONDS` | TTL do cache in-process de snapshots (padrão `600`). |
 | `SI_WARMUP_ON_STARTUP` | Aquece executive + trends em background no boot (`true` no Compose). |
 | `SI_WARMUP_TRENDS_MONTHS` | Meses carregados no warm-up (padrão `6`). |
+| `SI_PERIOD_SCORES_ENABLED` | Persiste scores por competência no Postgres para trends (padrão `true`). |
+
+Migration **V010** (`period_scores`) em `api-delpi/migrations/plugins/strategic-indicators/` — executar via `run_plugins_migrations.py` antes de usar em produção.
 
 ## Desenvolvimento local
 

@@ -31,11 +31,19 @@ from si_app.domain.ports.strategic_indicators.resolved_indicators_catalog_reposi
 from si_app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
+from si_app.application.services.strategic_indicators.period_scores_serialization import (
+    normalize_scope_branch,
+    normalize_scope_department_id,
+)
 from si_app.application.services.strategic_indicators.snapshot_shared_cache import (
     _catalog_cache as shared_catalog_cache,
     _measurements_cache as shared_measurements_cache,
     catalog_cache_key,
     measurements_cache_key,
+)
+from si_app.config import settings
+from si_app.domain.ports.strategic_indicators.period_scores_repository_port import (
+    StrategicIndicatorsPeriodScoresRepositoryPort,
 )
 
 logger = logging.getLogger("strategic_indicators.snapshot")
@@ -79,11 +87,13 @@ class StrategicIndicatorsSnapshotService:
             [], StrategicIndicatorsIndicatorMeasurementsPort
         ]
         | None = None,
+        period_scores_repository: StrategicIndicatorsPeriodScoresRepositoryPort | None = None,
     ) -> None:
         self._departments_catalog_repository = departments_catalog_repository
         self._resolved_indicators_catalog_repository = resolved_indicators_catalog_repository
         self._measurements_port = measurements_port
         self._measurements_port_factory = measurements_port_factory
+        self._period_scores_repository = period_scores_repository
         self._calculator = calculator
 
         self._catalog_cache: dict[str, StrategicIndicatorsCatalogSnapshot] = {}
@@ -429,23 +439,51 @@ class StrategicIndicatorsSnapshotService:
         branch: str | None = None,
     ) -> list[StrategicIndicatorsPeriodSnapshot]:
         started = time.perf_counter()
-        measurements_started = time.perf_counter()
+        scope_branch = normalize_scope_branch(branch)
+        scope_department_id = normalize_scope_department_id(department_id)
+
+        stored_snapshots: dict[str, StrategicIndicatorsPeriodSnapshot] = {}
         if (
-            self._measurements_port_factory is not None
-            and len(periods) > 1
-            and department_id in (None, "")
+            settings.SI_PERIOD_SCORES_ENABLED
+            and self._period_scores_repository is not None
+            and periods
         ):
-            measurements_by_period = self._load_measurements_by_period_parallel(
-                periods=periods,
-                department_id=department_id,
-                branch=branch,
+            stored_snapshots = self._period_scores_repository.list_period_snapshots(
+                competences=[period.competence for period in periods],
+                scope_branch=scope_branch,
+                scope_department_id=scope_department_id,
             )
-        else:
-            measurements_by_period = self._measurements_port.get_indicator_measurements_series(
-                periods=periods,
-                department_id=department_id,
-                branch=branch,
-            )
+
+        periods_to_compute = [
+            period
+            for period in periods
+            if period.competence not in stored_snapshots
+        ]
+
+        measurements_started = time.perf_counter()
+        measurements_by_period: dict[
+            str, tuple[list[StrategicIndicatorMeasuredValue], list[dict]]
+        ] = {}
+
+        if periods_to_compute:
+            if (
+                self._measurements_port_factory is not None
+                and len(periods_to_compute) > 1
+                and department_id in (None, "")
+            ):
+                measurements_by_period = self._load_measurements_by_period_parallel(
+                    periods=periods_to_compute,
+                    department_id=department_id,
+                    branch=branch,
+                )
+            else:
+                measurements_by_period = (
+                    self._measurements_port.get_indicator_measurements_series(
+                        periods=periods_to_compute,
+                        department_id=department_id,
+                        branch=branch,
+                    )
+                )
         measurements_ms = (time.perf_counter() - measurements_started) * 1000
 
         snapshots: list[StrategicIndicatorsPeriodSnapshot] = []
@@ -471,6 +509,11 @@ class StrategicIndicatorsSnapshotService:
             }
 
         for period in periods:
+            cached_snapshot = stored_snapshots.get(period.competence)
+            if cached_snapshot is not None:
+                snapshots.append(cached_snapshot)
+                continue
+
             indicators_catalog = (
                 self._resolved_indicators_catalog_repository.list_resolved_indicators_catalog(
                     competence=period.competence,
@@ -532,28 +575,40 @@ class StrategicIndicatorsSnapshotService:
                 calculated_departments
             )
 
-            snapshots.append(
-                StrategicIndicatorsPeriodSnapshot(
-                    period=period,
-                    measurements=measurements,
-                    measurement_errors=measurement_errors,
-                    calculated_indicators=calculated_indicators,
-                    calculated_departments=calculated_departments,
-                    igd=igd,
-                    igd_exact=igd_exact,
-                    classification=classification,
-                )
+            snapshot = StrategicIndicatorsPeriodSnapshot(
+                period=period,
+                measurements=measurements,
+                measurement_errors=measurement_errors,
+                calculated_indicators=calculated_indicators,
+                calculated_departments=calculated_departments,
+                igd=igd,
+                igd_exact=igd_exact,
+                classification=classification,
             )
+            snapshots.append(snapshot)
+
+            if (
+                settings.SI_PERIOD_SCORES_ENABLED
+                and self._period_scores_repository is not None
+            ):
+                self._period_scores_repository.upsert_period_snapshot(
+                    snapshot=snapshot,
+                    scope_branch=scope_branch,
+                    scope_department_id=scope_department_id,
+                )
 
         catalog_ms = (time.perf_counter() - catalog_started) * 1000
         build_ms = (time.perf_counter() - build_started) * 1000
         total_ms = (time.perf_counter() - started) * 1000
         logger.info(
             (
-                "si_series_snapshot periods=%d department_id=%s branch=%s "
+                "si_series_snapshot periods=%d computed=%d cached=%d "
+                "department_id=%s branch=%s "
                 "measurements_ms=%.0f catalog_ms=%.0f build_ms=%.0f total_ms=%.0f"
             ),
             len(periods),
+            len(periods_to_compute),
+            len(stored_snapshots),
             department_id,
             branch,
             measurements_ms,

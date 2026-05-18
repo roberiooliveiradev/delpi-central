@@ -122,7 +122,7 @@ PROIBIDO:
 
 - [x] 2.1 Séries consolidadas (7 deptos) em `real_indicator_measurements_provider.py`
 - [x] 2.2 Catálogo estrutural uma vez em `get_series_snapshot_optimized`
-- [ ] 2.3 Tabela `si_period_scores` (opcional, não implementado)
+- [x] 2.3 Tabela `period_scores` (Postgres) + cache de série em trends
 - [x] 2.4 Presentation `?include=` (API); trends-only sem comparativo
 - [x] 2.4b MFE split trends
 
@@ -161,6 +161,7 @@ PROIBIDO:
 | `TOTVS_POOL_MAX_SIZE` | `8` | Máx. conexões simultâneas (7 deptos + margem) |
 | `SI_WARMUP_ON_STARTUP` | `true` no Compose | Thread em background aquece executive + trends no boot |
 | `SI_WARMUP_TRENDS_MONTHS` | `6` | Meses pré-carregados no warm-up |
+| `SI_PERIOD_SCORES_ENABLED` | `true` | Persiste scores por competência (trends sem TOTVS) |
 
 ---
 
@@ -179,8 +180,8 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 
 ## 9. Ordem restante sugerida
 
-1. `si_period_scores` (2.3) — opcional, se trends ainda > 25s após warm-up
-2. Paginação em outras listas admin se o volume crescer (ex.: histórico de metas)
+1. Paginação em outras listas admin se o volume crescer (ex.: histórico de metas)
+2. Job de backfill de `period_scores` para competências históricas (opcional)
 
 ---
 
@@ -198,3 +199,4 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-18 | LMP: cache TTL do dashboard summary; SI ignora avg lead time |
 | 2026-05-18 | Warm-up executive + trends (`warmup_si_snapshots.py`, `SI_WARMUP_ON_STARTUP`) |
 | 2026-05-18 | Admin: batch monthly_targets; change-requests paginado; bench alerts |
+| 2026-05-18 | `period_scores` (V010): trends lê scores do Postgres quando todos os meses existem |

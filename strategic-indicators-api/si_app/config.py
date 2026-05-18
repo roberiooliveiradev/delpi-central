@@ -44,6 +44,10 @@ class Settings:
     SI_WARMUP_TRENDS_MONTHS: int = int(
         _get_env("SI_WARMUP_TRENDS_MONTHS", default="6") or "6"
     )
+    SI_PERIOD_SCORES_ENABLED: bool = (
+        str(_get_env("SI_PERIOD_SCORES_ENABLED", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
 
     # ==========================
     # Auth / Keycloak

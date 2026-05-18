@@ -61,7 +61,14 @@ def invalidate_strategic_indicators_snapshot_cache() -> None:
     from si_app.application.services.lmp.lmp_dashboard_summary_cache import (
         invalidate_lmp_dashboard_summary_cache,
     )
+    from si_app.config import settings
+    from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_period_scores_repository import (
+        PostgresStrategicIndicatorsPeriodScoresRepository,
+    )
 
     _measurements_cache.invalidate_all()
     _catalog_cache.invalidate_all()
     invalidate_lmp_dashboard_summary_cache()
+
+    if settings.SI_PERIOD_SCORES_ENABLED:
+        PostgresStrategicIndicatorsPeriodScoresRepository().delete_all()
