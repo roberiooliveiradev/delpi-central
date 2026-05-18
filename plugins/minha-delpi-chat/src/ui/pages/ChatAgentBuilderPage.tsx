@@ -12,7 +12,6 @@ import {
   Settings2,
   Sparkles,
   Trash2,
-  Upload,
   Wand2,
   X,
   Zap,
