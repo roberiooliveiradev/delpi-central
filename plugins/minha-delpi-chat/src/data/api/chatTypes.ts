@@ -19,6 +19,7 @@ export type ChatSource = {
   sourceRef?: string | null;
   chunkIndex?: number | null;
   score?: number | null;
+  scope?: string | null;
 };
 
 export type ChatPresentation =
@@ -40,6 +41,13 @@ export type ChatToolCall = {
   reason?: string | null;
   metadata?: (Record<string, unknown> & {
     presentation?: ChatPresentation | null;
+    responsePreview?: string | null;
+    actionId?: string | null;
+    provider?: string | null;
+    method?: string | null;
+    path?: string | null;
+    statusCode?: number | null;
+    ok?: boolean | null;
   }) | null;
 };
 

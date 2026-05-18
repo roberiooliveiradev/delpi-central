@@ -75,3 +75,4 @@ def test_agent_action_executes_only_when_allowed():
 
     assert called["value"] is True
     assert result["toolCalls"][0]["name"] == "execute_external_action"
+    assert '"ok": true' in result["toolCalls"][0]["metadata"]["responsePreview"]

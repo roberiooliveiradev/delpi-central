@@ -147,6 +147,11 @@ class ChatToolContextService:
                     "errorType": exc.__class__.__name__,
                 }
 
+                if tool_name == "execute_external_action":
+                    error_metadata["responsePreview"] = self._build_response_preview(
+                        error_metadata
+                    )
+
                 safe_tool_calls.append(
                     {
                         "name": tool_name,
@@ -165,15 +170,17 @@ class ChatToolContextService:
                 )
                 continue
 
-            # Safe metadata returned to the client and persisted in chat metadata.
-            # Do not include raw tool data here. Raw data may contain user profile,
-            # e-mail, permissions or operational values.
+            safe_metadata = self._build_safe_tool_metadata(
+                tool_name=result.name,
+                metadata=result.metadata,
+                data=result.data,
+            )
             safe_tool_calls.append(
                 {
                     "name": result.name,
                     "arguments": selected_tool.get("arguments") or {},
                     "reason": selected_tool.get("reason"),
-                    "metadata": result.metadata,
+                    "metadata": safe_metadata,
                 }
             )
 
@@ -197,6 +204,33 @@ class ChatToolContextService:
             "nativeToolCalling": native_meta,
         }
 
+
+    def _build_safe_tool_metadata(
+        self,
+        tool_name: str,
+        metadata: dict | None,
+        data,
+    ) -> dict:
+        safe_metadata = dict(metadata or {})
+
+        if tool_name == "execute_external_action":
+            safe_metadata["responsePreview"] = self._build_response_preview(data)
+
+        return safe_metadata
+
+    def _build_response_preview(self, data, max_chars: int = 12000) -> str:
+        if data is None:
+            return ""
+
+        try:
+            text = json.dumps(data, ensure_ascii=False, indent=2)
+        except (TypeError, ValueError):
+            text = str(data)
+
+        if len(text) <= max_chars:
+            return text
+
+        return f"{text[:max_chars]}\n…"
 
     def _format_tool_error_context(self, name: str, reason: str | None, error: Exception) -> str:
         payload = {

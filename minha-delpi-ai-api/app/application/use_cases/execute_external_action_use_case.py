@@ -4,10 +4,24 @@ from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.services.external_actions.external_action_execution_policy import (
     ExternalActionExecutionPolicy,
 )
-from app.domain.services.external_actions.external_action_result_presenter import ExternalActionResultPresenter
+from app.domain.services.external_actions.external_action_result_presenter import (
+    ExternalActionResultPresenter,
+)
 
 
 class ExecuteExternalActionUseCase:
+    INTERNAL_PARAMETER_NAMES = {
+        "message",
+        "prompt",
+        "question",
+        "input",
+        "text",
+        "queryText",
+        "query_text",
+        "userMessage",
+        "user_message",
+    }
+
     def __init__(
         self,
         repository,
@@ -48,17 +62,52 @@ class ExecuteExternalActionUseCase:
             access_token=access_token,
         )
 
-    INTERNAL_PARAMETER_NAMES = {
-        "message",
-        "prompt",
-        "question",
-        "input",
-        "text",
-        "queryText",
-        "query_text",
-        "userMessage",
-        "user_message",
-    }
+        sanitized_data = self.policy.sanitize_response(result["data"])
+        presentation = self.presenter.build_presentation(sanitized_data)
+
+        self.audit_repository.log(
+            user_id=UUID(user_id),
+            action="external_action.called",
+            context="external_action",
+            tool_calls=[
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "provider": provider["providerKey"],
+                        "actionId": action["actionId"],
+                        "method": action["method"],
+                        "path": action["path"],
+                        "statusCode": result["statusCode"],
+                        "durationMs": result["durationMs"],
+                        "sensitivity": action["sensitivity"],
+                    },
+                }
+            ],
+            metadata={
+                "provider": provider["providerKey"],
+                "action_id": action["actionId"],
+                "method": action["method"],
+                "path": action["path"],
+                "status_code": result["statusCode"],
+                "duration_ms": result["durationMs"],
+                "sensitivity": action["sensitivity"],
+            },
+        )
+
+        return {
+            "provider": provider["providerKey"],
+            "actionId": action["actionId"],
+            "method": action["method"],
+            "path": action["path"],
+            "statusCode": result["statusCode"],
+            "ok": result["ok"],
+            "data": sanitized_data,
+            "metadata": {
+                "durationMs": result["durationMs"],
+                "sensitivity": action["sensitivity"],
+                "presentation": presentation,
+            },
+        }
 
     def _drop_internal_unknown_parameters(self, action: dict, arguments: dict) -> dict:
         normalized = dict(arguments or {})
@@ -116,50 +165,3 @@ class ExecuteExternalActionUseCase:
         normalized["body"] = None
 
         return normalized
-
-        sanitized_data = self.policy.sanitize_response(result["data"])
-        presentation = self.presenter.build_presentation(sanitized_data)
-
-        self.audit_repository.log(
-            user_id=UUID(user_id),
-            action="external_action.called",
-            context="external_action",
-            tool_calls=[
-                {
-                    "name": "execute_external_action",
-                    "metadata": {
-                        "provider": provider["providerKey"],
-                        "actionId": action["actionId"],
-                        "method": action["method"],
-                        "path": action["path"],
-                        "statusCode": result["statusCode"],
-                        "durationMs": result["durationMs"],
-                        "sensitivity": action["sensitivity"],
-                    },
-                }
-            ],
-            metadata={
-                "provider": provider["providerKey"],
-                "action_id": action["actionId"],
-                "method": action["method"],
-                "path": action["path"],
-                "status_code": result["statusCode"],
-                "duration_ms": result["durationMs"],
-                "sensitivity": action["sensitivity"],
-            },
-        )
-
-        return {
-            "provider": provider["providerKey"],
-            "actionId": action["actionId"],
-            "method": action["method"],
-            "path": action["path"],
-            "statusCode": result["statusCode"],
-            "ok": result["ok"],
-            "data": sanitized_data,
-            "metadata": {
-                "durationMs": result["durationMs"],
-                "sensitivity": action["sensitivity"],
-                "presentation": presentation,
-            },
-        }

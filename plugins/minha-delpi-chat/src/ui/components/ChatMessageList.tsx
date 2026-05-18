@@ -8,8 +8,9 @@ import type {
 } from "../../data/api/chatTypes";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatMarkdown } from "./ChatMarkdown";
+import { ChatActionResults } from "./ChatActionResults";
 import { ChatSources } from "./ChatSources";
-import { ChatToolCalls } from "./ChatToolCalls";
+import { filterVisibleChatSources } from "./chatSourcesFilter";
 
 import "./ChatMessageList.css";
 
@@ -395,8 +396,10 @@ export function ChatMessageList({
 
             {message.role === "assistant" ? (
               <>
-                <ChatToolCalls toolCalls={getMessageToolCalls(message)} />
-                <ChatSources sources={getMessageSources(message)} />
+                <ChatActionResults toolCalls={getMessageToolCalls(message)} />
+                <ChatSources
+                  sources={filterVisibleChatSources(getMessageSources(message))}
+                />
               </>
             ) : null}
           </div>
@@ -423,8 +426,8 @@ export function ChatMessageList({
               </div>
             )}
 
-            <ChatToolCalls toolCalls={streamingToolCalls} />
-            <ChatSources sources={streamingSources} />
+            <ChatActionResults toolCalls={streamingToolCalls} />
+            <ChatSources sources={filterVisibleChatSources(streamingSources)} />
           </div>
         </article>
       ) : null}

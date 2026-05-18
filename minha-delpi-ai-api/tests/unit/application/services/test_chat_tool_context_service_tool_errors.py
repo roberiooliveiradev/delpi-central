@@ -41,6 +41,7 @@ def test_build_context_keeps_stream_alive_when_tool_fails():
     assert result["toolCalls"][0]["name"] == "execute_external_action"
     assert result["toolCalls"][0]["metadata"]["ok"] is False
     assert result["toolCalls"][0]["metadata"]["error"] == "Unknown parameter: message"
+    assert "responsePreview" in result["toolCalls"][0]["metadata"]
 
     assert "Ferramenta autorizada com erro" in result["context"]
     assert "não invente o resultado" in result["context"]
