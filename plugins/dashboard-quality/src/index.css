@@ -772,55 +772,233 @@
 
 @media print {
   @page {
-    margin: 12mm;
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Imprime só o dashboard qualidade, não sidebar nem chrome do portal */
+  body * {
+    visibility: hidden;
+  }
+
+  .dashboard-quality.dq-print-root,
+  .dashboard-quality.dq-print-root * {
+    visibility: visible;
+  }
+
+  .dashboard-quality.dq-print-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none;
+    min-height: auto;
+    margin: 0;
+    padding: 0;
+    z-index: 2147483647;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    animation: none !important;
+  }
+
+  .dashboard-quality .dq-app-shell {
+    animation: none !important;
+  }
+
+  .dashboard-quality.dashboard-page {
+    padding: 0 !important;
+    background: #fff !important;
   }
 
   .dashboard-quality .dq-no-print,
+  .dashboard-quality .dq-screen-only,
   .dashboard-quality .dq-nav,
   .dashboard-quality .dq-header-actions,
   .dashboard-quality .dq-pagination,
+  .dashboard-quality .dq-pagination__actions,
   .dashboard-quality .dq-chart-toolbar,
+  .dashboard-quality .dq-filters-row,
+  .dashboard-quality .dq-ppm-toolbar,
+  .dashboard-quality .dq-totvs-banner,
+  .dashboard-quality .dq-shortcuts-section,
+  .dashboard-quality .dq-chart-card__hint,
+  .dashboard-quality .dq-chart-card__hint--below,
   .dashboard-quality .dq-state--loading,
   .dashboard-quality .dq-state--error,
-  .dashboard-quality .dq-state--warning {
+  .dashboard-quality .dq-state--warning,
+  .dashboard-quality button {
     display: none !important;
   }
 
   .dashboard-quality .dq-print-only {
     display: block !important;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid #ccc;
+    margin: 0 0 8px;
+    padding: 0 0 8px;
+    border-bottom: 1px solid #999;
   }
 
-  .dashboard-quality .dq-page-header .dq-page-subtitle,
-  .dashboard-quality .dq-eyebrow {
-    color: #333 !important;
+  .dashboard-quality .dq-print-summary__title {
+    margin: 0 0 6px;
+    font-size: 16pt;
+    line-height: 1.2;
+    color: #000 !important;
   }
 
-  .dashboard-quality.dashboard-page,
-  .dashboard-quality.dq-print-root {
-    padding: 0;
-    background: #fff;
-    color: #000;
+  .dashboard-quality .dq-print-summary__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+  }
+
+  .dashboard-quality .dq-print-summary__meta dt {
+    display: inline;
+    font-size: 8pt;
+    color: #444 !important;
+  }
+
+  .dashboard-quality .dq-print-summary__meta dt::after {
+    content: ": ";
+  }
+
+  .dashboard-quality .dq-print-summary__meta dd {
+    display: inline;
+    margin: 0 12px 0 0;
+    font-size: 9pt;
+    font-weight: 600;
+    color: #000 !important;
+  }
+
+  .dashboard-quality .dq-kpi-grid,
+  .dashboard-quality .dq-summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .dashboard-quality .dq-charts-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .dashboard-quality .dq-chart-section,
+  .dashboard-quality .dq-table-section {
+    margin-bottom: 10px !important;
   }
 
   .dashboard-quality .dq-card {
     break-inside: avoid;
-    box-shadow: none;
-    border: 1px solid #ccc;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #bbb !important;
+    border-radius: 4px !important;
+    padding: 10px 12px !important;
+    margin: 0 0 8px !important;
+    background: #fff !important;
+  }
+
+  .dashboard-quality .dq-kpi-value {
+    font-size: 20pt !important;
+    line-height: 1.1;
+    color: #000 !important;
+  }
+
+  .dashboard-quality .dq-kpi-title,
+  .dashboard-quality .dq-kpi-subtitle,
+  .dashboard-quality .dq-chart-card__title {
+    color: #222 !important;
+  }
+
+  .dashboard-quality .dq-kpi-icon,
+  .dashboard-quality .dq-summary-card__icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .dashboard-quality .dq-chart-card__header {
+    margin-bottom: 6px;
   }
 
   .dashboard-quality .dq-chart-card__body {
-    min-height: 200px;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
+  .dashboard-quality .recharts-responsive-container {
+    width: 100% !important;
+    height: 220px !important;
+    min-height: 220px !important;
+    max-height: 220px !important;
+  }
+
+  .dashboard-quality .recharts-wrapper,
   .dashboard-quality .recharts-surface {
+    width: 100% !important;
     max-width: 100% !important;
+  }
+
+  .dashboard-quality .dq-sparkline .recharts-responsive-container {
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+  }
+
+  .dashboard-quality .dq-state-box {
+    min-height: 120px;
+    border: 1px dashed #ccc;
+    color: #555 !important;
+  }
+
+  .dashboard-quality .dq-table-wrap {
+    overflow: visible !important;
+  }
+
+  .dashboard-quality .dq-table {
+    font-size: 8pt;
+  }
+
+  .dashboard-quality .dq-table th,
+  .dashboard-quality .dq-table td {
+    padding: 4px 6px !important;
+    border-color: #ccc !important;
+    color: #000 !important;
+  }
+
+  .dashboard-quality .dq-table th {
+    background: #f0f0f0 !important;
+  }
+
+  .dashboard-quality .dq-section-title {
+    font-size: 11pt;
+    margin: 8px 0 6px;
+    color: #000 !important;
   }
 
   .dashboard-quality svg {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+}
+
+/* Força Recharts a recalcular dimensões antes do diálogo de impressão */
+html.dq-printing .dashboard-quality .recharts-responsive-container {
+  width: 100% !important;
+  height: 220px !important;
+  min-height: 220px !important;
 }

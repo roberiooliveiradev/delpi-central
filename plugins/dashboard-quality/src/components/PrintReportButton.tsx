@@ -5,6 +5,21 @@ type PrintReportButtonProps = {
   label?: string;
 };
 
+function triggerPrint() {
+  const cleanup = () => {
+    document.documentElement.classList.remove("dq-printing");
+    window.removeEventListener("afterprint", cleanup);
+  };
+
+  window.addEventListener("afterprint", cleanup);
+  document.documentElement.classList.add("dq-printing");
+  window.dispatchEvent(new Event("resize"));
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => window.print());
+  });
+}
+
 export function PrintReportButton({
   disabled = false,
   label = "Imprimir",
@@ -13,7 +28,7 @@ export function PrintReportButton({
     <button
       type="button"
       className="dq-ghost-btn dq-no-print"
-      onClick={() => window.print()}
+      onClick={triggerPrint}
       disabled={disabled}
       aria-label="Imprimir relatório da página"
     >

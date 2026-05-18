@@ -43,7 +43,7 @@ export function QualityPageHeader({
         />
       ) : null}
 
-      <header className="dq-page-header">
+      <header className="dq-page-header dq-screen-only">
         <div className="dq-page-header__brand">
           <div className="dq-header__icon" aria-hidden="true">
             <ShieldCheck size={28} strokeWidth={1.75} />
