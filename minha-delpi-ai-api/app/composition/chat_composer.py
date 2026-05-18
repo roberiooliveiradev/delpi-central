@@ -12,6 +12,9 @@ from app.application.services.chat_history_summary_service import ChatHistorySum
 from app.application.services.chat_intelligence_settings_service import (
     ChatIntelligenceSettingsService,
 )
+from app.application.services.chat_native_tool_calling_service import (
+    ChatNativeToolCallingService,
+)
 from app.application.services.chat_tool_router_service import ChatToolRouterService
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
@@ -177,6 +180,13 @@ def make_chat_agentic_tool_loop_service() -> ChatAgenticToolLoopService:
     )
 
 
+def make_chat_native_tool_calling_service() -> ChatNativeToolCallingService:
+    return ChatNativeToolCallingService(
+        llm_gateway=make_llm_gateway(),
+        intelligence_settings_service=make_chat_intelligence_settings_service(),
+    )
+
+
 def make_chat_tool_context_service() -> ChatToolContextService:
     return ChatToolContextService(
         tool_selection_service=ToolSelectionService(),
@@ -187,6 +197,7 @@ def make_chat_tool_context_service() -> ChatToolContextService:
         ),
         tool_router_service=make_chat_tool_router_service(),
         external_action_repository=make_postgres_external_action_repository(),
+        native_tool_calling_service=make_chat_native_tool_calling_service(),
     )
 
 

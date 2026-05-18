@@ -8,6 +8,7 @@ from app.application.services.chat_message_security_service import ChatMessageSe
 from app.application.services.chat_intelligence_metadata_service import (
     ChatIntelligenceMetadataService,
 )
+from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
@@ -95,6 +96,7 @@ class StreamChatMessageUseCase:
             )
 
         history_summary, history = self._prepare_history(previous_messages)
+        pipeline_timings = ChatPipelineTimings()
 
         rag = self.rag_context_service.build_context(
             message,
@@ -106,6 +108,7 @@ class StreamChatMessageUseCase:
             ),
         )
         sources = rag["sources"]
+        pipeline_timings.mark("rag_done")
 
         tool_context = self._build_tool_context(
             request,
@@ -119,10 +122,12 @@ class StreamChatMessageUseCase:
             tool_context=tool_context,
         )
         tool_calls = tool_context["toolCalls"]
+        pipeline_timings.mark("tools_done")
         intelligence_metadata = ChatIntelligenceMetadataService.build(
             sources=sources,
             tool_context=tool_context,
             embedding_cache_stats=self._embedding_cache_stats(),
+            pipeline_timings=pipeline_timings.to_dict(),
         )
 
         user_message = self.chat_repository.create_message(
@@ -199,6 +204,13 @@ class StreamChatMessageUseCase:
             }
 
         answer = "".join(answer_parts).strip()
+        pipeline_timings.mark("llm_done")
+        intelligence_metadata = ChatIntelligenceMetadataService.build(
+            sources=sources,
+            tool_context=tool_context,
+            embedding_cache_stats=self._embedding_cache_stats(),
+            pipeline_timings=pipeline_timings.to_dict(),
+        )
         latency_ms = int((time.perf_counter() - started_at) * 1000)
         prompt_tokens_estimated = self._estimate_tokens_from_messages(llm_messages)
         completion_tokens_estimated = self._estimate_tokens(answer)

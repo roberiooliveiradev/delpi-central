@@ -125,7 +125,7 @@ class ChatAgenticToolLoopService:
         parts = [existing_context, *context_blocks] if existing_context else context_blocks
         merged_context = "\n\n".join(part for part in parts if part).strip()
 
-        return {
+        merged = {
             "context": merged_context[: Settings.MAX_CONTEXT_CHARS],
             "toolCalls": safe_tool_calls,
             "agentic": {
@@ -133,6 +133,11 @@ class ChatAgenticToolLoopService:
                 "toolsAdded": len(context_blocks),
             },
         }
+
+        if tool_context.get("nativeToolCalling") is not None:
+            merged["nativeToolCalling"] = tool_context["nativeToolCalling"]
+
+        return merged
 
     def _resolve_settings(self) -> dict:
         runtime = self.intelligence_settings_service.resolve()

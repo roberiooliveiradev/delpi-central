@@ -17,6 +17,7 @@ class ChatIntelligenceSettings:
     rag_hybrid_enabled: bool
     rag_rerank_enabled: bool
     rag_fts_enabled: bool
+    native_tool_calling_enabled: bool
     agentic_loop_enabled: bool
     agentic_loop_max_steps: int
 
@@ -64,6 +65,10 @@ class ChatIntelligenceSettingsService:
                 stored.get("ragFtsEnabled"),
                 Settings.CHAT_RAG_FTS_ENABLED,
             ),
+            native_tool_calling_enabled=self._bool(
+                stored.get("nativeToolCallingEnabled"),
+                Settings.CHAT_NATIVE_TOOL_CALLING_ENABLED,
+            ),
             agentic_loop_enabled=self._bool(
                 stored.get("agenticLoopEnabled"),
                 Settings.CHAT_AGENTIC_LOOP_ENABLED,
@@ -86,6 +91,7 @@ class ChatIntelligenceSettingsService:
             "ragHybridEnabled": resolved.rag_hybrid_enabled,
             "ragRerankEnabled": resolved.rag_rerank_enabled,
             "ragFtsEnabled": resolved.rag_fts_enabled,
+            "nativeToolCallingEnabled": resolved.native_tool_calling_enabled,
             "agenticLoopEnabled": resolved.agentic_loop_enabled,
             "agenticLoopMaxSteps": resolved.agentic_loop_max_steps,
             "defaults": {
@@ -97,6 +103,7 @@ class ChatIntelligenceSettingsService:
                 "ragHybridEnabled": Settings.CHAT_RAG_HYBRID_ENABLED,
                 "ragRerankEnabled": Settings.CHAT_RAG_RERANK_ENABLED,
                 "ragFtsEnabled": Settings.CHAT_RAG_FTS_ENABLED,
+                "nativeToolCallingEnabled": Settings.CHAT_NATIVE_TOOL_CALLING_ENABLED,
                 "agenticLoopEnabled": Settings.CHAT_AGENTIC_LOOP_ENABLED,
                 "agenticLoopMaxSteps": Settings.CHAT_AGENTIC_LOOP_MAX_STEPS,
             },
@@ -136,6 +143,10 @@ class ChatIntelligenceSettingsService:
             "ragFtsEnabled": self._bool(
                 payload.get("ragFtsEnabled"),
                 current.rag_fts_enabled,
+            ),
+            "nativeToolCallingEnabled": self._bool(
+                payload.get("nativeToolCallingEnabled"),
+                current.native_tool_calling_enabled,
             ),
             "agenticLoopEnabled": self._bool(
                 payload.get("agenticLoopEnabled"),

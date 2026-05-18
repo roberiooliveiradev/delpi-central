@@ -174,3 +174,7 @@ class Settings:
     CHAT_RAG_FTS_ENABLED = (
         os.getenv("CHAT_RAG_FTS_ENABLED", "true").lower() == "true"
     )
+
+    CHAT_NATIVE_TOOL_CALLING_ENABLED = (
+        os.getenv("CHAT_NATIVE_TOOL_CALLING_ENABLED", "false").lower() == "true"
+    )

@@ -15,12 +15,14 @@ class ChatToolContextService:
         external_action_selection_service=None,
         tool_router_service=None,
         external_action_repository=None,
+        native_tool_calling_service=None,
     ):
         self.tool_selection_service = tool_selection_service
         self.execute_tool_use_case = execute_tool_use_case
         self.external_action_selection_service = external_action_selection_service
         self.tool_router_service = tool_router_service
         self.external_action_repository = external_action_repository
+        self.native_tool_calling_service = native_tool_calling_service
         self.external_action_result_presenter = ExternalActionResultPresenter()
 
     def build_context(
@@ -32,7 +34,22 @@ class ChatToolContextService:
         actions_enabled: bool = True,
         allowed_tool_names: list[str] | None = None,
     ) -> dict:
-        selected_tools = self.tool_selection_service.select_tools(message)
+        native_meta = {"used": False, "providerSupports": False}
+        native_selections: list[dict] = []
+
+        if self.native_tool_calling_service:
+            native_result = self.native_tool_calling_service.select_tools(
+                message=message,
+                allowed_tool_names=allowed_tool_names,
+                tools_registry=self.execute_tool_use_case.tools,
+            )
+            native_meta = native_result.get("meta") or native_meta
+            native_selections = list(native_result.get("selections") or [])
+
+        if native_selections:
+            selected_tools = native_selections
+        else:
+            selected_tools = self.tool_selection_service.select_tools(message)
 
         if allowed_tool_names:
             allowed = {str(item).strip() for item in allowed_tool_names if str(item).strip()}
@@ -42,7 +59,7 @@ class ChatToolContextService:
 
         router_suggestion = {"tools": [], "actionId": None}
 
-        if self.tool_router_service and actions_enabled:
+        if self.tool_router_service and actions_enabled and not native_selections:
             catalog_actions = []
 
             if self.external_action_repository and allowed_action_ids:
@@ -106,6 +123,7 @@ class ChatToolContextService:
             return {
                 "context": "",
                 "toolCalls": [],
+                "nativeToolCalling": native_meta,
             }
 
         context_blocks: list[str] = []
@@ -176,6 +194,7 @@ class ChatToolContextService:
         return {
             "context": context,
             "toolCalls": safe_tool_calls,
+            "nativeToolCalling": native_meta,
         }
 
 

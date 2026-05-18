@@ -299,6 +299,7 @@ export type AdminChatIntelligenceSettings = {
   ragHybridEnabled: boolean;
   ragRerankEnabled: boolean;
   ragFtsEnabled: boolean;
+  nativeToolCallingEnabled: boolean;
   agenticLoopEnabled: boolean;
   agenticLoopMaxSteps: number;
   defaults: {
@@ -310,6 +311,7 @@ export type AdminChatIntelligenceSettings = {
     ragHybridEnabled: boolean;
     ragRerankEnabled: boolean;
     ragFtsEnabled: boolean;
+    nativeToolCallingEnabled: boolean;
     agenticLoopEnabled: boolean;
     agenticLoopMaxSteps: number;
   };

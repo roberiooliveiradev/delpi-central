@@ -47,6 +47,7 @@ export function ChatIntelligenceSettingsPanel({
           ragHybridEnabled: settings.ragHybridEnabled,
           ragRerankEnabled: settings.ragRerankEnabled,
           ragFtsEnabled: settings.ragFtsEnabled,
+          nativeToolCallingEnabled: settings.nativeToolCallingEnabled,
           agenticLoopEnabled: settings.agenticLoopEnabled,
           agenticLoopMaxSteps: settings.agenticLoopMaxSteps,
         },
@@ -198,6 +199,20 @@ export function ChatIntelligenceSettingsPanel({
             }
           />
           <span>Busca FTS no Postgres (keyword RAG)</span>
+        </label>
+
+        <label className="mdc-admin-metrics-tab__checkbox">
+          <input
+            type="checkbox"
+            checked={settings.nativeToolCallingEnabled}
+            onChange={(event) =>
+              setSettings({
+                ...settings,
+                nativeToolCallingEnabled: event.target.checked,
+              })
+            }
+          />
+          <span>Tool-calling nativo do LLM (vLLM/Ollama)</span>
         </label>
 
         <label className="mdc-admin-metrics-tab__checkbox">

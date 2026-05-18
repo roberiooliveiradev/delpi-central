@@ -8,6 +8,7 @@ class ChatIntelligenceMetadataService:
         sources: list[dict],
         tool_context: dict,
         embedding_cache_stats: dict | None = None,
+        pipeline_timings: dict | None = None,
     ) -> dict:
         scores = [
             float(item.get("score"))
@@ -20,10 +21,14 @@ class ChatIntelligenceMetadataService:
             "topRagScore": max(scores) if scores else None,
             "toolCount": len(tool_context.get("toolCalls") or []),
             "agentic": tool_context.get("agentic"),
+            "nativeToolCalling": tool_context.get("nativeToolCalling"),
             "embeddingCacheBackend": Settings.EMBEDDING_CACHE_BACKEND,
         }
 
         if embedding_cache_stats:
             metadata["embeddingCache"] = embedding_cache_stats
+
+        if pipeline_timings:
+            metadata["timings"] = pipeline_timings
 
         return metadata
