@@ -222,9 +222,18 @@ export async function sendChatMessage(
   return parseJsonResponse<SendChatMessageResponse>(response);
 }
 
+function isAbortError(error: unknown, signal?: AbortSignal): boolean {
+  if (signal?.aborted) {
+    return true;
+  }
+
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
 async function consumeChatMessageStream(
   response: Response,
   callbacks: StreamCallbacks,
+  signal?: AbortSignal,
 ): Promise<void> {
   if (!response.body) {
     throw new Error("Erro ao iniciar streaming do Minha DELPI Chat.");
@@ -236,6 +245,7 @@ async function consumeChatMessageStream(
   let receivedDone = false;
   let streamErrorMessage: string | null = null;
 
+  try {
   while (true) {
     const { value, done } = await reader.read();
 
@@ -305,6 +315,19 @@ async function consumeChatMessageStream(
       }
     }
   }
+  } catch (error) {
+    if (isAbortError(error, signal)) {
+      return;
+    }
+
+    throw error;
+  } finally {
+    reader.releaseLock?.();
+  }
+
+  if (signal?.aborted) {
+    return;
+  }
 
   if (streamErrorMessage) {
     throw new Error(streamErrorMessage);
@@ -323,12 +346,22 @@ async function openChatMessageStream(
   callbacks: StreamCallbacks,
   options: ChatApiOptions & { signal?: AbortSignal } = {},
 ): Promise<void> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: await getAuthHeaders(options),
-    body: JSON.stringify(body),
-    signal: options.signal,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: await getAuthHeaders(options),
+      body: JSON.stringify(body),
+      signal: options.signal,
+    });
+  } catch (error) {
+    if (isAbortError(error, options.signal)) {
+      return;
+    }
+
+    throw error;
+  }
 
   if (!response.ok || !response.body) {
     const raw = await response.text();
@@ -357,7 +390,7 @@ async function openChatMessageStream(
     );
   }
 
-  await consumeChatMessageStream(response, callbacks);
+  await consumeChatMessageStream(response, callbacks, options.signal);
 }
 
 export async function streamChatMessage(
