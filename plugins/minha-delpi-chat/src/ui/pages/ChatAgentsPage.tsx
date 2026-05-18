@@ -10,7 +10,7 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
 import { ChatAgentActionsPage } from "./ChatAgentActionsPage";
@@ -146,6 +146,8 @@ export function ChatAgentsPage({
     providerKey?: string | null;
   } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const onReloadAgentsRef = useRef(onReloadAgents);
+  onReloadAgentsRef.current = onReloadAgents;
 
   const filteredAgents = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase();
@@ -171,9 +173,9 @@ export function ChatAgentsPage({
 
   useEffect(() => {
     if (canManageAgents) {
-      void onReloadAgents?.(false, true);
+      void onReloadAgentsRef.current?.(false, true);
     }
-  }, [canManageAgents, onReloadAgents]);
+  }, [canManageAgents]);
 
   useEffect(() => {
     if (!editAgentKey) {
