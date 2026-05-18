@@ -294,6 +294,197 @@
 
 .dashboard-quality .dq-module-shortcut {
   opacity: 0.85;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.dashboard-quality .dq-module-shortcut--link {
+  opacity: 1;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.dashboard-quality .dq-module-shortcut--link:hover {
+  border-color: color-mix(in srgb, var(--dq-accent) 40%, var(--dq-card-border));
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--dq-accent) 10%, transparent);
+}
+
+.dashboard-quality .dq-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dashboard-quality .dq-nav__link {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: var(--dq-font-sm);
+  font-weight: 600;
+  color: var(--dq-text-muted);
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.dashboard-quality .dq-nav__link:hover {
+  color: var(--dq-accent);
+  border-color: color-mix(in srgb, var(--dq-accent) 25%, transparent);
+}
+
+.dashboard-quality .dq-nav__link--active {
+  color: var(--dq-accent);
+  background: color-mix(in srgb, var(--dq-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--dq-accent) 25%, transparent);
+}
+
+.dashboard-quality .dq-ghost-btn {
+  min-height: var(--dq-control-height);
+  border-radius: var(--dq-control-radius);
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--dq-card-border);
+  background: transparent;
+  color: var(--dq-text);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.dashboard-quality .dq-ghost-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dashboard-quality .dq-ppm-toolbar {
+  margin-bottom: var(--dq-section-gap);
+}
+
+.dashboard-quality .dq-ppm-toggle {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--dq-card-border);
+  background: var(--dq-card-bg);
+  gap: 4px;
+}
+
+.dashboard-quality .dq-ppm-toggle__btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: var(--dq-font-sm);
+  color: var(--dq-text-muted);
+  cursor: pointer;
+}
+
+.dashboard-quality .dq-ppm-toggle__btn--active {
+  background: var(--dq-accent);
+  color: #fff;
+}
+
+.dashboard-quality .dq-kpi-grid--single-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-quality .dq-chart-section {
+  margin-bottom: var(--dq-section-gap);
+}
+
+.dashboard-quality .dq-chart-card__header {
+  margin-bottom: 12px;
+}
+
+.dashboard-quality .dq-chart-card__title {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  color: var(--dq-title);
+}
+
+.dashboard-quality .dq-chart-card__hint {
+  margin: 0;
+  font-size: var(--dq-font-xs);
+  color: var(--dq-text-muted);
+}
+
+.dashboard-quality .dq-chart-card__body {
+  min-height: 120px;
+}
+
+.dashboard-quality .dq-state-box {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dq-text-muted);
+  font-size: var(--dq-font-sm);
+}
+
+.dashboard-quality .dq-table-section__header {
+  margin-bottom: 12px;
+}
+
+.dashboard-quality .dq-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+.dashboard-quality .dq-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--dq-font-sm);
+}
+
+.dashboard-quality .dq-table th,
+.dashboard-quality .dq-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--dq-card-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.dashboard-quality .dq-table th {
+  font-weight: 700;
+  color: var(--dq-text-muted);
+  background: color-mix(in srgb, var(--dq-card-bg) 92%, var(--dq-accent) 8%);
+}
+
+.dashboard-quality .dq-table__col--wide {
+  min-width: 200px;
+  max-width: 360px;
+}
+
+.dashboard-quality .dq-table__col--numeric {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dashboard-quality .dq-table__empty {
+  text-align: center;
+  color: var(--dq-text-muted);
+  padding: 24px;
+}
+
+.dashboard-quality .dq-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-quality .dq-pagination__info {
+  font-size: var(--dq-font-sm);
+  color: var(--dq-text-muted);
+}
+
+.dashboard-quality .dq-pagination__actions {
+  display: flex;
+  gap: 8px;
 }
 
 .dashboard-quality .dq-module-shortcut__phase {

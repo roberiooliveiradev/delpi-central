@@ -1,15 +1,41 @@
+import { QUALITY_ROUTES } from "../constants/routes";
+
 type ModuleShortcutProps = {
   title: string;
   description: string;
-  phase: string;
+  phase?: string;
+  href?: string;
 };
 
-export function ModuleShortcut({ title, description, phase }: ModuleShortcutProps) {
-  return (
-    <article className="dq-card dq-module-shortcut" aria-disabled="true">
-      <span className="dq-module-shortcut__phase">{phase}</span>
+export function ModuleShortcut({
+  title,
+  description,
+  phase,
+  href,
+}: ModuleShortcutProps) {
+  const className = `dq-card dq-module-shortcut${href ? " dq-module-shortcut--link" : ""}`;
+
+  const content = (
+    <>
+      {phase ? <span className="dq-module-shortcut__phase">{phase}</span> : null}
       <h3 className="dq-module-shortcut__title">{title}</h3>
       <p className="dq-module-shortcut__description">{description}</p>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a href={href} className={className}>
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <article className={className} aria-disabled="true">
+      {content}
     </article>
   );
 }
+
+export const PPM_SHORTCUT_HREF = QUALITY_ROUTES.ppm;

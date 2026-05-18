@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   ClipboardCheck,
   Factory,
@@ -8,9 +8,11 @@ import {
 
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
-import { ModuleShortcut } from "../components/ModuleShortcut";
+import { ModuleShortcut, PPM_SHORTCUT_HREF } from "../components/ModuleShortcut";
 import { SummaryCard } from "../components/SummaryCard";
+import { QUALITY_ROUTES } from "../constants/routes";
 import { useQualityDashboard } from "../hooks/useQualityDashboard";
+import { useQualityFilters } from "../hooks/useQualityFilters";
 import {
   formatCurrency,
   formatDecimal,
@@ -18,17 +20,13 @@ import {
   formatPpm,
   formatScore,
 } from "../utils/format";
-import {
-  formatPeriodLabel,
-  getFirstDayOfMonthInputValue,
-  getTodayInputValue,
-} from "../utils/dates";
+import { formatPeriodLabel } from "../utils/dates";
 
 const MODULE_SHORTCUTS = [
   {
     title: "PPM detalhado",
     description: "Listagem interna e externa com paginação.",
-    phase: "Fase 3",
+    href: PPM_SHORTCUT_HREF,
   },
   {
     title: "Não conformidades",
@@ -47,10 +45,20 @@ const MODULE_SHORTCUTS = [
   },
 ] as const;
 
-export function DashboardQualityPage() {
-  const [dateStart, setDateStart] = useState(getFirstDayOfMonthInputValue);
-  const [dateEnd, setDateEnd] = useState(getTodayInputValue);
-  const [branch, setBranch] = useState("");
+type DashboardQualityPageProps = {
+  pathname?: string;
+};
+
+export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
+  const {
+    dateStart,
+    dateEnd,
+    branch,
+    setDateStart,
+    setDateEnd,
+    setBranch,
+    apiParams,
+  } = useQualityFilters();
 
   const {
     ppmInternal,
@@ -61,11 +69,7 @@ export function DashboardQualityPage() {
     refreshing,
     error,
     reload,
-  } = useQualityDashboard({
-    date_start: dateStart || undefined,
-    date_end: dateEnd || undefined,
-    branch: branch || undefined,
-  });
+  } = useQualityDashboard(apiParams);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -77,6 +81,7 @@ export function DashboardQualityPage() {
   return (
     <div className="dashboard-quality dashboard-page">
       <FilterBar
+        currentPath={pathname ?? QUALITY_ROUTES.home}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
@@ -163,7 +168,7 @@ export function DashboardQualityPage() {
       </section>
 
       <section className="dq-shortcuts-section">
-        <h2 className="dq-section-title">Próximas telas</h2>
+        <h2 className="dq-section-title">Módulos</h2>
         <div className="dq-shortcuts-grid">
           {MODULE_SHORTCUTS.map((item) => (
             <ModuleShortcut key={item.title} {...item} />

@@ -27,6 +27,14 @@
       "icon": "shield-check-icon",
       "order": 10,
       "showInMenu": true
+    },
+    {
+      "path": "/apps/dashboard-quality/ppm",
+      "label": "PPM",
+      "permission": "dashboard-quality.view",
+      "icon": "shield-check-icon",
+      "order": 11,
+      "showInMenu": false
     }
   ],
 

@@ -92,16 +92,18 @@ Depois, atribuir `dashboard-quality.view` ao perfil/grupo desejado no Keycloak o
 
 ---
 
-## Fase 3 — PPM (interno e externo)
+## Fase 3 — PPM (interno e externo) ✅
 
 **Entregáveis**
 
-- [ ] Aba ou rota `/ppm` com toggle interno | externo
-- [ ] Gráfico de evolução a partir de `/ppm/{type}/summary` (se série temporal no payload; senão derivar de lista paginada — validar contrato com backend)
-- [ ] Tabela paginada: `/ppm/internal` e `/ppm/external` (`page`, `page_size`)
-- [ ] Exportação CSV opcional (client-side) — nice-to-have
+- [x] Rota `/apps/dashboard-quality/ppm` + toggle interno | externo
+- [x] Gráfico mensal agregado a partir da listagem (amostra até 300 registros)
+- [x] Tabela paginada (`page`, `page_size` 20)
+- [x] Exportação CSV da página atual
 
 **Critério de pronto:** paginação estável; mesmos filtros da home aplicados.
+
+> Re-registrar manifesto na Core API se a rota `/ppm` ainda não existir no ambiente.
 
 ---
 

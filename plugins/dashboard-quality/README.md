@@ -38,7 +38,12 @@ Implementação espelhada em `plugins/dashboard-lmps` (cliente HTTP, federation,
 
 **Fase 0 concluída:** Vite + Module Federation, Docker/compose, shell placeholder.  
 **Fase 1 concluída:** `qualityApi.ts`, tipos DTO, hooks (`useQualityQueries`).  
-**Fase 2 concluída:** home executiva com filtros, KPIs PPM, resumos Kaizen/5S.
+**Fase 2 concluída:** home executiva com filtros, KPIs PPM, resumos Kaizen/5S.  
+**Fase 3 concluída:** rota `/apps/dashboard-quality/ppm` com tabela, gráfico e CSV.
+
+Rotas:
+- `/apps/dashboard-quality` — visão geral
+- `/apps/dashboard-quality/ppm` — PPM interno/externo
 
 ```bash
 cd plugins/dashboard-quality
