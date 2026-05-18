@@ -142,3 +142,55 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
                 page=page,
                 page_size=request.page_size or total
             )
+
+    def sum_returned_quantity(
+        self,
+        request: ListNonconformityRequest,
+        *,
+        regist_date_start: str | None = None,
+        regist_date_end: str | None = None,
+    ) -> tuple[float, int]:
+        qb = QueryBuilder()
+
+        qb.raw("D_E_L_E_T_ = ''")
+        qb.eq("QI2_FILIAL", request.branch)
+        qb.eq("QI2_STATUS", request.status)
+        qb.eq("QI2_ITEM", request.item_code)
+        qb.like("QI2_DESCR", request.description, case_insensitive=True)
+        qb.date_range(
+            field="QI2_REGIST",
+            start=regist_date_start,
+            end=regist_date_end,
+        )
+
+        if request.type == "internal":
+            qb.in_list("QI2_TIPO", self.INTERNAL_TYPES)
+        elif request.type == "external":
+            qb.in_list("QI2_TIPO", self.EXTERNAL_TYPES)
+
+        where_clause, params = qb.build()
+
+        sql = f"""
+            SELECT
+                ISNULL(
+                    SUM(
+                        COALESCE(
+                            TRY_PARSE(NULLIF(LTRIM(RTRIM(QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'pt-BR'),
+                            TRY_PARSE(NULLIF(LTRIM(RTRIM(QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'en-US'),
+                            0
+                        )
+                    ),
+                    0
+                ) AS total_returned,
+                COUNT(1) AS registros
+            FROM QI2010
+            WHERE {where_clause}
+        """
+
+        with self as repo:
+            row = repo.execute_one(sql, params) or {}
+
+        return (
+            float(row.get("total_returned") or 0),
+            int(row.get("registros") or 0),
+        )

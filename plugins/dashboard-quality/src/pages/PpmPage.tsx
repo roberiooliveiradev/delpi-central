@@ -11,7 +11,7 @@ import {
 } from "recharts";
 
 import { ChartCard } from "../components/ChartCard";
-import { ChartGranularityToggle } from "../components/ChartGranularityToggle";
+import { ChartToolbar } from "../components/ChartToolbar";
 import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { KpiCard } from "../components/KpiCard";
 import { Pagination } from "../components/Pagination";
@@ -20,7 +20,7 @@ import { QualityFilters } from "../components/QualityFilters";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { CHART_COLORS } from "../constants/chartColors";
-import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
+import { usePpmChartSeries, type PpmSeriesPoint } from "../hooks/usePpmChartSeries";
 import { usePpmPage } from "../hooks/usePpmPage";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
@@ -29,6 +29,7 @@ import type { PpmItem, PpmType } from "../types/ppm";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import { formatDecimal, formatPpm } from "../utils/format";
+import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
 import { suggestGranularity } from "../utils/periodBuckets";
 
 const CHART_HEIGHT = 320;
@@ -161,6 +162,24 @@ export function PpmPage({ pathname }: PpmPageProps) {
   const typeLabel = ppmType === "internal" ? "interno" : "externo";
   const hasChartValues = chartData.some((point) => point.ppm > 0);
 
+  const handleChartDrillDown = (point: PpmSeriesPoint) => {
+    if (!point.dateStart || !point.dateEnd) return;
+    setDateStart(point.dateStart);
+    setDateEnd(point.dateEnd);
+    setPage(1);
+  };
+
+  const handleExportChartCsv = () => {
+    downloadChartSeriesCsv(
+      `ppm-${ppmType}-serie.csv`,
+      chartData.map((point) => ({
+        periodo: point.periodo,
+        value: point.ppm,
+        valueLabel: "PPM",
+      }))
+    );
+  };
+
   return (
     <div className="dashboard-quality dashboard-page">
       <QualityPageHeader
@@ -236,16 +255,16 @@ export function PpmPage({ pathname }: PpmPageProps) {
           hint={
             chartTruncated
               ? "Período extenso: exibindo os primeiros 60 intervalos. Ajuste o filtro ou a granularidade."
-              : "PPM calculado por intervalo (devolvido ÷ produzido), com a mesma regra do resumo."
+              : "PPM por intervalo (devolvido ÷ produzido). Clique em um ponto para filtrar a tabela."
           }
         >
-          <div className="dq-chart-toolbar">
-            <ChartGranularityToggle
-              idPrefix="ppm"
-              value={granularity}
-              onChange={setGranularity}
-            />
-          </div>
+          <ChartToolbar
+            idPrefix="ppm"
+            granularity={granularity}
+            onGranularityChange={setGranularity}
+            onExportCsv={handleExportChartCsv}
+            exportDisabled={chartData.length === 0}
+          />
 
           {chartError ? (
             <div className="dq-state dq-state--error" role="alert">
@@ -259,7 +278,17 @@ export function PpmPage({ pathname }: PpmPageProps) {
 
           {!chartError && (chartData.length > 0 || chartLoading) ? (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <LineChart data={chartData}>
+              <LineChart
+                data={chartData}
+                onClick={(state) => {
+                  const rawIndex = state?.activeTooltipIndex;
+                  const index =
+                    typeof rawIndex === "number" ? rawIndex : Number(rawIndex);
+                  if (!Number.isFinite(index) || index < 0) return;
+                  const point = chartData[index];
+                  if (point) handleChartDrillDown(point);
+                }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="periodo"
@@ -278,7 +307,8 @@ export function PpmPage({ pathname }: PpmPageProps) {
                   dataKey="ppm"
                   stroke={CHART_COLORS[0]}
                   strokeWidth={2}
-                  dot={{ r: 4 }}
+                  dot={{ r: 4, cursor: "pointer" }}
+                  activeDot={{ r: 6, cursor: "pointer" }}
                   name="PPM"
                 />
               </LineChart>

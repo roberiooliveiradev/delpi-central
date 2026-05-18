@@ -15,6 +15,9 @@ from app.application.dto.kaizen.kaizen_summary_request import (
 from app.application.dto.nonconformity.list_nonconformity_request import (
     ListNonconformityRequest,
 )
+from app.application.dto.nonconformity.nonconformity_series_request import (
+    NonconformitySeriesRequest,
+)
 from app.application.dto.ppm.list_ppm_request import ListPpmRequest
 from app.application.dto.ppm.ppm_series_request import PpmSeriesRequest
 from app.application.dto.ppm.ppm_summary_request import PpmSummaryRequest
@@ -24,6 +27,7 @@ from app.composition.quality_composer import (
     build_get_kaizen_summary_use_case,
     build_get_ppm_series_use_case,
     build_get_ppm_summary_use_case,
+    build_get_nonconformity_series_use_case,
     build_list_nonconformity_use_case,
     build_list_ppm_use_case,
     build_list_quality_branches_use_case,
@@ -55,6 +59,47 @@ def list_quality_branches(
         log_error(f"Erro ao listar filiais de qualidade: {exc}")
         return error_response(
             "Erro interno ao listar filiais de qualidade.",
+            status_code=500,
+        )
+
+
+@router.get("/nonconformities/series")
+@require_any_permission(["api-delpi.quality.access", "dashboard-quality.view"])
+def get_nonconformity_series(
+    type: str = Query("all", pattern="^(internal|external|all)$"),
+    granularity: str = Query("month", pattern="^(day|week|month|year)$"),
+    branch: Optional[str] = None,
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
+    status: Optional[str] = None,
+    item_code: Optional[str] = None,
+    description: Optional[str] = None,
+):
+    try:
+        dto = NonconformitySeriesRequest(
+            type=type,
+            granularity=granularity,
+            branch=branch,
+            date_start=date_start,
+            date_end=date_end,
+            status=status,
+            item_code=item_code,
+            description=description,
+        )
+
+        use_case = build_get_nonconformity_series_use_case()
+        result = use_case.execute(dto)
+
+        return success_response(data=result.to_dict())
+
+    except ValueError as exc:
+        log_error(f"Erro de validação ao buscar série de NC: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao buscar série de NC: {exc}")
+        return error_response(
+            "Erro interno ao buscar série de não conformidades.",
             status_code=500,
         )
 

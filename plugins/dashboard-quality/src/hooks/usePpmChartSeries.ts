@@ -7,6 +7,8 @@ import { useQualityResource } from "./useQualityResource";
 export type PpmSeriesPoint = {
   periodo: string;
   sortKey: string;
+  dateStart: string;
+  dateEnd: string;
   ppm: number;
 };
 
@@ -64,6 +66,8 @@ export function usePpmChartSeries({
     data?.points.map((point) => ({
       periodo: point.periodo,
       sortKey: point.sort_key,
+      dateStart: point.date_start,
+      dateEnd: point.date_end,
       ppm: point.ppm,
     })) ?? [];
 

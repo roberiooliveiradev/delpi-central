@@ -8,9 +8,12 @@ import {
 
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
+import { PpmSparkline } from "../components/PpmSparkline";
 import { ModuleShortcut, PPM_SHORTCUT_HREF } from "../components/ModuleShortcut";
 import { SummaryCard } from "../components/SummaryCard";
 import { QUALITY_ROUTES } from "../constants/routes";
+import { CHART_COLORS } from "../constants/chartColors";
+import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityDashboard } from "../hooks/useQualityDashboard";
 import { useQualityFilters } from "../hooks/useQualityFilters";
@@ -76,6 +79,18 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
     reload,
   } = useQualityDashboard(apiParams);
 
+  const internalSparkline = usePpmChartSeries({
+    type: "internal",
+    filters: apiParams,
+    granularity: "month",
+  });
+
+  const externalSparkline = usePpmChartSeries({
+    type: "external",
+    filters: apiParams,
+    granularity: "month",
+  });
+
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
@@ -127,6 +142,12 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           subtitle={`Devolvido: ${formatDecimal(ppmInternal?.total_devolvido_un)} un · ${periodLabel}`}
           icon={<Factory size={22} />}
           loading={isBusy && !ppmInternal}
+          footer={
+            <PpmSparkline
+              data={internalSparkline.points}
+              loading={internalSparkline.loading}
+            />
+          }
         />
         <KpiCard
           title="PPM externo"
@@ -134,6 +155,13 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           subtitle={`Devolvido: ${formatDecimal(ppmExternal?.total_devolvido_un)} un · ${periodLabel}`}
           icon={<Truck size={22} />}
           loading={isBusy && !ppmExternal}
+          footer={
+            <PpmSparkline
+              data={externalSparkline.points}
+              color={CHART_COLORS[1]}
+              loading={externalSparkline.loading}
+            />
+          }
         />
       </section>
 

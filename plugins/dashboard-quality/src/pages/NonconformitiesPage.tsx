@@ -11,7 +11,7 @@ import {
 } from "recharts";
 
 import { ChartCard } from "../components/ChartCard";
-import { ChartGranularityToggle } from "../components/ChartGranularityToggle";
+import { ChartToolbar } from "../components/ChartToolbar";
 import { DataTable, type DataTableColumn } from "../components/DataTable";
 import { NonconformityFilters } from "../components/NonconformityFilters";
 import { Pagination } from "../components/Pagination";
@@ -24,11 +24,12 @@ import { useNonconformitiesChart } from "../hooks/useNonconformitiesChart";
 import { useNonconformities } from "../hooks/useQualityQueries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
-import type { ChartGranularity } from "../types/chart";
+import type { ChartGranularity, ChartSeriesPoint } from "../types/chart";
 import type { Nonconformity, NonconformityType } from "../types/nonconformity";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate } from "../utils/dates";
 import { formatDecimal } from "../utils/format";
+import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
 import { suggestGranularity } from "../utils/periodBuckets";
 
 const PAGE_SIZE = 20;
@@ -113,14 +114,12 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
 
   const {
     points: chartData,
-    sampleSize,
+    truncated: chartTruncated,
     loading: chartLoading,
     error: chartError,
     reload: reloadChart,
   } = useNonconformitiesChart({
     filters: chartFilters,
-    dateStart,
-    dateEnd,
     granularity,
   });
 
@@ -233,6 +232,24 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
 
   const hasChartValues = chartData.some((point) => point.value > 0);
 
+  const handleChartDrillDown = (point: ChartSeriesPoint) => {
+    if (!point.dateStart || !point.dateEnd) return;
+    setDateStart(point.dateStart);
+    setDateEnd(point.dateEnd);
+    setPage(1);
+  };
+
+  const handleExportChartCsv = () => {
+    downloadChartSeriesCsv(
+      "nao-conformidades-serie.csv",
+      chartData.map((point) => ({
+        periodo: point.periodo,
+        value: point.value,
+        valueLabel: "Qtd. devolvida",
+      }))
+    );
+  };
+
   return (
     <div className="dashboard-quality dashboard-page">
       <QualityPageHeader
@@ -287,15 +304,19 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       <section className="dq-chart-section" aria-busy={chartLoading}>
         <ChartCard
           title="Quantidade devolvida"
-          hint={`Agregado por data de registro (amostra de até ${sampleSize} registros).`}
+          hint={
+            chartTruncated
+              ? "Período extenso: exibindo os primeiros 60 intervalos. Clique em um ponto para filtrar a tabela."
+              : "Agregado por data de registro no TOTVS. Clique em um ponto para filtrar a tabela."
+          }
         >
-          <div className="dq-chart-toolbar">
-            <ChartGranularityToggle
-              idPrefix="nc"
-              value={granularity}
-              onChange={setGranularity}
-            />
-          </div>
+          <ChartToolbar
+            idPrefix="nc"
+            granularity={granularity}
+            onGranularityChange={setGranularity}
+            onExportCsv={handleExportChartCsv}
+            exportDisabled={chartData.length === 0}
+          />
 
           {chartError ? (
             <div className="dq-state dq-state--error" role="alert">
@@ -309,7 +330,17 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
 
           {!chartError && (chartData.length > 0 || chartLoading) ? (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <BarChart data={chartData}>
+              <BarChart
+                data={chartData}
+                onClick={(state) => {
+                  const rawIndex = state?.activeTooltipIndex;
+                  const index =
+                    typeof rawIndex === "number" ? rawIndex : Number(rawIndex);
+                  if (!Number.isFinite(index) || index < 0) return;
+                  const point = chartData[index];
+                  if (point) handleChartDrillDown(point);
+                }}
+              >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis
                   dataKey="periodo"
@@ -327,6 +358,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
                   dataKey="value"
                   fill={CHART_COLORS[2]}
                   radius={[6, 6, 0, 0]}
+                  cursor="pointer"
                   name="Qtd. devolvida"
                 />
               </BarChart>

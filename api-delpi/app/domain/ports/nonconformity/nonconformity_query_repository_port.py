@@ -15,3 +15,13 @@ class NonconformityQueryRepositoryPort(ABC):
         request: ListNonconformityRequest
     ):
         raise NotImplementedError
+
+    @abstractmethod
+    def sum_returned_quantity(
+        self,
+        request: ListNonconformityRequest,
+        *,
+        regist_date_start: str | None = None,
+        regist_date_end: str | None = None,
+    ) -> tuple[float, int]:
+        raise NotImplementedError

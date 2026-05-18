@@ -6,6 +6,7 @@ type KpiCardProps = {
   subtitle: string;
   icon: ReactNode;
   loading?: boolean;
+  footer?: ReactNode;
 };
 
 export function KpiCard({
@@ -14,6 +15,7 @@ export function KpiCard({
   subtitle,
   icon,
   loading = false,
+  footer,
 }: KpiCardProps) {
   return (
     <article className="dq-card dq-kpi-card">
@@ -27,6 +29,7 @@ export function KpiCard({
           {icon}
         </div>
       </div>
+      {footer ? <div className="dq-kpi-footer">{footer}</div> : null}
     </article>
   );
 }

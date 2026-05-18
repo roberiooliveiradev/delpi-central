@@ -9,6 +9,9 @@ from app.application.use_cases.audit_5s.get_audit_5s_summary_use_case import (
 from app.application.use_cases.kaizen.get_kaizen_summary_use_case import (
     GetKaizenSummaryUseCase,
 )
+from app.application.use_cases.nonconformity.get_nonconformity_series_use_case import (
+    GetNonconformitySeriesUseCase,
+)
 from app.application.use_cases.nonconformity.list_nonconformity_use_case import (
     ListNonconformityUseCase,
 )
@@ -100,6 +103,10 @@ def build_list_quality_branches_use_case() -> ListQualityBranchesUseCase:
 
 def build_list_nonconformity_use_case() -> ListNonconformityUseCase:
     return ListNonconformityUseCase(_build_nonconformity_repository())
+
+
+def build_get_nonconformity_series_use_case() -> GetNonconformitySeriesUseCase:
+    return GetNonconformitySeriesUseCase(_build_nonconformity_repository())
 
 
 def build_quality_metrics_snapshot_service() -> QualityMetricsSnapshotService:

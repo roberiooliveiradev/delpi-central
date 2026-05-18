@@ -483,7 +483,42 @@
 }
 
 .dashboard-quality .dq-chart-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.dashboard-quality .dq-chart-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-quality .dq-chart-toolbar__export {
+  white-space: nowrap;
+}
+
+.dashboard-quality .dq-kpi-footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dq-card-border);
+}
+
+.dashboard-quality .dq-sparkline {
+  height: 56px;
+}
+
+.dashboard-quality .dq-sparkline--loading,
+.dashboard-quality .dq-sparkline--empty {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--dq-font-xs);
+  color: var(--dq-text-muted);
 }
 
 .dashboard-quality .dq-chart-card__hint--below {

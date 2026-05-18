@@ -36,3 +36,19 @@ export type Nonconformity = {
   produced_quantity: number | null;
   returned_quantity: number | null;
 };
+
+export type NonconformitySeriesPoint = {
+  periodo: string;
+  sort_key: string;
+  date_start: string;
+  date_end: string;
+  value: number;
+  registros: number;
+};
+
+export type NonconformitySeriesResponse = {
+  type: NonconformityType;
+  granularity: string;
+  truncated: boolean;
+  points: NonconformitySeriesPoint[];
+};

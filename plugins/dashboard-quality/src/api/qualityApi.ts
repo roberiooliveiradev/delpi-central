@@ -13,6 +13,7 @@ import type {
 import type {
   ListNonconformitiesParams,
   Nonconformity,
+  NonconformitySeriesResponse,
 } from "../types/nonconformity";
 import type { ChartGranularity } from "../types/chart";
 import type {
@@ -140,6 +141,28 @@ export async function listQualityBranches(
   signal?: AbortSignal
 ): Promise<QualityBranchesResponse> {
   return fetchQualityData<QualityBranchesResponse>("/branches", params, signal);
+}
+
+export async function getNonconformitySeries(
+  params: Omit<ListNonconformitiesParams, "page" | "page_size"> & {
+    granularity: ChartGranularity;
+  },
+  signal?: AbortSignal
+): Promise<NonconformitySeriesResponse> {
+  return fetchQualityData<NonconformitySeriesResponse>(
+    "/nonconformities/series",
+    {
+      type: params.type ?? "all",
+      branch: params.branch,
+      date_start: params.date_start,
+      date_end: params.date_end,
+      status: params.status,
+      item_code: params.item_code,
+      description: params.description,
+      granularity: params.granularity,
+    },
+    signal
+  );
 }
 
 export async function getPpmSeries(
