@@ -1,25 +1,130 @@
 import { httpGet } from "./httpClient";
 import { buildQuery } from "./query";
 import type { ApiSuccessResponse } from "../types/api";
+import type { Page } from "../types/pagination";
+import type {
+  Audit5sSummary,
+  Audit5sSummaryParams,
+} from "../types/audit5s";
+import type {
+  KaizenSummary,
+  KaizenSummaryParams,
+} from "../types/kaizen";
+import type {
+  ListNonconformitiesParams,
+  Nonconformity,
+} from "../types/nonconformity";
+import type {
+  DateRangeParams,
+  ListPpmParams,
+  PpmItem,
+  PpmSummary,
+  PpmType,
+} from "../types/ppm";
 
-const API_BASE = "/apps/api-delpi/quality";
+export const QUALITY_API_BASE = "/apps/api-delpi/quality";
 
-export type DateRangeParams = {
-  branch?: string;
-  date_start?: string;
-  date_end?: string;
-};
+async function fetchQualityData<T>(
+  path: string,
+  params: Record<string, string | number | undefined | null> = {},
+  signal?: AbortSignal
+): Promise<T> {
+  const query = buildQuery(params);
+  const response = await httpGet<ApiSuccessResponse<T>>(
+    `${QUALITY_API_BASE}${path}${query}`,
+    { signal }
+  );
+
+  if (response.success === false) {
+    throw new Error(response.message || "Erro na API de qualidade");
+  }
+
+  return response.data;
+}
+
+export async function listNonconformities(
+  params: ListNonconformitiesParams = {},
+  signal?: AbortSignal
+): Promise<Page<Nonconformity>> {
+  return fetchQualityData<Page<Nonconformity>>(
+    "/nonconformities",
+    {
+      type: params.type ?? "all",
+      branch: params.branch,
+      date_start: params.date_start,
+      date_end: params.date_end,
+      status: params.status,
+      item_code: params.item_code,
+      description: params.description,
+      page: params.page,
+      page_size: params.page_size,
+    },
+    signal
+  );
+}
+
+export async function getKaizenSummary(
+  params: KaizenSummaryParams = {},
+  signal?: AbortSignal
+): Promise<KaizenSummary> {
+  return fetchQualityData<KaizenSummary>("/kaizens/summary", params, signal);
+}
+
+export async function getAudit5sSummary(
+  params: Audit5sSummaryParams = {},
+  signal?: AbortSignal
+): Promise<Audit5sSummary> {
+  return fetchQualityData<Audit5sSummary>(
+    "/audit-5s/summary",
+    params,
+    signal
+  );
+}
+
+export async function getPpmSummary(
+  type: PpmType,
+  params: DateRangeParams = {},
+  signal?: AbortSignal
+): Promise<PpmSummary> {
+  return fetchQualityData<PpmSummary>(
+    `/ppm/${type}/summary`,
+    params,
+    signal
+  );
+}
 
 export async function getPpmInternalSummary(
   params: DateRangeParams = {},
   signal?: AbortSignal
-): Promise<unknown> {
-  const query = buildQuery(params);
+): Promise<PpmSummary> {
+  return getPpmSummary("internal", params, signal);
+}
 
-  const response = await httpGet<ApiSuccessResponse<unknown>>(
-    `${API_BASE}/ppm/internal/summary${query}`,
-    { signal }
-  );
+export async function getPpmExternalSummary(
+  params: DateRangeParams = {},
+  signal?: AbortSignal
+): Promise<PpmSummary> {
+  return getPpmSummary("external", params, signal);
+}
 
-  return response.data;
+export async function listPpm(
+  type: PpmType,
+  params: ListPpmParams = {},
+  signal?: AbortSignal
+): Promise<Page<PpmItem>> {
+  return fetchQualityData<Page<PpmItem>>(`/ppm/${type}`, params, signal);
+}
+
+export async function listPpmInternal(
+  params: ListPpmParams = {},
+  signal?: AbortSignal
+): Promise<Page<PpmItem>> {
+  return listPpm("internal", params, signal);
+}
+
+export async function listPpmExternal(
+  params: ListPpmParams = {},
+  signal?: AbortSignal
+): Promise<Page<PpmItem>> {
+  return listPpm("external", params, signal);
 }

@@ -36,11 +36,29 @@ Implementação espelhada em `plugins/dashboard-lmps` (cliente HTTP, federation,
 
 ## Status
 
-**Fase 0 concluída:** Vite + Module Federation, Docker/compose, cliente HTTP, shell placeholder.
-
-Pendente operacional: registrar `dashboard-quality.manifest.json` na Core API e conceder `dashboard-quality.view` aos usuários.
+**Fase 0 concluída:** Vite + Module Federation, Docker/compose, shell placeholder.  
+**Fase 1 concluída:** `qualityApi.ts`, tipos DTO, hooks (`useQualityQueries`).  
+**Fase 2 concluída:** home executiva com filtros, KPIs PPM, resumos Kaizen/5S.
 
 ```bash
 cd plugins/dashboard-quality
 npm install && npm run build
 ```
+
+## Testes manuais (API)
+
+Com token JWT válido (`dashboard-quality.view` ou `api-delpi.quality.access`):
+
+```bash
+export TOKEN="seu-jwt"
+export BASE="http://localhost/apps/api-delpi/quality"
+
+curl -s -H "Authorization: Bearer $TOKEN" "$BASE/ppm/internal/summary" | jq .
+curl -s -H "Authorization: Bearer $TOKEN" "$BASE/ppm/external/summary" | jq .
+curl -s -H "Authorization: Bearer $TOKEN" "$BASE/ppm/internal?page=1&page_size=10" | jq .
+curl -s -H "Authorization: Bearer $TOKEN" "$BASE/kaizens/summary" | jq .
+curl -s -H "Authorization: Bearer $TOKEN" "$BASE/audit-5s/summary" | jq .
+curl -s -H "Authorization: Bearer $TOKEN" "$BASE/nonconformities?type=all&page=1&page_size=20" | jq .
+```
+
+No código do plugin, importe de `src/api/qualityApi.ts` ou use os hooks em `src/hooks/useQualityQueries.ts`.

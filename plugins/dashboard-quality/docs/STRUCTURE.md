@@ -30,19 +30,21 @@ plugins/dashboard-quality/
     ├── App.css
     ├── index.css
     ├── api/
-    │   ├── httpClient.ts                # fetch + Bearer
-    │   ├── query.ts                     # URLSearchParams helpers
-    │   └── qualityApi.ts                # chamadas /quality/*
+    │   ├── httpClient.ts
+    │   ├── query.ts
+    │   └── qualityApi.ts                # 7 endpoints tipados
     ├── types/
-    │   ├── api.ts                       # ApiSuccessResponse<T>
+    │   ├── api.ts
+    │   ├── pagination.ts
     │   ├── ppm.ts
     │   ├── nonconformity.ts
     │   ├── kaizen.ts
-    │   └── audit5s.ts
+    │   ├── audit5s.ts
+    │   └── index.ts
     ├── hooks/
-    │   ├── useQualityDashboard.ts       # home: summaries paralelos
-    │   ├── usePpmList.ts
-    │   └── useNonconformities.ts
+    │   ├── useQualityResource.ts        # fetch genérico + AbortController
+    │   ├── useQualityQueries.ts         # hooks por endpoint (Fase 1)
+    │   └── useQualityDashboard.ts       # home: summaries paralelos (Fase 2)
     ├── pages/
     │   ├── DashboardQualityPage.tsx     # layout + abas
     │   ├── PpmPage.tsx

@@ -57,35 +57,36 @@ Depois, atribuir `dashboard-quality.view` ao perfil/grupo desejado no Keycloak o
 
 ---
 
-## Fase 1 — Camada de API e tipos
+## Fase 1 — Camada de API e tipos ✅
 
 **Entregáveis**
 
-- [ ] `src/api/qualityApi.ts` — funções para cada endpoint (ver [API_MAPPING.md](./API_MAPPING.md))
-- [ ] `src/types/` — DTOs alinhados aos `to_dict()` dos use cases (PPM, kaizen, 5S, NC)
-- [ ] `src/api/query.ts` — helper `buildQuery` (filial, datas, paginação)
-- [ ] Tratamento uniforme de erro (`message` do envelope)
-- [ ] Testes manuais documentados no README (curl ou coleção)
+- [x] `src/api/qualityApi.ts` — funções para cada endpoint (ver [API_MAPPING.md](./API_MAPPING.md))
+- [x] `src/types/` — DTOs alinhados aos `to_dict()` dos use cases (PPM, kaizen, 5S, NC)
+- [x] `src/api/query.ts` — helper `buildQuery` (filial, datas, paginação)
+- [x] Tratamento uniforme de erro (`message` do envelope + `success: false`)
+- [x] `src/hooks/useQualityResource.ts` + `useQualityQueries.ts` (7 endpoints)
+- [x] Testes manuais documentados no README (curl)
 
 **Critério de pronto:** hooks conseguem buscar os 7 endpoints sem adaptação ad hoc por tela.
 
 ---
 
-## Fase 2 — Visão executiva (home do dashboard)
+## Fase 2 — Visão executiva (home do dashboard) ✅
 
 **UX sugerida** (similar ao dashboard LMPs):
 
 - Barra de filtros global: filial, `date_start`, `date_end`
 - **Cards KPI:** PPM interno, PPM externo (valores do `/summary`)
 - **Cards/resumos:** Kaizen e 5S (totais, status, tendência se a API expuser)
-- Atalhos para abas detalhadas
+- Atalhos para abas detalhadas (placeholders até Fases 3–5)
 
 **Entregáveis**
 
-- [ ] `FilterBar` compartilhada
-- [ ] `KpiCard` / `ChartCard` (reutilizar padrão visual de `dashboard-lmps` ou design system Delpi)
-- [ ] `useQualityDashboard` — paraleliza fetches de summary com `AbortController`
-- [ ] Loading / empty / error states
+- [x] `FilterBar` compartilhada
+- [x] `KpiCard` + `SummaryCard` + `ModuleShortcut`
+- [x] `useQualityDashboard` — `Promise.all` + `AbortController`
+- [x] Loading / error / refreshing states
 
 **Critério de pronto:** alterar período reflete em todos os KPIs; cancelamento de request ao trocar filtro rapidamente.
 

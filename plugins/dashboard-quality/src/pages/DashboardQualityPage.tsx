@@ -1,41 +1,174 @@
-import { ShieldCheck } from "lucide-react";
-import "../App.css";
+import { useMemo, useState } from "react";
+import {
+  ClipboardCheck,
+  Factory,
+  Lightbulb,
+  Truck,
+} from "lucide-react";
 
-const PLANNED_MODULES = [
-  "PPM interno e externo",
-  "Kaizens",
-  "Auditoria 5S",
-  "Não conformidades (TOTVS)",
+import { FilterBar } from "../components/FilterBar";
+import { KpiCard } from "../components/KpiCard";
+import { ModuleShortcut } from "../components/ModuleShortcut";
+import { SummaryCard } from "../components/SummaryCard";
+import { useQualityDashboard } from "../hooks/useQualityDashboard";
+import {
+  formatCurrency,
+  formatDecimal,
+  formatInteger,
+  formatPpm,
+  formatScore,
+} from "../utils/format";
+import {
+  formatPeriodLabel,
+  getFirstDayOfMonthInputValue,
+  getTodayInputValue,
+} from "../utils/dates";
+
+const MODULE_SHORTCUTS = [
+  {
+    title: "PPM detalhado",
+    description: "Listagem interna e externa com paginação.",
+    phase: "Fase 3",
+  },
+  {
+    title: "Não conformidades",
+    description: "Consulta analítica de NC no Protheus.",
+    phase: "Fase 4",
+  },
+  {
+    title: "Kaizens",
+    description: "Lista e filtros por status e setor.",
+    phase: "Fase 5",
+  },
+  {
+    title: "Auditoria 5S",
+    description: "Histórico e notas por área.",
+    phase: "Fase 5",
+  },
 ] as const;
 
 export function DashboardQualityPage() {
-  return (
-    <div className="dashboard-quality">
-      <header className="dq-header">
-        <div className="dq-header__icon" aria-hidden="true">
-          <ShieldCheck size={32} strokeWidth={1.75} />
-        </div>
-        <div>
-          <h1 className="dq-header__title">Dashboard Qualidade</h1>
-          <p className="dq-header__subtitle">
-            Painel analítico conectado à api-delpi. Em desenvolvimento — Fase 1
-            do roadmap.
-          </p>
-        </div>
-      </header>
+  const [dateStart, setDateStart] = useState(getFirstDayOfMonthInputValue);
+  const [dateEnd, setDateEnd] = useState(getTodayInputValue);
+  const [branch, setBranch] = useState("");
 
-      <section className="dq-card">
-        <h2 className="dq-card__title">Módulos previstos</h2>
-        <ul className="dq-module-list">
-          {PLANNED_MODULES.map((label) => (
-            <li key={label}>{label}</li>
+  const {
+    ppmInternal,
+    ppmExternal,
+    kaizen,
+    audit5s,
+    loading,
+    refreshing,
+    error,
+    reload,
+  } = useQualityDashboard({
+    date_start: dateStart || undefined,
+    date_end: dateEnd || undefined,
+    branch: branch || undefined,
+  });
+
+  const periodLabel = useMemo(
+    () => formatPeriodLabel(dateStart, dateEnd),
+    [dateStart, dateEnd]
+  );
+
+  const isBusy = loading || refreshing;
+
+  return (
+    <div className="dashboard-quality dashboard-page">
+      <FilterBar
+        dateStart={dateStart}
+        dateEnd={dateEnd}
+        branch={branch}
+        onDateStartChange={setDateStart}
+        onDateEndChange={setDateEnd}
+        onBranchChange={setBranch}
+        onRefresh={reload}
+        refreshing={refreshing}
+      />
+
+      {error ? (
+        <div className="dq-state dq-state--error" role="alert">
+          <p>{error}</p>
+          <button className="dq-primary-btn" type="button" onClick={reload}>
+            Tentar novamente
+          </button>
+        </div>
+      ) : null}
+
+      {loading && !ppmInternal ? (
+        <div className="dq-state dq-state--loading" aria-live="polite">
+          Carregando indicadores…
+        </div>
+      ) : null}
+
+      <section className="dq-kpi-grid" aria-busy={isBusy}>
+        <KpiCard
+          title="PPM interno"
+          value={formatPpm(ppmInternal?.ppm)}
+          subtitle={`Devolvido: ${formatDecimal(ppmInternal?.total_devolvido_un)} un · ${periodLabel}`}
+          icon={<Factory size={22} />}
+          loading={isBusy && !ppmInternal}
+        />
+        <KpiCard
+          title="PPM externo"
+          value={formatPpm(ppmExternal?.ppm)}
+          subtitle={`Devolvido: ${formatDecimal(ppmExternal?.total_devolvido_un)} un · ${periodLabel}`}
+          icon={<Truck size={22} />}
+          loading={isBusy && !ppmExternal}
+        />
+      </section>
+
+      <section className="dq-summary-grid" aria-busy={isBusy}>
+        <SummaryCard
+          title="Kaizens"
+          description="Resumo de melhorias implementadas no período."
+          icon={<Lightbulb size={22} />}
+          loading={isBusy && !kaizen}
+          metrics={[
+            {
+              label: "Total de kaizens",
+              value: formatInteger(kaizen?.total_kaizens),
+            },
+            {
+              label: "Economia acumulada",
+              value: formatCurrency(kaizen?.total_savings),
+            },
+            {
+              label: "Registros na lista",
+              value: formatInteger(kaizen?.list_kaizen.length ?? 0),
+            },
+          ]}
+        />
+        <SummaryCard
+          title="Auditoria 5S"
+          description="Média de notas das auditorias realizadas."
+          icon={<ClipboardCheck size={22} />}
+          loading={isBusy && !audit5s}
+          metrics={[
+            {
+              label: "Nota média",
+              value: formatScore(audit5s?.average_score),
+            },
+            {
+              label: "Auditorias no período",
+              value: formatInteger(audit5s?.list_audits.length ?? 0),
+            },
+            {
+              label: "Período",
+              value: periodLabel,
+            },
+          ]}
+        />
+      </section>
+
+      <section className="dq-shortcuts-section">
+        <h2 className="dq-section-title">Próximas telas</h2>
+        <div className="dq-shortcuts-grid">
+          {MODULE_SHORTCUTS.map((item) => (
+            <ModuleShortcut key={item.title} {...item} />
           ))}
-        </ul>
-        <p className="dq-card__hint">
-          API: <code>/apps/api-delpi/quality/*</code> — permissão{" "}
-          <code>dashboard-quality.view</code> ou{" "}
-          <code>api-delpi.quality.access</code>
-        </p>
+        </div>
       </section>
     </div>
   );
