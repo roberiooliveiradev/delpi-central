@@ -1,6 +1,6 @@
 # Gestão de agentes — melhorias
 
-**Status:** ondas 1–6 implementadas (maio/2026)
+**Status:** ondas 1–7 implementadas (maio/2026)
 
 ## Onda 1 — edição confiável
 
@@ -57,3 +57,12 @@
 | 6.2 | `POST /chat/agents/{id}/transfer` — transferir propriedade | Concluído |
 | 6.3 | Duplicar com `copySources` (fontes de conhecimento do agente) | Concluído |
 | 6.4 | Builder: editar papel de shares, transferir dono, métricas na lista | Concluído |
+
+## Onda 7 — portabilidade e admin
+
+| # | Entrega | Status |
+|---|---------|--------|
+| 7.1 | `GET /chat/agents/{id}/export` — JSON portável (sem segredos) | Concluído |
+| 7.2 | `POST /chat/agents/import` — criar agente a partir do export | Concluído |
+| 7.3 | Builder: exportar/importar JSON | Concluído |
+| 7.4 | Admin Agentes: painel de estatísticas de uso | Concluído |

@@ -58,7 +58,9 @@ from app.composition.chat_composer import (
     make_create_chat_agent_use_case,
     make_delete_chat_agent_use_case,
     make_duplicate_chat_agent_use_case,
+    make_export_chat_agent_use_case,
     make_get_chat_agent_stats_use_case,
+    make_import_chat_agent_use_case,
     make_transfer_chat_agent_ownership_use_case,
     make_search_chat_directory_users_use_case,
     make_list_chat_agent_action_providers_use_case,
@@ -469,6 +471,62 @@ def transfer_agent(agent_id: str):
         raise
 
     return "", 204
+
+
+@chat_bp.get("/agents/<agent_id>/export")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def export_agent(agent_id: str):
+    use_case = make_export_chat_agent_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+        )
+    except ChatAgentPermissionDeniedError as exc:
+        return forbidden(str(exc))
+
+    if not result:
+        return _not_found_response()
+
+    return jsonify(result), 200
+
+
+@chat_bp.post("/agents/import")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def import_agent():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    use_case = make_import_chat_agent_use_case()
+    capabilities = _get_chat_capabilities_from_request()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            payload=payload,
+            can_manage_official_agents=capabilities["canManageOfficialAgents"],
+        )
+        db.session.commit()
+    except ChatAgentPermissionDeniedError as exc:
+        db.session.rollback()
+        return forbidden(str(exc))
+    except ChatAgentKeyConflictError as exc:
+        db.session.rollback()
+        return conflict(str(exc))
+    except InvalidChatSessionInputError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except IntegrityError:
+        db.session.rollback()
+        return conflict("Agent key already exists")
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 201
 
 
 @chat_bp.get("/agents/<agent_id>/stats")

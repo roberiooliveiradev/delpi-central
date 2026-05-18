@@ -675,6 +675,18 @@
   cursor: pointer;
 }
 
+.mdc-chat-agent-builder__import-label {
+  position: relative;
+  cursor: pointer;
+}
+
+.mdc-chat-agent-builder__import-label input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
 .mdc-chat-agent-builder__topbar-actions .mdc-chat-agent-builder__secondary {
   display: inline-flex;
   align-items: center;

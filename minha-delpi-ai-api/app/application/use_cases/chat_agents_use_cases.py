@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
@@ -16,6 +17,7 @@ from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 ALLOWED_VISIBILITY = {"private", "public", "system"}
 ALLOWED_SHARE_ROLES = {"viewer", "editor"}
 ALLOWED_SENSITIVITY = {"read", "write", "admin"}
+AGENT_EXPORT_VERSION = 1
 
 
 class ChatAgentPermissionDeniedError(Exception):
@@ -540,3 +542,179 @@ class UpsertChatAgentActionProviderUseCase:
             requires_confirmation_for_write=requires_confirmation_for_write,
             can_manage_official_agents=can_manage_official_agents,
         )
+
+
+def _sanitize_export_providers(providers: list[dict]) -> list[dict]:
+    sanitized: list[dict] = []
+
+    for item in providers:
+        provider_key = str(item.get("providerKey") or "").strip()
+
+        if not provider_key:
+            continue
+
+        sanitized.append(
+            {
+                "providerKey": provider_key,
+                "enabled": bool(item.get("enabled", True)),
+                "allowRead": bool(item.get("allowRead", True)),
+                "allowWrite": bool(item.get("allowWrite", False)),
+                "allowAdmin": bool(item.get("allowAdmin", False)),
+                "requiresConfirmationForWrite": bool(
+                    item.get("requiresConfirmationForWrite", True)
+                ),
+            }
+        )
+
+    return sanitized
+
+
+def _sanitize_export_actions(actions: list[dict]) -> list[dict]:
+    sanitized: list[dict] = []
+
+    for item in actions:
+        provider_key = str(item.get("providerKey") or "").strip()
+        action_id = str(item.get("actionId") or "").strip()
+        sensitivity = str(item.get("sensitivity") or "read")
+
+        if not provider_key or not action_id:
+            continue
+
+        if sensitivity not in ALLOWED_SENSITIVITY:
+            sensitivity = "read"
+
+        sanitized.append(
+            {
+                "providerKey": provider_key,
+                "actionId": action_id,
+                "enabled": bool(item.get("enabled", True)),
+                "sensitivity": sensitivity,
+                "requiresConfirmation": bool(item.get("requiresConfirmation", False)),
+            }
+        )
+
+    return sanitized
+
+
+class ExportChatAgentUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(self, *, user_id: str, agent_id: str) -> dict | None:
+        record = self.repository.get_accessible_by_id(UUID(agent_id), UUID(user_id))
+
+        if not record:
+            return None
+
+        agent, access_role = record
+
+        if access_role not in {"owner", "editor", "system"}:
+            raise ChatAgentPermissionDeniedError(
+                "You do not have permission to export this agent"
+            )
+
+        providers = self.repository.list_action_providers(UUID(agent_id), UUID(user_id))
+        actions = self.repository.list_actions(UUID(agent_id), UUID(user_id))
+
+        metadata = dict(agent.metadata or {})
+
+        return {
+            "exportVersion": AGENT_EXPORT_VERSION,
+            "exportedAt": datetime.now(timezone.utc).isoformat(),
+            "suggestedKey": agent.key,
+            "agent": {
+                "name": agent.name,
+                "description": agent.description,
+                "systemPrompt": agent.system_prompt if _can_view_system_prompt(access_role) else None,
+                "category": agent.category,
+                "icon": agent.icon,
+                "responseStyle": agent.response_style,
+                "visibility": agent.visibility,
+                "enabled": agent.enabled,
+                "maxToolCalls": agent.max_tool_calls,
+                "requiresConfirmationForWrite": agent.requires_confirmation_for_write,
+                "metadata": metadata,
+            },
+            "actionProviders": _sanitize_export_providers(providers),
+            "actions": _sanitize_export_actions(actions),
+        }
+
+
+class ImportChatAgentUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(
+        self,
+        *,
+        user_id: str,
+        payload: dict,
+        can_manage_official_agents: bool = False,
+    ) -> ChatAgentResponse:
+        export_payload = payload.get("export") if isinstance(payload.get("export"), dict) else payload
+
+        if not isinstance(export_payload, dict):
+            raise InvalidChatSessionInputError("export payload is required")
+
+        version = int(export_payload.get("exportVersion") or 0)
+
+        if version != AGENT_EXPORT_VERSION:
+            raise InvalidChatSessionInputError("Unsupported export version")
+
+        agent_data = export_payload.get("agent")
+
+        if not isinstance(agent_data, dict):
+            raise InvalidChatSessionInputError("export.agent is required")
+
+        name = _normalize_text(
+            payload.get("name") or agent_data.get("name"),
+            120,
+            required=True,
+        )
+        visibility = str(payload.get("visibility") or agent_data.get("visibility") or "private")
+
+        if visibility not in ALLOWED_VISIBILITY:
+            raise InvalidChatSessionInputError("Invalid agent visibility")
+
+        if visibility == "system" and not can_manage_official_agents:
+            visibility = "private"
+
+        key_source = payload.get("key") or export_payload.get("suggestedKey") or name
+        key = _slugify(str(key_source))
+        owner_user_id = None if visibility == "system" else UUID(user_id)
+
+        try:
+            agent = self.repository.create(
+                owner_user_id=owner_user_id,
+                key=key,
+                name=name,
+                description=_normalize_text(agent_data.get("description"), 800),
+                system_prompt=_normalize_text(agent_data.get("systemPrompt"), 12000),
+                visibility=visibility,
+                category=_normalize_text(agent_data.get("category"), 80),
+                icon=_normalize_text(agent_data.get("icon"), 60),
+                response_style=_normalize_text(agent_data.get("responseStyle"), 40),
+                metadata=agent_data.get("metadata")
+                if isinstance(agent_data.get("metadata"), dict)
+                else None,
+                max_tool_calls=agent_data.get("maxToolCalls"),
+                requires_confirmation_for_write=agent_data.get("requiresConfirmationForWrite"),
+                enabled=agent_data.get("enabled"),
+            )
+        except IntegrityError as exc:
+            raise ChatAgentKeyConflictError("Agent key already exists") from exc
+
+        apply_actions = bool(payload.get("applyActions", True))
+
+        if apply_actions:
+            providers = export_payload.get("actionProviders")
+            actions = export_payload.get("actions")
+
+            if isinstance(providers, list) or isinstance(actions, list):
+                self.repository.apply_exported_action_configuration(
+                    agent.id,
+                    _sanitize_export_providers(providers if isinstance(providers, list) else []),
+                    _sanitize_export_actions(actions if isinstance(actions, list) else []),
+                )
+
+        return _to_response(agent, "owner", include_system_prompt=True)

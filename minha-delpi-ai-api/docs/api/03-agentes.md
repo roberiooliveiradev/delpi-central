@@ -338,6 +338,54 @@ Estatísticas de uso do agente (sessões e mensagens por `agent_key`, providers/
 
 ---
 
+## GET `/chat/agents/{agentId}/export`
+
+Exporta configuração portável do agente (instruções, metadados, providers/actions vinculados). Não inclui segredos de API nem fontes de conhecimento.
+
+### Permissão
+
+`minha-delpi.chat.tools.manage` + papel `owner`, `editor` ou `system`
+
+### Resposta `200`
+
+```json
+{
+  "exportVersion": 1,
+  "exportedAt": "2026-05-18T12:00:00+00:00",
+  "suggestedKey": "meu-agente",
+  "agent": { "name": "...", "systemPrompt": "...", "metadata": {} },
+  "actionProviders": [],
+  "actions": []
+}
+```
+
+---
+
+## POST `/chat/agents/import`
+
+Cria agente a partir de um export (`exportVersion: 1`).
+
+### Permissão
+
+`minha-delpi.chat.tools.manage`
+
+### Body
+
+```json
+{
+  "export": { "exportVersion": 1, "agent": { "name": "Novo agente" }, "actionProviders": [], "actions": [] },
+  "key": "opcional",
+  "name": "opcional",
+  "applyActions": true
+}
+```
+
+### Resposta `201`
+
+`ChatAgent` criado (visibilidade padrão `private`, salvo override por admin).
+
+---
+
 ## POST `/chat/agents/{agentId}/transfer`
 
 Transfere a propriedade do agente para outro usuário.

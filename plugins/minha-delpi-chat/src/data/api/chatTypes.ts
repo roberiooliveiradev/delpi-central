@@ -229,6 +229,40 @@ export type ShareChatAgentPayload = {
   role: "viewer" | "editor" | string;
 };
 
+export type ChatAgentExportBundle = {
+  exportVersion: number;
+  exportedAt: string;
+  suggestedKey?: string;
+  agent: {
+    name: string;
+    description?: string | null;
+    systemPrompt?: string | null;
+    category?: string | null;
+    icon?: string | null;
+    responseStyle?: string | null;
+    visibility?: string;
+    enabled?: boolean;
+    maxToolCalls?: number;
+    requiresConfirmationForWrite?: boolean;
+    metadata?: Record<string, unknown> | null;
+  };
+  actionProviders: Array<{
+    providerKey: string;
+    enabled: boolean;
+    allowRead: boolean;
+    allowWrite: boolean;
+    allowAdmin: boolean;
+    requiresConfirmationForWrite: boolean;
+  }>;
+  actions: Array<{
+    providerKey: string;
+    actionId: string;
+    enabled: boolean;
+    sensitivity: string;
+    requiresConfirmation: boolean;
+  }>;
+};
+
 export type ChatAgentStats = {
   agentKey: string;
   windowHours: number;

@@ -71,6 +71,15 @@ class ChatAgentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def apply_exported_action_configuration(
+        self,
+        agent_id: UUID,
+        providers: list[dict],
+        actions: list[dict],
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def transfer_ownership(
         self,
         agent_id: UUID,

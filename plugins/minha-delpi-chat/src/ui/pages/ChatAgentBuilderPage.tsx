@@ -4,7 +4,9 @@ import {
   Bot,
   Check,
   Copy,
+  Download,
   FileText,
+  Upload,
   Plus,
   Send,
   Settings2,
@@ -21,8 +23,10 @@ import {
   createAgentTextSource,
   deleteChatSource,
   duplicateChatAgent,
+  exportChatAgent,
   getChatAgent,
   getChatAgentStats,
+  importChatAgent,
   transferChatAgentOwnership,
   listAgentSources,
   listChatAgentActionProviders,
@@ -36,6 +40,7 @@ import { ChatUserSearchField } from "../components/ChatUserSearchField";
 import type {
   ChatAgent,
   ChatAgentActionProvider,
+  ChatAgentExportBundle,
   ChatAgentShare,
   ChatAgentStats,
   ChatWorkspaceSource,
@@ -208,6 +213,8 @@ export function ChatAgentBuilderPage({
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [copyActionsOnDuplicate, setCopyActionsOnDuplicate] = useState(true);
   const [copySourcesOnDuplicate, setCopySourcesOnDuplicate] = useState(false);
   const [transferTargetUserId, setTransferTargetUserId] = useState("");
@@ -720,6 +727,64 @@ export function ChatAgentBuilderPage({
     }
   }
 
+  async function exportCurrentAgent() {
+    if (!agent?.id || !getAccessToken) {
+      return;
+    }
+
+    setIsExporting(true);
+    setLocalError(null);
+
+    try {
+      const bundle = await exportChatAgent(agent.id, { getAccessToken });
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${agent.key || "agente"}-export.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setLocalError("Não foi possível exportar o agente.");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  async function importAgentFromFile(file: File) {
+    if (!getAccessToken) {
+      return;
+    }
+
+    setIsImporting(true);
+    setLocalError(null);
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as { export?: unknown } | Record<string, unknown>;
+      const exportPayload =
+        parsed && typeof parsed === "object" && "export" in parsed
+          ? (parsed.export as Record<string, unknown>)
+          : parsed;
+
+      const imported = await importChatAgent(
+        {
+          export: exportPayload as ChatAgentExportBundle,
+          applyActions: true,
+        },
+        { getAccessToken },
+      );
+
+      onDuplicateAgent?.(imported);
+    } catch {
+      setLocalError("Não foi possível importar o arquivo. Verifique o JSON exportado.");
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
   async function duplicateCurrentAgent() {
     if (!agent?.id || !getAccessToken) {
       return;
@@ -761,6 +826,10 @@ export function ChatAgentBuilderPage({
     }
   }
 
+  const canExportAgent =
+    agent && ["owner", "editor", "system"].includes(agent.access_role);
+  const canImportAgent = Boolean(onCreateAgent);
+
   return (
     <section className="mdc-chat-agent-builder" aria-label="Configurar agente">
       <header className="mdc-chat-agent-builder__topbar">
@@ -775,6 +844,40 @@ export function ChatAgentBuilderPage({
         </div>
 
         <div className="mdc-chat-agent-builder__topbar-actions">
+          {canImportAgent ? (
+            <label className="mdc-chat-agent-builder__secondary mdc-chat-agent-builder__import-label">
+              <Upload size={16} aria-hidden="true" />
+              <span>{isImporting ? "Importando..." : "Importar JSON"}</span>
+              <input
+                type="file"
+                accept="application/json,.json"
+                disabled={isImporting}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+
+                  if (file) {
+                    void importAgentFromFile(file);
+                  }
+
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          ) : null}
+
+          {canExportAgent ? (
+            <button
+              type="button"
+              className="mdc-chat-agent-builder__secondary"
+              disabled={isExporting}
+              onClick={() => void exportCurrentAgent()}
+              title="Baixa configuração em JSON"
+            >
+              <Download size={16} aria-hidden="true" />
+              <span>{isExporting ? "Exportando..." : "Exportar"}</span>
+            </button>
+          ) : null}
+
           {agent ? (
             <>
               <button

@@ -1,5 +1,8 @@
+import { BarChart3 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import { getChatAgentStats } from "../../../../data/api/chatApi";
+import type { ChatAgentStats } from "../../../../data/api/chatTypes";
 import {
   getAdminAgentSpecialization,
   listAdminAgentSpecializationPresets,
@@ -42,6 +45,8 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [agentStats, setAgentStats] = useState<ChatAgentStats | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
 
   const selectedAgent = agents.find((agent) => agent.id === selectedAgentId) ?? null;
 
@@ -108,6 +113,44 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
 
     void loadAgentSpecialization(selectedAgentId);
   }, [loadAgentSpecialization, selectedAgentId]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadStats() {
+      if (!selectedAgentId || !getAccessToken) {
+        setAgentStats(null);
+        return;
+      }
+
+      setIsLoadingStats(true);
+
+      try {
+        const stats = await getChatAgentStats(selectedAgentId, {
+          getAccessToken,
+          hours: 168,
+        });
+
+        if (isMounted) {
+          setAgentStats(stats);
+        }
+      } catch {
+        if (isMounted) {
+          setAgentStats(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingStats(false);
+        }
+      }
+    }
+
+    void loadStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [getAccessToken, selectedAgentId]);
 
   function applyPreset(presetKey: string) {
     const preset = presets.find((item) => item.key === presetKey);
@@ -222,6 +265,37 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
               <div className="mdc-admin-agents__agent-title">
                 <strong>{selectedAgent.name}</strong>
                 <span>{selectedAgent.key}</span>
+              </div>
+
+              <div className="mdc-admin-agents__stats">
+                <div className="mdc-admin-agents__stats-title">
+                  <BarChart3 size={16} aria-hidden="true" />
+                  <span>Uso (últimos 7 dias)</span>
+                </div>
+                {isLoadingStats ? (
+                  <p className="mdc-chat-muted">Carregando estatísticas...</p>
+                ) : agentStats ? (
+                  <div className="mdc-admin-agents__stats-grid">
+                    <article>
+                      <strong>{agentStats.sessionsInWindow}</strong>
+                      <small>Conversas no período</small>
+                    </article>
+                    <article>
+                      <strong>{agentStats.messagesInWindow}</strong>
+                      <small>Mensagens no período</small>
+                    </article>
+                    <article>
+                      <strong>{agentStats.totalSessions}</strong>
+                      <small>Total de conversas</small>
+                    </article>
+                    <article>
+                      <strong>{agentStats.actionProvidersCount}</strong>
+                      <small>APIs/actions</small>
+                    </article>
+                  </div>
+                ) : (
+                  <p className="mdc-chat-muted">Sem dados de uso no período.</p>
+                )}
               </div>
 
               <label className="mdc-admin-agents__toggle">

@@ -371,6 +371,18 @@ def make_transfer_chat_agent_ownership_use_case():
     return TransferChatAgentOwnershipUseCase(PostgresChatAgentRepository())
 
 
+def make_export_chat_agent_use_case():
+    from app.application.use_cases.chat_agents_use_cases import ExportChatAgentUseCase
+
+    return ExportChatAgentUseCase(PostgresChatAgentRepository())
+
+
+def make_import_chat_agent_use_case():
+    from app.application.use_cases.chat_agents_use_cases import ImportChatAgentUseCase
+
+    return ImportChatAgentUseCase(PostgresChatAgentRepository())
+
+
 def make_get_chat_agent_stats_use_case():
     from app.application.use_cases.chat_agents_use_cases import GetChatAgentStatsUseCase
 

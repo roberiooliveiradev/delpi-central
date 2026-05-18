@@ -6,6 +6,7 @@ import type {
   ChatActionTestResult,
   ChatAgent,
   ChatAgentActionProvider,
+  ChatAgentExportBundle,
   ChatAgentAction,
   ChatAgentPreviewResponse,
   ChatAgentShare,
@@ -572,6 +573,37 @@ export async function duplicateChatAgent(
     method: "POST",
     headers: await getAuthHeaders(apiOptions),
     body: JSON.stringify({ copyActions, copySources }),
+  });
+
+  return parseJsonResponse<ChatAgent>(response);
+}
+
+export async function exportChatAgent(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAgentExportBundle> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/export`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAgentExportBundle>(response);
+}
+
+export async function importChatAgent(
+  payload: {
+    export: ChatAgentExportBundle;
+    key?: string;
+    name?: string;
+    visibility?: string;
+    applyActions?: boolean;
+  },
+  options: ChatApiOptions = {},
+): Promise<ChatAgent> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/import`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
   });
 
   return parseJsonResponse<ChatAgent>(response);

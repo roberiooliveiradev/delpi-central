@@ -372,6 +372,52 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         db.session.flush()
 
+    def apply_exported_action_configuration(
+        self,
+        agent_id: UUID,
+        providers: list[dict],
+        actions: list[dict],
+    ) -> None:
+        for item in providers:
+            provider_key = str(item.get("providerKey") or "").strip()
+
+            if not provider_key:
+                continue
+
+            db.session.add(
+                AiChatAgentActionProviderModel(
+                    agent_id=agent_id,
+                    provider_key=provider_key,
+                    enabled=bool(item.get("enabled", True)),
+                    allow_read=bool(item.get("allowRead", True)),
+                    allow_write=bool(item.get("allowWrite", False)),
+                    allow_admin=bool(item.get("allowAdmin", False)),
+                    requires_confirmation_for_write=bool(
+                        item.get("requiresConfirmationForWrite", True)
+                    ),
+                )
+            )
+
+        for item in actions:
+            provider_key = str(item.get("providerKey") or "").strip()
+            action_id = str(item.get("actionId") or "").strip()
+
+            if not provider_key or not action_id:
+                continue
+
+            db.session.add(
+                AiChatAgentActionModel(
+                    agent_id=agent_id,
+                    provider_key=provider_key,
+                    action_id=action_id,
+                    enabled=bool(item.get("enabled", True)),
+                    sensitivity=str(item.get("sensitivity") or "read"),
+                    requires_confirmation=bool(item.get("requiresConfirmation", False)),
+                )
+            )
+
+        db.session.flush()
+
     def _generate_duplicate_key(self, base_key: str) -> str:
         normalized = (base_key or "agente").strip() or "agente"
         candidate = f"{normalized}-copia"[:80]
