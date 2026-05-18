@@ -33,8 +33,9 @@ Uploads multipart devem enviar apenas o header de autorização; não defina man
 | Documento | Conteúdo |
 |-----------|----------|
 | [`../roadmap/admin-minha-delpi-chat.md`](../roadmap/admin-minha-delpi-chat.md) | Itens 1–15 do painel admin (concluídos) |
+| [`../roadmap/agentes-gestao-melhorias.md`](../roadmap/agentes-gestao-melhorias.md) | Gestão de agentes — ondas 1–7 (concluídas) |
 | [`../roadmap/melhorias-futuras.md`](../roadmap/melhorias-futuras.md) | Melhorias pós-roadmap (concluídas; RBAC core pendente) |
-| [`../roadmap/README.md`](../roadmap/README.md) | Índice do roadmap |
+| [`../roadmap/README.md`](../roadmap/README.md) | Índice do roadmap (inteligência do chat, ondas 1–5) |
 
 Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/minha-delpi-chat/README.md).
 
@@ -45,7 +46,7 @@ Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/mi
 | `00-visao-geral.md` | Convenções, base URL, autenticação, erros, SSE, permissões. |
 | `01-health-status-capabilities.md` | Health check, status do chat e capabilities resolvidas pelo backend. |
 | `02-chat-sessoes-mensagens.md` | Sessões, histórico, mensagens, streaming, pin/archive e edição. |
-| `03-agentes.md` | CRUD, compartilhamento, oficiais/system e regras de permissão. |
+| `03-agentes.md` | CRUD, compartilhamento, stats, export/import, duplicate, preview e runtime no chat. |
 | `04-actions-openapi.md` | Providers/actions OpenAPI, vínculo agente -> provider, rotas, teste e logs. |
 | `05-projetos-fontes-anexos-artefatos.md` | Projetos, fontes, anexos e artefatos. |
 | `06-knowledge.md` | Ingestão e busca na base de conhecimento. |

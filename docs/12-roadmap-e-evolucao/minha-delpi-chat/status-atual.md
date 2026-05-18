@@ -14,6 +14,8 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 | Backend README | [minha-delpi-ai-api/README.md](../../../minha-delpi-ai-api/README.md) |
 | Plugin README | [plugins/minha-delpi-chat/README.md](../../../plugins/minha-delpi-chat/README.md) |
 | Roadmap admin | [minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
+| Gestão de agentes | [minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
+| Inteligência do chat | [minha-delpi-ai-api/docs/roadmap/README.md](../../../minha-delpi-ai-api/docs/roadmap/README.md) |
 | Melhorias futuras | [minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md) |
 
 ## Estado funcional
@@ -22,8 +24,10 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 
 - Sessões, histórico, streaming, pin/arquivo, edição de mensagem
 - RAG com fontes, tools, anexos, projetos e agentes
+- **Gestão de agentes** (builder, shares, stats, duplicate, export/import, transfer) — ondas 1–7
 - **Feedback** thumbs up/down nas respostas do assistente
 - Segurança de entrada (sanitização, anti-injection, modo enforce/monitor)
+- Inteligência configurável: RAG híbrido, rerank, loop agentic, cache de embeddings (admin)
 
 ### Painel administrativo
 
@@ -34,7 +38,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 | Métricas | Janela 24h/7d/30d, timeseries, custo LLM editável no banco |
 | Simulação | Prompt/RAG/diretrizes/tools; histórico de sessão; sandbox de tools |
 | Avaliações | Nota, veredito, sugestões regras + LLM opcional |
-| Agentes | Especialização (escopo RAG, diretrizes, tools) |
+| Agentes | Especialização (escopo RAG, diretrizes, tools) + painel de estatísticas de uso |
 | Segurança | Config, summary, eventos, scan |
 | Ferramentas | Health consolidado, external actions, LLM |
 | Auditoria | Paginação, filtros, timeline, export CSV, trace id |
@@ -42,6 +46,8 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 ### Roadmaps
 
 - **Admin itens 1–15:** concluídos — ver `admin-minha-delpi-chat.md`
+- **Gestão de agentes ondas 1–7:** concluídas — ver `agentes-gestao-melhorias.md`
+- **Inteligência do chat ondas 1–5:** concluídas — ver `roadmap/README.md` em `minha-delpi-ai-api`
 - **Melhorias futuras:** concluídas neste repositório — ver `melhorias-futuras.md`
 - **Pendente externo:** RBAC com perfis formais no `core-api`
 

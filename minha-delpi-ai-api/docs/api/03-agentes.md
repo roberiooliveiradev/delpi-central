@@ -2,6 +2,18 @@
 
 Agentes são contextos especializados do Minha DELPI Chat. Actions externas/OpenAPI pertencem aos agentes, não ao chat comum.
 
+Roadmap de evolução da gestão (UI + API): [`../roadmap/agentes-gestao-melhorias.md`](../roadmap/agentes-gestao-melhorias.md) (ondas 1–7 concluídas).
+
+## Comportamento no chat (runtime)
+
+1. A **sessão** guarda `agent_key` (ou herda `default_agent_key` do projeto).
+2. A cada mensagem, `ChatWorkspaceContextService` resolve o agente ativo (`get_enabled_by_key`).
+3. O prompt do LLM recebe, nesta ordem: diretrizes admin → contexto do projeto → **`system_prompt` do agente** → RAG (escopo da especialização) → tools executadas.
+4. **Tools/actions** só rodam se estiverem habilitadas no agente (`allowedActionIds` / providers vinculados).
+5. Limites do agente: `max_tool_calls`, `requires_confirmation_for_write`, `capabilities` em `metadata`.
+
+Metadados da resposta podem incluir `intelligence` (RAG, tools, timings). Ver ondas de inteligência em [`../roadmap/README.md`](../roadmap/README.md).
+
 ## Tipos
 
 ### `ChatAgent`
@@ -236,11 +248,15 @@ Lista compartilhamentos do agente (somente `owner`).
   {
     "id": "uuid",
     "target_user_id": "uuid",
+    "target_user_name": "Nome (quando disponível)",
+    "target_user_email": "email@empresa.com",
     "role": "viewer",
     "created_at": "datetime|null"
   }
 ]
 ```
+
+Reenviar `POST .../share` com o mesmo `targetUserId` atualiza o papel (`viewer` / `editor`).
 
 ---
 

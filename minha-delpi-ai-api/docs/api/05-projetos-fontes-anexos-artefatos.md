@@ -102,6 +102,22 @@ Resposta:
 }
 ```
 
+### GET `/chat/projects/{projectId}/shares`
+
+Lista compartilhamentos do projeto (somente `owner`).
+
+Permissão: `minha-delpi.chat.access`
+
+Resposta: array com `target_user_id`, `target_user_name`, `target_user_email` (quando disponível), `role`, `created_at`.
+
+### DELETE `/chat/projects/{projectId}/shares/{targetUserId}`
+
+Revoga compartilhamento (somente `owner`).
+
+Permissão: `minha-delpi.chat.access`
+
+Resposta: `204 No Content`
+
 ---
 
 ## Fontes de projeto e agente

@@ -79,6 +79,14 @@ Códigos HTTP comuns:
 - `tools.manage`: gerencia agentes próprios e suas actions.
 - `chat.admin` ou superadmin: gerencia agentes oficiais/system.
 
+Acesso na listagem: oficiais/públicos, próprios e compartilhados (`ai_chat_agent_share`). Detalhes de API: `03-agentes.md`. Evolução da gestão: `../roadmap/agentes-gestao-melhorias.md`.
+
+### Agente na conversa
+
+- Sessão com `agent_key` (ou projeto com `default_agent_key`).
+- Cada mensagem monta contexto com `system_prompt`, especialização RAG, `allowedActionIds` e limites do agente.
+- O chat **sem agente** não executa external actions OpenAPI vinculadas a agentes.
+
 ## Capabilities
 
 O frontend deve consultar:

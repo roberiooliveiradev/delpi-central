@@ -9,6 +9,8 @@ Backend Flask do **Minha DELPI Chat**: conversas, RAG, agentes, tools, conhecime
 | **API (referência completa)** | [docs/api/README.md](docs/api/README.md) |
 | Deploy e migrations | [docs/api/09-deploy-migrations-schema.md](docs/api/09-deploy-migrations-schema.md) |
 | Roadmap admin (itens 1–15) | [docs/roadmap/admin-minha-delpi-chat.md](docs/roadmap/admin-minha-delpi-chat.md) |
+| Gestão de agentes (ondas 1–7) | [docs/roadmap/agentes-gestao-melhorias.md](docs/roadmap/agentes-gestao-melhorias.md) |
+| Inteligência do chat (ondas 1–5) | [docs/roadmap/README.md](docs/roadmap/README.md) |
 | Melhorias futuras (fechadas) | [docs/roadmap/melhorias-futuras.md](docs/roadmap/melhorias-futuras.md) |
 | Plugin (UI) | [../plugins/minha-delpi-chat/README.md](../plugins/minha-delpi-chat/README.md) |
 
@@ -64,11 +66,13 @@ docs/              # documentação técnica
 ## Funcionalidades principais
 
 - Chat com histórico, streaming SSE, anexos e artefatos
-- RAG documental (pgvector) com fontes na resposta
-- Agentes, projetos, actions OpenAPI por agente
+- RAG documental (pgvector) com fontes na resposta; RAG híbrido, rerank e loop agentic (configurável)
+- **Agentes** com instruções, compartilhamento, stats, duplicate/export/import, fontes e actions OpenAPI por agente
+- **Projetos** com instruções, agente padrão e compartilhamento
 - Base global de conhecimento com pipeline de ingestão
-- Painel admin: diretrizes, métricas, auditoria, simulação, avaliações, segurança
+- Painel admin: diretrizes, métricas, auditoria, simulação, avaliações, segurança, especialização de agentes
 - Feedback do usuário (thumbs) nas respostas do assistente
+- Busca de usuários no diretório (core-api) para compartilhar agentes e projetos
 
 ## Variáveis de ambiente relevantes
 

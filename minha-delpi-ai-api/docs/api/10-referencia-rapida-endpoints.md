@@ -36,10 +36,22 @@
 | Método | Path | Permissão |
 |---|---|---|
 | GET | `/chat/agents` | `chat.access` |
+| GET | `/chat/agents?includeDisabled=true` | `chat.access` |
+| GET | `/chat/agents?includeStats=true&hours=168` | `chat.access` |
+| GET | `/chat/agents/{agentId}` | `chat.access` |
 | POST | `/chat/agents` | `tools.manage`; `chat.admin` para oficial |
 | PATCH | `/chat/agents/{agentId}` | `tools.manage`; `chat.admin` para oficial |
 | DELETE | `/chat/agents/{agentId}` | `tools.manage`; `chat.admin` para oficial |
 | POST | `/chat/agents/{agentId}/share` | `tools.manage` |
+| GET | `/chat/agents/{agentId}/shares` | `tools.manage` (owner) |
+| DELETE | `/chat/agents/{agentId}/shares/{targetUserId}` | `tools.manage` (owner) |
+| POST | `/chat/agents/{agentId}/preview` | `tools.manage` |
+| POST | `/chat/agents/{agentId}/duplicate` | `tools.manage` |
+| GET | `/chat/agents/{agentId}/export` | `tools.manage` |
+| POST | `/chat/agents/import` | `tools.manage` |
+| GET | `/chat/agents/{agentId}/stats` | `tools.manage` |
+| POST | `/chat/agents/{agentId}/transfer` | `tools.manage` (owner) |
+| GET | `/chat/users/search` | `tools.manage` |
 
 ## Chat — Actions/OpenAPI por agente
 
@@ -67,6 +79,8 @@
 | PATCH | `/chat/projects/{projectId}` | `chat.access` |
 | DELETE | `/chat/projects/{projectId}` | `chat.access` |
 | POST | `/chat/projects/{projectId}/share` | `chat.access` |
+| GET | `/chat/projects/{projectId}/shares` | `chat.access` (owner) |
+| DELETE | `/chat/projects/{projectId}/shares/{targetUserId}` | `chat.access` (owner) |
 
 ## Chat — Fontes, anexos e artefatos
 

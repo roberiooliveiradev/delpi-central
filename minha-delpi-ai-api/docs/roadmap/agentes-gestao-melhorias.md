@@ -2,6 +2,8 @@
 
 **Status:** ondas 1–7 implementadas (maio/2026)
 
+Referência de API: [`../api/03-agentes.md`](../api/03-agentes.md) · Endpoints consolidados: [`../api/10-referencia-rapida-endpoints.md`](../api/10-referencia-rapida-endpoints.md)
+
 ## Onda 1 — edição confiável
 
 | # | Entrega | Status |

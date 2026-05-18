@@ -9,6 +9,7 @@ Microfrontend React do **Minha DELPI Chat**, carregado pelo Portal via Module Fe
 | API backend | [../../minha-delpi-ai-api/docs/api/README.md](../../minha-delpi-ai-api/docs/api/README.md) |
 | Admin (componentes) | [src/ui/components/admin/README.md](src/ui/components/admin/README.md) |
 | Roadmap admin | [../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
+| Gestão de agentes | [../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
 | Status da plataforma | [../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md](../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md) |
 
 ## Identificação
@@ -54,6 +55,22 @@ src/
 - Agentes, projetos, fontes e anexos por contexto
 - Notificações (sino) quando habilitado na Core API
 
+### Gestão de agentes (plugin)
+
+Fluxo: **Lista de agentes** → **Builder** (configurar) → **Actions** (OpenAPI).
+
+| Recurso | Descrição |
+|---------|-----------|
+| Builder | Instruções, execução, quebra-gelos, compartilhamento, stats, duplicar |
+| Compartilhar | Busca de usuário (sem UUID manual); editar papel viewer/editor |
+| Transferir | Dono pode transferir propriedade |
+| Export / Import | JSON portável da configuração + actions |
+| Duplicate | `copyActions` e `copySources` opcionais |
+| Lista | Métricas de uso (7 dias), inativos, badges de papel |
+| Preview | Simulação real antes de publicar |
+
+Detalhes: [roadmap agentes](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md).
+
 ## Painel administrativo
 
 Acesso via botão **Admin** na UI (requer `minha-delpi.chat.admin`).
@@ -65,7 +82,7 @@ Acesso via botão **Admin** na UI (requer `minha-delpi.chat.admin`).
 | Diretrizes | CRUD, versões, publicação, teste RAG |
 | Simulação | Prompt final, RAG, diretrizes, tools; histórico de sessão; sandbox de tools |
 | Avaliações | Nota 1–5, sugestões automáticas e opcionais via LLM |
-| Agentes | Especialização (escopo RAG, diretrizes, tools) |
+| Agentes | Especialização (escopo RAG, diretrizes, tools) + estatísticas de uso |
 | Segurança | Config, eventos, scan de entrada |
 | Ferramentas | Health consolidado, providers/actions, LLM |
 | Auditoria | Filtros, timeline, export CSV, trace id |
