@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# Dashboard LMPs
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Microfrontend (Module Federation) para **acompanhamento de LMPs** (engenharia), com KPIs, gráficos e tabela alimentados pela **api-delpi** (`/engineering/lmps`).
 
-Currently, two official plugins are available:
+## Documentação
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Arquivo | Conteúdo |
+|---------|----------|
+| **[docs/DOCUMENTACAO.md](./docs/DOCUMENTACAO.md)** | Guia completo do plugin |
+| [docs/API_MAPPING.md](./docs/API_MAPPING.md) | Endpoints e tipos |
+| [docs/TESTING.md](./docs/TESTING.md) | Build, Docker, registro e checklist |
+| [docs/STRUCTURE.md](./docs/STRUCTURE.md) | Árvore de pastas |
 
-## React Compiler
+## Identificação
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Item | Valor |
+|------|--------|
+| ID | `dashboard-lmps` |
+| URL | `/apps/dashboard-lmps` |
+| Manifesto | `dash-lmps-microfrontend.manifest.json` |
+| Permissão | `dashboard-lmps.view` (ou `api-delpi.access`) |
 
-## Expanding the ESLint configuration
+## API
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+GET /apps/api-delpi/engineering/lmps/dashboard
+GET /apps/api-delpi/engineering/lmps
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Início rápido
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd plugins/dashboard-lmps
+npm install && npm run build
 ```
+
+Docker (em `infra/`):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build \
+  gateway core-api dashboard-lmps
+```
+
+Testes e registro na Core API: [docs/TESTING.md](./docs/TESTING.md).
+
+## Funcionalidades
+
+- KPIs: % dentro do prazo, lead time médio, total de propostas
+- Gráficos: nível, status, lead por nível, evolução temporal
+- Tabela detalhada das LMPs filtradas
+- Atualização automática a cada 2 minutos (aba visível)
+- Fallback de agregação no cliente se `charts` não vier da API
+
+## Referência
+
+Padrão de MFE alinhado a `plugins/dashboard-quality`. Backend: `api-delpi/docs/api/06-modulos-departamentais.md` (Engenharia).
