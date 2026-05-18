@@ -364,6 +364,16 @@ export const Sidebar = () => {
                     <div className="notif-item">Sem notificações</div>
                   )}
 
+                  <div
+                    className="notif-item notif-item--link"
+                    onClick={() => {
+                      setNotifOpen(false);
+                      navigate("/notifications");
+                    }}
+                  >
+                    Ver todas
+                  </div>
+
                   {notifications.length > 0 && (
                     <div
                       className="notif-item mark-all"

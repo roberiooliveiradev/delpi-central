@@ -117,6 +117,14 @@
   background: color-mix(in srgb, var(--primary) 8%, var(--bg));
 }
 
+.admin-notifications__broadcast--inline {
+  margin: 0;
+}
+
+.admin-notifications__fieldset--expires {
+  margin-top: 4px;
+}
+
 .admin-notifications__broadcast input {
   width: 18px;
   height: 18px;

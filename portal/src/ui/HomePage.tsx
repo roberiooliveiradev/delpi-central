@@ -109,12 +109,7 @@ export const HomePage = () => {
           title="Notificações"
           value={unreadCount}
           subtitle={unreadCount === 1 ? "não lida" : "não lidas"}
-          onClick={() => {
-            // por enquanto: abre dropdown na sidebar; no futuro: rota /notifications
-            // aqui podemos navegar pra "/" ou apenas scrollar.
-            const el = document.querySelector("#home-notifications");
-            el?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }}
+          onClick={() => navigate("/notifications")}
         />
 
         <SummaryCard
@@ -242,6 +237,8 @@ export const HomePage = () => {
           <PanelHeader
             title="Notificações recentes"
             hint="Acompanhe atualizações e ações pendentes"
+            actionLabel="Ver todas"
+            onAction={() => navigate("/notifications")}
           />
 
           {notifications.length === 0 ? (
@@ -308,13 +305,29 @@ export const HomePage = () => {
   );
 };
 
-function PanelHeader({ title, hint }: { title: string; hint?: string }) {
+function PanelHeader({
+  title,
+  hint,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  hint?: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
   return (
     <div className="home-panel-header">
       <div>
         <h3 className="home-panel-title">{title}</h3>
         {hint ? <p className="home-panel-hint">{hint}</p> : null}
       </div>
+      {actionLabel && onAction ? (
+        <button type="button" className="home-panel-action" onClick={onAction}>
+          {actionLabel}
+          <ArrowRight size={14} aria-hidden="true" />
+        </button>
+      ) : null}
     </div>
   );
 }

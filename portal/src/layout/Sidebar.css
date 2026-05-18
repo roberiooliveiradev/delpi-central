@@ -393,6 +393,11 @@
   background: var(--surface-2);
 }
 
+.notif-item--link {
+  font-weight: 600;
+  color: var(--primary);
+}
+
 .dropdown-item.danger {
   color: var(--danger);
 }

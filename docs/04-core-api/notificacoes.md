@@ -3,7 +3,8 @@
 > **Arquivo:** `docs/04-core-api/notificacoes.md`  
 > **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
-> **Escopo:** notificações de usuário na Core API e integração com Portal
+> **Escopo:** notificações de usuário na Core API e integração com Portal  
+> **Evolução rica:** ver [Roadmap notificações ricas](../12-roadmap-e-evolucao/notificacoes-ricas.md)
 
 ---
 
@@ -62,10 +63,13 @@ Todas exigem `@require_auth()`.
 
 | Método | Path | Use case |
 |---|---|---|
-| GET | `/me/notifications` | `ListUnreadNotificationsUseCase` |
+| GET | `/me/notifications` | `ListUnreadNotificationsUseCase` (não lidas, não expiradas) |
+| GET | `/me/notifications/history` | `ListNotificationsUseCase` (paginado: `status`, `limit`, `offset`) |
 | POST | `/me/notifications/<id>/read` | `MarkNotificationReadUseCase` |
 | POST | `/me/notifications/read-all` | `MarkAllNotificationsReadUseCase` |
 | POST | `/me/notifications/test` | `NotifyUserUseCase` (dev) |
+
+Admin e integrações: `POST /admin/notifications`, `POST /integrations/notifications`, templates em `/admin/notifications/templates` — ver roadmap.
 
 Resposta de listagem (campos expostos ao Portal):
 

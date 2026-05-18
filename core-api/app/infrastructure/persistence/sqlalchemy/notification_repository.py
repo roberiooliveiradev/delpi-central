@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import List
+from typing import List, Literal, Tuple
 from uuid import UUID
 
 from sqlalchemy import or_
@@ -49,20 +49,44 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
         return self._to_dto(row)
 
     def list_unread(self, user_id: str) -> List[NotificationDTO]:
+        items, _total = self.list_for_user(
+            user_id,
+            status="unread",
+            limit=500,
+            offset=0,
+        )
+        return items
+
+    def list_for_user(
+        self,
+        user_id: str,
+        *,
+        status: Literal["all", "unread", "read"] = "all",
+        limit: int = 20,
+        offset: int = 0,
+    ) -> Tuple[List[NotificationDTO], int]:
         now = datetime.utcnow()
 
+        query = self.session.query(Notification).filter(
+            Notification.user_id == user_id,
+            or_(Notification.expires_at.is_(None), Notification.expires_at > now),
+        )
+
+        if status == "unread":
+            query = query.filter(Notification.read_at.is_(None))
+        elif status == "read":
+            query = query.filter(Notification.read_at.isnot(None))
+
+        total = query.count()
+
         rows = (
-            self.session.query(Notification)
-            .filter(
-                Notification.user_id == user_id,
-                Notification.read_at.is_(None),
-                or_(Notification.expires_at.is_(None), Notification.expires_at > now),
-            )
-            .order_by(Notification.created_at.desc())
+            query.order_by(Notification.created_at.desc())
+            .limit(limit)
+            .offset(offset)
             .all()
         )
 
-        return [self._to_dto(row) for row in rows]
+        return [self._to_dto(row) for row in rows], total
 
     def mark_read(self, notification_id: UUID) -> None:
         row = self.session.get(Notification, notification_id)

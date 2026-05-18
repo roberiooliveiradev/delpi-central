@@ -1012,6 +1012,24 @@ body.portal-has-embedded-app .content {
   font-size: 12px;
 }
 
+.home-panel-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.home-panel-action:hover {
+  border-color: var(--primary);
+}
+
 /* Tiles */
 .home-app-grid {
   display: grid;

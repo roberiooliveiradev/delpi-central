@@ -143,6 +143,15 @@ export interface DispatchNotificationsResponse {
   notificationIds: string[];
 }
 
+export type NotificationHistoryStatus = "all" | "unread" | "read";
+
+export interface NotificationHistoryResponse {
+  items: NotificationItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface FavoriteAppItem {
   id: string;
   name: string;
@@ -221,17 +230,47 @@ export class CoreApi {
   // NOTIFICATIONS
   // -------------------------------------------------------
 
-  async getNotifications(): Promise<NotificationItem[]> {
-    const data = await this.client.get<unknown>("/core-api/me/notifications");
-    const items = normalizeArray<NotificationItem>(data);
-
-    return items.map((item) => ({
+  private normalizeNotificationItem(item: NotificationItem): NotificationItem {
+    return {
       ...item,
       category: item.category ?? "system",
       presentation: item.presentation ?? "text",
       type: item.type ?? "info",
       metadata: item.metadata ?? null,
-    }));
+    };
+  }
+
+  async getNotifications(): Promise<NotificationItem[]> {
+    const data = await this.client.get<unknown>("/core-api/me/notifications");
+    const items = normalizeArray<NotificationItem>(data);
+
+    return items.map((item) => this.normalizeNotificationItem(item));
+  }
+
+  async getNotificationHistory(params?: {
+    status?: NotificationHistoryStatus;
+    limit?: number;
+    offset?: number;
+  }): Promise<NotificationHistoryResponse> {
+    const search = new URLSearchParams();
+    if (params?.status) {
+      search.set("status", params.status);
+    }
+    if (params?.limit != null) {
+      search.set("limit", String(params.limit));
+    }
+    if (params?.offset != null) {
+      search.set("offset", String(params.offset));
+    }
+
+    const query = search.toString();
+    const path = `/core-api/me/notifications/history${query ? `?${query}` : ""}`;
+    const data = await this.client.get<NotificationHistoryResponse>(path);
+
+    return {
+      ...data,
+      items: (data.items ?? []).map((item) => this.normalizeNotificationItem(item)),
+    };
   }
 
   markNotificationRead(id: string) {

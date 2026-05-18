@@ -90,6 +90,12 @@ export function NotificationsTab() {
   const [actionType, setActionType] = useState<NotificationActionType | "none">("none");
   const [actionLabel, setActionLabel] = useState("");
   const [actionTarget, setActionTarget] = useState("");
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null);
+  const [recipientLabels, setRecipientLabels] = useState<
+    Record<string, { name: string; email: string }>
+  >({});
+  const [expiresEnabled, setExpiresEnabled] = useState(false);
+  const [expiresInDays, setExpiresInDays] = useState(7);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,12 +111,19 @@ export function NotificationsTab() {
     [templates, templateId],
   );
 
+  const previewRecipientName = useMemo(() => {
+    if (previewUserId && recipientLabels[previewUserId]) {
+      return recipientLabels[previewUserId].name;
+    }
+    return resolvePreviewRecipientName(user?.name);
+  }, [previewUserId, recipientLabels, user?.name]);
+
   const previewRecipientVars = useMemo(() => {
     if (!selectedTemplate?.recipientAutoVars?.includes("userName")) {
       return undefined;
     }
-    return { userName: resolvePreviewRecipientName(user?.name) };
-  }, [selectedTemplate, user?.name]);
+    return { userName: previewRecipientName };
+  }, [selectedTemplate, previewRecipientName]);
 
   const templatePreview = useMemo(() => {
     if (!selectedTemplate) {
@@ -204,6 +217,9 @@ export function NotificationsTab() {
               label: actionLabel.trim() || undefined,
               target: actionTarget.trim(),
             },
+      expiresAt: expiresEnabled
+        ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
+        : null,
       sourceApp: "portal-admin",
     };
 
@@ -304,6 +320,9 @@ export function NotificationsTab() {
                 onChangeSelectedUserIds={setSelectedUserIds}
                 onChangeExtraEmails={setExtraEmails}
                 disabled={isSubmitting}
+                previewUserId={previewUserId}
+                onPreviewUserIdChange={setPreviewUserId}
+                onRecipientLabelsChange={setRecipientLabels}
               />
             ) : null}
           </article>
@@ -390,10 +409,39 @@ export function NotificationsTab() {
                     onTemplateVarsChange={setTemplateVars}
                     category={category}
                     type={type}
-                    previewUserName={user?.name}
+                    previewUserName={previewRecipientName}
                     action={actionForPreview}
                   />
                 ) : null}
+
+                <fieldset className="admin-notifications__fieldset admin-notifications__fieldset--expires">
+                  <legend>Validade (opcional)</legend>
+                  <label className="admin-notifications__broadcast admin-notifications__broadcast--inline">
+                    <input
+                      type="checkbox"
+                      checked={expiresEnabled}
+                      onChange={(event) => setExpiresEnabled(event.target.checked)}
+                    />
+                    <span className="admin-notifications__broadcast-body">
+                      <strong>Expirar automaticamente</strong>
+                      <span>Some do sino após o prazo (notificações lidas permanecem no histórico até expirar)</span>
+                    </span>
+                  </label>
+                  {expiresEnabled ? (
+                    <label className="admin-notifications__field">
+                      <span>Dias até expirar</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={expiresInDays}
+                        onChange={(event) =>
+                          setExpiresInDays(Math.max(1, Number(event.target.value) || 1))
+                        }
+                      />
+                    </label>
+                  ) : null}
+                </fieldset>
 
                 {presentation === "html" ? (
                   <label className="admin-notifications__field">

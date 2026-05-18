@@ -1,6 +1,6 @@
 // src/components/notifications/NotificationRecipientPicker.tsx
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, ShieldCheck, UserRound, X } from "lucide-react";
 
 import type { AdminApi, AdminUser } from "../../data/adminApi";
@@ -17,6 +17,8 @@ type RecipientLabel = {
   email: string;
 };
 
+export type RecipientLabelMap = Record<string, RecipientLabel>;
+
 type NotificationRecipientPickerProps = {
   adminApi: AdminApi;
   selectedUserIds: string[];
@@ -24,6 +26,9 @@ type NotificationRecipientPickerProps = {
   onChangeSelectedUserIds: (ids: string[]) => void;
   onChangeExtraEmails: (emails: string[]) => void;
   disabled?: boolean;
+  previewUserId?: string | null;
+  onPreviewUserIdChange?: (id: string | null) => void;
+  onRecipientLabelsChange?: (labels: RecipientLabelMap) => void;
 };
 
 const getInitials = (user: AdminUser) => {
@@ -48,6 +53,9 @@ export function NotificationRecipientPicker({
   onChangeSelectedUserIds,
   onChangeExtraEmails,
   disabled = false,
+  previewUserId = null,
+  onPreviewUserIdChange,
+  onRecipientLabelsChange,
 }: NotificationRecipientPickerProps) {
   const [search, setSearch] = useState("");
   const [quickInput, setQuickInput] = useState("");
@@ -267,6 +275,16 @@ export function NotificationRecipientPicker({
 
   const totalRecipients = selectedUserIds.length + extraEmails.length;
 
+  useEffect(() => {
+    onRecipientLabelsChange?.(recipientLabels);
+  }, [recipientLabels, onRecipientLabelsChange]);
+
+  useEffect(() => {
+    if (previewUserId && !selectedUserIds.includes(previewUserId)) {
+      onPreviewUserIdChange?.(null);
+    }
+  }, [previewUserId, selectedUserIds, onPreviewUserIdChange]);
+
   return (
     <div className="notification-recipients">
       <div className="notification-recipients__quick">
@@ -359,6 +377,29 @@ export function NotificationRecipientPicker({
               </button>
             </span>
           ))}
+
+          {selectedUserIds.length > 0 && onPreviewUserIdChange ? (
+            <label className="notification-recipients__preview-select">
+              <span>Pré-visualizar como</span>
+              <select
+                value={previewUserId ?? ""}
+                disabled={disabled}
+                onChange={(event) =>
+                  onPreviewUserIdChange(event.target.value ? event.target.value : null)
+                }
+              >
+                <option value="">Eu (remetente)</option>
+                {selectedUserIds.map((userId) => {
+                  const label = recipientLabels[userId];
+                  return (
+                    <option key={userId} value={userId}>
+                      {label?.name ?? "Usuário"} — {label?.email ?? userId}
+                    </option>
+                  );
+                })}
+              </select>
+            </label>
+          ) : null}
         </div>
       ) : null}
 

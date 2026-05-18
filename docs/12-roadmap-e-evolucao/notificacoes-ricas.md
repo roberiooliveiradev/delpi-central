@@ -1,29 +1,34 @@
 # Roadmap — Notificações ricas (Minha DELPI)
 
-> **Status:** Fase 1 em implementação (maio/2026)  
+> **Status:** Fases 1–2 concluídas · Fase 3 parcial (expiração + histórico) · maio/2026  
 > **Escopo:** Core API + Portal
 
 ---
 
-## 1. Problema atual
+## 1. O que já está implementado
 
-Hoje a notificação é um **texto plano** (`title` + `message` + `type` visual). Não há:
-
-- redirecionamento para apps ou rotas do Portal;
-- categorias semânticas (boas-vindas, aniversário, evento);
-- conteúdo rico (HTML seguro) ou templates visuais;
-- ícone/imagem por tipo de comunicação.
+| Área | Entrega |
+|------|---------|
+| **Modelo** | `type`, `category`, `presentation` (`text` \| `html` \| `template`), `action`, `htmlContent`, `metadata`, `expiresAt`, `icon` |
+| **Segurança** | HTML sanitizado com `bleach` na Core API; validação de `portal_route` e `external_url` |
+| **Templates sistema** | `welcome_v1`, `birthday_v1`, `company_event_v1` (somente leitura no Admin) |
+| **Templates customizados** | CRUD `GET/POST/DELETE /admin/notifications/templates` + migration `c9d0e1f2a3b4` |
+| **Variáveis** | `{userName}`, `{userFullName}`, `{userEmail}` preenchidas por destinatário no dispatch |
+| **Admin Portal** | Painéis numerados, pills de formato, múltiplos destinatários, preview por destinatário, `expiresAt` |
+| **Usuário** | Sino na sidebar, cards na home, página `/notifications` com histórico paginado |
+| **API envio** | `POST /admin/notifications`, `POST /integrations/notifications` |
+| **API leitura** | `GET /me/notifications` (não lidas), `GET /me/notifications/history` (paginado) |
 
 ---
 
-## 2. Modelo conceitual (duas dimensões)
+## 2. Modelo conceitual
 
 | Dimensão | Campo | Exemplos | Uso |
 |----------|--------|----------|-----|
 | **Severidade visual** | `type` | `info`, `success`, `warning`, `error` | Cor, destaque na UI |
-| **Categoria** | `category` | `welcome`, `birthday`, `company_event`, `system`, `announcement`, `custom` | Ícone, template, filtros futuros |
-| **Apresentação** | `presentation` | `text`, `html` | Texto simples vs HTML sanitizado |
-| **Ação (CTA)** | `action` | ver abaixo | Botão “Abrir app”, “Ver evento” |
+| **Categoria** | `category` | `welcome`, `birthday`, `company_event`, `system`, `announcement`, `custom` | Ícone, template, filtros |
+| **Apresentação** | `presentation` | `text`, `html`, `template` | Texto, HTML sanitizado ou card React |
+| **Ação (CTA)** | `action` | `portal_route`, `external_url` | Botão no card |
 
 ### Ação (`action`)
 
@@ -48,81 +53,89 @@ Hoje a notificação é um **texto plano** (`title` + `message` + `type` visual)
 - Campo `htmlContent` (persistido como `html_content`).
 - **Sanitização obrigatória no backend** (`bleach`) antes de gravar.
 - Tags permitidas: `p`, `br`, `strong`, `em`, `ul`, `ol`, `li`, `a`, `h3`, `h4`, `span`.
-- Proibido: `script`, `iframe`, `on*` handlers, `javascript:`.
-- `message` continua obrigatório como **fallback** (preview, push, leitores simples).
+- `message` continua como **fallback** (preview, clientes simples).
 
 ---
 
-## 4. Templates (Fase 2)
+## 4. Templates
 
-Catálogo fixo no Portal (componentes React, sem HTML arbitrário):
+### Sistema (somente leitura)
 
-| Template | `category` | Variáveis (`metadata`) |
-|----------|------------|-------------------------|
-| Boas-vindas | `welcome` | `userName` |
-| Aniversário | `birthday` | `userName`, `years` |
+| Template | `category` | Variáveis |
+|----------|------------|-----------|
+| Boas-vindas | `welcome` | `userName` (auto) |
+| Aniversário | `birthday` | `userName` (auto), `years` |
 | Evento empresa | `company_event` | `eventName`, `eventDate`, `location` |
 
-Admin escolhe template + variáveis → backend grava `presentation: "template"` + `metadata` (Fase 2).
+### Customizados
+
+Criados no Admin → armazenados em `notification_custom_templates` → renderizados com as mesmas regras de variáveis.
 
 ---
 
-## 5. API (evolução)
+## 5. API
 
-### Resposta `GET /me/notifications`
+### `GET /me/notifications`
+
+Lista **não lidas** e não expiradas (array, compatível com o sino).
+
+### `GET /me/notifications/history`
+
+Histórico paginado.
+
+| Query | Valores | Default |
+|-------|---------|---------|
+| `status` | `all`, `unread`, `read` | `all` |
+| `limit` | 1–100 | `20` |
+| `offset` | ≥ 0 | `0` |
 
 ```json
 {
-  "id": "uuid",
-  "title": "Bem-vindo à Minha DELPI",
-  "message": "Sua conta está pronta.",
-  "type": "success",
-  "category": "welcome",
-  "presentation": "html",
-  "htmlContent": "<p>Olá, <strong>Rob</strong>!</p>",
-  "icon": "sparkles",
-  "action": {
-    "type": "portal_route",
-    "label": "Explorar aplicativos",
-    "target": "/"
-  },
-  "read": false,
-  "createdAt": "2026-05-18T12:00:00Z"
+  "items": [{ "id": "uuid", "title": "…", "message": "…", "read": false, "createdAt": "…" }],
+  "total": 42,
+  "limit": 20,
+  "offset": 0
 }
 ```
 
 ### Envio `POST /admin/notifications` e `/integrations/notifications`
 
-Campos adicionais opcionais: `category`, `presentation`, `htmlContent`, `icon`, `action`, `metadata`, `expiresAt`.
+Campos opcionais: `category`, `presentation`, `htmlContent`, `templateId`, `templateVars`, `icon`, `action`, `metadata`, `expiresAt`, `broadcast`, `userIds`, `emails`.
 
 ---
 
-## 6. UI Portal (Fase 1)
+## 6. UI Portal
 
-- **Sidebar:** card por notificação (título, cor por `type`, ícone por `category`, HTML ou texto, botão CTA).
-- **Admin → Notificações:** formulário com categoria, modo texto/HTML, ação e preview.
-- **Home:** cards enriquecidos (mesmo componente).
+| Superfície | Comportamento |
+|------------|----------------|
+| **Sidebar (sino)** | Não lidas; link “Ver todas” → `/notifications` |
+| **Home** | Resumo + até 4 cards; clique no resumo → `/notifications` |
+| **`/notifications`** | Abas Todas / Não lidas / Lidas, paginação, marcar como lida |
+| **Admin → Notificações** | Envio em massa, preview por destinatário, expiração em dias |
 
 ---
 
-## 7. Fases
+## 7. Fases (roadmap)
 
-| Fase | Entrega |
-|------|---------|
-| **1** (atual) | Migration, sanitização HTML, action, category, UI Portal + admin |
-| **2** | Templates React (`welcome_v1`, `birthday_v1`, `company_event_v1`) — **implementado** |
-| **3** | Agendamento, expiração automática, auditoria de envios |
-| **4** | Preferências do usuário (opt-out por categoria) |
-| **5** | Centro `/notifications` com histórico paginado |
+| Fase | Status | Entrega |
+|------|--------|---------|
+| **1** | ✅ | Migration rica, HTML, action, category, UI base |
+| **2** | ✅ | Templates React + customizados + variáveis |
+| **2b** | ✅ | Layout admin em painéis, editor HTML com toolbar de variáveis |
+| **3** | 🟡 | `expiresAt` na UI + histórico paginado — **feito**; falta agendamento e auditoria de envios |
+| **4** | ⬜ | Preferências do usuário (opt-out por categoria) |
+| **5** | 🟡 | Centro `/notifications` — **feito**; evoluir filtros por categoria |
+| **6** | ⬜ | Automação (aniversário, boas-vindas), destinatários por grupo/papel |
+| **7** | ⬜ | Rate limit em integrações; preview WYSIWYG HTML |
 
 ---
 
 ## 8. Segurança
 
 1. HTML sempre sanitizado na Core API.
-2. `portal_route` só aceita paths relativos (`/...`), sem `//` externo.
+2. `portal_route` só paths relativos (`/...`), sem `//` externo.
 3. `external_url` só `https:`.
-4. Integrações externas: rate limit (pendente).
+4. Integrações externas: rate limit (**pendente**).
 
 ---
 

@@ -1,7 +1,7 @@
 # app/interfaces/http/me_controller.py
 
 from uuid import UUID
-from flask import Blueprint, jsonify, g
+from flask import Blueprint, jsonify, g, request
 
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import (
     SqlAlchemyUnitOfWork,
@@ -28,6 +28,9 @@ from app.application.use_cases.remove_favorite_app_use_case import (
 
 from app.application.use_cases.list_unread_notifications_use_case import (
     ListUnreadNotificationsUseCase,
+)
+from app.application.use_cases.list_notifications_use_case import (
+    ListNotificationsUseCase,
 )
 from app.interfaces.http.serializers.notification_serializer import serialize_notification
 
@@ -155,6 +158,42 @@ def list_notifications():
         result = uc.execute(user_id=user.id)
 
     return jsonify([serialize_notification(n) for n in result]), 200
+
+
+@me_bp.route("/me/notifications/history", methods=["GET"])
+@require_auth()
+def list_notifications_history():
+    user = g.current_user
+
+    status = request.args.get("status", "all")
+    if status not in ("all", "unread", "read"):
+        return api_error("invalid_status", "status must be all, unread or read", status=400)
+
+    try:
+        limit = int(request.args.get("limit", 20))
+        offset = int(request.args.get("offset", 0))
+    except ValueError:
+        return api_error("invalid_pagination", "limit and offset must be integers", status=400)
+
+    with SqlAlchemyUnitOfWork() as uow:
+        result = ListNotificationsUseCase(uow).execute(
+            user_id=user.id,
+            status=status,
+            limit=limit,
+            offset=offset,
+        )
+
+    return (
+        jsonify(
+            {
+                "items": [serialize_notification(n) for n in result.items],
+                "total": result.total,
+                "limit": result.limit,
+                "offset": result.offset,
+            }
+        ),
+        200,
+    )
 
 
 @me_bp.route("/me/notifications/<notification_id>/read", methods=["POST"])

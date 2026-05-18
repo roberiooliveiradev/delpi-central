@@ -77,6 +77,28 @@
   color: #047857;
 }
 
+.notification-recipients__preview-select {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.notification-recipients__preview-select > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.notification-recipients__preview-select select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  font: inherit;
+}
+
 .notification-recipients__chips {
   display: flex;
   flex-wrap: wrap;

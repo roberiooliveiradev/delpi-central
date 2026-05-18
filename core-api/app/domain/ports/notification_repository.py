@@ -1,6 +1,6 @@
 # app/domain/ports/notification_repository.py
 
-from typing import Protocol, List
+from typing import Protocol, List, Tuple, Literal
 from uuid import UUID
 from dataclasses import dataclass
 from datetime import datetime
@@ -35,6 +35,16 @@ class NotificationRepository(Protocol):
         ...
 
     def list_unread(self, user_id: str) -> List[NotificationDTO]:
+        ...
+
+    def list_for_user(
+        self,
+        user_id: str,
+        *,
+        status: Literal["all", "unread", "read"] = "all",
+        limit: int = 20,
+        offset: int = 0,
+    ) -> Tuple[List[NotificationDTO], int]:
         ...
 
     def mark_read(self, notification_id: UUID) -> None:
