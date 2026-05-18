@@ -1,43 +1,61 @@
 # Strategic Indicators API
 
-Serviço FastAPI dedicado a **`/strategic-indicators/*`** (código derivado da api-delpi, pacote `si_app` com imports `from si_app...`).
+Serviço **FastAPI** dedicado ao módulo **Indicadores Estratégicos** (`/strategic-indicators/*`).
 
-O **`si_app/main.py`** expõe **`/health`**, **`/docs`** e o router **`/strategic-indicators/*`**.
+- Pacote: `si_app` (imports `from si_app...`)
+- Entrypoint: `si_app/main.py` — `/health`, `/docs`, router estratégico
+- Código podado a partir da api-delpi: apenas composers e infra usados pelo painel SI
 
-O repositório `si_app/` foi **poado**: mantêm-se só módulos alcançáveis a partir de `main.py` → `strategic_indicators_routes` → `strategic_indicators_composer` → composers departamentais (comercial, produção, qualidade, engenharia, financeiro, suprimentos, RH) e respetiva infra (TOTVS, Google Sheets, Portal RH, Postgres plugins para catálogo/metas/settings).
+## Documentação
+
+| Doc | Descrição |
+|-----|-----------|
+| [docs/README.md](docs/README.md) | Índice da documentação |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Gateway, fontes de dados, cache, paralelismo |
+| [docs/API.md](docs/API.md) | Rotas, permissões, query params |
+| [docs/PERFORMANCE_IMPLEMENTATION.md](docs/PERFORMANCE_IMPLEMENTATION.md) | Performance (fases 0–5), benchmark |
+| [migrations/README.md](migrations/README.md) | Migrations Postgres |
+
+MFE: [plugins/strategic-indicators/README.md](../plugins/strategic-indicators/README.md)
+
+## URL no gateway
+
+```text
+/apps/strategic-indicators-api/strategic-indicators/*
+```
+
+A **api-delpi** não expõe mais estas rotas.
 
 ## Variáveis de ambiente
 
-Igual à api-delpi para dados operacionais: `PLUGINS_*`, TOTVS, Google Sheets, Portal RH, Keycloak/JWT, etc. (ver `si_app/config.py`).
+Ver `si_app/config.py`. Principais:
 
 | Variável | Descrição |
 |----------|-----------|
-| `SI_API_ROOT_PATH` | Prefixo atrás do gateway (predefinição `/apps/strategic-indicators-api`). |
-| `STRATEGIC_INDICATORS_API_PORT` | Porta do processo (fallback para `PORT`). |
-| `TOTVS_POOL_ENABLED` | Reutilizar conexões SQL Server (`true` por padrão). |
-| `TOTVS_POOL_MAX_SIZE` | Tamanho do pool TOTVS (padrão `8`). |
-| `SI_SNAPSHOT_CACHE_TTL_SECONDS` | TTL do cache in-process de snapshots (padrão `600`). |
-| `SI_WARMUP_ON_STARTUP` | Aquece executive + trends em background no boot (`true` no Compose). |
-| `SI_WARMUP_TRENDS_MONTHS` | Meses carregados no warm-up (padrão `6`). |
-| `SI_PERIOD_SCORES_ENABLED` | Persiste scores por competência no Postgres para trends (padrão `true`). |
-| `SI_RUN_MIGRATIONS_ON_STARTUP` | Aplica migrations pendentes no boot (padrão `false`; `true` no Compose dev). |
+| `SI_API_ROOT_PATH` | Prefixo atrás do gateway (padrão `/apps/strategic-indicators-api`) |
+| `PORT` / `STRATEGIC_INDICATORS_API_PORT` | Porta do processo |
+| `PLUGINS_DB_*` | Postgres (schema `strategic_indicators`) |
+| `DB_*` / `TOTVS_*` | SQL Server Protheus |
+| `TOTVS_POOL_ENABLED`, `TOTVS_POOL_MAX_SIZE` | Pool pyodbc (padrão `true` / `8`) |
+| `SI_SNAPSHOT_CACHE_TTL_SECONDS` | Cache in-process de snapshots (padrão `600`) |
+| `SI_WARMUP_ON_STARTUP` | Warm-up executive + trends no boot |
+| `SI_WARMUP_TRENDS_MONTHS` | Meses do warm-up (padrão `6`) |
+| `SI_PERIOD_SCORES_ENABLED` | Persistir scores por competência (trends) |
+| `SI_RUN_MIGRATIONS_ON_STARTUP` | Aplicar migrations no boot (`true` em dev Compose) |
 
-## Migrations (Postgres plugins)
+Exemplo: [../infra/env.strategic-indicators.example](../infra/env.strategic-indicators.example)
 
-Arquivos em **`migrations/`** (V001–V010). Runner dedicado desta API — não depende mais da api-delpi.
+## Migrations
+
+SQL em `migrations/V001`–`V010`. Runner: `scripts/run_migrations.py`.
 
 ```bash
 export PYTHONPATH="$(pwd)/strategic-indicators-api:$(pwd)/shared"
-# Requer PLUGINS_DB_HOST, PLUGINS_DB_PORT, PLUGINS_DB_NAME, PLUGINS_DB_USER, PLUGINS_DB_PASSWORD
-python strategic-indicators-api/scripts/run_migrations.py up
 python strategic-indicators-api/scripts/run_migrations.py status
+python strategic-indicators-api/scripts/run_migrations.py up
 ```
 
-Detalhes: [migrations/README.md](migrations/README.md).
-
 ## Desenvolvimento local
-
-Na raiz do monorepo:
 
 ```bash
 export PYTHONPATH="$(pwd)/strategic-indicators-api:$(pwd)/shared"
@@ -52,10 +70,18 @@ Docker (contexto = raiz do monorepo):
 docker build -f strategic-indicators-api/Dockerfile -t strategic-indicators-api:dev .
 ```
 
-## Integração
+Compose dev: serviço `strategic-indicators-api` em `infra/docker-compose.dev.yml`.
 
-O MFE chama **`/apps/strategic-indicators-api/strategic-indicators`** através do gateway; a **api-delpi** já não monta estas rotas.
+## Scripts úteis
 
-## Performance (implementação)
+| Script | Uso |
+|--------|-----|
+| `scripts/run_migrations.py` | `up`, `status`, `reset` |
+| `scripts/warmup_si_snapshots.py` | Aquecer cache manualmente |
+| `scripts/bench_si_routes.py` | Medir latência das rotas de leitura |
 
-Roadmap e checklist de otimização das rotas de leitura: **[docs/PERFORMANCE_IMPLEMENTATION.md](docs/PERFORMANCE_IMPLEMENTATION.md)**.
+## Performance (resumo)
+
+Baseline medido: executive-summary ~19s → ~10s; trends 3 meses ~28s → ~9–10s.
+
+Detalhes, checklist e regras de paralelismo: [docs/PERFORMANCE_IMPLEMENTATION.md](docs/PERFORMANCE_IMPLEMENTATION.md).

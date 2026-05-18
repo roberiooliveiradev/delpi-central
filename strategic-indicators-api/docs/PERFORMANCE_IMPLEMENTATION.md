@@ -2,7 +2,7 @@
 
 Documento de referência para implementação incremental. Atualizar **Status** e **Checklist** a cada entrega.
 
-**Última atualização:** 2026-05-18  
+**Última atualização:** 2026-05-18 (doc SI consolidada)  
 **Baseline medido:** `GET /strategic-indicators/executive-summary?competence=2026-05` ≈ **19s** → **~10s** (2 períodos em paralelo com providers isolados).  
 **Trends (3 meses):** ~28s (série sequencial por dept) → **~9–10s** (períodos em paralelo com factory, até 3 workers).
 
@@ -26,6 +26,8 @@ Rotas **admin/escrita** (grupo C) são secundárias — já são rápidas (Postg
 | TTL genérico | `si_app/infrastructure/cache/ttl_cache.py` |
 | Composição DI | `si_app/composition/strategic_indicators_composer.py` |
 | Snapshot (núcleo) | `si_app/application/services/strategic_indicators/strategic_indicators_snapshot_service.py` |
+| Modelos de snapshot | `strategic_indicators_snapshot_models.py` |
+| Metas fallback (série) | `postgres_resolved_indicators_catalog_repository.py`, `list_latest_active_goals_map` |
 | Medições (TOTVS/Sheets/RH) | `si_app/infrastructure/providers/strategic_indicators/real_indicator_measurements_provider.py` |
 | Coletores por dept | `si_app/infrastructure/providers/strategic_indicators/*_indicators_snapshot_provider.py` |
 | Catálogo + metas (Postgres) | `si_app/infrastructure/persistence/plugins/repositories/strategic_indicators/postgres_resolved_indicators_catalog_repository.py` |
@@ -88,6 +90,8 @@ Rotas **admin/escrita** (grupo C) são secundárias — já são rápidas (Postg
 |-----------|--------|----------|
 | 500 em `/indicators`, `/presentation`, `/trends` com use case OK no log | `JSONResponse` + `Decimal` do Postgres após introdução de `si_read_route_support` | `to_json_safe()` antes de serializar |
 | Executive ~30s → erro com 2 períodos paralelos no mesmo provider | Race em cache TOTVS/pyodbc | Medições sequenciais; depois factory por thread |
+| 500 trends/presentation 6 meses: meta não encontrada | Metas só no `goal_year` da competência (seed 2026; série inclui 2025) | Fallback `list_latest_active_goals_map`; omitir indicador sem meta |
+| 502 em todas as rotas | Import circular `snapshot_service` ↔ `period_scores_serialization` | Modelos em `strategic_indicators_snapshot_models.py` |
 
 ---
 
@@ -179,10 +183,15 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 
 ---
 
-## 9. Ordem restante sugerida
+## 9. Pendências opcionais (pós fases 0–5)
 
-1. Paginação em outras listas admin se o volume crescer (ex.: histórico de metas)
-2. Job de backfill de `period_scores` para competências históricas (opcional)
+| Item | Prioridade | Notas |
+|------|------------|-------|
+| Backfill `period_scores` | Média | Script/job para competências históricas; trends ficam instantâneos quando todos os meses existem na tabela |
+| Metas por ano (2025, etc.) | Baixa | Admin `duplicate-year`; hoje há fallback automático |
+| Paginação admin extra | Baixa | Ex.: histórico de metas se volume crescer |
+| Unificar migrations | Housekeeping | Remover duplicata legada em `api-delpi/migrations/plugins/strategic-indicators/` |
+| Executive materializado | Evolução | Similar a `period_scores` para cold start &lt; 10s |
 
 ---
 
@@ -201,3 +210,5 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-18 | Warm-up executive + trends (`warmup_si_snapshots.py`, `SI_WARMUP_ON_STARTUP`) |
 | 2026-05-18 | Admin: batch monthly_targets; change-requests paginado; bench alerts |
 | 2026-05-18 | `period_scores` (V010): trends lê scores do Postgres quando todos os meses existem |
+| 2026-05-18 | Fallback metas + `snapshot_models` (fix série 6m e boot 502) |
+| 2026-05-18 | Docs SI: `docs/README`, `ARCHITECTURE`, `API`; README API e MFE atualizados |

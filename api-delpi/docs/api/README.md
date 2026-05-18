@@ -15,7 +15,7 @@ Exemplos:
 ```text
 GET  /apps/api-delpi/health
 GET  /apps/api-delpi/products/search?code=010101
-GET  /apps/api-delpi/strategic-indicators/executive-summary
+GET  /apps/strategic-indicators-api/strategic-indicators/executive-summary
 POST /apps/api-delpi/data/sql
 ```
 
@@ -49,7 +49,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [02-produtos.md](./02-produtos.md) | Busca, estrutura, estoque, NF-es, vendas e analisador de produto. |
 | [03-vendas.md](./03-vendas.md) | Listagem de ordens de venda. |
 | [04-sistema-e-dados.md](./04-sistema-e-dados.md) | Metadados Protheus (SX2/SX3/SIX/SX9) e execução SQL controlada. |
-| [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) | Dashboard executivo, metas, administração e governança. |
+| [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) | Redirecionamento → API dedicada SI ([doc oficial](../../strategic-indicators-api/docs/README.md)). |
 | [06-modulos-departamentais.md](./06-modulos-departamentais.md) | Financeiro, comercial, produção, suprimentos, engenharia e qualidade (métricas). |
 | [07-qualidade-nc.md](./07-qualidade-nc.md) | NC interna/externa (implementado, **ainda não montado** em `main.py`). |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
@@ -76,7 +76,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 |---|---|
 | **FastAPI** | Framework HTTP, OpenAPI, validação Pydantic. |
 | **SQL Server (Protheus)** | Consultas operacionais (produtos, vendas, métricas). |
-| **PostgreSQL** | Plugins (`strategic-indicators`, `quality` NC). |
+| **PostgreSQL** | Plugins (`quality` NC); schema `strategic_indicators` via **strategic-indicators-api**. |
 | **delpi_auth** | JWT + decorators de permissão. |
 | **Nginx (gateway)** | Proxy em `/apps/api-delpi/`. |
 

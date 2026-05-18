@@ -79,7 +79,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Plugin | Doc específica |
 |---|---|
 | Chat / IA | [minha-delpi-ai-api/docs/api/](../../minha-delpi-ai-api/docs/api/README.md) |
-| Indicadores | [api-delpi/docs/api/05-indicadores-estrategicos.md](../../api-delpi/docs/api/05-indicadores-estrategicos.md) |
+| Indicadores | [strategic-indicators-api/docs/](../../strategic-indicators-api/docs/README.md) · [MFE](../../plugins/strategic-indicators/README.md) |
 | API operacional | [api-delpi/docs/api/](../../api-delpi/docs/api/README.md) |
 
 ---

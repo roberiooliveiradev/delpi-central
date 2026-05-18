@@ -9,7 +9,7 @@
 
 ## 1. Papel
 
-Backend **FastAPI** para dados operacionais e integração **TOTVS Protheus** (SQL Server), além de módulos em **PostgreSQL** (Indicadores Estratégicos, qualidade NC).
+Backend **FastAPI** para dados operacionais e integração **TOTVS Protheus** (SQL Server), além de módulos em **PostgreSQL** (qualidade NC). **Indicadores Estratégicos** têm API dedicada (`strategic-indicators-api`).
 
 ```text
 Core API     → governança (usuários, apps, RBAC)
@@ -39,7 +39,7 @@ Autenticação: `Authorization: Bearer <JWT>` via `delpi_auth` (mesmo Keycloak d
 | `/sales` | Ordens de venda |
 | `/system` | Metadados Protheus (SX2/SX3/…) |
 | `/data` | SQL somente leitura controlado |
-| `/strategic-indicators` | Plugin indicadores estratégicos |
+| *(movido)* | Indicadores Estratégicos → `/apps/strategic-indicators-api/strategic-indicators` ([doc](../../strategic-indicators-api/docs/README.md)) |
 | `/engineering` | LMPs, Transforma Mais |
 | `/quality` | Métricas qualidade (TOTVS) |
 | `/commercial`, `/production`, `/supplies` | KPIs departamentais |

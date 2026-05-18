@@ -1,12 +1,30 @@
 # Migrations — Strategic Indicators
 
-Scripts SQL versionados para o schema `strategic_indicators` no banco **postgres-plugins** (`PLUGINS_DB_*`).
+Scripts SQL versionados para o schema **`strategic_indicators`** no banco **postgres-plugins** (`PLUGINS_DB_*`).
 
-Padrão de nome: `V001__descricao.sql`
+Padrão: `V###__descricao.sql`
+
+**Fonte oficial:** apenas `strategic-indicators-api/migrations/`.  
+O diretório `api-delpi/migrations/plugins/strategic-indicators/` é legado — não adicionar versões novas lá.
+
+## Versões
+
+| Versão | Arquivo | Conteúdo |
+|--------|---------|----------|
+| V001 | schema + extensions | Schema `strategic_indicators`, extensões |
+| V002 | module_settings | Configurações do módulo |
+| V003 | settings_audit | Auditoria de settings |
+| V004 | departments | Departamentos |
+| V005 | department_indicators | Indicadores por departamento |
+| V006 | indicator_goals | Metas versionadas |
+| V007 | change_requests | Solicitações de alteração |
+| V008 | change_request_comments | Comentários |
+| V009 | seed admin | Estrutura padrão + metas (ano corrente no seed) |
+| V010 | period_scores | Scores por competência/escopo (cache de série para trends) |
 
 ## Comandos
 
-Na raiz do monorepo (com `PLUGINS_DB_*` no ambiente):
+Na raiz do monorepo:
 
 ```bash
 export PYTHONPATH="$(pwd)/strategic-indicators-api:$(pwd)/shared"

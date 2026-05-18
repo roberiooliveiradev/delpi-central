@@ -1,73 +1,60 @@
-# React + TypeScript + Vite
+# Plugin — Indicadores Estratégicos (MFE)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Microfrontend React (Vite + Module Federation) do painel **Indicadores Estratégicos**.
 
-Currently, two official plugins are available:
+## Integração na plataforma
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Item | Valor |
+|------|-------|
+| `id` (manifesto) | `strategic-indicators` |
+| `basePath` | `/apps/strategic-indicators` |
+| Container dev | `delpi-strategic-indicators` |
+| API backend | `/apps/strategic-indicators-api/strategic-indicators` |
 
-## React Compiler
+Variável opcional de build: `VITE_STRATEGIC_INDICATORS_API_BASE` (padrão no código: `/apps/strategic-indicators-api/strategic-indicators`).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Documentação da API
 
-## Expanding the ESLint configuration
+- [strategic-indicators-api/docs/README.md](../../strategic-indicators-api/docs/README.md)
+- Rotas e permissões: [API.md](../../strategic-indicators-api/docs/API.md)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Estrutura do código
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+src/
+  data/api/          # Clientes HTTP (executive, trends, presentation, admin…)
+  data/cache/        # Cache de leitura no browser (SWR)
+  state/hooks/       # Hooks React + prefetch após executive
+  ui/pages/          # Painel executivo, departamentos, trends, admin…
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Comportamento de carregamento (performance)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Implementado no MFE (ver [PERFORMANCE_IMPLEMENTATION.md](../../strategic-indicators-api/docs/PERFORMANCE_IMPLEMENTATION.md) fase 4):
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **Stale-while-revalidate** — exibe cache local e atualiza em background.
+2. **Prefetch** — após `executive-summary`, dispara `departments` e `trends` (6 meses).
+3. **Presentation split** — overview com `?include=`; trends em segundo request.
+
+## Desenvolvimento
+
+```bash
+cd plugins/strategic-indicators
+npm install
+npm run dev
 ```
+
+Build para o gateway:
+
+```bash
+npm run build
+# Assets em dist/ → servidos em /apps/strategic-indicators/assets/
+```
+
+Registro na Core API via `strategic-indicators.manifest.json` — ver [docs/08-plugins/README.md](../../docs/08-plugins/README.md).
+
+## Permissões (exemplos)
+
+- `strategic-indicators.view` — painel
+- `strategic-indicators.trends.view` — tendências
+- `strategic-indicators.settings.manage` — admin e settings
