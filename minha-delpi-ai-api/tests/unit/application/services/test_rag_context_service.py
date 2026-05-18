@@ -135,3 +135,41 @@ def test_build_context_returns_empty_sources_when_no_chunks():
         "context": "",
         "sources": [],
     }
+
+
+def test_build_context_filters_chunks_below_min_score():
+    service = RagContextService(
+        FakeSearchKnowledgeUseCase(
+            [
+                {
+                    "id": "chunk-low",
+                    "documentId": "doc-1",
+                    "title": "Baixo",
+                    "sourceType": "global",
+                    "sourceRef": "ref",
+                    "chunkIndex": 0,
+                    "content": "Trecho irrelevante",
+                    "score": 0.20,
+                    "metadata": {"scope": "global"},
+                },
+                {
+                    "id": "chunk-high",
+                    "documentId": "doc-2",
+                    "title": "Alto",
+                    "sourceType": "global",
+                    "sourceRef": "ref",
+                    "chunkIndex": 0,
+                    "content": "Trecho relevante",
+                    "score": 0.80,
+                    "metadata": {"scope": "global"},
+                },
+            ]
+        )
+    )
+
+    result = service.build_context("pergunta")
+
+    assert "Trecho relevante" in result["context"]
+    assert "Trecho irrelevante" not in result["context"]
+    assert len(result["sources"]) == 1
+    assert result["sources"][0]["documentId"] == "doc-2"

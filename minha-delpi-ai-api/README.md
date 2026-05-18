@@ -77,7 +77,10 @@ docs/              # documentação técnica
 | `DATABASE_URL` | Conexão PostgreSQL (obrigatória) |
 | `LLM_PROVIDER` | `ollama` ou `vllm` |
 | `LLM_COST_TABLE_JSON` | Tabela de custo fallback (env) |
-| `RAG_ASSERTIVENESS_MIN_SCORE` | Limiar de assertividade nos testes RAG |
+| `RAG_ASSERTIVENESS_MIN_SCORE` | Limiar de assertividade nos testes RAG (admin) |
+| `RAG_CONTEXT_MIN_SCORE` | Score mínimo de chunk no contexto do chat (default = assertividade) |
+| `CHAT_ATTACHMENT_CONTEXT_*` | Injeção inline de texto de anexos no prompt |
+| `EXTERNAL_ACTION_SEMANTIC_*` | Ranking semântico de actions OpenAPI |
 | `KNOWLEDGE_SEMANTIC_DEDUP_*` | Deduplicação semântica na pré-visualização |
 | `RESPONSE_EVALUATION_LLM_SUGGESTIONS_ENABLED` | Sugestões LLM nas avaliações |
 | `CHAT_INPUT_SECURITY_*` | Sanitização e anti prompt-injection |

@@ -295,6 +295,23 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         return self._to_document_entity(model)
 
+    def list_chunks_by_document_id(
+        self,
+        document_id: UUID,
+        *,
+        limit: int = 12,
+    ) -> list[KnowledgeChunk]:
+        rows = (
+            AiKnowledgeChunkModel.query.filter(
+                AiKnowledgeChunkModel.document_id == document_id,
+            )
+            .order_by(AiKnowledgeChunkModel.chunk_index.asc())
+            .limit(max(1, limit))
+            .all()
+        )
+
+        return [self._to_chunk_entity(row) for row in rows]
+
     def find_global_document_by_content_hash(
         self,
         content_hash: str,

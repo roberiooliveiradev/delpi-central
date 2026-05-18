@@ -35,6 +35,7 @@ class SendChatMessageUseCase:
         chat_tool_context_service: ChatToolContextService,
         agent_repository: ChatAgentRepositoryPort | None = None,
         attachment_repository: ChatAttachmentRepositoryPort | None = None,
+        chat_attachment_context_service=None,
         workspace_context_service: ChatWorkspaceContextService | None = None,
         admin_guideline_prompt_service=None,
         message_security_service: ChatMessageSecurityService | None = None,
@@ -52,6 +53,7 @@ class SendChatMessageUseCase:
         self.chat_tool_context_service = chat_tool_context_service
         self.agent_repository = agent_repository
         self.attachment_repository = attachment_repository
+        self.chat_attachment_context_service = chat_attachment_context_service
         self.workspace_context_service = workspace_context_service
         self.admin_guideline_prompt_service = admin_guideline_prompt_service
 
@@ -135,6 +137,11 @@ class SendChatMessageUseCase:
             agent_prompt=workspace_context.get("agentPrompt"),
             admin_guidelines_prompt=admin_guidelines_prompt,
             attachments=attachments,
+            attachment_context=self._build_attachment_context(
+                user_id=user_id,
+                session_id=session_id,
+                request=request,
+            ),
         )
 
         started_at = time.perf_counter()
@@ -290,3 +297,70 @@ class SendChatMessageUseCase:
 
     def _hash_prompt(self, prompt: str) -> str:
         return hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+
+    def _get_message_attachments(
+        self,
+        request: SendChatMessageRequest,
+        user_id: UUID,
+        session_id: UUID,
+    ) -> list[dict]:
+        if not self.attachment_repository or not request.attachment_ids:
+            return []
+
+        attachment_ids = [UUID(value) for value in request.attachment_ids]
+
+        attachments = self.attachment_repository.list_attachments_by_ids(
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+        )
+
+        return [
+            {
+                "id": str(attachment.id),
+                "filename": attachment.filename,
+                "original_filename": attachment.original_filename,
+                "content_type": attachment.content_type,
+                "size_bytes": attachment.size_bytes,
+                "status": attachment.status,
+                "metadata": attachment.metadata,
+            }
+            for attachment in attachments
+        ]
+
+    def _attach_files_to_message(
+        self,
+        request: SendChatMessageRequest,
+        user_id: UUID,
+        session_id: UUID,
+        message_id: UUID,
+    ) -> None:
+        if not self.attachment_repository or not request.attachment_ids:
+            return
+
+        attachment_ids = [UUID(value) for value in request.attachment_ids]
+
+        self.attachment_repository.attach_to_message(
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+            message_id=message_id,
+        )
+
+    def _build_attachment_context(
+        self,
+        *,
+        user_id: UUID,
+        session_id: UUID,
+        request: SendChatMessageRequest,
+    ) -> str:
+        if not self.chat_attachment_context_service or not request.attachment_ids:
+            return ""
+
+        attachment_ids = [UUID(value) for value in request.attachment_ids]
+
+        return self.chat_attachment_context_service.build_context(
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+        )

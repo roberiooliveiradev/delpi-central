@@ -2,8 +2,9 @@ import re
 
 
 class ExternalActionSelectionService:
-    def __init__(self, repository):
+    def __init__(self, repository, semantic_ranker=None):
         self.repository = repository
+        self.semantic_ranker = semantic_ranker
 
     def select_action(
         self,
@@ -102,11 +103,11 @@ class ExternalActionSelectionService:
 
         allowed = {str(item) for item in allowed_action_ids}
 
-        candidates = [
-            action
-            for action in self.repository.find_candidate_actions(message, limit=120)
-            if str(action.get("actionId")) in allowed
-        ]
+        candidates = self._list_allowed_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            limit=120,
+        )
 
         preferred = [
             action
@@ -125,7 +126,8 @@ class ExternalActionSelectionService:
             )
         ]
 
-        action = preferred[0] if preferred else (candidates[0] if candidates else None)
+        ranked = self._rank_candidates(message, preferred or candidates)
+        action = ranked[0] if ranked else None
 
         if not action:
             return None
@@ -154,18 +156,21 @@ class ExternalActionSelectionService:
         if not allowed_action_ids:
             return None
 
-        allowed = {str(item) for item in allowed_action_ids}
-
-        candidates = [
-            action
-            for action in self.repository.find_candidate_actions(message, limit=120)
-            if str(action.get("actionId")) in allowed
-        ]
+        candidates = self._list_allowed_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            limit=120,
+        )
 
         if not candidates:
             return None
 
-        action = candidates[0]
+        ranked = self._rank_candidates(message, candidates)
+
+        if not ranked:
+            return None
+
+        action = ranked[0]
 
         return {
             "name": "execute_external_action",
@@ -175,6 +180,8 @@ class ExternalActionSelectionService:
                     "message": message,
                 },
             },
+            "reason": action.get("selectionReason")
+            or "Action OpenAPI autorizada selecionada por similaridade semântica com a pergunta.",
         }
 
     def _select_product_action(
@@ -188,11 +195,11 @@ class ExternalActionSelectionService:
 
         allowed = {str(item) for item in allowed_action_ids}
 
-        candidates = [
-            action
-            for action in self.repository.find_candidate_actions(message, limit=80)
-            if str(action.get("actionId")) in allowed
-        ]
+        candidates = self._list_allowed_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            limit=80,
+        )
 
         if not candidates:
             return None
@@ -228,11 +235,11 @@ class ExternalActionSelectionService:
 
         allowed = {str(item) for item in allowed_action_ids}
 
-        candidates = [
-            action
-            for action in self.repository.find_candidate_actions(message, limit=80)
-            if str(action.get("actionId")) in allowed
-        ]
+        candidates = self._list_allowed_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            limit=80,
+        )
 
         for action in candidates:
             if action.get("method") != "GET":
@@ -334,3 +341,31 @@ class ExternalActionSelectionService:
             return None
 
         return match.group(0)
+
+    def _list_allowed_candidates(
+        self,
+        message: str,
+        *,
+        allowed_action_ids: list[str],
+        limit: int,
+    ) -> list[dict]:
+        allowed = {str(item) for item in allowed_action_ids}
+
+        return [
+            action
+            for action in self.repository.find_candidate_actions(
+                message,
+                limit=limit,
+                allowed_action_ids=allowed_action_ids,
+            )
+            if str(action.get("actionId")) in allowed
+        ]
+
+    def _rank_candidates(self, message: str, candidates: list[dict]) -> list[dict]:
+        if not candidates:
+            return []
+
+        if self.semantic_ranker:
+            return self.semantic_ranker.rank(message, candidates)
+
+        return candidates

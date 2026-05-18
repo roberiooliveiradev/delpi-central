@@ -100,6 +100,15 @@ class KnowledgeRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_chunks_by_document_id(
+        self,
+        document_id: UUID,
+        *,
+        limit: int = 12,
+    ) -> list[KnowledgeChunk]:
+        raise NotImplementedError
+
+    @abstractmethod
     def find_global_document_by_content_hash(
         self,
         content_hash: str,

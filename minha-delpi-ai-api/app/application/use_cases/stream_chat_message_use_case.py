@@ -35,6 +35,7 @@ class StreamChatMessageUseCase:
         chat_tool_context_service: ChatToolContextService,
         agent_repository: ChatAgentRepositoryPort | None = None,
         attachment_repository: ChatAttachmentRepositoryPort | None = None,
+        chat_attachment_context_service=None,
         workspace_context_service: ChatWorkspaceContextService | None = None,
         admin_guideline_prompt_service=None,
         message_security_service: ChatMessageSecurityService | None = None,
@@ -52,6 +53,7 @@ class StreamChatMessageUseCase:
         self.chat_tool_context_service = chat_tool_context_service
         self.agent_repository = agent_repository
         self.attachment_repository = attachment_repository
+        self.chat_attachment_context_service = chat_attachment_context_service
         self.workspace_context_service = workspace_context_service
         self.admin_guideline_prompt_service = admin_guideline_prompt_service
 
@@ -144,6 +146,11 @@ class StreamChatMessageUseCase:
             agent_prompt=workspace_context.get("agentPrompt"),
             admin_guidelines_prompt=admin_guidelines_prompt,
             attachments=attachments,
+            attachment_context=self._build_attachment_context(
+                user_id=user_id,
+                session_id=session_id,
+                request=request,
+            ),
         )
 
         answer_parts: list[str] = []
@@ -346,6 +353,24 @@ class StreamChatMessageUseCase:
             session_id=session_id,
             attachment_ids=attachment_ids,
             message_id=message_id,
+        )
+
+    def _build_attachment_context(
+        self,
+        *,
+        user_id: UUID,
+        session_id: UUID,
+        request: SendChatMessageRequest,
+    ) -> str:
+        if not self.chat_attachment_context_service or not request.attachment_ids:
+            return ""
+
+        attachment_ids = [UUID(value) for value in request.attachment_ids]
+
+        return self.chat_attachment_context_service.build_context(
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
         )
 
     def _agent_metadata(self, agent) -> dict | None:

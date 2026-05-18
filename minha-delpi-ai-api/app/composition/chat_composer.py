@@ -1,8 +1,12 @@
 from app.application.use_cases.update_chat_message_use_case import UpdateChatMessageUseCase
 from app.application.use_cases.delete_chat_session_use_case import DeleteChatSessionUseCase
 from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
+from app.application.services.external_actions.external_action_semantic_ranker_service import (
+    ExternalActionSemanticRankerService,
+)
 from app.application.services.external_actions.external_action_selection_service import ExternalActionSelectionService
 from app.application.services.admin_guideline_prompt_service import AdminGuidelinePromptService
+from app.application.services.chat_attachment_context_service import ChatAttachmentContextService
 from app.application.services.chat_attachment_text_extractor import ChatAttachmentTextExtractor
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
@@ -124,12 +128,27 @@ def make_chat_workspace_context_service() -> ChatWorkspaceContextService:
     )
 
 
+def make_chat_attachment_context_service() -> ChatAttachmentContextService:
+    return ChatAttachmentContextService(
+        attachment_repository=PostgresChatAttachmentRepository(),
+        knowledge_repository=PostgresKnowledgeRepository(),
+        text_extractor=ChatAttachmentTextExtractor(),
+    )
+
+
+def make_external_action_semantic_ranker_service() -> ExternalActionSemanticRankerService:
+    return ExternalActionSemanticRankerService(
+        embedding_gateway=LocalEmbeddingGateway(),
+    )
+
+
 def make_chat_tool_context_service() -> ChatToolContextService:
     return ChatToolContextService(
         tool_selection_service=ToolSelectionService(),
         execute_tool_use_case=make_execute_tool_use_case(),
         external_action_selection_service=ExternalActionSelectionService(
-            PostgresExternalActionRepository()
+            PostgresExternalActionRepository(),
+            semantic_ranker=make_external_action_semantic_ranker_service(),
         ),
     )
 
@@ -148,6 +167,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
         chat_tool_context_service=make_chat_tool_context_service(),
         agent_repository=PostgresChatAgentRepository(),
         attachment_repository=PostgresChatAttachmentRepository(),
+        chat_attachment_context_service=make_chat_attachment_context_service(),
         workspace_context_service=make_chat_workspace_context_service(),
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
     )
@@ -163,6 +183,7 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
         chat_tool_context_service=make_chat_tool_context_service(),
         agent_repository=PostgresChatAgentRepository(),
         attachment_repository=PostgresChatAttachmentRepository(),
+        chat_attachment_context_service=make_chat_attachment_context_service(),
         workspace_context_service=make_chat_workspace_context_service(),
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
     )

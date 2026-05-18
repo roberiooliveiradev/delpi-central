@@ -1,6 +1,10 @@
+import logging
+
 from app.application.dto.search_knowledge_request import SearchKnowledgeRequest
 from app.application.use_cases.search_knowledge_use_case import SearchKnowledgeUseCase
 from app.infrastructure.config.settings import Settings
+
+logger = logging.getLogger("minha-delpi-ai-api.rag")
 
 
 class RagContextService:
@@ -23,6 +27,29 @@ class RagContextService:
                 "context": "",
                 "sources": [],
             }
+
+        min_score = Settings.RAG_CONTEXT_MIN_SCORE
+        filtered_chunks = [
+            chunk
+            for chunk in chunks
+            if chunk.get("score") is None or float(chunk["score"]) >= min_score
+        ]
+
+        if len(filtered_chunks) < len(chunks):
+            logger.debug(
+                "RAG chunks filtered by min score %.2f: %s -> %s",
+                min_score,
+                len(chunks),
+                len(filtered_chunks),
+            )
+
+        if not filtered_chunks:
+            return {
+                "context": "",
+                "sources": [],
+            }
+
+        chunks = filtered_chunks
 
         context_parts: list[str] = []
         sources_by_document: dict[str, dict] = {}

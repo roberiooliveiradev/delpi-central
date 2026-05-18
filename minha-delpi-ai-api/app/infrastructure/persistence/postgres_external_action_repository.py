@@ -190,13 +190,23 @@ class PostgresExternalActionRepository:
 
 
 
-    def find_candidate_actions(self, query: str, limit: int = 8) -> list[dict]:
+    def find_candidate_actions(
+        self,
+        query: str,
+        limit: int = 8,
+        *,
+        allowed_action_ids: list[str] | None = None,
+    ) -> list[dict]:
         normalized = str(query or "").lower()
+        allowed_ids = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
 
         db_query = ExternalActionModel.query.join(ExternalActionProviderModel).filter(
             ExternalActionModel.enabled.is_(True),
             ExternalActionProviderModel.enabled.is_(True),
         )
+
+        if allowed_ids:
+            db_query = db_query.filter(ExternalActionModel.action_id.in_(allowed_ids))
 
         if any(term in normalized for term in ["produto", "product", "item", "código", "codigo"]):
             db_query = db_query.filter(
@@ -230,7 +240,7 @@ class PostgresExternalActionRepository:
                     ExternalActionModel.operation_id.ilike("%data%"),
                 )
             )
-        else:
+        elif not allowed_ids:
             return []
 
         actions = db_query.order_by(

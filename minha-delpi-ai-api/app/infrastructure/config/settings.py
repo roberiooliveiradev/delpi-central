@@ -28,6 +28,12 @@ class Settings:
     RAG_ASSERTIVENESS_MIN_SCORE = float(
         os.getenv("RAG_ASSERTIVENESS_MIN_SCORE", "0.35")
     )
+    RAG_CONTEXT_MIN_SCORE = float(
+        os.getenv(
+            "RAG_CONTEXT_MIN_SCORE",
+            os.getenv("RAG_ASSERTIVENESS_MIN_SCORE", "0.35"),
+        )
+    )
 
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:1.5b")
@@ -95,4 +101,21 @@ class Settings:
     ADMIN_METRICS_MAX_HOURS = int(os.getenv("ADMIN_METRICS_MAX_HOURS", "720"))
     RESPONSE_EVALUATION_LLM_SUGGESTIONS_ENABLED = (
         os.getenv("RESPONSE_EVALUATION_LLM_SUGGESTIONS_ENABLED", "true").lower() == "true"
+    )
+
+    CHAT_ATTACHMENT_CONTEXT_ENABLED = (
+        os.getenv("CHAT_ATTACHMENT_CONTEXT_ENABLED", "true").lower() == "true"
+    )
+    CHAT_ATTACHMENT_CONTEXT_MAX_CHARS = int(
+        os.getenv("CHAT_ATTACHMENT_CONTEXT_MAX_CHARS", "6000")
+    )
+
+    EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED = (
+        os.getenv("EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED", "true").lower() == "true"
+    )
+    EXTERNAL_ACTION_SEMANTIC_RANK_LIMIT = int(
+        os.getenv("EXTERNAL_ACTION_SEMANTIC_RANK_LIMIT", "40")
+    )
+    EXTERNAL_ACTION_SEMANTIC_MIN_SCORE = float(
+        os.getenv("EXTERNAL_ACTION_SEMANTIC_MIN_SCORE", "0.42")
     )
