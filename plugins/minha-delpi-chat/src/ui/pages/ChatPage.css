@@ -8,6 +8,23 @@
   min-width: 0;
 }
 
+.mdc-chat-conversation {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.mdc-chat-conversation .mdc-chat-message-list {
+  padding-bottom: var(--mdc-space-3);
+}
+
+.mdc-chat-conversation .mdc-chat-input {
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  background: color-mix(in srgb, var(--mdc-bg) 94%, transparent);
+  backdrop-filter: blur(10px);
+}
+
 .mdc-chat-empty-composer {
   display: grid;
   align-content: center;

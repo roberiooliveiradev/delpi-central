@@ -1,5 +1,5 @@
 import { Check, Copy, FileText, Pencil, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type {
   ChatMessage,
@@ -155,9 +155,41 @@ export function ChatMessageList({
   onReuseMessage,
   onMessageFeedback,
 }: ChatMessageListProps) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const previousMessageCountRef = useRef(0);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
+
+  useEffect(() => {
+    if (messages.length === 0 && !streamingAnswer && !isStreaming) {
+      previousMessageCountRef.current = 0;
+      return;
+    }
+
+    const lastMessage = messages[messages.length - 1];
+    const userJustSent =
+      messages.length > previousMessageCountRef.current &&
+      lastMessage?.role === "user";
+
+    previousMessageCountRef.current = messages.length;
+
+    if (userJustSent) {
+      const userNode = listRef.current?.querySelector(
+        `[data-message-id="${lastMessage.id}"]`,
+      );
+
+      if (userNode instanceof HTMLElement) {
+        userNode.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+    }
+
+    if (isStreaming || streamingAnswer) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [messages, streamingAnswer, isStreaming]);
 
   async function handleSaveEdit(messageId: string) {
     const updated = await onEditMessage?.(messageId, editingContent);
@@ -219,10 +251,11 @@ export function ChatMessageList({
   }
 
   return (
-    <div className="mdc-chat-message-list" aria-live="polite">
+    <div ref={listRef} className="mdc-chat-message-list" aria-live="polite">
       {messages.map((message) => (
         <article
           key={message.id}
+          data-message-id={message.id}
           className={`mdc-chat-message mdc-chat-message--${message.role}`}
         >
           <div className="mdc-chat-message-avatar">
@@ -395,6 +428,7 @@ export function ChatMessageList({
           </div>
         </article>
       ) : null}
+      <div ref={bottomRef} className="mdc-chat-message-list__anchor" aria-hidden="true" />
     </div>
   );
 }

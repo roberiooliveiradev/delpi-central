@@ -64,8 +64,16 @@
   overflow: auto;
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-lg);
-  background: color-mix(in srgb, black 22%, var(--mdc-bg));
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, var(--mdc-text) 12%);
+  color: var(--mdc-text);
   padding: var(--mdc-space-4);
+}
+
+.mdc-chat-markdown pre code {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
 }
 
 .mdc-chat-markdown table {

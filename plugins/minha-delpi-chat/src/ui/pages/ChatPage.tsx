@@ -80,6 +80,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     isLoadingArchivedSessions,
     isLoadingMessages,
     isStreaming,
+    isSending,
     error,
     clearError,
     setDraft,
@@ -452,11 +453,14 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     await sendMessage({ attachments: files });
   }
 
-  const isConversationEmpty =
-    !isLoadingMessages &&
-    messages.length === 0 &&
-    !streamingAnswer &&
-    !isStreaming;
+  const hasActiveConversation =
+    messages.length > 0 ||
+    isStreaming ||
+    isSending ||
+    Boolean(streamingAnswer) ||
+    Boolean(streamingStatus);
+
+  const isConversationEmpty = !hasActiveConversation;
 
   function getComposerPlaceholder() {
     if (selectedProject && contextAgent) {
@@ -835,7 +839,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                     <ChatInput
                       value={draft}
                       disabled={false}
-                      isSending={isStreaming}
+                      isSending={isStreaming || isSending}
                       variant="center"
                       placeholder={getComposerPlaceholder()}
                       {...composerAttachmentProps}
@@ -875,7 +879,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                   <ChatInput
                     value={draft}
                     disabled={false}
-                    isSending={isStreaming}
+                    isSending={isStreaming || isSending}
                     variant="center"
                     placeholder={getComposerPlaceholder()}
                     {...composerAttachmentProps}
@@ -888,15 +892,15 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               )}
             </section>
           ) : (
-            <>
+            <section className="mdc-chat-conversation" aria-label="Conversa">
               <ChatMessageList
                 messages={messages}
                 streamingAnswer={streamingAnswer}
                 streamingSources={streamingSources}
                 streamingToolCalls={streamingToolCalls}
                 streamingStatus={streamingStatus}
-                isStreaming={isStreaming}
-                isLoading={isLoadingMessages}
+                isStreaming={isStreaming || isSending}
+                isLoading={isLoadingMessages && messages.length === 0}
                 onUseSuggestion={setDraft}
                 onEditMessage={editMessage}
                 onReuseMessage={reuseMessage}
@@ -906,7 +910,8 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               <ChatInput
                 value={draft}
                 disabled={false}
-                isSending={isStreaming}
+                isSending={isStreaming || isSending}
+                variant="dock"
                 placeholder={getComposerPlaceholder()}
                 {...composerAttachmentProps}
                 {...composerContextProps}
@@ -914,7 +919,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 onSubmit={handleSubmitMessage}
                 onCancel={cancelStreaming}
               />
-            </>
+            </section>
           )}
         </section>
         )}

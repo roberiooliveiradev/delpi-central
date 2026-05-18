@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   archiveChatSession,
@@ -60,11 +60,20 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingArchivedSessions, setIsLoadingArchivedSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const skipNextSessionLoadRef = useRef(false);
 
-  const { isStreaming, streamMessage, cancelStreaming } = useChatStreaming({
-    getAccessToken: options.getAccessToken,
-  });
+  const { isStreaming, streamMessage, cancelStreaming: cancelStreamingBase } =
+    useChatStreaming({
+      getAccessToken: options.getAccessToken,
+    });
+
+  const cancelStreaming = useCallback(() => {
+    cancelStreamingBase();
+    setStreamingStatus(null);
+    setIsSending(false);
+  }, [cancelStreamingBase]);
 
   const loadSessions = useCallback(async () => {
     setIsLoadingSessions(true);
@@ -414,15 +423,23 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [options.getAccessToken],
   );
 
+  const finishSending = useCallback(() => {
+    setIsSending(false);
+  }, []);
+
   const sendMessage = useCallback(async (params: { attachments?: File[] } = {}) => {
     const message = draft.trim();
 
-    if (!message || isStreaming) {
+    if (!message || isStreaming || isSending) {
       return;
     }
 
+    const optimisticId = `optimistic-${Date.now()}`;
+    let sessionForMessage = activeSession;
+
     setError(null);
     setDraft("");
+    setIsSending(true);
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
@@ -432,7 +449,16 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         : "Criando conversa e preparando sua pergunta...",
     );
 
-    let sessionForMessage = activeSession;
+    setMessages((current) => [
+      ...current,
+      {
+        ...createOptimisticUserMessage(
+          sessionForMessage?.id ?? "pending",
+          message,
+        ),
+        id: optimisticId,
+      },
+    ]);
 
     try {
       if (!sessionForMessage) {
@@ -448,9 +474,19 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           },
         );
 
+        skipNextSessionLoadRef.current = true;
         setSessions((current) => [sessionForMessage!, ...current]);
         setActiveSession(sessionForMessage);
-        setMessages([]);
+        setMessages((current) =>
+          current.map((item) =>
+            item.id === optimisticId
+              ? {
+                  ...item,
+                  session_id: sessionForMessage!.id,
+                }
+              : item,
+          ),
+        );
       }
 
       const uploadedAttachments: ChatAttachment[] = [];
@@ -470,21 +506,30 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       }
 
       const attachmentIds = uploadedAttachments.map((attachment) => attachment.id);
+      const attachmentPreview = uploadedAttachments.map((attachment) => ({
+        id: attachment.id,
+        original_filename: attachment.original_filename,
+        size_bytes: attachment.size_bytes,
+        content_type: attachment.content_type,
+        status: attachment.status,
+      }));
 
-      setMessages((current) => [
-        ...current,
-        createOptimisticUserMessage(
-          sessionForMessage!.id,
-          message,
-          uploadedAttachments.map((attachment) => ({
-            id: attachment.id,
-            original_filename: attachment.original_filename,
-            size_bytes: attachment.size_bytes,
-            content_type: attachment.content_type,
-            status: attachment.status,
-          })),
-        ),
-      ]);
+      if (attachmentPreview.length > 0) {
+        setMessages((current) =>
+          current.map((item) =>
+            item.id === optimisticId
+              ? {
+                  ...item,
+                  metadata: {
+                    ...item.metadata,
+                    optimistic: true,
+                    attachments: attachmentPreview,
+                  },
+                }
+              : item,
+          ),
+        );
+      }
 
       await streamMessage({
         sessionId: sessionForMessage.id,
@@ -517,25 +562,31 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingSources([]);
           setStreamingToolCalls([]);
           setStreamingStatus(null);
+          finishSending();
           await loadMessages(sessionForMessage!.id);
           await loadSessions();
         },
-        onError: (message) => {
+        onError: (streamError) => {
           setStreamingStatus(null);
-          setError(message);
+          setError(streamError);
+          finishSending();
         },
       });
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
+        finishSending();
         return;
       }
 
       setStreamingStatus(null);
       setError(err instanceof Error ? err.message : "Erro ao enviar mensagem.");
+      finishSending();
     }
   }, [
     activeSession,
     draft,
+    finishSending,
+    isSending,
     isStreaming,
     loadMessages,
     loadSessions,
@@ -552,6 +603,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   useEffect(() => {
     if (!activeSession) {
       setMessages([]);
+      return;
+    }
+
+    if (skipNextSessionLoadRef.current) {
+      skipNextSessionLoadRef.current = false;
       return;
     }
 
@@ -572,6 +628,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isLoadingArchivedSessions,
     isLoadingMessages,
     isStreaming,
+    isSending,
     error,
     clearError,
     setDraft,
