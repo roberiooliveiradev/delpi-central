@@ -40,12 +40,15 @@ Implementação espelhada em `plugins/dashboard-lmps` (cliente HTTP, federation,
 **Fase 1 concluída:** `qualityApi.ts`, tipos DTO, hooks (`useQualityQueries`).  
 **Fase 2 concluída:** home executiva com filtros, KPIs PPM, resumos Kaizen/5S.  
 **Fase 3 concluída:** rota `/apps/dashboard-quality/ppm` com tabela, gráfico e CSV.  
-**Fase 4 concluída:** rota `/apps/dashboard-quality/nonconformities` (NC TOTVS).
+**Fase 4 concluída:** rota `/apps/dashboard-quality/nonconformities` (NC TOTVS).  
+**Fase 5 concluída:** rotas `/kaizen` e `/audit-5s`.
 
 Rotas:
 - `/apps/dashboard-quality` — visão geral
 - `/apps/dashboard-quality/ppm` — PPM interno/externo
 - `/apps/dashboard-quality/nonconformities` — NC do Protheus
+- `/apps/dashboard-quality/kaizen` — Kaizens
+- `/apps/dashboard-quality/audit-5s` — Auditorias 5S
 
 ```bash
 cd plugins/dashboard-quality

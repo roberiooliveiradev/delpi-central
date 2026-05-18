@@ -36,12 +36,12 @@ const MODULE_SHORTCUTS = [
   {
     title: "Kaizens",
     description: "Lista e filtros por status e setor.",
-    phase: "Fase 5",
+    href: QUALITY_ROUTES.kaizen,
   },
   {
     title: "Auditoria 5S",
     description: "Histórico e notas por área.",
-    phase: "Fase 5",
+    href: QUALITY_ROUTES.audit5s,
   },
 ] as const;
 

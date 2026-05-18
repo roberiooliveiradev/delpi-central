@@ -43,6 +43,22 @@
       "icon": "shield-check-icon",
       "order": 12,
       "showInMenu": false
+    },
+    {
+      "path": "/apps/dashboard-quality/kaizen",
+      "label": "Kaizen",
+      "permission": "dashboard-quality.view",
+      "icon": "shield-check-icon",
+      "order": 13,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/dashboard-quality/audit-5s",
+      "label": "Auditoria 5S",
+      "permission": "dashboard-quality.view",
+      "icon": "shield-check-icon",
+      "order": 14,
+      "showInMenu": false
     }
   ],
 

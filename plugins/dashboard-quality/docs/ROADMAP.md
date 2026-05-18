@@ -121,13 +121,12 @@ Depois, atribuir `dashboard-quality.view` ao perfil/grupo desejado no Keycloak o
 
 ---
 
-## Fase 5 — Kaizen e Auditoria 5S
+## Fase 5 — Kaizen e Auditoria 5S ✅
 
 **Entregáveis**
 
-- [ ] Aba Kaizen: resumo + filtros (`title`, `status`, `branch`, datas)
-- [ ] Aba 5S: resumo + filtros (`start_date`, `end_date`, `branch`)
-- [ ] Visualizações adequadas ao payload (barras, pizza, tabela — definir após inspecionar `to_dict()`)
+- [x] Rota `/kaizen`: resumo, filtros (`title`, `status`, `branch`, datas), pizza por status, barras por setor, tabela + paginação client-side, CSV
+- [x] Rota `/audit-5s`: resumo, filtros de período/filial, barras por área, linha mensal, tabela + paginação client-side, CSV
 
 **Critério de pronto:** paridade funcional com o que a API já retorna; sem campos inventados no front.
 

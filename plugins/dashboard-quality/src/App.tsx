@@ -1,6 +1,8 @@
 import { configureHttpClient } from "./api/httpClient";
 import { QUALITY_ROUTES } from "./constants/routes";
 import { DashboardQualityPage } from "./pages/DashboardQualityPage";
+import { Audit5sPage } from "./pages/Audit5sPage";
+import { KaizenPage } from "./pages/KaizenPage";
 import { NonconformitiesPage } from "./pages/NonconformitiesPage";
 import { PpmPage } from "./pages/PpmPage";
 
@@ -31,6 +33,14 @@ export default function App({ getAccessToken, pathname }: AppProps) {
     path.startsWith(`${QUALITY_ROUTES.nonconformities}/`)
   ) {
     return <NonconformitiesPage pathname={path} />;
+  }
+
+  if (path === QUALITY_ROUTES.kaizen || path.startsWith(`${QUALITY_ROUTES.kaizen}/`)) {
+    return <KaizenPage pathname={path} />;
+  }
+
+  if (path === QUALITY_ROUTES.audit5s || path.startsWith(`${QUALITY_ROUTES.audit5s}/`)) {
+    return <Audit5sPage pathname={path} />;
   }
 
   return <DashboardQualityPage pathname={path} />;

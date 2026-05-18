@@ -8,6 +8,8 @@ const NAV_ITEMS = [
   { path: QUALITY_ROUTES.home, label: "Visão geral" },
   { path: QUALITY_ROUTES.ppm, label: "PPM" },
   { path: QUALITY_ROUTES.nonconformities, label: "NC TOTVS" },
+  { path: QUALITY_ROUTES.kaizen, label: "Kaizen" },
+  { path: QUALITY_ROUTES.audit5s, label: "5S" },
 ] as const;
 
 function isActive(path: string, currentPath?: string): boolean {
