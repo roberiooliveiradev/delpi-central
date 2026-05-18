@@ -6,6 +6,7 @@ import { AuthContext } from "../state/AuthContext";
 import { getRecentAppIds } from "../utils/recentApps";
 import { AppLauncherCard } from "../components/AppLauncherCard";
 import { NotificationCard } from "../components/notifications/NotificationCard";
+import { useNotificationActions } from "../components/notifications/useNotificationActions";
 import {
   Bell,
   Star,
@@ -39,9 +40,9 @@ export const HomePage = () => {
     favorites,
     notifications,
     apps,
-    markNotificationRead,
     markAllNotificationsRead,
   } = useContext(AuthContext);
+  const { markNotificationRead, handleDelete, handleToggleImportant } = useNotificationActions();
   const [openFavoriteAppId, setOpenFavoriteAppId] = useState<string | null>(null);
   const [openRecentAppId, setOpenRecentAppId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -262,6 +263,15 @@ export const HomePage = () => {
                     notification={n}
                     compact
                     onMarkRead={markNotificationRead}
+                    onDelete={(id) => void handleDelete(id)}
+                    onToggleImportant={(id, isImportant) =>
+                      void handleToggleImportant(id, isImportant)
+                    }
+                    onNavigate={
+                      n.action?.type === "portal_route"
+                        ? () => navigate(n.action!.target)
+                        : undefined
+                    }
                   />
                 ))}
               </div>

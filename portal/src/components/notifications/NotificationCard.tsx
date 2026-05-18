@@ -232,22 +232,83 @@ export function NotificationCard({
     );
   }
 
+  const isImportant = Boolean(notification.isImportant);
+  const hasQuickActions = Boolean(onToggleImportant || onDelete);
+
   return (
     <article
-      className={`notification-card notification-card--compact notification-card--${notification.type} ${
-        !notification.read ? "notification-card--unread" : ""
-      }`}
+      className={[
+        "notification-card",
+        "notification-card--compact",
+        `notification-card--${notification.type}`,
+        !notification.read ? "notification-card--unread" : "",
+        isImportant ? "notification-card--important" : "",
+      ].join(" ")}
     >
       <div className="notification-card__icon" aria-hidden="true">
         <Icon size={18} />
       </div>
 
       <div className="notification-card__body">
-        <div className="notification-card__meta">
-          <span className="notification-card__category">
-            {CATEGORY_LABELS[notification.category]}
-          </span>
-          {!notification.read ? <span className="notification-card__dot" /> : null}
+        <div className="notification-card__compact-head">
+          <div className="notification-card__meta">
+            {isImportant ? (
+              <span
+                className="notification-card__important-badge notification-card__important-badge--compact"
+                title="Importante"
+              >
+                <Star size={10} aria-hidden="true" />
+              </span>
+            ) : null}
+            <span className="notification-card__category">
+              {CATEGORY_LABELS[notification.category]}
+            </span>
+            {!notification.read ? <span className="notification-card__dot" aria-hidden="true" /> : null}
+          </div>
+
+          {hasQuickActions ? (
+            <div className="notification-card__actions notification-card__actions--compact">
+              {onToggleImportant ? (
+                <button
+                  type="button"
+                  className={
+                    isImportant
+                      ? "notification-card__icon-btn notification-card__icon-btn--compact notification-card__icon-btn--active"
+                      : "notification-card__icon-btn notification-card__icon-btn--compact"
+                  }
+                  onClick={() => onToggleImportant(notification.id, !isImportant)}
+                  aria-label={isImportant ? "Remover dos importantes" : "Marcar como importante"}
+                  title={isImportant ? "Remover dos importantes" : "Marcar como importante"}
+                >
+                  <Star size={14} aria-hidden="true" />
+                </button>
+              ) : null}
+
+              {!notification.read ? (
+                <button
+                  type="button"
+                  className="notification-card__icon-btn notification-card__icon-btn--compact"
+                  onClick={handleMarkReadOnly}
+                  aria-label="Marcar como lida"
+                  title="Marcar como lida"
+                >
+                  <Check size={14} aria-hidden="true" />
+                </button>
+              ) : null}
+
+              {onDelete ? (
+                <button
+                  type="button"
+                  className="notification-card__icon-btn notification-card__icon-btn--compact notification-card__icon-btn--danger"
+                  onClick={() => onDelete(notification.id)}
+                  aria-label="Excluir notificação"
+                  title="Excluir"
+                >
+                  <Trash2 size={14} aria-hidden="true" />
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         {!templateDefinition && notification.title ? (
@@ -260,7 +321,7 @@ export function NotificationCard({
           <button type="button" className="notification-card__cta" onClick={handleAction}>
             {notification.action.label}
           </button>
-        ) : (
+        ) : !hasQuickActions ? (
           <button
             type="button"
             className="notification-card__cta notification-card__cta--ghost"
@@ -268,7 +329,7 @@ export function NotificationCard({
           >
             Marcar como lida
           </button>
-        )}
+        ) : null}
       </div>
     </article>
   );

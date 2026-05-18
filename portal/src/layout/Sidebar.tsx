@@ -28,6 +28,7 @@ import {
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
 import { NotificationCard } from "../components/notifications/NotificationCard";
+import { useNotificationActions } from "../components/notifications/useNotificationActions";
 
 type GroupedRoutes = Record<
   string,
@@ -46,9 +47,10 @@ export const Sidebar = () => {
     logout,
     notifications,
     favorites,
-    markNotificationRead,
     markAllNotificationsRead,
   } = useContext(AuthContext);
+
+  const { markNotificationRead, handleDelete, handleToggleImportant } = useNotificationActions();
 
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
@@ -390,7 +392,18 @@ export const Sidebar = () => {
                         notification={n}
                         compact
                         onMarkRead={markNotificationRead}
-                        onNavigate={() => setNotifOpen(false)}
+                        onDelete={(id) => void handleDelete(id)}
+                        onToggleImportant={(id, isImportant) =>
+                          void handleToggleImportant(id, isImportant)
+                        }
+                        onNavigate={
+                          n.action?.type === "portal_route"
+                            ? () => {
+                                setNotifOpen(false);
+                                navigate(n.action!.target);
+                              }
+                            : () => setNotifOpen(false)
+                        }
                       />
                     ))}
                   </div>

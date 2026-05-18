@@ -17,6 +17,42 @@
   padding: 10px 12px;
 }
 
+.notification-card--compact.notification-card--important {
+  border-color: color-mix(in srgb, #b45309 35%, var(--border));
+  background: color-mix(in srgb, #b45309 5%, var(--surface));
+}
+
+.notification-card__body {
+  min-width: 0;
+}
+
+.notification-card__compact-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.notification-card--compact .notification-card__meta {
+  margin-bottom: 0;
+  flex-wrap: wrap;
+}
+
+.notification-card__important-badge--compact {
+  padding: 2px 5px;
+}
+
+.notification-card__actions--compact {
+  gap: 4px;
+}
+
+.notification-card__icon-btn--compact {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
 .notification-card__icon {
   display: grid;
   place-items: center;

@@ -13,6 +13,7 @@ import {
   type NotificationItem,
 } from "../data/coreApi";
 import { NotificationCard } from "../components/notifications/NotificationCard";
+import { useNotificationActions } from "../components/notifications/useNotificationActions";
 
 import "./NotificationsPage.css";
 
@@ -39,11 +40,10 @@ export function NotificationsPage() {
   const {
     getAccessToken,
     refreshToken,
-    markNotificationRead,
     markAllNotificationsRead,
-    deleteNotification,
-    setNotificationImportant,
   } = useContext(AuthContext);
+
+  const { markNotificationRead, handleDelete, handleToggleImportant } = useNotificationActions();
 
   const coreApi = useMemo(
     () =>
@@ -111,16 +111,13 @@ export function NotificationsPage() {
     await loadHistory();
   }
 
-  async function handleDelete(id: string) {
-    if (!window.confirm("Excluir esta notificação? Ela não aparecerá mais no seu histórico.")) {
-      return;
-    }
-    await deleteNotification(id);
+  async function handleDeleteAndReload(id: string) {
+    await handleDelete(id);
     await loadHistory();
   }
 
-  async function handleToggleImportant(id: string, isImportant: boolean) {
-    await setNotificationImportant(id, isImportant);
+  async function handleToggleImportantAndReload(id: string, isImportant: boolean) {
+    await handleToggleImportant(id, isImportant);
     await loadHistory();
   }
 
@@ -235,8 +232,10 @@ export function NotificationsPage() {
                   variant="page"
                   notification={notification}
                   onMarkRead={handleMarkRead}
-                  onDelete={(id) => void handleDelete(id)}
-                  onToggleImportant={(id, isImportant) => void handleToggleImportant(id, isImportant)}
+                  onDelete={(id) => void handleDeleteAndReload(id)}
+                  onToggleImportant={(id, isImportant) =>
+                    void handleToggleImportantAndReload(id, isImportant)
+                  }
                   onNavigate={
                     notification.action?.type === "portal_route"
                       ? () => navigate(notification.action!.target)

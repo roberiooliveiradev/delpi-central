@@ -63,10 +63,12 @@ Todas exigem `@require_auth()`.
 
 | Método | Path | Use case |
 |---|---|---|
-| GET | `/me/notifications` | `ListUnreadNotificationsUseCase` (não lidas, não expiradas) |
-| GET | `/me/notifications/history` | `ListNotificationsUseCase` (paginado: `status`, `limit`, `offset`) |
+| GET | `/me/notifications` | `ListUnreadNotificationsUseCase` (não lidas, não expiradas, não excluídas) |
+| GET | `/me/notifications/history` | `ListNotificationsUseCase` (paginado; ver query abaixo) |
 | POST | `/me/notifications/<id>/read` | `MarkNotificationReadUseCase` |
 | POST | `/me/notifications/read-all` | `MarkAllNotificationsReadUseCase` |
+| PATCH | `/me/notifications/<id>/important` | `SetNotificationImportantUseCase` — body `{ "isImportant": true \| false }` |
+| DELETE | `/me/notifications/<id>` | `DeleteNotificationUseCase` (soft delete: `deleted_at`) |
 | POST | `/me/notifications/test` | `NotifyUserUseCase` (dev) |
 
 Admin e integrações: `POST /admin/notifications`, `POST /integrations/notifications`, templates em `/admin/notifications/templates`, auditoria em `GET /admin/notifications/dispatches`, processamento de agendados em `POST .../dispatches/process-pending` — ver [roadmap](../12-roadmap-e-evolucao/notificacoes-ricas.md).
@@ -81,11 +83,24 @@ Resposta de listagem (campos expostos ao Portal):
   "message": "Texto",
   "type": "info",
   "read": false,
+  "isImportant": false,
   "createdAt": "2026-05-15T12:00:00Z"
 }
 ```
 
-`read` é derivado de `read_at IS NOT NULL` no repository.
+`read` é derivado de `read_at IS NOT NULL` no repository. Registros com `deleted_at` preenchido não aparecem nas listagens do usuário.
+
+### `GET /me/notifications/history` — query
+
+| Parâmetro | Valores | Default |
+|-----------|---------|---------|
+| `status` | `all`, `unread`, `read` | `all` |
+| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `custom` | — |
+| `important` | `true` (somente importantes) | — |
+| `limit` | 1–100 | `20` |
+| `offset` | ≥ 0 | `0` |
+
+Ordenação: importantes primeiro, depois `created_at` descendente.
 
 ---
 

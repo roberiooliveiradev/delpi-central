@@ -17,7 +17,8 @@
 | **Admin Portal** | Painéis numerados, pills de formato, múltiplos destinatários, preview por destinatário, `expiresAt` |
 | **Usuário** | Sino na sidebar, cards na home, página `/notifications` com histórico paginado |
 | **API envio** | `POST /admin/notifications`, `POST /integrations/notifications` |
-| **API leitura** | `GET /me/notifications` (não lidas), `GET /me/notifications/history` (paginado) |
+| **API leitura** | `GET /me/notifications` (não lidas), `GET /me/notifications/history` (paginado + filtros) |
+| **API usuário** | `PATCH /me/notifications/<id>/important`, `DELETE /me/notifications/<id>` (soft delete) |
 
 ---
 
@@ -86,6 +87,8 @@ Histórico paginado.
 | Query | Valores | Default |
 |-------|---------|---------|
 | `status` | `all`, `unread`, `read` | `all` |
+| `category` | categorias do modelo | — |
+| `important` | `true` | — |
 | `limit` | 1–100 | `20` |
 | `offset` | ≥ 0 | `0` |
 
@@ -120,9 +123,9 @@ Tabela `notification_dispatches`: payload completo, status, contadores, erro.
 
 | Superfície | Comportamento |
 |------------|----------------|
-| **Sidebar (sino)** | Não lidas; link “Ver todas” → `/notifications` |
-| **Home** | Resumo + até 4 cards; clique no resumo → `/notifications` |
-| **`/notifications`** | Abas Todas / Não lidas / Lidas, paginação, marcar como lida |
+| **Sidebar (sino)** | Não lidas; marcar lida, importante e excluir; link “Ver todas” → `/notifications` |
+| **Home** | Resumo + até 4 cards com as mesmas ações rápidas |
+| **`/notifications`** | Abas status, filtro categoria/importantes, paginação, marcar lida, importante, excluir |
 | **Admin → Notificações** | Envio em massa, agendamento, histórico de campanhas, preview por destinatário, expiração |
 
 ---
@@ -136,13 +139,29 @@ Tabela `notification_dispatches`: payload completo, status, contadores, erro.
 | **2b** | ✅ | Layout admin em painéis, editor HTML com toolbar de variáveis |
 | **3** | ✅ | `expiresAt`, histórico paginado, **agendamento** (`scheduledAt`) e **auditoria de envios** (`notification_dispatches`) |
 | **4** | ⬜ | Preferências do usuário (opt-out por categoria) |
-| **5** | 🟡 | Centro `/notifications` — **feito**; evoluir filtros por categoria |
+| **5** | ✅ | Centro `/notifications` com filtros (status, categoria, importantes), excluir e marcar importante |
 | **6** | ⬜ | Automação (aniversário, boas-vindas), destinatários por grupo/papel |
 | **7** | ⬜ | Rate limit em integrações; preview WYSIWYG HTML |
 
 ---
 
-## 8. Segurança
+## 8. Cron — envios agendados
+
+Campanhas com `scheduledAt` ficam `pending` até processamento. Em produção, agendar chamada periódica (ex.: a cada 1–5 min):
+
+```bash
+# Com token de serviço (integrações)
+curl -s -X POST "https://<host>/core-api/integrations/notifications/process-pending" \
+  -H "X-Delpi-Service-Token: $CORE_API_INTEGRATIONS_SERVICE_TOKEN"
+
+# Ou superadmin na rota admin (menos indicado para cron)
+curl -s -X POST "https://<host>/core-api/admin/notifications/dispatches/process-pending" \
+  -H "Authorization: Bearer <token>"
+```
+
+---
+
+## 9. Segurança
 
 1. HTML sempre sanitizado na Core API.
 2. `portal_route` só paths relativos (`/...`), sem `//` externo.
@@ -151,7 +170,7 @@ Tabela `notification_dispatches`: payload completo, status, contadores, erro.
 
 ---
 
-## 9. Referências
+## 10. Referências
 
 - [Notificações Core API](../04-core-api/notificacoes.md)
 - [Roadmap notificações (base)](../../minha-delpi-ai-api/docs/roadmap/notificacoes-minha-delpi.md)
