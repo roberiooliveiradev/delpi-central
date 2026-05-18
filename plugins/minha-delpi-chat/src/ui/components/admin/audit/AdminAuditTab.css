@@ -1,3 +1,67 @@
+.mdc-admin-audit-error {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+}
+
+.mdc-admin-audit-detail {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--mdc-border, #e5e7eb);
+  background: var(--mdc-surface, #fff);
+}
+
+.mdc-admin-audit-detail__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.mdc-admin-audit-detail__meta dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.mdc-admin-audit-detail__meta dd {
+  margin: 0.25rem 0 0;
+  word-break: break-all;
+}
+
+.mdc-admin-audit-detail pre {
+  max-height: 280px;
+  overflow: auto;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 0.8rem;
+}
+
+.mdc-admin-audit-detail__related ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.mdc-admin-audit-detail__related button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
 .mdc-admin-audit-tab {
   display: grid;
   gap: 18px;

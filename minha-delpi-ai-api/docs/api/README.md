@@ -28,6 +28,10 @@ Authorization: Bearer <access_token>
 
 Uploads multipart devem enviar apenas o header de autorização; não defina manualmente `Content-Type`, pois o browser/cliente deve montar o boundary.
 
+## Roadmap
+
+Evolução do painel administrativo: [`../roadmap/README.md`](../roadmap/README.md).
+
 ## Arquivos deste pacote
 
 | Arquivo | Conteúdo |

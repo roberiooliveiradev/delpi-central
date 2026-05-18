@@ -1,0 +1,129 @@
+.mdc-admin-security {
+  display: grid;
+  gap: var(--mdc-space-4);
+}
+
+.mdc-admin-security__header h2 {
+  margin: 0;
+  color: var(--mdc-primary);
+}
+
+.mdc-admin-security__cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-security__card {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  padding: var(--mdc-space-4);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mdc-admin-security__card strong {
+  font-size: 1.6rem;
+  color: var(--mdc-primary);
+}
+
+.mdc-admin-security__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: var(--mdc-space-4);
+}
+
+.mdc-admin-security__panel {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  padding: var(--mdc-space-4);
+  display: grid;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-security__panel h3 {
+  margin: 0;
+}
+
+.mdc-admin-security__config dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mdc-space-2);
+  margin: 0;
+}
+
+.mdc-admin-security__config dt {
+  font-size: 0.78rem;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-security__config dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.mdc-admin-security__scan textarea {
+  width: 100%;
+  min-height: 8rem;
+  border: 1px solid var(--mdc-control-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-control-bg);
+  color: var(--mdc-control-text);
+  font: inherit;
+  padding: 0.75rem 0.85rem;
+}
+
+.mdc-admin-security__scan-result {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg-muted);
+  padding: var(--mdc-space-3);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mdc-admin-security__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.mdc-admin-security__flags span {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-danger) 12%, transparent);
+  color: var(--mdc-danger);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+}
+
+.mdc-admin-security__events table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.mdc-admin-security__events th,
+.mdc-admin-security__events td {
+  border-bottom: 1px solid var(--mdc-card-border);
+  padding: 0.55rem 0.35rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.mdc-admin-security__error {
+  color: var(--mdc-danger);
+  margin: 0;
+}
+
+@media (max-width: 960px) {
+  .mdc-admin-security__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mdc-admin-security__layout {
+    grid-template-columns: 1fr;
+  }
+}

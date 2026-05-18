@@ -12,6 +12,7 @@ class AiAuditLogModel(db.Model):
     user_id = db.Column(UUID(as_uuid=True), nullable=True, index=True)
     action = db.Column(db.String(100), nullable=False, index=True)
     prompt_hash = db.Column(db.String(128), nullable=True, index=True)
+    trace_id = db.Column(db.String(64), nullable=True, index=True)
     context = db.Column(db.String(50), nullable=True, index=True)
     tool_calls = db.Column(JSONB, nullable=True)
     audit_metadata = db.Column("metadata", JSONB, nullable=True)

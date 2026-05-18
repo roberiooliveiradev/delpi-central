@@ -1,6 +1,6 @@
 # 08 — Admin API
 
-Todos os endpoints abaixo exigem `minha-delpi.chat.admin`.
+Todos os endpoints abaixo exigem `minha-delpi.chat.admin`, exceto quando indicado em RBAC (`/admin/rbac/summary` também exige admin).
 
 ## External action providers globais
 
@@ -31,15 +31,6 @@ Body típico:
 
 Importa schema OpenAPI enviado no body.
 
-```json
-{
-  "schema": {
-    "openapi": "3.0.0",
-    "paths": {}
-  }
-}
-```
-
 ### POST `/admin/external-action-providers/{providerKey}/reload-schema`
 
 Recarrega schema usando `openApiUrl` salvo no provider.
@@ -64,11 +55,30 @@ Executa checks administrativos do sistema.
 
 ### GET `/admin/metrics/summary`
 
-Resumo de métricas administrativas.
+Resumo de métricas administrativas. O bloco `advanced` inclui:
+
+| Campo | Descrição |
+|---|---|
+| `latencyAvgMs` | Latência média das mensagens instrumentadas (24h). |
+| `tokensUsed` | Tokens estimados (24h). |
+| `estimatedCost` | Custo estimado total (24h). |
+| `ragFailures` | Mensagens com RAG sem fontes. |
+| `assertivenessRate` | Taxa de testes RAG assertivos (24h). |
+| `ragTests24h` | Total de testes RAG registrados. |
+| `agentMetrics` | Distribuição por `agentKey`. |
+| `userProfileMetrics` | Distribuição por `userId`. |
+| `costTable` | Tabela configurada de custo por provider/modelo. |
+| `costBreakdown24h` | Uso e custo agregados por provider/modelo. |
+
+Variáveis de ambiente: `LLM_COST_TABLE_JSON`, `RAG_ASSERTIVENESS_MIN_SCORE`.
 
 ### GET `/admin/llm/status`
 
 Status do provider LLM configurado.
+
+### GET `/admin/rbac/summary`
+
+Resumo de perfis, permissões e capabilities administrativas.
 
 ---
 
@@ -76,7 +86,7 @@ Status do provider LLM configurado.
 
 ### GET `/admin/knowledge/documents`
 
-Lista documentos de knowledge.
+Lista documentos de knowledge com paginação.
 
 Query params:
 
@@ -84,26 +94,216 @@ Query params:
 |---|---:|---|
 | `limit` | `20` | Quantidade máxima. |
 | `offset` | `0` | Paginação. |
-| `search` | — | Filtro textual. |
+| `search` | — | Filtro textual (título, tipo, referência e metadados curadoriais). |
 | `active` | — | Filtro por ativo/inativo. |
+| `category` | — | Categoria curatorial. |
+| `namespace` | — | Namespace curatorial. |
+| `domain` | — | Domínio curatorial. |
+| `tag` | — | Tag (match parcial em `metadata.tags`). |
+| `sourceType` | — | Tipo de fonte do documento. |
+
+Resposta inclui `facets` (categorias, namespaces, domínios, tags e tipos de fonte disponíveis na base global) e campos curadoriais em cada item (`category`, `tags`, `namespace`, `domain`, `priority`, `qualityScore`).
+
+### PATCH `/admin/knowledge/documents/{documentId}/metadata`
+
+Atualiza metadados curadoriais de um documento global.
+
+Body (todos opcionais):
+
+```json
+{
+  "category": "atendimento",
+  "tags": ["faq", "onboarding"],
+  "namespace": "global:rh",
+  "domain": "recursos-humanos",
+  "priority": 3,
+  "qualityScore": 85
+}
+```
+
+### POST `/admin/knowledge/ingest/preview`
+
+Simula o pipeline de ingestão (limpeza, chunk adaptativo e deduplicação) sem persistir documento/chunks.
+
+Body:
+
+```json
+{
+  "content": "texto bruto",
+  "title": "opcional",
+  "sourceType": "manual",
+  "sourceRef": "global:exemplo",
+  "metadata": { "scope": "global" }
+}
+```
+
+Resposta: `cleanedPreview`, lista de `chunks` com `preview`, e objeto `pipeline` com estatísticas (`chunkStrategy`, `duplicatesRemoved`, `charsRemoved`, etc.).
+
+### POST `/admin/knowledge/documents/upload`
+
+Upload de arquivo com campos curadoriais opcionais no `multipart/form-data`: `category`, `tags`, `namespace`, `domain`, `priority`, `qualityScore` (além de `metadata` JSON legado).
+
+Respostas de ingestão/reindex incluem `pipeline` com estatísticas. Quando `sourceRef` + `contentHash` já existem na base global, a API retorna `duplicate: true` e `skipped: true` sem criar chunks novos.
 
 ### POST `/admin/knowledge/documents/{documentId}/deactivate`
 
 Desativa documento.
 
-Rate limit: `admin_actions`.
-
 ### POST `/admin/knowledge/documents/{documentId}/reactivate`
 
 Reativa documento.
-
-Rate limit: `admin_actions`.
 
 ### POST `/admin/knowledge/documents/{documentId}/reindex`
 
 Reindexa documento.
 
-Rate limit: `admin_actions`.
+---
+
+## Avaliação de respostas
+
+### GET `/admin/responses/evaluations/summary`
+
+Resumo agregado: total, média de nota, taxa de respostas úteis, distribuição por `verdict`, avaliações nas últimas 24h.
+
+### GET `/admin/responses/candidates`
+
+Lista respostas recentes do assistente (`role=assistant`) para avaliação, com avaliação existente quando houver.
+
+Query: `search`, `limit`, `offset`.
+
+### GET `/admin/responses/messages/{messageId}/evaluation-context`
+
+Retorna pergunta do usuário, resposta, metadados RAG/diretrizes/tools e **sugestões automáticas** para o score informado.
+
+Query: `score` (1-5, opcional).
+
+### GET `/admin/responses/evaluations`
+
+Lista avaliações salvas com filtros (`verdict`, `minScore`, `maxScore`, `search`).
+
+### POST `/admin/responses/evaluations`
+
+Salva ou atualiza avaliação de uma mensagem.
+
+Body:
+
+```json
+{
+  "messageId": "uuid-da-mensagem-assistente",
+  "score": 4,
+  "comment": "Resposta correta, mas faltou citar a política interna."
+}
+```
+
+Gera `verdict` (`helpful` | `neutral` | `unhelpful`) e persiste sugestões para documentos/diretrizes. Auditoria: `admin.response.evaluated`.
+
+---
+
+## Agentes especializados
+
+### GET `/admin/agents/specializations/catalog`
+
+Lista presets de domínio (RH, TI, Financeiro, etc.).
+
+### GET `/admin/agents/specialized`
+
+Lista agentes habilitados com resumo de especialização.
+
+### GET `/admin/agents/{agentId}/specialization`
+
+Retorna configuração atual do agente.
+
+### PUT `/admin/agents/{agentId}/specialization`
+
+Salva especialização no `metadata` do agente.
+
+Body:
+
+```json
+{
+  "specialization": {
+    "enabled": true,
+    "presetKey": "rh",
+    "domain": "recursos-humanos",
+    "knowledgeDomains": ["recursos-humanos"],
+    "knowledgeNamespaces": ["global:rh"],
+    "knowledgeCategories": ["rh"],
+    "knowledgeTags": ["rh", "ferias"],
+    "guidelineCategories": ["rh", "behavior"],
+    "allowedTools": ["get_current_user", "search_knowledge_base"],
+    "includeGlobalKnowledge": true
+  }
+}
+```
+
+Quando ativo, o chat e a simulação passam a respeitar o escopo de RAG, diretrizes e tools do agente.
+
+---
+
+## Segurança operacional
+
+### GET `/admin/security/config`
+
+Retorna limites e limiares ativos (env).
+
+### GET `/admin/security/summary?hours=24`
+
+Resumo de bloqueios, sinalizações e scans nas últimas N horas.
+
+### GET `/admin/security/events`
+
+Lista eventos de segurança (`security.input.*`, `admin.security.scanned`).
+
+### POST `/admin/security/scan`
+
+Analisa uma mensagem sem enviar ao chat.
+
+Body:
+
+```json
+{ "message": "texto para testar" }
+```
+
+Resposta inclui `analysis.riskScore`, `flags`, `wouldBlock` e `wouldFlag`.
+
+No chat, mensagens bloqueadas retornam `422` com código `security.input_blocked`.
+
+---
+
+## Diretrizes administrativas
+
+Ver rotas em `admin_routes.py`: listagem, salvamento, publicação, arquivamento, versões, comparação, restauração e `/admin/rag/test`.
+
+---
+
+## Simulação completa do agente
+
+### POST `/admin/agent/simulate`
+
+Simula o comportamento do agente sem persistir sessão/mensagem.
+
+Body:
+
+```json
+{
+  "question": "Como responder sobre férias?",
+  "agentId": "uuid-opcional",
+  "agentKey": "opcional",
+  "documentId": "opcional",
+  "generateAnswer": false
+}
+```
+
+Resposta inclui:
+
+- `finalPrompt` — system prompt montado e preview seguro
+- `appliedGuidelines` — diretrizes ativas
+- `chunks` / `matchedDocuments` — contexto RAG
+- `plannedToolCalls` — tools previstas (não executadas)
+- `comparison` — com/sem diretrizes e com/sem RAG
+- `answerPreview` — prévia estrutural ou resposta LLM se `generateAnswer=true`
+
+Registra auditoria `admin.agent.simulated`.
 
 ---
 
@@ -111,10 +311,63 @@ Rate limit: `admin_actions`.
 
 ### GET `/admin/audit-logs`
 
-Lista logs administrativos.
+Lista logs administrativos com paginação e filtros.
 
 Query params:
 
-| Parâmetro | Default |
-|---|---:|
-| `limit` | `100` |
+| Parâmetro | Default | Descrição |
+|---|---:|---|
+| `limit` | `50` | Máximo 200 por página. |
+| `offset` | `0` | Deslocamento. |
+| `action` | — | Filtro parcial por ação. |
+| `context` | — | Filtro parcial por contexto. |
+| `userId` | — | UUID do usuário. |
+| `traceId` | — | ID de correlação da requisição (`X-Trace-ID` / `X-Request-ID`). |
+| `search` | — | Busca em ação, contexto, usuário, hash e trace. |
+| `dateFrom` | — | ISO date ou datetime (início). |
+| `dateTo` | — | ISO date ou datetime (fim). |
+
+Resposta:
+
+```json
+{
+  "items": [],
+  "pagination": {
+    "limit": 50,
+    "offset": 0,
+    "total": 0,
+    "hasNext": false,
+    "hasPrevious": false
+  },
+  "filters": {}
+}
+```
+
+### GET `/admin/audit-logs/timeline`
+
+Agrupa eventos por dia com totais, distribuição por ação e amostra recente.
+
+Query params: mesmos filtros de listagem + `maxDays` (default 31, máx. 90).
+
+### GET `/admin/audit-logs/export`
+
+Exporta até 5000 registros com os mesmos filtros (sem paginação). Requer `minha-delpi.chat.admin`.
+
+- `format=json` (padrão): resposta JSON.
+- `format=csv`: download `text/csv` com colunas `id`, `createdAt`, `traceId`, `action`, etc.
+
+### GET `/admin/audit-logs/{logId}`
+
+Detalhe do evento, correlacionados por `promptHash` e por `traceId`.
+
+Resposta:
+
+```json
+{
+  "log": {},
+  "relatedLogs": [],
+  "traceRelatedLogs": []
+}
+```
+
+Cada novo evento de auditoria recebe `traceId` da requisição HTTP (`X-Trace-ID`, `X-Request-ID` ou UUID gerado).

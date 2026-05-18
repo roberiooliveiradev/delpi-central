@@ -115,6 +115,7 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         search: str | None = None,
         active: bool | None = None,
         scope: str | None = None,
+        curatorial_filters: dict | None = None,
     ) -> list[tuple[KnowledgeDocument, int]]:
         query = (
             db.session.query(
@@ -127,7 +128,13 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
             )
         )
 
-        query = self._apply_document_filters(query, search=search, active=active, scope=scope)
+        query = self._apply_document_filters(
+            query,
+            search=search,
+            active=active,
+            scope=scope,
+            curatorial_filters=curatorial_filters,
+        )
 
         rows = (
             query
@@ -148,11 +155,91 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         search: str | None = None,
         active: bool | None = None,
         scope: str | None = None,
+        curatorial_filters: dict | None = None,
     ) -> int:
         query = db.session.query(AiKnowledgeDocumentModel)
-        query = self._apply_document_filters(query, search=search, active=active, scope=scope)
+        query = self._apply_document_filters(
+            query,
+            search=search,
+            active=active,
+            scope=scope,
+            curatorial_filters=curatorial_filters,
+        )
 
         return int(query.count())
+
+    def update_document_metadata(self, document_id: UUID, metadata: dict) -> KnowledgeDocument | None:
+        return self.update_document(document_id, metadata=metadata)
+
+    def update_document(
+        self,
+        document_id: UUID,
+        *,
+        content: str | None = None,
+        metadata: dict | None = None,
+    ) -> KnowledgeDocument | None:
+        model = AiKnowledgeDocumentModel.query.filter(
+            AiKnowledgeDocumentModel.id == document_id
+        ).first()
+
+        if not model:
+            return None
+
+        if content is not None:
+            model.content = content
+
+        if metadata is not None:
+            model.document_metadata = metadata
+
+        model.updated_at = datetime.now(timezone.utc)
+        db.session.flush()
+
+        return self._to_document_entity(model)
+
+    def get_global_curatorial_facets(self) -> dict:
+        models = (
+            AiKnowledgeDocumentModel.query.filter(
+                db.or_(
+                    AiKnowledgeDocumentModel.document_metadata.is_(None),
+                    AiKnowledgeDocumentModel.document_metadata["scope"].astext.is_(None),
+                    AiKnowledgeDocumentModel.document_metadata["scope"].astext == "global",
+                )
+            )
+            .order_by(AiKnowledgeDocumentModel.created_at.desc())
+            .limit(500)
+            .all()
+        )
+
+        categories: set[str] = set()
+        namespaces: set[str] = set()
+        domains: set[str] = set()
+        tags: set[str] = set()
+        source_types: set[str] = set()
+
+        for model in models:
+            metadata = model.document_metadata or {}
+            source_types.add(model.source_type)
+
+            if metadata.get("category"):
+                categories.add(str(metadata["category"]))
+
+            if metadata.get("namespace"):
+                namespaces.add(str(metadata["namespace"]))
+
+            if metadata.get("domain"):
+                domains.add(str(metadata["domain"]))
+
+            for tag in metadata.get("tags") or []:
+                if tag:
+                    tags.add(str(tag))
+
+        return {
+            "categories": sorted(categories),
+            "namespaces": sorted(namespaces),
+            "domains": sorted(domains),
+            "tags": sorted(tags),
+            "sourceTypes": sorted(source_types),
+        }
 
 
     def list_documents_by_metadata(
@@ -202,6 +289,38 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         model = AiKnowledgeDocumentModel.query.filter(
             AiKnowledgeDocumentModel.id == document_id
         ).first()
+
+        if not model:
+            return None
+
+        return self._to_document_entity(model)
+
+    def find_global_document_by_content_hash(
+        self,
+        content_hash: str,
+        source_ref: str | None = None,
+    ) -> KnowledgeDocument | None:
+        normalized_hash = str(content_hash or "").strip()
+
+        if not normalized_hash:
+            return None
+
+        metadata = AiKnowledgeDocumentModel.document_metadata
+        query = AiKnowledgeDocumentModel.query.filter(
+            metadata["contentHash"].astext == normalized_hash,
+            db.or_(
+                metadata.is_(None),
+                metadata["scope"].astext.is_(None),
+                metadata["scope"].astext == "global",
+            ),
+        )
+
+        normalized_source_ref = str(source_ref or "").strip()
+
+        if normalized_source_ref:
+            query = query.filter(AiKnowledgeDocumentModel.source_ref == normalized_source_ref)
+
+        model = query.order_by(AiKnowledgeDocumentModel.updated_at.desc()).first()
 
         if not model:
             return None
@@ -332,11 +451,49 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         if document_id:
             query = query.filter(AiKnowledgeDocumentModel.id == str(document_id))
 
-        if not allowed_clauses:
+        if allowed_clauses:
+            query = query.filter(db.or_(*allowed_clauses))
+
+        return self._apply_curatorial_scope_filters(query, filters.get("curatorial"))
+
+
+    def _apply_curatorial_scope_filters(self, query, curatorial: dict | None):
+        if not curatorial:
             return query
 
-        return query.filter(db.or_(*allowed_clauses))
+        metadata = AiKnowledgeDocumentModel.document_metadata
 
+        domains = [str(item).strip() for item in (curatorial.get("domains") or []) if str(item).strip()]
+
+        if domains:
+            query = query.filter(metadata["domain"].astext.in_(domains))
+
+        namespaces = [
+            str(item).strip() for item in (curatorial.get("namespaces") or []) if str(item).strip()
+        ]
+
+        if namespaces:
+            query = query.filter(metadata["namespace"].astext.in_(namespaces))
+
+        categories = [
+            str(item).strip() for item in (curatorial.get("categories") or []) if str(item).strip()
+        ]
+
+        if categories:
+            query = query.filter(metadata["category"].astext.in_(categories))
+
+        tag = str(curatorial.get("tag") or "").strip().lower()
+
+        if tag:
+            query = query.filter(metadata["tags"].astext.ilike(f'%"{tag}"%'))
+
+        tags = [str(item).strip().lower() for item in (curatorial.get("tags") or []) if str(item).strip()]
+
+        if tags:
+            tag_clauses = [metadata["tags"].astext.ilike(f'%"{item}"%') for item in tags]
+            query = query.filter(db.or_(*tag_clauses))
+
+        return query
 
     def _apply_document_filters(
         self,
@@ -344,6 +501,7 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         search: str | None,
         active: bool | None,
         scope: str | None = None,
+        curatorial_filters: dict | None = None,
     ):
         if active is not None:
             query = query.filter(AiKnowledgeDocumentModel.active.is_(active))
@@ -368,13 +526,41 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         if normalized_search:
             pattern = f"%{normalized_search}%"
+            metadata = AiKnowledgeDocumentModel.document_metadata
             query = query.filter(
                 or_(
                     AiKnowledgeDocumentModel.title.ilike(pattern),
                     AiKnowledgeDocumentModel.source_type.ilike(pattern),
                     AiKnowledgeDocumentModel.source_ref.ilike(pattern),
+                    metadata["category"].astext.ilike(pattern),
+                    metadata["namespace"].astext.ilike(pattern),
+                    metadata["domain"].astext.ilike(pattern),
+                    metadata["tags"].astext.ilike(pattern),
                 )
             )
+
+        filters = curatorial_filters or {}
+        metadata = AiKnowledgeDocumentModel.document_metadata
+
+        category = str(filters.get("category") or "").strip()
+        if category:
+            query = query.filter(metadata["category"].astext == category)
+
+        namespace = str(filters.get("namespace") or "").strip()
+        if namespace:
+            query = query.filter(metadata["namespace"].astext == namespace)
+
+        domain = str(filters.get("domain") or "").strip()
+        if domain:
+            query = query.filter(metadata["domain"].astext == domain)
+
+        tag = str(filters.get("tag") or "").strip().lower()
+        if tag:
+            query = query.filter(metadata["tags"].astext.ilike(f'%"{tag}"%'))
+
+        source_type = str(filters.get("sourceType") or "").strip()
+        if source_type:
+            query = query.filter(AiKnowledgeDocumentModel.source_type == source_type)
 
         return query
 

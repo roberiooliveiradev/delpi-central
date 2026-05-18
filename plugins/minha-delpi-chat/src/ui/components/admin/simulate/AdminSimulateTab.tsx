@@ -1,0 +1,208 @@
+import { useEffect, useState } from "react";
+
+import { listChatAgents } from "../../../../data/api/chatApi";
+import type { ChatAgent } from "../../../../data/api/chatTypes";
+import { simulateAdminAgent } from "../../../../data/api/adminApi";
+import type { AdminAgentSimulateResponse } from "../../../../data/api/adminTypes";
+
+import "./AdminSimulateTab.css";
+
+type AdminSimulateTabProps = {
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
+};
+
+export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
+  const [question, setQuestion] = useState("");
+  const [agentId, setAgentId] = useState("");
+  const [generateAnswer, setGenerateAnswer] = useState(false);
+  const [agents, setAgents] = useState<ChatAgent[]>([]);
+  const [result, setResult] = useState<AdminAgentSimulateResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadAgents() {
+      try {
+        const response = await listChatAgents({ getAccessToken });
+        setAgents(response);
+      } catch {
+        setAgents([]);
+      }
+    }
+
+    void loadAgents();
+  }, [getAccessToken]);
+
+  async function handleSimulate() {
+    const normalized = question.trim();
+
+    if (!normalized || isLoading) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await simulateAdminAgent(
+        {
+          question: normalized,
+          agentId: agentId || undefined,
+          generateAnswer,
+        },
+        { getAccessToken },
+      );
+      setResult(response);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao simular agente.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <section className="mdc-admin-simulate">
+      <header className="mdc-admin-simulate__hero">
+        <div>
+          <p className="mdc-chat-eyebrow">Simulação</p>
+          <h2>Simulação completa do agente</h2>
+          <p>
+            Valide prompt final, diretrizes, RAG e tools previstas antes de publicar alterações.
+          </p>
+        </div>
+      </header>
+
+      <article className="mdc-admin-simulate__form">
+        <label>
+          <span>Pergunta de teste</span>
+          <textarea
+            value={question}
+            rows={4}
+            placeholder="Ex.: Como devo responder sobre férias?"
+            onChange={(event) => setQuestion(event.target.value)}
+          />
+        </label>
+
+        <label>
+          <span>Agente (opcional)</span>
+          <select value={agentId} onChange={(event) => setAgentId(event.target.value)}>
+            <option value="">Padrão do chat</option>
+            {agents.map((agent) => (
+              <option key={agent.id} value={agent.id}>
+                {agent.name} ({agent.key})
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="mdc-admin-simulate__checkbox">
+          <input
+            type="checkbox"
+            checked={generateAnswer}
+            onChange={(event) => setGenerateAnswer(event.target.checked)}
+          />
+          <span>Gerar resposta com LLM (mais lento)</span>
+        </label>
+
+        <button type="button" disabled={isLoading} onClick={() => void handleSimulate()}>
+          {isLoading ? "Simulando..." : "Simular agente"}
+        </button>
+      </article>
+
+      {error ? <p className="mdc-admin-simulate__error">{error}</p> : null}
+
+      {result ? (
+        <div className="mdc-admin-simulate__results">
+          <article className="mdc-admin-simulate__card">
+            <h3>Resposta</h3>
+            {result.agent ? (
+              <p className="mdc-chat-muted">
+                Agente: <strong>{result.agent.name}</strong> ({result.agent.key})
+              </p>
+            ) : null}
+            <pre>{result.answerPreview}</pre>
+          </article>
+
+          <article className="mdc-admin-simulate__card">
+            <h3>Prompt final (system)</h3>
+            <pre>{result.finalPrompt?.preview || result.finalPrompt?.systemPrompt || "—"}</pre>
+          </article>
+
+          <div className="mdc-admin-simulate__grid">
+            <article className="mdc-admin-simulate__card">
+              <h3>Diretrizes aplicadas ({result.appliedGuidelines?.length ?? 0})</h3>
+              <ul>
+                {(result.appliedGuidelines ?? []).map((item) => (
+                  <li key={item.id}>{item.title}</li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="mdc-admin-simulate__card">
+              <h3>Chunks usados ({result.chunks?.length ?? 0})</h3>
+              <ul>
+                {(result.chunks ?? []).map((chunk) => (
+                  <li key={chunk.id}>
+                    <strong>{chunk.title}</strong>
+                    <span>{Math.round((chunk.score ?? 0) * 100)}%</span>
+                    <p>{chunk.preview}</p>
+                  </li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="mdc-admin-simulate__card">
+              <h3>Tools ({result.plannedToolCalls?.length ?? 0})</h3>
+              <p className="mdc-chat-muted">
+                Com token válido, tools como <code>get_current_user</code> são executadas via
+                Core API (/me), como no chat real.
+              </p>
+              {(result.plannedToolCalls ?? []).length === 0 ? (
+                <p className="mdc-chat-muted">Nenhuma tool selecionada para esta pergunta.</p>
+              ) : (
+                <ul>
+                  {result.plannedToolCalls?.map((tool) => (
+                    <li key={tool.name}>
+                      <strong>
+                        {tool.name}{" "}
+                        <span className="mdc-admin-simulate__tool-status">
+                          {tool.status === "executed" ? "executada" : "prevista"}
+                        </span>
+                      </strong>
+                      <p>{tool.reason}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
+          </div>
+
+          {result.comparison ? (
+            <article className="mdc-admin-simulate__card">
+              <h3>Comparação de contexto</h3>
+              <div className="mdc-admin-simulate__comparison">
+                <div>
+                  <h4>Com diretrizes</h4>
+                  <p>{result.comparison.withGuidelines?.summary}</p>
+                </div>
+                <div>
+                  <h4>Sem diretrizes</h4>
+                  <p>{result.comparison.withoutGuidelines?.summary}</p>
+                </div>
+                <div>
+                  <h4>Com RAG</h4>
+                  <p>{result.comparison.withRag?.summary}</p>
+                </div>
+                <div>
+                  <h4>Sem RAG</h4>
+                  <p>{result.comparison.withoutRag?.summary}</p>
+                </div>
+              </div>
+            </article>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}

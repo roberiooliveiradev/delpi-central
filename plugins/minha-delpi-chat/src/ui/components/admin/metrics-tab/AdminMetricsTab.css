@@ -88,6 +88,34 @@
   font-size: 1rem;
 }
 
+.mdc-admin-metrics-card--wide {
+  grid-column: 1 / -1;
+}
+
+.mdc-admin-metrics-tab__table-wrap {
+  overflow: auto;
+  margin-top: var(--mdc-space-3);
+}
+
+.mdc-admin-metrics-tab__table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+}
+
+.mdc-admin-metrics-tab__table th,
+.mdc-admin-metrics-tab__table td {
+  border-bottom: 1px solid var(--mdc-card-border);
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+}
+
+.mdc-admin-metrics-tab__table th {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  color: var(--mdc-title-soft);
+}
+
 @media (max-width: 1100px) {
   .mdc-admin-metrics-tab__grid,
   .mdc-admin-metrics-tab__columns {

@@ -4,15 +4,16 @@ from uuid import UUID
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.dto.send_chat_message_response import SendChatMessageResponse
+from app.application.services.chat_message_security_service import ChatMessageSecurityService
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
+from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
 from app.application.services.rag_context_service import RagContextService
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
     ChatSessionNotFoundError,
-    InvalidChatSessionInputError,
 )
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
@@ -36,9 +37,13 @@ class SendChatMessageUseCase:
         attachment_repository: ChatAttachmentRepositoryPort | None = None,
         workspace_context_service: ChatWorkspaceContextService | None = None,
         admin_guideline_prompt_service=None,
+        message_security_service: ChatMessageSecurityService | None = None,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
+        self.message_security_service = message_security_service or ChatMessageSecurityService(
+            audit_repository=audit_repository,
+        )
         self.llm_gateway = llm_gateway
         self.prompt_policy_service = prompt_policy_service
         self.prompt_builder_service = ChatPromptBuilderService(prompt_policy_service)
@@ -51,9 +56,13 @@ class SendChatMessageUseCase:
         self.admin_guideline_prompt_service = admin_guideline_prompt_service
 
     def execute(self, request: SendChatMessageRequest) -> SendChatMessageResponse:
-        message = self._validate_message(request.message)
-
         user_id = UUID(request.user_id)
+        message = self.message_security_service.secure_message(
+            request.message,
+            user_id=user_id,
+            context=request.context,
+            source="chat",
+        )
         session_id = UUID(request.session_id)
 
         session = self.chat_repository.get_session_by_id(session_id)
@@ -85,6 +94,7 @@ class SendChatMessageUseCase:
             request,
             allowed_action_ids=workspace_context.get("allowedActionIds"),
             capabilities=workspace_context.get("capabilities") or {},
+            specialization=workspace_context.get("specialization"),
         )
         tool_calls = tool_context["toolCalls"]
 
@@ -112,7 +122,9 @@ class SendChatMessageUseCase:
             message_id=user_message.id,
         )
 
-        admin_guidelines_prompt, active_guidelines = self._build_admin_guidelines_prompt()
+        admin_guidelines_prompt, active_guidelines = self._build_admin_guidelines_prompt(
+            workspace_context,
+        )
 
         llm_messages = self.prompt_builder_service.build_messages(
             history=history,
@@ -198,11 +210,16 @@ class SendChatMessageUseCase:
             toolCalls=tool_calls,
         )
 
-    def _build_admin_guidelines_prompt(self) -> tuple[str, list[dict]]:
+    def _build_admin_guidelines_prompt(self, workspace_context: dict) -> tuple[str, list[dict]]:
         if not self.admin_guideline_prompt_service:
             return "", []
 
-        return self.admin_guideline_prompt_service.build_active_guidelines_prompt()
+        specialization = workspace_context.get("specialization") or {}
+        categories = specialization.get("guidelineCategories")
+
+        return self.admin_guideline_prompt_service.build_active_guidelines_prompt(
+            categories=categories,
+        )
 
     def _guideline_metadata(self, guidelines: list[dict]) -> list[dict]:
         return [
@@ -220,6 +237,7 @@ class SendChatMessageUseCase:
         request: SendChatMessageRequest,
         allowed_action_ids: list[str] | None = None,
         capabilities: dict | None = None,
+        specialization: dict | None = None,
     ) -> dict:
         if not request.access_token:
             return {
@@ -231,41 +249,27 @@ class SendChatMessageUseCase:
         if capabilities and capabilities.get("actions") is False:
             actions_enabled = False
 
+        allowed_tool_names = None
+
+        if isinstance(specialization, dict):
+            allowed_tool_names = specialization.get("allowedTools")
+
         return self.chat_tool_context_service.build_context(
             user_id=request.user_id,
             access_token=request.access_token,
             message=request.message,
             allowed_action_ids=allowed_action_ids,
             actions_enabled=actions_enabled,
+            allowed_tool_names=allowed_tool_names,
         )
 
-    def _validate_message(self, value: str) -> str:
-        if not isinstance(value, str):
-            raise InvalidChatSessionInputError("Message must be a string")
-
-        normalized = value.strip()
-
-        if not normalized:
-            raise InvalidChatSessionInputError("Message is required")
-
-        if len(normalized) > 8000:
-            raise InvalidChatSessionInputError("Message exceeds maximum length")
-
-        return normalized
-
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:
-        prompt_cost = (
-            prompt_tokens / 1000
-        ) * Settings.LLM_PROMPT_TOKEN_COST_PER_1K
-        completion_cost = (
-            completion_tokens / 1000
-        ) * Settings.LLM_COMPLETION_TOKEN_COST_PER_1K
-        total = prompt_cost + completion_cost
-
-        if total <= 0:
-            return None
-
-        return round(total, 6)
+        return LlmCostEstimatorService().estimate_cost(
+            provider=Settings.LLM_PROVIDER,
+            model=Settings.OLLAMA_MODEL if Settings.LLM_PROVIDER != "vllm" else Settings.VLLM_MODEL,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+        )
 
     def _estimate_tokens_from_messages(self, messages: list[dict]) -> int:
         total = 0

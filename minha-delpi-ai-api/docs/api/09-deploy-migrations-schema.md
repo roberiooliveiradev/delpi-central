@@ -3,8 +3,8 @@
 ## Estado esperado em produção
 
 ```bash
-flask --app app db current
-flask --app app db heads
+flask --app app.main:app db current
+flask --app app.main:app db heads
 ```
 
 Ambos devem apontar para a mesma head, por exemplo:
@@ -41,7 +41,7 @@ cd ~/projetos/delpi-central/infra
 docker compose -f docker-compose.yml --env-file .env up -d --build minha-delpi-ai-api
 
 docker compose -f docker-compose.yml --env-file .env exec minha-delpi-ai-api \
-  sh -lc "cd /app && flask --app app db upgrade"
+  sh -lc "cd /app && flask --app app.main:app db upgrade"
 
 docker compose -f docker-compose.yml --env-file .env exec minha-delpi-ai-api \
   sh -lc "cd /app && python -m app.infrastructure.db.schema_audit"
@@ -53,12 +53,12 @@ docker compose -f docker-compose.yml --env-file .env restart minha-delpi-ai-api
 
 ```bash
 docker compose -f docker-compose.yml --env-file .env exec minha-delpi-ai-api \
-  sh -lc "cd /app && flask --app app db current && flask --app app db heads"
+  sh -lc "cd /app && flask --app app.main:app db current && flask --app app.main:app db heads"
 ```
 
 ## Quando usar `stamp head`
 
-Use `flask --app app db stamp head` somente quando:
+Use `flask --app app.main:app db stamp head` somente quando:
 
 1. O schema foi corrigido manualmente por hotfix SQL.
 2. `python -m app.infrastructure.db.schema_audit` retorna `STATUS: OK`.
@@ -68,7 +68,7 @@ Exemplo:
 
 ```bash
 docker compose -f docker-compose.yml --env-file .env exec minha-delpi-ai-api \
-  sh -lc "cd /app && flask --app app db stamp head"
+  sh -lc "cd /app && flask --app app.main:app db stamp head"
 ```
 
 ## Tabelas críticas recentes

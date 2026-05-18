@@ -8,6 +8,12 @@ from app.domain.exceptions.knowledge_exceptions import InvalidKnowledgeDocumentI
 
 
 class FakeKnowledgeRepository:
+    def __init__(self):
+        self.duplicate = None
+
+    def find_global_document_by_content_hash(self, content_hash, source_ref=None):
+        return self.duplicate
+
     def create_document(self, title, source_type, source_ref, content, metadata=None):
         class Document:
             id = "00000000-0000-0000-0000-000000000001"
@@ -25,9 +31,20 @@ class FakeEmbeddingGateway:
         return [0.1, 0.2, 0.3]
 
 
-class FakeChunker:
-    def chunk(self, text):
-        return [text]
+class FakePipeline:
+    def prepare(self, content, **kwargs):
+        class Result:
+            cleaned_content = content
+            content_hash = "hash-test"
+            word_count = len(content.split())
+            chunks = [type("Chunk", (), {"content": content, "metadata": {}})()]
+            stats = {
+                "chunkStrategy": "single",
+                "chunksAfterDedup": 1,
+                "duplicatesRemoved": 0,
+            }
+
+        return Result()
 
 
 class FakeAuditRepository:
@@ -37,15 +54,24 @@ class FakeAuditRepository:
     def log(self, **kwargs):
         self.logs.append(kwargs)
 
+    def list_logs_page(self, query):
+        return self.logs[: query.limit], len(self.logs)
+
+    def get_log(self, log_id):
+        return None
+
+    def list_by_prompt_hash(self, **kwargs):
+        return []
+
     def list_logs(self, limit=100):
-        return self.logs
+        return self.logs[:limit]
 
 
-def make_use_case(audit_repository=None):
+def make_use_case(audit_repository=None, knowledge_repository=None):
     return IngestKnowledgeDocumentUseCase(
-        knowledge_repository=FakeKnowledgeRepository(),
+        knowledge_repository=knowledge_repository or FakeKnowledgeRepository(),
         embedding_gateway=FakeEmbeddingGateway(),
-        chunker=FakeChunker(),
+        pipeline=FakePipeline(),
         audit_repository=audit_repository,
     )
 

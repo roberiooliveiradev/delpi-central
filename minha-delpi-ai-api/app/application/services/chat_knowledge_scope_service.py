@@ -1,7 +1,14 @@
 from uuid import UUID
 
+from app.application.services.agent_specialization_service import (
+    AgentSpecializationService,
+)
+
 
 class ChatKnowledgeScopeService:
+    def __init__(self, specialization_service: AgentSpecializationService | None = None):
+        self.specialization_service = specialization_service or AgentSpecializationService()
+
     def build_filters(
         self,
         *,
@@ -30,4 +37,6 @@ class ChatKnowledgeScopeService:
         if cleaned_attachment_ids:
             filters["attachment_ids"] = cleaned_attachment_ids
 
-        return filters
+        specialization = workspace_context.get("specialization")
+
+        return self.specialization_service.build_rag_filters(specialization, filters)

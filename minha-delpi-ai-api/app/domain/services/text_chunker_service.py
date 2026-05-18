@@ -30,7 +30,7 @@ class TextChunkerService:
         return chunks
 
     def _normalize(self, text: str) -> str:
-        return "\\n".join(
+        return "\n".join(
             line.strip()
             for line in str(text or "").splitlines()
             if line.strip()

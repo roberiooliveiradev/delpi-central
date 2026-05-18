@@ -17,6 +17,7 @@ from app.domain.exceptions.chat_exceptions import (
 from app.domain.exceptions.llm_exceptions import LlmProviderError
 from app.domain.exceptions.knowledge_exceptions import KnowledgeError
 from app.domain.exceptions.rate_limit_exceptions import RateLimitExceededError
+from app.domain.exceptions.security_exceptions import ChatInputSecurityError
 from app.domain.exceptions.tool_exceptions import ToolError
 from app.interfaces.http.utils.errors import error_response, not_found, server_error
 
@@ -84,6 +85,31 @@ def register_error_handlers(app):
             status_code=400,
             code=getattr(error, "code", "chat.invalid_session_input"),
             message=getattr(error, "message", "Invalid chat session input"),
+        )
+
+    @app.errorhandler(ChatInputSecurityError)
+    def handle_chat_input_security_error(error):
+        from flask import jsonify
+
+        return (
+            jsonify(
+                {
+                    "errors": [
+                        {
+                            "code": getattr(error, "code", "security.input_blocked"),
+                            "message": getattr(
+                                error,
+                                "message",
+                                "Message blocked by security policy",
+                            ),
+                            "path": "_global",
+                            "flags": getattr(error, "flags", []),
+                            "riskScore": getattr(error, "risk_score", None),
+                        }
+                    ]
+                }
+            ),
+            422,
         )
 
     @app.errorhandler(LlmProviderError)

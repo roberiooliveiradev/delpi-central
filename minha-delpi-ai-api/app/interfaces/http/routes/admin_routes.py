@@ -9,12 +9,19 @@ from app.application.security.chat_permissions import (
 )
 import json
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
+from uuid import UUID
 
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, Response, g, jsonify, request
 
 from app.application.dto.ingest_document_request import IngestDocumentRequest
+from app.domain.exceptions.knowledge_exceptions import InvalidKnowledgeDocumentInputError
 from app.application.services.chat_attachment_text_extractor import ChatAttachmentTextExtractor
+from app.application.services.knowledge_curatorial_metadata_service import (
+    build_global_curatorial_metadata,
+    merge_curatorial_metadata,
+)
 from app.composition.admin_composer import (
     make_archive_admin_guideline_use_case,
     make_compare_admin_guideline_versions_use_case,
@@ -33,15 +40,32 @@ from app.composition.admin_composer import (
     make_list_admin_guidelines_use_case,
     make_list_admin_guideline_versions_use_case,
     make_list_admin_knowledge_documents_use_case,
+    make_preview_knowledge_ingestion_use_case,
+    make_update_admin_knowledge_document_metadata_use_case,
     make_reactivate_knowledge_document_use_case,
     make_publish_admin_guideline_use_case,
     make_reindex_knowledge_document_use_case,
     make_restore_admin_guideline_version_use_case,
     make_save_admin_guideline_use_case,
+    make_admin_agent_simulate_use_case,
+    make_get_admin_response_evaluation_context_use_case,
+    make_get_admin_agent_specialization_use_case,
+    make_get_admin_response_evaluation_summary_use_case,
+    make_list_admin_agent_specialization_presets_use_case,
+    make_list_admin_specialized_agents_use_case,
+    make_save_admin_agent_specialization_use_case,
+    make_list_admin_response_candidates_use_case,
+    make_list_admin_response_evaluations_use_case,
+    make_save_admin_response_evaluation_use_case,
+    make_get_admin_security_config_use_case,
+    make_get_admin_security_summary_use_case,
+    make_list_admin_security_events_use_case,
+    make_scan_admin_security_input_use_case,
     make_test_admin_rag_use_case,
 )
 from app.extensions.db import db
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
 from app.interfaces.http.auth_decorators import require_permission
 from app.interfaces.http.rate_limit_decorators import rate_limit
@@ -307,6 +331,79 @@ def test_admin_rag():
     except ValueError as exc:
         return jsonify({"errors": [{"code": "invalid_request", "message": str(exc), "path": "question"}]}), 400
 
+    score = float(result.get("score") or 0)
+    chunks = result.get("chunks") or []
+    assertive = score >= Settings.RAG_ASSERTIVENESS_MIN_SCORE and len(chunks) > 0
+
+    try:
+        PostgresAuditRepository().log(
+            user_id=UUID(str(g.current_user.sub)),
+            action="admin.rag.tested",
+            context="admin",
+            metadata={
+                "score": score,
+                "chunk_count": len(chunks),
+                "document_count": len(result.get("matchedDocuments") or []),
+                "assertive": assertive,
+                "question_preview": str(result.get("question") or "")[:200],
+            },
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    return jsonify(result), 200
+
+
+@admin_bp.post("/agent/simulate")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def simulate_admin_agent():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
+        ), 400
+
+    generate_answer = bool(payload.get("generateAnswer"))
+
+    use_case = make_admin_agent_simulate_use_case(with_llm=generate_answer)
+
+    try:
+        result = use_case.execute(
+            question=payload.get("question"),
+            agent_id=payload.get("agentId"),
+            agent_key=payload.get("agentKey"),
+            document_id=payload.get("documentId"),
+            generate_answer=generate_answer,
+            user_id=str(g.current_user.sub),
+            access_token=getattr(g, "access_token", None),
+        )
+    except ValueError as exc:
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": str(exc), "path": "question"}]},
+        ), 400
+
+    try:
+        PostgresAuditRepository().log(
+            user_id=UUID(str(g.current_user.sub)),
+            action="admin.agent.simulated",
+            context="admin",
+            metadata={
+                "generate_answer": generate_answer,
+                "agent_id": payload.get("agentId"),
+                "agent_key": payload.get("agentKey"),
+                "guideline_count": len(result.get("appliedGuidelines") or []),
+                "chunk_count": len(result.get("chunks") or []),
+                "planned_tool_count": len(result.get("plannedToolCalls") or []),
+                "question_preview": str(result.get("question") or "")[:200],
+            },
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
     return jsonify(result), 200
 
 
@@ -329,6 +426,35 @@ def llm_status():
     return jsonify(use_case.execute()), 200
 
 
+@admin_bp.post("/knowledge/ingest/preview")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def preview_knowledge_ingestion():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
+        ), 400
+
+    use_case = make_preview_knowledge_ingestion_use_case()
+
+    try:
+        result = use_case.execute(
+            content=payload.get("content", ""),
+            title=payload.get("title"),
+            source_type=payload.get("sourceType"),
+            source_ref=payload.get("sourceRef"),
+            metadata=payload.get("metadata"),
+        )
+    except InvalidKnowledgeDocumentInputError as exc:
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": str(exc), "path": "content"}]},
+        ), 400
+
+    return jsonify(result), 200
+
+
 @admin_bp.post("/knowledge/documents/upload")
 @require_permission(CHAT_ADMIN_PERMISSION)
 @rate_limit("knowledge_writes", Settings.RATE_LIMIT_KNOWLEDGE_WRITES_PER_WINDOW)
@@ -348,20 +474,50 @@ def upload_knowledge_document():
     source_type = (request.form.get("sourceType") or "admin_upload").strip()
     source_ref = (request.form.get("sourceRef") or f"admin_upload:{original_filename}").strip()
 
-    metadata = {
-        "scope": "global",
-        "origin": "admin_upload",
-        "originalFilename": original_filename,
-        "contentType": uploaded_file.content_type,
-        "sizeBytes": len(raw_bytes),
-    }
+    metadata = build_global_curatorial_metadata(
+        category=request.form.get("category"),
+        tags=request.form.get("tags"),
+        namespace=request.form.get("namespace"),
+        domain=request.form.get("domain"),
+        priority=request.form.get("priority"),
+        quality_score=request.form.get("qualityScore"),
+        extra={
+            "origin": "admin_upload",
+            "originalFilename": original_filename,
+            "contentType": uploaded_file.content_type,
+            "sizeBytes": len(raw_bytes),
+        },
+    )
 
     metadata_raw = request.form.get("metadata")
     if metadata_raw:
         try:
             extra_metadata = json.loads(metadata_raw)
             if isinstance(extra_metadata, dict):
-                metadata.update(extra_metadata)
+                metadata = merge_curatorial_metadata(
+                    metadata,
+                    category=extra_metadata.get("category"),
+                    tags=extra_metadata.get("tags"),
+                    namespace=extra_metadata.get("namespace"),
+                    domain=extra_metadata.get("domain"),
+                    priority=extra_metadata.get("priority"),
+                    quality_score=extra_metadata.get("qualityScore"),
+                )
+                metadata.update(
+                    {
+                        key: value
+                        for key, value in extra_metadata.items()
+                        if key
+                        not in {
+                            "category",
+                            "tags",
+                            "namespace",
+                            "domain",
+                            "priority",
+                            "qualityScore",
+                        }
+                    }
+                )
         except json.JSONDecodeError:
             return jsonify({"errors": [{"code": "invalid_request", "message": "metadata must be valid JSON", "path": "metadata"}]}), 400
 
@@ -422,8 +578,47 @@ def list_knowledge_documents():
             offset=request.args.get("offset", 0),
             search=request.args.get("search"),
             active=request.args.get("active"),
+            category=request.args.get("category"),
+            namespace=request.args.get("namespace"),
+            domain=request.args.get("domain"),
+            tag=request.args.get("tag"),
+            source_type=request.args.get("sourceType"),
         )
     ), 200
+
+
+@admin_bp.patch("/knowledge/documents/<document_id>/metadata")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def update_knowledge_document_metadata(document_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
+        ), 400
+
+    use_case = make_update_admin_knowledge_document_metadata_use_case()
+
+    try:
+        result = use_case.execute(
+            document_id=document_id,
+            category=payload.get("category"),
+            tags=payload.get("tags"),
+            namespace=payload.get("namespace"),
+            domain=payload.get("domain"),
+            priority=payload.get("priority"),
+            quality_score=payload.get("qualityScore"),
+        )
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify({"errors": [{"code": "not_found", "message": str(exc), "path": "documentId"}]}), 404
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
 
 
 @admin_bp.delete("/knowledge/documents/<document_id>")
@@ -505,9 +700,349 @@ def reindex_knowledge_document(document_id: str):
     return jsonify(result), 200
 
 
+@admin_bp.get("/agents/specializations/catalog")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def list_agent_specialization_presets():
+    use_case = make_list_admin_agent_specialization_presets_use_case()
+    return jsonify(use_case.execute()), 200
+
+
+@admin_bp.get("/agents/specialized")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def list_specialized_agents():
+    use_case = make_list_admin_specialized_agents_use_case()
+    return jsonify(use_case.execute()), 200
+
+
+@admin_bp.get("/agents/<agent_id>/specialization")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def get_agent_specialization(agent_id: str):
+    use_case = make_get_admin_agent_specialization_use_case()
+
+    try:
+        result = use_case.execute(agent_id=agent_id)
+    except ValueError as exc:
+        return jsonify(
+            {"errors": [{"code": "not_found", "message": str(exc), "path": "agentId"}]},
+        ), 404
+
+    return jsonify(result), 200
+
+
+@admin_bp.put("/agents/<agent_id>/specialization")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def save_agent_specialization(agent_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
+        ), 400
+
+    use_case = make_save_admin_agent_specialization_use_case()
+
+    try:
+        result = use_case.execute(
+            agent_id=agent_id,
+            specialization_payload=payload.get("specialization"),
+            user_id=str(g.current_user.sub),
+        )
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": str(exc), "path": "specialization"}]},
+        ), 400
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/responses/evaluations/summary")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def response_evaluations_summary():
+    use_case = make_get_admin_response_evaluation_summary_use_case()
+    return jsonify(use_case.execute()), 200
+
+
+@admin_bp.get("/responses/candidates")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def list_response_candidates():
+    use_case = make_list_admin_response_candidates_use_case()
+
+    return jsonify(
+        use_case.execute(
+            limit=request.args.get("limit", 20),
+            offset=request.args.get("offset", 0),
+            search=request.args.get("search"),
+        )
+    ), 200
+
+
+@admin_bp.get("/responses/messages/<message_id>/evaluation-context")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def get_response_evaluation_context(message_id: str):
+    use_case = make_get_admin_response_evaluation_context_use_case()
+    score_raw = request.args.get("score")
+
+    try:
+        score = int(score_raw) if score_raw is not None else None
+        result = use_case.execute(message_id=message_id, score=score)
+    except ValueError as exc:
+        return jsonify(
+            {"errors": [{"code": "not_found", "message": str(exc), "path": "messageId"}]},
+        ), 404
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/responses/evaluations")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def list_response_evaluations():
+    use_case = make_list_admin_response_evaluations_use_case()
+
+    min_score = request.args.get("minScore")
+    max_score = request.args.get("maxScore")
+
+    return jsonify(
+        use_case.execute(
+            limit=request.args.get("limit", 20),
+            offset=request.args.get("offset", 0),
+            verdict=request.args.get("verdict"),
+            min_score=int(min_score) if min_score is not None else None,
+            max_score=int(max_score) if max_score is not None else None,
+            search=request.args.get("search"),
+        )
+    ), 200
+
+
+@admin_bp.post("/responses/evaluations")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def save_response_evaluation():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]},
+        ), 400
+
+    use_case = make_save_admin_response_evaluation_use_case()
+
+    try:
+        result = use_case.execute(
+            message_id=payload.get("messageId"),
+            evaluator_user_id=str(g.current_user.sub),
+            score=payload.get("score", 3),
+            comment=payload.get("comment"),
+        )
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify(
+            {"errors": [{"code": "not_found", "message": str(exc), "path": "messageId"}]},
+        ), 404
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/security/config")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def get_admin_security_config():
+    use_case = make_get_admin_security_config_use_case()
+    return jsonify(use_case.execute()), 200
+
+
+@admin_bp.get("/security/summary")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def get_admin_security_summary():
+    use_case = make_get_admin_security_summary_use_case()
+
+    try:
+        hours = int(request.args.get("hours", 24))
+    except ValueError:
+        hours = 24
+
+    return jsonify(use_case.execute(hours=hours)), 200
+
+
+@admin_bp.get("/security/events")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def list_admin_security_events():
+    use_case = make_list_admin_security_events_use_case()
+
+    try:
+        result = use_case.execute(
+            limit=request.args.get("limit", 50),
+            offset=request.args.get("offset", 0),
+            action=request.args.get("action"),
+            user_id=request.args.get("userId"),
+            date_from=request.args.get("dateFrom"),
+            date_to=request.args.get("dateTo"),
+        )
+    except ValueError as exc:
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]},
+        ), 400
+
+    return jsonify(result), 200
+
+
+@admin_bp.post("/security/scan")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def scan_admin_security_input():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "Invalid JSON body", "path": "_global"}]},
+        ), 400
+
+    message = payload.get("message")
+
+    if not isinstance(message, str) or not message.strip():
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": "message is required", "path": "message"}]},
+        ), 400
+
+    use_case = make_scan_admin_security_input_use_case()
+
+    parsed_user_id = None
+
+    if getattr(g, "current_user", None) and getattr(g.current_user, "sub", None):
+        parsed_user_id = UUID(str(g.current_user.sub))
+
+    try:
+        result = use_case.execute(
+            message=message,
+            user_id=parsed_user_id,
+            context=payload.get("context"),
+        )
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]},
+        ), 400
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
 @admin_bp.get("/audit-logs")
 @require_permission(CHAT_ADMIN_PERMISSION)
 def list_audit_logs():
-    limit = request.args.get("limit", 100)
     use_case = make_list_admin_audit_logs_use_case()
-    return jsonify(use_case.execute(limit=limit)), 200
+
+    try:
+        result = use_case.execute(
+            limit=request.args.get("limit", 50),
+            offset=request.args.get("offset", 0),
+            action=request.args.get("action"),
+            context=request.args.get("context"),
+            user_id=request.args.get("userId"),
+            trace_id=request.args.get("traceId"),
+            search=request.args.get("search"),
+            date_from=request.args.get("dateFrom"),
+            date_to=request.args.get("dateTo"),
+        )
+    except ValueError as exc:
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]},
+        ), 400
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/audit-logs/timeline")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def audit_logs_timeline():
+    use_case = make_list_admin_audit_logs_use_case()
+
+    try:
+        max_days = request.args.get("maxDays")
+        result = use_case.execute_timeline(
+            action=request.args.get("action"),
+            context=request.args.get("context"),
+            user_id=request.args.get("userId"),
+            trace_id=request.args.get("traceId"),
+            search=request.args.get("search"),
+            date_from=request.args.get("dateFrom"),
+            date_to=request.args.get("dateTo"),
+            max_days=int(max_days) if max_days is not None else None,
+        )
+    except ValueError as exc:
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]},
+        ), 400
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/audit-logs/export")
+@require_permission(CHAT_ADMIN_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def export_audit_logs():
+    use_case = make_list_admin_audit_logs_use_case()
+    export_format = (request.args.get("format") or "json").lower().strip()
+
+    try:
+        if export_format == "csv":
+            csv_content = use_case.execute_export_csv(
+                action=request.args.get("action"),
+                context=request.args.get("context"),
+                user_id=request.args.get("userId"),
+                trace_id=request.args.get("traceId"),
+                search=request.args.get("search"),
+                date_from=request.args.get("dateFrom"),
+                date_to=request.args.get("dateTo"),
+            )
+        else:
+            result = use_case.execute_export(
+                action=request.args.get("action"),
+                context=request.args.get("context"),
+                user_id=request.args.get("userId"),
+                trace_id=request.args.get("traceId"),
+                search=request.args.get("search"),
+                date_from=request.args.get("dateFrom"),
+                date_to=request.args.get("dateTo"),
+            )
+    except ValueError as exc:
+        return jsonify(
+            {"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]},
+        ), 400
+
+    if export_format == "csv":
+        filename = f"minha-delpi-audit-{datetime.now(timezone.utc).date().isoformat()}.csv"
+        return Response(
+            csv_content,
+            mimetype="text/csv; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+            },
+        )
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/audit-logs/<int:log_id>")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def get_audit_log_detail(log_id: int):
+    use_case = make_list_admin_audit_logs_use_case()
+    result = use_case.execute_detail(log_id)
+
+    if not result:
+        return jsonify(
+            {"errors": [{"code": "not_found", "message": "Log não encontrado.", "path": "logId"}]},
+        ), 404
+
+    return jsonify(result), 200

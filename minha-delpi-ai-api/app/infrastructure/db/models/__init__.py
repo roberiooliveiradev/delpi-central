@@ -13,6 +13,7 @@ from app.infrastructure.db.models.chat_message_model import AiChatMessageModel
 from app.infrastructure.db.models.chat_session_model import AiChatSessionModel
 from app.infrastructure.db.models.knowledge_chunk_model import AiKnowledgeChunkModel
 from app.infrastructure.db.models.knowledge_document_model import AiKnowledgeDocumentModel
+from app.infrastructure.db.models.response_evaluation_model import AiResponseEvaluationModel
 from app.infrastructure.db.models.external_action_test_log_model import ExternalActionTestLogModel
 
 __all__ = [
@@ -31,5 +32,6 @@ __all__ = [
     "AiChatSessionModel",
     "AiKnowledgeChunkModel",
     "AiKnowledgeDocumentModel",
+    "AiResponseEvaluationModel",
     "ExternalActionTestLogModel",
 ]

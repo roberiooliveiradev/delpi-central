@@ -1,0 +1,203 @@
+.mdc-admin-evaluations {
+  display: grid;
+  gap: var(--mdc-space-4);
+}
+
+.mdc-admin-evaluations__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mdc-space-4);
+}
+
+.mdc-admin-evaluations__header h2 {
+  margin: 0;
+  color: var(--mdc-primary);
+}
+
+.mdc-admin-evaluations__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--mdc-space-2);
+}
+
+.mdc-admin-evaluations__summary article {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg-muted);
+  padding: var(--mdc-space-3);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.mdc-admin-evaluations__summary span {
+  font-size: 0.75rem;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-evaluations__summary strong {
+  font-size: 1.1rem;
+  color: var(--mdc-title);
+}
+
+.mdc-admin-evaluations__error {
+  color: var(--mdc-danger);
+  margin: 0;
+}
+
+.mdc-admin-evaluations__success {
+  color: var(--mdc-success);
+  margin: 0;
+}
+
+.mdc-admin-evaluations__layout {
+  display: grid;
+  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  gap: var(--mdc-space-4);
+  min-height: 28rem;
+}
+
+.mdc-admin-evaluations__candidates,
+.mdc-admin-evaluations__detail {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  padding: var(--mdc-space-4);
+  display: grid;
+  gap: var(--mdc-space-3);
+  align-content: start;
+}
+
+.mdc-admin-evaluations__candidates label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mdc-admin-evaluations__candidates input,
+.mdc-admin-evaluations__detail textarea {
+  width: 100%;
+  border: 1px solid var(--mdc-control-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-control-bg);
+  color: var(--mdc-control-text);
+  font: inherit;
+  padding: 0.75rem 0.85rem;
+}
+
+.mdc-admin-evaluations__candidates ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--mdc-space-2);
+  max-height: 32rem;
+  overflow: auto;
+}
+
+.mdc-admin-evaluations__candidates li button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg-muted);
+  padding: var(--mdc-space-3);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mdc-admin-evaluations__candidates li button.is-selected {
+  border-color: var(--mdc-primary);
+  box-shadow: var(--mdc-focus-ring);
+}
+
+.mdc-admin-evaluations__candidates li p,
+.mdc-admin-evaluations__candidates li small {
+  margin: 0;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-evaluations__question,
+.mdc-admin-evaluations__answer {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mdc-admin-evaluations__question span,
+.mdc-admin-evaluations__answer span,
+.mdc-admin-evaluations__score span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-evaluations__answer p,
+.mdc-admin-evaluations__question p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mdc-admin-evaluations__score > div {
+  display: inline-flex;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-admin-evaluations__score button {
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.mdc-admin-evaluations__score button.is-active {
+  background: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
+  border-color: var(--mdc-primary);
+  color: var(--mdc-primary);
+}
+
+.mdc-admin-evaluations__suggestions {
+  display: grid;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-admin-evaluations__suggestions h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.mdc-admin-evaluations__suggestions article {
+  border: 1px dashed var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  padding: var(--mdc-space-3);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.mdc-admin-evaluations__suggestions p,
+.mdc-admin-evaluations__suggestions small {
+  margin: 0;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-evaluations__detail > button {
+  justify-self: start;
+  min-height: 2.35rem;
+  border-radius: 999px;
+  font-weight: 800;
+  padding: 0.5rem 0.9rem;
+}
+
+@media (max-width: 960px) {
+  .mdc-admin-evaluations__header {
+    flex-direction: column;
+  }
+
+  .mdc-admin-evaluations__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .mdc-admin-evaluations__layout {
+    grid-template-columns: 1fr;
+  }
+}

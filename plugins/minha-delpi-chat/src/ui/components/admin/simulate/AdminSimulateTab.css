@@ -1,0 +1,124 @@
+.mdc-admin-simulate {
+  display: grid;
+  gap: var(--mdc-space-5);
+}
+
+.mdc-admin-simulate__hero,
+.mdc-admin-simulate__form,
+.mdc-admin-simulate__card {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+  padding: var(--mdc-space-5);
+}
+
+.mdc-admin-simulate__hero h2 {
+  margin: 0;
+  color: var(--mdc-primary);
+}
+
+.mdc-admin-simulate__form {
+  display: grid;
+  gap: var(--mdc-space-4);
+}
+
+.mdc-admin-simulate__form label {
+  display: grid;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-admin-simulate__form textarea,
+.mdc-admin-simulate__form select {
+  width: 100%;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  padding: 0.75rem;
+  font: inherit;
+}
+
+.mdc-admin-simulate__checkbox {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mdc-admin-simulate__form button {
+  justify-self: start;
+  border: 0;
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-primary);
+  color: #fff;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}
+
+.mdc-admin-simulate__error {
+  margin: 0;
+  color: #b91c1c;
+}
+
+.mdc-admin-simulate__results {
+  display: grid;
+  gap: var(--mdc-space-4);
+}
+
+.mdc-admin-simulate__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mdc-space-4);
+}
+
+.mdc-admin-simulate__card h3,
+.mdc-admin-simulate__card h4 {
+  margin: 0 0 var(--mdc-space-3);
+}
+
+.mdc-admin-simulate__card pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow: auto;
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: var(--mdc-radius-md);
+  background: #f8fafc;
+  font-size: 0.85rem;
+}
+
+.mdc-admin-simulate__card ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.mdc-admin-simulate__card li {
+  border-top: 1px solid var(--mdc-card-border);
+  padding-top: 0.75rem;
+}
+
+.mdc-admin-simulate__card li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.mdc-admin-simulate__tool-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--mdc-primary);
+}
+
+.mdc-admin-simulate__comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mdc-space-4);
+}
+
+@media (max-width: 960px) {
+  .mdc-admin-simulate__grid,
+  .mdc-admin-simulate__comparison {
+    grid-template-columns: 1fr;
+  }
+}

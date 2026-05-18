@@ -49,6 +49,7 @@ class KnowledgeRepositoryPort(ABC):
         search: str | None = None,
         active: bool | None = None,
         scope: str | None = None,
+        curatorial_filters: dict | None = None,
     ) -> list[tuple[KnowledgeDocument, int]]:
         raise NotImplementedError
 
@@ -58,7 +59,30 @@ class KnowledgeRepositoryPort(ABC):
         search: str | None = None,
         active: bool | None = None,
         scope: str | None = None,
+        curatorial_filters: dict | None = None,
     ) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_document_metadata(
+        self,
+        document_id: UUID,
+        metadata: dict,
+    ) -> KnowledgeDocument | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_document(
+        self,
+        document_id: UUID,
+        *,
+        content: str | None = None,
+        metadata: dict | None = None,
+    ) -> KnowledgeDocument | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_global_curatorial_facets(self) -> dict:
         raise NotImplementedError
 
     @abstractmethod
@@ -73,6 +97,14 @@ class KnowledgeRepositoryPort(ABC):
 
     @abstractmethod
     def get_document_by_id(self, document_id: UUID) -> KnowledgeDocument | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_global_document_by_content_hash(
+        self,
+        content_hash: str,
+        source_ref: str | None = None,
+    ) -> KnowledgeDocument | None:
         raise NotImplementedError
 
     @abstractmethod

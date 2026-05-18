@@ -11,29 +11,76 @@ import "./KnowledgeDocumentsPanel.css";
 type KnowledgeDocumentsPanelProps = KnowledgeDocumentsState &
   KnowledgeDocumentActions &
   KnowledgeBackendPlaceholders & {
+    canManageMetadata: boolean;
     canDeleteKnowledgeDocuments: boolean;
     canReindexKnowledgeDocuments: boolean;
   };
+
+function FacetSelect({
+  label,
+  value,
+  options,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  disabled?: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label>
+      <span>{label}</span>
+      <select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)}>
+        <option value="">Todos</option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
 
 export function KnowledgeDocumentsPanel({
   documents,
   documentsPagination,
   documentSearch,
   documentStatus,
+  documentCategory,
+  documentNamespace,
+  documentDomain,
+  documentTag,
+  documentSourceType,
+  documentFacets,
   isLoading,
   isMutating,
   setDocumentSearch,
   setDocumentStatus,
+  setDocumentCategory,
+  setDocumentNamespace,
+  setDocumentDomain,
+  setDocumentTag,
+  setDocumentSourceType,
+  resetDocumentCuratorialFilters,
   goToNextDocumentsPage,
   goToPreviousDocumentsPage,
   deleteDocument,
   deactivateDocument,
   reactivateDocument,
   reindexDocument,
+  updateDocumentMetadata,
   testDocument,
+  canManageMetadata,
   canDeleteKnowledgeDocuments,
   canReindexKnowledgeDocuments,
 }: KnowledgeDocumentsPanelProps) {
+  const hasCuratorialFilters = Boolean(
+    documentCategory || documentNamespace || documentDomain || documentTag || documentSourceType,
+  );
+
   return (
     <article className="mdc-knowledge-documents">
       <div className="mdc-knowledge-documents__header">
@@ -47,7 +94,7 @@ export function KnowledgeDocumentsPanel({
         <div className="mdc-knowledge-documents__filters">
           <input
             value={documentSearch}
-            placeholder="Buscar por título, tipo ou referência"
+            placeholder="Buscar por título, categoria, tags..."
             onChange={(event) => setDocumentSearch(event.target.value)}
           />
 
@@ -61,6 +108,57 @@ export function KnowledgeDocumentsPanel({
             <option value="active">Ativos</option>
             <option value="inactive">Inativos</option>
           </select>
+
+          <FacetSelect
+            label="Categoria"
+            value={documentCategory}
+            options={documentFacets.categories}
+            disabled={isLoading}
+            onChange={setDocumentCategory}
+          />
+
+          <FacetSelect
+            label="Namespace"
+            value={documentNamespace}
+            options={documentFacets.namespaces}
+            disabled={isLoading}
+            onChange={setDocumentNamespace}
+          />
+
+          <FacetSelect
+            label="Domínio"
+            value={documentDomain}
+            options={documentFacets.domains}
+            disabled={isLoading}
+            onChange={setDocumentDomain}
+          />
+
+          <FacetSelect
+            label="Tag"
+            value={documentTag}
+            options={documentFacets.tags}
+            disabled={isLoading}
+            onChange={setDocumentTag}
+          />
+
+          <FacetSelect
+            label="Tipo de fonte"
+            value={documentSourceType}
+            options={documentFacets.sourceTypes}
+            disabled={isLoading}
+            onChange={setDocumentSourceType}
+          />
+
+          {hasCuratorialFilters ? (
+            <button
+              type="button"
+              className="mdc-knowledge-documents__clear-filters"
+              disabled={isLoading}
+              onClick={resetDocumentCuratorialFilters}
+            >
+              Limpar filtros curadoriais
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -77,7 +175,9 @@ export function KnowledgeDocumentsPanel({
               deactivateDocument={deactivateDocument}
               reactivateDocument={reactivateDocument}
               reindexDocument={reindexDocument}
+              updateDocumentMetadata={updateDocumentMetadata}
               testDocument={testDocument}
+              canManageMetadata={canManageMetadata}
               canDeleteKnowledgeDocuments={canDeleteKnowledgeDocuments}
               canReindexKnowledgeDocuments={canReindexKnowledgeDocuments}
             />

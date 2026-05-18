@@ -1,5 +1,6 @@
 import { type DragEvent, useRef, useState } from "react";
 
+import { KnowledgeCuratorialFields } from "./KnowledgeCuratorialFields";
 import type {
   KnowledgeIngestionActions,
   KnowledgeIngestionMode,
@@ -31,6 +32,8 @@ export function KnowledgeIngestionPanel({
   canManageKnowledge,
   createDocument,
   uploadDocumentFile,
+  previewIngestion,
+  ingestionPreview,
 }: KnowledgeIngestionPanelProps) {
   const [title, setTitle] = useState("");
   const [sourceType, setSourceType] = useState("diretriz");
@@ -38,6 +41,12 @@ export function KnowledgeIngestionPanel({
   const [content, setContent] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [ingestMode, setIngestMode] = useState<KnowledgeIngestionMode>("file");
+  const [category, setCategory] = useState("");
+  const [tags, setTags] = useState("");
+  const [namespace, setNamespace] = useState("");
+  const [domain, setDomain] = useState("");
+  const [priority, setPriority] = useState("");
+  const [qualityScore, setQualityScore] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -46,10 +55,38 @@ export function KnowledgeIngestionPanel({
     sourceType.trim().length > 0 &&
     (ingestMode === "text" ? content.trim().length > 0 : Boolean(selectedFile));
 
+  const canPreviewPipeline = ingestMode === "text" && content.trim().length > 0;
+
+  async function handlePreviewPipeline() {
+    if (!canPreviewPipeline || isMutating) {
+      return;
+    }
+
+    await previewIngestion({
+      content: content.trim(),
+      title: title.trim() || "Pré-visualização",
+      sourceType: sourceType.trim(),
+      sourceRef: sourceRef.trim() || undefined,
+      metadata: {
+        scope: "global",
+        category: category.trim() || undefined,
+        tags: tags.trim() || undefined,
+        namespace: namespace.trim() || undefined,
+        domain: domain.trim() || undefined,
+      },
+    });
+  }
+
   function resetForm() {
     setTitle("");
     setSourceRef("");
     setContent("");
+    setCategory("");
+    setTags("");
+    setNamespace("");
+    setDomain("");
+    setPriority("");
+    setQualityScore("");
     setSelectedFile(null);
     setIsDragging(false);
 
@@ -126,8 +163,13 @@ export function KnowledgeIngestionPanel({
         title: title.trim() || selectedFile.name,
         sourceType: sourceType.trim() || "admin_upload",
         sourceRef: sourceRef.trim() || undefined,
+        category: category.trim() || undefined,
+        tags: tags.trim() || undefined,
+        namespace: namespace.trim() || undefined,
+        domain: domain.trim() || undefined,
+        priority: priority ? Number(priority) : undefined,
+        qualityScore: qualityScore ? Number(qualityScore) : undefined,
         metadata: {
-          scope: "global",
           origin: "admin_upload",
           adminContext: "knowledge_base",
         },
@@ -138,8 +180,13 @@ export function KnowledgeIngestionPanel({
         sourceType: sourceType.trim(),
         sourceRef: sourceRef.trim() || undefined,
         content: content.trim(),
+        category: category.trim() || undefined,
+        tags: tags.trim() || undefined,
+        namespace: namespace.trim() || undefined,
+        domain: domain.trim() || undefined,
+        priority: priority ? Number(priority) : undefined,
+        qualityScore: qualityScore ? Number(qualityScore) : undefined,
         metadata: {
-          scope: "global",
           origin: "admin_manual",
           adminContext: "knowledge_base",
         },
@@ -271,24 +318,68 @@ export function KnowledgeIngestionPanel({
           />
         </label>
 
-        <div className="mdc-knowledge-ingestion__future">
-          <strong>Próximas integrações</strong>
-          <small>
-            Teste RAG, versionamento e publicação ficarão plugados neste painel sem alterar a estrutura da aba.
-          </small>
+        <KnowledgeCuratorialFields
+          category={category}
+          tags={tags}
+          namespace={namespace}
+          domain={domain}
+          priority={priority}
+          qualityScore={qualityScore}
+          disabled={isMutating || !canManageKnowledge}
+          onCategoryChange={setCategory}
+          onTagsChange={setTags}
+          onNamespaceChange={setNamespace}
+          onDomainChange={setDomain}
+          onPriorityChange={setPriority}
+          onQualityScoreChange={setQualityScore}
+        />
+
+        <div className="mdc-knowledge-ingestion__actions">
+          <button
+            type="button"
+            disabled={!canManageKnowledge || !canPreviewPipeline || isMutating}
+            onClick={() => {
+              void handlePreviewPipeline();
+            }}
+          >
+            Pré-visualizar pipeline
+          </button>
+
+          <button
+            type="submit"
+            disabled={!canManageKnowledge || !canSubmitDocument || isMutating}
+            title={
+              canManageKnowledge
+                ? undefined
+                : "Você não tem permissão para adicionar conhecimento global."
+            }
+          >
+            {isMutating ? "Processando..." : "Ingerir na base global"}
+          </button>
         </div>
 
-        <button
-          type="submit"
-          disabled={!canManageKnowledge || !canSubmitDocument || isMutating}
-          title={
-            canManageKnowledge
-              ? undefined
-              : "Você não tem permissão para adicionar conhecimento global."
-          }
-        >
-          {isMutating ? "Processando..." : "Ingerir na base global"}
-        </button>
+        {ingestionPreview ? (
+          <div className="mdc-knowledge-ingestion__preview">
+            <strong>Prévia do pipeline</strong>
+            <p className="mdc-chat-muted">
+              {ingestionPreview.pipeline.chunksAfterDedup} chunk(s) · estratégia{" "}
+              {ingestionPreview.pipeline.chunkStrategy} ·{" "}
+              {ingestionPreview.pipeline.duplicatesRemoved} duplicata(s) removida(s) ·{" "}
+              {ingestionPreview.pipeline.charsRemoved} caractere(s) limpos
+            </p>
+            <ul>
+              {ingestionPreview.chunks.map((chunk) => (
+                <li key={chunk.index}>
+                  <span>
+                    Chunk {chunk.index + 1} · {chunk.wordCount} palavra(s) · {chunk.charCount}{" "}
+                    caractere(s)
+                  </span>
+                  <p>{chunk.preview}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </form>
     </article>
   );

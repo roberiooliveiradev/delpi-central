@@ -27,7 +27,26 @@
 .mdc-knowledge-documents__filters {
   display: grid;
   gap: var(--mdc-space-3);
-  width: min(26rem, 100%);
+  width: min(32rem, 100%);
+}
+
+.mdc-knowledge-documents__filters label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mdc-knowledge-documents__filters label span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-knowledge-documents__clear-filters {
+  justify-self: start;
+  min-height: 2.35rem;
+  border-radius: 999px;
+  font-weight: 800;
+  padding: 0.5rem 0.8rem;
 }
 
 .mdc-knowledge-documents__filters input,

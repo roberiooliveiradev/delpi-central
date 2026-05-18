@@ -28,7 +28,9 @@ from app.application.use_cases.chat_projects_use_cases import (
 )
 from app.application.use_cases.index_chat_attachment_use_case import IndexChatAttachmentUseCase
 from app.application.use_cases.ingest_knowledge_document_use_case import IngestKnowledgeDocumentUseCase
-from app.domain.services.text_chunker_service import TextChunkerService
+from app.composition.knowledge_pipeline_composer import (
+    make_knowledge_ingestion_pipeline_service,
+)
 from app.application.use_cases.chat_sources_use_cases import (
     CreateAgentSourceUseCase,
     CreateProjectSourceUseCase,
@@ -265,7 +267,7 @@ def make_ingest_knowledge_document_use_case() -> IngestKnowledgeDocumentUseCase:
     return IngestKnowledgeDocumentUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
         embedding_gateway=LocalEmbeddingGateway(),
-        chunker=TextChunkerService(),
+        pipeline=make_knowledge_ingestion_pipeline_service(),
         audit_repository=PostgresAuditRepository(),
     )
 

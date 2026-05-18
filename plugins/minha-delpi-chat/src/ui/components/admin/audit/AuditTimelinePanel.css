@@ -1,0 +1,57 @@
+.mdc-audit-timeline {
+  display: grid;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-audit-timeline__day {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  padding: var(--mdc-space-4);
+  display: grid;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-audit-timeline__day header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-audit-timeline__day h3 {
+  margin: 0;
+}
+
+.mdc-audit-timeline__actions,
+.mdc-audit-timeline__recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-audit-timeline__actions li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mdc-space-2);
+  font-size: 0.85rem;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-audit-timeline__recent button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg-muted);
+  padding: var(--mdc-space-2) var(--mdc-space-3);
+  display: grid;
+  gap: 0.2rem;
+}
+
+.mdc-audit-timeline__recent small {
+  color: var(--mdc-text-muted);
+  font-size: 0.72rem;
+}

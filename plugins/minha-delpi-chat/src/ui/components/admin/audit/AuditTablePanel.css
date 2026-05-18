@@ -30,6 +30,14 @@
   text-transform: uppercase;
 }
 
+.mdc-audit-table__row--clickable {
+  cursor: pointer;
+}
+
+.mdc-audit-table__row--clickable:hover td {
+  background: rgba(59, 130, 246, 0.06);
+}
+
 .mdc-audit-table td {
   color: var(--mdc-text-muted);
 }

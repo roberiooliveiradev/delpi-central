@@ -26,8 +26,15 @@ class ChatToolContextService:
         message: str,
         allowed_action_ids: list[str] | None = None,
         actions_enabled: bool = True,
+        allowed_tool_names: list[str] | None = None,
     ) -> dict:
         selected_tools = self.tool_selection_service.select_tools(message)
+
+        if allowed_tool_names:
+            allowed = {str(item).strip() for item in allowed_tool_names if str(item).strip()}
+            selected_tools = [
+                item for item in selected_tools if str(item.get("name") or "") in allowed
+            ]
 
         if self.external_action_selection_service and actions_enabled:
             selected_external_action = self.external_action_selection_service.select_action(

@@ -5,9 +5,14 @@ class AdminGuidelinePromptService:
     def __init__(self, guideline_repository):
         self.guideline_repository = guideline_repository
 
-    def build_active_guidelines_prompt(self) -> tuple[str, list[dict]]:
+    def build_active_guidelines_prompt(
+        self,
+        *,
+        categories: list[str] | None = None,
+    ) -> tuple[str, list[dict]]:
         guidelines = self.guideline_repository.list_active(
-            environment=self._current_environment()
+            environment=self._current_environment(),
+            categories=categories,
         )
 
         if not guidelines:
@@ -41,7 +46,7 @@ class AdminGuidelinePromptService:
         if len(lines) <= 2:
             return "", []
 
-        return "\\n".join(lines), guidelines
+        return "\n".join(lines), guidelines
 
     def _clean(self, value) -> str:
         return " ".join(str(value or "").split())

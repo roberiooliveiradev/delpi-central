@@ -37,6 +37,72 @@
   color: var(--mdc-danger);
 }
 
+.mdc-knowledge-document-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-2);
+  margin-top: var(--mdc-space-2);
+}
+
+.mdc-knowledge-badge {
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+}
+
+.mdc-knowledge-badge--policy {
+  background: color-mix(in srgb, var(--mdc-primary) 14%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-knowledge-badge--glossary {
+  background: color-mix(in srgb, #7c3aed 14%, transparent);
+  color: #7c3aed;
+}
+
+.mdc-knowledge-badge--manual {
+  background: color-mix(in srgb, #0f766e 14%, transparent);
+  color: #0f766e;
+}
+
+.mdc-knowledge-badge--default {
+  background: color-mix(in srgb, var(--mdc-text-muted) 16%, transparent);
+  color: var(--mdc-text-muted);
+}
+
+.mdc-knowledge-badge--category,
+.mdc-knowledge-badge--namespace,
+.mdc-knowledge-badge--domain {
+  background: var(--mdc-bg-muted);
+  color: var(--mdc-title);
+  border: 1px solid var(--mdc-card-border);
+}
+
+.mdc-knowledge-badge--tag {
+  background: color-mix(in srgb, var(--mdc-warning, #d97706) 14%, transparent);
+  color: var(--mdc-warning, #d97706);
+}
+
+.mdc-knowledge-badge--priority,
+.mdc-knowledge-badge--quality {
+  background: color-mix(in srgb, var(--mdc-success) 12%, transparent);
+  color: var(--mdc-success);
+}
+
+.mdc-knowledge-document-card__editor {
+  margin-top: var(--mdc-space-3);
+  padding-top: var(--mdc-space-3);
+  border-top: 1px dashed var(--mdc-card-border);
+}
+
+.mdc-knowledge-document-card__editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-2);
+  margin-top: var(--mdc-space-3);
+}
+
 .mdc-knowledge-document-card p,
 .mdc-knowledge-document-card small {
   margin: 0;

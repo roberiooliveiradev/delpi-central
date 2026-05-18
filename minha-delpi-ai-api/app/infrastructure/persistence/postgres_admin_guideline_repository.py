@@ -18,24 +18,38 @@ class PostgresAdminGuidelineRepository:
 
         return [self._to_dict(row) for row in rows]
 
-    def list_active(self, *, environment: str | None = None) -> list[dict]:
+    def list_active(
+        self,
+        *,
+        environment: str | None = None,
+        categories: list[str] | None = None,
+    ) -> list[dict]:
         normalized_environment = self._normalize_environment(environment)
         environments = ["global"]
 
         if normalized_environment != "global":
             environments.append(normalized_environment)
 
-        rows = (
+        query = (
             AiAdminGuidelineModel.query
             .filter(AiAdminGuidelineModel.status == "active")
             .filter(AiAdminGuidelineModel.environment.in_(environments))
-            .order_by(
-                AiAdminGuidelineModel.environment.asc(),
-                AiAdminGuidelineModel.category.asc(),
-                AiAdminGuidelineModel.created_at.asc(),
-            )
-            .all()
         )
+
+        normalized_categories = [
+            str(item).strip().lower()
+            for item in (categories or [])
+            if str(item).strip()
+        ]
+
+        if normalized_categories:
+            query = query.filter(AiAdminGuidelineModel.category.in_(normalized_categories))
+
+        rows = query.order_by(
+            AiAdminGuidelineModel.environment.asc(),
+            AiAdminGuidelineModel.category.asc(),
+            AiAdminGuidelineModel.created_at.asc(),
+        ).all()
 
         return [self._to_dict(row) for row in rows]
 

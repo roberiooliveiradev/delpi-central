@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
 
+from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
 from app.domain.ports.admin_metrics_repository_port import AdminMetricsRepositoryPort
 from app.extensions.db import db
+from app.infrastructure.config.settings import Settings
 from app.infrastructure.db.models.audit_log_model import AiAuditLogModel
 from app.infrastructure.db.models.chat_message_model import AiChatMessageModel
 from app.infrastructure.db.models.chat_session_model import AiChatSessionModel
@@ -46,6 +48,10 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
 
         message_metrics = self._message_metrics_24h(since=since)
         rag_failures = self._rag_failures_24h(since=since)
+        agent_metrics = self._agent_metrics_24h(since=since)
+        user_profile_metrics = self._user_profile_metrics_24h(since=since)
+        rag_test_metrics = self._rag_test_metrics_24h(since=since)
+        cost_estimator = LlmCostEstimatorService()
 
         action_distribution = self._count_by_field(
             AiAuditLogModel.action,
@@ -88,12 +94,18 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
                 "estimatedCost": message_metrics["estimatedCost"],
                 "instrumentedMessages": message_metrics["instrumentedMessages"],
                 "ragFailures": rag_failures,
-                "assertivenessRate": None,
-                "agentMetrics": [],
-                "userProfileMetrics": [],
+                "assertivenessRate": rag_test_metrics["assertivenessRate"],
+                "ragTests24h": rag_test_metrics["totalTests"],
+                "ragTestsAssertive24h": rag_test_metrics["assertiveTests"],
+                "agentMetrics": agent_metrics,
+                "userProfileMetrics": user_profile_metrics,
+                "costTable": cost_estimator.list_cost_table(),
+                "costBreakdown24h": message_metrics["costBreakdown24h"],
                 "notes": [
-                    "Latência e tokens são estimativas registradas no fluxo de mensagens a partir desta versão.",
-                    "Métricas por agente e usuário/perfil dependem de eventos auditáveis padronizados.",
+                    "Latência e tokens são estimativas registradas no fluxo de mensagens.",
+                    "Assertividade RAG considera score mínimo "
+                    f"{Settings.RAG_ASSERTIVENESS_MIN_SCORE} e chunks recuperados nos testes.",
+                    "Configure LLM_COST_TABLE_JSON para custos por provider/modelo.",
                 ],
             },
         }
@@ -110,7 +122,7 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
         failures = 0
 
         for row in rows:
-            metadata = row.metadata or {}
+            metadata = row.audit_metadata or {}
 
             if not isinstance(metadata, dict):
                 continue
@@ -122,6 +134,86 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
                 failures += 1
 
         return failures
+
+    def _user_profile_metrics_24h(self, *, since: datetime) -> list[dict]:
+        rows = (
+            db.session.query(AiAuditLogModel)
+            .filter(AiAuditLogModel.created_at >= since)
+            .filter(AiAuditLogModel.user_id.isnot(None))
+            .all()
+        )
+
+        counts: dict[str, int] = {}
+
+        for row in rows:
+            user_key = str(row.user_id)
+            counts[user_key] = counts.get(user_key, 0) + 1
+
+        return [
+            {"key": key, "count": count}
+            for key, count in sorted(counts.items(), key=lambda item: item[1], reverse=True)[:10]
+        ]
+
+    def _rag_test_metrics_24h(self, *, since: datetime) -> dict:
+        rows = (
+            db.session.query(AiAuditLogModel)
+            .filter(AiAuditLogModel.created_at >= since)
+            .filter(AiAuditLogModel.action == "admin.rag.tested")
+            .all()
+        )
+
+        total_tests = len(rows)
+        assertive_tests = 0
+
+        for row in rows:
+            metadata = row.audit_metadata or {}
+
+            if not isinstance(metadata, dict):
+                continue
+
+            if metadata.get("assertive") is True:
+                assertive_tests += 1
+                continue
+
+            score = self._metric_number_from_metadata(metadata, "score")
+            chunk_count = int(self._metric_number_from_metadata(metadata, "chunk_count"))
+
+            if score >= Settings.RAG_ASSERTIVENESS_MIN_SCORE and chunk_count > 0:
+                assertive_tests += 1
+
+        assertiveness_rate = (
+            round(assertive_tests / total_tests, 4) if total_tests > 0 else None
+        )
+
+        return {
+            "totalTests": total_tests,
+            "assertiveTests": assertive_tests,
+            "assertivenessRate": assertiveness_rate,
+        }
+
+    def _agent_metrics_24h(self, *, since: datetime) -> list[dict]:
+        rows = (
+            db.session.query(AiAuditLogModel)
+            .filter(AiAuditLogModel.created_at >= since)
+            .filter(AiAuditLogModel.action.in_(["chat.message.sent", "chat.message.streamed"]))
+            .all()
+        )
+
+        counts: dict[str, int] = {}
+
+        for row in rows:
+            metadata = row.audit_metadata or {}
+
+            if not isinstance(metadata, dict):
+                continue
+
+            agent_key = metadata.get("agentKey") or "sem_agente"
+            counts[str(agent_key)] = counts.get(str(agent_key), 0) + 1
+
+        return [
+            {"key": key, "count": count}
+            for key, count in sorted(counts.items(), key=lambda item: item[1], reverse=True)[:10]
+        ]
 
     def _safe_rate(self, value: int, total: int) -> float:
         if total <= 0:
@@ -187,9 +279,10 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
         latencies = []
         total_tokens = 0
         estimated_cost = 0.0
+        cost_breakdown: dict[str, dict] = {}
 
         for row in rows:
-            metadata = row.metadata or {}
+            metadata = row.audit_metadata or {}
             latency = self._metric_number_from_metadata(metadata, "latency_ms")
 
             if latency > 0:
@@ -200,11 +293,58 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             )
             estimated_cost += self._metric_number_from_metadata(metadata, "estimated_cost")
 
+            provider = str(metadata.get("provider") or Settings.LLM_PROVIDER)
+            model = str(
+                metadata.get("model")
+                or (
+                    Settings.VLLM_MODEL
+                    if provider == "vllm"
+                    else Settings.OLLAMA_MODEL
+                )
+            )
+            breakdown_key = f"{provider}::{model}"
+            bucket = cost_breakdown.setdefault(
+                breakdown_key,
+                {
+                    "provider": provider,
+                    "model": model,
+                    "messages": 0,
+                    "tokensUsed": 0,
+                    "estimatedCost": 0.0,
+                },
+            )
+            bucket["messages"] += 1
+            bucket["tokensUsed"] += int(
+                self._metric_number_from_metadata(metadata, "total_tokens_estimated")
+            )
+            bucket["estimatedCost"] += self._metric_number_from_metadata(
+                metadata,
+                "estimated_cost",
+            )
+
         latency_avg = round(sum(latencies) / len(latencies), 2) if latencies else None
+
+        breakdown_items = [
+            {
+                "provider": item["provider"],
+                "model": item["model"],
+                "messages": item["messages"],
+                "tokensUsed": int(item["tokensUsed"]),
+                "estimatedCost": round(item["estimatedCost"], 6)
+                if item["estimatedCost"]
+                else None,
+            }
+            for item in sorted(
+                cost_breakdown.values(),
+                key=lambda entry: entry["estimatedCost"],
+                reverse=True,
+            )
+        ]
 
         return {
             "latencyAvgMs": latency_avg,
             "tokensUsed": total_tokens,
             "estimatedCost": round(estimated_cost, 6) if estimated_cost else None,
             "instrumentedMessages": len(rows),
+            "costBreakdown24h": breakdown_items,
         }

@@ -1,5 +1,8 @@
 from uuid import UUID
 
+from app.application.services.agent_specialization_service import (
+    AgentSpecializationService,
+)
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_project_repository_port import ChatProjectRepositoryPort
 
@@ -12,6 +15,7 @@ class ChatWorkspaceContextService:
     ):
         self.project_repository = project_repository
         self.agent_repository = agent_repository
+        self.specialization_service = AgentSpecializationService()
 
     def build_context(self, *, session, user_id: UUID) -> dict:
         project = None
@@ -41,6 +45,7 @@ class ChatWorkspaceContextService:
             "allowedActionIds": self._allowed_action_ids(agent, user_id),
             "actionsEnabled": bool(agent and self._allowed_action_ids(agent, user_id)),
             "capabilities": self._capabilities(agent),
+            "specialization": self._specialization(agent),
         }
 
     def _project_metadata(self, project) -> dict | None:
@@ -89,6 +94,14 @@ class ChatWorkspaceContextService:
             return None
 
         return "\n".join(parts)
+
+    def _specialization(self, agent) -> dict | None:
+        if not agent:
+            return None
+
+        metadata = agent.metadata or {}
+
+        return self.specialization_service.parse(metadata.get("specialization"))
 
     def _allowed_action_ids(self, agent, user_id: UUID) -> list[str]:
         if not agent:

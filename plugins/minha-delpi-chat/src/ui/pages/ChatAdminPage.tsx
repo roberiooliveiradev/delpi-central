@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 
 import { AdminAuditTab } from "../components/admin/audit/AdminAuditTab";
+import { AdminAgentsTab } from "../components/admin/agents/AdminAgentsTab";
+import { AdminSecurityTab } from "../components/admin/security/AdminSecurityTab";
+import { AdminEvaluationsTab } from "../components/admin/evaluations/AdminEvaluationsTab";
 import { AdminGuidelinesTab } from "../components/admin/guidelines/AdminGuidelinesTab";
 import { AdminKnowledgeTab } from "../components/admin/knowledge/AdminKnowledgeTab";
 import { AdminMetricsTab } from "../components/admin/metrics-tab/AdminMetricsTab";
 import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
 import type { AdminTab, AdminTabItem } from "../components/admin/shell/adminShellTypes";
+import { AdminSimulateTab } from "../components/admin/simulate/AdminSimulateTab";
 import { AdminToolsTab } from "../components/admin/tools/AdminToolsTab";
 import { AdminRbacPanel } from "../components/admin/rbac/AdminRbacPanel";
 import { getAdminRbacSummary } from "../../data/api/adminApi";
@@ -25,6 +29,10 @@ const ADMIN_TABS: AdminTabItem[] = [
   { key: "knowledge", label: "Conhecimento" },
   { key: "metrics", label: "Métricas" },
   { key: "guidelines", label: "Diretrizes" },
+  { key: "simulate", label: "Simulação" },
+  { key: "evaluations", label: "Avaliações" },
+  { key: "agents", label: "Agentes" },
+  { key: "security", label: "Segurança" },
   { key: "tools", label: "Ferramentas" },
   { key: "audit", label: "Auditoria" },
 ];
@@ -70,18 +78,37 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
             documentsPagination={admin.documentsPagination}
             documentSearch={admin.documentSearch}
             documentStatus={admin.documentStatus}
+            documentCategory={admin.documentCategory}
+            documentNamespace={admin.documentNamespace}
+            documentDomain={admin.documentDomain}
+            documentTag={admin.documentTag}
+            documentSourceType={admin.documentSourceType}
+            documentFacets={admin.documentFacets}
             isLoading={admin.isLoading}
             isMutating={admin.isMutating}
             setDocumentSearch={admin.setDocumentSearch}
             setDocumentStatus={admin.setDocumentStatus}
+            setDocumentCategory={admin.setDocumentCategory}
+            setDocumentNamespace={admin.setDocumentNamespace}
+            setDocumentDomain={admin.setDocumentDomain}
+            setDocumentTag={admin.setDocumentTag}
+            setDocumentSourceType={admin.setDocumentSourceType}
+            resetDocumentCuratorialFilters={admin.resetDocumentCuratorialFilters}
             goToNextDocumentsPage={admin.goToNextDocumentsPage}
             goToPreviousDocumentsPage={admin.goToPreviousDocumentsPage}
             createDocument={admin.createDocument}
             uploadDocumentFile={admin.uploadDocumentFile}
+            previewIngestion={admin.previewIngestion}
+            ingestionPreview={admin.ingestionPreview}
             deleteDocument={admin.deleteDocument}
             deactivateDocument={admin.deactivateDocument}
             reactivateDocument={admin.reactivateDocument}
             reindexDocument={admin.reindexDocument}
+            updateDocumentMetadata={admin.updateDocumentMetadata}
+            testDocument={(documentId) =>
+              testAdminRag({ question: "Resuma este documento.", documentId }, { getAccessToken })
+                .then(() => undefined)
+            }
             rbac={adminRbac}
           />
         ) : null}
@@ -106,6 +133,22 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
           />
         ) : null}
 
+        {activeTab === "simulate" ? (
+          <AdminSimulateTab getAccessToken={getAccessToken} />
+        ) : null}
+
+        {activeTab === "evaluations" ? (
+          <AdminEvaluationsTab getAccessToken={getAccessToken} />
+        ) : null}
+
+        {activeTab === "agents" ? (
+          <AdminAgentsTab getAccessToken={getAccessToken} />
+        ) : null}
+
+        {activeTab === "security" ? (
+          <AdminSecurityTab getAccessToken={getAccessToken} />
+        ) : null}
+
         {activeTab === "tools" ? <AdminRbacPanel rbac={adminRbac} /> : null}
 
         {activeTab === "tools" ? (
@@ -117,10 +160,7 @@ export function ChatAdminPage({ getAccessToken, onBack }: ChatAdminPageProps) {
         ) : null}
 
         {activeTab === "audit" ? (
-          <AdminAuditTab
-            auditLogs={admin.auditLogs}
-            rbac={adminRbac}
-          />
+          <AdminAuditTab rbac={adminRbac} getAccessToken={getAccessToken} />
         ) : null}
       </section>
     </main>

@@ -30,6 +30,9 @@ from app.application.use_cases.list_admin_audit_logs_use_case import (
 from app.application.use_cases.list_admin_knowledge_documents_use_case import (
     ListAdminKnowledgeDocumentsUseCase,
 )
+from app.application.use_cases.update_admin_knowledge_document_metadata_use_case import (
+    UpdateAdminKnowledgeDocumentMetadataUseCase,
+)
 from app.application.use_cases.reactivate_knowledge_document_use_case import (
     ReactivateKnowledgeDocumentUseCase,
 )
@@ -37,13 +40,49 @@ from app.application.use_cases.restore_admin_guideline_version_use_case import R
 from app.application.use_cases.reindex_knowledge_document_use_case import (
     ReindexKnowledgeDocumentUseCase,
 )
+from app.application.use_cases.admin_agent_simulate_use_case import AdminAgentSimulateUseCase
 from app.application.use_cases.admin_rag_test_use_case import AdminRagTestUseCase
-from app.domain.services.text_chunker_service import TextChunkerService
+from app.application.use_cases.admin_agent_specialization_use_cases import (
+    GetAdminAgentSpecializationUseCase,
+    ListAdminAgentSpecializationPresetsUseCase,
+    ListAdminSpecializedAgentsUseCase,
+    SaveAdminAgentSpecializationUseCase,
+)
+from app.application.use_cases.admin_security_use_cases import (
+    GetAdminSecurityConfigUseCase,
+    GetAdminSecuritySummaryUseCase,
+    ListAdminSecurityEventsUseCase,
+    ScanAdminSecurityInputUseCase,
+)
+from app.application.services.chat_message_security_service import ChatMessageSecurityService
+from app.application.use_cases.admin_response_evaluation_use_cases import (
+    GetAdminResponseEvaluationContextUseCase,
+    GetAdminResponseEvaluationSummaryUseCase,
+    ListAdminResponseCandidatesUseCase,
+    ListAdminResponseEvaluationsUseCase,
+    SaveAdminResponseEvaluationUseCase,
+)
+from app.composition.chat_composer import (
+    make_admin_guideline_prompt_service,
+    make_chat_tool_context_service,
+    make_rag_context_service,
+)
+from app.composition.llm_composer import make_llm_gateway
+from app.domain.services.tool_selection_service import ToolSelectionService
+from app.application.use_cases.preview_knowledge_ingestion_use_case import (
+    PreviewKnowledgeIngestionUseCase,
+)
+from app.composition.knowledge_pipeline_composer import (
+    make_knowledge_ingestion_pipeline_service,
+)
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
 from app.infrastructure.persistence.postgres_admin_metrics_repository import PostgresAdminMetricsRepository
 from app.infrastructure.persistence.postgres_admin_system_check_repository import PostgresAdminSystemCheckRepository
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
+from app.infrastructure.persistence.postgres_response_evaluation_repository import (
+    PostgresResponseEvaluationRepository,
+)
 from app.infrastructure.persistence.postgres_knowledge_repository import (
     PostgresKnowledgeRepository,
 )
@@ -55,6 +94,12 @@ def make_get_llm_provider_status_use_case() -> GetLlmProviderStatusUseCase:
 
 def make_list_admin_knowledge_documents_use_case() -> ListAdminKnowledgeDocumentsUseCase:
     return ListAdminKnowledgeDocumentsUseCase(PostgresKnowledgeRepository())
+
+
+def make_update_admin_knowledge_document_metadata_use_case() -> (
+    UpdateAdminKnowledgeDocumentMetadataUseCase
+):
+    return UpdateAdminKnowledgeDocumentMetadataUseCase(PostgresKnowledgeRepository())
 
 
 def make_deactivate_knowledge_document_use_case() -> DeactivateKnowledgeDocumentUseCase:
@@ -75,7 +120,7 @@ def make_reindex_knowledge_document_use_case() -> ReindexKnowledgeDocumentUseCas
     return ReindexKnowledgeDocumentUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
         embedding_gateway=LocalEmbeddingGateway(),
-        chunker=TextChunkerService(chunk_size=Settings.KNOWLEDGE_CHUNK_SIZE, overlap=Settings.KNOWLEDGE_CHUNK_OVERLAP),
+        pipeline=make_knowledge_ingestion_pipeline_service(),
         audit_repository=PostgresAuditRepository(),
     )
 
@@ -84,11 +129,14 @@ def make_ingest_admin_knowledge_document_use_case() -> IngestKnowledgeDocumentUs
     return IngestKnowledgeDocumentUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
         embedding_gateway=LocalEmbeddingGateway(),
-        chunker=TextChunkerService(
-            chunk_size=Settings.KNOWLEDGE_CHUNK_SIZE,
-            overlap=Settings.KNOWLEDGE_CHUNK_OVERLAP,
-        ),
+        pipeline=make_knowledge_ingestion_pipeline_service(),
         audit_repository=PostgresAuditRepository(),
+    )
+
+
+def make_preview_knowledge_ingestion_use_case() -> PreviewKnowledgeIngestionUseCase:
+    return PreviewKnowledgeIngestionUseCase(
+        pipeline=make_knowledge_ingestion_pipeline_service(),
     )
 
 
@@ -133,6 +181,16 @@ def make_test_admin_rag_use_case() -> AdminRagTestUseCase:
         knowledge_repository=PostgresKnowledgeRepository(),
         embedding_gateway=LocalEmbeddingGateway(),
         guideline_repository=PostgresAdminGuidelineRepository(),
+    )
+
+
+def make_admin_agent_simulate_use_case(*, with_llm: bool = False) -> AdminAgentSimulateUseCase:
+    return AdminAgentSimulateUseCase(
+        rag_context_service=make_rag_context_service(),
+        guideline_prompt_service=make_admin_guideline_prompt_service(),
+        tool_selection_service=ToolSelectionService(),
+        chat_tool_context_service=make_chat_tool_context_service(),
+        llm_gateway=make_llm_gateway() if with_llm else None,
     )
 
 
@@ -181,3 +239,71 @@ def make_restore_admin_guideline_version_use_case() -> RestoreAdminGuidelineVers
 
 def make_get_admin_rbac_summary_use_case() -> GetAdminRbacSummaryUseCase:
     return GetAdminRbacSummaryUseCase()
+
+
+def _response_evaluation_repository() -> PostgresResponseEvaluationRepository:
+    return PostgresResponseEvaluationRepository()
+
+
+def make_list_admin_response_candidates_use_case() -> ListAdminResponseCandidatesUseCase:
+    return ListAdminResponseCandidatesUseCase(_response_evaluation_repository())
+
+
+def make_get_admin_response_evaluation_context_use_case() -> (
+    GetAdminResponseEvaluationContextUseCase
+):
+    return GetAdminResponseEvaluationContextUseCase(_response_evaluation_repository())
+
+
+def make_save_admin_response_evaluation_use_case() -> SaveAdminResponseEvaluationUseCase:
+    return SaveAdminResponseEvaluationUseCase(
+        _response_evaluation_repository(),
+        audit_repository=PostgresAuditRepository(),
+    )
+
+
+def make_list_admin_response_evaluations_use_case() -> ListAdminResponseEvaluationsUseCase:
+    return ListAdminResponseEvaluationsUseCase(_response_evaluation_repository())
+
+
+def make_get_admin_response_evaluation_summary_use_case() -> (
+    GetAdminResponseEvaluationSummaryUseCase
+):
+    return GetAdminResponseEvaluationSummaryUseCase(_response_evaluation_repository())
+
+
+def make_list_admin_agent_specialization_presets_use_case() -> (
+    ListAdminAgentSpecializationPresetsUseCase
+):
+    return ListAdminAgentSpecializationPresetsUseCase()
+
+
+def make_list_admin_specialized_agents_use_case() -> ListAdminSpecializedAgentsUseCase:
+    return ListAdminSpecializedAgentsUseCase()
+
+
+def make_get_admin_agent_specialization_use_case() -> GetAdminAgentSpecializationUseCase:
+    return GetAdminAgentSpecializationUseCase()
+
+
+def make_save_admin_agent_specialization_use_case() -> SaveAdminAgentSpecializationUseCase:
+    return SaveAdminAgentSpecializationUseCase(audit_repository=PostgresAuditRepository())
+
+
+def make_get_admin_security_config_use_case() -> GetAdminSecurityConfigUseCase:
+    return GetAdminSecurityConfigUseCase()
+
+
+def make_get_admin_security_summary_use_case() -> GetAdminSecuritySummaryUseCase:
+    return GetAdminSecuritySummaryUseCase(audit_repository=PostgresAuditRepository())
+
+
+def make_list_admin_security_events_use_case() -> ListAdminSecurityEventsUseCase:
+    return ListAdminSecurityEventsUseCase(audit_repository=PostgresAuditRepository())
+
+
+def make_scan_admin_security_input_use_case() -> ScanAdminSecurityInputUseCase:
+    return ScanAdminSecurityInputUseCase(
+        message_security_service=ChatMessageSecurityService(),
+        audit_repository=PostgresAuditRepository(),
+    )

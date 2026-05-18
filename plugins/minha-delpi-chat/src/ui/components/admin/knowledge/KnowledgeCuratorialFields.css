@@ -1,0 +1,38 @@
+.mdc-knowledge-curatorial {
+  display: grid;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-knowledge-curatorial__grid {
+  display: grid;
+  gap: var(--mdc-space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mdc-knowledge-curatorial label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mdc-knowledge-curatorial label span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-knowledge-curatorial input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--mdc-control-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-control-bg);
+  color: var(--mdc-control-text);
+  font: inherit;
+  padding: 0.75rem 0.85rem;
+}
+
+@media (max-width: 720px) {
+  .mdc-knowledge-curatorial__grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,11 +1,13 @@
 from uuid import UUID
 
 from app.application.dto.ingest_document_request import IngestDocumentRequest
+from app.application.services.knowledge_ingestion_pipeline_service import (
+    KnowledgeIngestionPipelineService,
+)
 from app.domain.exceptions.knowledge_exceptions import InvalidKnowledgeDocumentInputError
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.ports.embedding_gateway_port import EmbeddingGatewayPort
 from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
-from app.domain.services.text_chunker_service import TextChunkerService
 from app.infrastructure.config.settings import Settings
 
 
@@ -14,12 +16,12 @@ class IngestKnowledgeDocumentUseCase:
         self,
         knowledge_repository: KnowledgeRepositoryPort,
         embedding_gateway: EmbeddingGatewayPort,
-        chunker: TextChunkerService,
+        pipeline: KnowledgeIngestionPipelineService | None = None,
         audit_repository: AuditRepositoryPort | None = None,
     ):
         self.knowledge_repository = knowledge_repository
         self.embedding_gateway = embedding_gateway
-        self.chunker = chunker
+        self.pipeline = pipeline or KnowledgeIngestionPipelineService()
         self.audit_repository = audit_repository
 
     def execute(self, request: IngestDocumentRequest) -> dict:
@@ -28,34 +30,74 @@ class IngestKnowledgeDocumentUseCase:
         source_ref = self._validate_source_ref(request.source_ref)
         content = self._validate_content(request.content)
 
-        document = self.knowledge_repository.create_document(
+        prepared = self.pipeline.prepare(
+            content,
             title=title,
             source_type=source_type,
             source_ref=source_ref,
-            content=content,
-            metadata=request.metadata,
+            document_metadata=request.metadata,
         )
 
-        chunks = self.chunker.chunk(content)
-
-        if not chunks:
+        if not prepared.chunks:
             raise InvalidKnowledgeDocumentInputError(
                 "content did not generate indexable chunks"
             )
 
-        for index, chunk in enumerate(chunks):
-            embedding = self.embedding_gateway.embed(chunk)
+        duplicate = None
+
+        if Settings.KNOWLEDGE_PIPELINE_ENABLED and prepared.content_hash:
+            duplicate = self.knowledge_repository.find_global_document_by_content_hash(
+                prepared.content_hash,
+                source_ref=source_ref,
+            )
+
+        if duplicate:
+            self._audit_ingestion(
+                request=request,
+                document_id=str(duplicate.id),
+                title=duplicate.title,
+                source_type=source_type,
+                source_ref=source_ref,
+                chunks=0,
+                skipped_duplicate=True,
+                pipeline_stats=prepared.stats,
+            )
+
+            return {
+                "id": str(duplicate.id),
+                "title": duplicate.title,
+                "chunks": 0,
+                "duplicate": True,
+                "skipped": True,
+                "pipeline": prepared.stats,
+            }
+
+        document_metadata = dict(request.metadata or {})
+        document_metadata.update(
+            {
+                "contentHash": prepared.content_hash,
+                "wordCount": prepared.word_count,
+                "ingestionPipeline": prepared.stats,
+            }
+        )
+
+        document = self.knowledge_repository.create_document(
+            title=title,
+            source_type=source_type,
+            source_ref=source_ref,
+            content=prepared.cleaned_content,
+            metadata=document_metadata,
+        )
+
+        for index, chunk in enumerate(prepared.chunks):
+            embedding = self.embedding_gateway.embed(chunk.content)
 
             self.knowledge_repository.create_chunk(
                 document_id=document.id,
                 chunk_index=index,
-                content=chunk,
+                content=chunk.content,
                 embedding=embedding,
-                metadata={
-                    "title": title,
-                    "source_type": source_type,
-                    "source_ref": source_ref,
-                },
+                metadata=chunk.metadata,
             )
 
         self._audit_ingestion(
@@ -64,13 +106,18 @@ class IngestKnowledgeDocumentUseCase:
             title=document.title,
             source_type=source_type,
             source_ref=source_ref,
-            chunks=len(chunks),
+            chunks=len(prepared.chunks),
+            skipped_duplicate=False,
+            pipeline_stats=prepared.stats,
         )
 
         return {
             "id": str(document.id),
             "title": document.title,
-            "chunks": len(chunks),
+            "chunks": len(prepared.chunks),
+            "duplicate": False,
+            "skipped": False,
+            "pipeline": prepared.stats,
         }
 
     def _audit_ingestion(
@@ -81,6 +128,9 @@ class IngestKnowledgeDocumentUseCase:
         source_type: str,
         source_ref: str | None,
         chunks: int,
+        *,
+        skipped_duplicate: bool,
+        pipeline_stats: dict,
     ) -> None:
         if not self.audit_repository or not request.user_id:
             return
@@ -95,6 +145,8 @@ class IngestKnowledgeDocumentUseCase:
                 "source_type": source_type,
                 "source_ref": source_ref,
                 "chunks": chunks,
+                "skipped_duplicate": skipped_duplicate,
+                "pipeline": pipeline_stats,
             },
         )
 

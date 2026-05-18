@@ -25,6 +25,9 @@ class Settings:
     LLM_COMPLETION_TOKEN_COST_PER_1K = float(
         os.getenv("LLM_COMPLETION_TOKEN_COST_PER_1K", "0")
     )
+    RAG_ASSERTIVENESS_MIN_SCORE = float(
+        os.getenv("RAG_ASSERTIVENESS_MIN_SCORE", "0.35")
+    )
 
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:1.5b")
@@ -41,6 +44,17 @@ class Settings:
     EMBEDDING_TIMEOUT_SECONDS = float(os.getenv("EMBEDDING_TIMEOUT_SECONDS", "120"))
 
     CHAT_HISTORY_MAX_MESSAGES = int(os.getenv("CHAT_HISTORY_MAX_MESSAGES", "12"))
+    CHAT_MESSAGE_MAX_CHARS = int(os.getenv("CHAT_MESSAGE_MAX_CHARS", "8000"))
+    CHAT_INPUT_SECURITY_ENABLED = (
+        os.getenv("CHAT_INPUT_SECURITY_ENABLED", "true").lower() == "true"
+    )
+    CHAT_INPUT_SECURITY_MODE = os.getenv("CHAT_INPUT_SECURITY_MODE", "enforce").lower().strip()
+    CHAT_INPUT_SECURITY_BLOCK_THRESHOLD = float(
+        os.getenv("CHAT_INPUT_SECURITY_BLOCK_THRESHOLD", "0.7")
+    )
+    CHAT_INPUT_SECURITY_FLAG_THRESHOLD = float(
+        os.getenv("CHAT_INPUT_SECURITY_FLAG_THRESHOLD", "0.35")
+    )
     MAX_CONTEXT_CHUNKS = int(os.getenv("MAX_CONTEXT_CHUNKS", "6"))
     MAX_CONTEXT_CHARS = int(os.getenv("MAX_CONTEXT_CHARS", "9000"))
 
@@ -67,4 +81,8 @@ class Settings:
         os.getenv("KNOWLEDGE_DOCUMENT_MAX_CHARS", "50000")
     )
     KNOWLEDGE_CHUNK_SIZE = int(os.getenv("KNOWLEDGE_CHUNK_SIZE", "1400"))
+    KNOWLEDGE_CHUNK_MIN_SIZE = int(os.getenv("KNOWLEDGE_CHUNK_MIN_SIZE", "800"))
     KNOWLEDGE_CHUNK_OVERLAP = int(os.getenv("KNOWLEDGE_CHUNK_OVERLAP", "200"))
+    KNOWLEDGE_PIPELINE_ENABLED = (
+        os.getenv("KNOWLEDGE_PIPELINE_ENABLED", "true").lower() == "true"
+    )

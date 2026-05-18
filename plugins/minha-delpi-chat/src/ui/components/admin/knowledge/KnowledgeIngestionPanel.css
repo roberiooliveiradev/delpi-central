@@ -159,6 +159,56 @@
   line-height: 1.45;
 }
 
+.mdc-knowledge-ingestion__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-knowledge-ingestion__actions button {
+  min-height: 2.35rem;
+  border-radius: 999px;
+  font-weight: 800;
+  padding: 0.5rem 0.9rem;
+}
+
+.mdc-knowledge-ingestion__preview {
+  display: grid;
+  gap: var(--mdc-space-3);
+  border: 1px dashed var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg);
+  background: var(--mdc-bg-muted);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-knowledge-ingestion__preview ul {
+  display: grid;
+  gap: var(--mdc-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mdc-knowledge-ingestion__preview li {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-card-bg);
+  padding: var(--mdc-space-3);
+}
+
+.mdc-knowledge-ingestion__preview li span {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-knowledge-ingestion__preview li p {
+  margin: var(--mdc-space-2) 0 0;
+  color: var(--mdc-title);
+  overflow-wrap: anywhere;
+}
+
 .mdc-knowledge-ingestion__form button[type="submit"] {
   justify-self: start;
   min-height: 2.35rem;

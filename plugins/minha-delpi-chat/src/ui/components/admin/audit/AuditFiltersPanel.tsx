@@ -5,6 +5,7 @@ import "./AuditFiltersPanel.css";
 type AuditFiltersPanelProps = AuditBackendPlaceholders & {
   filters: AuditFilters;
   onChange: (filters: AuditFilters) => void;
+  canExport?: boolean;
 };
 
 export function AuditFiltersPanel({
@@ -12,6 +13,8 @@ export function AuditFiltersPanel({
   onChange,
   reloadAuditLogs,
   exportAuditLogs,
+  exportAuditLogsCsv,
+  canExport = false,
 }: AuditFiltersPanelProps) {
   function updateFilter(key: keyof AuditFilters, value: string) {
     onChange({
@@ -26,7 +29,7 @@ export function AuditFiltersPanel({
         <span>Buscar</span>
         <input
           value={filters.search}
-          placeholder="Ação, usuário ou contexto"
+          placeholder="Ação, usuário, contexto ou hash"
           onChange={(event) => updateFilter("search", event.target.value)}
         />
       </label>
@@ -44,7 +47,7 @@ export function AuditFiltersPanel({
         <span>Ação</span>
         <input
           value={filters.action}
-          placeholder="Ex.: document.deleted"
+          placeholder="Ex.: chat.message.sent"
           onChange={(event) => updateFilter("action", event.target.value)}
         />
       </label>
@@ -53,8 +56,35 @@ export function AuditFiltersPanel({
         <span>Usuário</span>
         <input
           value={filters.userId}
-          placeholder="ID do usuário"
+          placeholder="UUID do usuário"
           onChange={(event) => updateFilter("userId", event.target.value)}
+        />
+      </label>
+
+      <label>
+        <span>Trace ID</span>
+        <input
+          value={filters.traceId}
+          placeholder="Correlacionar requisição / fluxo"
+          onChange={(event) => updateFilter("traceId", event.target.value)}
+        />
+      </label>
+
+      <label>
+        <span>Data inicial</span>
+        <input
+          type="date"
+          value={filters.dateFrom}
+          onChange={(event) => updateFilter("dateFrom", event.target.value)}
+        />
+      </label>
+
+      <label>
+        <span>Data final</span>
+        <input
+          type="date"
+          value={filters.dateTo}
+          onChange={(event) => updateFilter("dateTo", event.target.value)}
         />
       </label>
 
@@ -62,23 +92,33 @@ export function AuditFiltersPanel({
         <button
           type="button"
           disabled={!reloadAuditLogs}
-          title={reloadAuditLogs ? "Recarregar auditoria" : "Aguardando endpoint paginado"}
           onClick={() => {
             void reloadAuditLogs?.(filters);
           }}
         >
-          Recarregar
+          Aplicar filtros
         </button>
 
         <button
           type="button"
-          disabled={!exportAuditLogs}
-          title={exportAuditLogs ? "Exportar auditoria" : "Aguardando endpoint de exportação"}
+          disabled={!exportAuditLogs || !canExport}
+          title={canExport ? "Exportar JSON" : "Sem permissão para exportar"}
           onClick={() => {
             void exportAuditLogs?.(filters);
           }}
         >
-          Exportar
+          Exportar JSON
+        </button>
+
+        <button
+          type="button"
+          disabled={!exportAuditLogsCsv || !canExport}
+          title={canExport ? "Exportar CSV" : "Sem permissão para exportar"}
+          onClick={() => {
+            void exportAuditLogsCsv?.(filters);
+          }}
+        >
+          Exportar CSV
         </button>
       </div>
     </section>
