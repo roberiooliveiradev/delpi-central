@@ -1,80 +1,57 @@
 # Dashboard Qualidade
 
-Microfrontend (Module Federation) para visualização de **métricas de qualidade** expostas pela **api-delpi** (dados TOTVS / planilhas).
+Microfrontend (Module Federation) para visualização de **métricas de qualidade** expostas pela **api-delpi** (dados TOTVS / Protheus).
+
+## Documentação principal
+
+**[docs/DOCUMENTACAO.md](./docs/DOCUMENTACAO.md)** — visão geral, rotas, filtros, impressão, permissões, deploy e estrutura.
+
+| Arquivo | Conteúdo |
+|---------|----------|
+| [docs/DOCUMENTACAO.md](./docs/DOCUMENTACAO.md) | Guia completo do plugin |
+| [docs/API_MAPPING.md](./docs/API_MAPPING.md) | Rotas api-delpi consumidas |
+| [docs/TESTING.md](./docs/TESTING.md) | Build, Docker, registro Core API e checklist |
+| [docs/ROADMAP.md](./docs/ROADMAP.md) | Fases de desenvolvimento |
+| [docs/IMPROVEMENTS_ROADMAP.md](./docs/IMPROVEMENTS_ROADMAP.md) | Ondas de melhorias (UX, performance) |
+| [docs/STRUCTURE.md](./docs/STRUCTURE.md) | Árvore de pastas e convenções |
 
 ## Escopo
 
-| Incluído | Excluído (fases futuras / outro produto) |
-|---|---|
-| PPM interno e externo (resumo + detalhe) | Módulo NC PostgreSQL (`/quality/internal-nc`, `/quality/external-nc`) |
-| Kaizens (resumo) | Cadastro / workflow de NC fora do TOTVS |
-| Auditoria 5S (resumo) | |
-| Listagem de NC do Protheus (`/quality/nonconformities`) | |
+| Incluído | Excluído |
+|----------|----------|
+| PPM interno/externo (resumo, série, comparativo) | NC PostgreSQL (`/quality/internal-nc`, `/quality/external-nc`) |
+| Kaizens e auditoria 5S | Cadastro/workflow de NC fora do TOTVS |
+| NC analítica Protheus (`/quality/nonconformities`) | Indicadores estratégicos (outra API) |
 
-## Documentação
+## Rotas
 
-| Arquivo | Conteúdo |
-|---|---|
-| [docs/ROADMAP.md](./docs/ROADMAP.md) | Fases de desenvolvimento, critérios de pronto, dependências |
-| [docs/API_MAPPING.md](./docs/API_MAPPING.md) | Rotas api-delpi consumidas pelo plugin |
-| [docs/STRUCTURE.md](./docs/STRUCTURE.md) | Árvore de pastas e convenções |
-| [docs/TESTING.md](./docs/TESTING.md) | Build, Docker, registro Core API e checklist manual |
-| [docs/IMPROVEMENTS_ROADMAP.md](./docs/IMPROVEMENTS_ROADMAP.md) | Ondas de melhorias (UX, performance, polish) |
+| URL | Módulo |
+|-----|--------|
+| `/apps/dashboard-quality` | Visão geral |
+| `/apps/dashboard-quality/ppm` | PPM |
+| `/apps/dashboard-quality/nonconformities` | NC TOTVS |
+| `/apps/dashboard-quality/kaizen` | Kaizens |
+| `/apps/dashboard-quality/audit-5s` | Auditoria 5S |
 
 ## Backend
-
-Todas as chamadas HTTP usam o prefixo do gateway:
 
 ```text
 /apps/api-delpi/quality/*
 ```
 
-Permissão exigida hoje na API: `api-delpi.quality.access`.  
-O roadmap prevê permissão de plugin `dashboard-quality.view` com `require_any_permission` na api-delpi (mesmo padrão de LMPs).
+Permissões: `dashboard-quality.view` ou `api-delpi.quality.access`.
 
-## Referência
-
-Implementação espelhada em `plugins/dashboard-lmps` (cliente HTTP, federation, Docker, compose).
-
-## Status
-
-**Fase 0 concluída:** Vite + Module Federation, Docker/compose, shell placeholder.  
-**Fase 1 concluída:** `qualityApi.ts`, tipos DTO, hooks (`useQualityQueries`).  
-**Fase 2 concluída:** home executiva com filtros, KPIs PPM, resumos Kaizen/5S.  
-**Fase 3 concluída:** rota `/apps/dashboard-quality/ppm` com tabela, gráfico e CSV.  
-**Fase 4 concluída:** rota `/apps/dashboard-quality/nonconformities` (NC TOTVS).  
-**Fase 5 concluída:** rotas `/kaizen` e `/audit-5s`.
-
-Rotas:
-- `/apps/dashboard-quality` — visão geral
-- `/apps/dashboard-quality/ppm` — PPM interno/externo
-- `/apps/dashboard-quality/nonconformities` — NC do Protheus
-- `/apps/dashboard-quality/kaizen` — Kaizens
-- `/apps/dashboard-quality/audit-5s` — Auditorias 5S
+## Início rápido
 
 ```bash
 cd plugins/dashboard-quality
 npm install && npm run ci
 ```
 
-Na raiz do monorepo: `./scripts/ci/build-dashboard-quality.sh`
+Monorepo: `./scripts/ci/build-dashboard-quality.sh`  
+Testes: [docs/TESTING.md](./docs/TESTING.md)
 
-Guia completo: [docs/TESTING.md](./docs/TESTING.md)
+## Status
 
-## Testes manuais (API)
-
-Com token JWT válido (`dashboard-quality.view` ou `api-delpi.quality.access`):
-
-```bash
-export TOKEN="seu-jwt"
-export BASE="http://localhost/apps/api-delpi/quality"
-
-curl -s -H "Authorization: Bearer $TOKEN" "$BASE/ppm/internal/summary" | jq .
-curl -s -H "Authorization: Bearer $TOKEN" "$BASE/ppm/external/summary" | jq .
-curl -s -H "Authorization: Bearer $TOKEN" "$BASE/ppm/internal?page=1&page_size=10" | jq .
-curl -s -H "Authorization: Bearer $TOKEN" "$BASE/kaizens/summary" | jq .
-curl -s -H "Authorization: Bearer $TOKEN" "$BASE/audit-5s/summary" | jq .
-curl -s -H "Authorization: Bearer $TOKEN" "$BASE/nonconformities?type=all&page=1&page_size=20" | jq .
-```
-
-No código do plugin, importe de `src/api/qualityApi.ts` ou use os hooks em `src/hooks/useQualityQueries.ts`.
+Fases 0–5 e ondas de melhorias 1–5 concluídas (exceto NC PostgreSQL — produto separado).  
+Filtros persistentes entre abas (URL + sessionStorage) e impressão com layout dedicado.

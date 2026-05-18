@@ -55,7 +55,7 @@ Complementa [ROADMAP.md](./ROADMAP.md) (fases 0–6). Entregas em **ondas** com 
 | 5.1 | PPM interno + externo no mesmo gráfico | ✅ | Modo **Comparar** na página PPM |
 | 5.2 | Linhas de meta / limite no gráfico | ✅ | `ppmReferenceLines.ts` + env `VITE_DQ_PPM_*` |
 | 5.3 | NC PostgreSQL (gestão) — plugin separado | 📋 | Fora do escopo deste MFE |
-| 5.4 | Relatório PDF / impressão | ✅ | `window.print()` + CSS `@media print` |
+| 5.4 | Relatório PDF / impressão | ✅ | `window.print()` + `@media print` isolado (`.dq-print-root`), resumo e Recharts |
 
 **Legenda:** ✅ concluído · 🚧 em andamento · 📋 planejado
 

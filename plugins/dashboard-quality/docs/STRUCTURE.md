@@ -1,77 +1,74 @@
 # Estrutura de pastas — Dashboard Qualidade
 
-Árvore prevista (espelha `dashboard-lmps` + abas por domínio):
-
 ```text
 plugins/dashboard-quality/
 ├── README.md
-├── dashboard-quality.manifest.json    # registro Core API
+├── dashboard-quality.manifest.json
 ├── package.json
-├── package-lock.json
-├── vite.config.ts                       # federation name: dashboard-quality
-├── tsconfig.json
-├── tsconfig.app.json
-├── tsconfig.node.json
-├── eslint.config.js
-├── index.html
+├── vite.config.ts
 ├── Dockerfile
-├── .gitignore
-├── public/
-│   ├── favicon.svg
-│   └── icons.svg
 ├── docs/
-│   ├── ROADMAP.md
+│   ├── DOCUMENTACAO.md          # guia principal do plugin
 │   ├── API_MAPPING.md
-│   └── STRUCTURE.md                     # este arquivo
+│   ├── TESTING.md
+│   ├── ROADMAP.md
+│   ├── IMPROVEMENTS_ROADMAP.md
+│   └── STRUCTURE.md
+├── scripts/
+│   └── register-manifest.sh
 └── src/
-    ├── main.tsx                         # dev standalone
-    ├── bootstrap.tsx                    # expõe App para federation
-    ├── App.tsx                          # shell + rotas internas
-    ├── App.css
-    ├── index.css
+    ├── main.tsx
+    ├── bootstrap.tsx
+    ├── App.tsx
+    ├── index.css                  # estilos + @media print
     ├── api/
     │   ├── httpClient.ts
     │   ├── query.ts
-    │   └── qualityApi.ts                # 7 endpoints tipados
+    │   ├── qualityApi.ts
+    │   └── validateQualityResponse.ts
     ├── types/
-    │   ├── api.ts
-    │   ├── pagination.ts
-    │   ├── ppm.ts
-    │   ├── nonconformity.ts
-    │   ├── kaizen.ts
-    │   ├── audit5s.ts
-    │   └── index.ts
     ├── hooks/
-    │   ├── useQualityResource.ts        # fetch genérico + AbortController
-    │   ├── useQualityQueries.ts         # hooks por endpoint (Fase 1)
-    │   └── useQualityDashboard.ts       # home: summaries paralelos (Fase 2)
+    │   ├── useQualityFilters.ts   # URL + sessionStorage
+    │   ├── useQualityDashboard.ts
+    │   ├── useQualityQueries.ts
+    │   ├── usePpmChartSeries.ts
+    │   └── ...
     ├── pages/
-    │   ├── DashboardQualityPage.tsx     # layout + abas
+    │   ├── DashboardQualityPage.tsx
     │   ├── PpmPage.tsx
     │   ├── NonconformitiesPage.tsx
     │   ├── KaizenPage.tsx
     │   └── Audit5sPage.tsx
     ├── components/
     │   ├── FilterBar.tsx
-    │   ├── KpiCard.tsx
+    │   ├── QualityPageHeader.tsx
+    │   ├── QualityNav.tsx
+    │   ├── PrintReportButton.tsx
+    │   ├── PrintReportSummary.tsx
     │   ├── ChartCard.tsx
-    │   ├── DataTable.tsx
-    │   └── EmptyState.tsx
+    │   ├── PpmEvolutionChart.tsx
+    │   └── ...
     ├── constants/
-    │   └── chartColors.ts
-    └── assets/
+    │   ├── routes.ts
+    │   ├── chartColors.ts
+    │   └── ppmReferenceLines.ts
+    └── utils/
+        ├── filterUrl.ts
+        ├── navigation.ts
+        ├── dates.ts
+        ├── chartAggregation.ts
+        └── chartSeriesExport.ts
 ```
 
 ## Convenções
 
 | Tópico | Convenção |
-|---|---|
-| IDs no manifesto | `dashboard-quality` |
+|--------|-----------|
+| ID no manifesto | `dashboard-quality` |
 | `basePath` / Vite `base` | `/apps/dashboard-quality/` |
 | Container Docker | `delpi-dashboard-quality` |
-| Chamadas HTTP | paths relativos `/apps/api-delpi/quality/...` |
-| Estado de filtros | Context ou URL search params (decidir na Fase 2) |
+| HTTP | `/apps/api-delpi/quality/...` |
+| Filtros | `date_start`, `date_end`, `branch` na URL + `sessionStorage` |
+| Impressão | `dq-print-root` na página; `dq-no-print` / `dq-screen-only` |
 
-## Fase 0
-
-Scaffold Vite/React implementado em `src/`; build em `dist/assets/remoteEntry.js`.
+Build de produção: `dist/assets/remoteEntry.js`.

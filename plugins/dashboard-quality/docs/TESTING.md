@@ -77,9 +77,17 @@ export DATE_END="2025-12-31"
 | Mobile | Largura ≤768px: toolbar empilhada, grids em 1 coluna |
 | PPM comparativo | Toggle **Comparar** → duas linhas (interno/externo), export CSV com duas colunas |
 | Metas PPM | Definir `target`/`limit` em `src/constants/ppmReferenceLines.ts` ou `VITE_DQ_PPM_TARGET` / `VITE_DQ_PPM_LIMIT` |
-| Impressão | Botão **Imprimir** na home e em PPM → visualizar PDF do navegador |
+| Impressão | **Imprimir** em qualquer aba: cabeçalho com período/filial; sem nav/filtros; gráficos visíveis; só conteúdo do dashboard (não sidebar do portal) |
 
-## 7. URLs úteis
+## 7. Impressão
+
+1. Abra qualquer aba (ex.: 5S) com dados ou período válido.
+2. Clique em **Imprimir** → pré-visualização do navegador.
+3. Validar: resumo com período/filial no topo; sem menu lateral do portal; KPIs e gráficos legíveis; sem filtros nem paginação da tabela.
+
+Detalhes: [DOCUMENTACAO.md](./DOCUMENTACAO.md#5-impressão).
+
+## 8. URLs úteis
 
 | Recurso | URL |
 |---------|-----|
