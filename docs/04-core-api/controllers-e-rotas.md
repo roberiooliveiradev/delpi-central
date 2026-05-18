@@ -56,10 +56,14 @@ Arquivo: `me_controller.py` — todas exigem `@require_auth()`.
 | GET | `/me/apps/favorites` | Favoritos (somente apps autorizados) |
 | POST | `/me/apps/favorites/{app_id}` | Adiciona favorito → `{ "ok": true }` |
 | DELETE | `/me/apps/favorites/{app_id}` | Remove favorito |
-| GET | `/me/notifications` | Notificações não lidas |
+| GET | `/me/notifications` | Não lidas (array) |
+| GET | `/me/notifications/history` | Histórico paginado (`status`, `category`, `important`, `limit`, `offset`) |
 | POST | `/me/notifications/{id}/read` | Marca como lida |
 | POST | `/me/notifications/read-all` | Marca todas |
-| POST | `/me/notifications/test` | Dispara notificação de teste (dev) |
+| DELETE | `/me/notifications/{id}` | Soft delete |
+| PATCH | `/me/notifications/{id}/important` | `{ "isImportant": bool }` |
+| GET/PATCH | `/me/notifications/preferences` | Categorias silenciadas |
+| POST | `/me/notifications/test` | Teste (403 se `FLASK_ENV=production`) |
 | GET | `/me/dashboard` | `{ "appsCount", "apps" }` |
 
 ### GET /me — exemplo
@@ -199,7 +203,7 @@ Legenda de permissões:
 | Método | Path | Permissão |
 |---|---|---|
 | GET | `/admin/rbac/users` | Users R |
-| PUT | `/admin/rbac/users/{user_id}` | Users W |
+| PUT | `/admin/rbac/users/{user_id}` | Users W — `roleIds`, `groupIds`, `birthDate`, `is_superadmin` |
 | DELETE | `/admin/rbac/users/{user_id}` | SA |
 | POST | `/admin/rbac/users/bulk-delete` | SA |
 | GET | `/admin/rbac/users/{user_id}/roles` | RBAC |

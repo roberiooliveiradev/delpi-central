@@ -30,7 +30,7 @@ A Core API é o backend de **governança** da Minha DELPI: JWT/Keycloak, RBAC, p
 | [unit-of-work.md](./unit-of-work.md) | Transações, commit, eventos pós-commit |
 | [repositories.md](./repositories.md) | Ports e implementações SQLAlchemy |
 | [erros-api.md](./erros-api.md) | Formato `{ errors: [...] }` e helpers HTTP |
-| [notificacoes.md](./notificacoes.md) | API `/me/notifications` e Socket.IO |
+| [notificacoes.md](./notificacoes.md) | API `/me/notifications`, preferências, dispatch, cron |
 
 ---
 

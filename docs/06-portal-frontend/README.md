@@ -16,6 +16,7 @@ Shell da Minha DELPI: login SSO, menu dinâmico, admin RBAC/apps, carregamento d
 | [app-authorization.md](./app-authorization.md) | Guards, permissões na UI |
 | [consumo-de-plugins.md](./consumo-de-plugins.md) | AppHost, Module Federation, iframe |
 | [favoritos.md](./favoritos.md) | `/me/apps/favorites` |
+| [notificacoes.md](./notificacoes.md) | Sino, `/notifications`, preferências |
 
 ---
 

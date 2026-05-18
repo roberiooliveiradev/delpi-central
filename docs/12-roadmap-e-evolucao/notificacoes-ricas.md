@@ -1,6 +1,6 @@
 # Roadmap — Notificações ricas (Minha DELPI)
 
-> **Status:** Fases 1–2 concluídas · Fase 3 parcial (expiração + histórico) · maio/2026  
+> **Status:** Fases 1–7 concluídas · maio/2026  
 > **Escopo:** Core API + Portal
 
 ---
@@ -15,7 +15,8 @@
 | **Templates customizados** | CRUD `GET/POST/DELETE /admin/notifications/templates` + migration `c9d0e1f2a3b4` |
 | **Variáveis** | `{userName}`, `{userFullName}`, `{userEmail}` preenchidas por destinatário no dispatch |
 | **Admin Portal** | Painéis numerados, pills de formato, múltiplos destinatários, preview por destinatário, `expiresAt` |
-| **Usuário** | Sino na sidebar, cards na home, página `/notifications` com histórico paginado |
+| **Usuário** | Sino, home, `/notifications` (abas **Histórico** + **Preferências**), ações no card |
+| **RBAC Admin** | `PUT /admin/rbac/users/:id` com `birthDate` para automação de aniversário |
 | **API envio** | `POST /admin/notifications`, `POST /integrations/notifications` |
 | **API leitura** | `GET /me/notifications` (não lidas), `GET /me/notifications/history` (paginado + filtros) |
 | **API usuário** | `PATCH /me/notifications/<id>/important`, `DELETE /me/notifications/<id>` (soft delete) |
@@ -122,12 +123,16 @@ Tabela `notification_dispatches`: payload completo, status, contadores, erro.
 
 ## 6. UI Portal
 
+Detalhes: [Portal — Notificações](../06-portal-frontend/notificacoes.md).
+
 | Superfície | Comportamento |
 |------------|----------------|
-| **Sidebar (sino)** | Não lidas; marcar lida, importante e excluir; link “Ver todas” → `/notifications` |
-| **Home** | Resumo + até 4 cards com as mesmas ações rápidas |
-| **`/notifications`** | Abas status, filtros, preferências (silenciar categorias), paginação, ações no card |
-| **Admin → Notificações** | Envio em massa, agendamento, histórico de campanhas, preview por destinatário, expiração |
+| **Sidebar (sino)** | Não lidas; marcar lida, importante e excluir; “Ver todas” → `/notifications` |
+| **Home** | Resumo + até 4 cards com as mesmas ações |
+| **`/notifications` — Histórico** | Status (todas/não lidas/lidas), categoria, importantes, paginação, `NotificationCard` |
+| **`/notifications` — Preferências** | `NotificationPreferencesPanel` — silenciar categorias (exceto `system`) |
+| **Admin → Notificações** | Envio, `roleIds`/`groupIds`, agendamento, histórico, preview HTML, templates |
+| **Admin → Usuário** | Data de nascimento no modal RBAC |
 
 ---
 
@@ -181,7 +186,18 @@ curl -s -X POST "https://<host>/core-api/admin/notifications/dispatches/process-
 
 ---
 
-## 10. Referências
+## 10. Evoluções opcionais (pós-fase 7)
+
+| Item | Descrição |
+|------|-----------|
+| Retenção | Job para arquivar/remover notificações lidas antigas |
+| Rate limit | Redis para múltiplas réplicas da Core API |
+| WYSIWYG | Editor rich-text no Admin (hoje: HTML + preview lado a lado) |
+
+---
+
+## 11. Referências
 
 - [Notificações Core API](../04-core-api/notificacoes.md)
+- [Portal — Notificações](../06-portal-frontend/notificacoes.md)
 - [Roadmap notificações (base)](../../minha-delpi-ai-api/docs/roadmap/notificacoes-minha-delpi.md)

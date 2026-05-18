@@ -4,7 +4,8 @@
 > **Status:** documentação oficial (maio/2026)  
 > **Produto:** Minha DELPI  
 > **Escopo:** notificações de usuário na Core API e integração com Portal  
-> **Evolução rica:** ver [Roadmap notificações ricas](../12-roadmap-e-evolucao/notificacoes-ricas.md)
+> **Evolução rica:** [Roadmap notificações ricas](../12-roadmap-e-evolucao/notificacoes-ricas.md)  
+> **Portal (UI):** [Notificações no frontend](../06-portal-frontend/notificacoes.md)
 
 ---
 
@@ -33,27 +34,42 @@ O sistema atual é simples e centrado no usuário autenticado.
 
 ---
 
-## 3. Tabela principal
+## 3. Tabelas e modelo
 
-Tabela:
-
-```text
-notifications
-```
-
-Campos principais:
-
-| Campo | Descrição |
-|---|---|
-| `id` | UUID da notificação |
-| `user_id` | Usuário destinatário |
-| `title` | Título opcional |
-| `message` | Mensagem da notificação |
-| `type` | Tipo/categoria |
-| `read_at` | Data/hora de leitura (`NULL` = não lida) |
-| `created_at` | Data/hora de criação |
+### 3.1 `notifications`
 
 Model: `app/infrastructure/db/models/notification.py`.
+
+| Campo | Descrição |
+|-------|-----------|
+| `id` | UUID |
+| `user_id` | Destinatário (FK usuário) |
+| `title` | Título opcional |
+| `message` | Texto principal / fallback |
+| `type` | Severidade visual: `info`, `success`, `warning`, `error` |
+| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `custom` |
+| `presentation` | `text`, `html`, `template` |
+| `html_content` | HTML sanitizado (`bleach`) |
+| `action_type`, `action_label`, `action_target` | CTA (`portal_route`, `external_url`) |
+| `icon`, `metadata` | Metadados de UI |
+| `expires_at` | Expiração opcional |
+| `is_important` | Destaque na listagem |
+| `read_at` | Leitura (`NULL` = não lida) |
+| `deleted_at` | Soft delete (não listado para o usuário) |
+| `created_at` | Criação |
+
+Migrations relevantes (ordem): `c9d0e1f2a3b4` (campos ricos), `e1f2a3b4c5d6` (`is_important`, `deleted_at`), `f2a3b4c5d6e7` (preferências), `g3b4c5d6e7f8` (`users.birth_date`).
+
+### 3.2 `user_notification_preferences`
+
+| Campo | Descrição |
+|-------|-----------|
+| `user_id` | PK / FK usuário |
+| `muted_categories` | JSON — categorias silenciadas (sem `system`) |
+
+### 3.3 `notification_dispatches`
+
+Auditoria e agendamento de campanhas (payload, `scheduled_at`, status, contadores). Ver [roadmap](../12-roadmap-e-evolucao/notificacoes-ricas.md).
 
 ---
 
@@ -98,7 +114,7 @@ Resposta `429` com `{ "error": "Too Many Requests", ... }`.
 
 Admin e integrações: `POST /admin/notifications`, `POST /integrations/notifications`, templates em `/admin/notifications/templates`, auditoria em `GET /admin/notifications/dispatches`, processamento de agendados em `POST .../dispatches/process-pending` — ver [roadmap](../12-roadmap-e-evolucao/notificacoes-ricas.md).
 
-Resposta de listagem (campos expostos ao Portal):
+Resposta de listagem (`serialize_notification`):
 
 ```json
 {
@@ -107,13 +123,35 @@ Resposta de listagem (campos expostos ao Portal):
   "title": "Título",
   "message": "Texto",
   "type": "info",
+  "category": "announcement",
+  "presentation": "text",
+  "htmlContent": null,
+  "icon": null,
+  "metadata": null,
   "read": false,
   "isImportant": false,
-  "createdAt": "2026-05-15T12:00:00Z"
+  "createdAt": "2026-05-15T12:00:00Z",
+  "expiresAt": null,
+  "action": { "type": "portal_route", "label": "Abrir", "target": "/apps/..." }
 }
 ```
 
-`read` é derivado de `read_at IS NOT NULL` no repository. Registros com `deleted_at` preenchido não aparecem nas listagens do usuário.
+`read` deriva de `read_at IS NOT NULL`. Registros com `deleted_at` não aparecem nas listagens do usuário.
+
+### `PUT /admin/rbac/users/<user_id>`
+
+Usado pelo modal RBAC do Portal para papéis, grupos e data de nascimento. Body parcial:
+
+```json
+{
+  "roleIds": ["uuid", "..."],
+  "groupIds": ["uuid", "..."],
+  "birthDate": "1990-05-18",
+  "is_superadmin": false
+}
+```
+
+`birthDate` vazio ou `null` limpa o campo. Handler: `update_user` em `rbac_controller.py` (não confundir com helper `_parse_birth_date`).
 
 ### `GET /me/notifications/history` — query
 
@@ -241,10 +279,6 @@ Resposta esperada:
 }
 ```
 
-Ponto de atenção técnico:
-
-> A implementação conhecida chama `self.uow.notifications.get(notification_id)`. Confirmar se o repository concreto e o port possuem esse método. Caso não possuam, ajustar o contrato ou o use case.
-
 ---
 
 ## 8. `POST /me/notifications/read-all`
@@ -293,34 +327,11 @@ Resposta esperada:
 
 ## 9. `POST /me/notifications/test`
 
-Finalidade:
+Cria notificação de teste para o usuário atual (`NotifyUserUseCase`).
 
-```text
-Criar notificação de teste para o usuário atual.
-```
-
-Proteção:
-
-```text
-require_auth
-```
-
-Use case provável:
-
-```text
-NotifyUserUseCase
-```
-
-Uso:
-
-- desenvolvimento;
-- validação do Portal;
-- validação de eventos;
-- testes manuais.
-
-Ponto de atenção:
-
-> Avaliar se este endpoint deve permanecer habilitado em produção ou ser condicionado por ambiente/permissão.
+- Exige `@require_auth()`.
+- **Produção:** retorna `403` quando `FLASK_ENV=production` (`forbidden` — test notifications are disabled in production).
+- Uso: desenvolvimento, validação do sino e eventos Socket.IO.
 
 ---
 
@@ -408,25 +419,22 @@ Validações esperadas:
 
 ## 11. Repository de notificações
 
-Repository exposto pelo Unit of Work:
+Port: `app/domain/ports/notification_repository.py` — implementação: `notification_repository.py`.
 
-```text
-notifications
-```
+Operações principais:
 
-Operações esperadas:
+| Método | Uso |
+|--------|-----|
+| `create` / dispatch em lote | Envio admin e integrações |
+| `list_unread` | `GET /me/notifications` |
+| `list_for_user` (paginado, filtros) | `GET /me/notifications/history` |
+| `get` | Validação de ownership em read/delete/important |
+| `mark_read`, `mark_all_read` | Leitura |
+| `soft_delete` | `DELETE /me/notifications/:id` |
+| `set_important` | `PATCH .../important` |
+| `filter_user_ids_accepting_category` | Dispatch respeita preferências |
 
-```text
-create(data)
-list_unread(user_id)
-mark_read(notification_id, user_id)
-mark_all_read(user_id)
-get(notification_id)
-```
-
-Ponto de atenção:
-
-> Confirmar se todos esses métodos existem no port e na implementação concreta. O método `get` é especialmente importante por ser usado no use case de marcar uma notificação como lida.
+Preferências: `user_notification_preferences` no UoW (`get` / `upsert` muted categories).
 
 ---
 
@@ -495,36 +503,21 @@ Exemplo de payload:
 
 ## 14. Comportamento esperado do Portal
 
-O Portal deve:
+Documentação detalhada da UI: [Portal — Notificações](../06-portal-frontend/notificacoes.md).
 
-1. Buscar notificações após login.
-2. Exibir contador de não lidas.
-3. Exibir lista de notificações.
-4. Permitir marcar uma como lida.
-5. Permitir marcar todas como lidas.
-6. Recarregar notificações ao receber evento relacionado.
-7. Tratar erro de sessão expirada.
-8. Não exibir notificações de outro usuário.
+Resumo:
 
-Fluxo inicial:
+| Superfície | API principal |
+|------------|----------------|
+| Sino / Home | `GET /me/notifications` + ações no card |
+| `/notifications` — aba **Histórico** | `GET /me/notifications/history` (filtros + paginação) |
+| `/notifications` — aba **Preferências** | `GET/PATCH /me/notifications/preferences` |
+| Admin → Notificações | `POST /admin/notifications`, templates, dispatches |
+| Admin → Usuário (RBAC) | `PUT /admin/rbac/users/:id` (`roleIds`, `birthDate`) |
 
-```text
-Login concluído
-  ↓
-GET /me/notifications
-  ↓
-Renderiza contador/lista
-```
+Fluxo após login: `AuthContext` carrega notificações → contador no sino.
 
-Fluxo por evento:
-
-```text
-admin.changed notifications.* recebido
-  ↓
-GET /me/notifications
-  ↓
-Atualiza UI
-```
+Fluxo Socket.IO: evento `admin.changed` com `entity: "notifications"` → `reloadNotifications()`.
 
 ---
 
@@ -650,19 +643,10 @@ Possíveis políticas futuras:
 
 ---
 
-## 19. Considerações de paginação
+## 19. Paginação e histórico
 
-O endpoint atual conhecido lista notificações não lidas.
-
-Se o volume crescer, considerar:
-
-```text
-GET /me/notifications?page=1&page_size=20
-GET /me/notifications?status=unread
-GET /me/notifications?status=all
-```
-
-A paginação deve seguir o padrão geral da Core API.
+- **Não lidas (sino):** `GET /me/notifications` — array sem paginação (somente não lidas, não expiradas, não excluídas).
+- **Histórico completo:** `GET /me/notifications/history` — `limit`/`offset` + filtros (`status`, `category`, `important`).
 
 ---
 
@@ -683,42 +667,38 @@ A paginação deve seguir o padrão geral da Core API.
 
 ## 21. Checklist de implementação
 
-- [ ] `GET /me/notifications` lista apenas notificações do usuário.
-- [ ] `POST /me/notifications/<id>/read` valida ownership.
-- [ ] `POST /me/notifications/read-all` atualiza apenas o usuário atual.
-- [ ] `read_at` é preenchido ao marcar como lida.
-- [ ] Operações são idempotentes quando aplicável.
-- [ ] Eventos direcionados são emitidos para o usuário.
-- [ ] Portal recarrega notificações em eventos.
-- [ ] Endpoint de teste é protegido ou condicionado por ambiente.
-- [ ] Repository possui métodos usados pelos use cases.
-- [ ] Erros seguem `{ errors: [...] }`.
+- [x] `GET /me/notifications` — escopo do usuário, não lidas.
+- [x] `GET /me/notifications/history` — paginação e filtros.
+- [x] `POST /me/notifications/<id>/read` — ownership.
+- [x] `DELETE`, `PATCH .../important`, preferências por categoria.
+- [x] `read_at` ao marcar lida; soft delete com `deleted_at`.
+- [x] Eventos Socket.IO direcionados; Portal recarrega sino.
+- [x] `POST /me/notifications/test` bloqueado em produção.
+- [x] Dispatch com `roleIds`/`groupIds`, welcome e aniversário.
+- [x] Rate limit em `/integrations/notifications`.
+- [ ] Política de retenção/arquivamento de histórico antigo (opcional).
+- [ ] Rate limit multi-instância via Redis (evolução).
 
 ---
 
 ## 22. Pontos de atenção
 
-1. Confirmar FK de `notifications.user_id` no model final.
-2. Confirmar existência de `notifications.get`.
-3. Definir política de uso do endpoint de teste em produção.
-4. Definir enum ou convenção para `type`.
-5. Considerar paginação/histórico em evolução futura.
-6. Não colocar conteúdo sensível em notificações.
-7. Eventos devem ser direcionados ao usuário correto.
-8. Marcar notificação de outro usuário deve ser bloqueado.
-9. Portal deve tratar sessão expirada ao listar notificações.
-10. Notificação é preferência/comunicação, não autorização.
+1. Não armazenar dados sensíveis em `message` / `htmlContent`.
+2. HTML sempre sanitizado no backend antes de persistir.
+3. Categoria `system` não pode ser silenciada nas preferências.
+4. Cron: `scripts/process-pending-notifications.sh`, `run-birthday-notifications.sh`, `run-notification-maintenance.sh`.
+5. `users.birth_date` deve estar preenchido no Admin para automação de aniversário.
+6. Notificação comunica estado ao usuário — **não** substitui RBAC/permissões.
+7. Rate limit in-memory não escala horizontalmente sem Redis compartilhado.
 
 ---
 
 ## 23. Documentos relacionados
 
-```text
-docs/04-core-api/visao-geral-core-api.md
-docs/04-core-api/use-cases.md
-docs/04-core-api/repositories.md
-docs/04-core-api/erros-api.md
-docs/06-portal-frontend/visao-geral-portal.md
-docs/06-portal-frontend/favoritos.md
-```
+| Documento | Conteúdo |
+|-----------|----------|
+| [Roadmap notificações ricas](../12-roadmap-e-evolucao/notificacoes-ricas.md) | Fases, Admin, cron, templates |
+| [Portal — Notificações](../06-portal-frontend/notificacoes.md) | UI `/notifications`, sino, `coreApi` |
+| [Controllers e rotas](./controllers-e-rotas.md) | Índice de rotas HTTP |
+| [RBAC](../03-autenticacao-autorizacao/rbac.md) | Papéis e `PUT` usuário |
 
