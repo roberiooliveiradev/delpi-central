@@ -662,8 +662,6 @@ def list_users():
         return server_error(str(e))
 
 
-@rbac_bp.route("/admin/rbac/users/<user_id>", methods=["PUT"])
-@require_all_permissions(["rbac.manage", "users.manage"])
 def _parse_birth_date(value):
     if value is None or value == "":
         return None, False
@@ -679,6 +677,8 @@ def _parse_birth_date(value):
         raise ValueError("birthDate must be YYYY-MM-DD") from exc
 
 
+@rbac_bp.route("/admin/rbac/users/<user_id>", methods=["PUT"])
+@require_all_permissions(["rbac.manage", "users.manage"])
 def update_user(user_id: str):
     data = request.get_json(silent=True) or {}
 

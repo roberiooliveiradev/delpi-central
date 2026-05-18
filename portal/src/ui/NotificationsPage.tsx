@@ -148,7 +148,7 @@ export function NotificationsPage() {
 
   return (
     <section className="notifications-page">
-      <header className="notifications-page__header">
+      <div className="notifications-page__header">
         <div className="notifications-page__header-icon" aria-hidden="true">
           <Bell size={22} />
         </div>
@@ -160,7 +160,7 @@ export function NotificationsPage() {
               : "Defina quais tipos de mensagem você deseja receber na plataforma."}
           </p>
         </div>
-      </header>
+      </div>
 
       <nav
         className="notifications-page__sections"
