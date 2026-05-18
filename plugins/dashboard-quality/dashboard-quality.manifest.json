@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "dashboard-quality",
+  "name": "Dashboard Qualidade",
+  "description": "Painel analítico de qualidade (PPM, kaizen, 5S e NC TOTVS) via api-delpi",
+  "icon": "shield-check-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/dashboard-quality",
+  "entry": "/apps/dashboard-quality/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "dashboard-quality.view",
+      "name": "Acesso ao dashboard de qualidade",
+      "description": "Permite visualizar métricas de qualidade (PPM, kaizen, 5S, NC TOTVS)",
+      "module": "dashboard-quality"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/dashboard-quality",
+      "label": "Dashboard Qualidade",
+      "permission": "dashboard-quality.view",
+      "icon": "shield-check-icon",
+      "order": 10,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

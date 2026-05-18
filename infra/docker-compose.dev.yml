@@ -289,6 +289,24 @@ services:
     networks:
       - delpi-network
 
+  dashboard-quality:
+    build:
+      context: ../plugins/dashboard-quality
+      dockerfile: Dockerfile
+
+    container_name: delpi-dashboard-quality
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/dashboard-quality:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   api-delpi:
     build:
       context: ..
@@ -455,6 +473,7 @@ services:
       - api-delpi
       - strategic-indicators-api
       - dashboard-lmps
+      - dashboard-quality
       - minha-delpi-ai-api
       - minha-delpi-chat
 

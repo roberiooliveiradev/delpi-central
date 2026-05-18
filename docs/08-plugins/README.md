@@ -28,6 +28,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 | `plugins/strategic-indicators` | `strategic-indicators` | microfrontend | `/apps/strategic-indicators` | `delpi-strategic-indicators` |
 | `plugins/minha-delpi-chat` | `minha-delpi-chat` | microfrontend | `/apps/minha-delpi-chat` | `delpi-minha-delpi-chat` |
 | `plugins/dashboard-lmps` | `dash-lmps` | iframe | `/dash-lmps` | `delpi-dashboard-lmps` |
+| `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
 | `plugins/dashboard-delpi` | (ver manifesto) | microfrontend | `/apps/dashboard-delpi` | `delpi-dashboard-delpi` |
 | `plugins/helpdesk` | (ver manifesto) | — | — | Pode ser externo / legado |
 | `plugins/idd_production` | (ver manifesto) | — | — | Avaliar registro na Core API |
@@ -42,6 +43,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 |---|---|
 | Indicadores Estratégicos | `/apps/strategic-indicators-api/strategic-indicators/*` |
 | Dashboard LMPs | `/apps/api-delpi/engineering/lmps/*` |
+| Dashboard Qualidade | `/apps/api-delpi/quality/*` (PPM, kaizen, 5S, NC TOTVS) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
 
@@ -68,6 +70,7 @@ Declaradas no manifesto e persistidas na Core API:
 |---|---|
 | strategic-indicators | `strategic-indicators.view`, `strategic-indicators.settings.manage`, … |
 | dash-lmps | `dash-lmps.access` |
+| dashboard-quality | `dashboard-quality.view` (+ `api-delpi.quality.access` na API) |
 | minha-delpi-chat | `minha-delpi.chat.access`, `minha-delpi.chat.ask`, … |
 
 Lista completa: seed + manifestos em `plugins/*/`.
@@ -81,6 +84,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Chat / IA | [minha-delpi-ai-api/docs/api/](../../minha-delpi-ai-api/docs/api/README.md) |
 | Indicadores | [Documentação SI (completa)](../../strategic-indicators-api/docs/README.md) |
 | API operacional | [api-delpi/docs/api/](../../api-delpi/docs/api/README.md) |
+| Dashboard Qualidade | [plugins/dashboard-quality/docs/ROADMAP.md](../../plugins/dashboard-quality/docs/ROADMAP.md) |
 
 ---
 

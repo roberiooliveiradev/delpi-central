@@ -104,7 +104,7 @@ Filtros de processos: `id`, `name_process`, `filial_id`, `sector_name`, `status`
 
 ## Qualidade (métricas TOTVS) — `/quality`
 
-**Permissão:** `api-delpi.quality.access`
+**Permissão:** `api-delpi.quality.access` **ou** `dashboard-quality.view`
 
 Consultas analíticas; **não** confundir com o módulo NC PostgreSQL ([07-qualidade-nc.md](./07-qualidade-nc.md)).
 

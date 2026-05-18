@@ -106,6 +106,8 @@ services:
       INITIAL_SUPERADMIN_EMAIL: ${INITIAL_SUPERADMIN_EMAIL}
       INITIAL_SUPERADMIN_NAME: ${INITIAL_SUPERADMIN_NAME}
 
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
+
       KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID}
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
       KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM}
@@ -302,6 +304,24 @@ services:
     networks:
       - delpi-network
 
+  dashboard-quality:
+    build:
+      context: ../plugins/dashboard-quality
+      dockerfile: Dockerfile
+
+    container_name: delpi-dashboard-quality
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/dashboard-quality:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   postgres-plugins:
     image: pgvector/pgvector:pg15
     container_name: delpi-postgres-plugins
@@ -452,6 +472,7 @@ services:
       - strategic-indicators-api
       - strategic-indicators
       - dashboard-lmps
+      - dashboard-quality
       - minha-delpi-ai-api
       - minha-delpi-chat
 
