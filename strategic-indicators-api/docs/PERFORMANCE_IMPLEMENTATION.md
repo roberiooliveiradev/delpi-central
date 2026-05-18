@@ -130,7 +130,7 @@ PROIBIDO:
 
 - [x] 3.1 Lock no cache do provider
 - [x] 3.2 Períodos paralelos com factory
-- [ ] 3.3 Pool pyodbc TOTVS (pendente)
+- [x] 3.3 Pool pyodbc TOTVS (`connection_pool.py`, `TOTVS_POOL_*`)
 - [ ] 3.4 Coletores thin (pendente)
 - [ ] 3.5 Warm-up cron (pendente)
 
@@ -153,6 +153,8 @@ PROIBIDO:
 |----------|---------|-----|
 | `SI_SNAPSHOT_CACHE_TTL_SECONDS` | `600` | TTL cache medições/catálogo entre requests |
 | `LOG_LEVEL` | `INFO` | Logs `strategic_indicators.*` |
+| `TOTVS_POOL_ENABLED` | `true` | Reutiliza conexões pyodbc entre queries |
+| `TOTVS_POOL_MAX_SIZE` | `8` | Máx. conexões simultâneas (7 deptos + margem) |
 
 ---
 
@@ -171,8 +173,7 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 
 ## 9. Ordem restante sugerida
 
-1. Pool TOTVS (3.3) — reduzir ~9s base por período
-2. Coletores thin (3.4)
+1. Coletores thin (3.4)
 3. `si_period_scores` (2.3) se trends ainda > 25s
 4. Paginação admin (5)
 
@@ -186,3 +187,4 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-18 | Implementação fases 0–2 e 3.1–3.2 (API); executive ~10s com paralelo seguro |
 | 2026-05-18 | Fix serialização `Decimal`; trends com períodos paralelos; roadmap atualizado |
 | 2026-05-18 | MFE: cache leitura, prefetch, split presentation, SWR em todas as páginas do painel |
+| 2026-05-18 | Pool pyodbc TOTVS com release no `BaseRepository` e discard em erro |

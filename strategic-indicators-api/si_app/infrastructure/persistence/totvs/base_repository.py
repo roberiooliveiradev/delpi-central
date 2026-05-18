@@ -1,6 +1,6 @@
 # app/infrastructure/providers/totvs/base_repository.py
 
-from si_app.infrastructure.providers.totvs.database import get_connection
+from si_app.infrastructure.providers.totvs.database import get_connection, release_connection
 from si_app.utils.logger import log_error
 from si_app.core.exceptions import DatabaseConnectionError
 
@@ -24,6 +24,7 @@ class BaseRepository:
     def __init__(self):
         self.connection = None
         self.cursor = None
+        self._uses_pool = False
 
     # --------------------------------------
     # Context Manager
@@ -34,7 +35,7 @@ class BaseRepository:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._close()
+        self._close(discard=exc_type is not None)
 
     # --------------------------------------
     # Conexão
@@ -43,19 +44,27 @@ class BaseRepository:
     def _connect(self):
         try:
             self.connection = get_connection()
+            self._uses_pool = True
             self.cursor = self.connection.cursor()
         except Exception as e:
             log_error(f"Erro ao conectar ao banco: {e}")
             raise DatabaseConnectionError(str(e))
 
-    def _close(self):
+    def _close(self, *, discard: bool = False):
         try:
             if self.cursor:
                 self.cursor.close()
+                self.cursor = None
             if self.connection:
-                self.connection.close()
+                if self._uses_pool:
+                    release_connection(self.connection, discard=discard)
+                else:
+                    self.connection.close()
+                self.connection = None
         except Exception:
             pass
+        finally:
+            self._uses_pool = False
 
     # --------------------------------------
     # Execução de queries

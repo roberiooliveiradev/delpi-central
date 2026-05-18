@@ -14,6 +14,8 @@ Igual à api-delpi para dados operacionais: `PLUGINS_*`, TOTVS, Google Sheets, P
 |----------|-----------|
 | `SI_API_ROOT_PATH` | Prefixo atrás do gateway (predefinição `/apps/strategic-indicators-api`). |
 | `STRATEGIC_INDICATORS_API_PORT` | Porta do processo (fallback para `PORT`). |
+| `TOTVS_POOL_ENABLED` | Reutilizar conexões SQL Server (`true` por padrão). |
+| `TOTVS_POOL_MAX_SIZE` | Tamanho do pool TOTVS (padrão `8`). |
 
 ## Desenvolvimento local
 

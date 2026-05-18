@@ -64,6 +64,10 @@ class Settings:
     TOTVS_DB_USER: str | None = _get_env("TOTVS_DB_USER")
     TOTVS_DB_PASSWORD: str | None = _get_env("TOTVS_DB_PASSWORD")
     TOTVS_DB_DATABASE: str | None = _get_env("TOTVS_DB_DATABASE")
+    TOTVS_POOL_ENABLED: bool = (
+        str(_get_env("TOTVS_POOL_ENABLED", default="true")).lower() in {"1", "true", "yes"}
+    )
+    TOTVS_POOL_MAX_SIZE: int = int(_get_env("TOTVS_POOL_MAX_SIZE", default="8") or "8")
 
     # ==========================
     # Plugins PostgreSQL
