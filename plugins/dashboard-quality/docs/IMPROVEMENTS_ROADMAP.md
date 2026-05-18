@@ -40,11 +40,11 @@ Complementa [ROADMAP.md](./ROADMAP.md) (fases 0–6). Entregas em **ondas** com 
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 4.1 | Responsivo tablet+ | 📋 | Gráficos legíveis em 768px |
-| 4.2 | Acessibilidade (labels, foco, contraste) | 📋 | Revisão axe/Lighthouse |
-| 4.3 | Validação Zod das respostas API | 📋 | Erro claro em contrato quebrado |
+| 4.1 | Responsivo tablet+ | 🚧 | Toolbar/grids em 768px; revisão visual pendente |
+| 4.2 | Acessibilidade (labels, foco, contraste) | 🚧 | `focus-visible`, `aria-pressed`, labels export |
+| 4.3 | Validação Zod das respostas API | 🚧 | Envelope + séries/filiais com guards leves; Zod completo pendente |
 | 4.4 | Registro Core API + CI build plugin | 📋 | Checklist monorepo |
-| 4.5 | Mensagens de erro acionáveis (timeout TOTVS) | 📋 | Copy orientando período menor |
+| 4.5 | Mensagens de erro acionáveis (timeout TOTVS) | ✅ | `formatQualityApiError` em hooks e home |
 
 ---
 

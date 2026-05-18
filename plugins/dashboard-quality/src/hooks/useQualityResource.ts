@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { formatQualityApiError } from "../utils/formatQualityApiError";
+
 type UseQualityResourceOptions = {
   enabled?: boolean;
   /** TTL do cache em ms (stale-while-revalidate). */
@@ -78,11 +80,10 @@ export function useQualityResource<T>(
         if (controller.signal.aborted) return;
 
         if (!cached) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Erro ao carregar dados de qualidade"
-          );
+          const message = formatQualityApiError(err);
+          if (message) {
+            setError(message);
+          }
         }
       } finally {
         if (!controller.signal.aborted) {

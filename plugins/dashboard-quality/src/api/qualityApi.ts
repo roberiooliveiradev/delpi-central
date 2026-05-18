@@ -1,5 +1,11 @@
 import { httpGet } from "./httpClient";
 import { buildQuery } from "./query";
+import {
+  isNonconformitySeriesData,
+  isPpmSeriesData,
+  isQualityBranchesData,
+  parseQualityApiEnvelope,
+} from "./validateQualityResponse";
 import type { ApiSuccessResponse } from "../types/api";
 import type { Page } from "../types/pagination";
 import type {
@@ -47,6 +53,21 @@ async function fetchQualityData<T>(
   }
 
   return response.data;
+}
+
+async function fetchQualityDataValidated<T>(
+  path: string,
+  params: Record<string, string | number | undefined | null>,
+  validateData: (data: unknown) => data is T,
+  signal?: AbortSignal
+): Promise<T> {
+  const query = buildQuery(params);
+  const response = await httpGet<unknown>(
+    `${QUALITY_API_BASE}${path}${query}`,
+    { signal }
+  );
+
+  return parseQualityApiEnvelope(response, validateData).data;
 }
 
 export async function listNonconformities(
@@ -140,7 +161,12 @@ export async function listQualityBranches(
   params: DateRangeParams = {},
   signal?: AbortSignal
 ): Promise<QualityBranchesResponse> {
-  return fetchQualityData<QualityBranchesResponse>("/branches", params, signal);
+  return fetchQualityDataValidated(
+    "/branches",
+    params,
+    isQualityBranchesData,
+    signal
+  );
 }
 
 export async function getNonconformitySeries(
@@ -149,7 +175,7 @@ export async function getNonconformitySeries(
   },
   signal?: AbortSignal
 ): Promise<NonconformitySeriesResponse> {
-  return fetchQualityData<NonconformitySeriesResponse>(
+  return fetchQualityDataValidated(
     "/nonconformities/series",
     {
       type: params.type ?? "all",
@@ -161,6 +187,7 @@ export async function getNonconformitySeries(
       description: params.description,
       granularity: params.granularity,
     },
+    isNonconformitySeriesData,
     signal
   );
 }
@@ -170,7 +197,7 @@ export async function getPpmSeries(
   params: DateRangeParams & { granularity: ChartGranularity },
   signal?: AbortSignal
 ): Promise<PpmSeriesResponse> {
-  return fetchQualityData<PpmSeriesResponse>(
+  return fetchQualityDataValidated(
     `/ppm/${type}/series`,
     {
       branch: params.branch,
@@ -178,6 +205,7 @@ export async function getPpmSeries(
       date_end: params.date_end,
       granularity: params.granularity,
     },
+    isPpmSeriesData,
     signal
   );
 }

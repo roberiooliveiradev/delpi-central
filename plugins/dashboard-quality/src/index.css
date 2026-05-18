@@ -36,6 +36,12 @@
   font: inherit;
 }
 
+.dashboard-quality button:focus-visible,
+.dashboard-quality a:focus-visible {
+  outline: 2px solid var(--dq-accent);
+  outline-offset: 2px;
+}
+
 .dashboard-quality .dq-app-shell {
   animation: dq-view-fade-in 0.18s ease-out;
 }
@@ -689,6 +695,25 @@
 }
 
 @media (max-width: 768px) {
+  .dashboard-quality.dashboard-page {
+    padding: 16px;
+  }
+
+  .dashboard-quality .dq-chart-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-quality .dq-chart-toolbar__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .dashboard-quality .dq-segment-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
   .dashboard-quality .dq-kpi-grid,
   .dashboard-quality .dq-summary-grid,
   .dashboard-quality .dq-charts-grid {

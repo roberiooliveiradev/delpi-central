@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+
+import { formatQualityApiError } from "../utils/formatQualityApiError";
 import {
   getAudit5sSummary,
   getKaizenSummary,
@@ -107,9 +109,8 @@ export function useQualityDashboard(
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.ppmInternal =
-            results[0].reason instanceof Error
-              ? results[0].reason.message
-              : "Erro ao carregar PPM interno";
+            formatQualityApiError(results[0].reason) ||
+            "Erro ao carregar PPM interno";
         }
 
         if (results[1].status === "fulfilled") {
@@ -117,9 +118,8 @@ export function useQualityDashboard(
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.ppmExternal =
-            results[1].reason instanceof Error
-              ? results[1].reason.message
-              : "Erro ao carregar PPM externo";
+            formatQualityApiError(results[1].reason) ||
+            "Erro ao carregar PPM externo";
         }
 
         if (results[2].status === "fulfilled") {
@@ -127,9 +127,8 @@ export function useQualityDashboard(
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.kaizen =
-            results[2].reason instanceof Error
-              ? results[2].reason.message
-              : "Erro ao carregar kaizens";
+            formatQualityApiError(results[2].reason) ||
+            "Erro ao carregar kaizens";
         }
 
         if (results[3].status === "fulfilled") {
@@ -137,9 +136,8 @@ export function useQualityDashboard(
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.audit5s =
-            results[3].reason instanceof Error
-              ? results[3].reason.message
-              : "Erro ao carregar auditorias 5S";
+            formatQualityApiError(results[3].reason) ||
+            "Erro ao carregar auditorias 5S";
         }
 
         if (!controller.signal.aborted) {

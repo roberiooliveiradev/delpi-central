@@ -36,9 +36,10 @@ export function ChartToolbar({
             className="dq-ghost-btn dq-chart-toolbar__export"
             onClick={onExportCsv}
             disabled={exportDisabled}
+            aria-label="Exportar série do gráfico em CSV"
           >
-            <Download size={16} />
-            Exportar série
+            <Download size={16} aria-hidden />
+            <span>Exportar série</span>
           </button>
         ) : null}
       </div>
