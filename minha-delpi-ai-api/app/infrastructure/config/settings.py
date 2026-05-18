@@ -162,3 +162,13 @@ class Settings:
         os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "false").lower() == "true"
     )
     CHAT_AGENTIC_LOOP_MAX_STEPS = int(os.getenv("CHAT_AGENTIC_LOOP_MAX_STEPS", "2"))
+
+    CHAT_RAG_RERANK_ENABLED = (
+        os.getenv("CHAT_RAG_RERANK_ENABLED", "true").lower() == "true"
+    )
+    CHAT_RAG_RERANK_KEYWORD_BOOST = float(
+        os.getenv("CHAT_RAG_RERANK_KEYWORD_BOOST", "0.15")
+    )
+    CHAT_RAG_FTS_ENABLED = (
+        os.getenv("CHAT_RAG_FTS_ENABLED", "true").lower() == "true"
+    )

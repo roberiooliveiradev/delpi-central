@@ -43,6 +43,8 @@ class KnowledgeRepositoryPort(ABC):
         query: str,
         limit: int,
         filters: dict | None = None,
+        *,
+        use_fts: bool = True,
     ) -> list[KnowledgeChunk]:
         raise NotImplementedError
 

@@ -5,6 +5,9 @@ from uuid import UUID
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.dto.send_chat_message_response import SendChatMessageResponse
 from app.application.services.chat_message_security_service import ChatMessageSecurityService
+from app.application.services.chat_intelligence_metadata_service import (
+    ChatIntelligenceMetadataService,
+)
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
@@ -108,6 +111,10 @@ class SendChatMessageUseCase:
             tool_context=tool_context,
         )
         tool_calls = tool_context["toolCalls"]
+        intelligence_metadata = ChatIntelligenceMetadataService.build(
+            sources=sources,
+            tool_context=tool_context,
+        )
 
         user_message = self.chat_repository.create_message(
             session_id=session_id,
@@ -123,6 +130,7 @@ class SendChatMessageUseCase:
                     "sources": sources,
                 },
                 "toolCalls": tool_calls,
+                "intelligence": intelligence_metadata,
             },
         )
 
@@ -182,6 +190,7 @@ class SendChatMessageUseCase:
                     "enabled": True,
                     "sourceCount": len(sources),
                 },
+                "intelligence": intelligence_metadata,
                 "adminGuidelines": self._guideline_metadata(active_guidelines),
                 "metrics": {
                     "latencyMs": latency_ms,

@@ -1,6 +1,7 @@
 from dataclasses import replace
 
 from app.application.dto.search_knowledge_request import SearchKnowledgeRequest
+from app.domain.services.keyword_similarity import keyword_overlap_score
 from app.application.services.chat_intelligence_settings_service import (
     ChatIntelligenceSettingsService,
 )
@@ -36,6 +37,8 @@ class SearchKnowledgeUseCase:
         else:
             chunks = self._vector_search(query, limit=limit, filters=filters)
 
+        chunks = self._rerank_chunks(query, chunks, limit=limit)
+
         return [self._chunk_to_dict(chunk) for chunk in chunks]
 
     def _hybrid_enabled(self) -> bool:
@@ -49,6 +52,43 @@ class SearchKnowledgeUseCase:
             return True
 
         return bool(enabled)
+
+    def _rerank_enabled(self) -> bool:
+        if not Settings.CHAT_RAG_RERANK_ENABLED:
+            return False
+
+        stored = self.intelligence_settings_service.settings_repository.get_chat_intelligence_settings() or {}
+        enabled = stored.get("ragRerankEnabled")
+
+        if enabled is None:
+            return True
+
+        return bool(enabled)
+
+    def _fts_enabled(self) -> bool:
+        if not Settings.CHAT_RAG_FTS_ENABLED:
+            return False
+
+        stored = self.intelligence_settings_service.settings_repository.get_chat_intelligence_settings() or {}
+        enabled = stored.get("ragFtsEnabled")
+
+        if enabled is None:
+            return True
+
+        return bool(enabled)
+
+    def _rerank_chunks(self, query: str, chunks: list, *, limit: int) -> list:
+        if not self._rerank_enabled() or not chunks:
+            return chunks
+
+        boost = Settings.CHAT_RAG_RERANK_KEYWORD_BOOST
+
+        def score_chunk(chunk) -> float:
+            base = float(chunk.score or 0)
+            overlap = keyword_overlap_score(query, chunk.content or "")
+            return base + boost * overlap
+
+        return sorted(chunks, key=score_chunk, reverse=True)[:limit]
 
     def _vector_search(self, query: str, *, limit: int, filters: dict | None) -> list:
         candidate_limit = limit
@@ -72,6 +112,7 @@ class SearchKnowledgeUseCase:
             query,
             limit=candidate_limit,
             filters=filters,
+            use_fts=self._fts_enabled(),
         )
 
         merged: dict[str, object] = {}

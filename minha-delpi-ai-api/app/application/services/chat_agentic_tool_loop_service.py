@@ -41,9 +41,6 @@ class ChatAgenticToolLoopService:
         if not settings["enabled"]:
             return tool_context
 
-        if tool_context.get("context"):
-            return tool_context
-
         max_steps = settings["max_steps"]
         catalog = self._build_catalog(allowed_tool_names, allowed_action_ids)
 
@@ -52,7 +49,11 @@ class ChatAgenticToolLoopService:
 
         context_blocks: list[str] = []
         safe_tool_calls = list(tool_context.get("toolCalls") or [])
-        executed_names: set[str] = set()
+        executed_names = {
+            str(item.get("name") or "").strip()
+            for item in safe_tool_calls
+            if str(item.get("name") or "").strip()
+        }
 
         for step in range(max_steps):
             plan = self._plan_tools(message, catalog, step=step)
@@ -120,13 +121,17 @@ class ChatAgenticToolLoopService:
         if not context_blocks:
             return tool_context
 
-        merged_context = "\n\n".join(
-            [str(tool_context.get("context") or "").strip(), *context_blocks]
-        ).strip()
+        existing_context = str(tool_context.get("context") or "").strip()
+        parts = [existing_context, *context_blocks] if existing_context else context_blocks
+        merged_context = "\n\n".join(part for part in parts if part).strip()
 
         return {
             "context": merged_context[: Settings.MAX_CONTEXT_CHARS],
             "toolCalls": safe_tool_calls,
+            "agentic": {
+                "stepsRun": max_steps,
+                "toolsAdded": len(context_blocks),
+            },
         }
 
     def _resolve_settings(self) -> dict:

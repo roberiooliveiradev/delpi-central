@@ -41,3 +41,7 @@ Admin (`chat_intelligence_settings`): `ragHybridEnabled`, `agenticLoopEnabled`, 
 - [x] Re-embed da mesma action não chama Ollama dentro do TTL  
 - [x] Com `CHAT_AGENTIC_LOOP_ENABLED=true`, planner LLM pode disparar tools extras  
 - [x] Com loop desligado, comportamento idêntico à Onda 2  
+
+## Próxima onda
+
+[Onda 4](./inteligencia-chat-onda-4.md)

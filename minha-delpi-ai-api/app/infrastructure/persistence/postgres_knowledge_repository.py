@@ -109,36 +109,49 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         query: str,
         limit: int,
         filters: dict | None = None,
+        *,
+        use_fts: bool = True,
     ) -> list[KnowledgeChunk]:
         from app.domain.services.keyword_similarity import keyword_overlap_score, tokenize
 
-        terms = tokenize(query)[:8]
+        normalized_query = str(query or "").strip()
 
-        if not terms:
+        if not normalized_query:
             return []
 
-        db_query = (
-            db.session.query(
-                AiKnowledgeChunkModel,
-                AiKnowledgeDocumentModel,
-            )
-            .join(
-                AiKnowledgeDocumentModel,
-                AiKnowledgeDocumentModel.id == AiKnowledgeChunkModel.document_id,
-            )
-            .filter(AiKnowledgeDocumentModel.active.is_(True))
-        )
+        rows = []
 
-        db_query = self._apply_scope_filters(db_query, filters or {})
-        db_query = db_query.filter(
-            db.or_(*[AiKnowledgeChunkModel.content.ilike(f"%{term}%") for term in terms])
-        )
+        if use_fts:
+            rows = self._search_keyword_chunks_fts(normalized_query, limit=limit, filters=filters)
 
-        rows = (
-            db_query.order_by(AiKnowledgeChunkModel.created_at.desc())
-            .limit(max(limit * 4, limit))
-            .all()
-        )
+        if not rows:
+            terms = tokenize(normalized_query)[:8]
+
+            if not terms:
+                return []
+
+            db_query = (
+                db.session.query(
+                    AiKnowledgeChunkModel,
+                    AiKnowledgeDocumentModel,
+                )
+                .join(
+                    AiKnowledgeDocumentModel,
+                    AiKnowledgeDocumentModel.id == AiKnowledgeChunkModel.document_id,
+                )
+                .filter(AiKnowledgeDocumentModel.active.is_(True))
+            )
+
+            db_query = self._apply_scope_filters(db_query, filters or {})
+            db_query = db_query.filter(
+                db.or_(*[AiKnowledgeChunkModel.content.ilike(f"%{term}%") for term in terms])
+            )
+
+            rows = (
+                db_query.order_by(AiKnowledgeChunkModel.created_at.desc())
+                .limit(max(limit * 4, limit))
+                .all()
+            )
 
         scored: list[tuple[float, KnowledgeChunk]] = []
 
@@ -166,6 +179,40 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         scored.sort(key=lambda item: item[0], reverse=True)
 
         return [chunk for score, chunk in scored[:limit] if score > 0]
+
+    def _search_keyword_chunks_fts(
+        self,
+        query: str,
+        *,
+        limit: int,
+        filters: dict | None,
+    ) -> list:
+        from sqlalchemy import func
+
+        ts_query = func.plainto_tsquery("simple", query)
+
+        db_query = (
+            db.session.query(
+                AiKnowledgeChunkModel,
+                AiKnowledgeDocumentModel,
+            )
+            .join(
+                AiKnowledgeDocumentModel,
+                AiKnowledgeDocumentModel.id == AiKnowledgeChunkModel.document_id,
+            )
+            .filter(AiKnowledgeDocumentModel.active.is_(True))
+            .filter(
+                func.to_tsvector("simple", AiKnowledgeChunkModel.content).op("@@")(ts_query)
+            )
+        )
+
+        db_query = self._apply_scope_filters(db_query, filters or {})
+
+        return (
+            db_query.order_by(AiKnowledgeChunkModel.created_at.desc())
+            .limit(max(limit * 4, limit))
+            .all()
+        )
 
     def list_documents_with_chunk_count(
         self,
