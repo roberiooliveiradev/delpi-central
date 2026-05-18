@@ -26,6 +26,9 @@ class FakeKnowledgeRepository:
         self.filters = filters
         return [FakeChunk()]
 
+    def search_keyword_chunks(self, query, limit, filters=None):
+        return []
+
 
 class FakeEmbeddingGateway:
     def embed(self, text):

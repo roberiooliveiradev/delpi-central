@@ -84,6 +84,9 @@ docs/              # documentação técnica
 | `CHAT_TOOL_ROUTER_*` | Router LLM para tools/actions |
 | `CHAT_HISTORY_SUMMARY_*` | Resumo de histórico longo no prompt |
 | `EXTERNAL_ACTION_EMBEDDING_ON_IMPORT` | Gera embedding ao importar OpenAPI |
+| `CHAT_RAG_HYBRID_*` | RAG híbrido vetor + keyword |
+| `EMBEDDING_CACHE_*` | Cache em memória de embeddings |
+| `CHAT_AGENTIC_LOOP_*` | Loop agentic de tools (default desligado) |
 | `KNOWLEDGE_SEMANTIC_DEDUP_*` | Deduplicação semântica na pré-visualização |
 | `RESPONSE_EVALUATION_LLM_SUGGESTIONS_ENABLED` | Sugestões LLM nas avaliações |
 | `CHAT_INPUT_SECURITY_*` | Sanitização e anti prompt-injection |

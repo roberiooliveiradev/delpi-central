@@ -138,3 +138,27 @@ class Settings:
     EXTERNAL_ACTION_EMBEDDING_ON_IMPORT = (
         os.getenv("EXTERNAL_ACTION_EMBEDDING_ON_IMPORT", "true").lower() == "true"
     )
+
+    CHAT_RAG_HYBRID_ENABLED = (
+        os.getenv("CHAT_RAG_HYBRID_ENABLED", "true").lower() == "true"
+    )
+    CHAT_RAG_HYBRID_VECTOR_WEIGHT = float(
+        os.getenv("CHAT_RAG_HYBRID_VECTOR_WEIGHT", "0.7")
+    )
+    CHAT_RAG_HYBRID_KEYWORD_WEIGHT = float(
+        os.getenv("CHAT_RAG_HYBRID_KEYWORD_WEIGHT", "0.3")
+    )
+    CHAT_RAG_HYBRID_CANDIDATE_MULTIPLIER = int(
+        os.getenv("CHAT_RAG_HYBRID_CANDIDATE_MULTIPLIER", "4")
+    )
+
+    EMBEDDING_CACHE_ENABLED = (
+        os.getenv("EMBEDDING_CACHE_ENABLED", "true").lower() == "true"
+    )
+    EMBEDDING_CACHE_TTL_SECONDS = int(os.getenv("EMBEDDING_CACHE_TTL_SECONDS", "3600"))
+    EMBEDDING_CACHE_MAX_ENTRIES = int(os.getenv("EMBEDDING_CACHE_MAX_ENTRIES", "500"))
+
+    CHAT_AGENTIC_LOOP_ENABLED = (
+        os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "false").lower() == "true"
+    )
+    CHAT_AGENTIC_LOOP_MAX_STEPS = int(os.getenv("CHAT_AGENTIC_LOOP_MAX_STEPS", "2"))

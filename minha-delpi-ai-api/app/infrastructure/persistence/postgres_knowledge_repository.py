@@ -104,9 +104,68 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         return result
 
+    def search_keyword_chunks(
+        self,
+        query: str,
+        limit: int,
+        filters: dict | None = None,
+    ) -> list[KnowledgeChunk]:
+        from app.domain.services.keyword_similarity import keyword_overlap_score, tokenize
 
+        terms = tokenize(query)[:8]
 
+        if not terms:
+            return []
 
+        db_query = (
+            db.session.query(
+                AiKnowledgeChunkModel,
+                AiKnowledgeDocumentModel,
+            )
+            .join(
+                AiKnowledgeDocumentModel,
+                AiKnowledgeDocumentModel.id == AiKnowledgeChunkModel.document_id,
+            )
+            .filter(AiKnowledgeDocumentModel.active.is_(True))
+        )
+
+        db_query = self._apply_scope_filters(db_query, filters or {})
+        db_query = db_query.filter(
+            db.or_(*[AiKnowledgeChunkModel.content.ilike(f"%{term}%") for term in terms])
+        )
+
+        rows = (
+            db_query.order_by(AiKnowledgeChunkModel.created_at.desc())
+            .limit(max(limit * 4, limit))
+            .all()
+        )
+
+        scored: list[tuple[float, KnowledgeChunk]] = []
+
+        for chunk_model, document_model in rows:
+            chunk = self._to_chunk_entity(chunk_model)
+            score = keyword_overlap_score(query, chunk.content or "")
+            scored.append(
+                (
+                    score,
+                    KnowledgeChunk(
+                        id=chunk.id,
+                        document_id=chunk.document_id,
+                        chunk_index=chunk.chunk_index,
+                        content=chunk.content,
+                        metadata=chunk.metadata,
+                        created_at=chunk.created_at,
+                        score=score,
+                        title=document_model.title,
+                        source_type=document_model.source_type,
+                        source_ref=document_model.source_ref,
+                    ),
+                )
+            )
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+
+        return [chunk for score, chunk in scored[:limit] if score > 0]
 
     def list_documents_with_chunk_count(
         self,

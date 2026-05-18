@@ -38,6 +38,15 @@ class KnowledgeRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def search_keyword_chunks(
+        self,
+        query: str,
+        limit: int,
+        filters: dict | None = None,
+    ) -> list[KnowledgeChunk]:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_documents(self, limit: int = 100) -> list[KnowledgeDocument]:
         raise NotImplementedError
 

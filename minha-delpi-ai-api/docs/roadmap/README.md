@@ -8,6 +8,7 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | [melhorias-futuras.md](./melhorias-futuras.md) | Melhorias pós-roadmap admin (implementadas; RBAC core externo pendente). |
 | [inteligencia-chat-onda-1.md](./inteligencia-chat-onda-1.md) | Inteligência do chat — Onda 1 (concluída). |
 | [inteligencia-chat-onda-2.md](./inteligencia-chat-onda-2.md) | Inteligência do chat — Onda 2 (concluída). |
+| [inteligencia-chat-onda-3.md](./inteligencia-chat-onda-3.md) | Inteligência do chat — Onda 3 (concluída). |
 | [notificacoes-minha-delpi.md](./notificacoes-minha-delpi.md) | Notificações de plataforma: broadcast, integrações e UI no chat. |
 
 ## Regra operacional

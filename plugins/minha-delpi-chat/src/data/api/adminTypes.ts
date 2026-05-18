@@ -296,12 +296,18 @@ export type AdminChatIntelligenceSettings = {
   externalActionSemanticRankEnabled: boolean;
   chatToolRouterEnabled: boolean;
   chatHistorySummaryEnabled: boolean;
+  ragHybridEnabled: boolean;
+  agenticLoopEnabled: boolean;
+  agenticLoopMaxSteps: number;
   defaults: {
     ragContextMinScore: number;
     externalActionSemanticMinScore: number;
     externalActionSemanticRankEnabled: boolean;
     chatToolRouterEnabled: boolean;
     chatHistorySummaryEnabled: boolean;
+    ragHybridEnabled: boolean;
+    agenticLoopEnabled: boolean;
+    agenticLoopMaxSteps: number;
   };
 };
 

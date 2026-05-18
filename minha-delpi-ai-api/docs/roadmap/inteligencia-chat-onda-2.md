@@ -42,8 +42,6 @@ POST /admin/tools/actions/reindex-embeddings
 
 Limiares RAG/actions podem ser sobrescritos pelo admin (`ragContextMinScore`, etc.).
 
-## Onda 3 (futuro)
+## Onda 3
 
-- Tool-calling nativo em loop agentic
-- RAG híbrido BM25 + vetor + rerank
-- Cache de embeddings de actions em memória/Redis
+Continuação em [inteligencia-chat-onda-3.md](./inteligencia-chat-onda-3.md).

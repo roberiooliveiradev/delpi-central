@@ -37,6 +37,7 @@ class SendChatMessageUseCase:
         attachment_repository: ChatAttachmentRepositoryPort | None = None,
         chat_attachment_context_service=None,
         chat_history_summary_service=None,
+        chat_agentic_tool_loop_service=None,
         workspace_context_service: ChatWorkspaceContextService | None = None,
         admin_guideline_prompt_service=None,
         message_security_service: ChatMessageSecurityService | None = None,
@@ -56,6 +57,7 @@ class SendChatMessageUseCase:
         self.attachment_repository = attachment_repository
         self.chat_attachment_context_service = chat_attachment_context_service
         self.chat_history_summary_service = chat_history_summary_service
+        self.chat_agentic_tool_loop_service = chat_agentic_tool_loop_service
         self.workspace_context_service = workspace_context_service
         self.admin_guideline_prompt_service = admin_guideline_prompt_service
 
@@ -99,6 +101,11 @@ class SendChatMessageUseCase:
             allowed_action_ids=workspace_context.get("allowedActionIds"),
             capabilities=workspace_context.get("capabilities") or {},
             specialization=workspace_context.get("specialization"),
+        )
+        tool_context = self._maybe_extend_tool_context(
+            request=request,
+            workspace_context=workspace_context,
+            tool_context=tool_context,
         )
         tool_calls = tool_context["toolCalls"]
 
@@ -241,6 +248,31 @@ class SendChatMessageUseCase:
             }
             for item in guidelines
         ]
+
+    def _maybe_extend_tool_context(
+        self,
+        *,
+        request: SendChatMessageRequest,
+        workspace_context: dict,
+        tool_context: dict,
+    ) -> dict:
+        if not self.chat_agentic_tool_loop_service or not request.access_token:
+            return tool_context
+
+        specialization = workspace_context.get("specialization") or {}
+        allowed_tool_names = None
+
+        if isinstance(specialization, dict):
+            allowed_tool_names = specialization.get("allowedTools")
+
+        return self.chat_agentic_tool_loop_service.extend_tool_context(
+            user_id=request.user_id,
+            access_token=request.access_token,
+            message=request.message,
+            tool_context=tool_context,
+            allowed_tool_names=allowed_tool_names,
+            allowed_action_ids=workspace_context.get("allowedActionIds"),
+        )
 
     def _build_tool_context(
         self,

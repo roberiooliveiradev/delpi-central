@@ -44,6 +44,9 @@ export function ChatIntelligenceSettingsPanel({
           externalActionSemanticRankEnabled: settings.externalActionSemanticRankEnabled,
           chatToolRouterEnabled: settings.chatToolRouterEnabled,
           chatHistorySummaryEnabled: settings.chatHistorySummaryEnabled,
+          ragHybridEnabled: settings.ragHybridEnabled,
+          agenticLoopEnabled: settings.agenticLoopEnabled,
+          agenticLoopMaxSteps: settings.agenticLoopMaxSteps,
         },
         { getAccessToken },
       );
@@ -151,6 +154,51 @@ export function ChatIntelligenceSettingsPanel({
             }
           />
           <span>Resumo de histórico longo</span>
+        </label>
+
+        <label className="mdc-admin-metrics-tab__checkbox">
+          <input
+            type="checkbox"
+            checked={settings.ragHybridEnabled}
+            onChange={(event) =>
+              setSettings({
+                ...settings,
+                ragHybridEnabled: event.target.checked,
+              })
+            }
+          />
+          <span>RAG híbrido (vetor + palavras-chave)</span>
+        </label>
+
+        <label className="mdc-admin-metrics-tab__checkbox">
+          <input
+            type="checkbox"
+            checked={settings.agenticLoopEnabled}
+            onChange={(event) =>
+              setSettings({
+                ...settings,
+                agenticLoopEnabled: event.target.checked,
+              })
+            }
+          />
+          <span>Loop agentic de ferramentas</span>
+        </label>
+
+        <label>
+          <span>Máx. passos do loop agentic</span>
+          <input
+            type="number"
+            min={1}
+            max={3}
+            step={1}
+            value={settings.agenticLoopMaxSteps}
+            onChange={(event) =>
+              setSettings({
+                ...settings,
+                agenticLoopMaxSteps: Number(event.target.value),
+              })
+            }
+          />
         </label>
       </div>
 

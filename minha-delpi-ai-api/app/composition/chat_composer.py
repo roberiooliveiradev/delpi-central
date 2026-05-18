@@ -71,7 +71,8 @@ from app.application.use_cases.stream_chat_message_use_case import StreamChatMes
 from app.composition.tool_composer import make_execute_tool_use_case
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.domain.services.tool_selection_service import ToolSelectionService
-from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
+from app.application.services.chat_agentic_tool_loop_service import ChatAgenticToolLoopService
+from app.composition.external_action_composer import make_embedding_gateway
 from app.composition.llm_composer import make_llm_gateway
 from app.infrastructure.persistence.postgres_admin_guideline_repository import PostgresAdminGuidelineRepository
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
@@ -123,7 +124,7 @@ def make_rag_context_service() -> RagContextService:
     return RagContextService(
         SearchKnowledgeUseCase(
             knowledge_repository=PostgresKnowledgeRepository(),
-            embedding_gateway=LocalEmbeddingGateway(),
+            embedding_gateway=make_embedding_gateway(),
         ),
         intelligence_settings_service=make_chat_intelligence_settings_service(),
     )
@@ -162,8 +163,16 @@ def make_chat_tool_router_service() -> ChatToolRouterService:
 
 def make_external_action_semantic_ranker_service() -> ExternalActionSemanticRankerService:
     return ExternalActionSemanticRankerService(
-        embedding_gateway=LocalEmbeddingGateway(),
+        embedding_gateway=make_embedding_gateway(),
         external_action_repository=make_postgres_external_action_repository(),
+        intelligence_settings_service=make_chat_intelligence_settings_service(),
+    )
+
+
+def make_chat_agentic_tool_loop_service() -> ChatAgenticToolLoopService:
+    return ChatAgenticToolLoopService(
+        llm_gateway=make_llm_gateway(),
+        execute_tool_use_case=make_execute_tool_use_case(),
         intelligence_settings_service=make_chat_intelligence_settings_service(),
     )
 
@@ -197,6 +206,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
         attachment_repository=PostgresChatAttachmentRepository(),
         chat_attachment_context_service=make_chat_attachment_context_service(),
         chat_history_summary_service=make_chat_history_summary_service(),
+        chat_agentic_tool_loop_service=make_chat_agentic_tool_loop_service(),
         workspace_context_service=make_chat_workspace_context_service(),
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
     )
@@ -214,6 +224,7 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
         attachment_repository=PostgresChatAttachmentRepository(),
         chat_attachment_context_service=make_chat_attachment_context_service(),
         chat_history_summary_service=make_chat_history_summary_service(),
+        chat_agentic_tool_loop_service=make_chat_agentic_tool_loop_service(),
         workspace_context_service=make_chat_workspace_context_service(),
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
     )
@@ -325,7 +336,7 @@ def make_share_chat_project_use_case() -> ShareChatProjectUseCase:
 def make_ingest_knowledge_document_use_case() -> IngestKnowledgeDocumentUseCase:
     return IngestKnowledgeDocumentUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
-        embedding_gateway=LocalEmbeddingGateway(),
+        embedding_gateway=make_embedding_gateway(),
         pipeline=make_knowledge_ingestion_pipeline_service(),
         audit_repository=PostgresAuditRepository(),
     )

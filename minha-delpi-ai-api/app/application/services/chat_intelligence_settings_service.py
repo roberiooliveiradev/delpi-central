@@ -14,6 +14,9 @@ class ChatIntelligenceSettings:
     external_action_semantic_rank_enabled: bool
     chat_tool_router_enabled: bool
     chat_history_summary_enabled: bool
+    rag_hybrid_enabled: bool
+    agentic_loop_enabled: bool
+    agentic_loop_max_steps: int
 
 
 class ChatIntelligenceSettingsService:
@@ -47,6 +50,18 @@ class ChatIntelligenceSettingsService:
                 stored.get("chatHistorySummaryEnabled"),
                 Settings.CHAT_HISTORY_SUMMARY_ENABLED,
             ),
+            rag_hybrid_enabled=self._bool(
+                stored.get("ragHybridEnabled"),
+                Settings.CHAT_RAG_HYBRID_ENABLED,
+            ),
+            agentic_loop_enabled=self._bool(
+                stored.get("agenticLoopEnabled"),
+                Settings.CHAT_AGENTIC_LOOP_ENABLED,
+            ),
+            agentic_loop_max_steps=self._int(
+                stored.get("agenticLoopMaxSteps"),
+                Settings.CHAT_AGENTIC_LOOP_MAX_STEPS,
+            ),
         )
 
     def to_dict(self, settings: ChatIntelligenceSettings | None = None) -> dict:
@@ -58,12 +73,18 @@ class ChatIntelligenceSettingsService:
             "externalActionSemanticRankEnabled": resolved.external_action_semantic_rank_enabled,
             "chatToolRouterEnabled": resolved.chat_tool_router_enabled,
             "chatHistorySummaryEnabled": resolved.chat_history_summary_enabled,
+            "ragHybridEnabled": resolved.rag_hybrid_enabled,
+            "agenticLoopEnabled": resolved.agentic_loop_enabled,
+            "agenticLoopMaxSteps": resolved.agentic_loop_max_steps,
             "defaults": {
                 "ragContextMinScore": Settings.RAG_CONTEXT_MIN_SCORE,
                 "externalActionSemanticMinScore": Settings.EXTERNAL_ACTION_SEMANTIC_MIN_SCORE,
                 "externalActionSemanticRankEnabled": Settings.EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED,
                 "chatToolRouterEnabled": Settings.CHAT_TOOL_ROUTER_ENABLED,
                 "chatHistorySummaryEnabled": Settings.CHAT_HISTORY_SUMMARY_ENABLED,
+                "ragHybridEnabled": Settings.CHAT_RAG_HYBRID_ENABLED,
+                "agenticLoopEnabled": Settings.CHAT_AGENTIC_LOOP_ENABLED,
+                "agenticLoopMaxSteps": Settings.CHAT_AGENTIC_LOOP_MAX_STEPS,
             },
         }
 
@@ -90,6 +111,18 @@ class ChatIntelligenceSettingsService:
                 payload.get("chatHistorySummaryEnabled"),
                 current.chat_history_summary_enabled,
             ),
+            "ragHybridEnabled": self._bool(
+                payload.get("ragHybridEnabled"),
+                current.rag_hybrid_enabled,
+            ),
+            "agenticLoopEnabled": self._bool(
+                payload.get("agenticLoopEnabled"),
+                current.agentic_loop_enabled,
+            ),
+            "agenticLoopMaxSteps": self._int(
+                payload.get("agenticLoopMaxSteps"),
+                current.agentic_loop_max_steps,
+            ),
         }
 
         self.settings_repository.save_chat_intelligence_settings(merged)
@@ -104,6 +137,15 @@ class ChatIntelligenceSettingsService:
             return float(value)
         except (TypeError, ValueError):
             return float(default)
+
+    def _int(self, value, default: int) -> int:
+        if value is None:
+            return int(default)
+
+        try:
+            return max(1, min(int(value), 3))
+        except (TypeError, ValueError):
+            return int(default)
 
     def _bool(self, value, default: bool) -> bool:
         if value is None:
