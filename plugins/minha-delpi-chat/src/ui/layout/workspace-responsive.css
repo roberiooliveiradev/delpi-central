@@ -1,0 +1,82 @@
+/* Layout responsivo — admin, agentes e projetos (breakpoints --mdc-bp-*) */
+
+/* Views fullscreen dentro do shell do chat */
+.mdc-chat-main .mdc-chat-agents-directory,
+.mdc-chat-main .mdc-chat-agent-builder,
+.mdc-chat-main .mdc-chat-agent-actions {
+  min-height: 0;
+  height: 100%;
+}
+
+.mdc-chat-agents-directory,
+.mdc-chat-agent-builder,
+.mdc-chat-agent-actions {
+  min-height: 100dvh;
+  min-height: 100vh;
+}
+
+/* Admin */
+.minha-delpi-chat.mdc-admin-root {
+  min-height: 100dvh;
+  min-height: 100vh;
+}
+
+@media (max-width: 1023px) {
+  .mdc-admin-shell {
+    gap: var(--mdc-space-4);
+    padding: var(--mdc-space-3);
+  }
+
+  .mdc-admin-topbar {
+    padding: var(--mdc-space-3);
+  }
+
+  .mdc-admin-topbar h1 {
+    font-size: clamp(1.2rem, 4.5vw, 1.55rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .mdc-admin-agents__header,
+  .mdc-admin-evaluations__header,
+  .mdc-admin-simulate__header,
+  .mdc-admin-security__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mdc-admin-agents__header > button,
+  .mdc-admin-evaluations__header > button,
+  .mdc-admin-simulate__header > button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Landscape compacto — admin e workspaces */
+@media (max-width: 1023px) and (orientation: landscape),
+  (max-height: 520px) and (max-width: 1023px) {
+  .mdc-admin-topbar {
+    gap: var(--mdc-space-2);
+    padding: var(--mdc-space-2) var(--mdc-space-3);
+  }
+
+  .mdc-admin-tabs button {
+    min-height: 1.85rem;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+  }
+
+  .mdc-chat-agents-directory__hero h1 {
+    font-size: clamp(1.45rem, 4vw, 2rem);
+  }
+
+  .mdc-chat-agents-directory__main {
+    padding-block: var(--mdc-space-4);
+    gap: var(--mdc-space-4);
+  }
+
+  .mdc-chat-project-sources {
+    max-height: min(42vh, 22rem);
+  }
+}

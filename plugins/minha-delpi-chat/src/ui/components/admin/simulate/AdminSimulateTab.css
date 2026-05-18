@@ -116,9 +116,20 @@
   gap: var(--mdc-space-4);
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1023px) {
   .mdc-admin-simulate__grid,
   .mdc-admin-simulate__comparison {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .mdc-admin-simulate__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mdc-admin-simulate__toolbar > * {
+    width: 100%;
   }
 }

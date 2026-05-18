@@ -263,9 +263,20 @@
   color: var(--mdc-primary);
 }
 
-@media (max-width: 780px) {
+@media (max-width: 1023px) {
+  .mdc-chat-agents-modal-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
   .mdc-chat-agents-modal {
-    max-height: 92vh;
+    width: 100%;
+    max-height: 94dvh;
+    border-radius: var(--mdc-radius-xl) var(--mdc-radius-xl) 0 0;
+  }
+
+  .mdc-chat-agents-modal__header {
+    padding: var(--mdc-space-4);
   }
 
   .mdc-chat-agents-modal__body {
@@ -273,8 +284,25 @@
   }
 
   .mdc-chat-agents-modal__list {
+    max-height: min(38vh, 16rem);
     border-right: 0;
     border-bottom: 1px solid var(--mdc-card-border);
+  }
+
+  .mdc-chat-agents-modal__form {
+    padding-bottom: calc(var(--mdc-space-4) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 767px) {
+  .mdc-chat-agents-modal__form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .mdc-chat-agents-modal__form-actions button {
+    width: 100%;
+    justify-content: center;
   }
 }
 

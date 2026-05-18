@@ -29,6 +29,13 @@
   background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
 }
 
+@media (max-width: 1023px) {
+  .mdc-chat-sidebar__agents-pane .mdc-chat-sidebar__link-list button,
+  .mdc-chat-sidebar__project-manage button {
+    min-height: 2.2rem;
+  }
+}
+
 .mdc-chat-sidebar__project-manage button svg {
   justify-self: center;
 }

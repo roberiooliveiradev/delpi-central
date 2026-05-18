@@ -150,3 +150,21 @@
 .mdc-chat-project-card-menu__danger:hover {
   background: color-mix(in srgb, var(--mdc-danger) 10%, transparent) !important;
 }
+
+@media (hover: none), (pointer: coarse) {
+  .mdc-chat-project-card__options {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 1023px) {
+  .mdc-chat-project-card__main {
+    min-height: 2.35rem;
+    padding-block: 0.35rem;
+  }
+
+  .mdc-chat-project-card-menu__panel {
+    width: min(14rem, calc(100vw - 2rem));
+  }
+}

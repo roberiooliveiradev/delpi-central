@@ -126,12 +126,28 @@
   padding: 0.5rem 0.9rem;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1023px) {
   .mdc-admin-agents__layout {
     grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .mdc-admin-agents__list ul {
+    max-height: min(40vh, 18rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .mdc-admin-agents__header {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .mdc-admin-agents__grid {
     grid-template-columns: 1fr;
+  }
+
+  .mdc-admin-agents__agent-title {
+    flex-wrap: wrap;
   }
 }

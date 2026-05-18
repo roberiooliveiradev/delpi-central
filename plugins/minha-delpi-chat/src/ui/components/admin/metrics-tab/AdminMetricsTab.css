@@ -123,9 +123,19 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .mdc-admin-metrics-tab__grid,
   .mdc-admin-metrics-tab__columns {
     grid-template-columns: 1fr;
+  }
+
+  .mdc-admin-metrics-tab__hero,
+  .mdc-admin-metrics-card {
+    padding: var(--mdc-space-4);
+  }
+
+  .mdc-admin-metrics-tab__table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }

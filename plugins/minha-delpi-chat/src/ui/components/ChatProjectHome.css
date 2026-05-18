@@ -1,3 +1,5 @@
+@import "../layout/workspace-responsive.css";
+
 .mdc-chat-project-home {
   position: relative;
   display: grid;
@@ -491,6 +493,114 @@
   border: 1px solid color-mix(in srgb, var(--mdc-danger) 65%, transparent) !important;
   background: transparent !important;
   color: var(--mdc-danger) !important;
+}
+
+@media (max-width: 1023px) {
+  .mdc-chat-project-home {
+    width: 100%;
+    padding-inline: clamp(var(--mdc-space-3), 3vw, var(--mdc-space-5));
+  }
+
+  .mdc-chat-project-home__topbar {
+    grid-template-columns: 1fr;
+    gap: var(--mdc-space-2);
+  }
+
+  .mdc-chat-project-home__actions {
+    justify-self: end;
+  }
+
+  .mdc-chat-project-home__tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 0.15rem;
+  }
+
+  .mdc-chat-project-home__tabs button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .mdc-chat-project-home--compact {
+    padding-top: clamp(1rem, 3vh, 2rem);
+  }
+
+  .mdc-chat-project-home--compact h2 {
+    font-size: clamp(1.35rem, 5vw, 1.9rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .mdc-chat-project-home h2 {
+    font-size: clamp(1.35rem, 5.5vw, 1.75rem);
+  }
+
+  .mdc-chat-project-home__composer {
+    width: 100%;
+  }
+
+  .mdc-chat-project-home-session-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--mdc-space-2);
+  }
+
+  .mdc-chat-project-home-session-date {
+    display: none;
+  }
+
+  .mdc-chat-project-settings-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .mdc-chat-project-settings {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 1.25rem 1.25rem 0 0;
+    overflow-y: auto;
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mdc-chat-project-settings footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .mdc-chat-project-settings footer button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .mdc-chat-project-source-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .mdc-chat-project-source-card > button:last-child {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .mdc-chat-project-home-session-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 1023px) and (orientation: landscape),
+  (max-height: 520px) and (max-width: 1023px) {
+  .mdc-chat-project-sources {
+    max-height: min(48vh, 20rem);
+  }
+
+  .mdc-chat-project-home--compact {
+    padding-top: var(--mdc-space-3);
+    gap: var(--mdc-space-3);
+  }
 }
 
 @media (max-width: 820px) {

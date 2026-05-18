@@ -1,3 +1,28 @@
+@media (max-width: 1023px) {
+  .mdc-chat-sidebar-project-children {
+    margin-left: 1.35rem;
+    padding-left: 0.25rem;
+  }
+
+  .mdc-chat-sidebar-project-more--root {
+    margin-left: 1.45rem;
+  }
+
+  .mdc-chat-sidebar__project-new button {
+    min-height: 2.35rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .mdc-chat-sidebar-project-children {
+    margin-left: 1.1rem;
+  }
+
+  .mdc-chat-sidebar-project-more--root {
+    margin-left: 1.15rem;
+  }
+}
+
 .mdc-chat-sidebar__section-title--button {
   padding-right: var(--mdc-sidebar-pad-x);
 }

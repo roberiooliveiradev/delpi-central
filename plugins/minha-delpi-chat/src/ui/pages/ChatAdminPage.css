@@ -1,3 +1,5 @@
+@import "../layout/workspace-responsive.css";
+
 .minha-delpi-chat.mdc-admin-root {
   width: 100%;
   height: auto;
@@ -20,8 +22,15 @@
   padding: clamp(var(--mdc-space-4), 1.6vw, var(--mdc-space-6));
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .mdc-admin-shell {
     padding: var(--mdc-space-3);
+    gap: var(--mdc-space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .mdc-admin-shell {
+    padding: var(--mdc-space-2);
   }
 }

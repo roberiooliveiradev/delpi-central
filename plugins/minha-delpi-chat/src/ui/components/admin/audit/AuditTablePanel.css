@@ -1,6 +1,7 @@
 .mdc-audit-table-wrap {
   overflow: auto;
   max-height: min(56vh, 38rem);
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-lg);
 }
@@ -40,4 +41,21 @@
 
 .mdc-audit-table td {
   color: var(--mdc-text-muted);
+}
+
+@media (max-width: 767px) {
+  .mdc-audit-table-wrap {
+    max-height: min(50vh, 24rem);
+    border-radius: var(--mdc-radius-md);
+  }
+
+  .mdc-audit-table {
+    min-width: 640px;
+  }
+
+  .mdc-audit-table th,
+  .mdc-audit-table td {
+    padding: 0.55rem 0.6rem;
+    font-size: 0.82rem;
+  }
 }

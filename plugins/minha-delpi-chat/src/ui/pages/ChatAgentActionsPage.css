@@ -1,3 +1,5 @@
+@import "../layout/workspace-responsive.css";
+
 .mdc-chat-agent-actions-page {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -357,6 +359,12 @@
   }
 }
 
+@media (max-width: 1023px) {
+  .mdc-chat-agent-actions-page__topbar > button span {
+    display: none;
+  }
+}
+
 @media (max-width: 760px) {
   .mdc-chat-agent-actions-page__topbar {
     grid-template-columns: 1fr;
@@ -366,6 +374,11 @@
 
   .mdc-chat-agent-actions-page__primary {
     justify-self: start;
+  }
+
+  .mdc-chat-agent-actions-page__topbar-actions {
+    flex-wrap: wrap;
+    width: 100%;
   }
 
   .mdc-chat-agent-actions-page__grid,

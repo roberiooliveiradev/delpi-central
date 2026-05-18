@@ -1,3 +1,5 @@
+@import "../layout/workspace-responsive.css";
+
 .mdc-chat-agent-builder {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -399,6 +401,12 @@
   }
 }
 
+@media (max-width: 1023px) {
+  .mdc-chat-agent-builder__topbar > button span {
+    display: none;
+  }
+}
+
 @media (max-width: 760px) {
   .mdc-chat-agent-builder__topbar {
     grid-template-columns: 1fr;
@@ -406,14 +414,32 @@
     gap: 0.5rem;
   }
 
+  .mdc-chat-agent-builder__topbar > div:nth-child(2) {
+    justify-items: start;
+  }
+
   .mdc-chat-agent-builder__topbar-actions {
+    flex-wrap: wrap;
     justify-content: start;
+    width: 100%;
   }
 
   .mdc-chat-agent-builder__grid,
   .mdc-chat-agent-builder__grid--three,
   .mdc-chat-agent-builder__preview-icebreakers {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1023px) and (orientation: landscape),
+  (max-height: 520px) and (max-width: 1023px) {
+  .mdc-chat-agent-builder__layout {
+    gap: var(--mdc-space-3);
+  }
+
+  .mdc-chat-agent-builder__preview {
+    max-height: min(42vh, 20rem);
+    overflow-y: auto;
   }
 }
 
