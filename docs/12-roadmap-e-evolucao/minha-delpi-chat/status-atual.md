@@ -78,7 +78,7 @@ Local (WSL) com `DATABASE_URL` apontando para `localhost:5433` — ver [09-deplo
 
 ## LLM em produção (provisório)
 
-- Provider: **Ollama** (`qwen2.5:3b` + `bge-m3`; CPU sem GPU)
+- Provider: **Ollama** (`qwen2.5:1.5b` chat + `bge-m3` embeddings; CPU sem GPU). Qualidade vem do pipeline (actions, RAG, fast paths), não de modelo maior
 - vLLM pendente de host com GPU — ver `homologacao-vllm-producao.md`
 
 ## Endpoints de verificação rápida
@@ -90,6 +90,10 @@ GET  /apps/minha-delpi-ai/api/admin/tools/health
 GET  /apps/minha-delpi-ai/api/admin/metrics/summary?hours=24
 GET  /apps/minha-delpi-ai/api/chat/capabilities
 ```
+
+## Inteligência do chat (Onda 6)
+
+Roadmap detalhado: [`minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-6.md) — modelo `qwen2.5:1.5b`, resposta direta após actions, seleção heurística, RAG enxuto e bateria de regressão.
 
 ## Próximas evoluções sugeridas
 

@@ -6,7 +6,8 @@
   padding: 0.32rem var(--mdc-sidebar-pad-x) 0.22rem;
 }
 
-.mdc-chat-sidebar__project-manage button {
+/* button (legado) e <a> (links com URL) compartilham o mesmo layout */
+.mdc-chat-sidebar__project-manage :is(button, a) {
   display: grid;
   grid-template-columns: 1.25rem minmax(0, auto);
   align-items: center;
@@ -23,19 +24,26 @@
   font-size: 0.7rem;
   font-weight: 850;
   padding: 0.34rem 0.5rem;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
-.mdc-chat-sidebar__project-manage button:hover {
+.mdc-chat-sidebar__project-manage :is(button, a):hover {
   background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+}
+
+.mdc-chat-sidebar__project-manage :is(button, a):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary) 55%, transparent);
+  outline-offset: 2px;
 }
 
 @media (max-width: 1023px) {
   .mdc-chat-sidebar__agents-pane .mdc-chat-sidebar__link-list button,
-  .mdc-chat-sidebar__project-manage button {
+  .mdc-chat-sidebar__project-manage :is(button, a) {
     min-height: 2.2rem;
   }
 }
 
-.mdc-chat-sidebar__project-manage button svg {
+.mdc-chat-sidebar__project-manage :is(button, a) svg {
   justify-self: center;
 }

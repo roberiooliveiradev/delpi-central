@@ -11,6 +11,7 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | [inteligencia-chat-onda-3.md](./inteligencia-chat-onda-3.md) | Inteligência do chat — Onda 3 (concluída). |
 | [inteligencia-chat-onda-4.md](./inteligencia-chat-onda-4.md) | Inteligência do chat — Onda 4 (concluída). |
 | [inteligencia-chat-onda-5.md](./inteligencia-chat-onda-5.md) | Inteligência do chat — Onda 5 (concluída). |
+| [inteligencia-chat-onda-6.md](./inteligencia-chat-onda-6.md) | Inteligência do chat — Onda 6 (em andamento: modelo 1.5b + pipeline). |
 | [notificacoes-minha-delpi.md](./notificacoes-minha-delpi.md) | Notificações de plataforma: broadcast, integrações e UI no chat. |
 | [agentes-gestao-melhorias.md](./agentes-gestao-melhorias.md) | Gestão de agentes — melhorias (ondas 1–7 concluídas). |
 
@@ -18,4 +19,4 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 
 Antes de criar funcionalidades, alterar layout, endpoints, migrations ou comportamento do agente, consultar estes documentos e a documentação da API em `docs/api/`.
 
-**Inteligência do chat:** ondas 1–5 concluídas ([inteligencia-chat-onda-5.md](./inteligencia-chat-onda-5.md)).
+**Inteligência do chat:** ondas 1–5 concluídas; **Onda 6 em andamento** ([inteligencia-chat-onda-6.md](./inteligencia-chat-onda-6.md)) — modelo leve + melhorias de pipeline (actions, resposta direta, RAG, prompts).

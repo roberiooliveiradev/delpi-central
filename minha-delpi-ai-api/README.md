@@ -80,6 +80,7 @@ docs/              # documentação técnica
 |----------|-----------|
 | `DATABASE_URL` | Conexão PostgreSQL (obrigatória) |
 | `LLM_PROVIDER` | `ollama` ou `vllm` |
+| `OLLAMA_MODEL` | Default `qwen2.5:1.5b` (rápido em CPU). Ver [Onda 6](./docs/roadmap/inteligencia-chat-onda-6.md) |
 | `LLM_COST_TABLE_JSON` | Tabela de custo fallback (env) |
 | `RAG_ASSERTIVENESS_MIN_SCORE` | Limiar de assertividade nos testes RAG (admin) |
 | `RAG_CONTEXT_MIN_SCORE` | Score mínimo de chunk no contexto do chat (default = assertividade) |
