@@ -60,16 +60,17 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingArchivedSessions, setIsLoadingArchivedSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [isSending, setIsSending] = useState(false);
+  const [pendingSessionIds, setPendingSessionIds] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null);
   const skipNextSessionLoadRef = useRef(false);
   const activeSessionIdRef = useRef<string | null>(null);
 
   const {
-    isStreaming,
+    isSessionStreaming,
     streamMessage,
     resendMessage,
     cancelStreaming: cancelStreamingBase,
+    cancelSessionStreaming,
   } = useChatStreaming({
     getAccessToken: options.getAccessToken,
   });
@@ -81,11 +82,61 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingStatus(null);
   }, []);
 
+  const markSessionPending = useCallback((sessionId: string) => {
+    setPendingSessionIds((current) => {
+      if (current.has(sessionId)) {
+        return current;
+      }
+
+      const next = new Set(current);
+      next.add(sessionId);
+      return next;
+    });
+  }, []);
+
+  const unmarkSessionPending = useCallback((sessionId: string) => {
+    setPendingSessionIds((current) => {
+      if (!current.has(sessionId)) {
+        return current;
+      }
+
+      const next = new Set(current);
+      next.delete(sessionId);
+      return next;
+    });
+  }, []);
+
+  const isSessionPending = useCallback(
+    (sessionId: string) => pendingSessionIds.has(sessionId),
+    [pendingSessionIds],
+  );
+
+  const isSessionProcessing = useCallback(
+    (sessionId: string) =>
+      pendingSessionIds.has(sessionId) || isSessionStreaming(sessionId),
+    [pendingSessionIds, isSessionStreaming],
+  );
+
+  const isActiveSessionBusy = useCallback(() => {
+    const sessionId = activeSessionIdRef.current;
+
+    if (!sessionId) {
+      return false;
+    }
+
+    return isSessionProcessing(sessionId);
+  }, [isSessionProcessing]);
+
   const cancelStreaming = useCallback(() => {
-    cancelStreamingBase();
+    const sessionId = activeSessionIdRef.current;
+
+    if (sessionId) {
+      cancelSessionStreaming(sessionId);
+      unmarkSessionPending(sessionId);
+    }
+
     resetStreamingUi();
-    setIsSending(false);
-  }, [cancelStreamingBase, resetStreamingUi]);
+  }, [cancelSessionStreaming, resetStreamingUi, unmarkSessionPending]);
 
   const isStreamForActiveSession = useCallback((sessionId: string) => {
     return activeSessionIdRef.current === sessionId;
@@ -140,22 +191,26 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
   const selectSession = useCallback(
     (session: ChatSession) => {
-      cancelStreaming();
+      resetStreamingUi();
       activeSessionIdRef.current = session.id;
       setMessages([]);
       setActiveSession(session);
+
+      if (isSessionPending(session.id) && !isSessionStreaming(session.id)) {
+        setStreamingStatus("Finalizando resposta em segundo plano...");
+      }
     },
-    [cancelStreaming],
+    [isSessionPending, isSessionStreaming, resetStreamingUi],
   );
 
   const startSession = useCallback(async () => {
-    cancelStreaming();
+    resetStreamingUi();
     activeSessionIdRef.current = null;
     setError(null);
     setActiveSession(null);
     setMessages([]);
     setDraft("");
-  }, [cancelStreaming]);
+  }, [resetStreamingUi]);
 
   const loadMessages = useCallback(
     async (sessionId: string) => {
@@ -199,8 +254,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           return nextSession;
         });
 
+        cancelSessionStreaming(sessionId);
+        unmarkSessionPending(sessionId);
+
         if (activeSession?.id === sessionId) {
-          cancelStreaming();
+          resetStreamingUi();
           activeSessionIdRef.current = null;
           setMessages([]);
         }
@@ -211,7 +269,14 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         return false;
       }
     },
-    [activeSession?.id, cancelStreaming, options.getAccessToken, sessions],
+    [
+      activeSession?.id,
+      cancelSessionStreaming,
+      options.getAccessToken,
+      resetStreamingUi,
+      sessions,
+      unmarkSessionPending,
+    ],
   );
 
   const setMessageFeedback = useCallback(
@@ -440,9 +505,12 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [options.getAccessToken],
   );
 
-  const finishSending = useCallback(() => {
-    setIsSending(false);
-  }, []);
+  const finishSending = useCallback(
+    (sessionId: string) => {
+      unmarkSessionPending(sessionId);
+    },
+    [unmarkSessionPending],
+  );
 
   const buildStreamCallbacks = useCallback(
     (sessionForMessage: ChatSession) => {
@@ -491,7 +559,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingAnswer((current) => current + token);
         },
         onDone: async () => {
-          finishSending();
+          finishSending(sessionId);
 
           try {
             await loadSessions();
@@ -508,7 +576,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           await loadMessages(sessionId);
         },
         onError: (streamError: string) => {
-          finishSending();
+          finishSending(sessionId);
 
           if (!isStreamForActiveSession(sessionId)) {
             return;
@@ -542,7 +610,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         return null;
       }
 
-      if (isSending || isStreaming) {
+      if (isActiveSessionBusy()) {
         setError("Aguarde a resposta atual terminar.");
         return null;
       }
@@ -562,7 +630,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       }
 
       setError(null);
-      setIsSending(true);
+      markSessionPending(activeSession.id);
       setStreamingAnswer("");
       setStreamingSources([]);
       setStreamingToolCalls([]);
@@ -604,13 +672,13 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         };
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") {
-          finishSending();
+          finishSending(activeSession.id);
           return null;
         }
 
         setStreamingStatus(null);
         setError(err instanceof Error ? err.message : "Erro ao reenviar mensagem.");
-        finishSending();
+        finishSending(activeSession.id);
         await loadMessages(activeSession.id);
         return null;
       }
@@ -619,9 +687,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       activeSession,
       buildStreamCallbacks,
       finishSending,
-      isSending,
-      isStreaming,
+      isActiveSessionBusy,
       loadMessages,
+      markSessionPending,
       messages,
       resendMessage,
     ],
@@ -630,7 +698,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const sendMessage = useCallback(async (params: { attachments?: File[] } = {}) => {
     const message = draft.trim();
 
-    if (!message || isStreaming || isSending) {
+    if (!message || isActiveSessionBusy()) {
       return;
     }
 
@@ -639,7 +707,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
     setError(null);
     setDraft("");
-    setIsSending(true);
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
@@ -648,6 +715,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         ? "Preparando sua pergunta..."
         : "Criando conversa e preparando sua pergunta...",
     );
+
+    if (activeSession) {
+      markSessionPending(activeSession.id);
+    }
 
     setMessages((current) => [
       ...current,
@@ -676,6 +747,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
         skipNextSessionLoadRef.current = true;
         activeSessionIdRef.current = sessionForMessage!.id;
+        markSessionPending(sessionForMessage!.id);
         setSessions((current) => [sessionForMessage!, ...current]);
         setActiveSession(sessionForMessage);
         setMessages((current) =>
@@ -689,6 +761,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           ),
         );
       }
+
+      markSessionPending(sessionForMessage.id);
 
       const uploadedAttachments: ChatAttachment[] = [];
 
@@ -741,22 +815,26 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       });
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
-        finishSending();
+        if (sessionForMessage) {
+          finishSending(sessionForMessage.id);
+        }
         return;
       }
 
       setStreamingStatus(null);
       setError(err instanceof Error ? err.message : "Erro ao enviar mensagem.");
-      finishSending();
+      if (sessionForMessage) {
+        finishSending(sessionForMessage.id);
+      }
     }
   }, [
     activeSession,
     draft,
     finishSending,
-    isSending,
-    isStreaming,
+    isActiveSessionBusy,
     loadMessages,
     loadSessions,
+    markSessionPending,
     options.agentKey,
     options.getAccessToken,
     options.projectId,
@@ -786,6 +864,29 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     void loadMessages(activeSession.id);
   }, [activeSession, loadMessages]);
 
+  useEffect(() => {
+    const sessionId = activeSession?.id;
+
+    if (!sessionId || !isSessionPending(sessionId) || isSessionStreaming(sessionId)) {
+      return;
+    }
+
+    setStreamingStatus("Finalizando resposta em segundo plano...");
+
+    const interval = window.setInterval(() => {
+      void loadMessages(sessionId);
+    }, 2500);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [activeSession?.id, isSessionPending, isSessionStreaming, loadMessages]);
+
+  const isComposerBusy = isActiveSessionBusy();
+  const isStreamingActiveSession =
+    Boolean(activeSession) &&
+    (isSessionStreaming(activeSession.id) || isSessionPending(activeSession.id));
+
   return {
     sessions,
     archivedSessions,
@@ -799,8 +900,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,
-    isStreaming,
-    isSending,
+    isComposerBusy,
+    isStreamingActiveSession,
+    isSessionProcessing,
     error,
     clearError,
     setDraft,

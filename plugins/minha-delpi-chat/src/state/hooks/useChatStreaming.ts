@@ -25,17 +25,47 @@ type StreamMessageParams = {
 };
 
 export function useChatStreaming(options: UseChatStreamingOptions = {}) {
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const streamsRef = useRef<Map<string, AbortController>>(new Map());
+  const [streamRevision, setStreamRevision] = useState(0);
 
-  const cancelStreaming = useCallback(() => {
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = null;
-    setIsStreaming(false);
+  const bumpStreams = useCallback(() => {
+    setStreamRevision((current) => current + 1);
   }, []);
+
+  const isSessionStreaming = useCallback(
+    (sessionId: string) => streamsRef.current.has(sessionId),
+    [streamRevision],
+  );
+
+  const cancelSessionStreaming = useCallback(
+    (sessionId: string) => {
+      streamsRef.current.get(sessionId)?.abort();
+      streamsRef.current.delete(sessionId);
+      bumpStreams();
+    },
+    [bumpStreams],
+  );
+
+  const cancelStreaming = useCallback(
+    (sessionId?: string) => {
+      if (sessionId) {
+        cancelSessionStreaming(sessionId);
+        return;
+      }
+
+      for (const controller of streamsRef.current.values()) {
+        controller.abort();
+      }
+
+      streamsRef.current.clear();
+      bumpStreams();
+    },
+    [bumpStreams, cancelSessionStreaming],
+  );
 
   const runStream = useCallback(
     async (
+      sessionId: string,
       runner: (
         callbacks: Pick<
           StreamMessageParams,
@@ -49,17 +79,17 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       >,
     ) => {
       const abortController = new AbortController();
-      abortControllerRef.current = abortController;
-      setIsStreaming(true);
+      streamsRef.current.set(sessionId, abortController);
+      bumpStreams();
 
       try {
         await runner(callbacks, abortController.signal);
       } finally {
-        abortControllerRef.current = null;
-        setIsStreaming(false);
+        streamsRef.current.delete(sessionId);
+        bumpStreams();
       }
     },
-    [],
+    [bumpStreams],
   );
 
   const streamMessage = useCallback(
@@ -76,6 +106,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       onError,
     }: StreamMessageParams) => {
       await runStream(
+        sessionId,
         (streamCallbacks, signal) =>
           streamChatMessage(
             sessionId,
@@ -128,6 +159,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       onError?: (message: string) => void;
     }) => {
       await runStream(
+        sessionId,
         (streamCallbacks, signal) =>
           resendChatMessage(sessionId, messageId, content, streamCallbacks, {
             getAccessToken: options.getAccessToken,
@@ -148,9 +180,10 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
   );
 
   return {
-    isStreaming,
+    isSessionStreaming,
     streamMessage,
     resendMessage,
     cancelStreaming,
+    cancelSessionStreaming,
   };
 }

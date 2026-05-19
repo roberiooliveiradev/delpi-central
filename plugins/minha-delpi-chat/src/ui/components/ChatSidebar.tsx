@@ -68,6 +68,7 @@ type ChatSidebarProps = {
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onSelectProject?: (projectId: string | null) => void;
   onSelectAgent?: (agentKey: string | null) => void;
+  isSessionProcessing?: (sessionId: string) => boolean;
 };
 
 export function ChatSidebar({
@@ -102,6 +103,7 @@ export function ChatSidebar({
   onDeleteProject,
   onSelectProject,
   onSelectAgent,
+  isSessionProcessing,
 }: ChatSidebarProps) {
   const [deleteTargetSession, setDeleteTargetSession] = useState<ChatSession | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -319,6 +321,7 @@ export function ChatSidebar({
           selectedProjectId={selectedProjectId}
           activeSessionId={activeSessionId}
           isLoading={isLoadingProjects}
+          isSessionProcessing={isSessionProcessing}
           onSelectProject={onSelectProject}
           onSelectSession={onSelectSession}
           onNewProject={() => setIsProjectsModalOpen(true)}
@@ -367,6 +370,7 @@ export function ChatSidebar({
             searchTerm={searchTerm}
             selectedProjectName={null}
             hideTitle
+            isSessionProcessing={isSessionProcessing}
             onOpenArchived={() => void openArchivedSessions()}
             onSelectSession={onSelectSession}
             onRenameSession={onRenameSession}

@@ -79,8 +79,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,
-    isStreaming,
-    isSending,
+    isComposerBusy,
+    isStreamingActiveSession,
+    isSessionProcessing,
     error,
     clearError,
     setDraft,
@@ -456,8 +457,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
 
   const hasActiveConversation =
     messages.length > 0 ||
-    isStreaming ||
-    isSending ||
+    isStreamingActiveSession ||
     Boolean(streamingAnswer) ||
     Boolean(streamingStatus);
 
@@ -573,6 +573,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           agents={agents}
           projects={projects}
           activeSessionId={activeSession?.id}
+          isSessionProcessing={isSessionProcessing}
           selectedProjectId={selectedProjectId}
           selectedAgentKey={activeAgentPageKey}
           isLoading={isLoadingSessions}
@@ -777,6 +778,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                   compact
                   settingsRequestKey={projectSettingsRequestKey}
                   activeSessionId={activeSession?.id}
+                  isSessionProcessing={isSessionProcessing}
                   onSelectSession={handleSelectSession}
                   onRenameSession={renameSession}
                   onDeleteSession={handleDeleteSession}
@@ -840,7 +842,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                     <ChatInput
                       value={draft}
                       disabled={false}
-                      isSending={isStreaming || isSending}
+                      isSending={isComposerBusy}
                       variant="center"
                       placeholder={getComposerPlaceholder()}
                       {...composerAttachmentProps}
@@ -880,7 +882,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                   <ChatInput
                     value={draft}
                     disabled={false}
-                    isSending={isStreaming || isSending}
+                    isSending={isComposerBusy}
                     variant="center"
                     placeholder={getComposerPlaceholder()}
                     {...composerAttachmentProps}
@@ -900,7 +902,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
                 streamingSources={streamingSources}
                 streamingToolCalls={streamingToolCalls}
                 streamingStatus={streamingStatus}
-                isStreaming={isStreaming || isSending}
+                isStreaming={isStreamingActiveSession}
                 isLoading={isLoadingMessages && messages.length === 0}
                 onUseSuggestion={setDraft}
                 onEditMessage={editMessage}
@@ -912,7 +914,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
               <ChatInput
                 value={draft}
                 disabled={false}
-                isSending={isStreaming || isSending}
+                isSending={isComposerBusy}
                 variant="dock"
                 placeholder={getComposerPlaceholder()}
                 {...composerAttachmentProps}

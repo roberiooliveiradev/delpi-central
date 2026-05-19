@@ -48,9 +48,27 @@
 
 .mdc-chat-conversation-item__leading,
 .mdc-chat-conversation-item__trailing {
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
   color: var(--mdc-text-muted);
+}
+
+.mdc-chat-conversation-item__trailing {
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.mdc-chat-conversation-item__spinner {
+  animation: mdc-chat-conversation-spin 0.85s linear infinite;
+  color: var(--mdc-primary);
+  flex-shrink: 0;
+}
+
+@keyframes mdc-chat-conversation-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .mdc-chat-conversation-item__leading {

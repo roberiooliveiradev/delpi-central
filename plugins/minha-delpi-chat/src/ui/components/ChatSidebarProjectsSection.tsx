@@ -23,6 +23,7 @@ type ChatSidebarProjectsSectionProps = {
   onNewProject: () => void;
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
+  isSessionProcessing?: (sessionId: string) => boolean;
 };
 
 export function ChatSidebarProjectsSection({
@@ -36,6 +37,7 @@ export function ChatSidebarProjectsSection({
   onNewProject,
   onRenameProject,
   onDeleteProject,
+  isSessionProcessing,
 }: ChatSidebarProjectsSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAllProjects, setShowAllProjects] = useState(false);
@@ -185,6 +187,7 @@ export function ChatSidebarProjectsSection({
                               session={session}
                               variant="project"
                               active={session.id === activeSessionId}
+                              isProcessing={isSessionProcessing?.(session.id) ?? false}
                               onClick={() => onSelectSession?.(session)}
                             />
                           ))}

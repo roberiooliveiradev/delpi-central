@@ -22,6 +22,7 @@ type ChatSidebarSessionListProps = {
   onArchiveSession?: (sessionId: string) => Promise<ChatSession | null>;
   onOpenArchived?: () => void;
   hideTitle?: boolean;
+  isSessionProcessing?: (sessionId: string) => boolean;
 };
 
 export function ChatSidebarSessionList({
@@ -38,6 +39,7 @@ export function ChatSidebarSessionList({
   onArchiveSession,
   onOpenArchived,
   hideTitle,
+  isSessionProcessing,
 }: ChatSidebarSessionListProps) {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -180,6 +182,7 @@ export function ChatSidebarSessionList({
                   : session.title,
               }}
               active={session.id === activeSessionId}
+              isProcessing={isSessionProcessing?.(session.id) ?? false}
               onClick={() => onSelectSession(session)}
             />
 

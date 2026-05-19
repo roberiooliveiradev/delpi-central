@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import type { ChatSession } from "../../data/api/chatTypes";
@@ -13,6 +14,7 @@ type ChatConversationListItemProps = {
   variant?: ChatConversationListItemVariant;
   leading?: ReactNode;
   trailing?: ReactNode;
+  isProcessing?: boolean;
   onClick: () => void;
 };
 
@@ -22,6 +24,7 @@ export function ChatConversationListItem({
   variant = "sidebar",
   leading,
   trailing,
+  isProcessing = false,
   onClick,
 }: ChatConversationListItemProps) {
   const date = formatSessionDate(session.updated_at);
@@ -37,6 +40,8 @@ export function ChatConversationListItem({
         .filter(Boolean)
         .join(" ")}
       onClick={onClick}
+      aria-busy={isProcessing || undefined}
+      title={isProcessing ? "Gerando resposta..." : undefined}
     >
       {leading ? (
         <span className="mdc-chat-conversation-item__leading">{leading}</span>
@@ -47,8 +52,17 @@ export function ChatConversationListItem({
         {date ? <small>{date}</small> : null}
       </span>
 
-      {trailing ? (
-        <span className="mdc-chat-conversation-item__trailing">{trailing}</span>
+      {trailing || isProcessing ? (
+        <span className="mdc-chat-conversation-item__trailing">
+          {isProcessing ? (
+            <Loader2
+              size={14}
+              className="mdc-chat-conversation-item__spinner"
+              aria-hidden="true"
+            />
+          ) : null}
+          {trailing}
+        </span>
       ) : null}
     </button>
   );

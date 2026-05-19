@@ -75,6 +75,7 @@ type ChatProjectHomeProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   compact?: boolean;
   settingsRequestKey?: number;
+  isSessionProcessing?: (sessionId: string) => boolean;
 };
 
 export function ChatProjectHome({
@@ -103,6 +104,7 @@ export function ChatProjectHome({
   getAccessToken,
   compact,
   settingsRequestKey,
+  isSessionProcessing,
 }: ChatProjectHomeProps) {
   const [activeTab, setActiveTab] = useState<ProjectTab>("chats");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -464,6 +466,7 @@ export function ChatProjectHome({
                     <ChatConversationListItem
                       session={session}
                       variant="home"
+                      isProcessing={isSessionProcessing?.(session.id) ?? false}
                       leading={
                         <span className="mdc-chat-conversation-item__avatar">
                           D
