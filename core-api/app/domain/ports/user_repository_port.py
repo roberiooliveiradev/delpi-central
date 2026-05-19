@@ -59,6 +59,9 @@ class UserRepositoryPort(Protocol):
     def update_name(self, user_id: UUID, name: str) -> None:
         ...
 
+    def update_identity(self, user_id: UUID, *, name: str, email: str) -> None:
+        ...
+
     def set_active(self, user_id: UUID, active: bool) -> None:
         ...
 

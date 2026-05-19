@@ -107,6 +107,26 @@ class SqlAlchemyUserRepository(UserRepositoryPort):
         if row:
             row.name = name
 
+    def update_identity(self, user_id: UUID, *, name: str, email: str) -> None:
+        row = self.session.get(User, user_id)
+        if not row:
+            return
+
+        normalized_name = (name or "").strip() or row.email
+        normalized_email = (email or "").strip().lower()
+
+        if row.name != normalized_name:
+            row.name = normalized_name
+
+        if row.email != normalized_email:
+            conflict = (
+                self.session.query(User.id)
+                .filter(User.email == normalized_email, User.id != user_id)
+                .first()
+            )
+            if not conflict:
+                row.email = normalized_email
+
     def set_active(self, user_id: UUID, active: bool) -> None:
         row = self.session.get(User, user_id)
         if row and hasattr(row, "active"):

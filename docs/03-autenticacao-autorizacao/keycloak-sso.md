@@ -454,11 +454,13 @@ Fluxo:
 ```text
 JWT validado
   ↓
-Extrai sub/email/name
+Extrai sub/email/name (e fallbacks given_name, preferred_username)
   ↓
-Busca users.email
+Busca users.id ou users.email
   ↓
 Se não existe, cria users com id=sub
+  ↓
+Se existe, atualiza name e email conforme o Keycloak
   ↓
 Atualiza last_login_at
   ↓
