@@ -48,6 +48,7 @@ export const Sidebar = () => {
     notifications,
     favorites,
     markAllNotificationsRead,
+    reloadNotifications,
   } = useContext(AuthContext);
 
   const { markNotificationRead, handleDelete, handleToggleImportant } = useNotificationActions();
@@ -348,7 +349,12 @@ export const Sidebar = () => {
 
               <div
                 className="sidebar-footer-item"
-                onClick={() => setNotifOpen(!notifOpen)}
+                onClick={() => {
+                  setNotifOpen((open) => {
+                    if (!open) void reloadNotifications();
+                    return !open;
+                  });
+                }}
               >
                 <Bell size={18} />
                 <span>Notificações</span>

@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import logging
-import threading
-import time
 from typing import TYPE_CHECKING
 
 from app.application.services.process_pending_notification_dispatches_service import (
     run_process_pending_notification_dispatches,
 )
+from app.extensions.socket import socketio
 
 if TYPE_CHECKING:
     from flask import Flask
@@ -17,7 +16,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _scheduler_started = False
-_scheduler_lock = threading.Lock()
 
 
 def _tick(app: Flask, *, batch_limit: int) -> None:
@@ -51,7 +49,7 @@ def _scheduler_loop(app: Flask, *, poll_seconds: int, batch_limit: int) -> None:
         except Exception:
             logger.exception("Notification dispatch scheduler tick failed")
 
-        time.sleep(poll_seconds)
+        socketio.sleep(poll_seconds)
 
 
 def start_notification_dispatch_scheduler(app: Flask) -> None:
@@ -67,16 +65,13 @@ def start_notification_dispatch_scheduler(app: Flask) -> None:
     poll_seconds = int(app.config.get("NOTIFICATIONS_DISPATCH_POLL_SECONDS", 60))
     batch_limit = int(app.config.get("NOTIFICATIONS_DISPATCH_BATCH_LIMIT", 20))
 
-    with _scheduler_lock:
-        if _scheduler_started:
-            return
-        _scheduler_started = True
+    if _scheduler_started:
+        return
+    _scheduler_started = True
 
-    thread = threading.Thread(
-        target=_scheduler_loop,
-        args=(app,),
-        kwargs={"poll_seconds": poll_seconds, "batch_limit": batch_limit},
-        name="notification-dispatch-scheduler",
-        daemon=True,
+    socketio.start_background_task(
+        _scheduler_loop,
+        app,
+        poll_seconds=poll_seconds,
+        batch_limit=batch_limit,
     )
-    thread.start()

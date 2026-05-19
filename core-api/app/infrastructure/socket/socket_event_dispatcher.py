@@ -16,16 +16,20 @@ class SocketIOEventDispatcher(EventDispatcherPort):
                 "payload": event.payload,
             }
 
-            if event.target_user_id:
-                socketio.emit(
-                    event.name,
-                    payload,
-                    room=str(event.target_user_id),
-                    namespace="/",
-                )
-            else:
-                socketio.emit(
-                    event.name,
-                    payload,
-                    namespace="/",
-                )
+            def _emit() -> None:
+                if event.target_user_id:
+                    socketio.emit(
+                        event.name,
+                        payload,
+                        room=str(event.target_user_id),
+                        namespace="/",
+                    )
+                else:
+                    socketio.emit(
+                        event.name,
+                        payload,
+                        namespace="/",
+                    )
+
+            # Agendador e outros fluxos fora do greenlet do eventlet precisam emitir na fila do Socket.IO.
+            socketio.start_background_task(_emit)

@@ -443,8 +443,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     onConnected: async () => {
       await Promise.all([loadIdentityAndNavigation(), loadNotificationsData()]);
     },
-    onNotification: (data) => {
-      setNotifications((prev) => [data, ...prev]);
+    onNotification: () => {
+      void loadNotificationsData();
     },
     onAdminChanged: async (data) => {
       if (data?.entity === "notifications") {
@@ -455,6 +455,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       await loadIdentityAndNavigation();
     },
   });
+
+  useEffect(() => {
+    if (!isAuthenticated || loading) return;
+
+    const pollMs = 60_000;
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void loadNotificationsData();
+    }, pollMs);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void loadNotificationsData();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [isAuthenticated, loading, loadNotificationsData]);
 
   useEffect(() => {
     let mounted = true;

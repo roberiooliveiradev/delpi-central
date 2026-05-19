@@ -61,7 +61,13 @@ O subtítulo do cabeçalho muda conforme a aba ativa. Após salvar preferências
 
 ## 4. Tempo real
 
-O `AuthContext` escuta eventos Socket.IO com `entity === "notifications"` e chama `loadNotificationsData()` para atualizar o sino sem recarregar a página.
+O `AuthContext` atualiza o sino por três caminhos:
+
+1. **Socket.IO** — evento `admin.changed` com `entity === "notifications"` dispara `loadNotificationsData()`.
+2. **Polling** — a cada 60 s (aba visível) recarrega a lista do sino.
+3. **Foco da aba** — ao voltar para a aba (`visibilitychange`) e ao abrir o dropdown do sino na Sidebar.
+
+Não é necessário recarregar a página manualmente após um envio agendado.
 
 ---
 
