@@ -1,5 +1,5 @@
 // src/ui/App.tsx
-import { useContext, useMemo } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Sidebar } from "../layout/Sidebar";
@@ -64,14 +64,22 @@ function AppShell() {
       );
   }, [apps]);
 
-  const federatedBasePaths = useMemo(
-    () => new Set(federatedAppHosts.map((host) => host.basePath)),
+  const isFederatedAppRoute = useCallback(
+    (path: string) => {
+      const normalized = normalizeAppBasePath(path);
+
+      return federatedAppHosts.some(
+        (host) =>
+          normalized === host.basePath ||
+          normalized.startsWith(`${host.basePath}/`),
+      );
+    },
     [federatedAppHosts],
   );
 
   const staticPluginRoutes = useMemo(
-    () => routes.filter((route) => !federatedBasePaths.has(normalizeAppBasePath(route.path))),
-    [routes, federatedBasePaths],
+    () => routes.filter((route) => !isFederatedAppRoute(route.path)),
+    [routes, isFederatedAppRoute],
   );
 
   return (
