@@ -514,7 +514,8 @@ export function NotificationsTab() {
               <div>
                 <h3 className="admin-notifications__panel-title">Destinatários</h3>
                 <p className="admin-notifications__panel-desc">
-                  Escolha usuários nos cards, cole e-mails ou IDs, ou envie para todos.
+                  Abra o seletor de usuários, cole e-mails ou IDs no atalho rápido, ou envie para
+                  todos.
                 </p>
               </div>
             </div>

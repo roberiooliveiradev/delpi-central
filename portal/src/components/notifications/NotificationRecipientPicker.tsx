@@ -1,10 +1,11 @@
 // src/components/notifications/NotificationRecipientPicker.tsx
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, ShieldCheck, UserRound, X } from "lucide-react";
+import { Plus, ShieldCheck, UserRound, Users, X } from "lucide-react";
 
 import type { AdminApi, AdminUser } from "../../data/adminApi";
 import { AdminEntityList } from "../admin/AdminEntityList";
+import { Modal } from "../Modal";
 import { usePaginatedResource } from "../../hooks/usePaginatedResource";
 import { parseRecipientsBulk } from "./notificationRecipients";
 
@@ -57,6 +58,8 @@ export function NotificationRecipientPicker({
   onPreviewUserIdChange,
   onRecipientLabelsChange,
 }: NotificationRecipientPickerProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [draftUserIds, setDraftUserIds] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [quickInput, setQuickInput] = useState("");
   const [quickError, setQuickError] = useState<string | null>(null);
@@ -69,12 +72,12 @@ export function NotificationRecipientPicker({
       adminApi.listUsers({
         page,
         pageSize,
-        q: search,
+        q: modalOpen ? search : "",
         sort: "name",
         direction: "asc",
       }),
     PAGE_SIZE,
-    [search],
+    [search, modalOpen],
   );
 
   const users = usersResource.data ?? [];
@@ -99,15 +102,37 @@ export function NotificationRecipientPicker({
     }));
   };
 
-  const toggleUserSelection = (userId: string) => {
+  const openModal = () => {
     if (disabled) {
       return;
     }
+    setDraftUserIds([...selectedUserIds]);
+    setSearch("");
+    usersResource.setPage(1);
+    setModalOpen(true);
+  };
 
+  const closeModal = () => {
+    setModalOpen(false);
+    setSearch("");
+  };
+
+  const confirmModal = () => {
+    for (const userId of draftUserIds) {
+      const user = usersById.get(userId);
+      if (user) {
+        rememberUser(user);
+      }
+    }
+    onChangeSelectedUserIds([...draftUserIds]);
+    closeModal();
+  };
+
+  const toggleDraftUser = (userId: string) => {
     const user = usersById.get(userId);
 
-    if (selectedUserIds.includes(userId)) {
-      onChangeSelectedUserIds(selectedUserIds.filter((id) => id !== userId));
+    if (draftUserIds.includes(userId)) {
+      setDraftUserIds(draftUserIds.filter((id) => id !== userId));
       return;
     }
 
@@ -115,15 +140,11 @@ export function NotificationRecipientPicker({
       rememberUser(user);
     }
 
-    onChangeSelectedUserIds([...selectedUserIds, userId]);
+    setDraftUserIds([...draftUserIds, userId]);
   };
 
-  const selectVisibleUsers = () => {
-    if (disabled) {
-      return;
-    }
-
-    const next = new Set(selectedUserIds);
+  const selectVisibleDraftUsers = () => {
+    const next = new Set(draftUserIds);
 
     for (const user of users) {
       if (user.active === false) {
@@ -133,7 +154,11 @@ export function NotificationRecipientPicker({
       next.add(user.id);
     }
 
-    onChangeSelectedUserIds(Array.from(next));
+    setDraftUserIds(Array.from(next));
+  };
+
+  const clearDraftUsers = () => {
+    setDraftUserIds([]);
   };
 
   const clearSelection = () => {
@@ -274,6 +299,12 @@ export function NotificationRecipientPicker({
   }
 
   const totalRecipients = selectedUserIds.length + extraEmails.length;
+  const userCountLabel =
+    selectedUserIds.length === 0
+      ? "Nenhum usuário selecionado"
+      : selectedUserIds.length === 1
+        ? "1 usuário selecionado"
+        : `${selectedUserIds.length} usuários selecionados`;
 
   useEffect(() => {
     onRecipientLabelsChange?.(recipientLabels);
@@ -285,11 +316,113 @@ export function NotificationRecipientPicker({
     }
   }, [previewUserId, selectedUserIds, onPreviewUserIdChange]);
 
+  const userList = (
+    <AdminEntityList<AdminUser>
+      className="notification-recipients__modal-list"
+      title=""
+      description=""
+      listTitle="Usuários ativos"
+      listSubtitle={`Página ${currentPage} de ${totalPages}`}
+      items={users.filter((user) => user.active !== false)}
+      loading={usersResource.loading}
+      emptyText="Nenhum usuário ativo encontrado."
+      getId={(user) => user.id}
+      selectedIds={draftUserIds}
+      selectionLabel="selecionados no modal"
+      onToggleSelected={toggleDraftUser}
+      onSelectVisible={selectVisibleDraftUsers}
+      onClearSelection={clearDraftUsers}
+      search={{
+        value: search,
+        placeholder: "Buscar por nome ou e-mail...",
+        onChange: (value) => {
+          setSearch(value);
+          usersResource.setPage(1);
+        },
+      }}
+      pagination={
+        usersResource.pagination
+          ? {
+              page: currentPage,
+              totalPages,
+              onPrevious: () => usersResource.prev(),
+              onNext: () => usersResource.next(),
+            }
+          : undefined
+      }
+      renderIcon={getInitials}
+      renderTitle={(user) => user.name || "Usuário sem nome"}
+      renderSubtitle={(user) => user.email}
+      renderBadges={(user) => [
+        {
+          label: user.active === false ? "Inativo" : "Ativo",
+          tone: user.active === false ? "danger" : "success",
+        },
+        ...(user.is_superadmin
+          ? [
+              {
+                label: (
+                  <>
+                    <ShieldCheck size={12} />
+                    Superadmin
+                  </>
+                ),
+                tone: "warning" as const,
+              },
+            ]
+          : []),
+      ]}
+      renderMeta={(user) => [
+        <>
+          <UserRound size={13} />
+          ID: {user.id}
+        </>,
+      ]}
+    />
+  );
+
   return (
     <div className="notification-recipients">
+      <div className="notification-recipients__picker-bar">
+        <div className="notification-recipients__picker-summary">
+          <span className="notification-recipients__picker-icon" aria-hidden="true">
+            <Users size={18} />
+          </span>
+          <div>
+            <strong>{userCountLabel}</strong>
+            {extraEmails.length > 0 ? (
+              <span className="notification-recipients__picker-extra">
+                + {extraEmails.length} e-mail(s) avulso(s)
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <div className="notification-recipients__picker-actions">
+          <button
+            type="button"
+            className="notification-recipients__open-modal"
+            onClick={openModal}
+            disabled={disabled}
+          >
+            <Users size={16} aria-hidden="true" />
+            Selecionar usuários
+          </button>
+          {totalRecipients > 0 ? (
+            <button
+              type="button"
+              className="notification-recipients__clear"
+              onClick={clearSelection}
+              disabled={disabled}
+            >
+              Limpar todos
+            </button>
+          ) : null}
+        </div>
+      </div>
+
       <div className="notification-recipients__quick">
         <label className="notification-recipients__quick-label">
-          <span>Adicionar destinatários (um ou vários)</span>
+          <span>Adicionar por e-mail ou ID (rápido)</span>
           <div className="notification-recipients__quick-row">
             <textarea
               value={quickInput}
@@ -302,9 +435,9 @@ export function NotificationRecipientPicker({
                   setQuickSuccess(null);
                 }
               }}
-              rows={3}
+              rows={2}
               placeholder={
-                "usuario@empresa.com\noutro@empresa.com\n550e8400-e29b-41d4-a716-446655440000"
+                "usuario@empresa.com, outro@empresa.com\n550e8400-e29b-41d4-a716-446655440000"
               }
               disabled={disabled}
             />
@@ -320,8 +453,8 @@ export function NotificationRecipientPicker({
           </div>
         </label>
         <p className="notification-recipients__hint">
-          Vários e-mails ou IDs: separe por vírgula, ponto-e-vírgula ou quebra de linha. Também
-          marque vários usuários nos cards (seleção múltipla).
+          Separe vários itens por vírgula ou quebra de linha. E-mails de usuários cadastrados viram
+          seleção por ID automaticamente.
         </p>
         {quickSuccess ? <p className="notification-recipients__success">{quickSuccess}</p> : null}
         {quickError ? <p className="notification-recipients__error">{quickError}</p> : null}
@@ -330,15 +463,7 @@ export function NotificationRecipientPicker({
       {totalRecipients > 0 ? (
         <div className="notification-recipients__chips">
           <div className="notification-recipients__chips-header">
-            <strong>{totalRecipients} destinatário(s)</strong>
-            <button
-              type="button"
-              className="notification-recipients__clear"
-              onClick={clearSelection}
-              disabled={disabled}
-            >
-              Limpar todos
-            </button>
+            <strong>{totalRecipients} destinatário(s) no total</strong>
           </div>
 
           {selectedUserIds.map((userId) => {
@@ -403,68 +528,41 @@ export function NotificationRecipientPicker({
         </div>
       ) : null}
 
-      <AdminEntityList<AdminUser>
-        className="notification-recipients__list"
+      <Modal
+        open={modalOpen}
         title="Selecionar usuários"
-        description="Marque um ou mais usuários ativos. A busca filtra por nome ou e-mail."
-        listTitle="Usuários"
-        listSubtitle={`Página ${currentPage} de ${totalPages}`}
-        items={users.filter((user) => user.active !== false)}
-        loading={usersResource.loading}
-        emptyText="Nenhum usuário ativo encontrado."
-        getId={(user) => user.id}
-        selectedIds={selectedUserIds}
-        selectionLabel="destinatários"
-        onToggleSelected={toggleUserSelection}
-        onSelectVisible={selectVisibleUsers}
-        onClearSelection={clearSelection}
-        search={{
-          value: search,
-          placeholder: "Buscar por nome ou e-mail...",
-          onChange: (value) => {
-            setSearch(value);
-            usersResource.setPage(1);
-          },
-        }}
-        pagination={
-          usersResource.pagination
-            ? {
-                page: currentPage,
-                totalPages,
-                onPrevious: () => usersResource.prev(),
-                onNext: () => usersResource.next(),
-              }
-            : undefined
+        size="xl"
+        onClose={closeModal}
+        footer={
+          <div className="notification-recipients__modal-footer">
+            <span className="notification-recipients__modal-count">
+              {draftUserIds.length === 0
+                ? "Nenhum usuário marcado"
+                : draftUserIds.length === 1
+                  ? "1 usuário marcado"
+                  : `${draftUserIds.length} usuários marcados`}
+            </span>
+            <div className="notification-recipients__modal-footer-actions">
+              <button type="button" className="notification-recipients__modal-btn" onClick={closeModal}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="notification-recipients__modal-btn notification-recipients__modal-btn--primary"
+                onClick={confirmModal}
+              >
+                Confirmar seleção
+              </button>
+            </div>
+          </div>
         }
-        renderIcon={getInitials}
-        renderTitle={(user) => user.name || "Usuário sem nome"}
-        renderSubtitle={(user) => user.email}
-        renderBadges={(user) => [
-          {
-            label: user.active === false ? "Inativo" : "Ativo",
-            tone: user.active === false ? "danger" : "success",
-          },
-          ...(user.is_superadmin
-            ? [
-                {
-                  label: (
-                    <>
-                      <ShieldCheck size={12} />
-                      Superadmin
-                    </>
-                  ),
-                  tone: "warning" as const,
-                },
-              ]
-            : []),
-        ]}
-        renderMeta={(user) => [
-          <>
-            <UserRound size={13} />
-            ID: {user.id}
-          </>,
-        ]}
-      />
+      >
+        <p className="notification-recipients__modal-intro">
+          Marque um ou mais usuários ativos. Use a busca para filtrar por nome ou e-mail. As
+          alterações só são aplicadas ao confirmar.
+        </p>
+        {userList}
+      </Modal>
     </div>
   );
 }
