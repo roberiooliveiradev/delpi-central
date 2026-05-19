@@ -4,7 +4,8 @@
   padding: 0.2rem var(--mdc-sidebar-pad-x) 0;
 }
 
-.mdc-chat-sidebar__nav button {
+.mdc-chat-sidebar__nav button,
+.mdc-chat-sidebar__nav a {
   display: grid;
   grid-template-columns: 1.5rem minmax(0, 1fr) auto;
   align-items: center;
@@ -20,9 +21,11 @@
   font-weight: 820;
   padding: 0.38rem 0.45rem;
   text-align: left;
+  text-decoration: none;
 }
 
-.mdc-chat-sidebar__nav button:hover {
+.mdc-chat-sidebar__nav button:hover,
+.mdc-chat-sidebar__nav a:hover {
   background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
 }
 

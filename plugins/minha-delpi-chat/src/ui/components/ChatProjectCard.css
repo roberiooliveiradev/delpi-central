@@ -34,6 +34,7 @@
   font: inherit;
   padding: 0.28rem 0.42rem;
   text-align: left;
+  text-decoration: none;
 }
 
 .mdc-chat-project-card__main:hover,

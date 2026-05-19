@@ -1,0 +1,36 @@
+import { useEffect, useRef } from "react";
+
+import { parseChatRoute, type ChatRoute } from "../../navigation/chatRoutes";
+import type { ChatSession } from "../../data/api/chatTypes";
+
+type UseChatRouteSyncOptions = {
+  pathname?: string;
+  sessions: ChatSession[];
+  onApplyRoute: (route: ChatRoute) => void;
+};
+
+export function useChatRouteSync({
+  pathname,
+  sessions,
+  onApplyRoute,
+}: UseChatRouteSyncOptions) {
+  const isApplyingRouteRef = useRef(false);
+
+  useEffect(() => {
+    if (!pathname) {
+      return;
+    }
+
+    const route = parseChatRoute(pathname);
+
+    isApplyingRouteRef.current = true;
+
+    try {
+      onApplyRoute(route);
+    } finally {
+      isApplyingRouteRef.current = false;
+    }
+  }, [pathname, sessions, onApplyRoute]);
+
+  return { isApplyingRouteRef };
+}

@@ -15,7 +15,8 @@ type ChatConversationListItemProps = {
   leading?: ReactNode;
   trailing?: ReactNode;
   isProcessing?: boolean;
-  onClick: () => void;
+  href?: string;
+  onClick?: () => void;
 };
 
 export function ChatConversationListItem({
@@ -25,24 +26,20 @@ export function ChatConversationListItem({
   leading,
   trailing,
   isProcessing = false,
+  href,
   onClick,
 }: ChatConversationListItemProps) {
   const date = formatSessionDate(session.updated_at);
+  const className = [
+    "mdc-chat-conversation-item",
+    `mdc-chat-conversation-item--${variant}`,
+    active ? "mdc-chat-conversation-item--active" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-  return (
-    <button
-      type="button"
-      className={[
-        "mdc-chat-conversation-item",
-        `mdc-chat-conversation-item--${variant}`,
-        active ? "mdc-chat-conversation-item--active" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      onClick={onClick}
-      aria-busy={isProcessing || undefined}
-      title={isProcessing ? "Gerando resposta..." : undefined}
-    >
+  const content = (
+    <>
       {leading ? (
         <span className="mdc-chat-conversation-item__leading">{leading}</span>
       ) : null}
@@ -64,6 +61,32 @@ export function ChatConversationListItem({
           {trailing}
         </span>
       ) : null}
+    </>
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        className={className}
+        onClick={onClick}
+        aria-busy={isProcessing || undefined}
+        title={isProcessing ? "Gerando resposta..." : undefined}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className={className}
+      onClick={onClick}
+      aria-busy={isProcessing || undefined}
+      title={isProcessing ? "Gerando resposta..." : undefined}
+    >
+      {content}
     </button>
   );
 }

@@ -15,6 +15,7 @@ import "./ChatProjectCard.css";
 type ChatProjectCardProps = {
   project: ChatProject;
   active?: boolean;
+  href?: string;
   onSelect: () => void;
   onRename?: () => void;
   onOpenSettings?: () => void;
@@ -32,6 +33,7 @@ const MENU_MARGIN = 8;
 export function ChatProjectCard({
   project,
   active,
+  href,
   onSelect,
   onRename,
   onOpenSettings,
@@ -152,20 +154,37 @@ export function ChatProjectCard({
           : "mdc-chat-project-card"
       }
     >
-      <button
-        type="button"
-        className="mdc-chat-project-card__main"
-        onClick={onSelect}
-        title={project.description || project.name}
-      >
-        <span className="mdc-chat-project-card__icon">
-          <Folder size={15} aria-hidden="true" />
-        </span>
+      {href ? (
+        <a
+          href={href}
+          className="mdc-chat-project-card__main"
+          onClick={onSelect}
+          title={project.description || project.name}
+        >
+          <span className="mdc-chat-project-card__icon">
+            <Folder size={15} aria-hidden="true" />
+          </span>
 
-        <span className="mdc-chat-project-card__content">
-          <strong>{project.name}</strong>
-        </span>
-      </button>
+          <span className="mdc-chat-project-card__content">
+            <strong>{project.name}</strong>
+          </span>
+        </a>
+      ) : (
+        <button
+          type="button"
+          className="mdc-chat-project-card__main"
+          onClick={onSelect}
+          title={project.description || project.name}
+        >
+          <span className="mdc-chat-project-card__icon">
+            <Folder size={15} aria-hidden="true" />
+          </span>
+
+          <span className="mdc-chat-project-card__content">
+            <strong>{project.name}</strong>
+          </span>
+        </button>
+      )}
 
       <button
         ref={triggerRef}

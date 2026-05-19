@@ -13,6 +13,7 @@
   font: inherit;
   padding: 0.32rem 0.42rem;
   text-align: left;
+  text-decoration: none;
   transition:
     background 0.14s ease,
     color 0.14s ease;

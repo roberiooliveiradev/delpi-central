@@ -30,6 +30,7 @@ import type {
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
 import { ChatUserSearchField } from "./ChatUserSearchField";
+import { buildChatSessionHref } from "../../navigation/chatRoutes";
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { formatSessionDate } from "./chatSidebarUtils";
@@ -467,6 +468,7 @@ export function ChatProjectHome({
                       session={session}
                       variant="home"
                       isProcessing={isSessionProcessing?.(session.id) ?? false}
+                      href={buildChatSessionHref(session.id)}
                       leading={
                         <span className="mdc-chat-conversation-item__avatar">
                           D

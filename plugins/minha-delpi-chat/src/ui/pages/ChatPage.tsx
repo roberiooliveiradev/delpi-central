@@ -1,4 +1,4 @@
-import { type DragEvent, useEffect, useState } from "react";
+import { type DragEvent, useCallback, useEffect, useState } from "react";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
@@ -21,6 +21,14 @@ import {
   updateChatArtifact,
   uploadProjectSource,
 } from "../../data/api/chatApi";
+import {
+  buildChatHref,
+  buildChatProjectHref,
+  buildChatSessionHref,
+  type ChatRoute,
+} from "../../navigation/chatRoutes";
+import { navigateChatHref } from "../../navigation/chatNavigation";
+import { useChatRouteSync } from "../../state/hooks/useChatRouteSync";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
@@ -40,11 +48,17 @@ function getAgentIcebreakerCount(agent: { metadata: Record<string, unknown> | nu
 
 type ChatPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  pathname?: string;
+  initialRoute?: ChatRoute;
   onOpenAdmin?: (agentId?: string) => void;
 };
 
 
-export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
+export function ChatPage({
+  getAccessToken,
+  pathname,
+  onOpenAdmin,
+}: ChatPageProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [activeAgentPageKey, setActiveAgentPageKey] = useState<string | null>(null);
   const [agentEditRequest, setAgentEditRequest] = useState<{
@@ -104,6 +118,9 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
     getAccessToken,
     projectId: selectedProjectId,
     agentKey: requestedAgentKey,
+    onSessionActivated: (sessionId) => {
+      navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
+    },
   });
 
   const {
@@ -150,6 +167,75 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   function closeMobileSidebar() {
     setIsMobileSidebarOpen(false);
   }
+
+  const applyChatRoute = useCallback(
+    (route: ChatRoute) => {
+      clearWorkspaceError();
+      clearError();
+      setCanvasDocument(null);
+      setComposerAttachments([]);
+
+      switch (route.kind) {
+        case "home":
+          setSelectedProjectId(null);
+          setActiveAgentPageKey(null);
+          setContextAgentKey(null);
+          setCurrentView("chat");
+          void startSession();
+          break;
+        case "session": {
+          const session = sessions.find((item) => item.id === route.sessionId);
+
+          if (!session) {
+            return;
+          }
+
+          setSelectedProjectId(session.project_id ?? null);
+          setActiveAgentPageKey(null);
+          setContextAgentKey(null);
+          setCurrentView("chat");
+          selectSession(session);
+          closeMobileSidebar();
+          break;
+        }
+        case "project":
+          setSelectedProjectId(route.projectId);
+          setActiveAgentPageKey(null);
+          setContextAgentKey(getProjectDefaultAgentKey(route.projectId));
+          setCurrentView("chat");
+          void startSession();
+          closeMobileSidebar();
+          break;
+        case "agent":
+          setSelectedProjectId(null);
+          setActiveAgentPageKey(route.agentKey);
+          setContextAgentKey(null);
+          setCurrentView("chat");
+          void startSession();
+          closeMobileSidebar();
+          break;
+        case "agents":
+          setCurrentView("agents");
+          closeMobileSidebar();
+          break;
+        default:
+          break;
+      }
+    },
+    [
+      clearError,
+      clearWorkspaceError,
+      selectSession,
+      sessions,
+      startSession,
+    ],
+  );
+
+  useChatRouteSync({
+    pathname,
+    sessions,
+    onApplyRoute: applyChatRoute,
+  });
 
   function openMobileSidebar() {
     setIsMobileSidebarOpen(true);
@@ -330,14 +416,7 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
   }
 
   async function handleStartGeneralSession() {
-    clearWorkspaceError();
-    clearError();
-    setCanvasDocument(null);
-    setSelectedProjectId(null);
-    setActiveAgentPageKey(null);
-    setContextAgentKey(null);
-    setCurrentView("chat");
-    await startSession();
+    navigateChatHref(buildChatHref({ kind: "home" }));
   }
 
   function handleSelectSession(session: typeof sessions[number]) {
@@ -594,26 +673,20 @@ export function ChatPage({ getAccessToken, onOpenAdmin }: ChatPageProps) {
           onRenameProject={(projectId, name) => editProject(projectId, { name })}
           onDeleteProject={removeProject}
           onSelectProject={(projectId) => {
-            clearWorkspaceError();
-            clearError();
-            setCanvasDocument(null);
-            setSelectedProjectId(projectId);
-            setActiveAgentPageKey(null);
-            setContextAgentKey(getProjectDefaultAgentKey(projectId));
-            setCurrentView("chat");
-            closeMobileSidebar();
-            void startSession();
+            if (!projectId) {
+              navigateChatHref(buildChatHref({ kind: "home" }));
+              return;
+            }
+
+            navigateChatHref(buildChatProjectHref(projectId));
           }}
           onSelectAgent={(agentKey) => {
-            clearWorkspaceError();
-            clearError();
-            setCanvasDocument(null);
-            setSelectedProjectId(null);
-            setActiveAgentPageKey(agentKey);
-            setContextAgentKey(null);
-            setCurrentView("chat");
-            closeMobileSidebar();
-            void startSession();
+            if (!agentKey) {
+              navigateChatHref(buildChatHref({ kind: "home" }));
+              return;
+            }
+
+            navigateChatHref(buildChatHref({ kind: "agent", agentKey }));
           }}
           isCollapsed={isDesktop && isSidebarCollapsed}
           isMobileOpen={isMobileSidebarOpen}

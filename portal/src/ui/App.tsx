@@ -1,5 +1,5 @@
 // src/ui/App.tsx
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Sidebar } from "../layout/Sidebar";
@@ -32,7 +32,37 @@ const AnimatedWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 function AppShell() {
-  const { routes } = useContext(AuthContext);
+  const { routes, apps } = useContext(AuthContext);
+
+  const appSplatRoutes = useMemo(() => {
+    const registeredPaths = new Set(routes.map((route) => route.path));
+
+    return apps
+      .filter((app) => app.renderMode === "federated")
+      .map((app) => {
+        const basePath = app.basePath.startsWith("/")
+          ? app.basePath.replace(/\/+$/, "")
+          : `/${app.basePath}`;
+        const splatPath = `${basePath}/*`;
+
+        if (registeredPaths.has(splatPath)) {
+          return null;
+        }
+
+        const mainRoute =
+          app.routes?.find((route) => route.showInMenu !== false) ?? app.routes?.[0];
+
+        if (!mainRoute?.permission) {
+          return null;
+        }
+
+        return {
+          path: splatPath,
+          permission: mainRoute.permission,
+        };
+      })
+      .filter((route): route is { path: string; permission: string } => route !== null);
+  }, [apps, routes]);
 
   return (
     <div className="app-shell">
@@ -58,6 +88,20 @@ function AppShell() {
             />
 
             {routes.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={
+                  <ProtectedRoute permission={route.permission}>
+                    <AnimatedWrapper>
+                      <AppHost key={route.path} />
+                    </AnimatedWrapper>
+                  </ProtectedRoute>
+                }
+              />
+            ))}
+
+            {appSplatRoutes.map((route) => (
               <Route
                 key={route.path}
                 path={route.path}

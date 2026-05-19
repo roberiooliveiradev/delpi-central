@@ -8,6 +8,7 @@ type ChatSidebarWorkspaceItemProps = {
   subtitle?: string | null;
   active?: boolean;
   badge?: string | null;
+  href?: string;
   onClick?: () => void;
 };
 
@@ -17,19 +18,15 @@ export function ChatSidebarWorkspaceItem({
   subtitle,
   active,
   badge,
+  href,
   onClick,
 }: ChatSidebarWorkspaceItemProps) {
-  return (
-    <button
-      type="button"
-      className={
-        active
-          ? "mdc-sidebar-workspace-item mdc-sidebar-workspace-item--active"
-          : "mdc-sidebar-workspace-item"
-      }
-      onClick={onClick}
-      title={subtitle || title}
-    >
+  const className = active
+    ? "mdc-sidebar-workspace-item mdc-sidebar-workspace-item--active"
+    : "mdc-sidebar-workspace-item";
+
+  const content = (
+    <>
       <span className="mdc-sidebar-workspace-item__icon">
         <Icon size={15} aria-hidden="true" />
       </span>
@@ -40,6 +37,20 @@ export function ChatSidebarWorkspaceItem({
       </span>
 
       {badge ? <em>{badge}</em> : null}
+    </>
+  );
+
+  if (href) {
+    return (
+      <a href={href} className={className} onClick={onClick} title={subtitle || title}>
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <button type="button" className={className} onClick={onClick} title={subtitle || title}>
+      {content}
     </button>
   );
 }

@@ -1,6 +1,8 @@
 import { MessageSquarePlus, Search, X } from "lucide-react";
 import type { RefObject } from "react";
 
+import { buildChatHref } from "../../navigation/chatRoutes";
+
 type ChatSidebarNavProps = {
   isSearchOpen: boolean;
   searchTerm: string;
@@ -23,10 +25,10 @@ export function ChatSidebarNav({
   return (
     <>
       <nav className="mdc-chat-sidebar__nav" aria-label="Ações do chat">
-        <button type="button" onClick={onNewSession}>
+        <a href={buildChatHref({ kind: "home" })} onClick={onNewSession}>
           <MessageSquarePlus size={17} aria-hidden="true" />
           <span>Nova conversa</span>
-        </button>
+        </a>
 
         <button type="button" onClick={onToggleSearch}>
           <Search size={17} aria-hidden="true" />

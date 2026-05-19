@@ -27,6 +27,7 @@ type UseChatSessionOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   projectId?: string | null;
   agentKey?: string | null;
+  onSessionActivated?: (sessionId: string) => void;
 };
 
 function createOptimisticUserMessage(
@@ -749,6 +750,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         markSessionPending(sessionForMessage!.id);
         setSessions((current) => [sessionForMessage!, ...current]);
         setActiveSession(sessionForMessage);
+        options.onSessionActivated?.(sessionForMessage!.id);
         setMessages((current) =>
           current.map((item) =>
             item.id === optimisticId

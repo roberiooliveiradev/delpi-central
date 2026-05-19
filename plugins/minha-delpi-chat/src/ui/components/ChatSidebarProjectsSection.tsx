@@ -6,6 +6,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
+import { buildChatProjectHref, buildChatSessionHref } from "../../navigation/chatRoutes";
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatProjectCard } from "./ChatProjectCard";
 
@@ -152,6 +153,7 @@ export function ChatSidebarProjectsSection({
                       <ChatProjectCard
                         project={project}
                         active={isProjectActive}
+                        href={buildChatProjectHref(project.id)}
                         onSelect={() =>
                           onSelectProject?.(
                             project.id === selectedProjectId ? null : project.id,
@@ -188,6 +190,7 @@ export function ChatSidebarProjectsSection({
                               variant="project"
                               active={session.id === activeSessionId}
                               isProcessing={isSessionProcessing?.(session.id) ?? false}
+                              href={buildChatSessionHref(session.id)}
                               onClick={() => onSelectSession?.(session)}
                             />
                           ))}

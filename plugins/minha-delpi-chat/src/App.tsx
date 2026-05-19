@@ -1,7 +1,9 @@
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useMemo } from "react";
 
 import "./App.css";
 
+import { buildChatHref, parseChatRoute } from "./navigation/chatRoutes";
+import { navigateChatHref } from "./navigation/chatNavigation";
 import { ChatPage } from "./ui/pages/ChatPage";
 
 const ChatAdminPage = lazy(() =>
@@ -13,15 +15,13 @@ const ChatAdminPage = lazy(() =>
 export type AppProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   pathname?: string;
+  search?: string;
 };
 
 export default function App({ getAccessToken, pathname }: AppProps) {
-  const [mode, setMode] = useState<"chat" | "admin">(
-    pathname?.includes("/admin") ? "admin" : "chat",
-  );
-  const [adminInitialAgentId, setAdminInitialAgentId] = useState<string | null>(null);
+  const route = useMemo(() => parseChatRoute(pathname), [pathname]);
 
-  if (mode === "admin") {
+  if (route.kind === "admin") {
     return (
       <Suspense
         fallback={
@@ -32,12 +32,7 @@ export default function App({ getAccessToken, pathname }: AppProps) {
       >
         <ChatAdminPage
           getAccessToken={getAccessToken}
-          initialAgentId={adminInitialAgentId}
-          initialTab={adminInitialAgentId ? "agents" : undefined}
-          onBack={() => {
-            setAdminInitialAgentId(null);
-            setMode("chat");
-          }}
+          onBack={() => navigateChatHref(buildChatHref({ kind: "home" }))}
         />
       </Suspense>
     );
@@ -46,10 +41,9 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   return (
     <ChatPage
       getAccessToken={getAccessToken}
-      onOpenAdmin={(agentId) => {
-        setAdminInitialAgentId(agentId ?? null);
-        setMode("admin");
-      }}
+      pathname={pathname}
+      initialRoute={route}
+      onOpenAdmin={() => navigateChatHref(buildChatHref({ kind: "admin" }))}
     />
   );
 }
