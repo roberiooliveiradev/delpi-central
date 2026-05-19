@@ -9,10 +9,13 @@ export type LmpProduct = {
   qtd_pi?: number | null;
 };
 
+export type LmpListingKind = "LMP" | "AMOSTRA";
+
 export type LmpItem = {
   branch?: string | null;
   sale_number: string;
   sale_description: string;
+  listing_kind?: LmpListingKind | null;
   start_date?: string | null;
   end_date?: string | null;
   engineering_status?: string | null;
@@ -50,6 +53,7 @@ export type ListLmpsParams = {
   date_start?: string;
   date_end?: string;
   branch?: string;
+  listing_type?: string;
   page?: number;
   page_size?: number;
 };

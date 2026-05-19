@@ -14,6 +14,8 @@ from si_app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
 class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
+    LISTING_KIND_LMP = "LMP"
+    LISTING_KIND_SAMPLE = "AMOSTRA"
 
     def __init__(self, settings: LMPQuerySettings | None = None):
         super().__init__()
@@ -121,6 +123,42 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             process_stages=self.settings.engineering_support_process_stages,
         )
 
+    def _sql_sample_anchor_process_stage_condition(
+        self,
+        process_field: str,
+        stage_field: str,
+    ) -> Tuple[str, tuple]:
+        return self._sql_process_stage_condition(
+            process_field=process_field,
+            stage_field=stage_field,
+            process_stages=self.settings.sample_anchor_process_stages,
+        )
+
+    def _resolve_listing_type_filter(
+        self,
+        request: ListLMPRequest,
+        *,
+        lmp_only: bool = False,
+    ) -> str | None:
+        if lmp_only:
+            return self.LISTING_KIND_LMP
+
+        raw = getattr(request, "listing_type", None)
+        if raw is None:
+            return None
+
+        normalized = str(raw).strip().lower()
+        if normalized in ("", "todos", "all"):
+            return None
+        if normalized == "lmp":
+            return self.LISTING_KIND_LMP
+        if normalized in ("amostra", "amostras", "sample"):
+            return self.LISTING_KIND_SAMPLE
+
+        raise ValueError(
+            "listing_type inválido. Valores aceitos: Todos, LMP ou Amostra."
+        )
+
     # =========================
     # SQL FILTER BLOCKS
     # =========================
@@ -194,8 +232,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         request: ListLMPRequest,
         *,
         include_qtd_pi: bool,
+        lmp_only: bool = False,
     ) -> Tuple[str, tuple]:
-        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(request)
+        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(
+            request,
+            lmp_only=lmp_only,
+        )
         cte_hist, params_hist = self._sql_historico_ov_cte(
             scope_cte_name="CandidateLMPs",
             requested_branch=request.branch,
@@ -229,10 +271,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         *,
         include_qtd_pi: bool,
         order_by: bool,
+        lmp_only: bool = False,
     ) -> Tuple[str, tuple]:
         ctes_sql, ctes_params = self._sql_lmp_base_dataset_ctes(
             request,
             include_qtd_pi=include_qtd_pi,
+            lmp_only=lmp_only,
         )
 
         qtd_pi_select = "ISNULL(PI.QTD_PI, 0) AS qtd_pi" if include_qtd_pi else "0 AS qtd_pi"
@@ -257,6 +301,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 C.AD1_FILIAL AS branch,
                 C.AD1_NROPOR AS sale_number,
                 C.AD1_DESCRI AS sale_description,
+                C.LISTING_KIND AS listing_kind,
                 C.LMP_START_DATE AS start_date,
                 C.LMP_END_DATE AS end_date,
                 H.ENGINEERING_STATUS AS engineering_status,
@@ -275,6 +320,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 C.AD1_FILIAL,
                 C.AD1_NROPOR,
                 C.AD1_DESCRI,
+                C.LISTING_KIND,
                 C.LMP_START_DATE,
                 C.LMP_END_DATE,
                 H.ENGINEERING_STATUS,
@@ -354,6 +400,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         ctes_sql, ctes_params = self._sql_lmp_base_dataset_ctes(
             request,
             include_qtd_pi=include_qtd_pi,
+            lmp_only=True,
         )
 
         qtd_pi_select = "ISNULL(PI.QTD_PI, 0) AS qtd_pi" if include_qtd_pi else "0 AS qtd_pi"
@@ -397,27 +444,45 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
         return sql, ctes_params
 
-    def _sql_candidate_lmps_cte(self, request: ListLMPRequest) -> Tuple[str, tuple]:
-        qb = QueryBuilder()
-        qb.date_range(
-            field="L.LMP_START_DATE",
-            start=request.date_start,
-            end=request.date_end,
+    def _sql_candidate_lmps_cte(
+        self,
+        request: ListLMPRequest,
+        *,
+        lmp_only: bool = False,
+    ) -> Tuple[str, tuple]:
+        listing_filter = self._resolve_listing_type_filter(
+            request,
+            lmp_only=lmp_only,
         )
-        where_period, params_period = qb.build()
+        include_lmp = listing_filter in (None, self.LISTING_KIND_LMP)
+        include_sample = (not lmp_only) and listing_filter in (
+            None,
+            self.LISTING_KIND_SAMPLE,
+        )
 
         cte_lmp, params_lmp = self._sql_lmp_marker_cte(request.branch)
+        cte_sample, params_sample = self._sql_sample_marker_cte(request.branch)
         where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", request.branch)
 
-        sql = f"""
-            {cte_lmp},
+        candidate_parts: list[str] = []
+        candidate_params: list = []
 
-            CandidateLMPs AS (
+        if include_lmp:
+            qb_lmp = QueryBuilder()
+            qb_lmp.date_range(
+                field="L.LMP_START_DATE",
+                start=request.date_start,
+                end=request.date_end,
+            )
+            where_period_lmp, params_period_lmp = qb_lmp.build()
+
+            candidate_parts.append(f"""
                 SELECT DISTINCT
                     AD1.AD1_FILIAL,
                     AD1.AD1_NROPOR,
                     AD1.AD1_REVISA,
                     AD1.AD1_DESCRI,
+                    ? AS LISTING_KIND,
                     L.LMP_START_DATE,
                     L.LMP_END_DATE
                 FROM AD1010 AD1
@@ -425,15 +490,89 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ON L.AIJ_FILIAL = AD1.AD1_FILIAL
                    AND L.AIJ_NROPOR = AD1.AD1_NROPOR
                 WHERE {where_ad1}
-                  AND {where_period}
+                  AND {where_period_lmp}
+            """)
+            candidate_params.extend(
+                [
+                    self.LISTING_KIND_LMP,
+                    *params_ad1,
+                    *params_period_lmp,
+                ]
+            )
+
+        if include_sample:
+            qb_sample = QueryBuilder()
+            qb_sample.date_range(
+                field="S.SAMPLE_START_DATE",
+                start=request.date_start,
+                end=request.date_end,
+            )
+            where_period_sample, params_period_sample = qb_sample.build()
+
+            candidate_parts.append(f"""
+                SELECT DISTINCT
+                    AD1.AD1_FILIAL,
+                    AD1.AD1_NROPOR,
+                    AD1.AD1_REVISA,
+                    AD1.AD1_DESCRI,
+                    ? AS LISTING_KIND,
+                    S.SAMPLE_START_DATE AS LMP_START_DATE,
+                    S.SAMPLE_END_DATE AS LMP_END_DATE
+                FROM AD1010 AD1
+                INNER JOIN SampleEventos S
+                    ON S.AIJ_FILIAL = AD1.AD1_FILIAL
+                   AND S.AIJ_NROPOR = AD1.AD1_NROPOR
+                WHERE {where_ad1}
+                  AND {where_period_sample}
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM LMPEventos L2
+                      WHERE L2.AIJ_FILIAL = AD1.AD1_FILIAL
+                        AND L2.AIJ_NROPOR = AD1.AD1_NROPOR
+                  )
+            """)
+            candidate_params.extend(
+                [
+                    self.LISTING_KIND_SAMPLE,
+                    *params_ad1,
+                    *params_period_sample,
+                ]
+            )
+
+        if not candidate_parts:
+            sql = f"""
+                {cte_lmp},
+                {cte_sample},
+                CandidateLMPs AS (
+                    SELECT
+                        CAST(NULL AS VARCHAR(2)) AS AD1_FILIAL,
+                        CAST(NULL AS VARCHAR(20)) AS AD1_NROPOR,
+                        CAST(NULL AS VARCHAR(3)) AS AD1_REVISA,
+                        CAST(NULL AS VARCHAR(254)) AS AD1_DESCRI,
+                        CAST(NULL AS VARCHAR(10)) AS LISTING_KIND,
+                        CAST(NULL AS VARCHAR(8)) AS LMP_START_DATE,
+                        CAST(NULL AS VARCHAR(8)) AS LMP_END_DATE
+                    WHERE 1 = 0
+                )
+            """
+            return sql, (*params_lmp, *params_sample)
+
+        union_sql = "\n                UNION ALL\n".join(candidate_parts)
+        marker_ctes = [cte_lmp]
+        marker_params: list = [*params_lmp]
+        if include_sample:
+            marker_ctes.append(cte_sample)
+            marker_params.extend(params_sample)
+
+        sql = f"""
+            {",\n".join(marker_ctes)},
+
+            CandidateLMPs AS (
+                {union_sql}
             )
         """
 
-        params = (
-            *params_lmp,
-            *params_ad1,
-            *params_period,
-        )
+        params = (*marker_params, *candidate_params)
         return sql, params
 
     def _sql_historico_ov_cte(
@@ -889,6 +1028,117 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         return sql, params
 
+    def _sql_sample_marker_cte(
+        self,
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
+        where_aij_base, params_aij_base = self._build_filter_sql(
+            lambda qb: (
+                self._active_filter(qb, "A.D_E_L_E_T_"),
+                self._branch_filter(qb, "A.AIJ_FILIAL", requested_branch),
+            )
+        )
+
+        where_sample_anchor, params_sample_anchor = (
+            self._sql_sample_anchor_process_stage_condition(
+                "A.AIJ_PROVEN",
+                "A.AIJ_STAGE",
+            )
+        )
+
+        sql = f"""
+            SampleAnchorEventos AS (
+                SELECT
+                    A.AIJ_FILIAL,
+                    A.AIJ_NROPOR,
+                    A.AIJ_REVISA,
+                    A.AIJ_PROVEN,
+                    A.AIJ_STAGE,
+                    A.AIJ_DTINIC,
+                    A.AIJ_HRINIC,
+                    A.AIJ_DTENCE,
+                    A.AIJ_HRENCE,
+                    A.R_E_C_N_O_,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR
+                        ORDER BY
+                            A.AIJ_REVISA DESC,
+                            A.AIJ_DTINIC DESC,
+                            A.AIJ_HRINIC DESC,
+                            A.R_E_C_N_O_ DESC
+                    ) AS RN_DESC
+                FROM AIJ010 A
+                WHERE {where_aij_base}
+                  AND {where_sample_anchor}
+            ),
+
+            SampleAnchorResolvido AS (
+                SELECT
+                    A.AIJ_FILIAL,
+                    A.AIJ_NROPOR,
+                    A.AIJ_REVISA,
+                    A.AIJ_PROVEN,
+                    A.AIJ_STAGE,
+                    A.AIJ_DTINIC AS SAMPLE_START_DATE,
+                    COALESCE(
+                        NULLIF(A.AIJ_DTENCE, ''),
+                        NEXT_EVT.NEXT_DATE
+                    ) AS SAMPLE_END_DATE,
+                    A.RN_DESC
+                FROM SampleAnchorEventos A
+                OUTER APPLY (
+                    SELECT TOP 1
+                        COALESCE(
+                            NULLIF(X.AIJ_DTENCE, ''),
+                            NULLIF(X.AIJ_DTINIC, '')
+                        ) AS NEXT_DATE
+                    FROM AIJ010 X
+                    WHERE X.D_E_L_E_T_ = ''
+                      AND X.AIJ_FILIAL = A.AIJ_FILIAL
+                      AND X.AIJ_NROPOR = A.AIJ_NROPOR
+                      AND (
+                            X.AIJ_REVISA > A.AIJ_REVISA
+                            OR (
+                                X.AIJ_REVISA = A.AIJ_REVISA
+                                AND (
+                                    X.AIJ_DTINIC > A.AIJ_DTINIC
+                                    OR (
+                                        X.AIJ_DTINIC = A.AIJ_DTINIC
+                                        AND ISNULL(X.AIJ_HRINIC, '') > ISNULL(A.AIJ_HRINIC, '')
+                                    )
+                                    OR (
+                                        X.AIJ_DTINIC = A.AIJ_DTINIC
+                                        AND ISNULL(X.AIJ_HRINIC, '') = ISNULL(A.AIJ_HRINIC, '')
+                                        AND X.R_E_C_N_O_ > A.R_E_C_N_O_
+                                    )
+                                )
+                            )
+                      )
+                    ORDER BY
+                        X.AIJ_DTINIC ASC,
+                        X.AIJ_HRINIC ASC,
+                        X.AIJ_REVISA ASC,
+                        X.R_E_C_N_O_ ASC
+                ) NEXT_EVT
+            ),
+
+            SampleEventos AS (
+                SELECT
+                    A.AIJ_FILIAL,
+                    A.AIJ_NROPOR,
+                    A.SAMPLE_START_DATE,
+                    A.SAMPLE_END_DATE
+                FROM SampleAnchorResolvido A
+                WHERE A.RN_DESC = 1
+            )
+        """
+
+        params = (
+            *params_aij_base,
+            *params_sample_anchor,
+        )
+        return sql, params
+
     def _sql_produtos_lmp_cte(
         self,
         scope_cte_name: str | None = None,
@@ -1152,6 +1402,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         requested_branch: str | None = None,
     ) -> Tuple[str, tuple]:
         cte_lmp, params_lmp = self._sql_lmp_marker_cte(requested_branch)
+        cte_sample, params_sample = self._sql_sample_marker_cte(requested_branch)
         cte_hist, params_hist = self._sql_historico_ov_cte(requested_branch=requested_branch)
         where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", requested_branch)
         where_sa1, params_sa1 = self._sql_filter_sa1_active("SA1")
@@ -1160,13 +1411,18 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         sql = f"""
             WITH
             {cte_lmp},
+            {cte_sample},
             {cte_hist}
             SELECT TOP 1
                 AD1.AD1_FILIAL AS branch,
                 AD1.AD1_NROPOR AS sale_number,
                 AD1.AD1_DESCRI AS sale_description,
-                L.LMP_START_DATE AS start_date,
-                L.LMP_END_DATE AS end_date,
+                CASE
+                    WHEN L.AIJ_NROPOR IS NOT NULL THEN ?
+                    ELSE ?
+                END AS listing_kind,
+                COALESCE(L.LMP_START_DATE, S.SAMPLE_START_DATE) AS start_date,
+                COALESCE(L.LMP_END_DATE, S.SAMPLE_END_DATE) AS end_date,
                 H.ENGINEERING_STATUS AS engineering_status,
                 H.QTD_PASSAGENS_ENG AS qtd_engineering_entries,
                 H.QTD_PASSAGENS_ENCERRADAS AS qtd_engineering_closed,
@@ -1179,9 +1435,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 AD1.AD1_VEND AS seller_code,
                 SA3.A3_NOME AS seller_name
             FROM AD1010 AD1
-            INNER JOIN LMPEventos L
+            LEFT JOIN LMPEventos L
                 ON L.AIJ_FILIAL = AD1.AD1_FILIAL
                AND L.AIJ_NROPOR = AD1.AD1_NROPOR
+            LEFT JOIN SampleEventos S
+                ON S.AIJ_FILIAL = AD1.AD1_FILIAL
+               AND S.AIJ_NROPOR = AD1.AD1_NROPOR
             LEFT JOIN EngenhariaResumoUltimaRevisao H
                 ON H.AIJ_FILIAL = AD1.AD1_FILIAL
                AND H.AIJ_NROPOR = AD1.AD1_NROPOR
@@ -1194,12 +1453,16 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                AND {where_sa3}
             WHERE {where_ad1}
               AND AD1.AD1_NROPOR = ?
+              AND (L.AIJ_NROPOR IS NOT NULL OR S.AIJ_NROPOR IS NOT NULL)
             ORDER BY AD1.AD1_REVISA DESC
         """
 
         params = (
             *params_lmp,
+            *params_sample,
             *params_hist,
+            self.LISTING_KIND_LMP,
+            self.LISTING_KIND_SAMPLE,
             *params_sa1,
             *params_sa3,
             *params_ad1,
@@ -1324,7 +1587,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             )
 
             if not header_row:
-                raise ValueError(f"LMP não encontrada: {request.sale_number}")
+                raise ValueError(
+                    f"LMP ou amostra não encontrada: {request.sale_number}"
+                )
 
             product_rows = repo.execute_query(
                 sql_products,
@@ -1342,6 +1607,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             branch=header_row.get("branch"),
             sale_number=header_row["sale_number"],
             sale_description=header_row["sale_description"],
+            listing_kind=header_row.get("listing_kind"),
             start_date=header_row.get("start_date"),
             end_date=header_row.get("end_date"),
             engineering_status=header_row.get("engineering_status"),

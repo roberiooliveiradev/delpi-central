@@ -30,6 +30,10 @@ def list_lmps_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
     branch: Optional[str] = None,
+    listing_type: Optional[str] = Query(
+        None,
+        description="Filtro de tipo: Todos, LMP ou Amostra.",
+    ),
     page: Optional[int] = Query(None, ge=1),
     page_size: Optional[int] = Query(None, ge=1),
 ):
@@ -38,6 +42,7 @@ def list_lmps_route(
             date_start=date_start,
             date_end=date_end,
             branch=branch,
+            listing_type=listing_type,
             page=page,
             page_size=page_size,
         )
@@ -66,6 +71,10 @@ def list_lmps_dashboard_route(
     date_end: Optional[str] = None,
     status: str = Query("Todos"),
     branch: Optional[str] = None,
+    listing_type: Optional[str] = Query(
+        None,
+        description="Filtro de tipo: Todos, LMP ou Amostra.",
+    ),
     page: Optional[int] = Query(None, ge=1),
     page_size: Optional[int] = Query(None, ge=1),
 ):
@@ -74,6 +83,7 @@ def list_lmps_dashboard_route(
             date_start=date_start,
             date_end=date_end,
             branch=branch,
+            listing_type=listing_type,
             page=page,
             page_size=page_size,
         )

@@ -104,6 +104,7 @@ export function DashboardLmpsPage() {
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState(getTodayInputValue());
   const [branch, setBranch] = useState("");
+  const [listingType, setListingType] = useState("Todos");
   const [status, setStatus] = useState("Todos");
   const [didInitializeDateStart, setDidInitializeDateStart] = useState(false);
 
@@ -112,6 +113,7 @@ export function DashboardLmpsPage() {
       date_start: dateStart || undefined,
       date_end: dateEnd || undefined,
       branch: branch || undefined,
+      listing_type: listingType,
       status,
       autoRefreshMs: 2 * 60 * 1000,
     });
@@ -247,10 +249,12 @@ export function DashboardLmpsPage() {
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
+        listingType={listingType}
         status={status}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}
+        onListingTypeChange={setListingType}
         onStatusChange={setStatus}
         onRefresh={reload}
       />
@@ -422,12 +426,13 @@ export function DashboardLmpsPage() {
           </section>
 
           <section className="lmps-charts-grid">
-            <ChartCard title="LMPs filtradas">
+            <ChartCard title="Registros filtrados">
               <div className="lmps-table-wrapper">
                 <table className="lmps-table">
                   <thead>
                     <tr>
                       <th>Filial</th>
+                      <th>Tipo</th>
                       <th>Nº Proposta</th>
                       <th>Descrição</th>
                       <th>Data Início</th>
@@ -444,14 +449,17 @@ export function DashboardLmpsPage() {
                   <tbody>
                     {sortedDashboardItems.length === 0 ? (
                       <tr>
-                        <td colSpan={12}>
-                          Nenhuma LMP encontrada para os filtros informados.
+                        <td colSpan={13}>
+                          Nenhum registro encontrado para os filtros informados.
                         </td>
                       </tr>
                     ) : (
                       sortedDashboardItems.map((item) => (
-                        <tr key={`${item.branch ?? "sem-filial"}-${item.sale_number}`}>
+                        <tr
+                          key={`${item.branch ?? "sem-filial"}-${item.listing_kind ?? "LMP"}-${item.sale_number}`}
+                        >
                           <td>{item.branch ?? "-"}</td>
+                          <td>{item.listing_kind === "AMOSTRA" ? "Amostra" : "LMP"}</td>
                           <td>{item.sale_number}</td>
                           <td>{item.sale_description}</td>
                           <td>{formatDate(item.start_date)}</td>

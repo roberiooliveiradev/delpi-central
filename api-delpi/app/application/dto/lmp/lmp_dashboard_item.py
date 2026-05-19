@@ -8,6 +8,7 @@ class LMPDashboardItem:
     branch: Optional[str]
     sale_number: str
     sale_description: str
+    listing_kind: Optional[str]
     start_date: Optional[str]
     end_date: Optional[str]
     engineering_status: Optional[str]

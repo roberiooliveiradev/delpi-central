@@ -4,10 +4,12 @@ type FilterBarProps = {
   dateStart: string;
   dateEnd: string;
   branch: string;
+  listingType: string;
   status: string;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchChange: (value: string) => void;
+  onListingTypeChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onRefresh: () => void;
 };
@@ -16,10 +18,12 @@ export function FilterBar({
   dateStart,
   dateEnd,
   branch,
+  listingType,
   status,
   onDateStartChange,
   onDateEndChange,
   onBranchChange,
+  onListingTypeChange,
   onStatusChange,
   onRefresh
 }: FilterBarProps) {
@@ -76,6 +80,18 @@ export function FilterBar({
             <option value="">Todas</option>
             <option value="01">01</option>
             <option value="02">02</option>
+          </select>
+        </div>
+
+        <div className="lmps-filter-box">
+          <label>Tipo</label>
+          <select
+            value={listingType}
+            onChange={(e) => onListingTypeChange(e.target.value)}
+          >
+            <option value="Todos">Todos</option>
+            <option value="LMP">LMP</option>
+            <option value="Amostra">Amostra</option>
           </select>
         </div>
 

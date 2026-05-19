@@ -55,6 +55,9 @@ function buildQuery(params: ListLmpsParams & { status?: string }): string {
   if (params.date_start) searchParams.set("date_start", params.date_start);
   if (params.date_end) searchParams.set("date_end", params.date_end);
   if (params.branch) searchParams.set("branch", params.branch);
+  if (params.listing_type && params.listing_type !== "Todos") {
+    searchParams.set("listing_type", params.listing_type);
+  }
   if (params.status) searchParams.set("status", params.status);
   if (params.page) searchParams.set("page", String(params.page));
   if (params.page_size) searchParams.set("page_size", String(params.page_size));

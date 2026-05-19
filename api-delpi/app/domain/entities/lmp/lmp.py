@@ -9,6 +9,7 @@ class LMP:
     branch: Optional[str] = None
     sale_number: str = ""
     sale_description: str = ""
+    listing_kind: Optional[str] = None
 
     # Engineering summary
     start_date: Optional[str] = None

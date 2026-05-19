@@ -5,6 +5,7 @@ type UseLmpsDashboardParams = {
   date_start?: string;
   date_end?: string;
   branch?: string;
+  listing_type?: string;
   status?: string;
   page?: number;
   page_size?: number;
@@ -36,6 +37,7 @@ export function useLmpsDashboard(
       date_start: params.date_start,
       date_end: params.date_end,
       branch: params.branch,
+      listing_type: params.listing_type,
       status: params.status,
       page: params.page,
       page_size: params.page_size,
@@ -44,6 +46,7 @@ export function useLmpsDashboard(
       params.date_start,
       params.date_end,
       params.branch,
+      params.listing_type,
       params.status,
       params.page,
       params.page_size,
@@ -70,6 +73,7 @@ export function useLmpsDashboard(
             date_start: stableParams.date_start,
             date_end: stableParams.date_end,
             branch: stableParams.branch,
+            listing_type: stableParams.listing_type,
             status: stableParams.status,
             page: stableParams.page,
             page_size: stableParams.page_size,

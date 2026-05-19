@@ -1,5 +1,5 @@
 # app/application/use_cases/lmp/list_lmp_dashboard_use_case.py
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from typing import List, Dict, Any
 
 from si_app.application.dto.lmp.list_lmp_request import ListLMPRequest
@@ -29,6 +29,7 @@ class ListLMPDashboardUseCase:
             branch=item.branch,
             sale_number=item.sale_number,
             sale_description=item.sale_description,
+            listing_kind=item.listing_kind,
             start_date=item.start_date,
             end_date=item.end_date,
             engineering_status=item.engineering_status,
@@ -44,18 +45,28 @@ class ListLMPDashboardUseCase:
 
     def execute(self, request: ListLMPRequest, status_filter: str = "Todos") -> Dict[str, Any]:
         rows: List[LMP] = self._repository.list_lmps(request)
+        lmp_summary_request = replace(request, listing_type="lmp")
+        lmp_rows: List[LMP] = self._repository.list_lmps(lmp_summary_request)
 
         enriched = [self._enrich_item(row) for row in rows]
+        lmp_enriched = [self._enrich_item(row) for row in lmp_rows]
 
         if status_filter != "Todos":
             enriched = [item for item in enriched if item.status == status_filter]
 
         total = len(enriched)
 
-        lead_items = [item for item in enriched if item.lead_time_util is not None]
-        pontuais = len([item for item in enriched if item.status != "Atrasado"])
+        lead_items = [
+            item for item in lmp_enriched if item.lead_time_util is not None
+        ]
+        pontuais = len(
+            [item for item in lmp_enriched if item.status != "Atrasado"]
+        )
+        total_lmps_for_kpi = len(lmp_enriched)
 
-        percent_dentro_prazo = (pontuais / total * 100) if total else 0
+        percent_dentro_prazo = (
+            (pontuais / total_lmps_for_kpi * 100) if total_lmps_for_kpi else 0
+        )
         avg_lead_time = (
             sum(item.lead_time_util or 0 for item in lead_items) / len(lead_items)
             if lead_items else 0
@@ -78,7 +89,8 @@ class ListLMPDashboardUseCase:
             "page": page,
             "page_size": page_size,
             "summary": {
-                "total_lmps": total,
+                "total_lmps": total_lmps_for_kpi,
+                "total_items": total,
                 "percent_dentro_prazo": round(percent_dentro_prazo, 2),
                 "avg_lead_time": round(avg_lead_time, 2),
             },
