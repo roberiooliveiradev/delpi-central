@@ -110,7 +110,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
         onRefresh={reload}
         refreshing={refreshing}
       />
-      <DataSourceBanner />
+      <DataSourceBanner variant="sheets" />
       <FinancialStatusAlerts
         error={error}
         loading={loading}

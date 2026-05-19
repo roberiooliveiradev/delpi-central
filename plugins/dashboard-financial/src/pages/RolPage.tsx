@@ -97,7 +97,7 @@ export function RolPage({ pathname }: RolPageProps) {
         onRefresh={reload}
         refreshing={refreshing}
       />
-      <DataSourceBanner />
+      <DataSourceBanner variant="totvs" />
       <FinancialStatusAlerts
         error={error}
         loading={loading}
