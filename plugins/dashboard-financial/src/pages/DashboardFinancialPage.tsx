@@ -159,10 +159,11 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         />
       </section>
 
-      <ChartCard
-        title="Indicadores percentuais"
-        hint={`${branchLabel} · ${periodLabel}`}
-      >
+      <section className="ds-chart-section">
+        <ChartCard
+          title="Indicadores percentuais"
+          hint={`${branchLabel} · ${periodLabel}`}
+        >
         {hasChartValues ? (
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={comparisonChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -183,7 +184,8 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         ) : (
           <p className="ds-table__empty">Sem dados percentuais para o período.</p>
         )}
-      </ChartCard>
+        </ChartCard>
+      </section>
 
       <section className="ds-shortcuts-grid">
         {SHORTCUTS.map((item) => (

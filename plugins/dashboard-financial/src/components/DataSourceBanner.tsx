@@ -8,8 +8,8 @@ export function DataSourceBanner() {
         <div>
           <strong>TOTVS Protheus</strong>
           <p>
-            CPV (movimentos SD3), OTD de linhas de compras, saldo de estoque e
-            base para o giro IDD no período filtrado.
+            ROL (faturamento SD2/F2), EBITDA, custos fixos e prazo médio de
+            recebimento no período filtrado.
           </p>
         </div>
       </article>

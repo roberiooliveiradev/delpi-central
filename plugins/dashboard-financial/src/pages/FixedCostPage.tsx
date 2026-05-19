@@ -133,6 +133,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
       </section>
 
       {showBranchChart ? (
+        <section className="ds-charts-grid ds-charts-grid--single">
         <ChartCard title="Custos fixos / ROL por filial" hint={periodLabel}>
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={chartData}>
@@ -148,6 +149,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
+        </section>
       ) : null}
 
       {branchRows.length > 0 ? (

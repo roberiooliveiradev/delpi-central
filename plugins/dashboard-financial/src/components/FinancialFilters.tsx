@@ -24,18 +24,18 @@ export function FinancialFilters({
       {showPeriodFilters ? (
         <>
           <div className="ds-filter-box">
-            <label htmlFor="df-date-start">Data inicial</label>
+            <label htmlFor="ds-date-start">Data inicial</label>
             <input
-              id="df-date-start"
+              id="ds-date-start"
               type="date"
               value={dateStart}
               onChange={(e) => onDateStartChange(e.target.value)}
             />
           </div>
           <div className="ds-filter-box">
-            <label htmlFor="df-date-end">Data final</label>
+            <label htmlFor="ds-date-end">Data final</label>
             <input
-              id="df-date-end"
+              id="ds-date-end"
               type="date"
               value={dateEnd}
               onChange={(e) => onDateEndChange(e.target.value)}
@@ -44,9 +44,9 @@ export function FinancialFilters({
         </>
       ) : null}
       <div className="ds-filter-box">
-        <label htmlFor="df-branch">Filial</label>
+        <label htmlFor="ds-branch">Filial</label>
         <select
-          id="df-branch"
+          id="ds-branch"
           value={branch}
           onChange={(e) => onBranchChange(e.target.value)}
         >

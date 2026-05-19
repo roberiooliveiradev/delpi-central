@@ -137,6 +137,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
       </section>
 
       {showBranchChart ? (
+        <section className="ds-charts-grid ds-charts-grid--single">
         <ChartCard title="EBITDA / ROL por filial" hint={periodLabel}>
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={chartData}>
@@ -152,6 +153,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
+        </section>
       ) : null}
 
       {branchRows.length > 0 ? (
