@@ -20,7 +20,7 @@ import { AppsTab } from "./tabs/AppsTab";
 import { NotificationsTab } from "./tabs/NotificationsTab";
 import { StatsTab } from "./tabs/StatsTab";
 
-type AdminTab =
+export type AdminTab =
   | "stats"
   | "apps"
   | "users"
@@ -109,7 +109,7 @@ export const AdminPage = () => {
 
       <div className="admin-content">
         <div key={tab} className="admin-tab-panel">
-          {tab === "stats" && <StatsTab />}
+          {tab === "stats" && <StatsTab onNavigateTab={setTab} />}
           {tab === "users" && <RbacTab />}
           {tab === "apps" && <AppsTab />}
           {tab === "roles" && <RolesTab />}

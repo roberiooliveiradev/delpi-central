@@ -11,6 +11,7 @@ from app.infrastructure.db.models import (
     App,
     AppRoute,
     Group,
+    NotificationDispatch,
     Permission,
     Role,
     User,
@@ -90,6 +91,21 @@ class SqlAlchemyAdminStatisticsRepository:
             },
             "permissions": {
                 "total": self._count(Permission),
+            },
+            "notifications": {
+                "dispatchesTotal": self._count(NotificationDispatch),
+                "dispatchesPending": self._count(
+                    NotificationDispatch,
+                    NotificationDispatch.status == "pending",
+                ),
+                "dispatchesCompleted": self._count(
+                    NotificationDispatch,
+                    NotificationDispatch.status == "completed",
+                ),
+                "dispatchesFailed": self._count(
+                    NotificationDispatch,
+                    NotificationDispatch.status == "failed",
+                ),
             },
             "assignments": {
                 "userRoles": self._junction_count(user_roles),

@@ -20,5 +20,6 @@ def test_get_snapshot_returns_expected_sections():
     assert "groups" in snapshot
     assert "permissions" in snapshot
     assert "assignments" in snapshot
+    assert "notifications" in snapshot
     assert isinstance(snapshot["users"]["total"], int)
     assert isinstance(snapshot["apps"]["byType"], list)

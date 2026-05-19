@@ -101,6 +101,12 @@ export type AdminStatistics = {
   permissions: {
     total: number;
   };
+  notifications: {
+    dispatchesTotal: number;
+    dispatchesPending: number;
+    dispatchesCompleted: number;
+    dispatchesFailed: number;
+  };
   assignments: {
     userRoles: number;
     userGroups: number;

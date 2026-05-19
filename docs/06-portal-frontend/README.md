@@ -17,6 +17,7 @@ Shell da Minha DELPI: login SSO, menu dinâmico, admin RBAC/apps, carregamento d
 | [consumo-de-plugins.md](./consumo-de-plugins.md) | AppHost, Module Federation, iframe |
 | [favoritos.md](./favoritos.md) | `/me/apps/favorites` |
 | [notificacoes.md](./notificacoes.md) | Sino, `/notifications`, preferências |
+| [admin-estatisticas.md](./admin-estatisticas.md) | Aba Estatísticas no `/admin` |
 
 ---
 
@@ -25,7 +26,7 @@ Shell da Minha DELPI: login SSO, menu dinâmico, admin RBAC/apps, carregamento d
 | Cliente | Base path |
 |---|---|
 | `coreApi.ts` | `/core-api/me`, favoritos, notificações |
-| `adminApi.ts` | `/core-api/admin/rbac/*`, `/core-api/admin/apps/*` |
+| `adminApi.ts` | `/core-api/admin/rbac/*`, `/core-api/admin/apps/*`, `/admin/statistics` |
 | Plugins | `/apps/api-delpi/*`, `/apps/minha-delpi-ai/api/*` |
 
 ---

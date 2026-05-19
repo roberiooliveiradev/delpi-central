@@ -226,7 +226,20 @@ Legenda de permissões:
 
 ---
 
-## 7. Socket.IO
+## 7. Admin — estatísticas e presença
+
+Arquivos: `admin_statistics_controller.py`, `presence_controller.py`.
+
+| Método | Path | Permissão | Descrição |
+|---|---|---|---|
+| GET | `/admin/statistics` | `rbac.manage` | Snapshot agregado: usuários, apps, papéis, grupos, permissões, vínculos RBAC, campanhas de notificação, online |
+| GET | `/admin/users/presence` | Superadmin | Usuários com portal conectado (Socket.IO) |
+
+`GET /admin/statistics` retorna contagens e rankings (ex.: papéis/grupos mais usados, apps por tipo, logins 7/30 dias). Campo `users.online` integra o store de presença. Ver [event-driven-e-socket.md](../01-arquitetura/event-driven-e-socket.md) §12.1.
+
+---
+
+## 8. Socket.IO
 
 | Item | Valor |
 |---|---|
@@ -239,7 +252,7 @@ Cliente Portal: `portal/src/hooks/useSocket.ts`.
 
 ---
 
-## 8. Consumo pelo Portal
+## 9. Consumo pelo Portal
 
 | Cliente | Arquivo |
 |---|---|
@@ -250,7 +263,7 @@ Paths usados pelo admin batem com as tabelas acima (prefixo `/core-api/admin/rba
 
 ---
 
-## 9. Documentos relacionados
+## 10. Documentos relacionados
 
 - [README.md](./README.md)
 - [visao-geral-core-api.md](./visao-geral-core-api.md)

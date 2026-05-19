@@ -2,7 +2,9 @@
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
+  ArrowRight,
   BarChart3,
+  Bell,
   LayoutGrid,
   RefreshCw,
   Shield,
@@ -13,8 +15,34 @@ import {
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi, type AdminStatistics } from "../../../data/adminApi";
+import type { AdminTab } from "../AdminPage";
 
 import "./StatsTab.css";
+
+type StatsTabProps = {
+  onNavigateTab?: (tab: AdminTab) => void;
+};
+
+type PanelNavProps = {
+  tab: AdminTab;
+  label: string;
+  onNavigateTab?: (tab: AdminTab) => void;
+};
+
+function PanelNav({ tab, label, onNavigateTab }: PanelNavProps) {
+  if (!onNavigateTab) return null;
+
+  return (
+    <button
+      type="button"
+      className="admin-stats__panel-link"
+      onClick={() => onNavigateTab(tab)}
+    >
+      {label}
+      <ArrowRight size={14} aria-hidden="true" />
+    </button>
+  );
+}
 
 type StatMetricProps = {
   label: string;
@@ -118,7 +146,7 @@ const formatGeneratedAt = (value: string) => {
   }).format(date);
 };
 
-export const StatsTab = () => {
+export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
   const { getAccessToken } = useContext(AuthContext);
   const [stats, setStats] = useState<AdminStatistics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -247,10 +275,13 @@ export const StatsTab = () => {
       <div className="admin-stats__grid">
         <article className="admin-stats__panel">
           <div className="admin-stats__panel-head">
-            <span className="admin-stats__panel-icon" aria-hidden="true">
-              <Users size={16} />
-            </span>
-            <h4>Usuários</h4>
+            <div className="admin-stats__panel-head-main">
+              <span className="admin-stats__panel-icon" aria-hidden="true">
+                <Users size={16} />
+              </span>
+              <h4>Usuários</h4>
+            </div>
+            <PanelNav tab="users" label="Gerenciar" onNavigateTab={onNavigateTab} />
           </div>
           <div className="admin-stats__metrics">
             <StatMetric label="Ativos" value={stats.users.active} />
@@ -271,10 +302,13 @@ export const StatsTab = () => {
 
         <article className="admin-stats__panel">
           <div className="admin-stats__panel-head">
-            <span className="admin-stats__panel-icon" aria-hidden="true">
-              <LayoutGrid size={16} />
-            </span>
-            <h4>Aplicações</h4>
+            <div className="admin-stats__panel-head-main">
+              <span className="admin-stats__panel-icon" aria-hidden="true">
+                <LayoutGrid size={16} />
+              </span>
+              <h4>Aplicações</h4>
+            </div>
+            <PanelNav tab="apps" label="Gerenciar" onNavigateTab={onNavigateTab} />
           </div>
           <div className="admin-stats__metrics">
             <StatMetric label="Ativas" value={stats.apps.active} />
@@ -300,10 +334,13 @@ export const StatsTab = () => {
 
         <article className="admin-stats__panel">
           <div className="admin-stats__panel-head">
-            <span className="admin-stats__panel-icon" aria-hidden="true">
-              <Shield size={16} />
-            </span>
-            <h4>Papéis</h4>
+            <div className="admin-stats__panel-head-main">
+              <span className="admin-stats__panel-icon" aria-hidden="true">
+                <Shield size={16} />
+              </span>
+              <h4>Papéis</h4>
+            </div>
+            <PanelNav tab="roles" label="Gerenciar" onNavigateTab={onNavigateTab} />
           </div>
           <div className="admin-stats__metrics">
             <StatMetric label="De sistema" value={stats.roles.system} />
@@ -319,10 +356,13 @@ export const StatsTab = () => {
 
         <article className="admin-stats__panel">
           <div className="admin-stats__panel-head">
-            <span className="admin-stats__panel-icon" aria-hidden="true">
-              <UsersRound size={16} />
-            </span>
-            <h4>Grupos</h4>
+            <div className="admin-stats__panel-head-main">
+              <span className="admin-stats__panel-icon" aria-hidden="true">
+                <UsersRound size={16} />
+              </span>
+              <h4>Grupos</h4>
+            </div>
+            <PanelNav tab="groups" label="Gerenciar" onNavigateTab={onNavigateTab} />
           </div>
           <div className="admin-stats__metrics">
             <StatMetric label="Ativos" value={stats.groups.active} />
@@ -342,30 +382,63 @@ export const StatsTab = () => {
         </article>
       </div>
 
-      <article className="admin-stats__overview" aria-label="Vínculos RBAC">
-        <h4>
-          <BarChart3 size={16} aria-hidden="true" /> Vínculos e permissões
-        </h4>
-        <div className="admin-stats__metrics">
-          <StatMetric
-            label="Atribuições usuário → papel"
-            value={stats.assignments.userRoles}
-          />
-          <StatMetric
-            label="Atribuições usuário → grupo"
-            value={stats.assignments.userGroups}
-          />
-          <StatMetric
-            label="Atribuições grupo → papel"
-            value={stats.assignments.groupRoles}
-          />
-          <StatMetric
-            label="Permissões em papéis"
-            value={stats.assignments.rolePermissions}
-          />
-          <StatMetric label="Permissões cadastradas" value={stats.permissions.total} />
-        </div>
-      </article>
+      <div className="admin-stats__overview-grid">
+        <article className="admin-stats__overview" aria-label="Vínculos RBAC">
+          <div className="admin-stats__overview-head">
+            <h4>
+              <BarChart3 size={16} aria-hidden="true" /> Vínculos e permissões
+            </h4>
+            <PanelNav tab="permissions" label="Permissões" onNavigateTab={onNavigateTab} />
+          </div>
+          <div className="admin-stats__metrics">
+            <StatMetric
+              label="Atribuições usuário → papel"
+              value={stats.assignments.userRoles}
+            />
+            <StatMetric
+              label="Atribuições usuário → grupo"
+              value={stats.assignments.userGroups}
+            />
+            <StatMetric
+              label="Atribuições grupo → papel"
+              value={stats.assignments.groupRoles}
+            />
+            <StatMetric
+              label="Permissões em papéis"
+              value={stats.assignments.rolePermissions}
+            />
+            <StatMetric label="Permissões cadastradas" value={stats.permissions.total} />
+          </div>
+        </article>
+
+        <article className="admin-stats__overview" aria-label="Campanhas de notificação">
+          <div className="admin-stats__overview-head">
+            <h4>
+              <Bell size={16} aria-hidden="true" /> Notificações (campanhas)
+            </h4>
+            <PanelNav tab="notifications" label="Gerenciar" onNavigateTab={onNavigateTab} />
+          </div>
+          <div className="admin-stats__metrics">
+            <StatMetric
+              label="Envios registrados"
+              value={stats.notifications?.dispatchesTotal ?? 0}
+            />
+            <StatMetric
+              label="Agendados / pendentes"
+              value={stats.notifications?.dispatchesPending ?? 0}
+            />
+            <StatMetric
+              label="Concluídos"
+              value={stats.notifications?.dispatchesCompleted ?? 0}
+              highlight
+            />
+            <StatMetric
+              label="Com falha"
+              value={stats.notifications?.dispatchesFailed ?? 0}
+            />
+          </div>
+        </article>
+      </div>
     </section>
   );
 };
