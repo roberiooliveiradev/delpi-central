@@ -1,4 +1,5 @@
 import type { DepartmentOverviewViewItem } from "../../data/types/departments";
+import { appendStrategicIndicatorsFiltersToPath } from "../shared/strategicIndicatorsFilterUrl";
 import { StatusBadge } from "./StatusBadge";
 import "./DepartmentOverviewTable.css";
 
@@ -72,7 +73,9 @@ export function DepartmentOverviewTable({
 
             <div className="si-department-overview__action">
               <a
-                href={`/apps/strategic-indicators/departments/${department.id}`}
+                href={appendStrategicIndicatorsFiltersToPath(
+                  `/apps/strategic-indicators/departments/${department.id}`,
+                )}
                 className="si-link-button"
               >
                 Ver detalhe

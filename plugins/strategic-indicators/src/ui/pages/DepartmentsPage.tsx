@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { DepartmentOverviewTable } from "../components/DepartmentOverviewTable";
 import { InfoState } from "../components/InfoState";
 import { PageHeader } from "../components/PageHeader";
@@ -8,12 +8,6 @@ import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { useStrategicIndicatorsDepartments } from "../../state/hooks/useStrategicIndicatorsDepartments";
-import {
-  buildStrategicIndicatorsMonthRange,
-  getCurrentStrategicIndicatorsMonthValue,
-  resolveStrategicIndicatorsBranch,
-  type StrategicIndicatorsViewMode,
-} from "../shared/strategicIndicatorsFilters";
 import "./DepartmentsPage.css";
 
 type DepartmentsPageProps = {
@@ -21,22 +15,17 @@ type DepartmentsPageProps = {
 };
 
 export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
-  const [referenceMonth, setReferenceMonth] = useState(
-    getCurrentStrategicIndicatorsMonthValue(),
-  );
-  const [viewMode, setViewMode] =
-    useState<StrategicIndicatorsViewMode>("consolidated");
-  const [branch, setBranch] = useState("01");
-
-  const { startDate, endDate } = useMemo(
-    () => buildStrategicIndicatorsMonthRange(referenceMonth),
-    [referenceMonth],
-  );
-
-  const effectiveBranch = useMemo(
-    () => resolveStrategicIndicatorsBranch(viewMode, branch),
-    [viewMode, branch],
-  );
+  const {
+    referenceMonth,
+    viewMode,
+    branch,
+    setReferenceMonth,
+    setViewMode,
+    setBranch,
+    startDate,
+    endDate,
+    effectiveBranch,
+  } = useStrategicIndicatorsFilters();
 
   const { items, loading, refreshing, error, reload } =
     useStrategicIndicatorsDepartments({

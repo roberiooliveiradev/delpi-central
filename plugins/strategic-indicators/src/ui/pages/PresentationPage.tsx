@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PresentationAlertsBoard } from "../components/PresentationAlertsBoard";
 import { PresentationClosingPanel } from "../components/PresentationClosingPanel";
 import { PresentationDepartmentBoard } from "../components/PresentationDepartmentBoard";
@@ -11,11 +11,9 @@ import { InfoState } from "../components/InfoState";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { PresentationAlertsSeverityDonut } from "../components/PresentationAlertsSeverityDonut";
 import { PresentationTrendAreaChart } from "../components/PresentationTrendAreaChart";
+import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { useStrategicIndicatorsPresentation } from "../../state/hooks/useStrategicIndicatorsPresentation";
 import {
-  buildStrategicIndicatorsMonthRange,
-  getCurrentStrategicIndicatorsMonthValue,
-  resolveStrategicIndicatorsBranch,
   STRATEGIC_INDICATORS_BRANCH_OPTIONS,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
@@ -36,12 +34,11 @@ type PresentationScene =
   | "closing";
 
 const PRESENTATION_MODE_STORAGE_KEY = "si:presentation:mode";
-const PRESENTATION_VIEW_MODE_STORAGE_KEY = "si:presentation:view-mode";
-const PRESENTATION_BRANCH_STORAGE_KEY = "si:presentation:branch";
-const PRESENTATION_MONTHS_STORAGE_KEY = "si:presentation:months";
 
 const PRESENTATION_MONTHS_OPTIONS = [
+  { value: 2, label: "2 meses" },
   { value: 3, label: "3 meses" },
+  { value: 4, label: "4 meses" },
   { value: 6, label: "6 meses" },
   { value: 12, label: "12 meses" },
 ] as const;
@@ -166,44 +163,27 @@ function readStoredPresentationMode(): PresentationMode {
     : "meeting";
 }
 
-function readStoredPresentationViewMode(): StrategicIndicatorsViewMode {
-  if (typeof window === "undefined") return "consolidated";
-  const value = window.localStorage.getItem(PRESENTATION_VIEW_MODE_STORAGE_KEY);
-  return value === "branch" || value === "consolidated"
-    ? value
-    : "consolidated";
-}
-
-function readStoredPresentationBranch(): string {
-  if (typeof window === "undefined") return "01";
-  return window.localStorage.getItem(PRESENTATION_BRANCH_STORAGE_KEY) || "01";
-}
-
-function readStoredPresentationMonths(): number {
-  if (typeof window === "undefined") return 3;
-
-  const rawValue = window.localStorage.getItem(PRESENTATION_MONTHS_STORAGE_KEY);
-  const parsedValue = Number(rawValue);
-
-  return [3, 6, 12].includes(parsedValue) ? parsedValue : 3;
-}
-
 export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(() => {
     if (typeof document === "undefined") return false;
     return Boolean(document.fullscreenElement);
   });
-  const [referenceMonth, setReferenceMonth] = useState(
-    getCurrentStrategicIndicatorsMonthValue(),
-  );
+  const {
+    referenceMonth,
+    viewMode,
+    branch,
+    monthsToCompare,
+    setReferenceMonth,
+    setViewMode,
+    setBranch,
+    setMonthsToCompare,
+    startDate,
+    endDate,
+    effectiveBranch,
+  } = useStrategicIndicatorsFilters();
   const [mode, setMode] = useState<PresentationMode>(() =>
     readStoredPresentationMode(),
   );
-  const [viewMode, setViewMode] = useState<StrategicIndicatorsViewMode>(() =>
-    readStoredPresentationViewMode(),
-  );
-  const [branch, setBranch] = useState(() => readStoredPresentationBranch());
-  const [months, setMonths] = useState(() => readStoredPresentationMonths());
   const [scene, setScene] = useState<PresentationScene>("overview");
   const [departmentIndex, setDepartmentIndex] = useState(0);
   const [isAutoplayPaused, setIsAutoplayPaused] = useState(false);
@@ -213,22 +193,12 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
   const autoplayResumeTimerRef = useRef<number | null>(null);
 
-  const { startDate, endDate } = useMemo(
-    () => buildStrategicIndicatorsMonthRange(referenceMonth),
-    [referenceMonth],
-  );
-
-  const effectiveBranch = useMemo(
-    () => resolveStrategicIndicatorsBranch(viewMode, branch),
-    [viewMode, branch],
-  );
-
   const presentation = useStrategicIndicatorsPresentation({
     competence: referenceMonth,
     branch: effectiveBranch,
     startDate,
     endDate,
-    months,
+    months: monthsToCompare,
     getAccessToken,
   });
 
@@ -239,24 +209,6 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(PRESENTATION_MODE_STORAGE_KEY, mode);
   }, [mode]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(PRESENTATION_VIEW_MODE_STORAGE_KEY, viewMode);
-  }, [viewMode]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(PRESENTATION_BRANCH_STORAGE_KEY, branch);
-  }, [branch]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(
-      PRESENTATION_MONTHS_STORAGE_KEY,
-      String(months),
-    );
-  }, [months]);
 
   function clearAutoplayResumeTimer() {
     if (typeof window === "undefined") return;
@@ -301,7 +253,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   useEffect(() => {
     syncDeckAfterFilterChange();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode, branch, referenceMonth, months]);
+  }, [viewMode, branch, referenceMonth, monthsToCompare]);
 
   useEffect(() => {
     if (!presentation.departmentIds.length) {
@@ -459,7 +411,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
   function handleMonthsChange(nextMonths: number) {
     pauseAutoplayTemporarily();
-    setMonths(nextMonths);
+    setMonthsToCompare(nextMonths);
   }
 
   const selectedBoardDepartment =
@@ -911,7 +863,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
       );
     }
 
-    const igdSeries = trend.igdSeries.slice(-months);
+    const igdSeries = trend.igdSeries.slice(-monthsToCompare);
 
     const strongestMomentumDepartment = [...trend.departments].sort(
       (a, b) => b.netVariation - a.netVariation,
@@ -950,7 +902,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
                   Evolução histórica
                 </span>
                 <h3 className="si-presentation-trend-scene__chart-title">
-                  Comportamento do IGD nos últimos {months} meses
+                  Comportamento do IGD nos últimos {monthsToCompare} meses
                 </h3>
                 <p className="si-presentation-trend-scene__chart-subtitle">
                   Leitura consolidada da trajetória do índice global no recorte
@@ -1256,7 +1208,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
           viewMode={viewMode}
           branch={branch}
           branchOptions={STRATEGIC_INDICATORS_BRANCH_OPTIONS}
-          months={months}
+          months={monthsToCompare}
           monthsOptions={[...PRESENTATION_MONTHS_OPTIONS]}
           isRefreshing={
             presentation.refreshing ||

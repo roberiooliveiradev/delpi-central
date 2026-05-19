@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { useStrategicIndicators } from "../../state/hooks/useStrategicIndicators";
+import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { IndicatorAnalyticsSummary } from "../components/IndicatorAnalyticsSummary";
 import { IndicatorAnalyticsTable } from "../components/IndicatorAnalyticsTable";
 import { IndicatorDepartmentOverview } from "../components/IndicatorDepartmentOverview";
@@ -14,12 +15,6 @@ import { StatusBadge } from "../components/StatusBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
-import {
-  buildStrategicIndicatorsMonthRange,
-  getCurrentStrategicIndicatorsMonthValue,
-  resolveStrategicIndicatorsBranch,
-  type StrategicIndicatorsViewMode,
-} from "../shared/strategicIndicatorsFilters";
 import "./IndicatorsPage.css";
 
 type IndicatorsPageProps = {
@@ -139,24 +134,19 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("all");
   const [status, setStatus] = useState("all");
-  const [referenceMonth, setReferenceMonth] = useState(
-    getCurrentStrategicIndicatorsMonthValue(),
-  );
-  const [viewMode, setViewMode] =
-    useState<StrategicIndicatorsViewMode>("consolidated");
-  const [branch, setBranch] = useState("01");
+  const {
+    referenceMonth,
+    viewMode,
+    branch,
+    setReferenceMonth,
+    setViewMode,
+    setBranch,
+    startDate,
+    endDate,
+    effectiveBranch,
+  } = useStrategicIndicatorsFilters();
   const [selectedIndicatorId, setSelectedIndicatorId] = useState<string | null>(
     null,
-  );
-
-  const { startDate, endDate } = useMemo(
-    () => buildStrategicIndicatorsMonthRange(referenceMonth),
-    [referenceMonth],
-  );
-
-  const effectiveBranch = useMemo(
-    () => resolveStrategicIndicatorsBranch(viewMode, branch),
-    [viewMode, branch],
   );
 
   const {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { DepartmentDetailHero } from "../components/DepartmentDetailHero";
 import { IndicatorDetailGrid } from "../components/IndicatorDetailGrid";
 import { InfoState } from "../components/InfoState";
@@ -9,12 +9,7 @@ import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { useStrategicIndicatorsDepartmentDetails } from "../../state/hooks/useStrategicIndicatorsDepartmentDetails";
-import {
-  buildStrategicIndicatorsMonthRange,
-  getCurrentStrategicIndicatorsMonthValue,
-  resolveStrategicIndicatorsBranch,
-  type StrategicIndicatorsViewMode,
-} from "../shared/strategicIndicatorsFilters";
+import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import "./DepartmentDetailsPage.css";
 
 type DepartmentDetailsPageProps = {
@@ -32,22 +27,17 @@ export function DepartmentDetailsPage({
   getAccessToken,
 }: DepartmentDetailsPageProps) {
   const departmentId = useMemo(() => extractDepartmentId(pathname), [pathname]);
-  const [referenceMonth, setReferenceMonth] = useState(
-    getCurrentStrategicIndicatorsMonthValue(),
-  );
-  const [viewMode, setViewMode] =
-    useState<StrategicIndicatorsViewMode>("consolidated");
-  const [branch, setBranch] = useState("01");
-
-  const { startDate, endDate } = useMemo(
-    () => buildStrategicIndicatorsMonthRange(referenceMonth),
-    [referenceMonth],
-  );
-
-  const effectiveBranch = useMemo(
-    () => resolveStrategicIndicatorsBranch(viewMode, branch),
-    [viewMode, branch],
-  );
+  const {
+    referenceMonth,
+    viewMode,
+    branch,
+    setReferenceMonth,
+    setViewMode,
+    setBranch,
+    startDate,
+    endDate,
+    effectiveBranch,
+  } = useStrategicIndicatorsFilters();
 
   const { data, loading, refreshing, error, reload } =
     useStrategicIndicatorsDepartmentDetails({

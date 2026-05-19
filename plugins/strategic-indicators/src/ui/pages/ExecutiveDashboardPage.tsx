@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { Card } from "../components/Card";
 import { ClassificationBand } from "../components/ClassificationBand";
 import { ContributionRanking } from "../components/ContributionRanking";
@@ -13,12 +13,6 @@ import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { useStrategicIndicatorsExecutiveSummary } from "../../state/hooks/useStrategicIndicatorsExecutiveSummary";
-import {
-  buildStrategicIndicatorsMonthRange,
-  getCurrentStrategicIndicatorsMonthValue,
-  resolveStrategicIndicatorsBranch,
-  type StrategicIndicatorsViewMode,
-} from "../shared/strategicIndicatorsFilters";
 import "./ExecutiveDashboardPage.css";
 
 type ExecutiveDashboardPageProps = {
@@ -28,22 +22,17 @@ type ExecutiveDashboardPageProps = {
 export function ExecutiveDashboardPage({
   getAccessToken,
 }: ExecutiveDashboardPageProps) {
-  const [referenceMonth, setReferenceMonth] = useState(
-    getCurrentStrategicIndicatorsMonthValue(),
-  );
-  const [viewMode, setViewMode] =
-    useState<StrategicIndicatorsViewMode>("consolidated");
-  const [branch, setBranch] = useState("01");
-
-  const { startDate, endDate } = useMemo(
-    () => buildStrategicIndicatorsMonthRange(referenceMonth),
-    [referenceMonth],
-  );
-
-  const effectiveBranch = useMemo(
-    () => resolveStrategicIndicatorsBranch(viewMode, branch),
-    [viewMode, branch],
-  );
+  const {
+    referenceMonth,
+    viewMode,
+    branch,
+    setReferenceMonth,
+    setViewMode,
+    setBranch,
+    startDate,
+    endDate,
+    effectiveBranch,
+  } = useStrategicIndicatorsFilters();
 
   const { data, loading, refreshing, error, reload } =
     useStrategicIndicatorsExecutiveSummary({

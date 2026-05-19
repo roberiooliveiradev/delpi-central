@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { AlertsExecutiveAction } from "../components/AlertsExecutiveAction";
 import { AlertsPriorityHighlights } from "../components/AlertsPriorityHighlights";
 import { AlertsSummaryCards } from "../components/AlertsSummaryCards";
@@ -14,12 +14,6 @@ import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { TopAlertHighlight } from "../components/TopAlertHighlight";
 import { useStrategicIndicatorsAlerts } from "../../state/hooks/useStrategicIndicatorsAlerts";
-import {
-  buildStrategicIndicatorsMonthRange,
-  getCurrentStrategicIndicatorsMonthValue,
-  resolveStrategicIndicatorsBranch,
-  type StrategicIndicatorsViewMode,
-} from "../shared/strategicIndicatorsFilters";
 import "./AlertsPage.css";
 
 type AlertsPageProps = {
@@ -38,22 +32,17 @@ function buildPartialErrorDescription(
 }
 
 export function AlertsPage({ getAccessToken }: AlertsPageProps) {
-  const [referenceMonth, setReferenceMonth] = useState(
-    getCurrentStrategicIndicatorsMonthValue(),
-  );
-  const [viewMode, setViewMode] =
-    useState<StrategicIndicatorsViewMode>("consolidated");
-  const [branch, setBranch] = useState("01");
-
-  const { startDate, endDate } = useMemo(
-    () => buildStrategicIndicatorsMonthRange(referenceMonth),
-    [referenceMonth],
-  );
-
-  const effectiveBranch = useMemo(
-    () => resolveStrategicIndicatorsBranch(viewMode, branch),
-    [viewMode, branch],
-  );
+  const {
+    referenceMonth,
+    viewMode,
+    branch,
+    setReferenceMonth,
+    setViewMode,
+    setBranch,
+    startDate,
+    endDate,
+    effectiveBranch,
+  } = useStrategicIndicatorsFilters();
 
   const { data, loading, refreshing, error, reload } =
     useStrategicIndicatorsAlerts({

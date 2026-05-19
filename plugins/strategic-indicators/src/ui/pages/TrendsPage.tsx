@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { DepartmentTrendGrid } from "../components/DepartmentTrendGrid";
 import { IgdTrendTimeline } from "../components/IgdTrendTimeline";
 import { InfoState } from "../components/InfoState";
@@ -14,11 +14,6 @@ import { TrendMonthComparison } from "../components/TrendMonthComparison";
 import { TrendPriorityList } from "../components/TrendPriorityList";
 import { TrendSummaryCards } from "../components/TrendSummaryCards";
 import { useStrategicIndicatorsTrends } from "../../state/hooks/useStrategicIndicatorsTrends";
-import {
-  getCurrentStrategicIndicatorsMonthValue,
-  resolveStrategicIndicatorsBranch,
-  type StrategicIndicatorsViewMode,
-} from "../shared/strategicIndicatorsFilters";
 import "./TrendsPage.css";
 
 type TrendsPageProps = {
@@ -26,18 +21,17 @@ type TrendsPageProps = {
 };
 
 export function TrendsPage({ getAccessToken }: TrendsPageProps) {
-  const [referenceMonth, setReferenceMonth] = useState(
-    getCurrentStrategicIndicatorsMonthValue(),
-  );
-  const [monthsToCompare, setMonthsToCompare] = useState(3);
-  const [viewMode, setViewMode] =
-    useState<StrategicIndicatorsViewMode>("consolidated");
-  const [branch, setBranch] = useState("01");
-
-  const effectiveBranch = useMemo(
-    () => resolveStrategicIndicatorsBranch(viewMode, branch),
-    [viewMode, branch],
-  );
+  const {
+    referenceMonth,
+    viewMode,
+    branch,
+    monthsToCompare,
+    setReferenceMonth,
+    setViewMode,
+    setBranch,
+    setMonthsToCompare,
+    effectiveBranch,
+  } = useStrategicIndicatorsFilters();
 
   const { data, loading, refreshing, error, reload } =
     useStrategicIndicatorsTrends({
