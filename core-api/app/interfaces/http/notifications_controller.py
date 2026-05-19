@@ -21,8 +21,8 @@ from app.application.use_cases.resolve_notification_recipients_use_case import (
 from app.application.use_cases.update_scheduled_notification_dispatch_use_case import (
     UpdateScheduledNotificationDispatchUseCase,
 )
-from app.application.use_cases.process_pending_notification_dispatches_use_case import (
-    ProcessPendingNotificationDispatchesUseCase,
+from app.application.services.process_pending_notification_dispatches_service import (
+    run_process_pending_notification_dispatches,
 )
 from app.application.use_cases.process_birthday_notifications_use_case import (
     ProcessBirthdayNotificationsUseCase,
@@ -325,12 +325,7 @@ def process_pending_notification_dispatches():
         return api_error("invalid_limit", "limit must be an integer", status=400)
 
     try:
-        registry = build_template_registry()
-        with SqlAlchemyUnitOfWork() as uow:
-            result = ProcessPendingNotificationDispatchesUseCase(
-                uow,
-                template_registry=registry,
-            ).execute(limit=limit)
+        result = run_process_pending_notification_dispatches(limit=limit)
 
         return (
             jsonify(
@@ -358,12 +353,7 @@ def integrations_process_pending_notification_dispatches():
         return api_error("invalid_limit", "limit must be an integer", status=400)
 
     try:
-        registry = build_template_registry()
-        with SqlAlchemyUnitOfWork() as uow:
-            result = ProcessPendingNotificationDispatchesUseCase(
-                uow,
-                template_registry=registry,
-            ).execute(limit=limit)
+        result = run_process_pending_notification_dispatches(limit=limit)
 
         return (
             jsonify(

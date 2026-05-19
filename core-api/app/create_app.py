@@ -26,6 +26,9 @@ from app.interfaces.http.auth_middleware import authenticate
 
 from app.infrastructure.db.models import *  # noqa
 from app.infrastructure.seeds.permissions_seed import seed_base_permissions
+from app.infrastructure.schedulers.notification_dispatch_scheduler import (
+    start_notification_dispatch_scheduler,
+)
 
 # IMPORTANT: registra policies
 import app.interfaces.http.security.policies
@@ -84,5 +87,7 @@ def create_app(config_name: str | None = None) -> Flask:
                 seed_base_permissions(db.session)
             except Exception as e:
                 logging.warning(f"Permission seed failed: {e}")
+
+    start_notification_dispatch_scheduler(app)
 
     return app

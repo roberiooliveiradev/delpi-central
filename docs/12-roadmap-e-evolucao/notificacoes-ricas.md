@@ -153,9 +153,19 @@ Detalhes: [Portal — Notificações](../06-portal-frontend/notificacoes.md).
 
 ---
 
-## 8. Cron — envios agendados
+## 8. Envios agendados — processamento automático
 
-Campanhas com `scheduledAt` ficam `pending` até processamento. Em produção, agendar chamada periódica (ex.: a cada 1–5 min). Script: `scripts/process-pending-notifications.sh`.
+Campanhas com `scheduledAt` ficam `pending` até `scheduled_at <= now`. A **Core API** inclui um scheduler em background (thread daemon) que chama o mesmo fluxo de `process-pending` a cada intervalo configurável — **não é necessário clicar em “Processar agendados”** no Admin.
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED` | `true` | Liga/desliga o scheduler interno |
+| `NOTIFICATIONS_DISPATCH_POLL_SECONDS` | `60` | Intervalo entre verificações (mín. 15s) |
+| `NOTIFICATIONS_DISPATCH_BATCH_LIMIT` | `20` | Máx. dispatches por ciclo (máx. 50) |
+
+O botão **Processar agendados** e o cron externo continuam úteis para forçar processamento imediato ou redundância em ambientes com várias réplicas da API (onde cada instância roda o scheduler — use cron + service token e desabilite o interno com `NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED=false` se preferir um único worker).
+
+Script opcional: `scripts/process-pending-notifications.sh`.
 
 ```bash
 export DELPI_API_BASE_URL="https://<host>"

@@ -117,8 +117,8 @@ export function NotificationDispatchHistory({
 
       {pendingCount > 0 ? (
         <p className="notification-dispatch-history__hint">
-          {pendingCount} envio(s) agendado(s) nesta página. Use “Processar agendados” ou configure um
-          cron em <code>POST /admin/notifications/dispatches/process-pending</code>.
+          {pendingCount} envio(s) agendado(s) nesta página. A Core API processa automaticamente no
+          horário (verificação periódica). Use “Processar agendados” apenas para forçar agora.
         </p>
       ) : null}
 

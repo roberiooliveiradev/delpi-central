@@ -686,7 +686,7 @@ Possíveis políticas futuras:
 1. Não armazenar dados sensíveis em `message` / `htmlContent`.
 2. HTML sempre sanitizado no backend antes de persistir.
 3. Categoria `system` não pode ser silenciada nas preferências.
-4. Cron: `scripts/process-pending-notifications.sh`, `run-birthday-notifications.sh`, `run-notification-maintenance.sh`.
+4. Agendados: scheduler interno (`NOTIFICATIONS_DISPATCH_*`); cron opcional: `scripts/process-pending-notifications.sh`, `run-birthday-notifications.sh`, `run-notification-maintenance.sh`.
 5. `users.birth_date` deve estar preenchido no Admin para automação de aniversário.
 6. Notificação comunica estado ao usuário — **não** substitui RBAC/permissões.
 7. Rate limit in-memory não escala horizontalmente sem Redis compartilhado.

@@ -5,11 +5,46 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def _env_bool(name: str, default: bool = True) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
+def _env_int(name: str, default: int, *, minimum: int | None = None) -> int:
+    raw = os.getenv(name)
+    if raw is None or not str(raw).strip():
+        return default
+    value = int(raw)
+    if minimum is not None:
+        return max(minimum, value)
+    return value
+
+
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")
     CORE_API_INTEGRATIONS_SERVICE_TOKEN = os.getenv(
         "CORE_API_INTEGRATIONS_SERVICE_TOKEN", ""
     ).strip()
+
+    NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED = _env_bool(
+        "NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED",
+        default=True,
+    )
+    NOTIFICATIONS_DISPATCH_POLL_SECONDS = _env_int(
+        "NOTIFICATIONS_DISPATCH_POLL_SECONDS",
+        default=60,
+        minimum=15,
+    )
+    NOTIFICATIONS_DISPATCH_BATCH_LIMIT = min(
+        50,
+        _env_int(
+            "NOTIFICATIONS_DISPATCH_BATCH_LIMIT",
+            default=20,
+            minimum=1,
+        ),
+    )
 
     DB_HOST = os.getenv("DB_HOST")
     DB_PORT = os.getenv("DB_PORT")
