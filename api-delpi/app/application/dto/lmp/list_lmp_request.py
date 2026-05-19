@@ -69,3 +69,5 @@ class ListLMPRequest:
     listing_type: Optional[str] = None
     page: Optional[int] = None
     page_size: Optional[int] = None
+    # None = incluir PI (listagem legada); False = modo leve (dashboard/resumo).
+    include_qtd_pi: Optional[bool] = None

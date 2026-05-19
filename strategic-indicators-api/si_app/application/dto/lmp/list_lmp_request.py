@@ -69,3 +69,4 @@ class ListLMPRequest:
     listing_type: Optional[str] = None
     page: Optional[int] = None
     page_size: Optional[int] = None
+    include_qtd_pi: Optional[bool] = None

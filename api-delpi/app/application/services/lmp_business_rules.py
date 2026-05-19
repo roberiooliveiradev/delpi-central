@@ -156,6 +156,59 @@ class LMPBusinessRules:
         return normalized_status == normalized_filter
 
     @classmethod
+    def resolve_dashboard_status(
+        cls,
+        *,
+        start_date_str: Optional[str],
+        end_date_str: Optional[str],
+        qtd_pi: Optional[int],
+        engineering_status: Optional[str] = None,
+        engineering_total_minutes: Optional[int] = None,
+        today: Optional[date] = None,
+    ) -> str:
+        today = today or date.today()
+
+        nivel = cls.get_nivel(qtd_pi)
+        sla_limit_minutes = cls.get_sla_limit_minutes(nivel)
+
+        start_date = cls.parse_totvs_date(start_date_str)
+        end_date = cls.parse_totvs_date(end_date_str)
+        data_limite_com_tolerancia = cls.get_sla_limit_date(start_date, nivel)
+
+        total_minutes = int(engineering_total_minutes or 0)
+        finished = cls.is_engineering_finished(engineering_status)
+        returned = cls.is_engineering_returned(engineering_status)
+
+        if returned:
+            return cls.DASHBOARD_STATUS_RETURNED
+
+        if finished:
+            within_date_limit = (
+                end_date is not None
+                and data_limite_com_tolerancia is not None
+                and end_date <= data_limite_com_tolerancia
+            )
+            within_minutes_limit = total_minutes <= sla_limit_minutes
+
+            return (
+                cls.DASHBOARD_STATUS_ON_TIME
+                if (within_date_limit or within_minutes_limit)
+                else cls.DASHBOARD_STATUS_LATE
+            )
+
+        over_date_limit = (
+            data_limite_com_tolerancia is not None
+            and today > data_limite_com_tolerancia
+        )
+        over_minutes_limit = total_minutes > sla_limit_minutes
+
+        return (
+            cls.DASHBOARD_STATUS_LATE
+            if (over_date_limit and over_minutes_limit)
+            else cls.DASHBOARD_STATUS_IN_PROGRESS
+        )
+
+    @classmethod
     def get_dashboard_status(
         cls,
         start_date_str: Optional[str],
@@ -165,18 +218,14 @@ class LMPBusinessRules:
         engineering_total_minutes: Optional[int] = None,
         today: Optional[date] = None,
     ) -> tuple[str, int, int, Optional[str], Optional[int], str]:
-        today = today or date.today()
-
         nivel = cls.get_nivel(qtd_pi)
         sla_days = cls.get_sla_days(nivel)
         sla_minutes = cls.get_sla_minutes(nivel)
-        sla_limit_minutes = cls.get_sla_limit_minutes(nivel)
 
         start_date = cls.parse_totvs_date(start_date_str)
         end_date = cls.parse_totvs_date(end_date_str)
 
         data_limite = cls.add_business_days(start_date, sla_days) if start_date else None
-        data_limite_com_tolerancia = cls.get_sla_limit_date(start_date, nivel)
 
         lead_time_util = (
             cls.business_days_between(start_date, end_date)
@@ -184,39 +233,14 @@ class LMPBusinessRules:
             else None
         )
 
-        total_minutes = int(engineering_total_minutes or 0)
-        finished = cls.is_engineering_finished(engineering_status)
-        returned = cls.is_engineering_returned(engineering_status)
-
-        if returned:
-            status = cls.DASHBOARD_STATUS_RETURNED
-
-        elif finished:
-            within_date_limit = (
-                end_date is not None
-                and data_limite_com_tolerancia is not None
-                and end_date <= data_limite_com_tolerancia
-            )
-
-            within_minutes_limit = total_minutes <= sla_limit_minutes
-
-            status = (
-                cls.DASHBOARD_STATUS_ON_TIME
-                if (within_date_limit or within_minutes_limit)
-                else cls.DASHBOARD_STATUS_LATE
-            )
-        else:
-            over_date_limit = (
-                data_limite_com_tolerancia is not None
-                and today > data_limite_com_tolerancia
-            )
-            over_minutes_limit = total_minutes > sla_limit_minutes
-
-            status = (
-                cls.DASHBOARD_STATUS_LATE
-                if (over_date_limit and over_minutes_limit)
-                else cls.DASHBOARD_STATUS_IN_PROGRESS
-            )
+        status = cls.resolve_dashboard_status(
+            start_date_str=start_date_str,
+            end_date_str=end_date_str,
+            qtd_pi=qtd_pi,
+            engineering_status=engineering_status,
+            engineering_total_minutes=engineering_total_minutes,
+            today=today,
+        )
 
         return (
             nivel,

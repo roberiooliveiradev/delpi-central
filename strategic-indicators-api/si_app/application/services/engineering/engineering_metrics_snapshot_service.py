@@ -97,6 +97,7 @@ class EngineeringMetricsSnapshotService:
                 branch=branch,
                 page=None,
                 page_size=None,
+                include_qtd_pi=False,
             ),
             include_avg_lead_time=False,
         )

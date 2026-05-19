@@ -160,21 +160,27 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             lmp_only=lmp_only,
         )
 
-    def _sql_listing_kind_filter_clause(
-        self,
-        request: ListLMPRequest,
-        *,
-        lmp_only: bool = False,
-        alias: str = "C",
-    ) -> Tuple[str, tuple]:
-        listing_filter = self._resolve_listing_type_filter(
-            request,
-            lmp_only=lmp_only,
-        )
-        if not listing_filter:
-            return "", ()
+    def _resolve_include_qtd_pi(self, request: ListLMPRequest) -> bool:
+        if request.include_qtd_pi is None:
+            return True
+        return bool(request.include_qtd_pi)
 
-        return f"WHERE {alias}.LISTING_KIND = ?", (listing_filter,)
+    def _sql_aij_period_filter_clause(
+        self,
+        field: str,
+        date_start: str | None,
+        date_end: str | None,
+    ) -> Tuple[str, tuple]:
+        qb_period = QueryBuilder()
+        qb_period.date_range(
+            field=field,
+            start=date_start,
+            end=date_end,
+        )
+        where_period, params_period = qb_period.build()
+        if not where_period:
+            return "", ()
+        return f"AND {where_period}", params_period
 
     # =========================
     # SQL FILTER BLOCKS
@@ -305,10 +311,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         """ if include_qtd_pi else ""
 
         qtd_pi_group_by = ",\n                PI.QTD_PI" if include_qtd_pi else ""
-        listing_where_sql, listing_where_params = self._sql_listing_kind_filter_clause(
-            request,
-            lmp_only=lmp_only,
-        )
         order_clause = """
             ORDER BY
                 C.LMP_START_DATE DESC,
@@ -337,7 +339,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 ON H.AIJ_FILIAL = C.AD1_FILIAL
                AND H.AIJ_NROPOR = C.AD1_NROPOR
             {qtd_pi_join}
-            {listing_where_sql}
             GROUP BY
                 C.AD1_FILIAL,
                 C.AD1_NROPOR,
@@ -355,7 +356,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             {order_clause}
         """
 
-        return sql, (*ctes_params, *listing_where_params)
+        return sql, ctes_params
 
     def _sql_lmp_base_rows_query(
         self,
@@ -469,6 +470,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def _sql_eng_support_ov_reference_cte(
         self,
         requested_branch: str | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
     ) -> Tuple[str, tuple]:
         where_aij_base, params_aij_base = self._build_filter_sql(
             lambda qb: (
@@ -481,6 +484,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 "A.AIJ_PROVEN",
                 "A.AIJ_STAGE",
             )
+        )
+        where_period, params_period = self._sql_aij_period_filter_clause(
+            "A.AIJ_DTINIC",
+            date_start,
+            date_end,
         )
 
         sql = f"""
@@ -495,12 +503,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 FROM AIJ010 A
                 WHERE {where_aij_base}
                   AND {where_eng_support}
+                  {where_period}
                 GROUP BY
                     A.AIJ_FILIAL,
                     A.AIJ_NROPOR
             )
         """
-        return sql, (*params_aij_base, *params_eng_support)
+        return sql, (*params_aij_base, *params_eng_support, *params_period)
 
     def _sql_candidate_lmps_cte(
         self,
@@ -513,9 +522,15 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             lmp_only=lmp_only,
         )
 
-        cte_marker, params_marker = self._sql_listing_anchor_marker_cte(request.branch)
+        cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
+            request.branch,
+            request.date_start,
+            request.date_end,
+        )
         cte_eng_ref, params_eng_ref = self._sql_eng_support_ov_reference_cte(
-            request.branch
+            request.branch,
+            request.date_start,
+            request.date_end,
         )
         where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", request.branch)
 
@@ -966,234 +981,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         return sql, params
 
-    def _sql_lmp_marker_cte(
-        self,
-        requested_branch: str | None = None,
-    ) -> Tuple[str, tuple]:
-        where_aij_base, params_aij_base = self._build_filter_sql(
-            lambda qb: (
-                self._active_filter(qb, "A.D_E_L_E_T_"),
-                self._branch_filter(qb, "A.AIJ_FILIAL", requested_branch),
-            )
-        )
-
-        where_lmp_anchor, params_lmp_anchor = self._sql_lmp_anchor_process_stage_condition(
-            "A.AIJ_PROVEN",
-            "A.AIJ_STAGE",
-        )
-
-        sql = f"""
-            LMPAnchorEventos AS (
-                SELECT
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.AIJ_REVISA,
-                    A.AIJ_PROVEN,
-                    A.AIJ_STAGE,
-                    A.AIJ_DTINIC,
-                    A.AIJ_HRINIC,
-                    A.AIJ_DTENCE,
-                    A.AIJ_HRENCE,
-                    A.R_E_C_N_O_,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR
-                        ORDER BY
-                            A.AIJ_REVISA DESC,
-                            A.AIJ_DTINIC DESC,
-                            A.AIJ_HRINIC DESC,
-                            A.R_E_C_N_O_ DESC
-                    ) AS RN_DESC
-                FROM AIJ010 A
-                WHERE {where_aij_base}
-                  AND {where_lmp_anchor}
-            ),
-
-            LMPAnchorResolvido AS (
-                SELECT
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.AIJ_REVISA,
-                    A.AIJ_PROVEN,
-                    A.AIJ_STAGE,
-                    A.AIJ_DTINIC AS LMP_START_DATE,
-                    COALESCE(
-                        NULLIF(A.AIJ_DTENCE, ''),
-                        NEXT_EVT.NEXT_DATE
-                    ) AS LMP_END_DATE,
-                    A.RN_DESC
-                FROM LMPAnchorEventos A
-                OUTER APPLY (
-                    SELECT TOP 1
-                        COALESCE(
-                            NULLIF(X.AIJ_DTENCE, ''),
-                            NULLIF(X.AIJ_DTINIC, '')
-                        ) AS NEXT_DATE
-                    FROM AIJ010 X
-                    WHERE X.D_E_L_E_T_ = ''
-                      AND X.AIJ_FILIAL = A.AIJ_FILIAL
-                      AND X.AIJ_NROPOR = A.AIJ_NROPOR
-                      AND (
-                            X.AIJ_REVISA > A.AIJ_REVISA
-                            OR (
-                                X.AIJ_REVISA = A.AIJ_REVISA
-                                AND (
-                                    X.AIJ_DTINIC > A.AIJ_DTINIC
-                                    OR (
-                                        X.AIJ_DTINIC = A.AIJ_DTINIC
-                                        AND ISNULL(X.AIJ_HRINIC, '') > ISNULL(A.AIJ_HRINIC, '')
-                                    )
-                                    OR (
-                                        X.AIJ_DTINIC = A.AIJ_DTINIC
-                                        AND ISNULL(X.AIJ_HRINIC, '') = ISNULL(A.AIJ_HRINIC, '')
-                                        AND X.R_E_C_N_O_ > A.R_E_C_N_O_
-                                    )
-                                )
-                            )
-                      )
-                    ORDER BY
-                        X.AIJ_DTINIC ASC,
-                        X.AIJ_HRINIC ASC,
-                        X.AIJ_REVISA ASC,
-                        X.R_E_C_N_O_ ASC
-                ) NEXT_EVT
-            ),
-
-            LMPEventos AS (
-                SELECT
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.LMP_START_DATE,
-                    A.LMP_END_DATE,
-                    1 AS QTD_PASSAGENS_LMP,
-                    CASE
-                        WHEN ISNULL(A.LMP_END_DATE, '') <> '' THEN 1
-                        ELSE 0
-                    END AS QTD_PASSAGENS_LMP_ENCERRADAS
-                FROM LMPAnchorResolvido A
-                WHERE A.RN_DESC = 1
-            )
-        """
-
-        params = (
-            *params_aij_base,
-            *params_lmp_anchor,
-        )
-        return sql, params
-
-    def _sql_sample_marker_cte(
-        self,
-        requested_branch: str | None = None,
-    ) -> Tuple[str, tuple]:
-        where_aij_base, params_aij_base = self._build_filter_sql(
-            lambda qb: (
-                self._active_filter(qb, "A.D_E_L_E_T_"),
-                self._branch_filter(qb, "A.AIJ_FILIAL", requested_branch),
-            )
-        )
-
-        where_sample_anchor, params_sample_anchor = (
-            self._sql_sample_anchor_process_stage_condition(
-                "A.AIJ_PROVEN",
-                "A.AIJ_STAGE",
-            )
-        )
-
-        sql = f"""
-            SampleAnchorEventos AS (
-                SELECT
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.AIJ_REVISA,
-                    A.AIJ_PROVEN,
-                    A.AIJ_STAGE,
-                    A.AIJ_DTINIC,
-                    A.AIJ_HRINIC,
-                    A.AIJ_DTENCE,
-                    A.AIJ_HRENCE,
-                    A.R_E_C_N_O_,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR
-                        ORDER BY
-                            A.AIJ_REVISA DESC,
-                            A.AIJ_DTINIC DESC,
-                            A.AIJ_HRINIC DESC,
-                            A.R_E_C_N_O_ DESC
-                    ) AS RN_DESC
-                FROM AIJ010 A
-                WHERE {where_aij_base}
-                  AND {where_sample_anchor}
-            ),
-
-            SampleAnchorResolvido AS (
-                SELECT
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.AIJ_REVISA,
-                    A.AIJ_PROVEN,
-                    A.AIJ_STAGE,
-                    A.AIJ_DTINIC AS SAMPLE_START_DATE,
-                    COALESCE(
-                        NULLIF(A.AIJ_DTENCE, ''),
-                        NEXT_EVT.NEXT_DATE
-                    ) AS SAMPLE_END_DATE,
-                    A.RN_DESC
-                FROM SampleAnchorEventos A
-                OUTER APPLY (
-                    SELECT TOP 1
-                        COALESCE(
-                            NULLIF(X.AIJ_DTENCE, ''),
-                            NULLIF(X.AIJ_DTINIC, '')
-                        ) AS NEXT_DATE
-                    FROM AIJ010 X
-                    WHERE X.D_E_L_E_T_ = ''
-                      AND X.AIJ_FILIAL = A.AIJ_FILIAL
-                      AND X.AIJ_NROPOR = A.AIJ_NROPOR
-                      AND (
-                            X.AIJ_REVISA > A.AIJ_REVISA
-                            OR (
-                                X.AIJ_REVISA = A.AIJ_REVISA
-                                AND (
-                                    X.AIJ_DTINIC > A.AIJ_DTINIC
-                                    OR (
-                                        X.AIJ_DTINIC = A.AIJ_DTINIC
-                                        AND ISNULL(X.AIJ_HRINIC, '') > ISNULL(A.AIJ_HRINIC, '')
-                                    )
-                                    OR (
-                                        X.AIJ_DTINIC = A.AIJ_DTINIC
-                                        AND ISNULL(X.AIJ_HRINIC, '') = ISNULL(A.AIJ_HRINIC, '')
-                                        AND X.R_E_C_N_O_ > A.R_E_C_N_O_
-                                    )
-                                )
-                            )
-                      )
-                    ORDER BY
-                        X.AIJ_DTINIC ASC,
-                        X.AIJ_HRINIC ASC,
-                        X.AIJ_REVISA ASC,
-                        X.R_E_C_N_O_ ASC
-                ) NEXT_EVT
-            ),
-
-            SampleEventos AS (
-                SELECT
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.SAMPLE_START_DATE,
-                    A.SAMPLE_END_DATE
-                FROM SampleAnchorResolvido A
-                WHERE A.RN_DESC = 1
-            )
-        """
-
-        params = (
-            *params_aij_base,
-            *params_sample_anchor,
-        )
-        return sql, params
-
     def _sql_listing_anchor_marker_cte(
         self,
         requested_branch: str | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
     ) -> Tuple[str, tuple]:
         """
         Resolve uma única âncora por OV.
@@ -1227,6 +1019,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 "A.AIJ_STAGE",
             )
         )
+        where_period, params_period = self._sql_aij_period_filter_clause(
+            "A.AIJ_DTINIC",
+            date_start,
+            date_end,
+        )
 
         sql = f"""
             AllListingAnchorRaw AS (
@@ -1245,6 +1042,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 FROM AIJ010 A
                 WHERE {where_aij_base}
                   AND {where_lmp_anchor}
+                  {where_period}
 
                 UNION ALL
 
@@ -1263,6 +1061,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 FROM AIJ010 A
                 WHERE {where_aij_base}
                   AND {where_sample_anchor}
+                  {where_period}
             ),
 
             AllListingAnchorRanked AS (
@@ -1352,6 +1151,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 FROM AIJ010 A
                 WHERE {where_aij_base}
                   AND {where_lmp_finalized}
+                  {where_period}
             ),
 
             LmpFinalizedAnchorRanked AS (
@@ -1447,26 +1247,6 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     WHERE F.AIJ_FILIAL = C.AIJ_FILIAL
                       AND F.AIJ_NROPOR = C.AIJ_NROPOR
                 )
-            ),
-
-            LMPEventos AS (
-                SELECT
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.ANCHOR_START_DATE AS LMP_START_DATE,
-                    A.ANCHOR_END_DATE AS LMP_END_DATE
-                FROM ListingAnchorEventos A
-                WHERE A.LISTING_KIND = ?
-            ),
-
-            SampleEventos AS (
-                SELECT
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.ANCHOR_START_DATE AS SAMPLE_START_DATE,
-                    A.ANCHOR_END_DATE AS SAMPLE_END_DATE
-                FROM ListingAnchorEventos A
-                WHERE A.LISTING_KIND = ?
             )
         """
 
@@ -1474,15 +1254,16 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             LISTING_KIND_LMP,
             *params_aij_base,
             *params_lmp_anchor,
+            *params_period,
             LISTING_KIND_SAMPLE,
             *params_aij_base,
             *params_sample_anchor,
+            *params_period,
             LISTING_KIND_SAMPLE,
             LISTING_KIND_LMP,
             *params_aij_base,
             *params_lmp_finalized,
-            LISTING_KIND_LMP,
-            LISTING_KIND_SAMPLE,
+            *params_period,
         )
         return sql, params
 
@@ -1881,7 +1662,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def list_lmps(self, request: ListLMPRequest) -> List[LMP]:
         sql, params = self._sql_lmp_base_rows_query(
             request,
-            include_qtd_pi=True,
+            include_qtd_pi=self._resolve_include_qtd_pi(request),
         )
 
         with self as repo:
@@ -1899,13 +1680,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 page_size=total,
             )
 
+        include_qtd_pi = self._resolve_include_qtd_pi(request)
         count_sql, count_params = self._sql_lmp_base_rows_count_query(
             request,
-            include_qtd_pi=True,
+            include_qtd_pi=include_qtd_pi,
         )
         page_sql, page_params = self._sql_lmp_base_rows_paged_query(
             request,
-            include_qtd_pi=True,
+            include_qtd_pi=include_qtd_pi,
         )
 
         with self as repo:
@@ -1976,7 +1758,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:
         sql, params = self._sql_lmp_summary_rows_query(
             request,
-            include_qtd_pi=True,
+            include_qtd_pi=self._resolve_include_qtd_pi(request),
         )
 
         with self as repo:

@@ -41,6 +41,10 @@ def list_lmps_route(
     ),
     page: Optional[int] = Query(None, ge=1),
     page_size: Optional[int] = Query(None, ge=1),
+    include_qtd_pi: Optional[bool] = Query(
+        None,
+        description="Incluir contagem de PI via BOM (mais lento). Padrão: true.",
+    ),
 ):
     try:
         dto = ListLMPRequest(
@@ -50,6 +54,7 @@ def list_lmps_route(
             listing_type=listing_type,
             page=page,
             page_size=page_size,
+            include_qtd_pi=include_qtd_pi,
         )
 
         use_case = build_engineering_list_lmps_use_case()

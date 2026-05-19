@@ -21,17 +21,30 @@ class GetLMPDashboardSummaryUseCase:
         *,
         include_avg_lead_time: bool = True,
     ) -> LMPDashboardSummaryResponse:
+        include_qtd_pi = (
+            request.include_qtd_pi
+            if request.include_qtd_pi is not None
+            else False
+        )
         cache_key = lmp_dashboard_summary_cache_key(
             date_start=request.date_start,
             date_end=request.date_end,
             branch=request.branch,
             include_avg_lead_time=include_avg_lead_time,
+            include_qtd_pi=include_qtd_pi,
         )
         cached = get_cached_lmp_dashboard_summary(cache_key)
         if cached is not None:
             return cached
 
-        rows = self._repository.get_lmp_dashboard_summary(request)
+        summary_request = ListLMPRequest(
+            date_start=request.date_start,
+            date_end=request.date_end,
+            branch=request.branch,
+            listing_type="lmp",
+            include_qtd_pi=include_qtd_pi,
+        )
+        rows = self._repository.get_lmp_dashboard_summary(summary_request)
 
         total_lmps = len(rows)
         total_dentro_prazo = 0

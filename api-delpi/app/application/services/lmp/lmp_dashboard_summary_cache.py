@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from si_app.application.dto.lmp.lmp_dashboard_summary_response import (
+from app.application.dto.lmp.lmp_dashboard_summary_response import (
     LMPDashboardSummaryResponse,
 )
-from si_app.config import settings
-from si_app.infrastructure.cache.ttl_cache import TtlCache
+from app.infrastructure.cache.ttl_cache import TtlCache
+
+_LMP_DASHBOARD_SUMMARY_TTL_SECONDS = 120.0
 
 _lmp_dashboard_summary_cache: TtlCache[LMPDashboardSummaryResponse] = TtlCache(
-    ttl_seconds=settings.SI_SNAPSHOT_CACHE_TTL_SECONDS,
+    ttl_seconds=_LMP_DASHBOARD_SUMMARY_TTL_SECONDS,
 )
 
 
@@ -17,7 +18,7 @@ def lmp_dashboard_summary_cache_key(
     date_end: str | None,
     branch: str | None,
     include_avg_lead_time: bool,
-    include_qtd_pi: bool = False,
+    include_qtd_pi: bool,
 ) -> str:
     return "|".join(
         [
@@ -42,7 +43,3 @@ def set_cached_lmp_dashboard_summary(
     value: LMPDashboardSummaryResponse,
 ) -> None:
     _lmp_dashboard_summary_cache.set(key, value)
-
-
-def invalidate_lmp_dashboard_summary_cache() -> None:
-    _lmp_dashboard_summary_cache.invalidate_all()

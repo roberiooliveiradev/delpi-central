@@ -97,7 +97,9 @@ class EngineeringMetricsSnapshotService:
                 branch=branch,
                 page=None,
                 page_size=None,
-            )
+                include_qtd_pi=False,
+            ),
+            include_avg_lead_time=False,
         )
 
         lmp_projects_on_time_pct = self._to_float(

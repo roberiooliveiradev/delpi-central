@@ -5,9 +5,9 @@ from typing import Any, Dict, List, Optional
 
 from si_app.application.dto.lmp.list_lmp_request import (
     DASHBOARD_STATUS_VALUES,
+    LISTING_KIND_LMP,
     ListLMPRequest,
     resolve_dashboard_status_filter,
-    resolve_listing_type_filter,
 )
 from si_app.application.dto.lmp.lmp_dashboard_item import LMPDashboardItem
 from si_app.application.services.lmp_business_rules import LMPBusinessRules
@@ -48,21 +48,6 @@ class ListLMPDashboardUseCase:
             lead_time_util=lead_time_util,
             status=status,
         )
-
-    def _filter_rows_by_listing_type(
-        self,
-        rows: List[LMP],
-        request: ListLMPRequest,
-    ) -> List[LMP]:
-        listing_filter = resolve_listing_type_filter(request.listing_type)
-        if not listing_filter:
-            return rows
-
-        return [
-            row
-            for row in rows
-            if row.listing_kind == listing_filter
-        ]
 
     def _filter_items_by_status(
         self,
@@ -178,19 +163,14 @@ class ListLMPDashboardUseCase:
         status_filter: str = "Todos",
     ) -> Dict[str, Any]:
         resolved_status = resolve_dashboard_status_filter(status_filter)
+        query_request = replace(request, include_qtd_pi=False)
 
-        rows: List[LMP] = self._filter_rows_by_listing_type(
-            self._repository.list_lmps(request),
-            request,
-        )
-        lmp_summary_request = replace(request, listing_type="lmp")
-        lmp_rows: List[LMP] = self._repository.list_lmps(lmp_summary_request)
-
-        enriched = self._filter_items_by_status(
-            [self._enrich_item(row) for row in rows],
-            resolved_status,
-        )
-        lmp_enriched = [self._enrich_item(row) for row in lmp_rows]
+        rows: List[LMP] = self._repository.list_lmps(query_request)
+        enriched_all = [self._enrich_item(row) for row in rows]
+        lmp_enriched = [
+            item for item in enriched_all if item.listing_kind == LISTING_KIND_LMP
+        ]
+        enriched = self._filter_items_by_status(enriched_all, resolved_status)
 
         total = len(enriched)
 
@@ -207,7 +187,8 @@ class ListLMPDashboardUseCase:
         )
         avg_lead_time = (
             sum(item.lead_time_util or 0 for item in lead_items) / len(lead_items)
-            if lead_items else 0
+            if lead_items
+            else 0
         )
 
         if not request.page_size:
