@@ -343,6 +343,24 @@ services:
     networks:
       - delpi-network
 
+  dashboard-production:
+    build:
+      context: ../plugins/dashboard-production
+      dockerfile: Dockerfile
+
+    container_name: delpi-dashboard-production
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/dashboard-production:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   api-delpi:
     build:
       context: ..
@@ -511,6 +529,7 @@ services:
       - dashboard-lmps
       - dashboard-quality
       - dashboard-commercial
+      - dashboard-production
       - minha-delpi-ai-api
       - minha-delpi-chat
 

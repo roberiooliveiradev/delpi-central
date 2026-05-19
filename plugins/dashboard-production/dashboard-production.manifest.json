@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "dashboard-production",
+  "name": "Dashboard Produção",
+  "description": "Painel de indicadores de produção (custos % ROL, OEE e OTD) via api-delpi",
+  "icon": "factory-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/dashboard-production",
+  "entry": "/apps/dashboard-production/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "dashboard-production.view",
+      "name": "Acesso ao dashboard de produção",
+      "description": "Permite visualizar indicadores de produção (MO, custos, OEE, OTD)",
+      "module": "dashboard-production"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/dashboard-production",
+      "label": "Dashboard Produção",
+      "permission": "dashboard-production.view",
+      "icon": "factory-icon",
+      "order": 16,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 
-from delpi_auth.authorization import require_permission
+from delpi_auth.authorization import require_any_permission
 from app.core.responses import success_response, error_response
 from app.utils.logger import log_error
 
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/production", tags=["Produção"])
 
 
 @router.get("/direct_labor_cost_pct")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-production.view"])
 def get_direct_labor_cost_pct(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -60,7 +60,7 @@ def get_direct_labor_cost_pct(
 
 
 @router.get("/production_cost_pct")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-production.view"])
 def get_production_cost_pct(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -101,7 +101,7 @@ def get_production_cost_pct(
 
 
 @router.get("/depreciation_pct")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-production.view"])
 def get_depreciation_pct(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -142,7 +142,7 @@ def get_depreciation_pct(
     
 
 @router.get("/overall_equipment_effectiveness_pct")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-production.view"])
 def get_overall_equipment_effectiveness_pct(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -178,7 +178,7 @@ def get_overall_equipment_effectiveness_pct(
     
 
 @router.get("/on_time_delivery_pct")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-production.view"])
 def get_on_time_delivery_pct(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
