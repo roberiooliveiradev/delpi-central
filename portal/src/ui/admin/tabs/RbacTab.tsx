@@ -1,12 +1,12 @@
 // src/ui/admin/tabs/RbacTab.tsx
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { ShieldCheck, UserRound } from "lucide-react";
+import { Circle, ShieldCheck, UserRound } from "lucide-react";
 
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
-import type { AdminUser } from "../../../data/adminApi";
+import type { AdminUser, OnlineUserPresence } from "../../../data/adminApi";
 
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
@@ -71,8 +71,11 @@ export const RbacTab = () => {
   const [selected, setSelected] = useState<string[]>([]);
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [confirmBulk, setConfirmBulk] = useState(false);
-  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(() => new Set());
+  const [onlineByUserId, setOnlineByUserId] = useState<
+    Map<string, OnlineUserPresence>
+  >(() => new Map());
   const [onlineTotal, setOnlineTotal] = useState(0);
+  const [presenceEnabled, setPresenceEnabled] = useState(true);
 
   const api = useMemo(() => {
     return new AdminApi(new ApiClient("", getAccessToken));
@@ -81,14 +84,18 @@ export const RbacTab = () => {
   const loadOnlineUsers = useCallback(async () => {
     try {
       const data = await api.listOnlineUsers();
+      setPresenceEnabled(data.enabled);
+
       if (!data.enabled) {
-        setOnlineUserIds(new Set());
+        setOnlineByUserId(new Map());
         setOnlineTotal(0);
         return;
       }
 
       setOnlineTotal(data.total);
-      setOnlineUserIds(new Set(data.items.map((item) => item.userId)));
+      setOnlineByUserId(
+        new Map(data.items.map((item) => [item.userId, item])),
+      );
     } catch {
       // polling silencioso — lista de usuários segue funcionando
     }
@@ -190,6 +197,37 @@ export const RbacTab = () => {
 
   const sortLabel = sort.direction === "asc" ? "A-Z" : "Z-A";
 
+  const formatPresenceSessions = (presence: OnlineUserPresence) => {
+    if (presence.connectionCount <= 1) {
+      return "1 sessão no portal";
+    }
+
+    return `${presence.connectionCount} sessões no portal`;
+  };
+
+  const renderPresenceMeta = (user: AdminUser) => {
+    if (!presenceEnabled) {
+      return null;
+    }
+
+    const presence = onlineByUserId.get(user.id);
+
+    if (presence) {
+      return (
+        <span className="admin-user-presence-meta admin-user-presence-meta--online">
+          <span className="admin-user-presence-meta__dot" aria-hidden="true" />
+          Online agora · {formatPresenceSessions(presence)}
+        </span>
+      );
+    }
+
+    return (
+      <span className="admin-user-presence-meta admin-user-presence-meta--offline">
+        Offline no portal
+      </span>
+    );
+  };
+
   return (
     <>
       <AdminEntityList<AdminUser>
@@ -251,7 +289,21 @@ export const RbacTab = () => {
               }
             : undefined
         }
-        renderIcon={getInitials}
+        getItemClassName={(user) =>
+          onlineByUserId.has(user.id) ? "admin-entity-card--online" : undefined
+        }
+        renderIcon={(user) => (
+          <span className="admin-user-presence-icon">
+            {getInitials(user)}
+            {onlineByUserId.has(user.id) ? (
+              <span
+                className="admin-user-presence-icon__dot"
+                title="Online no portal"
+                aria-hidden="true"
+              />
+            ) : null}
+          </span>
+        )}
         renderTitle={(user) => user.name || "Usuário sem nome"}
         renderSubtitle={(user) => user.email}
         renderBadges={(user) => [
@@ -259,10 +311,15 @@ export const RbacTab = () => {
             label: getUserStatusLabel(user),
             tone: user.active === false ? "danger" : "success",
           },
-          ...(onlineUserIds.has(user.id)
+          ...(onlineByUserId.has(user.id)
             ? [
                 {
-                  label: "Online",
+                  label: (
+                    <>
+                      <Circle size={8} fill="currentColor" aria-hidden="true" />
+                      Online
+                    </>
+                  ),
                   tone: "success" as const,
                 },
               ]
@@ -282,12 +339,13 @@ export const RbacTab = () => {
             : []),
         ]}
         renderMeta={(user) => [
+          renderPresenceMeta(user),
           <>
             <UserRound size={13} />
             ID: {user.id}
           </>,
           `Último login: ${formatBrazilDateTime(user.last_login_at)}`,
-        ]}
+        ].filter(Boolean)}
         renderActions={(user) => [
           {
             label: "Editar RBAC",

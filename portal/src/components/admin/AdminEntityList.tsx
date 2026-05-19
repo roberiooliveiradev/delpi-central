@@ -77,6 +77,8 @@ type AdminEntityListProps<T> = {
   renderMeta?: (item: T) => ReactNode[];
   renderActions?: (item: T) => AdminEntityCardAction[];
 
+  getItemClassName?: (item: T) => string | undefined;
+
   className?: string;
 };
 
@@ -111,6 +113,7 @@ export function AdminEntityList<T>({
   renderBadges,
   renderMeta,
   renderActions,
+  getItemClassName,
   className,
 }: AdminEntityListProps<T>) {
   const selectedSet = new Set(selectedIds);
@@ -252,12 +255,15 @@ export function AdminEntityList<T>({
               const meta = renderMeta?.(item) ?? [];
               const actions = renderActions?.(item) ?? [];
 
+              const itemClassName = getItemClassName?.(item);
+
               return (
                 <article
                   key={id}
                   className={[
                     "admin-entity-card",
                     selected ? "selected" : "",
+                    itemClassName,
                   ]
                     .filter(Boolean)
                     .join(" ")}

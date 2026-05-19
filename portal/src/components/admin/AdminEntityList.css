@@ -433,6 +433,71 @@
   line-height: 1;
 }
 
+.admin-entity-card--online {
+  border-color: color-mix(in srgb, #22c55e 35%, var(--border));
+  background: color-mix(in srgb, #22c55e 4%, var(--surface));
+}
+
+.admin-user-presence-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.admin-user-presence-icon__dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: #22c55e;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #22c55e 25%, transparent);
+}
+
+.admin-user-presence-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-user-presence-meta--online {
+  color: #16a34a;
+}
+
+.admin-user-presence-meta--offline {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.admin-user-presence-meta__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #22c55e;
+  flex-shrink: 0;
+  animation: admin-user-presence-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes admin-user-presence-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.65;
+    transform: scale(0.92);
+  }
+}
+
 .admin-entity-card-main {
   min-width: 0;
   display: flex;
