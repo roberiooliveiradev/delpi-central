@@ -72,15 +72,23 @@ function parseDateNumber(value?: string | null): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+function formatListingKind(kind?: string | null): string {
+  if (kind === "AMOSTRA") return "Amostra";
+  if (kind === "OUTRO") return "Outro";
+  if (kind === "LMP") return "LMP";
+  return kind ?? "-";
+}
+
 function matchesListingType(
   item: LmpDashboardItem,
   listingType: string
 ): boolean {
   if (listingType === "Todos") return true;
 
-  const kind = item.listing_kind ?? "LMP";
+  const kind = item.listing_kind;
   if (listingType === "Amostra") return kind === "AMOSTRA";
   if (listingType === "LMP") return kind === "LMP";
+  if (listingType === "Outro") return kind === "OUTRO";
   return true;
 }
 
@@ -474,10 +482,10 @@ export function DashboardLmpsPage() {
                     ) : (
                       sortedDashboardItems.map((item) => (
                         <tr
-                          key={`${item.branch ?? "sem-filial"}-${item.listing_kind ?? "LMP"}-${item.sale_number}`}
+                          key={`${item.branch ?? "sem-filial"}-${item.listing_kind ?? "sem-tipo"}-${item.sale_number}`}
                         >
                           <td>{item.branch ?? "-"}</td>
-                          <td>{item.listing_kind === "AMOSTRA" ? "Amostra" : "LMP"}</td>
+                          <td>{formatListingKind(item.listing_kind)}</td>
                           <td>{item.sale_number}</td>
                           <td>{item.sale_description}</td>
                           <td>{formatDate(item.start_date)}</td>

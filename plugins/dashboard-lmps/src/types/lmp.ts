@@ -9,7 +9,7 @@ export type LmpProduct = {
   qtd_pi?: number | null;
 };
 
-export type LmpListingKind = "LMP" | "AMOSTRA";
+export type LmpListingKind = "LMP" | "AMOSTRA" | "OUTRO";
 
 export type LmpItem = {
   branch?: string | null;

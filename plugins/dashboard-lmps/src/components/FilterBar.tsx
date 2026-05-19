@@ -92,6 +92,7 @@ export function FilterBar({
             <option value="Todos">Todos</option>
             <option value="LMP">LMP</option>
             <option value="Amostra">Amostra</option>
+            <option value="Outro">Outro</option>
           </select>
         </div>
 

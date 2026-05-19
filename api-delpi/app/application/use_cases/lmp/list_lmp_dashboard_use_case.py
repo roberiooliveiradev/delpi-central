@@ -3,7 +3,6 @@ from dataclasses import asdict, replace
 from typing import List, Dict, Any
 
 from app.application.dto.lmp.list_lmp_request import (
-    LISTING_KIND_LMP,
     ListLMPRequest,
     resolve_listing_type_filter,
 )
@@ -59,7 +58,7 @@ class ListLMPDashboardUseCase:
         return [
             row
             for row in rows
-            if (row.listing_kind or LISTING_KIND_LMP) == listing_filter
+            if row.listing_kind == listing_filter
         ]
 
     def execute(self, request: ListLMPRequest, status_filter: str = "Todos") -> Dict[str, Any]:

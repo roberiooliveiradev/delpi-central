@@ -4,6 +4,7 @@ from typing import Optional
 
 LISTING_KIND_LMP = "LMP"
 LISTING_KIND_SAMPLE = "AMOSTRA"
+LISTING_KIND_OTHER = "OUTRO"
 
 
 def resolve_listing_type_filter(
@@ -24,9 +25,11 @@ def resolve_listing_type_filter(
         return LISTING_KIND_LMP
     if normalized in ("amostra", "amostras", "sample"):
         return LISTING_KIND_SAMPLE
+    if normalized in ("outro", "outros", "other"):
+        return LISTING_KIND_OTHER
 
     raise ValueError(
-        "listing_type inválido. Valores aceitos: Todos, LMP ou Amostra."
+        "listing_type inválido. Valores aceitos: Todos, LMP, Amostra ou Outro."
     )
 
 

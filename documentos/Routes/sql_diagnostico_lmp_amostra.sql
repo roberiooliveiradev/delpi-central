@@ -15,6 +15,7 @@ Regra de prioridade na listagem (após correção):
   - Se a OV já teve estágio 000012 (lançamento/homologação LMP) → sempre LMP.
   - Senão: evento âncora LMP ou amostra mais recente; em empate, amostra prevalece.
   - Amostra âncora inclui 000002+000008 e 000003+000002/000008.
+  - OUTRO: OV com eventos de engenharia (support) no período, sem âncora LMP/amostra.
 
 Hipótese comum de erro (corrigida):
   - OV com histórico 000008 (amostra) e 000012 (LMP homologada) na mesma data:
