@@ -74,6 +74,18 @@ def test_contextual_prompt_includes_sql_policy_when_rag_context_has_sql():
     assert "Não reproduza SQL bruto" in prompt
 
 
+def test_contextual_prompt_includes_operational_policy_when_operational_mode_enabled():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context="",
+        operational_mode=True,
+    )
+
+    assert "Modo operacional" in prompt
+
+
 def test_contextual_prompt_includes_api_delpi_routes_policy_when_tool_context_mentions_api_delpi():
     service = PromptPolicyService()
 

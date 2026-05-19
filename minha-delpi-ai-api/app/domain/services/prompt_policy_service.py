@@ -145,6 +145,8 @@ Regras obrigatórias:
         self,
         rag_context: str,
         tool_context: str,
+        *,
+        operational_mode: bool = False,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
 
@@ -171,6 +173,14 @@ Regras obrigatórias:
                 tool_context=tool_context,
             )
         )
+
+        if operational_mode:
+            sections.append(
+                self._load_policy(
+                    "operational-agent.md",
+                    "Modo operacional: respostas curtas com base nas ferramentas autorizadas.",
+                )
+            )
 
         return "\n\n".join(
             section.strip()

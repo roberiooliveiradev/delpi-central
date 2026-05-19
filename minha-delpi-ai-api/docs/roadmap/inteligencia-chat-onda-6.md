@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 6
 
-**Status:** em andamento (maio/2026)  
+**Status:** concluída (maio/2026) — validação de latência &lt; 15s em homologação pendente  
 **Pré-requisitos:** [Ondas 1–5](./inteligencia-chat-onda-1.md)
 
 ## Objetivo
@@ -38,13 +38,13 @@ Serviços principais:
 | # | Entrega | Descrição | Status |
 |---|---------|-----------|--------|
 | 6.1 | Modelo padrão 1.5b | Defaults em `settings.py`, Compose e `.env.prod` | Concluído |
-| 6.2 | Fast path operacional | Produto/estoque/LMP: pula RAG/resumo pesado quando aplicável | Parcial |
-| 6.3 | Seleção de actions | Heurísticas + FTS; ranking semântico opcional | Parcial |
-| 6.4 | Resposta direta | Templates após `execute_external_action` (produto, LMP, genérico) | Pendente |
-| 6.5 | Prompts por tipo de agente | Operacional vs documental; instruções enxutas em CPU | Parcial (`api-delpi-routes.md` + doc RAG) |
+| 6.2 | Fast path operacional | Produto/estoque/LMP: pula RAG/resumo pesado quando aplicável | Concluído |
+| 6.3 | Seleção de actions | Heurísticas + FTS; ranking semântico opcional | Concluído |
+| 6.4 | Resposta direta | Templates após `execute_external_action` (produto, LMP, SQL, genérico) | Concluído |
+| 6.5 | Prompts por tipo de agente | Operacional vs documental; instruções enxutas em CPU | Concluído (`operational-agent.md`, `api-delpi-routes.md`, doc RAG) |
 | 6.6 | RAG enxuto | Keyword/FTS; hybrid/rerank desligados em prod CPU | Config ok |
-| 6.7 | Observabilidade | `intelligence.timings`; action escolhida + motivo | Parcial |
-| 6.8 | Regressão | Fixtures com 15–20 perguntas reais da operação | Pendente |
+| 6.7 | Observabilidade | `intelligence.timings`; action escolhida + motivo | Concluído |
+| 6.8 | Regressão | Fixtures com 15–20 perguntas reais da operação | Concluído (`tests/fixtures/chat_intelligence_regression_cases.py`) |
 
 ---
 
@@ -170,10 +170,10 @@ Serviços principais:
 ## Critérios de aceite
 
 - [x] Defaults do repositório apontam para `qwen2.5:1.5b`
-- [ ] Pergunta operacional típica (estoque por código) &lt; 15s em CPU de produção
-- [ ] Pergunta documental usa RAG sem embedding em toda mensagem (keyword/FTS)
-- [ ] Metadados `intelligence` indicam fast path / resposta direta quando aplicável
-- [ ] Bateria de regressão (fixtures) verde para produto, estoque, follow-up e LMP
+- [ ] Pergunta operacional típica (estoque por código) &lt; 15s em CPU de produção (validar em homologação)
+- [x] Pergunta documental usa RAG sem embedding em toda mensagem (keyword/FTS) — flags prod
+- [x] Metadados `intelligence` indicam fast path / resposta direta quando aplicável
+- [x] Bateria de regressão (fixtures) verde para produto, estoque, follow-up e LMP
 
 ---
 

@@ -1,0 +1,135 @@
+"""Casos de regressão — Onda 6 (perguntas reais da operação)."""
+
+from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
+
+INTENT_CASES = [
+    ("descrição do produto 10080047", ChatProductQueryIntent.DESCRIPTION),
+    ("qual a descrição do 10.080.055", ChatProductQueryIntent.DESCRIPTION),
+    ("busque o estoque desse produto", ChatProductQueryIntent.STOCK),
+    ("saldo disponível do item", ChatProductQueryIntent.STOCK),
+    ("informações completas do produto 10080055", ChatProductQueryIntent.FULL),
+    ("qual o valor total de estoque da empresa", ChatProductQueryIntent.FULL),
+    ("explique o procedimento de estoque e política interna", ChatProductQueryIntent.FULL),
+]
+
+PRODUCT_CODE_CASES = [
+    ("produto 10.080.055", "10080055"),
+    ("código 10080047", "10080047"),
+    ("detalhe da LMP da OV 123456", None),
+    (
+        "estoque desse produto",
+        "10080047",
+        "assistant: Produto 10080047: TERM. PINO RETO",
+    ),
+]
+
+OPERATIONAL_FAST_PATH_CASES = [
+    ("estoque do produto 10080047", True),
+    ("descrição do produto 10080047", True),
+    (
+        (
+            "explique o procedimento completo de como consultar estoque "
+            "e saldo disponível nas filiais segundo a política interna"
+        ),
+        False,
+    ),
+    ("olá, tudo bem?", False),
+]
+
+SELECTION_CASES = [
+    {
+        "message": "estoque do produto 10080047",
+        "actions": [
+            {
+                "actionId": "stock",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "summary": "Estoque do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "analyser",
+                "method": "GET",
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "summary": "Analisador",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "stock",
+    },
+    {
+        "message": "qual o valor total de estoque",
+        "actions": [
+            {
+                "actionId": "product-stock",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "summary": "Estoque produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "supplies-stock",
+                "method": "GET",
+                "path": "/supplies/stock-value",
+                "operationId": "get_supplies_stock_value",
+                "summary": "Valor total estoque",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "supplies-stock",
+    },
+    {
+        "message": "detalhe da LMP da OV 123456",
+        "actions": [
+            {
+                "actionId": "list-lmps",
+                "method": "GET",
+                "path": "/engineering/lmps",
+                "operationId": "list_lmps",
+                "summary": "Listar LMPs",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "get-lmp",
+                "method": "GET",
+                "path": "/engineering/lmps/{sale_number}",
+                "operationId": "get_lmp_by_sale_number",
+                "summary": "LMP por OV",
+                "parametersSchema": [{"name": "sale_number"}],
+            },
+        ],
+        "expected_action_id": "get-lmp",
+    },
+]
+
+DIRECT_ANSWER_CASES = [
+    {
+        "humanized": {
+            "titulo": "Lista de LMPs",
+            "linhas": [
+                "OV 123 · LMP · Aberto: AMOSTRA CLIENTE X",
+                "Total: 2 registro(s) (página 1).",
+            ],
+        },
+        "path": "/engineering/lmps",
+        "operation_id": "list_lmps",
+        "message": "listar lmps",
+        "must_contain": ["**Lista de LMPs**", "OV 123"],
+    },
+    {
+        "humanized": {
+            "titulo": "Consulta SQL",
+            "linhas": [
+                "A consulta retornou 2 registro(s).",
+                "1. code=10080047, description=PARAFUSO",
+            ],
+        },
+        "path": "/data/sql",
+        "operation_id": "execute_readonly_sql",
+        "message": "select top 2",
+        "must_contain": ["**Consulta SQL**", "2 registro"],
+    },
+]

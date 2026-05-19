@@ -279,6 +279,7 @@ class StreamChatMessageUseCase:
                     request=request,
                 ),
                 history_summary=history_summary,
+                operational_mode=operational_optimize,
             )
 
         answer_parts: list[str] = []

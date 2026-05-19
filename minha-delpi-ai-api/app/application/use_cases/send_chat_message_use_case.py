@@ -219,6 +219,7 @@ class SendChatMessageUseCase:
                     request=request,
                 ),
                 history_summary=history_summary,
+                operational_mode=operational_optimize,
             )
 
         started_at = time.perf_counter()

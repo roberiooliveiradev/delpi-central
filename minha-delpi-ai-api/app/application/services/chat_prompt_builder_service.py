@@ -15,10 +15,12 @@ class ChatPromptBuilderService:
         attachments: list[dict] | None = None,
         attachment_context: str | None = None,
         history_summary: str | None = None,
+        operational_mode: bool = False,
     ) -> list[dict]:
         base_prompt = self.prompt_policy_service.build_contextual_prompt(
             rag_context=rag_context,
             tool_context=tool_context,
+            operational_mode=operational_mode,
         )
 
         if admin_guidelines_prompt:

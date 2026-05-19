@@ -30,9 +30,29 @@ class ExternalActionResultPresenter:
         if isinstance(product, dict):
             return self._present_product(root, product)
 
+        if isinstance(root, dict):
+            lmp_page = self._present_lmp_page(root)
+
+            if lmp_page:
+                return lmp_page
+
+            lmp_detail = self._present_lmp_detail(root)
+
+            if lmp_detail:
+                return lmp_detail
+
+        if isinstance(root, list) and root:
+            sql_result = self._present_sql_rows(root)
+
+            if sql_result:
+                return sql_result
+
         items = root.get("items") if isinstance(root, dict) else None
 
         if isinstance(items, list):
+            if items and isinstance(items[0], dict) and "sale_number" in items[0]:
+                return self._present_lmp_page(root)
+
             return self._present_items(items)
 
         return {
@@ -92,6 +112,133 @@ class ExternalActionResultPresenter:
                 "inspectionTotal": self._total(root.get("inspection")),
                 "structureTotal": self._total(root.get("structure")),
             },
+        }
+
+    def _present_lmp_page(self, root: dict) -> dict | None:
+        items = root.get("items")
+
+        if not isinstance(items, list):
+            return None
+
+        total = root.get("total")
+
+        if not items and total in (0, None):
+            return {
+                "titulo": "Lista de LMPs",
+                "linhas": ["Nenhuma LMP encontrada para os filtros informados."],
+                "dados": root,
+            }
+
+        linhas = []
+
+        for item in items[:12]:
+            if not isinstance(item, dict):
+                continue
+
+            ov = item.get("sale_number") or item.get("saleNumber")
+            desc = item.get("sale_description") or item.get("saleDescription") or ""
+            status = item.get("status") or item.get("engineering_status") or ""
+            kind = item.get("listing_kind") or item.get("listingKind") or ""
+            branch = item.get("branch") or ""
+
+            parts = [str(part) for part in [ov, kind, status, branch] if part]
+            header = " · ".join(parts) if parts else "LMP"
+            line = f"OV {header}: {desc}".strip(": ")
+
+            if line:
+                linhas.append(line.rstrip(": "))
+
+        if total is not None:
+            linhas.append(f"Total: {total} registro(s) (página {root.get('page', 1)}).")
+
+        return {
+            "titulo": "Lista de LMPs",
+            "linhas": linhas or ["Nenhuma LMP na página atual."],
+            "dados": {"total": total, "items": items[:12]},
+        }
+
+    def _present_lmp_detail(self, root: dict) -> dict | None:
+        sale_number = root.get("sale_number") or root.get("saleNumber")
+
+        if not sale_number:
+            return None
+
+        desc = root.get("sale_description") or root.get("saleDescription") or ""
+        status = root.get("engineering_status") or root.get("status") or ""
+        kind = root.get("listing_kind") or root.get("listingKind") or ""
+        branch = root.get("branch") or ""
+        customer = root.get("costumer_name") or root.get("customer_name") or ""
+        seller = root.get("seller_name") or ""
+        qtd_pi = root.get("qtd_pi")
+
+        linhas = [
+            f"OV {sale_number}: {desc}".strip(": "),
+        ]
+
+        if kind:
+            linhas.append(f"Tipo: {kind}.")
+
+        if branch:
+            linhas.append(f"Filial: {branch}.")
+
+        if status:
+            linhas.append(f"Status engenharia: {status}.")
+
+        if customer:
+            linhas.append(f"Cliente: {customer}.")
+
+        if seller:
+            linhas.append(f"Vendedor: {seller}.")
+
+        if qtd_pi is not None:
+            linhas.append(f"Quantidade PI: {qtd_pi}.")
+
+        products = root.get("list_products") or root.get("listProducts") or []
+
+        if isinstance(products, list):
+            linhas.append(f"Produtos na LMP: {len(products)} item(ns).")
+
+        return {
+            "titulo": f"LMP OV {sale_number}",
+            "linhas": [line for line in linhas if line],
+            "dados": root,
+        }
+
+    def _present_sql_rows(self, rows: list) -> dict | None:
+        if not rows:
+            return {
+                "titulo": "Consulta SQL",
+                "linhas": ["A consulta não retornou registros."],
+                "dados": {"rows": []},
+            }
+
+        if not isinstance(rows[0], dict):
+            return {
+                "titulo": "Consulta SQL",
+                "linhas": [f"A consulta retornou {len(rows)} registro(s)."],
+                "dados": {"rows": rows[:20]},
+            }
+
+        linhas = [f"A consulta retornou {len(rows)} registro(s)."]
+
+        for index, row in enumerate(rows[:8], start=1):
+            if not isinstance(row, dict):
+                continue
+
+            preview = ", ".join(
+                f"{key}={value}"
+                for key, value in list(row.items())[:6]
+                if value is not None
+            )
+            linhas.append(f"{index}. {preview}")
+
+        if len(rows) > 8:
+            linhas.append(f"… e mais {len(rows) - 8} registro(s).")
+
+        return {
+            "titulo": "Consulta SQL",
+            "linhas": linhas,
+            "dados": {"rows": rows[:20]},
         }
 
     def _present_items(self, items: list) -> dict:

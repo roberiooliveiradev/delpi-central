@@ -2,7 +2,9 @@ import json
 
 from app.application.dto.execute_tool_request import ExecuteToolRequest
 from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
-from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntentService
+from app.domain.services.chat_external_action_direct_answer_service import (
+    ChatExternalActionDirectAnswerService,
+)
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.config.settings import Settings
 from app.domain.services.external_actions.external_action_result_presenter import ExternalActionResultPresenter
@@ -229,9 +231,12 @@ class ChatToolContextService:
             and safe_tool_calls[0].get("name") == "execute_external_action"
             and self._is_successful_external_action(safe_tool_calls[0].get("metadata") or {})
         ):
+            action_metadata = safe_tool_calls[0].get("metadata") or {}
             direct_answer = self._build_direct_answer(
                 last_external_action_data,
                 message=message,
+                path=action_metadata.get("path"),
+                operation_id=action_metadata.get("operationId"),
             )
 
         return {
@@ -386,16 +391,24 @@ class ChatToolContextService:
         except (TypeError, ValueError):
             return False
 
-    def _build_direct_answer(self, data, *, message: str) -> str | None:
+    def _build_direct_answer(
+        self,
+        data,
+        *,
+        message: str,
+        path: str | None = None,
+        operation_id: str | None = None,
+    ) -> str | None:
         if not Settings.CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED:
             return None
 
         humanized = self.external_action_result_presenter.present(data)
-        intent = ChatProductQueryIntentService.detect(message)
 
-        return ChatProductQueryIntentService.format_direct_answer(
+        return ChatExternalActionDirectAnswerService.format(
             humanized,
-            intent=intent,
+            message=message,
+            path=path,
+            operation_id=operation_id,
         )
 
     def _extract_external_action_summary(self, data):

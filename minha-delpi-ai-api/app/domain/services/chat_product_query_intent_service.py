@@ -17,6 +17,9 @@ class ChatProductQueryIntentService:
     def detect(cls, message: str) -> str:
         normalized = str(message or "").lower()
 
+        if cls._looks_like_mixed_documental_operational(normalized):
+            return ChatProductQueryIntent.FULL
+
         if cls._looks_like_stock_question(normalized):
             return ChatProductQueryIntent.STOCK
 
@@ -24,6 +27,30 @@ class ChatProductQueryIntentService:
             return ChatProductQueryIntent.DESCRIPTION
 
         return ChatProductQueryIntent.FULL
+
+    @classmethod
+    def _looks_like_mixed_documental_operational(cls, normalized: str) -> bool:
+        documental_terms = (
+            "explique",
+            "explica ",
+            "documentação",
+            "documentacao",
+            "política",
+            "politica",
+            "procedimento",
+            "como funciona",
+            "manual ",
+        )
+        operational_terms = (
+            "estoque",
+            "produto",
+            "saldo",
+            "lmp",
+        )
+
+        return any(term in normalized for term in documental_terms) and any(
+            term in normalized for term in operational_terms
+        )
 
     @classmethod
     def references_previous_product(cls, message: str) -> bool:
