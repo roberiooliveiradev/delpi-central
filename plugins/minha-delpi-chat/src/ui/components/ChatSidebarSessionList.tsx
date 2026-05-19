@@ -32,7 +32,7 @@ export function ChatSidebarSessionList({
   isLoading,
   searchTerm,
   selectedProjectName,
-  onSelectSession,
+  onSelectSession: _onSelectSession,
   onRenameSession,
   onDeleteSessionRequest,
   onPinSession,
@@ -185,7 +185,6 @@ export function ChatSidebarSessionList({
               active={session.id === activeSessionId}
               isProcessing={isSessionProcessing?.(session.id) ?? false}
               href={buildChatSessionHref(session.id)}
-              onClick={() => onSelectSession(session)}
             />
 
             <div className="mdc-chat-session-actions">

@@ -170,26 +170,45 @@ export function ChatPage({
 
   const applyChatRoute = useCallback(
     (route: ChatRoute) => {
-      clearWorkspaceError();
-      clearError();
-      setCanvasDocument(null);
-      setComposerAttachments([]);
-
       switch (route.kind) {
-        case "home":
+        case "home": {
+          if (
+            !activeSession &&
+            !selectedProjectId &&
+            !activeAgentPageKey &&
+            currentView === "chat"
+          ) {
+            return;
+          }
+
+          clearWorkspaceError();
+          clearError();
+          setCanvasDocument(null);
+          setComposerAttachments([]);
           setSelectedProjectId(null);
           setActiveAgentPageKey(null);
           setContextAgentKey(null);
           setCurrentView("chat");
           void startSession();
+          closeMobileSidebar();
           break;
+        }
         case "session": {
+          if (activeSession?.id === route.sessionId) {
+            closeMobileSidebar();
+            return;
+          }
+
           const session = sessions.find((item) => item.id === route.sessionId);
 
           if (!session) {
             return;
           }
 
+          clearWorkspaceError();
+          clearError();
+          setCanvasDocument(null);
+          setComposerAttachments([]);
           setSelectedProjectId(session.project_id ?? null);
           setActiveAgentPageKey(null);
           setContextAgentKey(null);
@@ -198,7 +217,16 @@ export function ChatPage({
           closeMobileSidebar();
           break;
         }
-        case "project":
+        case "project": {
+          if (selectedProjectId === route.projectId && !activeSession) {
+            closeMobileSidebar();
+            return;
+          }
+
+          clearWorkspaceError();
+          clearError();
+          setCanvasDocument(null);
+          setComposerAttachments([]);
           setSelectedProjectId(route.projectId);
           setActiveAgentPageKey(null);
           setContextAgentKey(getProjectDefaultAgentKey(route.projectId));
@@ -206,7 +234,17 @@ export function ChatPage({
           void startSession();
           closeMobileSidebar();
           break;
-        case "agent":
+        }
+        case "agent": {
+          if (activeAgentPageKey === route.agentKey && !activeSession) {
+            closeMobileSidebar();
+            return;
+          }
+
+          clearWorkspaceError();
+          clearError();
+          setCanvasDocument(null);
+          setComposerAttachments([]);
           setSelectedProjectId(null);
           setActiveAgentPageKey(route.agentKey);
           setContextAgentKey(null);
@@ -214,18 +252,29 @@ export function ChatPage({
           void startSession();
           closeMobileSidebar();
           break;
-        case "agents":
+        }
+        case "agents": {
+          if (currentView === "agents") {
+            closeMobileSidebar();
+            return;
+          }
+
           setCurrentView("agents");
           closeMobileSidebar();
           break;
+        }
         default:
           break;
       }
     },
     [
+      activeAgentPageKey,
+      activeSession?.id,
       clearError,
       clearWorkspaceError,
+      currentView,
       selectSession,
+      selectedProjectId,
       sessions,
       startSession,
     ],

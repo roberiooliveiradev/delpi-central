@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
+import { handleChatNavClick } from "../../navigation/chatNavigation";
+
 import "./ChatSidebarWorkspaceItem.css";
 
 type ChatSidebarWorkspaceItemProps = {
@@ -42,7 +44,14 @@ export function ChatSidebarWorkspaceItem({
 
   if (href) {
     return (
-      <a href={href} className={className} onClick={onClick} title={subtitle || title}>
+      <a
+        href={href}
+        className={className}
+        onClick={(event) => {
+          handleChatNavClick(event, href, { onNavigate: onClick });
+        }}
+        title={subtitle || title}
+      >
         {content}
       </a>
     );

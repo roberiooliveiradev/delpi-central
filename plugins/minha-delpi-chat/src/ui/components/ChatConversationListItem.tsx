@@ -2,6 +2,7 @@ import { Loader2 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import type { ChatSession } from "../../data/api/chatTypes";
+import { handleChatNavClick } from "../../navigation/chatNavigation";
 import { formatSessionDate } from "./chatSidebarUtils";
 
 import "./ChatConversationListItem.css";
@@ -69,7 +70,10 @@ export function ChatConversationListItem({
       <a
         href={href}
         className={className}
-        onClick={onClick}
+        onClick={(event) => {
+          handleChatNavClick(event, href);
+          onClick?.();
+        }}
         aria-busy={isProcessing || undefined}
         title={isProcessing ? "Gerando resposta..." : undefined}
       >

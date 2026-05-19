@@ -34,7 +34,7 @@ export function ChatSidebarProjectsSection({
   activeSessionId,
   isLoading,
   onSelectProject,
-  onSelectSession,
+  onSelectSession: _onSelectSession,
   onNewProject,
   onRenameProject,
   onDeleteProject,
@@ -191,7 +191,6 @@ export function ChatSidebarProjectsSection({
                               active={session.id === activeSessionId}
                               isProcessing={isSessionProcessing?.(session.id) ?? false}
                               href={buildChatSessionHref(session.id)}
-                              onClick={() => onSelectSession?.(session)}
                             />
                           ))}
 

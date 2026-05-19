@@ -31,24 +31,19 @@ const AnimatedWrapper = ({ children }: { children: React.ReactNode }) => (
   </motion.div>
 );
 
+function normalizeAppBasePath(basePath: string) {
+  const normalized = basePath.startsWith("/") ? basePath : `/${basePath}`;
+  return normalized.replace(/\/+$/, "") || "/";
+}
+
 function AppShell() {
   const { routes, apps } = useContext(AuthContext);
 
-  const appSplatRoutes = useMemo(() => {
-    const registeredPaths = new Set(routes.map((route) => route.path));
-
+  const federatedAppHosts = useMemo(() => {
     return apps
       .filter((app) => app.renderMode === "federated")
       .map((app) => {
-        const basePath = app.basePath.startsWith("/")
-          ? app.basePath.replace(/\/+$/, "")
-          : `/${app.basePath}`;
-        const splatPath = `${basePath}/*`;
-
-        if (registeredPaths.has(splatPath)) {
-          return null;
-        }
-
+        const basePath = normalizeAppBasePath(app.basePath);
         const mainRoute =
           app.routes?.find((route) => route.showInMenu !== false) ?? app.routes?.[0];
 
@@ -57,12 +52,27 @@ function AppShell() {
         }
 
         return {
-          path: splatPath,
+          appId: app.id,
+          basePath,
+          path: `${basePath}/*`,
           permission: mainRoute.permission,
         };
       })
-      .filter((route): route is { path: string; permission: string } => route !== null);
-  }, [apps, routes]);
+      .filter(
+        (route): route is { appId: string; basePath: string; path: string; permission: string } =>
+          route !== null,
+      );
+  }, [apps]);
+
+  const federatedBasePaths = useMemo(
+    () => new Set(federatedAppHosts.map((host) => host.basePath)),
+    [federatedAppHosts],
+  );
+
+  const staticPluginRoutes = useMemo(
+    () => routes.filter((route) => !federatedBasePaths.has(normalizeAppBasePath(route.path))),
+    [routes, federatedBasePaths],
+  );
 
   return (
     <div className="app-shell">
@@ -87,7 +97,7 @@ function AppShell() {
               }
             />
 
-            {routes.map((route) => (
+            {staticPluginRoutes.map((route) => (
               <Route
                 key={route.path}
                 path={route.path}
@@ -101,15 +111,13 @@ function AppShell() {
               />
             ))}
 
-            {appSplatRoutes.map((route) => (
+            {federatedAppHosts.map((host) => (
               <Route
-                key={route.path}
-                path={route.path}
+                key={host.appId}
+                path={host.path}
                 element={
-                  <ProtectedRoute permission={route.permission}>
-                    <AnimatedWrapper>
-                      <AppHost key={route.path} />
-                    </AnimatedWrapper>
+                  <ProtectedRoute permission={host.permission}>
+                    <AppHost key={host.appId} />
                   </ProtectedRoute>
                 }
               />

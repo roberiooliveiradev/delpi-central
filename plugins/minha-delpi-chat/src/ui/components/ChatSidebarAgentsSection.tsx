@@ -2,6 +2,7 @@ import { Bot, Settings } from "lucide-react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
 import { buildChatAgentHref, buildChatHref } from "../../navigation/chatRoutes";
+import { handleChatNavClick } from "../../navigation/chatNavigation";
 import { ChatSidebarWorkspaceItem } from "./ChatSidebarWorkspaceItem";
 
 type ChatSidebarAgentsSectionProps = {
@@ -18,7 +19,7 @@ export function ChatSidebarAgentsSection({
   agents,
   selectedAgentKey,
   isLoading,
-  onSelectAgent,
+  onSelectAgent: _onSelectAgent,
   onManageAgents,
   canManageAgents = false,
   hideTitle,
@@ -53,7 +54,6 @@ export function ChatSidebarAgentsSection({
                     ? "Oficial"
                     : null
               }
-              onClick={() => onSelectAgent?.(agent.key)}
             />
           ))
         )}
@@ -61,7 +61,14 @@ export function ChatSidebarAgentsSection({
 
       {canManageAgents ? (
         <div className="mdc-chat-sidebar__project-manage">
-          <a href={buildChatHref({ kind: "agents" })} onClick={onManageAgents}>
+          <a
+            href={buildChatHref({ kind: "agents" })}
+            onClick={(event) => {
+              handleChatNavClick(event, buildChatHref({ kind: "agents" }), {
+                onNavigate: onManageAgents,
+              });
+            }}
+          >
             <Settings size={15} aria-hidden="true" />
             <span>Gerenciar agentes</span>
           </a>
