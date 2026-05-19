@@ -172,6 +172,16 @@ export function ChatPage({
     (route: ChatRoute) => {
       switch (route.kind) {
         case "home": {
+          const hasOutboundInFlight =
+            messages.some((message) => message.metadata?.optimistic === true) ||
+            Boolean(streamingStatus) ||
+            isStreamingActiveSession;
+
+          if (hasOutboundInFlight) {
+            closeMobileSidebar();
+            return;
+          }
+
           if (
             !activeSession &&
             !selectedProjectId &&
@@ -194,14 +204,20 @@ export function ChatPage({
           break;
         }
         case "session": {
-          if (activeSession?.id === route.sessionId) {
-            closeMobileSidebar();
-            return;
-          }
-
           const session = sessions.find((item) => item.id === route.sessionId);
 
           if (!session) {
+            return;
+          }
+
+          if (
+            activeSession?.id === route.sessionId ||
+            isSessionProcessing(session.id)
+          ) {
+            if (activeSession?.id !== route.sessionId) {
+              selectSession(session);
+            }
+            closeMobileSidebar();
             return;
           }
 
@@ -273,10 +289,14 @@ export function ChatPage({
       clearError,
       clearWorkspaceError,
       currentView,
+      isSessionProcessing,
+      isStreamingActiveSession,
+      messages,
       selectSession,
       selectedProjectId,
       sessions,
       startSession,
+      streamingStatus,
     ],
   );
 

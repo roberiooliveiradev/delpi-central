@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   archiveChatSession,
@@ -53,6 +53,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [archivedSessions, setArchivedSessions] = useState<ChatSession[]>([]);
   const [activeSession, setActiveSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [pendingUserMessage, setPendingUserMessage] = useState<ChatMessage | null>(
+    null,
+  );
   const [draft, setDraft] = useState("");
   const [streamingAnswer, setStreamingAnswer] = useState("");
   const [streamingSources, setStreamingSources] = useState<ChatSource[]>([]);
@@ -191,9 +194,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
   const selectSession = useCallback(
     (session: ChatSession) => {
-      resetStreamingUi();
+      const isSameSession = activeSessionIdRef.current === session.id;
+
+      if (!isSameSession) {
+        resetStreamingUi();
+        setMessages([]);
+        setPendingUserMessage(null);
+      }
+
       activeSessionIdRef.current = session.id;
-      setMessages([]);
       setActiveSession(session);
 
       if (isSessionPending(session.id) && !isSessionStreaming(session.id)) {
@@ -209,6 +218,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setError(null);
     setActiveSession(null);
     setMessages([]);
+    setPendingUserMessage(null);
     setDraft("");
   }, [resetStreamingUi]);
 
@@ -572,6 +582,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           setDraft("");
+          setPendingUserMessage(null);
           resetStreamingUi();
           await loadMessages(sessionId);
         },
@@ -582,6 +593,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          setPendingUserMessage(null);
           resetStreamingUi();
           setError(streamError);
         },
@@ -720,16 +732,16 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       markSessionPending(activeSession.id);
     }
 
-    setMessages((current) => [
-      ...current,
-      {
-        ...createOptimisticUserMessage(
-          sessionForMessage?.id ?? "pending",
-          message,
-        ),
-        id: optimisticId,
-      },
-    ]);
+    const optimisticMessage: ChatMessage = {
+      ...createOptimisticUserMessage(
+        sessionForMessage?.id ?? "pending",
+        message,
+      ),
+      id: optimisticId,
+    };
+
+    setPendingUserMessage(optimisticMessage);
+    setMessages((current) => [...current, optimisticMessage]);
 
     try {
       if (!sessionForMessage) {
@@ -750,7 +762,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         markSessionPending(sessionForMessage!.id);
         setSessions((current) => [sessionForMessage!, ...current]);
         setActiveSession(sessionForMessage);
-        options.onSessionActivated?.(sessionForMessage!.id);
+        queueMicrotask(() => {
+          options.onSessionActivated?.(sessionForMessage!.id);
+        });
         setMessages((current) =>
           current.map((item) =>
             item.id === optimisticId
@@ -823,6 +837,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       }
 
       setStreamingStatus(null);
+      setPendingUserMessage(null);
       setError(err instanceof Error ? err.message : "Erro ao enviar mensagem.");
       if (sessionForMessage) {
         finishSending(sessionForMessage.id);
@@ -853,7 +868,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
   useEffect(() => {
     if (!activeSession) {
-      setMessages([]);
       return;
     }
 
@@ -862,13 +876,31 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       return;
     }
 
+    if (
+      isSessionPending(activeSession.id) ||
+      isSessionStreaming(activeSession.id) ||
+      pendingUserMessage
+    ) {
+      return;
+    }
+
     void loadMessages(activeSession.id);
-  }, [activeSession, loadMessages]);
+  }, [
+    activeSession,
+    isSessionPending,
+    isSessionStreaming,
+    loadMessages,
+    pendingUserMessage,
+  ]);
 
   useEffect(() => {
     const sessionId = activeSession?.id;
 
     if (!sessionId || !isSessionPending(sessionId) || isSessionStreaming(sessionId)) {
+      return;
+    }
+
+    if (pendingUserMessage) {
       return;
     }
 
@@ -881,7 +913,25 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     return () => {
       window.clearInterval(interval);
     };
-  }, [activeSession?.id, isSessionPending, isSessionStreaming, loadMessages]);
+  }, [
+    activeSession?.id,
+    isSessionPending,
+    isSessionStreaming,
+    loadMessages,
+    pendingUserMessage,
+  ]);
+
+  const visibleMessages = useMemo(() => {
+    if (!pendingUserMessage) {
+      return messages;
+    }
+
+    if (messages.some((message) => message.id === pendingUserMessage.id)) {
+      return messages;
+    }
+
+    return [...messages, pendingUserMessage];
+  }, [messages, pendingUserMessage]);
 
   const isComposerBusy = isActiveSessionBusy();
   const isStreamingActiveSession =
@@ -892,7 +942,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     sessions,
     archivedSessions,
     activeSession,
-    messages,
+    messages: visibleMessages,
     draft,
     streamingAnswer,
     streamingSources,
