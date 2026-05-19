@@ -1,9 +1,10 @@
 // src/components/notifications/NotificationDispatchHistory.tsx
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, History, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, History, Pencil, RefreshCw } from "lucide-react";
 
 import type { CoreApi, NotificationDispatchItem } from "../../data/coreApi";
+import { isEditableScheduledDispatch } from "./dispatchEditForm";
 
 import "./NotificationDispatchHistory.css";
 
@@ -18,9 +19,13 @@ const STATUS_LABELS: Record<string, string> = {
 
 type NotificationDispatchHistoryProps = {
   coreApi: CoreApi;
+  onEditDispatch?: (dispatchId: string) => void;
 };
 
-export function NotificationDispatchHistory({ coreApi }: NotificationDispatchHistoryProps) {
+export function NotificationDispatchHistory({
+  coreApi,
+  onEditDispatch,
+}: NotificationDispatchHistoryProps) {
   const [items, setItems] = useState<NotificationDispatchItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -133,6 +138,7 @@ export function NotificationDispatchHistory({ coreApi }: NotificationDispatchHis
                 <th>Título / template</th>
                 <th>Destinatários</th>
                 <th>Formato</th>
+                {onEditDispatch ? <th>Ações</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -170,6 +176,22 @@ export function NotificationDispatchHistory({ coreApi }: NotificationDispatchHis
                         : `${item.createdCount}`}
                   </td>
                   <td>{item.presentation}</td>
+                  {onEditDispatch ? (
+                    <td>
+                      {isEditableScheduledDispatch(item.status, item.scheduledAt) ? (
+                        <button
+                          type="button"
+                          className="notification-dispatch-history__edit"
+                          onClick={() => onEditDispatch(item.id)}
+                        >
+                          <Pencil size={14} aria-hidden="true" />
+                          Editar
+                        </button>
+                      ) : (
+                        <span className="notification-dispatch-history__muted">—</span>
+                      )}
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

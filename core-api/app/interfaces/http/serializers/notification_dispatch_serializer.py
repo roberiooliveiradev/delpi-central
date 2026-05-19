@@ -4,8 +4,12 @@ from app.application.dto.notification_dispatch_response import NotificationDispa
 from app.domain.ports.notification_dispatch_repository import NotificationDispatchDTO
 
 
-def serialize_notification_dispatch(dto: NotificationDispatchDTO) -> dict:
-    return {
+def serialize_notification_dispatch(
+    dto: NotificationDispatchDTO,
+    *,
+    include_payload: bool = False,
+) -> dict:
+    result = {
         "id": str(dto.id),
         "createdByUserId": dto.created_by_user_id,
         "status": dto.status,
@@ -22,6 +26,9 @@ def serialize_notification_dispatch(dto: NotificationDispatchDTO) -> dict:
         "errorMessage": dto.error_message,
         "createdAt": dto.created_at.isoformat() + "Z" if dto.created_at else None,
     }
+    if include_payload:
+        result["payload"] = dto.payload or {}
+    return result
 
 
 def serialize_dispatch_result(result: NotificationDispatchResponse) -> dict:

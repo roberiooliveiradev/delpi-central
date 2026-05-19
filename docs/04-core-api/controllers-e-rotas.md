@@ -66,6 +66,8 @@ Arquivo: `me_controller.py` — todas exigem `@require_auth()`.
 | POST | `/me/notifications/test` | Teste (403 se `FLASK_ENV=production`) |
 | GET | `/me/dashboard` | `{ "appsCount", "apps" }` |
 
+Admin notificações (`notifications_controller.py`, superadmin): `POST /admin/notifications`, `GET/PUT /admin/notifications/dispatches/:id`, `GET /admin/notifications/dispatches`, `POST .../process-pending`, templates CRUD — ver [notificacoes.md](./notificacoes.md).
+
 ### GET /me — exemplo
 
 ```json

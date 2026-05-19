@@ -1,6 +1,7 @@
 # app/interfaces/http/notifications_controller.py
 
 from datetime import datetime
+from uuid import UUID
 
 from flask import Blueprint, g, jsonify, request
 
@@ -13,6 +14,9 @@ from app.application.use_cases.dispatch_notifications_use_case import (
 )
 from app.application.use_cases.list_notification_dispatches_use_case import (
     ListNotificationDispatchesUseCase,
+)
+from app.application.use_cases.update_scheduled_notification_dispatch_use_case import (
+    UpdateScheduledNotificationDispatchUseCase,
 )
 from app.application.use_cases.process_pending_notification_dispatches_use_case import (
     ProcessPendingNotificationDispatchesUseCase,
@@ -223,6 +227,69 @@ def list_notification_dispatches():
         )
     except Exception as exc:
         return api_error("list_dispatches_failed", str(exc))
+
+
+@admin_notifications_bp.route("/dispatches/<dispatch_id>", methods=["GET"])
+@require_superadmin()
+def get_notification_dispatch(dispatch_id: str):
+    try:
+        dispatch_uuid = UUID(dispatch_id)
+    except ValueError:
+        return api_error("invalid_id", "Invalid dispatch id", status=400)
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            dispatch = uow.notification_dispatches.get(dispatch_uuid)
+
+        if not dispatch:
+            return api_error("not_found", "Dispatch not found", status=404)
+
+        return jsonify(serialize_notification_dispatch(dispatch, include_payload=True)), 200
+    except Exception as exc:
+        return api_error("get_dispatch_failed", str(exc))
+
+
+@admin_notifications_bp.route("/dispatches/<dispatch_id>", methods=["PUT"])
+@require_superadmin()
+def update_scheduled_notification_dispatch(dispatch_id: str):
+    try:
+        dispatch_uuid = UUID(dispatch_id)
+    except ValueError:
+        return api_error("invalid_id", "Invalid dispatch id", status=400)
+
+    try:
+        body = request.get_json(silent=True) or {}
+        request_dto = _parse_dispatch_body(body)
+        scheduled_at = _parse_scheduled_at_from_body(body)
+        if not scheduled_at:
+            return api_error(
+                "validation_error",
+                "scheduledAt is required for scheduled dispatches",
+                status=400,
+            )
+
+        with SqlAlchemyUnitOfWork() as uow:
+            updated = UpdateScheduledNotificationDispatchUseCase(uow).execute(
+                dispatch_uuid,
+                request_dto,
+                scheduled_at=scheduled_at,
+            )
+
+        return (
+            jsonify(
+                {
+                    **serialize_notification_dispatch(updated),
+                    "scheduledAt": updated.scheduled_at.isoformat() + "Z"
+                    if updated.scheduled_at
+                    else None,
+                }
+            ),
+            200,
+        )
+    except DispatchNotificationsValidationError as exc:
+        return api_error("validation_error", str(exc), status=400)
+    except Exception as exc:
+        return api_error("update_dispatch_failed", str(exc))
 
 
 @admin_notifications_bp.route("/dispatches/process-pending", methods=["POST"])

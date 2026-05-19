@@ -58,8 +58,15 @@ class SqlAlchemyNotificationDispatchRepository(NotificationDispatchRepository):
         row.status = dispatch.status
         row.scheduled_at = dispatch.scheduled_at
         row.processed_at = dispatch.processed_at
+        row.broadcast = dispatch.broadcast
         row.recipient_count = dispatch.recipient_count
         row.created_count = dispatch.created_count
+        row.title = dispatch.title
+        row.category = dispatch.category
+        row.presentation = dispatch.presentation
+        row.template_id = dispatch.template_id
+        row.source_app = dispatch.source_app
+        row.payload = dispatch.payload
         row.notification_ids = dispatch.notification_ids
         row.error_message = dispatch.error_message
 

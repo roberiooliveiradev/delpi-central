@@ -89,6 +89,29 @@
   font-size: 13px;
 }
 
+.notification-dispatch-history__edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.notification-dispatch-history__edit:hover {
+  border-color: var(--primary);
+}
+
+.notification-dispatch-history__muted {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
 .notification-dispatch-history__table th,
 .notification-dispatch-history__table td {
   padding: 10px 12px;

@@ -27,6 +27,10 @@ import {
 } from "../../../components/notifications/notificationTemplates";
 import { useNotificationTemplates } from "../../../components/notifications/useNotificationTemplates";
 import { NotificationDispatchHistory } from "../../../components/notifications/NotificationDispatchHistory";
+import {
+  snapshotFromDispatchPayload,
+  type DispatchFormSnapshot,
+} from "../../../components/notifications/dispatchEditForm";
 
 import "./NotificationsTab.css";
 
@@ -105,6 +109,8 @@ export function NotificationsTab() {
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduledAtLocal, setScheduledAtLocal] = useState("");
   const [view, setView] = useState<AdminNotificationsView>("send");
+  const [editingDispatchId, setEditingDispatchId] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -172,32 +178,80 @@ export function NotificationsTab() {
     setType(selectedTemplate.defaultType);
   }, [selectedTemplate, presentation]);
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  function applyFormSnapshot(snapshot: DispatchFormSnapshot) {
+    setBroadcast(snapshot.broadcast);
+    setSelectedUserIds(snapshot.selectedUserIds);
+    setSelectedRoleIds(snapshot.selectedRoleIds);
+    setSelectedGroupIds(snapshot.selectedGroupIds);
+    setExtraEmails(snapshot.extraEmails);
+    setTitle(snapshot.title);
+    setMessage(snapshot.message);
+    setType(snapshot.type);
+    setCategory(snapshot.category);
+    setPresentation(snapshot.presentation);
+    setHtmlContent(snapshot.htmlContent);
+    setTemplateId(snapshot.templateId);
+    setTemplateVars(snapshot.templateVars);
+    setActionType(snapshot.actionType);
+    setActionLabel(snapshot.actionLabel);
+    setActionTarget(snapshot.actionTarget);
+    setExpiresEnabled(snapshot.expiresEnabled);
+    setExpiresInDays(snapshot.expiresInDays);
+    setScheduleEnabled(snapshot.scheduleEnabled);
+    setScheduledAtLocal(snapshot.scheduledAtLocal);
+  }
 
-    if (!isSuperadmin) {
-      setError("Apenas superadmin pode enviar notificações.");
-      return;
-    }
+  function resetComposeForm() {
+    setBroadcast(false);
+    setSelectedUserIds([]);
+    setSelectedRoleIds([]);
+    setSelectedGroupIds([]);
+    setExtraEmails([]);
+    setTitle("");
+    setMessage("");
+    setType("info");
+    setCategory("announcement");
+    setPresentation("template");
+    setHtmlContent("");
+    setTemplateId("welcome_v1");
+    setTemplateVars({});
+    setActionType("none");
+    setActionLabel("");
+    setActionTarget("");
+    setExpiresEnabled(false);
+    setExpiresInDays(7);
+    setScheduleEnabled(false);
+    setScheduledAtLocal("");
+  }
 
-    setIsSubmitting(true);
+  function cancelEditDispatch() {
+    setEditingDispatchId(null);
+    setFeedback(null);
+    setError(null);
+    resetComposeForm();
+  }
+
+  async function beginEditDispatch(dispatchId: string) {
+    setEditingDispatchId(dispatchId);
+    setView("send");
+    setLoadingEdit(true);
     setFeedback(null);
     setError(null);
 
-    if (
-      !broadcast &&
-      selectedUserIds.length === 0 &&
-      extraEmails.length === 0 &&
-      selectedRoleIds.length === 0 &&
-      selectedGroupIds.length === 0
-    ) {
-      setError(
-        "Selecione ao menos um destinatário (usuário, e-mail, papel ou grupo).",
+    try {
+      const detail = await coreApi.getNotificationDispatch(dispatchId);
+      applyFormSnapshot(
+        snapshotFromDispatchPayload(detail.payload, detail.scheduledAt),
       );
-      setIsSubmitting(false);
-      return;
+    } catch (err) {
+      setEditingDispatchId(null);
+      setError(err instanceof Error ? err.message : "Falha ao carregar agendamento");
+    } finally {
+      setLoadingEdit(false);
     }
+  }
 
+  function buildDispatchPayload(): DispatchNotificationsPayload {
     const isTemplate = presentation === "template";
     const fallbackMessage = isTemplate
       ? templatePreview?.message ?? "Notificação"
@@ -205,19 +259,7 @@ export function NotificationsTab() {
         ? message.trim() || "Notificação em HTML"
         : message.trim();
 
-    if (!fallbackMessage && presentation !== "html") {
-      setError("Informe a mensagem ou preencha o template.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (presentation === "html" && !htmlContent.trim()) {
-      setError("Informe o conteúdo HTML.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    const payload: DispatchNotificationsPayload = {
+    return {
       broadcast,
       userIds: broadcast ? undefined : selectedUserIds,
       emails: broadcast ? undefined : extraEmails,
@@ -248,48 +290,117 @@ export function NotificationsTab() {
           : null,
       sourceApp: "portal-admin",
     };
+  }
 
-    if (scheduleEnabled && !scheduledAtLocal) {
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+
+    if (!isSuperadmin) {
+      setError("Apenas superadmin pode enviar notificações.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFeedback(null);
+    setError(null);
+
+    if (
+      !broadcast &&
+      selectedUserIds.length === 0 &&
+      extraEmails.length === 0 &&
+      selectedRoleIds.length === 0 &&
+      selectedGroupIds.length === 0
+    ) {
+      setError(
+        "Selecione ao menos um destinatário (usuário, e-mail, papel ou grupo).",
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    const payload = buildDispatchPayload();
+
+    if (!payload.message && presentation !== "html") {
+      setError("Informe a mensagem ou preencha o template.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (presentation === "html" && !htmlContent.trim()) {
+      setError("Informe o conteúdo HTML.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const requiresSchedule = Boolean(editingDispatchId) || scheduleEnabled;
+    if (requiresSchedule && !scheduledAtLocal) {
       setError("Informe data e hora do agendamento.");
       setIsSubmitting(false);
       return;
     }
 
+    if (editingDispatchId && !scheduleEnabled) {
+      setError("O agendamento deve manter data e hora definidas.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      const result = await coreApi.dispatchNotifications(payload);
-
-      if (result.status === "pending") {
-        setFeedback(
-          result.scheduledAt
-            ? `Envio agendado para ${new Date(result.scheduledAt).toLocaleString("pt-BR")}.`
-            : "Envio agendado com sucesso.",
+      if (editingDispatchId) {
+        const updated = await coreApi.updateScheduledNotificationDispatch(
+          editingDispatchId,
+          payload,
         );
+        setFeedback(
+          updated.scheduledAt
+            ? `Agendamento atualizado para ${new Date(updated.scheduledAt).toLocaleString("pt-BR")}.`
+            : "Agendamento atualizado.",
+        );
+        setEditingDispatchId(null);
+        setView("history");
       } else {
-        const count = result.createdCount;
-        setFeedback(
-          count === 1
-            ? "1 notificação enviada."
-            : `${count} notificações enviadas para ${count} destinatário(s).`,
-        );
-      }
+        const result = await coreApi.dispatchNotifications(payload);
 
-      if (!broadcast) {
-        setSelectedUserIds([]);
-        setExtraEmails([]);
-      }
+        if (result.status === "pending") {
+          setFeedback(
+            result.scheduledAt
+              ? `Envio agendado para ${new Date(result.scheduledAt).toLocaleString("pt-BR")}.`
+              : "Envio agendado com sucesso.",
+          );
+        } else {
+          const count = result.createdCount;
+          setFeedback(
+            count === 1
+              ? "1 notificação enviada."
+              : `${count} notificações enviadas para ${count} destinatário(s).`,
+          );
+        }
 
-      setMessage("");
-      setHtmlContent("");
-      setScheduleEnabled(false);
-      setScheduledAtLocal("");
+        if (!broadcast) {
+          setSelectedUserIds([]);
+          setExtraEmails([]);
+        }
+
+        setMessage("");
+        setHtmlContent("");
+        setScheduleEnabled(false);
+        setScheduledAtLocal("");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao enviar notificações");
+      setError(
+        err instanceof Error
+          ? err.message
+          : editingDispatchId
+            ? "Falha ao atualizar agendamento"
+            : "Falha ao enviar notificações",
+      );
     } finally {
       setIsSubmitting(false);
     }
   }
 
   const submitDisabled =
+    loadingEdit ||
     isSubmitting ||
     (!broadcast &&
       selectedUserIds.length === 0 &&
@@ -340,7 +451,12 @@ export function NotificationsTab() {
               ? "admin-notifications__subnav-btn admin-notifications__subnav-btn--active"
               : "admin-notifications__subnav-btn"
           }
-          onClick={() => setView("send")}
+          onClick={() => {
+            if (editingDispatchId) {
+              cancelEditDispatch();
+            }
+            setView("send");
+          }}
         >
           <Send size={16} aria-hidden="true" />
           Novo envio
@@ -361,12 +477,34 @@ export function NotificationsTab() {
 
       {view === "history" ? (
         <article className="admin-notifications__panel">
-          <NotificationDispatchHistory coreApi={coreApi} />
+          <NotificationDispatchHistory
+            coreApi={coreApi}
+            onEditDispatch={(dispatchId) => void beginEditDispatch(dispatchId)}
+          />
         </article>
       ) : null}
 
       {view === "send" ? (
       <form className="admin-notifications__form" onSubmit={(event) => void handleSubmit(event)}>
+        {editingDispatchId ? (
+          <div className="admin-notifications__edit-banner" role="status">
+            <p>
+              Editando envio agendado. Alterações só entram em vigor após salvar; o envio anterior
+              não foi disparado.
+            </p>
+            <button
+              type="button"
+              className="admin-notifications__edit-cancel"
+              onClick={cancelEditDispatch}
+              disabled={isSubmitting}
+            >
+              Cancelar edição
+            </button>
+          </div>
+        ) : null}
+        {loadingEdit ? (
+          <p className="admin-notifications__edit-loading">Carregando agendamento…</p>
+        ) : null}
         <div className="admin-notifications__shell">
           <article className="admin-notifications__panel">
             <div className="admin-notifications__panel-head">
@@ -772,10 +910,14 @@ export function NotificationsTab() {
               >
                 <Send size={16} aria-hidden="true" />
                 {isSubmitting
-                  ? "Enviando…"
-                  : scheduleEnabled
-                    ? "Agendar envio"
-                    : "Enviar notificações"}
+                  ? editingDispatchId
+                    ? "Salvando…"
+                    : "Enviando…"
+                  : editingDispatchId
+                    ? "Salvar agendamento"
+                    : scheduleEnabled
+                      ? "Agendar envio"
+                      : "Enviar notificações"}
               </button>
             </div>
           </footer>

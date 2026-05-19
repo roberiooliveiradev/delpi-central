@@ -112,7 +112,7 @@ Rotas sob `/integrations/notifications` usam limite por IP e path (padrão **60 
 
 Resposta `429` com `{ "error": "Too Many Requests", ... }`.
 
-Admin e integrações: `POST /admin/notifications`, `POST /integrations/notifications`, templates em `/admin/notifications/templates`, auditoria em `GET /admin/notifications/dispatches`, processamento de agendados em `POST .../dispatches/process-pending` — ver [roadmap](../12-roadmap-e-evolucao/notificacoes-ricas.md).
+Admin e integrações: `POST /admin/notifications`, `POST /integrations/notifications`, templates em `/admin/notifications/templates`, auditoria em `GET /admin/notifications/dispatches`, edição de agendados em `GET/PUT /admin/notifications/dispatches/:id` (somente `status=pending` com `scheduled_at` futuro), processamento em `POST .../dispatches/process-pending` — ver [roadmap](../12-roadmap-e-evolucao/notificacoes-ricas.md).
 
 Resposta de listagem (`serialize_notification`):
 

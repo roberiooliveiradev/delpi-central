@@ -177,6 +177,10 @@ export interface NotificationDispatchItem {
   createdAt: string;
 }
 
+export interface NotificationDispatchDetail extends NotificationDispatchItem {
+  payload: Record<string, unknown>;
+}
+
 export interface NotificationDispatchListResponse {
   items: NotificationDispatchItem[];
   total: number;
@@ -386,6 +390,22 @@ export class CoreApi {
     return this.client.post<DispatchNotificationsResponse>(
       "/core-api/admin/notifications",
       payload
+    );
+  }
+
+  getNotificationDispatch(dispatchId: string) {
+    return this.client.get<NotificationDispatchDetail>(
+      `/core-api/admin/notifications/dispatches/${dispatchId}`,
+    );
+  }
+
+  updateScheduledNotificationDispatch(
+    dispatchId: string,
+    payload: DispatchNotificationsPayload,
+  ) {
+    return this.client.put<NotificationDispatchItem>(
+      `/core-api/admin/notifications/dispatches/${dispatchId}`,
+      payload,
     );
   }
 
