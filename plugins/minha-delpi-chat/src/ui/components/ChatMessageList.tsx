@@ -287,6 +287,17 @@ export function ChatMessageList({
       const isSendFlow =
         pinUserMessageIdRef.current !== null || isActiveStream;
 
+      if (isSendFlow && !pinUserMessageIdRef.current) {
+        const lastUserMessage = [...messages]
+          .reverse()
+          .find((message) => message.role === "user");
+
+        if (lastUserMessage?.id) {
+          pinUserMessageIdRef.current = lastUserMessage.id;
+          followStreamRef.current = false;
+        }
+      }
+
       pendingInitialScrollRef.current =
         Boolean(conversationKey) &&
         previousKey !== conversationKey &&
@@ -298,7 +309,7 @@ export function ChatMessageList({
 
       setShowScrollToBottom(false);
     }
-  }, [conversationKey, isActiveStream]);
+  }, [conversationKey, isActiveStream, messages]);
 
   useEffect(() => {
     if (isLoading) {

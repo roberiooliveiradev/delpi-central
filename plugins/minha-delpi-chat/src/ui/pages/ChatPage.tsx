@@ -170,13 +170,13 @@ export function ChatPage({
 
   const applyChatRoute = useCallback(
     (route: ChatRoute) => {
+      const hasOutboundInFlight =
+        messages.some((message) => message.metadata?.optimistic === true) ||
+        Boolean(streamingStatus) ||
+        isStreamingActiveSession;
+
       switch (route.kind) {
         case "home": {
-          const hasOutboundInFlight =
-            messages.some((message) => message.metadata?.optimistic === true) ||
-            Boolean(streamingStatus) ||
-            isStreamingActiveSession;
-
           if (hasOutboundInFlight) {
             closeMobileSidebar();
             return;
@@ -234,6 +234,11 @@ export function ChatPage({
           break;
         }
         case "project": {
+          if (hasOutboundInFlight) {
+            closeMobileSidebar();
+            return;
+          }
+
           if (selectedProjectId === route.projectId && !activeSession) {
             closeMobileSidebar();
             return;
@@ -252,6 +257,11 @@ export function ChatPage({
           break;
         }
         case "agent": {
+          if (hasOutboundInFlight) {
+            closeMobileSidebar();
+            return;
+          }
+
           if (activeAgentPageKey === route.agentKey && !activeSession) {
             closeMobileSidebar();
             return;
