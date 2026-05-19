@@ -175,13 +175,19 @@ export function ChatPage({
         Boolean(streamingStatus) ||
         isStreamingActiveSession;
 
+      const shouldPreserveAgentCompose =
+        route.kind === "agent" &&
+        hasOutboundInFlight &&
+        activeAgentPageKey === route.agentKey;
+
+      const shouldPreserveProjectCompose =
+        route.kind === "project" &&
+        hasOutboundInFlight &&
+        selectedProjectId === route.projectId &&
+        (!activeSession || activeSession.project_id === route.projectId);
+
       switch (route.kind) {
         case "home": {
-          if (hasOutboundInFlight) {
-            closeMobileSidebar();
-            return;
-          }
-
           if (
             !activeSession &&
             !selectedProjectId &&
@@ -210,13 +216,7 @@ export function ChatPage({
             return;
           }
 
-          if (
-            activeSession?.id === route.sessionId ||
-            isSessionProcessing(session.id)
-          ) {
-            if (activeSession?.id !== route.sessionId) {
-              selectSession(session);
-            }
+          if (activeSession?.id === route.sessionId) {
             closeMobileSidebar();
             return;
           }
@@ -234,7 +234,7 @@ export function ChatPage({
           break;
         }
         case "project": {
-          if (hasOutboundInFlight) {
+          if (shouldPreserveProjectCompose) {
             closeMobileSidebar();
             return;
           }
@@ -257,7 +257,7 @@ export function ChatPage({
           break;
         }
         case "agent": {
-          if (hasOutboundInFlight) {
+          if (shouldPreserveAgentCompose) {
             closeMobileSidebar();
             return;
           }
@@ -295,6 +295,7 @@ export function ChatPage({
     },
     [
       activeAgentPageKey,
+      activeSession,
       activeSession?.id,
       clearError,
       clearWorkspaceError,
@@ -616,8 +617,7 @@ export function ChatPage({
   const hasActiveConversation =
     messages.length > 0 ||
     isStreamingActiveSession ||
-    Boolean(streamingAnswer) ||
-    Boolean(streamingStatus);
+    (isStreamingActiveSession && Boolean(streamingAnswer));
 
   const isConversationEmpty = !hasActiveConversation;
 

@@ -200,16 +200,26 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         resetStreamingUi();
         setMessages([]);
         setPendingUserMessage(null);
+        setError(null);
       }
 
       activeSessionIdRef.current = session.id;
       setActiveSession(session);
 
-      if (isSessionPending(session.id) && !isSessionStreaming(session.id)) {
+      if (
+        isSessionPending(session.id) &&
+        !isSessionStreaming(session.id) &&
+        isStreamForActiveSession(session.id)
+      ) {
         setStreamingStatus("Finalizando resposta em segundo plano...");
       }
     },
-    [isSessionPending, isSessionStreaming, resetStreamingUi],
+    [
+      isSessionPending,
+      isSessionStreaming,
+      isStreamForActiveSession,
+      resetStreamingUi,
+    ],
   );
 
   const startSession = useCallback(async () => {
@@ -232,11 +242,21 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           getAccessToken: options.getAccessToken,
         });
 
+        if (activeSessionIdRef.current !== sessionId) {
+          return;
+        }
+
         setMessages(data);
       } catch (err) {
+        if (activeSessionIdRef.current !== sessionId) {
+          return;
+        }
+
         setError(err instanceof Error ? err.message : "Erro ao carregar mensagens.");
       } finally {
-        setIsLoadingMessages(false);
+        if (activeSessionIdRef.current === sessionId) {
+          setIsLoadingMessages(false);
+        }
       }
     },
     [options.getAccessToken],
