@@ -151,10 +151,53 @@ def _serialize_goal_item(item: dict) -> dict:
 
 @router.get("/health")
 def strategic_indicators_health():
-    return {
+    from si_app.infrastructure.persistence.plugins.plugin_healthcheck import (
+        get_plugins_db_health,
+    )
+    from si_app.infrastructure.persistence.plugins.plugin_base_repository import (
+        PluginBaseRepository,
+        PluginsRepositoryError,
+    )
+
+    payload: dict = {
         "status": "online",
         "module": "strategic-indicators",
+        "plugins_db": get_plugins_db_health(),
     }
+
+    if payload["plugins_db"].get("status") != "ok":
+        payload["status"] = "degraded"
+        payload["strategic_indicators_schema"] = {
+            "status": "skipped",
+            "reason": "plugins_db_unavailable",
+        }
+        return payload
+
+    try:
+        row = PluginBaseRepository().fetch_one(
+            """
+            SELECT COUNT(*)::int AS department_count
+            FROM strategic_indicators.departments
+            WHERE is_active = TRUE
+            """
+        )
+        payload["strategic_indicators_schema"] = {
+            "status": "ok",
+            "department_count": int((row or {}).get("department_count") or 0),
+        }
+    except PluginsRepositoryError as exc:
+        payload["status"] = "degraded"
+        payload["strategic_indicators_schema"] = {
+            "status": "error",
+            "reason": str(exc),
+            "hint": (
+                "Execute as migrations: "
+                "docker exec delpi-strategic-indicators-api "
+                "python3 scripts/run_migrations.py up"
+            ),
+        }
+
+    return payload
 
 
 @router.get("/executive-summary")

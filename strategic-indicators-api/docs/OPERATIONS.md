@@ -53,6 +53,46 @@ Baseline documentado: executive ~19s → ~10s após otimizações — ver [PERFO
 
 ## Problemas comuns
 
+### 500 — `Falha ao executar fetch_all no banco de plugins`
+
+**Sintoma:** painel SI mostra erro ao carregar executive-summary, departments, settings, etc.
+
+**Causa mais comum:** schema `strategic_indicators` inexistente ou incompleto no Postgres `postgres-plugins` (migrations não aplicadas em produção).
+
+Em produção, `SI_RUN_MIGRATIONS_ON_STARTUP` costuma estar **desligado** (`false` no `docker-compose.yml`). As migrations precisam rodar **uma vez** manualmente após deploy.
+
+**Diagnóstico no servidor:**
+
+```bash
+# Erro SQL real (traceback)
+docker logs delpi-strategic-indicators-api 2>&1 | tail -200 | grep -E "fetch_all failed|does not exist|PluginsRepository|ERROR"
+
+# Health com checagem do schema (após redeploy com health estendido)
+curl -s http://localhost/apps/strategic-indicators-api/strategic-indicators/health | jq
+
+# Tabelas no banco plugins
+docker exec delpi-postgres-plugins psql -U "$PLUGINS_DB_USER" -d "$PLUGINS_DB_NAME" -c \
+  "SELECT tablename FROM pg_tables WHERE schemaname='strategic_indicators' ORDER BY 1 LIMIT 20;"
+
+# Status / aplicar migrations
+docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py status
+docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py up
+```
+
+**Correção:** após `up` com sucesso, reinicie a API:
+
+```bash
+docker compose -f infra/docker-compose.yml restart strategic-indicators-api
+```
+
+Opcional no `.env.prod` (somente depois da primeira carga manual bem-sucedida):
+
+```env
+SI_RUN_MIGRATIONS_ON_STARTUP=true
+```
+
+**Nota:** as datas `start_date=01-05-2026` no log estão no formato esperado pelo SI (DD-MM-YYYY). O 500 neste caso não é formato de data — é falha ao ler o catálogo/metas no Postgres.
+
 ### 502 Bad Gateway em todas as rotas
 
 **Causa:** container `strategic-indicators-api` não sobe (crash no import).
