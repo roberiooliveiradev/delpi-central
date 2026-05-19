@@ -388,6 +388,24 @@ services:
     networks:
       - delpi-network
 
+  dashboard-financial:
+    build:
+      context: ../plugins/dashboard-financial
+      dockerfile: Dockerfile
+
+    container_name: delpi-dashboard-financial
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/dashboard-financial:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   api-delpi:
     build:
       context: ..
@@ -558,6 +576,7 @@ services:
       - dashboard-commercial
       - dashboard-production
       - dashboard-supplies
+      - dashboard-financial
       - minha-delpi-ai-api
       - minha-delpi-chat
 

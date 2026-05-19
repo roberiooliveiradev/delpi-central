@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "dashboard-financial",
+  "name": "Dashboard Financeiro",
+  "description": "Painel financeiro (ROL, EBITDA, custos fixos e PMR) via api-delpi",
+  "icon": "landmark-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/dashboard-financial",
+  "entry": "/apps/dashboard-financial/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "dashboard-financial.view",
+      "name": "Acesso ao dashboard financeiro",
+      "description": "Permite visualizar ROL, EBITDA, custos fixos e PMR",
+      "module": "dashboard-financial"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/dashboard-financial",
+      "label": "Dashboard Financeiro",
+      "permission": "dashboard-financial.view",
+      "icon": "landmark-icon",
+      "order": 22,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/dashboard-financial/rol",
+      "label": "ROL",
+      "permission": "dashboard-financial.view",
+      "icon": "landmark-icon",
+      "order": 23,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/dashboard-financial/ebitda",
+      "label": "EBITDA",
+      "permission": "dashboard-financial.view",
+      "icon": "landmark-icon",
+      "order": 24,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/dashboard-financial/fixed-cost",
+      "label": "Custos fixos",
+      "permission": "dashboard-financial.view",
+      "icon": "landmark-icon",
+      "order": 25,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/dashboard-financial/pmr",
+      "label": "PMR",
+      "permission": "dashboard-financial.view",
+      "icon": "landmark-icon",
+      "order": 26,
+      "showInMenu": false
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}
