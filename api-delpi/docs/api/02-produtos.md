@@ -6,6 +6,8 @@ Prefixo: `/products`
 
 Formato de resposta: envelope `{ success, message, data }`.
 
+> **Agentes (chat):** mapa de qual rota usar por intenção — [11-guia-agente-chat.md](./11-guia-agente-chat.md). Metadados OpenAPI (`summary`, `description`, `operationId`) em `app/interface/http/openapi_agent_metadata.py`.
+
 ## GET /products/search
 
 Busca paginada de produtos no Protheus.

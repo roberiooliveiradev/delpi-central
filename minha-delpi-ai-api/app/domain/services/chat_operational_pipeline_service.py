@@ -1,4 +1,7 @@
-from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntentService
+from app.domain.services.chat_product_query_intent_service import (
+    ChatProductQueryIntent,
+    ChatProductQueryIntentService,
+)
 from app.infrastructure.config.settings import Settings
 
 
@@ -9,12 +12,39 @@ class ChatOperationalPipelineService:
         "item",
         "codigo",
         "código",
+        "referencia",
+        "referência",
+        "ref ",
+        " sku",
         "estoque",
         "stock",
+        "saldo",
         "lmp",
+        "lmps",
+        "lista de materiais",
+        "lista material",
+        "amostra",
+        "ordem de venda",
         "sql",
         "analisador",
         "analyser",
+        "api delpi",
+    )
+
+    _DOCUMENTAL_TERMS = (
+        "explique",
+        "explica ",
+        "documentação",
+        "documentacao",
+        "política",
+        "politica",
+        "procedimento",
+        "como funciona",
+        "o que é",
+        "o que e ",
+        "descreva o processo",
+        "manual ",
+        "norma ",
     )
 
     @classmethod
@@ -43,13 +73,21 @@ class ChatOperationalPipelineService:
         if not normalized:
             return False
 
+        if cls._looks_like_documental_question(normalized) and any(
+            term in normalized for term in cls._OPERATIONAL_TERMS
+        ):
+            return False
+
         if ChatProductQueryIntentService.extract_product_code(message):
             return True
 
-        if ChatProductQueryIntentService._looks_like_stock_question(normalized):
-            return True
+        intent = ChatProductQueryIntentService.detect(message)
 
-        if ChatProductQueryIntentService._looks_like_description_question(normalized):
+        if intent in (ChatProductQueryIntent.STOCK, ChatProductQueryIntent.DESCRIPTION):
             return True
 
         return any(term in normalized for term in cls._OPERATIONAL_TERMS)
+
+    @classmethod
+    def _looks_like_documental_question(cls, normalized: str) -> bool:
+        return any(term in normalized for term in cls._DOCUMENTAL_TERMS)

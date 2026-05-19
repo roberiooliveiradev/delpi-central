@@ -45,6 +45,29 @@ def test_format_direct_answer_description_keeps_only_main_line():
     )
 
 
+def test_normalize_product_code_strips_mask():
+    assert ChatProductQueryIntentService.normalize_product_code("10.080.055") == "10080055"
+    assert ChatProductQueryIntentService.extract_product_code("produto 10.080.055") == "10080055"
+
+
+def test_format_direct_answer_stock_uses_bullets():
+    answer = ChatProductQueryIntentService.format_direct_answer(
+        {
+            "titulo": "Estoque 10080047",
+            "linhas": [
+                "Filial 01 — quantidade disponível: 120 PC",
+                "Roteiro: 0 registro(s).",
+            ],
+        },
+        intent=ChatProductQueryIntent.STOCK,
+    )
+
+    assert answer is not None
+    assert "**Estoque 10080047**" in answer
+    assert "- Filial 01" in answer
+    assert "Roteiro" not in answer
+
+
 def test_format_direct_answer_full_filters_zero_records():
     answer = ChatProductQueryIntentService.format_direct_answer(
         {

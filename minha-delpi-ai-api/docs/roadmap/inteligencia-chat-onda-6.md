@@ -41,7 +41,7 @@ Serviços principais:
 | 6.2 | Fast path operacional | Produto/estoque/LMP: pula RAG/resumo pesado quando aplicável | Parcial |
 | 6.3 | Seleção de actions | Heurísticas + FTS; ranking semântico opcional | Parcial |
 | 6.4 | Resposta direta | Templates após `execute_external_action` (produto, LMP, genérico) | Pendente |
-| 6.5 | Prompts por tipo de agente | Operacional vs documental; instruções enxutas em CPU | Pendente |
+| 6.5 | Prompts por tipo de agente | Operacional vs documental; instruções enxutas em CPU | Parcial (`api-delpi-routes.md` + doc RAG) |
 | 6.6 | RAG enxuto | Keyword/FTS; hybrid/rerank desligados em prod CPU | Config ok |
 | 6.7 | Observabilidade | `intelligence.timings`; action escolhida + motivo | Parcial |
 | 6.8 | Regressão | Fixtures com 15–20 perguntas reais da operação | Pendente |

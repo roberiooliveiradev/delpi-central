@@ -161,6 +161,12 @@ class SendChatMessageUseCase:
             tool_context=tool_context,
             embedding_cache_stats=self._embedding_cache_stats(),
             pipeline_timings=pipeline_timings.to_dict(),
+            pipeline=ChatIntelligenceMetadataService.build_pipeline_flags(
+                fast_path=fast_path,
+                operational_optimize=operational_optimize,
+                tool_context=tool_context,
+                skip_rag=skip_rag,
+            ),
         )
 
         user_message = self.chat_repository.create_message(
@@ -228,6 +234,12 @@ class SendChatMessageUseCase:
             tool_context=tool_context,
             embedding_cache_stats=self._embedding_cache_stats(),
             pipeline_timings=pipeline_timings.to_dict(),
+            pipeline=ChatIntelligenceMetadataService.build_pipeline_flags(
+                fast_path=fast_path,
+                operational_optimize=operational_optimize,
+                tool_context=tool_context,
+                skip_rag=skip_rag,
+            ),
         )
         latency_ms = int((time.perf_counter() - started_at) * 1000)
         prompt_tokens_estimated = self._estimate_tokens_from_messages(llm_messages)

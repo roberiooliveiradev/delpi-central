@@ -9,7 +9,9 @@ class ChatProductQueryIntent:
 
 class ChatProductQueryIntentService:
     _ZERO_RECORDS_RE = re.compile(r":\s*0 registro\(s\)\.?$", re.IGNORECASE)
-    _PRODUCT_CODE_RE = re.compile(r"\b\d{4,}\b")
+    _PRODUCT_CODE_RE = re.compile(
+        r"\b(?:\d[\d.\-/]{2,}\d|\d{4,})\b",
+    )
 
     @classmethod
     def detect(cls, message: str) -> str:
@@ -42,6 +44,10 @@ class ChatProductQueryIntentService:
             "desse item",
             "deste item",
             "esse item",
+            "mesmo código",
+            "mesmo codigo",
+            "mesma referência",
+            "mesma referencia",
             "dele",
             "dela",
         ]
@@ -49,13 +55,42 @@ class ChatProductQueryIntentService:
         return any(term in normalized for term in terms)
 
     @classmethod
+    def normalize_product_code(cls, raw: str) -> str:
+        digits = re.sub(r"\D", "", str(raw or ""))
+
+        if len(digits) >= 4:
+            return digits
+
+        return str(raw or "").strip()
+
+    @classmethod
     def extract_product_code(cls, text: str | None) -> str | None:
+        if cls._looks_like_lmp_context(text):
+            return None
+
         match = cls._PRODUCT_CODE_RE.search(str(text or ""))
 
         if not match:
             return None
 
-        return match.group(0)
+        return cls.normalize_product_code(match.group(0))
+
+    @classmethod
+    def _looks_like_lmp_context(cls, text: str | None) -> bool:
+        normalized = str(text or "").lower()
+
+        return any(
+            term in normalized
+            for term in (
+                "lmp",
+                "lmps",
+                "lista de materiais de projeto",
+                "ordem de venda",
+                " amostra",
+                " ov ",
+                " ov#",
+            )
+        )
 
     @classmethod
     def resolve_product_code(cls, message: str, conversation_context: str | None = None) -> str | None:
@@ -99,27 +134,23 @@ class ChatProductQueryIntentService:
             return "\n\n".join(parts)
 
         if intent == ChatProductQueryIntent.STOCK:
-            stock_lines = [
+            stock_lines = cls._filter_stock_lines(lines)
+            filtered = [
                 line
-                for line in lines
-                if any(
-                    token in line.lower()
-                    for token in (
-                        "filial",
-                        "armazém",
-                        "armazem",
-                        "quantidade",
-                        "disponível",
-                        "disponivel",
-                        "empenhada",
-                        "registro(s)",
-                    )
-                )
+                for line in (stock_lines or lines)
+                if not cls._ZERO_RECORDS_RE.search(line)
             ]
-            filtered = stock_lines or lines
-            parts = [title] if title else []
-            parts.extend(filtered)
-            return "\n\n".join(parts)
+
+            if not filtered:
+                return None
+
+            header = title or "Posição de estoque"
+            body = "\n".join(f"- {line}" for line in filtered[:12])
+
+            if len(filtered) > 12:
+                body += f"\n- … e mais {len(filtered) - 12} registro(s)."
+
+            return f"**{header}**\n\n{body}"
 
         filtered = [line for line in lines if not cls._ZERO_RECORDS_RE.search(line)]
         parts = [title] if title else []
@@ -127,7 +158,46 @@ class ChatProductQueryIntentService:
         return "\n\n".join(parts)
 
     @classmethod
+    def _filter_stock_lines(cls, lines: list[str]) -> list[str]:
+        stock_lines = []
+
+        for line in lines:
+            lowered = line.lower()
+
+            if any(
+                token in lowered
+                for token in (
+                    "filial",
+                    "armazém",
+                    "armazem",
+                    "quantidade",
+                    "disponível",
+                    "disponivel",
+                    "empenhada",
+                    "reservada",
+                    "registro(s)",
+                    "local:",
+                    "localização",
+                    "localizacao",
+                )
+            ):
+                stock_lines.append(line)
+
+        return stock_lines
+
+    @classmethod
     def _looks_like_stock_question(cls, normalized: str) -> bool:
+        if any(
+            term in normalized
+            for term in (
+                "valor total",
+                "valor de estoque",
+                "valor do estoque",
+                "giro de estoque",
+            )
+        ) and not cls.extract_product_code(normalized):
+            return False
+
         terms = [
             "estoque",
             "stock",
@@ -137,6 +207,10 @@ class ChatProductQueryIntentService:
             "quantidade dispon",
             "posição de estoque",
             "posicao de estoque",
+            "tem em estoque",
+            "qtd dispon",
+            "posição",
+            "posicao",
         ]
 
         return any(term in normalized for term in terms)
@@ -151,6 +225,14 @@ class ChatProductQueryIntentService:
             "como se chama",
             "qual a descrição",
             "qual a descricao",
+            "qual produto",
+            "referência",
+            "referencia",
+            "ref ",
+            " ref.",
+            "sku",
+            "código do item",
+            "codigo do item",
         ]
 
         return any(term in normalized for term in terms)

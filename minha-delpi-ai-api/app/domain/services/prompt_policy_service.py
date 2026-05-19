@@ -73,6 +73,25 @@ Regras obrigatórias:
         "statusCode",
     )
 
+    API_DELPI_MARKERS = (
+        "api_delpi",
+        "api-delpi",
+        "/products/",
+        "/engineering/lmps",
+        "/supplies/stock-value",
+        "/data/sql",
+        "get_product_stock",
+        "get_product_analyser",
+        "list_lmps",
+        "execute_readonly_sql",
+    )
+
+    API_DELPI_ROUTES_POLICY_FALLBACK = """Instruções para consultas via API DELPI (execute_external_action):
+- Produto: analyser para descrição/ficha; /stock para saldo do item; /search sem código exato.
+- LMP: /engineering/lmps para listar; /dashboard para painel; /lmps/{sale_number} para uma OV.
+- Valor total de estoque da empresa: /supplies/stock-value (não confundir com estoque de produto).
+- SQL leitura: POST /data/sql com campo sql."""
+
     PLATFORM_TOOL_MARKERS = (
         "get_current_user",
         "get_allowed_apps",
@@ -175,6 +194,14 @@ Regras obrigatórias:
                 self._load_policy(
                     "external-actions.md",
                     self.EXTERNAL_ACTIONS_POLICY_FALLBACK,
+                )
+            )
+
+        if self._contains_any(normalized_tool_context, self.API_DELPI_MARKERS):
+            sections.append(
+                self._load_policy(
+                    "api-delpi-routes.md",
+                    self.API_DELPI_ROUTES_POLICY_FALLBACK,
                 )
             )
 

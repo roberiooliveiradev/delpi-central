@@ -26,6 +26,12 @@ from app.application.dto.product.get_product_sales_billing_request import GetPro
 from app.application.dto.product.get_product_pricing_request import GetProductPricingRequest
 from app.application.dto.product.product_analyser_request import ProductAnalyserRequest
 
+from app.interface.http.openapi_agent_metadata import (
+    PRODUCT_ANALYSER,
+    PRODUCT_SEARCH,
+    PRODUCT_STOCK,
+    PRODUCT_STRUCTURE,
+)
 from app.composition.product_composer import (
     build_search_products_use_case,
     build_list_structure_use_case,
@@ -51,7 +57,7 @@ from app.composition.product_composer import (
 
 router = APIRouter()
 
-@router.get("/search")
+@router.get("/search", **PRODUCT_SEARCH)
 @require_permission("api-delpi.access")
 def search_products_route(
     code: Optional[str] = Query(None),
@@ -84,7 +90,7 @@ def search_products_route(
         log_error(f"Erro ao buscar produtos: {e}")
         return error_response(str(e))
 
-@router.get("{code}/structure")
+@router.get("/{code}/structure", **PRODUCT_STRUCTURE)
 @require_permission("api-delpi.access")
 def get_structure(
     code: str,
@@ -346,7 +352,7 @@ def internal_movements(
 
         return error_response(str(e))
     
-@router.get("/{code}/stock")
+@router.get("/{code}/stock", **PRODUCT_STOCK)
 @require_permission("api-delpi.access")
 def stock(
     code: str,
@@ -590,7 +596,7 @@ def product_pricing(code: str):
 
         return error_response(f"Unexpected error: {e}")
 
-@router.get("/{code}/analyser")
+@router.get("/{code}/analyser", **PRODUCT_ANALYSER)
 @require_permission("api-delpi.access")
 def product_analyser(code: str):
 

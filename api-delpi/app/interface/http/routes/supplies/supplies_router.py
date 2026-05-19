@@ -11,6 +11,7 @@ from app.application.dto.supplies.get_inventory_turnover_request import (
     GetInventoryTurnoverRequest,
 )
 
+from app.interface.http.openapi_agent_metadata import SUPPLIES_STOCK_VALUE
 from app.composition.supplies_composer import (
     build_get_cpv_use_case,
     build_get_otd_use_case,
@@ -97,7 +98,7 @@ def get_otd(
         )
     
 
-@router.get("/stock-value")
+@router.get("/stock-value", **SUPPLIES_STOCK_VALUE)
 @require_any_permission(["api-delpi.access", "dashboard-supplies.view"])
 def get_stock_value(
     branch: str | None = Query(default=None),

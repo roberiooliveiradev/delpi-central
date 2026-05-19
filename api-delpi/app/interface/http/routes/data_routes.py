@@ -10,6 +10,8 @@ from app.utils.logger import log_error
 
 from delpi_auth.authorization import require_any_permission
 
+from app.interface.http.openapi_agent_metadata import DATA_SQL
+
 
 router = APIRouter()
 
@@ -17,7 +19,9 @@ router = APIRouter()
 
 @router.post(
     "/sql",
-    summary="Executa SQL puro (somente SELECT, com CTE e recursivo permitido).",
+    summary=DATA_SQL["summary"],
+    description=DATA_SQL["description"],
+    operation_id=DATA_SQL["operation_id"],
     response_class=JSONResponse,
     openapi_extra={
         "requestBody": {

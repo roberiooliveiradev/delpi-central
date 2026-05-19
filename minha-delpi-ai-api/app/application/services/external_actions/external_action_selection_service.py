@@ -24,9 +24,26 @@ class ExternalActionSelectionService:
             conversation_context,
         )
 
-        if product_code and ChatProductQueryIntentService._looks_like_stock_question(
-            normalized
-        ):
+        if self._looks_like_lmp_question(normalized):
+            selected = self._select_lmp_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                conversation_context=conversation_context,
+            )
+
+            if selected:
+                return selected
+
+        if self._looks_like_supplies_stock_kpi(normalized) and not product_code:
+            selected = self._select_supplies_stock_value_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if selected:
+                return selected
+
+        if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.STOCK:
             selected = self._select_product_action(
                 message,
                 product_code,
@@ -37,9 +54,7 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        if product_code and ChatProductQueryIntentService._looks_like_description_question(
-            normalized
-        ):
+        if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.DESCRIPTION:
             selected = self._select_product_action(
                 message,
                 product_code,
@@ -56,12 +71,6 @@ class ExternalActionSelectionService:
                 product_code,
                 allowed_action_ids=allowed_action_ids,
                 intent=ChatProductQueryIntent.FULL,
-            )
-
-        if self._looks_like_lmp_question(normalized):
-            return self._select_lmp_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
             )
 
         if self._looks_like_sql_or_data_query(message):
@@ -82,18 +91,120 @@ class ExternalActionSelectionService:
             "item",
             "código",
             "codigo",
+            "referência",
+            "referencia",
+            "ref ",
+            " sku",
+            "material",
+            "insumo",
+            "mp ",
             "informações do produto",
             "informacoes do produto",
             "dados do produto",
             "busque as informações do produto",
             "busque informacoes do produto",
+            "consulta produto",
             "api delpi",
         ]
 
         return any(term in value for term in terms)
 
+    def _looks_like_supplies_stock_kpi(self, value: str) -> bool:
+        terms = [
+            "valor total",
+            "valor de estoque",
+            "valor do estoque",
+            "valor em estoque",
+            "giro de estoque",
+            "idd",
+        ]
+
+        return any(term in value for term in terms)
+
+    def _select_supplies_stock_value_action(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        candidates = self._list_allowed_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            limit=80,
+        )
+
+        for action in sorted(
+            candidates,
+            key=lambda item: self._score_supplies_stock_action(item),
+            reverse=True,
+        ):
+            if action.get("method") != "GET":
+                continue
+
+            path = str(action.get("path") or "").lower()
+
+            if "stock-value" not in path and "stock_value" not in str(
+                action.get("operationId") or ""
+            ).lower():
+                continue
+
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": action["actionId"],
+                    "parameters": self._build_supplies_stock_parameters(action),
+                },
+                "reason": "A pergunta solicita indicador agregado de valor de estoque (suprimentos).",
+            }
+
+        return None
+
+    def _score_supplies_stock_action(self, action: dict) -> int:
+        haystack = " ".join(
+            str(action.get(key) or "")
+            for key in ["path", "summary", "description", "operationId"]
+        ).lower()
+        value = 0
+
+        if "stock-value" in haystack or "get_supplies_stock_value" in haystack:
+            value += 100
+
+        if "/supplies/" in haystack:
+            value += 20
+
+        if "/products/" in haystack:
+            value -= 80
+
+        return value
+
+    def _build_supplies_stock_parameters(self, action: dict) -> dict:
+        parameters = {}
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if lowered in {"top_limit", "limit"}:
+                parameters[name] = 10
+
+        return parameters
+
     def _looks_like_lmp_question(self, value: str) -> bool:
-        return "lmp" in value or "lmps" in value
+        terms = [
+            "lmp",
+            "lmps",
+            "lista de materiais",
+            "lista material",
+            "lista de material",
+            "amostra",
+            "ordem de venda",
+            " ov ",
+        ]
+
+        return any(term in value for term in terms)
 
     def _looks_like_sql_or_data_query(self, message: str) -> bool:
         normalized = str(message or "").lower()
@@ -274,11 +385,10 @@ class ExternalActionSelectionService:
         self,
         message: str,
         allowed_action_ids: list[str],
+        conversation_context: str | None = None,
     ) -> dict | None:
         if not allowed_action_ids:
             return None
-
-        allowed = {str(item) for item in allowed_action_ids}
 
         candidates = self._list_allowed_candidates(
             message,
@@ -286,23 +396,132 @@ class ExternalActionSelectionService:
             limit=80,
         )
 
-        for action in candidates:
-            if action.get("method") != "GET":
-                continue
+        getters = [action for action in candidates if action.get("method") == "GET"]
 
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": action["actionId"],
-                    "parameters": {
-                        "page": 1,
-                        "page_size": 5,
-                    },
-                },
-                "reason": "A pergunta solicita consulta de LMP via OpenAPI.",
-            }
+        if not getters:
+            return None
+
+        ranked = self._rank_lmp_actions(message, getters)
+        action = ranked[0]
+        parameters = self._build_lmp_parameters(
+            message,
+            action,
+            conversation_context=conversation_context,
+        )
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": action["actionId"],
+                "parameters": parameters,
+            },
+            "reason": "A pergunta solicita consulta de LMP via OpenAPI.",
+        }
+
+    def _extract_sale_number(self, text: str | None) -> str | None:
+        raw = str(text or "")
+
+        patterns = [
+            r"\bov\s*[#:\-]?\s*(\d{4,})\b",
+            r"\bordem\s+de\s+venda\s*[#:\-]?\s*(\d{4,})\b",
+            r"\blmp\s+(\d{4,})\b",
+            r"\bamostra\s+(\d{4,})\b",
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, raw, flags=re.IGNORECASE)
+
+            if match:
+                return match.group(1)
 
         return None
+
+    def _rank_lmp_actions(self, message: str, candidates: list[dict]) -> list[dict]:
+        normalized = str(message or "").lower()
+        sale_number = self._extract_sale_number(message)
+        wants_dashboard = any(
+            term in normalized
+            for term in ("dashboard", "painel", "resumo gerencial", "visão gerencial")
+        )
+        wants_list = any(
+            term in normalized
+            for term in ("listar", "liste", "lista de", "quais lmps", "todas as lmp")
+        )
+
+        def score(action: dict) -> int:
+            path = str(action.get("path") or "").lower()
+            haystack = " ".join(
+                str(action.get(key) or "")
+                for key in ["actionId", "operationId", "path", "summary", "description"]
+            ).lower()
+            value = 0
+
+            if sale_number and "{sale_number}" in path:
+                value += 120
+
+            if wants_dashboard and "dashboard" in path:
+                value += 100
+
+            if wants_list and path.endswith("/lmps") and "dashboard" not in path and "{" not in path:
+                value += 90
+
+            operation_id = str(action.get("operationId") or "").lower()
+
+            if operation_id == "list_lmps":
+                value += 40
+
+            if "/lmps" in path and "lmp" in haystack:
+                value += 25
+
+            if "transforma" in path:
+                value -= 50
+
+            return value
+
+        return sorted(candidates, key=score, reverse=True)
+
+    def _build_lmp_parameters(
+        self,
+        message: str,
+        action: dict,
+        *,
+        conversation_context: str | None = None,
+    ) -> dict:
+        path = str(action.get("path") or "")
+        sale_number = self._extract_sale_number(message) or self._extract_sale_number(
+            conversation_context
+        )
+
+        if sale_number and "{sale_number}" in path:
+            for parameter in action.get("parametersSchema") or []:
+                name = parameter.get("name")
+
+                if name and name.lower() in {"sale_number", "ordem", "ov"}:
+                    return {name: sale_number}
+
+            return {"sale_number": sale_number}
+
+        parameters: dict = {}
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if lowered in {"page"}:
+                parameters[name] = 1
+            elif lowered in {"page_size", "pagesize", "limit"}:
+                parameters[name] = 5
+            elif lowered == "status" and "/dashboard" in path:
+                parameters[name] = "Todos"
+
+        if not parameters:
+            parameters = {"page": 1, "page_size": 5}
+
+        return parameters
 
     def _rank_product_actions(
         self,

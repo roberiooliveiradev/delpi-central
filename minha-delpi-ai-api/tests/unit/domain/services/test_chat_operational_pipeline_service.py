@@ -22,3 +22,16 @@ def test_should_not_optimize_without_allowed_actions():
         "descrição do produto 10080047",
         [],
     )
+
+
+def test_should_not_optimize_long_mixed_documental_operational_question():
+    message = (
+        "explique o procedimento completo de como consultar estoque "
+        "e saldo disponível nas filiais segundo a política interna da empresa"
+    )
+
+    assert len(message) > 100
+    assert not ChatOperationalPipelineService.should_optimize(
+        message,
+        ["action-1"],
+    )

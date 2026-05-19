@@ -50,6 +50,7 @@ Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/mi
 | `04-actions-openapi.md` | Providers/actions OpenAPI, vínculo agente -> provider, rotas, teste e logs. |
 | `05-projetos-fontes-anexos-artefatos.md` | Projetos, fontes, anexos e artefatos. |
 | `06-knowledge.md` | Ingestão e busca na base de conhecimento. |
+| [`../knowledge/README.md`](../knowledge/README.md) | Documentos prontos para anexar à inteligência do agente (ex.: rotas api-delpi). |
 | `07-tools.md` | Execução de tools internas. |
 | `08-admin.md` | Endpoints administrativos, métricas, LLM, auditoria e knowledge admin. |
 | `09-deploy-migrations-schema.md` | Migrações, schema audit e fluxo de deploy. |

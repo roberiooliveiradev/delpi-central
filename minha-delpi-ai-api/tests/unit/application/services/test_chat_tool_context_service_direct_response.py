@@ -41,7 +41,7 @@ class FakeExternalActionExecuteToolUseCase:
 
 
 class FakeExternalActionSelectionService:
-    def select_action(self, message, allowed_action_ids=None):
+    def select_action(self, message, allowed_action_ids=None, conversation_context=None):
         return {
             "name": "execute_external_action",
             "arguments": {

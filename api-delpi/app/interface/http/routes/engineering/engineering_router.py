@@ -19,12 +19,17 @@ from app.composition.engineering_composer import (
     build_engineering_list_transforma_mais_processes_use_case,
 )
 from app.core.responses import error_response, success_response
+from app.interface.http.openapi_agent_metadata import (
+    LMP_BY_SALE,
+    LMP_DASHBOARD,
+    LMP_LIST,
+)
 from app.utils.logger import log_error
 
 router = APIRouter(prefix="/engineering", tags=["Engenharia"])
 
 
-@router.get("/lmps")
+@router.get("/lmps", **LMP_LIST)
 @require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
 def list_lmps_route(
     date_start: Optional[str] = None,
@@ -32,7 +37,7 @@ def list_lmps_route(
     branch: Optional[str] = None,
     listing_type: Optional[str] = Query(
         None,
-        description="Filtro de tipo: Todos, LMP ou Amostra.",
+        description="Filtro de tipo: Todos, LMP, Amostra ou Outro.",
     ),
     page: Optional[int] = Query(None, ge=1),
     page_size: Optional[int] = Query(None, ge=1),
@@ -64,7 +69,7 @@ def list_lmps_route(
         return error_response("Erro interno ao listar LMPs.", status_code=500)
 
 
-@router.get("/lmps/dashboard")
+@router.get("/lmps/dashboard", **LMP_DASHBOARD)
 @require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
 def list_lmps_dashboard_route(
     date_start: Optional[str] = None,
@@ -73,7 +78,7 @@ def list_lmps_dashboard_route(
     branch: Optional[str] = None,
     listing_type: Optional[str] = Query(
         None,
-        description="Filtro de tipo: Todos, LMP ou Amostra.",
+        description="Filtro de tipo: Todos, LMP, Amostra ou Outro.",
     ),
     page: Optional[int] = Query(None, ge=1),
     page_size: Optional[int] = Query(None, ge=1),
@@ -108,7 +113,7 @@ def list_lmps_dashboard_route(
         )
 
 
-@router.get("/lmps/{sale_number}")
+@router.get("/lmps/{sale_number}", **LMP_BY_SALE)
 @require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
 def get_lmp_route(sale_number: str):
     try:

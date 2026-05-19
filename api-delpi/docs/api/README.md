@@ -53,6 +53,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [06-modulos-departamentais.md](./06-modulos-departamentais.md) | Financeiro, comercial, produção, suprimentos, engenharia e qualidade (métricas). |
 | [07-qualidade-nc.md](./07-qualidade-nc.md) | NC interna/externa (implementado, **ainda não montado** em `main.py`). |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
+| [11-guia-agente-chat.md](./11-guia-agente-chat.md) | Mapa intenção → rota para agentes do Minha DELPI Chat (OpenAPI). |
 
 ## Permissões principais
 

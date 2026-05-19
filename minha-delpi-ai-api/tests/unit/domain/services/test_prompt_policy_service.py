@@ -74,6 +74,21 @@ def test_contextual_prompt_includes_sql_policy_when_rag_context_has_sql():
     assert "Não reproduza SQL bruto" in prompt
 
 
+def test_contextual_prompt_includes_api_delpi_routes_policy_when_tool_context_mentions_api_delpi():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context=(
+            "execute_external_action provider=api_delpi "
+            "path=/products/{code}/stock statusCode=200"
+        ),
+    )
+
+    assert "Instruções para consultas via API DELPI" in prompt
+    assert "get_product_stock" in prompt or "/products/{code}/stock" in prompt
+
+
 def test_contextual_prompt_includes_session_knowledge_policy_for_attachment_context():
     service = PromptPolicyService()
 

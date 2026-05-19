@@ -98,6 +98,7 @@ class ChatToolContextService:
                 )
 
         selected_external_action = None
+        selected_external_action_meta = None
 
         if self.external_action_selection_service and actions_enabled:
             selected_external_action = self.external_action_selection_service.select_action(
@@ -111,6 +112,11 @@ class ChatToolContextService:
                 allowed_action_ids,
             ):
                 selected_tools.append(selected_external_action)
+                arguments = selected_external_action.get("arguments") or {}
+                selected_external_action_meta = {
+                    "actionId": arguments.get("actionId") or arguments.get("action_id"),
+                    "reason": selected_external_action.get("reason"),
+                }
 
         if (
             actions_enabled
@@ -234,6 +240,7 @@ class ChatToolContextService:
             "nativeToolCalling": native_meta,
             "directAnswer": direct_answer,
             "skipRag": skip_rag,
+            "selectedExternalAction": selected_external_action_meta,
         }
 
 
