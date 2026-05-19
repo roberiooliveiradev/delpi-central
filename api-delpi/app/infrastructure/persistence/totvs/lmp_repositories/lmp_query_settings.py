@@ -34,7 +34,9 @@ class LMPQuerySettings:
 
     sample_anchor_process_stages: Dict[str, List[str]] = field(
         default_factory=lambda: {
-            # 000003 = processo engenharia; 000002/000008 = amostra
+            # 000002 = oportunidade — 000008 = amostra engenharia (doc TOTVS)
+            "000002": ["000008"],
+            # 000003 = processo engenharia — 000002/000008 = amostra
             "000003": ["000002", "000008"],
         }
     )
