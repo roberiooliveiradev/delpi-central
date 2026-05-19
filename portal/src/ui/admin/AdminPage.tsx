@@ -8,6 +8,7 @@ import {
   UsersRound,
   KeyRound,
   Bell,
+  BarChart3,
   ChevronDown,
 } from "lucide-react";
 
@@ -17,15 +18,24 @@ import { GroupsTab } from "./tabs/GroupsTab";
 import { PermissionsTab } from "./tabs/PermissionsTab";
 import { AppsTab } from "./tabs/AppsTab";
 import { NotificationsTab } from "./tabs/NotificationsTab";
+import { StatsTab } from "./tabs/StatsTab";
 
-type AdminTab = "apps" | "users" | "roles" | "groups" | "permissions" | "notifications";
+type AdminTab =
+  | "stats"
+  | "apps"
+  | "users"
+  | "roles"
+  | "groups"
+  | "permissions"
+  | "notifications";
 
 export const AdminPage = () => {
-  const [tab, setTab] = useState<AdminTab>("users");
+  const [tab, setTab] = useState<AdminTab>("stats");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const items = useMemo(
     () => [
+      { key: "stats" as const, label: "Estatísticas", icon: BarChart3 },
       { key: "users" as const, label: "Usuários", icon: Users },
       { key: "apps" as const, label: "Aplicações", icon: LayoutGrid },
       { key: "roles" as const, label: "Papéis", icon: Shield },
@@ -99,6 +109,7 @@ export const AdminPage = () => {
 
       <div className="admin-content">
         <div key={tab} className="admin-tab-panel">
+          {tab === "stats" && <StatsTab />}
           {tab === "users" && <RbacTab />}
           {tab === "apps" && <AppsTab />}
           {tab === "roles" && <RolesTab />}

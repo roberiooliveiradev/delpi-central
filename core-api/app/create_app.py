@@ -22,6 +22,7 @@ from app.interfaces.http.notifications_controller import (
     integrations_notifications_bp,
 )
 from app.interfaces.http.presence_controller import admin_presence_bp
+from app.interfaces.http.admin_statistics_controller import admin_statistics_bp
 
 from app.interfaces.http.auth_middleware import authenticate
 
@@ -78,6 +79,7 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(admin_notifications_bp)
     app.register_blueprint(integrations_notifications_bp)
     app.register_blueprint(admin_presence_bp)
+    app.register_blueprint(admin_statistics_bp)
 
     # ==========================================================
     # DB INIT

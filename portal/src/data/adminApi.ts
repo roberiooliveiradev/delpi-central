@@ -49,6 +49,66 @@ export type OnlineUsersPresenceResponse = {
   enabled: boolean;
 };
 
+export type AdminStatisticsRankItem = {
+  id: string;
+  name: string;
+  count: number;
+};
+
+export type AdminStatisticsTypeCount = {
+  type: string;
+  count: number;
+};
+
+export type AdminStatistics = {
+  generatedAt: string;
+  users: {
+    total: number;
+    active: number;
+    inactive: number;
+    superadmins: number;
+    online: number;
+    withBirthDate: number;
+    loggedInLast7Days: number;
+    loggedInLast30Days: number;
+    withoutDirectRoles: number;
+    withoutGroups: number;
+  };
+  apps: {
+    total: number;
+    active: number;
+    inactive: number;
+    routesTotal: number;
+    routesActive: number;
+    routesInactive: number;
+    byType: AdminStatisticsTypeCount[];
+  };
+  roles: {
+    total: number;
+    system: number;
+    custom: number;
+    withoutUsers: number;
+    topByUsers: AdminStatisticsRankItem[];
+  };
+  groups: {
+    total: number;
+    active: number;
+    inactive: number;
+    withoutUsers: number;
+    topByUsers: AdminStatisticsRankItem[];
+    topByRoles: AdminStatisticsRankItem[];
+  };
+  permissions: {
+    total: number;
+  };
+  assignments: {
+    userRoles: number;
+    userGroups: number;
+    groupRoles: number;
+    rolePermissions: number;
+  };
+};
+
 export type AdminRole = {
   id: string;
   name: string;
@@ -312,6 +372,10 @@ export class AdminApi {
     return this.client.get<OnlineUsersPresenceResponse>(
       "/core-api/admin/users/presence",
     );
+  }
+
+  getAdminStatistics() {
+    return this.client.get<AdminStatistics>("/core-api/admin/statistics");
   }
 
   updateUser(
