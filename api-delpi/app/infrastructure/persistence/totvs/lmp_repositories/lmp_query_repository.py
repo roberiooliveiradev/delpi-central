@@ -564,8 +564,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             marker_ctes.append(cte_sample)
             marker_params.extend(params_sample)
 
+        marker_ctes_sql = ",\n".join(marker_ctes)
         sql = f"""
-            {",\n".join(marker_ctes)},
+            {marker_ctes_sql},
 
             CandidateLMPs AS (
                 {union_sql}
