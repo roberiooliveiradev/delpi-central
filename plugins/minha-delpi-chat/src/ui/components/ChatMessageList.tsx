@@ -8,7 +8,7 @@ import {
   ThumbsDown,
   ThumbsUp,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import type {
   ChatMessage,
@@ -28,6 +28,7 @@ import { filterVisibleChatSources } from "./chatSourcesFilter";
 import "./ChatMessageList.css";
 
 const SCROLL_NEAR_BOTTOM_THRESHOLD_PX = 96;
+const PIN_USER_MESSAGE_TOP_PADDING_PX = 12;
 
 type ChatMessageListProps = {
   messages: ChatMessage[];
@@ -176,6 +177,38 @@ function isElementNearBottom(element: HTMLDivElement, threshold = SCROLL_NEAR_BO
   );
 }
 
+function getMessageScrollTop(
+  list: HTMLDivElement,
+  messageId: string,
+  padding = PIN_USER_MESSAGE_TOP_PADDING_PX,
+): number | null {
+  const node = list.querySelector(`[data-message-id="${messageId}"]`);
+
+  if (!(node instanceof HTMLElement)) {
+    return null;
+  }
+
+  const listTop = list.getBoundingClientRect().top;
+  const nodeTop = node.getBoundingClientRect().top;
+  const targetTop = nodeTop - listTop + list.scrollTop - padding;
+
+  return Math.max(0, targetTop);
+}
+
+function scrollMessageToTopOfList(
+  list: HTMLDivElement,
+  messageId: string,
+  behavior: ScrollBehavior = "auto",
+) {
+  const targetTop = getMessageScrollTop(list, messageId);
+
+  if (targetTop === null) {
+    return;
+  }
+
+  list.scrollTo({ top: targetTop, behavior });
+}
+
 export function ChatMessageList({
   messages,
   conversationKey,
@@ -194,10 +227,11 @@ export function ChatMessageList({
   const listRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
-  const previousConversationKeyRef = useRef<string | null | undefined>(conversationKey);
+  const previousConversationKeyRef = useRef<string | null | undefined>(undefined);
   const pendingInitialScrollRef = useRef(false);
   const followStreamRef = useRef(true);
   const wasStreamingRef = useRef(false);
+  const pinUserMessageIdRef = useRef<string | null>(null);
 
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -230,29 +264,41 @@ export function ChatMessageList({
     setShowScrollToBottom(false);
   }, []);
 
-  const scrollToMessage = useCallback((messageId: string, block: ScrollLogicalPosition) => {
+  const alignPinnedUserMessage = useCallback((behavior: ScrollBehavior = "auto") => {
     const list = listRef.current;
+    const pinnedId = pinUserMessageIdRef.current;
 
-    if (!list) {
+    if (!list || !pinnedId) {
       return;
     }
 
-    const node = list.querySelector(`[data-message-id="${messageId}"]`);
-
-    if (node instanceof HTMLElement) {
-      node.scrollIntoView({ behavior: "smooth", block });
-    }
+    scrollMessageToTopOfList(list, pinnedId, behavior);
+    followStreamRef.current = false;
+    setShowScrollToBottom(true);
   }, []);
+
+  const isActiveStream = Boolean(isStreaming || streamingAnswer || streamingStatus);
 
   useEffect(() => {
     if (conversationKey !== previousConversationKeyRef.current) {
+      const previousKey = previousConversationKeyRef.current;
       previousConversationKeyRef.current = conversationKey;
-      previousMessageCountRef.current = 0;
-      pendingInitialScrollRef.current = true;
-      followStreamRef.current = true;
+
+      const isSendFlow =
+        pinUserMessageIdRef.current !== null || isActiveStream;
+
+      pendingInitialScrollRef.current =
+        Boolean(conversationKey) &&
+        previousKey !== conversationKey &&
+        !isSendFlow;
+
+      if (!pinUserMessageIdRef.current) {
+        followStreamRef.current = true;
+      }
+
       setShowScrollToBottom(false);
     }
-  }, [conversationKey]);
+  }, [conversationKey, isActiveStream]);
 
   useEffect(() => {
     if (isLoading) {
@@ -267,7 +313,7 @@ export function ChatMessageList({
       return;
     }
 
-    if (messages.length === 0 && !streamingAnswer && !isStreaming) {
+    if (messages.length === 0 && !isActiveStream) {
       previousMessageCountRef.current = 0;
       return;
     }
@@ -280,27 +326,37 @@ export function ChatMessageList({
     previousMessageCountRef.current = messages.length;
 
     if (userJustSent && lastMessage?.id) {
+      pinUserMessageIdRef.current = lastMessage.id;
       followStreamRef.current = false;
-      requestAnimationFrame(() => {
-        scrollToMessage(lastMessage.id, "start");
-        updateScrollAffordances();
-      });
       return;
     }
 
-    if ((isStreaming || streamingAnswer) && followStreamRef.current) {
+    if (isActiveStream && followStreamRef.current && !pinUserMessageIdRef.current) {
       requestAnimationFrame(() => {
         scrollToBottom("smooth");
       });
     }
   }, [
+    isActiveStream,
     isLoading,
-    isStreaming,
     messages,
     scrollToBottom,
-    scrollToMessage,
+  ]);
+
+  useLayoutEffect(() => {
+    if (isLoading || !pinUserMessageIdRef.current) {
+      return;
+    }
+
+    alignPinnedUserMessage("auto");
+  }, [
+    alignPinnedUserMessage,
+    isActiveStream,
+    isLoading,
+    messages,
     streamingAnswer,
-    updateScrollAffordances,
+    streamingStatus,
+    timelineItems.length,
   ]);
 
   useEffect(() => {
@@ -311,6 +367,19 @@ export function ChatMessageList({
     }
 
     const handleScroll = () => {
+      const pinnedId = pinUserMessageIdRef.current;
+
+      if (pinnedId) {
+        const pinnedTop = getMessageScrollTop(list, pinnedId, 0);
+
+        if (
+          pinnedTop !== null &&
+          list.scrollTop > pinnedTop + PIN_USER_MESSAGE_TOP_PADDING_PX + 48
+        ) {
+          pinUserMessageIdRef.current = null;
+        }
+      }
+
       updateScrollAffordances();
     };
 
@@ -320,20 +389,23 @@ export function ChatMessageList({
     return () => {
       list.removeEventListener("scroll", handleScroll);
     };
-  }, [updateScrollAffordances, timelineItems.length, isStreaming, streamingAnswer]);
+  }, [updateScrollAffordances, timelineItems.length, isActiveStream]);
 
   useEffect(() => {
     const wasStreaming = wasStreamingRef.current;
-    const isActiveStream = Boolean(isStreaming || streamingAnswer);
 
-    if (wasStreaming && !isActiveStream && followStreamRef.current) {
-      requestAnimationFrame(() => {
-        scrollToBottom("auto");
-      });
+    if (wasStreaming && !isActiveStream) {
+      pinUserMessageIdRef.current = null;
+
+      if (followStreamRef.current) {
+        requestAnimationFrame(() => {
+          scrollToBottom("auto");
+        });
+      }
     }
 
     wasStreamingRef.current = isActiveStream;
-  }, [isStreaming, scrollToBottom, streamingAnswer]);
+  }, [isActiveStream, scrollToBottom]);
 
   async function handleSaveEdit(messageId: string) {
     const updated = await onEditMessage?.(messageId, editingContent);
@@ -593,7 +665,7 @@ export function ChatMessageList({
           ),
         )}
 
-        {isStreaming || streamingAnswer ? (
+        {isActiveStream ? (
           <article className="mdc-chat-message mdc-chat-message--assistant mdc-chat-message--streaming">
             <div className="mdc-chat-message-avatar" aria-hidden="true">
               D
