@@ -69,7 +69,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isSessionStreaming,
     streamMessage,
     resendMessage,
-    cancelStreaming: cancelStreamingBase,
     cancelSessionStreaming,
   } = useChatStreaming({
     getAccessToken: options.getAccessToken,
