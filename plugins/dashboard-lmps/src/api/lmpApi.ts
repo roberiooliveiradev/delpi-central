@@ -49,11 +49,24 @@ type LmpsDashboardParams = ListLmpsParams & {
   status?: string;
 };
 
+function toApiDate(value?: string): string | undefined {
+  if (!value) return undefined;
+  const normalized = value.trim();
+  if (/^\d{8}$/.test(normalized)) return normalized;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    return normalized.replaceAll("-", "");
+  }
+  return normalized;
+}
+
 function buildQuery(params: ListLmpsParams & { status?: string }): string {
   const searchParams = new URLSearchParams();
 
-  if (params.date_start) searchParams.set("date_start", params.date_start);
-  if (params.date_end) searchParams.set("date_end", params.date_end);
+  const dateStart = toApiDate(params.date_start);
+  const dateEnd = toApiDate(params.date_end);
+
+  if (dateStart) searchParams.set("date_start", dateStart);
+  if (dateEnd) searchParams.set("date_end", dateEnd);
   if (params.branch) searchParams.set("branch", params.branch);
   if (params.listing_type && params.listing_type !== "Todos") {
     searchParams.set("listing_type", params.listing_type);

@@ -2,6 +2,33 @@
 from dataclasses import dataclass
 from typing import Optional
 
+LISTING_KIND_LMP = "LMP"
+LISTING_KIND_SAMPLE = "AMOSTRA"
+
+
+def resolve_listing_type_filter(
+    raw: str | None,
+    *,
+    lmp_only: bool = False,
+) -> str | None:
+    if lmp_only:
+        return LISTING_KIND_LMP
+
+    if raw is None:
+        return None
+
+    normalized = str(raw).strip().lower()
+    if normalized in ("", "todos", "all"):
+        return None
+    if normalized == "lmp":
+        return LISTING_KIND_LMP
+    if normalized in ("amostra", "amostras", "sample"):
+        return LISTING_KIND_SAMPLE
+
+    raise ValueError(
+        "listing_type inválido. Valores aceitos: Todos, LMP ou Amostra."
+    )
+
 
 @dataclass
 class ListLMPRequest:

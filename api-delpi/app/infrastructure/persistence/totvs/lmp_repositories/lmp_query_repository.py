@@ -1,7 +1,12 @@
 from typing import List, Tuple
 
 from app.application.dto.lmp.get_lmp_request import GetLMPRequest
-from app.application.dto.lmp.list_lmp_request import ListLMPRequest
+from app.application.dto.lmp.list_lmp_request import (
+    LISTING_KIND_LMP,
+    LISTING_KIND_SAMPLE,
+    ListLMPRequest,
+    resolve_listing_type_filter,
+)
 from app.application.models.page import Page
 from app.domain.entities.lmp.lmp import LMP
 from app.domain.entities.lmp.lmp_product import LMPProduct
@@ -14,8 +19,6 @@ from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
 class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
-    LISTING_KIND_LMP = "LMP"
-    LISTING_KIND_SAMPLE = "AMOSTRA"
 
     def __init__(self, settings: LMPQuerySettings | None = None):
         super().__init__()
@@ -140,24 +143,26 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         *,
         lmp_only: bool = False,
     ) -> str | None:
-        if lmp_only:
-            return self.LISTING_KIND_LMP
-
-        raw = getattr(request, "listing_type", None)
-        if raw is None:
-            return None
-
-        normalized = str(raw).strip().lower()
-        if normalized in ("", "todos", "all"):
-            return None
-        if normalized == "lmp":
-            return self.LISTING_KIND_LMP
-        if normalized in ("amostra", "amostras", "sample"):
-            return self.LISTING_KIND_SAMPLE
-
-        raise ValueError(
-            "listing_type inválido. Valores aceitos: Todos, LMP ou Amostra."
+        return resolve_listing_type_filter(
+            request.listing_type,
+            lmp_only=lmp_only,
         )
+
+    def _sql_listing_kind_filter_clause(
+        self,
+        request: ListLMPRequest,
+        *,
+        lmp_only: bool = False,
+        alias: str = "C",
+    ) -> Tuple[str, tuple]:
+        listing_filter = self._resolve_listing_type_filter(
+            request,
+            lmp_only=lmp_only,
+        )
+        if not listing_filter:
+            return "", ()
+
+        return f"WHERE {alias}.LISTING_KIND = ?", (listing_filter,)
 
     # =========================
     # SQL FILTER BLOCKS
@@ -288,6 +293,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         """ if include_qtd_pi else ""
 
         qtd_pi_group_by = ",\n                PI.QTD_PI" if include_qtd_pi else ""
+        listing_where_sql, listing_where_params = self._sql_listing_kind_filter_clause(
+            request,
+            lmp_only=lmp_only,
+        )
         order_clause = """
             ORDER BY
                 C.LMP_START_DATE DESC,
@@ -316,6 +325,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 ON H.AIJ_FILIAL = C.AD1_FILIAL
                AND H.AIJ_NROPOR = C.AD1_NROPOR
             {qtd_pi_join}
+            {listing_where_sql}
             GROUP BY
                 C.AD1_FILIAL,
                 C.AD1_NROPOR,
@@ -333,7 +343,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             {order_clause}
         """
 
-        return sql, ctes_params
+        return sql, (*ctes_params, *listing_where_params)
 
     def _sql_lmp_base_rows_query(
         self,
@@ -454,10 +464,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             request,
             lmp_only=lmp_only,
         )
-        include_lmp = listing_filter in (None, self.LISTING_KIND_LMP)
+        include_lmp = listing_filter in (None, LISTING_KIND_LMP)
         include_sample = (not lmp_only) and listing_filter in (
             None,
-            self.LISTING_KIND_SAMPLE,
+            LISTING_KIND_SAMPLE,
         )
 
         cte_lmp, params_lmp = self._sql_lmp_marker_cte(request.branch)
@@ -494,7 +504,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             """)
             candidate_params.extend(
                 [
-                    self.LISTING_KIND_LMP,
+                    LISTING_KIND_LMP,
                     *params_ad1,
                     *params_period_lmp,
                 ]
@@ -533,7 +543,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             """)
             candidate_params.extend(
                 [
-                    self.LISTING_KIND_SAMPLE,
+                    LISTING_KIND_SAMPLE,
                     *params_ad1,
                     *params_period_sample,
                 ]
@@ -1462,8 +1472,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             *params_lmp,
             *params_sample,
             *params_hist,
-            self.LISTING_KIND_LMP,
-            self.LISTING_KIND_SAMPLE,
+            LISTING_KIND_LMP,
+            LISTING_KIND_SAMPLE,
             *params_sa1,
             *params_sa3,
             *params_ad1,

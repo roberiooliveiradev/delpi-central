@@ -2,7 +2,11 @@
 from dataclasses import asdict, replace
 from typing import List, Dict, Any
 
-from si_app.application.dto.lmp.list_lmp_request import ListLMPRequest
+from si_app.application.dto.lmp.list_lmp_request import (
+    LISTING_KIND_LMP,
+    ListLMPRequest,
+    resolve_listing_type_filter,
+)
 from si_app.application.dto.lmp.lmp_dashboard_item import LMPDashboardItem
 from si_app.application.services.lmp_business_rules import LMPBusinessRules
 from si_app.domain.entities.lmp.lmp import LMP
@@ -43,8 +47,26 @@ class ListLMPDashboardUseCase:
             status=status,
         )
 
+    def _filter_rows_by_listing_type(
+        self,
+        rows: List[LMP],
+        request: ListLMPRequest,
+    ) -> List[LMP]:
+        listing_filter = resolve_listing_type_filter(request.listing_type)
+        if not listing_filter:
+            return rows
+
+        return [
+            row
+            for row in rows
+            if (row.listing_kind or LISTING_KIND_LMP) == listing_filter
+        ]
+
     def execute(self, request: ListLMPRequest, status_filter: str = "Todos") -> Dict[str, Any]:
-        rows: List[LMP] = self._repository.list_lmps(request)
+        rows: List[LMP] = self._filter_rows_by_listing_type(
+            self._repository.list_lmps(request),
+            request,
+        )
         lmp_summary_request = replace(request, listing_type="lmp")
         lmp_rows: List[LMP] = self._repository.list_lmps(lmp_summary_request)
 

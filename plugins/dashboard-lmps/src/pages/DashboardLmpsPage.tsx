@@ -72,6 +72,18 @@ function parseDateNumber(value?: string | null): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+function matchesListingType(
+  item: LmpDashboardItem,
+  listingType: string
+): boolean {
+  if (listingType === "Todos") return true;
+
+  const kind = item.listing_kind ?? "LMP";
+  if (listingType === "Amostra") return kind === "AMOSTRA";
+  if (listingType === "LMP") return kind === "LMP";
+  return true;
+}
+
 function getPeriodo(dateValue?: string | null): string | null {
   if (!dateValue || dateValue.length !== 8) return null;
 
@@ -119,13 +131,19 @@ export function DashboardLmpsPage() {
     });
 
   const dashboardItems = items as LmpDashboardItem[];
-  const hasData = dashboardItems.length > 0;
+
+  const filteredDashboardItems = useMemo(
+    () => dashboardItems.filter((item) => matchesListingType(item, listingType)),
+    [dashboardItems, listingType]
+  );
+
+  const hasData = filteredDashboardItems.length > 0;
 
   useEffect(() => {
     if (didInitializeDateStart) return;
-    if (dashboardItems.length === 0) return;
+    if (filteredDashboardItems.length === 0) return;
 
-    const validStartDates = dashboardItems
+    const validStartDates = filteredDashboardItems
       .map((item) => item.start_date)
       .filter((value): value is string => Boolean(value && value.length === 8))
       .sort((a, b) => parseDateNumber(a) - parseDateNumber(b));
@@ -135,13 +153,13 @@ export function DashboardLmpsPage() {
 
     setDateStart(formatDateToInput(oldestStartDate));
     setDidInitializeDateStart(true);
-  }, [dashboardItems, didInitializeDateStart]);
+  }, [filteredDashboardItems, didInitializeDateStart]);
 
   const sortedDashboardItems = useMemo(() => {
-    return [...dashboardItems].sort(
+    return [...filteredDashboardItems].sort(
       (a, b) => parseDateNumber(b.start_date) - parseDateNumber(a.start_date)
     );
-  }, [dashboardItems]);
+  }, [filteredDashboardItems]);
 
   const fallbackCharts = useMemo(() => {
     const levelOrder = ["Nível 1", "Nível 2", "Nível 3"];
@@ -149,16 +167,16 @@ export function DashboardLmpsPage() {
 
     const levelData = levelOrder.map((name) => ({
       name,
-      value: dashboardItems.filter((item) => item.nivel === name).length,
+      value: filteredDashboardItems.filter((item) => item.nivel === name).length,
     }));
 
     const statusData = statusOrder.map((name) => ({
       name,
-      value: dashboardItems.filter((item) => item.status === name).length,
+      value: filteredDashboardItems.filter((item) => item.status === name).length,
     }));
 
     const leadByLevel = levelOrder.map((nivel) => {
-      const itemsByLevel = dashboardItems.filter(
+      const itemsByLevel = filteredDashboardItems.filter(
         (item) => item.nivel === nivel && item.lead_time_util != null
       );
 
@@ -187,7 +205,7 @@ export function DashboardLmpsPage() {
       }
     >();
 
-    for (const item of dashboardItems) {
+    for (const item of filteredDashboardItems) {
       const periodo = getPeriodo(item.start_date);
       const sortKey = parseDateNumber(item.start_date);
 
@@ -229,7 +247,7 @@ export function DashboardLmpsPage() {
       leadByLevel,
       evolutionData,
     };
-  }, [dashboardItems]);
+  }, [filteredDashboardItems]);
 
   const resolvedCharts = {
     levelData: charts?.levelData ?? fallbackCharts.levelData,
