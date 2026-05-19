@@ -19,6 +19,7 @@ import {
 import { KpiCard } from "../components/KpiCard";
 import { ChartCard } from "../components/ChartCard";
 import { FilterBar } from "../components/FilterBar";
+import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
 import type { LmpDashboardItem } from "../types/lmp";
@@ -92,6 +93,25 @@ function matchesListingType(
   return true;
 }
 
+function matchesDashboardStatus(
+  item: LmpDashboardItem,
+  statusFilter: string
+): boolean {
+  if (statusFilter === "Todos") return true;
+  return item.status === statusFilter;
+}
+
+function matchesDashboardFilters(
+  item: LmpDashboardItem,
+  listingType: string,
+  statusFilter: string
+): boolean {
+  return (
+    matchesListingType(item, listingType) &&
+    matchesDashboardStatus(item, statusFilter)
+  );
+}
+
 function getPeriodo(dateValue?: string | null): string | null {
   if (!dateValue || dateValue.length !== 8) return null;
 
@@ -141,8 +161,11 @@ export function DashboardLmpsPage() {
   const dashboardItems = items as LmpDashboardItem[];
 
   const filteredDashboardItems = useMemo(
-    () => dashboardItems.filter((item) => matchesListingType(item, listingType)),
-    [dashboardItems, listingType]
+    () =>
+      dashboardItems.filter((item) =>
+        matchesDashboardFilters(item, listingType, status)
+      ),
+    [dashboardItems, listingType, status]
   );
 
   const hasData = filteredDashboardItems.length > 0;
@@ -261,13 +284,14 @@ export function DashboardLmpsPage() {
     levelData: charts?.levelData ?? fallbackCharts.levelData,
     statusData: charts?.statusData ?? fallbackCharts.statusData,
     leadByLevel: charts?.leadByLevel ?? fallbackCharts.leadByLevel,
-    evolutionData:
-      charts?.evolutionData != null
-        ? [...charts.evolutionData].sort(
-            (a, b) => parseDateNumber(a.periodo) - parseDateNumber(b.periodo)
-          )
-        : fallbackCharts.evolutionData,
+    evolutionData: charts?.evolutionData ?? fallbackCharts.evolutionData,
   };
+
+  const totalPropostas =
+    summary?.total_items ??
+    (status !== "Todos" || listingType !== "Todos"
+      ? filteredDashboardItems.length
+      : summary?.total_lmps ?? 0);
 
   return (
     <main className="dashboard-lmps dashboard-page">
@@ -285,11 +309,15 @@ export function DashboardLmpsPage() {
         onRefresh={reload}
       />
 
-      {refreshing && hasData && (
-        <section className="lmps-charts-grid">
-          <div className="lmps-refreshing-banner">Atualizando dados...</div>
-        </section>
-      )}
+      {refreshing && hasData ? (
+        <LoadingActivityInline
+          title="Atualizando dashboard de LMPs"
+          description="Os dados exibidos estão sendo atualizados com os filtros selecionados."
+          variant="compact"
+          tone="info"
+          sticky
+        />
+      ) : null}
 
       <section className="lmps-kpi-grid">
         <KpiCard
@@ -315,8 +343,12 @@ export function DashboardLmpsPage() {
         />
         <KpiCard
           title="Total de Propostas"
-          value={String(summary?.total_lmps ?? 0)}
-          subtitle="Período filtrado"
+          value={String(totalPropostas)}
+          subtitle={
+            status !== "Todos" || listingType !== "Todos"
+              ? "Registros no filtro atual"
+              : "Período filtrado"
+          }
           icon={<BarChart3 size={22} />}
         />
       </section>

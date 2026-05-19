@@ -6,6 +6,8 @@ LISTING_KIND_LMP = "LMP"
 LISTING_KIND_SAMPLE = "AMOSTRA"
 LISTING_KIND_OTHER = "OUTRO"
 
+DASHBOARD_STATUS_VALUES = ("Pontual", "Atrasado", "Andamento", "Retornada")
+
 
 def resolve_listing_type_filter(
     raw: str | None,
@@ -30,6 +32,32 @@ def resolve_listing_type_filter(
 
     raise ValueError(
         "listing_type inválido. Valores aceitos: Todos, LMP, Amostra ou Outro."
+    )
+
+
+def resolve_dashboard_status_filter(raw: str | None) -> str | None:
+    if raw is None:
+        return None
+
+    normalized = str(raw).strip().lower()
+    if normalized in ("", "todos", "all"):
+        return None
+
+    aliases = {
+        "pontual": "Pontual",
+        "atrasado": "Atrasado",
+        "andamento": "Andamento",
+        "retornada": "Retornada",
+    }
+    if normalized in aliases:
+        return aliases[normalized]
+
+    for value in DASHBOARD_STATUS_VALUES:
+        if str(raw).strip() == value:
+            return value
+
+    raise ValueError(
+        "status inválido. Valores aceitos: Todos, Pontual, Atrasado, Andamento ou Retornada."
     )
 
 

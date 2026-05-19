@@ -1,9 +1,13 @@
 # app/application/use_cases/lmp/list_lmp_dashboard_use_case.py
+from collections import defaultdict
 from dataclasses import asdict, replace
-from typing import List, Dict, Any
+from datetime import date
+from typing import Any, Dict, List, Optional
 
 from app.application.dto.lmp.list_lmp_request import (
+    DASHBOARD_STATUS_VALUES,
     ListLMPRequest,
+    resolve_dashboard_status_filter,
     resolve_listing_type_filter,
 )
 from app.application.dto.lmp.lmp_dashboard_item import LMPDashboardItem
@@ -61,7 +65,121 @@ class ListLMPDashboardUseCase:
             if row.listing_kind == listing_filter
         ]
 
-    def execute(self, request: ListLMPRequest, status_filter: str = "Todos") -> Dict[str, Any]:
+    def _filter_items_by_status(
+        self,
+        items: List[LMPDashboardItem],
+        status_filter: Optional[str],
+    ) -> List[LMPDashboardItem]:
+        if not status_filter:
+            return items
+
+        return [item for item in items if item.status == status_filter]
+
+    @staticmethod
+    def _parse_period_sort_key(value: Optional[str]) -> int:
+        if not value or len(value) != 8:
+            return 0
+        try:
+            return int(value)
+        except ValueError:
+            return 0
+
+    @classmethod
+    def _format_period_label(cls, value: Optional[str]) -> Optional[str]:
+        sort_key = cls._parse_period_sort_key(value)
+        if not sort_key:
+            return None
+
+        year = int(value[0:4])
+        month = int(value[4:6])
+        day = int(value[6:8])
+        if not year or not month or not day:
+            return None
+
+        return date(year, month, day).strftime("%b %y")
+
+    def _build_charts(self, items: List[LMPDashboardItem]) -> Dict[str, Any]:
+        level_order = ["Nível 1", "Nível 2", "Nível 3"]
+
+        level_data = [
+            {"name": name, "value": sum(1 for item in items if item.nivel == name)}
+            for name in level_order
+        ]
+        status_data = [
+            {"name": name, "value": sum(1 for item in items if item.status == name)}
+            for name in DASHBOARD_STATUS_VALUES
+        ]
+
+        lead_by_level = []
+        for nivel in level_order:
+            items_by_level = [
+                item
+                for item in items
+                if item.nivel == nivel and item.lead_time_util is not None
+            ]
+            avg = (
+                sum(item.lead_time_util or 0 for item in items_by_level)
+                / len(items_by_level)
+                if items_by_level
+                else 0
+            )
+            lead_by_level.append(
+                {"nivel": nivel, "valor": round(avg, 2)}
+            )
+
+        evolution_map: dict[str, dict[str, Any]] = {}
+        for item in items:
+            periodo = self._format_period_label(item.start_date)
+            sort_key = self._parse_period_sort_key(item.start_date)
+            if not periodo or not sort_key:
+                continue
+
+            bucket = evolution_map.setdefault(
+                periodo,
+                {
+                    "periodo": periodo,
+                    "sortKey": sort_key,
+                    "totalLead": 0.0,
+                    "leadCount": 0,
+                    "propostas": 0,
+                },
+            )
+            bucket["propostas"] += 1
+            if item.lead_time_util is not None:
+                bucket["totalLead"] += float(item.lead_time_util)
+                bucket["leadCount"] += 1
+            bucket["sortKey"] = min(bucket["sortKey"], sort_key)
+
+        evolution_data = [
+            {
+                "periodo": bucket["periodo"],
+                "mediaLead": round(
+                    bucket["totalLead"] / bucket["leadCount"], 2
+                )
+                if bucket["leadCount"]
+                else 0,
+                "propostas": bucket["propostas"],
+            }
+            for bucket in sorted(
+                evolution_map.values(),
+                key=lambda entry: entry["sortKey"],
+            )
+        ]
+
+        return {
+            "levelData": level_data,
+            "statusData": status_data,
+            "leadByLevel": lead_by_level,
+            "evolutionData": evolution_data,
+        }
+
+    def execute(
+        self,
+        request: ListLMPRequest,
+        status_filter: str = "Todos",
+    ) -> Dict[str, Any]:
+        resolved_status = resolve_dashboard_status_filter(status_filter)
+
         rows: List[LMP] = self._filter_rows_by_listing_type(
             self._repository.list_lmps(request),
             request,
@@ -69,11 +187,11 @@ class ListLMPDashboardUseCase:
         lmp_summary_request = replace(request, listing_type="lmp")
         lmp_rows: List[LMP] = self._repository.list_lmps(lmp_summary_request)
 
-        enriched = [self._enrich_item(row) for row in rows]
+        enriched = self._filter_items_by_status(
+            [self._enrich_item(row) for row in rows],
+            resolved_status,
+        )
         lmp_enriched = [self._enrich_item(row) for row in lmp_rows]
-
-        if status_filter != "Todos":
-            enriched = [item for item in enriched if item.status == status_filter]
 
         total = len(enriched)
 
@@ -90,7 +208,8 @@ class ListLMPDashboardUseCase:
         )
         avg_lead_time = (
             sum(item.lead_time_util or 0 for item in lead_items) / len(lead_items)
-            if lead_items else 0
+            if lead_items
+            else 0
         )
 
         if not request.page_size:
@@ -115,4 +234,5 @@ class ListLMPDashboardUseCase:
                 "percent_dentro_prazo": round(percent_dentro_prazo, 2),
                 "avg_lead_time": round(avg_lead_time, 2),
             },
+            "charts": self._build_charts(enriched),
         }

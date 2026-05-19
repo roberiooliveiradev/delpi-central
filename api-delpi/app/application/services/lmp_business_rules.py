@@ -131,7 +131,10 @@ class LMPBusinessRules:
     @classmethod
     def is_engineering_in_progress(cls, engineering_status: Optional[str]) -> bool:
         normalized = cls.normalize_string(engineering_status)
-        return normalized == cls.ENGINEERING_STATUS_IN_PROGRESS
+        return normalized in {
+            cls.ENGINEERING_STATUS_IN_PROGRESS,
+            "ABERTA",
+        }
 
     @classmethod
     def is_engineering_partial(cls, engineering_status: Optional[str]) -> bool:

@@ -9,6 +9,7 @@ import type {
 
 export type LmpsDashboardSummary = {
   total_lmps: number;
+  total_items?: number;
   percent_dentro_prazo: number;
   avg_lead_time: number;
 };
@@ -71,7 +72,9 @@ function buildQuery(params: ListLmpsParams & { status?: string }): string {
   if (params.listing_type && params.listing_type !== "Todos") {
     searchParams.set("listing_type", params.listing_type);
   }
-  if (params.status) searchParams.set("status", params.status);
+  if (params.status && params.status !== "Todos") {
+    searchParams.set("status", params.status);
+  }
   if (params.page) searchParams.set("page", String(params.page));
   if (params.page_size) searchParams.set("page_size", String(params.page_size));
 
