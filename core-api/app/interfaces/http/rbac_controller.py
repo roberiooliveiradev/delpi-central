@@ -1,5 +1,7 @@
 # app/interfaces/http/rbac_controller.py
 
+from uuid import UUID
+
 from flask import Blueprint, request, jsonify, g
 
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
@@ -633,6 +635,31 @@ def remove_user_from_group(group_id: str, user_id: str):
 # USERS
 # ==========================================================
 
+def _parse_optional_bool_arg(value: str | None) -> bool | None:
+    if value is None:
+        return None
+
+    normalized = value.strip().lower()
+
+    if normalized in ("true", "1", "yes"):
+        return True
+
+    if normalized in ("false", "0", "no"):
+        return False
+
+    return None
+
+
+def _parse_optional_uuid_arg(value: str | None) -> UUID | None:
+    if not value:
+        return None
+
+    try:
+        return UUID(value)
+    except ValueError:
+        return None
+
+
 @rbac_bp.route("/admin/rbac/users", methods=["GET"])
 @require_all_permissions(["rbac.manage", "users.view"])
 def list_users():
@@ -642,6 +669,13 @@ def list_users():
         page_size = int(request.args.get("page_size", 10))
         sort = request.args.get("sort", "email")
         direction = request.args.get("direction", "asc")
+        is_superadmin = _parse_optional_bool_arg(request.args.get("is_superadmin"))
+        online = request.args.get("online")
+        role_id = _parse_optional_uuid_arg(request.args.get("role_id"))
+        group_id = _parse_optional_uuid_arg(request.args.get("group_id"))
+
+        if online not in (None, "true", "false"):
+            online = None
 
         with SqlAlchemyUnitOfWork() as uow:
             use_case = ListUsersUseCase(uow)
@@ -651,6 +685,10 @@ def list_users():
                 page_size=page_size,
                 sort=sort,
                 direction=direction,
+                is_superadmin=is_superadmin,
+                role_id=role_id,
+                group_id=group_id,
+                online=online,
             )
 
         return jsonify({

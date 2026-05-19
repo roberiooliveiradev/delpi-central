@@ -22,6 +22,13 @@ export type ListQueryOptions = {
   direction?: "asc" | "desc";
 };
 
+export type ListUsersQueryOptions = ListQueryOptions & {
+  isSuperadmin?: boolean;
+  online?: "true" | "false";
+  roleId?: string;
+  groupId?: string;
+};
+
 export type AdminUser = {
   id: string;
   name: string;
@@ -366,11 +373,25 @@ export class AdminApi {
      RBAC - Users
   ========================= */
 
-  listUsers(options?: ListQueryOptions) {
-    const qs = this.buildQuery(options);
+  listUsers(options?: ListUsersQueryOptions) {
+    const params = new URLSearchParams();
+
+    if (options?.page) params.append("page", String(options.page));
+    if (options?.pageSize) params.append("page_size", String(options.pageSize));
+    if (options?.q) params.append("q", options.q);
+    if (options?.sort) params.append("sort", options.sort);
+    if (options?.direction) params.append("direction", options.direction);
+    if (options?.isSuperadmin !== undefined) {
+      params.append("is_superadmin", String(options.isSuperadmin));
+    }
+    if (options?.online) params.append("online", options.online);
+    if (options?.roleId) params.append("role_id", options.roleId);
+    if (options?.groupId) params.append("group_id", options.groupId);
+
+    const qs = params.toString();
 
     return this.client.get<PaginatedResponse<AdminUser>>(
-      `/core-api/admin/rbac/users${qs}`
+      `/core-api/admin/rbac/users${qs ? `?${qs}` : ""}`
     );
   }
 

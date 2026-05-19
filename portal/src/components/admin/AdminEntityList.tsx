@@ -50,6 +50,7 @@ type AdminEntityListProps<T> = {
   };
 
   toolbarActions?: AdminEntityToolbarAction[];
+  filterSlot?: ReactNode;
 
   listTitle: string;
   listSubtitle?: string;
@@ -93,6 +94,7 @@ export function AdminEntityList<T>({
   summary = [],
   search,
   toolbarActions = [],
+  filterSlot,
   listTitle,
   listSubtitle,
   items,
@@ -186,6 +188,10 @@ export function AdminEntityList<T>({
           )}
         </section>
       )}
+
+      {filterSlot ? (
+        <section className="admin-entity-filters">{filterSlot}</section>
+      ) : null}
 
       {hasSelection && (
         <section className="admin-entity-selection-bar">

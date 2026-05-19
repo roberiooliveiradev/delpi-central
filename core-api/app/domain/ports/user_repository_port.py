@@ -74,11 +74,16 @@ class UserRepositoryPort(Protocol):
     def list_paginated(
         self,
         *,
-        q:str | None,
+        q: str | None,
         page: int,
         page_size: int,
         sort: str,
-        direction: str
+        direction: str,
+        is_superadmin: bool | None = None,
+        role_id: UUID | None = None,
+        group_id: UUID | None = None,
+        online_filter: str | None = None,
+        online_user_ids: list[UUID] | None = None,
     ) -> tuple[list[UserDTO], int]:
         ...
 

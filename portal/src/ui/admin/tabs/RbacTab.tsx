@@ -6,16 +6,29 @@ import { Circle, ShieldCheck, UserRound } from "lucide-react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
-import type { AdminUser, OnlineUserPresence } from "../../../data/adminApi";
+import type {
+  AdminGroup,
+  AdminRole,
+  AdminUser,
+  OnlineUserPresence,
+} from "../../../data/adminApi";
 
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { AdminEntityList } from "../../../components/admin/AdminEntityList";
 import { UserRbacModal } from "../modals/UserRbacModal";
 
-type UserSortField = "name" | "email" | "is_superadmin";
+type UserSortField = "name" | "email";
+
+type UserListFilters = {
+  online?: "true" | "false";
+  isSuperadmin?: boolean;
+  roleId?: string;
+  groupId?: string;
+};
 
 const PAGE_SIZE = 10;
+const FILTER_OPTIONS_PAGE_SIZE = 500;
 
 const getInitials = (user: AdminUser) => {
   const source = user.name?.trim() || user.email?.trim() || "?";
@@ -76,6 +89,9 @@ export const RbacTab = () => {
   >(() => new Map());
   const [onlineTotal, setOnlineTotal] = useState(0);
   const [presenceEnabled, setPresenceEnabled] = useState(true);
+  const [filters, setFilters] = useState<UserListFilters>({});
+  const [roles, setRoles] = useState<AdminRole[]>([]);
+  const [groups, setGroups] = useState<AdminGroup[]>([]);
 
   const api = useMemo(() => {
     return new AdminApi(new ApiClient("", getAccessToken));
@@ -107,17 +123,53 @@ export const RbacTab = () => {
     return () => window.clearInterval(intervalId);
   }, [loadOnlineUsers]);
 
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        const [rolesResponse, groupsResponse] = await Promise.all([
+          api.listRoles({ page: 1, pageSize: FILTER_OPTIONS_PAGE_SIZE, sort: "name" }),
+          api.listGroups({ page: 1, pageSize: FILTER_OPTIONS_PAGE_SIZE, sort: "name" }),
+        ]);
+
+        setRoles(rolesResponse.data ?? []);
+        setGroups(groupsResponse.data ?? []);
+      } catch {
+        // selects ficam vazios; filtros por papel/grupo seguem opcionais
+      }
+    };
+
+    void loadFilterOptions();
+  }, [api]);
+
+  const hasActiveFilters =
+    filters.online !== undefined ||
+    filters.isSuperadmin !== undefined ||
+    !!filters.roleId ||
+    !!filters.groupId;
+
   const usersResource = usePaginatedResource<AdminUser>(
     ({ page, pageSize }) =>
       api.listUsers({
         page,
         pageSize,
-        q: search,
+        q: search || undefined,
         sort: sort.sort,
         direction: sort.direction,
+        online: filters.online,
+        isSuperadmin: filters.isSuperadmin,
+        roleId: filters.roleId,
+        groupId: filters.groupId,
       }),
     PAGE_SIZE,
-    [search, sort.sort, sort.direction]
+    [
+      search,
+      sort.sort,
+      sort.direction,
+      filters.online,
+      filters.isSuperadmin,
+      filters.roleId,
+      filters.groupId,
+    ]
   );
 
   const users = usersResource.data ?? [];
@@ -130,6 +182,38 @@ export const RbacTab = () => {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
+    usersResource.setPage(1);
+  };
+
+  const applyFilters = (patch: Partial<UserListFilters>) => {
+    setFilters((prev) => {
+      const next = { ...prev, ...patch };
+
+      Object.entries(patch).forEach(([key, value]) => {
+        if (value === undefined) {
+          delete next[key as keyof UserListFilters];
+        }
+      });
+
+      return next;
+    });
+    usersResource.setPage(1);
+  };
+
+  const toggleOnlineFilter = (value: "true" | "false") => {
+    applyFilters({
+      online: filters.online === value ? undefined : value,
+    });
+  };
+
+  const toggleSuperadminFilter = (value: boolean) => {
+    applyFilters({
+      isSuperadmin: filters.isSuperadmin === value ? undefined : value,
+    });
+  };
+
+  const clearFilters = () => {
+    setFilters({});
     usersResource.setPage(1);
   };
 
@@ -246,21 +330,102 @@ export const RbacTab = () => {
         }}
         toolbarActions={[
           {
-            label: `Nome ${sort.sort === "name" ? sortLabel : ""}`,
+            label: `Ordenar: Nome ${sort.sort === "name" ? sortLabel : ""}`,
             active: sort.sort === "name",
             onClick: () => toggleSort("name"),
           },
           {
-            label: `Email ${sort.sort === "email" ? sortLabel : ""}`,
+            label: `Ordenar: Email ${sort.sort === "email" ? sortLabel : ""}`,
             active: sort.sort === "email",
             onClick: () => toggleSort("email"),
           },
-          {
-            label: "Superadmin",
-            active: sort.sort === "is_superadmin",
-            onClick: () => toggleSort("is_superadmin"),
-          },
         ]}
+        filterSlot={
+          <>
+            <div className="admin-entity-filters__group">
+              <span className="admin-entity-filters__label">Filtrar:</span>
+              {presenceEnabled ? (
+                <>
+                  <button
+                    type="button"
+                    className={filters.online === "true" ? "active" : ""}
+                    onClick={() => toggleOnlineFilter("true")}
+                  >
+                    Online
+                  </button>
+                  <button
+                    type="button"
+                    className={filters.online === "false" ? "active" : ""}
+                    onClick={() => toggleOnlineFilter("false")}
+                  >
+                    Offline
+                  </button>
+                </>
+              ) : null}
+              <button
+                type="button"
+                className={filters.isSuperadmin === true ? "active" : ""}
+                onClick={() => toggleSuperadminFilter(true)}
+              >
+                Superadmin
+              </button>
+              <button
+                type="button"
+                className={filters.isSuperadmin === false ? "active" : ""}
+                onClick={() => toggleSuperadminFilter(false)}
+              >
+                Não superadmin
+              </button>
+              {hasActiveFilters ? (
+                <button type="button" onClick={clearFilters}>
+                  Limpar filtros
+                </button>
+              ) : null}
+            </div>
+            <div className="admin-entity-filters__group">
+              <label className="admin-entity-filters__label" htmlFor="user-filter-role">
+                Papel
+              </label>
+              <select
+                id="user-filter-role"
+                value={filters.roleId ?? ""}
+                onChange={(event) =>
+                  applyFilters({
+                    roleId: event.target.value || undefined,
+                  })
+                }
+              >
+                <option value="">Todos os papéis</option>
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="admin-entity-filters__group">
+              <label className="admin-entity-filters__label" htmlFor="user-filter-group">
+                Grupo
+              </label>
+              <select
+                id="user-filter-group"
+                value={filters.groupId ?? ""}
+                onChange={(event) =>
+                  applyFilters({
+                    groupId: event.target.value || undefined,
+                  })
+                }
+              >
+                <option value="">Todos os grupos</option>
+                {groups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        }
         listTitle="Listagem de usuários"
         listSubtitle={`Página ${currentPage} de ${totalPages}`}
         items={users}

@@ -1,7 +1,7 @@
 # app/infrastructure/persistence/sqlalchemy/user_repository.py
 
 from __future__ import annotations
-from sqlalchemy import extract, or_
+from sqlalchemy import extract, false, or_
 from typing import Optional, List
 from uuid import UUID
 from datetime import date, datetime
@@ -9,7 +9,7 @@ from datetime import date, datetime
 from sqlalchemy.orm import Session
 
 from app.domain.ports.user_repository_port import UserRepositoryPort, UserDTO
-from app.infrastructure.db.models import User
+from app.infrastructure.db.models import User, user_groups, user_roles
 
 
 class SqlAlchemyUserRepository(UserRepositoryPort):
@@ -139,6 +139,11 @@ class SqlAlchemyUserRepository(UserRepositoryPort):
         page_size: int,
         sort: str,
         direction: str,
+        is_superadmin: bool | None = None,
+        role_id: UUID | None = None,
+        group_id: UUID | None = None,
+        online_filter: str | None = None,
+        online_user_ids: list[UUID] | None = None,
     ) -> tuple[list[UserDTO], int]:
 
         query = self.session.query(User)
@@ -158,12 +163,47 @@ class SqlAlchemyUserRepository(UserRepositoryPort):
             )
 
         # =========================
+        # Filters
+        # =========================
+
+        if is_superadmin is not None:
+            query = query.filter(User.is_superadmin.is_(is_superadmin))
+
+        if role_id is not None:
+            query = (
+                query.join(user_roles, User.id == user_roles.c.user_id)
+                .filter(user_roles.c.role_id == role_id)
+                .distinct()
+            )
+
+        if group_id is not None:
+            query = (
+                query.join(user_groups, User.id == user_groups.c.user_id)
+                .filter(user_groups.c.group_id == group_id)
+                .distinct()
+            )
+
+        if online_filter == "true":
+            online_ids = online_user_ids or []
+            query = (
+                query.filter(User.id.in_(online_ids))
+                if online_ids
+                else query.filter(false())
+            )
+
+        if online_filter == "false":
+            online_ids = online_user_ids or []
+            if online_ids:
+                query = query.filter(~User.id.in_(online_ids))
+
+        # =========================
         # Sorting seguro
         # =========================
 
         sort_map = {
             "email": User.email,
             "name": User.name,
+            "is_superadmin": User.is_superadmin,
             "created_at": getattr(User, "created_at", User.email),
             "last_login_at": getattr(User, "last_login_at", User.email),
         }
