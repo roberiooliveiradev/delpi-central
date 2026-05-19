@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 
-from delpi_auth.authorization import require_permission
+from delpi_auth.authorization import require_any_permission
 from app.core.responses import success_response, error_response
 from app.utils.logger import log_error
 
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/supplies", tags=["Suprimentos"])
 
 
 @router.get("/cpv")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-supplies.view"])
 def get_cpv(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -59,7 +59,7 @@ def get_cpv(
     
 
 @router.get("/otd")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-supplies.view"])
 def get_otd(
     branch: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
@@ -98,7 +98,7 @@ def get_otd(
     
 
 @router.get("/stock-value")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-supplies.view"])
 def get_stock_value(
     branch: str | None = Query(default=None),
     location: str | None = Query(default=None),
@@ -133,7 +133,7 @@ def get_stock_value(
     
 
 @router.get("/inventory-turnover")
-@require_permission("api-delpi.access")
+@require_any_permission(["api-delpi.access", "dashboard-supplies.view"])
 def get_inventory_turnover(
     branch: str | None = Query(default=None),
     location: str | None = Query(default=None),

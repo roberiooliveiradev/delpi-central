@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "dashboard-supplies",
+  "name": "Dashboard Suprimentos",
+  "description": "Painel de suprimentos (CPV, OTD compras, estoque e giro IDD) via api-delpi",
+  "icon": "package-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/dashboard-supplies",
+  "entry": "/apps/dashboard-supplies/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "dashboard-supplies.view",
+      "name": "Acesso ao dashboard de suprimentos",
+      "description": "Permite visualizar CPV, OTD, valor de estoque e giro de estoque",
+      "module": "dashboard-supplies"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/dashboard-supplies",
+      "label": "Dashboard Suprimentos",
+      "permission": "dashboard-supplies.view",
+      "icon": "package-icon",
+      "order": 17,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

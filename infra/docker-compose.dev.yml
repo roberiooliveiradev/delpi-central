@@ -109,6 +109,10 @@ services:
 
       CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
 
+      NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED: ${NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED:-true}
+      NOTIFICATIONS_DISPATCH_POLL_SECONDS: ${NOTIFICATIONS_DISPATCH_POLL_SECONDS:-60}
+      NOTIFICATIONS_DISPATCH_BATCH_LIMIT: ${NOTIFICATIONS_DISPATCH_BATCH_LIMIT:-20}
+
       KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID}
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
       KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM}
@@ -361,6 +365,24 @@ services:
     networks:
       - delpi-network
 
+  dashboard-supplies:
+    build:
+      context: ../plugins/dashboard-supplies
+      dockerfile: Dockerfile
+
+    container_name: delpi-dashboard-supplies
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/dashboard-supplies:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   api-delpi:
     build:
       context: ..
@@ -530,6 +552,7 @@ services:
       - dashboard-quality
       - dashboard-commercial
       - dashboard-production
+      - dashboard-supplies
       - minha-delpi-ai-api
       - minha-delpi-chat
 
