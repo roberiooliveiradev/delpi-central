@@ -29,8 +29,9 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 | Saldo / estoque / disponível **de um código** | `GET /products/{code}/stock` | `get_product_stock` |
 | Estrutura / BOM / componentes | `GET /products/{code}/structure` | `get_product_structure` |
 | Fornecedores do item | `GET /products/{code}/suppliers` | (ver catálogo) |
-| Histórico de compras | `GET /products/{code}/purchases` | `purchases` |
-| Vendas / carteira / faturamento | `GET /products/{code}/sales*` | (ver catálogo) |
+| Histórico de compras | `GET /products/{code}/purchases` | `get_product_purchases` |
+| Resumo de vendas do item | `GET /products/{code}/sales` | `get_product_sales_summary` |
+| Carteira / pedidos em aberto do item | `GET /products/{code}/sales/open-orders` | `get_product_sales_open_orders` |
 
 **Parâmetros comuns**
 
@@ -76,12 +77,24 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 |----------------|------|-------------|
 | **Valor total** de estoque (KPI) | `GET /supplies/stock-value` | `get_supplies_stock_value` |
 | Giro de estoque (IDD) | `GET /supplies/inventory-turnover` | (ver catálogo) |
-| CPV / OTD compras | `/supplies/cpv`, `/supplies/otd` | (ver catálogo) |
+| CPV (custo produção vendido) | `GET /supplies/cpv` | `get_supplies_cpv` |
+| OTD (entrega no prazo compras) | `GET /supplies/otd` | `get_supplies_otd` |
+| Giro / IDD | `GET /supplies/inventory-turnover` | `get_supplies_inventory_turnover` |
 
 **Exemplos**
 
 - “Qual o valor total de estoque da empresa?” → `get_supplies_stock_value` (**não** `/products/{code}/stock`)
 - “Estoque do produto X” → `get_product_stock` (**não** `stock-value`)
+
+---
+
+### Vendas — ordens (`/sales`)
+
+| O usuário quer | Rota | operationId |
+|----------------|------|-------------|
+| Listar ordens de venda no período | `GET /sales/` | `list_sale_orders` |
+
+Não confundir com detalhe de LMP (`/engineering/lmps/{sale_number}`) nem vendas de um produto (`/products/{code}/sales`).
 
 ---
 

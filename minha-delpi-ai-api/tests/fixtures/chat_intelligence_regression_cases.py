@@ -103,6 +103,72 @@ SELECTION_CASES = [
         ],
         "expected_action_id": "get-lmp",
     },
+    {
+        "message": "qual o CPV da filial 01 no último mês",
+        "actions": [
+            {
+                "actionId": "cpv",
+                "method": "GET",
+                "path": "/supplies/cpv",
+                "operationId": "get_supplies_cpv",
+                "summary": "CPV suprimentos",
+                "parametersSchema": [{"name": "branch"}],
+            },
+            {
+                "actionId": "stock-value",
+                "method": "GET",
+                "path": "/supplies/stock-value",
+                "operationId": "get_supplies_stock_value",
+                "summary": "Valor total estoque",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "cpv",
+    },
+    {
+        "message": "mostre o OTD de compras",
+        "actions": [
+            {
+                "actionId": "otd",
+                "method": "GET",
+                "path": "/supplies/otd",
+                "operationId": "get_supplies_otd",
+                "summary": "OTD suprimentos",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "cpv",
+                "method": "GET",
+                "path": "/supplies/cpv",
+                "operationId": "get_supplies_cpv",
+                "summary": "CPV",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "otd",
+    },
+    {
+        "message": "histórico de compras do produto 10080047",
+        "actions": [
+            {
+                "actionId": "purchases",
+                "method": "GET",
+                "path": "/products/{code}/purchases",
+                "operationId": "get_product_purchases",
+                "summary": "Compras do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "analyser",
+                "method": "GET",
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "summary": "Analisador",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "purchases",
+    },
 ]
 
 DIRECT_ANSWER_CASES = [

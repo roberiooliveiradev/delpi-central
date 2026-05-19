@@ -285,6 +285,10 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.mdc-chat-agent-builder__prompt-templates {
+  margin-bottom: var(--mdc-space-3);
+}
+
 .mdc-chat-agent-builder__prompt {
   min-height: 10rem;
 }

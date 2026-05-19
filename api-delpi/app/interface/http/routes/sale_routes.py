@@ -11,12 +11,13 @@ from app.utils.logger import log_error
 from app.application.dto.sale_order.list_sale_order_request import ListSaleOrderRequest
 from app.composition.sale_composer import (
     build_list_sale_order_use_case,
-    )
+)
+from app.interface.http.openapi_agent_metadata import SALE_ORDERS_LIST
 
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("/", **SALE_ORDERS_LIST)
 @require_permission("api-delpi.access")
 def list_sale_order_route(
     date_start: Optional[str] = None,

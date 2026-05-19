@@ -28,6 +28,9 @@ from app.application.dto.product.product_analyser_request import ProductAnalyser
 
 from app.interface.http.openapi_agent_metadata import (
     PRODUCT_ANALYSER,
+    PRODUCT_PURCHASES,
+    PRODUCT_SALES_OPEN_ORDERS,
+    PRODUCT_SALES_SUMMARY,
     PRODUCT_SEARCH,
     PRODUCT_STOCK,
     PRODUCT_STRUCTURE,
@@ -458,10 +461,7 @@ def outbound_invoice_items(
         log_error(f"Erro ao consultar NF-es de saída para {code}: {e}")
         return error_response(f"Unexpected error: {e}")
     
-@router.get(
-    "/{code}/purchases",
-    summary="Purchase history for product"
-)
+@router.get("/{code}/purchases", **PRODUCT_PURCHASES)
 @require_permission("api-delpi.access")
 def purchases(
     code: str,
@@ -492,10 +492,7 @@ def purchases(
 
         return error_response(f"Unexpected error: {e}")
     
-@router.get(
-    "/{code}/sales",
-    summary="Product sales summary"
-)
+@router.get("/{code}/sales", **PRODUCT_SALES_SUMMARY)
 @require_permission("api-delpi.access")
 def product_sales_summary(code: str):
 
@@ -518,10 +515,7 @@ def product_sales_summary(code: str):
 
         return error_response(f"Unexpected error: {e}")
     
-@router.get(
-    "/{code}/sales/open-orders",
-    summary="Open sales orders portfolio"
-)
+@router.get("/{code}/sales/open-orders", **PRODUCT_SALES_OPEN_ORDERS)
 @require_permission("api-delpi.access")
 def product_sales_open_orders(code: str):
 

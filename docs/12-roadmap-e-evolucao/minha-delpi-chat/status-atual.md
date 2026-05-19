@@ -17,6 +17,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 | Gestão de agentes | [minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
 | Inteligência do chat | [minha-delpi-ai-api/docs/roadmap/README.md](../../../minha-delpi-ai-api/docs/roadmap/README.md) |
 | Onda 6 (inteligência) | [inteligencia-chat-onda-6.md](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-6.md) |
+| Onda 7 (inteligência) | [inteligencia-chat-onda-7.md](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-7.md) |
 | Guia api-delpi para agentes | [api-delpi-rotas-agente.md](../../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md) |
 | Melhorias futuras | [minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md) |
 
@@ -52,6 +53,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 - **Admin itens 1–15:** concluídos — ver `admin-minha-delpi-chat.md`
 - **Gestão de agentes ondas 1–7:** concluídas — ver `agentes-gestao-melhorias.md`
 - **Inteligência do chat ondas 1–6:** concluídas — ver `roadmap/README.md` e `inteligencia-chat-onda-6.md` em `minha-delpi-ai-api`
+- **Inteligência Onda 7:** em andamento — templates de instruções no builder (7.1 concluído)
 - **Melhorias futuras:** concluídas neste repositório — ver `melhorias-futuras.md`
 - **Pendente externo:** RBAC com perfis formais no `core-api`
 
@@ -129,4 +131,5 @@ Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadma
 3. Observabilidade Prometheus/Grafana
 4. Homologação vLLM em GPU (latência com modelo maior)
 5. Validação de latência Onda 6 em ambiente de produção real
-6. Templates de system prompt no admin (“Operacional TOTVS”, “Documental/RH”) — opcional
+6. ~~Templates de system prompt no builder~~ — concluído (Onda 7.1)
+7. Expandir OpenAPI (compras, vendas, CPV/OTD) + regressão (Onda 7.2–7.3)

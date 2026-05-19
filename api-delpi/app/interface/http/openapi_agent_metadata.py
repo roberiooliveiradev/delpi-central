@@ -75,6 +75,35 @@ LMP_BY_SALE = agent_route(
     operation_id="get_lmp_by_sale_number",
 )
 
+SUPPLIES_CPV = agent_route(
+    summary="CPV — custo de produção vendido (suprimentos)",
+    description=(
+        "Indicador CPV agregado por filial e período, com ranking dos principais itens. "
+        "Use quando o usuário mencionar CPV, custo de produção vendido ou ranking de custo em suprimentos. "
+        "Não usar para estoque de um produto nem valor total de estoque da empresa."
+    ),
+    operation_id="get_supplies_cpv",
+)
+
+SUPPLIES_OTD = agent_route(
+    summary="OTD — entrega no prazo (suprimentos)",
+    description=(
+        "Indicador OTD (on-time delivery) de compras/suprimentos por filial e período. "
+        "Use para perguntas sobre OTD, entrega no prazo ou atrasos de fornecimento agregados. "
+        "Não confundir com OTD de produção ou entrega de pedido de venda de um produto específico."
+    ),
+    operation_id="get_supplies_otd",
+)
+
+SUPPLIES_INVENTORY_TURNOVER = agent_route(
+    summary="Giro de estoque / IDD (suprimentos)",
+    description=(
+        "Giro de estoque (IDD) por filial, local e período. "
+        "Use para giro, rotatividade ou IDD — não para saldo de um item nem valor total em R$."
+    ),
+    operation_id="get_supplies_inventory_turnover",
+)
+
 SUPPLIES_STOCK_VALUE = agent_route(
     summary="Valor total de estoque (suprimentos)",
     description=(
@@ -82,6 +111,42 @@ SUPPLIES_STOCK_VALUE = agent_route(
         "Não usar para saldo de um produto/código; para item use estoque do produto (/products/{code}/stock)."
     ),
     operation_id="get_supplies_stock_value",
+)
+
+PRODUCT_PURCHASES = agent_route(
+    summary="Histórico de compras do produto",
+    description=(
+        "Lista compras / entradas de um item pelo código no path. "
+        "Use quando o usuário pedir histórico de compras, últimas compras ou fornecimento do produto."
+    ),
+    operation_id="get_product_purchases",
+)
+
+PRODUCT_SALES_SUMMARY = agent_route(
+    summary="Resumo de vendas do produto",
+    description=(
+        "Resumo de vendas e faturamento de um item específico. "
+        "Use para vendas, faturamento ou performance comercial de um código."
+    ),
+    operation_id="get_product_sales_summary",
+)
+
+PRODUCT_SALES_OPEN_ORDERS = agent_route(
+    summary="Carteira de pedidos de venda em aberto do produto",
+    description=(
+        "Pedidos de venda em aberto (carteira) vinculados ao código do produto. "
+        "Use para carteira, pedidos abertos ou backlog de vendas do item."
+    ),
+    operation_id="get_product_sales_open_orders",
+)
+
+SALE_ORDERS_LIST = agent_route(
+    summary="Listar ordens de venda",
+    description=(
+        "Lista paginada de ordens de venda (OV) por período. "
+        "Use para listar OVs, pedidos de venda ou vendas no período — não para detalhe de LMP de uma OV."
+    ),
+    operation_id="list_sale_orders",
 )
 
 DATA_SQL = agent_route(

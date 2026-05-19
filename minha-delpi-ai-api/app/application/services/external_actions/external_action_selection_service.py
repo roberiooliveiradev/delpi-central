@@ -34,6 +34,42 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+        if self._looks_like_cpv_question(normalized) and not product_code:
+            selected = self._select_supplies_metric_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                path_token="cpv",
+                operation_token="cpv",
+                reason="A pergunta solicita o indicador CPV de suprimentos.",
+            )
+
+            if selected:
+                return selected
+
+        if self._looks_like_otd_question(normalized) and not product_code:
+            selected = self._select_supplies_metric_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                path_token="otd",
+                operation_token="otd",
+                reason="A pergunta solicita o indicador OTD de suprimentos.",
+            )
+
+            if selected:
+                return selected
+
+        if self._looks_like_inventory_turnover_question(normalized) and not product_code:
+            selected = self._select_supplies_metric_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                path_token="inventory-turnover",
+                operation_token="inventory_turnover",
+                reason="A pergunta solicita giro de estoque (IDD) em suprimentos.",
+            )
+
+            if selected:
+                return selected
+
         if self._looks_like_supplies_stock_kpi(normalized) and not product_code:
             selected = self._select_supplies_stock_value_action(
                 message,
@@ -105,9 +141,51 @@ class ExternalActionSelectionService:
             "busque informacoes do produto",
             "consulta produto",
             "api delpi",
+            "compra",
+            "compras",
+            "venda",
+            "vendas",
+            "faturamento",
+            "carteira",
         ]
 
         return any(term in value for term in terms)
+
+    def _looks_like_cpv_question(self, value: str) -> bool:
+        return any(
+            term in value
+            for term in (
+                "cpv",
+                "custo de produção vendido",
+                "custo de producao vendido",
+                "custo producao vendido",
+            )
+        )
+
+    def _looks_like_otd_question(self, value: str) -> bool:
+        return any(
+            term in value
+            for term in (
+                " otd",
+                "otd ",
+                "on-time delivery",
+                "entrega no prazo",
+                "entregas no prazo",
+            )
+        ) or value.strip().startswith("otd")
+
+    def _looks_like_inventory_turnover_question(self, value: str) -> bool:
+        return any(
+            term in value
+            for term in (
+                "giro de estoque",
+                "giro do estoque",
+                "giro estoque",
+                " rotatividade",
+                "idd",
+                "inventory-turnover",
+            )
+        )
 
     def _looks_like_supplies_stock_kpi(self, value: str) -> bool:
         terms = [
@@ -115,11 +193,45 @@ class ExternalActionSelectionService:
             "valor de estoque",
             "valor do estoque",
             "valor em estoque",
-            "giro de estoque",
-            "idd",
         ]
 
         return any(term in value for term in terms)
+
+    def _select_supplies_metric_action(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        path_token: str,
+        operation_token: str,
+        reason: str,
+    ) -> dict | None:
+        candidates = self._list_allowed_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            limit=80,
+        )
+
+        for action in candidates:
+            if action.get("method") != "GET":
+                continue
+
+            path = str(action.get("path") or "").lower()
+            operation_id = str(action.get("operationId") or "").lower()
+
+            if path_token not in path and operation_token not in operation_id:
+                continue
+
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": action["actionId"],
+                    "parameters": self._build_supplies_stock_parameters(action),
+                },
+                "reason": reason,
+            }
+
+        return None
 
     def _select_supplies_stock_value_action(
         self,
@@ -366,7 +478,11 @@ class ExternalActionSelectionService:
             if action.get("method") == "GET"
         ] or candidates
 
-        for action in self._rank_product_actions(candidates, intent=intent):
+        for action in self._rank_product_actions(
+            candidates,
+            intent=intent,
+            message=message,
+        ):
             parameters = self._build_product_parameters(action, product_code)
 
             if parameters:
@@ -528,7 +644,29 @@ class ExternalActionSelectionService:
         candidates: list[dict],
         *,
         intent: str = ChatProductQueryIntent.FULL,
+        message: str | None = None,
     ) -> list[dict]:
+        normalized = str(message or "").lower()
+        wants_purchases = any(
+            term in normalized
+            for term in ("compra", "compras", "fornecedor comprou", "histórico de compra", "historico de compra")
+        )
+        wants_sales = any(
+            term in normalized
+            for term in (
+                "venda",
+                "vendas",
+                "faturamento",
+                "carteira",
+                "pedidos em aberto",
+                "pedido em aberto",
+            )
+        )
+        wants_open_orders = any(
+            term in normalized
+            for term in ("carteira", "pedidos em aberto", "pedido em aberto", "open-orders")
+        )
+
         def score(action: dict) -> int:
             haystack = " ".join(
                 str(action.get(key) or "")
@@ -537,6 +675,15 @@ class ExternalActionSelectionService:
             path = str(action.get("path") or "").lower()
 
             value = 0
+
+            if wants_purchases and "/purchases" in path:
+                value += 110
+
+            if wants_open_orders and "open-orders" in path:
+                value += 115
+
+            elif wants_sales and "/sales" in path and "open-orders" not in path:
+                value += 100
 
             if intent == ChatProductQueryIntent.STOCK:
                 if "/products/{code}/stock" in haystack or path.endswith("/stock"):

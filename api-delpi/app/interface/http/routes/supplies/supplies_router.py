@@ -11,7 +11,12 @@ from app.application.dto.supplies.get_inventory_turnover_request import (
     GetInventoryTurnoverRequest,
 )
 
-from app.interface.http.openapi_agent_metadata import SUPPLIES_STOCK_VALUE
+from app.interface.http.openapi_agent_metadata import (
+    SUPPLIES_CPV,
+    SUPPLIES_INVENTORY_TURNOVER,
+    SUPPLIES_OTD,
+    SUPPLIES_STOCK_VALUE,
+)
 from app.composition.supplies_composer import (
     build_get_cpv_use_case,
     build_get_otd_use_case,
@@ -22,7 +27,7 @@ from app.composition.supplies_composer import (
 router = APIRouter(prefix="/supplies", tags=["Suprimentos"])
 
 
-@router.get("/cpv")
+@router.get("/cpv", **SUPPLIES_CPV)
 @require_any_permission(["api-delpi.access", "dashboard-supplies.view"])
 def get_cpv(
     branch: str | None = Query(default=None),
@@ -59,7 +64,7 @@ def get_cpv(
         )
     
 
-@router.get("/otd")
+@router.get("/otd", **SUPPLIES_OTD)
 @require_any_permission(["api-delpi.access", "dashboard-supplies.view"])
 def get_otd(
     branch: str | None = Query(default=None),
@@ -133,7 +138,7 @@ def get_stock_value(
         )
     
 
-@router.get("/inventory-turnover")
+@router.get("/inventory-turnover", **SUPPLIES_INVENTORY_TURNOVER)
 @require_any_permission(["api-delpi.access", "dashboard-supplies.view"])
 def get_inventory_turnover(
     branch: str | None = Query(default=None),

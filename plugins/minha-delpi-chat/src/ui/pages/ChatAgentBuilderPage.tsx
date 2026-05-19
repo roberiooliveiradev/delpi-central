@@ -47,6 +47,11 @@ import type {
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
 
+import {
+  AGENT_SYSTEM_PROMPT_TEMPLATES,
+  getAgentSystemPromptTemplate,
+} from "../../domain/agentSystemPromptTemplates";
+
 import "./ChatAgentBuilderPage.css";
 
 type AgentPayload = {
@@ -162,6 +167,7 @@ export function ChatAgentBuilderPage({
   const [name, setName] = useState(agent?.name ?? "");
   const [description, setDescription] = useState(agent?.description ?? "");
   const [systemPrompt, setSystemPrompt] = useState("");
+  const [selectedPromptTemplateKey, setSelectedPromptTemplateKey] = useState("");
   const [visibility, setVisibility] = useState(
     agent?.visibility === "system"
       ? "system"
@@ -1092,6 +1098,55 @@ export function ChatAgentBuilderPage({
                 <h2>Instruções</h2>
                 <p>Defina comportamento, regras, limites e estilo de resposta.</p>
               </div>
+            </div>
+
+            <div className="mdc-chat-agent-builder__prompt-templates">
+              <label>
+                <span>Modelo de instruções</span>
+                <select
+                  value={selectedPromptTemplateKey}
+                  onChange={(event) => {
+                    const templateKey = event.target.value;
+                    setSelectedPromptTemplateKey(templateKey);
+
+                    if (!templateKey) {
+                      return;
+                    }
+
+                    const template = getAgentSystemPromptTemplate(templateKey);
+
+                    if (!template) {
+                      return;
+                    }
+
+                    const shouldReplace =
+                      !systemPrompt.trim() ||
+                      window.confirm(
+                        "Substituir as instruções atuais pelo modelo selecionado?",
+                      );
+
+                    if (!shouldReplace) {
+                      return;
+                    }
+
+                    setSystemPrompt(template.prompt);
+                    setResponseStyle(template.suggestedResponseStyle);
+                  }}
+                >
+                  <option value="">Selecione um modelo (opcional)</option>
+                  {AGENT_SYSTEM_PROMPT_TEMPLATES.map((template) => (
+                    <option key={template.key} value={template.key}>
+                      {template.label}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  {selectedPromptTemplateKey
+                    ? getAgentSystemPromptTemplate(selectedPromptTemplateKey)
+                        ?.description
+                    : "Modelos prontos para agentes operacionais, documentais ou híbridos (Onda 7)."}
+                </small>
+              </label>
             </div>
 
             <label>
