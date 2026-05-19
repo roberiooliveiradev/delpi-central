@@ -1,11 +1,24 @@
-import { Check, Copy, FileText, Pencil, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  ArrowDown,
+  Check,
+  Copy,
+  FileText,
+  Pencil,
+  RotateCcw,
+  ThumbsDown,
+  ThumbsUp,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   ChatMessage,
   ChatSource,
   ChatToolCall,
 } from "../../data/api/chatTypes";
+import {
+  buildChatTimelineItems,
+  formatMessageTime,
+} from "./chatMessageTimeline";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatActionResults } from "./ChatActionResults";
@@ -14,8 +27,11 @@ import { filterVisibleChatSources } from "./chatSourcesFilter";
 
 import "./ChatMessageList.css";
 
+const SCROLL_NEAR_BOTTOM_THRESHOLD_PX = 96;
+
 type ChatMessageListProps = {
   messages: ChatMessage[];
+  conversationKey?: string | null;
   streamingAnswer?: string;
   streamingSources?: ChatSource[];
   streamingToolCalls?: ChatToolCall[];
@@ -147,8 +163,22 @@ async function copyTextToClipboard(text: string): Promise<void> {
   }
 }
 
+function scrollElementToBottom(element: HTMLDivElement, behavior: ScrollBehavior) {
+  element.scrollTo({
+    top: element.scrollHeight,
+    behavior,
+  });
+}
+
+function isElementNearBottom(element: HTMLDivElement, threshold = SCROLL_NEAR_BOTTOM_THRESHOLD_PX) {
+  return (
+    element.scrollHeight - element.scrollTop - element.clientHeight <= threshold
+  );
+}
+
 export function ChatMessageList({
   messages,
+  conversationKey,
   streamingAnswer,
   streamingSources,
   streamingToolCalls,
@@ -164,11 +194,79 @@ export function ChatMessageList({
   const listRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
+  const previousConversationKeyRef = useRef<string | null | undefined>(conversationKey);
+  const pendingInitialScrollRef = useRef(false);
+  const followStreamRef = useRef(true);
+  const wasStreamingRef = useRef(false);
+
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+
+  const timelineItems = useMemo(() => buildChatTimelineItems(messages), [messages]);
+
+  const updateScrollAffordances = useCallback(() => {
+    const list = listRef.current;
+
+    if (!list) {
+      return;
+    }
+
+    const nearBottom = isElementNearBottom(list);
+    followStreamRef.current = nearBottom;
+    setShowScrollToBottom(!nearBottom && messages.length > 0);
+  }, [messages.length]);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    const list = listRef.current;
+
+    if (!list) {
+      return;
+    }
+
+    scrollElementToBottom(list, behavior);
+    followStreamRef.current = true;
+    setShowScrollToBottom(false);
+  }, []);
+
+  const scrollToMessage = useCallback((messageId: string, block: ScrollLogicalPosition) => {
+    const list = listRef.current;
+
+    if (!list) {
+      return;
+    }
+
+    const node = list.querySelector(`[data-message-id="${messageId}"]`);
+
+    if (node instanceof HTMLElement) {
+      node.scrollIntoView({ behavior: "smooth", block });
+    }
+  }, []);
 
   useEffect(() => {
+    if (conversationKey !== previousConversationKeyRef.current) {
+      previousConversationKeyRef.current = conversationKey;
+      previousMessageCountRef.current = 0;
+      pendingInitialScrollRef.current = true;
+      followStreamRef.current = true;
+      setShowScrollToBottom(false);
+    }
+  }, [conversationKey]);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    if (pendingInitialScrollRef.current && messages.length > 0) {
+      pendingInitialScrollRef.current = false;
+      requestAnimationFrame(() => {
+        scrollToBottom("auto");
+      });
+      return;
+    }
+
     if (messages.length === 0 && !streamingAnswer && !isStreaming) {
       previousMessageCountRef.current = 0;
       return;
@@ -181,21 +279,61 @@ export function ChatMessageList({
 
     previousMessageCountRef.current = messages.length;
 
-    if (userJustSent) {
-      const userNode = listRef.current?.querySelector(
-        `[data-message-id="${lastMessage.id}"]`,
-      );
-
-      if (userNode instanceof HTMLElement) {
-        userNode.scrollIntoView({ behavior: "smooth", block: "start" });
-        return;
-      }
+    if (userJustSent && lastMessage?.id) {
+      followStreamRef.current = false;
+      requestAnimationFrame(() => {
+        scrollToMessage(lastMessage.id, "start");
+        updateScrollAffordances();
+      });
+      return;
     }
 
-    if (isStreaming || streamingAnswer) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if ((isStreaming || streamingAnswer) && followStreamRef.current) {
+      requestAnimationFrame(() => {
+        scrollToBottom("smooth");
+      });
     }
-  }, [messages, streamingAnswer, isStreaming]);
+  }, [
+    isLoading,
+    isStreaming,
+    messages,
+    scrollToBottom,
+    scrollToMessage,
+    streamingAnswer,
+    updateScrollAffordances,
+  ]);
+
+  useEffect(() => {
+    const list = listRef.current;
+
+    if (!list) {
+      return;
+    }
+
+    const handleScroll = () => {
+      updateScrollAffordances();
+    };
+
+    list.addEventListener("scroll", handleScroll, { passive: true });
+    updateScrollAffordances();
+
+    return () => {
+      list.removeEventListener("scroll", handleScroll);
+    };
+  }, [updateScrollAffordances, timelineItems.length, isStreaming, streamingAnswer]);
+
+  useEffect(() => {
+    const wasStreaming = wasStreamingRef.current;
+    const isActiveStream = Boolean(isStreaming || streamingAnswer);
+
+    if (wasStreaming && !isActiveStream && followStreamRef.current) {
+      requestAnimationFrame(() => {
+        scrollToBottom("auto");
+      });
+    }
+
+    wasStreamingRef.current = isActiveStream;
+  }, [isStreaming, scrollToBottom, streamingAnswer]);
 
   async function handleSaveEdit(messageId: string) {
     const updated = await onEditMessage?.(messageId, editingContent);
@@ -238,53 +376,38 @@ export function ChatMessageList({
     }, 1800);
   }
 
-  if (isLoading) {
+  function renderMessage(message: ChatMessage) {
+    const isUser = message.role === "user";
+    const messageTime = formatMessageTime(message.created_at);
+    const isPending = Boolean(message.metadata?.optimistic);
+
     return (
-      <div className="mdc-chat-message-list" aria-live="polite">
-        <article className="mdc-chat-message mdc-chat-message--assistant">
-          <div className="mdc-chat-message-avatar">D</div>
+      <article
+        key={message.id}
+        data-message-id={message.id}
+        className={`mdc-chat-message mdc-chat-message--${message.role}${
+          isPending ? " mdc-chat-message--pending" : ""
+        }`}
+      >
+        <div className="mdc-chat-message-avatar" aria-hidden="true">
+          {isUser ? "V" : "D"}
+        </div>
 
-          <div className="mdc-chat-message-card">
-            <div className="mdc-chat-message-header">
+        <div className="mdc-chat-message-card">
+          <div className="mdc-chat-message-header">
+            {!isUser ? (
               <strong>Minha DELPI Chat</strong>
-            </div>
+            ) : (
+              <span className="mdc-chat-message-header__spacer" aria-hidden="true" />
+            )}
 
-            <div className="mdc-chat-history-loading">
-              <span />
-              <span />
-              <span />
-              <p>Carregando histórico da conversa...</p>
-            </div>
-          </div>
-        </article>
-      </div>
-    );
-  }
-
-  if (messages.length === 0 && !streamingAnswer && !isStreaming) {
-    return <ChatEmptyState onUseSuggestion={onUseSuggestion ?? (() => undefined)} />;
-  }
-
-  return (
-    <div ref={listRef} className="mdc-chat-message-list" aria-live="polite">
-      {messages.map((message) => (
-        <article
-          key={message.id}
-          data-message-id={message.id}
-          className={`mdc-chat-message mdc-chat-message--${message.role}`}
-        >
-          <div className="mdc-chat-message-avatar">
-            {message.role === "user" ? "V" : "D"}
-          </div>
-
-          <div className="mdc-chat-message-card">
-            <div className="mdc-chat-message-header">
-              <strong>
-                {message.role === "user" ? "Você" : "Minha DELPI Chat"}
-              </strong>
+            <div className="mdc-chat-message-meta">
+              {messageTime ? (
+                <time dateTime={message.created_at}>{messageTime}</time>
+              ) : null}
 
               <div className="mdc-chat-message-actions">
-                {message.role === "user" ? (
+                {isUser ? (
                   <>
                     <button
                       className="mdc-chat-message-action"
@@ -306,9 +429,7 @@ export function ChatMessageList({
                       <RotateCcw size={15} aria-hidden="true" />
                     </button>
                   </>
-                ) : null}
-
-                {message.role === "assistant" ? (
+                ) : (
                   <>
                     <button
                       className={`mdc-chat-message-action${
@@ -344,116 +465,181 @@ export function ChatMessageList({
                       <ThumbsDown size={15} aria-hidden="true" />
                     </button>
 
-                  <button
-                    className="mdc-chat-message-action"
-                    type="button"
-                    onClick={() => void handleCopy(message.id, message.content)}
-                    aria-label={
-                      copiedMessageId === message.id
-                        ? "Resposta copiada"
-                        : "Copiar resposta"
-                    }
-                    title={
-                      copiedMessageId === message.id
-                        ? "Resposta copiada"
-                        : "Copiar resposta"
-                    }
-                  >
-                    {copiedMessageId === message.id ? (
-                      <Check size={15} aria-hidden="true" />
-                    ) : (
-                      <Copy size={15} aria-hidden="true" />
-                    )}
-                  </button>
+                    <button
+                      className="mdc-chat-message-action"
+                      type="button"
+                      onClick={() => void handleCopy(message.id, message.content)}
+                      aria-label={
+                        copiedMessageId === message.id
+                          ? "Resposta copiada"
+                          : "Copiar resposta"
+                      }
+                      title={
+                        copiedMessageId === message.id
+                          ? "Resposta copiada"
+                          : "Copiar resposta"
+                      }
+                    >
+                      {copiedMessageId === message.id ? (
+                        <Check size={15} aria-hidden="true" />
+                      ) : (
+                        <Copy size={15} aria-hidden="true" />
+                      )}
+                    </button>
                   </>
-                ) : null}
+                )}
               </div>
             </div>
+          </div>
 
-            {editingMessageId === message.id ? (
-              <div className="mdc-chat-message-edit">
-                <textarea
-                  value={editingContent}
-                  autoFocus
-                  onChange={(event) => setEditingContent(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Escape") {
-                      event.preventDefault();
-                      cancelEditMessage();
-                    }
+          {editingMessageId === message.id ? (
+            <div className="mdc-chat-message-edit">
+              <textarea
+                value={editingContent}
+                autoFocus
+                onChange={(event) => setEditingContent(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    cancelEditMessage();
+                  }
 
-                    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-                      event.preventDefault();
-                      void handleSaveEdit(message.id);
-                    }
-                  }}
-                />
+                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                    event.preventDefault();
+                    void handleSaveEdit(message.id);
+                  }
+                }}
+              />
 
-                <div className="mdc-chat-message-edit-actions">
-                  <button type="button" onClick={cancelEditMessage}>
-                    Cancelar
-                  </button>
-                  <button type="button" onClick={() => void handleSaveEdit(message.id)}>
-                    Salvar
-                  </button>
-                  <button
-                    type="button"
-                    className="mdc-chat-message-edit-actions__primary"
-                    disabled={Boolean(isStreaming)}
-                    onClick={() => void handleSaveAndResend(message.id)}
-                  >
-                    Salvar e reenviar
-                  </button>
+              <div className="mdc-chat-message-edit-actions">
+                <button type="button" onClick={cancelEditMessage}>
+                  Cancelar
+                </button>
+                <button type="button" onClick={() => void handleSaveEdit(message.id)}>
+                  Salvar
+                </button>
+                <button
+                  type="button"
+                  className="mdc-chat-message-edit-actions__primary"
+                  disabled={Boolean(isStreaming)}
+                  onClick={() => void handleSaveAndResend(message.id)}
+                >
+                  Salvar e reenviar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <ChatMessageAttachments attachments={getMessageAttachments(message)} />
+              <ChatMarkdown content={message.content} compact={isUser} />
+            </>
+          )}
+
+          {!isUser ? (
+            <>
+              <ChatActionResults toolCalls={getMessageToolCalls(message)} />
+              <ChatSources sources={filterVisibleChatSources(getMessageSources(message))} />
+            </>
+          ) : null}
+        </div>
+      </article>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="mdc-chat-message-list-wrap">
+        <div className="mdc-chat-message-list" aria-live="polite">
+          <article className="mdc-chat-message mdc-chat-message--assistant">
+            <div className="mdc-chat-message-avatar">D</div>
+
+            <div className="mdc-chat-message-card">
+              <div className="mdc-chat-message-header">
+                <strong>Minha DELPI Chat</strong>
+              </div>
+
+              <div className="mdc-chat-history-loading">
+                <span />
+                <span />
+                <span />
+                <p>Carregando histórico da conversa...</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    );
+  }
+
+  if (messages.length === 0 && !streamingAnswer && !isStreaming) {
+    return <ChatEmptyState onUseSuggestion={onUseSuggestion ?? (() => undefined)} />;
+  }
+
+  return (
+    <div className="mdc-chat-message-list-wrap">
+      <div ref={listRef} className="mdc-chat-message-list" aria-live="polite">
+        {timelineItems.map((item) =>
+          item.type === "day" ? (
+            <div
+              key={item.key}
+              className="mdc-chat-timeline-day"
+              role="separator"
+              aria-label={item.label}
+            >
+              <span>{item.label}</span>
+            </div>
+          ) : (
+            renderMessage(item.message)
+          ),
+        )}
+
+        {isStreaming || streamingAnswer ? (
+          <article className="mdc-chat-message mdc-chat-message--assistant mdc-chat-message--streaming">
+            <div className="mdc-chat-message-avatar" aria-hidden="true">
+              D
+            </div>
+
+            <div className="mdc-chat-message-card">
+              <div className="mdc-chat-message-header">
+                <strong>Minha DELPI Chat</strong>
+                <div className="mdc-chat-message-meta">
+                  <time dateTime={new Date().toISOString()}>
+                    {formatMessageTime(new Date().toISOString())}
+                  </time>
                 </div>
               </div>
-            ) : (
-              <>
-                <ChatMessageAttachments attachments={getMessageAttachments(message)} />
-                <ChatMarkdown
-                  content={message.content}
-                  compact={message.role === "user"}
-                />
-              </>
-            )}
 
-            {message.role === "assistant" ? (
-              <>
-                <ChatActionResults toolCalls={getMessageToolCalls(message)} />
-                <ChatSources
-                  sources={filterVisibleChatSources(getMessageSources(message))}
-                />
-              </>
-            ) : null}
-          </div>
-        </article>
-      ))}
+              {streamingAnswer ? (
+                <ChatMarkdown content={streamingAnswer} />
+              ) : (
+                <div className="mdc-chat-thinking" role="status" aria-live="polite">
+                  <span className="mdc-chat-thinking__dot" />
+                  <span className="mdc-chat-thinking__dot" />
+                  <span className="mdc-chat-thinking__dot" />
+                  <p>{streamingStatus || "Processando sua solicitação..."}</p>
+                </div>
+              )}
 
-      {isStreaming || streamingAnswer ? (
-        <article className="mdc-chat-message mdc-chat-message--assistant mdc-chat-message--streaming">
-          <div className="mdc-chat-message-avatar">D</div>
-
-          <div className="mdc-chat-message-card">
-            <div className="mdc-chat-message-header">
-              <strong>Minha DELPI Chat</strong>
+              <ChatActionResults toolCalls={streamingToolCalls} />
+              <ChatSources sources={filterVisibleChatSources(streamingSources)} />
             </div>
+          </article>
+        ) : null}
 
-            {streamingAnswer ? (
-              <ChatMarkdown content={streamingAnswer} />
-            ) : (
-              <div className="mdc-chat-thinking" role="status" aria-live="polite">
-                <span className="mdc-chat-thinking__dot" />
-                <span className="mdc-chat-thinking__dot" />
-                <span className="mdc-chat-thinking__dot" />
-                <p>{streamingStatus || "Processando sua solicitação..."}</p>
-              </div>
-            )}
+        <div ref={bottomRef} className="mdc-chat-message-list__anchor" aria-hidden="true" />
+      </div>
 
-            <ChatActionResults toolCalls={streamingToolCalls} />
-            <ChatSources sources={filterVisibleChatSources(streamingSources)} />
-          </div>
-        </article>
+      {showScrollToBottom ? (
+        <button
+          type="button"
+          className="mdc-chat-scroll-to-bottom"
+          aria-label="Ir para as mensagens mais recentes"
+          title="Ir para o final"
+          onClick={() => scrollToBottom("smooth")}
+        >
+          <ArrowDown size={18} aria-hidden="true" />
+        </button>
       ) : null}
-      <div ref={bottomRef} className="mdc-chat-message-list__anchor" aria-hidden="true" />
     </div>
   );
 }

@@ -1020,6 +1020,7 @@ export function ChatPage({
             <section className="mdc-chat-conversation" aria-label="Conversa">
               <ChatMessageList
                 messages={messages}
+                conversationKey={activeSession?.id ?? null}
                 streamingAnswer={streamingAnswer}
                 streamingSources={streamingSources}
                 streamingToolCalls={streamingToolCalls}

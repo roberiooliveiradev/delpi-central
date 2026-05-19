@@ -15,6 +15,10 @@
   height: 100%;
 }
 
+.mdc-chat-conversation .mdc-chat-message-list-wrap {
+  min-height: 0;
+}
+
 .mdc-chat-conversation .mdc-chat-message-list {
   padding-bottom: var(--mdc-space-3);
 }
