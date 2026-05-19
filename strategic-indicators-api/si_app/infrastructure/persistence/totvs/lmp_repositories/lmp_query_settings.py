@@ -41,6 +41,13 @@ class LMPQuerySettings:
         }
     )
 
+    lmp_finalized_process_stages: Dict[str, List[str]] = field(
+        default_factory=lambda: {
+            "000002": ["000012"],
+            "000003": ["000012"],
+        }
+    )
+
     engineering_status_labels: Dict[str, str] = field(
         default_factory=lambda: {
             "in_progress": "ABERTA",

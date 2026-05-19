@@ -137,6 +137,17 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             process_stages=self.settings.sample_anchor_process_stages,
         )
 
+    def _sql_lmp_finalized_process_stage_condition(
+        self,
+        process_field: str,
+        stage_field: str,
+    ) -> Tuple[str, tuple]:
+        return self._sql_process_stage_condition(
+            process_field=process_field,
+            stage_field=stage_field,
+            process_stages=self.settings.lmp_finalized_process_stages,
+        )
+
     def _resolve_listing_type_filter(
         self,
         request: ListLMPRequest,
@@ -1081,8 +1092,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         requested_branch: str | None = None,
     ) -> Tuple[str, tuple]:
         """
-        Resolve uma única âncora por OV: a passagem âncora mais recente (data/hora)
-        entre LMP e amostra. Em empate de data/hora, amostra prevalece.
+        Resolve uma única âncora por OV.
+
+        Se a OV já teve lançamento/homologação LMP (estágio 000012), permanece LMP
+        com âncora na passagem 000012 mais recente — histórico de amostra não reclassifica.
+
+        Caso contrário: passagem âncora mais recente entre LMP e amostra; em empate,
+        amostra prevalece.
         """
         where_aij_base, params_aij_base = self._build_filter_sql(
             lambda qb: (
@@ -1097,6 +1113,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         where_sample_anchor, params_sample_anchor = (
             self._sql_sample_anchor_process_stage_condition(
+                "A.AIJ_PROVEN",
+                "A.AIJ_STAGE",
+            )
+        )
+        where_lmp_finalized, params_lmp_finalized = (
+            self._sql_lmp_finalized_process_stage_condition(
                 "A.AIJ_PROVEN",
                 "A.AIJ_STAGE",
             )
@@ -1210,15 +1232,117 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 WHERE A.RN_DESC = 1
             ),
 
-            ListingAnchorEventos AS (
+            LmpFinalizedAnchorRaw AS (
                 SELECT
                     A.AIJ_FILIAL,
                     A.AIJ_NROPOR,
                     A.AIJ_REVISA,
+                    A.AIJ_PROVEN,
+                    A.AIJ_STAGE,
+                    A.AIJ_DTINIC,
+                    A.AIJ_HRINIC,
+                    A.AIJ_DTENCE,
+                    A.AIJ_HRENCE,
+                    A.R_E_C_N_O_,
+                    ? AS LISTING_KIND
+                FROM AIJ010 A
+                WHERE {where_aij_base}
+                  AND {where_lmp_finalized}
+            ),
+
+            LmpFinalizedAnchorRanked AS (
+                SELECT
+                    R.*,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY R.AIJ_FILIAL, R.AIJ_NROPOR
+                        ORDER BY
+                            R.AIJ_DTINIC DESC,
+                            R.AIJ_HRINIC DESC,
+                            R.R_E_C_N_O_ DESC
+                    ) AS RN_DESC
+                FROM LmpFinalizedAnchorRaw R
+            ),
+
+            LmpFinalizedAnchorChosen AS (
+                SELECT
+                    A.AIJ_FILIAL,
+                    A.AIJ_NROPOR,
+                    A.AIJ_REVISA,
+                    A.AIJ_PROVEN,
+                    A.AIJ_STAGE,
+                    A.AIJ_DTINIC,
+                    A.AIJ_HRINIC,
                     A.LISTING_KIND,
-                    A.ANCHOR_START_DATE,
-                    A.ANCHOR_END_DATE
-                FROM ListingAnchorChosen A
+                    A.AIJ_DTINIC AS ANCHOR_START_DATE,
+                    COALESCE(
+                        NULLIF(A.AIJ_DTENCE, ''),
+                        NEXT_EVT.NEXT_DATE
+                    ) AS ANCHOR_END_DATE,
+                    A.RN_DESC
+                FROM LmpFinalizedAnchorRanked A
+                OUTER APPLY (
+                    SELECT TOP 1
+                        COALESCE(
+                            NULLIF(X.AIJ_DTENCE, ''),
+                            NULLIF(X.AIJ_DTINIC, '')
+                        ) AS NEXT_DATE
+                    FROM AIJ010 X
+                    WHERE X.D_E_L_E_T_ = ''
+                      AND X.AIJ_FILIAL = A.AIJ_FILIAL
+                      AND X.AIJ_NROPOR = A.AIJ_NROPOR
+                      AND (
+                            X.AIJ_REVISA > A.AIJ_REVISA
+                            OR (
+                                X.AIJ_REVISA = A.AIJ_REVISA
+                                AND (
+                                    X.AIJ_DTINIC > A.AIJ_DTINIC
+                                    OR (
+                                        X.AIJ_DTINIC = A.AIJ_DTINIC
+                                        AND ISNULL(X.AIJ_HRINIC, '') > ISNULL(A.AIJ_HRINIC, '')
+                                    )
+                                    OR (
+                                        X.AIJ_DTINIC = A.AIJ_DTINIC
+                                        AND ISNULL(X.AIJ_HRINIC, '') = ISNULL(A.AIJ_HRINIC, '')
+                                        AND X.R_E_C_N_O_ > A.R_E_C_N_O_
+                                    )
+                                )
+                            )
+                      )
+                    ORDER BY
+                        X.AIJ_DTINIC ASC,
+                        X.AIJ_HRINIC ASC,
+                        X.AIJ_REVISA ASC,
+                        X.R_E_C_N_O_ ASC
+                ) NEXT_EVT
+                WHERE A.RN_DESC = 1
+            ),
+
+            ListingAnchorEventos AS (
+                SELECT
+                    F.AIJ_FILIAL,
+                    F.AIJ_NROPOR,
+                    F.AIJ_REVISA,
+                    F.LISTING_KIND,
+                    F.ANCHOR_START_DATE,
+                    F.ANCHOR_END_DATE
+                FROM LmpFinalizedAnchorChosen F
+
+                UNION ALL
+
+                SELECT
+                    C.AIJ_FILIAL,
+                    C.AIJ_NROPOR,
+                    C.AIJ_REVISA,
+                    C.LISTING_KIND,
+                    C.ANCHOR_START_DATE,
+                    C.ANCHOR_END_DATE
+                FROM ListingAnchorChosen C
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM LmpFinalizedAnchorChosen F
+                    WHERE F.AIJ_FILIAL = C.AIJ_FILIAL
+                      AND F.AIJ_NROPOR = C.AIJ_NROPOR
+                )
             ),
 
             LMPEventos AS (
@@ -1250,6 +1374,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             *params_aij_base,
             *params_sample_anchor,
             LISTING_KIND_SAMPLE,
+            LISTING_KIND_LMP,
+            *params_aij_base,
+            *params_lmp_finalized,
             LISTING_KIND_LMP,
             LISTING_KIND_SAMPLE,
         )

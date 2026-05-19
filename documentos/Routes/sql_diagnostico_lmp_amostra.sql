@@ -12,14 +12,14 @@ Regras ATUAIS no backend (lmp_query_settings.py):
     processo 000003 + estágio 000002, 000008
 
 Regra de prioridade na listagem (após correção):
-  - Uma âncora por OV: evento âncora LMP ou amostra mais recente (AIJ_DTINIC/HRINIC).
-  - Em empate de data/hora, amostra prevalece sobre LMP.
+  - Se a OV já teve estágio 000012 (lançamento/homologação LMP) → sempre LMP.
+  - Senão: evento âncora LMP ou amostra mais recente; em empate, amostra prevalece.
   - Amostra âncora inclui 000002+000008 e 000003+000002/000008.
 
-Hipótese comum de erro:
-  - Amostra operacional no processo 000002 + estágio 000008 (doc interna)
-    NÃO está em sample_anchor_process_stages (só 000003).
-  - OV passou depois por 000003/000012 → vira LMP e “esconde” a amostra.
+Hipótese comum de erro (corrigida):
+  - OV com histórico 000008 (amostra) e 000012 (LMP homologada) na mesma data:
+    a regra antiga “última âncora” classificava como AMOSTRA; 000012 deve fixar LMP.
+  - Amostra “real” (ex. 003380): tem 000008 mas ainda NÃO passou por 000012.
 
 Como usar:
   1) Ajuste @FILIAL, @DATE_START, @DATE_END (e opcional @NROPOR).

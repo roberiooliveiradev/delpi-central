@@ -41,6 +41,15 @@ class LMPQuerySettings:
         }
     )
 
+    # Lançamento/homologação LMP: OV que já passou por 000012 permanece LMP
+    # (histórico de amostra 000008 não reclassifica como amostra na listagem).
+    lmp_finalized_process_stages: Dict[str, List[str]] = field(
+        default_factory=lambda: {
+            "000002": ["000012"],
+            "000003": ["000012"],
+        }
+    )
+
     engineering_status_labels: Dict[str, str] = field(
         default_factory=lambda: {
             "in_progress": "ABERTA",
