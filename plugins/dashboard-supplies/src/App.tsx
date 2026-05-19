@@ -1,5 +1,6 @@
 import { configureHttpClient } from "./api/httpClient";
 import { SUPPLIES_ROUTES } from "./constants/routes";
+import { useSuppliesRouterPath } from "./hooks/useSuppliesRouterPath";
 import { CpvPage } from "./pages/CpvPage";
 import { DashboardSuppliesPage } from "./pages/DashboardSuppliesPage";
 import { InventoryTurnoverPage } from "./pages/InventoryTurnoverPage";
@@ -11,15 +12,14 @@ export type AppProps = {
   pathname?: string;
 };
 
-function normalizePath(pathname?: string): string {
-  if (!pathname) return SUPPLIES_ROUTES.home;
+function normalizePath(pathname: string): string {
   if (pathname.length > 1 && pathname.endsWith("/")) {
     return pathname.slice(0, -1);
   }
   return pathname;
 }
 
-function renderPage(path: string, pathname?: string) {
+function renderPage(path: string) {
   if (path === SUPPLIES_ROUTES.cpv || path.startsWith(`${SUPPLIES_ROUTES.cpv}/`)) {
     return <CpvPage pathname={path} />;
   }
@@ -42,17 +42,18 @@ function renderPage(path: string, pathname?: string) {
     return <InventoryTurnoverPage pathname={path} />;
   }
 
-  return <DashboardSuppliesPage pathname={pathname ?? path} />;
+  return <DashboardSuppliesPage pathname={path} />;
 }
 
-export default function App({ getAccessToken, pathname }: AppProps) {
+export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
 
+  const pathname = useSuppliesRouterPath(pathnameFromHost);
   const path = normalizePath(pathname);
 
   return (
     <div className="ds-app-shell" key={path}>
-      {renderPage(path, pathname)}
+      {renderPage(path)}
     </div>
   );
 }
