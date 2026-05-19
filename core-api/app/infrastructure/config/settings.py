@@ -46,6 +46,15 @@ class Config:
         ),
     )
 
+    USER_PRESENCE_ENABLED = _env_bool("USER_PRESENCE_ENABLED", default=True)
+    USER_PRESENCE_TTL_SECONDS = _env_int(
+        "USER_PRESENCE_TTL_SECONDS",
+        default=90,
+        minimum=15,
+    )
+    USER_PRESENCE_STORE = os.getenv("USER_PRESENCE_STORE", "memory").strip().lower()
+    REDIS_URL = os.getenv("REDIS_URL", "").strip()
+
     DB_HOST = os.getenv("DB_HOST")
     DB_PORT = os.getenv("DB_PORT")
     DB_NAME = os.getenv("DB_NAME")

@@ -1,6 +1,6 @@
 // src/ui/admin/tabs/RbacTab.tsx
 
-import { useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ShieldCheck, UserRound } from "lucide-react";
 
 import { AuthContext } from "../../../state/AuthContext";
@@ -71,10 +71,34 @@ export const RbacTab = () => {
   const [selected, setSelected] = useState<string[]>([]);
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [confirmBulk, setConfirmBulk] = useState(false);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(() => new Set());
+  const [onlineTotal, setOnlineTotal] = useState(0);
 
   const api = useMemo(() => {
     return new AdminApi(new ApiClient("", getAccessToken));
   }, [getAccessToken]);
+
+  const loadOnlineUsers = useCallback(async () => {
+    try {
+      const data = await api.listOnlineUsers();
+      if (!data.enabled) {
+        setOnlineUserIds(new Set());
+        setOnlineTotal(0);
+        return;
+      }
+
+      setOnlineTotal(data.total);
+      setOnlineUserIds(new Set(data.items.map((item) => item.userId)));
+    } catch {
+      // polling silencioso — lista de usuários segue funcionando
+    }
+  }, [api]);
+
+  useEffect(() => {
+    void loadOnlineUsers();
+    const intervalId = window.setInterval(() => void loadOnlineUsers(), 30_000);
+    return () => window.clearInterval(intervalId);
+  }, [loadOnlineUsers]);
 
   const usersResource = usePaginatedResource<AdminUser>(
     ({ page, pageSize }) =>
@@ -173,6 +197,7 @@ export const RbacTab = () => {
         description="Administre usuários, papéis diretos, grupos e privilégios administrativos."
         summary={[
           { value: totalUsers, label: "usuários" },
+          { value: onlineTotal, label: "online agora" },
           { value: activeCount, label: "ativos nesta página" },
           { value: superadminCount, label: "superadmins nesta página" },
         ]}
@@ -234,6 +259,14 @@ export const RbacTab = () => {
             label: getUserStatusLabel(user),
             tone: user.active === false ? "danger" : "success",
           },
+          ...(onlineUserIds.has(user.id)
+            ? [
+                {
+                  label: "Online",
+                  tone: "success" as const,
+                },
+              ]
+            : []),
           ...(user.is_superadmin
             ? [
                 {

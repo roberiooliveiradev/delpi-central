@@ -32,6 +32,23 @@ export type AdminUser = {
   birth_date?: string | null;
 };
 
+export type OnlineUserPresence = {
+  userId: string;
+  name?: string | null;
+  email?: string | null;
+  active?: boolean | null;
+  connectionCount: number;
+  connectedAt: string;
+  lastSeenAt: string;
+};
+
+export type OnlineUsersPresenceResponse = {
+  items: OnlineUserPresence[];
+  total: number;
+  ttlSeconds: number;
+  enabled: boolean;
+};
+
 export type AdminRole = {
   id: string;
   name: string;
@@ -288,6 +305,12 @@ export class AdminApi {
 
     return this.client.get<PaginatedResponse<AdminUser>>(
       `/core-api/admin/rbac/users${qs}`
+    );
+  }
+
+  listOnlineUsers() {
+    return this.client.get<OnlineUsersPresenceResponse>(
+      "/core-api/admin/users/presence",
     );
   }
 

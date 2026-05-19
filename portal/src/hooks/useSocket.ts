@@ -111,5 +111,29 @@ export const useSocket = ({
     }
   }, [token]);
 
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !token || token.length < 20) return;
+
+    const ping = () => {
+      if (socket.connected) {
+        socket.emit("presence.ping");
+      }
+    };
+
+    const onConnect = () => {
+      ping();
+    };
+
+    socket.on("connect", onConnect);
+
+    const intervalId = window.setInterval(ping, 45_000);
+
+    return () => {
+      socket.off("connect", onConnect);
+      window.clearInterval(intervalId);
+    };
+  }, [token]);
+
   return socketRef;
 };

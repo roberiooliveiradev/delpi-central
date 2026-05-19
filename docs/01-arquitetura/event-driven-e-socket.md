@@ -339,6 +339,28 @@ Uso:
 
 ---
 
+## 12.1 Presença online (portal aberto)
+
+Com `USER_PRESENCE_ENABLED=true` (padrão), a Core API registra conexões Socket.IO:
+
+| Evento | Ação |
+|--------|------|
+| `connect` | `register(user_id=sub, session_id=sid)` |
+| `disconnect` | `unregister(sid)` |
+| `presence.ping` (portal a cada ~45 s) | `touch(sid)` — renova TTL |
+
+Consulta Admin (superadmin): `GET /admin/users/presence` — lista usuários com portal conectado, `connectionCount`, `connectedAt`, `lastSeenAt`.
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `USER_PRESENCE_ENABLED` | `true` | Liga/desliga presença |
+| `USER_PRESENCE_TTL_SECONDS` | `90` | Sem ping, sessão expira |
+| `USER_PRESENCE_STORE` | `memory` | `memory` ou `redis` (com `REDIS_URL`) |
+
+Em múltiplas réplicas da Core API, use `USER_PRESENCE_STORE=redis` e `REDIS_URL` compartilhado.
+
+---
+
 ## 13. Eventos e Portal
 
 O Portal deve reagir a eventos recarregando dados da Core API.
