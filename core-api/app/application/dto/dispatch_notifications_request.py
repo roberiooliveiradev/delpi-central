@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 
@@ -21,4 +21,5 @@ class DispatchNotificationsRequest:
     emails: list[str]
     role_ids: list[str]
     group_ids: list[str]
+    excluded_user_ids: list[str] = field(default_factory=list)
     source_app: str | None = None

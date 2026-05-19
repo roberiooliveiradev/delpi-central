@@ -127,6 +127,7 @@ export interface DispatchNotificationsPayload {
   emails?: string[];
   roleIds?: string[];
   groupIds?: string[];
+  excludedUserIds?: string[];
   title?: string | null;
   message: string;
   type?: NotificationType;
@@ -390,6 +391,18 @@ export class CoreApi {
     return this.client.post<DispatchNotificationsResponse>(
       "/core-api/admin/notifications",
       payload
+    );
+  }
+
+  resolveNotificationRecipients(
+    payload: Pick<
+      DispatchNotificationsPayload,
+      "roleIds" | "groupIds" | "excludedUserIds" | "broadcast" | "userIds" | "emails" | "message"
+    >,
+  ) {
+    return this.client.post<{ users: { id: string; name: string; email: string }[]; total: number }>(
+      "/core-api/admin/notifications/resolve-recipients",
+      payload,
     );
   }
 

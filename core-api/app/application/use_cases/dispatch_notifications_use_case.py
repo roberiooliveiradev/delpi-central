@@ -2,6 +2,9 @@ from uuid import UUID
 
 from app.application.dto.dispatch_notifications_request import DispatchNotificationsRequest
 from app.application.dto.dispatch_notifications_response import DispatchNotificationsResponse
+from app.application.services.notification_recipient_resolution import (
+    resolve_notification_recipient_ids,
+)
 from app.application.services.notification_content_service import (
     NotificationContentService,
     NotificationContentValidationError,
@@ -165,55 +168,7 @@ class DispatchNotificationsUseCase:
         return spec
 
     def _resolve_target_user_ids(self, request: DispatchNotificationsRequest) -> list[str]:
-        if request.broadcast:
-            return self._list_active_user_ids()
-
-        resolved: set[str] = set()
-
-        for raw_user_id in request.user_ids:
-            user_id = self._normalize_user_id(raw_user_id)
-            user = self.uow.users.get_by_id(UUID(user_id))
-            if not user or not user.active:
-                raise DispatchNotificationsValidationError(f"user not found or inactive: {raw_user_id}")
-            resolved.add(user_id)
-
-        for email in request.emails:
-            normalized_email = (email or "").strip().lower()
-            if not normalized_email:
-                continue
-
-            user = self.uow.users.get_by_email(normalized_email)
-            if not user or not user.active:
-                raise DispatchNotificationsValidationError(
-                    f"user not found or inactive for email: {normalized_email}"
-                )
-            resolved.add(str(user.id))
-
-        for raw_role_id in request.role_ids:
-            role_id = self._normalize_user_id(raw_role_id)
-            resolved.update(self.uow.rbac_queries.list_user_ids_by_role(UUID(role_id)))
-            resolved.update(self.uow.rbac_queries.list_user_ids_by_group_role(UUID(role_id)))
-
-        for raw_group_id in request.group_ids:
-            group_id = self._normalize_user_id(raw_group_id)
-            resolved.update(self.uow.rbac_queries.list_user_ids_by_group(UUID(group_id)))
-
-        return self._filter_active_user_ids(resolved)
-
-    def _list_active_user_ids(self) -> list[str]:
-        return sorted(
-            str(user.id)
-            for user in self.uow.users.list_all()
-            if user.active
-        )
-
-    def _filter_active_user_ids(self, user_ids: set[str]) -> list[str]:
-        active: list[str] = []
-        for user_id in user_ids:
-            user = self.uow.users.get_by_id(UUID(user_id))
-            if user and user.active:
-                active.append(user_id)
-        return sorted(active)
+        return resolve_notification_recipient_ids(self.uow, request)
 
     @staticmethod
     def _normalize_user_id(raw_user_id: str) -> str:

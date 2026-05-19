@@ -15,6 +15,9 @@ from app.application.use_cases.dispatch_notifications_use_case import (
 from app.application.use_cases.list_notification_dispatches_use_case import (
     ListNotificationDispatchesUseCase,
 )
+from app.application.use_cases.resolve_notification_recipients_use_case import (
+    ResolveNotificationRecipientsUseCase,
+)
 from app.application.use_cases.update_scheduled_notification_dispatch_use_case import (
     UpdateScheduledNotificationDispatchUseCase,
 )
@@ -137,6 +140,10 @@ def _parse_dispatch_body(data: dict | None) -> DispatchNotificationsRequest:
             "vars": template_vars if isinstance(template_vars, dict) else {},
         }
 
+    excluded_user_ids = payload.get("excludedUserIds") or payload.get("excluded_user_ids") or []
+    if not isinstance(excluded_user_ids, list):
+        excluded_user_ids = []
+
     return DispatchNotificationsRequest(
         title=payload.get("title"),
         message=payload.get("message", ""),
@@ -155,6 +162,7 @@ def _parse_dispatch_body(data: dict | None) -> DispatchNotificationsRequest:
         emails=[str(item) for item in emails if item],
         role_ids=[str(item) for item in role_ids if item],
         group_ids=[str(item) for item in group_ids if item],
+        excluded_user_ids=[str(item) for item in excluded_user_ids if item],
         source_app=payload.get("sourceApp") or payload.get("source_app"),
     )
 
@@ -183,6 +191,21 @@ def _dispatch_notifications(request_dto: DispatchNotificationsRequest, scheduled
 
 def _parse_scheduled_at_from_body(payload: dict) -> datetime | None:
     return _parse_scheduled_at(payload.get("scheduledAt") or payload.get("scheduled_at"))
+
+
+@admin_notifications_bp.route("/resolve-recipients", methods=["POST"])
+@require_superadmin()
+def resolve_notification_recipients():
+    try:
+        body = request.get_json(silent=True) or {}
+        request_dto = _parse_dispatch_body(body)
+        with SqlAlchemyUnitOfWork() as uow:
+            users = ResolveNotificationRecipientsUseCase(uow).execute(request_dto)
+        return jsonify({"users": users, "total": len(users)}), 200
+    except DispatchNotificationsValidationError as exc:
+        return api_error("validation_error", str(exc), status=400)
+    except Exception as exc:
+        return api_error("resolve_recipients_failed", str(exc))
 
 
 @admin_notifications_bp.route("", methods=["POST"])

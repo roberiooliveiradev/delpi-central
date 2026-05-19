@@ -15,6 +15,7 @@ export type DispatchFormSnapshot = {
   selectedUserIds: string[];
   selectedRoleIds: string[];
   selectedGroupIds: string[];
+  excludedRoleGroupUserIds: string[];
   extraEmails: string[];
   title: string;
   message: string;
@@ -73,6 +74,8 @@ export function snapshotFromDispatchPayload(
     selectedUserIds: (payload.userIds as string[] | undefined) ?? [],
     selectedRoleIds: (payload.roleIds as string[] | undefined) ?? [],
     selectedGroupIds: (payload.groupIds as string[] | undefined) ?? [],
+    excludedRoleGroupUserIds:
+      (payload.excludedUserIds as string[] | undefined) ?? [],
     extraEmails: (payload.emails as string[] | undefined) ?? [],
     title: (payload.title as string | undefined) ?? "",
     message: (payload.message as string | undefined) ?? "",

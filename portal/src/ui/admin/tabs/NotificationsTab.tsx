@@ -88,6 +88,7 @@ export function NotificationsTab() {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+  const [excludedRoleGroupUserIds, setExcludedRoleGroupUserIds] = useState<string[]>([]);
   const [extraEmails, setExtraEmails] = useState<string[]>([]);
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -183,6 +184,7 @@ export function NotificationsTab() {
     setSelectedUserIds(snapshot.selectedUserIds);
     setSelectedRoleIds(snapshot.selectedRoleIds);
     setSelectedGroupIds(snapshot.selectedGroupIds);
+    setExcludedRoleGroupUserIds(snapshot.excludedRoleGroupUserIds);
     setExtraEmails(snapshot.extraEmails);
     setTitle(snapshot.title);
     setMessage(snapshot.message);
@@ -206,6 +208,7 @@ export function NotificationsTab() {
     setSelectedUserIds([]);
     setSelectedRoleIds([]);
     setSelectedGroupIds([]);
+    setExcludedRoleGroupUserIds([]);
     setExtraEmails([]);
     setTitle("");
     setMessage("");
@@ -265,6 +268,10 @@ export function NotificationsTab() {
       emails: broadcast ? undefined : extraEmails,
       roleIds: broadcast ? undefined : selectedRoleIds,
       groupIds: broadcast ? undefined : selectedGroupIds,
+      excludedUserIds:
+        broadcast || (selectedRoleIds.length === 0 && selectedGroupIds.length === 0)
+          ? undefined
+          : excludedRoleGroupUserIds,
       title: isTemplate ? title.trim() || templatePreview?.title || null : title.trim() || null,
       message: fallbackMessage,
       type,
@@ -549,10 +556,13 @@ export function NotificationsTab() {
                 />
                 <NotificationRoleGroupPicker
                   adminApi={adminApi}
+                  coreApi={coreApi}
                   selectedRoleIds={selectedRoleIds}
                   selectedGroupIds={selectedGroupIds}
+                  excludedUserIds={excludedRoleGroupUserIds}
                   onChangeRoleIds={setSelectedRoleIds}
                   onChangeGroupIds={setSelectedGroupIds}
+                  onChangeExcludedUserIds={setExcludedRoleGroupUserIds}
                   disabled={isSubmitting}
                 />
               </>
