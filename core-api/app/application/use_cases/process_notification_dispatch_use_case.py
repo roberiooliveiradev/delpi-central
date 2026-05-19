@@ -6,9 +6,11 @@ from uuid import UUID
 from app.application.dto.dispatch_notifications_request import DispatchNotificationsRequest
 from app.application.services.dispatch_notifications_serialization import payload_dict_to_request
 from app.application.unit_of_work import UnitOfWork
+from app.application.errors.notification_dispatch_errors import (
+    DispatchNotificationsValidationError,
+)
 from app.application.use_cases.dispatch_notifications_use_case import (
     DispatchNotificationsUseCase,
-    DispatchNotificationsValidationError,
 )
 from app.domain.notifications.notification_template_registry import NotificationTemplateRegistry
 from app.domain.ports.notification_dispatch_repository import NotificationDispatchDTO

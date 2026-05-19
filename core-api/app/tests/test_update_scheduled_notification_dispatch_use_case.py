@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 
 from app.application.dto.dispatch_notifications_request import DispatchNotificationsRequest
-from app.application.use_cases.dispatch_notifications_use_case import (
+from app.application.errors.notification_dispatch_errors import (
     DispatchNotificationsValidationError,
 )
 from app.application.use_cases.update_scheduled_notification_dispatch_use_case import (

@@ -3,7 +3,7 @@
 from uuid import UUID
 
 from app.application.dto.dispatch_notifications_request import DispatchNotificationsRequest
-from app.application.use_cases.dispatch_notifications_use_case import (
+from app.application.errors.notification_dispatch_errors import (
     DispatchNotificationsValidationError,
 )
 from app.application.unit_of_work import UnitOfWork

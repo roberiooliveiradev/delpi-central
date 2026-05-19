@@ -9,7 +9,7 @@ from app.application.services.dispatch_notifications_serialization import (
     request_to_payload_dict,
 )
 from app.application.unit_of_work import UnitOfWork
-from app.application.use_cases.dispatch_notifications_use_case import (
+from app.application.errors.notification_dispatch_errors import (
     DispatchNotificationsValidationError,
 )
 from app.application.use_cases.process_notification_dispatch_use_case import (

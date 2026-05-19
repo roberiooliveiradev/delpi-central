@@ -2,6 +2,9 @@ from uuid import UUID
 
 from app.application.dto.dispatch_notifications_request import DispatchNotificationsRequest
 from app.application.dto.dispatch_notifications_response import DispatchNotificationsResponse
+from app.application.errors.notification_dispatch_errors import (
+    DispatchNotificationsValidationError,
+)
 from app.application.services.notification_recipient_resolution import (
     resolve_notification_recipient_ids,
 )
@@ -15,10 +18,6 @@ from app.domain.notifications.notification_recipient_vars import build_recipient
 from app.domain.notifications.notification_template_registry import NotificationTemplateRegistry
 from app.domain.notifications.per_recipient_policy import requires_per_recipient_render
 from app.domain.ports.notification_repository import NotificationDTO
-
-
-class DispatchNotificationsValidationError(ValueError):
-    pass
 
 
 class DispatchNotificationsUseCase:

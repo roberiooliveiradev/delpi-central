@@ -6,9 +6,11 @@ from uuid import uuid4
 import pytest
 
 from app.application.dto.dispatch_notifications_request import DispatchNotificationsRequest
+from app.application.errors.notification_dispatch_errors import (
+    DispatchNotificationsValidationError,
+)
 from app.application.use_cases.dispatch_notifications_use_case import (
     DispatchNotificationsUseCase,
-    DispatchNotificationsValidationError,
 )
 from app.domain.ports.user_repository_port import UserDTO
 

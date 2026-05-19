@@ -9,7 +9,7 @@ from app.application.dto.dispatch_notifications_request import DispatchNotificat
 from app.application.use_cases.create_notification_dispatch_use_case import (
     CreateNotificationDispatchUseCase,
 )
-from app.application.use_cases.dispatch_notifications_use_case import (
+from app.application.errors.notification_dispatch_errors import (
     DispatchNotificationsValidationError,
 )
 from app.application.use_cases.list_notification_dispatches_use_case import (
