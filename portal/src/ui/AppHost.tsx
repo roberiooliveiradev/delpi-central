@@ -300,14 +300,7 @@ export const AppHost = () => {
     if (typeof mod.mount === "function") {
       mod.mount(federatedHostRef.current, props);
     }
-  }, [
-    app?.id,
-    app?.renderMode,
-    app?.basePath,
-    location.pathname,
-    location.search,
-    getAccessToken,
-  ]);
+  }, [app?.id, app?.renderMode, app?.basePath, location.pathname, getAccessToken]);
 
   useEffect(() => {
     const forwardTokenUpdate = async () => {

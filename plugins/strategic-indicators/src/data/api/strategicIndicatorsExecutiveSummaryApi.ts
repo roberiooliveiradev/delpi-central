@@ -70,7 +70,10 @@ export async function fetchStrategicIndicatorsExecutiveSummary({
 
   if (!response.ok) {
     const message = await safeReadError(response);
-    throw new Error(message || "Falha ao carregar resumo executivo do módulo.");
+    throw new Error(
+      message ||
+        `Falha ao carregar resumo executivo do módulo (HTTP ${response.status}).`,
+    );
   }
 
   return response.json();

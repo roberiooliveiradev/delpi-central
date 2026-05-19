@@ -115,6 +115,10 @@ export function useStrategicIndicatorsExecutiveSummary({
           return;
         }
 
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
+
         setError(
           err instanceof Error
             ? err.message
