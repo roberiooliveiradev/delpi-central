@@ -19,13 +19,13 @@ export type CpvSummary = {
 export type CpvBreakdownItem = {
   cfop?: string;
   tm?: string;
+  tes_description?: string;
   cpv_total?: number;
   total_quantity?: number;
-  label?: string;
-  name?: string;
+  total_movements?: number;
   product_code?: string;
   product_description?: string;
-  value?: number;
+  document?: string;
 };
 
 export type CpvData = {
@@ -36,6 +36,7 @@ export type CpvData = {
   by_cfop: CpvBreakdownItem[];
   by_tm: CpvBreakdownItem[];
   top_products: CpvBreakdownItem[];
+  top_documents: CpvBreakdownItem[];
 };
 
 export type OtdSummary = {
@@ -47,8 +48,9 @@ export type OtdSummary = {
 };
 
 export type OtdMonthlyItem = {
-  month?: string;
-  period?: string;
+  month?: string | number;
+  year?: string | number;
+  month_date?: string;
   otd_percentage?: number;
   total_lines?: number;
   on_time_lines?: number;
@@ -64,6 +66,21 @@ export type LateSupplierItem = {
   late_percentage?: number;
 };
 
+export type LateDeliveryItem = {
+  branch?: string;
+  supplier_code?: string;
+  supplier_name?: string;
+  document?: string;
+  order_number?: string;
+  order_item?: string;
+  product_code?: string;
+  product_description?: string;
+  quantity?: number;
+  expected_delivery_date?: string;
+  receipt_entry_date?: string;
+  days_diff?: number;
+};
+
 export type OtdData = {
   branch: string;
   start_date: string;
@@ -71,6 +88,7 @@ export type OtdData = {
   summary: OtdSummary;
   monthly_breakdown: OtdMonthlyItem[];
   top_late_suppliers: LateSupplierItem[];
+  late_deliveries: LateDeliveryItem[];
 };
 
 export type StockValueSummary = {
@@ -84,6 +102,15 @@ export type StockValueSummary = {
 
 export type StockValueByLocation = {
   location?: string;
+  branch?: string;
+  total_stock_value?: number;
+  total_stock_quantity?: number;
+};
+
+export type StockTopProduct = {
+  product_code?: string;
+  product_description?: string;
+  location?: string;
   total_stock_value?: number;
   total_stock_quantity?: number;
 };
@@ -92,7 +119,9 @@ export type StockValueData = {
   branch: string;
   location: string;
   summary: StockValueSummary;
+  by_branch: StockValueByLocation[];
   by_location: StockValueByLocation[];
+  top_products: StockTopProduct[];
 };
 
 export type InventoryTurnoverSummary = {
@@ -114,5 +143,19 @@ export type InventoryTurnoverData = {
     idd_period_valid: boolean;
     strict_idd_period: boolean;
     period_reference: number;
+  };
+  stock_context: {
+    total_stock_value: number;
+    total_stock_quantity: number;
+    total_records: number;
+    total_products: number;
+    total_locations: number;
+    average_unit_value: number;
+  };
+  cpv_context: {
+    cpv_total: number;
+    total_movements: number;
+    total_quantity: number;
+    cpv_average_monthly: number;
   };
 };

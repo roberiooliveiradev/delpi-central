@@ -54,13 +54,13 @@ async function fetchSuppliesData<T>(
 }
 
 export function getCpv(params: SuppliesFilterParams, signal?: AbortSignal) {
-  return fetchSuppliesData<CpvData>("/cpv", { ...params, top_limit: 8 }, signal);
+  return fetchSuppliesData<CpvData>("/cpv", { ...params, top_limit: 15 }, signal);
 }
 
 export function getOtd(params: SuppliesFilterParams, signal?: AbortSignal) {
   return fetchSuppliesData<OtdData>(
     "/otd",
-    { ...params, top_limit: 8, details_limit: 15 },
+    { ...params, top_limit: 10, details_limit: 50 },
     signal
   );
 }
@@ -71,7 +71,7 @@ export function getStockValue(
 ) {
   return fetchSuppliesData<StockValueData>(
     "/stock-value",
-    { ...params, top_limit: params.top_limit ?? 10 },
+    { ...params, top_limit: params.top_limit ?? 20 },
     signal
   );
 }

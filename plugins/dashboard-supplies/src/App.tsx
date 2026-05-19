@@ -1,17 +1,58 @@
 import { configureHttpClient } from "./api/httpClient";
+import { SUPPLIES_ROUTES } from "./constants/routes";
+import { CpvPage } from "./pages/CpvPage";
 import { DashboardSuppliesPage } from "./pages/DashboardSuppliesPage";
+import { InventoryTurnoverPage } from "./pages/InventoryTurnoverPage";
+import { OtdPage } from "./pages/OtdPage";
+import { StockPage } from "./pages/StockPage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
 };
 
-export default function App({ getAccessToken }: AppProps) {
+function normalizePath(pathname?: string): string {
+  if (!pathname) return SUPPLIES_ROUTES.home;
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1);
+  }
+  return pathname;
+}
+
+function renderPage(path: string, pathname?: string) {
+  if (path === SUPPLIES_ROUTES.cpv || path.startsWith(`${SUPPLIES_ROUTES.cpv}/`)) {
+    return <CpvPage pathname={path} />;
+  }
+
+  if (path === SUPPLIES_ROUTES.otd || path.startsWith(`${SUPPLIES_ROUTES.otd}/`)) {
+    return <OtdPage pathname={path} />;
+  }
+
+  if (
+    path === SUPPLIES_ROUTES.stock ||
+    path.startsWith(`${SUPPLIES_ROUTES.stock}/`)
+  ) {
+    return <StockPage pathname={path} />;
+  }
+
+  if (
+    path === SUPPLIES_ROUTES.inventoryTurnover ||
+    path.startsWith(`${SUPPLIES_ROUTES.inventoryTurnover}/`)
+  ) {
+    return <InventoryTurnoverPage pathname={path} />;
+  }
+
+  return <DashboardSuppliesPage pathname={pathname ?? path} />;
+}
+
+export default function App({ getAccessToken, pathname }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
 
+  const path = normalizePath(pathname);
+
   return (
-    <div className="ds-app-shell">
-      <DashboardSuppliesPage />
+    <div className="ds-app-shell" key={path}>
+      {renderPage(path, pathname)}
     </div>
   );
 }

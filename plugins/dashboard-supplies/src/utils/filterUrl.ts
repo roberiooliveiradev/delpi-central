@@ -118,3 +118,15 @@ export function writeFiltersToUrl(state: SuppliesFilterUrlState): void {
 
   window.history.replaceState(window.history.state, "", nextUrl);
 }
+
+export function appendFiltersToPath(
+  path: string,
+  state?: SuppliesFilterUrlState
+): string {
+  const filters = state ?? readSuppliesFilters();
+  return `${path}${buildFilterSearchParams(filters)}`;
+}
+
+export function readFiltersFromUrl(search: string): SuppliesFilterUrlState {
+  return parseFilterParams(new URLSearchParams(search)) ?? defaultFilterState();
+}

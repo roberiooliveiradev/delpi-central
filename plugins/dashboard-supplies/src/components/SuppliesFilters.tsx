@@ -7,6 +7,7 @@ type SuppliesFiltersProps = {
   onDateEndChange: (value: string) => void;
   onBranchChange: (value: string) => void;
   onLocationChange: (value: string) => void;
+  showPeriodFilters?: boolean;
   className?: string;
 };
 
@@ -19,28 +20,33 @@ export function SuppliesFilters({
   onDateEndChange,
   onBranchChange,
   onLocationChange,
+  showPeriodFilters = true,
   className = "",
 }: SuppliesFiltersProps) {
   return (
     <section className={`ds-filters-row ${className}`.trim()}>
-      <div className="ds-filter-box">
-        <label htmlFor="ds-date-start">Data inicial</label>
-        <input
-          id="ds-date-start"
-          type="date"
-          value={dateStart}
-          onChange={(e) => onDateStartChange(e.target.value)}
-        />
-      </div>
-      <div className="ds-filter-box">
-        <label htmlFor="ds-date-end">Data final</label>
-        <input
-          id="ds-date-end"
-          type="date"
-          value={dateEnd}
-          onChange={(e) => onDateEndChange(e.target.value)}
-        />
-      </div>
+      {showPeriodFilters ? (
+        <>
+          <div className="ds-filter-box">
+            <label htmlFor="ds-date-start">Data inicial</label>
+            <input
+              id="ds-date-start"
+              type="date"
+              value={dateStart}
+              onChange={(e) => onDateStartChange(e.target.value)}
+            />
+          </div>
+          <div className="ds-filter-box">
+            <label htmlFor="ds-date-end">Data final</label>
+            <input
+              id="ds-date-end"
+              type="date"
+              value={dateEnd}
+              onChange={(e) => onDateEndChange(e.target.value)}
+            />
+          </div>
+        </>
+      ) : null}
       <div className="ds-filter-box">
         <label htmlFor="ds-branch">Filial</label>
         <select
