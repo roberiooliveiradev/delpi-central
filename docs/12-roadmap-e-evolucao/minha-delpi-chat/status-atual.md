@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado após conclusão do roadmap admin (itens 1–15) e melhorias futuras (maio/2026).
+> Atualizado após conclusão da **Onda 6** de inteligência do chat, roadmap admin (itens 1–15) e melhorias futuras (maio/2026).
 
 ## Visão geral
 
@@ -16,6 +16,8 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 | Roadmap admin | [minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
 | Inteligência do chat | [minha-delpi-ai-api/docs/roadmap/README.md](../../../minha-delpi-ai-api/docs/roadmap/README.md) |
+| Onda 6 (inteligência) | [inteligencia-chat-onda-6.md](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-6.md) |
+| Guia api-delpi para agentes | [api-delpi-rotas-agente.md](../../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md) |
 | Melhorias futuras | [minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md) |
 
 ## Estado funcional
@@ -28,6 +30,8 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 - **Feedback** thumbs up/down nas respostas do assistente
 - Segurança de entrada (sanitização, anti-injection, modo enforce/monitor)
 - Inteligência configurável: RAG híbrido, rerank, loop agentic, cache de embeddings (admin)
+- **Pipeline operacional (Onda 6):** fast path, seleção heurística de actions OpenAPI, resposta direta (produto/LMP/SQL), metadados `intelligence` (timings, action, pipeline)
+- Timeline de mensagens (estilo mensageiro), pin no topo durante stream, primeira pergunta visível ao enviar
 
 ### Painel administrativo
 
@@ -47,7 +51,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 
 - **Admin itens 1–15:** concluídos — ver `admin-minha-delpi-chat.md`
 - **Gestão de agentes ondas 1–7:** concluídas — ver `agentes-gestao-melhorias.md`
-- **Inteligência do chat ondas 1–5:** concluídas — ver `roadmap/README.md` em `minha-delpi-ai-api`
+- **Inteligência do chat ondas 1–6:** concluídas — ver `roadmap/README.md` e `inteligencia-chat-onda-6.md` em `minha-delpi-ai-api`
 - **Melhorias futuras:** concluídas neste repositório — ver `melhorias-futuras.md`
 - **Pendente externo:** RBAC com perfis formais no `core-api`
 
@@ -91,14 +95,38 @@ GET  /apps/minha-delpi-ai/api/admin/metrics/summary?hours=24
 GET  /apps/minha-delpi-ai/api/chat/capabilities
 ```
 
-## Inteligência do chat (Onda 6)
+## Inteligência do chat (Onda 6) — concluída
 
-Roadmap detalhado: [`minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-6.md) — modelo `qwen2.5:1.5b`, resposta direta após actions, seleção heurística, RAG enxuto e bateria de regressão.
+Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-6.md).
+
+| Entrega | Status |
+|---------|--------|
+| Modelo padrão `qwen2.5:1.5b` + env CPU | Concluído |
+| Fast path operacional | Concluído |
+| Seleção de actions (produto, estoque, LMP, SQL, suprimentos) | Concluído |
+| Resposta direta sem LLM (produto, LMP, SQL, genérico) | Concluído |
+| Prompts `operational-agent.md` + `api-delpi-routes.md` | Concluído |
+| OpenAPI api-delpi enriquecido (`operationId`, summaries PT) | Concluído |
+| Doc RAG para agentes (`docs/knowledge/api-delpi-rotas-agente.md`) | Concluído |
+| Metadados `intelligence` (timings, `selectedExternalAction`, `pipeline`) | Concluído |
+| Fixtures de regressão (`tests/fixtures/chat_intelligence_regression_cases.py`) | Concluído |
+
+**Produção recomendada (CPU):** `CHAT_OPERATIONAL_FAST_PATH_ENABLED=true`, `CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED=true`, `EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED=false`, `CHAT_RAG_HYBRID_ENABLED=false`, `CHAT_RAG_PREFER_KEYWORD_SEARCH=true` — ver [variaveis-de-ambiente.md](../../02-infraestrutura/variaveis-de-ambiente.md).
+
+**Após deploy da api-delpi:** reimportar OpenAPI no provider do agente e reindexar o documento de rotas na base de conhecimento.
+
+**Homologação pendente:** latência &lt; 15s em CPU para pergunta operacional típica (estoque por código).
+
+## api-delpi e agentes
+
+- Metadados OpenAPI centralizados em `api-delpi/app/interface/http/openapi_agent_metadata.py`
+- Guia técnico: [`api-delpi/docs/api/11-guia-agente-chat.md`](../../../api-delpi/docs/api/11-guia-agente-chat.md)
 
 ## Próximas evoluções sugeridas
 
 1. RBAC formal no Core API (perfis centralizados)
 2. Notificações — ver [notificacoes-minha-delpi.md](../../../minha-delpi-ai-api/docs/roadmap/notificacoes-minha-delpi.md)
 3. Observabilidade Prometheus/Grafana
-4. Homologação vLLM em GPU
-5. Tools operacionais (`search_lmp`, etc.) com RBAC dedicado
+4. Homologação vLLM em GPU (latência com modelo maior)
+5. Validação de latência Onda 6 em ambiente de produção real
+6. Templates de system prompt no admin (“Operacional TOTVS”, “Documental/RH”) — opcional
