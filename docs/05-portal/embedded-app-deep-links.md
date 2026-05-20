@@ -51,8 +51,13 @@ Tipos já usados no ecossistema DELPI:
 | `DELPI_NAVIGATE` | Portal → filho |
 | `DELPI_EMBEDDED_ROUTE` | Filho → portal (sincroniza URL) |
 | `DELPI_LOGOUT` | Portal → filho |
+| `DELPI_THEME` | Portal → filho (`theme`, `resolved`) — tema claro/escuro/sistema |
 
-Implementação de referência: `controle_mp/front-cadastro-mp/src/app/sso/DelpiNavigateBridge.jsx`.
+Implementação de referência: `controle_mp/.../DelpiNavigateBridge.jsx`, `DelpiThemeBridge.jsx`.
+
+### Tema (opcional no filho)
+
+O portal envia `DELPI_THEME` para **todo** app `renderMode: embedded` (`AppHost`). O filho precisa escutar e aplicar (ex.: `data-theme` no `<html>`). Sem bridge no app, o iframe ignora a mensagem e mantém o tema local/sistema.
 
 ## Portal (código)
 

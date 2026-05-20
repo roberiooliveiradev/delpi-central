@@ -15,6 +15,7 @@ import {
   pendingMatchesCurrentApp,
   portalPathMatchesAppBase,
 } from "../utils/embeddedAppNotification";
+import { buildThemeMessage } from "../utils/theme";
 
 function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -172,6 +173,19 @@ export const AppHost = () => {
     window.setTimeout(trySendPendingEmbeddedNavigate, 200);
     window.setTimeout(trySendPendingEmbeddedNavigate, 600);
     window.setTimeout(trySendPendingEmbeddedNavigate, 1200);
+
+    sendThemeToIframe();
+  }
+
+  function sendThemeToIframe() {
+    if (!iframeRef.current) return;
+    if (!app || app.renderMode !== "embedded") return;
+    if (!resolvedEntry) return;
+
+    iframeRef.current.contentWindow?.postMessage(
+      buildThemeMessage(),
+      getUrlOrigin(resolvedEntry),
+    );
   }
 
   function sendLogoutToIframe() {
@@ -259,6 +273,7 @@ export const AppHost = () => {
 
       if (event.data?.type === "DELPI_AUTH_READY") {
         sendAuthToIframe();
+        sendThemeToIframe();
         return;
       }
 
@@ -287,6 +302,32 @@ export const AppHost = () => {
     iframeReloadKey,
     refreshToken,
   ]);
+
+  useEffect(() => {
+    function handleThemeChange() {
+      sendThemeToIframe();
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key === "theme") {
+        sendThemeToIframe();
+      }
+    }
+
+    window.addEventListener("DELPI_THEME_CHANGE", handleThemeChange);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("DELPI_THEME_CHANGE", handleThemeChange);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [app, resolvedEntry, iframeReloadKey]);
+
+  useEffect(() => {
+    if (app?.renderMode === "embedded") {
+      sendThemeToIframe();
+    }
+  }, [app?.id, app?.renderMode, resolvedEntry, iframeReloadKey]);
 
   useEffect(() => {
     function handleGlobalLogout() {

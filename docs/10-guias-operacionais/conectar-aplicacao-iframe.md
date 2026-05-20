@@ -17,6 +17,7 @@ Este guia cobre o fluxo completo: manifesto no portal, SSO, notificações com d
 │       │                              ▲                       │
 │       │ postMessage                  │ DELPI_AUTH_READY      │
 │       ├─ DELPI_AUTH (token Keycloak) │ DELPI_NAVIGATE (path) │
+│       ├─ DELPI_THEME (claro/escuro)  │ DELPI_EMBEDDED_ROUTE  │
 │       └─ DELPI_LOGOUT                │                       │
 └─────────────────────────────────────────────────────────────┘
          │
@@ -121,6 +122,20 @@ Implemente três bridges (padrão Controle MP):
 | `DelpiSsoBridge.jsx` | Pede token (`DELPI_AUTH_READY`), chama API `sso-login`; no iframe **não** redireciona para home após SSO |
 | `DelpiNavigateBridge.jsx` | Escuta `DELPI_NAVIGATE` e navega no React Router |
 | `DelpiRouteSyncBridge.jsx` | Envia `DELPI_EMBEDDED_ROUTE` ao pai quando a rota interna muda |
+| `DelpiThemeBridge.jsx` | Escuta `DELPI_THEME` e aplica `data-theme` (claro/escuro/sistema do portal) |
+
+### Tema claro / escuro / sistema
+
+O menu do portal (Sidebar) persiste `theme` em `localStorage` e o `AppHost` envia ao iframe:
+
+```json
+{ "type": "DELPI_THEME", "theme": "light|dark|system", "resolved": "light|dark" }
+```
+
+- `theme`: preferência do usuário no portal.
+- `resolved`: tema efetivo (com `system`, segue `prefers-color-scheme` do navegador).
+
+O filho deve definir `document.documentElement.setAttribute("data-theme", resolved)` e marcar sincronização (ex.: `data-delpi-theme-synced="true"`) para não conflitar com CSS `@media (prefers-color-scheme)` no modo standalone.
 
 **Origens permitidas** no filho (validar `event.origin`):
 

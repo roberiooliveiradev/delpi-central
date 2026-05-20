@@ -1,52 +1,48 @@
 // src/hooks/useTheme.ts
 
 import { useEffect, useState } from "react";
+import {
+  applyThemeToDocument,
+  getStoredTheme,
+  resolveTheme,
+  type Theme,
+  THEME_STORAGE_KEY,
+} from "../utils/theme";
 
-export type Theme = "light" | "dark" | "system";
-
-const STORAGE_KEY = "theme";
 const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-function resolveSystemTheme(): "light" | "dark" {
-  return mediaQuery.matches ? "dark" : "light";
+function notifyThemeChange(theme: Theme) {
+  window.dispatchEvent(
+    new CustomEvent("DELPI_THEME_CHANGE", {
+      detail: {
+        theme,
+        resolved: resolveTheme(theme),
+      },
+    }),
+  );
 }
 
-function applyThemeToDocument(value: Theme) {
-  const root = document.documentElement;
-
-  const resolved =
-    value === "system" ? resolveSystemTheme() : value;
-
-  root.setAttribute("data-theme", resolved);
-}
+export type { Theme };
 
 export const useTheme = () => {
-  const getInitialTheme = (): Theme => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "light" || saved === "dark" || saved === "system") {
-      return saved;
-    }
-    return "system";
-  };
-
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  const [theme, setThemeState] = useState<Theme>(getStoredTheme);
 
   const setTheme = (value: Theme) => {
-    localStorage.setItem(STORAGE_KEY, value);
+    localStorage.setItem(THEME_STORAGE_KEY, value);
     setThemeState(value);
   };
 
-  // Aplica sempre que o theme mudar
   useEffect(() => {
     applyThemeToDocument(theme);
+    notifyThemeChange(theme);
   }, [theme]);
 
-  // Escuta mudança do sistema SOMENTE se estiver em system
   useEffect(() => {
     if (theme !== "system") return;
 
     const handleChange = () => {
       applyThemeToDocument("system");
+      notifyThemeChange("system");
     };
 
     mediaQuery.addEventListener("change", handleChange);
