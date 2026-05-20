@@ -8,7 +8,9 @@ import {
 } from "../hooks/useGoogleEmbeddedAppLogin";
 import { pushRecentApp } from "../utils/recentApps";
 import {
+  buildPortalEmbeddedPath,
   clearEmbeddedDeepLink,
+  extractEmbeddedDeepPath,
   peekEmbeddedDeepLink,
   pendingMatchesCurrentApp,
   portalPathMatchesAppBase,
@@ -127,13 +129,31 @@ export const AppHost = () => {
   }
 
   function trySendPendingEmbeddedNavigate() {
+    if (!app) return;
+
+    const fromUrl = extractEmbeddedDeepPath(location.pathname, app.basePath);
+    if (fromUrl && fromUrl !== "/") {
+      postNavigateToIframe(fromUrl);
+      return;
+    }
+
     const pending = peekEmbeddedDeepLink();
-    if (!pending || !app) return;
-    if (!pendingMatchesCurrentApp(pending, app.basePath)) return;
+    if (!pending || !pendingMatchesCurrentApp(pending, app.basePath)) return;
 
     postNavigateToIframe(pending.deepPath, () => {
       clearEmbeddedDeepLink();
     });
+  }
+
+  function syncPortalUrlFromEmbeddedRoute(deepPath: string) {
+    if (!app) return;
+
+    const portalPath = buildPortalEmbeddedPath(app.basePath, deepPath);
+    const current = location.pathname.replace(/\/+$/, "") || "/";
+    const next = portalPath.replace(/\/+$/, "") || "/";
+
+    if (current === next) return;
+    navigate(portalPath, { replace: true });
   }
 
   function sendAuthToIframe() {
@@ -214,6 +234,7 @@ export const AppHost = () => {
         return;
       }
 
+      syncPortalUrlFromEmbeddedRoute(deepPath);
       postNavigateToIframe(deepPath);
     }
 
@@ -221,7 +242,7 @@ export const AppHost = () => {
     return () => {
       window.removeEventListener("DELPI_NOTIFICATION_NAVIGATE", handleNotificationNavigate);
     };
-  }, [app, location.pathname, resolvedEntry]);
+  }, [app, location.pathname, resolvedEntry, navigate]);
 
   useEffect(() => {
     if (app?.renderMode === "embedded") {
@@ -238,6 +259,14 @@ export const AppHost = () => {
 
       if (event.data?.type === "DELPI_AUTH_READY") {
         sendAuthToIframe();
+        return;
+      }
+
+      if (event.data?.type === "DELPI_EMBEDDED_ROUTE") {
+        const deepPath = event.data?.path;
+        if (typeof deepPath === "string" && deepPath.trim()) {
+          syncPortalUrlFromEmbeddedRoute(deepPath);
+        }
         return;
       }
 
@@ -488,7 +517,7 @@ export const AppHost = () => {
         ) : null}
 
         <iframe
-          key={`${location.pathname}:${iframeReloadKey}`}
+          key={`${app.id}:${iframeReloadKey}`}
           ref={iframeRef}
           title={route?.label || app.name}
           src={iframeSrc}

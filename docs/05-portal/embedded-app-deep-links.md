@@ -69,7 +69,12 @@ Referência Controle MP: `delpiEmbeddedNavigation.js`, `DelpiNavigateBridge.jsx`
 
 ## URL do portal
 
-A barra do navegador permanece em `/controle-mp`; a conversa abre **dentro do iframe** (`/conversations/:id` no domínio do app).
+Com deep link, a barra do navegador reflete a rota interna, no mesmo espírito do chat IA:
+
+- Portal: `/controle-mp/conversations/109`
+- Iframe (domínio do app): `/conversations/109`
+
+O filho envia `DELPI_EMBEDDED_ROUTE` ao mudar de rota; o portal responde com `DELPI_NAVIGATE` ao abrir notificação ou ao carregar URL com sufixo.
 
 ## Aliases de rota
 

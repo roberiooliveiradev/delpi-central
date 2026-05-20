@@ -64,6 +64,31 @@ function AppShell() {
       );
   }, [apps]);
 
+  const embeddedAppHosts = useMemo(() => {
+    return apps
+      .filter((app) => app.renderMode === "embedded")
+      .map((app) => {
+        const basePath = normalizeAppBasePath(app.basePath);
+        const mainRoute =
+          app.routes?.find((route) => route.showInMenu !== false) ?? app.routes?.[0];
+
+        if (!mainRoute?.permission) {
+          return null;
+        }
+
+        return {
+          appId: app.id,
+          basePath,
+          path: `${basePath}/*`,
+          permission: mainRoute.permission,
+        };
+      })
+      .filter(
+        (route): route is { appId: string; basePath: string; path: string; permission: string } =>
+          route !== null,
+      );
+  }, [apps]);
+
   const isFederatedAppRoute = useCallback(
     (path: string) => {
       const normalized = normalizeAppBasePath(path);
@@ -77,9 +102,25 @@ function AppShell() {
     [federatedAppHosts],
   );
 
+  const isEmbeddedAppRoute = useCallback(
+    (path: string) => {
+      const normalized = normalizeAppBasePath(path);
+
+      return embeddedAppHosts.some(
+        (host) =>
+          normalized === host.basePath ||
+          normalized.startsWith(`${host.basePath}/`),
+      );
+    },
+    [embeddedAppHosts],
+  );
+
   const staticPluginRoutes = useMemo(
-    () => routes.filter((route) => !isFederatedAppRoute(route.path)),
-    [routes, isFederatedAppRoute],
+    () =>
+      routes.filter(
+        (route) => !isFederatedAppRoute(route.path) && !isEmbeddedAppRoute(route.path),
+      ),
+    [routes, isFederatedAppRoute, isEmbeddedAppRoute],
   );
 
   return (
@@ -120,6 +161,18 @@ function AppShell() {
             ))}
 
             {federatedAppHosts.map((host) => (
+              <Route
+                key={host.appId}
+                path={host.path}
+                element={
+                  <ProtectedRoute permission={host.permission}>
+                    <AppHost key={host.appId} />
+                  </ProtectedRoute>
+                }
+              />
+            ))}
+
+            {embeddedAppHosts.map((host) => (
               <Route
                 key={host.appId}
                 path={host.path}

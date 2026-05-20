@@ -33,6 +33,43 @@ export function normalizeAppPath(path: string): string {
   return value.startsWith("/") ? value : `/${value}`;
 }
 
+/** URL do portal = basePath + rota interna do iframe (ex.: /controle-mp/conversations/12). */
+export function buildPortalEmbeddedPath(portalRoute: string, deepPath: string): string {
+  const base = normalizeAppPath(portalRoute).replace(/\/+$/, "") || "/";
+  const deep = normalizeAppPath(deepPath);
+
+  if (deep === "/" || portalPathsEquivalent(deep, base)) {
+    return base;
+  }
+
+  if (deep.startsWith(`${base}/`)) {
+    return deep.replace(/\/+$/, "") || base;
+  }
+
+  const suffix = deep.startsWith("/") ? deep : `/${deep}`;
+  return `${base}${suffix}`.replace(/\/+$/, "") || base;
+}
+
+/** Extrai a rota interna do iframe a partir da URL do portal. */
+export function extractEmbeddedDeepPath(
+  pathname: string,
+  appBasePath: string
+): string | null {
+  const base = normalizeAppPath(appBasePath).replace(/\/+$/, "") || "/";
+  const path = normalizeAppPath(pathname).replace(/\/+$/, "") || "/";
+
+  if (portalPathsEquivalent(path, base)) {
+    return "/";
+  }
+
+  if (!path.startsWith(`${base}/`)) {
+    return null;
+  }
+
+  const suffix = path.slice(base.length) || "/";
+  return normalizeAppPath(suffix);
+}
+
 /** Compara rotas tolerando _ vs - (legado controle_mp vs controle-mp). */
 export function portalPathsEquivalent(a: string, b: string): boolean {
   const left = normalizeAppPath(a).replace(/\/+$/, "") || "/";

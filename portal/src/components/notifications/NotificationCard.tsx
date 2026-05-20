@@ -19,6 +19,8 @@ import type { NotificationCategory, NotificationItem } from "../../data/coreApi"
 import { AuthContext } from "../../state/AuthContext";
 import { executeNotificationAction } from "../../utils/notificationNavigation";
 import {
+  buildPortalEmbeddedPath,
+  isEmbeddedDeepLinkNotification,
   normalizeAppPath,
   resolvePortalRoute,
 } from "../../utils/embeddedAppNotification";
@@ -139,7 +141,14 @@ export function NotificationCard({
 
     if (notification.action.type === "portal_route") {
       onNavigate?.();
-      navigate(resolvePortalRoute(notification.action.target, appBasePaths));
+      const portalRoute = resolvePortalRoute(notification.action.target, appBasePaths);
+      const target = isEmbeddedDeepLinkNotification(
+        notification.metadata,
+        notification.action.type
+      )
+        ? buildPortalEmbeddedPath(portalRoute, String(notification.metadata?.deepPath ?? ""))
+        : portalRoute;
+      navigate(target);
     }
 
     void onMarkRead(notification.id);
