@@ -35,6 +35,9 @@ class NotificationRepository(Protocol):
     def get(self, notification_id: UUID) -> NotificationDTO | None:
         ...
 
+    def list_by_ids(self, notification_ids: List[UUID]) -> List[NotificationDTO]:
+        ...
+
     def list_unread(self, user_id: str) -> List[NotificationDTO]:
         ...
 
@@ -51,6 +54,9 @@ class NotificationRepository(Protocol):
         ...
 
     def soft_delete(self, notification_id: UUID) -> None:
+        ...
+
+    def soft_delete_many(self, notification_ids: List[UUID]) -> int:
         ...
 
     def set_important(self, notification_id: UUID, *, is_important: bool) -> None:

@@ -18,6 +18,12 @@ from app.application.use_cases.list_notification_dispatches_use_case import (
 from app.application.use_cases.resolve_notification_recipients_use_case import (
     ResolveNotificationRecipientsUseCase,
 )
+from app.application.use_cases.delete_notification_dispatch_use_case import (
+    DeleteNotificationDispatchUseCase,
+)
+from app.application.use_cases.get_notification_dispatch_detail_use_case import (
+    GetNotificationDispatchDetailUseCase,
+)
 from app.application.use_cases.update_scheduled_notification_dispatch_use_case import (
     UpdateScheduledNotificationDispatchUseCase,
 )
@@ -41,6 +47,7 @@ from app.interfaces.http.security.service_token import require_service_token
 from app.interfaces.http.serializers.notification_dispatch_serializer import (
     serialize_dispatch_result,
     serialize_notification_dispatch,
+    serialize_notification_dispatch_detail,
 )
 from app.interfaces.http.utils.errors import api_error
 
@@ -262,14 +269,42 @@ def get_notification_dispatch(dispatch_id: str):
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            dispatch = uow.notification_dispatches.get(dispatch_uuid)
+            use_case = GetNotificationDispatchDetailUseCase(uow)
+            detail = use_case.execute(dispatch_uuid)
 
-        if not dispatch:
+        return jsonify(serialize_notification_dispatch_detail(detail)), 200
+    except DispatchNotificationsValidationError as exc:
+        if str(exc) == "Dispatch not found":
             return api_error("not_found", "Dispatch not found", status=404)
-
-        return jsonify(serialize_notification_dispatch(dispatch, include_payload=True)), 200
+        return api_error("get_dispatch_failed", str(exc), status=400)
     except Exception as exc:
         return api_error("get_dispatch_failed", str(exc))
+
+
+@admin_notifications_bp.route("/dispatches/<dispatch_id>", methods=["DELETE"])
+@require_superadmin()
+def delete_notification_dispatch(dispatch_id: str):
+    try:
+        dispatch_uuid = UUID(dispatch_id)
+    except ValueError:
+        return api_error("invalid_id", "Invalid dispatch id", status=400)
+
+    actor_id = str(g.current_user.id) if getattr(g, "current_user", None) else None
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = DeleteNotificationDispatchUseCase(uow).execute(
+                dispatch_uuid,
+                actor_user_id=actor_id,
+            )
+
+        return jsonify(result), 200
+    except DispatchNotificationsValidationError as exc:
+        if str(exc) == "Dispatch not found":
+            return api_error("not_found", "Dispatch not found", status=404)
+        return api_error("delete_dispatch_failed", str(exc), status=400)
+    except Exception as exc:
+        return api_error("delete_dispatch_failed", str(exc))
 
 
 @admin_notifications_bp.route("/dispatches/<dispatch_id>", methods=["PUT"])

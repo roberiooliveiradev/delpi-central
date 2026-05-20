@@ -1,10 +1,11 @@
 // src/components/notifications/NotificationDispatchHistory.tsx
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, History, Pencil, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, History, Pencil, RefreshCw, Trash2 } from "lucide-react";
 
 import type { CoreApi, NotificationDispatchItem } from "../../data/coreApi";
 import { isEditableScheduledDispatch } from "./dispatchEditForm";
+import { NotificationDispatchDetailModal } from "./NotificationDispatchDetailModal";
 
 import "./NotificationDispatchHistory.css";
 
@@ -32,8 +33,45 @@ export function NotificationDispatchHistory({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [detailDispatchId, setDetailDispatchId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  function canDeleteDispatch(item: NotificationDispatchItem) {
+    if (item.revokedAt) return false;
+    if (item.status === "pending") return true;
+    if (item.status === "processing") return false;
+    return item.createdCount > 0 || item.status === "completed";
+  }
+
+  function deleteConfirmMessage(item: NotificationDispatchItem) {
+    if (item.status === "pending") {
+      return "Cancelar este envio agendado? Ele será removido do histórico.";
+    }
+    const count = item.createdCount > 0 ? item.createdCount : "todos os";
+    return `Excluir este envio para ${count} destinatário(s)? A notificação sumirá da caixa de entrada de quem recebeu.`;
+  }
+
+  async function handleDeleteDispatch(item: NotificationDispatchItem) {
+    if (!canDeleteDispatch(item)) return;
+    if (!window.confirm(deleteConfirmMessage(item))) return;
+
+    setDeletingId(item.id);
+    setError(null);
+
+    try {
+      await coreApi.deleteNotificationDispatch(item.id);
+      if (detailDispatchId === item.id) {
+        setDetailDispatchId(null);
+      }
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao excluir envio");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -138,7 +176,7 @@ export function NotificationDispatchHistory({
                 <th>Título / template</th>
                 <th>Destinatários</th>
                 <th>Formato</th>
-                {onEditDispatch ? <th>Ações</th> : null}
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -176,9 +214,18 @@ export function NotificationDispatchHistory({
                         : `${item.createdCount}`}
                   </td>
                   <td>{item.presentation}</td>
-                  {onEditDispatch ? (
-                    <td>
-                      {isEditableScheduledDispatch(item.status, item.scheduledAt) ? (
+                  <td>
+                    <div className="notification-dispatch-history__row-actions">
+                      <button
+                        type="button"
+                        className="notification-dispatch-history__edit"
+                        onClick={() => setDetailDispatchId(item.id)}
+                      >
+                        <Eye size={14} aria-hidden="true" />
+                        Detalhes
+                      </button>
+                      {onEditDispatch &&
+                      isEditableScheduledDispatch(item.status, item.scheduledAt) ? (
                         <button
                           type="button"
                           className="notification-dispatch-history__edit"
@@ -187,11 +234,22 @@ export function NotificationDispatchHistory({
                           <Pencil size={14} aria-hidden="true" />
                           Editar
                         </button>
-                      ) : (
-                        <span className="notification-dispatch-history__muted">—</span>
-                      )}
-                    </td>
-                  ) : null}
+                      ) : null}
+                      {canDeleteDispatch(item) ? (
+                        <button
+                          type="button"
+                          className="notification-dispatch-history__edit notification-dispatch-history__edit--danger"
+                          disabled={deletingId === item.id}
+                          onClick={() => void handleDeleteDispatch(item)}
+                        >
+                          <Trash2 size={14} aria-hidden="true" />
+                          {deletingId === item.id ? "Excluindo…" : "Excluir"}
+                        </button>
+                      ) : item.revokedAt ? (
+                        <span className="notification-dispatch-history__muted">Removido</span>
+                      ) : null}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -222,6 +280,17 @@ export function NotificationDispatchHistory({
           </button>
         </footer>
       ) : null}
+
+      <NotificationDispatchDetailModal
+        open={detailDispatchId != null}
+        dispatchId={detailDispatchId}
+        coreApi={coreApi}
+        onClose={() => setDetailDispatchId(null)}
+        onDeleted={() => {
+          setDetailDispatchId(null);
+          void load();
+        }}
+      />
     </section>
   );
 }

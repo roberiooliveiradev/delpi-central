@@ -41,6 +41,9 @@ class NotificationDispatchRepository(Protocol):
     def update(self, dispatch: NotificationDispatchDTO) -> None:
         ...
 
+    def delete(self, dispatch_id: UUID) -> None:
+        ...
+
     def list_recent(
         self,
         *,

@@ -177,10 +177,47 @@ export interface NotificationDispatchItem {
   sourceApp?: string | null;
   errorMessage?: string | null;
   createdAt: string;
+  revokedAt?: string | null;
+}
+
+export interface NotificationDispatchRecipient {
+  id?: string;
+  userId?: string;
+  notificationId?: string;
+  name: string;
+  email: string;
+  read?: boolean;
+  createdAt?: string | null;
+}
+
+export interface NotificationDispatchTargeting {
+  broadcast: boolean;
+  userIds: string[];
+  emails: string[];
+  roleIds: string[];
+  groupIds: string[];
+  excludedUserIds: string[];
+  sourceApp?: string | null;
+  actionType?: string | null;
+  actionLabel?: string | null;
+  actionTarget?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export interface NotificationDispatchCreatedBy {
+  id: string;
+  name: string;
+  email: string;
 }
 
 export interface NotificationDispatchDetail extends NotificationDispatchItem {
   payload: Record<string, unknown>;
+  notificationIds: string[];
+  createdBy?: NotificationDispatchCreatedBy | null;
+  targeting: NotificationDispatchTargeting;
+  intendedRecipients: NotificationDispatchRecipient[];
+  eligibleRecipientCount?: number | null;
+  deliveredRecipients: NotificationDispatchRecipient[];
 }
 
 export interface NotificationDispatchListResponse {
@@ -411,6 +448,14 @@ export class CoreApi {
     return this.client.get<NotificationDispatchDetail>(
       `/core-api/admin/notifications/dispatches/${dispatchId}`,
     );
+  }
+
+  deleteNotificationDispatch(dispatchId: string) {
+    return this.client.delete<{
+      ok: boolean;
+      deletedDispatch: boolean;
+      deletedNotifications: number;
+    }>(`/core-api/admin/notifications/dispatches/${dispatchId}`);
   }
 
   updateScheduledNotificationDispatch(

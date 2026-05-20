@@ -49,6 +49,20 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
 
         return self._to_dto(row)
 
+    def list_by_ids(self, notification_ids: List[UUID]) -> List[NotificationDTO]:
+        if not notification_ids:
+            return []
+
+        rows = (
+            self.session.query(Notification)
+            .filter(
+                Notification.id.in_(notification_ids),
+                Notification.deleted_at.is_(None),
+            )
+            .all()
+        )
+        return [self._to_dto(row) for row in rows]
+
     def list_unread(self, user_id: str) -> List[NotificationDTO]:
         items, _total = self.list_for_user(
             user_id,
@@ -107,6 +121,21 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
         row = self.session.get(Notification, notification_id)
         if row and row.deleted_at is None:
             row.deleted_at = datetime.utcnow()
+
+    def soft_delete_many(self, notification_ids: List[UUID]) -> int:
+        if not notification_ids:
+            return 0
+
+        now = datetime.utcnow()
+        updated = (
+            self.session.query(Notification)
+            .filter(
+                Notification.id.in_(notification_ids),
+                Notification.deleted_at.is_(None),
+            )
+            .update({"deleted_at": now}, synchronize_session=False)
+        )
+        return int(updated)
 
     def set_important(self, notification_id: UUID, *, is_important: bool) -> None:
         row = self.session.get(Notification, notification_id)

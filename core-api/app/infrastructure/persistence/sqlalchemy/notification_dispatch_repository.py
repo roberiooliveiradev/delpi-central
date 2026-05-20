@@ -50,6 +50,11 @@ class SqlAlchemyNotificationDispatchRepository(NotificationDispatchRepository):
             return None
         return self._to_dto(row)
 
+    def delete(self, dispatch_id: UUID) -> None:
+        row = self.session.get(NotificationDispatch, dispatch_id)
+        if row:
+            self.session.delete(row)
+
     def update(self, dispatch: NotificationDispatchDTO) -> None:
         row = self.session.get(NotificationDispatch, dispatch.id)
         if not row:

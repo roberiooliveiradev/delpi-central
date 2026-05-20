@@ -89,6 +89,12 @@
   font-size: 13px;
 }
 
+.notification-dispatch-history__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .notification-dispatch-history__edit {
   display: inline-flex;
   align-items: center;
@@ -105,6 +111,14 @@
 
 .notification-dispatch-history__edit:hover {
   border-color: var(--primary);
+}
+
+.notification-dispatch-history__edit--danger {
+  color: #b91c1c;
+}
+
+.notification-dispatch-history__edit--danger:hover {
+  border-color: #b91c1c;
 }
 
 .notification-dispatch-history__muted {

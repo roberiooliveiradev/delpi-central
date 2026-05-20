@@ -9,6 +9,7 @@ def serialize_notification_dispatch(
     *,
     include_payload: bool = False,
 ) -> dict:
+    payload = dto.payload or {}
     result = {
         "id": str(dto.id),
         "createdByUserId": dto.created_by_user_id,
@@ -25,9 +26,22 @@ def serialize_notification_dispatch(
         "sourceApp": dto.source_app,
         "errorMessage": dto.error_message,
         "createdAt": dto.created_at.isoformat() + "Z" if dto.created_at else None,
+        "notificationIds": list(dto.notification_ids or []),
+        "revokedAt": payload.get("revokedAt"),
     }
     if include_payload:
-        result["payload"] = dto.payload or {}
+        result["payload"] = payload
+    return result
+
+
+def serialize_notification_dispatch_detail(detail: dict) -> dict:
+    dispatch = detail["dispatch"]
+    result = serialize_notification_dispatch(dispatch, include_payload=True)
+    result["createdBy"] = detail.get("createdBy")
+    result["targeting"] = detail.get("targeting") or {}
+    result["intendedRecipients"] = detail.get("intendedRecipients") or []
+    result["eligibleRecipientCount"] = detail.get("eligibleRecipientCount")
+    result["deliveredRecipients"] = detail.get("deliveredRecipients") or []
     return result
 
 
