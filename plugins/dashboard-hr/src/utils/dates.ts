@@ -1,6 +1,14 @@
+/** Converte YYYY-MM-DD (input date) para DD-MM-YYYY (Portal RH / api-delpi /hr). */
 export function inputDateToApi(value: string | undefined): string | undefined {
   if (!value) return undefined;
-  return value;
+
+  const trimmed = value.trim();
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return `${isoMatch[3]}-${isoMatch[2]}-${isoMatch[1]}`;
+  }
+
+  return trimmed;
 }
 
 export function getTodayInputValue(): string {

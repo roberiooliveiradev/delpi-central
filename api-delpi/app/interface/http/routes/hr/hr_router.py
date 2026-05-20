@@ -7,6 +7,14 @@ from app.composition.hr_composer import (
     build_hr_metrics_snapshot_service,
 )
 from app.core.responses import error_response, success_response
+from app.infrastructure.persistence.portal_rh.portal_rh_base_repository import (
+    PortalRhRepositoryError,
+)
+from app.infrastructure.providers.database.portal_rh_postgres_connection import (
+    PortalRhDatabaseConfigError,
+    PortalRhDatabaseConnectionError,
+)
+from app.interface.http.routes.hr.date_params import normalize_portal_rh_date
 from app.utils.logger import log_error
 
 router = APIRouter(prefix="/hr", tags=["Recursos Humanos"])
@@ -41,6 +49,18 @@ def list_hr_branches():
             data={"branches": branches},
             message="Filiais de RH listadas com sucesso.",
         )
+    except PortalRhDatabaseConfigError as exc:
+        log_error(f"Configuração Portal RH ausente: {exc}")
+        return error_response(str(exc), status_code=503)
+    except PortalRhDatabaseConnectionError as exc:
+        log_error(f"Conexão Portal RH indisponível: {exc}")
+        return error_response(
+            "Não foi possível conectar ao banco do Portal RH. Verifique PORTAL_RH_DB_* no ambiente.",
+            status_code=503,
+        )
+    except PortalRhRepositoryError as exc:
+        log_error(f"Erro ao listar filiais de RH: {exc}")
+        return error_response(str(exc), status_code=500)
     except Exception as exc:
         log_error(f"Erro ao listar filiais de RH: {exc}")
         return error_response(
@@ -59,8 +79,8 @@ def get_hr_snapshot(
     try:
         service = build_hr_metrics_snapshot_service()
         snapshot = service.get_snapshot(
-            start_date=start_date,
-            end_date=end_date,
+            start_date=normalize_portal_rh_date(start_date),
+            end_date=normalize_portal_rh_date(end_date),
             branch=branch,
         )
         return success_response(
@@ -70,6 +90,18 @@ def get_hr_snapshot(
     except ValueError as exc:
         log_error(f"Erro de validação ao buscar RH: {exc}")
         return error_response(str(exc), status_code=400)
+    except PortalRhDatabaseConfigError as exc:
+        log_error(f"Configuração Portal RH ausente: {exc}")
+        return error_response(str(exc), status_code=503)
+    except PortalRhDatabaseConnectionError as exc:
+        log_error(f"Conexão Portal RH indisponível: {exc}")
+        return error_response(
+            "Não foi possível conectar ao banco do Portal RH. Verifique PORTAL_RH_DB_* no ambiente.",
+            status_code=503,
+        )
+    except PortalRhRepositoryError as exc:
+        log_error(f"Erro ao buscar indicadores de RH: {exc}")
+        return error_response(str(exc), status_code=500)
     except Exception as exc:
         log_error(f"Erro ao buscar indicadores de RH: {exc}")
         return error_response(
