@@ -67,6 +67,24 @@ export type AdminStatisticsTypeCount = {
   count: number;
 };
 
+export type AdminAppUsageLiveItem = {
+  appId: string;
+  appName: string;
+  userCount: number;
+  sessionCount: number;
+  lastSeenAt: string;
+};
+
+export type AdminAppUsageSnapshot = {
+  enabled: boolean;
+  ttlSeconds: number;
+  inUseNow: number;
+  live: AdminAppUsageLiveItem[];
+  topUsed: AdminStatisticsRankItem[];
+  ghostApps: AdminStatisticsRankItem[];
+  usedInPeriod: number;
+};
+
 export type AdminStatistics = {
   generatedAt: string;
   users: {
@@ -89,6 +107,7 @@ export type AdminStatistics = {
     routesActive: number;
     routesInactive: number;
     byType: AdminStatisticsTypeCount[];
+    usage: AdminAppUsageSnapshot;
   };
   roles: {
     total: number;
@@ -403,6 +422,10 @@ export class AdminApi {
 
   getAdminStatistics() {
     return this.client.get<AdminStatistics>("/core-api/admin/statistics");
+  }
+
+  getAppUsage() {
+    return this.client.get<AdminAppUsageSnapshot>("/core-api/admin/apps/usage");
   }
 
   updateUser(

@@ -55,6 +55,19 @@ class Config:
     USER_PRESENCE_STORE = os.getenv("USER_PRESENCE_STORE", "memory").strip().lower()
     REDIS_URL = os.getenv("REDIS_URL", "").strip()
 
+    APP_USAGE_ENABLED = _env_bool("APP_USAGE_ENABLED", default=True)
+    APP_USAGE_TTL_SECONDS = _env_int(
+        "APP_USAGE_TTL_SECONDS",
+        default=90,
+        minimum=15,
+    )
+    APP_USAGE_STORE = os.getenv("APP_USAGE_STORE", "memory").strip().lower()
+    APP_USAGE_HISTORY_DAYS = _env_int(
+        "APP_USAGE_HISTORY_DAYS",
+        default=30,
+        minimum=1,
+    )
+
     DB_HOST = os.getenv("DB_HOST")
     DB_PORT = os.getenv("DB_PORT")
     DB_NAME = os.getenv("DB_NAME")

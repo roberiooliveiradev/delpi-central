@@ -2,6 +2,8 @@
 
 from datetime import datetime
 
+from flask import current_app
+
 from app.application.unit_of_work import UnitOfWork
 from app.infrastructure.persistence.sqlalchemy.admin_statistics_repository import (
     SqlAlchemyAdminStatisticsRepository,
@@ -9,6 +11,9 @@ from app.infrastructure.persistence.sqlalchemy.admin_statistics_repository impor
 from app.infrastructure.presence.presence_store_provider import (
     get_user_presence_store,
     is_user_presence_enabled,
+)
+from app.application.use_cases.admin.get_app_usage_snapshot_use_case import (
+    GetAppUsageSnapshotUseCase,
 )
 
 
@@ -26,6 +31,10 @@ class GetAdminStatisticsUseCase:
             online_total = len(get_user_presence_store().list_online())
 
         snapshot["users"]["online"] = online_total
+        history_days = int(current_app.config.get("APP_USAGE_HISTORY_DAYS", 30))
+        snapshot["apps"]["usage"] = GetAppUsageSnapshotUseCase(self.uow).execute(
+            history_days=history_days,
+        )
         snapshot["generatedAt"] = datetime.utcnow().isoformat() + "Z"
 
         return snapshot

@@ -247,7 +247,8 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
           <strong>{stats.apps.total}</strong>
           <span>Aplicações</span>
           <small>
-            {stats.apps.active} ativas · {stats.apps.routesTotal} rotas
+            {stats.apps.usage?.inUseNow ?? 0} em uso agora ·{" "}
+            {stats.apps.usage?.ghostApps?.length ?? 0} fantasmas (30d)
           </small>
         </article>
         <article className="admin-stats__kpi">
@@ -313,9 +314,51 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
           <div className="admin-stats__metrics">
             <StatMetric label="Ativas" value={stats.apps.active} />
             <StatMetric label="Inativas" value={stats.apps.inactive} />
-            <StatMetric label="Rotas totais" value={stats.apps.routesTotal} />
-            <StatMetric label="Rotas ativas" value={stats.apps.routesActive} highlight />
+            <StatMetric
+              label="Em uso agora"
+              value={stats.apps.usage?.inUseNow ?? 0}
+              highlight
+            />
+            <StatMetric
+              label="Usadas em 30 dias"
+              value={stats.apps.usage?.usedInPeriod ?? 0}
+            />
+            <StatMetric
+              label="Apps fantasmas"
+              value={stats.apps.usage?.ghostApps?.length ?? 0}
+            />
+            <StatMetric label="Rotas ativas" value={stats.apps.routesActive} />
           </div>
+          {stats.apps.usage?.enabled ? (
+            <>
+              <RankList
+                title="Em uso agora (usuários no portal)"
+                items={(stats.apps.usage.live ?? []).map((item) => ({
+                  id: item.appId,
+                  name: item.appName || item.appId,
+                  count: item.userCount,
+                }))}
+                countLabel="usuários"
+              />
+              <RankList
+                title="Mais usadas nos últimos 30 dias"
+                items={stats.apps.usage.topUsed ?? []}
+                countLabel="usuários únicos"
+              />
+              <RankList
+                title="Fantasmas — ativas sem uso em 30 dias"
+                items={(stats.apps.usage.ghostApps ?? []).map((item) => ({
+                  ...item,
+                  count: 0,
+                }))}
+                countLabel="sem uso"
+              />
+            </>
+          ) : (
+            <p className="admin-stats__empty">
+              Rastreamento de uso de apps desabilitado no servidor.
+            </p>
+          )}
           <div className="admin-stats__bars" aria-label="Aplicações por tipo">
             {stats.apps.byType.length === 0 ? (
               <p className="admin-stats__empty">Nenhuma aplicação cadastrada.</p>

@@ -3,6 +3,11 @@
 import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 
+import {
+  APP_USAGE_OPEN_EVENT,
+  type AppUsageOpenDetail,
+} from "../utils/appUsageEvents";
+
 interface UseSocketProps {
   token?: string;
   onNotification?: (data: any) => void;
@@ -17,6 +22,7 @@ export const useSocket = ({
   onConnected,
 }: UseSocketProps) => {
   const socketRef = useRef<Socket | null>(null);
+  const activeAppRef = useRef<{ appId: string; routePath: string } | null>(null);
 
   const onNotificationRef = useRef(onNotification);
   const onAdminChangedRef = useRef(onAdminChanged);
@@ -115,25 +121,67 @@ export const useSocket = ({
     const socket = socketRef.current;
     if (!socket || !token || token.length < 20) return;
 
-    const ping = () => {
-      if (socket.connected) {
-        socket.emit("presence.ping");
+    const emitUsagePing = () => {
+      if (!socket.connected) return;
+
+      socket.emit("presence.ping");
+
+      const activeApp = activeAppRef.current;
+      if (activeApp?.appId) {
+        socket.emit("app_usage.ping", {
+          appId: activeApp.appId,
+          routePath: activeApp.routePath,
+        });
       }
     };
 
     const onConnect = () => {
-      ping();
+      const activeApp = activeAppRef.current;
+      if (activeApp?.appId) {
+        socket.emit("app_usage.open", {
+          appId: activeApp.appId,
+          routePath: activeApp.routePath,
+        });
+      }
+
+      emitUsagePing();
     };
 
     socket.on("connect", onConnect);
 
-    const intervalId = window.setInterval(ping, 45_000);
+    const intervalId = window.setInterval(emitUsagePing, 45_000);
 
     return () => {
       socket.off("connect", onConnect);
       window.clearInterval(intervalId);
     };
   }, [token]);
+
+  useEffect(() => {
+    const onAppOpened = (event: Event) => {
+      const custom = event as CustomEvent<AppUsageOpenDetail>;
+      const appId = custom.detail?.appId;
+      const routePath = custom.detail?.routePath;
+
+      if (!appId) return;
+
+      activeAppRef.current = { appId, routePath: routePath || "/" };
+
+      const socket = socketRef.current;
+      if (socket?.connected) {
+        socket.emit("app_usage.open", {
+          appId,
+          routePath: routePath || "/",
+        });
+      }
+    };
+
+    window.addEventListener(APP_USAGE_OPEN_EVENT, onAppOpened);
+
+    return () => {
+      window.removeEventListener(APP_USAGE_OPEN_EVENT, onAppOpened);
+    };
+  }, []);
 
   return socketRef;
 };

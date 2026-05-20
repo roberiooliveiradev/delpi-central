@@ -361,6 +361,37 @@ Em múltiplas réplicas da Core API, use `USER_PRESENCE_STORE=redis` e `REDIS_UR
 
 ---
 
+## 12.2 Uso de aplicações (plugins em uso)
+
+Com `APP_USAGE_ENABLED=true` (padrão), o Portal reporta qual **app** o usuário está usando:
+
+| Evento | Ação |
+|--------|------|
+| `connect` | `bind_session(user_id=sub, session_id=sid)` |
+| `disconnect` | `unbind_session(sid)` |
+| `app_usage.open` (ao entrar em um app no `AppHost`) | Atualiza store ao vivo + grava evento em `app_usage_events` (debounce 5 min por usuário/app) |
+| `app_usage.ping` (portal a cada ~45 s, com `appId` atual) | Renova TTL da sessão no app ativo |
+
+Consultas Admin (`rbac.manage`):
+
+| Método | Path | Descrição |
+|--------|------|-----------|
+| GET | `/admin/apps/usage` | Snapshot: apps em uso agora, top 30 dias, fantasmas |
+| GET | `/admin/statistics` | Inclui `apps.usage` no painel de estatísticas |
+
+**App fantasma:** cadastrada e `active=true`, sem abertura registrada nos últimos `APP_USAGE_HISTORY_DAYS` (padrão 30).
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `APP_USAGE_ENABLED` | `true` | Liga/desliga rastreamento |
+| `APP_USAGE_TTL_SECONDS` | `90` | Sem ping, sessão some do “em uso agora” |
+| `APP_USAGE_STORE` | `memory` | Store ao vivo (`memory`; Redis futuro) |
+| `APP_USAGE_HISTORY_DAYS` | `30` | Janela para top usadas e fantasmas |
+
+Portal: `portal/src/utils/appUsageEvents.ts`, `AppHost.tsx`, `useSocket.ts`.
+
+---
+
 ## 13. Eventos e Portal
 
 O Portal deve reagir a eventos recarregando dados da Core API.

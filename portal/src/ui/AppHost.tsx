@@ -7,6 +7,7 @@ import {
   useGoogleEmbeddedAppLogin,
 } from "../hooks/useGoogleEmbeddedAppLogin";
 import { pushRecentApp } from "../utils/recentApps";
+import { notifyAppOpened } from "../utils/appUsageEvents";
 import {
   buildPortalEmbeddedPath,
   clearEmbeddedDeepLink,
@@ -212,10 +213,11 @@ export const AppHost = () => {
   });
 
   useEffect(() => {
-    if (app?.id) {
-      pushRecentApp(app.id);
-    }
-  }, [app]);
+    if (!app?.id) return;
+
+    pushRecentApp(app.id);
+    notifyAppOpened(app.id, location.pathname);
+  }, [app?.id, location.pathname]);
 
   useEffect(() => {
     const isEmbedded = app?.renderMode === "embedded";

@@ -13,6 +13,7 @@ Primeira aba do `/admin`, pensada como **painel executivo** antes das telas oper
 |-------|----------|
 | KPIs | Totais de usuários, apps, papéis e grupos |
 | Painéis 2×2 | Detalhes por domínio + barras de proporção / ranking top 5 |
+| Aplicações — uso | Em uso agora (Socket), top 30 dias, **apps fantasmas** (ativas sem abertura) |
 | Visão RBAC | Contagens de vínculos e permissões |
 | Notificações | Envios de campanha (total, pendente, concluído, falha) |
 
@@ -29,4 +30,4 @@ Botão **Atualizar** recarrega o snapshot. Timestamp exibido em `generatedAt` (h
 ## 3. Relacionados
 
 - [Controllers e rotas — estatísticas](../04-core-api/controllers-e-rotas.md#7-admin--estatísticas-e-presença)
-- [Presença online (Socket.IO)](../01-arquitetura/event-driven-e-socket.md)
+- [Presença online e uso de apps (Socket.IO)](../01-arquitetura/event-driven-e-socket.md)

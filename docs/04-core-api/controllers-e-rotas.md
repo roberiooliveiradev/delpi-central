@@ -232,10 +232,11 @@ Arquivos: `admin_statistics_controller.py`, `presence_controller.py`.
 
 | Método | Path | Permissão | Descrição |
 |---|---|---|---|
-| GET | `/admin/statistics` | `rbac.manage` | Snapshot agregado: usuários, apps, papéis, grupos, permissões, vínculos RBAC, campanhas de notificação, online |
+| GET | `/admin/statistics` | `rbac.manage` | Snapshot agregado: usuários, apps, papéis, grupos, permissões, vínculos RBAC, campanhas de notificação, online, uso de apps |
 | GET | `/admin/users/presence` | Superadmin | Usuários com portal conectado (Socket.IO) |
+| GET | `/admin/apps/usage` | `rbac.manage` | Apps em uso agora, ranking 30 dias, apps fantasmas |
 
-`GET /admin/statistics` retorna contagens e rankings (ex.: papéis/grupos mais usados, apps por tipo, logins 7/30 dias). Campo `users.online` integra o store de presença. Ver [event-driven-e-socket.md](../01-arquitetura/event-driven-e-socket.md) §12.1.
+`GET /admin/statistics` retorna contagens e rankings (ex.: papéis/grupos mais usados, apps por tipo, logins 7/30 dias). Campo `users.online` integra o store de presença; `apps.usage` integra uso de plugins. Ver [event-driven-e-socket.md](../01-arquitetura/event-driven-e-socket.md) §12.1 e §12.2.
 
 ---
 
