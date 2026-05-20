@@ -16,7 +16,8 @@ import { CircleGauge, Truck } from "lucide-react";
 
 import { getOtd } from "../api/suppliesApi";
 import { ChartCard } from "../components/ChartCard";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
@@ -254,35 +255,31 @@ export function OtdPage({ pathname }: OtdPageProps) {
         </ChartCard>
       </section>
 
-      <section className="ds-table-section">
-        <ChartCard title="Ranking de fornecedores em atraso">
-          <DataTable
-            columns={supplierColumns}
-            rows={data?.top_late_suppliers ?? []}
-            rowKey={(row) =>
-              `${row.supplier_code ?? row.supplier_name ?? "s"}-${row.late_lines}`
-            }
-            loading={isBusy && !data}
-          />
-        </ChartCard>
-      </section>
+      <DataTableSection
+        title="Ranking de fornecedores em atraso"
+        columns={supplierColumns}
+        rows={data?.top_late_suppliers ?? []}
+        rowKey={(row) =>
+          `${row.supplier_code ?? row.supplier_name ?? "s"}-${row.late_lines}`
+        }
+        loading={loading && !(data?.top_late_suppliers?.length)}
+        refreshing={refreshing}
+        searchPlaceholder="Buscar fornecedor…"
+      />
 
-      <section className="ds-table-section">
-        <ChartCard
-          title="Entregas em atraso (amostra)"
-          hint="Linhas com DIAS negativo na view de pontualidade."
-        >
-          <DataTable
-            columns={deliveryColumns}
-            rows={data?.late_deliveries ?? []}
-            rowKey={(row) =>
-              `${row.order_number}-${row.order_item}-${row.product_code}`
-            }
-            loading={isBusy && !data}
-            emptyMessage="Nenhuma entrega em atraso no período."
-          />
-        </ChartCard>
-      </section>
+      <DataTableSection
+        title="Entregas em atraso (amostra)"
+        hint="Linhas com DIAS negativo na view de pontualidade."
+        columns={deliveryColumns}
+        rows={data?.late_deliveries ?? []}
+        rowKey={(row) =>
+          `${row.order_number}-${row.order_item}-${row.product_code}`
+        }
+        loading={loading && !(data?.late_deliveries?.length)}
+        refreshing={refreshing}
+        emptyMessage="Nenhuma entrega em atraso no período."
+        searchPlaceholder="Buscar pedido, produto, fornecedor…"
+      />
     </div>
   );
 }

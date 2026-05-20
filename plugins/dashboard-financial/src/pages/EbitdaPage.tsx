@@ -14,7 +14,8 @@ import { Percent } from "lucide-react";
 import { getEbitdaPct } from "../api/financialApi";
 import { ChartCard } from "../components/ChartCard";
 import { DataSourceBanner } from "../components/DataSourceBanner";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { FinancialStatusAlerts } from "../components/FinancialStatusAlerts";
@@ -157,16 +158,15 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
       ) : null}
 
       {branchRows.length > 0 ? (
-        <section className="ds-table-section">
-          <ChartCard title="Por filial" hint={periodLabel}>
-            <DataTable
-              columns={columns}
-              rows={branchRows}
-              rowKey={(row) => row.branch}
-              loading={isBusy && !data}
-            />
-          </ChartCard>
-        </section>
+        <DataTableSection
+          title="Por filial"
+          hint={periodLabel}
+          columns={columns}
+          rows={branchRows}
+          rowKey={(row) => row.branch}
+          loading={loading && branchRows.length === 0}
+          refreshing={refreshing}
+        />
       ) : null}
     </div>
   );

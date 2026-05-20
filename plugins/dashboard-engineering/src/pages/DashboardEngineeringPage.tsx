@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { BarChart3, CircleGauge, Clock, Coins, Lightbulb, Percent } from "lucide-react";
 
 import { DataSourceBanner } from "../components/DataSourceBanner";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { ModuleShortcut } from "../components/ModuleShortcut";
@@ -86,6 +87,14 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         hasData={hasData}
         onRetry={reload}
       />
+      {refreshing && hasData ? (
+        <LoadingActivityCard
+          title="Atualizando visão geral"
+          description="Atualizando KPIs de LMP e TRANSFORMA+."
+          variant="compact"
+          sticky
+        />
+      ) : null}
       {Object.keys(sectionErrors).length > 0 && hasData ? (
         <div className="ds-state ds-state--warning" role="status">
           <p>

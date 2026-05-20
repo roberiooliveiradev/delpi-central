@@ -1,3 +1,5 @@
+import { LoadingActivityCard } from "./LoadingActivityCard";
+
 type FinancialStatusAlertsProps = {
   error: string | null;
   loading: boolean;
@@ -23,9 +25,10 @@ export function FinancialStatusAlerts({
       ) : null}
 
       {loading && !hasData ? (
-        <div className="ds-state ds-state--loading" aria-live="polite">
-          Carregando indicadores…
-        </div>
+        <LoadingActivityCard
+          title="Carregando indicadores"
+          description="Buscando dados financeiros para o período e filial selecionados."
+        />
       ) : null}
     </>
   );

@@ -1,3 +1,5 @@
+import { LoadingActivityCard } from "./LoadingActivityCard";
+
 type EngineeringStatusAlertsProps = {
   error: string | null;
   loading: boolean;
@@ -23,9 +25,10 @@ export function EngineeringStatusAlerts({
       ) : null}
 
       {loading && !hasData ? (
-        <div className="ds-state ds-state--loading" aria-live="polite">
-          Carregando indicadores…
-        </div>
+        <LoadingActivityCard
+          title="Carregando indicadores"
+          description="Buscando LMPs e TRANSFORMA+ para o período e filial selecionados."
+        />
       ) : null}
     </>
   );

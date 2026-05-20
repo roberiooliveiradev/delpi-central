@@ -16,7 +16,8 @@ import { Clock, Coins, Lightbulb, Percent } from "lucide-react";
 import { getTransformaProcesses, getTransformaSummary } from "../api/engineeringApi";
 import { ChartCard } from "../components/ChartCard";
 import { DataSourceBanner } from "../components/DataSourceBanner";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { EngineeringStatusAlerts } from "../components/EngineeringStatusAlerts";
@@ -288,17 +289,27 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         </section>
       ) : null}
 
-      <section className="ds-table-section">
-        <ChartCard title="Lista de processos" hint={periodLabel}>
-          <DataTable
-            columns={columns}
-            rows={items}
-            rowKey={(row) => row.id}
-            loading={isBusy && !processesData}
-            emptyMessage="Nenhum processo encontrado para os filtros."
-          />
-        </ChartCard>
-      </section>
+      <DataTableSection
+        title="Lista de processos"
+        hint={periodLabel}
+        columns={columns}
+        rows={items}
+        rowKey={(row) => row.id}
+        loading={listLoading && items.length === 0}
+        refreshing={listRefreshing}
+        emptyMessage="Nenhum processo encontrado para os filtros."
+        searchPlaceholder="Buscar processo, setor, status…"
+        getSearchText={(row) =>
+          [
+            row.name_process,
+            row.filial_id,
+            row.sector_name,
+            row.status,
+          ]
+            .filter(Boolean)
+            .join(" ")
+        }
+      />
     </div>
   );
 }

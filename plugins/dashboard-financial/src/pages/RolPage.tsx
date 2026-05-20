@@ -3,8 +3,8 @@ import { TrendingUp } from "lucide-react";
 
 import { getRol } from "../api/financialApi";
 import { DataSourceBanner } from "../components/DataSourceBanner";
-import { ChartCard } from "../components/ChartCard";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { FinancialStatusAlerts } from "../components/FinancialStatusAlerts";
@@ -120,17 +120,18 @@ export function RolPage({ pathname }: RolPageProps) {
           loading={isBusy && !data}
         />
       </section>
-      <section className="ds-table-section">
-        <ChartCard title="Detalhamento da ROL" hint={periodLabel}>
-          <DataTable
-            columns={columns}
-            rows={breakdownRows}
-            rowKey={(row) => row.label}
-            loading={isBusy && !data}
-            emptyMessage="Sem dados de ROL para o período."
-          />
-        </ChartCard>
-      </section>
+      <DataTableSection
+        title="Detalhamento da ROL"
+        hint={periodLabel}
+        columns={columns}
+        rows={breakdownRows}
+        rowKey={(row) => row.label}
+        loading={loading && breakdownRows.length === 0}
+        refreshing={refreshing}
+        emptyMessage="Sem dados de ROL para o período."
+        pageSize={10}
+        hideSearch
+      />
     </div>
   );
 }

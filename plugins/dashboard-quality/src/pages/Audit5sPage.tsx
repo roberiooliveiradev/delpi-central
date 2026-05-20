@@ -15,14 +15,14 @@ import {
 import { Audit5sFilters } from "../components/Audit5sFilters";
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { KpiCard } from "../components/KpiCard";
-import { Pagination } from "../components/Pagination";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { CHART_COLORS } from "../constants/chartColors";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { useAudit5sSummary } from "../hooks/useQualityQueries";
-import { useClientPagination } from "../hooks/useClientPagination";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import type { ChartGranularity } from "../types/chart";
@@ -38,7 +38,6 @@ import { formatScore } from "../utils/format";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { suggestGranularity } from "../utils/periodBuckets";
 
-const PAGE_SIZE = 20;
 const CHART_HEIGHT = 300;
 
 type Audit5sPageProps = {
@@ -72,8 +71,6 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
 
   const { data, loading, error, reload } = useAudit5sSummary(summaryParams);
   const items = data?.list_audits ?? [];
-
-  const { page, setPage, slice, total } = useClientPagination(items, PAGE_SIZE);
 
   useEffect(() => {
     setGranularity(suggestGranularity(dateStart, dateEnd));
@@ -168,7 +165,6 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
     if (!point.dateStart || !point.dateEnd) return;
     setDateStart(point.dateStart);
     setDateEnd(point.dateEnd);
-    setPage(1);
   };
 
   const handleExportScoreCsv = () => {
@@ -237,7 +233,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         />
         <KpiCard
           title="Auditorias"
-          value={String(total || (loading ? "…" : 0))}
+          value={String(items.length || (loading ? "…" : 0))}
           subtitle="Registros no período filtrado"
           icon={<ClipboardCheck size={22} />}
           loading={loading && !data}
@@ -319,29 +315,22 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         </ChartCard>
       </section>
 
-      <section className="dq-table-section dq-card" aria-busy={loading}>
-        <div className="dq-table-section__header">
-          <h2 className="dq-section-title">Auditorias</h2>
-          <span className="dq-table-section__meta">{total} registro(s)</span>
-        </div>
-
-        <DataTable
-          columns={columns}
-          rows={slice}
-          rowKey={(row) => row.id}
-          loading={loading && !data}
-          emptyMessage="Nenhuma auditoria encontrada para os filtros."
+      {loading && !data ? (
+        <LoadingActivityCard
+          title="Carregando auditorias 5S"
+          description="Buscando registros de auditoria para o período."
         />
+      ) : null}
 
-        {total > 0 ? (
-          <Pagination
-            page={page}
-            pageSize={PAGE_SIZE}
-            total={total}
-            onPageChange={setPage}
-          />
-        ) : null}
-      </section>
+      <DataTableSection
+        title="Auditorias"
+        columns={columns}
+        rows={items}
+        rowKey={(row) => row.id}
+        loading={loading && !data}
+        emptyMessage="Nenhuma auditoria encontrada para os filtros."
+        searchPlaceholder="Buscar setor, auditor, nota…"
+      />
     </div>
   );
 }

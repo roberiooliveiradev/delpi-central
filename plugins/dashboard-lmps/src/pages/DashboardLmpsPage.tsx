@@ -19,7 +19,9 @@ import {
 import { KpiCard } from "../components/KpiCard";
 import { ChartCard } from "../components/ChartCard";
 import { FilterBar } from "../components/FilterBar";
-import { LoadingActivityInline } from "../components/LoadingActivityInline";
+import { DataTableSection } from "../components/DataTableSection";
+import type { DataTableColumn } from "../components/DataTable";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
 import type { LmpDashboardItem } from "../types/lmp";
@@ -287,6 +289,62 @@ export function DashboardLmpsPage() {
     evolutionData: charts?.evolutionData ?? fallbackCharts.evolutionData,
   };
 
+  const tableColumns = useMemo<DataTableColumn<LmpDashboardItem>[]>(
+    () => [
+      { key: "branch", header: "Filial", render: (row) => row.branch ?? "-" },
+      {
+        key: "kind",
+        header: "Tipo",
+        render: (row) => formatListingKind(row.listing_kind),
+      },
+      { key: "sale", header: "Nº Proposta", render: (row) => row.sale_number },
+      {
+        key: "desc",
+        header: "Descrição",
+        className: "lmps-table__col--wide",
+        render: (row) => row.sale_description,
+      },
+      {
+        key: "start",
+        header: "Data Início",
+        render: (row) => formatDate(row.start_date),
+      },
+      {
+        key: "end",
+        header: "Data Fim",
+        render: (row) => formatDate(row.end_date),
+      },
+      {
+        key: "eng",
+        header: "Status Engenharia",
+        render: (row) => row.engineering_status ?? "-",
+      },
+      {
+        key: "pi",
+        header: "Qtd PI",
+        render: (row) => String(row.qtd_pi ?? 0),
+      },
+      { key: "nivel", header: "Nível", render: (row) => row.nivel },
+      {
+        key: "sla",
+        header: "Dias úteis",
+        render: (row) => String(row.dias_uteis_sla),
+      },
+      {
+        key: "limit",
+        header: "Data Limite",
+        render: (row) => formatDate(row.data_limite),
+      },
+      {
+        key: "lead",
+        header: "Lead Time Útil",
+        render: (row) => String(row.lead_time_util ?? "-"),
+      },
+      { key: "status", header: "Status Classificação", render: (row) => row.status },
+    ],
+    []
+  );
+
   const totalPropostas =
     summary?.total_items ??
     (status !== "Todos" || listingType !== "Todos"
@@ -310,11 +368,10 @@ export function DashboardLmpsPage() {
       />
 
       {refreshing && hasData ? (
-        <LoadingActivityInline
+        <LoadingActivityCard
           title="Atualizando dashboard de LMPs"
           description="Os dados exibidos estão sendo atualizados com os filtros selecionados."
           variant="compact"
-          tone="info"
           sticky
         />
       ) : null}
@@ -354,11 +411,10 @@ export function DashboardLmpsPage() {
       </section>
 
       {loading && !hasData ? (
-        <section className="lmps-charts-grid">
-          <ChartCard title="Carregando">
-            <div className="lmps-state-box">Carregando dashboard...</div>
-          </ChartCard>
-        </section>
+        <LoadingActivityCard
+          title="Carregando dashboard de LMPs"
+          description="Buscando propostas, indicadores e gráficos no TOTVS."
+        />
       ) : error && !hasData ? (
         <section className="lmps-charts-grid">
           <ChartCard title="Erro">
@@ -483,60 +539,31 @@ export function DashboardLmpsPage() {
             </ChartCard>
           </section>
 
-          <section className="lmps-charts-grid">
-            <ChartCard title="Registros filtrados">
-              <div className="lmps-table-wrapper">
-                <table className="lmps-table">
-                  <thead>
-                    <tr>
-                      <th>Filial</th>
-                      <th>Tipo</th>
-                      <th>Nº Proposta</th>
-                      <th>Descrição</th>
-                      <th>Data Início</th>
-                      <th>Data Fim</th>
-                      <th>Status Engenharia</th>
-                      <th>Qtd PI</th>
-                      <th>Nível</th>
-                      <th>Dias úteis</th>
-                      <th>Data Limite</th>
-                      <th>Lead Time Útil</th>
-                      <th>Status Classificação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedDashboardItems.length === 0 ? (
-                      <tr>
-                        <td colSpan={13}>
-                          Nenhum registro encontrado para os filtros informados.
-                        </td>
-                      </tr>
-                    ) : (
-                      sortedDashboardItems.map((item) => (
-                        <tr
-                          key={`${item.branch ?? "sem-filial"}-${item.listing_kind ?? "sem-tipo"}-${item.sale_number}`}
-                        >
-                          <td>{item.branch ?? "-"}</td>
-                          <td>{formatListingKind(item.listing_kind)}</td>
-                          <td>{item.sale_number}</td>
-                          <td>{item.sale_description}</td>
-                          <td>{formatDate(item.start_date)}</td>
-                          <td>{formatDate(item.end_date)}</td>
-                          <td>{item.engineering_status ?? "-"}</td>
-                          <td>{item.qtd_pi ?? 0}</td>
-                          <td>{item.nivel}</td>
-                          <td>{item.dias_uteis_sla}</td>
-                          <td>{formatDate(item.data_limite)}</td>
-                          <td>{item.lead_time_util ?? "-"}</td>
-                          <td>{item.status}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </ChartCard>
-          </section>
+          <DataTableSection
+            title="Registros filtrados"
+            columns={tableColumns}
+            rows={sortedDashboardItems}
+            rowKey={(row) =>
+              `${row.branch ?? "sem-filial"}-${row.listing_kind ?? "sem-tipo"}-${row.sale_number}`
+            }
+            loading={loading && sortedDashboardItems.length === 0}
+            refreshing={refreshing}
+            emptyMessage="Nenhum registro encontrado para os filtros informados."
+            searchPlaceholder="Buscar proposta, descrição, status…"
+            getSearchText={(row) =>
+              [
+                row.branch,
+                row.sale_number,
+                row.sale_description,
+                row.engineering_status,
+                row.nivel,
+                row.status,
+                formatListingKind(row.listing_kind),
+              ]
+                .filter(Boolean)
+                .join(" ")
+            }
+          />
         </>
       )}
     </main>

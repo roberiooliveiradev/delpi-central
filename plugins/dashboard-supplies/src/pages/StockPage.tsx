@@ -13,7 +13,8 @@ import { Warehouse } from "lucide-react";
 
 import { getStockValue } from "../api/suppliesApi";
 import { ChartCard } from "../components/ChartCard";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
@@ -222,27 +223,28 @@ export function StockPage({ pathname }: StockPageProps) {
         </ChartCard>
       </section>
 
-      <section className="ds-table-section">
-        <ChartCard title="Saldo por localização">
-          <DataTable
-            columns={locationColumns}
-            rows={data?.by_location ?? []}
-            rowKey={(row) => row.location ?? "loc"}
-            loading={isBusy && !data}
-          />
-        </ChartCard>
-      </section>
+      <DataTableSection
+        title="Saldo por localização"
+        columns={locationColumns}
+        rows={data?.by_location ?? []}
+        rowKey={(row) => row.location ?? "loc"}
+        loading={loading && !(data?.by_location?.length)}
+        refreshing={refreshing}
+        searchPlaceholder="Buscar localização…"
+      />
 
-      <section className="ds-table-section">
-        <ChartCard title="Top produtos por valor em estoque">
-          <DataTable
-            columns={productColumns}
-            rows={data?.top_products ?? []}
-            rowKey={(row) => `${row.product_code}-${row.location}`}
-            loading={isBusy && !data}
-          />
-        </ChartCard>
-      </section>
+      <DataTableSection
+        title="Top produtos por valor em estoque"
+        columns={productColumns}
+        rows={data?.top_products ?? []}
+        rowKey={(row) => `${row.product_code}-${row.location}`}
+        loading={loading && !(data?.top_products?.length)}
+        refreshing={refreshing}
+        searchPlaceholder="Buscar produto, localização…"
+        getSearchText={(row) =>
+          `${row.product_code ?? ""} ${row.product_description ?? ""} ${row.location ?? ""}`
+        }
+      />
     </div>
   );
 }

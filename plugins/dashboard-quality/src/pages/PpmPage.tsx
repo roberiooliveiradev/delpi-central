@@ -3,9 +3,9 @@ import { Download, Factory, Truck } from "lucide-react";
 
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { KpiCard } from "../components/KpiCard";
-import { Pagination } from "../components/Pagination";
 import { PpmCompareToggle } from "../components/PpmCompareToggle";
 import { PpmEvolutionChart } from "../components/PpmEvolutionChart";
 import { PpmTypeToggle } from "../components/PpmTypeToggle";
@@ -342,29 +342,29 @@ export function PpmPage({ pathname }: PpmPageProps) {
         </ChartCard>
       </section>
 
-      <section className="dq-table-section dq-card" aria-busy={isBusy}>
-        <div className="dq-table-section__header">
-          <h2 className="dq-section-title">
-            Registros de PPM {typeLabel}
-          </h2>
-        </div>
-
-        <DataTable
-          columns={columns}
-          rows={tablePage?.items ?? []}
-          rowKey={(row) => `${row.code}-${row.revision}-${row.registered_date}`}
-          loading={loading && !tablePage}
-        />
-
-        {tablePage ? (
-          <Pagination
-            page={tablePage.page}
-            pageSize={tablePage.page_size}
-            total={tablePage.total}
-            onPageChange={setPage}
-          />
-        ) : null}
-      </section>
+      <DataTableSection
+        title={`Registros de PPM ${typeLabel}`}
+        hint={
+          tablePage
+            ? `${tablePage.total} registro(s) · busca na página atual`
+            : undefined
+        }
+        columns={columns}
+        rows={tablePage?.items ?? []}
+        rowKey={(row) => `${row.code}-${row.revision}-${row.registered_date}`}
+        loading={loading && !tablePage}
+        searchPlaceholder="Buscar código, produto…"
+        serverPagination={
+          tablePage
+            ? {
+                page: tablePage.page,
+                pageSize: tablePage.page_size,
+                total: tablePage.total,
+                onPageChange: setPage,
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }

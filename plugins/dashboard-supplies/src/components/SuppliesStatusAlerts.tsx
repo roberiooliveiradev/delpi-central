@@ -1,3 +1,5 @@
+import { LoadingActivityCard } from "./LoadingActivityCard";
+
 type SuppliesStatusAlertsProps = {
   error: string | null;
   loading: boolean;
@@ -23,9 +25,10 @@ export function SuppliesStatusAlerts({
       ) : null}
 
       {loading && !hasData ? (
-        <div className="ds-state ds-state--loading" aria-live="polite">
-          Carregando indicadores…
-        </div>
+        <LoadingActivityCard
+          title="Carregando indicadores"
+          description="Buscando dados de suprimentos para o período e filial selecionados."
+        />
       ) : null}
     </>
   );

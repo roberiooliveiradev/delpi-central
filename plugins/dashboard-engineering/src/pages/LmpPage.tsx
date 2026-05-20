@@ -18,7 +18,9 @@ import { BarChart3, CircleGauge, Clock3 } from "lucide-react";
 
 import { ChartCard } from "../components/ChartCard";
 import { DataSourceBanner } from "../components/DataSourceBanner";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { EngineeringStatusAlerts } from "../components/EngineeringStatusAlerts";
@@ -211,6 +213,15 @@ export function LmpPage({ pathname }: LmpPageProps) {
         onRetry={reload}
       />
 
+      {refreshing && hasData ? (
+        <LoadingActivityCard
+          title="Atualizando LMPs"
+          description="Recalculando indicadores e gráficos com os filtros atuais."
+          variant="compact"
+          sticky
+        />
+      ) : null}
+
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="% LMP dentro do prazo"
@@ -351,19 +362,32 @@ export function LmpPage({ pathname }: LmpPageProps) {
         </>
       ) : null}
 
-      <section className="ds-table-section">
-        <ChartCard title="Registros filtrados" hint={periodLabel}>
-          <DataTable
-            columns={columns}
-            rows={sortedItems}
-            rowKey={(row) =>
-              `${row.branch ?? "x"}-${row.listing_kind ?? "x"}-${row.sale_number}`
-            }
-            loading={isBusy && !hasData}
-            emptyMessage="Nenhum registro encontrado para os filtros informados."
-          />
-        </ChartCard>
-      </section>
+      <DataTableSection
+        title="Registros filtrados"
+        hint={periodLabel}
+        columns={columns}
+        rows={sortedItems}
+        rowKey={(row) =>
+          `${row.branch ?? "x"}-${row.listing_kind ?? "x"}-${row.sale_number}`
+        }
+        loading={loading && sortedItems.length === 0}
+        refreshing={refreshing}
+        emptyMessage="Nenhum registro encontrado para os filtros informados."
+        searchPlaceholder="Buscar proposta, descrição, status…"
+        getSearchText={(row) =>
+          [
+            row.branch,
+            row.sale_number,
+            row.sale_description,
+            row.engineering_status,
+            row.nivel,
+            row.status,
+            formatListingKind(row.listing_kind),
+          ]
+            .filter(Boolean)
+            .join(" ")
+        }
+      />
     </div>
   );
 }

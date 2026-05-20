@@ -13,7 +13,8 @@ import { Percent, TrendingUp } from "lucide-react";
 
 import { getCpv } from "../api/suppliesApi";
 import { ChartCard } from "../components/ChartCard";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
@@ -222,28 +223,26 @@ export function CpvPage({ pathname }: CpvPageProps) {
         </ChartCard>
       </section>
 
-      <section className="ds-table-section">
-        <ChartCard title="Top produtos por CPV">
-          <DataTable
-            columns={productColumns}
-            rows={data?.top_products ?? []}
-            rowKey={(row) => `${row.product_code ?? "p"}-${row.cpv_total}`}
-            loading={isBusy && !data}
-            emptyMessage="Nenhum produto no período."
-          />
-        </ChartCard>
-      </section>
+      <DataTableSection
+        title="Top produtos por CPV"
+        columns={productColumns}
+        rows={data?.top_products ?? []}
+        rowKey={(row) => `${row.product_code ?? "p"}-${row.cpv_total}`}
+        loading={loading && !(data?.top_products?.length)}
+        refreshing={refreshing}
+        emptyMessage="Nenhum produto no período."
+        searchPlaceholder="Buscar produto…"
+      />
 
-      <section className="ds-table-section">
-        <ChartCard title="Detalhamento por CFOP">
-          <DataTable
-            columns={cfopColumns}
-            rows={data?.by_cfop ?? []}
-            rowKey={(row) => row.cfop ?? "cfop"}
-            loading={isBusy && !data}
-          />
-        </ChartCard>
-      </section>
+      <DataTableSection
+        title="Detalhamento por CFOP"
+        columns={cfopColumns}
+        rows={data?.by_cfop ?? []}
+        rowKey={(row) => row.cfop ?? "cfop"}
+        loading={loading && !(data?.by_cfop?.length)}
+        refreshing={refreshing}
+        searchPlaceholder="Buscar CFOP…"
+      />
     </div>
   );
 }

@@ -18,14 +18,14 @@ import {
 
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { KaizenFilters } from "../components/KaizenFilters";
 import { KpiCard } from "../components/KpiCard";
-import { Pagination } from "../components/Pagination";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { CHART_COLORS } from "../constants/chartColors";
 import { QUALITY_ROUTES } from "../constants/routes";
-import { useClientPagination } from "../hooks/useClientPagination";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useKaizenSummary } from "../hooks/useQualityQueries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
@@ -44,7 +44,6 @@ import { formatCurrency, formatDecimal } from "../utils/format";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { suggestGranularity } from "../utils/periodBuckets";
 
-const PAGE_SIZE = 20;
 const CHART_HEIGHT = 300;
 
 type KaizenPageProps = {
@@ -94,8 +93,6 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
 
   const { data, loading, error, reload } = useKaizenSummary(summaryParams);
   const items = data?.list_kaizen ?? [];
-
-  const { page, setPage, slice, total } = useClientPagination(items, PAGE_SIZE);
 
   useEffect(() => {
     setGranularity(suggestGranularity(dateStart, dateEnd));
@@ -195,7 +192,6 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
     if (!point.dateStart || !point.dateEnd) return;
     setDateStart(point.dateStart);
     setDateEnd(point.dateEnd);
-    setPage(1);
   };
 
   const handleExportPeriodCsv = () => {
@@ -385,29 +381,25 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         </ChartCard>
       </section>
 
-      <section className="dq-table-section dq-card" aria-busy={loading}>
-        <div className="dq-table-section__header">
-          <h2 className="dq-section-title">Lista de kaizens</h2>
-          <span className="dq-table-section__meta">{total} registro(s)</span>
-        </div>
-
-        <DataTable
-          columns={columns}
-          rows={slice}
-          rowKey={(row) => row.id}
-          loading={loading && !data}
-          emptyMessage="Nenhum kaizen encontrado para os filtros."
+      {loading && !data ? (
+        <LoadingActivityCard
+          title="Carregando kaizens"
+          description="Buscando melhorias cadastradas para o período."
         />
+      ) : null}
 
-        {total > 0 ? (
-          <Pagination
-            page={page}
-            pageSize={PAGE_SIZE}
-            total={total}
-            onPageChange={setPage}
-          />
-        ) : null}
-      </section>
+      <DataTableSection
+        title="Lista de kaizens"
+        columns={columns}
+        rows={items}
+        rowKey={(row) => row.id}
+        loading={loading && !data}
+        emptyMessage="Nenhum kaizen encontrado para os filtros."
+        searchPlaceholder="Buscar título, setor, status…"
+        getSearchText={(row) =>
+          [row.title, row.sector, row.status, row.branch].filter(Boolean).join(" ")
+        }
+      />
     </div>
   );
 }

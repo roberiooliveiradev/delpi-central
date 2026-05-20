@@ -3,7 +3,8 @@ import { Package, Percent, TrendingUp, Warehouse } from "lucide-react";
 
 import { getInventoryTurnover } from "../api/suppliesApi";
 import { ChartCard } from "../components/ChartCard";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
@@ -208,24 +209,26 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
           hint={`Referência: ${data?.calculation_context.period_reference ?? "—"} · Período IDD válido: ${iddValid ? "sim" : "não"}`}
         >
           <div className="ds-metric-pairs">
-            <div>
-              <h3 className="ds-metric-pairs__title">Estoque</h3>
-              <DataTable
-                columns={contextColumns}
-                rows={stockRows}
-                rowKey={(row) => `stock-${row.label}`}
-                loading={isBusy && !data}
-              />
-            </div>
-            <div>
-              <h3 className="ds-metric-pairs__title">CPV no período</h3>
-              <DataTable
-                columns={contextColumns}
-                rows={cpvRows}
-                rowKey={(row) => `cpv-${row.label}`}
-                loading={isBusy && !data}
-              />
-            </div>
+            <DataTableSection
+              title="Estoque"
+              columns={contextColumns}
+              rows={stockRows}
+              rowKey={(row) => `stock-${row.label}`}
+              loading={loading && stockRows.length === 0}
+              refreshing={refreshing}
+              hideSearch
+              pageSize={10}
+            />
+            <DataTableSection
+              title="CPV no período"
+              columns={contextColumns}
+              rows={cpvRows}
+              rowKey={(row) => `cpv-${row.label}`}
+              loading={loading && cpvRows.length === 0}
+              refreshing={refreshing}
+              hideSearch
+              pageSize={10}
+            />
           </div>
         </ChartCard>
       </section>

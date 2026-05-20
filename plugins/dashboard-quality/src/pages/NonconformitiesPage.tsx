@@ -12,9 +12,9 @@ import {
 
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
-import { DataTable, type DataTableColumn } from "../components/DataTable";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { NonconformityFilters } from "../components/NonconformityFilters";
-import { Pagination } from "../components/Pagination";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { QUALITY_ROUTES } from "../constants/routes";
@@ -378,33 +378,30 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         </ChartCard>
       </section>
 
-      <section className="dq-table-section dq-card" aria-busy={loading}>
-        <div className="dq-table-section__header">
-          <h2 className="dq-section-title">Registros</h2>
-          {data ? (
-            <span className="dq-table-section__meta">
-              {data.total} registro(s) no período
-            </span>
-          ) : null}
-        </div>
-
-        <DataTable
-          columns={columns}
-          rows={data?.items ?? []}
-          rowKey={(row) => `${row.code}-${row.revision}-${row.branch}`}
-          loading={loading && !data}
-          emptyMessage="Nenhuma não conformidade encontrada para os filtros."
-        />
-
-        {data ? (
-          <Pagination
-            page={data.page}
-            pageSize={data.page_size}
-            total={data.total}
-            onPageChange={setPage}
-          />
-        ) : null}
-      </section>
+      <DataTableSection
+        title="Registros"
+        hint={
+          data
+            ? `${data.total} registro(s) no período · busca na página atual`
+            : undefined
+        }
+        columns={columns}
+        rows={data?.items ?? []}
+        rowKey={(row) => `${row.code}-${row.revision}-${row.branch}`}
+        loading={loading && !data}
+        emptyMessage="Nenhuma não conformidade encontrada para os filtros."
+        searchPlaceholder="Buscar código, produto, filial…"
+        serverPagination={
+          data
+            ? {
+                page: data.page,
+                pageSize: data.page_size,
+                total: data.total,
+                onPageChange: setPage,
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }
