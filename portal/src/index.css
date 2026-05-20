@@ -207,31 +207,34 @@ textarea {
 
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
 
-  --warning: #d97706;
+  --warning: #f59e0b;
 
-  /* Analytics / Admin Estatísticas (alinhado ao Strategic Indicators) */
+  /* Analytics / Admin Estatísticas — vivido em claro e escuro (Strategic Indicators) */
   --stats-title: var(--secundary);
-  --stats-title-soft: color-mix(in srgb, var(--secundary) 82%, #ffffff);
+  --stats-title-soft: color-mix(in srgb, var(--secundary) 68%, var(--primary));
   --stats-text: var(--text);
   --stats-text-muted: var(--text-muted);
   --stats-card-bg: var(--surface);
-  --stats-card-bg-elevated: var(--surface-2);
-  --stats-card-border: var(--border);
-  --stats-track-bg: color-mix(in srgb, var(--secundary) 6%, var(--surface-2));
-  --stats-hero-bg: var(--bg-gradient);
-  --stats-kpi-value: var(--secundary);
-  --stats-accent-bg: color-mix(in srgb, var(--primary) 10%, var(--surface));
-  --stats-accent-border: color-mix(in srgb, var(--primary) 32%, var(--border));
-  --stats-live-bg: color-mix(in srgb, var(--primary) 7%, var(--surface));
-  --stats-live-border: color-mix(in srgb, var(--primary) 38%, var(--border));
+  --stats-card-bg-elevated: color-mix(in srgb, var(--surface-2) 94%, var(--primary));
+  --stats-card-border: color-mix(in srgb, var(--primary) 12%, var(--border));
+  --stats-track-bg: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
+  --stats-hero-bg:
+    radial-gradient(circle at 14% 24%, rgba(8, 155, 219, 0.2), transparent 44%),
+    radial-gradient(circle at 86% 76%, rgba(14, 165, 233, 0.14), transparent 48%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-2) 96%, #ffffff), var(--bg));
+  --stats-kpi-value: color-mix(in srgb, var(--primary) 42%, var(--secundary));
+  --stats-accent-bg: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  --stats-accent-border: color-mix(in srgb, var(--primary) 40%, var(--border));
+  --stats-live-bg: color-mix(in srgb, var(--primary) 11%, var(--surface));
+  --stats-live-border: color-mix(in srgb, var(--primary) 48%, var(--border));
 
-  /* Paleta de gráficos — cores sólidas para donuts/barras */
+  /* Paleta de gráficos — saturada, legível em fundo claro */
   --chart-1: #089bdb;
-  --chart-2: #0284c7;
-  --chart-3: #06b6d4;
-  --chart-4: #059669;
-  --chart-5: #d97706;
-  --chart-6: #dc2626;
+  --chart-2: #0ea5e9;
+  --chart-3: #22d3ee;
+  --chart-4: #22c55e;
+  --chart-5: #f59e0b;
+  --chart-6: #ef4444;
   --chart-muted: #94a3b8;
 }
 

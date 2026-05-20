@@ -7,7 +7,7 @@
 
 ## 1. Aba Estatísticas
 
-Primeira aba do `/admin`, com **subpáginas** internas e tema de analytics via tokens globais do portal (`--stats-*`, `--chart-*` em `portal/src/index.css`), no mesmo espírito do plugin Strategic Indicators (cores vivas em claro e escuro).
+Primeira aba do `/admin`, com **subpáginas** internas e tema de analytics via tokens globais do portal (`--stats-*`, `--chart-*` em `portal/src/index.css`), no mesmo espírito do plugin Strategic Indicators: paleta saturada e legível tanto no modo claro quanto no escuro.
 
 | Subpágina | Conteúdo |
 |-----------|----------|
