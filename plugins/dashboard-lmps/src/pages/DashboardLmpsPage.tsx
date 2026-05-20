@@ -24,9 +24,16 @@ import { DataTableSection } from "../components/DataTableSection";
 import type { DataTableColumn } from "../components/DataTable";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { CHART_COLORS } from "../constants/chartColors";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
 import type { ChartGranularity } from "../types/chart";
 import type { LmpDashboardItem } from "../types/lmp";
+import { buildLmpFallbackCharts, parseLmpDateNumber } from "../utils/lmpCharts";
+import {
+  formatPeriodLabel,
+  getFirstDayOfMonthInputValue,
+  getTodayInputValue,
+} from "../utils/dates";
 import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
 import { suggestGranularity } from "../utils/periodBuckets";
 
@@ -38,6 +45,7 @@ const PIE_OUTER_RADIUS = 110;
 const BAR_CHART_HEIGHT = 320;
 const LINE_CHART_HEIGHT = 380;
 const CHART_FONT_SIZE = 14;
+const FILTER_DEBOUNCE_MS = 400;
 
 const AXIS_TICK_PROPS = { fontSize: CHART_FONT_SIZE };
 const TOOLTIP_STYLE = { fontSize: CHART_FONT_SIZE };
@@ -53,69 +61,11 @@ function formatDate(value?: string | null): string {
   return `${day}/${month}/${year}`;
 }
 
-function formatDateToInput(value?: string | null): string {
-  if (!value || value.length !== 8) return "";
-  const year = value.slice(0, 4);
-  const month = value.slice(4, 6);
-  const day = value.slice(6, 8);
-  return `${year}-${month}-${day}`;
-}
-
-function getTodayInputValue(): string {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function parseDateNumber(value?: string | null): number {
-  if (!value) return 0;
-
-  const normalized = value.replaceAll("-", "");
-  if (normalized.length !== 8) return 0;
-
-  const parsed = Number(normalized);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
 function formatListingKind(kind?: string | null): string {
   if (kind === "AMOSTRA") return "Amostra";
   if (kind === "OUTRO") return "Outro";
   if (kind === "LMP") return "LMP";
   return kind ?? "-";
-}
-
-function matchesListingType(
-  item: LmpDashboardItem,
-  listingType: string
-): boolean {
-  if (listingType === "Todos") return true;
-
-  const kind = item.listing_kind;
-  if (listingType === "Amostra") return kind === "AMOSTRA";
-  if (listingType === "LMP") return kind === "LMP";
-  if (listingType === "Outro") return kind === "OUTRO";
-  return true;
-}
-
-function matchesDashboardStatus(
-  item: LmpDashboardItem,
-  statusFilter: string
-): boolean {
-  if (statusFilter === "Todos") return true;
-  return item.status === statusFilter;
-}
-
-function matchesDashboardFilters(
-  item: LmpDashboardItem,
-  listingType: string,
-  statusFilter: string
-): boolean {
-  return (
-    matchesListingType(item, listingType) &&
-    matchesDashboardStatus(item, statusFilter)
-  );
 }
 
 function renderPieLabel({
@@ -130,57 +80,59 @@ function renderPieLabel({
 }
 
 export function DashboardLmpsPage() {
-  const [dateStart, setDateStart] = useState("");
-  const [dateEnd, setDateEnd] = useState(getTodayInputValue());
+  const [dateStart, setDateStart] = useState(getFirstDayOfMonthInputValue);
+  const [dateEnd, setDateEnd] = useState(getTodayInputValue);
   const [branch, setBranch] = useState("");
   const [listingType, setListingType] = useState("Todos");
   const [status, setStatus] = useState("Todos");
-  const [didInitializeDateStart, setDidInitializeDateStart] = useState(false);
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
+
+  const debouncedDateStart = useDebouncedValue(dateStart, FILTER_DEBOUNCE_MS);
+  const debouncedDateEnd = useDebouncedValue(dateEnd, FILTER_DEBOUNCE_MS);
 
   const { items, summary, charts, loading, refreshing, error, reload } =
     useLmpsDashboard({
-      date_start: dateStart || undefined,
-      date_end: dateEnd || undefined,
+      date_start: debouncedDateStart || undefined,
+      date_end: debouncedDateEnd || undefined,
       branch: branch || undefined,
       listing_type: listingType,
       status,
-      autoRefreshMs: 2 * 60 * 1000,
     });
 
   const dashboardItems = items as LmpDashboardItem[];
-
-  const filteredDashboardItems = useMemo(
-    () =>
-      dashboardItems.filter((item) =>
-        matchesDashboardFilters(item, listingType, status)
-      ),
-    [dashboardItems, listingType, status]
+  const periodLabel = useMemo(
+    () => formatPeriodLabel(dateStart, dateEnd),
+    [dateStart, dateEnd]
   );
 
-  const hasData = filteredDashboardItems.length > 0;
+  const sortedItems = useMemo(
+    () =>
+      [...dashboardItems].sort(
+        (a, b) => parseLmpDateNumber(b.start_date) - parseLmpDateNumber(a.start_date)
+      ),
+    [dashboardItems]
+  );
 
-  useEffect(() => {
-    if (didInitializeDateStart) return;
-    if (filteredDashboardItems.length === 0) return;
+  const hasData = sortedItems.length > 0 || summary !== null;
+  const isBusy = loading || refreshing;
 
-    const validStartDates = filteredDashboardItems
-      .map((item) => item.start_date)
-      .filter((value): value is string => Boolean(value && value.length === 8))
-      .sort((a, b) => parseDateNumber(a) - parseDateNumber(b));
+  const fallbackCharts = useMemo(
+    () => buildLmpFallbackCharts(sortedItems),
+    [sortedItems]
+  );
 
-    const oldestStartDate = validStartDates[0];
-    if (!oldestStartDate) return;
+  const resolvedCharts = useMemo(
+    () => ({
+      levelData: charts?.levelData ?? fallbackCharts.levelData,
+      statusData: charts?.statusData ?? fallbackCharts.statusData,
+      leadByLevel: charts?.leadByLevel ?? fallbackCharts.leadByLevel,
+    }),
+    [charts, fallbackCharts]
+  );
 
-    setDateStart(formatDateToInput(oldestStartDate));
-    setDidInitializeDateStart(true);
-  }, [filteredDashboardItems, didInitializeDateStart]);
-
-  const sortedDashboardItems = useMemo(() => {
-    return [...filteredDashboardItems].sort(
-      (a, b) => parseDateNumber(b.start_date) - parseDateNumber(a.start_date)
-    );
-  }, [filteredDashboardItems]);
+  const hasCharts =
+    resolvedCharts.levelData.some((d) => d.value > 0) ||
+    resolvedCharts.statusData.some((d) => d.value > 0);
 
   useEffect(() => {
     if (!dateStart || !dateEnd) return;
@@ -190,59 +142,13 @@ export function DashboardLmpsPage() {
   const evolutionChartData = useMemo(
     () =>
       aggregateLmpEvolutionSeries(
-        sortedDashboardItems,
+        sortedItems,
         dateStart || undefined,
         dateEnd || undefined,
         granularity
       ),
-    [sortedDashboardItems, dateStart, dateEnd, granularity]
+    [sortedItems, dateStart, dateEnd, granularity]
   );
-
-  const fallbackCharts = useMemo(() => {
-    const levelOrder = ["Nível 1", "Nível 2", "Nível 3"];
-    const statusOrder = ["Pontual", "Atrasado", "Andamento", "Retornada"];
-
-    const levelData = levelOrder.map((name) => ({
-      name,
-      value: filteredDashboardItems.filter((item) => item.nivel === name).length,
-    }));
-
-    const statusData = statusOrder.map((name) => ({
-      name,
-      value: filteredDashboardItems.filter((item) => item.status === name).length,
-    }));
-
-    const leadByLevel = levelOrder.map((nivel) => {
-      const itemsByLevel = filteredDashboardItems.filter(
-        (item) => item.nivel === nivel && item.lead_time_util != null
-      );
-
-      const avg =
-        itemsByLevel.length > 0
-          ? itemsByLevel.reduce(
-              (acc, item) => acc + (item.lead_time_util ?? 0),
-              0
-            ) / itemsByLevel.length
-          : 0;
-
-      return {
-        nivel,
-        valor: Number(avg.toFixed(2)),
-      };
-    });
-
-    return {
-      levelData,
-      statusData,
-      leadByLevel,
-    };
-  }, [filteredDashboardItems]);
-
-  const resolvedCharts = {
-    levelData: charts?.levelData ?? fallbackCharts.levelData,
-    statusData: charts?.statusData ?? fallbackCharts.statusData,
-    leadByLevel: charts?.leadByLevel ?? fallbackCharts.leadByLevel,
-  };
 
   const tableColumns = useMemo<DataTableColumn<LmpDashboardItem>[]>(
     () => [
@@ -301,10 +207,7 @@ export function DashboardLmpsPage() {
   );
 
   const totalPropostas =
-    summary?.total_items ??
-    (status !== "Todos" || listingType !== "Todos"
-      ? filteredDashboardItems.length
-      : summary?.total_lmps ?? 0);
+    summary?.total_items ?? summary?.total_lmps ?? sortedItems.length;
 
   return (
     <main className="dashboard-lmps dashboard-page">
@@ -331,7 +234,7 @@ export function DashboardLmpsPage() {
         />
       ) : null}
 
-      <section className="lmps-kpi-grid">
+      <section className="lmps-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="% LMP Dentro do Prazo"
           value={`${(summary?.percent_dentro_prazo ?? 0).toLocaleString(
@@ -341,7 +244,7 @@ export function DashboardLmpsPage() {
               maximumFractionDigits: 2,
             }
           )}%`}
-          subtitle="Percentual consolidado"
+          subtitle={periodLabel}
           icon={<CircleGauge size={22} />}
         />
         <KpiCard
@@ -350,7 +253,7 @@ export function DashboardLmpsPage() {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })} dias`}
-          subtitle="Média geral"
+          subtitle="Média no período"
           icon={<Clock3 size={22} />}
         />
         <KpiCard
@@ -359,7 +262,7 @@ export function DashboardLmpsPage() {
           subtitle={
             status !== "Todos" || listingType !== "Todos"
               ? "Registros no filtro atual"
-              : "Período filtrado"
+              : periodLabel
           }
           icon={<BarChart3 size={22} />}
         />
@@ -387,130 +290,137 @@ export function DashboardLmpsPage() {
             </section>
           )}
 
-          <section className="lmps-charts-grid lmps-charts-grid-top">
-            <ChartCard title="Contagem por Nível">
-              <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
-                <PieChart>
-                  <Pie
-                    data={resolvedCharts.levelData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={PIE_OUTER_RADIUS}
-                    dataKey="value"
-                    nameKey="name"
-                    label={renderPieLabel}
-                  >
-                    {resolvedCharts.levelData.map((entry, index) => (
-                      <Cell
-                        key={entry.name}
-                        fill={CHART_COLORS[index % CHART_COLORS.length]}
+          {hasCharts ? (
+            <>
+              <section className="lmps-charts-grid lmps-charts-grid-top">
+                <ChartCard title="Contagem por Nível">
+                  <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
+                    <PieChart>
+                      <Pie
+                        data={resolvedCharts.levelData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={PIE_OUTER_RADIUS}
+                        dataKey="value"
+                        nameKey="name"
+                        label={renderPieLabel}
+                      >
+                        {resolvedCharts.levelData.map((entry, index) => (
+                          <Cell
+                            key={entry.name}
+                            fill={CHART_COLORS[index % CHART_COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={TOOLTIP_STYLE} />
+                      <Legend wrapperStyle={LEGEND_STYLE} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+
+                <ChartCard title="Contagem por Status">
+                  <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
+                    <PieChart>
+                      <Pie
+                        data={resolvedCharts.statusData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={PIE_OUTER_RADIUS}
+                        dataKey="value"
+                        nameKey="name"
+                        label={renderPieLabel}
+                      >
+                        {resolvedCharts.statusData.map((entry, index) => (
+                          <Cell
+                            key={entry.name}
+                            fill={CHART_COLORS[index % CHART_COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={TOOLTIP_STYLE} />
+                      <Legend wrapperStyle={LEGEND_STYLE} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+
+                <ChartCard title="Média de Lead Time Útil por Nível">
+                  <ResponsiveContainer width="100%" height={BAR_CHART_HEIGHT}>
+                    <BarChart data={resolvedCharts.leadByLevel}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="nivel" tick={AXIS_TICK_PROPS} />
+                      <YAxis tick={AXIS_TICK_PROPS} />
+                      <Tooltip contentStyle={TOOLTIP_STYLE} />
+                      <Bar
+                        dataKey="valor"
+                        radius={[8, 8, 0, 0]}
+                        fill={PRIMARY_CHART_COLOR}
                       />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Legend wrapperStyle={LEGEND_STYLE} />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartCard>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              </section>
 
-            <ChartCard title="Contagem por Status">
-              <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
-                <PieChart>
-                  <Pie
-                    data={resolvedCharts.statusData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={PIE_OUTER_RADIUS}
-                    dataKey="value"
-                    nameKey="name"
-                    label={renderPieLabel}
-                  >
-                    {resolvedCharts.statusData.map((entry, index) => (
-                      <Cell
-                        key={entry.name}
-                        fill={CHART_COLORS[index % CHART_COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Legend wrapperStyle={LEGEND_STYLE} />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard title="Média de Lead Time Útil por Nível">
-              <ResponsiveContainer width="100%" height={BAR_CHART_HEIGHT}>
-                <BarChart data={resolvedCharts.leadByLevel}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="nivel" tick={AXIS_TICK_PROPS} />
-                  <YAxis tick={AXIS_TICK_PROPS} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Bar
-                    dataKey="valor"
-                    radius={[8, 8, 0, 0]}
-                    fill={PRIMARY_CHART_COLOR}
+              <section className="lmps-charts-grid">
+                <ChartCard title="Evolução de Lead Time Útil e Quantidade de Propostas">
+                  <ChartToolbar
+                    idPrefix="lmps-evolution"
+                    granularity={granularity}
+                    onGranularityChange={setGranularity}
                   />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </section>
-
-          <section className="lmps-charts-grid">
-            <ChartCard title="Evolução de Lead Time Útil e Quantidade de Propostas">
-              <ChartToolbar
-                idPrefix="lmps-evolution"
-                granularity={granularity}
-                onGranularityChange={setGranularity}
-              />
-              {evolutionChartData.length === 0 && !loading ? (
-                <div className="lmps-state-box">Sem dados para o agrupamento selecionado.</div>
-              ) : (
-              <ResponsiveContainer width="100%" height={LINE_CHART_HEIGHT}>
-                <LineChart data={evolutionChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="periodo" tick={AXIS_TICK_PROPS} />
-                  <YAxis yAxisId="left" tick={AXIS_TICK_PROPS} />
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    tick={AXIS_TICK_PROPS}
-                  />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Legend wrapperStyle={LEGEND_STYLE} />
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="mediaLead"
-                    name="Média Lead Time"
-                    strokeWidth={3}
-                    stroke={PRIMARY_CHART_COLOR}
-                    dot={{ r: 4, strokeWidth: 2, fill: "#ffffff" }}
-                    activeDot={{ r: 3 }}
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="propostas"
-                    name="Nº Propostas"
-                    strokeWidth={4}
-                    stroke={SECONDARY_CHART_COLOR}
-                    dot={{ r: 4, strokeWidth: 2, fill: "#ffffff" }}
-                    activeDot={{ r: 3 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-              )}
-            </ChartCard>
-          </section>
+                  {evolutionChartData.length === 0 && !loading ? (
+                    <div className="lmps-state-box">
+                      Sem dados para o agrupamento selecionado.
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={LINE_CHART_HEIGHT}>
+                      <LineChart data={evolutionChartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="periodo" tick={AXIS_TICK_PROPS} />
+                        <YAxis yAxisId="left" tick={AXIS_TICK_PROPS} />
+                        <YAxis
+                          yAxisId="right"
+                          orientation="right"
+                          tick={AXIS_TICK_PROPS}
+                        />
+                        <Tooltip contentStyle={TOOLTIP_STYLE} />
+                        <Legend wrapperStyle={LEGEND_STYLE} />
+                        <Line
+                          yAxisId="left"
+                          type="monotone"
+                          dataKey="mediaLead"
+                          name="Média Lead Time"
+                          strokeWidth={3}
+                          stroke={PRIMARY_CHART_COLOR}
+                          dot={{ r: 4, strokeWidth: 2, fill: "#ffffff" }}
+                          activeDot={{ r: 3 }}
+                        />
+                        <Line
+                          yAxisId="right"
+                          type="monotone"
+                          dataKey="propostas"
+                          name="Nº Propostas"
+                          strokeWidth={4}
+                          stroke={SECONDARY_CHART_COLOR}
+                          dot={{ r: 4, strokeWidth: 2, fill: "#ffffff" }}
+                          activeDot={{ r: 3 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
+                </ChartCard>
+              </section>
+            </>
+          ) : null}
 
           <DataTableSection
             title="Registros filtrados"
+            hint={periodLabel}
             columns={tableColumns}
-            rows={sortedDashboardItems}
+            rows={sortedItems}
             rowKey={(row) =>
               `${row.branch ?? "sem-filial"}-${row.listing_kind ?? "sem-tipo"}-${row.sale_number}`
             }
-            loading={loading && sortedDashboardItems.length === 0}
+            loading={loading && sortedItems.length === 0}
             refreshing={refreshing}
             emptyMessage="Nenhum registro encontrado para os filtros informados."
             searchPlaceholder="Buscar proposta, descrição, status…"

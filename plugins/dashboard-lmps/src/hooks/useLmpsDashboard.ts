@@ -9,7 +9,6 @@ type UseLmpsDashboardParams = {
   status?: string;
   page?: number;
   page_size?: number;
-  autoRefreshMs?: number;
 };
 
 type UseLmpsDashboardResult = {
@@ -57,7 +56,7 @@ export function useLmpsDashboard(
     const controller = new AbortController();
 
     async function run() {
-      const hasPreviousData = Boolean(data);
+      const hasPreviousData = data !== null;
 
       try {
         setError(null);
@@ -68,28 +67,19 @@ export function useLmpsDashboard(
           setLoading(true);
         }
 
-        const result = await getLmpsDashboard(
-          {
-            date_start: stableParams.date_start,
-            date_end: stableParams.date_end,
-            branch: stableParams.branch,
-            listing_type: stableParams.listing_type,
-            status: stableParams.status,
-            page: stableParams.page,
-            page_size: stableParams.page_size,
-          },
-          controller.signal
-        );
+        const result = await getLmpsDashboard(stableParams, controller.signal);
 
-        setData(result);
+        if (!controller.signal.aborted) {
+          setData(result);
+        }
       } catch (err) {
-        if (controller.signal.aborted) return;
-
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Erro ao carregar dashboard de LMPs"
-        );
+        if (!controller.signal.aborted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Erro ao carregar dashboard de LMPs"
+          );
+        }
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
@@ -101,21 +91,17 @@ export function useLmpsDashboard(
     void run();
 
     return () => controller.abort();
-  }, [stableParams, reloadKey]);
-
-  useEffect(() => {
-    if (!params.autoRefreshMs || params.autoRefreshMs <= 0) return;
-
-    const intervalId = window.setInterval(() => {
-      if (document.visibilityState !== "visible") return;
-
-      setReloadKey((prev) => prev + 1);
-    }, params.autoRefreshMs);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [params.autoRefreshMs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    stableParams.branch,
+    stableParams.date_end,
+    stableParams.date_start,
+    stableParams.listing_type,
+    stableParams.status,
+    stableParams.page,
+    stableParams.page_size,
+    reloadKey,
+  ]);
 
   const reload = useCallback(() => {
     setReloadKey((prev) => prev + 1);
