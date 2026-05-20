@@ -8,6 +8,59 @@
   background: var(--surface);
 }
 
+.notification-card--page.notification-card--selectable {
+  grid-template-columns: auto auto 1fr;
+}
+
+.notification-card--selected {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.notification-card__select {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.notification-card__select-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.notification-card__select-box {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.notification-card__select-input:focus-visible + .notification-card__select-box {
+  outline: 2px solid color-mix(in srgb, var(--primary) 50%, transparent);
+  outline-offset: 2px;
+}
+
+.notification-card__select-input:checked + .notification-card__select-box {
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: inset 0 0 0 3px var(--surface);
+}
+
 .notification-card--unread {
   border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
   background: color-mix(in srgb, var(--primary) 6%, var(--surface));

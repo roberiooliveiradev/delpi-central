@@ -43,6 +43,10 @@ type NotificationCardProps = {
   /** @deprecated use variant="compact" */
   compact?: boolean;
   variant?: "compact" | "page";
+  /** Seleção em lote (apenas variant="page") */
+  selectionEnabled?: boolean;
+  selected?: boolean;
+  onSelectedChange?: (selected: boolean) => void;
 };
 
 function formatNotificationDate(iso: string): string {
@@ -106,6 +110,9 @@ export function NotificationCard({
   onToggleImportant,
   compact = false,
   variant,
+  selectionEnabled = false,
+  selected = false,
+  onSelectedChange,
 }: NotificationCardProps) {
   const navigate = useNavigate();
   const { apps } = useContext(AuthContext);
@@ -180,8 +187,23 @@ export function NotificationCard({
           `notification-card--${notification.type}`,
           notification.read ? "notification-card--read" : "notification-card--unread",
           isImportant ? "notification-card--important" : "",
+          selectionEnabled ? "notification-card--selectable" : "",
+          selectionEnabled && selected ? "notification-card--selected" : "",
         ].join(" ")}
       >
+        {selectionEnabled ? (
+          <label className="notification-card__select">
+            <input
+              type="checkbox"
+              className="notification-card__select-input"
+              checked={selected}
+              onChange={(event) => onSelectedChange?.(event.target.checked)}
+              aria-label={`Selecionar notificação ${notification.title || notification.category}`}
+            />
+            <span className="notification-card__select-box" aria-hidden="true" />
+          </label>
+        ) : null}
+
         <div className="notification-card__icon" aria-hidden="true">
           <Icon size={20} />
         </div>

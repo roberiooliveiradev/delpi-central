@@ -178,6 +178,97 @@
   color: var(--primary);
 }
 
+.notifications-page__summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.notifications-page__select-page {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.notifications-page__select-page:hover:not(:disabled) {
+  color: color-mix(in srgb, var(--primary) 80%, var(--text));
+}
+
+.notifications-page__select-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notifications-page__bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+}
+
+.notifications-page__bulk-count {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.notifications-page__bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.notifications-page__bulk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.notifications-page__bulk-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.notifications-page__bulk-btn--danger:hover:not(:disabled) {
+  border-color: #b91c1c;
+  color: #b91c1c;
+}
+
+.notifications-page__bulk-btn--ghost {
+  background: transparent;
+}
+
+.notifications-page__bulk-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .notifications-page__controls-divider {
   height: 1px;
   background: var(--border);

@@ -30,10 +30,41 @@ export function useNotificationActions() {
     [setNotificationImportant],
   );
 
+  const bulkMarkRead = useCallback(
+    async (ids: string[]) => {
+      const unique = [...new Set(ids)].filter(Boolean);
+      if (!unique.length) return;
+
+      await Promise.all(unique.map((id) => markNotificationRead(id)));
+    },
+    [markNotificationRead],
+  );
+
+  const bulkDelete = useCallback(
+    async (ids: string[]) => {
+      const unique = [...new Set(ids)].filter(Boolean);
+      if (!unique.length) return;
+
+      const message =
+        unique.length === 1
+          ? DELETE_CONFIRM
+          : `Excluir ${unique.length} notificações? Elas não aparecerão mais no seu histórico.`;
+
+      if (!window.confirm(message)) {
+        return;
+      }
+
+      await Promise.all(unique.map((id) => deleteNotification(id)));
+    },
+    [deleteNotification],
+  );
+
   return {
     markNotificationRead,
     markAllNotificationsRead,
     handleDelete,
     handleToggleImportant,
+    bulkMarkRead,
+    bulkDelete,
   };
 }

@@ -1,7 +1,17 @@
 // src/ui/NotificationsPage.tsx
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Bell, ChevronLeft, ChevronRight, Inbox, Settings2, Star } from "lucide-react";
+import {
+  Bell,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Inbox,
+  Settings2,
+  Star,
+  Trash2,
+  X,
+} from "lucide-react";
 import { AuthContext } from "../state/AuthContext";
 import { ApiClient } from "../data/apiClient";
 import {
@@ -50,7 +60,8 @@ export function NotificationsPage() {
     reloadNotifications,
   } = useContext(AuthContext);
 
-  const { markNotificationRead, handleDelete, handleToggleImportant } = useNotificationActions();
+  const { markNotificationRead, handleDelete, handleToggleImportant, bulkMarkRead, bulkDelete } =
+    useNotificationActions();
 
   const coreApi = useMemo(
     () =>
@@ -74,6 +85,8 @@ export function NotificationsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -111,6 +124,81 @@ export function NotificationsPage() {
   useEffect(() => {
     setPage(1);
   }, [status, category, importantOnly]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [page, status, category, importantOnly, section]);
+
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const selectedCount = selectedIds.length;
+  const allOnPageSelected =
+    items.length > 0 && items.every((item) => selectedSet.has(item.id));
+  const selectedUnreadCount = items.filter(
+    (item) => selectedSet.has(item.id) && !item.read,
+  ).length;
+
+  function toggleSelected(id: string, next: boolean) {
+    setSelectedIds((current) => {
+      if (next) {
+        return current.includes(id) ? current : [...current, id];
+      }
+      return current.filter((value) => value !== id);
+    });
+  }
+
+  function toggleSelectAllOnPage() {
+    if (allOnPageSelected) {
+      setSelectedIds([]);
+      return;
+    }
+    setSelectedIds(items.map((item) => item.id));
+  }
+
+  function clearSelection() {
+    setSelectedIds([]);
+  }
+
+  async function handleBulkMarkRead() {
+    const ids = items
+      .filter((item) => selectedSet.has(item.id) && !item.read)
+      .map((item) => item.id);
+
+    if (!ids.length) return;
+
+    setBulkBusy(true);
+    setError(null);
+
+    try {
+      await bulkMarkRead(ids);
+      await reloadNotifications();
+      await loadHistory();
+      clearSelection();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Falha ao marcar notificações como lidas",
+      );
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (!selectedCount) return;
+
+    setBulkBusy(true);
+    setError(null);
+
+    try {
+      await bulkDelete(selectedIds);
+      await reloadNotifications();
+      await loadHistory();
+      clearSelection();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao excluir notificações");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
 
   async function handleMarkRead(id: string) {
     await markNotificationRead(id);
@@ -271,15 +359,73 @@ export function NotificationsPage() {
             </div>
           </div>
 
-          <p className="notifications-page__summary" aria-live="polite">
-            {summaryLabel}
-            {!loading && status === "unread" ? " · não lidas" : null}
-            {!loading && status === "read" ? " · lidas" : null}
-            {!loading && importantOnly ? " · importantes" : null}
-            {!loading && category
-              ? ` · ${CATEGORY_OPTIONS.find((o) => o.value === category)?.label ?? category}`
-              : null}
-          </p>
+          <div className="notifications-page__summary-row">
+            <p className="notifications-page__summary" aria-live="polite">
+              {summaryLabel}
+              {!loading && status === "unread" ? " · não lidas" : null}
+              {!loading && status === "read" ? " · lidas" : null}
+              {!loading && importantOnly ? " · importantes" : null}
+              {!loading && category
+                ? ` · ${CATEGORY_OPTIONS.find((o) => o.value === category)?.label ?? category}`
+                : null}
+            </p>
+
+            {!loading && items.length > 0 ? (
+              <button
+                type="button"
+                className="notifications-page__select-page"
+                onClick={toggleSelectAllOnPage}
+                disabled={bulkBusy}
+              >
+                {allOnPageSelected ? "Desmarcar página" : "Selecionar página"}
+              </button>
+            ) : null}
+          </div>
+
+          {selectedCount > 0 ? (
+            <div className="notifications-page__bulk" role="region" aria-label="Ações em lote">
+              <span className="notifications-page__bulk-count">
+                {selectedCount === 1
+                  ? "1 selecionada"
+                  : `${selectedCount} selecionadas`}
+              </span>
+
+              <div className="notifications-page__bulk-actions">
+                {selectedUnreadCount > 0 ? (
+                  <button
+                    type="button"
+                    className="notifications-page__bulk-btn"
+                    disabled={bulkBusy}
+                    onClick={() => void handleBulkMarkRead()}
+                  >
+                    <Check size={16} aria-hidden="true" />
+                    Marcar como lidas
+                  </button>
+                ) : null}
+
+                <button
+                  type="button"
+                  className="notifications-page__bulk-btn notifications-page__bulk-btn--danger"
+                  disabled={bulkBusy}
+                  onClick={() => void handleBulkDelete()}
+                >
+                  <Trash2 size={16} aria-hidden="true" />
+                  Excluir
+                </button>
+
+                <button
+                  type="button"
+                  className="notifications-page__bulk-btn notifications-page__bulk-btn--ghost"
+                  disabled={bulkBusy}
+                  onClick={clearSelection}
+                  aria-label="Limpar seleção"
+                >
+                  <X size={16} aria-hidden="true" />
+                  Limpar
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {error ? <p className="notifications-page__error">{error}</p> : null}
 
@@ -298,6 +444,9 @@ export function NotificationsPage() {
                     <NotificationCard
                       variant="page"
                       notification={notification}
+                      selectionEnabled
+                      selected={selectedSet.has(notification.id)}
+                      onSelectedChange={(next) => toggleSelected(notification.id, next)}
                       onMarkRead={handleMarkRead}
                       onDelete={(id) => void handleDeleteAndReload(id)}
                       onToggleImportant={(id, isImportant) =>

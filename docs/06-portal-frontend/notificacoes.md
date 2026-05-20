@@ -23,7 +23,7 @@
 
 | Aba | Conteúdo |
 |-----|----------|
-| **Histórico** | Filtros de status (Todas / Não lidas / Lidas), categoria, toggle “Importantes”, lista paginada (`PAGE_SIZE=12`), ações no card |
+| **Histórico** | Filtros de status (Todas / Não lidas / Lidas), categoria, toggle “Importantes”, lista paginada (`PAGE_SIZE=12`), ações no card, **seleção múltipla** (marcar lidas / excluir em lote na página atual) |
 | **Preferências** | Silenciar categorias mutáveis (`mutedCategories`); categoria `system` não pode ser desativada |
 
 O subtítulo do cabeçalho muda conforme a aba ativa. Após salvar preferências, o sino recarrega via `reloadNotifications()` do `AuthContext`.
