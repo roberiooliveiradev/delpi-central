@@ -41,6 +41,7 @@ const CATEGORY_OPTIONS: { value: NotificationCategory | ""; label: string }[] = 
   { value: "company_event", label: "Evento" },
   { value: "announcement", label: "Comunicado" },
   { value: "custom", label: "Personalizada" },
+  { value: "controle_mp", label: "Controle MP" },
 ];
 
 export function NotificationsPage() {

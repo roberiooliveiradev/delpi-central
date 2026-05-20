@@ -14,6 +14,7 @@ const CATEGORY_LABELS: Record<NotificationCategory, string> = {
   company_event: "Evento",
   announcement: "Comunicado",
   custom: "Personalizada",
+  controle_mp: "Controle MP",
 };
 
 type Props = {
