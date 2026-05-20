@@ -7,7 +7,7 @@
 
 ## 1. Aba Estatísticas
 
-Primeira aba do `/admin`, com **subpáginas** internas e visual alinhado aos tokens Minha DELPI (`--primary`, `--secundary`).
+Primeira aba do `/admin`, com **subpáginas** internas e tema de analytics via tokens globais do portal (`--stats-*`, `--chart-*` em `portal/src/index.css`), no mesmo espírito do plugin Strategic Indicators (cores vivas em claro e escuro).
 
 | Subpágina | Conteúdo |
 |-----------|----------|
@@ -17,11 +17,9 @@ Primeira aba do `/admin`, com **subpáginas** internas e visual alinhado aos tok
 | **Acesso RBAC** | Rankings de papéis/grupos e vínculos |
 | **Notificações** | Status dos envios de campanha |
 
-Código em `portal/src/ui/admin/stats/` (páginas em `stats/pages/`).
-| Visão RBAC | Contagens de vínculos e permissões |
-| Notificações | Envios de campanha (total, pendente, concluído, falha) |
+Código em `portal/src/ui/admin/stats/` (páginas em `stats/pages/`). Paleta de segmentos em `statsTheme.ts` (`STATS_CHART_COLORS` → `var(--chart-1)` … `var(--chart-6)`).
 
-Cada painel tem atalho **Gerenciar** que navega para a aba correspondente.
+Cada painel pode ter atalho **Gerenciar** que navega para a aba correspondente.
 
 ---
 

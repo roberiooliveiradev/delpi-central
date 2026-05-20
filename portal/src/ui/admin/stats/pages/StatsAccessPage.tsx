@@ -25,7 +25,7 @@ export function StatsAccessPage({ stats, onNavigateTab }: StatsPageProps) {
               value: item.count,
             }))}
             valueLabel="usuários"
-            accent={STATS_CHART_COLORS.secondary}
+            accent={STATS_CHART_COLORS.c2}
           />
           <p className="admin-stats__chart-foot">
             {stats.roles.withoutUsers} papéis sem usuários · {stats.roles.system} de sistema
@@ -60,7 +60,7 @@ export function StatsAccessPage({ stats, onNavigateTab }: StatsPageProps) {
               value: item.count,
             }))}
             valueLabel="papéis"
-            accent={STATS_CHART_COLORS.primaryLight}
+            accent={STATS_CHART_COLORS.c3}
           />
         </article>
 
@@ -92,7 +92,7 @@ export function StatsAccessPage({ stats, onNavigateTab }: StatsPageProps) {
                 value: stats.assignments.rolePermissions,
               },
             ]}
-            accent={STATS_CHART_COLORS.secondaryMuted}
+            accent={STATS_CHART_COLORS.c6}
           />
           <p className="admin-stats__chart-foot">
             {stats.permissions.total} permissões cadastradas no catálogo

@@ -97,7 +97,7 @@ export function BarChart({
   items,
   valueLabel = "",
   maxItems = 6,
-  accent = "var(--primary)",
+  accent = "linear-gradient(90deg, var(--chart-2), var(--chart-1))",
 }: BarChartProps) {
   const visible = items.slice(0, maxItems);
 

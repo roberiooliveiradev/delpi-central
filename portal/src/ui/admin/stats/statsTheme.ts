@@ -1,14 +1,19 @@
 // src/ui/admin/stats/statsTheme.ts
-// Paleta alinhada aos tokens do portal (index.css — Minha DELPI)
+// Paleta via tokens globais do portal (--chart-*, --stats-*) — vivida em claro e escuro
 
 export const STATS_CHART_COLORS = {
-  primary: "var(--primary)",
-  secondary: "var(--secundary)",
-  success: "var(--success)",
-  danger: "var(--danger)",
-  muted: "color-mix(in srgb, var(--text-muted) 60%, var(--border))",
-  primaryLight: "color-mix(in srgb, var(--primary) 72%, #ffffff)",
-  secondaryMuted: "color-mix(in srgb, var(--secundary) 45%, var(--primary))",
+  c1: "var(--chart-1)",
+  c2: "var(--chart-2)",
+  c3: "var(--chart-3)",
+  c4: "var(--chart-4)",
+  c5: "var(--chart-5)",
+  c6: "var(--chart-6)",
+  muted: "var(--chart-muted)",
+  primary: "var(--chart-1)",
+  accent: "var(--chart-3)",
+  success: "var(--chart-4)",
+  warning: "var(--chart-5)",
+  danger: "var(--chart-6)",
 } as const;
 
 export type StatsSubPage = "overview" | "users" | "apps" | "access" | "notifications";

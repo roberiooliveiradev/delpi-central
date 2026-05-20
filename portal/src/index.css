@@ -206,6 +206,33 @@ textarea {
     );
 
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
+
+  --warning: #d97706;
+
+  /* Analytics / Admin Estatísticas (alinhado ao Strategic Indicators) */
+  --stats-title: var(--secundary);
+  --stats-title-soft: color-mix(in srgb, var(--secundary) 82%, #ffffff);
+  --stats-text: var(--text);
+  --stats-text-muted: var(--text-muted);
+  --stats-card-bg: var(--surface);
+  --stats-card-bg-elevated: var(--surface-2);
+  --stats-card-border: var(--border);
+  --stats-track-bg: color-mix(in srgb, var(--secundary) 6%, var(--surface-2));
+  --stats-hero-bg: var(--bg-gradient);
+  --stats-kpi-value: var(--secundary);
+  --stats-accent-bg: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  --stats-accent-border: color-mix(in srgb, var(--primary) 32%, var(--border));
+  --stats-live-bg: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  --stats-live-border: color-mix(in srgb, var(--primary) 38%, var(--border));
+
+  /* Paleta de gráficos — cores sólidas para donuts/barras */
+  --chart-1: #089bdb;
+  --chart-2: #0284c7;
+  --chart-3: #06b6d4;
+  --chart-4: #059669;
+  --chart-5: #d97706;
+  --chart-6: #dc2626;
+  --chart-muted: #94a3b8;
 }
 
 /* DARK MODE */
@@ -235,6 +262,39 @@ textarea {
 
   --alert-danger-border: color-mix(in srgb, var(--danger) 50%, transparent);
   --alert-danger-bg: color-mix(in srgb, var(--danger) 18%, transparent);
+
+  --warning: #fbbf24;
+
+  --bg-gradient:
+    radial-gradient(circle at 18% 25%, rgba(8, 155, 219, 0.2), transparent 48%),
+    radial-gradient(circle at 82% 72%, rgba(0, 56, 102, 0.35), transparent 52%),
+    linear-gradient(135deg, color-mix(in srgb, var(--bg) 88%, #0b1b2b), var(--bg));
+
+  --stats-title: color-mix(in srgb, var(--primary) 75%, #ffffff);
+  --stats-title-soft: color-mix(in srgb, var(--primary) 52%, #ffffff);
+  --stats-text: rgba(255, 255, 255, 0.92);
+  --stats-text-muted: rgba(255, 255, 255, 0.72);
+  --stats-card-bg: color-mix(in srgb, var(--surface-2) 88%, #000000);
+  --stats-card-bg-elevated: color-mix(in srgb, var(--surface-2) 72%, var(--primary) 6%);
+  --stats-card-border: rgba(255, 255, 255, 0.14);
+  --stats-track-bg: rgba(255, 255, 255, 0.1);
+  --stats-hero-bg:
+    radial-gradient(circle at 12% 20%, rgba(8, 155, 219, 0.28), transparent 42%),
+    radial-gradient(circle at 88% 80%, rgba(56, 189, 248, 0.12), transparent 48%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-2) 92%, #000), var(--bg));
+  --stats-kpi-value: color-mix(in srgb, var(--primary) 68%, #ffffff);
+  --stats-accent-bg: color-mix(in srgb, var(--primary) 16%, var(--surface-2));
+  --stats-accent-border: color-mix(in srgb, var(--primary) 45%, transparent);
+  --stats-live-bg: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
+  --stats-live-border: color-mix(in srgb, var(--chart-1) 55%, transparent);
+
+  --chart-1: #38bdf8;
+  --chart-2: #22d3ee;
+  --chart-3: #67e8f9;
+  --chart-4: #4ade80;
+  --chart-5: #fbbf24;
+  --chart-6: #fb7185;
+  --chart-muted: rgba(255, 255, 255, 0.28);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -264,6 +324,30 @@ textarea {
 
     --alert-danger-border: color-mix(in srgb, var(--danger) 50%, transparent);
     --alert-danger-bg: color-mix(in srgb, var(--danger) 18%, transparent);
+
+    --warning: #fbbf24;
+
+    --stats-title: color-mix(in srgb, var(--primary) 75%, #ffffff);
+    --stats-title-soft: color-mix(in srgb, var(--primary) 52%, #ffffff);
+    --stats-text: rgba(255, 255, 255, 0.92);
+    --stats-text-muted: rgba(255, 255, 255, 0.72);
+    --stats-card-bg: color-mix(in srgb, var(--surface-2) 88%, #000000);
+    --stats-card-bg-elevated: color-mix(in srgb, var(--surface-2) 72%, var(--primary) 6%);
+    --stats-card-border: rgba(255, 255, 255, 0.14);
+    --stats-track-bg: rgba(255, 255, 255, 0.1);
+    --stats-kpi-value: color-mix(in srgb, var(--primary) 68%, #ffffff);
+    --stats-accent-bg: color-mix(in srgb, var(--primary) 16%, var(--surface-2));
+    --stats-accent-border: color-mix(in srgb, var(--primary) 45%, transparent);
+    --stats-live-bg: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
+    --stats-live-border: color-mix(in srgb, var(--chart-1) 55%, transparent);
+
+    --chart-1: #38bdf8;
+    --chart-2: #22d3ee;
+    --chart-3: #67e8f9;
+    --chart-4: #4ade80;
+    --chart-5: #fbbf24;
+    --chart-6: #fb7185;
+    --chart-muted: rgba(255, 255, 255, 0.28);
   }
 }
 

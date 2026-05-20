@@ -71,17 +71,17 @@ export function useAdminStats() {
       {
         label: "Em uso agora",
         value: usage?.inUseNow ?? 0,
-        color: STATS_CHART_COLORS.primary,
+        color: STATS_CHART_COLORS.c1,
       },
       {
         label: "Usadas (30d)",
         value: Math.max(0, usedInPeriod - (usage?.inUseNow ?? 0)),
-        color: STATS_CHART_COLORS.primaryLight,
+        color: STATS_CHART_COLORS.c3,
       },
       {
         label: "Fantasmas",
         value: ghostCount,
-        color: STATS_CHART_COLORS.secondary,
+        color: STATS_CHART_COLORS.c5,
       },
       {
         label: "Sem uso recente",

@@ -101,7 +101,7 @@ export function StatsAppsPage({ stats, charts, onNavigateTab }: StatsAppsPagePro
               label: formatAppType(item.type),
               value: item.count,
             }))}
-            accent={STATS_CHART_COLORS.secondary}
+            accent={STATS_CHART_COLORS.c2}
             maxItems={6}
           />
           <p className="admin-stats__chart-foot">
