@@ -8,6 +8,7 @@ class ChatExternalActionKind:
     PRODUCT = "product"
     LMP_LIST = "lmp_list"
     LMP_DETAIL = "lmp_detail"
+    SUPPLIES = "supplies"
     SQL = "sql"
     GENERIC = "generic"
 
@@ -35,6 +36,9 @@ class ChatExternalActionDirectAnswerService:
                 return ChatExternalActionKind.LMP_DETAIL
 
             return ChatExternalActionKind.LMP_LIST
+
+        if "/supplies/" in normalized_path or normalized_operation.startswith("get_supplies_"):
+            return ChatExternalActionKind.SUPPLIES
 
         if "/data/sql" in normalized_path or "sql" in normalized_operation:
             return ChatExternalActionKind.SQL
@@ -72,6 +76,9 @@ class ChatExternalActionDirectAnswerService:
 
         if kind == ChatExternalActionKind.SQL:
             return cls._format_sql(humanized)
+
+        if kind == ChatExternalActionKind.SUPPLIES:
+            return cls._format_supplies(humanized, operation_id=operation_id)
 
         return cls._format_generic(humanized)
 
@@ -121,6 +128,38 @@ class ChatExternalActionDirectAnswerService:
 
         if len(lines) > 15:
             body += f"\n- … e mais {len(lines) - 15} linha(s)."
+
+        return f"**{title}**\n\n{body}"
+
+    @classmethod
+    def _format_supplies(
+        cls,
+        humanized: dict,
+        *,
+        operation_id: str | None = None,
+    ) -> str | None:
+        operation = str(operation_id or "").lower()
+        default_title = "Indicador de suprimentos"
+
+        if "cpv" in operation:
+            default_title = "CPV (custo de produção vendido)"
+        elif "otd" in operation:
+            default_title = "OTD (entrega no prazo)"
+        elif "inventory_turnover" in operation or "giro" in operation:
+            default_title = "Giro de estoque (IDD)"
+        elif "stock_value" in operation:
+            default_title = "Valor total de estoque"
+
+        lines = cls._clean_lines(humanized)
+
+        if not lines:
+            return f"**{default_title}**\n\nNenhum dado retornado para os filtros informados."
+
+        title = str(humanized.get("titulo") or default_title).strip()
+        body = "\n".join(f"- {line}" for line in lines[:12])
+
+        if len(lines) > 12:
+            body += f"\n- … e mais {len(lines) - 12} item(ns)."
 
         return f"**{title}**\n\n{body}"
 

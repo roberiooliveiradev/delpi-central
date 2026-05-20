@@ -169,6 +169,116 @@ SELECTION_CASES = [
         ],
         "expected_action_id": "purchases",
     },
+    {
+        "message": "qual o giro de estoque da filial 01",
+        "actions": [
+            {
+                "actionId": "inventory",
+                "method": "GET",
+                "path": "/supplies/inventory-turnover",
+                "operationId": "get_supplies_inventory_turnover",
+                "summary": "Giro de estoque",
+                "parametersSchema": [{"name": "branch"}],
+            },
+            {
+                "actionId": "stock-value",
+                "method": "GET",
+                "path": "/supplies/stock-value",
+                "operationId": "get_supplies_stock_value",
+                "summary": "Valor total estoque",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "inventory",
+    },
+    {
+        "message": "dashboard de LMPs em aberto",
+        "actions": [
+            {
+                "actionId": "lmp-dash",
+                "method": "GET",
+                "path": "/engineering/lmps/dashboard",
+                "operationId": "list_lmps_dashboard",
+                "summary": "Dashboard LMPs",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "list-lmps",
+                "method": "GET",
+                "path": "/engineering/lmps",
+                "operationId": "list_lmps",
+                "summary": "Listar LMPs",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "lmp-dash",
+    },
+    {
+        "message": "resumo de vendas do produto 10080047",
+        "actions": [
+            {
+                "actionId": "sales-summary",
+                "method": "GET",
+                "path": "/products/{code}/sales",
+                "operationId": "get_product_sales_summary",
+                "summary": "Vendas do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "purchases",
+                "method": "GET",
+                "path": "/products/{code}/purchases",
+                "operationId": "get_product_purchases",
+                "summary": "Compras",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "sales-summary",
+    },
+    {
+        "message": "carteira de pedidos em aberto do produto 10080047",
+        "actions": [
+            {
+                "actionId": "open-orders",
+                "method": "GET",
+                "path": "/products/{code}/sales/open-orders",
+                "operationId": "get_product_sales_open_orders",
+                "summary": "Carteira do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "sales-summary",
+                "method": "GET",
+                "path": "/products/{code}/sales",
+                "operationId": "get_product_sales_summary",
+                "summary": "Vendas",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "open-orders",
+    },
+    {
+        "message": "listar ordens de venda da semana",
+        "actions": [
+            {
+                "actionId": "sale-orders",
+                "method": "GET",
+                "path": "/sales/",
+                "operationId": "list_sale_orders",
+                "summary": "Ordens de venda",
+                "parametersSchema": [{"name": "date_start"}],
+            },
+            {
+                "actionId": "list-lmps",
+                "method": "GET",
+                "path": "/engineering/lmps",
+                "operationId": "list_lmps",
+                "summary": "LMPs",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "sale-orders",
+    },
 ]
 
 DIRECT_ANSWER_CASES = [
@@ -197,5 +307,31 @@ DIRECT_ANSWER_CASES = [
         "operation_id": "execute_readonly_sql",
         "message": "select top 2",
         "must_contain": ["**Consulta SQL**", "2 registro"],
+    },
+    {
+        "humanized": {
+            "titulo": "CPV",
+            "linhas": [
+                "Filial 01 · CPV: 12,5%",
+                "Top 3 itens listados.",
+            ],
+        },
+        "path": "/supplies/cpv",
+        "operation_id": "get_supplies_cpv",
+        "message": "qual o cpv",
+        "must_contain": ["**CPV", "Filial 01"],
+    },
+    {
+        "humanized": {
+            "titulo": "Detalhe LMP OV 123456",
+            "linhas": [
+                "OV 123456 · LMP · Status: Aberto",
+                "Cliente: ACME",
+            ],
+        },
+        "path": "/engineering/lmps/123456",
+        "operation_id": "get_lmp_by_sale_number",
+        "message": "detalhe lmp ov 123456",
+        "must_contain": ["**Detalhe", "OV 123456"],
     },
 ]

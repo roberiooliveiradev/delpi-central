@@ -121,6 +121,11 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `CHAT_TOOL_ROUTER_ENABLED` | `false` em CPU — evita LLM extra antes de cada resposta |
 | `CHAT_RAG_HYBRID_ENABLED` | `false` em CPU — evita embedding `bge-m3` em toda pergunta |
 | `CHAT_RAG_PREFER_KEYWORD_SEARCH` | `true` com hybrid off — busca por FTS sem vetor |
+| `CHAT_OPERATIONAL_FAST_PATH_ENABLED` | `true` — pula RAG pesado em perguntas operacionais curtas |
+| `CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED` | `true` — resposta formatada sem LLM após action |
+| `EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED` | `false` em CPU — seleção por heurística + FTS |
+| `RAG_CONTEXT_MIN_SCORE` | Default `0.35` (fallback `RAG_ASSERTIVENESS_MIN_SCORE`). Prod operacional: `0.40`–`0.45`. Ver [rag-context-min-score-calibracao.md](../../minha-delpi-ai-api/docs/roadmap/rag-context-min-score-calibracao.md) |
+| `RAG_ASSERTIVENESS_MIN_SCORE` | Score mínimo em fluxos de assertividade (default `0.35`) |
 | `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` | Ex.: `bge-m3` |
 | `RATE_LIMIT_*` | Limites por janela |
 | `KNOWLEDGE_*` | Limites de ingestão RAG |

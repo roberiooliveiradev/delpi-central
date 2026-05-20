@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado após conclusão da **Onda 6** de inteligência do chat, roadmap admin (itens 1–15) e melhorias futuras (maio/2026).
+> Atualizado após **Onda 6** (concluída) e **Onda 7** em andamento — templates, OpenAPI, regressão e calibração RAG (maio/2026).
 
 ## Visão geral
 
@@ -18,6 +18,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 | Inteligência do chat | [minha-delpi-ai-api/docs/roadmap/README.md](../../../minha-delpi-ai-api/docs/roadmap/README.md) |
 | Onda 6 (inteligência) | [inteligencia-chat-onda-6.md](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-6.md) |
 | Onda 7 (inteligência) | [inteligencia-chat-onda-7.md](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-7.md) |
+| Calibração RAG | [rag-context-min-score-calibracao.md](../../../minha-delpi-ai-api/docs/roadmap/rag-context-min-score-calibracao.md) |
 | Guia api-delpi para agentes | [api-delpi-rotas-agente.md](../../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md) |
 | Melhorias futuras | [minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md) |
 
@@ -53,7 +54,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 - **Admin itens 1–15:** concluídos — ver `admin-minha-delpi-chat.md`
 - **Gestão de agentes ondas 1–7:** concluídas — ver `agentes-gestao-melhorias.md`
 - **Inteligência do chat ondas 1–6:** concluídas — ver `roadmap/README.md` e `inteligencia-chat-onda-6.md` em `minha-delpi-ai-api`
-- **Inteligência Onda 7:** em andamento — templates de instruções no builder (7.1 concluído)
+- **Inteligência Onda 7:** quase concluída — templates (7.1), OpenAPI CPV/OTD/vendas (7.2), regressão (7.3), calibração RAG documentada (7.4); falta homologação latência em prod (7.5)
 - **Melhorias futuras:** concluídas neste repositório — ver `melhorias-futuras.md`
 - **Pendente externo:** RBAC com perfis formais no `core-api`
 
@@ -132,4 +133,6 @@ Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadma
 4. Homologação vLLM em GPU (latência com modelo maior)
 5. Validação de latência Onda 6 em ambiente de produção real
 6. ~~Templates de system prompt no builder~~ — concluído (Onda 7.1)
-7. Expandir OpenAPI (compras, vendas, CPV/OTD) + regressão (Onda 7.2–7.3)
+7. ~~OpenAPI CPV/OTD/vendas + regressão~~ — concluído (Onda 7.2–7.3)
+8. ~~Calibração `RAG_CONTEXT_MIN_SCORE`~~ — guia publicado (Onda 7.4)
+9. Homologação latência &lt; 15s em CPU prod (Onda 7.5 — checklist no guia RAG)

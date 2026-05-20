@@ -24,6 +24,15 @@ class ExternalActionSelectionService:
             conversation_context,
         )
 
+        if self._looks_like_sale_orders_list_question(normalized):
+            selected = self._select_sale_orders_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if selected:
+                return selected
+
         if self._looks_like_lmp_question(normalized):
             selected = self._select_lmp_action(
                 message,
@@ -304,6 +313,80 @@ class ExternalActionSelectionService:
 
         return parameters
 
+    def _looks_like_sale_orders_list_question(self, value: str) -> bool:
+        if any(term in value for term in ("lmp", "lmps", "amostra")):
+            return False
+
+        return any(
+            term in value
+            for term in (
+                "ordens de venda",
+                "pedidos de venda",
+                "lista de ov",
+                "listar ov",
+                "listar as ov",
+                "vendas do período",
+                "vendas do periodo",
+            )
+        )
+
+    def _select_sale_orders_action(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        candidates = self._list_allowed_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            limit=80,
+        )
+
+        for action in candidates:
+            if action.get("method") != "GET":
+                continue
+
+            path = str(action.get("path") or "").lower()
+            operation_id = str(action.get("operationId") or "").lower()
+
+            if not (
+                path.rstrip("/").endswith("/sales")
+                or path.rstrip("/").endswith("/sales/")
+                or "list_sale_orders" in operation_id
+            ):
+                continue
+
+            if "/lmps" in path or "lmp" in path:
+                continue
+
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": action["actionId"],
+                    "parameters": self._build_sale_orders_parameters(action),
+                },
+                "reason": "A pergunta solicita listagem de ordens de venda.",
+            }
+
+        return None
+
+    def _build_sale_orders_parameters(self, action: dict) -> dict:
+        parameters = {}
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if lowered in {"page"}:
+                parameters[name] = 1
+            elif lowered in {"page_size", "pagesize", "limit"}:
+                parameters[name] = 20
+
+        return parameters
+
     def _looks_like_lmp_question(self, value: str) -> bool:
         terms = [
             "lmp",
@@ -312,11 +395,19 @@ class ExternalActionSelectionService:
             "lista material",
             "lista de material",
             "amostra",
-            "ordem de venda",
             " ov ",
         ]
 
-        return any(term in value for term in terms)
+        if any(term in value for term in terms):
+            return True
+
+        if "ordem de venda" in value or "ordem de vendas" in value:
+            return any(
+                marker in value
+                for marker in ("lmp", "lmps", "amostra", "engenharia")
+            ) or bool(self._extract_sale_number(value))
+
+        return False
 
     def _looks_like_sql_or_data_query(self, message: str) -> bool:
         normalized = str(message or "").lower()

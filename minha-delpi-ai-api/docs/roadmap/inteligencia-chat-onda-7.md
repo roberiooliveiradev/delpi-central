@@ -15,9 +15,10 @@ Facilitar a **configuração de agentes** no builder (templates de instruções)
 |---|---------|-----------|--------|
 | 7.1 | Templates de system prompt | Modelos “Operacional TOTVS”, “Documental/RH”, “Documental geral”, “Híbrido” no builder | Concluído (`plugins/minha-delpi-chat/src/domain/agentSystemPromptTemplates.ts`) |
 | 7.2 | OpenAPI ampliado | CPV, OTD, giro, compras/vendas produto, listagem OVs | Concluído (`openapi_agent_metadata.py`) |
-| 7.3 | Regressão ampliada | CPV, OTD, compras produto (+ seleção heurística) | Parcial (3 casos novos) |
-| 7.4 | Calibração RAG | `RAG_CONTEXT_MIN_SCORE` por ambiente | Pendente |
-| 7.5 | Homologação latência | Estoque por código &lt; 15s em CPU prod | Pendente (validação) |
+| 7.3 | Regressão ampliada | Giro, dashboard LMP, vendas produto, OVs, suprimentos diretos | Concluído (+10 casos) |
+| 7.4 | Calibração RAG | Guia `rag-context-min-score-calibracao.md` + tabela em `variaveis-de-ambiente.md` | Concluído |
+| 7.5 | Homologação latência | Checklist em guia RAG; medição em prod | Pendente (validação manual) |
+| 7.6 | Seleção OVs vs LMP | Heurística `list_sale_orders` sem confundir com LMP | Concluído |
 
 ---
 
@@ -35,12 +36,11 @@ Confirmação antes de substituir instruções já preenchidas.
 
 ---
 
-## Próximos passos (7.2–7.5)
+## Próximos passos
 
-1. Estender `openapi_agent_metadata.py` para rotas de compras/vendas/CPV.
-2. Adicionar casos em `chat_intelligence_regression_cases.py`.
-3. Documentar valores recomendados de `RAG_CONTEXT_MIN_SCORE` em homologação.
-4. Medir latência p95 em produção CPU e registrar em `status-atual.md`.
+1. Medir latência p95 em produção CPU (checklist em [rag-context-min-score-calibracao.md](./rag-context-min-score-calibracao.md)) e registrar em `status-atual.md`.
+2. Reimportar OpenAPI e reindexar `api-delpi-rotas-agente.md` após deploy.
+3. Opcional: resposta direta dedicada para `list_sale_orders` e mais rotas comerciais no OpenAPI.
 
 ---
 
@@ -48,4 +48,5 @@ Confirmação antes de substituir instruções já preenchidas.
 
 - [api-delpi-rotas-agente.md](../knowledge/api-delpi-rotas-agente.md)
 - [11-guia-agente-chat.md](../../../api-delpi/docs/api/11-guia-agente-chat.md)
+- [rag-context-min-score-calibracao.md](./rag-context-min-score-calibracao.md)
 - [status-atual.md](../../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md)
