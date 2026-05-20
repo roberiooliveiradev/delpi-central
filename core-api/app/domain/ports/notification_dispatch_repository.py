@@ -5,6 +5,10 @@ from datetime import datetime
 from typing import Literal, Protocol, Tuple, List
 from uuid import UUID
 
+from app.application.dto.list_notification_dispatches_filters import (
+    ListNotificationDispatchesFilters,
+)
+
 
 NotificationDispatchStatus = Literal["pending", "processing", "completed", "failed"]
 
@@ -44,11 +48,12 @@ class NotificationDispatchRepository(Protocol):
     def delete(self, dispatch_id: UUID) -> None:
         ...
 
-    def list_recent(
+    def list_filtered(
         self,
         *,
         limit: int = 20,
         offset: int = 0,
+        filters: ListNotificationDispatchesFilters | None = None,
     ) -> Tuple[List[NotificationDispatchDTO], int]:
         ...
 

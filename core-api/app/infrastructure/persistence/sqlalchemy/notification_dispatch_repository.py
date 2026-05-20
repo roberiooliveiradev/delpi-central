@@ -8,11 +8,17 @@ from uuid import UUID
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.application.dto.list_notification_dispatches_filters import (
+    ListNotificationDispatchesFilters,
+)
+from app.domain.notifications.notification_constants import ALLOWED_NOTIFICATION_CATEGORIES
 from app.domain.ports.notification_dispatch_repository import (
     NotificationDispatchDTO,
     NotificationDispatchRepository,
 )
 from app.infrastructure.db.models.notification_dispatch import NotificationDispatch
+
+ALLOWED_DISPATCH_STATUSES = frozenset({"pending", "processing", "completed", "failed"})
 
 
 class SqlAlchemyNotificationDispatchRepository(NotificationDispatchRepository):
@@ -75,8 +81,16 @@ class SqlAlchemyNotificationDispatchRepository(NotificationDispatchRepository):
         row.notification_ids = dispatch.notification_ids
         row.error_message = dispatch.error_message
 
-    def list_recent(self, *, limit: int = 20, offset: int = 0) -> Tuple[List[NotificationDispatchDTO], int]:
+    def list_filtered(
+        self,
+        *,
+        limit: int = 20,
+        offset: int = 0,
+        filters: ListNotificationDispatchesFilters | None = None,
+    ) -> Tuple[List[NotificationDispatchDTO], int]:
         query = self.session.query(NotificationDispatch)
+        query = self._apply_filters(query, filters)
+
         total = query.count()
         rows = (
             query.order_by(NotificationDispatch.created_at.desc())
@@ -85,6 +99,53 @@ class SqlAlchemyNotificationDispatchRepository(NotificationDispatchRepository):
             .all()
         )
         return [self._to_dto(row) for row in rows], total
+
+    @staticmethod
+    def _apply_filters(query, filters: ListNotificationDispatchesFilters | None):
+        if not filters:
+            return query
+
+        if filters.status:
+            normalized_status = filters.status.strip().lower()
+            if normalized_status in ALLOWED_DISPATCH_STATUSES:
+                query = query.filter(
+                    NotificationDispatch.status == normalized_status  # type: ignore[arg-type]
+                )
+
+        if filters.category:
+            normalized_category = filters.category.strip().lower()
+            if normalized_category in ALLOWED_NOTIFICATION_CATEGORIES:
+                query = query.filter(NotificationDispatch.category == normalized_category)
+
+        if filters.source_app:
+            normalized_app = filters.source_app.strip().lower()
+            if normalized_app:
+                query = query.filter(
+                    NotificationDispatch.source_app.ilike(normalized_app)  # type: ignore[attr-defined]
+                )
+
+        if filters.search:
+            term = f"%{filters.search.strip()}%"
+            if term != "%%":
+                query = query.filter(
+                    or_(
+                        NotificationDispatch.title.ilike(term),  # type: ignore[attr-defined]
+                        NotificationDispatch.template_id.ilike(term),  # type: ignore[attr-defined]
+                    )
+                )
+
+        revoked_at = NotificationDispatch.payload["revokedAt"].as_string()
+        if filters.revoked == "revoked":
+            query = query.filter(revoked_at.isnot(None), revoked_at != "")
+        elif filters.revoked == "active":
+            query = query.filter(or_(revoked_at.is_(None), revoked_at == ""))
+
+        if filters.date_from:
+            query = query.filter(NotificationDispatch.created_at >= filters.date_from)
+        if filters.date_to:
+            query = query.filter(NotificationDispatch.created_at <= filters.date_to)
+
+        return query
 
     def list_due_pending(self, *, limit: int = 20) -> List[NotificationDispatchDTO]:
         now = datetime.utcnow()

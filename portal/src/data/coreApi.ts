@@ -161,6 +161,20 @@ export interface DispatchNotificationsResponse {
 
 export type NotificationDispatchStatus = "pending" | "processing" | "completed" | "failed";
 
+export type NotificationDispatchRevokedFilter = "all" | "active" | "revoked";
+
+export interface ListNotificationDispatchesParams {
+  limit?: number;
+  offset?: number;
+  status?: NotificationDispatchStatus;
+  category?: NotificationCategory;
+  sourceApp?: string;
+  search?: string;
+  revoked?: NotificationDispatchRevokedFilter;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
 export interface NotificationDispatchItem {
   id: string;
   createdByUserId?: string | null;
@@ -458,6 +472,17 @@ export class CoreApi {
     }>(`/core-api/admin/notifications/dispatches/${dispatchId}`);
   }
 
+  bulkDeleteNotificationDispatches(dispatchIds: string[]) {
+    return this.client.post<{
+      ok: boolean;
+      requested: number;
+      revoked: number;
+      deletedNotifications: number;
+      deletedDispatches: number;
+      errors: { dispatchId: string; error: string }[];
+    }>("/core-api/admin/notifications/dispatches/bulk-delete", { dispatchIds });
+  }
+
   updateScheduledNotificationDispatch(
     dispatchId: string,
     payload: DispatchNotificationsPayload,
@@ -468,13 +493,34 @@ export class CoreApi {
     );
   }
 
-  listNotificationDispatches(params?: { limit?: number; offset?: number }) {
+  listNotificationDispatches(params?: ListNotificationDispatchesParams) {
     const search = new URLSearchParams();
     if (params?.limit != null) {
       search.set("limit", String(params.limit));
     }
     if (params?.offset != null) {
       search.set("offset", String(params.offset));
+    }
+    if (params?.status) {
+      search.set("status", params.status);
+    }
+    if (params?.category) {
+      search.set("category", params.category);
+    }
+    if (params?.sourceApp) {
+      search.set("sourceApp", params.sourceApp);
+    }
+    if (params?.search) {
+      search.set("search", params.search);
+    }
+    if (params?.revoked) {
+      search.set("revoked", params.revoked);
+    }
+    if (params?.dateFrom) {
+      search.set("dateFrom", params.dateFrom);
+    }
+    if (params?.dateTo) {
+      search.set("dateTo", params.dateTo);
     }
     const query = search.toString();
     return this.client.get<NotificationDispatchListResponse>(

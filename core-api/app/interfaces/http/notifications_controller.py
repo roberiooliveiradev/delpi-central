@@ -6,6 +6,12 @@ from uuid import UUID
 from flask import Blueprint, g, jsonify, request
 
 from app.application.dto.dispatch_notifications_request import DispatchNotificationsRequest
+from app.application.dto.list_notification_dispatches_filters import (
+    ListNotificationDispatchesFilters,
+)
+from app.application.use_cases.bulk_delete_notification_dispatches_use_case import (
+    BulkDeleteNotificationDispatchesUseCase,
+)
 from app.application.use_cases.create_notification_dispatch_use_case import (
     CreateNotificationDispatchUseCase,
 )
@@ -229,6 +235,39 @@ def admin_dispatch_notifications():
         return api_error("dispatch_failed", str(exc))
 
 
+def _parse_dispatch_list_filters() -> ListNotificationDispatchesFilters:
+    status = (request.args.get("status") or "").strip() or None
+    category = (request.args.get("category") or "").strip() or None
+    source_app = (request.args.get("sourceApp") or request.args.get("source_app") or "").strip() or None
+    search = (request.args.get("search") or request.args.get("q") or "").strip() or None
+
+    revoked_raw = (request.args.get("revoked") or "all").strip().lower()
+    revoked = revoked_raw if revoked_raw in {"all", "active", "revoked"} else "all"
+
+    date_from = _parse_optional_datetime(request.args.get("dateFrom") or request.args.get("date_from"))
+    date_to = _parse_optional_datetime(request.args.get("dateTo") or request.args.get("date_to"))
+
+    return ListNotificationDispatchesFilters(
+        status=status,
+        category=category,
+        source_app=source_app,
+        search=search,
+        revoked=revoked,  # type: ignore[arg-type]
+        date_from=date_from,
+        date_to=date_to,
+    )
+
+
+def _parse_optional_datetime(raw: str | None) -> datetime | None:
+    if not raw:
+        return None
+    normalized = raw.strip().replace("Z", "+00:00")
+    try:
+        return datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+
+
 @admin_notifications_bp.route("/dispatches", methods=["GET"])
 @require_superadmin()
 def list_notification_dispatches():
@@ -238,9 +277,15 @@ def list_notification_dispatches():
     except ValueError:
         return api_error("invalid_pagination", "limit and offset must be integers", status=400)
 
+    filters = _parse_dispatch_list_filters()
+
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            result = ListNotificationDispatchesUseCase(uow).execute(limit=limit, offset=offset)
+            result = ListNotificationDispatchesUseCase(uow).execute(
+                limit=limit,
+                offset=offset,
+                filters=filters,
+            )
 
         return (
             jsonify(
@@ -257,6 +302,39 @@ def list_notification_dispatches():
         )
     except Exception as exc:
         return api_error("list_dispatches_failed", str(exc))
+
+
+@admin_notifications_bp.route("/dispatches/bulk-delete", methods=["POST"])
+@require_superadmin()
+def bulk_delete_notification_dispatches():
+    body = request.get_json(silent=True) or {}
+    raw_ids = body.get("dispatchIds") or body.get("dispatch_ids") or []
+
+    if not isinstance(raw_ids, list) or not raw_ids:
+        return api_error("validation_error", "dispatchIds is required", status=400)
+
+    dispatch_ids: list[UUID] = []
+    for raw in raw_ids:
+        try:
+            dispatch_ids.append(UUID(str(raw)))
+        except (TypeError, ValueError):
+            return api_error("invalid_id", f"Invalid dispatch id: {raw}", status=400)
+
+    actor_id = str(g.current_user.id) if getattr(g, "current_user", None) else None
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = BulkDeleteNotificationDispatchesUseCase(uow).execute(
+                dispatch_ids,
+                actor_user_id=actor_id,
+            )
+
+        status = 200 if result.get("ok") else 207
+        return jsonify(result), status
+    except DispatchNotificationsValidationError as exc:
+        return api_error("validation_error", str(exc), status=400)
+    except Exception as exc:
+        return api_error("bulk_delete_failed", str(exc))
 
 
 @admin_notifications_bp.route("/dispatches/<dispatch_id>", methods=["GET"])

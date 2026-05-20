@@ -8,9 +8,9 @@ import type {
   CoreApi,
   NotificationCategory,
   NotificationDispatchDetail,
-  NotificationDispatchItem,
   NotificationDispatchRecipient,
 } from "../../data/coreApi";
+import { canDeleteDispatch, singleDeleteConfirmMessage } from "./dispatchHistoryHelpers";
 
 import "./NotificationDispatchDetailModal.css";
 
@@ -40,21 +40,6 @@ type Props = {
   onClose: () => void;
   onDeleted?: () => void;
 };
-
-function canDeleteDispatch(item: NotificationDispatchItem) {
-  if (item.revokedAt) return false;
-  if (item.status === "pending") return true;
-  if (item.status === "processing") return false;
-  return item.createdCount > 0 || item.status === "completed";
-}
-
-function deleteConfirmMessage(item: NotificationDispatchItem) {
-  if (item.status === "pending") {
-    return "Cancelar este envio agendado? Ele será removido do histórico.";
-  }
-  const count = item.createdCount > 0 ? String(item.createdCount) : "todos os";
-  return `Excluir este envio para ${count} destinatário(s)? A notificação sumirá da caixa de entrada de quem recebeu.`;
-}
 
 function formatDateTime(value?: string | null) {
   if (!value) return "—";
@@ -190,7 +175,7 @@ export function NotificationDispatchDetailModal({
 
   async function handleDelete() {
     if (!detail || !canDeleteDispatch(detail)) return;
-    if (!window.confirm(deleteConfirmMessage(detail))) return;
+    if (!window.confirm(singleDeleteConfirmMessage(detail))) return;
 
     setDeleting(true);
     setError(null);
