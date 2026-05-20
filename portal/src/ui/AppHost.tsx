@@ -9,7 +9,6 @@ import {
 import { pushRecentApp } from "../utils/recentApps";
 import {
   clearEmbeddedDeepLink,
-  consumeEmbeddedDeepLink,
   peekEmbeddedDeepLink,
   pendingMatchesCurrentApp,
   portalPathMatchesAppBase,
