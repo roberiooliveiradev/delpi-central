@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -17,6 +17,7 @@ import {
 import { BarChart3, CircleGauge, Clock3 } from "lucide-react";
 
 import { ChartCard } from "../components/ChartCard";
+import { ChartToolbar } from "../components/ChartToolbar";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
@@ -30,7 +31,10 @@ import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
 import type { LmpDashboardItem } from "../types/lmp";
+import type { ChartGranularity } from "../types/chart";
 import { buildLmpFallbackCharts } from "../utils/lmpCharts";
+import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
+import { suggestGranularity } from "../utils/periodBuckets";
 import {
   formatListingKind,
   formatLmpApiDate,
@@ -72,6 +76,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
 
   const [listingType, setListingType] = useState("Todos");
   const [status, setStatus] = useState("Todos");
+  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const { items, summary, charts, loading, refreshing, error, reload } =
     useLmpsDashboard({
@@ -100,14 +105,22 @@ export function LmpPage({ pathname }: LmpPageProps) {
     [sortedItems]
   );
 
+  useEffect(() => {
+    setGranularity(suggestGranularity(dateStart, dateEnd));
+  }, [dateStart, dateEnd]);
+
   const resolvedCharts = useMemo(
     () => ({
       levelData: charts?.levelData ?? fallbackCharts.levelData,
       statusData: charts?.statusData ?? fallbackCharts.statusData,
       leadByLevel: charts?.leadByLevel ?? fallbackCharts.leadByLevel,
-      evolutionData: charts?.evolutionData ?? fallbackCharts.evolutionData,
     }),
     [charts, fallbackCharts]
+  );
+
+  const evolutionChartData = useMemo(
+    () => aggregateLmpEvolutionSeries(sortedItems, dateStart, dateEnd, granularity),
+    [sortedItems, dateStart, dateEnd, granularity]
   );
 
   const totalPropostas =
@@ -323,10 +336,18 @@ export function LmpPage({ pathname }: LmpPageProps) {
           <section className="ds-chart-section">
             <ChartCard
               title="Evolução de lead time e propostas"
-              hint="Por mês de início"
+              hint="Por data de início da proposta"
             >
+              <ChartToolbar
+                idPrefix="lmp-evolution"
+                granularity={granularity}
+                onGranularityChange={setGranularity}
+              />
+              {evolutionChartData.length === 0 && !loading ? (
+                <p className="ds-state-box">Sem dados para o agrupamento selecionado.</p>
+              ) : (
               <ResponsiveContainer width="100%" height={LINE_HEIGHT}>
-                <LineChart data={resolvedCharts.evolutionData}>
+                <LineChart data={evolutionChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="periodo" tick={{ fontSize: 12 }} />
                   <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
@@ -357,6 +378,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
                   />
                 </LineChart>
               </ResponsiveContainer>
+              )}
             </ChartCard>
           </section>
         </>

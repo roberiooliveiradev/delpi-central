@@ -42,6 +42,12 @@ export type LmpDashboardItem = LmpItem & {
   status: LmpStatus;
 };
 
+export type LmpsEvolutionDatum = {
+  periodo: string;
+  mediaLead: number;
+  propostas: number;
+};
+
 export type Page<T> = {
   items: T[];
   total: number;

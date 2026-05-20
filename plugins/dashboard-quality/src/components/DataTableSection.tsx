@@ -126,16 +126,17 @@ export function DataTableSection<T>({
         <>
           {!hideSearch ? (
             <div className="dq-table-toolbar">
-              <label className="dq-table-search">
-                <Search size={16} aria-hidden="true" />
+              <div className="dq-table-search" role="search">
+                <Search size={16} aria-hidden="true" className="dq-table-search__icon" />
                 <input
                   type="search"
+                  className="dq-table-search__input"
                   value={search}
                   placeholder={searchPlaceholder}
                   onChange={(event) => setSearch(event.target.value)}
                   aria-label="Filtrar registros da tabela"
                 />
-              </label>
+              </div>
             </div>
           ) : null}
 

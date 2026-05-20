@@ -18,13 +18,17 @@ import {
 
 import { KpiCard } from "../components/KpiCard";
 import { ChartCard } from "../components/ChartCard";
+import { ChartToolbar } from "../components/ChartToolbar";
 import { FilterBar } from "../components/FilterBar";
 import { DataTableSection } from "../components/DataTableSection";
 import type { DataTableColumn } from "../components/DataTable";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
+import type { ChartGranularity } from "../types/chart";
 import type { LmpDashboardItem } from "../types/lmp";
+import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
+import { suggestGranularity } from "../utils/periodBuckets";
 
 const PRIMARY_CHART_COLOR = "#089bdb";
 const SECONDARY_CHART_COLOR = "#003866";
@@ -114,23 +118,6 @@ function matchesDashboardFilters(
   );
 }
 
-function getPeriodo(dateValue?: string | null): string | null {
-  if (!dateValue || dateValue.length !== 8) return null;
-
-  const year = Number(dateValue.slice(0, 4));
-  const month = Number(dateValue.slice(4, 6));
-  const day = Number(dateValue.slice(6, 8));
-
-  if (!year || !month || !day) return null;
-
-  const date = new Date(year, month - 1, day);
-
-  return date.toLocaleDateString("pt-BR", {
-    month: "short",
-    year: "2-digit",
-  });
-}
-
 function renderPieLabel({
   name,
   percent,
@@ -149,6 +136,7 @@ export function DashboardLmpsPage() {
   const [listingType, setListingType] = useState("Todos");
   const [status, setStatus] = useState("Todos");
   const [didInitializeDateStart, setDidInitializeDateStart] = useState(false);
+  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const { items, summary, charts, loading, refreshing, error, reload } =
     useLmpsDashboard({
@@ -194,6 +182,22 @@ export function DashboardLmpsPage() {
     );
   }, [filteredDashboardItems]);
 
+  useEffect(() => {
+    if (!dateStart || !dateEnd) return;
+    setGranularity(suggestGranularity(dateStart, dateEnd));
+  }, [dateStart, dateEnd]);
+
+  const evolutionChartData = useMemo(
+    () =>
+      aggregateLmpEvolutionSeries(
+        sortedDashboardItems,
+        dateStart || undefined,
+        dateEnd || undefined,
+        granularity
+      ),
+    [sortedDashboardItems, dateStart, dateEnd, granularity]
+  );
+
   const fallbackCharts = useMemo(() => {
     const levelOrder = ["Nível 1", "Nível 2", "Nível 3"];
     const statusOrder = ["Pontual", "Atrasado", "Andamento", "Retornada"];
@@ -227,58 +231,10 @@ export function DashboardLmpsPage() {
       };
     });
 
-    const evolutionMap = new Map<
-      string,
-      {
-        periodo: string;
-        sortKey: number;
-        totalLead: number;
-        leadCount: number;
-        propostas: number;
-      }
-    >();
-
-    for (const item of filteredDashboardItems) {
-      const periodo = getPeriodo(item.start_date);
-      const sortKey = parseDateNumber(item.start_date);
-
-      if (!periodo || !sortKey) continue;
-
-      const current = evolutionMap.get(periodo) ?? {
-        periodo,
-        sortKey,
-        totalLead: 0,
-        leadCount: 0,
-        propostas: 0,
-      };
-
-      current.propostas += 1;
-
-      if (item.lead_time_util != null) {
-        current.totalLead += item.lead_time_util;
-        current.leadCount += 1;
-      }
-
-      if (sortKey < current.sortKey) {
-        current.sortKey = sortKey;
-      }
-
-      evolutionMap.set(periodo, current);
-    }
-
-    const evolutionData = Array.from(evolutionMap.values())
-      .sort((a, b) => a.sortKey - b.sortKey)
-      .map(({ periodo, totalLead, leadCount, propostas }) => ({
-        periodo,
-        mediaLead: leadCount ? Number((totalLead / leadCount).toFixed(2)) : 0,
-        propostas,
-      }));
-
     return {
       levelData,
       statusData,
       leadByLevel,
-      evolutionData,
     };
   }, [filteredDashboardItems]);
 
@@ -286,7 +242,6 @@ export function DashboardLmpsPage() {
     levelData: charts?.levelData ?? fallbackCharts.levelData,
     statusData: charts?.statusData ?? fallbackCharts.statusData,
     leadByLevel: charts?.leadByLevel ?? fallbackCharts.leadByLevel,
-    evolutionData: charts?.evolutionData ?? fallbackCharts.evolutionData,
   };
 
   const tableColumns = useMemo<DataTableColumn<LmpDashboardItem>[]>(
@@ -502,8 +457,16 @@ export function DashboardLmpsPage() {
 
           <section className="lmps-charts-grid">
             <ChartCard title="Evolução de Lead Time Útil e Quantidade de Propostas">
+              <ChartToolbar
+                idPrefix="lmps-evolution"
+                granularity={granularity}
+                onGranularityChange={setGranularity}
+              />
+              {evolutionChartData.length === 0 && !loading ? (
+                <div className="lmps-state-box">Sem dados para o agrupamento selecionado.</div>
+              ) : (
               <ResponsiveContainer width="100%" height={LINE_CHART_HEIGHT}>
-                <LineChart data={resolvedCharts.evolutionData}>
+                <LineChart data={evolutionChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="periodo" tick={AXIS_TICK_PROPS} />
                   <YAxis yAxisId="left" tick={AXIS_TICK_PROPS} />
@@ -536,6 +499,7 @@ export function DashboardLmpsPage() {
                   />
                 </LineChart>
               </ResponsiveContainer>
+              )}
             </ChartCard>
           </section>
 

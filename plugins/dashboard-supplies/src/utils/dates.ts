@@ -51,3 +51,63 @@ export function formatPeriodLabel(
   if (dateStart) return `A partir de ${formatDisplayDate(dateStart)}`;
   return `Até ${formatDisplayDate(dateEnd)}`;
 }
+
+export type DateParts = {
+  year: number;
+  month: number;
+  day: number;
+};
+
+function isValidDateParts(year: number, month: number, day: number): boolean {
+  if (!Number.isFinite(year) || year < 1900 || year > 2100) return false;
+  if (!Number.isFinite(month) || month < 1 || month > 12) return false;
+  if (!Number.isFinite(day) || day < 1 || day > 31) return false;
+  return true;
+}
+
+export function parseDateParts(
+  value: string | null | undefined
+): DateParts | null {
+  if (!value) return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const brSlash = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (brSlash) {
+    const day = Number(brSlash[1]);
+    const month = Number(brSlash[2]);
+    let year = Number(brSlash[3]);
+    if (year < 100) year += 2000;
+
+    if (!isValidDateParts(year, month, day)) return null;
+    return { year, month, day };
+  }
+
+  const digits = trimmed.replace(/\D/g, "");
+  if (digits.length >= 8) {
+    const year = Number(digits.slice(0, 4));
+    const month = Number(digits.slice(4, 6));
+    const day = Number(digits.slice(6, 8));
+
+    if (!isValidDateParts(year, month, day)) return null;
+    return { year, month, day };
+  }
+
+  if (digits.length === 6) {
+    const year = Number(digits.slice(0, 4));
+    const month = Number(digits.slice(4, 6));
+
+    if (!isValidDateParts(year, month, 1)) return null;
+    return { year, month, day: 1 };
+  }
+
+  return null;
+}
+
+export function dateToMonthKey(value: string | null | undefined): string | null {
+  const parts = parseDateParts(value);
+  if (!parts) return null;
+
+  return `${parts.year}-${String(parts.month).padStart(2, "0")}`;
+}

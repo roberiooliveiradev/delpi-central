@@ -496,29 +496,51 @@
 }
 
 .dashboard-lmps .lmps-table-toolbar {
+  display: flex;
+  align-items: center;
   margin-bottom: 12px;
 }
 
 .dashboard-lmps .lmps-table-search {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
-  max-width: 420px;
-  padding: 8px 12px;
+  width: min(100%, 420px);
+  min-height: var(--lmps-control-height);
+  height: var(--lmps-control-height);
+  box-sizing: border-box;
+  padding: 0 12px;
   border-radius: var(--lmps-control-radius);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
-.dashboard-lmps .lmps-table-search input {
-  flex: 1;
+.dashboard-lmps .lmps-table-search__icon {
+  flex-shrink: 0;
+  display: block;
+  color: var(--text-muted);
+}
+
+.dashboard-lmps .lmps-table-search__input {
+  flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
   border: 0;
   outline: none;
   background: transparent;
   color: var(--text);
   font-size: var(--lmps-font-sm);
+  line-height: 1.4;
+}
+
+.dashboard-lmps .lmps-table-search__input::placeholder {
+  color: var(--text-muted);
 }
 
 .dashboard-lmps .lmps-loading-activity {
@@ -594,6 +616,41 @@
   text-align: center;
   color: var(--text-muted);
   padding: 24px;
+}
+
+.dashboard-lmps .lmps-segment-toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  gap: 4px;
+}
+
+.dashboard-lmps .lmps-segment-toggle__btn {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: var(--lmps-font-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.dashboard-lmps .lmps-segment-toggle__btn--active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.dashboard-lmps .lmps-chart-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .dashboard-lmps .lmps-pagination {

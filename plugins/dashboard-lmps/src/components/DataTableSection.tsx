@@ -126,16 +126,17 @@ export function DataTableSection<T>({
         <>
           {!hideSearch ? (
             <div className="lmps-table-toolbar">
-              <label className="lmps-table-search">
-                <Search size={16} aria-hidden="true" />
+              <div className="lmps-table-search" role="search">
+                <Search size={16} aria-hidden="true" className="lmps-table-search__icon" />
                 <input
                   type="search"
+                  className="lmps-table-search__input"
                   value={search}
                   placeholder={searchPlaceholder}
                   onChange={(event) => setSearch(event.target.value)}
                   aria-label="Filtrar registros da tabela"
                 />
-              </label>
+              </div>
             </div>
           ) : null}
 

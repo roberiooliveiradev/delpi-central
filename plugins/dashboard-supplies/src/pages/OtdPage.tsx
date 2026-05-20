@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -16,6 +16,7 @@ import { CircleGauge, Truck } from "lucide-react";
 
 import { getOtd } from "../api/suppliesApi";
 import { ChartCard } from "../components/ChartCard";
+import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
 import { DataSourceBanner } from "../components/DataSourceBanner";
@@ -27,8 +28,10 @@ import { SUPPLIES_ROUTES } from "../constants/routes";
 import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { useSuppliesResource } from "../hooks/useSuppliesResource";
 import type { LateDeliveryItem, LateSupplierItem } from "../types/supplies";
-import { formatMonthLabel } from "../utils/chartHelpers";
+import type { ChartGranularity } from "../types/chart";
+import { buildOtdTrendSeries } from "../utils/chartMonthlySeries";
 import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
+import { suggestGranularity } from "../utils/periodBuckets";
 import { formatInteger, formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 320;
@@ -49,6 +52,8 @@ export function OtdPage({ pathname }: OtdPageProps) {
     filterState,
   } = useSuppliesFilters();
 
+  const [granularity, setGranularity] = useState<ChartGranularity>("month");
+
   const { data, loading, refreshing, error, reload } = useSuppliesResource(
     (signal) => getOtd(periodParams, signal),
     [periodParams.branch, periodParams.end_date, periodParams.start_date]
@@ -59,18 +64,23 @@ export function OtdPage({ pathname }: OtdPageProps) {
     [dateStart, dateEnd]
   );
 
+  useEffect(() => {
+    const suggested = suggestGranularity(dateStart, dateEnd);
+    setGranularity(suggested === "year" ? "year" : "month");
+  }, [dateStart, dateEnd]);
+
   const monthlyChart = useMemo(
     () =>
-      [...(data?.monthly_breakdown ?? [])]
-        .reverse()
-        .map((item) => ({
-          name: formatMonthLabel(item),
-          otd: Number(item.otd_percentage ?? 0),
-          late: Number(item.late_lines ?? 0),
-          onTime: Number(item.on_time_lines ?? 0),
-        })),
-    [data?.monthly_breakdown]
+      buildOtdTrendSeries(
+        data?.monthly_breakdown ?? [],
+        dateStart,
+        dateEnd,
+        granularity
+      ),
+    [data?.monthly_breakdown, dateStart, dateEnd, granularity]
   );
+
+  const otdChartModes: ChartGranularity[] = ["month", "year"];
 
   const lateSuppliersChart = useMemo(
     () =>
@@ -201,7 +211,13 @@ export function OtdPage({ pathname }: OtdPageProps) {
       </section>
 
       <section className="ds-charts-grid">
-        <ChartCard title="OTD mensal" hint="Evolução da pontualidade.">
+        <ChartCard title="OTD no período" hint="Evolução da pontualidade (dados mensais da API).">
+          <ChartToolbar
+            idPrefix="otd-trend"
+            granularity={granularity}
+            onGranularityChange={setGranularity}
+            modes={otdChartModes}
+          />
           {monthlyChart.length > 0 ? (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <LineChart data={monthlyChart}>

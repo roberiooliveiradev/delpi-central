@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -15,6 +15,7 @@ import { Clock, Coins, Lightbulb, Percent } from "lucide-react";
 
 import { getTransformaProcesses, getTransformaSummary } from "../api/engineeringApi";
 import { ChartCard } from "../components/ChartCard";
+import { ChartToolbar } from "../components/ChartToolbar";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
@@ -25,8 +26,11 @@ import { CHART_COLORS } from "../constants/chartColors";
 import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { useEngineeringResource } from "../hooks/useEngineeringResource";
+import type { ChartGranularity } from "../types/chart";
 import type { TransformaProcess } from "../types/engineering";
-import { formatPeriodLabel, monthKeyToLabel } from "../utils/dates";
+import { buildTransformaSavingsSeries } from "../utils/chartMonthlySeries";
+import { formatPeriodLabel } from "../utils/dates";
+import { suggestGranularity } from "../utils/periodBuckets";
 import {
   formatCurrency,
   formatDecimal,
@@ -51,6 +55,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
   } = useEngineeringFilters();
 
   const [statusFilter, setStatusFilter] = useState("");
+  const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const listParams = useMemo(
     () => ({
@@ -105,13 +110,20 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
   const isBusy = loading || refreshing;
   const hasData = summary !== null || processesData !== null;
 
+  useEffect(() => {
+    setGranularity(suggestGranularity(dateStart, dateEnd));
+  }, [dateStart, dateEnd]);
+
   const savingsChartData = useMemo(
     () =>
-      (summary?.monthly_breakdown ?? []).map((item) => ({
-        name: monthKeyToLabel(item.month),
-        net: item.net_savings_month,
-      })),
-    [summary?.monthly_breakdown]
+      buildTransformaSavingsSeries(
+        items,
+        summary?.monthly_breakdown ?? [],
+        dateStart,
+        dateEnd,
+        granularity
+      ),
+    [items, summary?.monthly_breakdown, dateStart, dateEnd, granularity]
   );
 
   const topSavingsChart = useMemo(
@@ -244,9 +256,19 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         />
       </section>
 
-      {savingsChartData.length > 0 ? (
-        <section className="ds-chart-section">
-          <ChartCard title="Economia líquida mensal" hint={periodLabel}>
+      <section className="ds-chart-section">
+        <ChartCard title="Economia líquida no período" hint={periodLabel}>
+          <ChartToolbar
+            idPrefix="transforma-savings"
+            granularity={granularity}
+            onGranularityChange={setGranularity}
+          />
+          {savingsChartData.length === 0 && !isBusy ? (
+            <p className="ds-state-box">
+              Sem economia no agrupamento. Use mês/ano com resumo mensal ou dia/semana
+              com processos que tenham data de implantação.
+            </p>
+          ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <LineChart data={savingsChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -262,9 +284,9 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
                 />
               </LineChart>
             </ResponsiveContainer>
-          </ChartCard>
-        </section>
-      ) : null}
+          )}
+        </ChartCard>
+      </section>
 
       {topSavingsChart.length > 0 ? (
         <section className="ds-charts-grid ds-charts-grid--single">
