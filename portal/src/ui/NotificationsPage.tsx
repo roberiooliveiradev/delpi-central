@@ -2,8 +2,6 @@
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Bell, ChevronLeft, ChevronRight, Inbox, Settings2, Star } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-
 import { AuthContext } from "../state/AuthContext";
 import { ApiClient } from "../data/apiClient";
 import {
@@ -45,7 +43,6 @@ const CATEGORY_OPTIONS: { value: NotificationCategory | ""; label: string }[] = 
 ];
 
 export function NotificationsPage() {
-  const navigate = useNavigate();
   const {
     getAccessToken,
     refreshToken,
@@ -305,11 +302,6 @@ export function NotificationsPage() {
                       onDelete={(id) => void handleDeleteAndReload(id)}
                       onToggleImportant={(id, isImportant) =>
                         void handleToggleImportantAndReload(id, isImportant)
-                      }
-                      onNavigate={
-                        notification.action?.type === "portal_route"
-                          ? () => navigate(notification.action!.target)
-                          : undefined
                       }
                     />
                   </li>

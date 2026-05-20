@@ -402,14 +402,7 @@ export const Sidebar = () => {
                         onToggleImportant={(id, isImportant) =>
                           void handleToggleImportant(id, isImportant)
                         }
-                        onNavigate={
-                          n.action?.type === "portal_route"
-                            ? () => {
-                                setNotifOpen(false);
-                                navigate(n.action!.target);
-                              }
-                            : () => setNotifOpen(false)
-                        }
+                        onNavigate={() => setNotifOpen(false)}
                       />
                     ))}
                   </div>

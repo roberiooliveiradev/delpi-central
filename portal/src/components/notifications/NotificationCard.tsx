@@ -1,5 +1,7 @@
 // src/components/notifications/NotificationCard.tsx
 
+import { useContext, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bell,
   Cake,
@@ -14,7 +16,12 @@ import {
 } from "lucide-react";
 
 import type { NotificationCategory, NotificationItem } from "../../data/coreApi";
+import { AuthContext } from "../../state/AuthContext";
 import { executeNotificationAction } from "../../utils/notificationNavigation";
+import {
+  normalizeAppPath,
+  resolvePortalRoute,
+} from "../../utils/embeddedAppNotification";
 import { NotificationTemplateView } from "./NotificationTemplateView";
 import { NOTIFICATION_TEMPLATE_DEFINITIONS } from "./notificationTemplates";
 import {
@@ -98,6 +105,14 @@ export function NotificationCard({
   compact = false,
   variant,
 }: NotificationCardProps) {
+  const navigate = useNavigate();
+  const { apps } = useContext(AuthContext);
+
+  const appBasePaths = useMemo(
+    () => apps.map((item) => normalizeAppPath(item.basePath)),
+    [apps]
+  );
+
   const layout = variant ?? (compact ? "compact" : "page");
   const isPage = layout === "page";
   const Icon = CATEGORY_ICONS[notification.category] ?? Bell;
@@ -113,10 +128,20 @@ export function NotificationCard({
   }
 
   function handleAction() {
-    if (notification.action) {
-      executeNotificationAction(notification.action, notification.metadata);
-      onNavigate?.();
+    if (!notification.action) {
+      void onMarkRead(notification.id);
+      return;
     }
+
+    executeNotificationAction(notification.action, notification.metadata, {
+      appBasePaths,
+    });
+
+    if (notification.action.type === "portal_route") {
+      onNavigate?.();
+      navigate(resolvePortalRoute(notification.action.target, appBasePaths));
+    }
+
     void onMarkRead(notification.id);
   }
 

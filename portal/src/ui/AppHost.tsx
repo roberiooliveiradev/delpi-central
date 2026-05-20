@@ -7,7 +7,11 @@ import {
   useGoogleEmbeddedAppLogin,
 } from "../hooks/useGoogleEmbeddedAppLogin";
 import { pushRecentApp } from "../utils/recentApps";
-import { consumeControleMpDeepPath } from "../utils/controleMpNotification";
+import {
+  consumeEmbeddedDeepLink,
+  pendingMatchesCurrentApp,
+  portalPathMatchesAppBase,
+} from "../utils/embeddedAppNotification";
 
 function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -96,21 +100,35 @@ export const AppHost = () => {
   }
 
   function postNavigateToIframe(path: string) {
-    if (!iframeRef.current) return;
     if (!app || app.renderMode !== "embedded") return;
     if (!resolvedEntry) return;
 
     const normalized = path.startsWith("/") ? path : `/${path}`;
-    iframeRef.current.contentWindow?.postMessage(
-      { type: "DELPI_NAVIGATE", path: normalized },
-      getUrlOrigin(resolvedEntry)
-    );
+    const targetOrigin = getUrlOrigin(resolvedEntry);
+
+    const send = () => {
+      const win = iframeRef.current?.contentWindow;
+      if (!win) return false;
+      win.postMessage({ type: "DELPI_NAVIGATE", path: normalized }, targetOrigin);
+      return true;
+    };
+
+    if (send()) return;
+
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      if (send() || attempts >= 12) {
+        window.clearInterval(timer);
+      }
+    }, 200);
   }
 
-  function trySendPendingControleMpNavigate() {
-    const deepPath = consumeControleMpDeepPath();
-    if (!deepPath) return;
-    postNavigateToIframe(deepPath);
+  function trySendPendingEmbeddedNavigate() {
+    const pending = consumeEmbeddedDeepLink();
+    if (!pending || !app) return;
+    if (!pendingMatchesCurrentApp(pending, app.basePath)) return;
+    postNavigateToIframe(pending.deepPath);
   }
 
   function sendAuthToIframe() {
@@ -126,7 +144,7 @@ export const AppHost = () => {
       getUrlOrigin(resolvedEntry)
     );
 
-    window.setTimeout(trySendPendingControleMpNavigate, 150);
+    window.setTimeout(trySendPendingEmbeddedNavigate, 150);
   }
 
   function sendLogoutToIframe() {
@@ -182,13 +200,12 @@ export const AppHost = () => {
   useEffect(() => {
     function handleNotificationNavigate(event: Event) {
       const custom = event as CustomEvent<{ portalRoute?: string; deepPath?: string }>;
-      const portalRoute = custom.detail?.portalRoute;
       const deepPath = custom.detail?.deepPath;
-      if (!portalRoute || !deepPath || !app) return;
+      if (!deepPath || !app) return;
 
-      const base = normalize(app.basePath);
-      const target = normalize(portalRoute);
-      if (target !== base && !location.pathname.startsWith(base + "/")) return;
+      if (!portalPathMatchesAppBase(location.pathname, app.basePath)) {
+        return;
+      }
 
       postNavigateToIframe(deepPath);
     }
@@ -201,7 +218,7 @@ export const AppHost = () => {
 
   useEffect(() => {
     if (app?.renderMode === "embedded") {
-      trySendPendingControleMpNavigate();
+      trySendPendingEmbeddedNavigate();
     }
   }, [app?.id, app?.renderMode, location.pathname, iframeReloadKey, resolvedEntry]);
 

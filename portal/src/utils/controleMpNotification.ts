@@ -1,41 +1,22 @@
-// Navegação pós-clique em notificações originadas do Controle MP.
+/**
+ * @deprecated Importe de `embeddedAppNotification.ts`. Mantido para compatibilidade.
+ */
+export type { EmbeddedAppNotificationMetadata as ControleMpNotificationMetadata } from "./embeddedAppNotification";
 
-const STORAGE_KEY = "delpi.controle_mp.pending_navigate";
+export {
+  portalPathMatchesAppBase,
+  dispatchEmbeddedNotificationNavigate as dispatchControleMpNotificationNavigate,
+  stashEmbeddedDeepLink as stashControleMpDeepPath,
+  consumeEmbeddedDeepLink as consumeControleMpDeepPath,
+  resolvePortalRoute as normalizeControleMpPortalRoute,
+} from "./embeddedAppNotification";
 
-export type ControleMpNotificationMetadata = {
-  source?: string;
-  deepPath?: string;
-  event?: string;
-  dedupeKey?: string;
-  conversationId?: number;
-  messageId?: number;
-  requestId?: number;
-  requestItemId?: number;
-};
+import { isEmbeddedDeepLinkNotification } from "./embeddedAppNotification";
 
 export function isControleMpNotification(
   metadata: Record<string, unknown> | null | undefined
-): metadata is ControleMpNotificationMetadata {
-  return metadata?.source === "controle_mp" && typeof metadata?.deepPath === "string";
-}
-
-export function stashControleMpDeepPath(deepPath: string) {
-  const normalized = deepPath.startsWith("/") ? deepPath : `/${deepPath}`;
-  sessionStorage.setItem(STORAGE_KEY, normalized);
-}
-
-export function consumeControleMpDeepPath(): string | null {
-  const value = sessionStorage.getItem(STORAGE_KEY);
-  if (!value) return null;
-  sessionStorage.removeItem(STORAGE_KEY);
-  return value;
-}
-
-export function dispatchControleMpNotificationNavigate(detail: {
-  portalRoute: string;
-  deepPath: string;
-}) {
-  window.dispatchEvent(
-    new CustomEvent("DELPI_NOTIFICATION_NAVIGATE", { detail })
+): boolean {
+  return (
+    isEmbeddedDeepLinkNotification(metadata) && metadata?.source === "controle_mp"
   );
 }

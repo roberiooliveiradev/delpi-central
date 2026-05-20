@@ -267,11 +267,6 @@ export const HomePage = () => {
                     onToggleImportant={(id, isImportant) =>
                       void handleToggleImportant(id, isImportant)
                     }
-                    onNavigate={
-                      n.action?.type === "portal_route"
-                        ? () => navigate(n.action!.target)
-                        : undefined
-                    }
                   />
                 ))}
               </div>
