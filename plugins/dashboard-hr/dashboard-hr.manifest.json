@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "dashboard-hr",
+  "name": "Dashboard RH",
+  "description": "Indicadores de Recursos Humanos (Portal RH): absenteísmo, turnover, treinamento, PDI e satisfação",
+  "icon": "users",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/dashboard-hr",
+  "entry": "/apps/dashboard-hr/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "dashboard-hr.view",
+      "name": "Acesso ao dashboard de RH",
+      "description": "Permite visualizar indicadores de RH consolidados do Portal RH",
+      "module": "dashboard-hr"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/dashboard-hr",
+      "label": "Dashboard RH",
+      "permission": "dashboard-hr.view",
+      "icon": "users",
+      "order": 30,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

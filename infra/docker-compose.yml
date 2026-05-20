@@ -451,6 +451,24 @@ services:
     networks:
       - delpi-network
 
+  dashboard-hr:
+    build:
+      context: ../plugins/dashboard-hr
+      dockerfile: Dockerfile
+
+    container_name: delpi-dashboard-hr
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/dashboard-hr:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   postgres-plugins:
     image: pgvector/pgvector:pg15
     container_name: delpi-postgres-plugins
@@ -607,6 +625,7 @@ services:
       - dashboard-supplies
       - dashboard-financial
       - dashboard-engineering
+      - dashboard-hr
       - minha-delpi-ai-api
       - minha-delpi-chat
 
