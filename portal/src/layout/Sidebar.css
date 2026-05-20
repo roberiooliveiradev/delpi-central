@@ -6,7 +6,7 @@
   width: 300px;
   min-width: 300px;
   max-width: 300px;
-  background: var(--surface-2);
+  background: var(--sidebar-bg, var(--surface-2));
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;

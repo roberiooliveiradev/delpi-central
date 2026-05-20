@@ -158,6 +158,9 @@ textarea {
   --surface: #ffffff;
   --surface-2: #f7f7f7;
   --surface-3: #fafafa;
+  /* Sidebar usa tom mais escuro; apps embedded usam --bg como canvas */
+  --sidebar-bg: var(--surface-2);
+  --app-canvas: var(--bg);
 
   --text: #111111;
   --text: var(--secundary);
@@ -211,6 +214,8 @@ textarea {
   --surface: #0f1115;
   --surface-2: #1b2030;
   --surface-3: #111521;
+  --sidebar-bg: var(--surface-2);
+  --app-canvas: var(--bg);
 
   --text: rgba(255, 255, 255, 0.85);
   --text-muted: rgba(255, 255, 255, 0.7);
@@ -238,6 +243,8 @@ textarea {
     --surface: #0f1115;
     --surface-2: #1b2030;
     --surface-3: #111521;
+    --sidebar-bg: var(--surface-2);
+    --app-canvas: var(--bg);
 
     --text: rgba(255, 255, 255, 0.85);
     --text-muted: rgba(255, 255, 255, 0.7);
@@ -289,6 +296,7 @@ body,
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  background: var(--app-canvas);
 }
 
 .content {

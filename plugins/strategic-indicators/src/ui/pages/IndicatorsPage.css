@@ -2,7 +2,7 @@
   min-height: 100%;
   padding: 24px;
   color: var(--si-text);
-  background: var(--surface-2, #f7f7f7);
+  background: var(--app-canvas, var(--bg, #ffffff));
 }
 
 .si-indicator-analytics-layout {

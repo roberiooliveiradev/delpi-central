@@ -62,10 +62,11 @@
   min-height: 100%;
   padding: var(--dp-page-padding);
   color: var(--dp-text);
-  background: linear-gradient(
+  background-color: var(--app-canvas, var(--bg, #ffffff));
+  background-image: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--surface-2, #f5f8fb) 72%, transparent),
-    transparent 280px
+    color-mix(in srgb, var(--primary, #089bdb) 5%, var(--app-canvas, var(--bg, #ffffff))),
+    var(--app-canvas, var(--bg, #ffffff)) 280px
   );
 }
 

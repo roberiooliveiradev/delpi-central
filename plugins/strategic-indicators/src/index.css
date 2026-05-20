@@ -5,6 +5,19 @@
 :root {
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
+  /* Alinhado ao portal: sidebar = surface-2; canvas do app = bg */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f7f7f7;
+  --surface-3: #fafafa;
+  --border: #e6e6e6;
+  --primary: #089bdb;
+  --secundary: #003866;
+  --text: #003866;
+  --text-muted: rgba(17, 17, 17, 0.7);
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  --app-canvas: var(--bg);
+
   --si-title: var(--secundary, #003866);
   --si-title-soft: color-mix(in srgb, var(--secundary, #003866) 84%, white);
   --si-text: var(--text, #111111);
@@ -23,6 +36,15 @@
 ========================================= */
 
 :root[data-theme="dark"] {
+  --bg: #0f1115;
+  --surface: #0f1115;
+  --surface-2: #1b2030;
+  --surface-3: #111521;
+  --border: rgba(255, 255, 255, 0.12);
+  --text: rgba(255, 255, 255, 0.85);
+  --text-muted: rgba(255, 255, 255, 0.7);
+  --app-canvas: var(--bg);
+
   --si-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
   --si-title-soft: color-mix(in srgb, var(--primary, #089bdb) 52%, white);
   --si-text: rgba(255, 255, 255, 0.88);
@@ -42,6 +64,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    --bg: #0f1115;
+    --surface: #0f1115;
+    --surface-2: #1b2030;
+    --surface-3: #111521;
+    --border: rgba(255, 255, 255, 0.12);
+    --text: rgba(255, 255, 255, 0.85);
+    --text-muted: rgba(255, 255, 255, 0.7);
+    --app-canvas: var(--bg);
+
     --si-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
     --si-title-soft: color-mix(in srgb, var(--primary, #089bdb) 52%, white);
     --si-text: rgba(255, 255, 255, 0.88);

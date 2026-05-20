@@ -5,7 +5,7 @@
   background:
     radial-gradient(circle at top left, rgba(8, 155, 219, 0.14), transparent 28%),
     radial-gradient(circle at bottom right, rgba(0, 56, 102, 0.12), transparent 34%),
-    var(--surface-2, #f7f7f7);
+    var(--app-canvas, var(--bg, #ffffff));
 }
 
 .si-trends-executive-grid {
