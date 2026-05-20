@@ -16,14 +16,14 @@ export function KpiCard({
   loading = false,
 }: KpiCardProps) {
   return (
-    <article className="dp-card dp-kpi-card">
-      <div className="dp-kpi-header">
+    <article className="ds-card ds-kpi-card">
+      <div className="ds-kpi-header">
         <div>
-          <p className="dp-kpi-title">{title}</p>
-          <h3 className="dp-kpi-value">{loading ? "…" : value}</h3>
-          <span className="dp-kpi-subtitle">{subtitle}</span>
+          <p className="ds-kpi-title">{title}</p>
+          <h3 className="ds-kpi-value">{loading ? "…" : value}</h3>
+          <span className="ds-kpi-subtitle">{subtitle}</span>
         </div>
-        <div className="dp-kpi-icon" aria-hidden="true">
+        <div className="ds-kpi-icon" aria-hidden="true">
           {icon}
         </div>
       </div>
