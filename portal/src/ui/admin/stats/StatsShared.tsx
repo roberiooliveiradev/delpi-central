@@ -96,3 +96,5 @@ export type StatsPageProps = {
   stats: AdminStatistics;
   onNavigateTab?: (tab: AdminTab) => void;
 };
+
+export { statPercent, formatPercent } from "./StatsEnrichment";

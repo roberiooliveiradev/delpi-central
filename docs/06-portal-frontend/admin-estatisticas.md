@@ -17,7 +17,9 @@ Primeira aba do `/admin`, com **subpáginas** internas e tema de analytics via t
 | **Acesso RBAC** | Rankings de papéis/grupos e vínculos |
 | **Notificações** | Status dos envios de campanha |
 
-Código em `portal/src/ui/admin/stats/` (páginas em `stats/pages/`). Paleta de segmentos em `statsTheme.ts` (`STATS_CHART_COLORS` → `var(--chart-1)` … `var(--chart-6)`).
+Código em `portal/src/ui/admin/stats/` (páginas em `stats/pages/`, componentes em `StatsEnrichment.tsx`). Paleta em `statsTheme.ts` (`STATS_CHART_COLORS` → `var(--chart-1)` … `var(--chart-6)`).
+
+**Aplicações:** layout em duas colunas — uso ao vivo ocupa a área principal; ranking 30d e lista compacta de apps fantasmas (rolável, expansível) ficam na coluna lateral, sem tags que estouram a tela.
 
 Cada painel pode ter atalho **Gerenciar** que navega para a aba correspondente.
 

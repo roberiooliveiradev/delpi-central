@@ -3,6 +3,15 @@
 import { LayoutGrid, Shield, Users, UsersRound } from "lucide-react";
 
 import { DonutChart } from "../StatsCharts";
+import {
+  StatsChartCard,
+  StatsInsight,
+  StatsInsightRow,
+  StatsMiniKpi,
+  StatsMiniKpiRow,
+  formatPercent,
+  statPercent,
+} from "../StatsEnrichment";
 import { StatsPageIntro, type StatsPageProps } from "../StatsShared";
 
 import type { StatsChartsData } from "../useAdminStats";
@@ -13,6 +22,10 @@ type StatsOverviewPageProps = StatsPageProps & {
 
 export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
   const usage = stats.apps.usage;
+  const notifyTotal = stats.notifications?.dispatchesTotal ?? 0;
+  const notifyOk = stats.notifications?.dispatchesCompleted ?? 0;
+  const onlinePct = statPercent(stats.users.online, stats.users.total);
+  const activeUserPct = statPercent(stats.users.active, stats.users.total);
 
   return (
     <div className="admin-stats-page">
@@ -30,7 +43,8 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
             <strong>{stats.users.total}</strong>
             <span>Usuários</span>
             <small>
-              {stats.users.online} online · {stats.users.loggedInLast7Days} logins (7d)
+              {stats.users.online} online ({formatPercent(onlinePct)}) ·{" "}
+              {stats.users.loggedInLast7Days} logins (7d)
             </small>
           </div>
         </article>
@@ -42,7 +56,8 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
             <strong>{stats.apps.total}</strong>
             <span>Aplicações</span>
             <small>
-              {usage?.inUseNow ?? 0} em uso · {usage?.ghostApps?.length ?? 0} fantasmas
+              {usage?.inUseNow ?? 0} em uso · {usage?.ghostApps?.length ?? 0} fantasmas ·{" "}
+              {usage?.usedInPeriod ?? 0} com uso (30d)
             </small>
           </div>
         </article>
@@ -54,7 +69,8 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
             <strong>{stats.roles.total}</strong>
             <span>Papéis</span>
             <small>
-              {stats.roles.system} sistema · {stats.roles.custom} customizados
+              {stats.roles.system} sistema · {stats.roles.custom} customizados ·{" "}
+              {stats.roles.withoutUsers} órfãos
             </small>
           </div>
         </article>
@@ -66,38 +82,101 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
             <strong>{stats.groups.total}</strong>
             <span>Grupos</span>
             <small>
-              {stats.groups.active} ativos · {stats.permissions.total} permissões
+              {stats.groups.active} ativos · {stats.permissions.total} permissões ·{" "}
+              {stats.assignments.userRoles} vínculos usuário→papel
             </small>
           </div>
         </article>
       </div>
 
+      <StatsInsightRow>
+        <StatsInsight
+          label="Base ativa"
+          value={formatPercent(activeUserPct)}
+          detail={`${stats.users.active} de ${stats.users.total} usuários`}
+        />
+        <StatsInsight
+          label="Adoção de apps (30d)"
+          value={formatPercent(statPercent(usage?.usedInPeriod ?? 0, stats.apps.active))}
+          detail={`${usage?.usedInPeriod ?? 0} apps com uso`}
+        />
+        <StatsInsight
+          label="Envios de notificação"
+          value={String(notifyTotal)}
+          detail={
+            notifyTotal > 0
+              ? `${formatPercent(statPercent(notifyOk, notifyTotal))} concluídos`
+              : "Nenhum envio registrado"
+          }
+        />
+        <StatsInsight
+          label="RBAC"
+          value={String(
+            stats.assignments.userRoles +
+              stats.assignments.userGroups +
+              stats.assignments.groupRoles,
+          )}
+          detail="Vínculos usuário/grupo/papel (sem permissões)"
+        />
+      </StatsInsightRow>
+
       <div className="admin-stats__charts-row">
-        <article className="admin-stats__chart-card">
-          <h5>Usuários</h5>
+        <StatsChartCard
+          title="Usuários"
+          foot={`${stats.users.superadmins} superadmins · ${stats.users.withoutGroups} sem grupo`}
+        >
           <DonutChart
             segments={charts.userSegments}
             centerValue={String(stats.users.total)}
             centerLabel="Cadastrados"
           />
-        </article>
-        <article className="admin-stats__chart-card">
-          <h5>Adoção de apps</h5>
+        </StatsChartCard>
+        <StatsChartCard
+          title="Adoção de apps"
+          foot={`${usage?.inUseNow ?? 0} em uso neste instante`}
+        >
           <DonutChart
             segments={charts.appSegments}
             centerValue={String(stats.apps.active)}
             centerLabel="Ativas"
           />
-        </article>
-        <article className="admin-stats__chart-card">
-          <h5>Notificações</h5>
+        </StatsChartCard>
+        <StatsChartCard
+          title="Notificações"
+          foot={`${stats.notifications?.dispatchesPending ?? 0} pendentes · ${stats.notifications?.dispatchesFailed ?? 0} falhas`}
+        >
           <DonutChart
             segments={charts.notificationSegments}
-            centerValue={String(stats.notifications?.dispatchesTotal ?? 0)}
+            centerValue={String(notifyTotal)}
             centerLabel="Envios"
           />
-        </article>
+        </StatsChartCard>
       </div>
+
+      <StatsMiniKpiRow>
+        <StatsMiniKpi
+          tone="primary"
+          label="Online"
+          value={stats.users.online}
+          hint="Presença Socket.IO"
+        />
+        <StatsMiniKpi
+          label="Logins 30d"
+          value={stats.users.loggedInLast30Days}
+          hint={formatPercent(statPercent(stats.users.loggedInLast30Days, stats.users.total))}
+        />
+        <StatsMiniKpi
+          tone="warning"
+          label="Fantasmas"
+          value={usage?.ghostApps?.length ?? 0}
+          hint="Apps ativas sem uso"
+        />
+        <StatsMiniKpi
+          label="Grupos inativos"
+          value={stats.groups.inactive}
+          hint={`${stats.groups.withoutUsers} grupos sem usuários`}
+        />
+      </StatsMiniKpiRow>
     </div>
   );
 }
