@@ -2,12 +2,15 @@
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
+  Activity,
   ArrowRight,
   BarChart3,
   Bell,
+  Ghost,
   LayoutGrid,
   RefreshCw,
   Shield,
+  Sparkles,
   Users,
   UsersRound,
 } from "lucide-react";
@@ -16,6 +19,12 @@ import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi, type AdminStatistics } from "../../../data/adminApi";
 import type { AdminTab } from "../AdminPage";
+import {
+  BarChart,
+  DonutChart,
+  LiveAppUsageCard,
+  type ChartSegment,
+} from "../stats/StatsCharts";
 
 import "./StatsTab.css";
 
@@ -23,13 +32,25 @@ type StatsTabProps = {
   onNavigateTab?: (tab: AdminTab) => void;
 };
 
-type PanelNavProps = {
+const CHART_COLORS = {
+  primary: "var(--primary)",
+  success: "#16a34a",
+  warning: "#d97706",
+  danger: "#dc2626",
+  muted: "color-mix(in srgb, var(--text-muted) 55%, var(--border))",
+  violet: "#7c3aed",
+  cyan: "#0891b2",
+};
+
+function PanelNav({
+  tab,
+  label,
+  onNavigateTab,
+}: {
   tab: AdminTab;
   label: string;
   onNavigateTab?: (tab: AdminTab) => void;
-};
-
-function PanelNav({ tab, label, onNavigateTab }: PanelNavProps) {
+}) {
   if (!onNavigateTab) return null;
 
   return (
@@ -41,87 +62,6 @@ function PanelNav({ tab, label, onNavigateTab }: PanelNavProps) {
       {label}
       <ArrowRight size={14} aria-hidden="true" />
     </button>
-  );
-}
-
-type StatMetricProps = {
-  label: string;
-  value: number;
-  highlight?: boolean;
-};
-
-function StatMetric({ label, value, highlight }: StatMetricProps) {
-  return (
-    <div
-      className={
-        highlight
-          ? "admin-stats__metric admin-stats__metric--highlight"
-          : "admin-stats__metric"
-      }
-    >
-      <strong>{value.toLocaleString("pt-BR")}</strong>
-      <span>{label}</span>
-    </div>
-  );
-}
-
-function StatBar({
-  label,
-  value,
-  max,
-}: {
-  label: string;
-  value: number;
-  max: number;
-}) {
-  const width = max > 0 ? Math.max(4, Math.round((value / max) * 100)) : 0;
-
-  return (
-    <div className="admin-stats__bar-row">
-      <span className="admin-stats__bar-label" title={label}>
-        {label}
-      </span>
-      <div className="admin-stats__bar-track" aria-hidden="true">
-        <div className="admin-stats__bar-fill" style={{ width: `${width}%` }} />
-      </div>
-      <span className="admin-stats__bar-value">{value}</span>
-    </div>
-  );
-}
-
-function RankList({
-  title,
-  items,
-  countLabel,
-}: {
-  title: string;
-  items: { id: string; name: string; count: number }[];
-  countLabel: string;
-}) {
-  if (items.length === 0) {
-    return (
-      <div className="admin-stats__rank">
-        <h5>{title}</h5>
-        <p className="admin-stats__empty">Sem dados para exibir.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="admin-stats__rank">
-      <h5>{title}</h5>
-      {items.map((item, index) => (
-        <div key={item.id} className="admin-stats__rank-item">
-          <span className="admin-stats__rank-pos">{index + 1}</span>
-          <span className="admin-stats__rank-name" title={item.name}>
-            {item.name}
-          </span>
-          <span className="admin-stats__rank-count">
-            {item.count} {countLabel}
-          </span>
-        </div>
-      ))}
-    </div>
   );
 }
 
@@ -177,13 +117,67 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
     void load();
   }, [load]);
 
-  const appsTypeMax = useMemo(() => {
-    if (!stats?.apps.byType.length) return 0;
-    return Math.max(...stats.apps.byType.map((item) => item.count));
+  const charts = useMemo(() => {
+    if (!stats) return null;
+
+    const usage = stats.apps.usage;
+    const ghostCount = usage?.ghostApps?.length ?? 0;
+    const usedInPeriod = usage?.usedInPeriod ?? 0;
+    const appsActive = stats.apps.active;
+    const appsIdle = Math.max(0, appsActive - usedInPeriod);
+
+    const userSegments: ChartSegment[] = [
+      { label: "Ativos", value: stats.users.active, color: CHART_COLORS.success },
+      { label: "Inativos", value: stats.users.inactive, color: CHART_COLORS.muted },
+    ];
+
+    const appSegments: ChartSegment[] = [
+      {
+        label: "Em uso agora",
+        value: usage?.inUseNow ?? 0,
+        color: CHART_COLORS.success,
+      },
+      {
+        label: "Usadas (30d)",
+        value: Math.max(0, usedInPeriod - (usage?.inUseNow ?? 0)),
+        color: CHART_COLORS.primary,
+      },
+      { label: "Fantasmas", value: ghostCount, color: CHART_COLORS.warning },
+      { label: "Sem uso recente", value: appsIdle, color: CHART_COLORS.muted },
+    ];
+
+    const notifyTotal = stats.notifications?.dispatchesTotal ?? 0;
+    const notifyPending = stats.notifications?.dispatchesPending ?? 0;
+    const notifyCompleted = stats.notifications?.dispatchesCompleted ?? 0;
+    const notifyFailed = stats.notifications?.dispatchesFailed ?? 0;
+    const notifyOther = Math.max(
+      0,
+      notifyTotal - notifyPending - notifyCompleted - notifyFailed,
+    );
+
+    const notificationSegments: ChartSegment[] = [
+      { label: "Concluídos", value: notifyCompleted, color: CHART_COLORS.success },
+      { label: "Pendentes", value: notifyPending, color: CHART_COLORS.warning },
+      { label: "Falhas", value: notifyFailed, color: CHART_COLORS.danger },
+      { label: "Outros", value: notifyOther, color: CHART_COLORS.muted },
+    ];
+
+    return { userSegments, appSegments, notificationSegments };
   }, [stats]);
 
   if (loading && !stats) {
-    return <div className="admin-stats__state">Carregando estatísticas…</div>;
+    return (
+      <div className="admin-stats admin-stats--loading">
+        <div className="admin-stats__skeleton admin-stats__skeleton--hero" />
+        <div className="admin-stats__skeleton-row">
+          <div className="admin-stats__skeleton admin-stats__skeleton--kpi" />
+          <div className="admin-stats__skeleton admin-stats__skeleton--kpi" />
+          <div className="admin-stats__skeleton admin-stats__skeleton--kpi" />
+          <div className="admin-stats__skeleton admin-stats__skeleton--kpi" />
+        </div>
+        <div className="admin-stats__skeleton admin-stats__skeleton--panel" />
+      </div>
+    );
   }
 
   if (error && !stats) {
@@ -197,23 +191,30 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
     );
   }
 
-  if (!stats) {
+  if (!stats || !charts) {
     return <div className="admin-stats__state">Nenhum dado disponível.</div>;
   }
 
+  const usage = stats.apps.usage;
+
   return (
     <section className="admin-stats" aria-labelledby="admin-stats-title">
-      <header className="admin-stats__header">
-        <div>
+      <header className="admin-stats__hero">
+        <div className="admin-stats__hero-copy">
+          <span className="admin-stats__eyebrow">
+            <Sparkles size={14} aria-hidden="true" />
+            Painel executivo
+          </span>
           <h3 id="admin-stats-title">Estatísticas da plataforma</h3>
           <p>
-            Visão consolidada de usuários, aplicações, papéis e grupos para apoiar
-            governança de acesso e saúde do ecossistema Minha DELPI.
+            Usuários online, uso real de aplicações (com quem está em cada app) e
+            indicadores de governança RBAC em um só lugar.
           </p>
         </div>
-        <div className="admin-stats__header-actions">
+        <div className="admin-stats__hero-actions">
           {stats.generatedAt ? (
             <span className="admin-stats__generated">
+              <Activity size={14} aria-hidden="true" />
               Atualizado: {formatGeneratedAt(stats.generatedAt)}
             </span>
           ) : null}
@@ -223,261 +224,338 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
             onClick={() => void load()}
             disabled={loading}
           >
-            <RefreshCw size={16} aria-hidden="true" />
+            <RefreshCw size={16} className={loading ? "admin-stats__spin" : ""} />
             {loading ? "Atualizando…" : "Atualizar"}
           </button>
         </div>
       </header>
 
       <div className="admin-stats__kpis" aria-label="Indicadores principais">
-        <article className="admin-stats__kpi">
-          <span className="admin-stats__kpi-icon" aria-hidden="true">
+        <article className="admin-stats__kpi admin-stats__kpi--users">
+          <span className="admin-stats__kpi-icon">
             <Users size={18} />
           </span>
-          <strong>{stats.users.total}</strong>
-          <span>Usuários</span>
-          <small>
-            {stats.users.online} online · {stats.users.active} ativos
-          </small>
+          <div>
+            <strong>{stats.users.total}</strong>
+            <span>Usuários</span>
+            <small>
+              {stats.users.online} online · {stats.users.loggedInLast7Days} logins (7d)
+            </small>
+          </div>
         </article>
-        <article className="admin-stats__kpi">
-          <span className="admin-stats__kpi-icon" aria-hidden="true">
+        <article className="admin-stats__kpi admin-stats__kpi--apps">
+          <span className="admin-stats__kpi-icon">
             <LayoutGrid size={18} />
           </span>
-          <strong>{stats.apps.total}</strong>
-          <span>Aplicações</span>
-          <small>
-            {stats.apps.usage?.inUseNow ?? 0} em uso agora ·{" "}
-            {stats.apps.usage?.ghostApps?.length ?? 0} fantasmas (30d)
-          </small>
+          <div>
+            <strong>{stats.apps.total}</strong>
+            <span>Aplicações</span>
+            <small>
+              {usage?.inUseNow ?? 0} em uso · {usage?.ghostApps?.length ?? 0} fantasmas
+            </small>
+          </div>
         </article>
-        <article className="admin-stats__kpi">
-          <span className="admin-stats__kpi-icon" aria-hidden="true">
+        <article className="admin-stats__kpi admin-stats__kpi--roles">
+          <span className="admin-stats__kpi-icon">
             <Shield size={18} />
           </span>
-          <strong>{stats.roles.total}</strong>
-          <span>Papéis</span>
-          <small>
-            {stats.roles.system} sistema · {stats.roles.custom} customizados
-          </small>
+          <div>
+            <strong>{stats.roles.total}</strong>
+            <span>Papéis</span>
+            <small>
+              {stats.roles.system} sistema · {stats.roles.custom} customizados
+            </small>
+          </div>
         </article>
-        <article className="admin-stats__kpi">
-          <span className="admin-stats__kpi-icon" aria-hidden="true">
+        <article className="admin-stats__kpi admin-stats__kpi--groups">
+          <span className="admin-stats__kpi-icon">
             <UsersRound size={18} />
           </span>
-          <strong>{stats.groups.total}</strong>
-          <span>Grupos</span>
-          <small>
-            {stats.groups.active} ativos · {stats.permissions.total} permissões
-          </small>
+          <div>
+            <strong>{stats.groups.total}</strong>
+            <span>Grupos</span>
+            <small>
+              {stats.groups.active} ativos · {stats.permissions.total} permissões
+            </small>
+          </div>
         </article>
       </div>
+
+      <div className="admin-stats__charts-row">
+        <article className="admin-stats__chart-card">
+          <h4>Usuários</h4>
+          <DonutChart
+            segments={charts.userSegments}
+            centerValue={String(stats.users.total)}
+            centerLabel="Cadastrados"
+          />
+        </article>
+        <article className="admin-stats__chart-card">
+          <h4>Apps — adoção</h4>
+          <DonutChart
+            segments={charts.appSegments}
+            centerValue={String(stats.apps.active)}
+            centerLabel="Ativas"
+          />
+        </article>
+        <article className="admin-stats__chart-card">
+          <h4>Notificações</h4>
+          <DonutChart
+            segments={charts.notificationSegments}
+            centerValue={String(stats.notifications?.dispatchesTotal ?? 0)}
+            centerLabel="Envios"
+          />
+        </article>
+      </div>
+
+      <article className="admin-stats__panel admin-stats__panel--wide">
+        <div className="admin-stats__panel-head">
+          <div className="admin-stats__panel-head-main">
+            <span className="admin-stats__panel-icon">
+              <LayoutGrid size={16} />
+            </span>
+            <div>
+              <h4>Uso de aplicações</h4>
+              <p className="admin-stats__panel-sub">
+                Registra o app aberto e o usuário (nome/e-mail). Apps fantasmas = ativas
+                sem abertura em 30 dias.
+              </p>
+            </div>
+          </div>
+          <PanelNav tab="apps" label="Gerenciar apps" onNavigateTab={onNavigateTab} />
+        </div>
+
+        {usage?.enabled ? (
+          <div className="admin-stats__apps-layout">
+            <div className="admin-stats__apps-col">
+              <h5>Em uso agora</h5>
+              {(usage.live ?? []).length === 0 ? (
+                <p className="admin-stats__empty">Nenhum app em uso no momento.</p>
+              ) : (
+                <div className="admin-stats__live-grid">
+                  {(usage.live ?? []).map((item) => (
+                    <LiveAppUsageCard
+                      key={item.appId}
+                      appId={item.appId}
+                      appName={item.appName || item.appId}
+                      userCount={item.userCount}
+                      sessionCount={item.sessionCount}
+                      users={item.users ?? []}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="admin-stats__apps-col">
+              <h5>Top 30 dias</h5>
+              <BarChart
+                items={(usage.topUsed ?? []).map((item) => ({
+                  id: item.id,
+                  label: item.name,
+                  value: item.count,
+                  sublabel: "usuários únicos",
+                }))}
+                valueLabel="usuários"
+                accent={CHART_COLORS.primary}
+              />
+              <h5 className="admin-stats__subsection">
+                <Ghost size={14} aria-hidden="true" />
+                Apps fantasmas ({usage.ghostApps?.length ?? 0})
+              </h5>
+              {(usage.ghostApps ?? []).length === 0 ? (
+                <p className="admin-stats__empty admin-stats__empty--success">
+                  Nenhuma aplicação ativa sem uso no período.
+                </p>
+              ) : (
+                <ul className="admin-stats__ghost-tags">
+                  {(usage.ghostApps ?? []).map((item) => (
+                    <li key={item.id} title={item.id}>
+                      {item.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="admin-stats__empty">
+            Rastreamento de uso desabilitado (`APP_USAGE_ENABLED=false`).
+          </p>
+        )}
+      </article>
 
       <div className="admin-stats__grid">
         <article className="admin-stats__panel">
           <div className="admin-stats__panel-head">
             <div className="admin-stats__panel-head-main">
-              <span className="admin-stats__panel-icon" aria-hidden="true">
+              <span className="admin-stats__panel-icon">
                 <Users size={16} />
               </span>
               <h4>Usuários</h4>
             </div>
             <PanelNav tab="users" label="Gerenciar" onNavigateTab={onNavigateTab} />
           </div>
-          <div className="admin-stats__metrics">
-            <StatMetric label="Ativos" value={stats.users.active} />
-            <StatMetric label="Inativos" value={stats.users.inactive} />
-            <StatMetric label="Online agora" value={stats.users.online} highlight />
-            <StatMetric label="Superadmins" value={stats.users.superadmins} />
-            <StatMetric label="Login últimos 7 dias" value={stats.users.loggedInLast7Days} />
-            <StatMetric label="Login últimos 30 dias" value={stats.users.loggedInLast30Days} />
-            <StatMetric label="Com data de nascimento" value={stats.users.withBirthDate} />
-            <StatMetric label="Sem papel direto" value={stats.users.withoutDirectRoles} />
-            <StatMetric label="Sem grupo" value={stats.users.withoutGroups} />
-          </div>
-          <div className="admin-stats__bars" aria-label="Proporção ativos e inativos">
-            <StatBar label="Ativos" value={stats.users.active} max={stats.users.total} />
-            <StatBar label="Inativos" value={stats.users.inactive} max={stats.users.total} />
+          <div className="admin-stats__split">
+            <DonutChart
+              segments={charts.userSegments}
+              centerValue={String(stats.users.online)}
+              centerLabel="Online"
+              size={112}
+            />
+            <BarChart
+              items={[
+                { id: "active", label: "Ativos", value: stats.users.active },
+                { id: "inactive", label: "Inativos", value: stats.users.inactive },
+                {
+                  id: "login7",
+                  label: "Login 7 dias",
+                  value: stats.users.loggedInLast7Days,
+                },
+                {
+                  id: "login30",
+                  label: "Login 30 dias",
+                  value: stats.users.loggedInLast30Days,
+                },
+                {
+                  id: "super",
+                  label: "Superadmins",
+                  value: stats.users.superadmins,
+                },
+              ]}
+              accent={CHART_COLORS.cyan}
+            />
           </div>
         </article>
 
         <article className="admin-stats__panel">
           <div className="admin-stats__panel-head">
             <div className="admin-stats__panel-head-main">
-              <span className="admin-stats__panel-icon" aria-hidden="true">
-                <LayoutGrid size={16} />
-              </span>
-              <h4>Aplicações</h4>
-            </div>
-            <PanelNav tab="apps" label="Gerenciar" onNavigateTab={onNavigateTab} />
-          </div>
-          <div className="admin-stats__metrics">
-            <StatMetric label="Ativas" value={stats.apps.active} />
-            <StatMetric label="Inativas" value={stats.apps.inactive} />
-            <StatMetric
-              label="Em uso agora"
-              value={stats.apps.usage?.inUseNow ?? 0}
-              highlight
-            />
-            <StatMetric
-              label="Usadas em 30 dias"
-              value={stats.apps.usage?.usedInPeriod ?? 0}
-            />
-            <StatMetric
-              label="Apps fantasmas"
-              value={stats.apps.usage?.ghostApps?.length ?? 0}
-            />
-            <StatMetric label="Rotas ativas" value={stats.apps.routesActive} />
-          </div>
-          {stats.apps.usage?.enabled ? (
-            <>
-              <RankList
-                title="Em uso agora (usuários no portal)"
-                items={(stats.apps.usage.live ?? []).map((item) => ({
-                  id: item.appId,
-                  name: item.appName || item.appId,
-                  count: item.userCount,
-                }))}
-                countLabel="usuários"
-              />
-              <RankList
-                title="Mais usadas nos últimos 30 dias"
-                items={stats.apps.usage.topUsed ?? []}
-                countLabel="usuários únicos"
-              />
-              <RankList
-                title="Fantasmas — ativas sem uso em 30 dias"
-                items={(stats.apps.usage.ghostApps ?? []).map((item) => ({
-                  ...item,
-                  count: 0,
-                }))}
-                countLabel="sem uso"
-              />
-            </>
-          ) : (
-            <p className="admin-stats__empty">
-              Rastreamento de uso de apps desabilitado no servidor.
-            </p>
-          )}
-          <div className="admin-stats__bars" aria-label="Aplicações por tipo">
-            {stats.apps.byType.length === 0 ? (
-              <p className="admin-stats__empty">Nenhuma aplicação cadastrada.</p>
-            ) : (
-              stats.apps.byType.map((item) => (
-                <StatBar
-                  key={item.type}
-                  label={formatAppType(item.type)}
-                  value={item.count}
-                  max={appsTypeMax}
-                />
-              ))
-            )}
-          </div>
-        </article>
-
-        <article className="admin-stats__panel">
-          <div className="admin-stats__panel-head">
-            <div className="admin-stats__panel-head-main">
-              <span className="admin-stats__panel-icon" aria-hidden="true">
+              <span className="admin-stats__panel-icon">
                 <Shield size={16} />
               </span>
               <h4>Papéis</h4>
             </div>
             <PanelNav tab="roles" label="Gerenciar" onNavigateTab={onNavigateTab} />
           </div>
-          <div className="admin-stats__metrics">
-            <StatMetric label="De sistema" value={stats.roles.system} />
-            <StatMetric label="Customizados" value={stats.roles.custom} />
-            <StatMetric label="Sem usuários" value={stats.roles.withoutUsers} />
-          </div>
-          <RankList
-            title="Mais atribuídos a usuários"
-            items={stats.roles.topByUsers}
-            countLabel="usuários"
+          <BarChart
+            items={stats.roles.topByUsers.map((item) => ({
+              id: item.id,
+              label: item.name,
+              value: item.count,
+            }))}
+            valueLabel="usuários"
+            accent={CHART_COLORS.violet}
           />
         </article>
 
         <article className="admin-stats__panel">
           <div className="admin-stats__panel-head">
             <div className="admin-stats__panel-head-main">
-              <span className="admin-stats__panel-icon" aria-hidden="true">
+              <span className="admin-stats__panel-icon">
                 <UsersRound size={16} />
               </span>
               <h4>Grupos</h4>
             </div>
             <PanelNav tab="groups" label="Gerenciar" onNavigateTab={onNavigateTab} />
           </div>
-          <div className="admin-stats__metrics">
-            <StatMetric label="Ativos" value={stats.groups.active} />
-            <StatMetric label="Inativos" value={stats.groups.inactive} />
-            <StatMetric label="Sem usuários" value={stats.groups.withoutUsers} />
-          </div>
-          <RankList
-            title="Mais usuários"
-            items={stats.groups.topByUsers}
-            countLabel="usuários"
+          <BarChart
+            items={stats.groups.topByUsers.map((item) => ({
+              id: item.id,
+              label: item.name,
+              value: item.count,
+            }))}
+            valueLabel="usuários"
+            accent={CHART_COLORS.primary}
           />
-          <RankList
-            title="Mais papéis vinculados"
-            items={stats.groups.topByRoles}
-            countLabel="papéis"
+        </article>
+
+        <article className="admin-stats__panel">
+          <div className="admin-stats__panel-head">
+            <div className="admin-stats__panel-head-main">
+              <span className="admin-stats__panel-icon">
+                <BarChart3 size={16} />
+              </span>
+              <h4>Apps por tipo</h4>
+            </div>
+          </div>
+          <BarChart
+            items={stats.apps.byType.map((item) => ({
+              id: item.type,
+              label: formatAppType(item.type),
+              value: item.count,
+            }))}
+            accent={CHART_COLORS.success}
           />
         </article>
       </div>
 
       <div className="admin-stats__overview-grid">
-        <article className="admin-stats__overview" aria-label="Vínculos RBAC">
+        <article className="admin-stats__overview">
           <div className="admin-stats__overview-head">
             <h4>
-              <BarChart3 size={16} aria-hidden="true" /> Vínculos e permissões
+              <BarChart3 size={16} /> Vínculos RBAC
             </h4>
             <PanelNav tab="permissions" label="Permissões" onNavigateTab={onNavigateTab} />
           </div>
-          <div className="admin-stats__metrics">
-            <StatMetric
-              label="Atribuições usuário → papel"
-              value={stats.assignments.userRoles}
-            />
-            <StatMetric
-              label="Atribuições usuário → grupo"
-              value={stats.assignments.userGroups}
-            />
-            <StatMetric
-              label="Atribuições grupo → papel"
-              value={stats.assignments.groupRoles}
-            />
-            <StatMetric
-              label="Permissões em papéis"
-              value={stats.assignments.rolePermissions}
-            />
-            <StatMetric label="Permissões cadastradas" value={stats.permissions.total} />
-          </div>
+          <BarChart
+            items={[
+              {
+                id: "ur",
+                label: "Usuário → papel",
+                value: stats.assignments.userRoles,
+              },
+              {
+                id: "ug",
+                label: "Usuário → grupo",
+                value: stats.assignments.userGroups,
+              },
+              {
+                id: "gr",
+                label: "Grupo → papel",
+                value: stats.assignments.groupRoles,
+              },
+              {
+                id: "rp",
+                label: "Papel → permissão",
+                value: stats.assignments.rolePermissions,
+              },
+            ]}
+            accent={CHART_COLORS.violet}
+          />
         </article>
 
-        <article className="admin-stats__overview" aria-label="Campanhas de notificação">
+        <article className="admin-stats__overview">
           <div className="admin-stats__overview-head">
             <h4>
-              <Bell size={16} aria-hidden="true" /> Notificações (campanhas)
+              <Bell size={16} /> Campanhas de notificação
             </h4>
             <PanelNav tab="notifications" label="Gerenciar" onNavigateTab={onNavigateTab} />
           </div>
-          <div className="admin-stats__metrics">
-            <StatMetric
-              label="Envios registrados"
-              value={stats.notifications?.dispatchesTotal ?? 0}
+          <div className="admin-stats__split admin-stats__split--compact">
+            <DonutChart
+              segments={charts.notificationSegments}
+              size={112}
+              centerLabel="Envios"
             />
-            <StatMetric
-              label="Agendados / pendentes"
-              value={stats.notifications?.dispatchesPending ?? 0}
-            />
-            <StatMetric
-              label="Concluídos"
-              value={stats.notifications?.dispatchesCompleted ?? 0}
-              highlight
-            />
-            <StatMetric
-              label="Com falha"
-              value={stats.notifications?.dispatchesFailed ?? 0}
+            <BarChart
+              items={[
+                {
+                  id: "pending",
+                  label: "Pendentes",
+                  value: stats.notifications?.dispatchesPending ?? 0,
+                },
+                {
+                  id: "done",
+                  label: "Concluídos",
+                  value: stats.notifications?.dispatchesCompleted ?? 0,
+                },
+                {
+                  id: "fail",
+                  label: "Falhas",
+                  value: stats.notifications?.dispatchesFailed ?? 0,
+                },
+              ]}
+              accent={CHART_COLORS.warning}
             />
           </div>
         </article>

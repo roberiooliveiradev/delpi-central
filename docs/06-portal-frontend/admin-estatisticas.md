@@ -12,8 +12,9 @@ Primeira aba do `/admin`, pensada como **painel executivo** antes das telas oper
 | Bloco | Conteúdo |
 |-------|----------|
 | KPIs | Totais de usuários, apps, papéis e grupos |
-| Painéis 2×2 | Detalhes por domínio + barras de proporção / ranking top 5 |
-| Aplicações — uso | Em uso agora (Socket), top 30 dias, **apps fantasmas** (ativas sem abertura) |
+| Gráficos (donut + barras) | Usuários, adoção de apps, notificações, rankings RBAC |
+| Painéis 2×2 | Detalhes por domínio com visualização em barras |
+| Aplicações — uso | **Quem** está em cada app agora (nome/e-mail), top 30 dias, **apps fantasmas** |
 | Visão RBAC | Contagens de vínculos e permissões |
 | Notificações | Envios de campanha (total, pendente, concluído, falha) |
 

@@ -67,11 +67,18 @@ export type AdminStatisticsTypeCount = {
   count: number;
 };
 
+export type AdminAppUsageLiveUser = {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+};
+
 export type AdminAppUsageLiveItem = {
   appId: string;
   appName: string;
   userCount: number;
   sessionCount: number;
+  users: AdminAppUsageLiveUser[];
   lastSeenAt: string;
 };
 

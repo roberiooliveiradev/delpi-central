@@ -1,6 +1,8 @@
 # app/application/use_cases/admin/get_app_usage_snapshot_use_case.py
 
+from collections import defaultdict
 from datetime import datetime, timedelta
+from uuid import UUID
 
 from app.application.unit_of_work import UnitOfWork
 from app.infrastructure.app_usage.app_usage_live_store_provider import (
@@ -38,6 +40,23 @@ class GetAppUsageSnapshotUseCase:
 
         live_store = get_app_usage_live_store()
         live_apps = live_store.list_live_apps()
+        live_sessions = live_store.list_live_sessions()
+
+        users_by_app: dict[str, set[str]] = defaultdict(set)
+        for session in live_sessions:
+            users_by_app[session.app_id].add(session.user_id)
+
+        user_ids: list[UUID] = []
+        for raw_id in {uid for ids in users_by_app.values() for uid in ids}:
+            try:
+                user_ids.append(UUID(str(raw_id)))
+            except ValueError:
+                continue
+
+        users_by_id: dict[str, object] = {}
+        if user_ids:
+            for user in self.uow.users.get_by_ids(user_ids):
+                users_by_id[str(user.id)] = user
 
         app_ids = [item.app_id for item in live_apps]
         app_names: dict[str, str] = {}
@@ -49,16 +68,29 @@ class GetAppUsageSnapshotUseCase:
             )
             app_names = {row.id: row.name for row in rows}
 
-        live = [
-            {
-                "appId": item.app_id,
-                "appName": app_names.get(item.app_id, item.app_id),
-                "userCount": item.user_count,
-                "sessionCount": item.session_count,
-                "lastSeenAt": item.last_seen_at.isoformat() + "Z",
-            }
-            for item in live_apps
-        ]
+        live = []
+        for item in live_apps:
+            active_users = []
+            for user_id in sorted(users_by_app.get(item.app_id, set())):
+                user = users_by_id.get(str(user_id))
+                active_users.append(
+                    {
+                        "id": str(user_id),
+                        "name": user.name if user else None,
+                        "email": user.email if user else None,
+                    }
+                )
+
+            live.append(
+                {
+                    "appId": item.app_id,
+                    "appName": app_names.get(item.app_id, item.app_id),
+                    "userCount": item.user_count,
+                    "sessionCount": item.session_count,
+                    "users": active_users,
+                    "lastSeenAt": item.last_seen_at.isoformat() + "Z",
+                }
+            )
 
         top_used = self.repo.top_apps_by_unique_users(since=since, limit=5)
         ghost_apps = self.repo.ghost_active_apps(since=since)
