@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "dashboard-engineering",
+  "name": "Dashboard Engenharia",
+  "description": "Painel TRANSFORMA+ DELPI (ganhos e processos de melhoria) via api-delpi",
+  "icon": "wrench-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/dashboard-engineering",
+  "entry": "/apps/dashboard-engineering/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "dashboard-engineering.view",
+      "name": "Acesso ao dashboard de engenharia",
+      "description": "Permite visualizar ganhos e processos do TRANSFORMA+ DELPI",
+      "module": "dashboard-engineering"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/dashboard-engineering",
+      "label": "Dashboard Engenharia",
+      "permission": "dashboard-engineering.view",
+      "icon": "wrench-icon",
+      "order": 27,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/dashboard-engineering/processes",
+      "label": "Processos Transforma+",
+      "permission": "dashboard-engineering.view",
+      "icon": "wrench-icon",
+      "order": 28,
+      "showInMenu": false
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

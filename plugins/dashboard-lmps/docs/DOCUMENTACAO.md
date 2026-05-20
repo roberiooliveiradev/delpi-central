@@ -26,7 +26,7 @@ O Portal carrega o MFE, injeta o JWT Keycloak em `configureHttpClient` e renderi
 ### Fora de escopo deste plugin
 
 - Detalhe individual `GET /engineering/lmps/{sale_number}` (não há tela de drill-down)
-- Módulo **Transforma Mais** (`/engineering/transforma-mais/*`) — outras rotas de engenharia, sem UI neste MFE
+- Módulo **Transforma Mais** (`/engineering/transforma-mais/*`) — painel em **`dashboard-engineering`** (`/apps/dashboard-engineering`); este MFE cobre apenas **LMPs**
 - Cadastro ou edição de LMPs no Protheus
 
 ### Legado na plataforma

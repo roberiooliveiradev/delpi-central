@@ -142,7 +142,7 @@ def get_lmp_route(sale_number: str):
 
 
 @router.get("/transforma-mais/processes")
-@require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
+@require_any_permission(["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"])
 def list_processes(
     id: str | None = Query(default=None),
     name_process: str | None = Query(default=None),
@@ -188,7 +188,7 @@ def list_processes(
 
 
 @router.get("/transforma-mais/processes/summary")
-@require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
+@require_any_permission(["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"])
 def get_process_summary(
     filial_id: str | None = Query(default=None),
     start_date: str | None = Query(default=None),

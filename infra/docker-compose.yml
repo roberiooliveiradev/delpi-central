@@ -433,6 +433,24 @@ services:
     networks:
       - delpi-network
 
+  dashboard-engineering:
+    build:
+      context: ../plugins/dashboard-engineering
+      dockerfile: Dockerfile
+
+    container_name: delpi-dashboard-engineering
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/dashboard-engineering:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   postgres-plugins:
     image: pgvector/pgvector:pg15
     container_name: delpi-postgres-plugins
@@ -588,6 +606,7 @@ services:
       - dashboard-production
       - dashboard-supplies
       - dashboard-financial
+      - dashboard-engineering
       - minha-delpi-ai-api
       - minha-delpi-chat
 

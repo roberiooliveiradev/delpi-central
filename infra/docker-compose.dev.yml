@@ -406,6 +406,24 @@ services:
     networks:
       - delpi-network
 
+  dashboard-engineering:
+    build:
+      context: ../plugins/dashboard-engineering
+      dockerfile: Dockerfile
+
+    container_name: delpi-dashboard-engineering
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/dashboard-engineering:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   api-delpi:
     build:
       context: ..
@@ -577,6 +595,7 @@ services:
       - dashboard-production
       - dashboard-supplies
       - dashboard-financial
+      - dashboard-engineering
       - minha-delpi-ai-api
       - minha-delpi-chat
 
