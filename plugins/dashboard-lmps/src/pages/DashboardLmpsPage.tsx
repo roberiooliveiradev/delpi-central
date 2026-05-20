@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { BarChart3, CircleGauge, Clock3 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -34,6 +34,7 @@ import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "../utils/dates";
+import { exportLmpsDashboardCsv } from "../utils/exportLmpsCsv";
 import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
 import { suggestGranularity } from "../utils/periodBuckets";
 
@@ -209,6 +210,13 @@ export function DashboardLmpsPage() {
   const totalPropostas =
     summary?.total_items ?? summary?.total_lmps ?? sortedItems.length;
 
+  const handleExportCsv = useCallback(() => {
+    exportLmpsDashboardCsv(sortedItems, {
+      dateStart: dateStart || undefined,
+      dateEnd: dateEnd || undefined,
+    });
+  }, [sortedItems, dateStart, dateEnd]);
+
   return (
     <main className="dashboard-lmps dashboard-page">
       <FilterBar
@@ -223,6 +231,8 @@ export function DashboardLmpsPage() {
         onListingTypeChange={setListingType}
         onStatusChange={setStatus}
         onRefresh={reload}
+        onExport={handleExportCsv}
+        exportDisabled={sortedItems.length === 0 || loading}
       />
 
       {refreshing && hasData ? (

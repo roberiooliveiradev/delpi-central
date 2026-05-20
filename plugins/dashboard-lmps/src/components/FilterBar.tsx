@@ -1,4 +1,4 @@
-import { Filter, ListFilter } from "lucide-react";
+import { Download, ListFilter } from "lucide-react";
 
 type FilterBarProps = {
   dateStart: string;
@@ -12,6 +12,8 @@ type FilterBarProps = {
   onListingTypeChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onRefresh: () => void;
+  onExport?: () => void;
+  exportDisabled?: boolean;
 };
 
 export function FilterBar({
@@ -25,7 +27,9 @@ export function FilterBar({
   onBranchChange,
   onListingTypeChange,
   onStatusChange,
-  onRefresh
+  onRefresh,
+  onExport,
+  exportDisabled = false,
 }: FilterBarProps) {
   return (
     <>
@@ -39,10 +43,17 @@ export function FilterBar({
         </div>
 
         <div className="lmps-header-actions">
-          <button className="lmps-ghost-btn" type="button">
-            <Filter size={16} />
-            Filtros
-          </button>
+          {onExport ? (
+            <button
+              className="lmps-ghost-btn"
+              type="button"
+              onClick={onExport}
+              disabled={exportDisabled}
+            >
+              <Download size={16} />
+              Exportar CSV
+            </button>
+          ) : null}
           <button className="lmps-primary-btn" type="button" onClick={onRefresh}>
             <ListFilter size={16} />
             Atualizar

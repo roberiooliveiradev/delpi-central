@@ -193,7 +193,7 @@
 
 .dashboard-lmps .lmps-filters-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--lmps-grid-gap);
   margin-bottom: var(--lmps-section-gap);
 }
@@ -738,10 +738,6 @@
 ========================================= */
 
 @media (max-width: 1280px) {
-  .dashboard-lmps .lmps-filters-row {
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
-  }
-
   .dashboard-lmps .lmps-kpi-grid {
     grid-template-columns: repeat(2, minmax(220px, 1fr));
   }
@@ -765,7 +761,10 @@
     justify-content: flex-start;
   }
 
-  .dashboard-lmps .lmps-filters-row,
+  .dashboard-lmps .lmps-filters-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .dashboard-lmps .lmps-kpi-grid,
   .dashboard-lmps .lmps-charts-grid-top {
     grid-template-columns: 1fr;
@@ -776,6 +775,10 @@
   .dashboard-lmps {
     --lmps-page-padding: 16px;
     --lmps-chart-min-height: var(--lmps-chart-min-height-mobile);
+  }
+
+  .dashboard-lmps .lmps-filters-row {
+    grid-template-columns: 1fr;
   }
 
   .dashboard-lmps .lmps-primary-btn,
