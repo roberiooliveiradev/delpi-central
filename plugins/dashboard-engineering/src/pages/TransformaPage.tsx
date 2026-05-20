@@ -4,14 +4,16 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { Lightbulb } from "lucide-react";
+import { Clock, Coins, Lightbulb, Percent } from "lucide-react";
 
-import { getTransformaProcesses } from "../api/engineeringApi";
+import { getTransformaProcesses, getTransformaSummary } from "../api/engineeringApi";
 import { ChartCard } from "../components/ChartCard";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { DataTable, type DataTableColumn } from "../components/DataTable";
@@ -23,14 +25,19 @@ import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { useEngineeringResource } from "../hooks/useEngineeringResource";
 import type { TransformaProcess } from "../types/engineering";
-import { formatPeriodLabel } from "../utils/dates";
-import { formatCurrency, formatDecimal } from "../utils/format";
+import { formatPeriodLabel, monthKeyToLabel } from "../utils/dates";
+import {
+  formatCurrency,
+  formatDecimal,
+  formatInteger,
+  formatPercent,
+} from "../utils/format";
 
 const CHART_HEIGHT = 320;
 
-type ProcessesPageProps = { pathname?: string };
+type TransformaPageProps = { pathname?: string };
 
-export function ProcessesPage({ pathname }: ProcessesPageProps) {
+export function TransformaPage({ pathname }: TransformaPageProps) {
   const {
     dateStart,
     dateEnd,
@@ -52,7 +59,24 @@ export function ProcessesPage({ pathname }: ProcessesPageProps) {
     [apiParams, statusFilter]
   );
 
-  const { data, loading, refreshing, error, reload } = useEngineeringResource(
+  const {
+    data: summary,
+    loading: summaryLoading,
+    refreshing: summaryRefreshing,
+    error: summaryError,
+    reload: reloadSummary,
+  } = useEngineeringResource(
+    (signal) => getTransformaSummary(apiParams, signal),
+    [apiParams.branch, apiParams.end_date, apiParams.filial_id, apiParams.start_date]
+  );
+
+  const {
+    data: processesData,
+    loading: listLoading,
+    refreshing: listRefreshing,
+    error: listError,
+    reload: reloadList,
+  } = useEngineeringResource(
     (signal) => getTransformaProcesses(listParams, signal),
     [
       listParams.branch,
@@ -63,12 +87,31 @@ export function ProcessesPage({ pathname }: ProcessesPageProps) {
     ]
   );
 
+  const reload = () => {
+    reloadSummary();
+    reloadList();
+  };
+
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
   );
 
-  const items = data?.items ?? [];
+  const items = processesData?.items ?? [];
+  const loading = summaryLoading || listLoading;
+  const refreshing = summaryRefreshing || listRefreshing;
+  const error = summaryError && listError ? summaryError : null;
+  const isBusy = loading || refreshing;
+  const hasData = summary !== null || processesData !== null;
+
+  const savingsChartData = useMemo(
+    () =>
+      (summary?.monthly_breakdown ?? []).map((item) => ({
+        name: monthKeyToLabel(item.month),
+        net: item.net_savings_month,
+      })),
+    [summary?.monthly_breakdown]
+  );
 
   const topSavingsChart = useMemo(
     () =>
@@ -94,21 +137,9 @@ export function ProcessesPage({ pathname }: ProcessesPageProps) {
         className: "ds-table__col--wide",
         render: (row) => row.name_process || "—",
       },
-      {
-        key: "filial",
-        header: "Filial",
-        render: (row) => row.filial_id ?? "—",
-      },
-      {
-        key: "sector",
-        header: "Setor",
-        render: (row) => row.sector_name ?? "—",
-      },
-      {
-        key: "status",
-        header: "Status",
-        render: (row) => row.status ?? "—",
-      },
+      { key: "filial", header: "Filial", render: (row) => row.filial_id ?? "—" },
+      { key: "sector", header: "Setor", render: (row) => row.sector_name ?? "—" },
+      { key: "status", header: "Status", render: (row) => row.status ?? "—" },
       {
         key: "daily",
         header: "Economia/dia",
@@ -130,14 +161,12 @@ export function ProcessesPage({ pathname }: ProcessesPageProps) {
     []
   );
 
-  const isBusy = loading || refreshing;
-
   return (
     <div className="dashboard-engineering dashboard-page">
       <FilterBar
-        title="Processos Transforma+"
-        subtitle="Melhorias, automações e correções cadastradas na planilha"
-        currentPath={pathname ?? ENGINEERING_ROUTES.processes}
+        title="TRANSFORMA+ DELPI"
+        subtitle="Ganhos financeiros e processos de melhoria na planilha"
+        currentPath={pathname ?? ENGINEERING_ROUTES.transforma}
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
@@ -148,19 +177,19 @@ export function ProcessesPage({ pathname }: ProcessesPageProps) {
         onRefresh={reload}
         refreshing={refreshing}
       />
-      <DataSourceBanner />
+      <DataSourceBanner variant="transforma" />
       <EngineeringStatusAlerts
         error={error}
         loading={loading}
-        hasData={data !== null}
+        hasData={hasData}
         onRetry={reload}
       />
 
       <section className="ds-filters-row">
         <div className="ds-filter-box">
-          <label htmlFor="de-status">Status do processo</label>
+          <label htmlFor="de-transforma-status">Status do processo</label>
           <input
-            id="de-status"
+            id="de-transforma-status"
             type="text"
             value={statusFilter}
             placeholder="Todos"
@@ -171,17 +200,74 @@ export function ProcessesPage({ pathname }: ProcessesPageProps) {
 
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
-          title="Processos no recorte"
-          value={String(data?.total ?? items.length)}
+          title="Ganhos brutos no período"
+          value={formatCurrency(summary?.total_gross_savings_in_period)}
           subtitle={periodLabel}
+          icon={<Coins size={22} />}
+          loading={isBusy && !summary}
+        />
+        <KpiCard
+          title="Economia líquida"
+          value={formatCurrency(summary?.total_net_savings_until_now)}
+          subtitle="Acumulado no recorte"
+          icon={<Coins size={22} />}
+          loading={isBusy && !summary}
+        />
+        <KpiCard
+          title="Soluções implementadas"
+          value={formatInteger(summary?.implemented_solutions_count)}
+          subtitle="Cenários de melhoria"
           icon={<Lightbulb size={22} />}
-          loading={isBusy && !data}
+          loading={isBusy && !summary}
+        />
+        <KpiCard
+          title="Horas economizadas"
+          value={formatDecimal(summary?.total_hours_saved_until_now, 1)}
+          subtitle={periodLabel}
+          icon={<Clock size={22} />}
+          loading={isBusy && !summary}
+        />
+        <KpiCard
+          title="ROI médio"
+          value={formatPercent(summary?.average_roi, 1)}
+          subtitle="Média no período"
+          icon={<Percent size={22} />}
+          loading={isBusy && !summary}
+        />
+        <KpiCard
+          title="Processos listados"
+          value={String(processesData?.total ?? items.length)}
+          subtitle="Com filtros aplicados"
+          icon={<Lightbulb size={22} />}
+          loading={isBusy && !processesData}
         />
       </section>
 
+      {savingsChartData.length > 0 ? (
+        <section className="ds-chart-section">
+          <ChartCard title="Economia líquida mensal" hint={periodLabel}>
+            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+              <LineChart data={savingsChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={(v) => formatCurrency(Number(v))} width={72} />
+                <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+                <Line
+                  type="monotone"
+                  dataKey="net"
+                  stroke={CHART_COLORS[0]}
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </section>
+      ) : null}
+
       {topSavingsChart.length > 0 ? (
         <section className="ds-charts-grid ds-charts-grid--single">
-          <ChartCard title="Top economia diária" hint="10 maiores no filtro atual">
+          <ChartCard title="Top economia diária" hint="10 maiores no filtro">
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <BarChart data={topSavingsChart} layout="vertical" margin={{ left: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -208,7 +294,7 @@ export function ProcessesPage({ pathname }: ProcessesPageProps) {
             columns={columns}
             rows={items}
             rowKey={(row) => row.id}
-            loading={isBusy && !data}
+            loading={isBusy && !processesData}
             emptyMessage="Nenhum processo encontrado para os filtros."
           />
         </ChartCard>

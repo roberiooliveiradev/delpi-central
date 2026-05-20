@@ -20,7 +20,7 @@ type FilterBarProps = {
 
 export function FilterBar({
   title = "Dashboard Engenharia",
-  subtitle = "TRANSFORMA+ DELPI — ganhos e processos de melhoria",
+  subtitle = "LMPs no prazo e TRANSFORMA+ DELPI — indicadores estratégicos",
   currentPath,
   filterState,
   dateStart,

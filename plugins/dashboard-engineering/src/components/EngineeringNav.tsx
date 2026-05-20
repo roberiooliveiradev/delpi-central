@@ -10,7 +10,8 @@ type EngineeringNavProps = {
 
 const NAV_ITEMS = [
   { path: ENGINEERING_ROUTES.home, label: "Visão geral" },
-  { path: ENGINEERING_ROUTES.processes, label: "Processos" },
+  { path: ENGINEERING_ROUTES.lmp, label: "LMPs no prazo" },
+  { path: ENGINEERING_ROUTES.transforma, label: "TRANSFORMA+" },
 ] as const;
 
 function isActive(path: string, currentPath?: string): boolean {

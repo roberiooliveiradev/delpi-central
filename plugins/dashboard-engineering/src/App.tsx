@@ -2,7 +2,8 @@ import { configureHttpClient } from "./api/httpClient";
 import { ENGINEERING_ROUTES } from "./constants/routes";
 import { useEngineeringRouterPath } from "./hooks/useEngineeringRouterPath";
 import { DashboardEngineeringPage } from "./pages/DashboardEngineeringPage";
-import { ProcessesPage } from "./pages/ProcessesPage";
+import { LmpPage } from "./pages/LmpPage";
+import { TransformaPage } from "./pages/TransformaPage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -18,10 +19,17 @@ function normalizePath(pathname: string): string {
 
 function renderPage(path: string) {
   if (
-    path === ENGINEERING_ROUTES.processes ||
-    path.startsWith(`${ENGINEERING_ROUTES.processes}/`)
+    path === ENGINEERING_ROUTES.lmp ||
+    path.startsWith(`${ENGINEERING_ROUTES.lmp}/`)
   ) {
-    return <ProcessesPage pathname={path} />;
+    return <LmpPage pathname={path} />;
+  }
+
+  if (
+    path === ENGINEERING_ROUTES.transforma ||
+    path.startsWith(`${ENGINEERING_ROUTES.transforma}/`)
+  ) {
+    return <TransformaPage pathname={path} />;
   }
 
   return <DashboardEngineeringPage pathname={path} />;

@@ -30,7 +30,9 @@ router = APIRouter(prefix="/engineering", tags=["Engenharia"])
 
 
 @router.get("/lmps", **LMP_LIST)
-@require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
+@require_any_permission(
+    ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
+)
 def list_lmps_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
@@ -75,7 +77,9 @@ def list_lmps_route(
 
 
 @router.get("/lmps/dashboard", **LMP_DASHBOARD)
-@require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
+@require_any_permission(
+    ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
+)
 def list_lmps_dashboard_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
@@ -119,7 +123,9 @@ def list_lmps_dashboard_route(
 
 
 @router.get("/lmps/{sale_number}", **LMP_BY_SALE)
-@require_any_permission(["api-delpi.access", "dashboard-lmps.view"])
+@require_any_permission(
+    ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
+)
 def get_lmp_route(sale_number: str):
     try:
         dto = GetLMPRequest(sale_number=sale_number)

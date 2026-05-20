@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "dashboard-engineering",
   "name": "Dashboard Engenharia",
-  "description": "Painel TRANSFORMA+ DELPI (ganhos e processos de melhoria) via api-delpi",
+  "description": "Indicadores estratégicos de engenharia: LMPs no prazo (TOTVS) e TRANSFORMA+ DELPI (planilha)",
   "icon": "wrench-icon",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "microfrontend",
 
   "basePath": "/apps/dashboard-engineering",
@@ -14,7 +14,7 @@
     {
       "code": "dashboard-engineering.view",
       "name": "Acesso ao dashboard de engenharia",
-      "description": "Permite visualizar ganhos e processos do TRANSFORMA+ DELPI",
+      "description": "Permite visualizar LMPs no prazo e ganhos/processos do TRANSFORMA+ DELPI",
       "module": "dashboard-engineering"
     }
   ],
@@ -29,11 +29,19 @@
       "showInMenu": true
     },
     {
-      "path": "/apps/dashboard-engineering/processes",
-      "label": "Processos Transforma+",
+      "path": "/apps/dashboard-engineering/lmp",
+      "label": "LMPs no prazo",
       "permission": "dashboard-engineering.view",
       "icon": "wrench-icon",
       "order": 28,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/dashboard-engineering/transforma",
+      "label": "TRANSFORMA+",
+      "permission": "dashboard-engineering.view",
+      "icon": "wrench-icon",
+      "order": 29,
       "showInMenu": false
     }
   ],

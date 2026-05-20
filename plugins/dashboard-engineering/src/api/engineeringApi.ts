@@ -5,8 +5,32 @@ import type {
   TransformaProcessesList,
   TransformaSummary,
 } from "../types/engineering";
+import type { LmpsDashboardParams, LmpsDashboardResponse } from "../types/lmp";
+import { inputDateToLmpApi } from "../utils/lmpDates";
 
 export const ENGINEERING_API_BASE = "/apps/api-delpi/engineering";
+
+function buildLmpQuery(params: LmpsDashboardParams = {}): string {
+  const searchParams = new URLSearchParams();
+
+  const dateStart = inputDateToLmpApi(params.date_start);
+  const dateEnd = inputDateToLmpApi(params.date_end);
+
+  if (dateStart) searchParams.set("date_start", dateStart);
+  if (dateEnd) searchParams.set("date_end", dateEnd);
+  if (params.branch) searchParams.set("branch", params.branch);
+  if (params.listing_type && params.listing_type !== "Todos") {
+    searchParams.set("listing_type", params.listing_type);
+  }
+  if (params.status && params.status !== "Todos") {
+    searchParams.set("status", params.status);
+  }
+  if (params.page) searchParams.set("page", String(params.page));
+  if (params.page_size) searchParams.set("page_size", String(params.page_size));
+
+  const query = searchParams.toString();
+  return query ? `?${query}` : "";
+}
 
 function buildQuery(params: EngineeringFilterParams = {}): string {
   const searchParams = new URLSearchParams();
@@ -60,4 +84,20 @@ export function getTransformaProcesses(
     params,
     signal
   );
+}
+
+export async function getLmpsDashboard(
+  params: LmpsDashboardParams,
+  signal?: AbortSignal
+): Promise<LmpsDashboardResponse> {
+  const response = await httpGet<ApiSuccessResponse<LmpsDashboardResponse>>(
+    `${ENGINEERING_API_BASE}/lmps/dashboard${buildLmpQuery(params)}`,
+    { signal }
+  );
+
+  if (response.success === false) {
+    throw new Error(response.message || "Erro ao carregar LMPs");
+  }
+
+  return response.data;
 }
