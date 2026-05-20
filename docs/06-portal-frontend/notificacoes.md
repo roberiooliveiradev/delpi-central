@@ -38,7 +38,7 @@ O subtítulo do cabeçalho muda conforme a aba ativa. Após salvar preferências
 | Arquivo | Papel |
 |---------|--------|
 | `NotificationCard` | Variantes `compact` (sino/home) e `page` (histórico) |
-| `useNotificationActions` | Marcar lida, excluir (com confirmação), alternar importante |
+| `useNotificationActions` | Marcar lida, excluir, alternar importante; `bulkMarkRead` / `bulkDelete` na página Histórico |
 | `NotificationPreferencesPanel` | Variante `page` na aba Preferências; `embedded` se reutilizado |
 | `notificationHtmlPreview.ts` | Preview HTML no Admin (variáveis de exemplo) |
 
