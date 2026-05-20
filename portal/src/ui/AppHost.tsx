@@ -12,8 +12,10 @@ import {
   buildPortalEmbeddedPath,
   clearEmbeddedDeepLink,
   extractEmbeddedDeepPath,
+  normalizeEmbeddedDeepPath,
   peekEmbeddedDeepLink,
   pendingMatchesCurrentApp,
+  pickEmbeddedNavigatePath,
   portalPathMatchesAppBase,
 } from "../utils/embeddedAppNotification";
 import { buildThemeMessage } from "../utils/theme";
@@ -55,6 +57,8 @@ export const AppHost = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const federatedHostRef = useRef<HTMLDivElement>(null);
   const mountedModuleRef = useRef<any>(null);
+  /** Última rota reportada pelo iframe (DELPI_EMBEDDED_ROUTE). */
+  const iframeDeepPathRef = useRef<string | null>(null);
 
   const [federatedError, setFederatedError] = useState<string | null>(null);
   const [iframeReloadKey, setIframeReloadKey] = useState(0);
@@ -134,13 +138,15 @@ export const AppHost = () => {
     if (!app) return;
 
     const fromUrl = extractEmbeddedDeepPath(location.pathname, app.basePath);
-    if (fromUrl === "/") {
+    const resolved = pickEmbeddedNavigatePath(fromUrl, iframeDeepPathRef.current);
+
+    if (resolved === "/") {
       postNavigateToIframe("/conversations");
       return;
     }
 
-    if (fromUrl && fromUrl !== "/") {
-      postNavigateToIframe(fromUrl);
+    if (resolved) {
+      postNavigateToIframe(resolved);
       return;
     }
 
@@ -233,6 +239,10 @@ export const AppHost = () => {
   }, [app?.id, location.pathname, resolvedEntry]);
 
   useEffect(() => {
+    iframeDeepPathRef.current = null;
+  }, [app?.id, iframeReloadKey, resolvedEntry]);
+
+  useEffect(() => {
     if (!app) return;
     if (app.renderMode !== "external") return;
     if (!resolvedEntry) return;
@@ -287,6 +297,7 @@ export const AppHost = () => {
       if (event.data?.type === "DELPI_EMBEDDED_ROUTE") {
         const deepPath = event.data?.path;
         if (typeof deepPath === "string" && deepPath.trim()) {
+          iframeDeepPathRef.current = normalizeEmbeddedDeepPath(deepPath);
           syncPortalUrlFromEmbeddedRoute(deepPath);
         }
         return;

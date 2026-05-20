@@ -179,6 +179,40 @@ export function dispatchEmbeddedNotificationNavigate(detail: EmbeddedPendingNavi
   );
 }
 
+/** Rota interna do iframe sem barra final (ex.: /conversations/12). */
+export function normalizeEmbeddedDeepPath(path: string): string {
+  return normalizeAppPath(path).replace(/\/+$/, "") || "/";
+}
+
+/** `parent` é prefixo estrito de `child` (ex.: /conversations → /conversations/12). */
+export function isEmbeddedPathAncestor(parent: string, child: string): boolean {
+  const p = normalizeEmbeddedDeepPath(parent);
+  const c = normalizeEmbeddedDeepPath(child);
+  if (p === c) return false;
+  if (p === "/") return c !== "/";
+  return c.startsWith(`${p}/`);
+}
+
+/**
+ * Escolhe a rota a enviar ao iframe quando a URL do portal está atrás do filho
+ * (DELPI_EMBEDDED_ROUTE ainda não sincronizou ou falhou).
+ */
+export function pickEmbeddedNavigatePath(
+  fromPortalUrl: string | null,
+  fromIframe: string | null
+): string | null {
+  const portal = fromPortalUrl ? normalizeEmbeddedDeepPath(fromPortalUrl) : null;
+  const iframe = fromIframe ? normalizeEmbeddedDeepPath(fromIframe) : null;
+
+  if (!portal && !iframe) return null;
+  if (!portal) return iframe;
+  if (!iframe) return portal;
+  if (portal === iframe) return portal;
+  if (isEmbeddedPathAncestor(portal, iframe)) return iframe;
+  if (isEmbeddedPathAncestor(iframe, portal)) return portal;
+  return iframe;
+}
+
 export function pendingMatchesCurrentApp(
   pending: EmbeddedPendingNavigate,
   appBasePath: string
