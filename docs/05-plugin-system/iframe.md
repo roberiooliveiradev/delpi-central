@@ -344,6 +344,24 @@ Regra recomendada:
 
 Não é recomendado expor tokens sensíveis em query string.
 
+### 13.1 postMessage portal ↔ iframe (contrato DELPI)
+
+Quando `renderMode: embedded`, o `AppHost` do portal troca mensagens com o filho. Implementação de referência: Controle MP (`front-cadastro-mp/src/app/sso/`).
+
+| Tipo | Direção | Uso |
+|------|---------|-----|
+| `DELPI_AUTH_READY` | Filho → portal | Pedir token SSO |
+| `DELPI_AUTH` | Portal → filho | Access token Keycloak |
+| `DELPI_LOGOUT` | Portal → filho | Encerrar sessão local |
+| `DELPI_NAVIGATE` | Portal → filho | Deep link `{ path: "/rota-interna" }` |
+| `DELPI_EMBEDDED_ROUTE` | Filho → portal | Sincronizar URL do portal (`/basePath/...`) |
+| `DELPI_REFRESH_REQUEST` | Filho → portal | Renovar token |
+| `DELPI_THEME` | Portal → filho | `{ theme: "light\|dark\|system", resolved: "light\|dark" }` |
+
+O portal envia `DELPI_THEME` para **todos** os iframes embedded ao carregar e quando o usuário altera o tema no menu. O app filho deve implementar um bridge (ex.: `DelpiThemeBridge`) — sem isso, o iframe mantém apenas o tema do SO (`prefers-color-scheme`).
+
+Tutorial: [conectar-aplicacao-iframe.md](../10-guias-operacionais/conectar-aplicacao-iframe.md) · Deep links: [embedded-app-deep-links.md](../05-portal/embedded-app-deep-links.md).
+
 ---
 
 ## 14. Limitações de iframe

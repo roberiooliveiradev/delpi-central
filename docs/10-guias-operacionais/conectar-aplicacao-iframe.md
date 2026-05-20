@@ -111,11 +111,11 @@ O portal repassa o **access token Keycloak** ao filho. O app troca por sessão l
 
 ### 4.1 No portal (já implementado)
 
-`AppHost.tsx` escuta `DELPI_AUTH_READY`, envia `DELPI_AUTH` com token, e `DELPI_LOGOUT` no logout global.
+`AppHost.tsx` escuta `DELPI_AUTH_READY`, envia `DELPI_AUTH` com token, `DELPI_THEME` (tema claro/escuro/sistema) e `DELPI_LOGOUT` no logout global. O tema é reenviado ao trocar a preferência no menu do portal (`DELPI_THEME_CHANGE`) e ao carregar o iframe.
 
 ### 4.2 No front do app filho
 
-Implemente três bridges (padrão Controle MP):
+Implemente **quatro bridges** (padrão Controle MP):
 
 | Arquivo (referência) | Função |
 |----------------------|--------|
@@ -136,6 +136,21 @@ O menu do portal (Sidebar) persiste `theme` em `localStorage` e o `AppHost` envi
 - `resolved`: tema efetivo (com `system`, segue `prefers-color-scheme` do navegador).
 
 O filho deve definir `document.documentElement.setAttribute("data-theme", resolved)` e marcar sincronização (ex.: `data-delpi-theme-synced="true"`) para não conflitar com CSS `@media (prefers-color-scheme)` no modo standalone.
+
+Snippet mínimo (`DelpiThemeBridge`):
+
+```javascript
+window.addEventListener("message", (event) => {
+  if (!ALLOWED_ORIGINS.includes(event.origin)) return;
+  if (event.data?.type !== "DELPI_THEME") return;
+  const resolved = event.data.resolved === "dark" ? "dark" : "light";
+  document.documentElement.dataset.delpiThemeSynced = "true";
+  document.documentElement.setAttribute("data-theme", resolved);
+  document.documentElement.style.colorScheme = resolved;
+});
+```
+
+Referência completa: `controle_mp/front-cadastro-mp/src/app/sso/DelpiThemeBridge.jsx` e `delpiTheme.js`.
 
 **Origens permitidas** no filho (validar `event.origin`):
 
@@ -180,7 +195,7 @@ Content-Type: application/json
   "message": "Fulano enviou uma mensagem.",
   "type": "info",
   "category": "controle_mp",
-  "emails": ["usuario@delpi.com.br"],
+  "emails": ["usuario1@delpi.com.br", "usuario2@delpi.com.br"],
   "sourceApp": "controle_mp",
   "action": {
     "type": "portal_route",
@@ -204,6 +219,8 @@ Content-Type: application/json
 | `category` | Sim | Deve existir em `notification_constants` da Core API |
 
 A Core API só entrega a notificação a usuários que **tenham permissão para abrir o app** no portal (ex.: `controle-mp.access` no RBAC). Quem não tem acesso ao módulo não recebe alerta no sino.
+
+O array `emails` aceita **vários destinatários na mesma requisição** (recomendado em integrações com muitos analistas/admin). O Controle MP envia em lote (`DELPI_NOTIFICATIONS_BATCH_SIZE`, padrão 100).
 
 API completa: [notificacoes.md](../04-core-api/notificacoes.md).
 
@@ -275,7 +292,7 @@ Lista completa: [variaveis-de-ambiente.md](../02-infraestrutura/variaveis-de-amb
 - [ ] Manifesto registrado com `basePath` definitivo
 - [ ] Permissões atribuídas aos usuários/grupos
 - [ ] App filho em HTTPS com CORS/iframe ok
-- [ ] Bridges SSO + `DELPI_NAVIGATE` no front
+- [ ] Bridges SSO + `DELPI_NAVIGATE` + `DELPI_THEME` + `DELPI_EMBEDDED_ROUTE` no front
 - [ ] Token de integração alinhado (se notificações)
 - [ ] Rebuild portal + app filho
 
@@ -289,6 +306,7 @@ Lista completa: [variaveis-de-ambiente.md](../02-infraestrutura/variaveis-de-amb
 | 4 | Clicar **Abrir** na notificação | URL `/controle-mp/conversations/{id}` e chat correto |
 | 5 | Chat aberto: outro usuário envia | Mensagem aparece **sem** precisar enviar outra |
 | 6 | E-mail destinatário = Keycloak | `createdCount >= 1` nos logs |
+| 7 | Trocar tema no portal (claro/escuro) | Iframe acompanha sem recarregar |
 
 ### URL na barra do navegador
 
@@ -309,7 +327,10 @@ src/app/sso/
   DelpiSsoBridge.jsx           # DELPI_AUTH / DELPI_LOGOUT
   DelpiNavigateBridge.jsx      # DELPI_NAVIGATE
   DelpiRouteSyncBridge.jsx     # DELPI_EMBEDDED_ROUTE → URL do portal
+  DelpiThemeBridge.jsx         # DELPI_THEME (tema do portal)
   delpiEmbeddedNavigation.js   # sessionStorage rota pendente
+  delpiTheme.js                # applyDelpiTheme / clearDelpiThemeSync
+  delpiParentOrigins.js        # ALLOWED_DELPI_PARENT_ORIGINS (opcional, compartilhado)
 ```
 
 Monte os bridges no router raiz (como em `AppRouter.jsx`).
@@ -342,6 +363,7 @@ Após SSO, consuma `delpi.child.pending_navigate` antes de redirecionar para a h
 | Mensagem só aparece ao enviar outra | Socket antes do `commit` no DB | Rebuild API + front Controle MP |
 | `createdCount=0` | E-mail não existe na Core API | Cadastrar usuário Keycloak |
 | `action.target` com `_` vs `-` | Legado `/controle_mp` | Usar `/controle-mp` igual ao manifesto |
+| Iframe não muda tema | Falta `DelpiThemeBridge` ou CSS só com `prefers-color-scheme` | Bridge + `:root[data-theme="dark"]` no filho |
 
 Mais diagnósticos: [troubleshooting.md](./troubleshooting.md).
 

@@ -113,9 +113,11 @@ Resposta de envio imediato: `201` com `createdCount`. Agendado: `202` com `statu
 
 | Método | Path | Descrição |
 |--------|------|-----------|
-| GET | `/admin/notifications/dispatches` | Lista campanhas (`limit`, `offset`) |
-| GET | `/admin/notifications/dispatches/:id` | Detalhe com `payload` (edição) |
+| GET | `/admin/notifications/dispatches` | Lista campanhas (`limit`, `offset`, filtros: `status`, `category`, `revoked`, `search`, `dateFrom`, `dateTo`) |
+| GET | `/admin/notifications/dispatches/:id` | Detalhe enriquecido: `payload`, destinatários planejados/entregues, `revokedAt` |
 | PUT | `/admin/notifications/dispatches/:id` | Atualiza envio **agendado** `pending` (body igual ao POST + `scheduledAt`) |
+| DELETE | `/admin/notifications/dispatches/:id` | Revoga envio (soft delete das notificações criadas; cancela agendado sem entregas) |
+| POST | `/admin/notifications/dispatches/bulk-delete` | Revoga vários envios (`dispatchIds`, máx. 50) |
 | POST | `/admin/notifications/dispatches/process-pending` | Processa envios com `scheduledAt` vencido |
 | POST | `/integrations/notifications/process-pending` | Mesmo processamento (service token, para cron) |
 
@@ -133,7 +135,7 @@ Detalhes: [Portal — Notificações](../06-portal-frontend/notificacoes.md).
 | **Home** | Resumo + até 4 cards com as mesmas ações |
 | **`/notifications` — Histórico** | Status (todas/não lidas/lidas), categoria, importantes, paginação, `NotificationCard` |
 | **`/notifications` — Preferências** | `NotificationPreferencesPanel` — silenciar categorias (exceto `system`) |
-| **Admin → Notificações** | Envio, `roleIds`/`groupIds`, agendamento, histórico com **Editar** em pendentes, preview HTML, templates |
+| **Admin → Notificações** | Envio, `roleIds`/`groupIds`, agendamento, histórico com filtros, detalhe do envio, exclusão individual/em lote, **Editar** em pendentes, preview HTML, templates |
 | **Admin → Usuário** | Data de nascimento no modal RBAC |
 
 ---

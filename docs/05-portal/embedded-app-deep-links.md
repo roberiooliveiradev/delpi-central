@@ -59,12 +59,21 @@ Implementação de referência: `controle_mp/.../DelpiNavigateBridge.jsx`, `Delp
 
 O portal envia `DELPI_THEME` para **todo** app `renderMode: embedded` (`AppHost`). O filho precisa escutar e aplicar (ex.: `data-theme` no `<html>`). Sem bridge no app, o iframe ignora a mensagem e mantém o tema local/sistema.
 
+Payload:
+
+```json
+{ "type": "DELPI_THEME", "theme": "light|dark|system", "resolved": "light|dark" }
+```
+
+Use sempre `resolved` no CSS; com `theme: "system"`, o portal reenvia quando `prefers-color-scheme` do navegador mudar.
+
 ## Portal (código)
 
 - `portal/src/utils/embeddedAppNotification.ts` — stash, `buildPortalEmbeddedPath`, `extractEmbeddedDeepPath`
 - `portal/src/utils/notificationNavigation.ts` — clique no card
 - `portal/src/ui/App.tsx` — rotas wildcard `${basePath}/*` para apps `renderMode: embedded`
-- `portal/src/ui/AppHost.tsx` — `DELPI_NAVIGATE` / `DELPI_EMBEDDED_ROUTE`; iframe não remonta a cada subrota
+- `portal/src/ui/AppHost.tsx` — `DELPI_NAVIGATE`, `DELPI_THEME`, `DELPI_EMBEDDED_ROUTE`; iframe não remonta a cada subrota
+- `portal/src/utils/theme.ts` — `buildThemeMessage()`, persistência `localStorage.theme`
 - `portal/src/components/notifications/NotificationCard.tsx` — navega para URL completa com `deepPath`
 
 ## Filho (iframe) — ordem com SSO
@@ -73,7 +82,7 @@ O portal envia `DELPI_THEME` para **todo** app `renderMode: embedded` (`AppHost`
 2. O filho grava a rota em `sessionStorage` (`delpi.child.pending_navigate`) e navega.
 3. Após o SSO, **não** redirecionar para `/conversations` se já houver rota pendente.
 
-Referência Controle MP: `delpiEmbeddedNavigation.js`, `DelpiNavigateBridge.jsx`, `DelpiRouteSyncBridge.jsx`, `DelpiSsoBridge.jsx`.
+Referência Controle MP: `delpiEmbeddedNavigation.js`, `DelpiNavigateBridge.jsx`, `DelpiRouteSyncBridge.jsx`, `DelpiThemeBridge.jsx`, `DelpiSsoBridge.jsx`.
 
 ## URL do portal
 

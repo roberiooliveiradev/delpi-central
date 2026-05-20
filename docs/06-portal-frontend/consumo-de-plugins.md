@@ -83,7 +83,8 @@ Gateway serve:
 ### 4.2 Iframe embutido (`renderMode: embedded`)
 
 - Renderiza `<iframe src={entry + cacheBust}>`
-- Após load, envia `postMessage({ type: "DELPI_AUTH", token }, targetOrigin)`
+- Após load, envia `postMessage({ type: "DELPI_AUTH", token }, targetOrigin)` e `DELPI_THEME` (`theme`, `resolved`)
+- Reenvia `DELPI_THEME` ao mudar preferência no Sidebar (`DELPI_THEME_CHANGE`) ou `localStorage.theme` em outra aba
 - Escuta `DELPI_REFRESH_REQUEST` → `refreshToken()` no Portal
 - Apps Google: hook `useGoogleEmbeddedAppLogin` para fluxo de login embutido
 - Classe CSS `portal-has-embedded-app` no `body` para layout full-height
@@ -104,7 +105,7 @@ Gateway serve:
 
 | Canal | Mecanismo |
 |---|---|
-| Iframe | `postMessage` `DELPI_AUTH` |
+| Iframe | `postMessage` `DELPI_AUTH`, `DELPI_THEME`, `DELPI_NAVIGATE` (portal → filho); `DELPI_AUTH_READY`, `DELPI_EMBEDDED_ROUTE`, `DELPI_REFRESH_REQUEST` (filho → portal) |
 | Microfrontend | Host pode passar token via props/context do remote (contrato do plugin) |
 | API direta | Plugin chama `/apps/api-delpi` com `Authorization` próprio |
 

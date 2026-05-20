@@ -103,8 +103,9 @@ Quando `metadata.deepPath` está presente (ex.: notificações do Controle MP), 
 2. Envia `postMessage` `{ type: "DELPI_NAVIGATE", path: deepPath }` ao iframe.
 3. Mantém o deep link em `sessionStorage` até o iframe confirmar recebimento.
 4. Escuta `DELPI_EMBEDDED_ROUTE` do filho para manter a barra de URL sincronizada ao navegar dentro do app.
+5. Envia `DELPI_THEME` para o iframe seguir claro/escuro/sistema do menu do portal (genérico para todo app embedded; o filho implementa o listener).
 
-Código: `embeddedAppNotification.ts`, `notificationNavigation.ts`, `App.tsx`, `AppHost.tsx`, `NotificationCard.tsx`.
+Código: `embeddedAppNotification.ts`, `notificationNavigation.ts`, `App.tsx`, `AppHost.tsx`, `NotificationCard.tsx`, `utils/theme.ts`.
 
 Tutorial: [conectar-aplicacao-iframe.md](../10-guias-operacionais/conectar-aplicacao-iframe.md) · Contrato: [embedded-app-deep-links.md](../05-portal/embedded-app-deep-links.md).
 
