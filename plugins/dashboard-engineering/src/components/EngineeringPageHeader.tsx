@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ListFilter, Wrench } from "lucide-react";
+import { DraftingCompass, ListFilter } from "lucide-react";
 import type { EngineeringFilterUrlState } from "../utils/filterUrl";
 import { EngineeringNav } from "./EngineeringNav";
 
@@ -26,7 +26,7 @@ export function EngineeringPageHeader({
     <header className="ds-page-header">
       <div className="ds-page-header__brand">
         <div className="ds-header__icon" aria-hidden="true">
-          <Wrench size={28} strokeWidth={1.75} />
+          <DraftingCompass size={28} strokeWidth={1.75} />
         </div>
         <div>
           <p className="ds-eyebrow">DELPI • Engenharia</p>

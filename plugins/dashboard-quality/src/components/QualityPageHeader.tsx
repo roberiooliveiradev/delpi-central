@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ListFilter, ShieldCheck } from "lucide-react";
+import { Award, ListFilter } from "lucide-react";
 import type { QualityFilterUrlState } from "../utils/filterUrl";
 import { PrintReportButton } from "./PrintReportButton";
 import { PrintReportSummary } from "./PrintReportSummary";
@@ -46,7 +46,7 @@ export function QualityPageHeader({
       <header className="dq-page-header dq-screen-only">
         <div className="dq-page-header__brand">
           <div className="dq-header__icon" aria-hidden="true">
-            <ShieldCheck size={28} strokeWidth={1.75} />
+            <Award size={28} strokeWidth={1.75} />
           </div>
           <div>
             <p className="dq-eyebrow">DELPI • Qualidade</p>

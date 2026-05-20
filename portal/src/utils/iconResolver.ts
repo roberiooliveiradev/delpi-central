@@ -26,9 +26,13 @@ export function resolveIcon(iconName?: string | null): IconComponent | null {
     return iconCache[normalized];
   }
 
-  const pascal = normalized.includes("-")
-    ? toPascalCaseFromKebab(normalized)
+  const withoutIconSuffix = normalized.endsWith("-icon")
+    ? normalized.slice(0, -"-icon".length)
     : normalized;
+
+  const pascal = withoutIconSuffix.includes("-")
+    ? toPascalCaseFromKebab(withoutIconSuffix)
+    : withoutIconSuffix;
 
   const Component =
     (LucideIcons as any)[pascal] ||

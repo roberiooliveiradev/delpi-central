@@ -3,8 +3,8 @@
   "id": "dashboard-engineering",
   "name": "Dashboard Engenharia",
   "description": "Indicadores estratégicos de engenharia: LMPs no prazo (TOTVS) e TRANSFORMA+ DELPI (planilha)",
-  "icon": "wrench-icon",
-  "version": "0.2.0",
+  "icon": "drafting-compass",
+  "version": "0.2.1",
   "type": "microfrontend",
 
   "basePath": "/apps/dashboard-engineering",
@@ -24,7 +24,7 @@
       "path": "/apps/dashboard-engineering",
       "label": "Dashboard Engenharia",
       "permission": "dashboard-engineering.view",
-      "icon": "wrench-icon",
+      "icon": "drafting-compass",
       "order": 27,
       "showInMenu": true
     },
@@ -32,7 +32,7 @@
       "path": "/apps/dashboard-engineering/lmp",
       "label": "LMPs no prazo",
       "permission": "dashboard-engineering.view",
-      "icon": "wrench-icon",
+      "icon": "drafting-compass",
       "order": 28,
       "showInMenu": false
     },
@@ -40,7 +40,7 @@
       "path": "/apps/dashboard-engineering/transforma",
       "label": "TRANSFORMA+",
       "permission": "dashboard-engineering.view",
-      "icon": "wrench-icon",
+      "icon": "drafting-compass",
       "order": 29,
       "showInMenu": false
     }
