@@ -133,6 +133,11 @@ export const AppHost = () => {
     if (!app) return;
 
     const fromUrl = extractEmbeddedDeepPath(location.pathname, app.basePath);
+    if (fromUrl === "/") {
+      postNavigateToIframe("/conversations");
+      return;
+    }
+
     if (fromUrl && fromUrl !== "/") {
       postNavigateToIframe(fromUrl);
       return;

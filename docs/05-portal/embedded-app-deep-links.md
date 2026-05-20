@@ -80,7 +80,7 @@ Use sempre `resolved` no CSS; com `theme: "system"`, o portal reenvia quando `pr
 
 1. Portal envia `DELPI_NAVIGATE` (deep link) e `DELPI_AUTH`.
 2. O filho grava a rota em `sessionStorage` (`delpi.child.pending_navigate`) e navega.
-3. Após o SSO, **não** redirecionar para `/conversations` se já houver rota pendente.
+3. Após o SSO em `/login`, redirecionar para `/conversations` (ou rota pendente de `DELPI_NAVIGATE`). O portal, na rota raiz do app (`/controle-mp`), envia `DELPI_NAVIGATE` com `/conversations`.
 
 Referência Controle MP: `delpiEmbeddedNavigation.js`, `DelpiNavigateBridge.jsx`, `DelpiRouteSyncBridge.jsx`, `DelpiThemeBridge.jsx`, `DelpiSsoBridge.jsx`.
 

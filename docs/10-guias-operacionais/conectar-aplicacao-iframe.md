@@ -119,7 +119,7 @@ Implemente **quatro bridges** (padrão Controle MP):
 
 | Arquivo (referência) | Função |
 |----------------------|--------|
-| `DelpiSsoBridge.jsx` | Pede token (`DELPI_AUTH_READY`), chama API `sso-login`; no iframe **não** redireciona para home após SSO |
+| `DelpiSsoBridge.jsx` | Pede token (`DELPI_AUTH_READY`), chama API `sso-login`; após SSO sai de `/login` → `/conversations` (ou `deepPath` pendente) |
 | `DelpiNavigateBridge.jsx` | Escuta `DELPI_NAVIGATE` e navega no React Router |
 | `DelpiRouteSyncBridge.jsx` | Envia `DELPI_EMBEDDED_ROUTE` ao pai quando a rota interna muda |
 | `DelpiThemeBridge.jsx` | Escuta `DELPI_THEME` e aplica `data-theme` (claro/escuro/sistema do portal) |
@@ -364,6 +364,7 @@ Após SSO, consuma `delpi.child.pending_navigate` antes de redirecionar para a h
 | `createdCount=0` | E-mail não existe na Core API | Cadastrar usuário Keycloak |
 | `action.target` com `_` vs `-` | Legado `/controle_mp` | Usar `/controle-mp` igual ao manifesto |
 | Iframe não muda tema | Falta `DelpiThemeBridge` ou CSS só com `prefers-color-scheme` | Bridge + `:root[data-theme="dark"]` no filho |
+| Fica em `/login` após abrir o app | SSO ok mas sem `navigate` no iframe | `navigateAfterAuth` + portal envia `/conversations` na rota raiz |
 
 Mais diagnósticos: [troubleshooting.md](./troubleshooting.md).
 
