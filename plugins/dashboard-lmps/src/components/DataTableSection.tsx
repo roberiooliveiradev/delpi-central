@@ -95,7 +95,7 @@ export function DataTableSection<T>({
 
   return (
     <section
-      className="lmps-table-section lmps-chart-card"
+      className="lmps-card lmps-table-section"
       aria-busy={loading || refreshing}
     >
       <div className="lmps-table-section__header">

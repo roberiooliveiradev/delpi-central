@@ -77,12 +77,12 @@
   min-height: 100%;
   padding: var(--lmps-page-padding);
   color: var(--text);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface-2) 72%, transparent),
-      transparent 280px
-    );
+  background-color: var(--surface-2);
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-2) 72%, transparent),
+    transparent 280px
+  );
 }
 
 /* =========================================
@@ -430,11 +430,18 @@
    TABLE
 ========================================= */
 
+.dashboard-lmps .lmps-table-section.lmps-card {
+  padding: var(--lmps-card-padding);
+  margin-bottom: var(--lmps-section-gap);
+}
+
 .dashboard-lmps .lmps-table-wrapper {
   width: 100%;
   overflow: auto;
   max-height: var(--lmps-table-max-height);
+  border: 1px solid var(--border);
   border-radius: var(--lmps-state-box-radius);
+  background: var(--surface);
 }
 
 .dashboard-lmps .lmps-table {
@@ -449,6 +456,10 @@
   padding: var(--lmps-table-cell-padding-y) var(--lmps-table-cell-padding-x);
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
+}
+
+.dashboard-lmps .lmps-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .dashboard-lmps .lmps-table th {
