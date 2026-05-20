@@ -7,14 +7,17 @@
 
 ## 1. Aba Estatísticas
 
-Primeira aba do `/admin`, pensada como **painel executivo** antes das telas operacionais.
+Primeira aba do `/admin`, com **subpáginas** internas e visual alinhado aos tokens Minha DELPI (`--primary`, `--secundary`).
 
-| Bloco | Conteúdo |
-|-------|----------|
-| KPIs | Totais de usuários, apps, papéis e grupos |
-| Gráficos (donut + barras) | Usuários, adoção de apps, notificações, rankings RBAC |
-| Painéis 2×2 | Detalhes por domínio com visualização em barras |
-| Aplicações — uso | **Quem** está em cada app agora (nome/e-mail), top 30 dias, **apps fantasmas** |
+| Subpágina | Conteúdo |
+|-----------|----------|
+| **Visão geral** | KPIs + donuts resumidos (usuários, apps, notificações) |
+| **Usuários** | Online, logins, ativos/inativos |
+| **Aplicações** | Quem usa cada app agora, top 30d, fantasmas, tipos |
+| **Acesso RBAC** | Rankings de papéis/grupos e vínculos |
+| **Notificações** | Status dos envios de campanha |
+
+Código em `portal/src/ui/admin/stats/` (páginas em `stats/pages/`).
 | Visão RBAC | Contagens de vínculos e permissões |
 | Notificações | Envios de campanha (total, pendente, concluído, falha) |
 
