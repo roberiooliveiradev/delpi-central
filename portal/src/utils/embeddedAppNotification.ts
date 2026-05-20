@@ -84,27 +84,30 @@ export function stashEmbeddedDeepLink(payload: EmbeddedPendingNavigate) {
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify(item));
 }
 
-export function consumeEmbeddedDeepLink(): EmbeddedPendingNavigate | null {
+function parseStoredPending(raw: string): EmbeddedPendingNavigate | null {
+  try {
+    const parsed = JSON.parse(raw) as EmbeddedPendingNavigate;
+    if (!parsed?.deepPath) return null;
+    return {
+      portalRoute: normalizeAppPath(parsed.portalRoute || ""),
+      deepPath: normalizeAppPath(parsed.deepPath),
+      source: parsed.source,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Lê o deep link pendente sem remover (para retentar até o iframe estar pronto). */
+export function peekEmbeddedDeepLink(): EmbeddedPendingNavigate | null {
   const raw = sessionStorage.getItem(STORAGE_KEY);
   if (raw) {
-    sessionStorage.removeItem(STORAGE_KEY);
-    try {
-      const parsed = JSON.parse(raw) as EmbeddedPendingNavigate;
-      if (parsed?.deepPath) {
-        return {
-          portalRoute: normalizeAppPath(parsed.portalRoute || ""),
-          deepPath: normalizeAppPath(parsed.deepPath),
-          source: parsed.source,
-        };
-      }
-    } catch {
-      // ignore JSON inválido
-    }
+    const parsed = parseStoredPending(raw);
+    if (parsed) return parsed;
   }
 
   const legacy = sessionStorage.getItem(LEGACY_CONTROLE_MP_KEY);
   if (legacy) {
-    sessionStorage.removeItem(LEGACY_CONTROLE_MP_KEY);
     return {
       portalRoute: "/controle-mp",
       deepPath: normalizeAppPath(legacy),
@@ -113,6 +116,18 @@ export function consumeEmbeddedDeepLink(): EmbeddedPendingNavigate | null {
   }
 
   return null;
+}
+
+export function clearEmbeddedDeepLink() {
+  sessionStorage.removeItem(STORAGE_KEY);
+  sessionStorage.removeItem(LEGACY_CONTROLE_MP_KEY);
+}
+
+export function consumeEmbeddedDeepLink(): EmbeddedPendingNavigate | null {
+  const pending = peekEmbeddedDeepLink();
+  if (!pending) return null;
+  clearEmbeddedDeepLink();
+  return pending;
 }
 
 export function dispatchEmbeddedNotificationNavigate(detail: EmbeddedPendingNavigate) {

@@ -70,6 +70,7 @@ Documentação técnica do monorepo **delpi-central** (produto **Minha DELPI**).
 | [troubleshooting.md](./10-guias-operacionais/troubleshooting.md) | Diagnóstico |
 | [reset-banco-dev.md](./10-guias-operacionais/reset-banco-dev.md) | Reset DB |
 | [registrar-plugin.md](./10-guias-operacionais/registrar-plugin.md) | Plugins |
+| [conectar-aplicacao-iframe.md](./10-guias-operacionais/conectar-aplicacao-iframe.md) | Tutorial app iframe + SSO + notificações |
 | [docker-compose.md](./02-infraestrutura/docker-compose.md) | Compose |
 | [gateway-nginx.md](./02-infraestrutura/gateway-nginx.md) | Nginx |
 | [variaveis-de-ambiente.md](./02-infraestrutura/variaveis-de-ambiente.md) | `.env` |

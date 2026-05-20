@@ -95,7 +95,21 @@ docker compose -f docker-compose.yml --env-file .env up -d portal
 
 ---
 
-## 7. Relacionados
+## 7. Apps iframe — deep link ao clicar
+
+Quando `metadata.deepPath` está presente (ex.: notificações do Controle MP), o portal:
+
+1. Navega para `action.target` (= `basePath` do app, ex.: `/controle-mp`) via React Router.
+2. Envia `postMessage` `{ type: "DELPI_NAVIGATE", path: deepPath }` ao iframe.
+3. Mantém o deep link em `sessionStorage` até o iframe confirmar recebimento.
+
+Código: `embeddedAppNotification.ts`, `notificationNavigation.ts`, `AppHost.tsx`, `NotificationCard.tsx`.
+
+Tutorial para novas apps: [conectar-aplicacao-iframe.md](../10-guias-operacionais/conectar-aplicacao-iframe.md) · Contrato: [embedded-app-deep-links.md](../05-portal/embedded-app-deep-links.md).
+
+---
+
+## 8. Relacionados
 
 - [Notificações Core API](../04-core-api/notificacoes.md)
 - [Roadmap notificações ricas](../12-roadmap-e-evolucao/notificacoes-ricas.md)

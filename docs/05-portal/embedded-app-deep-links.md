@@ -2,6 +2,8 @@
 
 Apps com `renderMode: embedded` podem abrir uma rota interna ao clicar em notificação no portal.
 
+> Tutorial completo (manifesto, SSO, notificações, deploy): [conectar-aplicacao-iframe.md](../10-guias-operacionais/conectar-aplicacao-iframe.md)
+
 ## Contrato da notificação (Core API)
 
 ```json
@@ -55,7 +57,19 @@ Implementação de referência: `controle_mp/front-cadastro-mp/src/app/sso/Delpi
 
 - `portal/src/utils/embeddedAppNotification.ts` — stash, evento, match de `basePath`
 - `portal/src/utils/notificationNavigation.ts` — clique no card
-- `portal/src/ui/AppHost.tsx` — `postMessage` com retry após load do iframe
+- `portal/src/ui/AppHost.tsx` — `postMessage` com retry; só remove o stash após entregar ao iframe
+
+## Filho (iframe) — ordem com SSO
+
+1. Portal envia `DELPI_NAVIGATE` (deep link) e `DELPI_AUTH`.
+2. O filho grava a rota em `sessionStorage` (`delpi.child.pending_navigate`) e navega.
+3. Após o SSO, **não** redirecionar para `/conversations` se já houver rota pendente.
+
+Referência Controle MP: `delpiEmbeddedNavigation.js`, `DelpiNavigateBridge.jsx`, `DelpiSsoBridge.jsx`.
+
+## URL do portal
+
+A barra do navegador permanece em `/controle-mp`; a conversa abre **dentro do iframe** (`/conversations/:id` no domínio do app).
 
 ## Aliases de rota
 

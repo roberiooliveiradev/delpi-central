@@ -8,7 +8,9 @@ import {
 } from "../hooks/useGoogleEmbeddedAppLogin";
 import { pushRecentApp } from "../utils/recentApps";
 import {
+  clearEmbeddedDeepLink,
   consumeEmbeddedDeepLink,
+  peekEmbeddedDeepLink,
   pendingMatchesCurrentApp,
   portalPathMatchesAppBase,
 } from "../utils/embeddedAppNotification";
@@ -99,7 +101,7 @@ export const AppHost = () => {
     window.open(resolvedEntry, "_blank", "noopener,noreferrer");
   }
 
-  function postNavigateToIframe(path: string) {
+  function postNavigateToIframe(path: string, onDelivered?: () => void) {
     if (!app || app.renderMode !== "embedded") return;
     if (!resolvedEntry) return;
 
@@ -110,6 +112,7 @@ export const AppHost = () => {
       const win = iframeRef.current?.contentWindow;
       if (!win) return false;
       win.postMessage({ type: "DELPI_NAVIGATE", path: normalized }, targetOrigin);
+      onDelivered?.();
       return true;
     };
 
@@ -118,17 +121,20 @@ export const AppHost = () => {
     let attempts = 0;
     const timer = window.setInterval(() => {
       attempts += 1;
-      if (send() || attempts >= 12) {
+      if (send() || attempts >= 15) {
         window.clearInterval(timer);
       }
     }, 200);
   }
 
   function trySendPendingEmbeddedNavigate() {
-    const pending = consumeEmbeddedDeepLink();
+    const pending = peekEmbeddedDeepLink();
     if (!pending || !app) return;
     if (!pendingMatchesCurrentApp(pending, app.basePath)) return;
-    postNavigateToIframe(pending.deepPath);
+
+    postNavigateToIframe(pending.deepPath, () => {
+      clearEmbeddedDeepLink();
+    });
   }
 
   function sendAuthToIframe() {
@@ -144,7 +150,9 @@ export const AppHost = () => {
       getUrlOrigin(resolvedEntry)
     );
 
-    window.setTimeout(trySendPendingEmbeddedNavigate, 150);
+    window.setTimeout(trySendPendingEmbeddedNavigate, 200);
+    window.setTimeout(trySendPendingEmbeddedNavigate, 600);
+    window.setTimeout(trySendPendingEmbeddedNavigate, 1200);
   }
 
   function sendLogoutToIframe() {

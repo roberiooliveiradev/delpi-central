@@ -534,13 +534,11 @@ Atenção:
 
 ## 22. Documentos relacionados
 
-```text
-docs/05-plugin-system/manifesto-plugin.md
-docs/05-plugin-system/registro-de-plugin.md
-docs/05-plugin-system/atualizacao-de-manifesto.md
-docs/05-plugin-system/versionamento-e-rollback.md
-docs/05-plugin-system/microfrontends.md
-docs/06-portal-frontend/consumo-de-plugins.md
-docs/03-autenticacao-autorizacao/rbac.md
-```
+| Documento | Conteúdo |
+|-----------|----------|
+| [conectar-aplicacao-iframe.md](../10-guias-operacionais/conectar-aplicacao-iframe.md) | **Tutorial passo a passo** (SSO, notificações, deep link) |
+| [embedded-app-deep-links.md](../05-portal/embedded-app-deep-links.md) | Contrato `metadata.deepPath` + `DELPI_NAVIGATE` |
+| [manifesto-plugin.md](./manifesto-plugin.md) | Schema do manifesto |
+| [consumo-de-plugins.md](../06-portal-frontend/consumo-de-plugins.md) | AppHost no portal |
+| [keycloak-sso.md](../03-autenticacao-autorizacao/keycloak-sso.md) | SSO §22 — apps iframe |
 
