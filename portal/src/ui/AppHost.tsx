@@ -7,6 +7,7 @@ import {
   useGoogleEmbeddedAppLogin,
 } from "../hooks/useGoogleEmbeddedAppLogin";
 import { pushRecentApp } from "../utils/recentApps";
+import { consumeControleMpDeepPath } from "../utils/controleMpNotification";
 
 function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -94,6 +95,24 @@ export const AppHost = () => {
     window.open(resolvedEntry, "_blank", "noopener,noreferrer");
   }
 
+  function postNavigateToIframe(path: string) {
+    if (!iframeRef.current) return;
+    if (!app || app.renderMode !== "embedded") return;
+    if (!resolvedEntry) return;
+
+    const normalized = path.startsWith("/") ? path : `/${path}`;
+    iframeRef.current.contentWindow?.postMessage(
+      { type: "DELPI_NAVIGATE", path: normalized },
+      getUrlOrigin(resolvedEntry)
+    );
+  }
+
+  function trySendPendingControleMpNavigate() {
+    const deepPath = consumeControleMpDeepPath();
+    if (!deepPath) return;
+    postNavigateToIframe(deepPath);
+  }
+
   function sendAuthToIframe() {
     if (!iframeRef.current) return;
     if (!app || app.renderMode !== "embedded") return;
@@ -106,6 +125,8 @@ export const AppHost = () => {
       { type: "DELPI_AUTH", token },
       getUrlOrigin(resolvedEntry)
     );
+
+    window.setTimeout(trySendPendingControleMpNavigate, 150);
   }
 
   function sendLogoutToIframe() {
@@ -157,6 +178,32 @@ export const AppHost = () => {
   useEffect(() => {
     sendAuthToIframe();
   }, [app, resolvedEntry, location.pathname, getAccessToken, iframeReloadKey]);
+
+  useEffect(() => {
+    function handleNotificationNavigate(event: Event) {
+      const custom = event as CustomEvent<{ portalRoute?: string; deepPath?: string }>;
+      const portalRoute = custom.detail?.portalRoute;
+      const deepPath = custom.detail?.deepPath;
+      if (!portalRoute || !deepPath || !app) return;
+
+      const base = normalize(app.basePath);
+      const target = normalize(portalRoute);
+      if (target !== base && !location.pathname.startsWith(base + "/")) return;
+
+      postNavigateToIframe(deepPath);
+    }
+
+    window.addEventListener("DELPI_NOTIFICATION_NAVIGATE", handleNotificationNavigate);
+    return () => {
+      window.removeEventListener("DELPI_NOTIFICATION_NAVIGATE", handleNotificationNavigate);
+    };
+  }, [app, location.pathname, resolvedEntry]);
+
+  useEffect(() => {
+    if (app?.renderMode === "embedded") {
+      trySendPendingControleMpNavigate();
+    }
+  }, [app?.id, app?.renderMode, location.pathname, iframeReloadKey, resolvedEntry]);
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {

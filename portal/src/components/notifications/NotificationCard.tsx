@@ -6,6 +6,7 @@ import {
   Calendar,
   Check,
   Megaphone,
+  MessageCircle,
   Sparkles,
   Star,
   Trash2,
@@ -75,6 +76,7 @@ const CATEGORY_ICONS: Record<NotificationCategory, LucideIcon> = {
   company_event: Calendar,
   announcement: Megaphone,
   custom: Bell,
+  controle_mp: MessageCircle,
 };
 
 const CATEGORY_LABELS: Record<NotificationCategory, string> = {
@@ -84,6 +86,7 @@ const CATEGORY_LABELS: Record<NotificationCategory, string> = {
   company_event: "Evento",
   announcement: "Comunicado",
   custom: "Personalizada",
+  controle_mp: "Controle MP",
 };
 
 export function NotificationCard({
@@ -111,7 +114,7 @@ export function NotificationCard({
 
   function handleAction() {
     if (notification.action) {
-      executeNotificationAction(notification.action);
+      executeNotificationAction(notification.action, notification.metadata);
       onNavigate?.();
     }
     void onMarkRead(notification.id);

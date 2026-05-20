@@ -29,7 +29,7 @@
 | Dimensão | Campo | Exemplos | Uso |
 |----------|--------|----------|-----|
 | **Severidade visual** | `type` | `info`, `success`, `warning`, `error` | Cor, destaque na UI |
-| **Categoria** | `category` | `welcome`, `birthday`, `company_event`, `system`, `announcement`, `custom` | Ícone, template, filtros |
+| **Categoria** | `category` | `welcome`, `birthday`, `company_event`, `system`, `announcement`, `custom`, `controle_mp` | Ícone, template, filtros |
 | **Apresentação** | `presentation` | `text`, `html`, `template` | Texto, HTML sanitizado ou card React |
 | **Ação (CTA)** | `action` | `portal_route`, `external_url` | Botão no card |
 

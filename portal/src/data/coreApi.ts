@@ -62,7 +62,8 @@ export type NotificationCategory =
   | "birthday"
   | "company_event"
   | "announcement"
-  | "custom";
+  | "custom"
+  | "controle_mp";
 
 export type NotificationPresentation = "text" | "html" | "template";
 

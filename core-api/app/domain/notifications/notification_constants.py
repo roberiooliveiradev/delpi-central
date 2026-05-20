@@ -9,6 +9,7 @@ ALLOWED_NOTIFICATION_CATEGORIES = frozenset({
     "company_event",
     "announcement",
     "custom",
+    "controle_mp",
 })
 
 ALLOWED_PRESENTATION_MODES = frozenset({"text", "html", "template"})
@@ -22,4 +23,5 @@ CATEGORY_DEFAULT_ICONS = {
     "company_event": "calendar",
     "announcement": "megaphone",
     "custom": "bell",
+    "controle_mp": "message-circle",
 }
