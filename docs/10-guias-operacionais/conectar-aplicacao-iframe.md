@@ -114,12 +114,13 @@ O portal repassa o **access token Keycloak** ao filho. O app troca por sessão l
 
 ### 4.2 No front do app filho
 
-Implemente dois bridges (padrão Controle MP):
+Implemente três bridges (padrão Controle MP):
 
 | Arquivo (referência) | Função |
 |----------------------|--------|
-| `DelpiSsoBridge.jsx` | Pede token (`DELPI_AUTH_READY`), chama API `sso-login`, **não** sobrescreve deep link após SSO |
+| `DelpiSsoBridge.jsx` | Pede token (`DELPI_AUTH_READY`), chama API `sso-login`; no iframe **não** redireciona para home após SSO |
 | `DelpiNavigateBridge.jsx` | Escuta `DELPI_NAVIGATE` e navega no React Router |
+| `DelpiRouteSyncBridge.jsx` | Envia `DELPI_EMBEDDED_ROUTE` ao pai quando a rota interna muda |
 
 **Origens permitidas** no filho (validar `event.origin`):
 
@@ -204,11 +205,12 @@ O token de integração deve ser **idêntico** em `delpi-central/infra/.env` e n
 ### 5.3 Deep link no clique (portal + filho)
 
 1. Usuário clica em **Abrir** no card da notificação.
-2. Portal navega para `/controle-mp` (SPA, sem reload).
+2. Portal navega para `/controle-mp/conversations/109` (rota wildcard `basePath/*`).
 3. Portal envia `DELPI_NAVIGATE` com `path: metadata.deepPath`.
 4. Filho navega para a tela (ex.: conversa 109).
+5. Ao mudar de tela no filho, `DELPI_EMBEDDED_ROUTE` mantém a URL do portal sincronizada.
 
-**Rota pendente após SSO:** o filho deve guardar `deepPath` em `sessionStorage` e não redirecionar para home após login. Ver `delpi.child.pending_navigate` no Controle MP.
+**Rota pendente após SSO:** `sessionStorage` (`delpi.child.pending_navigate`); no iframe o SSO **não** deve sobrescrever com a home.
 
 Detalhe técnico: [embedded-app-deep-links.md](../05-portal/embedded-app-deep-links.md).
 
@@ -267,12 +269,17 @@ Lista completa: [variaveis-de-ambiente.md](../02-infraestrutura/variaveis-de-amb
 | 1 | Menu → abrir app | Iframe carrega, usuário logado via SSO |
 | 2 | Logout no portal | Sessão do iframe encerra |
 | 3 | Enviar notificação de teste | Card no sino |
-| 4 | Clicar **Abrir** na notificação | App abre na rota `deepPath` (ex.: conversa correta) |
-| 5 | E-mail destinatário = Keycloak | `createdCount >= 1` nos logs |
+| 4 | Clicar **Abrir** na notificação | URL `/controle-mp/conversations/{id}` e chat correto |
+| 5 | Chat aberto: outro usuário envia | Mensagem aparece **sem** precisar enviar outra |
+| 6 | E-mail destinatário = Keycloak | `createdCount >= 1` nos logs |
 
 ### URL na barra do navegador
 
-No modo embedded, a URL do portal fica em `/controle-mp`. A rota interna (`/conversations/109`) existe **dentro do iframe** (domínio do app). Isso é esperado.
+No modo embedded (maio/2026), a URL do portal inclui a rota interna, como no chat IA:
+
+| Portal | Iframe (domínio do app) |
+|--------|-------------------------|
+| `/controle-mp/conversations/110` | `/conversations/110` |
 
 ---
 
@@ -282,9 +289,10 @@ Copie e adapte do Controle MP:
 
 ```text
 src/app/sso/
-  DelpiSsoBridge.jsx      # DELPI_AUTH / DELPI_LOGOUT
-  DelpiNavigateBridge.jsx # DELPI_NAVIGATE
-  delpiEmbeddedNavigation.js  # sessionStorage rota pendente
+  DelpiSsoBridge.jsx           # DELPI_AUTH / DELPI_LOGOUT
+  DelpiNavigateBridge.jsx      # DELPI_NAVIGATE
+  DelpiRouteSyncBridge.jsx     # DELPI_EMBEDDED_ROUTE → URL do portal
+  delpiEmbeddedNavigation.js   # sessionStorage rota pendente
 ```
 
 Monte os bridges no router raiz (como em `AppRouter.jsx`).
@@ -313,7 +321,8 @@ Após SSO, consuma `delpi.child.pending_navigate` antes de redirecionar para a h
 | Iframe em branco | CSP / X-Frame-Options | Liberar frame do portal |
 | SSO 500 | JWKS inacessível do container | `CENTRAL_JWKS_URL` via `host.docker.internal` |
 | Sino vazio | Token ou e-mail errado | Logs `grep DELPI`; igualar e-mails |
-| Abre app mas não a conversa | SSO sobrescreve rota / stash consumido cedo | Atualizar portal + bridges (maio/2026) |
+| Abre app mas não a conversa | SSO sobrescreve rota / portal sem wildcard | Rebuild portal + 3 bridges no filho |
+| Mensagem só aparece ao enviar outra | Socket antes do `commit` no DB | Rebuild API + front Controle MP |
 | `createdCount=0` | E-mail não existe na Core API | Cadastrar usuário Keycloak |
 | `action.target` com `_` vs `-` | Legado `/controle_mp` | Usar `/controle-mp` igual ao manifesto |
 

@@ -49,15 +49,18 @@ Tipos já usados no ecossistema DELPI:
 | `DELPI_AUTH_READY` | Filho → portal |
 | `DELPI_AUTH` | Portal → filho |
 | `DELPI_NAVIGATE` | Portal → filho |
+| `DELPI_EMBEDDED_ROUTE` | Filho → portal (sincroniza URL) |
 | `DELPI_LOGOUT` | Portal → filho |
 
 Implementação de referência: `controle_mp/front-cadastro-mp/src/app/sso/DelpiNavigateBridge.jsx`.
 
 ## Portal (código)
 
-- `portal/src/utils/embeddedAppNotification.ts` — stash, evento, match de `basePath`
+- `portal/src/utils/embeddedAppNotification.ts` — stash, `buildPortalEmbeddedPath`, `extractEmbeddedDeepPath`
 - `portal/src/utils/notificationNavigation.ts` — clique no card
-- `portal/src/ui/AppHost.tsx` — `postMessage` com retry; só remove o stash após entregar ao iframe
+- `portal/src/ui/App.tsx` — rotas wildcard `${basePath}/*` para apps `renderMode: embedded`
+- `portal/src/ui/AppHost.tsx` — `DELPI_NAVIGATE` / `DELPI_EMBEDDED_ROUTE`; iframe não remonta a cada subrota
+- `portal/src/components/notifications/NotificationCard.tsx` — navega para URL completa com `deepPath`
 
 ## Filho (iframe) — ordem com SSO
 
@@ -65,7 +68,7 @@ Implementação de referência: `controle_mp/front-cadastro-mp/src/app/sso/Delpi
 2. O filho grava a rota em `sessionStorage` (`delpi.child.pending_navigate`) e navega.
 3. Após o SSO, **não** redirecionar para `/conversations` se já houver rota pendente.
 
-Referência Controle MP: `delpiEmbeddedNavigation.js`, `DelpiNavigateBridge.jsx`, `DelpiSsoBridge.jsx`.
+Referência Controle MP: `delpiEmbeddedNavigation.js`, `DelpiNavigateBridge.jsx`, `DelpiRouteSyncBridge.jsx`, `DelpiSsoBridge.jsx`.
 
 ## URL do portal
 
