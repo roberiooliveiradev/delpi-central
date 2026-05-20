@@ -188,6 +188,8 @@ Content-Type: application/json
 | `metadata.source` | Recomendado | Id lógico (`controle_mp`, `meu_app`) |
 | `category` | Sim | Deve existir em `notification_constants` da Core API |
 
+A Core API só entrega a notificação a usuários que **tenham permissão para abrir o app** no portal (ex.: `controle-mp.access` no RBAC). Quem não tem acesso ao módulo não recebe alerta no sino.
+
 API completa: [notificacoes.md](../04-core-api/notificacoes.md).
 
 ### 5.2 Variáveis no backend (ex.: Controle MP)

@@ -5,6 +5,9 @@ from app.application.dto.dispatch_notifications_response import DispatchNotifica
 from app.application.errors.notification_dispatch_errors import (
     DispatchNotificationsValidationError,
 )
+from app.application.services.notification_app_access_service import (
+    filter_user_ids_with_app_access,
+)
 from app.application.services.notification_recipient_resolution import (
     resolve_notification_recipient_ids,
 )
@@ -46,6 +49,21 @@ class DispatchNotificationsUseCase:
         if not target_user_ids:
             raise DispatchNotificationsValidationError(
                 "no recipients accept this notification category (check user preferences)"
+            )
+
+        target_user_ids = filter_user_ids_with_app_access(
+            self.uow,
+            target_user_ids,
+            source_app=request.source_app,
+            action_target=request.action_target
+            if (request.action_type or "").strip().lower() == "portal_route"
+            else None,
+            metadata=request.metadata,
+        )
+        if not target_user_ids:
+            raise DispatchNotificationsValidationError(
+                "no recipients have access to the source application "
+                "(assign app permission in Minha DELPI RBAC)"
             )
 
         template_spec = self._resolve_template_spec(request)

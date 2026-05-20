@@ -1,6 +1,6 @@
 # app/tests/test_dispatch_notifications_use_case.py
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -124,6 +124,75 @@ def test_dispatch_broadcast_active_users_only(uow):
 
     assert result.created_count == 1
     uow.notifications.create.assert_called_once()
+
+
+def test_dispatch_controle_mp_skips_user_without_app_access(uow):
+    from app.domain.ports.app_query_port import AppDTO, RouteDTO
+
+    allowed = _user(email="allowed@delpi.com")
+    denied = _user(email="denied@delpi.com")
+    app = AppDTO(
+        id="controle-mp",
+        name="Controle MP",
+        base_path="/controle-mp",
+        icon=None,
+        type="iframe",
+        entry_url="https://x",
+        render_mode="embedded",
+        routes=[
+            RouteDTO(
+                path="/controle-mp",
+                label="Abrir",
+                icon=None,
+                permission_code="controle-mp.access",
+                show_in_menu=True,
+                order=1,
+                entry=None,
+            )
+        ],
+    )
+    uow.app_queries.list_active_apps_with_routes.return_value = [app]
+
+    def get_user(uid):
+        if uid == allowed.id:
+            return allowed
+        if uid == denied.id:
+            return denied
+        return None
+
+    uow.users.get_by_id.side_effect = get_user
+
+    with patch(
+        "app.application.use_cases.dispatch_notifications_use_case.filter_user_ids_with_app_access"
+    ) as filter_access:
+        filter_access.return_value = [str(allowed.id)]
+
+        use_case = DispatchNotificationsUseCase(uow)
+        result = use_case.execute(
+            DispatchNotificationsRequest(
+                title="Controle MP",
+                message="Nova mensagem",
+                type="info",
+                category="controle_mp",
+                presentation="text",
+                html_content=None,
+                action_type="portal_route",
+                action_label="Abrir",
+                action_target="/controle-mp",
+                icon=None,
+                metadata={"source": "controle_mp", "deepPath": "/conversations/1"},
+                expires_at=None,
+                broadcast=False,
+                user_ids=[],
+                emails=[allowed.email, denied.email],
+                role_ids=[],
+                group_ids=[],
+                source_app="controle_mp",
+            )
+        )
+
+    assert result.created_count == 1
+    filter_access.assert_called_once()
 
 
 def test_dispatch_welcome_template_uses_recipient_name(uow):

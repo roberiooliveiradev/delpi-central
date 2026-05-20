@@ -91,6 +91,8 @@ Todas exigem `@require_auth()`.
 
 No dispatch (`POST /admin/notifications` e integrações), usuários que silenciaram a `category` do envio são ignorados. A categoria `system` não pode ser silenciada.
 
+Quando o envio está vinculado a um app do portal (`sourceApp` / `metadata.source` / `action.target` com `portal_route`), destinatários **sem permissão para abrir esse app** (mesma regra de `GET /me/apps`, ex.: `controle-mp.access`) são removidos antes de criar a notificação. Se ninguém restar: erro `no recipients have access to the source application`. Implementação: `notification_app_access_service.py`.
+
 Destinatários adicionais no body: `roleIds` (papel direto + via grupo), `groupIds` (membros do grupo).
 
 ### Automação (integrações, service token)
