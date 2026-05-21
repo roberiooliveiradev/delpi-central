@@ -6,12 +6,10 @@ import {
   getScopeTypeLabel,
 } from "../presentation/labels";
 import {
-  formatBranchScopedMetric,
+  formatIndicatorGapDisplay,
   formatIndicatorGoalValue,
+  formatIndicatorRealizedDisplay,
   formatIndicatorScore,
-  formatScopeAwareMetric,
-  hasBranchScopeValues,
-  hasMultiBranchValues,
   isMissingValueClassification,
 } from "../shared/indicatorValueFormatter";
 import "./IndicatorDetailCard.css";
@@ -28,32 +26,6 @@ function getValueFormat(indicator: DepartmentIndicator) {
     valueSuffix: indicator.valueSuffix,
     valueDecimals: indicator.valueDecimals,
   };
-}
-
-function formatRealized(indicator: DepartmentIndicator) {
-  const valueFormat = getValueFormat(indicator);
-  const realized = indicator.realized ?? {};
-
-  if (!Object.keys(realized).length) {
-    return indicator.hasValue ? "—" : "Sem dados preenchidos";
-  }
-
-  return formatScopeAwareMetric(realized, valueFormat);
-}
-
-function formatGap(indicator: DepartmentIndicator) {
-  const valueFormat = getValueFormat(indicator);
-  const gaps = indicator.gaps ?? {};
-
-  if (hasBranchScopeValues(gaps) || hasMultiBranchValues(gaps)) {
-    return formatBranchScopedMetric(gaps, valueFormat, { signed: true });
-  }
-
-  return formatBranchScopedMetric(
-    { consolidated: indicator.gap },
-    valueFormat,
-    { signed: true },
-  );
 }
 
 export function IndicatorDetailCard({
@@ -116,7 +88,7 @@ export function IndicatorDetailCard({
       <div className="si-indicator-card__goal">
         <span className="si-indicator-card__goal-label">Realizado</span>
         <strong className="si-indicator-card__goal-value">
-          {formatRealized(indicator)}
+          {formatIndicatorRealizedDisplay(indicator, getValueFormat(indicator))}
         </strong>
       </div>
 
@@ -138,7 +110,7 @@ export function IndicatorDetailCard({
             !indicator.hasValue ? " si-indicator-card__goal-value--missing" : ""
           }`}
         >
-          {formatGap(indicator)}
+          {formatIndicatorGapDisplay(indicator, getValueFormat(indicator))}
         </strong>
       </div>
 

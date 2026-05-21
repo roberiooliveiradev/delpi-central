@@ -3,6 +3,11 @@ import { adaptDepartmentsToView } from "../../data/adapters/departmentsAdapter";
 import { adaptExecutiveSummaryToView } from "../../data/adapters/executiveSummaryAdapter";
 import { adaptIndicatorsToView } from "../../data/adapters/indicatorsAdapter";
 import { buildDepartmentTreeModel } from "../../data/builders/buildDepartmentTreeModel";
+import {
+  writeDepartmentsReadCache,
+  writeIndicatorsReadCache,
+} from "../../data/builders/departmentTreeCacheWrites";
+import { tryBuildDepartmentTreeFromReadCache } from "../../data/builders/departmentTreeReadCache";
 import { resolveDepartmentTreeScopes } from "../../data/departmentTreeScopes";
 import { fetchStrategicIndicatorsDepartments } from "../../data/api/strategicIndicatorsDepartmentsApi";
 import { fetchStrategicIndicatorsExecutiveSummary } from "../../data/api/strategicIndicatorsExecutiveSummaryApi";
@@ -58,132 +63,155 @@ export function useStrategicIndicatorsDepartmentTree({
     getAccessTokenRef.current = getAccessToken;
   }, [getAccessToken]);
 
-  const loadRef = useRef<() => Promise<void>>(async () => {});
+  const query = useMemo(
+    () => ({ competence, startDate, endDate }),
+    [competence, startDate, endDate],
+  );
 
-  useEffect(() => {
-    loadRef.current = async () => {
-      const requestId = ++requestIdRef.current;
+  const load = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
 
-      abortControllerRef.current?.abort();
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-      const cacheKey = buildStrategicIndicatorsCacheKey("departments-tree", {
+    const cacheKey = buildStrategicIndicatorsCacheKey("departments-tree", {
+      competence,
+      branch: viewMode === "branch" ? branch : "consolidated-all",
+      viewMode,
+      startDate,
+      endDate,
+    });
+    const cachedTree =
+      getStrategicIndicatorsCachedValue<DepartmentTreeCache>(cacheKey);
+    const hydratedFromReads = tryBuildDepartmentTreeFromReadCache({
+      viewMode,
+      branch,
+      scopes,
+      query,
+    });
+
+    beginStrategicIndicatorsLoad({
+      cached: cachedTree?.model ?? hydratedFromReads,
+      hasLoadedOnce: hasLoadedOnceRef.current,
+      setValue: (value) => setModel(value),
+      setLoading,
+      setRefreshing,
+    });
+
+    setError(null);
+
+    try {
+      const token = getAccessTokenRef.current;
+      const executiveBranch =
+        viewMode === "branch" && branch.trim() ? branch.trim() : undefined;
+
+      const executivePromise = fetchStrategicIndicatorsExecutiveSummary({
+        branch: executiveBranch,
         competence,
-        branch: viewMode === "branch" ? branch : "consolidated-all",
-        viewMode,
         startDate,
         endDate,
-      });
-      const cached =
-        getStrategicIndicatorsCachedValue<DepartmentTreeCache>(cacheKey);
-
-      beginStrategicIndicatorsLoad({
-        cached: cached?.model ?? null,
-        hasLoadedOnce: hasLoadedOnceRef.current,
-        setValue: (value) => setModel(value),
-        setLoading,
-        setRefreshing,
+        getAccessToken: token,
+        signal: controller.signal,
       });
 
-      setError(null);
-
-      try {
-        const token = getAccessTokenRef.current;
-        const executiveBranch =
-          viewMode === "branch" && branch.trim() ? branch.trim() : undefined;
-
-        const executivePromise = fetchStrategicIndicatorsExecutiveSummary({
-          branch: executiveBranch,
-          competence,
-          startDate,
-          endDate,
-          getAccessToken: token,
-          signal: controller.signal,
-        });
-
-        const scopePromises = scopes.map(async (scope) => {
-          const [departmentsResponse, indicatorsResponse] = await Promise.all([
-            fetchStrategicIndicatorsDepartments({
-              branch: scope.branch,
-              competence,
-              startDate,
-              endDate,
-              getAccessToken: token,
-              signal: controller.signal,
-            }),
-            fetchStrategicIndicators({
-              branch: scope.branch,
-              competence,
-              startDate,
-              endDate,
-              getAccessToken: token,
-              signal: controller.signal,
-            }),
-          ]);
-
-          return {
-            scope,
-            departments: adaptDepartmentsToView(departmentsResponse),
-            indicators: adaptIndicatorsToView(indicatorsResponse),
-          };
-        });
-
-        const [executiveResult, ...scopeResults] = await Promise.all([
-          executivePromise,
-          ...scopePromises,
+      const scopePromises = scopes.map(async (scope) => {
+        const [departmentsResponse, indicatorsResponse] = await Promise.all([
+          fetchStrategicIndicatorsDepartments({
+            branch: scope.branch,
+            competence,
+            startDate,
+            endDate,
+            getAccessToken: token,
+            signal: controller.signal,
+          }),
+          fetchStrategicIndicators({
+            branch: scope.branch,
+            competence,
+            startDate,
+            endDate,
+            getAccessToken: token,
+            signal: controller.signal,
+          }),
         ]);
 
-        if (requestId !== requestIdRef.current || controller.signal.aborted) {
-          return;
-        }
+        const departments = adaptDepartmentsToView(departmentsResponse);
+        const indicators = adaptIndicatorsToView(indicatorsResponse);
 
-        const executive = adaptExecutiveSummaryToView(executiveResult);
-        const nextModel = buildDepartmentTreeModel({
-          competence: executive.competence,
-          igd: executive.igd,
-          igdExact: executive.igdExact,
-          classification: executive.classification,
-          scopePayloads: scopeResults,
-        });
+        writeDepartmentsReadCache(query, scope.branch, departments);
+        writeIndicatorsReadCache(query, scope.branch, indicators);
 
-        setModel(nextModel);
-        setStrategicIndicatorsCachedValue(cacheKey, { model: nextModel });
-        hasLoadedOnceRef.current = true;
-      } catch (err) {
-        if (requestId !== requestIdRef.current || controller.signal.aborted) {
-          return;
-        }
+        return {
+          scope,
+          departments,
+          indicators,
+        };
+      });
 
-        setError(
-          captureStrategicIndicatorsError(err, {
-            surface: "Árvore de departamentos",
-            route: "/departments",
-            method: "GET",
-            competence: competence ?? null,
-            branch: branch ?? null,
-          }),
-        );
-      } finally {
-        if (requestId === requestIdRef.current && !controller.signal.aborted) {
-          setLoading(false);
-          setRefreshing(false);
-        }
+      const [executiveResult, ...scopeResults] = await Promise.all([
+        executivePromise,
+        ...scopePromises,
+      ]);
+
+      if (requestId !== requestIdRef.current) {
+        return;
       }
-    };
-  }, [viewMode, branch, competence, startDate, endDate, scopes]);
+
+      const executive = adaptExecutiveSummaryToView(executiveResult);
+      setStrategicIndicatorsCachedValue(
+        buildStrategicIndicatorsCacheKey("executive-summary", {
+          competence,
+          branch: executiveBranch,
+          startDate,
+          endDate,
+        }),
+        executive,
+      );
+
+      const nextModel = buildDepartmentTreeModel({
+        competence: executive.competence,
+        igd: executive.igd,
+        igdExact: executive.igdExact,
+        classification: executive.classification,
+        scopePayloads: scopeResults,
+      });
+
+      setModel(nextModel);
+      setStrategicIndicatorsCachedValue(cacheKey, { model: nextModel });
+      hasLoadedOnceRef.current = true;
+    } catch (err) {
+      if (requestId !== requestIdRef.current || controller.signal.aborted) {
+        return;
+      }
+
+      setError(
+        captureStrategicIndicatorsError(err, {
+          surface: "Árvore de departamentos",
+          route: "/departments",
+          method: "GET",
+          competence: competence ?? null,
+          branch: branch ?? null,
+        }),
+      );
+    } finally {
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    }
+  }, [viewMode, branch, competence, startDate, endDate, scopes, query]);
 
   useEffect(() => {
-    void loadRef.current();
+    void load();
 
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [viewMode, branch, competence, startDate, endDate, scopes]);
+  }, [load]);
 
   const reload = useCallback(() => {
-    void loadRef.current();
-  }, []);
+    void load();
+  }, [load]);
 
   return useMemo(
     () => ({

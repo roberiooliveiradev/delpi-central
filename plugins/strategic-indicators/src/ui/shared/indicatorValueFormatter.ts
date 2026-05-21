@@ -287,6 +287,70 @@ export function formatBranchScopedMetric(
     .join(" | ");
 }
 
+export type IndicatorScopedMetricsInput = {
+  gap?: number | null;
+  gaps?: Record<string, number | null>;
+  realized?: Record<string, number | null>;
+  value?: number | null;
+  currentValue?: number | null;
+  hasValue?: boolean;
+};
+
+function hasScopedMetricMap(
+  values: Record<string, number | null> | undefined,
+): boolean {
+  if (!values || !Object.keys(values).length) {
+    return false;
+  }
+
+  return (
+    hasBranchScopeValues(values) ||
+    hasMultiBranchValues(values) ||
+    Object.keys(values).length > 0
+  );
+}
+
+/** Gap com filiais (`01: … | 02: …`) quando `gaps` vier da API; senão valor consolidado. */
+export function formatIndicatorGapDisplay(
+  metrics: Pick<IndicatorScopedMetricsInput, "gap" | "gaps">,
+  format: IndicatorValueFormat = {},
+): string {
+  const gaps = metrics.gaps ?? {};
+
+  if (hasScopedMetricMap(gaps)) {
+    return formatScopeAwareMetric(gaps, format, { signed: true });
+  }
+
+  return formatIndicatorValue(metrics.gap ?? null, format, { signed: true });
+}
+
+/** Realizado / valor atual com o mesmo padrão de escopo da meta. */
+export function formatIndicatorRealizedDisplay(
+  metrics: Pick<
+    IndicatorScopedMetricsInput,
+    "realized" | "value" | "currentValue" | "hasValue"
+  >,
+  format: IndicatorValueFormat = {},
+): string {
+  const realized = metrics.realized ?? {};
+
+  if (hasScopedMetricMap(realized)) {
+    return formatScopeAwareMetric(realized, format);
+  }
+
+  const single = metrics.currentValue ?? metrics.value ?? null;
+
+  if (single !== null && single !== undefined) {
+    return formatIndicatorValue(single, format);
+  }
+
+  if (metrics.hasValue === false) {
+    return MISSING_VALUE_LABEL;
+  }
+
+  return "—";
+}
+
 export function formatIndicatorGoalValue(
   indicator: IndicatorGoalDisplayInput,
   competence?: string | null,

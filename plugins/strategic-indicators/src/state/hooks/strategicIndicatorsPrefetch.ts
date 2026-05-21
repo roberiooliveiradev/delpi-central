@@ -1,5 +1,7 @@
+import { adaptDepartmentsToView } from "../../data/adapters/departmentsAdapter";
 import { adaptTrendsToView } from "../../data/adapters/trendsAdapter";
 import { fetchStrategicIndicatorsDepartments } from "../../data/api/strategicIndicatorsDepartmentsApi";
+import { writeDepartmentsReadCache } from "../../data/builders/departmentTreeCacheWrites";
 import { fetchStrategicIndicatorsTrends } from "../../data/api/strategicIndicatorsTrendsApi";
 import {
   buildStrategicIndicatorsCacheKey,
@@ -25,7 +27,19 @@ export function prefetchStrategicIndicatorsDepartments(
     startDate: params.startDate,
     endDate: params.endDate,
     getAccessToken: params.getAccessToken,
-  }).catch(() => undefined);
+  })
+    .then((response) => {
+      writeDepartmentsReadCache(
+        {
+          competence: params.competence,
+          startDate: params.startDate,
+          endDate: params.endDate,
+        },
+        params.branch,
+        adaptDepartmentsToView(response),
+      );
+    })
+    .catch(() => undefined);
 }
 
 export function prefetchStrategicIndicatorsTrends(
