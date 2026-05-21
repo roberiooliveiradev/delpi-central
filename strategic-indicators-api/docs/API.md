@@ -279,6 +279,14 @@ Prefixo: `/apps/strategic-indicators-api/strategic-indicators`
 - Respostas conforme use case (objeto criado/atualizado ou `HTTPException`).
 - Mutações invalidam cache de snapshot in-process.
 
+### Erros 500 nas rotas de leitura
+
+Corpo FastAPI: `{ "detail": "Falha ao carregar …: …" }` ou mensagem de `PluginsRepositoryError` (ex.: *Falha ao executar fetch_all no banco de plugins.*).
+
+O MFE normaliza via `buildStrategicIndicatorsApiError` e exibe o card padronizado (`StrategicIndicatorsPageError`). Diagnóstico: [OPERATIONS.md](./OPERATIONS.md).
+
+Query `branch=01|02` exige coluna `goal_scope_branch` (V016+) e API com ordem correta dos parâmetros em `list_resolved_goals_map`.
+
 ### Códigos HTTP
 
 | Código | Situação |

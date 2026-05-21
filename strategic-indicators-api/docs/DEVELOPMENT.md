@@ -78,15 +78,22 @@ python strategic-indicators-api/scripts/bench_si_routes.py \
   --token "$ACCESS_TOKEN"
 ```
 
-## Warm-up manual
+## Warm-up e materialização
 
 ```bash
 docker exec delpi-strategic-indicators-api python3 scripts/warmup_si_snapshots.py
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py
 ```
 
 ## Testes
 
-Executar testes do pacote SI se existirem em `strategic-indicators-api/tests/` (adicionar conforme evolução do módulo).
+```bash
+export PYTHONPATH="$(pwd)/strategic-indicators-api:$(pwd)/shared"
+pip install pytest  # se ainda não instalado
+pytest strategic-indicators-api/tests/test_branch_scoped_goals.py \
+       strategic-indicators-api/tests/test_indicator_goals_sql_param_order.py \
+       strategic-indicators-api/tests/test_goal_scope_validation.py -q
+```
 
 ## Dicas
 

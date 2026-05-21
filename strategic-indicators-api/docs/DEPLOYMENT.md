@@ -103,3 +103,23 @@ postgres-plugins, keycloak
 docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py status
 docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py up
 ```
+
+Versões esperadas até **V020** (metas por filial, RH, Qualidade `average_of_units`). Ver [migrations/README.md](../migrations/README.md).
+
+## Após deploy (metas por filial / MFE)
+
+1. Reiniciar API e MFE (`strategic-indicators-api`, `strategic-indicators`).
+2. Materializar scores por escopo (consolidado + filiais `01`/`02`):
+
+```bash
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py
+```
+
+3. Validar catálogo por filial (deve imprimir `OK N` sem traceback):
+
+```bash
+docker exec delpi-strategic-indicators-api python3 -c "
+from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_resolved_indicators_catalog_repository import PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository
+print(len(PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository().list_resolved_indicators_catalog(competence='2026-04', branch='01')))
+"
+```

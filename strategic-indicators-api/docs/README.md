@@ -28,6 +28,9 @@ Documentação técnica oficial do módulo **Strategic Indicators** no monorepo 
 | 9 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Variáveis, gateway, produção |
 | 10 | [OPERATIONS.md](./OPERATIONS.md) | Logs, troubleshooting, warm-up |
 | 11 | [PERFORMANCE_IMPLEMENTATION.md](./PERFORMANCE_IMPLEMENTATION.md) | Plano de performance (fases 0–5) |
+| — | [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md) | Metas consolidado / filial 01 / 02 |
+| — | [HR_INDICATORS.md](./HR_INDICATORS.md) | Catálogo e fontes RH |
+| — | [QUALITY_INDICATORS.md](./QUALITY_INDICATORS.md) | Metas Qualidade por filial |
 
 ## Repositórios e paths
 

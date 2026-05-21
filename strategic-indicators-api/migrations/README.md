@@ -28,6 +28,9 @@ O diretório `api-delpi/migrations/plugins/strategic-indicators/` é legado — 
 | V015 | commercial restructure | Catálogo Comercial: pesos/metas, OTD pedidos, % ROL novos negócios |
 | V016 | goal_scope_branch | Metas por consolidado / filial 01 / 02 (todos indicadores `consolidated`) |
 | V017 | scope all consolidated | Reaplica `supports_branch_goals` para todo `scope_type = consolidated` |
+| V018 | quality_branch_goals_2026 | Metas Qualidade 01/02; inativa metas consolidadas legadas |
+| V019 | hr_branch_goals_and_catalog | Catálogo RH (6 indicadores), metas 2026 por filial, PDI contagem |
+| V020 | hr_quality_average_of_units | `aggregation_mode = average_of_units` para RH e Qualidade |
 
 ## Comandos
 

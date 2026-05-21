@@ -47,7 +47,12 @@ Resolução em runtime: `list_resolved_goals_map` (ano da competência) com fall
 
 Colunas relevantes: `igd`, `igd_exact`, `classification`, `calculated_departments` (JSONB), `calculated_indicators` (JSONB), `measurement_errors`, `computed_at`.
 
-Rotas de leitura (`executive-summary`, `departments`, `indicators`, `trends`) consultam esta tabela quando o período é mês calendário padrão e o registro existe. O job `SI_PERIOD_SCORES_REFRESH_*` recalcula e grava a cada 5 minutos (padrão).
+Rotas de leitura (`executive-summary`, `departments`, `indicators`, `trends`, `alerts`, `presentation`) consultam esta tabela quando o período é mês calendário padrão e o registro existe para o par `(competence, scope_branch, scope_department_id)`.
+
+- Visão **consolidado** na API: `scope_branch = ''`.
+- Visão **por filial** (`branch=01` ou `02`): exige linha com o mesmo `scope_branch`; sem ela a API recalcula em tempo real (consulta metas + medições).
+
+O job `SI_PERIOD_SCORES_REFRESH_*` recalcula e grava a cada 5 minutos (padrão). Após mudanças de metas ou correção de bug na resolução por filial, execute `scripts/refresh_period_scores.py` manualmente.
 
 - **`refresh_state`** — `last_started_at`, `last_completed_at`, `last_duration_ms`, `last_periods_upserted`, `last_error` do último ciclo de materialização.
 

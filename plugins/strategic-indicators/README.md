@@ -28,3 +28,7 @@ npm run build
 ```
 
 Variável opcional: `VITE_STRATEGIC_INDICATORS_API_BASE`.
+
+## Erros na UI
+
+Páginas analíticas usam o card **`StrategicIndicatorsPageError`** (causas, sugestões, detalhe técnico, “Tentar novamente”). Implementação em `src/data/errors/strategicIndicatorsError.ts` e `src/ui/components/StrategicIndicatorsPageError.tsx`. Ver [MFE.md](../../strategic-indicators-api/docs/MFE.md) e [OPERATIONS.md](../../strategic-indicators-api/docs/OPERATIONS.md).
