@@ -18,8 +18,10 @@ class IndicatorItemResponse:
     scope_type: str = "consolidated"
     performance_direction: str = "higher_is_better"
     value: float | None = None
+    realized: dict[str, float | None] = field(default_factory=dict)
     score: float | None = None
     gap: float | None = None
+    gaps: dict[str, float | None] = field(default_factory=dict)
     has_value: bool = False
     trend: str = "stable"
     classification: str = ""

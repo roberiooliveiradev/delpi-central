@@ -5,13 +5,24 @@ type TransformometroNavProps = {
   onNavigate: (path: string) => void;
 };
 
+/** Alinhado ao manifest (routes showInMenu) e ao menu lateral do portal. */
 const LINKS = [
+  { path: TRANSFORMOMETRO_ROUTES.home, label: "Início" },
   { path: TRANSFORMOMETRO_ROUTES.dashboard, label: "Dashboard" },
   { path: TRANSFORMOMETRO_ROUTES.processos, label: "Processos" },
+  { path: TRANSFORMOMETRO_ROUTES.import, label: "Importar" },
 ] as const;
 
 function isActive(path: string, currentPath?: string): boolean {
-  if (!currentPath) return path === TRANSFORMOMETRO_ROUTES.dashboard;
+  if (!currentPath) {
+    return path === TRANSFORMOMETRO_ROUTES.home;
+  }
+  if (path === TRANSFORMOMETRO_ROUTES.home) {
+    return (
+      currentPath === TRANSFORMOMETRO_ROUTES.home ||
+      currentPath === `${TRANSFORMOMETRO_ROUTES.home}/`
+    );
+  }
   return currentPath === path || currentPath.startsWith(`${path}/`);
 }
 

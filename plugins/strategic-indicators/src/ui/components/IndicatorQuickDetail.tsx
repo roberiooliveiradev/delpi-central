@@ -6,9 +6,10 @@ import {
   getPerformanceDirectionLabel,
 } from "../presentation/labels";
 import {
+  formatBranchScopedMetric,
   formatIndicatorGoalValue,
   formatIndicatorScore,
-  formatIndicatorValue,
+  hasMultiBranchValues,
 } from "../shared/indicatorValueFormatter";
 import "./IndicatorQuickDetail.css";
 
@@ -42,6 +43,9 @@ export function IndicatorQuickDetail({
     valueSuffix: indicator.valueSuffix,
     valueDecimals: indicator.valueDecimals,
   };
+  const showBranchBreakdown =
+    hasMultiBranchValues(indicator.realized) ||
+    hasMultiBranchValues(indicator.gaps);
 
   return (
     <aside className="si-indicator-quick-detail">
@@ -102,16 +106,27 @@ export function IndicatorQuickDetail({
         <div className="si-indicator-quick-detail__meta-item">
           <span>Valor atual</span>
           <strong>
-            {formatIndicatorValue(indicator.currentValue, valueFormat)}
+            {showBranchBreakdown
+              ? formatBranchScopedMetric(indicator.realized, valueFormat)
+              : formatBranchScopedMetric(
+                  { consolidated: indicator.currentValue },
+                  valueFormat,
+                )}
           </strong>
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">
           <span>Gap</span>
           <strong>
-            {formatIndicatorValue(indicator.gap, valueFormat, {
-              signed: true,
-            })}
+            {showBranchBreakdown
+              ? formatBranchScopedMetric(indicator.gaps, valueFormat, {
+                  signed: true,
+                })
+              : formatBranchScopedMetric(
+                  { consolidated: indicator.gap },
+                  valueFormat,
+                  { signed: true },
+                )}
           </strong>
         </div>
 

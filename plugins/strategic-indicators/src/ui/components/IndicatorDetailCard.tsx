@@ -6,9 +6,10 @@ import {
   getScopeTypeLabel,
 } from "../presentation/labels";
 import {
+  formatBranchScopedMetric,
   formatIndicatorGoalValue,
   formatIndicatorScore,
-  formatIndicatorValue,
+  hasMultiBranchValues,
   isMissingValueClassification,
 } from "../shared/indicatorValueFormatter";
 import "./IndicatorDetailCard.css";
@@ -42,6 +43,11 @@ function getValueFormat(indicator: DepartmentIndicator) {
 
 function formatRealized(indicator: DepartmentIndicator) {
   const valueFormat = getValueFormat(indicator);
+
+  if (hasMultiBranchValues(indicator.realized)) {
+    return formatBranchScopedMetric(indicator.realized, valueFormat);
+  }
+
   const entries = Object.entries(indicator.realized ?? {});
 
   if (!entries.length) {
@@ -51,9 +57,25 @@ function formatRealized(indicator: DepartmentIndicator) {
   return entries
     .map(
       ([key, value]) =>
-        `${getRealizedKeyLabel(key)}: ${formatIndicatorValue(value, valueFormat)}`,
+        `${getRealizedKeyLabel(key)}: ${formatBranchScopedMetric({ [key]: value }, valueFormat)}`,
     )
     .join(" · ");
+}
+
+function formatGap(indicator: DepartmentIndicator) {
+  const valueFormat = getValueFormat(indicator);
+
+  if (hasMultiBranchValues(indicator.gaps)) {
+    return formatBranchScopedMetric(indicator.gaps, valueFormat, {
+      signed: true,
+    });
+  }
+
+  return formatBranchScopedMetric(
+    { consolidated: indicator.gap },
+    valueFormat,
+    { signed: true },
+  );
 }
 
 export function IndicatorDetailCard({
@@ -140,9 +162,7 @@ export function IndicatorDetailCard({
             !indicator.hasValue ? " si-indicator-card__goal-value--missing" : ""
           }`}
         >
-          {formatIndicatorValue(indicator.gap, valueFormat, {
-            signed: true,
-          })}
+          {formatGap(indicator)}
         </strong>
       </div>
 

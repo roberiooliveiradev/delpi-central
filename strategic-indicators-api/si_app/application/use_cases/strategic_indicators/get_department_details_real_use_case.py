@@ -139,6 +139,10 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             "classification": current.classification,
             "score": current.score,
             "gap": current.gap,
+            "gaps": self._calculator.build_gaps_payload(
+                unit_gaps=current.unit_gaps,
+                gap=current.gap,
+            ),
             "trend": trend,
             "value_unit": getattr(current, "value_unit", None),
             "value_prefix": getattr(current, "value_prefix", None),
