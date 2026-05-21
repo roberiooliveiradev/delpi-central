@@ -173,8 +173,15 @@ function getMonthlyTargetValue(
   return Number.isFinite(numeric) ? numeric : null;
 }
 
-function formatBranchUnitLabel(branchCode: string) {
-  return branchCode.trim();
+/** Rótulos PT-BR para chaves de `realized` / `gaps` (comercial, filiais TOTVS, etc.). */
+const UNIT_SCOPE_LABELS: Record<string, string> = {
+  matrix: "Matriz",
+  branch: "Filial",
+};
+
+function formatBranchUnitLabel(scopeKey: string) {
+  const normalized = scopeKey.trim();
+  return UNIT_SCOPE_LABELS[normalized] ?? normalized;
 }
 
 function listBranchScopeKeys(values: Record<string, number | null>): string[] {
