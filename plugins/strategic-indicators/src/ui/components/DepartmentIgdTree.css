@@ -432,6 +432,52 @@
   width: 100%;
 }
 
+.si-org-chart__departments-row--one-expanded {
+  justify-content: center;
+}
+
+.si-org-chart__department-column--solo-expanded {
+  flex: 1 1 560px;
+  min-width: min(100%, 520px);
+  max-width: min(96vw, 1280px);
+}
+
+.si-org-chart__department-column--open:not(.si-org-chart__department-column--solo-expanded) {
+  min-width: 300px;
+}
+
+.si-tree-dept__indicator-list--row {
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.si-tree-dept__indicator-list--row > .si-tree-indicator-card__link {
+  flex: 1 1 220px;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.si-tree-dept__indicator-list--multi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.si-tree-dept__indicator-list--multi-grid > .si-tree-indicator-card__link {
+  min-width: 0;
+  max-width: none;
+}
+
+.si-tree-dept__indicator-list--multi-stack {
+  flex-direction: column;
+}
+
+.si-tree-dept__indicator-list--multi-stack > .si-tree-indicator-card__link {
+  max-width: none;
+}
+
 /* —— Card indicador (nível 4) —— */
 
 .si-tree-indicator-card {
@@ -622,7 +668,15 @@
     max-width: 320px;
   }
 
-  .si-tree-indicator-card__metrics {
+  .si-tree-dept__indicator-list--row {
+    flex-direction: column;
+  }
+
+  .si-tree-dept__indicator-list--row > .si-tree-indicator-card__link {
+    max-width: none;
+  }
+
+  .si-tree-dept__indicator-list--multi-grid {
     grid-template-columns: 1fr;
   }
 }

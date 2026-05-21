@@ -63,6 +63,22 @@ type DepartmentIgdTreeProps = {
   filterControls: DepartmentIgdTreeFilterControls;
 };
 
+type IndicatorListLayout = "row" | "multi-grid" | "multi-stack";
+
+function resolveIndicatorListLayout(
+  expandedDepartmentCount: number,
+): IndicatorListLayout {
+  if (expandedDepartmentCount === 1) {
+    return "row";
+  }
+
+  if (expandedDepartmentCount === 2) {
+    return "multi-grid";
+  }
+
+  return "multi-stack";
+}
+
 function mapScoreToBadgeVariant(
   score: number,
 ): "success" | "info" | "warning" | "danger" {
@@ -413,6 +429,7 @@ function DepartmentTreeCard({
   filterState,
   competence,
   expanded,
+  indicatorListLayout,
   onToggle,
   activeCardId,
   onActivateCard,
@@ -422,6 +439,7 @@ function DepartmentTreeCard({
   filterState: StrategicIndicatorsFilterState;
   competence: string;
   expanded: boolean;
+  indicatorListLayout: IndicatorListLayout;
   onToggle: () => void;
   activeCardId: string | null;
   onActivateCard: (cardId: string) => void;
@@ -571,7 +589,9 @@ function DepartmentTreeCard({
       {expanded && indicatorCount > 0 ? (
         <section className="si-tree-dept__indicators" data-pan-zoom-lock="true">
           <OrgChartArrow />
-          <div className="si-tree-dept__indicator-list">
+          <div
+            className={`si-tree-dept__indicator-list si-tree-dept__indicator-list--${indicatorListLayout}`}
+          >
             {node.indicators.map((indicatorNode) => {
               const indicatorCardId = `ind:${scope.key}:${department.id}:${indicatorNode.indicator.id}`;
 
@@ -668,6 +688,27 @@ export function DepartmentIgdTree({
 
   const hasExpandable = allExpandableKeys.length > 0;
 
+  const expandedDepartmentIds = useMemo(() => {
+    if (!activeColumn) {
+      return [];
+    }
+
+    return model.departmentOrder.filter((departmentId) => {
+      const expandKey = `${activeColumn.scope.key}:${departmentId}`;
+      if (!expandedKeys.has(expandKey)) {
+        return false;
+      }
+
+      const node = nodesById.get(departmentId);
+      return Boolean(node && node.indicators.length > 0);
+    });
+  }, [activeColumn, expandedKeys, model.departmentOrder, nodesById]);
+
+  const expandedDepartmentCount = expandedDepartmentIds.length;
+  const indicatorListLayout = resolveIndicatorListLayout(expandedDepartmentCount);
+  const soloExpandedDepartmentId =
+    expandedDepartmentCount === 1 ? expandedDepartmentIds[0] : null;
+
   const departmentCount = model.departmentOrder.length;
 
   const fitToken = treeLayoutKey;
@@ -758,11 +799,35 @@ export function DepartmentIgdTree({
         <section className="si-org-chart__level si-org-chart__level--departments">
           <span className="si-org-chart__level-tag">Departamentos e indicadores</span>
 
-          <div className="si-org-chart__departments-row">
-            {model.departmentOrder.map((departmentId) => (
+          <div
+            className={`si-org-chart__departments-row${
+              expandedDepartmentCount === 1
+                ? " si-org-chart__departments-row--one-expanded"
+                : ""
+            }${
+              expandedDepartmentCount >= 2
+                ? " si-org-chart__departments-row--multi-expanded"
+                : ""
+            }`}
+          >
+            {model.departmentOrder.map((departmentId) => {
+              const expandKey = activeColumn
+                ? `${activeColumn.scope.key}:${departmentId}`
+                : "";
+              const isDepartmentExpanded = expandedKeys.has(expandKey);
+
+              return (
               <div
                 key={departmentId}
-                className="si-org-chart__department-column"
+                className={`si-org-chart__department-column${
+                  soloExpandedDepartmentId === departmentId
+                    ? " si-org-chart__department-column--solo-expanded"
+                    : ""
+                }${
+                  isDepartmentExpanded
+                    ? " si-org-chart__department-column--open"
+                    : ""
+                }`}
               >
                 <div className="si-org-chart__department-scopes">
                   {activeColumn ? (
@@ -772,14 +837,9 @@ export function DepartmentIgdTree({
                         scope={activeColumn.scope}
                         filterState={filterState}
                         competence={model.competence}
-                        expanded={expandedKeys.has(
-                          `${activeColumn.scope.key}:${departmentId}`,
-                        )}
-                        onToggle={() =>
-                          toggleDepartment(
-                            `${activeColumn.scope.key}:${departmentId}`,
-                          )
-                        }
+                        expanded={isDepartmentExpanded}
+                        indicatorListLayout={indicatorListLayout}
+                        onToggle={() => toggleDepartment(expandKey)}
                         activeCardId={activeCardId}
                         onActivateCard={setActiveCardId}
                       />
@@ -787,7 +847,8 @@ export function DepartmentIgdTree({
                   ) : null}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </section>
       </div>
