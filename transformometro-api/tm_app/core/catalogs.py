@@ -1,0 +1,38 @@
+FILIAIS = {"01": "Matriz", "02": "Filial"}
+
+SETORES = (
+    "engenharia",
+    "qualidade",
+    "pcp",
+    "producao",
+    "comercial",
+    "compras",
+    "almoxarifado",
+)
+
+STATUS_PROCESSO = ("ativo", "descontinuado", "em_implantacao")
+CENARIO_TIPO = ("baseline", "melhoria", "automacao", "correcao")
+TIPO_INVESTIMENTO = ("fixo", "variavel", "recorrente", "unico")
+CATEGORIAS = ("software", "treinamento", "consultoria", "equipamento", "horas_internas", "terceiros")
+RECORRENCIAS = ("unico", "mensal", "anual")
+CRITERIO_RATEIO = ("igualitario", "por_revisoes_ativas", "por_peso")
+STATUS_RECURSO = ("ativo", "inativo")
+
+
+def assert_in(value: str, allowed: tuple[str, ...], field: str) -> None:
+    if value not in allowed:
+        raise ValueError(f"{field} inválido: {value}")
+
+
+def options_payload() -> dict:
+    return {
+        "filiais": [{"id": k, "label": v} for k, v in FILIAIS.items()],
+        "setores": list(SETORES),
+        "status_processo": list(STATUS_PROCESSO),
+        "cenario_tipo": list(CENARIO_TIPO),
+        "tipo_investimento": list(TIPO_INVESTIMENTO),
+        "categorias": list(CATEGORIAS),
+        "recorrencias": list(RECORRENCIAS),
+        "criterio_rateio": list(CRITERIO_RATEIO),
+        "status_recurso": list(STATUS_RECURSO),
+    }

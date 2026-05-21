@@ -5,7 +5,11 @@ import "./HomePage.css";
 
 type LoadState = "loading" | "ok" | "error";
 
-export function HomePage({ getAccessToken }: Pick<AppProps, "getAccessToken">) {
+type HomeProps = Pick<AppProps, "getAccessToken"> & {
+  onGoProcessos?: () => void;
+};
+
+export function HomePage({ getAccessToken, onGoProcessos }: HomeProps) {
   const [state, setState] = useState<LoadState>("loading");
   const [detail, setDetail] = useState<string>("");
 
@@ -39,11 +43,19 @@ export function HomePage({ getAccessToken }: Pick<AppProps, "getAccessToken">) {
       </header>
 
       <section className="tm-home__card">
-        <h2>Fase 0 — fundação</h2>
+        <h2>Fase 1 — cadastro</h2>
         <p>
-          Plugin microfrontend conectado à API dedicada. Próximas entregas: CRUD de
-          processos, revisões e dashboard derivado.
+          API com CRUD de processos, revisões, medições, investimentos e recursos no
+          PostgreSQL. Use o cadastro para substituir a planilha.
         </p>
+
+        {onGoProcessos ? (
+          <p>
+            <button type="button" className="tm-home__link" onClick={onGoProcessos}>
+              Abrir lista de processos →
+            </button>
+          </p>
+        ) : null}
 
         <div className={`tm-home__status tm-home__status--${state}`}>
           {state === "loading" && "Verificando API…"}

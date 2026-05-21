@@ -43,6 +43,15 @@
       "entry": null,
       "order": 20,
       "showInMenu": true
+    },
+    {
+      "path": "/apps/transformometro/processos",
+      "label": "Processos",
+      "permission": "transformometro.processes.manage",
+      "icon": "list",
+      "entry": null,
+      "order": 21,
+      "showInMenu": true
     }
   ],
   "backend": {

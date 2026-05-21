@@ -1,0 +1,291 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Query, Request
+
+from tm_app.core.catalogs import (
+    CENARIO_TIPO,
+    CATEGORIAS,
+    CRITERIO_RATEIO,
+    RECORRENCIAS,
+    SETORES,
+    STATUS_PROCESSO,
+    STATUS_RECURSO,
+    TIPO_INVESTIMENTO,
+    assert_in,
+    options_payload,
+)
+from tm_app.core.responses import fail, ok
+from tm_app.core.serialize import row_to_json, rows_to_json
+from tm_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
+from tm_app.infrastructure.persistence.repositories.investimento_repository import (
+    InvestimentoRepository,
+)
+from tm_app.infrastructure.persistence.repositories.medicao_repository import MedicaoRepository
+from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
+from tm_app.infrastructure.persistence.repositories.recurso_repository import (
+    RecursoRepository,
+    VinculoRepository,
+)
+from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
+from tm_app.interface.http.schemas.crud_schemas import (
+    InvestimentoBody,
+    MedicaoBody,
+    ProcessoCreateBody,
+    ProcessoUpdateBody,
+    RecursoBody,
+    RevisaoBody,
+    VinculoBody,
+)
+
+router = APIRouter(prefix="/transformometro", tags=["Transformômetro CRUD"])
+
+
+def _actor(request: Request) -> tuple[str | None, str | None]:
+    user = getattr(request.state, "user", None) or {}
+    return (
+        str(user.get("sub") or user.get("user_id") or "") or None,
+        user.get("email"),
+    )
+
+
+def _audit(request: Request, entity_type: str, entity_id: str, action: str, payload: dict):
+    user_id, user_email = _actor(request)
+    AuditRepository().log(
+        entity_type=entity_type,
+        entity_id=entity_id,
+        action=action,
+        user_id=user_id,
+        user_email=user_email,
+        payload=payload,
+    )
+
+
+def _validate_processo_body(body: ProcessoCreateBody):
+    assert_in(body.filial_id, ("01", "02"), "filial_id")
+    assert_in(body.setor_id, SETORES, "setor_id")
+    assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
+
+
+# --- Processos ---
+
+
+@router.get("/processos")
+def list_processos(
+    filial_id: str | None = None,
+    setor_id: str | None = None,
+    status: str | None = None,
+    q: str | None = None,
+):
+    rows = ProcessoRepository().list(
+        filial_id=filial_id,
+        setor_id=setor_id,
+        status_processo=status,
+        q=q,
+    )
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.get("/processos/{processo_id}")
+def get_processo(processo_id: str):
+    row = ProcessoRepository().get(processo_id)
+    if not row:
+        return fail("Processo não encontrado.", 404)
+    return ok(row_to_json(row))
+
+
+@router.post("/processos")
+def create_processo(body: ProcessoCreateBody, request: Request):
+    try:
+        _validate_processo_body(body)
+        row = ProcessoRepository().create(body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+    except Exception as exc:
+        return fail(str(exc), 500)
+
+    pid = str(row["processo_id"])
+    _audit(request, "processo", pid, "create", body.model_dump())
+    return ok(row_to_json(row), "Processo criado.", 201)
+
+
+@router.put("/processos/{processo_id}")
+def update_processo(processo_id: str, body: ProcessoUpdateBody, request: Request):
+    try:
+        _validate_processo_body(body)
+        row = ProcessoRepository().update(processo_id, body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    if not row:
+        return fail("Processo não encontrado.", 404)
+
+    _audit(request, "processo", processo_id, "update", body.model_dump())
+    return ok(row_to_json(row), "Processo atualizado.")
+
+
+@router.delete("/processos/{processo_id}")
+def delete_processo(processo_id: str, request: Request):
+    if not ProcessoRepository().soft_delete(processo_id):
+        return fail("Processo não encontrado.", 404)
+    _audit(request, "processo", processo_id, "delete", {})
+    return ok(message="Processo excluído.")
+
+
+# --- Revisões ---
+
+
+@router.get("/processos/{processo_id}/revisoes")
+def list_revisoes(processo_id: str):
+    rows = RevisaoRepository().list_by_processo(processo_id)
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.post("/revisoes")
+def create_revisao(body: RevisaoBody, request: Request):
+    try:
+        assert_in(body.cenario_tipo, CENARIO_TIPO, "cenario_tipo")
+        row = RevisaoRepository().create(body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+    except Exception as exc:
+        return fail(str(exc), 500)
+
+    rid = str(row["revisao_id"])
+    _audit(request, "revisao", rid, "create", body.model_dump())
+    return ok(row_to_json(row), "Revisão criada.", 201)
+
+
+@router.put("/revisoes/{revisao_id}")
+def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
+    try:
+        assert_in(body.cenario_tipo, CENARIO_TIPO, "cenario_tipo")
+        row = RevisaoRepository().update(revisao_id, body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    if not row:
+        return fail("Revisão não encontrada.", 404)
+
+    _audit(request, "revisao", revisao_id, "update", body.model_dump())
+    return ok(row_to_json(row), "Revisão atualizada.")
+
+
+@router.post("/revisoes/{revisao_id}/ativar")
+def activate_revisao(revisao_id: str, request: Request):
+    row = RevisaoRepository().activate(revisao_id)
+    if not row:
+        return fail("Revisão não encontrada.", 404)
+    _audit(request, "revisao", revisao_id, "activate", {})
+    return ok(row_to_json(row), "Revisão ativada.")
+
+
+@router.delete("/revisoes/{revisao_id}")
+def delete_revisao(revisao_id: str, request: Request):
+    if not RevisaoRepository().soft_delete(revisao_id):
+        return fail("Revisão não encontrada.", 404)
+    _audit(request, "revisao", revisao_id, "delete", {})
+    return ok(message="Revisão excluída.")
+
+
+# --- Medições ---
+
+
+@router.get("/revisoes/{revisao_id}/medicoes")
+def get_medicao(revisao_id: str):
+    row = MedicaoRepository().get_by_revisao(revisao_id)
+    return ok(row_to_json(row))
+
+
+@router.post("/medicoes")
+def upsert_medicao(body: MedicaoBody, request: Request):
+    row = MedicaoRepository().upsert(body.model_dump())
+    mid = str(row["medicao_id"])
+    _audit(request, "medicao", mid, "upsert", body.model_dump())
+    return ok(row_to_json(row), "Medição salva.")
+
+
+# --- Investimentos ---
+
+
+@router.get("/revisoes/{revisao_id}/investimentos")
+def list_investimentos(revisao_id: str):
+    rows = InvestimentoRepository().list_by_revisao(revisao_id)
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.post("/investimentos")
+def create_investimento(body: InvestimentoBody, request: Request):
+    try:
+        assert_in(body.tipo_investimento, TIPO_INVESTIMENTO, "tipo_investimento")
+        assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
+        if body.categoria_investimento:
+            assert_in(body.categoria_investimento, CATEGORIAS, "categoria_investimento")
+        row = InvestimentoRepository().create(body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    iid = str(row["investimento_id"])
+    _audit(request, "investimento", iid, "create", body.model_dump())
+    return ok(row_to_json(row), "Investimento criado.", 201)
+
+
+@router.delete("/investimentos/{investimento_id}")
+def delete_investimento(investimento_id: str, request: Request):
+    if not InvestimentoRepository().soft_delete(investimento_id):
+        return fail("Investimento não encontrado.", 404)
+    _audit(request, "investimento", investimento_id, "delete", {})
+    return ok(message="Investimento excluído.")
+
+
+# --- Recursos ---
+
+
+@router.get("/recursos-compartilhados")
+def list_recursos():
+    rows = RecursoRepository().list()
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.post("/recursos-compartilhados")
+def create_recurso(body: RecursoBody, request: Request):
+    try:
+        assert_in(body.criterio_rateio, CRITERIO_RATEIO, "criterio_rateio")
+        assert_in(body.status_recurso, STATUS_RECURSO, "status_recurso")
+        assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
+        row = RecursoRepository().create(body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    rid = str(row["recurso_compartilhado_id"])
+    _audit(request, "recurso", rid, "create", body.model_dump())
+    return ok(row_to_json(row), "Recurso criado.", 201)
+
+
+# --- Vínculos ---
+
+
+@router.get("/revisoes/{revisao_id}/recursos-compartilhados")
+def list_vinculos(revisao_id: str):
+    rows = VinculoRepository().list_by_revisao(revisao_id)
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.post("/revisao-recursos-compartilhados")
+def create_vinculo(body: VinculoBody, request: Request):
+    row = VinculoRepository().create(body.model_dump())
+    vid = str(row["vinculo_id"])
+    _audit(request, "vinculo", vid, "create", body.model_dump())
+    return ok(row_to_json(row), "Vínculo criado.", 201)
+
+
+@router.delete("/revisao-recursos-compartilhados/{vinculo_id}")
+def delete_vinculo(vinculo_id: str, request: Request):
+    if not VinculoRepository().soft_delete(vinculo_id):
+        return fail("Vínculo não encontrado.", 404)
+    _audit(request, "vinculo", vinculo_id, "delete", {})
+    return ok(message="Vínculo excluído.")
+
+
+@router.get("/options")
+def get_options():
+    return ok(options_payload())

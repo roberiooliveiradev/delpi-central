@@ -60,3 +60,14 @@
   font-size: 0.8125rem;
   overflow-x: auto;
 }
+
+.tm-home__link {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}

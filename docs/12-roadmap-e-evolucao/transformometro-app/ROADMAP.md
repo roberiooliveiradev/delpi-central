@@ -12,24 +12,27 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Migrations `V001` schema `transformometro` | Schema + `schema_migrations` | ✅ |
 | Compose + gateway | URLs `/apps/transformometro` e `/apps/transformometro-api` | ✅ |
 | Build MFE | `npm run build` no plugin | ✅ |
-| Registro no Core API | App + permissões iniciais | Manual (menu já pode aparecer antes do deploy do MFE) |
-| Serviços em `docker-compose.yml` (prod) | `transformometro` + `transformometro-api` | ✅ |
+| Registro no Core API | App + permissões iniciais | Pendente (manual) |
 | CI mínimo | lint + testes do calculador | Fase 2 |
 
 **Critério de pronto:** `GET /health` e MFE “hello” carregando no portal com JWT.
 
-## Fase 1 — CRUD e catálogos (2–3 sprints)
+## Fase 1 — CRUD e catálogos (2–3 sprints) ✅ MVP no repo
 
 **Objetivo:** substituir cadastro na planilha.
 
-| Entrega | Detalhe |
-|---------|---------|
-| API CRUD | processos, revisões (+ ativar), medições, investimentos, recursos, vínculos |
-| Validações | catálogos §4 da spec, exclusão lógica, versão texto |
-| UI cadastro | listas + formulários + detalhe processo |
-| Auditoria | `audit_logs` nas mutações |
+| Entrega | Detalhe | Status |
+|---------|---------|--------|
+| Migration V002 | Tabelas cadastrais + `audit_logs` | ✅ |
+| API CRUD | processos, revisões (+ ativar), medições, investimentos, recursos, vínculos | ✅ |
+| Validações | catálogos §4, exclusão lógica | ✅ |
+| UI cadastro | lista processos + novo processo + revisões no detalhe | ✅ |
+| Auditoria | `audit_logs` nas mutações | ✅ |
+| UI medições/investimentos/recursos | Formulários no detalhe da revisão | Pendente |
 
 **Critério de pronto:** criar processo completo só pela UI, sem abrir Sheets.
+
+**Deploy:** rebuild `transformometro-api` e `transformometro` no servidor (`TM_RUN_MIGRATIONS_ON_STARTUP=true` aplica V002).
 
 ## Fase 2 — Cálculo e dashboard (2 sprints)
 

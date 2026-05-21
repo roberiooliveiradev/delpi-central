@@ -1,0 +1,171 @@
+from __future__ import annotations
+
+from typing import Any
+
+from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
+    PluginBaseRepository,
+)
+
+
+class RecursoRepository(PluginBaseRepository):
+    def next_codigo(self) -> str:
+        row = self.fetch_one(
+            """
+            SELECT COALESCE(
+                MAX(CAST(SUBSTRING(codigo_recurso FROM 4) AS INTEGER)), 0
+            ) + 1 AS seq
+            FROM transformometro.recursos_compartilhados
+            WHERE codigo_recurso ~ '^RC-[0-9]+$'
+            """
+        )
+        seq = int((row or {}).get("seq") or 1)
+        return f"RC-{seq:04d}"
+
+    def list(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT * FROM transformometro.recursos_compartilhados
+            WHERE deletado = FALSE
+            ORDER BY nome_recurso ASC
+            """
+        )
+
+    def get(self, recurso_id: str) -> dict[str, Any] | None:
+        return self.fetch_one(
+            """
+            SELECT * FROM transformometro.recursos_compartilhados
+            WHERE recurso_compartilhado_id = %s AND deletado = FALSE
+            """,
+            (recurso_id,),
+        )
+
+    def create(self, data: dict[str, Any]) -> dict[str, Any]:
+        codigo = data.get("codigo_recurso") or self.next_codigo()
+        row = self.execute_returning_one(
+            """
+            INSERT INTO transformometro.recursos_compartilhados (
+                codigo_recurso, nome_recurso, categoria_recurso, fornecedor,
+                tipo_custo, recorrencia, valor_total_recorrente,
+                data_inicio_vigencia, data_fim_vigencia, centro_custo,
+                criterio_rateio, status_recurso, observacoes
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING *
+            """,
+            (
+                codigo,
+                data["nome_recurso"],
+                data.get("categoria_recurso"),
+                data.get("fornecedor"),
+                data["tipo_custo"],
+                data["recorrencia"],
+                data.get("valor_total_recorrente", 0),
+                data.get("data_inicio_vigencia"),
+                data.get("data_fim_vigencia"),
+                data.get("centro_custo"),
+                data.get("criterio_rateio", "igualitario"),
+                data.get("status_recurso", "ativo"),
+                data.get("observacoes"),
+            ),
+        )
+        if row is None:
+            raise RuntimeError("Falha ao criar recurso.")
+        return row
+
+    def update(self, recurso_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
+        return self.execute_returning_one(
+            """
+            UPDATE transformometro.recursos_compartilhados SET
+                nome_recurso = %s,
+                categoria_recurso = %s,
+                fornecedor = %s,
+                tipo_custo = %s,
+                recorrencia = %s,
+                valor_total_recorrente = %s,
+                data_inicio_vigencia = %s,
+                data_fim_vigencia = %s,
+                centro_custo = %s,
+                criterio_rateio = %s,
+                status_recurso = %s,
+                observacoes = %s,
+                updated_at = NOW()
+            WHERE recurso_compartilhado_id = %s AND deletado = FALSE
+            RETURNING *
+            """,
+            (
+                data["nome_recurso"],
+                data.get("categoria_recurso"),
+                data.get("fornecedor"),
+                data["tipo_custo"],
+                data["recorrencia"],
+                data.get("valor_total_recorrente", 0),
+                data.get("data_inicio_vigencia"),
+                data.get("data_fim_vigencia"),
+                data.get("centro_custo"),
+                data.get("criterio_rateio", "igualitario"),
+                data.get("status_recurso", "ativo"),
+                data.get("observacoes"),
+                recurso_id,
+            ),
+        )
+
+    def soft_delete(self, recurso_id: str) -> bool:
+        row = self.execute_returning_one(
+            """
+            UPDATE transformometro.recursos_compartilhados
+            SET deletado = TRUE, updated_at = NOW()
+            WHERE recurso_compartilhado_id = %s AND deletado = FALSE
+            RETURNING recurso_compartilhado_id
+            """,
+            (recurso_id,),
+        )
+        return row is not None
+
+
+class VinculoRepository(PluginBaseRepository):
+    def list_by_revisao(self, revisao_id: str) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT v.*, r.nome_recurso, r.codigo_recurso
+            FROM transformometro.revisao_recursos_compartilhados v
+            JOIN transformometro.recursos_compartilhados r
+              ON r.recurso_compartilhado_id = v.recurso_compartilhado_id
+            WHERE v.revisao_id = %s AND v.deletado = FALSE AND r.deletado = FALSE
+            ORDER BY r.nome_recurso ASC
+            """,
+            (revisao_id,),
+        )
+
+    def create(self, data: dict[str, Any]) -> dict[str, Any]:
+        row = self.execute_returning_one(
+            """
+            INSERT INTO transformometro.revisao_recursos_compartilhados (
+                revisao_id, recurso_compartilhado_id,
+                data_inicio_uso, data_fim_uso, ativo, peso_rateio, observacoes
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING *
+            """,
+            (
+                data["revisao_id"],
+                data["recurso_compartilhado_id"],
+                data.get("data_inicio_uso"),
+                data.get("data_fim_uso"),
+                data.get("ativo", True),
+                data.get("peso_rateio"),
+                data.get("observacoes"),
+            ),
+        )
+        if row is None:
+            raise RuntimeError("Falha ao criar vínculo.")
+        return row
+
+    def soft_delete(self, vinculo_id: str) -> bool:
+        row = self.execute_returning_one(
+            """
+            UPDATE transformometro.revisao_recursos_compartilhados
+            SET deletado = TRUE, updated_at = NOW()
+            WHERE vinculo_id = %s AND deletado = FALSE
+            RETURNING vinculo_id
+            """,
+            (vinculo_id,),
+        )
+        return row is not None
