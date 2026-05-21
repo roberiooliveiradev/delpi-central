@@ -37,19 +37,26 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
     def _resolved_goal_scope_order(
         *,
         scope_branch: str | None,
-        params: list,
-    ) -> str:
+    ) -> tuple[str, list]:
+        """
+        Fragmento ORDER BY e parâmetros na ordem em que aparecem no SQL final.
+
+        Os valores devem ser acrescentados a ``params`` depois do filtro de vigência
+        (valid_from/valid_to), pois o CASE entra no ORDER BY após o WHERE.
+        """
         normalized = normalize_goal_scope_branch(scope_branch)
         if normalized:
-            params.append(normalized)
-            return """
+            return (
+                """
                 CASE
                     WHEN ig.goal_scope_branch = %s THEN 0
                     WHEN ig.goal_scope_branch = '' THEN 1
                     ELSE 2
                 END,
-            """
-        return ""
+            """,
+                [normalized],
+            )
+        return "", []
 
     def get_indicator_goal_policy(self, indicator_id: str) -> dict | None:
         return self.fetch_one(
@@ -222,14 +229,14 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         )
 
         params: list = [indicator_id, year]
-        scope_order = self._resolved_goal_scope_order(
-            scope_branch=scope_branch,
-            params=params,
-        )
         scope_filter = self._resolved_goal_scope_filter(
             scope_branch=scope_branch,
             params=params,
         )
+        scope_order, scope_order_params = self._resolved_goal_scope_order(
+            scope_branch=scope_branch,
+        )
+        params.extend(scope_order_params)
 
         query = f"""
             SELECT
@@ -288,9 +295,8 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             scope_branch=scope_branch,
             params=params,
         )
-        scope_order = self._resolved_goal_scope_order(
+        scope_order, scope_order_params = self._resolved_goal_scope_order(
             scope_branch=scope_branch,
-            params=params,
         )
 
         query = f"""
@@ -336,6 +342,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             reference_date=reference_date,
             params=params,
         )
+        params.extend(scope_order_params)
 
         query += f"""
             ORDER BY
@@ -484,9 +491,8 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             scope_branch=scope_branch,
             params=params,
         )
-        scope_order = self._resolved_goal_scope_order(
+        scope_order, scope_order_params = self._resolved_goal_scope_order(
             scope_branch=scope_branch,
-            params=params,
         )
 
         query = f"""
@@ -532,6 +538,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             reference_date=reference_date,
             params=params,
         )
+        params.extend(scope_order_params)
 
         query += f"""
             ORDER BY
