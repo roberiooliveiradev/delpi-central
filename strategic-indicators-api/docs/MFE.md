@@ -29,8 +29,11 @@ data/
   adapters/               # DTO API → view models
 state/hooks/              # React hooks (SWR, prefetch)
 ui/pages/                 # Executive, Departments, Trends, Settings…
-ui/components/            # Filtros, cards, grids
+ui/components/            # Filtros, cards, grids, erros padronizados
+ui/components/StrategicIndicatorsPageError.tsx
 ui/shared/indicatorValueFormatter.ts  # Formatação de meta/realizado/nota
+data/errors/strategicIndicatorsError.ts
+data/api/strategicIndicatorsApiErrors.ts
 ```
 
 ## Indicadores sem medição na UI
@@ -41,8 +44,37 @@ Quando a API retorna `has_value: false` ou `value` / `score` `null`:
 - Cards (`IndicatorDetailCard`), tabela analítica e resumos não tratam ausência como nota `0` nem como excelência em `lower_is_better`.
 - `realized` pode trazer chaves com `null` por filial; cada unidade é formatada com o mesmo rótulo de ausência.
 - Médias de departamento/unidade na UI consideram apenas indicadores com `hasValue` e `score` numérico.
+- Metas e gaps multi-filial na visão consolidado: **`01: valor | 02: valor`** (código da filial, sem prefixo "Un.") — `formatBranchScopedMetric` em `indicatorValueFormatter.ts`.
+- Filtro de filial e admin de metas exibem rótulos `01`, `02` (`getGoalScopeBranchLabel` em `ui/presentation/labels.ts`).
 
 Contrato da API: [API.md](./API.md) e regras de cálculo: [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+## Erros padronizados (todas as páginas analíticas)
+
+| Página | Superfície (`context.surface`) | Hook |
+|--------|-------------------------------|------|
+| Painel executivo | Resumo executivo | `useStrategicIndicatorsExecutiveSummary` |
+| Departamentos | Departamentos | `useStrategicIndicatorsDepartments` |
+| Detalhe departamento | Detalhe do departamento | `useStrategicIndicatorsDepartmentDetails` |
+| Indicadores | Lista de indicadores | `useStrategicIndicators` |
+| Tendências | Tendências | `useStrategicIndicatorsTrends` |
+| Alertas | Lista de alertas | `useStrategicIndicatorsAlerts` |
+| Apresentação | Apresentação executiva | `useStrategicIndicatorsPresentation` |
+
+Fluxo:
+
+1. Clientes HTTP (`strategicIndicators*Api.ts`) usam `buildStrategicIndicatorsApiError` em respostas não-OK.
+2. Hooks capturam com `captureStrategicIndicatorsError` → `StrategicIndicatorsErrorView`.
+3. UI renderiza `StrategicIndicatorsPageError` (modo `load` ou `refresh`).
+
+**Modos de título:**
+
+- Carga sem dados: `Falha em {superfície}` (ex.: *Falha em Lista de indicadores*).
+- Atualização com dados antigos na tela: `mode="refresh"` → *Falha ao atualizar {superfície}*.
+
+O card inclui causas heurísticas (plugins, schema, timeout, 502) e sugestões (migrations, refresh, testar outra filial). Admin/settings mantém alertas compactos (`InfoState` / strip) — não usam este card.
+
+Troubleshooting backend: [OPERATIONS.md](./OPERATIONS.md).
 
 ## Rotas da UI (portal)
 

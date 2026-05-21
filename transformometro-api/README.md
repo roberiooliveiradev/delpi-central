@@ -22,8 +22,11 @@ python -m uvicorn tm_app.main:app --reload --port 8010
 
 ## Migrations
 
+Ver [migrations/README.md](migrations/README.md) (V001–V005).
+
 ```bash
 PLUGINS_DB_HOST=localhost PLUGINS_DB_PORT=5433 ...
+python -m tm_app.infrastructure.persistence.plugins.migrations_runner status
 python -m tm_app.infrastructure.persistence.plugins.migrations_runner up
 ```
 
@@ -31,8 +34,19 @@ python -m tm_app.infrastructure.persistence.plugins.migrations_runner up
 
 ```bash
 make test
-# ou: ../../scripts/ci-transformometro-api.sh
+# ou na raiz do monorepo:
+./scripts/ci-transformometro-api.sh
 ```
+
+## Endpoints principais
+
+| Grupo | Exemplos |
+|-------|----------|
+| Processos / revisões | `/processos`, `/revisoes`, `/revisoes/{id}/ativar` |
+| Workflow | `POST /revisoes/{id}/workflow/submeter`, `/aprovar`, `/rejeitar` |
+| Recursos | `/recursos-compartilhados`, vínculos `/revisao-recursos-compartilhados` |
+| Dashboard | `/dashboard/resumo`, `/alertas`, `/export.csv`, `/export.xls`, `POST /recalcular` |
+| Integração | `/integrations/engineering/transforma-mais/processes` |
 
 ## Importação da planilha (Transforma+)
 
@@ -45,22 +59,21 @@ CLI:
 
 ```bash
 python scripts/migrate_transforma_mais_sheet.py --preview
-python scripts/migrate_transforma_mais_sheet.py --apply --replace   # truncate + import + recalc (recomendado na 1ª carga)
-python scripts/migrate_transforma_mais_sheet.py --apply             # merge (reconcilia PROC-0001 etc. já no banco)
+python scripts/migrate_transforma_mais_sheet.py --apply --replace   # truncate + import + recalc
+python scripts/migrate_transforma_mais_sheet.py --apply             # merge por codigo_processo
 ```
 
-HTTP (JWT):
-
-- `GET /transformometro/import/preview`
-- `POST /transformometro/import/apply` — body `{ "replace_existing": false, "recalc_dashboard": true }`
+HTTP (JWT): `GET /import/preview`, `POST /import/apply`
 
 ## Integração engenharia / SI
-
-Rotas com contrato legado Transforma+ (calculador oficial):
 
 - `GET /transformometro/integrations/engineering/transforma-mais/processes`
 - `GET /transformometro/integrations/engineering/transforma-mais/processes/summary`
 
 Consumidores: `shared/transformometro_client` + `API_DELPI_INTERNAL_SERVICE_TOKEN`.
 
-Documentação: [docs/12-roadmap-e-evolucao/transformometro-app/](../docs/12-roadmap-e-evolucao/transformometro-app/README.md)
+## Documentação
+
+- [docs/12-roadmap-e-evolucao/transformometro-app/](../docs/12-roadmap-e-evolucao/transformometro-app/README.md)
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)

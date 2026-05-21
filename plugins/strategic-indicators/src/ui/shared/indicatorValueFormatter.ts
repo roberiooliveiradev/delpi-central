@@ -173,8 +173,15 @@ function getMonthlyTargetValue(
   return Number.isFinite(numeric) ? numeric : null;
 }
 
-function formatBranchUnitLabel(branchCode: string) {
-  return branchCode.trim();
+/** Rótulos PT-BR para chaves de `realized` / `gaps` (comercial, filiais TOTVS, etc.). */
+const UNIT_SCOPE_LABELS: Record<string, string> = {
+  matrix: "Matriz",
+  branch: "Filial",
+};
+
+function formatBranchUnitLabel(scopeKey: string) {
+  const normalized = scopeKey.trim();
+  return UNIT_SCOPE_LABELS[normalized] ?? normalized;
 }
 
 function listBranchScopeKeys(values: Record<string, number | null>): string[] {
@@ -189,6 +196,57 @@ export function hasMultiBranchValues(
   if (!values) return false;
 
   return listBranchScopeKeys(values).length >= 2;
+}
+
+export function hasBranchScopeValues(
+  values: Record<string, number | null> | undefined,
+): boolean {
+  if (!values) return false;
+
+  return listBranchScopeKeys(values).length >= 1;
+}
+
+const SEMANTIC_SCOPE_KEYS = new Set([
+  "consolidated",
+  "per_unit",
+  "average_of_units",
+]);
+
+function getSemanticScopeLabel(key: string): string {
+  switch (key) {
+    case "consolidated":
+      return "Consolidado";
+    case "per_unit":
+      return "Por unidade";
+    case "average_of_units":
+      return "Média das unidades";
+    default:
+      return key;
+  }
+}
+
+/** Formata mapa de realizado/gap: filiais via `01: … | 02: …`; chaves semânticas sem duplicar rótulo. */
+export function formatScopeAwareMetric(
+  values: Record<string, number | null> | undefined,
+  format: IndicatorValueFormat = {},
+  options: FormatIndicatorValueOptions = {},
+): string {
+  if (!values || !Object.keys(values).length) {
+    return options.fallback ?? MISSING_VALUE_LABEL;
+  }
+
+  if (hasBranchScopeValues(values)) {
+    return formatBranchScopedMetric(values, format, options);
+  }
+
+  return Object.entries(values)
+    .map(([key, value]) => {
+      const label = SEMANTIC_SCOPE_KEYS.has(key)
+        ? getSemanticScopeLabel(key)
+        : formatBranchUnitLabel(key);
+      return `${label}: ${formatIndicatorValue(value, format, options)}`;
+    })
+    .join(" · ");
 }
 
 export function formatBranchScopedMetric(

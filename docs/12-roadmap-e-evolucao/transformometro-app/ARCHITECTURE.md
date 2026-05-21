@@ -93,7 +93,7 @@ Schema sugerido: `transformometro`.
 | Tabela | PK | Observação |
 |--------|-----|------------|
 | `processos` | `processo_id` UUID | `filial_id`, `versao_revisao` como `VARCHAR` |
-| `revisoes` | `revisao_id` UUID | FK `processo_id`, unique `(processo_id, versao_revisao)` |
+| `revisoes` | `revisao_id` UUID | FK `processo_id`; V005: `status_aprovacao`, `motivo_rejeicao`, … |
 | `medicoes` | `medicao_id` UUID | FK `revisao_id`, 1:1 ou 1:N conforme evolução |
 | `investimentos` | `investimento_id` UUID | `valor_total` calculado no backend |
 | `recursos_compartilhados` | `recurso_compartilhado_id` UUID | |
@@ -125,11 +125,12 @@ Alinhada à [ESPECIFICACAO.md §15](./ESPECIFICACAO.md), com convenção Delpi:
 | Grupo | Endpoints |
 |-------|-----------|
 | Processos | `GET/POST /processos`, `GET/PUT/DELETE /processos/{id}` |
-| Revisões | `GET/POST /revisoes`, `GET /processos/{id}/revisoes`, `POST /revisoes/{id}/ativar` |
+| Revisões | `GET/POST /revisoes`, `PUT /revisoes/{id}`, `GET /processos/{id}/revisoes`, `POST /revisoes/{id}/ativar` (só se `aprovada`) |
+| Workflow revisão | `POST /revisoes/{id}/workflow/submeter`, `/aprovar`, `/rejeitar` |
 | Medições | CRUD + `GET /revisoes/{id}/medicoes` |
 | Investimentos | CRUD + cálculo `valor_total` |
-| Recursos | CRUD recursos + vínculos |
-| Dashboard | `GET /dashboard/resumo`, `/evolucao`, `/processos`, `/alertas`, `/por-familia`, `/export.csv`, `POST /recalcular` |
+| Recursos | `GET/POST /recursos-compartilhados`, `PUT/DELETE /recursos-compartilhados/{id}`; vínculos `revisao-recursos-compartilhados` |
+| Dashboard | `GET /dashboard/resumo`, `/evolucao`, `/processos`, `/alertas`, `/por-familia`, `/export.csv`, `/export.xls`, `POST /recalcular` |
 | Processos (Fase 4) | `GET /processos/{id}/comparativo`; filtros `familia_processo` na listagem |
 | Revisões (Fase 4) | `GET /revisoes/{id}/diagnostico-rateio` |
 | Catálogos | `GET /options/*` |
@@ -179,17 +180,17 @@ Manifesto `transformometro.manifest.json` (espelho do SI):
 }
 ```
 
-### Telas (MVP → completo)
+### Telas (MFE)
 
 | Rota UI | Função |
 |---------|--------|
-| `/apps/transformometro` | Dashboard executivo (cards + gráficos + filtros) |
-| `/apps/transformometro/processos` | Lista e filtros |
-| `/apps/transformometro/processos/:id` | Detalhe: revisões, medições, investimentos, vínculos |
-| `/apps/transformometro/recursos` | Cadastro recursos compartilhados |
-| `/apps/transformometro/import` | (Fase 2) Import planilha |
+| `/apps/transformometro` | Início + health |
+| `/apps/transformometro/dashboard` | Cards, gráficos, alertas, export CSV/Excel, recalcular |
+| `/apps/transformometro/processos` | Lista; detalhe com revisões (clique na linha) |
+| `/apps/transformometro/recursos` | Catálogo global (CRUD) |
+| `/apps/transformometro/import` | Import planilha |
 
-Wizard sugerido no detalhe do processo: **Processo → Revisão → Medição → Investimentos → Vínculos**.
+Detalhe da revisão (estado no MFE, sem URL própria): abas **Vigência** (datas + descrição/motivo/observações), **Medição**, **Investimentos**, **Recursos** (vínculos editáveis). Toolbar de **workflow** acima das abas.
 
 ## Integração infra
 

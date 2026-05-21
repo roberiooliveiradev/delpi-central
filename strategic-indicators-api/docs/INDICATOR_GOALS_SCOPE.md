@@ -1,6 +1,6 @@
 # Metas por escopo (consolidado / filial)
 
-**Migration:** `V016__indicator_goals_scope_branch.sql`
+**Migrations:** `V016` (coluna e índice), `V017` (supports_branch_goals), `V018`/`V019` (seeds RH/Qualidade), `V020` (agregação consolidada)
 
 ## Regra global
 
@@ -30,3 +30,25 @@ Aplica-se a **todos os departamentos** (Comercial, Financeiro, Produção, etc.)
 No formulário de metas, escolher **Escopo da meta**: Consolidado, Filial 01 ou Filial 02.
 
 `supports_branch_goals` em `department_indicators` é sincronizado automaticamente: `TRUE` quando `scope_type = consolidated`.
+
+## Implementação (`postgres_indicator_goals_repository`)
+
+- `list_resolved_goals_map` / `list_latest_active_goals_map`: filtram por `goal_scope_branch` e vigência (`valid_from` / `valid_to` no último dia da competência).
+- Com `branch=01` ou `02`, o `ORDER BY` prioriza a meta da filial (`CASE WHEN goal_scope_branch = %s`).
+- **Importante:** os parâmetros do `CASE` no `ORDER BY` devem ser enviados **depois** dos parâmetros de vigência no array Python — ordem incorreta gerava `operator does not exist: character varying = date` (corrigido em `cbc91c5`).
+
+## Materialização (`period_scores`)
+
+O refresh (`scripts/refresh_period_scores.py`) grava uma linha por combinação:
+
+| `scope_branch` | Significado |
+|----------------|-------------|
+| `''` | Visão consolidado |
+| `01` | Filial 01 |
+| `02` | Filial 02 |
+
+Após deploy com metas por filial, rode o refresh manualmente se o job periódico ainda não tiver preenchido `01`/`02` para a competência desejada.
+
+## UI (MFE)
+
+Rótulos de filial na meta, realizado e gap: `01: valor | 02: valor` (sem prefixo "Un."). Ver [MFE.md](./MFE.md).

@@ -50,14 +50,26 @@ shared/
 2. `RealStrategicIndicatorsMeasurementsProvider` — agrega coletores por departamento
 3. `StrategicIndicatorsCalculator` — scores, IGD, classificação
 4. `PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository` — catálogo + metas
+5. `PostgresStrategicIndicatorsIndicatorGoalsRepository` — resolução por `goal_scope_branch` e vigência
+
+Metas por filial: ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
 
 ## Scripts (raiz do serviço)
 
 | Script | Descrição |
 |--------|-----------|
-| `scripts/run_migrations.py` | Migrations V001–V010 |
+| `scripts/run_migrations.py` | Migrations V001–V020 |
+| `scripts/refresh_period_scores.py` | Materializa `period_scores` (consolidado + filiais) |
 | `scripts/warmup_si_snapshots.py` | Warm-up manual |
 | `scripts/bench_si_routes.py` | Benchmark rotas de leitura |
+
+## Testes relevantes
+
+| Arquivo | Cobertura |
+|---------|-----------|
+| `tests/test_branch_scoped_goals.py` | Rótulos e média consolidada por filial |
+| `tests/test_indicator_goals_sql_param_order.py` | Ordem dos parâmetros SQL em metas por filial |
+| `tests/test_goal_scope_validation.py` | Validação de escopo no admin |
 
 ## Dependência `shared/`
 

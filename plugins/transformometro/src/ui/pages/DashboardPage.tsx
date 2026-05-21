@@ -11,7 +11,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { AlertTriangle, Clock, Coins, Download, Lightbulb, Percent, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  Clock,
+  Coins,
+  Download,
+  FileSpreadsheet,
+  Lightbulb,
+  Percent,
+  RefreshCw,
+} from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { ChartCard } from "../../components/ChartCard";
@@ -26,6 +35,7 @@ import { CHART_COLORS } from "../../constants/chartColors";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   downloadDashboardCsv,
+  downloadDashboardExcel,
   fetchDashboardAlertas,
   fetchDashboardEvolucao,
   fetchDashboardPorFamilia,
@@ -121,15 +131,21 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     setExportando(true);
     setError(null);
     try {
-      const blob = await downloadDashboardCsv(getAccessToken, apiParams);
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = "transformometro-dashboard.csv";
-      anchor.click();
-      URL.revokeObjectURL(url);
+      await downloadDashboardCsv(getAccessToken, apiParams);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao exportar CSV");
+    } finally {
+      setExportando(false);
+    }
+  }
+
+  async function handleExportExcel() {
+    setExportando(true);
+    setError(null);
+    try {
+      await downloadDashboardExcel(getAccessToken, apiParams);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao exportar Excel");
     } finally {
       setExportando(false);
     }
@@ -290,7 +306,16 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
               onClick={() => void handleExportCsv()}
             >
               <Download size={16} />
-              {exportando ? "Exportando…" : "Exportar CSV"}
+              {exportando ? "Exportando…" : "CSV"}
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              disabled={exportando || isBusy}
+              onClick={() => void handleExportExcel()}
+            >
+              <FileSpreadsheet size={16} />
+              Excel
             </button>
             <button
               type="button"

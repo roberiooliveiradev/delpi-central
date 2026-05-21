@@ -53,11 +53,27 @@ Baseline documentado: executive ~19s → ~10s após otimizações — ver [PERFO
 
 ## Problemas comuns
 
+### Erro padronizado no MFE
+
+Todas as páginas analíticas (executivo, departamentos, indicadores, tendências, alertas, apresentação) exibem o mesmo card:
+
+- **Onde** / **Recorte** (rota, competência, filial)
+- **Possíveis causas** e **O que fazer**
+- **Detalhe técnico** (mensagem da API, colapsável)
+
+Componente: `StrategicIndicatorsPageError` → `StrategicIndicatorsErrorState`. Parse centralizado em `strategicIndicatorsError.ts` e `buildStrategicIndicatorsApiError` (ver [MFE.md](./MFE.md)).
+
 ### 500 — `Falha ao executar fetch_all no banco de plugins`
 
-**Sintoma:** painel SI mostra erro ao carregar executive-summary, departments, settings, etc.
+**Sintoma:** card de erro na UI; detalhe técnico com essa mensagem (às vezes só na visão **por filial**, com consolidado aparentemente normal).
 
-**Causa mais comum:** schema `strategic_indicators` inexistente ou incompleto no Postgres `postgres-plugins` (migrations não aplicadas em produção).
+**Causas frequentes:**
+
+| Causa | Log / detalhe técnico | Ação |
+|-------|----------------------|------|
+| Migrations pendentes | `column ... goal_scope_branch does not exist` | `run_migrations.py up` até V020 |
+| Bug ordem de parâmetros SQL (metas por filial) | `operator does not exist: character varying = date` | Deploy da API com fix `list_resolved_goals_map` (`cbc91c5`+) |
+| Schema inexistente | `relation "strategic_indicators...." does not exist` | Migrations V001+ |
 
 Em produção, `SI_RUN_MIGRATIONS_ON_STARTUP` costuma estar **desligado** (`false` no `docker-compose.yml`). As migrations precisam rodar **uma vez** manualmente após deploy.
 
@@ -65,33 +81,53 @@ Em produção, `SI_RUN_MIGRATIONS_ON_STARTUP` costuma estar **desligado** (`fals
 
 ```bash
 # Erro SQL real (traceback)
-docker logs delpi-strategic-indicators-api 2>&1 | tail -200 | grep -E "fetch_all failed|does not exist|PluginsRepository|ERROR"
+docker logs delpi-strategic-indicators-api 2>&1 | tail -200 | grep -E "fetch_all failed|does not exist|character varying = date|PluginsRepository|ERROR"
 
-# Health com checagem do schema (após redeploy com health estendido)
+# Reproduzir resolução de catálogo por filial
+docker exec delpi-strategic-indicators-api python3 -c "
+from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_resolved_indicators_catalog_repository import PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository
+n = len(PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository().list_resolved_indicators_catalog(competence='2026-04', branch='01'))
+print('OK', n)
+"
+
+# Health
 curl -s http://localhost/apps/strategic-indicators-api/strategic-indicators/health | jq
 
-# Tabelas no banco plugins
-docker exec delpi-postgres-plugins psql -U "$PLUGINS_DB_USER" -d "$PLUGINS_DB_NAME" -c \
-  "SELECT tablename FROM pg_tables WHERE schemaname='strategic_indicators' ORDER BY 1 LIMIT 20;"
-
-# Status / aplicar migrations
+# Migrations (credenciais: carregar .env do host ou usar variáveis do compose)
 docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py status
 docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py up
 ```
 
-**Correção:** após `up` com sucesso, reinicie a API:
+**Correção:** após `up` e deploy da API corrigida:
 
 ```bash
 docker compose -f infra/docker-compose.yml restart strategic-indicators-api
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py
 ```
 
-Opcional no `.env.prod` (somente depois da primeira carga manual bem-sucedida):
+Confirme `period_scores` para a competência (via container da API, sem depender de `.env` no shell):
 
-```env
-SI_RUN_MIGRATIONS_ON_STARTUP=true
+```bash
+docker exec delpi-strategic-indicators-api python3 -c "
+from si_app.infrastructure.persistence.plugins.plugin_base_repository import PluginBaseRepository
+for row in PluginBaseRepository().fetch_all('''
+  SELECT competence, scope_branch, computed_at::text
+  FROM strategic_indicators.period_scores
+  WHERE competence = %s ORDER BY scope_branch
+''', ('2026-04',)):
+    print(row)
+"
 ```
 
-**Nota:** as datas `start_date=01-05-2026` no log estão no formato esperado pelo SI (DD-MM-YYYY). O 500 neste caso não é formato de data — é falha ao ler o catálogo/metas no Postgres.
+Esperado: linhas com `scope_branch` `''`, `01` e `02`.
+
+**Nota:** datas `start_date=01-05-2026` no log estão no formato esperado pelo SI (DD-MM-YYYY). O 500 neste caso não é formato de data — é falha ao ler catálogo/metas no Postgres.
+
+### Consolidado OK, filial 01/02 com erro
+
+**Causa:** cache `period_scores` só para `scope_branch = ''`; ao abrir filial a API recalcula e falha na query de metas (migrations ou bug de parâmetros acima).
+
+**Ação:** corrigir API + `refresh_period_scores.py` até existirem linhas para `01` e `02`.
 
 ### 502 Bad Gateway em todas as rotas
 

@@ -1,0 +1,28 @@
+.si-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--si-card-border, #d7e3ee);
+  background: var(--si-card-bg, #fff);
+  color: var(--si-title, #0f172a);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.si-back-link:hover {
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, var(--si-card-border));
+  background: color-mix(in srgb, var(--primary, #089bdb) 6%, var(--si-card-bg));
+}
+
+.si-back-link__icon {
+  font-size: 16px;
+  line-height: 1;
+}

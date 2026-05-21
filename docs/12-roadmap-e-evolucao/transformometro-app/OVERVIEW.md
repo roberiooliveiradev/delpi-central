@@ -1,6 +1,6 @@
 # Visão geral — Transformômetro App
 
-**Última atualização:** 2026-05-21
+**Última atualização:** 2026-05-21 (navegação completa, catálogo Recursos, workflow V005, export Excel)
 
 ## O que é
 
@@ -15,15 +15,27 @@ Hoje isso vive em **Google Sheets + Apps Script**. A meta é uma aplicação web
 - **PostgreSQL** como fonte de verdade
 - **Autenticação e permissões** via Core API / Keycloak (mesmo modelo do SI)
 
-## Componentes planejados
+## Componentes
 
-| Peça | Pasta | URL (gateway dev) |
-|------|-------|-------------------|
+| Peça | Pasta | URL (gateway) |
+|------|-------|---------------|
 | API | `transformometro-api/` (`tm_app`) | `/apps/transformometro-api/` |
 | Rotas de negócio | prefixo `/transformometro` | `/apps/transformometro-api/transformometro/*` |
 | MFE (UI) | `plugins/transformometro/` | `/apps/transformometro/` |
 | Banco | schema `transformometro` em `postgres-plugins` | `PLUGINS_DB_*` |
-| Migração inicial | import da planilha atual | script one-shot + validação |
+| Migração inicial | import da planilha Transforma+ | CLI + UI `/import` |
+
+### Rotas do MFE (menu e abas superiores)
+
+| Rota | Função |
+|------|--------|
+| `/apps/transformometro` | Início (status API + atalhos) |
+| `/apps/transformometro/dashboard` | KPIs, alertas, export CSV/Excel, recalcular |
+| `/apps/transformometro/processos` | Lista e detalhe (revisões) |
+| `/apps/transformometro/recursos` | Catálogo global de recursos compartilhados |
+| `/apps/transformometro/import` | Importação planilha (admin) |
+
+No **detalhe da revisão** (Processos → clicar revisão): abas **Vigência**, **Medição**, **Investimentos**, **Recursos** (vínculos).
 
 ## Fluxo do usuário
 
@@ -43,7 +55,7 @@ Portal MinhaDelpi
 Tudo gira em torno de **`revisao_id`**:
 
 - `processos` = cadastro mestre
-- `revisoes` = cenários (baseline, melhoria, automacao, correcao)
+- `revisoes` = cenários (baseline, melhoria, automacao, correcao) + workflow (`rascunho` → `em_analise` → `aprovada` / `rejeitada`)
 - `medicoes`, `investimentos`, vínculos de recurso = dados da revisão
 - `dashboard_calculos` = tabela **derivada** (nunca editada manualmente)
 

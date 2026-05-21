@@ -9,6 +9,7 @@ import {
   formatBranchScopedMetric,
   formatIndicatorGoalValue,
   formatIndicatorScore,
+  hasBranchScopeValues,
   hasMultiBranchValues,
 } from "../shared/indicatorValueFormatter";
 import "./IndicatorQuickDetail.css";
@@ -45,7 +46,9 @@ export function IndicatorQuickDetail({
   };
   const showBranchBreakdown =
     hasMultiBranchValues(indicator.realized) ||
-    hasMultiBranchValues(indicator.gaps);
+    hasMultiBranchValues(indicator.gaps) ||
+    hasBranchScopeValues(indicator.realized) ||
+    hasBranchScopeValues(indicator.gaps);
 
   return (
     <aside className="si-indicator-quick-detail">
