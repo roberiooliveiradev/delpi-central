@@ -1,5 +1,7 @@
 # API HTTP — Strategic Indicators
 
+**Última atualização:** 2026-05-21
+
 **Base URL (gateway):**
 
 ```text
@@ -56,13 +58,42 @@ Detalhe de um departamento. `404` se não existir.
 
 Indicadores calculados do período.
 
+Campos relevantes quando **não há medição** no período:
+
+| Campo | Com medição | Sem medição |
+|-------|-------------|-------------|
+| `value` | número | `null` |
+| `score` | número | `null` |
+| `gap` | número | `null` |
+| `has_value` | `true` | `false` |
+| `classification` | faixa de desempenho | `Sem dados preenchidos` |
+
 ```json
 {
-  "items": [ { "indicator_id": "...", "score": 85.0, "value": 95.2, "...": "..." } ],
+  "items": [
+    {
+      "indicator_id": "financial-fixed-cost",
+      "value": null,
+      "score": null,
+      "gap": null,
+      "has_value": false,
+      "classification": "Sem dados preenchidos"
+    },
+    {
+      "indicator_id": "financial-ebitda",
+      "value": 13.5,
+      "score": 8.2,
+      "gap": -1.3,
+      "has_value": true,
+      "classification": "Alto Desempenho"
+    }
+  ],
   "errors": [],
   "partial_success": false
 }
 ```
+
+`GET /departments/{id}` e `GET /presentation` usam o mesmo contrato em `indicators` / `realized` (valores `null` por filial quando não houver dado na unidade).
 
 ---
 

@@ -1,6 +1,6 @@
 # Arquitetura — Strategic Indicators
 
-**Última atualização:** 2026-05-18
+**Última atualização:** 2026-05-21
 
 ## Visão geral
 
@@ -45,6 +45,30 @@ Modelos de snapshot (`StrategicIndicatorsPeriodSnapshot`, etc.) ficam em `strate
 3. **Medições** (TOTVS/Sheets/RH) por período — paralelo seguro por departamento e, quando aplicável, por período com `measurements_port_factory`.
 4. **Cálculo** (`StrategicIndicatorsCalculator`) → scores, IGD, classificação.
 5. **Cache** in-process (TTL) + opcional **`si_period_scores`** (Postgres) para séries em trends.
+
+## Ausência de medição vs. zero real
+
+O painel precisa distinguir **“não houve dado no período”** de **“o realizado foi zero”** (relevante para indicadores `lower_is_better`, onde `0` pode ser excelência).
+
+| Situação | `value` na medição | Nota | Classificação | Peso no IGD / departamento |
+|----------|-------------------|------|---------------|----------------------------|
+| Sem linha/dado no período | `null` | `null` | **Sem dados preenchidos** | Não entra na média ponderada |
+| Zero real (ex.: 0% na planilha) | `0.0` | calculada | faixa normal (ex.: Excelência se ≤ meta) | Entra normalmente |
+| Indicador no catálogo sem coleta | `null` (sem medição) | `null` | **Sem dados preenchidos** | Não entra na média |
+
+Regras na API de leitura:
+
+- Campo **`has_value`**: `true` quando existe realizado numérico para o recorte.
+- **`realized`**: mapa unidade → valor; chaves podem ter `null` (filial sem dado naquele indicador).
+- Indicadores **sempre listados** no departamento quando estão no catálogo resolvido, mesmo sem medição.
+
+Implementação principal:
+
+- `StrategicIndicatorsCalculator` — `MISSING_VALUE_CLASSIFICATION`, `_build_missing_indicator_value`, média de departamento só com indicadores pontuados.
+- Financeiro (Sheets) — `_average_sheet_metric` retorna `null` se não houver linhas no intervalo; **não** converte ausência em `0` (api-delpi espelha a mesma regra).
+- MFE — `formatIndicatorValue` / `formatIndicatorScore` exibem **Sem dados preenchidos** quando o valor ou a nota são `null`.
+
+**Pendente de alinhamento nas fontes:** Produção ainda pode enviar `0` quando não há dado; Qualidade (PPM) usa `default_value=0.0` em alguns indicadores. Ver [DATA_SOURCES.md](./DATA_SOURCES.md).
 
 ## Metas em séries históricas
 

@@ -1,5 +1,7 @@
 # Microfrontend — `plugins/strategic-indicators`
 
+**Última atualização:** 2026-05-21
+
 ## Papel
 
 Interface React (Vite + Module Federation) do painel **Indicadores Estratégicos**, carregada pelo portal MinhaDelpi.
@@ -28,7 +30,19 @@ data/
 state/hooks/              # React hooks (SWR, prefetch)
 ui/pages/                 # Executive, Departments, Trends, Settings…
 ui/components/            # Filtros, cards, grids
+ui/shared/indicatorValueFormatter.ts  # Formatação de meta/realizado/nota
 ```
+
+## Indicadores sem medição na UI
+
+Quando a API retorna `has_value: false` ou `value` / `score` `null`:
+
+- Texto padrão: **Sem dados preenchidos** (`MISSING_VALUE_LABEL` em `indicatorValueFormatter.ts`).
+- Cards (`IndicatorDetailCard`), tabela analítica e resumos não tratam ausência como nota `0` nem como excelência em `lower_is_better`.
+- `realized` pode trazer chaves com `null` por filial; cada unidade é formatada com o mesmo rótulo de ausência.
+- Médias de departamento/unidade na UI consideram apenas indicadores com `hasValue` e `score` numérico.
+
+Contrato da API: [API.md](./API.md) e regras de cálculo: [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Rotas da UI (portal)
 

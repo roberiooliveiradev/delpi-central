@@ -18,7 +18,7 @@ Documentação técnica oficial do módulo **Strategic Indicators** no monorepo 
 | # | Documento | Conteúdo |
 |---|-----------|----------|
 | 1 | [OVERVIEW.md](./OVERVIEW.md) | Propósito, componentes, conceitos, permissões |
-| 2 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Fluxos, cache, paralelismo, metas |
+| 2 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Fluxos, cache, ausência vs. zero, metas |
 | 3 | [API.md](./API.md) | Referência HTTP (todas as rotas) |
 | 4 | [DATABASE.md](./DATABASE.md) | Schema Postgres, migrations |
 | 5 | [DATA_SOURCES.md](./DATA_SOURCES.md) | TOTVS, Sheets, Portal RH |

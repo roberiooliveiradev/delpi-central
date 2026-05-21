@@ -1,12 +1,31 @@
 # Fontes de dados — medições do painel
 
+**Última atualização:** 2026-05-21
+
 O painel SI **não** armazena valores realizados no Postgres (exceto cache `period_scores`). Os realizados vêm de fontes operacionais por `source_key` / departamento.
+
+## Ausência vs. zero nas fontes
+
+| Comportamento esperado | Quem implementa |
+|------------------------|-----------------|
+| Sem registro no período → medição com `value: null` | Coletor / `FinancialMetricsSnapshotService` |
+| Registro com 0 na fonte → `value: 0.0` | Coletor (zero é realizado válido) |
+| UI e API expõem **Sem dados preenchidos** | `StrategicIndicatorsCalculator` + MFE |
+
+| Departamento | Status (2026-05) |
+|--------------|------------------|
+| Financeiro (Sheets EBITDA / custos fixos) | Alinhado — `null` sem linhas no período |
+| RH | Parcial — satisfação/PDI só entram no snapshot se existirem; demais métricas usam `null` na resolução |
+| Comercial | Repassa `null` do snapshot quando aplicável |
+| Qualidade | PPM ainda pode usar `default_value=0.0` quando falta dado |
+| Produção | `_build_measurement` ainda converte ausência em `0.0` |
+| Suprimentos / Engenharia | Depende do snapshot upstream |
 
 ## Resumo por departamento
 
 | Departamento | Fontes principais | Coletor (si_app) |
 |--------------|-------------------|------------------|
-| Financeiro | TOTVS (ROL), Google Sheets (EBITDA e custo fixo já em %; filial vazia = consolidado; filial preenchida = por unidade), recebíveis | `financial_indicators_snapshot_provider` |
+| Financeiro | TOTVS (ROL), Google Sheets (EBITDA e custo fixo já em %; filial vazia = consolidado; filial preenchida = por unidade), recebíveis. Sem linhas no período → `ebitda_over_rol_pct` / `fixed_cost_over_rol_pct` = `null` (não `0`). | `financial_indicators_snapshot_provider` |
 | Comercial | TOTVS (conversão, novos clientes, ROL novos) | `commercial_indicators_snapshot_provider` |
 | Produção | TOTVS (OTD, OEE), Sheets (MO, custo, depreciação) | `production_indicators_snapshot_provider` |
 | Qualidade | TOTVS (PPM, NC), Sheets (Kaizen, 5S) | `quality_indicators_snapshot_provider` |
