@@ -21,12 +21,19 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    logging.basicConfig(level=getattr(logging, args.log_level.upper(), logging.INFO))
+    logging.basicConfig(
+        level=getattr(logging, args.log_level.upper(), logging.INFO),
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
 
+    print(
+        "si_refresh_start (consulta TOTVS/Sheets/RH; pode levar 1–3 min em produção)...",
+        flush=True,
+    )
     started = time.perf_counter()
     upserted = refresh_period_scores_materialized()
     elapsed_ms = (time.perf_counter() - started) * 1000
-    print(f"refresh_ok periods={upserted} {elapsed_ms:.0f} ms")
+    print(f"refresh_ok periods={upserted} {elapsed_ms:.0f} ms", flush=True)
 
 
 if __name__ == "__main__":

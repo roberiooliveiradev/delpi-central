@@ -67,6 +67,12 @@ def refresh_period_scores_materialized() -> int:
     state_repo.mark_started()
     started = time.perf_counter()
 
+    logger.info(
+        "si_period_scores_refresh_start competence=%s trends_months=%d",
+        current_competence(),
+        settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS,
+    )
+
     try:
         invalidate_strategic_indicators_snapshot_cache()
 
