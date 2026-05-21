@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { DepartmentDetailHero } from "../components/DepartmentDetailHero";
 import { IndicatorDetailGrid } from "../components/IndicatorDetailGrid";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
@@ -59,6 +60,9 @@ export function DepartmentDetailsPage({
       getAccessToken,
     });
 
+  const loadingProgress = useSimulatedLoadingProgress(loading && !data);
+  const refreshingProgress = useSimulatedLoadingProgress(Boolean(refreshing && data));
+
   const filters = (
     <StrategicIndicatorsReferenceFilters
       referenceMonth={referenceMonth}
@@ -93,6 +97,7 @@ export function DepartmentDetailsPage({
           description="Aguarde enquanto a visão detalhada é carregada."
           variant="panel"
           tone="info"
+          progressPercent={loadingProgress}
         />
       </div>
     );
@@ -157,6 +162,7 @@ export function DepartmentDetailsPage({
           description="Os dados exibidos estão sendo atualizados para o novo período."
           variant="compact"
           tone="info"
+          progressPercent={refreshingProgress}
         />
       ) : null}
 

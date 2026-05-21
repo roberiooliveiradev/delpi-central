@@ -1,3 +1,4 @@
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { AlertsExecutiveAction } from "../components/AlertsExecutiveAction";
 import { AlertsPriorityHighlights } from "../components/AlertsPriorityHighlights";
@@ -54,6 +55,9 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
       getAccessToken,
     });
 
+  const loadingProgress = useSimulatedLoadingProgress(loading && !data);
+  const refreshingProgress = useSimulatedLoadingProgress(Boolean(refreshing && data));
+
   const filters = (
     <StrategicIndicatorsReferenceFilters
       referenceMonth={referenceMonth}
@@ -87,6 +91,7 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
           description="Aguarde enquanto os alertas reais são carregados."
           variant="panel"
           tone="info"
+          progressPercent={loadingProgress}
         />
       </div>
     );
@@ -151,6 +156,7 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
           description="Os dados exibidos estão sendo atualizados para o novo período."
           variant="compact"
           tone="info"
+          progressPercent={refreshingProgress}
         />
       ) : null}
 
