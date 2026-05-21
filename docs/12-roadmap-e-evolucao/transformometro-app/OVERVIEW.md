@@ -49,8 +49,8 @@ Tudo gira em torno de **`revisao_id`**:
 
 ## O que não é
 
-- **Não** é extensão do painel Strategic Indicators (SI continua consumindo snapshot de engenharia via Sheets até migrar a fonte).
-- **Não** substitui de imediato `dashboard-engineering` — na fase 1 pode coexistir; depois o engineering aponta para a nova API ou mantém só LMP.
+- **Não** é extensão do painel Strategic Indicators — o SI e o `api-delpi` leem o schema `transformometro` no Postgres (`TRANSFORMA_MAIS_DATA_SOURCE=postgres`).
+- O `dashboard-engineering` (TRANSFORMA+) usa as mesmas rotas `/engineering/transforma-mais/*`, agora alimentadas pelo banco.
 - **Não** usa planilha como fonte permanente após go-live (Sheets só migração / contingência).
 
 ## Permissões (manifesto — proposta)

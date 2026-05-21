@@ -178,7 +178,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
     <div className="dashboard-engineering dashboard-page">
       <FilterBar
         title="TRANSFORMA+ DELPI"
-        subtitle="Ganhos financeiros e processos de melhoria na planilha"
+        subtitle="Ganhos financeiros e processos de melhoria (Postgres transformometro)"
         currentPath={pathname ?? ENGINEERING_ROUTES.transforma}
         filterState={filterState}
         dateStart={dateStart}
@@ -192,9 +192,9 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
       />
       <DataSourceBanner variant="transforma" />
       <p className="ds-hint" style={{ margin: "0 0 1rem" }}>
-        Cadastro e cálculo oficiais migraram para o app{" "}
-        <a href="/apps/transformometro/dashboard">Transformômetro</a> (Postgres). Esta tela
-        permanece como visão legada da planilha até desativação.
+        Dados via API de engenharia, lidos do schema{" "}
+        <strong>transformometro</strong>. Cadastro completo no app{" "}
+        <a href="/apps/transformometro/dashboard">Transformômetro</a>.
       </p>
       <EngineeringStatusAlerts
         error={error}

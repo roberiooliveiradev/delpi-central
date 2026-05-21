@@ -1,4 +1,4 @@
-import { Database, Sheet } from "lucide-react";
+import { Database } from "lucide-react";
 
 type DataSourceBannerProps = {
   variant?: "all" | "lmp" | "transforma";
@@ -24,12 +24,12 @@ export function DataSourceBanner({ variant = "all" }: DataSourceBannerProps) {
       ) : null}
       {showTransforma ? (
         <article className="ds-source-banner">
-          <Sheet size={18} aria-hidden="true" />
+          <Database size={18} aria-hidden="true" />
           <div>
-            <strong>Planilha Google Sheets — TRANSFORMA+ DELPI</strong>
+            <strong>Postgres — schema transformometro</strong>
             <p>
-              Ganhos financeiros, horas economizadas e processos de melhoria vêm
-              do preenchimento manual da planilha Transforma+.
+              Ganhos, ROI e processos de melhoria vêm do cadastro oficial no
+              Transformômetro (mesma base do app dedicado).
             </p>
           </div>
         </article>

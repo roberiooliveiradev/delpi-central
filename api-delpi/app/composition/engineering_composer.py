@@ -19,10 +19,13 @@ from app.domain.services.transforma_mais.process_summary_calculator import (
     ProcessSummaryCalculator,
 )
 from app.infrastructure.persistence.google_sheets.transforma_mais.process_repository import (
-    ProcessRepository,
+    ProcessRepository as SheetsProcessRepository,
 )
 from app.infrastructure.persistence.google_sheets.transforma_mais.sheet_sources import (
     TransformaMaisSources,
+)
+from app.infrastructure.persistence.transformometro.process_repository import (
+    TransformometroProcessRepository,
 )
 from app.infrastructure.persistence.totvs.lmp_repositories.lmp_query_repository import (
     LMPQueryRepository,
@@ -51,14 +54,16 @@ def _build_transforma_mais_sources() -> TransformaMaisSources:
     )
 
 
-def _build_transforma_mais_repository() -> ProcessRepository:
+def _transforma_mais_use_postgres() -> bool:
+    return str(settings.TRANSFORMA_MAIS_DATA_SOURCE or "postgres").strip().lower() != "sheets"
+
+
+def _build_transforma_mais_repository():
+    if _transforma_mais_use_postgres():
+        return TransformometroProcessRepository()
     client = GoogleSheetsClient(timeout=int(settings.GOOGLE_SHEETS_TIMEOUT))
     sources = _build_transforma_mais_sources()
-
-    return ProcessRepository(
-        client=client,
-        sources=sources,
-    )
+    return SheetsProcessRepository(client=client, sources=sources)
 
 
 def _build_transforma_mais_calculator() -> ProcessSummaryCalculator:

@@ -81,8 +81,13 @@ Checklist (manual, Google Workspace):
 
 Mutações gravam em `transformometro.audit_logs` (entity_type, action, user_id, payload_json).
 
-## Coexistência com legado
+## Fonte para engenharia e SI
 
-- **Transformômetro (novo):** Postgres + calculador spec.
-- **TRANSFORMA+ no engineering:** ainda planilha via `strategic-indicators-api` / `api-delpi`.
-- Indicador de engenharia no SI pode ser apontado para `transformometro-api` em sprint futura.
+`api-delpi` e `strategic-indicators-api` leem o schema **`transformometro`** quando `TRANSFORMA_MAIS_DATA_SOURCE=postgres` (padrão no compose).
+
+Rotas inalteradas:
+
+- `GET /engineering/transforma-mais/processes`
+- `GET /engineering/transforma-mais/processes/summary`
+
+Contingência planilha: `TRANSFORMA_MAIS_DATA_SOURCE=sheets` no `.env`.

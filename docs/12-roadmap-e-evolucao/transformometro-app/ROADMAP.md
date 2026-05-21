@@ -61,7 +61,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Manifesto + script registro | `register-manifest.sh`, permissões completas | ✅ repo |
 | Registro RBAC no portal | Atribuir `transformometro.*` aos perfis | Pendente (manual) |
 | Desativar escrita na planilha | somente leitura ou desligada | Pendente (Google) |
-| Opcional: SI/engineering → `transformometro-api` | trocar fonte do indicador engenharia | Backlog |
+| SI/engineering → Postgres `transformometro` | `transformometro_read` + `TRANSFORMA_MAIS_DATA_SOURCE=postgres` | ✅ repo |
 
 ## Fase 4 — Melhorias (backlog)
 

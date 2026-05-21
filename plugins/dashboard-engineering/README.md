@@ -5,7 +5,7 @@ Microfrontend (Module Federation) para o departamento **Engenharia** no escopo d
 | Indicador | Aba | Fonte |
 |-----------|-----|--------|
 | % projetos/LMPs no prazo | Visão geral + **LMPs no prazo** | TOTVS Protheus (`GET /engineering/lmps/dashboard`) |
-| Ganhos TRANSFORMA+ | Visão geral + **TRANSFORMA+** | Planilha Google Sheets |
+| Ganhos TRANSFORMA+ | Visão geral + **TRANSFORMA+** | Postgres `transformometro` via `api-delpi` |
 
 ## Navegação
 
