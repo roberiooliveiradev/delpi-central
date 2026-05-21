@@ -38,8 +38,11 @@ class ImportPersistence(PluginBaseRepository):
 
     def import_all(self, raw: TransformometroRawData, *, replace_existing: bool) -> dict[str, int]:
         try:
+            reconcile_stats: dict[str, int] = {}
             if replace_existing:
                 self.truncate_cadastro()
+            else:
+                raw, reconcile_stats = reconcile_raw_with_database(self, raw)
 
             counts = {
                 "processos": self._import_processos(raw.processos),
@@ -50,7 +53,7 @@ class ImportPersistence(PluginBaseRepository):
                 "vinculos": self._import_vinculos(raw.revisao_recursos_compartilhados),
             }
             self._connection.commit()
-            return counts
+            return {**counts, **reconcile_stats}
         except Exception:
             self._connection.rollback()
             raise
@@ -66,8 +69,7 @@ class ImportPersistence(PluginBaseRepository):
                     filial_id, setor_id, gestor_responsavel, objetivo_processo,
                     status_processo, deletado
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, FALSE)
-                ON CONFLICT (processo_id) DO UPDATE SET
-                    codigo_processo = EXCLUDED.codigo_processo,
+                ON CONFLICT (codigo_processo) DO UPDATE SET
                     nome_processo = EXCLUDED.nome_processo,
                     descricao_processo = EXCLUDED.descricao_processo,
                     filial_id = EXCLUDED.filial_id,
@@ -106,10 +108,9 @@ class ImportPersistence(PluginBaseRepository):
                     data_implantacao, data_inicio_vigencia, data_fim_vigencia,
                     revisao_ativa, observacoes, deletado
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, FALSE)
-                ON CONFLICT (revisao_id) DO UPDATE SET
+                ON CONFLICT (chave_unica_processo_revisao) DO UPDATE SET
                     processo_id = EXCLUDED.processo_id,
                     versao_revisao = EXCLUDED.versao_revisao,
-                    chave_unica_processo_revisao = EXCLUDED.chave_unica_processo_revisao,
                     descricao_revisao = EXCLUDED.descricao_revisao,
                     motivo_revisao = EXCLUDED.motivo_revisao,
                     cenario_tipo = EXCLUDED.cenario_tipo,
@@ -296,8 +297,7 @@ class ImportPersistence(PluginBaseRepository):
                     valor_total_recorrente, data_inicio_vigencia, data_fim_vigencia,
                     centro_custo, criterio_rateio, status_recurso, observacoes, deletado
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, FALSE)
-                ON CONFLICT (recurso_compartilhado_id) DO UPDATE SET
-                    codigo_recurso = EXCLUDED.codigo_recurso,
+                ON CONFLICT (codigo_recurso) DO UPDATE SET
                     nome_recurso = EXCLUDED.nome_recurso,
                     categoria_recurso = EXCLUDED.categoria_recurso,
                     fornecedor = EXCLUDED.fornecedor,
@@ -369,6 +369,134 @@ class ImportPersistence(PluginBaseRepository):
             )
             count += 1
         return count
+
+
+def reconcile_raw_with_database(
+    repo: PluginBaseRepository,
+    raw: TransformometroRawData,
+) -> tuple[TransformometroRawData, dict[str, int]]:
+    """
+    Alinha IDs da planilha com registros já existentes no Postgres (ex.: testes manuais
+    com mesmo codigo_processo mas UUID diferente).
+    """
+    pid_remap: dict[str, str] = {}
+    rid_remap: dict[str, str] = {}
+    rcid_remap: dict[str, str] = {}
+
+    codigo_to_pid = {
+        row["codigo_processo"]: str(row["processo_id"])
+        for row in repo.fetch_all(
+            """
+            SELECT processo_id, codigo_processo
+            FROM transformometro.processos
+            WHERE deletado = FALSE
+            """
+        )
+    }
+
+    processos: list[dict[str, Any]] = []
+    for row in raw.processos:
+        sheet_pid = row["processo_id"]
+        codigo = row["codigo_processo"]
+        db_pid = codigo_to_pid.get(codigo)
+        if db_pid and sheet_pid != db_pid:
+            pid_remap[sheet_pid] = db_pid
+            row = {**row, "processo_id": db_pid}
+        processos.append(row)
+
+    def remap_pid(value: str | None) -> str | None:
+        if not value:
+            return value
+        return pid_remap.get(value, value)
+
+    chave_to_rid = {
+        row["chave_unica_processo_revisao"]: str(row["revisao_id"])
+        for row in repo.fetch_all(
+            """
+            SELECT revisao_id, chave_unica_processo_revisao
+            FROM transformometro.revisoes
+            WHERE deletado = FALSE
+            """
+        )
+    }
+
+    revisoes: list[dict[str, Any]] = []
+    for row in raw.revisoes:
+        sheet_rid = row["revisao_id"]
+        pid = remap_pid(row["processo_id"])
+        versao = row["versao_revisao"]
+        chave = f"{pid}|{versao}"
+        merged = {
+            **row,
+            "processo_id": pid,
+            "chave_unica_processo_revisao": chave,
+        }
+        db_rid = chave_to_rid.get(chave)
+        if db_rid and sheet_rid != db_rid:
+            rid_remap[sheet_rid] = db_rid
+            merged["revisao_id"] = db_rid
+        revisoes.append(merged)
+
+    def remap_rid(value: str | None) -> str | None:
+        if not value:
+            return value
+        return rid_remap.get(value, value)
+
+    codigo_to_rcid = {
+        row["codigo_recurso"]: str(row["recurso_compartilhado_id"])
+        for row in repo.fetch_all(
+            """
+            SELECT recurso_compartilhado_id, codigo_recurso
+            FROM transformometro.recursos_compartilhados
+            WHERE deletado = FALSE
+            """
+        )
+    }
+
+    recursos: list[dict[str, Any]] = []
+    for row in raw.recursos_compartilhados:
+        sheet_rid = row["recurso_compartilhado_id"]
+        codigo = row["codigo_recurso"]
+        db_rid = codigo_to_rcid.get(codigo)
+        if db_rid and sheet_rid != db_rid:
+            rcid_remap[sheet_rid] = db_rid
+            row = {**row, "recurso_compartilhado_id": db_rid}
+        recursos.append(row)
+
+    def remap_rcid(value: str | None) -> str | None:
+        if not value:
+            return value
+        return rcid_remap.get(value, value)
+
+    medicoes = [{**row, "revisao_id": remap_rid(row.get("revisao_id"))} for row in raw.medicoes]
+    investimentos = [
+        {**row, "revisao_id": remap_rid(row.get("revisao_id"))} for row in raw.investimentos
+    ]
+    vinculos = [
+        {
+            **row,
+            "revisao_id": remap_rid(row.get("revisao_id")),
+            "recurso_compartilhado_id": remap_rcid(row.get("recurso_compartilhado_id")),
+        }
+        for row in raw.revisao_recursos_compartilhados
+    ]
+
+    stats = {
+        "processo_ids_remapped": len(pid_remap),
+        "revisao_ids_remapped": len(rid_remap),
+        "recurso_ids_remapped": len(rcid_remap),
+    }
+    return (
+        TransformometroRawData(
+            processos=processos,
+            revisoes=revisoes,
+            medicoes=medicoes,
+            investimentos=investimentos,
+            recursos_compartilhados=recursos,
+            revisao_recursos_compartilhados=vinculos,
+        ),
+        stats,
+    )
 
 
 def normalize_raw_rows(raw: TransformometroRawData) -> TransformometroRawData:

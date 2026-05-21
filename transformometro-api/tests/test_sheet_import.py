@@ -54,6 +54,36 @@ def test_validate_ok_for_minimal_fixture():
     assert validation.sheet_counts["processos"] == 1
 
 
+def test_reconcile_remaps_processo_id_by_codigo():
+    raw = normalize_raw_rows(_minimal_raw())
+    sheet_pid = raw.processos[0]["processo_id"]
+    db_pid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+
+    class FakeRepo:
+        def fetch_all(self, query: str):
+            if "processos" in query:
+                return [
+                    {
+                        "processo_id": db_pid,
+                        "codigo_processo": raw.processos[0]["codigo_processo"],
+                    }
+                ]
+            if "revisoes" in query:
+                return []
+            return []
+
+    from tm_app.infrastructure.persistence.import_persistence import (
+        reconcile_raw_with_database,
+    )
+
+    merged, stats = reconcile_raw_with_database(FakeRepo(), raw)
+    assert merged.processos[0]["processo_id"] == db_pid
+    assert merged.revisoes[0]["processo_id"] == db_pid
+    assert merged.medicoes[0]["revisao_id"] == raw.revisoes[0]["revisao_id"]
+    assert stats["processo_ids_remapped"] == 1
+    assert sheet_pid != db_pid
+
+
 def test_validate_fails_on_orphan_revisao():
     raw = normalize_raw_rows(_minimal_raw())
     raw.revisoes[0]["processo_id"] = "99999999-9999-9999-9999-999999999999"

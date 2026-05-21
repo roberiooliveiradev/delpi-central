@@ -5,7 +5,8 @@ Migração Transforma+ (Google Sheets / CSV) → Postgres transformometro.
 Uso:
   cd transformometro-api
   python scripts/migrate_transforma_mais_sheet.py --preview
-  python scripts/migrate_transforma_mais_sheet.py --apply --replace
+  python scripts/migrate_transforma_mais_sheet.py --apply --replace   # 1ª carga / limpar testes
+  python scripts/migrate_transforma_mais_sheet.py --apply             # merge com cadastro existente
   python scripts/migrate_transforma_mais_sheet.py --apply --csv-dir ./exports
 
 Requer PLUGINS_DB_* e TRANSFORMA_MAIS_* no ambiente (ou .env na raiz do monorepo).

@@ -45,7 +45,8 @@ CLI:
 
 ```bash
 python scripts/migrate_transforma_mais_sheet.py --preview
-python scripts/migrate_transforma_mais_sheet.py --apply --replace   # truncate + import + recalc
+python scripts/migrate_transforma_mais_sheet.py --apply --replace   # truncate + import + recalc (recomendado na 1ª carga)
+python scripts/migrate_transforma_mais_sheet.py --apply             # merge (reconcilia PROC-0001 etc. já no banco)
 ```
 
 HTTP (JWT):
