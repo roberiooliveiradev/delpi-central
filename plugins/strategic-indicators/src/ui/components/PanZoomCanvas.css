@@ -21,26 +21,40 @@
   border-right: none;
 }
 
-.si-pan-zoom-shell--expanded {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  gap: 0;
-  padding: 12px 16px 16px;
+html:fullscreen,
+html:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   background: var(--app-canvas, var(--bg, #ffffff));
 }
 
-.si-pan-zoom-shell--expanded .si-pan-zoom__viewport {
-  flex: 1;
-  height: auto;
-  min-height: 0;
-  max-height: none;
-  border-radius: 16px;
+html:fullscreen .si-departments-page--immersive,
+html:-webkit-full-screen .si-departments-page--immersive {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
 }
 
-.si-pan-zoom-shell--expanded .si-pan-zoom-shell__bar {
-  flex-shrink: 0;
-  margin-bottom: 10px;
+html:fullscreen .si-pan-zoom-shell--immersive,
+html:-webkit-full-screen .si-pan-zoom-shell--immersive,
+.si-pan-zoom-shell--fullscreen.si-pan-zoom-shell--immersive {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+html:fullscreen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
+html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
+.si-pan-zoom-shell--fullscreen.si-pan-zoom-shell--immersive .si-pan-zoom__viewport {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
 }
 
 .si-pan-zoom-shell__bar {
@@ -141,6 +155,14 @@
   width: 100%;
   min-width: 0;
   pointer-events: auto;
+}
+
+.si-pan-zoom__floating-bar:has(.si-tree-map-floating--collapsed) {
+  justify-content: flex-start;
+}
+
+.si-pan-zoom__floating-controls:has(.si-tree-map-floating--collapsed) {
+  width: auto;
 }
 
 .si-pan-zoom__floating-nav .si-pan-zoom__nav {

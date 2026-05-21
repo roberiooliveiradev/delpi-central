@@ -10,6 +10,51 @@ import {
 import { usePanZoom, type PanZoomTransform } from "../hooks/usePanZoom";
 import "./PanZoomCanvas.css";
 
+function getFullscreenElement() {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return (
+    document.fullscreenElement ??
+    (document as Document & { webkitFullscreenElement?: Element | null })
+      .webkitFullscreenElement ??
+    null
+  );
+}
+
+async function requestBrowserFullscreen() {
+  const root = document.documentElement;
+
+  if (root.requestFullscreen) {
+    await root.requestFullscreen();
+    return;
+  }
+
+  const webkitRequest = (
+    root as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> }
+  ).webkitRequestFullscreen;
+
+  if (webkitRequest) {
+    await webkitRequest.call(root);
+  }
+}
+
+async function exitBrowserFullscreen() {
+  if (document.exitFullscreen) {
+    await document.exitFullscreen();
+    return;
+  }
+
+  const webkitExit = (
+    document as Document & { webkitExitFullscreen?: () => Promise<void> }
+  ).webkitExitFullscreen;
+
+  if (webkitExit) {
+    await webkitExit.call(document);
+  }
+}
+
 type PanZoomCanvasProps = {
   children: ReactNode;
   fitToken?: string | number;
@@ -29,49 +74,52 @@ export function PanZoomCanvas({
   allowFullscreen = true,
   immersive = false,
 }: PanZoomCanvasProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(
+    () =>
+      typeof document !== "undefined" &&
+      getFullscreenElement() === document.documentElement,
+  );
   const panZoom = usePanZoom({
-    fitToken: `${fitToken ?? ""}-${isExpanded ? "expanded" : "normal"}`,
-    fitPadding: isExpanded ? 40 : immersive ? 72 : 56,
+    fitToken: `${fitToken ?? ""}-${isFullscreen ? "fullscreen" : "normal"}`,
+    fitPadding: isFullscreen ? 32 : immersive ? 72 : 56,
   });
 
-  const toggleExpanded = useCallback(() => {
-    setIsExpanded((current) => !current);
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (getFullscreenElement()) {
+        await exitBrowserFullscreen();
+        return;
+      }
+
+      await requestBrowserFullscreen();
+    } catch {
+      // fullscreen pode falhar por política do navegador
+    }
   }, []);
 
   useEffect(() => {
-    if (!isExpanded) {
-      return;
-    }
+    const handleFullscreenChange = () => {
+      const active = getFullscreenElement() === document.documentElement;
+      setIsFullscreen(active);
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsExpanded(false);
+      if (active) {
+        window.requestAnimationFrame(() => {
+          panZoom.fitToView();
+        });
       }
     };
 
-    window.addEventListener("keydown", onKeyDown);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange,
+      );
     };
-  }, [isExpanded]);
-
-  useEffect(() => {
-    if (!isExpanded) {
-      return;
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      panZoom.fitToView();
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [isExpanded]);
+  }, [panZoom.fitToView]);
 
   const nav = (
     <div className="si-pan-zoom__nav" aria-label="Navegação do mapa">
@@ -98,12 +146,12 @@ export function PanZoomCanvas({
         <button
           type="button"
           className="si-pan-zoom__nav-btn"
-          onClick={toggleExpanded}
-          title={isExpanded ? "Sair da tela cheia" : "Expandir mapa"}
-          aria-label={isExpanded ? "Sair da tela cheia" : "Expandir mapa"}
-          aria-pressed={isExpanded}
+          onClick={() => void toggleFullscreen()}
+          title={isFullscreen ? "Sair da tela cheia (Esc)" : "Tela cheia"}
+          aria-label={isFullscreen ? "Sair da tela cheia" : "Entrar em tela cheia"}
+          aria-pressed={isFullscreen}
         >
-          {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </button>
       ) : null}
       <button
@@ -131,7 +179,7 @@ export function PanZoomCanvas({
     <div
       className={`si-pan-zoom-shell${
         immersive ? " si-pan-zoom-shell--immersive" : ""
-      }${isExpanded ? " si-pan-zoom-shell--expanded" : ""} ${className}`.trim()}
+      }${isFullscreen ? " si-pan-zoom-shell--fullscreen" : ""} ${className}`.trim()}
     >
       {!immersive && (toolbar || floatingControls) ? (
         <div className="si-pan-zoom-shell__bar">
