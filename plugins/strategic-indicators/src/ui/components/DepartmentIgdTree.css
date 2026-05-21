@@ -1,8 +1,8 @@
 /* Organograma: IGD → Departamentos → Indicadores */
 
 .si-org-chart--single-scope .si-org-chart__department-column {
-  min-width: 280px;
-  max-width: 340px;
+  min-width: var(--si-dept-slot-width, 360px);
+  max-width: var(--si-dept-slot-width, 360px);
 }
 
 .si-org-chart--single-scope .si-org-chart__department-scopes {
@@ -34,8 +34,8 @@
   min-width: max(
     100%,
     calc(
-      var(--si-dept-count, 7) *
-        (var(--si-org-chart-cols, 3) * 272px + 48px) + 120px
+      var(--si-dept-count, 7) * var(--si-dept-slot-width, 360px) +
+        (var(--si-dept-count, 7) - 1) * var(--si-dept-gap, 24px) + 80px
     )
   );
 }
@@ -81,7 +81,41 @@
 }
 
 .si-org-chart__level--departments {
+  align-items: center;
+  width: 100%;
+}
+
+.si-org-chart__igd-stack {
+  display: flex;
+  flex-direction: column;
   align-items: stretch;
+  gap: 10px;
+  width: 100%;
+}
+
+.si-org-chart__igd-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--si-card-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--si-accent, #2563eb) 10%, var(--si-card-bg));
+  color: var(--si-title);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.si-org-chart__igd-toggle:hover {
+  border-color: color-mix(in srgb, var(--si-accent, #2563eb) 45%, var(--si-card-border));
+}
+
+.si-org-chart__igd-chevron--open {
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
 }
 
 .si-org-chart__level-tag {
@@ -185,16 +219,22 @@
 }
 
 .si-org-chart__departments-fork {
-  position: relative;
+  display: flex;
+  justify-content: center;
   width: 100%;
 }
 
-.si-org-chart__departments-fork > .si-org-chart__departments-row {
+.si-org-chart__departments-connector {
   position: relative;
+  width: calc(
+    var(--si-dept-count, 7) * var(--si-dept-slot-width, 360px) +
+      max(0, var(--si-dept-count, 7) - 1) * var(--si-dept-gap, 24px)
+  );
+  max-width: 100%;
   padding-top: 28px;
 }
 
-.si-org-chart__departments-fork > .si-org-chart__departments-row::before {
+.si-org-chart__departments-connector::before {
   content: "";
   position: absolute;
   top: 0;
@@ -206,55 +246,66 @@
   border-radius: 2px;
 }
 
-.si-org-chart__departments-fork > .si-org-chart__departments-row::after {
+.si-org-chart__departments-connector::after {
   content: "";
   position: absolute;
   top: 14px;
-  left: calc(50% / var(--si-dept-count, 1));
-  right: calc(50% / var(--si-dept-count, 1));
+  left: calc(var(--si-dept-slot-width, 360px) / 2);
+  right: calc(var(--si-dept-slot-width, 360px) / 2);
   height: 3px;
   background: var(--si-org-line);
   border-radius: 2px;
 }
 
-.si-org-chart__departments-fork[style*="--si-dept-count: 1"]
-  > .si-org-chart__departments-row::after {
+.si-org-chart[style*="--si-dept-count: 1"] .si-org-chart__departments-connector::after {
   display: none;
 }
 
 .si-org-chart__departments-row {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(
+    var(--si-dept-count, 7),
+    var(--si-dept-slot-width, 360px)
+  );
+  gap: var(--si-dept-gap, 24px);
+  align-items: start;
   width: 100%;
-  padding: 4px 0 12px;
+  padding: 14px 0 12px;
 }
 
 .si-org-chart__department-column {
   position: relative;
   display: flex;
-  flex: 0 0 auto;
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
-  min-width: 280px;
-  max-width: 340px;
-  padding-top: 14px;
+  width: 100%;
+  min-width: 0;
 }
 
 .si-org-chart__department-column::before {
   content: "";
   position: absolute;
-  top: 0;
+  top: -14px;
   left: 50%;
   transform: translateX(-50%);
   width: 3px;
   height: 14px;
   background: var(--si-org-line);
   border-radius: 2px;
+}
+
+.si-org-chart__department-column::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--si-org-line);
 }
 
 .si-org-chart__department-anchor {
@@ -488,22 +539,19 @@
 }
 
 .si-org-chart__departments-row--one-expanded {
-  justify-content: center;
+  grid-template-columns: repeat(
+    var(--si-dept-count, 7),
+    var(--si-dept-slot-width, 360px)
+  );
 }
 
 .si-org-chart__department-column--solo-expanded {
-  flex: 1 1 720px;
-  min-width: min(100%, 560px);
-  max-width: min(96vw, 1400px);
+  z-index: 1;
 }
 
 .si-tree-dept__indicators--solo-expanded {
   padding-left: 10px;
   padding-right: 10px;
-}
-
-.si-org-chart__department-column--open:not(.si-org-chart__department-column--solo-expanded) {
-  min-width: 300px;
 }
 
 .si-tree-dept__indicator-list--row {
@@ -512,22 +560,22 @@
   flex-direction: row !important;
   justify-content: flex-start;
   align-items: stretch;
-  gap: 14px;
+  gap: 16px;
   width: 100%;
 }
 
 .si-tree-dept__indicator-list--row > .si-tree-indicator-card__link {
   display: block;
-  flex: 1 1 240px;
+  flex: 1 1 280px;
   width: auto;
-  min-width: 220px;
-  max-width: 320px;
+  min-width: 260px;
+  max-width: 340px;
 }
 
 .si-tree-dept__indicator-list--multi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
 }
 
 .si-tree-dept__indicator-list--multi-grid > .si-tree-indicator-card__link {
@@ -549,7 +597,11 @@
   width: 100%;
   max-width: none;
   gap: 12px;
-  padding: 16px;
+  padding: 18px;
+}
+
+.si-tree-dept-card .si-department-card {
+  width: 100%;
 }
 
 .si-tree-indicator-card__goals {
@@ -719,18 +771,22 @@
     display: none;
   }
 
+  .si-org-chart__departments-connector {
+    width: min(
+      100%,
+      calc(
+        var(--si-dept-count, 7) * var(--si-dept-slot-width, 360px) +
+          max(0, var(--si-dept-count, 7) - 1) * var(--si-dept-gap, 24px)
+      )
+    );
+  }
+
   .si-org-chart__departments-row {
-    flex-wrap: nowrap;
     overflow: visible;
   }
 
   .si-org-chart__department-scopes {
     grid-template-columns: 1fr;
-  }
-
-  .si-org-chart__department-column {
-    min-width: 280px;
-    max-width: 320px;
   }
 
   .si-tree-dept__indicator-list--row {
