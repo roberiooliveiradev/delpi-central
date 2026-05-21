@@ -199,6 +199,12 @@ export type AdminApp = {
   type?: string | null;
   version?: string | null;
   active?: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+  created_by_user_id?: string | null;
+  created_by_email?: string | null;
+  updated_by_user_id?: string | null;
+  updated_by_email?: string | null;
 };
 
 export type AdminAppRoute = {

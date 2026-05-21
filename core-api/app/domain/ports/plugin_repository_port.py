@@ -11,11 +11,24 @@ class PluginRepositoryPort(ABC):
         ...
 
     @abstractmethod
-    def create(self, data: Dict[str, Any]) -> None:
+    def create(
+        self,
+        data: Dict[str, Any],
+        *,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+    ) -> None:
         ...
 
     @abstractmethod
-    def update_version(self, plugin_id: str, version: str) -> None:
+    def update_version(
+        self,
+        plugin_id: str,
+        version: str,
+        *,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+    ) -> None:
         ...
 
     @abstractmethod
@@ -26,6 +39,8 @@ class PluginRepositoryPort(ABC):
         name: str,
         description: Optional[str],
         icon: Optional[str],
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
     ) -> None:
         ...
 

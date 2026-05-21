@@ -3,6 +3,7 @@
 from app.extensions.db import db
 from app.infrastructure.db.base_model import TimestampMixin
 
+
 class App(db.Model, TimestampMixin):
     __tablename__ = "apps"
 
@@ -14,6 +15,10 @@ class App(db.Model, TimestampMixin):
     type = db.Column(db.String(50), nullable=False)
     version = db.Column(db.String(20), nullable=True)
     active = db.Column(db.Boolean, default=True, nullable=False)
+    created_by_user_id = db.Column(db.UUID(as_uuid=True), nullable=True)
+    created_by_email = db.Column(db.String(255), nullable=True)
+    updated_by_user_id = db.Column(db.UUID(as_uuid=True), nullable=True)
+    updated_by_email = db.Column(db.String(255), nullable=True)
 
     routes = db.relationship(
         "AppRoute",

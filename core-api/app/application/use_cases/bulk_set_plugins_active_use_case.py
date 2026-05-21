@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
+from app.infrastructure.persistence.app_audit import apply_app_audit
 
 
 @dataclass(frozen=True)
@@ -19,7 +20,14 @@ class BulkSetPluginsActiveUseCase:
     def __init__(self, uow: UnitOfWork):
         self._uow = uow
 
-    def execute(self, ids: List[str], active: bool) -> BulkSetPluginsActiveResult:
+    def execute(
+        self,
+        ids: List[str],
+        active: bool,
+        *,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+    ) -> BulkSetPluginsActiveResult:
 
         if not ids:
             return BulkSetPluginsActiveResult(
@@ -41,6 +49,11 @@ class BulkSetPluginsActiveUseCase:
                 continue
 
             plugin.active = active
+            apply_app_audit(
+                plugin,
+                user_id=actor_user_id,
+                email=actor_email,
+            )
             updated += 1
 
         # 2️⃣ Evento global de plugin
