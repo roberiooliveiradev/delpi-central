@@ -1,12 +1,12 @@
 # Status atual — Transformômetro
 
-Atualizado: 2026-05-21 (Fase 3 — integração SI/api-delpi em produção).
+Atualizado: 2026-05-21 (Fase 4 — alertas, export CSV, comparativo, rateio/família).
 
 ## Entregue
 
 | Área | Status |
 |------|--------|
-| API + migrations V001–V003 | ✅ Produção |
+| API + migrations V001–V004 | ✅ Repo (V004 no próximo deploy) |
 | CRUD + UI cadastro + datas de vigência | ✅ |
 | Dashboard + recálculo materializado | ✅ |
 | Import planilha (CLI + UI + merge por código) | ✅ |
@@ -14,13 +14,16 @@ Atualizado: 2026-05-21 (Fase 3 — integração SI/api-delpi em produção).
 | Rotas integração engenharia (`/transformometro/integrations/...`) | ✅ |
 | api-delpi + SI via `transformometro_client` (HTTP) | ✅ |
 | Auth S2S `API_DELPI_INTERNAL_SERVICE_TOKEN` + JWT em threads (SI) | ✅ |
+| Fase 4 — alertas, export CSV, comparativo revisões, diagnóstico rateio | ✅ |
+| Fase 4 — campos família/agrupador no cadastro de processos | ✅ |
 
 ## Pendente (operacional)
 
 | Item | Responsável |
 |------|-------------|
 | Registrar/atualizar manifesto na Core API + RBAC | Ops — `register-manifest.sh` |
-| `TRANSFORMOMETRO_API_BASE_URL=http://transformometro-api:8000` no `.env` | Ops (se ainda ausente) |
+| Deploy Fase 4 (V004 + MFE alertas/export/comparativo) | Ops — rebuild + migrations |
+| `TRANSFORMOMETRO_API_BASE_URL=http://transformometro-api:8000` no `.env` | ✅ Produção |
 | Planilha somente leitura | Google Workspace |
 
 ## Variáveis de produção (checklist)

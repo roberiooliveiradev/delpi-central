@@ -31,6 +31,12 @@ from tm_app.infrastructure.persistence.repositories.recurso_repository import (
     RecursoRepository,
     VinculoRepository,
 )
+from tm_app.application.services.process_revision_compare_service import (
+    ProcessRevisionCompareService,
+)
+from tm_app.application.services.revisao_rateio_diagnostic_service import (
+    RevisaoRateioDiagnosticService,
+)
 from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
 from tm_app.interface.http.schemas.crud_schemas import (
     InvestimentoBody,
@@ -81,12 +87,14 @@ def list_processos(
     filial_id: str | None = None,
     setor_id: str | None = None,
     status: str | None = None,
+    familia_processo: str | None = None,
     q: str | None = None,
 ):
     rows = ProcessoRepository().list(
         filial_id=filial_id,
         setor_id=setor_id,
         status_processo=status,
+        familia_processo=familia_processo,
         q=q,
     )
     return ok({"total": len(rows), "items": rows_to_json(rows)})
@@ -142,6 +150,14 @@ def delete_processo(processo_id: str, request: Request):
 # --- Revisões ---
 
 
+@router.get("/processos/{processo_id}/comparativo")
+def processo_comparativo_revisoes(processo_id: str):
+    data = ProcessRevisionCompareService().compare(processo_id)
+    if not data:
+        return fail("Processo não encontrado.", 404)
+    return ok(data, "Comparativo de revisões.")
+
+
 @router.get("/processos/{processo_id}/revisoes")
 def list_revisoes(processo_id: str):
     rows = RevisaoRepository().list_by_processo(processo_id)
@@ -193,6 +209,14 @@ def delete_revisao(revisao_id: str, request: Request):
         return fail("Revisão não encontrada.", 404)
     _audit(request, "revisao", revisao_id, "delete", {})
     return ok(message="Revisão excluída.")
+
+
+@router.get("/revisoes/{revisao_id}/diagnostico-rateio")
+def revisao_diagnostico_rateio(revisao_id: str, competencia: str | None = None):
+    data = RevisaoRateioDiagnosticService().diagnose(revisao_id, competencia=competencia)
+    if not data:
+        return fail("Revisão não encontrada.", 404)
+    return ok(data, "Diagnóstico de rateio.")
 
 
 # --- Medições ---

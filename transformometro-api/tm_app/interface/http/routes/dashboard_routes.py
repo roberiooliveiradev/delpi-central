@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
+from fastapi.responses import Response
 
+from tm_app.application.services.dashboard_alerts_service import DashboardAlertsService
+from tm_app.application.services.dashboard_export_service import DashboardExportService
 from tm_app.application.services.dashboard_recalc_service import DashboardRecalcService
 from tm_app.core.responses import ok
 from tm_app.core.serialize import row_to_json, rows_to_json
@@ -113,3 +116,58 @@ def dashboard_processos(
     if setor_id:
         items = [i for i in items if (i.get("setor_id") or "") == setor_id]
     return ok({"total": len(items), "items": items[:limit]})
+
+
+@router.get("/alertas")
+def dashboard_alertas(
+    meses_consecutivos: int = Query(default=3, ge=1, le=24),
+    filial_id: str | None = None,
+    setor_id: str | None = None,
+    familia_processo: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
+):
+    data = DashboardAlertsService(min_consecutive_months=meses_consecutivos).list_negative_savings_alerts(
+        filial_id=filial_id,
+        setor_id=setor_id,
+        familia_processo=familia_processo,
+        competencia_inicio=competencia_inicio,
+        competencia_fim=competencia_fim,
+    )
+    return ok(data, "Alertas de economia líquida negativa.")
+
+
+@router.get("/por-familia")
+def dashboard_por_familia(
+    filial_id: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
+):
+    rows = DashboardCalculoRepository().query_resumo_por_familia(
+        filial_id=filial_id,
+        competencia_inicio=competencia_inicio,
+        competencia_fim=competencia_fim,
+    )
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.get("/export.csv")
+def dashboard_export_csv(
+    filial_id: str | None = None,
+    setor_id: str | None = None,
+    familia_processo: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
+):
+    content = DashboardExportService().build_csv(
+        filial_id=filial_id,
+        setor_id=setor_id,
+        familia_processo=familia_processo,
+        competencia_inicio=competencia_inicio,
+        competencia_fim=competencia_fim,
+    )
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="transformometro-dashboard.csv"'},
+    )

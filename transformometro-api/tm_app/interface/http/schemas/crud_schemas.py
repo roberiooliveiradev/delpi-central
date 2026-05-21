@@ -14,6 +14,8 @@ class ProcessoCreateBody(BaseModel):
     gestor_responsavel: Optional[str] = None
     objetivo_processo: Optional[str] = None
     codigo_processo: Optional[str] = None
+    familia_processo: Optional[str] = Field(default=None, max_length=64)
+    agrupador_ferramenta: Optional[str] = Field(default=None, max_length=128)
 
 
 class ProcessoUpdateBody(ProcessoCreateBody):

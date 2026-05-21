@@ -64,13 +64,20 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | SI/engineering → transformometro-api HTTP | `transformometro_client` + gateway + token interno | ✅ |
 | Testes integração engenharia | `tests/test_engineering_transforma_mais.py` | ✅ |
 
-## Fase 4 — Melhorias (backlog)
+## Fase 4 — Melhorias (2 sprints) ✅ MVP no repo / 🚧 workflow pendente
 
-- Rateio por família de processo / agrupador “ferramenta”
-- Alertas (processo com economia líquida negativa > N meses)
-- Export Excel/PDF
-- Comparativo multi-revisão na UI
-- Workflow de aprovação de revisão
+| Entrega | Detalhe | Status |
+|---------|---------|--------|
+| Migration V004 | `familia_processo`, `agrupador_ferramenta` em `processos` | ✅ |
+| Rateio / família | Campos no CRUD + filtro listagem + `GET /dashboard/por-familia` | ✅ API |
+| Alertas economia negativa | `GET /dashboard/alertas` (≥ N meses consecutivos) | ✅ |
+| Export dashboard | `GET /dashboard/export.csv` | ✅ |
+| Comparativo revisões | `GET /processos/{id}/comparativo` + tabela no detalhe | ✅ |
+| Diagnóstico rateio | `GET /revisoes/{id}/diagnostico-rateio` + painel na revisão | ✅ |
+| UI Fase 4 | Alertas + CSV no dashboard; família no cadastro; comparativo + rateio | ✅ |
+| Testes | `tests/test_phase4_services.py` | ✅ |
+| Workflow de aprovação de revisão | — | Backlog |
+| Export Excel/PDF | CSV entregue; PDF/Excel formatado | Backlog |
 
 ## Matriz de reaproveitamento
 
@@ -93,6 +100,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 ## Próximo passo imediato
 
-1. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
-2. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
-3. **Fase 4:** rateio por família, alertas economia negativa, export Excel
+1. **Deploy Fase 4:** rebuild `transformometro-api` + MFE; `TM_RUN_MIGRATIONS_ON_STARTUP=true` (V004)
+2. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
+3. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
+4. **Backlog Fase 4+:** workflow aprovação revisão, export PDF/Excel

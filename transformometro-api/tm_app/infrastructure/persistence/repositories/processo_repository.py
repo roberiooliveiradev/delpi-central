@@ -28,6 +28,7 @@ class ProcessoRepository(PluginBaseRepository):
         filial_id: str | None = None,
         setor_id: str | None = None,
         status_processo: str | None = None,
+        familia_processo: str | None = None,
         q: str | None = None,
     ) -> list[dict[str, Any]]:
         clauses = ["p.deletado = FALSE"]
@@ -42,12 +43,15 @@ class ProcessoRepository(PluginBaseRepository):
         if status_processo:
             clauses.append("p.status_processo = %s")
             params.append(status_processo)
+        if familia_processo:
+            clauses.append("p.familia_processo = %s")
+            params.append(familia_processo)
         if q:
             clauses.append(
-                "(p.nome_processo ILIKE %s OR p.codigo_processo ILIKE %s)"
+                "(p.nome_processo ILIKE %s OR p.codigo_processo ILIKE %s OR p.familia_processo ILIKE %s)"
             )
             like = f"%{q}%"
-            params.extend([like, like])
+            params.extend([like, like, like])
 
         where_sql = " AND ".join(clauses)
         return self.fetch_all(
@@ -76,8 +80,8 @@ class ProcessoRepository(PluginBaseRepository):
             INSERT INTO transformometro.processos (
                 codigo_processo, nome_processo, descricao_processo,
                 filial_id, setor_id, gestor_responsavel, objetivo_processo,
-                status_processo
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                status_processo, familia_processo, agrupador_ferramenta
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
             (
@@ -89,6 +93,8 @@ class ProcessoRepository(PluginBaseRepository):
                 data.get("gestor_responsavel"),
                 data.get("objetivo_processo"),
                 data["status_processo"],
+                data.get("familia_processo"),
+                data.get("agrupador_ferramenta"),
             ),
         )
         if row is None:
@@ -106,6 +112,8 @@ class ProcessoRepository(PluginBaseRepository):
                 gestor_responsavel = %s,
                 objetivo_processo = %s,
                 status_processo = %s,
+                familia_processo = %s,
+                agrupador_ferramenta = %s,
                 updated_at = NOW()
             WHERE processo_id = %s AND deletado = FALSE
             RETURNING *
@@ -118,6 +126,8 @@ class ProcessoRepository(PluginBaseRepository):
                 data.get("gestor_responsavel"),
                 data.get("objetivo_processo"),
                 data["status_processo"],
+                data.get("familia_processo"),
+                data.get("agrupador_ferramenta"),
                 processo_id,
             ),
         )

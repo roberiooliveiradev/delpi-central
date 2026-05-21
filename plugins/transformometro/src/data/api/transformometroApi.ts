@@ -62,6 +62,8 @@ export type Processo = {
   descricao_processo?: string | null;
   gestor_responsavel?: string | null;
   objetivo_processo?: string | null;
+  familia_processo?: string | null;
+  agrupador_ferramenta?: string | null;
 };
 
 export type Revisao = {
@@ -427,4 +429,87 @@ export function fetchDashboardProcessos(
     `/dashboard/processos${qs}`,
     getAccessToken
   );
+}
+
+export type DashboardAlertItem = {
+  processo_id: string;
+  codigo_processo?: string;
+  nome_processo?: string;
+  months: number;
+  competencia_inicio?: string;
+  competencia_fim?: string;
+  economia_liquida_acumulada: number;
+  familia_processo?: string | null;
+  agrupador_ferramenta?: string | null;
+};
+
+export type RevisionCompareItem = {
+  revisao_id: string;
+  versao_revisao?: string;
+  cenario_tipo?: string;
+  revisao_ativa?: boolean;
+  ultima_competencia?: string | null;
+  meses_com_dados?: number;
+  totais: {
+    economia_bruta: number;
+    economia_liquida_mes: number;
+    investimento_unico_mes: number;
+    custo_recorrente_mes: number;
+    horas_economizadas_mes: number;
+  };
+};
+
+export type RateioDiagnostic = {
+  revisao_id: string;
+  competencia?: string;
+  economia_bruta: number;
+  custo_recursos_compartilhados_mes: number;
+  economia_liquida_mes: number;
+  rateio_excede_ganho: boolean;
+  message: string;
+};
+
+export function fetchDashboardAlertas(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  const qs = params ? `?${new URLSearchParams(params)}` : "";
+  return request<{ min_consecutive_months: number; total: number; items: DashboardAlertItem[] }>(
+    `/dashboard/alertas${qs}`,
+    getAccessToken
+  );
+}
+
+export async function downloadDashboardCsv(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  const qs = params ? `?${new URLSearchParams(params)}` : "";
+  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/dashboard/export.csv${qs}`, {
+    headers: buildAuthHeaders(getAccessToken),
+  });
+  if (!response.ok) {
+    throw new Error(`Exportação falhou (HTTP ${response.status})`);
+  }
+  return response.blob();
+}
+
+export function fetchProcessoComparativo(
+  processoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<{
+    processo: Processo;
+    total_revisoes: number;
+    items: RevisionCompareItem[];
+  }>(`/processos/${processoId}/comparativo`, getAccessToken);
+}
+
+export function fetchRevisaoDiagnosticoRateio(
+  revisaoId: string,
+  getAccessToken?: () => string | undefined,
+  competencia?: string
+) {
+  const qs = competencia ? `?competencia=${encodeURIComponent(competencia)}` : "";
+  return request<RateioDiagnostic>(`/revisoes/${revisaoId}/diagnostico-rateio${qs}`, getAccessToken);
 }

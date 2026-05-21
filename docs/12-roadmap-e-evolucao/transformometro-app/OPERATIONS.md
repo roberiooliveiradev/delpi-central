@@ -16,7 +16,9 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 
 1. Cadastro e alterações somente pela **UI** ou API (`transformometro-api`).
 2. Após mudanças relevantes (revisão ativa, vigências, medições): **Dashboard → Recalcular**.
-3. Não editar a planilha Transforma+ em produção (somente leitura ou desligada).
+3. **Alertas** (economia líquida negativa ≥3 meses) e **Exportar CSV** no dashboard (Fase 4).
+4. Cadastro: preencher **família** e **agrupador ferramenta** quando o processo participa de rateio compartilhado.
+5. Não editar a planilha Transforma+ em produção (somente leitura ou desligada).
 
 ## Importação / reimportação
 

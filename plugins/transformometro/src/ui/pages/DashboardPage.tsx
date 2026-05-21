@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Clock, Coins, Lightbulb, Percent, RefreshCw } from "lucide-react";
+import { AlertTriangle, Clock, Coins, Download, Lightbulb, Percent, RefreshCw } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { ChartCard } from "../../components/ChartCard";
@@ -25,11 +25,14 @@ import { StatusAlerts } from "../../components/StatusAlerts";
 import { CHART_COLORS } from "../../constants/chartColors";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
+  downloadDashboardCsv,
+  fetchDashboardAlertas,
   fetchDashboardEvolucao,
   fetchDashboardProcessos,
   fetchDashboardResumo,
   fetchOptions,
   recalcularDashboard,
+  type DashboardAlertItem,
   type DashboardEvolucaoItem,
   type DashboardProcessoItem,
   type DashboardResumo,
@@ -64,6 +67,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [recalculando, setRecalculando] = useState(false);
+  const [alertas, setAlertas] = useState<DashboardAlertItem[]>([]);
+  const [exportando, setExportando] = useState(false);
 
   const apiParams = useMemo(() => {
     const params: Record<string, string> = {};
@@ -80,16 +85,21 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     setRefreshing(true);
     setError(null);
     try {
-      const [r, ev, proc, opts] = await Promise.all([
+      const [r, ev, proc, opts, al] = await Promise.all([
         fetchDashboardResumo(getAccessToken, apiParams),
         fetchDashboardEvolucao(getAccessToken, apiParams),
         fetchDashboardProcessos(getAccessToken, apiParams),
         fetchOptions(getAccessToken),
+        fetchDashboardAlertas(getAccessToken, {
+          ...apiParams,
+          meses_consecutivos: "3",
+        }),
       ]);
       setResumo(r);
       setEvolucao(ev.items);
       setProcessos(proc.items);
       setOptions(opts);
+      setAlertas(al.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dashboard");
     } finally {
@@ -101,6 +111,24 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function handleExportCsv() {
+    setExportando(true);
+    setError(null);
+    try {
+      const blob = await downloadDashboardCsv(getAccessToken, apiParams);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "transformometro-dashboard.csv";
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao exportar CSV");
+    } finally {
+      setExportando(false);
+    }
+  }
 
   async function handleRecalcular() {
     setRecalculando(true);
@@ -217,15 +245,26 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         onRefresh={() => void load()}
         refreshing={refreshing}
         headerActions={
-          <button
-            type="button"
-            className="ds-ghost-btn"
-            disabled={recalculando || isBusy}
-            onClick={() => void handleRecalcular()}
-          >
-            <RefreshCw size={16} />
-            {recalculando ? "Recalculando…" : "Recalcular"}
-          </button>
+          <>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              disabled={exportando || isBusy}
+              onClick={() => void handleExportCsv()}
+            >
+              <Download size={16} />
+              {exportando ? "Exportando…" : "Exportar CSV"}
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              disabled={recalculando || isBusy}
+              onClick={() => void handleRecalcular()}
+            >
+              <RefreshCw size={16} />
+              {recalculando ? "Recalculando…" : "Recalcular"}
+            </button>
+          </>
         }
       />
 
@@ -245,6 +284,25 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           variant="compact"
           sticky
         />
+      ) : null}
+
+      {alertas.length > 0 ? (
+        <section className="ds-card ds-alert-panel">
+          <h2 className="ds-section-title">
+            <AlertTriangle size={18} />
+            Alertas — economia líquida negativa (≥3 meses)
+          </h2>
+          <ul className="ds-alert-list">
+            {alertas.map((item) => (
+              <li key={item.processo_id}>
+                <strong>{item.codigo_processo}</strong> — {item.nome_processo}:{" "}
+                {item.months} meses ({item.competencia_inicio} → {item.competencia_fim}), acumulado{" "}
+                {formatCurrency(item.economia_liquida_acumulada)}
+                {item.familia_processo ? ` · família ${item.familia_processo}` : ""}
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       <section className="ds-kpi-grid" aria-busy={isBusy}>

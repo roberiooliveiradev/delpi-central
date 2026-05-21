@@ -41,6 +41,8 @@ export function ProcessosPage({
     filial_id: "01",
     setor_id: "engenharia",
     status_processo: "ativo",
+    familia_processo: "",
+    agrupador_ferramenta: "",
   });
 
   const listParams = useMemo(() => {
@@ -78,7 +80,14 @@ export function ProcessosPage({
     e.preventDefault();
     setError(null);
     try {
-      const created = await createProcesso(form, getAccessToken);
+      const created = await createProcesso(
+        {
+          ...form,
+          familia_processo: form.familia_processo.trim() || undefined,
+          agrupador_ferramenta: form.agrupador_ferramenta.trim() || undefined,
+        },
+        getAccessToken
+      );
       setShowForm(false);
       await load();
       onOpenProcesso(created.processo_id);
@@ -98,6 +107,7 @@ export function ProcessosPage({
       },
       { key: "filial", header: "Filial", render: (row) => row.filial_id },
       { key: "setor", header: "Setor", render: (row) => row.setor_id },
+      { key: "familia", header: "Família", render: (row) => row.familia_processo ?? "—" },
       { key: "status", header: "Status", render: (row) => row.status_processo },
     ],
     []
@@ -244,6 +254,24 @@ export function ProcessosPage({
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="ds-filter-box">
+                <label htmlFor="tm-form-familia">Família (rateio)</label>
+                <input
+                  id="tm-form-familia"
+                  placeholder="ex.: ia, automação"
+                  value={form.familia_processo}
+                  onChange={(e) => setForm({ ...form, familia_processo: e.target.value })}
+                />
+              </div>
+              <div className="ds-filter-box">
+                <label htmlFor="tm-form-ferramenta">Agrupador ferramenta</label>
+                <input
+                  id="tm-form-ferramenta"
+                  placeholder="ex.: ChatGPT, Power Automate"
+                  value={form.agrupador_ferramenta}
+                  onChange={(e) => setForm({ ...form, agrupador_ferramenta: e.target.value })}
+                />
               </div>
             </div>
             <div className="ds-cadastro-form__actions">

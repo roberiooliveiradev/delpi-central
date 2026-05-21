@@ -222,3 +222,149 @@ class DashboardCalculoRepository(PluginBaseRepository):
             """,
             tuple(params),
         )
+
+    def query_process_monthly_liquida(
+        self,
+        *,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        familia_processo: str | None = None,
+        competencia_inicio: str | None = None,
+        competencia_fim: str | None = None,
+    ) -> list[dict[str, Any]]:
+        clauses = ["d.cenario_tipo IN ('melhoria', 'automacao', 'correcao')"]
+        params: list[Any] = []
+
+        if filial_id:
+            clauses.append("d.filial_id = %s")
+            params.append(filial_id)
+        if setor_id:
+            clauses.append("d.setor_id = %s")
+            params.append(setor_id)
+        if familia_processo:
+            clauses.append("p.familia_processo = %s")
+            params.append(familia_processo)
+        if competencia_inicio:
+            clauses.append("d.competencia >= %s")
+            params.append(competencia_inicio)
+        if competencia_fim:
+            clauses.append("d.competencia <= %s")
+            params.append(competencia_fim)
+
+        where_sql = " AND ".join(clauses)
+
+        return self.fetch_all(
+            f"""
+            SELECT
+                d.processo_id,
+                p.codigo_processo,
+                p.nome_processo,
+                p.filial_id,
+                p.setor_id,
+                p.familia_processo,
+                p.agrupador_ferramenta,
+                d.competencia,
+                SUM(d.economia_liquida_mes) AS economia_liquida_mes
+            FROM transformometro.dashboard_calculos d
+            JOIN transformometro.processos p ON p.processo_id = d.processo_id
+            WHERE {where_sql}
+            GROUP BY
+                d.processo_id, p.codigo_processo, p.nome_processo,
+                p.filial_id, p.setor_id, p.familia_processo, p.agrupador_ferramenta,
+                d.competencia
+            ORDER BY d.processo_id, d.competencia
+            """,
+            tuple(params),
+        )
+
+    def query_export_rows(
+        self,
+        *,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        familia_processo: str | None = None,
+        competencia_inicio: str | None = None,
+        competencia_fim: str | None = None,
+    ) -> list[dict[str, Any]]:
+        clauses: list[str] = []
+        params: list[Any] = []
+
+        if filial_id:
+            clauses.append("d.filial_id = %s")
+            params.append(filial_id)
+        if setor_id:
+            clauses.append("d.setor_id = %s")
+            params.append(setor_id)
+        if familia_processo:
+            clauses.append("p.familia_processo = %s")
+            params.append(familia_processo)
+        if competencia_inicio:
+            clauses.append("d.competencia >= %s")
+            params.append(competencia_inicio)
+        if competencia_fim:
+            clauses.append("d.competencia <= %s")
+            params.append(competencia_fim)
+
+        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+
+        return self.fetch_all(
+            f"""
+            SELECT
+                p.codigo_processo,
+                p.nome_processo,
+                p.familia_processo,
+                p.agrupador_ferramenta,
+                d.filial_id,
+                d.setor_id,
+                d.competencia,
+                d.cenario_tipo,
+                d.economia_bruta,
+                d.economia_liquida_mes,
+                d.investimento_unico_mes,
+                d.custo_recorrente_mes,
+                d.horas_economizadas_mes
+            FROM transformometro.dashboard_calculos d
+            JOIN transformometro.processos p ON p.processo_id = d.processo_id
+            {where_sql}
+            ORDER BY d.competencia, p.codigo_processo
+            """,
+            tuple(params),
+        )
+
+    def query_resumo_por_familia(
+        self,
+        *,
+        filial_id: str | None = None,
+        competencia_inicio: str | None = None,
+        competencia_fim: str | None = None,
+    ) -> list[dict[str, Any]]:
+        clauses = ["p.familia_processo IS NOT NULL", "p.familia_processo <> ''"]
+        params: list[Any] = []
+
+        if filial_id:
+            clauses.append("d.filial_id = %s")
+            params.append(filial_id)
+        if competencia_inicio:
+            clauses.append("d.competencia >= %s")
+            params.append(competencia_inicio)
+        if competencia_fim:
+            clauses.append("d.competencia <= %s")
+            params.append(competencia_fim)
+
+        where_sql = " AND ".join(clauses)
+
+        return self.fetch_all(
+            f"""
+            SELECT
+                p.familia_processo,
+                COUNT(DISTINCT d.processo_id) AS processos,
+                SUM(d.economia_bruta) AS economia_bruta,
+                SUM(d.economia_liquida_mes) AS economia_liquida_mes
+            FROM transformometro.dashboard_calculos d
+            JOIN transformometro.processos p ON p.processo_id = d.processo_id
+            WHERE {where_sql}
+            GROUP BY p.familia_processo
+            ORDER BY economia_liquida_mes DESC
+            """,
+            tuple(params),
+        )

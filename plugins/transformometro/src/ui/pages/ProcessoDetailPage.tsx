@@ -10,9 +10,11 @@ import {
   createRevisao,
   fetchOptions,
   fetchProcesso,
+  fetchProcessoComparativo,
   fetchRevisoes,
   type OptionsData,
   type Processo,
+  type RevisionCompareItem,
   type Revisao,
 } from "../../data/api/transformometroApi";
 import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils/dateInputs";
@@ -40,6 +42,7 @@ export function ProcessoDetailPage({
   const [refreshing, setRefreshing] = useState(false);
   const [showRevisaoForm, setShowRevisaoForm] = useState(false);
   const [selectedRevisaoId, setSelectedRevisaoId] = useState<string | null>(null);
+  const [comparativo, setComparativo] = useState<RevisionCompareItem[]>([]);
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
     cenario_tipo: "baseline",
@@ -53,14 +56,16 @@ export function ProcessoDetailPage({
     setRefreshing(true);
     setError(null);
     try {
-      const [proc, revs, opts] = await Promise.all([
+      const [proc, revs, opts, comp] = await Promise.all([
         fetchProcesso(processoId, getAccessToken),
         fetchRevisoes(processoId, getAccessToken),
         fetchOptions(getAccessToken),
+        fetchProcessoComparativo(processoId, getAccessToken),
       ]);
       setProcesso(proc);
       setRevisoes(revs.items);
       setOptions(opts);
+      setComparativo(comp.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar");
     } finally {
@@ -134,7 +139,15 @@ export function ProcessoDetailPage({
     <div className="dashboard-transformometro dashboard-page">
       <PageHeader
         title={`${processo.codigo_processo} — ${processo.nome_processo}`}
-        subtitle={`Filial ${processo.filial_id} · ${processo.setor_id} · ${processo.status_processo}`}
+        subtitle={[
+          `Filial ${processo.filial_id}`,
+          processo.setor_id,
+          processo.status_processo,
+          processo.familia_processo ? `família ${processo.familia_processo}` : null,
+          processo.agrupador_ferramenta ? processo.agrupador_ferramenta : null,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.processos}
         onNavigate={onNavigate}
         onRefresh={() => void load()}
@@ -246,6 +259,44 @@ export function ProcessoDetailPage({
               </button>
             </div>
           </form>
+        </section>
+      ) : null}
+
+      {comparativo.length > 0 ? (
+        <section className="ds-card ds-table-section">
+          <div className="ds-table-section__header">
+            <h2 className="ds-section-title">Comparativo de revisões</h2>
+          </div>
+          <div className="ds-table-wrap">
+            <table className="ds-table">
+              <thead>
+                <tr>
+                  <th>Versão</th>
+                  <th>Cenário</th>
+                  <th>Ativa</th>
+                  <th>Última competência</th>
+                  <th>Meses c/ dados</th>
+                  <th>Economia bruta</th>
+                  <th>Economia líquida</th>
+                  <th>Horas/mês</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparativo.map((row) => (
+                  <tr key={row.revisao_id}>
+                    <td>{row.versao_revisao ?? "—"}</td>
+                    <td>{row.cenario_tipo ?? "—"}</td>
+                    <td>{row.revisao_ativa ? "sim" : "—"}</td>
+                    <td>{row.ultima_competencia ?? "—"}</td>
+                    <td>{row.meses_com_dados ?? 0}</td>
+                    <td>{row.totais.economia_bruta.toLocaleString("pt-BR")}</td>
+                    <td>{row.totais.economia_liquida_mes.toLocaleString("pt-BR")}</td>
+                    <td>{row.totais.horas_economizadas_mes.toLocaleString("pt-BR")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       ) : null}
 

@@ -11,6 +11,7 @@ import {
   fetchInvestimentos,
   fetchMedicao,
   fetchRecursos,
+  fetchRevisaoDiagnosticoRateio,
   fetchVinculos,
   updateRevisao,
   upsertMedicao,
@@ -18,6 +19,7 @@ import {
   type Medicao,
   type OptionsData,
   type RecursoCompartilhado,
+  type RateioDiagnostic,
   type Revisao,
   type VinculoRecurso,
 } from "../../data/api/transformometroApi";
@@ -63,6 +65,7 @@ export function RevisaoCadastroPanel({
   const [vinculos, setVinculos] = useState<VinculoRecurso[]>([]);
   const [recursos, setRecursos] = useState<RecursoCompartilhado[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rateioDiag, setRateioDiag] = useState<RateioDiagnostic | null>(null);
 
   const [invForm, setInvForm] = useState({
     tipo_investimento: "unico",
@@ -110,16 +113,18 @@ export function RevisaoCadastroPanel({
     setLoading(true);
     onError(null);
     try {
-      const [med, inv, vin, rec] = await Promise.all([
+      const [med, inv, vin, rec, diag] = await Promise.all([
         fetchMedicao(revisao.revisao_id, getAccessToken),
         fetchInvestimentos(revisao.revisao_id, getAccessToken),
         fetchVinculos(revisao.revisao_id, getAccessToken),
         fetchRecursos(getAccessToken),
+        fetchRevisaoDiagnosticoRateio(revisao.revisao_id, getAccessToken).catch(() => null),
       ]);
       setMedicao(med ? { ...med, revisao_id: revisao.revisao_id } : emptyMedicao(revisao.revisao_id));
       setInvestimentos(inv.items);
       setVinculos(vin.items);
       setRecursos(rec.items);
+      setRateioDiag(diag);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao carregar cadastro da revisão");
     } finally {
@@ -279,6 +284,27 @@ export function RevisaoCadastroPanel({
           </button>
         ) : null}
       </div>
+
+      {rateioDiag ? (
+        <div
+          className={[
+            "ds-card",
+            "ds-rateio-diag",
+            rateioDiag.rateio_excede_ganho ? "ds-rateio-diag--warn" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          role="status"
+        >
+          <p className="ds-rateio-diag__message">{rateioDiag.message}</p>
+          <p className="ds-hint">
+            Competência {rateioDiag.competencia ?? "—"} · bruta{" "}
+            {rateioDiag.economia_bruta.toLocaleString("pt-BR")} · recursos{" "}
+            {rateioDiag.custo_recursos_compartilhados_mes.toLocaleString("pt-BR")} · líquida{" "}
+            {rateioDiag.economia_liquida_mes.toLocaleString("pt-BR")}
+          </p>
+        </div>
+      ) : null}
 
       <form className="ds-cadastro-panel__block" onSubmit={handleSaveRevisaoDatas}>
         <h3 className="ds-section-title">Vigência da revisão</h3>
