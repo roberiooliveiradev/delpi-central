@@ -178,3 +178,25 @@
     font-size: 48px;
   }
 }
+
+.si-trend-hero--tree {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 300px;
+  padding: 16px 18px;
+  border-radius: 22px;
+}
+
+.si-trend-hero--tree .si-trend-hero__value {
+  font-size: 36px;
+}
+
+.si-trend-hero--tree .si-trend-hero__description {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.si-trend-hero--tree .si-trend-hero__metrics {
+  display: none;
+}

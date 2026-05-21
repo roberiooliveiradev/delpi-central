@@ -19,7 +19,7 @@ function defaultFilterState(): StrategicIndicatorsFilterState {
     referenceMonth: getCurrentStrategicIndicatorsMonthValue(),
     viewMode: "consolidated",
     branch: "01",
-    monthsToCompare: 3,
+    monthsToCompare: 6,
   };
 }
 
@@ -137,7 +137,7 @@ export function buildStrategicIndicatorsFilterSearchParams(
     params.set("branch", state.branch);
   }
 
-  if (state.monthsToCompare !== 3) {
+  if (state.monthsToCompare !== 6) {
     params.set("months", String(state.monthsToCompare));
   }
 

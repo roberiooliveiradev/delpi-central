@@ -14,6 +14,7 @@ type StrategicIndicatorsReferenceFiltersProps = {
   onViewModeChange: (value: StrategicIndicatorsViewMode) => void;
   onBranchChange: (value: string) => void;
   onMonthsToCompareChange?: (value: number) => void;
+  className?: string;
 };
 
 export function StrategicIndicatorsReferenceFilters({
@@ -26,12 +27,13 @@ export function StrategicIndicatorsReferenceFilters({
   onViewModeChange,
   onBranchChange,
   onMonthsToCompareChange,
+  className = "",
 }: StrategicIndicatorsReferenceFiltersProps) {
   return (
     <div
       className={`si-reference-filters ${
         showMonthsToCompare ? "si-reference-filters--with-comparison" : ""
-      }`}
+      } ${className}`.trim()}
     >
       <label className="si-reference-filters__field">
         <span className="si-reference-filters__label">Mês de referência</span>

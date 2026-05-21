@@ -245,6 +245,7 @@ class StrategicIndicatorsSnapshotService:
             measurements=measurements,
             measurement_errors=measurement_errors,
             department_id=department_id,
+            branch=branch,
         )
         self._persist_calculation_snapshot(
             period=period,
@@ -391,6 +392,7 @@ class StrategicIndicatorsSnapshotService:
             measurements=measurements_current,
             measurement_errors=errors_current,
             department_id=department_id,
+            branch=branch,
         )
         previous = self._build_period_snapshot(
             period=previous_period_resolved,
@@ -398,6 +400,7 @@ class StrategicIndicatorsSnapshotService:
             measurements=measurements_previous,
             measurement_errors=errors_previous,
             department_id=department_id,
+            branch=branch,
         )
         self._persist_calculation_snapshot(
             period=current_period,
@@ -466,6 +469,7 @@ class StrategicIndicatorsSnapshotService:
         measurements: list[StrategicIndicatorMeasuredValue],
         measurement_errors: list[dict],
         department_id: str | None,
+        branch: str | None = None,
     ) -> StrategicIndicatorsPeriodSnapshot:
         calculated_indicators = self._calculator.calculate_indicators(
             indicators_catalog=catalog.indicators_catalog,
@@ -474,6 +478,7 @@ class StrategicIndicatorsSnapshotService:
             start_date=period.start_date,
             end_date=period.end_date,
             competence=period.competence,
+            scope_branch=branch,
         )
 
         calculated_departments = self._calculator.calculate_departments(
@@ -483,6 +488,7 @@ class StrategicIndicatorsSnapshotService:
             start_date=period.start_date,
             end_date=period.end_date,
             competence=period.competence,
+            scope_branch=branch,
         )
 
         for index, department in enumerate(calculated_departments):
@@ -643,57 +649,13 @@ class StrategicIndicatorsSnapshotService:
                 ([], []),
             )
 
-            calculated_indicators = self._calculator.calculate_indicators(
-                indicators_catalog=catalog.indicators_catalog,
-                measurements=measurements,
-                department_id=department_id,
-                start_date=period.start_date,
-                end_date=period.end_date,
-                competence=period.competence,
-            )
-
-            calculated_departments = self._calculator.calculate_departments(
-                departments_catalog=catalog.departments_catalog,
-                indicators_catalog=catalog.indicators_catalog,
-                measurements=measurements,
-                start_date=period.start_date,
-                end_date=period.end_date,
-                competence=period.competence,
-            )
-
-            for index, department in enumerate(calculated_departments):
-                strategic_summary = catalog.goals_by_department.get(
-                    department.department_id,
-                    department.strategic_summary,
-                )
-                if strategic_summary != department.strategic_summary:
-                    calculated_departments[index] = StrategicDepartmentCalculatedValue(
-                        department_id=department.department_id,
-                        department_name=department.department_name,
-                        short_name=department.short_name,
-                        weight_pct=department.weight_pct,
-                        strategic_summary=strategic_summary,
-                        aggregation_mode=department.aggregation_mode,
-                        score=department.score,
-                        contribution=department.contribution,
-                        classification=department.classification,
-                        trend=department.trend,
-                        indicators=department.indicators,
-                    )
-
-            igd, igd_exact, classification = self._calculator.calculate_igd(
-                calculated_departments
-            )
-
-            snapshot = StrategicIndicatorsPeriodSnapshot(
+            snapshot = self._build_period_snapshot(
                 period=period,
+                catalog=catalog,
                 measurements=measurements,
                 measurement_errors=measurement_errors,
-                calculated_indicators=calculated_indicators,
-                calculated_departments=calculated_departments,
-                igd=igd,
-                igd_exact=igd_exact,
-                classification=classification,
+                department_id=department_id,
+                branch=branch,
             )
             snapshots.append(snapshot)
             self._persist_calculation_snapshot(

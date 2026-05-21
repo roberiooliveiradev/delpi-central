@@ -21,6 +21,7 @@ from si_app.application.use_cases.strategic_indicators.get_indicators_use_case i
 from si_app.application.use_cases.strategic_indicators.get_trends_real_use_case import (
     GetStrategicIndicatorsTrendsRealUseCase,
 )
+from si_app.shared.goal_scope import BRANCH_UNIT_CODES, is_branch_unit_scope
 
 
 @dataclass(frozen=True)
@@ -270,14 +271,14 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
         if normalized_mode == "branch" and normalized_branch:
             scope_key = (
                 normalized_branch
-                if normalized_branch in {"01", "02"}
-                else "01"
+                if is_branch_unit_scope(normalized_branch)
+                else BRANCH_UNIT_CODES[0]
             )
             return [
                 _TreeScopeConfig(
                     scope_key=scope_key,
                     scope_label=f"Filial {normalized_branch}",
-                    branch=normalized_branch,
+                    branch=scope_key,
                 )
             ]
 
@@ -287,16 +288,14 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
                 scope_label="Consolidado",
                 branch=None,
             ),
-            _TreeScopeConfig(
-                scope_key="01",
-                scope_label="Filial 01",
-                branch="01",
-            ),
-            _TreeScopeConfig(
-                scope_key="02",
-                scope_label="Filial 02",
-                branch="02",
-            ),
+            *[
+                _TreeScopeConfig(
+                    scope_key=branch_code,
+                    scope_label=f"Filial {branch_code}",
+                    branch=branch_code,
+                )
+                for branch_code in BRANCH_UNIT_CODES
+            ],
         ]
 
     @staticmethod

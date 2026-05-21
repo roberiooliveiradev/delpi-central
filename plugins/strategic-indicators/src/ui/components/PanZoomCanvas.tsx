@@ -14,21 +14,25 @@ type PanZoomCanvasProps = {
   children: ReactNode;
   fitToken?: string | number;
   toolbar?: ReactNode;
+  floatingControls?: ReactNode;
   className?: string;
   allowFullscreen?: boolean;
+  immersive?: boolean;
 };
 
 export function PanZoomCanvas({
   children,
   fitToken,
   toolbar,
+  floatingControls,
   className = "",
   allowFullscreen = true,
+  immersive = false,
 }: PanZoomCanvasProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const panZoom = usePanZoom({
     fitToken: `${fitToken ?? ""}-${isExpanded ? "expanded" : "normal"}`,
-    fitPadding: isExpanded ? 40 : 56,
+    fitPadding: isExpanded ? 40 : immersive ? 72 : 56,
   });
 
   const toggleExpanded = useCallback(() => {
@@ -69,69 +73,74 @@ export function PanZoomCanvas({
     return () => window.cancelAnimationFrame(frame);
   }, [isExpanded]);
 
+  const nav = (
+    <div className="si-pan-zoom__nav" aria-label="Navegação do mapa">
+      <button
+        type="button"
+        className="si-pan-zoom__nav-btn"
+        onClick={panZoom.zoomOut}
+        title="Diminuir zoom"
+        aria-label="Diminuir zoom"
+      >
+        <Minus size={16} />
+      </button>
+      <span className="si-pan-zoom__zoom-label">{panZoom.zoomPercent}%</span>
+      <button
+        type="button"
+        className="si-pan-zoom__nav-btn"
+        onClick={panZoom.zoomIn}
+        title="Aumentar zoom"
+        aria-label="Aumentar zoom"
+      >
+        <Plus size={16} />
+      </button>
+      {allowFullscreen ? (
+        <button
+          type="button"
+          className="si-pan-zoom__nav-btn"
+          onClick={toggleExpanded}
+          title={isExpanded ? "Sair da tela cheia" : "Expandir mapa"}
+          aria-label={isExpanded ? "Sair da tela cheia" : "Expandir mapa"}
+          aria-pressed={isExpanded}
+        >
+          {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </button>
+      ) : null}
+      <button
+        type="button"
+        className="si-pan-zoom__nav-btn"
+        onClick={panZoom.fitToView}
+        title="Ajustar à tela"
+        aria-label="Ajustar à tela"
+      >
+        <RotateCcw size={16} />
+      </button>
+      <button
+        type="button"
+        className="si-pan-zoom__nav-btn"
+        onClick={panZoom.resetView}
+        title="Zoom 100% e posição inicial"
+        aria-label="Restaurar visualização"
+      >
+        <span className="si-pan-zoom__reset-label">100%</span>
+      </button>
+    </div>
+  );
+
   return (
     <div
-      className={`si-pan-zoom-shell${isExpanded ? " si-pan-zoom-shell--expanded" : ""} ${className}`.trim()}
+      className={`si-pan-zoom-shell${
+        immersive ? " si-pan-zoom-shell--immersive" : ""
+      }${isExpanded ? " si-pan-zoom-shell--expanded" : ""} ${className}`.trim()}
     >
-      <div className="si-pan-zoom-shell__bar">
-        {toolbar ? (
-          <div className="si-pan-zoom-shell__toolbar">{toolbar}</div>
-        ) : null}
-
-        <div className="si-pan-zoom-shell__nav" aria-label="Navegação do mapa">
-          <button
-            type="button"
-            className="si-pan-zoom-shell__nav-btn"
-            onClick={panZoom.zoomOut}
-            title="Diminuir zoom"
-            aria-label="Diminuir zoom"
-          >
-            <Minus size={16} />
-          </button>
-          <span className="si-pan-zoom-shell__zoom-label">
-            {panZoom.zoomPercent}%
-          </span>
-          <button
-            type="button"
-            className="si-pan-zoom-shell__nav-btn"
-            onClick={panZoom.zoomIn}
-            title="Aumentar zoom"
-            aria-label="Aumentar zoom"
-          >
-            <Plus size={16} />
-          </button>
-          {allowFullscreen ? (
-            <button
-              type="button"
-              className="si-pan-zoom-shell__nav-btn"
-              onClick={toggleExpanded}
-              title={isExpanded ? "Sair da tela cheia" : "Expandir mapa"}
-              aria-label={isExpanded ? "Sair da tela cheia" : "Expandir mapa"}
-              aria-pressed={isExpanded}
-            >
-              {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-            </button>
+      {!immersive && (toolbar || floatingControls) ? (
+        <div className="si-pan-zoom-shell__bar">
+          {toolbar ? (
+            <div className="si-pan-zoom-shell__toolbar">{toolbar}</div>
           ) : null}
-          <button
-            type="button"
-            className="si-pan-zoom-shell__nav-btn"
-            onClick={panZoom.fitToView}
-            title="Ajustar à tela"
-            aria-label="Ajustar à tela"
-          >
-            <RotateCcw size={16} className="si-pan-zoom-shell__fit-icon" />
-          </button>
-          <button
-            type="button"
-            className="si-pan-zoom-shell__nav-btn"
-            onClick={panZoom.resetView}
-            title="Zoom 100% e posição inicial"
-            aria-label="Restaurar visualização"
-          >
-            <span className="si-pan-zoom-shell__reset-label">100%</span>
-          </button>
+          {nav}
         </div>
-      </div>
+      ) : null}
 
       <div
         ref={panZoom.viewportRef}
@@ -140,11 +149,21 @@ export function PanZoomCanvas({
         }`}
         {...panZoom.viewportProps}
       >
+        {immersive ? (
+          <div className="si-pan-zoom__floating-bar" data-pan-zoom-lock="true">
+            {floatingControls ? (
+              <div className="si-pan-zoom__floating-controls">
+                {floatingControls}
+              </div>
+            ) : null}
+            <div className="si-pan-zoom__floating-nav">{nav}</div>
+          </div>
+        ) : null}
+
         <div className="si-pan-zoom__hint">
           <Move size={14} aria-hidden />
           <span>
             Arraste para navegar · Scroll ou pinça para zoom · Espaço + arraste
-            · Botões à direita para ajustar
           </span>
         </div>
 

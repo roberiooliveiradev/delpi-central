@@ -187,3 +187,90 @@ def test_department_consolidated_score_is_average_of_branch_idds() -> None:
         end_date="30-04-2026",
     )
     assert calculated[0].unit_gaps == {"01": 0.0, "02": 5.0}
+
+
+def test_scope_branch_02_uses_filial_unit_value_and_goal() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    indicator = StrategicIndicatorCatalogItem(
+        indicator_id="hr-pdi",
+        department_id="hr",
+        indicator_name="PDIs ativos",
+        weight_pct=10,
+        goal_label="8 PDIs",
+        goal_value=8.0,
+        goal_periodicity="monthly",
+        scope_type="consolidated",
+        performance_direction="higher_is_better",
+        branch_goals={},
+    )
+
+    calculated = calculator.calculate_indicators(
+        indicators_catalog=[indicator],
+        measurements=[
+            StrategicIndicatorMeasuredValue(
+                indicator_id="hr-pdi",
+                department_id="hr",
+                value=9.5,
+                source="portal_rh_pdi_count",
+                unit_values={"01": 10.0, "02": 5.0},
+            )
+        ],
+        competence="2026-04",
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        scope_branch="02",
+    )
+
+    assert len(calculated) == 1
+    assert calculated[0].value == 5.0
+    assert calculated[0].score is not None
+    assert calculated[0].score < 8.0
+
+
+def test_scope_branch_02_department_average_of_units_single_branch() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    catalog = [
+        StrategicIndicatorCatalogItem(
+            indicator_id="hr-pdi",
+            department_id="hr",
+            indicator_name="PDIs",
+            weight_pct=100,
+            goal_label="8",
+            goal_value=8.0,
+            goal_periodicity="monthly",
+            scope_type="consolidated",
+            performance_direction="higher_is_better",
+            branch_goals={},
+        )
+    ]
+    measurements = [
+        StrategicIndicatorMeasuredValue(
+            indicator_id="hr-pdi",
+            department_id="hr",
+            value=9.5,
+            source="test",
+            unit_values={"01": 10.0, "02": 5.0},
+        )
+    ]
+
+    departments = calculator.calculate_departments(
+        departments_catalog=[
+            StrategicDepartmentCatalogItem(
+                department_id="hr",
+                department_name="RH",
+                short_name="RH",
+                weight_pct=15,
+                strategic_summary="",
+                aggregation_mode="average_of_units",
+            )
+        ],
+        indicators_catalog=catalog,
+        measurements=measurements,
+        competence="2026-04",
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        scope_branch="02",
+    )
+
+    assert len(departments) == 1
+    assert departments[0].score == 6.25
