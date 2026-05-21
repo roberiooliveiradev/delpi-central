@@ -139,6 +139,22 @@ export function createRevisao(
   });
 }
 
+export function updateRevisao(
+  revisaoId: string,
+  payload: Partial<Revisao> & {
+    processo_id: string;
+    versao_revisao: string;
+    cenario_tipo: string;
+    data_inicio_vigencia: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<Revisao>(`/revisoes/${revisaoId}`, getAccessToken, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function activateRevisao(
   revisaoId: string,
   getAccessToken?: () => string | undefined
@@ -175,6 +191,8 @@ export type Investimento = {
   valor_total: number;
   recorrencia: string;
   categoria_investimento?: string | null;
+  data_investimento?: string | null;
+  meses_vigencia?: number | null;
 };
 
 export type RecursoCompartilhado = {
@@ -188,6 +206,8 @@ export type RecursoCompartilhado = {
   status_recurso: string;
   categoria_recurso?: string | null;
   fornecedor?: string | null;
+  data_inicio_vigencia?: string | null;
+  data_fim_vigencia?: string | null;
 };
 
 export type VinculoRecurso = {
@@ -197,6 +217,8 @@ export type VinculoRecurso = {
   nome_recurso?: string;
   codigo_recurso?: string;
   ativo: boolean;
+  data_inicio_uso?: string | null;
+  data_fim_uso?: string | null;
 };
 
 export function fetchMedicao(
@@ -277,7 +299,13 @@ export function fetchVinculos(
 }
 
 export function createVinculo(
-  payload: { revisao_id: string; recurso_compartilhado_id: string; ativo?: boolean },
+  payload: {
+    revisao_id: string;
+    recurso_compartilhado_id: string;
+    ativo?: boolean;
+    data_inicio_uso?: string;
+    data_fim_uso?: string;
+  },
   getAccessToken?: () => string | undefined
 ) {
   return request<VinculoRecurso>("/revisao-recursos-compartilhados", getAccessToken, {

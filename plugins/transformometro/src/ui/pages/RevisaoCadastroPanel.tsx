@@ -12,6 +12,7 @@ import {
   fetchMedicao,
   fetchRecursos,
   fetchVinculos,
+  updateRevisao,
   upsertMedicao,
   type Investimento,
   type Medicao,
@@ -20,6 +21,12 @@ import {
   type Revisao,
   type VinculoRecurso,
 } from "../../data/api/transformometroApi";
+import {
+  optionalDateField,
+  todayDateInput,
+  toDateInputValue,
+  toMonthInputValue,
+} from "../../utils/dateInputs";
 
 const TIPOS_CUSTO = ["fixo", "variavel", "assinatura", "licenca"] as const;
 
@@ -64,6 +71,8 @@ export function RevisaoCadastroPanel({
     valor_unitario: 0,
     recorrencia: "unico",
     categoria_investimento: "",
+    data_investimento: todayDateInput(),
+    meses_vigencia: "",
   });
 
   const [recursoForm, setRecursoForm] = useState({
@@ -73,9 +82,29 @@ export function RevisaoCadastroPanel({
     valor_total_recorrente: 0,
     criterio_rateio: "igualitario",
     status_recurso: "ativo",
+    data_inicio_vigencia: "",
+    data_fim_vigencia: "",
   });
   const [showRecursoForm, setShowRecursoForm] = useState(false);
   const [vinculoRecursoId, setVinculoRecursoId] = useState("");
+  const [vinculoDatas, setVinculoDatas] = useState({
+    data_inicio_uso: "",
+    data_fim_uso: "",
+  });
+
+  const [revisaoDatas, setRevisaoDatas] = useState({
+    data_inicio_vigencia: toDateInputValue(revisao.data_inicio_vigencia),
+    data_implantacao: toDateInputValue(revisao.data_implantacao),
+    data_fim_vigencia: toDateInputValue(revisao.data_fim_vigencia),
+  });
+
+  useEffect(() => {
+    setRevisaoDatas({
+      data_inicio_vigencia: toDateInputValue(revisao.data_inicio_vigencia),
+      data_implantacao: toDateInputValue(revisao.data_implantacao),
+      data_fim_vigencia: toDateInputValue(revisao.data_fim_vigencia),
+    });
+  }, [revisao.revisao_id, revisao.data_inicio_vigencia, revisao.data_implantacao, revisao.data_fim_vigencia]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -102,6 +131,29 @@ export function RevisaoCadastroPanel({
     void load();
   }, [load]);
 
+  async function handleSaveRevisaoDatas(e: React.FormEvent) {
+    e.preventDefault();
+    onError(null);
+    try {
+      await updateRevisao(
+        revisao.revisao_id,
+        {
+          processo_id: revisao.processo_id,
+          versao_revisao: revisao.versao_revisao,
+          cenario_tipo: revisao.cenario_tipo,
+          revisao_ativa: revisao.revisao_ativa,
+          data_inicio_vigencia: revisaoDatas.data_inicio_vigencia,
+          data_implantacao: optionalDateField(revisaoDatas.data_implantacao),
+          data_fim_vigencia: optionalDateField(revisaoDatas.data_fim_vigencia),
+        },
+        getAccessToken
+      );
+      onRevisaoUpdated();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Erro ao salvar vigência da revisão");
+    }
+  }
+
   async function handleSaveMedicao(e: React.FormEvent) {
     e.preventDefault();
     onError(null);
@@ -126,6 +178,10 @@ export function RevisaoCadastroPanel({
           valor_unitario: invForm.valor_unitario,
           recorrencia: invForm.recorrencia,
           categoria_investimento: invForm.categoria_investimento || undefined,
+          data_investimento: optionalDateField(invForm.data_investimento),
+          meses_vigencia: invForm.meses_vigencia
+            ? Number.parseInt(invForm.meses_vigencia, 10)
+            : undefined,
         },
         getAccessToken
       );
@@ -136,6 +192,8 @@ export function RevisaoCadastroPanel({
         valor_unitario: 0,
         recorrencia: "unico",
         categoria_investimento: "",
+        data_investimento: todayDateInput(),
+        meses_vigencia: "",
       });
       await load();
     } catch (err) {
@@ -147,7 +205,14 @@ export function RevisaoCadastroPanel({
     e.preventDefault();
     onError(null);
     try {
-      const created = await createRecurso(recursoForm, getAccessToken);
+      const created = await createRecurso(
+        {
+          ...recursoForm,
+          data_inicio_vigencia: optionalDateField(recursoForm.data_inicio_vigencia),
+          data_fim_vigencia: optionalDateField(recursoForm.data_fim_vigencia),
+        },
+        getAccessToken
+      );
       setShowRecursoForm(false);
       setVinculoRecursoId(created.recurso_compartilhado_id);
       await load();
@@ -162,10 +227,16 @@ export function RevisaoCadastroPanel({
     onError(null);
     try {
       await createVinculo(
-        { revisao_id: revisao.revisao_id, recurso_compartilhado_id: vinculoRecursoId },
+        {
+          revisao_id: revisao.revisao_id,
+          recurso_compartilhado_id: vinculoRecursoId,
+          data_inicio_uso: optionalDateField(vinculoDatas.data_inicio_uso),
+          data_fim_uso: optionalDateField(vinculoDatas.data_fim_uso),
+        },
         getAccessToken
       );
       setVinculoRecursoId("");
+      setVinculoDatas({ data_inicio_uso: "", data_fim_uso: "" });
       await load();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao vincular recurso");
@@ -208,6 +279,50 @@ export function RevisaoCadastroPanel({
           </button>
         ) : null}
       </div>
+
+      <form className="ds-cadastro-panel__block" onSubmit={handleSaveRevisaoDatas}>
+        <h3 className="ds-section-title">Vigência da revisão</h3>
+        <p className="ds-hint">
+          Define o período em que a revisão entra no cálculo do dashboard. Deixe fim vazio para
+          vigência aberta.
+        </p>
+        <div className="ds-filters-row">
+          <label>
+            Início vigência
+            <input
+              type="date"
+              required
+              value={revisaoDatas.data_inicio_vigencia}
+              onChange={(e) =>
+                setRevisaoDatas({ ...revisaoDatas, data_inicio_vigencia: e.target.value })
+              }
+            />
+          </label>
+          <label>
+            Implantação
+            <input
+              type="date"
+              value={revisaoDatas.data_implantacao}
+              onChange={(e) =>
+                setRevisaoDatas({ ...revisaoDatas, data_implantacao: e.target.value })
+              }
+            />
+          </label>
+          <label>
+            Fim vigência
+            <input
+              type="date"
+              value={revisaoDatas.data_fim_vigencia}
+              onChange={(e) =>
+                setRevisaoDatas({ ...revisaoDatas, data_fim_vigencia: e.target.value })
+              }
+            />
+          </label>
+        </div>
+        <button type="submit" className="ds-primary-btn">
+          Salvar vigência
+        </button>
+      </form>
 
       <form className="ds-cadastro-panel__block" onSubmit={handleSaveMedicao}>
         <h3 className="ds-section-title">Medição operacional</h3>
@@ -284,6 +399,19 @@ export function RevisaoCadastroPanel({
               }
             />
           </label>
+          <label>
+            Mês de referência (metadado)
+            <input
+              type="month"
+              value={toMonthInputValue(medicao.base_referencia_mes)}
+              onChange={(e) =>
+                setMedicao({
+                  ...medicao,
+                  base_referencia_mes: e.target.value || undefined,
+                })
+              }
+            />
+          </label>
         </div>
         <button type="submit" className="ds-primary-btn">
           Salvar medição
@@ -302,6 +430,8 @@ export function RevisaoCadastroPanel({
                 <th>Qtd</th>
                 <th>Unit.</th>
                 <th>Total</th>
+                <th>Data</th>
+                <th>Meses vig.</th>
                 <th />
               </tr>
             </thead>
@@ -313,6 +443,8 @@ export function RevisaoCadastroPanel({
                   <td>{inv.quantidade}</td>
                   <td>{inv.valor_unitario.toLocaleString("pt-BR")}</td>
                   <td>{inv.valor_total.toLocaleString("pt-BR")}</td>
+                  <td>{toDateInputValue(inv.data_investimento) || "—"}</td>
+                  <td>{inv.meses_vigencia ?? "—"}</td>
                   <td>
                     <button
                       type="button"
@@ -391,6 +523,27 @@ export function RevisaoCadastroPanel({
                 ))}
               </select>
             </label>
+            <label>
+              Data do investimento
+              <input
+                type="date"
+                value={invForm.data_investimento}
+                onChange={(e) =>
+                  setInvForm({ ...invForm, data_investimento: e.target.value })
+                }
+              />
+            </label>
+            <label>
+              Meses de vigência
+              <input
+                type="number"
+                min={1}
+                step={1}
+                placeholder="Opcional"
+                value={invForm.meses_vigencia}
+                onChange={(e) => setInvForm({ ...invForm, meses_vigencia: e.target.value })}
+              />
+            </label>
           </div>
           <button type="submit" className="ds-primary-btn">
             Adicionar investimento
@@ -406,6 +559,9 @@ export function RevisaoCadastroPanel({
               <li key={v.vinculo_id}>
                 <span>
                   {v.codigo_recurso} — {v.nome_recurso}
+                  {v.data_inicio_uso || v.data_fim_uso
+                    ? ` (${toDateInputValue(v.data_inicio_uso) || "…"} → ${toDateInputValue(v.data_fim_uso) || "…"})`
+                    : ""}
                 </span>
                 <button
                   type="button"
@@ -435,6 +591,26 @@ export function RevisaoCadastroPanel({
                 </option>
               ))}
             </select>
+          </label>
+          <label>
+            Início uso
+            <input
+              type="date"
+              value={vinculoDatas.data_inicio_uso}
+              onChange={(e) =>
+                setVinculoDatas({ ...vinculoDatas, data_inicio_uso: e.target.value })
+              }
+            />
+          </label>
+          <label>
+            Fim uso
+            <input
+              type="date"
+              value={vinculoDatas.data_fim_uso}
+              onChange={(e) =>
+                setVinculoDatas({ ...vinculoDatas, data_fim_uso: e.target.value })
+              }
+            />
           </label>
           <button type="submit" className="ds-primary-btn" disabled={!vinculoRecursoId}>
             Vincular
@@ -504,6 +680,26 @@ export function RevisaoCadastroPanel({
                     </option>
                   ))}
                 </select>
+              </label>
+              <label>
+                Início vigência (catálogo)
+                <input
+                  type="date"
+                  value={recursoForm.data_inicio_vigencia}
+                  onChange={(e) =>
+                    setRecursoForm({ ...recursoForm, data_inicio_vigencia: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Fim vigência (catálogo)
+                <input
+                  type="date"
+                  value={recursoForm.data_fim_vigencia}
+                  onChange={(e) =>
+                    setRecursoForm({ ...recursoForm, data_fim_vigencia: e.target.value })
+                  }
+                />
               </label>
             </div>
             <button type="submit" className="ds-primary-btn">

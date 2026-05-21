@@ -15,6 +15,7 @@ import {
   type Processo,
   type Revisao,
 } from "../../data/api/transformometroApi";
+import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils/dateInputs";
 import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -42,7 +43,9 @@ export function ProcessoDetailPage({
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
     cenario_tipo: "baseline",
-    data_inicio_vigencia: new Date().toISOString().slice(0, 10),
+    data_inicio_vigencia: todayDateInput(),
+    data_implantacao: "",
+    data_fim_vigencia: "",
     revisao_ativa: true,
   });
 
@@ -77,7 +80,12 @@ export function ProcessoDetailPage({
       await createRevisao(
         {
           processo_id: processoId,
-          ...revForm,
+          versao_revisao: revForm.versao_revisao,
+          cenario_tipo: revForm.cenario_tipo,
+          data_inicio_vigencia: revForm.data_inicio_vigencia,
+          revisao_ativa: revForm.revisao_ativa,
+          data_implantacao: optionalDateField(revForm.data_implantacao),
+          data_fim_vigencia: optionalDateField(revForm.data_fim_vigencia),
         },
         getAccessToken
       );
@@ -196,6 +204,28 @@ export function ProcessoDetailPage({
                   }
                 />
               </div>
+              <div className="ds-filter-box">
+                <label htmlFor="tm-rev-implantacao">Implantação</label>
+                <input
+                  id="tm-rev-implantacao"
+                  type="date"
+                  value={revForm.data_implantacao}
+                  onChange={(e) =>
+                    setRevForm({ ...revForm, data_implantacao: e.target.value })
+                  }
+                />
+              </div>
+              <div className="ds-filter-box">
+                <label htmlFor="tm-rev-fim">Fim vigência</label>
+                <input
+                  id="tm-rev-fim"
+                  type="date"
+                  value={revForm.data_fim_vigencia}
+                  onChange={(e) =>
+                    setRevForm({ ...revForm, data_fim_vigencia: e.target.value })
+                  }
+                />
+              </div>
               <div className="ds-filter-box ds-filter-box--checkbox">
                 <label htmlFor="tm-rev-ativa">
                   <input
@@ -237,7 +267,9 @@ export function ProcessoDetailPage({
                   <tr>
                     <th>Versão</th>
                     <th>Cenário</th>
-                    <th>Vigência</th>
+                    <th>Início</th>
+                    <th>Implantação</th>
+                    <th>Fim</th>
                     <th>Ativa</th>
                   </tr>
                 </thead>
@@ -259,7 +291,9 @@ export function ProcessoDetailPage({
                     >
                       <td>{r.versao_revisao}</td>
                       <td>{r.cenario_tipo}</td>
-                      <td>{r.data_inicio_vigencia}</td>
+                      <td>{toDateInputValue(r.data_inicio_vigencia) || "—"}</td>
+                      <td>{toDateInputValue(r.data_implantacao) || "—"}</td>
+                      <td>{toDateInputValue(r.data_fim_vigencia) || "—"}</td>
                       <td>
                         {r.revisao_ativa ? (
                           <span className="ds-badge ds-badge--success">ativa</span>
