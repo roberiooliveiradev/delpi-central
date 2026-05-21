@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { adaptDepartmentTreeBundleToModel } from "../../data/adapters/departmentTreeBundleAdapter";
 import { adaptDepartmentsToView } from "../../data/adapters/departmentsAdapter";
 import { adaptIndicatorsToView } from "../../data/adapters/indicatorsAdapter";
-import { resolveDepartmentTreeScopes } from "../../data/departmentTreeScopes";
+import {
+  pickActiveTreeColumn,
+  resolveActiveTreeScopeKey,
+  resolveDepartmentTreeScopes,
+} from "../../data/departmentTreeScopes";
 import { fetchStrategicIndicatorsDepartmentTree } from "../../data/api/strategicIndicatorsDepartmentTreeApi";
 import {
   writeDepartmentsReadCache,
@@ -33,6 +37,24 @@ type UseStrategicIndicatorsDepartmentTreeParams = {
 type DepartmentTreeCache = {
   model: DepartmentTreeModel;
 };
+
+function narrowDepartmentTreeModel(
+  model: DepartmentTreeModel,
+  viewMode: StrategicIndicatorsViewMode,
+  branch: string,
+): DepartmentTreeModel {
+  const activeScopeKey = resolveActiveTreeScopeKey(viewMode, branch);
+  const activeColumn = pickActiveTreeColumn(model.columns, activeScopeKey);
+
+  if (!activeColumn || model.columns.length <= 1) {
+    return model;
+  }
+
+  return {
+    ...model,
+    columns: [activeColumn],
+  };
+}
 
 export function useStrategicIndicatorsDepartmentTree({
   viewMode,
@@ -91,8 +113,13 @@ export function useStrategicIndicatorsDepartmentTree({
       query,
     });
 
+    const cachedModel = cachedTree?.model ?? hydratedFromReads;
+    const scopedCachedModel = cachedModel
+      ? narrowDepartmentTreeModel(cachedModel, viewMode, branch)
+      : null;
+
     beginStrategicIndicatorsLoad({
-      cached: cachedTree?.model ?? hydratedFromReads,
+      cached: scopedCachedModel,
       hasLoadedOnce: hasLoadedOnceRef.current,
       setValue: (value) => setModel(value),
       setLoading,
@@ -118,7 +145,11 @@ export function useStrategicIndicatorsDepartmentTree({
         return;
       }
 
-      const nextModel = adaptDepartmentTreeBundleToModel(bundle);
+      const nextModel = narrowDepartmentTreeModel(
+        adaptDepartmentTreeBundleToModel(bundle),
+        viewMode,
+        branch,
+      );
 
       for (const scope of bundle.scopes) {
         writeDepartmentsReadCache(
