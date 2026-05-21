@@ -56,7 +56,7 @@
 }
 
 .si-org-chart__level--igd {
-  max-width: 320px;
+  max-width: 380px;
 }
 
 .si-org-chart__level--departments {
@@ -209,7 +209,10 @@
 /* —— Cards clicáveis —— */
 
 .si-tree-card--interactive,
-.si-tree-dept-card__link {
+.si-tree-dept-card__link,
+.si-tree-igd-card__link,
+.si-tree-scope-card__link,
+.si-tree-indicator-card__link {
   display: block;
   width: 100%;
   max-width: none;
@@ -389,16 +392,23 @@
 
 .si-tree-indicator-card {
   width: 100%;
+  max-width: none;
   gap: 12px;
   padding: 16px;
 }
 
-.si-tree-indicator-card__charts {
-  width: 100%;
+.si-tree-indicator-card__goals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
-.si-tree-indicator-card__metrics {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.si-tree-indicator-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .si-tree-indicator-card__meta {

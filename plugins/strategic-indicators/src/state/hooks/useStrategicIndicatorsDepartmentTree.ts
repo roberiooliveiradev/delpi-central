@@ -26,6 +26,7 @@ type UseStrategicIndicatorsDepartmentTreeParams = {
   competence?: string;
   startDate?: string;
   endDate?: string;
+  months?: number;
   getAccessToken?: () => string | undefined;
 };
 
@@ -39,6 +40,7 @@ export function useStrategicIndicatorsDepartmentTree({
   competence,
   startDate,
   endDate,
+  months = 6,
   getAccessToken,
 }: UseStrategicIndicatorsDepartmentTreeParams) {
   const [model, setModel] = useState<DepartmentTreeModel | null>(null);
@@ -78,6 +80,7 @@ export function useStrategicIndicatorsDepartmentTree({
       viewMode,
       startDate,
       endDate,
+      months,
     });
     const cachedTree =
       getStrategicIndicatorsCachedValue<DepartmentTreeCache>(cacheKey);
@@ -106,7 +109,7 @@ export function useStrategicIndicatorsDepartmentTree({
         competence,
         startDate,
         endDate,
-        months: 6,
+        months,
         getAccessToken: token,
         signal: controller.signal,
       });
@@ -153,7 +156,7 @@ export function useStrategicIndicatorsDepartmentTree({
         setRefreshing(false);
       }
     }
-  }, [viewMode, branch, competence, startDate, endDate, scopes, query]);
+  }, [viewMode, branch, competence, startDate, endDate, months, scopes, query]);
 
   useEffect(() => {
     void load();

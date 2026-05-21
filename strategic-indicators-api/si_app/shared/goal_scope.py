@@ -3,10 +3,20 @@ from __future__ import annotations
 VALID_GOAL_SCOPE_BRANCHES = frozenset({"", "01", "02"})
 BRANCH_UNIT_CODES: tuple[str, ...] = ("01", "02")
 
+DEFAULT_PERIOD_SCORES_REFRESH_BRANCHES: tuple[str | None, ...] = (
+    None,
+    "01",
+    "02",
+)
+
 
 def normalize_goal_scope_branch(branch: str | None) -> str:
     """Escopo da meta: vazio = consolidado; códigos TOTVS = filial."""
     return (branch or "").strip()
+
+
+def is_branch_unit_scope(branch: str | None) -> bool:
+    return normalize_goal_scope_branch(branch) in BRANCH_UNIT_CODES
 
 
 def format_branch_scope_label(branch_code: str) -> str:

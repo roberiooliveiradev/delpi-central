@@ -10,7 +10,7 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicIndicatorCatalogItem,
     StrategicIndicatorMeasuredValue,
 )
-from si_app.shared.goal_scope import BRANCH_UNIT_CODES
+from si_app.shared.goal_scope import BRANCH_UNIT_CODES, normalize_goal_scope_branch
 
 
 class StrategicIndicatorsCalculator:
@@ -101,12 +101,14 @@ class StrategicIndicatorsCalculator:
         start_date: str | None = None,
         end_date: str | None = None,
         competence: str | None = None,
+        scope_branch: str | None = None,
     ) -> list[StrategicIndicatorCalculatedValue]:
         measurements_by_indicator = {
             item.indicator_id: item for item in measurements
         }
 
         calculated: list[StrategicIndicatorCalculatedValue] = []
+        active_branch = normalize_goal_scope_branch(scope_branch)
 
         for indicator in indicators_catalog:
             if department_id and indicator.department_id != department_id:
@@ -140,6 +142,72 @@ class StrategicIndicatorsCalculator:
                 "performance_direction",
                 "higher_is_better",
             )
+
+            if active_branch in BRANCH_UNIT_CODES:
+                branch_indicator_score = self._calculate_indicator_for_branch_code(
+                    indicator=indicator,
+                    measurement=measurement,
+                    branch_code=active_branch,
+                    performance_direction=performance_direction,
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
+                if branch_indicator_score is None:
+                    calculated.append(
+                        self._build_missing_indicator_value(
+                            indicator=indicator,
+                            source=measurement.source,
+                            unit_values=measurement.unit_values,
+                        )
+                    )
+                    continue
+
+                score, gap, realized_value = branch_indicator_score
+                unit_values = measurement.unit_values or {}
+                unit_gaps = (
+                    {active_branch: gap}
+                    if gap is not None
+                    else {active_branch: None}
+                )
+                calculated.append(
+                    StrategicIndicatorCalculatedValue(
+                        indicator_id=indicator.indicator_id,
+                        department_id=indicator.department_id,
+                        indicator_name=indicator.indicator_name,
+                        weight_pct=indicator.weight_pct,
+                        goal_label=indicator.goal_label,
+                        goal_value=indicator.goal_value,
+                        goal_periodicity=indicator.goal_periodicity,
+                        goal_mode=getattr(indicator, "goal_mode", "standard"),
+                        monthly_targets=getattr(indicator, "monthly_targets", None),
+                        scope_type=indicator.scope_type,
+                        performance_direction=performance_direction,
+                        strategic_description=indicator.strategic_description,
+                        source=measurement.source,
+                        value=(
+                            round(realized_value, 2)
+                            if realized_value is not None
+                            else None
+                        ),
+                        score=score,
+                        gap=gap,
+                        trend="stable",
+                        classification=self.classify_score(score),
+                        unit_values={
+                            key: unit_values.get(key)
+                            for key in (active_branch,)
+                            if key in unit_values
+                        }
+                        or None,
+                        unit_gaps=unit_gaps,
+                        value_unit=indicator.value_unit,
+                        value_prefix=indicator.value_prefix,
+                        value_suffix=indicator.value_suffix,
+                        value_decimals=indicator.value_decimals,
+                    )
+                )
+                continue
 
             branch_scoped_score = self._calculate_branch_scoped_indicator_score(
                 indicator=indicator,
@@ -225,6 +293,7 @@ class StrategicIndicatorsCalculator:
         start_date: str | None = None,
         end_date: str | None = None,
         competence: str | None = None,
+        scope_branch: str | None = None,
     ) -> list[StrategicDepartmentCalculatedValue]:
         indicators_by_department: dict[str, list[StrategicIndicatorCalculatedValue]] = {}
 
@@ -234,6 +303,7 @@ class StrategicIndicatorsCalculator:
             start_date=start_date,
             end_date=end_date,
             competence=competence,
+            scope_branch=scope_branch,
         ):
             indicators_by_department.setdefault(item.department_id, []).append(item)
 
@@ -265,6 +335,7 @@ class StrategicIndicatorsCalculator:
                     start_date=start_date,
                     end_date=end_date,
                     competence=competence,
+                    filter_branch=normalize_goal_scope_branch(scope_branch) or None,
                 )
             else:
                 department_score = self._calculate_department_score(calculated_indicators)
@@ -510,25 +581,35 @@ class StrategicIndicatorsCalculator:
             "performance_direction",
             "higher_is_better",
         )
+        unit_values = measurement.unit_values or {}
+        branch_value = unit_values.get(branch_code)
         branch_goal = (indicator.branch_goals or {}).get(branch_code)
 
-        if branch_goal:
-            realized_value = (measurement.unit_values or {}).get(branch_code)
-            if realized_value is None:
-                return None
-            comparable_goal = self.calculate_comparable_goal(
-                goal_value=float(branch_goal["goal_value"]),
-                goal_periodicity=branch_goal["goal_periodicity"],
-                goal_mode=branch_goal.get("goal_mode", "standard"),
-                monthly_targets=branch_goal.get("monthly_targets") or [],
-                start_date=start_date,
-                end_date=end_date,
-                competence=competence,
-            )
+        if branch_value is not None:
+            if branch_goal:
+                comparable_goal = self.calculate_comparable_goal(
+                    goal_value=float(branch_goal["goal_value"]),
+                    goal_periodicity=branch_goal["goal_periodicity"],
+                    goal_mode=branch_goal.get("goal_mode", "standard"),
+                    monthly_targets=branch_goal.get("monthly_targets") or [],
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
+            else:
+                comparable_goal = self.calculate_comparable_goal(
+                    goal_value=indicator.goal_value,
+                    goal_periodicity=indicator.goal_periodicity,
+                    goal_mode=getattr(indicator, "goal_mode", "standard"),
+                    monthly_targets=getattr(indicator, "monthly_targets", None),
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
             return self.calculate_indicator_score(
                 performance_direction=performance_direction,
                 comparable_goal=comparable_goal,
-                value=float(realized_value),
+                value=float(branch_value),
             )
 
         if measurement.value is None:
@@ -549,6 +630,56 @@ class StrategicIndicatorsCalculator:
             value=float(measurement.value),
         )
 
+    def _calculate_indicator_for_branch_code(
+        self,
+        *,
+        indicator: StrategicIndicatorCatalogItem,
+        measurement: StrategicIndicatorMeasuredValue,
+        branch_code: str,
+        performance_direction: str,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> tuple[float, float | None, float | None] | None:
+        unit_values = measurement.unit_values or {}
+        realized_value = unit_values.get(branch_code)
+        if realized_value is None:
+            return None
+
+        branch_goal = (indicator.branch_goals or {}).get(branch_code)
+        if branch_goal:
+            comparable_goal = self.calculate_comparable_goal(
+                goal_value=float(branch_goal["goal_value"]),
+                goal_periodicity=branch_goal["goal_periodicity"],
+                goal_mode=branch_goal.get("goal_mode", "standard"),
+                monthly_targets=branch_goal.get("monthly_targets") or [],
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+        else:
+            comparable_goal = self.calculate_comparable_goal(
+                goal_value=indicator.goal_value,
+                goal_periodicity=indicator.goal_periodicity,
+                goal_mode=getattr(indicator, "goal_mode", "standard"),
+                monthly_targets=getattr(indicator, "monthly_targets", None),
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+
+        score = self.calculate_indicator_score(
+            performance_direction=performance_direction,
+            comparable_goal=comparable_goal,
+            value=float(realized_value),
+        )
+        gap = self.calculate_indicator_gap(
+            performance_direction=performance_direction,
+            comparable_goal=comparable_goal,
+            value=float(realized_value),
+        )
+        return score, gap, float(realized_value)
+
     def _calculate_department_score_average_of_units(
         self,
         *,
@@ -557,11 +688,17 @@ class StrategicIndicatorsCalculator:
         start_date: str | None,
         end_date: str | None,
         competence: str | None,
+        filter_branch: str | None = None,
     ) -> float:
         """IDD consolidado = média aritmética do IDD de cada filial (01, 02)."""
         branch_department_scores: list[float] = []
+        branch_codes = (
+            [filter_branch]
+            if filter_branch in BRANCH_UNIT_CODES
+            else list(BRANCH_UNIT_CODES)
+        )
 
-        for branch_code in BRANCH_UNIT_CODES:
+        for branch_code in branch_codes:
             weighted_scores: list[tuple[float, float]] = []
 
             for indicator in indicators_catalog:

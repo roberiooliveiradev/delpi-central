@@ -16,6 +16,7 @@ from si_app.composition.strategic_indicators_composer import (
     build_strategic_indicators_snapshot_service,
 )
 from si_app.config import settings
+from si_app.shared.goal_scope import DEFAULT_PERIOD_SCORES_REFRESH_BRANCHES
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_refresh_state_repository import (
     PostgresStrategicIndicatorsRefreshStateRepository,
 )
@@ -26,7 +27,7 @@ logger = logging.getLogger("strategic_indicators.period_scores_refresh")
 def _parse_branch_scopes() -> list[str | None]:
     raw = (settings.SI_PERIOD_SCORES_REFRESH_BRANCHES or "").strip()
     if not raw:
-        return [None]
+        return list(DEFAULT_PERIOD_SCORES_REFRESH_BRANCHES)
 
     scopes: list[str | None] = []
     for item in raw.split(","):

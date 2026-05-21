@@ -5,6 +5,22 @@
   width: 100%;
 }
 
+.si-pan-zoom-shell--immersive {
+  gap: 0;
+  height: 100%;
+  min-height: 0;
+}
+
+.si-pan-zoom-shell--immersive .si-pan-zoom__viewport {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
 .si-pan-zoom-shell--expanded {
   position: fixed;
   inset: 0;
@@ -107,6 +123,33 @@
 
 .si-pan-zoom__viewport--dragging {
   cursor: grabbing;
+}
+
+.si-pan-zoom__floating-bar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 4;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.si-pan-zoom__floating-controls {
+  flex: 1;
+  min-width: 0;
+}
+
+.si-pan-zoom__floating-nav {
+  flex-shrink: 0;
+  pointer-events: auto;
+}
+
+.si-pan-zoom__floating-nav .si-pan-zoom__nav {
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
 }
 
 .si-pan-zoom__hint {

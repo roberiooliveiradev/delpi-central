@@ -1,12 +1,9 @@
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { DepartmentIgdTree } from "../components/DepartmentIgdTree";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
-import { PageHeader } from "../components/PageHeader";
-import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
-import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { useStrategicIndicatorsDepartmentTree } from "../../state/hooks/useStrategicIndicatorsDepartmentTree";
 import "./DepartmentsPage.css";
 
@@ -19,9 +16,11 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
     referenceMonth,
     viewMode,
     branch,
+    monthsToCompare,
     setReferenceMonth,
     setViewMode,
     setBranch,
+    setMonthsToCompare,
     startDate,
     endDate,
     filterState,
@@ -34,92 +33,76 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       competence: referenceMonth,
       startDate,
       endDate,
+      months: monthsToCompare,
       getAccessToken,
     });
 
-  const filters = (
-    <StrategicIndicatorsReferenceFilters
-      referenceMonth={referenceMonth}
-      viewMode={viewMode}
-      branch={branch}
-      onReferenceMonthChange={setReferenceMonth}
-      onViewModeChange={setViewMode}
-      onBranchChange={setBranch}
-    />
-  );
+  const statusBadge =
+    loading || refreshing ? (
+      <LoadingActivityBadge label="Atualizando" tone="info" />
+    ) : (
+      <StatusBadge label="API Real" variant="success" />
+    );
 
   return (
-    <div className="si-departments-page">
-      <PageHeader
-        eyebrow="MinhaDelpi"
-        title="Departamentos"
-        description="Mapa interativo do IGD Delpi com pan, zoom e drill-down por departamento."
-        badge={
-          loading || refreshing ? (
-            <LoadingActivityBadge label="Atualizando" tone="info" />
-          ) : (
-            <StatusBadge label="API Real" variant="success" />
-          )
-        }
-      />
-
-      <SectionBlock
-        title="Filtro de referência"
-        description="Selecione o mês de referência e a visão analítica. No consolidado, a árvore exibe três colunas (Consolidado, Filial 01 e Filial 02)."
-      >
-        {filters}
-      </SectionBlock>
-
-      <SectionBlock
-        title="Árvore departamental do IGD"
-        description="Mapa navegável com cards no padrão Delpi, departamentos em linha horizontal, pan/zoom e botão para expandir o mapa em tela cheia."
-        aside={
-          <span className="si-departments-page__map-hint">
-            Use o ícone de expandir no mapa para ocupar a tela inteira
-          </span>
-        }
-      >
-        {loading && !model ? (
+    <div className="si-departments-page si-departments-page--immersive">
+      {loading && !model ? (
+        <div className="si-departments-page__overlay">
           <LoadingActivityInline
-            title="Carregando árvore departamental"
-            description="Aguarde enquanto os escopos, departamentos e indicadores são carregados."
+            title="Carregando mapa departamental"
+            description="Montando IGD, IDDs e indicadores com série dos últimos meses."
             variant="panel"
             tone="info"
           />
-        ) : error && !model ? (
+        </div>
+      ) : error && !model ? (
+        <div className="si-departments-page__overlay">
           <StrategicIndicatorsPageError
             error={error}
             onAction={() => void reload()}
           />
-        ) : model ? (
-          <>
-            {refreshing ? (
+        </div>
+      ) : model ? (
+        <>
+          {refreshing ? (
+            <div className="si-departments-page__refresh-banner">
               <LoadingActivityInline
-                title="Atualizando árvore departamental"
-                description="Os dados exibidos estão sendo atualizados para o novo período."
+                title="Atualizando mapa"
+                description="Recalculando escopos para o novo filtro."
                 variant="compact"
                 tone="info"
               />
-            ) : null}
+            </div>
+          ) : null}
 
-            {error ? (
+          {error ? (
+            <div className="si-departments-page__refresh-banner">
               <StrategicIndicatorsPageError
                 error={error}
                 mode="refresh"
                 onAction={() => void reload()}
               />
-            ) : null}
-
-            <div className="si-departments-page__map">
-              <DepartmentIgdTree
-                model={model}
-                filterState={filterState}
-                isMultiColumn={isMultiColumn}
-              />
             </div>
-          </>
-        ) : null}
-      </SectionBlock>
+          ) : null}
+
+          <DepartmentIgdTree
+            model={model}
+            filterState={filterState}
+            isMultiColumn={isMultiColumn}
+            filterControls={{
+              referenceMonth,
+              viewMode,
+              branch,
+              monthsToCompare,
+              onReferenceMonthChange: setReferenceMonth,
+              onViewModeChange: setViewMode,
+              onBranchChange: setBranch,
+              onMonthsToCompareChange: setMonthsToCompare,
+              status: statusBadge,
+            }}
+          />
+        </>
+      ) : null}
     </div>
   );
 }
