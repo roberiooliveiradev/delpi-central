@@ -12,7 +12,8 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Migrations `V001` schema `transformometro` | Schema + `schema_migrations` | ✅ |
 | Compose + gateway | URLs `/apps/transformometro` e `/apps/transformometro-api` | ✅ |
 | Build MFE | `npm run build` no plugin | ✅ |
-| Registro no Core API | App + permissões iniciais | Pendente (manual) |
+| Registro no Core API | App + permissões iniciais | Manual (menu já pode aparecer antes do deploy do MFE) |
+| Serviços em `docker-compose.yml` (prod) | `transformometro` + `transformometro-api` | ✅ |
 | CI mínimo | lint + testes do calculador | Fase 2 |
 
 **Critério de pronto:** `GET /health` e MFE “hello” carregando no portal com JWT.

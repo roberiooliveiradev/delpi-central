@@ -278,6 +278,26 @@ services:
     networks:
       - delpi-network
 
+  transformometro:
+    build:
+      context: ../plugins/transformometro
+      dockerfile: Dockerfile
+
+    container_name: delpi-transformometro
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
   vllm:
     profiles:
       - gpu
@@ -610,6 +630,52 @@ services:
     networks:
       - delpi-network
 
+  transformometro-api:
+    build:
+      context: ..
+      dockerfile: transformometro-api/Dockerfile
+
+    container_name: delpi-transformometro-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      TM_API_ROOT_PATH: /apps/transformometro-api
+      TM_RUN_MIGRATIONS_ON_STARTUP: ${TM_RUN_MIGRATIONS_ON_STARTUP:-true}
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
   gateway:
     build:
       context: ../gateway
@@ -628,6 +694,8 @@ services:
       - api-delpi
       - strategic-indicators-api
       - strategic-indicators
+      - transformometro-api
+      - transformometro
       - dashboard-lmps
       - dashboard-quality
       - dashboard-commercial
