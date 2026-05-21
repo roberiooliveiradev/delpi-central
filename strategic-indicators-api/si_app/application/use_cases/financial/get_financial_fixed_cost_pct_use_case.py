@@ -2,6 +2,9 @@ from si_app.application.dto.financial.get_rol_request import GetRolRequest
 from si_app.application.services.financial.financial_metrics_snapshot_service import (
     FinancialMetricsSnapshotService,
 )
+from si_app.application.services.financial.financial_sheet_scope import (
+    CONSOLIDATED_BRANCH_KEY,
+)
 
 
 class GetFinancialFixedCostPctUseCase:
@@ -51,14 +54,17 @@ class GetFinancialFixedCostPctUseCase:
                 "fixed_cost_over_rol_pct": item.fixed_cost_over_rol_pct,
             }
             for item in snapshot.branches
+            if item.branch != CONSOLIDATED_BRANCH_KEY
         ]
 
+        consolidated_snapshot = next(
+            (item for item in snapshot.branches if item.branch == CONSOLIDATED_BRANCH_KEY),
+            None,
+        )
         consolidated_value = (
-            round(
-                sum(item["fixed_cost_over_rol_pct"] for item in branches) / len(branches),
-                2,
-            )
-            if branches
+            consolidated_snapshot.fixed_cost_over_rol_pct
+            if consolidated_snapshot
+            and consolidated_snapshot.fixed_cost_over_rol_pct is not None
             else 0.0
         )
 

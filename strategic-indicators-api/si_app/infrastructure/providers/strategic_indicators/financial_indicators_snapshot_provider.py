@@ -3,6 +3,9 @@ from __future__ import annotations
 from si_app.application.services.financial.financial_metrics_snapshot_service import (
     FinancialMetricsSnapshotService,
 )
+from si_app.application.services.financial.financial_sheet_scope import (
+    CONSOLIDATED_BRANCH_KEY,
+)
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
@@ -155,6 +158,10 @@ class FinancialIndicatorsSnapshotProvider(
         if branch:
             value = unit_values.get(branch)
             return round(float(value), 2) if value is not None else None
+
+        consolidated_value = unit_values.get(CONSOLIDATED_BRANCH_KEY)
+        if consolidated_value is not None:
+            return round(float(consolidated_value), 2)
 
         valid = [float(value) for value in unit_values.values() if value is not None]
         if not valid:

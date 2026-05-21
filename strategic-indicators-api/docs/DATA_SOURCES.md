@@ -6,7 +6,7 @@ O painel SI **não** armazena valores realizados no Postgres (exceto cache `peri
 
 | Departamento | Fontes principais | Coletor (si_app) |
 |--------------|-------------------|------------------|
-| Financeiro | TOTVS (ROL batch), Google Sheets (EBITDA, custo fixo, recebíveis) | `financial_indicators_snapshot_provider` |
+| Financeiro | TOTVS (ROL), Google Sheets (EBITDA e custo fixo já em %; filial vazia = consolidado; filial preenchida = por unidade), recebíveis | `financial_indicators_snapshot_provider` |
 | Comercial | TOTVS (conversão, novos clientes, ROL novos) | `commercial_indicators_snapshot_provider` |
 | Produção | TOTVS (OTD, OEE), Sheets (MO, custo, depreciação) | `production_indicators_snapshot_provider` |
 | Qualidade | TOTVS (PPM, NC), Sheets (Kaizen, 5S) | `quality_indicators_snapshot_provider` |
