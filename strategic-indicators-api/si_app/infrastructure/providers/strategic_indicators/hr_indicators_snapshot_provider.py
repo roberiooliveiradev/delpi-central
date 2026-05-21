@@ -111,7 +111,11 @@ class HrIndicatorsSnapshotProvider(
             for item in snapshot.branches
         }
         pdi_unit_values = {
-            item.branch_code: item.active_pdi_pct
+            item.branch_code: item.active_pdi_count
+            for item in snapshot.branches
+        }
+        performance_reviews_unit_values = {
+            item.branch_code: item.performance_reviews_completion_pct
             for item in snapshot.branches
         }
 
@@ -161,17 +165,31 @@ class HrIndicatorsSnapshotProvider(
                 }
             )
 
-        if snapshot.active_pdi_pct is not None:
+        if snapshot.active_pdi_count is not None:
             items.append(
                 {
                     "department_id": "hr",
                     "indicator_id": "hr-pdi",
-                    "value": self._resolve_indicator_value(
+                    "value": self._resolve_count_indicator_value(
                         unit_values=pdi_unit_values,
                         branch=branch,
                     ),
-                    "source": "portal_rh_pdi",
+                    "source": "portal_rh_pdi_count",
                     "unit_values": pdi_unit_values,
+                }
+            )
+
+        if snapshot.performance_reviews_completion_pct is not None:
+            items.append(
+                {
+                    "department_id": "hr",
+                    "indicator_id": "hr-performance-reviews",
+                    "value": self._resolve_indicator_value(
+                        unit_values=performance_reviews_unit_values,
+                        branch=branch,
+                    ),
+                    "source": "portal_rh_performance_reviews",
+                    "unit_values": performance_reviews_unit_values,
                 }
             )
 
@@ -195,3 +213,19 @@ class HrIndicatorsSnapshotProvider(
             return None
 
         return round(sum(values) / len(values), 2)
+
+    def _resolve_count_indicator_value(
+        self,
+        *,
+        unit_values: dict[str, float | None],
+        branch: str | None,
+    ) -> float | None:
+        if branch:
+            value = unit_values.get(branch)
+            return round(float(value), 2) if value is not None else None
+
+        values = [float(value) for value in unit_values.values() if value is not None]
+        if not values:
+            return None
+
+        return round(sum(values), 2)

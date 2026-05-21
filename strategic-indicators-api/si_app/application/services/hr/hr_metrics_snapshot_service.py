@@ -16,7 +16,9 @@ class HrBranchSnapshot:
     absenteeism_pct: float | None
     turnover_pct: float | None
     training_hours_per_collaborator: float | None
+    active_pdi_count: float | None = None
     active_pdi_pct: float | None = None
+    performance_reviews_completion_pct: float | None = None
 
 
 @dataclass(frozen=True)
@@ -25,7 +27,9 @@ class HrMetricsSnapshot:
     end_date: str | None
     branches: list[HrBranchSnapshot]
     internal_satisfaction_pct: float | None = None
+    active_pdi_count: float | None = None
     active_pdi_pct: float | None = None
+    performance_reviews_completion_pct: float | None = None
 
 
 class HrMetricsSnapshotService:
@@ -110,6 +114,91 @@ class HrMetricsSnapshotService:
         )
         return snapshot.branches[0] if snapshot.branches else None
 
+    def get_active_pdi_count(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        branch: str | None = None,
+    ) -> dict:
+        branches = self._resolve_branches(branch=branch)
+        branch_rows: list[dict] = []
+
+        for branch_code in branches:
+            raw = self._repository.get_active_pdi_snapshot(
+                branch_code=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            count = self._to_float(raw.get("active_pdis"))
+            branch_rows.append(
+                {
+                    "branch_code": branch_code,
+                    "active_pdi_count": round(count, 2) if count is not None else None,
+                    "total_pdis": self._to_float(raw.get("total_pdis")),
+                    "active_pdi_pct": self._to_float(raw.get("active_pdi_pct")),
+                }
+            )
+
+        counts = [
+            row["active_pdi_count"]
+            for row in branch_rows
+            if row["active_pdi_count"] is not None
+        ]
+
+        return {
+            "start_date": start_date,
+            "end_date": end_date,
+            "active_pdi_count": round(sum(counts), 2) if counts else None,
+            "branches": branch_rows,
+        }
+
+    def get_performance_reviews_completion(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        branch: str | None = None,
+    ) -> dict:
+        branches = self._resolve_branches(branch=branch)
+        branch_rows: list[dict] = []
+
+        for branch_code in branches:
+            raw = self._repository.get_performance_reviews_completion_snapshot(
+                branch_code=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            completion_pct = self._to_float(raw.get("value"))
+            branch_rows.append(
+                {
+                    "branch_code": branch_code,
+                    "completion_pct": round(completion_pct, 2)
+                    if completion_pct is not None
+                    else None,
+                    "total_reviews": self._to_float(raw.get("total_reviews")),
+                    "completed_reviews": self._to_float(raw.get("completed_reviews")),
+                }
+            )
+
+        completion_values = [
+            row["completion_pct"]
+            for row in branch_rows
+            if row["completion_pct"] is not None
+        ]
+        completion_pct = (
+            sum(completion_values) / len(completion_values)
+            if completion_values
+            else None
+        )
+
+        return {
+            "start_date": start_date,
+            "end_date": end_date,
+            "completion_pct": round(completion_pct, 2) if completion_pct is not None else None,
+            "branches": branch_rows,
+        }
+
     def _build_snapshot(
         self,
         *,
@@ -142,6 +231,13 @@ class HrMetricsSnapshotService:
                 start_date=start_date,
                 end_date=end_date,
             )
+            performance_reviews_raw = (
+                self._repository.get_performance_reviews_completion_snapshot(
+                    branch_code=branch_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            )
 
             total_absence_hours = self._to_float(absenteeism_raw.get("total_absence_hours")) or 0.0
             expected_hours = self._to_float(absenteeism_raw.get("expected_hours")) or 0.0
@@ -166,7 +262,11 @@ class HrMetricsSnapshotService:
                 if total_participations > 0
                 else None
             )
-            active_pdi_pct = self._to_float(active_pdi_raw.get("value"))
+            active_pdi_count = self._to_float(active_pdi_raw.get("active_pdis"))
+            active_pdi_pct = self._to_float(active_pdi_raw.get("active_pdi_pct"))
+            performance_reviews_completion_pct = self._to_float(
+                performance_reviews_raw.get("value")
+            )
 
             branch_snapshots.append(
                 HrBranchSnapshot(
@@ -176,20 +276,47 @@ class HrMetricsSnapshotService:
                     training_hours_per_collaborator=round(training_hours_per_collaborator, 2)
                     if training_hours_per_collaborator is not None
                     else None,
+                    active_pdi_count=round(active_pdi_count, 2)
+                    if active_pdi_count is not None
+                    else None,
                     active_pdi_pct=round(active_pdi_pct, 2)
                     if active_pdi_pct is not None
+                    else None,
+                    performance_reviews_completion_pct=round(
+                        performance_reviews_completion_pct,
+                        2,
+                    )
+                    if performance_reviews_completion_pct is not None
                     else None,
                 )
             )
 
-        active_pdi_values = [
+        active_pdi_counts = [
+            item.active_pdi_count
+            for item in branch_snapshots
+            if item.active_pdi_count is not None
+        ]
+        active_pdi_count = sum(active_pdi_counts) if active_pdi_counts else None
+
+        active_pdi_pct_values = [
             item.active_pdi_pct
             for item in branch_snapshots
             if item.active_pdi_pct is not None
         ]
         active_pdi_pct = (
-            sum(active_pdi_values) / len(active_pdi_values)
-            if active_pdi_values
+            sum(active_pdi_pct_values) / len(active_pdi_pct_values)
+            if active_pdi_pct_values
+            else None
+        )
+
+        performance_review_values = [
+            item.performance_reviews_completion_pct
+            for item in branch_snapshots
+            if item.performance_reviews_completion_pct is not None
+        ]
+        performance_reviews_completion_pct = (
+            sum(performance_review_values) / len(performance_review_values)
+            if performance_review_values
             else None
         )
 
@@ -211,8 +338,17 @@ class HrMetricsSnapshotService:
             internal_satisfaction_pct=round(internal_satisfaction_pct, 2)
             if internal_satisfaction_pct is not None
             else None,
+            active_pdi_count=round(active_pdi_count, 2)
+            if active_pdi_count is not None
+            else None,
             active_pdi_pct=round(active_pdi_pct, 2)
             if active_pdi_pct is not None
+            else None,
+            performance_reviews_completion_pct=round(
+                performance_reviews_completion_pct,
+                2,
+            )
+            if performance_reviews_completion_pct is not None
             else None,
         )
 

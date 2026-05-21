@@ -12,7 +12,9 @@ Microfrontend (Module Federation) para indicadores de **Recursos Humanos** via *
 
 | Endpoint | Descrição |
 |----------|-----------|
-| `GET /apps/api-delpi/hr/snapshot` | Snapshot consolidado (absenteísmo, turnover, treinamento, PDI, satisfação) |
+| `GET /apps/api-delpi/hr/snapshot` | Snapshot consolidado (absenteísmo, turnover, treinamento, PDI, satisfação, avaliações) |
+| `GET /apps/api-delpi/hr/active-pdi-count` | Contagem de PDIs ativos por filial |
+| `GET /apps/api-delpi/hr/performance-reviews-completion` | % de avaliações de desempenho concluídas |
 | `GET /apps/api-delpi/hr/branches` | Filiais ativas |
 
 Permissão: `dashboard-hr.view` ou `api-delpi.access`.
