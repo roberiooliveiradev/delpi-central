@@ -15,6 +15,7 @@ from tm_app.core.catalogs import (
     SETORES,
     STATUS_PROCESSO,
     STATUS_RECURSO,
+    TIPO_CUSTO_RECURSO,
     TIPO_INVESTIMENTO,
     assert_in,
     options_payload,
@@ -46,6 +47,7 @@ from tm_app.interface.http.schemas.crud_schemas import (
     RecursoBody,
     RevisaoBody,
     VinculoBody,
+    VinculoUpdateBody,
 )
 
 router = APIRouter(prefix="/transformometro", tags=["Transformômetro CRUD"])
@@ -281,6 +283,7 @@ def list_recursos():
 @router.post("/recursos-compartilhados")
 def create_recurso(body: RecursoBody, request: Request):
     try:
+        assert_in(body.tipo_custo, TIPO_CUSTO_RECURSO, "tipo_custo")
         assert_in(body.criterio_rateio, CRITERIO_RATEIO, "criterio_rateio")
         assert_in(body.status_recurso, STATUS_RECURSO, "status_recurso")
         assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
@@ -308,6 +311,15 @@ def create_vinculo(body: VinculoBody, request: Request):
     vid = str(row["vinculo_id"])
     _audit(request, "vinculo", vid, "create", body.model_dump())
     return ok(row_to_json(row), "Vínculo criado.", 201)
+
+
+@router.put("/revisao-recursos-compartilhados/{vinculo_id}")
+def update_vinculo(vinculo_id: str, body: VinculoUpdateBody, request: Request):
+    row = VinculoRepository().update(vinculo_id, body.model_dump())
+    if not row:
+        return fail("Vínculo não encontrado.", 404)
+    _audit(request, "vinculo", vinculo_id, "update", body.model_dump())
+    return ok(row_to_json(row), "Vínculo atualizado.")
 
 
 @router.delete("/revisao-recursos-compartilhados/{vinculo_id}")

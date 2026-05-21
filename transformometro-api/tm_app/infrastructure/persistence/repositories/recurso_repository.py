@@ -122,17 +122,53 @@ class RecursoRepository(PluginBaseRepository):
 
 
 class VinculoRepository(PluginBaseRepository):
-    def list_by_revisao(self, revisao_id: str) -> list[dict[str, Any]]:
-        return self.fetch_all(
-            """
-            SELECT v.*, r.nome_recurso, r.codigo_recurso
+    _VINCULO_SELECT = """
+            SELECT
+                v.vinculo_id,
+                v.revisao_id,
+                v.recurso_compartilhado_id,
+                v.data_inicio_uso,
+                v.data_fim_uso,
+                v.ativo,
+                v.peso_rateio,
+                v.observacoes,
+                v.created_at,
+                v.updated_at,
+                r.codigo_recurso,
+                r.nome_recurso,
+                r.categoria_recurso,
+                r.fornecedor,
+                r.tipo_custo,
+                r.recorrencia,
+                r.valor_total_recorrente,
+                r.data_inicio_vigencia AS recurso_data_inicio_vigencia,
+                r.data_fim_vigencia AS recurso_data_fim_vigencia,
+                r.centro_custo,
+                r.criterio_rateio,
+                r.status_recurso,
+                r.observacoes AS recurso_observacoes
             FROM transformometro.revisao_recursos_compartilhados v
             JOIN transformometro.recursos_compartilhados r
               ON r.recurso_compartilhado_id = v.recurso_compartilhado_id
+    """
+
+    def list_by_revisao(self, revisao_id: str) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            f"""
+            {self._VINCULO_SELECT}
             WHERE v.revisao_id = %s AND v.deletado = FALSE AND r.deletado = FALSE
             ORDER BY r.nome_recurso ASC
             """,
             (revisao_id,),
+        )
+
+    def get(self, vinculo_id: str) -> dict[str, Any] | None:
+        return self.fetch_one(
+            f"""
+            {self._VINCULO_SELECT}
+            WHERE v.vinculo_id = %s AND v.deletado = FALSE AND r.deletado = FALSE
+            """,
+            (vinculo_id,),
         )
 
     def create(self, data: dict[str, Any]) -> dict[str, Any]:
@@ -156,7 +192,33 @@ class VinculoRepository(PluginBaseRepository):
         )
         if row is None:
             raise RuntimeError("Falha ao criar vínculo.")
-        return row
+        return self.get(str(row["vinculo_id"])) or row
+
+    def update(self, vinculo_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
+        row = self.execute_returning_one(
+            """
+            UPDATE transformometro.revisao_recursos_compartilhados SET
+                data_inicio_uso = %s,
+                data_fim_uso = %s,
+                ativo = %s,
+                peso_rateio = %s,
+                observacoes = %s,
+                updated_at = NOW()
+            WHERE vinculo_id = %s AND deletado = FALSE
+            RETURNING vinculo_id
+            """,
+            (
+                data.get("data_inicio_uso"),
+                data.get("data_fim_uso"),
+                data.get("ativo", True),
+                data.get("peso_rateio"),
+                data.get("observacoes"),
+                vinculo_id,
+            ),
+        )
+        if row is None:
+            return None
+        return self.get(vinculo_id)
 
     def soft_delete(self, vinculo_id: str) -> bool:
         row = self.execute_returning_one(

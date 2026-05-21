@@ -86,6 +86,7 @@ export type OptionsData = {
   criterio_rateio: string[];
   status_recurso: string[];
   tipo_investimento: string[];
+  tipo_custo: string[];
   categorias: string[];
 };
 
@@ -210,6 +211,8 @@ export type RecursoCompartilhado = {
   fornecedor?: string | null;
   data_inicio_vigencia?: string | null;
   data_fim_vigencia?: string | null;
+  centro_custo?: string | null;
+  observacoes?: string | null;
 };
 
 export type VinculoRecurso = {
@@ -218,9 +221,22 @@ export type VinculoRecurso = {
   recurso_compartilhado_id: string;
   nome_recurso?: string;
   codigo_recurso?: string;
+  categoria_recurso?: string | null;
+  fornecedor?: string | null;
+  tipo_custo?: string;
+  recorrencia?: string;
+  valor_total_recorrente?: number;
+  recurso_data_inicio_vigencia?: string | null;
+  recurso_data_fim_vigencia?: string | null;
+  centro_custo?: string | null;
+  criterio_rateio?: string;
+  status_recurso?: string;
+  recurso_observacoes?: string | null;
   ativo: boolean;
   data_inicio_uso?: string | null;
   data_fim_uso?: string | null;
+  peso_rateio?: number | null;
+  observacoes?: string | null;
 };
 
 export function fetchMedicao(
@@ -307,11 +323,30 @@ export function createVinculo(
     ativo?: boolean;
     data_inicio_uso?: string;
     data_fim_uso?: string;
+    peso_rateio?: number;
+    observacoes?: string;
   },
   getAccessToken?: () => string | undefined
 ) {
   return request<VinculoRecurso>("/revisao-recursos-compartilhados", getAccessToken, {
     method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateVinculo(
+  vinculoId: string,
+  payload: {
+    ativo?: boolean;
+    data_inicio_uso?: string;
+    data_fim_uso?: string;
+    peso_rateio?: number;
+    observacoes?: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<VinculoRecurso>(`/revisao-recursos-compartilhados/${vinculoId}`, getAccessToken, {
+    method: "PUT",
     body: JSON.stringify(payload),
   });
 }

@@ -87,5 +87,13 @@ class VinculoBody(BaseModel):
     ativo: bool = True
     data_inicio_uso: Optional[str] = None
     data_fim_uso: Optional[str] = None
-    peso_rateio: Optional[float] = None
+    peso_rateio: Optional[float] = Field(default=None, ge=0)
+    observacoes: Optional[str] = None
+
+
+class VinculoUpdateBody(BaseModel):
+    ativo: bool = True
+    data_inicio_uso: Optional[str] = None
+    data_fim_uso: Optional[str] = None
+    peso_rateio: Optional[float] = Field(default=None, ge=0)
     observacoes: Optional[str] = None
