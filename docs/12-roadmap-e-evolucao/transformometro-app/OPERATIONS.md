@@ -9,6 +9,7 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 | Portal | `https://www.minhadelpi.com.br/apps/transformometro` |
 | Dashboard | `/apps/transformometro/dashboard` |
 | Processos | `/apps/transformometro/processos` |
+| Recursos (catálogo) | `/apps/transformometro/recursos` |
 | Import (admin) | `/apps/transformometro/import` |
 | API health | `/apps/transformometro-api/transformometro/health` |
 
@@ -16,9 +17,11 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 
 1. Cadastro e alterações somente pela **UI** ou API (`transformometro-api`).
 2. Após mudanças relevantes (revisão ativa, vigências, medições): **Dashboard → Recalcular**.
-3. **Alertas** (economia líquida negativa ≥3 meses) e **Exportar CSV** no dashboard (Fase 4).
+3. **Alertas** (economia líquida negativa ≥3 meses) e export **CSV** ou **Excel** no dashboard.
 4. Cadastro: preencher **família** e **agrupador ferramenta** quando o processo participa de rateio compartilhado.
-5. Não editar a planilha Transforma+ em produção (somente leitura ou desligada).
+5. **Recursos compartilhados:** cadastrar em **Recursos** (menu); vincular em Processos → revisão → aba Recursos.
+6. **Revisões:** enviar para análise → aprovar → só então **Definir como ativa** (workflow V005).
+7. Não editar a planilha Transforma+ em produção (somente leitura ou desligada).
 
 ## Importação / reimportação
 
@@ -57,7 +60,8 @@ Atribuir ao perfil de engenharia/gestão, no mínimo:
 - `transformometro.processes.manage`
 - `transformometro.revisions.manage`
 - `transformometro.dashboard.recalculate`
-- `transformometro.admin` (somente quem importa)
+- `transformometro.shared-resources.manage` (catálogo Recursos)
+- `transformometro.admin` (import planilha)
 
 ## Desligar escrita na planilha Google
 
