@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 VALID_GOAL_SCOPE_BRANCHES = frozenset({"", "01", "02"})
+BRANCH_UNIT_CODES: tuple[str, ...] = ("01", "02")
 
 
 def normalize_goal_scope_branch(branch: str | None) -> str:

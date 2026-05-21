@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from si_app.application.dto.strategic_indicators.catalog_models import (
+    StrategicDepartmentCatalogItem,
     StrategicIndicatorCatalogItem,
     StrategicIndicatorMeasuredValue,
 )
@@ -85,3 +86,95 @@ def test_consolidated_score_averages_branch_scores() -> None:
     assert calculated[0].score is not None
     assert calculated[0].score > 0
     assert calculated[0].classification != calculator.MISSING_VALUE_CLASSIFICATION
+
+
+def test_department_consolidated_score_is_average_of_branch_idds() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    catalog = [
+        StrategicIndicatorCatalogItem(
+            indicator_id="hr-pdi",
+            department_id="hr",
+            indicator_name="PDIs",
+            weight_pct=50,
+            goal_label="por unidade",
+            goal_value=15,
+            goal_periodicity="monthly",
+            branch_goals={
+                "01": {
+                    "goal_value": 10.0,
+                    "goal_periodicity": "monthly",
+                    "goal_mode": "standard",
+                    "monthly_targets": [],
+                },
+                "02": {
+                    "goal_value": 10.0,
+                    "goal_periodicity": "monthly",
+                    "goal_mode": "standard",
+                    "monthly_targets": [],
+                },
+            },
+        ),
+        StrategicIndicatorCatalogItem(
+            indicator_id="hr-turnover",
+            department_id="hr",
+            indicator_name="Turnover",
+            weight_pct=50,
+            goal_label="por unidade",
+            goal_value=5,
+            goal_periodicity="monthly",
+            performance_direction="lower_is_better",
+            branch_goals={
+                "01": {
+                    "goal_value": 5.0,
+                    "goal_periodicity": "monthly",
+                    "goal_mode": "standard",
+                    "monthly_targets": [],
+                },
+                "02": {
+                    "goal_value": 5.0,
+                    "goal_periodicity": "monthly",
+                    "goal_mode": "standard",
+                    "monthly_targets": [],
+                },
+            },
+        ),
+    ]
+    measurements = [
+        StrategicIndicatorMeasuredValue(
+            indicator_id="hr-pdi",
+            department_id="hr",
+            value=10.0,
+            source="test",
+            unit_values={"01": 10.0, "02": 5.0},
+        ),
+        StrategicIndicatorMeasuredValue(
+            indicator_id="hr-turnover",
+            department_id="hr",
+            value=2.5,
+            source="test",
+            unit_values={"01": 0.0, "02": 5.0},
+        ),
+    ]
+
+    departments = calculator.calculate_departments(
+        departments_catalog=[
+            StrategicDepartmentCatalogItem(
+                department_id="hr",
+                department_name="RH",
+                short_name="RH",
+                weight_pct=15,
+                strategic_summary="",
+                aggregation_mode="average_of_units",
+            )
+        ],
+        indicators_catalog=catalog,
+        measurements=measurements,
+        competence="2026-04",
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+    )
+
+    assert len(departments) == 1
+
+    # Filial 01: PDI 10 + Turnover 10 → IDD 10 | Filial 02: PDI 5 + Turnover 10 → IDD 7,5
+    assert departments[0].score == 8.75

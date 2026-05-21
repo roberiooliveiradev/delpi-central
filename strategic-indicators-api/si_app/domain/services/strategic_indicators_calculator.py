@@ -10,6 +10,7 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicIndicatorCatalogItem,
     StrategicIndicatorMeasuredValue,
 )
+from si_app.shared.goal_scope import BRANCH_UNIT_CODES
 
 
 class StrategicIndicatorsCalculator:
@@ -229,12 +230,35 @@ class StrategicIndicatorsCalculator:
 
         calculated_departments: list[StrategicDepartmentCalculatedValue] = []
 
+        measurements_by_indicator = {
+            item.indicator_id: item for item in measurements
+        }
+        indicators_catalog_by_department: dict[str, list[StrategicIndicatorCatalogItem]] = {}
+        for indicator in indicators_catalog:
+            indicators_catalog_by_department.setdefault(
+                indicator.department_id,
+                [],
+            ).append(indicator)
+
         for department in departments_catalog:
             calculated_indicators = indicators_by_department.get(
                 department.department_id, []
             )
+            department_catalog = indicators_catalog_by_department.get(
+                department.department_id,
+                [],
+            )
 
-            department_score = self._calculate_department_score(calculated_indicators)
+            if (department.aggregation_mode or "").strip() == "average_of_units":
+                department_score = self._calculate_department_score_average_of_units(
+                    indicators_catalog=department_catalog,
+                    measurements_by_indicator=measurements_by_indicator,
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
+            else:
+                department_score = self._calculate_department_score(calculated_indicators)
             contribution = round((department_score * department.weight_pct) / 100.0, 2)
 
             calculated_departments.append(
@@ -461,6 +485,116 @@ class StrategicIndicatorsCalculator:
         )
         realized_value = round(sum(branch_values) / len(branch_values), 2)
         return score, gap, realized_value
+
+    def _score_indicator_for_branch(
+        self,
+        *,
+        indicator: StrategicIndicatorCatalogItem,
+        measurement: StrategicIndicatorMeasuredValue,
+        branch_code: str,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> float | None:
+        performance_direction = getattr(
+            indicator,
+            "performance_direction",
+            "higher_is_better",
+        )
+        branch_goal = (indicator.branch_goals or {}).get(branch_code)
+
+        if branch_goal:
+            realized_value = (measurement.unit_values or {}).get(branch_code)
+            if realized_value is None:
+                return None
+            comparable_goal = self.calculate_comparable_goal(
+                goal_value=float(branch_goal["goal_value"]),
+                goal_periodicity=branch_goal["goal_periodicity"],
+                goal_mode=branch_goal.get("goal_mode", "standard"),
+                monthly_targets=branch_goal.get("monthly_targets") or [],
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+            return self.calculate_indicator_score(
+                performance_direction=performance_direction,
+                comparable_goal=comparable_goal,
+                value=float(realized_value),
+            )
+
+        if measurement.value is None:
+            return None
+
+        comparable_goal = self.calculate_comparable_goal(
+            goal_value=indicator.goal_value,
+            goal_periodicity=indicator.goal_periodicity,
+            goal_mode=getattr(indicator, "goal_mode", "standard"),
+            monthly_targets=getattr(indicator, "monthly_targets", None),
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+        return self.calculate_indicator_score(
+            performance_direction=performance_direction,
+            comparable_goal=comparable_goal,
+            value=float(measurement.value),
+        )
+
+    def _calculate_department_score_average_of_units(
+        self,
+        *,
+        indicators_catalog: list[StrategicIndicatorCatalogItem],
+        measurements_by_indicator: dict[str, StrategicIndicatorMeasuredValue],
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> float:
+        """IDD consolidado = média aritmética do IDD de cada filial (01, 02)."""
+        branch_department_scores: list[float] = []
+
+        for branch_code in BRANCH_UNIT_CODES:
+            weighted_scores: list[tuple[float, float]] = []
+
+            for indicator in indicators_catalog:
+                measurement = measurements_by_indicator.get(indicator.indicator_id)
+                if measurement is None:
+                    continue
+
+                branch_score = self._score_indicator_for_branch(
+                    indicator=indicator,
+                    measurement=measurement,
+                    branch_code=branch_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
+                if branch_score is None:
+                    continue
+
+                weighted_scores.append((branch_score, indicator.weight_pct))
+
+            if not weighted_scores:
+                continue
+
+            total_weight = sum(weight for _, weight in weighted_scores)
+            if total_weight <= 0:
+                continue
+
+            branch_department_scores.append(
+                round(
+                    sum(score * weight for score, weight in weighted_scores)
+                    / total_weight,
+                    2,
+                )
+            )
+
+        if not branch_department_scores:
+            return 0.0
+
+        return round(
+            sum(branch_department_scores) / len(branch_department_scores),
+            2,
+        )
 
     def _calculate_department_score(
         self,
