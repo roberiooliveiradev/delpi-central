@@ -123,6 +123,7 @@ export type StrategicIndicatorsPresentationApiResponse = {
           has_value: boolean;
           score: number | null;
           gap: number | null;
+          gaps?: Record<string, number | null>;
           trend: TrendDirection;
           classification: string;
         } & IndicatorValueFormatApiFields
@@ -156,8 +157,10 @@ export type StrategicIndicatorsPresentationApiResponse = {
         scope_type: string;
         performance_direction: string;
         value: number | null;
+        realized?: Record<string, number | null>;
         score: number | null;
         gap: number | null;
+        gaps?: Record<string, number | null>;
         has_value: boolean;
         trend: TrendDirection;
         classification: string;
