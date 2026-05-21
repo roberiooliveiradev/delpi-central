@@ -4,6 +4,7 @@ import { HomePage } from "./ui/pages/HomePage";
 import { ProcessoDetailPage } from "./ui/pages/ProcessoDetailPage";
 import { ImportPage } from "./ui/pages/ImportPage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
+import { RecursosPage } from "./ui/pages/RecursosPage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -31,6 +32,16 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   if (pathname === "/apps/transformometro/import" || pathname?.endsWith("/import")) {
     return (
       <ImportPage
+        getAccessToken={getAccessToken}
+        pathname={pathname}
+        onNavigate={navigate}
+      />
+    );
+  }
+
+  if (pathname === "/apps/transformometro/recursos" || pathname?.endsWith("/recursos")) {
+    return (
+      <RecursosPage
         getAccessToken={getAccessToken}
         pathname={pathname}
         onNavigate={navigate}

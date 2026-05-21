@@ -341,6 +341,32 @@ def create_recurso(body: RecursoBody, request: Request):
     return ok(row_to_json(row), "Recurso criado.", 201)
 
 
+@router.put("/recursos-compartilhados/{recurso_id}")
+def update_recurso(recurso_id: str, body: RecursoBody, request: Request):
+    try:
+        assert_in(body.tipo_custo, TIPO_CUSTO_RECURSO, "tipo_custo")
+        assert_in(body.criterio_rateio, CRITERIO_RATEIO, "criterio_rateio")
+        assert_in(body.status_recurso, STATUS_RECURSO, "status_recurso")
+        assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
+        row = RecursoRepository().update(recurso_id, body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    if not row:
+        return fail("Recurso não encontrado.", 404)
+
+    _audit(request, "recurso", recurso_id, "update", body.model_dump())
+    return ok(row_to_json(row), "Recurso atualizado.")
+
+
+@router.delete("/recursos-compartilhados/{recurso_id}")
+def delete_recurso(recurso_id: str, request: Request):
+    if not RecursoRepository().soft_delete(recurso_id):
+        return fail("Recurso não encontrado.", 404)
+    _audit(request, "recurso", recurso_id, "delete", {})
+    return ok(message="Recurso excluído.")
+
+
 # --- Vínculos ---
 
 
