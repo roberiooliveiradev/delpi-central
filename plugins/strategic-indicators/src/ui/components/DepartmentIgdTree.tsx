@@ -33,6 +33,7 @@ import { StatusBadge } from "./StatusBadge";
 import { PanZoomCanvas } from "./PanZoomCanvas";
 import { TreeScoreRing } from "./TreeScoreRing";
 import { TreeSparkline } from "./TreeSparkline";
+import "./DepartmentSummaryCard.css";
 import "./DepartmentIgdTree.css";
 
 type DepartmentIgdTreeProps = {
@@ -184,80 +185,87 @@ function IndicatorTreeCard({
       cardId={cardId}
       isActive={isActive}
       onActivate={onActivate}
-      className={`si-tree-indicator si-tree-indicator--${tone}`}
+      className={`si-department-card si-tree-indicator-card si-tree-indicator-card--${tone}`}
     >
-      <header className="si-tree-indicator__head">
-        <div className="si-tree-indicator__title-wrap">
-          <strong className="si-tree-indicator__name">{indicator.name}</strong>
-          <span className="si-tree-indicator__weight">
-            Peso {indicator.weightPct}%
-          </span>
+      <div className="si-department-card__top si-tree-indicator-card__top">
+        <div className="si-department-card__identity">
+          <div>
+            <h3 className="si-department-card__title">{indicator.name}</h3>
+            <p className="si-department-card__weight">
+              Peso {indicator.weightPct}%
+            </p>
+          </div>
         </div>
         {!isMissingValueClassification(indicator.classification) ? (
           <StatusBadge
-            label={indicator.classification}
+            label={
+              indicator.hasValue
+                ? (indicator.score ?? 0).toFixed(1)
+                : indicator.classification
+            }
             variant={tone === "empty" ? "neutral" : tone}
           />
-        ) : null}
-      </header>
+        ) : (
+          <StatusBadge label="Sem dado" variant="neutral" />
+        )}
+      </div>
 
-      <div className="si-tree-indicator__charts">
-        <TreeScoreRing
-          score={indicator.score ?? 0}
-          label="Nota"
-          tone={tone}
-          size={64}
-        />
+      <div className="si-tree-indicator-card__charts">
         <TreeSparkline
           points={series}
           direction={indicator.trend}
           height={48}
-          label="Histórico"
+          label="Histórico · 6 meses"
         />
       </div>
 
-      <div className="si-tree-indicator__metrics">
-        <div className="si-tree-indicator__metric">
-          <span>Meta</span>
+      <div className="si-department-card__metrics si-tree-indicator-card__metrics">
+        <div className="si-department-card__metric">
+          <span className="si-department-card__metric-label">Meta</span>
           <strong>{formatIndicatorGoalValue(indicator, competence)}</strong>
         </div>
-        <div className="si-tree-indicator__metric">
-          <span>Realizado</span>
+        <div className="si-department-card__metric">
+          <span className="si-department-card__metric-label">Realizado</span>
           <strong>
             {formatIndicatorRealizedDisplay(indicator, valueFormat)}
           </strong>
         </div>
-        <div className="si-tree-indicator__metric">
-          <span>Nota</span>
+        <div className="si-department-card__metric">
+          <span className="si-department-card__metric-label">Nota</span>
           <strong
-            className={
-              !indicator.hasValue ? "si-tree-indicator__value--missing" : ""
-            }
+            className={`si-department-card__metric-value${
+              !indicator.hasValue ? " si-tree-indicator__value--missing" : ""
+            }`}
           >
             {formatIndicatorScore(indicator.score)}
           </strong>
         </div>
-        <div className="si-tree-indicator__metric">
-          <span>Gap</span>
+        <div className="si-department-card__metric">
+          <span className="si-department-card__metric-label">Gap</span>
           <strong
-            className={
-              !indicator.hasValue ? "si-tree-indicator__value--missing" : ""
-            }
+            className={`si-department-card__metric-value${
+              !indicator.hasValue ? " si-tree-indicator__value--missing" : ""
+            }`}
           >
             {formatIndicatorGapDisplay(indicator, valueFormat)}
           </strong>
         </div>
-        <div className="si-tree-indicator__metric">
-          <span>Tendência</span>
-          <strong>{getTrendLabel(indicator.trend)}</strong>
-        </div>
-        <div className="si-tree-indicator__metric">
-          <span>Escopo</span>
-          <strong>{getScopeTypeLabel(indicator.scopeType)}</strong>
-        </div>
       </div>
+
+      <p className="si-tree-indicator-card__meta">
+        {getTrendLabel(indicator.trend)} · {getScopeTypeLabel(indicator.scopeType)}
+      </p>
     </InteractiveTreeCard>
   );
+}
+
+function getDepartmentCardVariant(
+  score: number,
+): "success" | "info" | "warning" | "danger" {
+  if (score >= 8) return "success";
+  if (score >= 7) return "info";
+  if (score >= 6) return "warning";
+  return "danger";
 }
 
 function DepartmentTreeCard({
@@ -267,7 +275,7 @@ function DepartmentTreeCard({
   competence,
   expanded,
   onToggle,
-  showDepartmentTitle,
+  showDepartmentHeader,
   activeCardId,
   onActivateCard,
 }: {
@@ -277,13 +285,13 @@ function DepartmentTreeCard({
   competence: string;
   expanded: boolean;
   onToggle: () => void;
-  showDepartmentTitle: boolean;
+  showDepartmentHeader: boolean;
   activeCardId: string | null;
   onActivateCard: (cardId: string) => void;
 }) {
   if (!node) {
     return (
-      <article className="si-tree-dept si-tree-dept--empty">
+      <article className="si-department-card si-tree-dept-card si-tree-dept-card--empty">
         <strong>Sem medição</strong>
         <p>Sem dados em {scope.label} no período.</p>
       </article>
@@ -291,10 +299,13 @@ function DepartmentTreeCard({
   }
 
   const { department } = node;
-  const tone = getScoreStatusVariant(department.score);
+  const cardVariant = getDepartmentCardVariant(department.score);
   const variationValue = department.variation.value;
   const variationPrefix = variationValue > 0 ? "+" : "";
   const indicatorCount = node.indicators.length;
+  const keyIndicators = node.indicators
+    .slice(0, 3)
+    .map((item) => item.indicator.name);
   const detailHref = buildDepartmentDetailHref(
     department.id,
     scope,
@@ -303,66 +314,109 @@ function DepartmentTreeCard({
   const deptCardId = `dept:${scope.key}:${department.id}`;
 
   return (
-    <article className={`si-tree-dept-wrap si-tree-dept-wrap--${tone}`}>
+    <article className="si-tree-dept-wrap">
       <InteractiveTreeCard
         href={detailHref}
         cardId={deptCardId}
         isActive={activeCardId === deptCardId}
         onActivate={onActivateCard}
-        className={`si-tree-dept si-tree-dept--${tone}`}
+        className="si-tree-dept-card__link"
       >
-        <header className="si-tree-dept__head">
-          <div className="si-tree-dept__identity">
-            {showDepartmentTitle ? (
-              <>
-                <strong className="si-tree-dept__name">{department.name}</strong>
-                <p className="si-tree-dept__summary">
-                  {department.strategicSummary}
-                </p>
-              </>
-            ) : null}
-            <div className="si-tree-dept__score-row">
-              <TreeScoreRing
-                score={department.score}
-                tone={tone}
-                size={76}
-              />
-              <div className="si-tree-dept__score-meta">
-                <StatusBadge
-                  label={department.classification}
-                  variant={tone}
-                />
-                <TreeSparkline
-                  points={node.series}
-                  direction={department.variation.direction}
-                  height={50}
-                  label="IDD · 6 meses"
-                />
-              </div>
+        <div className="si-department-card si-tree-dept-card">
+          <div className="si-department-card__top">
+            <div className="si-department-card__identity">
+              {showDepartmentHeader ? (
+                <>
+                  <span className="si-department-card__short">
+                    {department.shortName}
+                  </span>
+                  <div>
+                    <h3 className="si-department-card__title">
+                      {department.name}
+                    </h3>
+                    <p className="si-department-card__weight">
+                      peso no IGD: {department.weightInIgd}%
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <h3 className="si-department-card__title">{scope.label}</h3>
+                  <p className="si-department-card__weight">
+                    {department.classification}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <StatusBadge
+              label={department.score.toFixed(1)}
+              variant={cardVariant}
+            />
+          </div>
+
+          {showDepartmentHeader ? (
+            <p className="si-department-card__summary">
+              {department.strategicSummary}
+            </p>
+          ) : null}
+
+          <div className="si-department-card__goal">
+            <span className="si-department-card__goal-label">
+              {showDepartmentHeader ? "Referência executiva" : "Visão analítica"}
+            </span>
+            <strong className="si-department-card__goal-value">
+              {department.classification}
+              {!showDepartmentHeader ? ` · ${scope.label}` : null}
+            </strong>
+          </div>
+
+          <div className="si-department-card__metrics">
+            <div className="si-department-card__metric">
+              <span className="si-department-card__metric-label">IDD</span>
+              <strong className="si-department-card__metric-value">
+                {department.score.toFixed(1)}
+              </strong>
+            </div>
+            <div className="si-department-card__metric">
+              <span className="si-department-card__metric-label">
+                Contribuição
+              </span>
+              <strong className="si-department-card__metric-value">
+                {department.contribution.toFixed(3)}
+              </strong>
             </div>
           </div>
-        </header>
 
-        <dl className="si-tree-dept__stats">
-        <div>
-          <dt>Peso no IGD</dt>
-          <dd>{department.weightInIgd}%</dd>
-        </div>
-        <div>
-          <dt>Variação</dt>
-          <dd>
-            {variationPrefix}
-            {variationValue.toFixed(1)} ·{" "}
-            {getDirectionLabel(department.variation.direction)}
-          </dd>
-        </div>
-        <div>
-          <dt>Escopo</dt>
-          <dd>{scope.label}</dd>
-        </div>
-        </dl>
+          <div className="si-tree-dept-card__trend">
+            <span className="si-tree-dept-card__trend-label">
+              Variação {variationPrefix}
+              {variationValue.toFixed(1)} ·{" "}
+              {getDirectionLabel(department.variation.direction)}
+            </span>
+            <TreeSparkline
+              points={node.series}
+              direction={department.variation.direction}
+              height={44}
+              label="IDD · 6 meses"
+            />
+          </div>
 
-        <p className="si-tree-dept__cta">Clique para abrir o departamento</p>
+          {keyIndicators.length > 0 ? (
+            <div className="si-department-card__indicators">
+              <span className="si-department-card__indicators-label">
+                Indicadores-chave
+              </span>
+              <ul className="si-department-card__indicator-list">
+                {keyIndicators.map((indicator) => (
+                  <li key={indicator}>{indicator}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <p className="si-tree-dept-card__cta">Ver detalhe do departamento</p>
+        </div>
       </InteractiveTreeCard>
 
       <div className="si-tree-dept__actions" data-pan-zoom-lock="true">
@@ -496,7 +550,14 @@ export function DepartmentIgdTree({
 
   const hasExpandable = allExpandableKeys.length > 0;
 
+  const departmentCount = model.departmentOrder.length;
+
   const fitToken = `${model.competence}-${columnCount}-${model.departmentOrder.join("|")}`;
+
+  const chartStyle = {
+    "--si-org-chart-cols": String(columnCount),
+    "--si-dept-count": String(departmentCount),
+  } as CSSProperties;
 
   const toolbar: ReactNode = (
     <>
@@ -525,13 +586,12 @@ export function DepartmentIgdTree({
   );
 
   return (
-    <PanZoomCanvas fitToken={fitToken} toolbar={toolbar}>
-      <div
-        className="si-org-chart"
-        style={
-          { "--si-org-chart-cols": String(columnCount) } as CSSProperties
-        }
-      >
+    <PanZoomCanvas
+      fitToken={fitToken}
+      toolbar={toolbar}
+      className="si-org-chart-canvas"
+    >
+      <div className="si-org-chart" style={chartStyle}>
         <section className="si-org-chart__level si-org-chart__level--igd">
           <span className="si-org-chart__level-tag">Nível 1</span>
           <InteractiveTreeCard
@@ -621,11 +681,11 @@ export function DepartmentIgdTree({
             Nível 3 · Departamentos · Nível 4 · Indicadores
           </span>
 
-          <div className="si-org-chart__department-blocks">
+          <div className="si-org-chart__departments-row">
             {model.departmentOrder.map((departmentId) => (
               <div
                 key={departmentId}
-                className="si-org-chart__department-block"
+                className="si-org-chart__department-column"
               >
                 {isMultiColumn ? (
                   <p className="si-org-chart__department-anchor">
@@ -633,7 +693,7 @@ export function DepartmentIgdTree({
                   </p>
                 ) : null}
 
-                <div className="si-org-chart__fork-row">
+                <div className="si-org-chart__department-scopes">
                   {columnsByScope.map(({ column, nodesById }) => {
                     const expandKey = `${column.scope.key}:${departmentId}`;
                     const node = nodesById.get(departmentId) ?? null;
@@ -641,7 +701,7 @@ export function DepartmentIgdTree({
                     return (
                       <div
                         key={expandKey}
-                        className="si-org-chart__fork-item"
+                        className="si-org-chart__department-scope"
                       >
                         <DepartmentTreeCard
                           node={node}
@@ -650,7 +710,7 @@ export function DepartmentIgdTree({
                           competence={model.competence}
                           expanded={expandedKeys.has(expandKey)}
                           onToggle={() => toggleDepartment(expandKey)}
-                          showDepartmentTitle={!isMultiColumn}
+                          showDepartmentHeader={!isMultiColumn}
                           activeCardId={activeCardId}
                           onActivateCard={setActiveCardId}
                         />

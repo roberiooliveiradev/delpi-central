@@ -31,16 +31,27 @@ class GetStrategicIndicatorsTrendsRealUseCase:
         self,
         request: GetStrategicIndicatorsTrendsRealRequest,
     ) -> dict:
+        snapshots = self.load_period_snapshots(request)
+        return self.build_response_from_snapshots(snapshots)
+
+    def load_period_snapshots(
+        self,
+        request: GetStrategicIndicatorsTrendsRealRequest,
+    ) -> list[StrategicIndicatorsPeriodSnapshot]:
         months = max(2, min(request.months, 12))
         reference = self._parse_competence(request.competence)
         periods = self._build_periods(reference, months)
 
-        snapshots = self._snapshot_service.get_series_snapshot_optimized(
+        return self._snapshot_service.get_series_snapshot_optimized(
             periods=periods,
             department_id=request.department_id,
             branch=request.branch,
         )
 
+    def build_response_from_snapshots(
+        self,
+        snapshots: list[StrategicIndicatorsPeriodSnapshot],
+    ) -> dict:
         monthly_points: list[dict] = []
         monthly_departments: dict[str, list[dict]] = {}
         errors: list[dict] = []

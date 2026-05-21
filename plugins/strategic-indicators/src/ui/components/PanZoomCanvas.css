@@ -5,6 +5,28 @@
   width: 100%;
 }
 
+.si-pan-zoom-shell--expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  gap: 0;
+  padding: 12px 16px 16px;
+  background: var(--app-canvas, var(--bg, #ffffff));
+}
+
+.si-pan-zoom-shell--expanded .si-pan-zoom__viewport {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  border-radius: 16px;
+}
+
+.si-pan-zoom-shell--expanded .si-pan-zoom-shell__bar {
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
 .si-pan-zoom-shell__bar {
   display: flex;
   flex-wrap: wrap;
@@ -58,10 +80,16 @@
   color: var(--si-text-muted);
 }
 
+.si-pan-zoom-shell__reset-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
 .si-pan-zoom__viewport {
   position: relative;
-  height: min(72vh, 760px);
-  min-height: 420px;
+  height: min(78vh, 860px);
+  min-height: 480px;
   overflow: hidden;
   border-radius: 20px;
   border: 1px solid var(--si-card-border);

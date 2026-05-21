@@ -70,6 +70,7 @@ from si_app.composition.strategic_indicators_composer import (
     build_list_strategic_indicators_change_requests_use_case,
     build_submit_strategic_indicators_change_request_use_case,
     build_get_strategic_indicators_departments_use_case,
+    build_get_strategic_indicators_departments_tree_use_case,
     build_get_strategic_indicators_department_details_use_case,
     build_get_strategic_indicators_use_case,
     build_get_strategic_indicators_alerts_use_case,
@@ -938,6 +939,45 @@ def get_strategic_indicators_departments(
         raise HTTPException(
             status_code=500,
             detail=f"Falha ao carregar departamentos do Strategic Indicators: {exc}",
+        ) from exc
+
+
+@router.get("/departments/tree")
+@require_permission("strategic-indicators.view")
+def get_strategic_indicators_departments_tree(
+    view_mode: str = Query("consolidated"),
+    branch: str | None = Query(None),
+    competence: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+    months: int = Query(6, ge=2, le=12),
+):
+    try:
+        from si_app.application.use_cases.strategic_indicators.get_departments_tree_use_case import (
+            GetStrategicIndicatorsDepartmentsTreeRequest,
+        )
+
+        return run_logged_read_route(
+            route="departments-tree",
+            competence=competence,
+            department_id=None,
+            branch=branch,
+            months=months,
+            handler=lambda: build_get_strategic_indicators_departments_tree_use_case().execute(
+                GetStrategicIndicatorsDepartmentsTreeRequest(
+                    view_mode=view_mode,
+                    branch=branch,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
+                    months=months,
+                )
+            ),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar árvore de departamentos: {exc}",
         ) from exc
 
 

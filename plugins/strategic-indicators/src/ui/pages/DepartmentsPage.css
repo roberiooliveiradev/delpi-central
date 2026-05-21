@@ -5,6 +5,22 @@
   background: var(--app-canvas, var(--bg, #ffffff));
 }
 
+.si-departments-page__map {
+  width: 100%;
+  max-width: none;
+  margin-left: -4px;
+  margin-right: -4px;
+}
+
+.si-departments-page__map-hint {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--si-text-muted);
+  text-align: right;
+  max-width: 220px;
+  line-height: 1.45;
+}
+
 @media (max-width: 900px) {
   .si-departments-page {
     padding: 16px;

@@ -72,7 +72,12 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
 
       <SectionBlock
         title="Árvore departamental do IGD"
-        description="Mapa navegável com cards clicáveis, gráficos de evolução (6 meses), anel de nota e drill-down para painel, tendências e departamentos."
+        description="Mapa navegável com cards no padrão Delpi, departamentos em linha horizontal, pan/zoom e botão para expandir o mapa em tela cheia."
+        aside={
+          <span className="si-departments-page__map-hint">
+            Use o ícone de expandir no mapa para ocupar a tela inteira
+          </span>
+        }
       >
         {loading && !model ? (
           <LoadingActivityInline
@@ -105,11 +110,13 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
               />
             ) : null}
 
-            <DepartmentIgdTree
-              model={model}
-              filterState={filterState}
-              isMultiColumn={isMultiColumn}
-            />
+            <div className="si-departments-page__map">
+              <DepartmentIgdTree
+                model={model}
+                filterState={filterState}
+                isMultiColumn={isMultiColumn}
+              />
+            </div>
           </>
         ) : null}
       </SectionBlock>
