@@ -2,6 +2,7 @@ import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicInd
 import { DepartmentTrendGrid } from "../components/DepartmentTrendGrid";
 import { IgdTrendTimeline } from "../components/IgdTrendTimeline";
 import { InfoState } from "../components/InfoState";
+import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
@@ -99,10 +100,8 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
           {referenceFilters}
         </SectionBlock>
 
-        <InfoState
-          title="Falha ao carregar tendências"
-          description={error}
-          actionLabel="Tentar novamente"
+        <StrategicIndicatorsPageError
+          error={error}
           onAction={() => void reload()}
         />
       </div>
@@ -150,10 +149,9 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
       ) : null}
 
       {error ? (
-        <InfoState
-          title="Falha parcial ao atualizar tendências"
-          description={error}
-          actionLabel="Tentar novamente"
+        <StrategicIndicatorsPageError
+          error={error}
+          mode="refresh"
           onAction={() => void reload()}
         />
       ) : null}

@@ -24,9 +24,9 @@ import { RevisaoWorkflowToolbar } from "../revisao/cadastro/RevisaoWorkflowToolb
 import { RevisaoMedicaoSection } from "../revisao/cadastro/RevisaoMedicaoSection";
 import { RevisaoRecursosSection } from "../revisao/cadastro/RevisaoRecursosSection";
 import {
-  buildRevisaoDatasFromRevisao,
+  buildRevisaoVigenciaFromRevisao,
   RevisaoVigenciaSection,
-  revisaoPayloadDates,
+  revisaoPayloadFromVigenciaForm,
 } from "../revisao/cadastro/RevisaoVigenciaSection";
 
 const emptyMedicao = (revisaoId: string): Medicao => ({
@@ -64,11 +64,19 @@ export function RevisaoCadastroPanel({
   const [recursos, setRecursos] = useState<RecursoCompartilhado[]>([]);
   const [loading, setLoading] = useState(true);
   const [rateioDiag, setRateioDiag] = useState<RateioDiagnostic | null>(null);
-  const [revisaoDatas, setRevisaoDatas] = useState(() => buildRevisaoDatasFromRevisao(revisao));
+  const [revisaoVigencia, setRevisaoVigencia] = useState(() => buildRevisaoVigenciaFromRevisao(revisao));
 
   useEffect(() => {
-    setRevisaoDatas(buildRevisaoDatasFromRevisao(revisao));
-  }, [revisao.revisao_id, revisao.data_inicio_vigencia, revisao.data_implantacao, revisao.data_fim_vigencia]);
+    setRevisaoVigencia(buildRevisaoVigenciaFromRevisao(revisao));
+  }, [
+    revisao.revisao_id,
+    revisao.data_inicio_vigencia,
+    revisao.data_implantacao,
+    revisao.data_fim_vigencia,
+    revisao.descricao_revisao,
+    revisao.motivo_revisao,
+    revisao.observacoes,
+  ]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -118,7 +126,7 @@ export function RevisaoCadastroPanel({
           versao_revisao: revisao.versao_revisao,
           cenario_tipo: revisao.cenario_tipo,
           revisao_ativa: revisao.revisao_ativa,
-          ...revisaoPayloadDates(revisaoDatas),
+          ...revisaoPayloadFromVigenciaForm(revisaoVigencia),
         },
         getAccessToken
       );
@@ -193,8 +201,8 @@ export function RevisaoCadastroPanel({
       <CadastroTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
         {activeTab === "vigencia" ? (
           <RevisaoVigenciaSection
-            revisaoDatas={revisaoDatas}
-            onChange={setRevisaoDatas}
+            revisaoVigencia={revisaoVigencia}
+            onChange={setRevisaoVigencia}
             onSubmit={handleSaveRevisaoDatas}
           />
         ) : null}

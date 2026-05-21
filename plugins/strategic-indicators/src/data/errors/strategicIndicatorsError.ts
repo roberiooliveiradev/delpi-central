@@ -18,6 +18,8 @@ export type StrategicIndicatorsErrorView = {
   rawMessage: string;
 };
 
+export type StrategicIndicatorsErrorMode = "load" | "refresh";
+
 export class StrategicIndicatorsApiError extends Error {
   readonly view: StrategicIndicatorsErrorView;
 
@@ -77,6 +79,31 @@ function detectCauses(technicalDetail: string): string[] {
     causes.push("API Indicadores Estratégicos indisponível ou reiniciando.");
   }
 
+  if (
+    normalized.includes("fetch_all") ||
+    normalized.includes("fetch_one") ||
+    normalized.includes("banco de plugins")
+  ) {
+    causes.push(
+      "Falha ao consultar catálogo, metas ou cache no Postgres do módulo (plugins).",
+    );
+  }
+
+  if (
+    normalized.includes("does not exist") ||
+    normalized.includes("undefinedcolumn")
+  ) {
+    causes.push(
+      "Schema do Strategic Indicators incompleto ou API desatualizada em relação ao banco.",
+    );
+  }
+
+  if (normalized.includes("character varying = date")) {
+    causes.push(
+      "Bug na resolução de metas por filial no backend — implante a versão corrigida da API SI.",
+    );
+  }
+
   if (!causes.length && technicalDetail) {
     causes.push("Erro interno retornado pela API ao processar o período selecionado.");
   }
@@ -114,6 +141,28 @@ function buildSuggestions(
 
   if (causes.some((item) => item.includes("autenticação"))) {
     suggestions.add("Faça logout/login no portal e tente novamente.");
+  }
+
+  if (
+    causes.some(
+      (item) =>
+        item.includes("Schema") ||
+        item.includes("catálogo") ||
+        item.includes("Postgres do módulo"),
+    )
+  ) {
+    suggestions.add(
+      "No servidor: docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py up",
+    );
+    suggestions.add(
+      "Depois: docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py",
+    );
+  }
+
+  if (causes.some((item) => item.includes("metas por filial"))) {
+    suggestions.add(
+      "Atualize e reinicie o container strategic-indicators-api com o patch de metas por filial.",
+    );
   }
 
   suggestions.add("Use “Tentar novamente” após corrigir a fonte ou atualizar o backend.");
@@ -157,6 +206,23 @@ export function toStrategicIndicatorsErrorView(
   }
 
   return parseStrategicIndicatorsError("Erro inesperado no módulo.", context);
+}
+
+export function withStrategicIndicatorsErrorMode(
+  view: StrategicIndicatorsErrorView,
+  mode: StrategicIndicatorsErrorMode,
+): StrategicIndicatorsErrorView {
+  if (mode === "refresh") {
+    return {
+      ...view,
+      title: `Falha ao atualizar ${view.context.surface.toLowerCase()}`,
+    };
+  }
+
+  return {
+    ...view,
+    title: `Falha em ${view.context.surface}`,
+  };
 }
 
 export function formatStrategicIndicatorsErrorLocation(

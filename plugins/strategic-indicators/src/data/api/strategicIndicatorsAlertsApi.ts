@@ -1,4 +1,5 @@
 import type { StrategicIndicatorsAlertsResponse } from "../types/alerts";
+import { buildStrategicIndicatorsApiError } from "./strategicIndicatorsApiErrors";
 
 import { STRATEGIC_INDICATORS_API_BASE } from "./strategicIndicatorsApiBase";
 
@@ -69,20 +70,15 @@ export async function fetchStrategicIndicatorsAlerts({
   );
 
   if (!response.ok) {
-    const message = await safeReadError(response);
-    throw new Error(message || "Falha ao carregar alertas do módulo.");
+    throw await buildStrategicIndicatorsApiError(response, {
+      surface: "Lista de alertas",
+      route: "/alerts",
+      method: "GET",
+      competence: competence ?? null,
+      branch: branch ?? null,
+      departmentId: departmentId ?? null,
+    });
   }
 
   return response.json();
-}
-
-async function safeReadError(response: Response): Promise<string | null> {
-  try {
-    const data = await response.json();
-    if (typeof data?.detail === "string") return data.detail;
-    if (typeof data?.message === "string") return data.message;
-    return null;
-  } catch {
-    return null;
-  }
 }

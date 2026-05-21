@@ -8,6 +8,7 @@ import { PresentationHero } from "../components/PresentationHero";
 import { PresentationNarrativeStrip } from "../components/PresentationNarrativeStrip";
 import { PresentationTopBar } from "../components/PresentationTopBar";
 import { InfoState } from "../components/InfoState";
+import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { PresentationAlertsSeverityDonut } from "../components/PresentationAlertsSeverityDonut";
 import { PresentationTrendAreaChart } from "../components/PresentationTrendAreaChart";
@@ -1172,13 +1173,23 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
     if (presentation.error || !data) {
       return (
         <div className="si-presentation-loading-stage">
-          <InfoState
-            title="Falha ao carregar apresentação"
-            description={
-              presentation.error ??
-              "Não foi possível obter os dados necessários."
+          <StrategicIndicatorsPageError
+            error={
+              presentation.error ?? {
+                title: "Falha em Apresentação executiva",
+                summary:
+                  "Não foi possível obter os dados necessários para a apresentação.",
+                context: {
+                  surface: "Apresentação executiva",
+                  route: "/presentation",
+                },
+                causes: [],
+                suggestions: [
+                  'Use "Tentar novamente" após corrigir a fonte ou atualizar o backend.',
+                ],
+                rawMessage: "Erro inesperado no módulo.",
+              }
             }
-            actionLabel="Tentar novamente"
             onAction={() => {
               void presentation.reload();
             }}
@@ -1231,10 +1242,9 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
           {(presentation.error && data) || presentation.warnings.length > 0 ? (
             <div className="si-presentation-stage__feedback">
               {presentation.error ? (
-                <InfoState
-                  title="Falha ao atualizar apresentação"
-                  description={presentation.error}
-                  actionLabel="Tentar novamente"
+                <StrategicIndicatorsPageError
+                  error={presentation.error}
+                  mode="refresh"
                   onAction={() => {
                     void presentation.reload();
                   }}

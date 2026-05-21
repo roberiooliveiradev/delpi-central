@@ -100,7 +100,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 ## Próximo passo imediato
 
-1. **Deploy Fase 4:** rebuild `transformometro-api` + MFE; `TM_RUN_MIGRATIONS_ON_STARTUP=true` (V004)
+1. **Deploy:** rebuild `transformometro-api` + MFE; `TM_RUN_MIGRATIONS_ON_STARTUP=true` (V004–V005); registrar manifesto (rota `/recursos`)
 2. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
 3. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
 4. **Backlog Fase 4+:** export PDF/Excel formatado
