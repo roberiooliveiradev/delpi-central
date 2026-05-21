@@ -12,6 +12,7 @@ import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsP
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { PresentationAlertsSeverityDonut } from "../components/PresentationAlertsSeverityDonut";
 import { PresentationTrendAreaChart } from "../components/PresentationTrendAreaChart";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { useStrategicIndicatorsPresentation } from "../../state/hooks/useStrategicIndicatorsPresentation";
 import {
@@ -205,6 +206,11 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
   const data = presentation.data;
   const loading = presentation.loading;
+  const presentationLoadingProgress = useSimulatedLoadingProgress(presentation.loading);
+  const trendsLoadingProgress = useSimulatedLoadingProgress(presentation.trendsLoading);
+  const partialRefreshProgress = useSimulatedLoadingProgress(
+    !presentation.error && presentation.warnings.length > 0
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -850,6 +856,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             description="Aguarde enquanto a série histórica do IGD é preparada."
             variant="panel"
             tone="info"
+            progressPercent={trendsLoadingProgress}
           />
         </div>
       );
@@ -1165,6 +1172,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             description="Aguarde enquanto a visão executiva do IGD e dos departamentos é preparada."
             variant="panel"
             tone="info"
+            progressPercent={presentationLoadingProgress}
           />
         </div>
       );
@@ -1257,6 +1265,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
                     .join(" • ")}
                   variant="compact"
                   tone="info"
+                  progressPercent={partialRefreshProgress}
                 />
               )}
             </div>

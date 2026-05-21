@@ -647,6 +647,25 @@
   animation: lmps-loading-slide 1.3s ease-in-out infinite;
 }
 
+.dashboard-lmps .lmps-loading-activity__progress-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-lmps .lmps-loading-activity__progress-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.dashboard-lmps .lmps-loading-activity__progress-indicator--determinate {
+  width: 0;
+  animation: none;
+  background: color-mix(in srgb, var(--primary) 88%, white);
+  transition: width 0.35s ease;
+}
+
 @keyframes lmps-loading-spin {
   to {
     transform: rotate(360deg);

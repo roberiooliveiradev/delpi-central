@@ -30,6 +30,7 @@ import { CHART_COLORS } from "../constants/chartColors";
 import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import type { LmpDashboardItem } from "../types/lmp";
 import type { ChartGranularity } from "../types/chart";
 import { buildLmpFallbackCharts } from "../utils/lmpCharts";
@@ -192,6 +193,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
 
   const isBusy = loading || refreshing;
   const hasData = sortedItems.length > 0 || summary !== null;
+  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
   const hasCharts =
     resolvedCharts.levelData.some((d) => d.value > 0) ||
     resolvedCharts.statusData.some((d) => d.value > 0);
@@ -232,6 +234,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
           description="Recalculando indicadores e gráficos com os filtros atuais."
           variant="compact"
           sticky
+          progressPercent={refreshLoadingProgress}
         />
       ) : null}
 

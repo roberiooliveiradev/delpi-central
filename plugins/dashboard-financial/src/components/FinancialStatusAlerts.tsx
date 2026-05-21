@@ -1,4 +1,5 @@
 import { LoadingActivityCard } from "./LoadingActivityCard";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 
 type FinancialStatusAlertsProps = {
   error: string | null;
@@ -13,6 +14,8 @@ export function FinancialStatusAlerts({
   hasData,
   onRetry,
 }: FinancialStatusAlertsProps) {
+  const loadingProgress = useSimulatedLoadingProgress(loading && !hasData);
+
   return (
     <>
       {error ? (
@@ -28,6 +31,7 @@ export function FinancialStatusAlerts({
         <LoadingActivityCard
           title="Carregando indicadores"
           description="Buscando dados financeiros para o período e filial selecionados."
+          progressPercent={loadingProgress}
         />
       ) : null}
     </>

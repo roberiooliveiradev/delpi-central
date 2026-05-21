@@ -23,6 +23,7 @@ import { QualityPageHeader } from "../components/QualityPageHeader";
 import { CHART_COLORS } from "../constants/chartColors";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { useAudit5sSummary } from "../hooks/useQualityQueries";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import type { ChartGranularity } from "../types/chart";
@@ -70,6 +71,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
   );
 
   const { data, loading, error, reload } = useAudit5sSummary(summaryParams);
+  const initialLoadingProgress = useSimulatedLoadingProgress(loading && !data);
   const items = data?.list_audits ?? [];
 
   useEffect(() => {
@@ -319,6 +321,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         <LoadingActivityCard
           title="Carregando auditorias 5S"
           description="Buscando registros de auditoria para o período."
+          progressPercent={initialLoadingProgress}
         />
       ) : null}
 

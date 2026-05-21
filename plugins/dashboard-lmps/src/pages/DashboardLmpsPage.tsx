@@ -26,6 +26,7 @@ import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import type { ChartGranularity } from "../types/chart";
 import type { LmpDashboardItem } from "../types/lmp";
 import { buildLmpFallbackCharts, parseLmpDateNumber } from "../utils/lmpCharts";
@@ -116,6 +117,8 @@ export function DashboardLmpsPage() {
 
   const hasData = sortedItems.length > 0 || summary !== null;
   const isBusy = loading || refreshing;
+  const initialLoadingProgress = useSimulatedLoadingProgress(loading && !hasData);
+  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
 
   const fallbackCharts = useMemo(
     () => buildLmpFallbackCharts(sortedItems),
@@ -241,6 +244,7 @@ export function DashboardLmpsPage() {
           description="Os dados exibidos estão sendo atualizados com os filtros selecionados."
           variant="compact"
           sticky
+          progressPercent={refreshLoadingProgress}
         />
       ) : null}
 
@@ -282,6 +286,7 @@ export function DashboardLmpsPage() {
         <LoadingActivityCard
           title="Carregando dashboard de LMPs"
           description="Buscando propostas, indicadores e gráficos no TOTVS."
+          progressPercent={initialLoadingProgress}
         />
       ) : error && !hasData ? (
         <section className="lmps-charts-grid">

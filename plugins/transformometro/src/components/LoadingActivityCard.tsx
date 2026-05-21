@@ -3,6 +3,7 @@ type LoadingActivityCardProps = {
   description?: string;
   variant?: "compact" | "panel";
   sticky?: boolean;
+  progressPercent?: number;
 };
 
 export function LoadingActivityCard({
@@ -10,7 +11,16 @@ export function LoadingActivityCard({
   description,
   variant = "panel",
   sticky = variant === "compact",
+  progressPercent,
 }: LoadingActivityCardProps) {
+  const hasProgress =
+    typeof progressPercent === "number" && Number.isFinite(progressPercent);
+  const clampedProgress = hasProgress
+    ? Math.min(100, Math.max(0, Math.round(progressPercent)))
+    : null;
+  const remainingPercent =
+    clampedProgress !== null ? Math.max(0, 100 - clampedProgress) : null;
+
   return (
     <div
       className={[
@@ -32,8 +42,37 @@ export function LoadingActivityCard({
             <p className="ds-loading-activity__description">{description}</p>
           ) : null}
         </div>
-        <div className="ds-loading-activity__progress" aria-hidden="true">
-          <div className="ds-loading-activity__progress-indicator" />
+        <div className="ds-loading-activity__progress-wrap">
+          {remainingPercent !== null ? (
+            <span className="ds-loading-activity__progress-label">
+              Faltam {remainingPercent}%
+            </span>
+          ) : null}
+          <div
+            className="ds-loading-activity__progress"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={clampedProgress ?? undefined}
+            aria-label={
+              remainingPercent !== null
+                ? `Carregamento: faltam ${remainingPercent} por cento`
+                : "Carregamento em andamento"
+            }
+          >
+            <div
+              className={`ds-loading-activity__progress-indicator${
+                clampedProgress !== null
+                  ? " ds-loading-activity__progress-indicator--determinate"
+                  : ""
+              }`}
+              style={
+                clampedProgress !== null
+                  ? { width: `${clampedProgress}%` }
+                  : undefined
+              }
+            />
+          </div>
         </div>
       </div>
     </div>

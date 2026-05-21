@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import { useSimulatedLoadingProgress } from "../../hooks/useSimulatedLoadingProgress";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
@@ -122,11 +123,14 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     }
   }
 
+  const catalogLoadingProgress = useSimulatedLoadingProgress(loading && !options);
+
   if (loading && !options) {
     return (
       <LoadingActivityCard
         title="Carregando catálogo de recursos"
         description="Licenças, assinaturas e ferramentas compartilhadas."
+        progressPercent={catalogLoadingProgress}
       />
     );
   }

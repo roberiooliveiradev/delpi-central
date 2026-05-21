@@ -1,4 +1,5 @@
 import { LoadingActivityCard } from "./LoadingActivityCard";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 
 type StatusAlertsProps = {
   error: string | null;
@@ -8,6 +9,8 @@ type StatusAlertsProps = {
 };
 
 export function StatusAlerts({ error, loading, hasData, onRetry }: StatusAlertsProps) {
+  const loadingProgress = useSimulatedLoadingProgress(loading && !hasData);
+
   return (
     <>
       {error ? (
@@ -23,6 +26,7 @@ export function StatusAlerts({ error, loading, hasData, onRetry }: StatusAlertsP
         <LoadingActivityCard
           title="Carregando indicadores"
           description="Buscando economia, evolução mensal e ranking de processos."
+          progressPercent={loadingProgress}
         />
       ) : null}
     </>

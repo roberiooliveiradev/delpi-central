@@ -10,6 +10,7 @@ import { EngineeringStatusAlerts } from "../components/EngineeringStatusAlerts";
 import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringDashboard } from "../hooks/useEngineeringDashboard";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { formatPeriodLabel } from "../utils/dates";
 import {
   formatCurrency,
@@ -64,6 +65,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
   const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
   const isBusy = loading || refreshing;
   const hasData = transforma !== null || lmpSummary !== null;
+  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
 
   return (
     <div className="dashboard-engineering dashboard-page">
@@ -93,6 +95,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
           description="Atualizando KPIs de LMP e TRANSFORMA+."
           variant="compact"
           sticky
+          progressPercent={refreshLoadingProgress}
         />
       ) : null}
       {Object.keys(sectionErrors).length > 0 && hasData ? (

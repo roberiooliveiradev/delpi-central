@@ -5,6 +5,8 @@ import { SettingsStatusStrip } from "../components/SettingsStatusStrip";
 import { AuditWorkspacePanel } from "../components/AuditWorkspacePanel";
 import { SectionBlock } from "../components/SectionBlock";
 import { InfoState } from "../components/InfoState";
+import { LoadingActivityInline } from "../components/LoadingActivityInline";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { SettingsSummaryCards } from "../components/SettingsSummaryCards";
 import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
 import type { SettingsDashboardData } from "../../data/types/settingsDashboard";
@@ -38,6 +40,12 @@ type SettingsTab =
 export function SettingsPage({ getAccessToken }: SettingsPageProps) {
   const settings = useStrategicIndicatorsSettings({ getAccessToken });
   const [activeTab, setActiveTab] = useState<SettingsTab>("overview");
+  const overviewLoadingProgress = useSimulatedLoadingProgress(
+    settings.loading && activeTab === "overview"
+  );
+  const globalLoadingProgress = useSimulatedLoadingProgress(
+    settings.loading && activeTab === "global"
+  );
 
   const dashboardData = useMemo<SettingsDashboardData | null>(() => {
     if (!settings.data) return null;
@@ -155,10 +163,18 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
             title="Painel administrativo"
             description="Resumo executivo do estado atual do módulo. Os blocos de pesos e metas abaixo são visão de leitura, não a base principal de edição."
           >
-            {!dashboardData ? (
-              <InfoState
+            {settings.loading && !dashboardData ? (
+              <LoadingActivityInline
                 title="Carregando painel administrativo"
                 description="Aguarde enquanto o painel do módulo é carregado."
+                variant="panel"
+                tone="info"
+                progressPercent={overviewLoadingProgress}
+              />
+            ) : !dashboardData ? (
+              <InfoState
+                title="Painel indisponível"
+                description="Não foi possível carregar o painel administrativo."
               />
             ) : (
               <>
@@ -233,10 +249,18 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
             title="Configurações globais"
             description="Administre apenas os blocos globais centrais do módulo: parâmetros e governança."
           >
-            {!settings.data ? (
-              <InfoState
+            {settings.loading && !settings.data ? (
+              <LoadingActivityInline
                 title="Carregando configurações globais"
                 description="Aguarde enquanto parâmetros e governança são carregados."
+                variant="panel"
+                tone="info"
+                progressPercent={globalLoadingProgress}
+              />
+            ) : !settings.data ? (
+              <InfoState
+                title="Configurações indisponíveis"
+                description="Não foi possível carregar parâmetros e governança."
               />
             ) : (
               <SettingsStructuredEditor

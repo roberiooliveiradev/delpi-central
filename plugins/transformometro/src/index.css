@@ -883,6 +883,25 @@
   animation: ds-loading-slide 1.3s ease-in-out infinite;
 }
 
+.dashboard-transformometro .ds-loading-activity__progress-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-transformometro .ds-loading-activity__progress-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ds-text-muted);
+  text-align: right;
+}
+
+.dashboard-transformometro .ds-loading-activity__progress-indicator--determinate {
+  width: 0;
+  animation: none;
+  background: color-mix(in srgb, var(--ds-accent) 88%, white);
+  transition: width 0.35s ease;
+}
+
 @keyframes ds-loading-spin {
   to {
     transform: rotate(360deg);

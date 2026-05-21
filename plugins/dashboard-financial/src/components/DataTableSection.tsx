@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
 import { useClientPagination } from "../hooks/useClientPagination";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 import { Pagination } from "./Pagination";
@@ -92,6 +93,10 @@ export function DataTableSection<T>({
   const handlePageChange = serverPagination?.onPageChange ?? setPage;
 
   const showInitialLoading = loading && rows.length === 0;
+  const initialLoadingProgress = useSimulatedLoadingProgress(showInitialLoading);
+  const refreshLoadingProgress = useSimulatedLoadingProgress(
+    refreshing && rows.length > 0
+  );
 
   return (
     <section
@@ -114,6 +119,7 @@ export function DataTableSection<T>({
           description="Mantendo os dados visíveis enquanto a nova consulta é aplicada."
           variant="compact"
           sticky
+          progressPercent={refreshLoadingProgress}
         />
       ) : null}
 
@@ -121,6 +127,7 @@ export function DataTableSection<T>({
         <LoadingActivityCard
           title="Carregando registros"
           description="Aguarde enquanto os dados da tabela são obtidos."
+          progressPercent={initialLoadingProgress}
         />
       ) : (
         <>

@@ -1,4 +1,5 @@
 import { LoadingActivityCard } from "./LoadingActivityCard";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 
 type EngineeringStatusAlertsProps = {
   error: string | null;
@@ -13,6 +14,8 @@ export function EngineeringStatusAlerts({
   hasData,
   onRetry,
 }: EngineeringStatusAlertsProps) {
+  const loadingProgress = useSimulatedLoadingProgress(loading && !hasData);
+
   return (
     <>
       {error ? (
@@ -27,7 +30,8 @@ export function EngineeringStatusAlerts({
       {loading && !hasData ? (
         <LoadingActivityCard
           title="Carregando indicadores"
-          description="Buscando LMPs e TRANSFORMA+ para o período e filial selecionados."
+          description="Buscando dados de engenharia para o período e filial selecionados."
+          progressPercent={loadingProgress}
         />
       ) : null}
     </>

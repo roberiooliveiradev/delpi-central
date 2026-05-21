@@ -1,4 +1,5 @@
 import { LoadingActivityCard } from "./LoadingActivityCard";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 
 type SuppliesStatusAlertsProps = {
   error: string | null;
@@ -13,6 +14,8 @@ export function SuppliesStatusAlerts({
   hasData,
   onRetry,
 }: SuppliesStatusAlertsProps) {
+  const loadingProgress = useSimulatedLoadingProgress(loading && !hasData);
+
   return (
     <>
       {error ? (
@@ -28,6 +31,7 @@ export function SuppliesStatusAlerts({
         <LoadingActivityCard
           title="Carregando indicadores"
           description="Buscando dados de suprimentos para o período e filial selecionados."
+          progressPercent={loadingProgress}
         />
       ) : null}
     </>

@@ -3,6 +3,7 @@ import { ArrowLeft, Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import { useSimulatedLoadingProgress } from "../../hooks/useSimulatedLoadingProgress";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
@@ -107,6 +108,8 @@ export function ProcessoDetailPage({
 
   const selectedRevisao = revisoes.find((r) => r.revisao_id === selectedRevisaoId);
 
+  const processLoadingProgress = useSimulatedLoadingProgress(loading && !processo);
+
   if (loading && !processo) {
     return (
       <div className="dashboard-transformometro dashboard-page">
@@ -117,6 +120,7 @@ export function ProcessoDetailPage({
         <LoadingActivityCard
           title="Carregando processo"
           description="Buscando dados do processo e revisões."
+          progressPercent={processLoadingProgress}
         />
       </div>
     );
