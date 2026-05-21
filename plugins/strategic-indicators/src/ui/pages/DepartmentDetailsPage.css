@@ -5,6 +5,10 @@
   background: var(--app-canvas, var(--bg, #ffffff));
 }
 
+.si-department-details-page__nav {
+  margin-bottom: 16px;
+}
+
 @media (max-width: 900px) {
   .si-department-details-page {
     padding: 16px;

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { DepartmentDetailHero } from "../components/DepartmentDetailHero";
 import { IndicatorDetailGrid } from "../components/IndicatorDetailGrid";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
+import { StrategicIndicatorsBackLink } from "../components/StrategicIndicatorsBackLink";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
@@ -37,7 +38,16 @@ export function DepartmentDetailsPage({
     startDate,
     endDate,
     effectiveBranch,
+    filterState,
   } = useStrategicIndicatorsFilters();
+
+  const backToDepartments = (
+    <StrategicIndicatorsBackLink
+      href="/apps/strategic-indicators/departments"
+      label="Voltar aos departamentos"
+      filterState={filterState}
+    />
+  );
 
   const { data, loading, refreshing, error, reload } =
     useStrategicIndicatorsDepartmentDetails({
@@ -63,6 +73,7 @@ export function DepartmentDetailsPage({
   if (loading && !data) {
     return (
       <div className="si-department-details-page">
+        <nav className="si-department-details-page__nav">{backToDepartments}</nav>
         <PageHeader
           eyebrow="MinhaDelpi"
           title="Departamento"
@@ -90,6 +101,7 @@ export function DepartmentDetailsPage({
   if (error && !data) {
     return (
       <div className="si-department-details-page">
+        <nav className="si-department-details-page__nav">{backToDepartments}</nav>
         <PageHeader
           eyebrow="MinhaDelpi"
           title="Departamento não encontrado"
@@ -118,6 +130,7 @@ export function DepartmentDetailsPage({
 
   return (
     <div className="si-department-details-page">
+      <nav className="si-department-details-page__nav">{backToDepartments}</nav>
       <PageHeader
         eyebrow="MinhaDelpi"
         title={`Departamento — ${data.name}`}
