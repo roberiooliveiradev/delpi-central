@@ -106,23 +106,23 @@
 .si-igd-hero--tree {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   width: 100%;
   max-width: var(--si-igd-card-max-width, 560px);
-  padding: 24px 28px;
-  border-radius: 26px;
+  padding: 28px 32px;
+  border-radius: 28px;
 }
 
 .si-igd-hero--tree .si-igd-hero__eyebrow {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .si-igd-hero--tree .si-igd-hero__value {
-  font-size: 56px;
+  font-size: 64px;
 }
 
 .si-igd-hero--tree .si-igd-hero__exact {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .si-igd-hero--tree .si-igd-hero__highlights {
@@ -130,19 +130,19 @@
 }
 
 .si-igd-hero--tree .si-igd-hero__description {
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 15px;
+  line-height: 1.6;
   max-width: none;
 }
 
 @media (max-width: 900px) {
   .si-igd-hero--tree {
-    padding: 18px 20px;
-    border-radius: 22px;
+    padding: 22px 24px;
+    border-radius: 24px;
   }
 
   .si-igd-hero--tree .si-igd-hero__value {
-    font-size: 44px;
+    font-size: 50px;
   }
 
   .si-igd-hero--tree .si-igd-hero__headline {
@@ -154,16 +154,16 @@
 
 @media (max-width: 640px) {
   .si-igd-hero--tree {
-    padding: 16px;
-    gap: 12px;
-    border-radius: 18px;
+    padding: 20px;
+    gap: 14px;
+    border-radius: 20px;
   }
 
   .si-igd-hero--tree .si-igd-hero__value {
-    font-size: 38px;
+    font-size: 44px;
   }
 
   .si-igd-hero--tree .si-igd-hero__description {
-    font-size: 13px;
+    font-size: 14px;
   }
 }

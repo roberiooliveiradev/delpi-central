@@ -198,7 +198,7 @@ function TreeIgdCard({
             <TreeSparkline
               points={model.igdSeries}
               direction="stable"
-              height={56}
+              height={64}
               label="Evolução · últimos meses"
             />
           ) : null}
@@ -322,7 +322,7 @@ function IndicatorTreeCard({
           <TreeSparkline
             points={series}
             direction={indicator.trend}
-            height={44}
+            height={52}
             label="Histórico · últimos meses"
           />
         ) : null}
@@ -515,7 +515,7 @@ function DepartmentTreeCard({
             <TreeSparkline
               points={node.series}
               direction={department.variation.direction}
-              height={44}
+              height={52}
               label="IDD · 6 meses"
             />
           </div>
