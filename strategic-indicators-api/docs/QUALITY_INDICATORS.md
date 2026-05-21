@@ -18,8 +18,9 @@ Metas consolidadas (`goal_scope_branch = ''`) do seed V009 são **inativadas**; 
 
 Na visão **Consolidado** (`aggregation_mode = average_of_units`):
 
-- Nota de cada indicador = média das notas das filiais 01 e 02.
-- **Nota IDD da Qualidade** = média entre o IDD da filial 01 e o IDD da filial 02.
+- Nota de cada indicador = média das notas das filiais `01` e `02`.
+- Meta, valor atual e gap exibem `01: … | 02: …`.
+- **Nota IDD da Qualidade** = média entre o IDD da filial `01` e o IDD da filial `02`.
 
 ## Deploy
 

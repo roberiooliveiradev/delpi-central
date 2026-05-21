@@ -22,7 +22,7 @@ def test_format_branch_scoped_goal_label() -> None:
         }
     )
 
-    assert label == "Un. 01: 15 PDIs | Un. 02: 8 PDIs"
+    assert label == "01: 15 PDIs | 02: 8 PDIs"
 
 
 def test_pick_primary_branch_goal_prefers_filial_01() -> None:
@@ -43,7 +43,7 @@ def test_consolidated_score_averages_branch_scores() -> None:
         department_id="hr",
         indicator_name="PDIs ativos",
         weight_pct=10,
-        goal_label="Un. 01: 15 | Un. 02: 8",
+        goal_label="01: 15 | 02: 8",
         goal_value=15,
         goal_periodicity="monthly",
         scope_type="consolidated",
