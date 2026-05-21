@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { DepartmentDetailHero } from "../components/DepartmentDetailHero";
 import { IndicatorDetailGrid } from "../components/IndicatorDetailGrid";
-import { InfoState } from "../components/InfoState";
+import { StrategicIndicatorsErrorState } from "../components/StrategicIndicatorsErrorState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
@@ -104,12 +104,8 @@ export function DepartmentDetailsPage({
           {filters}
         </SectionBlock>
 
-        <InfoState
-          title="Área não localizada"
-          description={
-            error ??
-            "Verifique a rota informada ou retorne para a visão de departamentos."
-          }
+        <StrategicIndicatorsErrorState
+          error={error}
           actionLabel="Tentar novamente"
           onAction={() => void reload()}
         />
@@ -153,9 +149,8 @@ export function DepartmentDetailsPage({
       ) : null}
 
       {error && data ? (
-        <InfoState
-          title="Falha ao atualizar departamento"
-          description={error}
+        <StrategicIndicatorsErrorState
+          error={{ ...error, title: "Falha ao atualizar departamento" }}
           actionLabel="Tentar novamente"
           onAction={() => void reload()}
         />

@@ -9,6 +9,7 @@ import { IndicatorFiltersBar } from "../components/IndicatorFiltersBar";
 import { IndicatorPriorityList } from "../components/IndicatorPriorityList";
 import { IndicatorQuickDetail } from "../components/IndicatorQuickDetail";
 import { InfoState } from "../components/InfoState";
+import { StrategicIndicatorsErrorState } from "../components/StrategicIndicatorsErrorState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
@@ -289,9 +290,8 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
           tone="info"
         />
       ) : error && items.length === 0 ? (
-        <InfoState
-          title="Falha ao carregar indicadores"
-          description={error}
+        <StrategicIndicatorsErrorState
+          error={error}
           actionLabel="Tentar novamente"
           onAction={() => void reload()}
         />
@@ -307,9 +307,8 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
           ) : null}
 
           {error && items.length > 0 ? (
-            <InfoState
-              title="Falha ao atualizar indicadores"
-              description={error}
+            <StrategicIndicatorsErrorState
+              error={{ ...error, title: "Falha ao atualizar indicadores" }}
               actionLabel="Tentar novamente"
               onAction={() => void reload()}
             />

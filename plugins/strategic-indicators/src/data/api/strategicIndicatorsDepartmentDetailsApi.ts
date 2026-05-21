@@ -1,4 +1,5 @@
 import type { StrategicIndicatorsDepartmentDetailsResponse } from "../types/departmentDetails";
+import { buildStrategicIndicatorsApiError } from "./strategicIndicatorsApiErrors";
 
 import { STRATEGIC_INDICATORS_API_BASE } from "./strategicIndicatorsApiBase";
 
@@ -66,20 +67,15 @@ export async function fetchStrategicIndicatorsDepartmentDetails({
   );
 
   if (!response.ok) {
-    const message = await safeReadError(response);
-    throw new Error(message || "Falha ao carregar detalhe do departamento.");
+    throw await buildStrategicIndicatorsApiError(response, {
+      surface: "Detalhe do departamento",
+      route: `/departments/${departmentId}`,
+      method: "GET",
+      competence: competence ?? null,
+      branch: branch ?? null,
+      departmentId,
+    });
   }
 
   return response.json();
-}
-
-async function safeReadError(response: Response): Promise<string | null> {
-  try {
-    const data = await response.json();
-    if (typeof data?.detail === "string") return data.detail;
-    if (typeof data?.message === "string") return data.message;
-    return null;
-  } catch {
-    return null;
-  }
 }

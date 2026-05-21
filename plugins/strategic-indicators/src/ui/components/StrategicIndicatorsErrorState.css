@@ -1,0 +1,121 @@
+.si-error-state {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--si-card-bg);
+  border: 1px solid color-mix(in srgb, #f59e0b 35%, var(--si-card-border));
+  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.si-error-state__icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #b45309;
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+}
+
+.si-error-state__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.si-error-state__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--si-title);
+}
+
+.si-error-state__summary {
+  margin: 0 0 14px;
+  color: var(--si-text);
+  line-height: 1.5;
+}
+
+.si-error-state__meta {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.si-error-state__meta-row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.si-error-state__meta-row dt {
+  margin: 0;
+  font-weight: 700;
+  color: var(--si-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.si-error-state__meta-row dd {
+  margin: 0;
+  color: var(--si-text);
+}
+
+.si-error-state__section {
+  margin-bottom: 14px;
+}
+
+.si-error-state__section-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--si-text-muted);
+}
+
+.si-error-state__list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--si-text);
+  line-height: 1.45;
+}
+
+.si-error-state__list li + li {
+  margin-top: 6px;
+}
+
+.si-error-state__technical {
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.si-error-state__technical summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--si-text-muted);
+}
+
+.si-error-state__technical pre {
+  margin: 10px 0 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--si-card-border) 40%, transparent);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+}
+
+.si-error-state__action {
+  width: 100%;
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}

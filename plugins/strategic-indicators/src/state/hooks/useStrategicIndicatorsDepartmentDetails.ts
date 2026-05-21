@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { adaptDepartmentDetailsToView } from "../../data/adapters/departmentDetailsAdapter";
 import { fetchStrategicIndicatorsDepartmentDetails } from "../../data/api/strategicIndicatorsDepartmentDetailsApi";
 import type { DepartmentDetailsViewData } from "../../data/types/departmentDetails";
+import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
+import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
 
 type UseStrategicIndicatorsDepartmentDetailsParams = {
   departmentId: string;
@@ -23,7 +25,7 @@ export function useStrategicIndicatorsDepartmentDetails({
   const [data, setData] = useState<DepartmentDetailsViewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<StrategicIndicatorsErrorView | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -42,7 +44,13 @@ export function useStrategicIndicatorsDepartmentDetails({
         setData(null);
         setLoading(false);
         setRefreshing(false);
-        setError("Departamento inválido.");
+        setError(
+          captureStrategicIndicatorsError("Departamento inválido.", {
+            surface: "Detalhe do departamento",
+            route: "/departments/:id",
+            departmentId: departmentId ?? null,
+          }),
+        );
         return;
       }
 
@@ -83,9 +91,14 @@ export function useStrategicIndicatorsDepartmentDetails({
         }
 
         setError(
-          err instanceof Error
-            ? err.message
-            : "Erro inesperado ao carregar detalhe do departamento.",
+          captureStrategicIndicatorsError(err, {
+            surface: "Detalhe do departamento",
+            route: `/departments/${departmentId}`,
+            method: "GET",
+            competence: competence ?? null,
+            branch: branch ?? null,
+            departmentId,
+          }),
         );
       } finally {
         if (requestId === requestIdRef.current && !controller.signal.aborted) {

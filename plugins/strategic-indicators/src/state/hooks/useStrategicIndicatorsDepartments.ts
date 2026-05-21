@@ -7,7 +7,9 @@ import {
   setStrategicIndicatorsCachedValue,
 } from "../../data/cache/strategicIndicatorsReadCache";
 import type { DepartmentOverviewViewItem } from "../../data/types/departments";
+import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
+import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
 
 type UseStrategicIndicatorsDepartmentsParams = {
   departmentId?: string;
@@ -29,7 +31,7 @@ export function useStrategicIndicatorsDepartments({
   const [items, setItems] = useState<DepartmentOverviewViewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<StrategicIndicatorsErrorView | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -96,9 +98,14 @@ export function useStrategicIndicatorsDepartments({
         }
 
         setError(
-          err instanceof Error
-            ? err.message
-            : "Erro inesperado ao carregar departamentos.",
+          captureStrategicIndicatorsError(err, {
+            surface: "Departamentos",
+            route: "/departments",
+            method: "GET",
+            competence: competence ?? null,
+            branch: branch ?? null,
+            departmentId: departmentId ?? null,
+          }),
         );
       } finally {
         if (requestId === requestIdRef.current && !controller.signal.aborted) {

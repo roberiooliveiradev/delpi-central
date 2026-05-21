@@ -25,6 +25,7 @@ from si_app.domain.ports.strategic_indicators.alerts_summary_port import (
 from si_app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
+from si_app.shared.indicator_scoring import indicator_has_score
 
 
 @dataclass(frozen=True)
@@ -642,6 +643,9 @@ class GetStrategicIndicatorsPresentationUseCase:
 
         for department in departments:
             for indicator in department.indicators:
+                if not indicator_has_score(indicator):
+                    continue
+
                 if indicator.score >= 8:
                     continue
 

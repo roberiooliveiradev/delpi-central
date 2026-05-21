@@ -6,6 +6,7 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
 from si_app.domain.ports.strategic_indicators.alerts_summary_port import (
     StrategicIndicatorsAlertsSummaryPort,
 )
+from si_app.shared.indicator_scoring import iter_scored_indicators
 
 
 class CalculatedStrategicIndicatorsAlertsSummaryProvider(
@@ -141,10 +142,11 @@ class CalculatedStrategicIndicatorsAlertsSummaryProvider(
         candidates: list[tuple[StrategicDepartmentCalculatedValue, object]] = []
 
         for department in departments:
-            if not department.indicators:
+            scored_indicators = iter_scored_indicators(department.indicators)
+            if not scored_indicators:
                 continue
 
-            worst_indicator = min(department.indicators, key=lambda item: item.score)
+            worst_indicator = min(scored_indicators, key=lambda item: item.score)
             candidates.append((department, worst_indicator))
 
         if not candidates:
@@ -152,17 +154,20 @@ class CalculatedStrategicIndicatorsAlertsSummaryProvider(
 
         department, indicator = min(candidates, key=lambda item: item[1].score)
 
-        if indicator.score >= 7:
+        indicator_score = float(indicator.score)
+        indicator_gap = float(indicator.gap or 0)
+
+        if indicator_score >= 7:
             return None
 
-        severity = "high" if indicator.score < 6 else "medium"
+        severity = "high" if indicator_score < 6 else "medium"
 
         return {
             "title": f"Risco concentrado em {indicator.indicator_name}",
             "severity": severity,
             "impact": (
                 f"O indicador crítico está em {department.department_name}, com "
-                f"score {indicator.score:.1f} e gap {indicator.gap:.2f}."
+                f"score {indicator_score:.1f} e gap {indicator_gap:.2f}."
             ),
             "recommendation": (
                 "Atuar diretamente na causa operacional do indicador e monitorar sua "

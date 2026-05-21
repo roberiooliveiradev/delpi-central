@@ -5,7 +5,7 @@ import { ContributionRanking } from "../components/ContributionRanking";
 import { DepartmentSummaryGrid } from "../components/DepartmentSummaryGrid";
 import { ExecutiveMethodCard } from "../components/ExecutiveMethodCard";
 import { IgdHeroCard } from "../components/IgdHeroCard";
-import { InfoState } from "../components/InfoState";
+import { StrategicIndicatorsErrorState } from "../components/StrategicIndicatorsErrorState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
@@ -98,9 +98,8 @@ export function ExecutiveDashboardPage({
           {filterBlock}
         </SectionBlock>
 
-        <InfoState
-          title="Falha ao carregar resumo executivo"
-          description={error ?? "O resumo executivo não retornou dados válidos."}
+        <StrategicIndicatorsErrorState
+          error={error}
           actionLabel="Tentar novamente"
           onAction={() => void reload()}
         />
@@ -157,9 +156,11 @@ export function ExecutiveDashboardPage({
       ) : null}
 
       {error && data ? (
-        <InfoState
-          title="Falha ao atualizar resumo executivo"
-          description={error}
+        <StrategicIndicatorsErrorState
+          error={{
+            ...error,
+            title: "Falha ao atualizar resumo executivo",
+          }}
           actionLabel="Tentar novamente"
           onAction={() => void reload()}
         />
