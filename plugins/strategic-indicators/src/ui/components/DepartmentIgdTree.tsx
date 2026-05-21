@@ -139,6 +139,9 @@ function TreeIgdCard({
   cardId,
   isActive,
   onActivate,
+  departmentsVisible,
+  departmentCount,
+  onToggleDepartments,
 }: {
   model: DepartmentTreeModel;
   activeColumn: DepartmentTreeColumn | null;
@@ -146,6 +149,9 @@ function TreeIgdCard({
   cardId: string;
   isActive: boolean;
   onActivate: (cardId: string) => void;
+  departmentsVisible: boolean;
+  departmentCount: number;
+  onToggleDepartments: () => void;
 }) {
   const igdBadgeVariant =
     model.igd !== null
@@ -156,17 +162,18 @@ function TreeIgdCard({
     scopeScore !== null ? mapScoreToBadgeVariant(scopeScore) : ("neutral" as const);
 
   return (
-    <InteractiveTreeCard
-      href={appendStrategicIndicatorsFiltersToPath(
-        "/apps/strategic-indicators",
-        filterState,
-      )}
-      cardId={cardId}
-      isActive={isActive}
-      onActivate={onActivate}
-      className="si-tree-igd-card__link"
-    >
-      <section className="si-igd-hero si-igd-hero--tree">
+    <div className="si-org-chart__igd-stack">
+      <InteractiveTreeCard
+        href={appendStrategicIndicatorsFiltersToPath(
+          "/apps/strategic-indicators",
+          filterState,
+        )}
+        cardId={cardId}
+        isActive={isActive}
+        onActivate={onActivate}
+        className="si-tree-igd-card__link"
+      >
+        <section className="si-igd-hero si-igd-hero--tree">
         <p className="si-igd-hero__eyebrow">Índice Global Delpi</p>
         <div className="si-igd-hero__headline">
           <div>
@@ -211,8 +218,36 @@ function TreeIgdCard({
             label="Evolução · últimos meses"
           />
         ) : null}
-      </section>
-    </InteractiveTreeCard>
+        </section>
+      </InteractiveTreeCard>
+
+      {departmentCount > 0 ? (
+        <button
+          type="button"
+          className="si-org-chart__igd-toggle"
+          data-pan-zoom-lock="true"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onToggleDepartments();
+          }}
+          aria-expanded={departmentsVisible}
+        >
+          <span>
+            {departmentsVisible
+              ? "Recolher departamentos"
+              : `Expandir ${departmentCount} departamentos`}
+          </span>
+          <ChevronDown
+            size={18}
+            className={
+              departmentsVisible ? "si-org-chart__igd-chevron--open" : undefined
+            }
+            aria-hidden
+          />
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -690,6 +725,8 @@ export function DepartmentIgdTree({
   const chartStyle = {
     "--si-org-chart-cols": "1",
     "--si-dept-count": String(departmentCount),
+    "--si-dept-slot-width": "360px",
+    "--si-dept-gap": "24px",
   } as CSSProperties;
 
   const mapActions =
@@ -768,6 +805,9 @@ export function DepartmentIgdTree({
             cardId="igd:root"
             isActive={activeCardId === "igd:root"}
             onActivate={setActiveCardId}
+            departmentsVisible={departmentsVisible}
+            departmentCount={departmentCount}
+            onToggleDepartments={toggleDepartmentsVisible}
           />
         </section>
 
@@ -780,16 +820,10 @@ export function DepartmentIgdTree({
                 Departamentos e indicadores
               </span>
 
-              <div
-                className="si-org-chart__departments-fork"
-                style={
-                  {
-                    "--si-dept-count": String(departmentCount),
-                  } as CSSProperties
-                }
-              >
-                <div
-                  className={`si-org-chart__departments-row${
+              <div className="si-org-chart__departments-fork">
+                <div className="si-org-chart__departments-connector">
+                  <div
+                    className={`si-org-chart__departments-row${
                     expandedDepartmentCount === 1
                       ? " si-org-chart__departments-row--one-expanded"
                       : ""
@@ -845,6 +879,7 @@ export function DepartmentIgdTree({
               </div>
             );
             })}
+                  </div>
                 </div>
               </div>
             </section>
