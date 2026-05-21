@@ -12,7 +12,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Migrations `V001` schema `transformometro` | Schema + `schema_migrations` | ✅ |
 | Compose + gateway | URLs `/apps/transformometro` e `/apps/transformometro-api` | ✅ |
 | Build MFE | `npm run build` no plugin | ✅ |
-| Registro no Core API | App + permissões iniciais | Pendente (manual) |
+| Registro no Core API | `plugins/transformometro/scripts/register-manifest.sh` | Pendente (manual no portal) |
 | CI mínimo | `scripts/ci-transformometro-api.sh` (pytest calculador + import) | ✅ |
 
 **Critério de pronto:** `GET /health` e MFE “hello” carregando no portal com JWT.
@@ -52,14 +52,16 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 **Diferença vs Transforma+ legado:** listagem legada subtrai custo compartilhado inteiro na economia diária; spec usa delta de recursos na economia bruta e não repete na líquida.
 
-## Fase 3 — Produção e desligamento planilha (1 sprint)
+## Fase 3 — Produção e desligamento planilha (1 sprint) 🚧
 
-| Entrega | Detalhe |
-|---------|---------|
-| Permissões finas + revisão de segurança | |
-| Documentação OPERATIONS / DEPLOYMENT | |
-| Desativar escrita na planilha | somente leitura ou desligada |
-| Opcional: SI/engineering leem `transformometro-api` | trocar fonte do indicador engenharia |
+| Entrega | Detalhe | Status |
+|---------|---------|--------|
+| Dados em produção | Import planilha `--apply --replace` | ✅ |
+| Documentação | [OPERATIONS.md](./OPERATIONS.md), [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md), [status-atual.md](./status-atual.md) | ✅ |
+| Manifesto + script registro | `register-manifest.sh`, permissões completas | ✅ repo |
+| Registro RBAC no portal | Atribuir `transformometro.*` aos perfis | Pendente (manual) |
+| Desativar escrita na planilha | somente leitura ou desligada | Pendente (Google) |
+| Opcional: SI/engineering → `transformometro-api` | trocar fonte do indicador engenharia | Backlog |
 
 ## Fase 4 — Melhorias (backlog)
 
@@ -90,7 +92,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 ## Próximo passo imediato
 
-1. **Deploy** (`TM_RUN_MIGRATIONS_ON_STARTUP=true`; rebuild `transformometro-api` + `transformometro`)
-2. Configurar `TRANSFORMA_MAIS_*` no ambiente da API e registrar app no Core API (incl. `transformometro.admin`)
-3. **Importar planilha** (UI ou CLI) e validar diff do calculador
-4. Desligar escrita na planilha (Fase 3)
+1. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
+2. **Recalcular** dashboard e validar KPIs no portal
+3. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
+4. Opcional: redirecionar indicador TRANSFORMA+ do `dashboard-engineering` para esta API

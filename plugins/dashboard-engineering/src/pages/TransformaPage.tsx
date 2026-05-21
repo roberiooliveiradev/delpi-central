@@ -191,6 +191,11 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         refreshing={refreshing}
       />
       <DataSourceBanner variant="transforma" />
+      <p className="ds-hint" style={{ margin: "0 0 1rem" }}>
+        Cadastro e cálculo oficiais migraram para o app{" "}
+        <a href="/apps/transformometro/dashboard">Transformômetro</a> (Postgres). Esta tela
+        permanece como visão legada da planilha até desativação.
+      </p>
       <EngineeringStatusAlerts
         error={error}
         loading={loading}

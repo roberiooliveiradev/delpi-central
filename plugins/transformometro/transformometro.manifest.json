@@ -28,6 +28,24 @@
       "module": "transformometro"
     },
     {
+      "code": "transformometro.measurements.manage",
+      "name": "Gerenciar medições",
+      "description": "Permite cadastrar medição operacional por revisão.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.investments.manage",
+      "name": "Gerenciar investimentos",
+      "description": "Permite cadastrar investimentos por revisão.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.shared-resources.manage",
+      "name": "Gerenciar recursos compartilhados",
+      "description": "Permite cadastrar recursos e vínculos por revisão.",
+      "module": "transformometro"
+    },
+    {
       "code": "transformometro.dashboard.recalculate",
       "name": "Recalcular dashboard",
       "description": "Permite disparar o recálculo mensal derivado.",
