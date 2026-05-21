@@ -143,6 +143,55 @@
   pointer-events: auto;
 }
 
+.si-pan-zoom__floating-nav .si-pan-zoom__nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--si-card-bg) 94%, transparent);
+  border: 1px solid var(--si-card-border);
+  box-shadow: var(--shadow, 0 8px 20px rgba(0, 0, 0, 0.1));
+}
+
+.si-pan-zoom__nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.si-pan-zoom__nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--si-title);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.si-pan-zoom__nav-btn:hover {
+  background: color-mix(in srgb, var(--si-accent, #2563eb) 14%, transparent);
+}
+
+.si-pan-zoom__zoom-label {
+  min-width: 46px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--si-text-muted);
+}
+
+.si-pan-zoom__reset-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
 .si-pan-zoom__hint {
   position: absolute;
   left: 14px;

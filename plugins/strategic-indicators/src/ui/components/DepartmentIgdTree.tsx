@@ -14,7 +14,6 @@ import {
   resolveActiveTreeScopeKey,
 } from "../../data/departmentTreeScopes";
 import type {
-  DepartmentTreeColumn,
   DepartmentTreeDepartmentNode,
   DepartmentTreeIndicatorNode,
   DepartmentTreeModel,
@@ -39,6 +38,7 @@ import { TreeSparkline } from "./TreeSparkline";
 import type { StrategicIndicatorsViewMode } from "../shared/strategicIndicatorsFilters";
 import "./DepartmentSummaryCard.css";
 import "./IndicatorDetailCard.css";
+import { IGD_HERO_DESCRIPTION } from "./IgdHeroCard";
 import "./IgdHeroCard.css";
 import "./DepartmentIgdTree.css";
 
@@ -134,7 +134,6 @@ function OrgChartArrow() {
 
 function TreeIgdCard({
   model,
-  activeColumn,
   filterState,
   cardId,
   isActive,
@@ -144,7 +143,6 @@ function TreeIgdCard({
   onToggleDepartments,
 }: {
   model: DepartmentTreeModel;
-  activeColumn: DepartmentTreeColumn | null;
   filterState: StrategicIndicatorsFilterState;
   cardId: string;
   isActive: boolean;
@@ -157,13 +155,6 @@ function TreeIgdCard({
     model.igd !== null
       ? mapScoreToBadgeVariant(model.igd)
       : ("neutral" as const);
-  const scopeScore = activeColumn?.averageScore ?? null;
-  const duplicateScopeScore =
-    model.igd !== null &&
-    scopeScore !== null &&
-    model.igd.toFixed(1) === scopeScore.toFixed(1);
-  const scopeBadgeVariant =
-    scopeScore !== null ? mapScoreToBadgeVariant(scopeScore) : ("neutral" as const);
 
   return (
     <div className="si-org-chart__igd-stack">
@@ -178,50 +169,39 @@ function TreeIgdCard({
         className="si-tree-igd-card__link"
       >
         <section className="si-igd-hero si-igd-hero--tree">
-        <p className="si-igd-hero__eyebrow">Índice Global Delpi</p>
-        <div className="si-igd-hero__headline">
-          <div>
-            <h2 className="si-igd-hero__value">
-              {model.igd !== null ? model.igd.toFixed(1) : "—"}
-            </h2>
-            <p className="si-igd-hero__exact">
-              Competência {model.competence}
-              {activeColumn ? (
-                <>
-                  {" · "}
-                  <span className="si-igd-hero__scope-name">
-                    {activeColumn.scope.label}
-                  </span>
-                </>
+          <div className="si-igd-hero__content">
+            <p className="si-igd-hero__eyebrow">Índice Global Delpi</p>
+
+            <div className="si-igd-hero__headline">
+              <div>
+                <h2 className="si-igd-hero__value">
+                  IGD: {model.igd !== null ? model.igd.toFixed(1) : "—"}
+                </h2>
+                <p className="si-igd-hero__exact">
+                  {model.igdExact !== null
+                    ? `cálculo consolidado: ${model.igdExact.toFixed(3)}`
+                    : `Competência ${model.competence}`}
+                </p>
+              </div>
+              {model.classification ? (
+                <StatusBadge
+                  label={model.classification}
+                  variant={igdBadgeVariant}
+                />
               ) : null}
-            </p>
-            {activeColumn ? (
-              <p className="si-igd-hero__context-hint">
-                Média dos departamentos neste escopo.
-              </p>
-            ) : null}
+            </div>
+
+            <p className="si-igd-hero__description">{IGD_HERO_DESCRIPTION}</p>
           </div>
-          {model.classification ? (
-            <StatusBadge label={model.classification} variant={igdBadgeVariant} />
+
+          {model.igdSeries.length > 0 ? (
+            <TreeSparkline
+              points={model.igdSeries}
+              direction="stable"
+              height={56}
+              label="Evolução · últimos meses"
+            />
           ) : null}
-        </div>
-
-        {activeColumn && !duplicateScopeScore && scopeScore !== null ? (
-          <div className="si-igd-hero__scope-alt">
-            <span className="si-igd-hero__scope-alt-label">Média IDD do escopo</span>
-            <span className="si-igd-hero__scope-alt-value">{scopeScore.toFixed(1)}</span>
-            <StatusBadge label="Média IDD" variant={scopeBadgeVariant} />
-          </div>
-        ) : null}
-
-        {model.igdSeries.length > 0 ? (
-          <TreeSparkline
-            points={model.igdSeries}
-            direction="stable"
-            height={56}
-            label="Evolução · últimos meses"
-          />
-        ) : null}
         </section>
       </InteractiveTreeCard>
 
@@ -733,42 +713,41 @@ export function DepartmentIgdTree({
     "--si-dept-gap": "28px",
   } as CSSProperties;
 
+  const isTreeFullyExpanded =
+    departmentsVisible &&
+    (allExpandableKeys.length === 0 ||
+      allExpandableKeys.every((key) => expandedKeys.has(key)));
+
+  const isTreeFullyCollapsed = !departmentsVisible && expandedKeys.size === 0;
+
   const mapActions =
     departmentCount > 0 || hasExpandable ? (
-      <>
+      <div
+        className="si-tree-view-toggle"
+        role="group"
+        aria-label="Expandir ou recolher organograma"
+      >
         <button
           type="button"
-          className="si-org-chart__toolbar-btn"
-          onClick={toggleDepartmentsVisible}
+          className={`si-tree-view-toggle__btn${
+            isTreeFullyExpanded ? " si-tree-view-toggle__btn--active" : ""
+          }`}
+          onClick={expandAll}
+          aria-pressed={isTreeFullyExpanded}
         >
-          {departmentsVisible ? "Recolher departamentos" : "Expandir departamentos"}
+          Expandir tudo
         </button>
-        {departmentsVisible && hasExpandable ? (
-          <>
-            <button
-              type="button"
-              className="si-org-chart__toolbar-btn"
-              onClick={expandAll}
-            >
-              Expandir indicadores
-            </button>
-            <button
-              type="button"
-              className="si-org-chart__toolbar-btn"
-              onClick={() => setExpandedKeys(new Set())}
-            >
-              Recolher indicadores
-            </button>
-          </>
-        ) : null}
         <button
           type="button"
-          className="si-org-chart__toolbar-btn"
+          className={`si-tree-view-toggle__btn${
+            isTreeFullyCollapsed ? " si-tree-view-toggle__btn--active" : ""
+          }`}
           onClick={collapseAll}
+          aria-pressed={isTreeFullyCollapsed}
         >
           Recolher tudo
         </button>
-      </>
+      </div>
     ) : null;
 
   const renderFloatingControls = (viewportNav: ReactNode) => (
@@ -804,7 +783,6 @@ export function DepartmentIgdTree({
           <span className="si-org-chart__level-tag">IGD</span>
           <TreeIgdCard
             model={model}
-            activeColumn={activeColumn}
             filterState={filterState}
             cardId="igd:root"
             isActive={activeCardId === "igd:root"}

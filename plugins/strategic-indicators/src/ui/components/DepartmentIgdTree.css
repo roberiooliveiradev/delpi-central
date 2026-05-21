@@ -48,33 +48,6 @@
   );
 }
 
-.si-org-chart__toolbar-hint {
-  font-size: 13px;
-  color: var(--si-text-muted);
-}
-
-.si-org-chart__toolbar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.si-org-chart__toolbar-btn {
-  border: 1px solid var(--si-card-border);
-  border-radius: 999px;
-  padding: 8px 14px;
-  background: var(--si-card-bg);
-  color: var(--si-title);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.si-org-chart__toolbar-btn:hover {
-  border-color: color-mix(in srgb, var(--si-accent, #2563eb) 45%, var(--si-card-border));
-}
-
 .si-org-chart__level {
   display: flex;
   flex-direction: column;
@@ -356,11 +329,29 @@
   text-decoration: none;
   color: inherit;
   cursor: pointer;
+  border: none;
+  outline: none;
+  background: transparent;
   transition:
     transform 0.22s ease,
     box-shadow 0.22s ease,
     border-color 0.22s ease,
     filter 0.22s ease;
+}
+
+.si-tree-indicator-card__link {
+  border-radius: var(--si-tree-card-radius, 24px);
+  overflow: hidden;
+}
+
+.si-tree-indicator-card__link:focus-visible {
+  outline: none;
+}
+
+.si-tree-indicator-card__link:focus-visible .si-indicator-card {
+  box-shadow:
+    var(--si-tree-card-shadow),
+    0 0 0 3px color-mix(in srgb, var(--si-accent, #2563eb) 45%, transparent);
 }
 
 
@@ -396,8 +387,21 @@
 }
 
 .si-tree-card--active {
-  outline: 3px solid color-mix(in srgb, var(--si-accent, #2563eb) 55%, transparent);
-  outline-offset: 3px;
+  outline: none;
+}
+
+.si-tree-igd-card__link.si-tree-card--active .si-igd-hero,
+.si-tree-dept-card__link.si-tree-card--active .si-department-card,
+.si-tree-indicator-card__link.si-tree-card--active .si-indicator-card {
+  box-shadow:
+    var(--si-tree-card-shadow-hover),
+    0 0 0 3px color-mix(in srgb, var(--si-accent, #2563eb) 55%, transparent);
+}
+
+.si-tree-igd-card__link,
+.si-tree-dept-card__link {
+  border-radius: var(--si-tree-card-radius, 24px);
+  overflow: hidden;
 }
 
 .si-tree-card__open {
@@ -439,6 +443,9 @@
 }
 
 .si-tree-dept-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
 }
 
@@ -573,9 +580,10 @@
   flex-direction: column;
   align-items: stretch;
   width: 100%;
-  padding: 0 12px 14px;
-  border-top: 1px dashed var(--si-card-border);
-  background: color-mix(in srgb, var(--si-card-bg) 94%, var(--si-text-muted));
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
 }
 
 .si-tree-dept__indicators:has(.si-tree-dept__indicator-list--row) {
@@ -601,8 +609,7 @@
 }
 
 .si-tree-dept__indicators--solo-expanded {
-  padding-left: 10px;
-  padding-right: 10px;
+  width: 100%;
 }
 
 .si-tree-dept__indicator-list--row {

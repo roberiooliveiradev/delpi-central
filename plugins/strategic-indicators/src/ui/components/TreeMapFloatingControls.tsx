@@ -89,8 +89,18 @@ export function TreeMapFloatingControls({
             <div className="si-tree-map-floating__status">{status}</div>
           ) : null}
 
-          {viewportNav ? (
-            <div className="si-tree-map-floating__nav">{viewportNav}</div>
+          {actions || viewportNav ? (
+            <div
+              className="si-tree-map-floating__view-controls"
+              aria-label="Controles de visualização"
+            >
+              {actions ? (
+                <div className="si-tree-map-floating__tree-actions">{actions}</div>
+              ) : null}
+              {viewportNav ? (
+                <div className="si-tree-map-floating__nav">{viewportNav}</div>
+              ) : null}
+            </div>
           ) : null}
         </div>
 
@@ -111,10 +121,6 @@ export function TreeMapFloatingControls({
               onMonthsToCompareChange={onMonthsToCompareChange}
               className="si-tree-map-floating__filters"
             />
-
-            {actions ? (
-              <div className="si-tree-map-floating__actions">{actions}</div>
-            ) : null}
           </div>
         ) : null}
       </div>

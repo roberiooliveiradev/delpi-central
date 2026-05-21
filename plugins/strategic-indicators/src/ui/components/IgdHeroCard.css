@@ -104,6 +104,9 @@
 }
 
 .si-igd-hero--tree {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
   max-width: var(--si-igd-card-max-width, 560px);
   padding: 24px 28px;
@@ -126,37 +129,8 @@
   display: none;
 }
 
-.si-igd-hero--tree .si-igd-hero__scope-name {
-  font-weight: 700;
-  color: var(--si-title);
-}
-
-.si-igd-hero--tree .si-igd-hero__context-hint {
-  margin: 6px 0 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--si-text-muted);
-}
-
-.si-igd-hero--tree .si-igd-hero__scope-alt {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--primary, #089bdb) 16%, var(--si-card-border));
-  background: color-mix(in srgb, var(--primary, #089bdb) 6%, var(--surface, #ffffff));
-}
-
-.si-igd-hero--tree .si-igd-hero__scope-alt-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--si-text-muted);
-}
-
-.si-igd-hero--tree .si-igd-hero__scope-alt-value {
-  font-size: 20px;
-  font-weight: 900;
-  color: var(--si-title);
+.si-igd-hero--tree .si-igd-hero__description {
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: none;
 }
