@@ -3,7 +3,7 @@ import pytest
 from si_app.application.services.strategic_indicators.goal_scope_validation import (
     validate_goal_scope_branch,
 )
-from si_app.application.use_cases.strategic_indicators.create_indicator_goal_use_case import (
+from si_app.application.services.strategic_indicators.indicator_goal_validation_error import (
     StrategicIndicatorsIndicatorGoalValidationError,
 )
 

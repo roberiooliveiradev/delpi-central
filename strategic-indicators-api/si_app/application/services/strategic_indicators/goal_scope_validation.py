@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from si_app.application.use_cases.strategic_indicators.create_indicator_goal_use_case import (
+from si_app.application.services.strategic_indicators.indicator_goal_validation_error import (
     StrategicIndicatorsIndicatorGoalValidationError,
 )
 from si_app.shared.goal_scope import (

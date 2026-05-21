@@ -48,7 +48,7 @@ from si_app.application.dto.strategic_indicators.update_indicator_goal_request i
 from si_app.application.use_cases.strategic_indicators.update_settings_use_case import (
     StrategicIndicatorsSettingsValidationError,
 )
-from si_app.application.use_cases.strategic_indicators.create_indicator_goal_use_case import (
+from si_app.application.services.strategic_indicators.indicator_goal_validation_error import (
     StrategicIndicatorsIndicatorGoalValidationError,
 )
 

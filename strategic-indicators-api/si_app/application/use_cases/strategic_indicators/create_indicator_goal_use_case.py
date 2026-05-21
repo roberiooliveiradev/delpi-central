@@ -6,13 +6,12 @@ from si_app.application.dto.strategic_indicators.create_indicator_goal_request i
 from si_app.application.services.strategic_indicators.goal_scope_validation import (
     validate_goal_scope_branch,
 )
+from si_app.application.services.strategic_indicators.indicator_goal_validation_error import (
+    StrategicIndicatorsIndicatorGoalValidationError,
+)
 from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port import (
     StrategicIndicatorsIndicatorGoalsRepositoryPort,
 )
-
-
-class StrategicIndicatorsIndicatorGoalValidationError(ValueError):
-    """Erro de validação das metas analíticas do Strategic Indicators."""
 
 
 class CreateStrategicIndicatorsIndicatorGoalUseCase:

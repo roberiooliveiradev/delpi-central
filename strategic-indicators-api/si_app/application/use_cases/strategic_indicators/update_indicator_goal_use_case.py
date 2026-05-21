@@ -3,7 +3,7 @@ from __future__ import annotations
 from si_app.application.dto.strategic_indicators.update_indicator_goal_request import (
     UpdateStrategicIndicatorsIndicatorGoalRequest,
 )
-from si_app.application.use_cases.strategic_indicators.create_indicator_goal_use_case import (
+from si_app.application.services.strategic_indicators.indicator_goal_validation_error import (
     StrategicIndicatorsIndicatorGoalValidationError,
 )
 from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port import (
