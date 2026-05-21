@@ -3,14 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from si_app.application.dto.commercial.commercial_target_request import CommercialTargetRequest
-from si_app.application.dto.commercial.new_clients_rol_pct_request import (
-    NewClientsRolPctRequest,
+from si_app.application.dto.commercial.new_business_rol_pct_request import (
+    NewBusinessRolPctRequest,
 )
 from si_app.application.dto.commercial.sales_conversion_rate_request import (
     SalesConversionRateRequest,
 )
-from si_app.application.use_cases.commercial.get_new_clients_rol_pct_use_case import (
-    GetNewClientsRolPctUseCase,
+from si_app.application.use_cases.commercial.get_new_business_rol_pct_use_case import (
+    GetNewBusinessRolPctUseCase,
 )
 from si_app.application.use_cases.commercial.get_rol_target_pct_use_case import (
     GetRolTargetPctUseCase,
@@ -46,12 +46,12 @@ class CommercialMetricsSnapshotService:
         head_office_rol_target_use_case: GetRolTargetPctUseCase,
         branch_rol_target_use_case: GetRolTargetPctUseCase,
         sales_conversion_rate_use_case: GetSalesConversionRateUseCase,
-        new_clients_rol_pct_use_case: GetNewClientsRolPctUseCase,
+        new_business_rol_pct_use_case: GetNewBusinessRolPctUseCase,
     ) -> None:
         self._head_office_rol_target_use_case = head_office_rol_target_use_case
         self._branch_rol_target_use_case = branch_rol_target_use_case
         self._sales_conversion_rate_use_case = sales_conversion_rate_use_case
-        self._new_clients_rol_pct_use_case = new_clients_rol_pct_use_case
+        self._new_business_rol_pct_use_case = new_business_rol_pct_use_case
         self._cache: dict[
             tuple[str | None, str | None, str | None],
             CommercialMetricsSnapshot,
@@ -129,8 +129,8 @@ class CommercialMetricsSnapshotService:
                 end_date=end_date,
             )
         )
-        new_business_rol_result = self._new_clients_rol_pct_use_case.execute(
-            NewClientsRolPctRequest(
+        new_business_rol_result = self._new_business_rol_pct_use_case.execute(
+            NewBusinessRolPctRequest(
                 branch=branch,
                 start_date=start_date,
                 end_date=end_date,
@@ -143,7 +143,7 @@ class CommercialMetricsSnapshotService:
         )
         new_business_rol_pct = self._extract_number(
             new_business_rol_result,
-            ["new_clients_rol_pct"],
+            ["new_business_rol_pct"],
         )
 
         return CommercialMetricsSnapshot(

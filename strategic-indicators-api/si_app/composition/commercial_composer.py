@@ -7,8 +7,12 @@ from si_app.application.use_cases.commercial.get_sales_conversion_rate_use_case 
 from si_app.infrastructure.persistence.totvs.commercial_repositories.sales_conversion_rate_repository import SalesConversionRateRepository
 from si_app.application.use_cases.commercial.get_new_clients_average_use_case import GetNewClientsAverageUseCase
 from si_app.infrastructure.persistence.totvs.commercial_repositories.new_clients_average_repository import NewClientsAverageRepository
-from si_app.application.use_cases.commercial.get_new_clients_rol_pct_use_case import GetNewClientsRolPctUseCase
-from si_app.infrastructure.persistence.totvs.commercial_repositories.new_clients_rol_pct_repository import NewClientsRolPctRepository
+from si_app.application.use_cases.commercial.get_new_business_rol_pct_use_case import (
+    GetNewBusinessRolPctUseCase,
+)
+from si_app.infrastructure.persistence.totvs.commercial_repositories.new_business_rol_pct_repository import (
+    NewBusinessRolPctRepository,
+)
 from si_app.infrastructure.providers.strategic_indicators.commercial_indicators_snapshot_provider import (
     CommercialIndicatorsSnapshotProvider,
 )
@@ -45,9 +49,9 @@ def build_get_new_clients_average_use_case() -> GetNewClientsAverageUseCase:
     )
 
 
-def build_get_new_clients_rol_pct_use_case() -> GetNewClientsRolPctUseCase:
-    return GetNewClientsRolPctUseCase(
-        new_clients_rol_pct_repository=NewClientsRolPctRepository()
+def build_get_new_business_rol_pct_use_case() -> GetNewBusinessRolPctUseCase:
+    return GetNewBusinessRolPctUseCase(
+        new_business_rol_pct_repository=NewBusinessRolPctRepository()
     )
 
 
@@ -56,7 +60,7 @@ def build_commercial_metrics_snapshot_service() -> CommercialMetricsSnapshotServ
         head_office_rol_target_use_case=build_get_head_office_rol_target_pct_use_case(),
         branch_rol_target_use_case=build_get_branch_rol_target_pct_use_case(),
         sales_conversion_rate_use_case=build_get_sales_conversion_rate_use_case(),
-        new_clients_rol_pct_use_case=build_get_new_clients_rol_pct_use_case(),
+        new_business_rol_pct_use_case=build_get_new_business_rol_pct_use_case(),
     )
 
 
