@@ -36,9 +36,32 @@
   pointer-events: auto;
 }
 
+@media (max-width: 900px) {
+  .si-departments-page__overlay {
+    padding: 16px;
+  }
+
+  .si-departments-page__refresh-banner {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    max-width: none;
+  }
+}
+
 @media (max-width: 768px) {
   .si-departments-page--immersive {
     min-height: calc(100dvh - 48px);
+  }
+}
+
+@media (max-width: 640px) {
+  .si-departments-page--immersive {
+    min-height: calc(100dvh - 40px);
+  }
+
+  .si-departments-page__overlay {
+    padding: 12px;
   }
 }
 

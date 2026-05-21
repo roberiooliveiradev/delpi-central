@@ -242,3 +242,51 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
   will-change: transform;
   padding: 48px 64px 80px;
 }
+
+.si-pan-zoom-shell--immersive .si-pan-zoom__surface {
+  padding: clamp(28px, 5vh, 48px) clamp(20px, 4vw, 64px) clamp(48px, 8vh, 80px);
+}
+
+@media (max-width: 900px) {
+  .si-pan-zoom__floating-bar {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+  }
+
+  .si-pan-zoom-shell--immersive .si-pan-zoom__surface {
+    padding: 28px 16px 52px;
+  }
+
+  .si-pan-zoom__hint {
+    left: 8px;
+    bottom: 8px;
+    max-width: calc(100% - 16px);
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  .si-pan-zoom__nav-btn {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 640px) {
+  .si-pan-zoom-shell--immersive .si-pan-zoom__surface {
+    padding: 22px 10px 44px;
+  }
+
+  .si-pan-zoom__hint {
+    display: none;
+  }
+
+  .si-pan-zoom__nav .si-pan-zoom__zoom-label {
+    min-width: 40px;
+    font-size: 11px;
+  }
+
+  .si-pan-zoom__nav .si-pan-zoom__nav-btn:has(.si-pan-zoom__reset-label) {
+    display: none;
+  }
+}

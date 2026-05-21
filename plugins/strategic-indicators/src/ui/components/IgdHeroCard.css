@@ -134,3 +134,36 @@
   line-height: 1.55;
   max-width: none;
 }
+
+@media (max-width: 900px) {
+  .si-igd-hero--tree {
+    padding: 18px 20px;
+    border-radius: 22px;
+  }
+
+  .si-igd-hero--tree .si-igd-hero__value {
+    font-size: 44px;
+  }
+
+  .si-igd-hero--tree .si-igd-hero__headline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .si-igd-hero--tree {
+    padding: 16px;
+    gap: 12px;
+    border-radius: 18px;
+  }
+
+  .si-igd-hero--tree .si-igd-hero__value {
+    font-size: 38px;
+  }
+
+  .si-igd-hero--tree .si-igd-hero__description {
+    font-size: 13px;
+  }
+}
