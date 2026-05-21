@@ -1,5 +1,5 @@
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
-import { DepartmentOverviewTable } from "../components/DepartmentOverviewTable";
+import { DepartmentIgdTree } from "../components/DepartmentIgdTree";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
@@ -7,7 +7,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
-import { useStrategicIndicatorsDepartments } from "../../state/hooks/useStrategicIndicatorsDepartments";
+import { useStrategicIndicatorsDepartmentTree } from "../../state/hooks/useStrategicIndicatorsDepartmentTree";
 import "./DepartmentsPage.css";
 
 type DepartmentsPageProps = {
@@ -24,12 +24,13 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
     setBranch,
     startDate,
     endDate,
-    effectiveBranch,
+    filterState,
   } = useStrategicIndicatorsFilters();
 
-  const { items, loading, refreshing, error, reload } =
-    useStrategicIndicatorsDepartments({
-      branch: effectiveBranch,
+  const { model, loading, refreshing, error, reload, isMultiColumn } =
+    useStrategicIndicatorsDepartmentTree({
+      viewMode,
+      branch,
       competence: referenceMonth,
       startDate,
       endDate,
@@ -52,7 +53,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Departamentos"
-        description="Visão comparativa dos departamentos que compõem o IGD, com peso oficial, nota resumida e acesso ao drill-down por área."
+        description="Árvore do IGD: Grupo Delpi, escopos analíticos, departamentos e indicadores com acesso ao drill-down por área."
         badge={
           loading || refreshing ? (
             <LoadingActivityBadge label="Atualizando" tone="info" />
@@ -64,39 +65,39 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
 
       <SectionBlock
         title="Filtro de referência"
-        description="Selecione o mês de referência e a visão analítica desejada para consultar a composição departamental do período."
+        description="Selecione o mês de referência e a visão analítica. No consolidado, a árvore exibe três colunas (Consolidado, Filial 01 e Filial 02)."
       >
         {filters}
       </SectionBlock>
 
       <SectionBlock
-        title="Comparativo departamental"
-        description="Cada linha representa um departamento oficial do IGD, com acesso à visão específica do seu IDD."
+        title="Árvore departamental do IGD"
+        description="Do topo (IGD Delpi) até os indicadores de cada departamento. Expanda os indicadores ou abra o detalhe do departamento."
       >
-        {loading && items.length === 0 ? (
+        {loading && !model ? (
           <LoadingActivityInline
-            title="Carregando departamentos"
-            description="Aguarde enquanto a visão comparativa é carregada."
+            title="Carregando árvore departamental"
+            description="Aguarde enquanto os escopos, departamentos e indicadores são carregados."
             variant="panel"
             tone="info"
           />
-        ) : error && items.length === 0 ? (
+        ) : error && !model ? (
           <StrategicIndicatorsPageError
             error={error}
             onAction={() => void reload()}
           />
-        ) : (
+        ) : model ? (
           <>
             {refreshing ? (
               <LoadingActivityInline
-                title="Atualizando departamentos"
+                title="Atualizando árvore departamental"
                 description="Os dados exibidos estão sendo atualizados para o novo período."
                 variant="compact"
                 tone="info"
               />
             ) : null}
 
-            {error && items.length > 0 ? (
+            {error ? (
               <StrategicIndicatorsPageError
                 error={error}
                 mode="refresh"
@@ -104,9 +105,13 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
               />
             ) : null}
 
-            <DepartmentOverviewTable departments={items} />
+            <DepartmentIgdTree
+              model={model}
+              filterState={filterState}
+              isMultiColumn={isMultiColumn}
+            />
           </>
-        )}
+        ) : null}
       </SectionBlock>
     </div>
   );
