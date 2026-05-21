@@ -56,7 +56,6 @@ def build_commercial_metrics_snapshot_service() -> CommercialMetricsSnapshotServ
         head_office_rol_target_use_case=build_get_head_office_rol_target_pct_use_case(),
         branch_rol_target_use_case=build_get_branch_rol_target_pct_use_case(),
         sales_conversion_rate_use_case=build_get_sales_conversion_rate_use_case(),
-        new_clients_average_use_case=build_get_new_clients_average_use_case(),
         new_clients_rol_pct_use_case=build_get_new_clients_rol_pct_use_case(),
     )
 

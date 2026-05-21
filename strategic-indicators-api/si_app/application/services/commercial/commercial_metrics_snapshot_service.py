@@ -3,17 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from si_app.application.dto.commercial.commercial_target_request import CommercialTargetRequest
-from si_app.application.dto.commercial.new_clients_average_request import (
-    NewClientsAverageRequest,
-)
 from si_app.application.dto.commercial.new_clients_rol_pct_request import (
     NewClientsRolPctRequest,
 )
 from si_app.application.dto.commercial.sales_conversion_rate_request import (
     SalesConversionRateRequest,
-)
-from si_app.application.use_cases.commercial.get_new_clients_average_use_case import (
-    GetNewClientsAverageUseCase,
 )
 from si_app.application.use_cases.commercial.get_new_clients_rol_pct_use_case import (
     GetNewClientsRolPctUseCase,
@@ -40,8 +34,8 @@ class CommercialMetricsSnapshot:
     matrix_rol_value: float | None
     branch_rol_value: float | None
     sales_conversion_rate_pct: float | None
-    monthly_average_new_clients: float | None
-    new_clients_rol_pct: float | None
+    sales_order_otd_pct: float | None
+    new_business_rol_pct: float | None
     requested_branch: str | None = None
 
 
@@ -52,13 +46,11 @@ class CommercialMetricsSnapshotService:
         head_office_rol_target_use_case: GetRolTargetPctUseCase,
         branch_rol_target_use_case: GetRolTargetPctUseCase,
         sales_conversion_rate_use_case: GetSalesConversionRateUseCase,
-        new_clients_average_use_case: GetNewClientsAverageUseCase,
         new_clients_rol_pct_use_case: GetNewClientsRolPctUseCase,
     ) -> None:
         self._head_office_rol_target_use_case = head_office_rol_target_use_case
         self._branch_rol_target_use_case = branch_rol_target_use_case
         self._sales_conversion_rate_use_case = sales_conversion_rate_use_case
-        self._new_clients_average_use_case = new_clients_average_use_case
         self._new_clients_rol_pct_use_case = new_clients_rol_pct_use_case
         self._cache: dict[
             tuple[str | None, str | None, str | None],
@@ -137,14 +129,7 @@ class CommercialMetricsSnapshotService:
                 end_date=end_date,
             )
         )
-        new_clients_average_result = self._new_clients_average_use_case.execute(
-            NewClientsAverageRequest(
-                branch=branch,
-                start_date=start_date,
-                end_date=end_date,
-            )
-        )
-        new_clients_rol_result = self._new_clients_rol_pct_use_case.execute(
+        new_business_rol_result = self._new_clients_rol_pct_use_case.execute(
             NewClientsRolPctRequest(
                 branch=branch,
                 start_date=start_date,
@@ -156,12 +141,8 @@ class CommercialMetricsSnapshotService:
             sales_conversion_result,
             ["sales_conversion_rate_pct"],
         )
-        monthly_average_new_clients = self._extract_number(
-            new_clients_average_result,
-            ["monthly_average"],
-        )
-        new_clients_rol_pct = self._extract_number(
-            new_clients_rol_result,
+        new_business_rol_pct = self._extract_number(
+            new_business_rol_result,
             ["new_clients_rol_pct"],
         )
 
@@ -179,14 +160,10 @@ class CommercialMetricsSnapshotService:
                 if sales_conversion_rate_pct is not None
                 else None
             ),
-            monthly_average_new_clients=(
-                round(monthly_average_new_clients, 2)
-                if monthly_average_new_clients is not None
-                else None
-            ),
-            new_clients_rol_pct=(
-                round(new_clients_rol_pct, 2)
-                if new_clients_rol_pct is not None
+            sales_order_otd_pct=None,
+            new_business_rol_pct=(
+                round(new_business_rol_pct, 2)
+                if new_business_rol_pct is not None
                 else None
             ),
             requested_branch=branch,

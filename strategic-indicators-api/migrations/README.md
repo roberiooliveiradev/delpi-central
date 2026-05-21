@@ -25,6 +25,7 @@ O diretório `api-delpi/migrations/plugins/strategic-indicators/` é legado — 
 | V012 | calculation_snapshots | Insumos do cálculo (catálogo, metas, medições) por competência/escopo |
 | V013 | indicator_goals unique | Uma meta ativa por indicador/ano (índice parcial) |
 | V014 | catalog_inputs_hash | Fingerprint do catálogo em materializados |
+| V015 | commercial restructure | Catálogo Comercial: pesos/metas, OTD pedidos, % ROL novos negócios |
 
 ## Comandos
 
