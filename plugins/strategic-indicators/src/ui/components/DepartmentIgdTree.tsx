@@ -214,7 +214,7 @@ function TreeIgdCard({
           <TreeSparkline
             points={model.igdSeries}
             direction="stable"
-            height={48}
+            height={56}
             label="Evolução · últimos meses"
           />
         ) : null}
@@ -725,8 +725,8 @@ export function DepartmentIgdTree({
   const chartStyle = {
     "--si-org-chart-cols": "1",
     "--si-dept-count": String(departmentCount),
-    "--si-dept-slot-width": "360px",
-    "--si-dept-gap": "24px",
+    "--si-dept-slot-width": "420px",
+    "--si-dept-gap": "28px",
   } as CSSProperties;
 
   const mapActions =
