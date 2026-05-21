@@ -56,7 +56,7 @@ def _department_scopes(*, include_per_department: bool) -> list[str | None]:
 
 def refresh_period_scores_materialized() -> int:
     """
-    Recalcula e persiste period_scores para os escopos configurados.
+    Recalcula e persiste period_scores e calculation_snapshots para os escopos configurados.
     Retorna quantidade de períodos gravados (upserts).
     """
     if not settings.SI_PERIOD_SCORES_ENABLED:
@@ -117,12 +117,16 @@ def refresh_period_scores_materialized() -> int:
             periods_upserted=upserted,
         )
         logger.info(
-            "si_period_scores_refresh_done competence=%s periods=%d branches=%d departments=%d ms=%d",
+            (
+                "si_period_scores_refresh_done competence=%s periods=%d branches=%d "
+                "departments=%d ms=%d calculation_snapshots=%s"
+            ),
             reference_competence,
             upserted,
             len(branch_scopes),
             len(department_scopes),
             duration_ms,
+            settings.SI_CALCULATION_SNAPSHOTS_ENABLED,
         )
         return upserted
     except Exception as exc:

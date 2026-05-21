@@ -22,6 +22,7 @@ O diretório `api-delpi/migrations/plugins/strategic-indicators/` é legado — 
 | V009 | seed admin | Estrutura padrão + metas (ano corrente no seed) |
 | V010 | period_scores | Scores por competência/escopo (indicadores materializados) |
 | V011 | refresh_state | Estado do job periódico de refresh (5 min) |
+| V012 | calculation_snapshots | Insumos do cálculo (catálogo, metas, medições) por competência/escopo |
 
 ## Comandos
 

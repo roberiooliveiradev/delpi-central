@@ -47,6 +47,9 @@ from si_app.application.services.strategic_indicators.snapshot_shared_cache impo
     measurements_cache_key,
 )
 from si_app.config import settings
+from si_app.domain.ports.strategic_indicators.calculation_snapshots_repository_port import (
+    StrategicIndicatorsCalculationSnapshotsRepositoryPort,
+)
 from si_app.domain.ports.strategic_indicators.period_scores_repository_port import (
     StrategicIndicatorsPeriodScoresRepositoryPort,
 )
@@ -67,12 +70,16 @@ class StrategicIndicatorsSnapshotService:
         ]
         | None = None,
         period_scores_repository: StrategicIndicatorsPeriodScoresRepositoryPort | None = None,
+        calculation_snapshots_repository: (
+            StrategicIndicatorsCalculationSnapshotsRepositoryPort | None
+        ) = None,
     ) -> None:
         self._departments_catalog_repository = departments_catalog_repository
         self._resolved_indicators_catalog_repository = resolved_indicators_catalog_repository
         self._measurements_port = measurements_port
         self._measurements_port_factory = measurements_port_factory
         self._period_scores_repository = period_scores_repository
+        self._calculation_snapshots_repository = calculation_snapshots_repository
         self._calculator = calculator
 
         self._catalog_cache: dict[str, StrategicIndicatorsCatalogSnapshot] = {}
@@ -217,6 +224,14 @@ class StrategicIndicatorsSnapshotService:
             measurements=measurements,
             measurement_errors=measurement_errors,
             department_id=department_id,
+        )
+        self._persist_calculation_snapshot(
+            period=period,
+            catalog=catalog,
+            measurements=measurements,
+            measurement_errors=measurement_errors,
+            department_id=department_id,
+            branch=branch,
         )
         self._persist_period_snapshot(
             snapshot=snapshot,
@@ -636,6 +651,14 @@ class StrategicIndicatorsSnapshotService:
                 classification=classification,
             )
             snapshots.append(snapshot)
+            self._persist_calculation_snapshot(
+                period=period,
+                catalog=catalog,
+                measurements=measurements,
+                measurement_errors=measurement_errors,
+                department_id=department_id,
+                branch=branch,
+            )
             self._persist_period_snapshot(
                 snapshot=snapshot,
                 department_id=department_id,
@@ -679,6 +702,32 @@ class StrategicIndicatorsSnapshotService:
 
         return self._period_scores_repository.get_period_snapshot(
             competence=period.competence,
+            scope_branch=normalize_scope_branch(branch),
+            scope_department_id=normalize_scope_department_id(department_id),
+        )
+
+    def _persist_calculation_snapshot(
+        self,
+        *,
+        period: ResolvedPeriod,
+        catalog: StrategicIndicatorsCatalogSnapshot,
+        measurements: list[StrategicIndicatorMeasuredValue],
+        measurement_errors: list[dict],
+        department_id: str | None,
+        branch: str | None,
+    ) -> None:
+        if not settings.SI_CALCULATION_SNAPSHOTS_ENABLED:
+            return
+        if self._calculation_snapshots_repository is None:
+            return
+        if not is_standard_competence_period(period):
+            return
+
+        self._calculation_snapshots_repository.upsert_calculation_snapshot(
+            period=period,
+            catalog=catalog,
+            measurements=measurements,
+            measurement_errors=measurement_errors,
             scope_branch=normalize_scope_branch(branch),
             scope_department_id=normalize_scope_department_id(department_id),
         )
