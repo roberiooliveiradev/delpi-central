@@ -6,6 +6,7 @@ import { CriticalDepartmentList } from "../components/CriticalDepartmentList";
 import { CriticalIndicatorList } from "../components/CriticalIndicatorList";
 import { ExecutiveAlertsList } from "../components/ExecutiveAlertsList";
 import { InfoState } from "../components/InfoState";
+import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
@@ -108,10 +109,8 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
           {filters}
         </SectionBlock>
 
-        <InfoState
-          title="Falha ao carregar alertas"
-          description={error}
-          actionLabel="Tentar novamente"
+        <StrategicIndicatorsPageError
+          error={error}
           onAction={() => void reload()}
         />
       </div>
@@ -156,10 +155,9 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
       ) : null}
 
       {error && data ? (
-        <InfoState
-          title="Falha ao atualizar alertas"
-          description={error}
-          actionLabel="Tentar novamente"
+        <StrategicIndicatorsPageError
+          error={error}
+          mode="refresh"
           onAction={() => void reload()}
         />
       ) : null}

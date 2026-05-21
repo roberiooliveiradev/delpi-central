@@ -1,6 +1,6 @@
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { DepartmentOverviewTable } from "../components/DepartmentOverviewTable";
-import { StrategicIndicatorsErrorState } from "../components/StrategicIndicatorsErrorState";
+import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
@@ -81,9 +81,8 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
             tone="info"
           />
         ) : error && items.length === 0 ? (
-          <StrategicIndicatorsErrorState
+          <StrategicIndicatorsPageError
             error={error}
-            actionLabel="Tentar novamente"
             onAction={() => void reload()}
           />
         ) : (
@@ -98,9 +97,9 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
             ) : null}
 
             {error && items.length > 0 ? (
-              <StrategicIndicatorsErrorState
-                error={{ ...error, title: "Falha ao atualizar departamentos" }}
-                actionLabel="Tentar novamente"
+              <StrategicIndicatorsPageError
+                error={error}
+                mode="refresh"
                 onAction={() => void reload()}
               />
             ) : null}

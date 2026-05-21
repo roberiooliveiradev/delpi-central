@@ -6,7 +6,9 @@ import {
   getStrategicIndicatorsCachedValue,
   setStrategicIndicatorsCachedValue,
 } from "../../data/cache/strategicIndicatorsReadCache";
+import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
 import type { AlertsDashboardViewData } from "../../data/types/alerts";
+import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 
 type UseStrategicIndicatorsAlertsParams = {
@@ -29,7 +31,7 @@ export function useStrategicIndicatorsAlerts({
   const [data, setData] = useState<AlertsDashboardViewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<StrategicIndicatorsErrorView | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -95,9 +97,14 @@ export function useStrategicIndicatorsAlerts({
         }
 
         setError(
-          err instanceof Error
-            ? err.message
-            : "Erro inesperado ao carregar alertas.",
+          captureStrategicIndicatorsError(err, {
+            surface: "Lista de alertas",
+            route: "/alerts",
+            method: "GET",
+            competence: competence ?? null,
+            branch: branch ?? null,
+            departmentId: departmentId ?? null,
+          }),
         );
       } finally {
         if (requestId === requestIdRef.current && !controller.signal.aborted) {

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { DepartmentDetailHero } from "../components/DepartmentDetailHero";
 import { IndicatorDetailGrid } from "../components/IndicatorDetailGrid";
-import { StrategicIndicatorsErrorState } from "../components/StrategicIndicatorsErrorState";
+import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
@@ -104,9 +104,8 @@ export function DepartmentDetailsPage({
           {filters}
         </SectionBlock>
 
-        <StrategicIndicatorsErrorState
+        <StrategicIndicatorsPageError
           error={error}
-          actionLabel="Tentar novamente"
           onAction={() => void reload()}
         />
       </div>
@@ -149,9 +148,9 @@ export function DepartmentDetailsPage({
       ) : null}
 
       {error && data ? (
-        <StrategicIndicatorsErrorState
-          error={{ ...error, title: "Falha ao atualizar departamento" }}
-          actionLabel="Tentar novamente"
+        <StrategicIndicatorsPageError
+          error={error}
+          mode="refresh"
           onAction={() => void reload()}
         />
       ) : null}

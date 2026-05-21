@@ -1,3 +1,4 @@
+import { buildStrategicIndicatorsApiError } from "./strategicIndicatorsApiErrors";
 import { STRATEGIC_INDICATORS_API_BASE } from "./strategicIndicatorsApiBase";
 
 const BASE_URL = STRATEGIC_INDICATORS_API_BASE;
@@ -337,18 +338,13 @@ export async function fetchStrategicIndicatorsPresentation(
   );
 
   if (!response.ok) {
-    let detail = "Falha ao carregar presentation do Strategic Indicators.";
-
-    try {
-      const payload = (await response.json()) as { detail?: string };
-      if (payload?.detail) {
-        detail = payload.detail;
-      }
-    } catch {
-      // mantém fallback
-    }
-
-    throw new Error(detail);
+    throw await buildStrategicIndicatorsApiError(response, {
+      surface: "Apresentação executiva",
+      route: "/presentation",
+      method: "GET",
+      competence: params.competence ?? null,
+      branch: params.branch ?? null,
+    });
   }
 
   return (await response.json()) as StrategicIndicatorsPresentationApiResponse;

@@ -6,7 +6,9 @@ import {
   getStrategicIndicatorsCachedValue,
   setStrategicIndicatorsCachedValue,
 } from "../../data/cache/strategicIndicatorsReadCache";
+import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
 import type { TrendsDashboardViewData } from "../../data/types/trends";
+import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 
 type UseStrategicIndicatorsTrendsParams = {
@@ -31,7 +33,7 @@ export function useStrategicIndicatorsTrends({
   const [data, setData] = useState<TrendsDashboardViewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<StrategicIndicatorsErrorView | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -99,9 +101,14 @@ export function useStrategicIndicatorsTrends({
         }
 
         setError(
-          err instanceof Error
-            ? err.message
-            : "Erro inesperado ao carregar tendências.",
+          captureStrategicIndicatorsError(err, {
+            surface: "Tendências",
+            route: "/trends",
+            method: "GET",
+            competence: competence ?? null,
+            branch: branch ?? null,
+            departmentId: departmentId ?? null,
+          }),
         );
       } finally {
         if (requestId === requestIdRef.current && !controller.signal.aborted) {

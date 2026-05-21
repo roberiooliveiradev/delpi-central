@@ -8,7 +8,9 @@ import {
   adaptPresentationWarnings,
   type PresentationWarningItem,
 } from "../../data/adapters/presentationPayloadAdapter";
+import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
 import type { PresentationViewData } from "../../data/types/presentation";
+import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 
 type UseStrategicIndicatorsPresentationParams = {
@@ -36,7 +38,7 @@ export function useStrategicIndicatorsPresentation({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [trendsLoading, setTrendsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<StrategicIndicatorsErrorView | null>(null);
   const [warnings, setWarnings] = useState<PresentationWarningItem[]>([]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -138,9 +140,13 @@ export function useStrategicIndicatorsPresentation({
         }
 
         setError(
-          err instanceof Error
-            ? err.message
-            : "Erro inesperado ao carregar a apresentação executiva.",
+          captureStrategicIndicatorsError(err, {
+            surface: "Apresentação executiva",
+            route: "/presentation",
+            method: "GET",
+            competence: competence ?? null,
+            branch: branch ?? null,
+          }),
         );
       } finally {
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
