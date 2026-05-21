@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppProps } from "../../App";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import { useSimulatedLoadingProgress } from "../../hooks/useSimulatedLoadingProgress";
 import {
   activateRevisao,
   fetchInvestimentos,
@@ -157,12 +158,15 @@ export function RevisaoCadastroPanel({
     }
   }
 
+  const cadastroLoadingProgress = useSimulatedLoadingProgress(loading);
+
   if (loading) {
     return (
       <LoadingActivityCard
         title="Carregando cadastro da revisão"
         description="Medição, investimentos e recursos compartilhados."
         variant="compact"
+        progressPercent={cadastroLoadingProgress}
       />
     );
   }

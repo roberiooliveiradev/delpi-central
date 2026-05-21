@@ -770,6 +770,25 @@
   animation: dq-loading-slide 1.3s ease-in-out infinite;
 }
 
+.dashboard-quality .dq-loading-activity__progress-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-quality .dq-loading-activity__progress-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--dq-text-muted);
+  text-align: right;
+}
+
+.dashboard-quality .dq-loading-activity__progress-indicator--determinate {
+  width: 0;
+  animation: none;
+  background: color-mix(in srgb, var(--dq-accent) 88%, white);
+  transition: width 0.35s ease;
+}
+
 @keyframes dq-loading-spin {
   to {
     transform: rotate(360deg);
