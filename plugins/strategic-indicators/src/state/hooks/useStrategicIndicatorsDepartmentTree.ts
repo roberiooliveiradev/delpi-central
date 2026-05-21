@@ -1,30 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { adaptDepartmentTreeBundleToModel } from "../../data/adapters/departmentTreeBundleAdapter";
 import { adaptDepartmentsToView } from "../../data/adapters/departmentsAdapter";
-import { adaptExecutiveSummaryToView } from "../../data/adapters/executiveSummaryAdapter";
 import { adaptIndicatorsToView } from "../../data/adapters/indicatorsAdapter";
-import { adaptTrendsToView } from "../../data/adapters/trendsAdapter";
-import { buildDepartmentTreeModel } from "../../data/builders/buildDepartmentTreeModel";
-import { enrichDepartmentTreeWithTrends } from "../../data/builders/enrichDepartmentTreeWithTrends";
+import { resolveDepartmentTreeScopes } from "../../data/departmentTreeScopes";
+import { fetchStrategicIndicatorsDepartmentTree } from "../../data/api/strategicIndicatorsDepartmentTreeApi";
 import {
   writeDepartmentsReadCache,
   writeIndicatorsReadCache,
 } from "../../data/builders/departmentTreeCacheWrites";
 import { tryBuildDepartmentTreeFromReadCache } from "../../data/builders/departmentTreeReadCache";
-import { resolveDepartmentTreeScopes } from "../../data/departmentTreeScopes";
-import { fetchStrategicIndicatorsDepartments } from "../../data/api/strategicIndicatorsDepartmentsApi";
-import { fetchStrategicIndicatorsExecutiveSummary } from "../../data/api/strategicIndicatorsExecutiveSummaryApi";
-import { fetchStrategicIndicators } from "../../data/api/strategicIndicatorsApi";
-import { fetchStrategicIndicatorsTrends } from "../../data/api/strategicIndicatorsTrendsApi";
-import type { DepartmentTreeScopeKey } from "../../data/types/departmentTree";
-import type { TrendsDashboardViewData } from "../../data/types/trends";
+import type { DepartmentTreeModel } from "../../data/types/departmentTree";
+import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
+import type { StrategicIndicatorsViewMode } from "../../ui/shared/strategicIndicatorsFilters";
 import {
   buildStrategicIndicatorsCacheKey,
   getStrategicIndicatorsCachedValue,
   setStrategicIndicatorsCachedValue,
 } from "../../data/cache/strategicIndicatorsReadCache";
-import type { DepartmentTreeModel } from "../../data/types/departmentTree";
-import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
-import type { StrategicIndicatorsViewMode } from "../../ui/shared/strategicIndicatorsFilters";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
 
@@ -108,99 +100,35 @@ export function useStrategicIndicatorsDepartmentTree({
 
     try {
       const token = getAccessTokenRef.current;
-      const executiveBranch =
-        viewMode === "branch" && branch.trim() ? branch.trim() : undefined;
-
-      const executivePromise = fetchStrategicIndicatorsExecutiveSummary({
-        branch: executiveBranch,
+      const bundle = await fetchStrategicIndicatorsDepartmentTree({
+        viewMode,
+        branch: viewMode === "branch" ? branch : undefined,
         competence,
         startDate,
         endDate,
+        months: 6,
         getAccessToken: token,
         signal: controller.signal,
       });
-
-      const scopePromises = scopes.map(async (scope) => {
-        const [departmentsResponse, indicatorsResponse, trendsResponse] =
-          await Promise.all([
-            fetchStrategicIndicatorsDepartments({
-              branch: scope.branch,
-              competence,
-              startDate,
-              endDate,
-              getAccessToken: token,
-              signal: controller.signal,
-            }),
-            fetchStrategicIndicators({
-              branch: scope.branch,
-              competence,
-              startDate,
-              endDate,
-              getAccessToken: token,
-              signal: controller.signal,
-            }),
-            fetchStrategicIndicatorsTrends({
-              branch: scope.branch,
-              competence,
-              startDate,
-              endDate,
-              months: 6,
-              getAccessToken: token,
-              signal: controller.signal,
-            }),
-          ]);
-
-        const departments = adaptDepartmentsToView(departmentsResponse);
-        const indicators = adaptIndicatorsToView(indicatorsResponse);
-        const trends = adaptTrendsToView(trendsResponse);
-
-        writeDepartmentsReadCache(query, scope.branch, departments);
-        writeIndicatorsReadCache(query, scope.branch, indicators);
-
-        return {
-          scope,
-          departments,
-          indicators,
-          trends,
-        };
-      });
-
-      const [executiveResult, ...scopeResults] = await Promise.all([
-        executivePromise,
-        ...scopePromises,
-      ]);
 
       if (requestId !== requestIdRef.current) {
         return;
       }
 
-      const executive = adaptExecutiveSummaryToView(executiveResult);
-      setStrategicIndicatorsCachedValue(
-        buildStrategicIndicatorsCacheKey("executive-summary", {
-          competence,
-          branch: executiveBranch,
-          startDate,
-          endDate,
-        }),
-        executive,
-      );
+      const nextModel = adaptDepartmentTreeBundleToModel(bundle);
 
-      const trendsByScope = scopeResults.reduce<
-        Partial<Record<DepartmentTreeScopeKey, TrendsDashboardViewData>>
-      >((accumulator, result) => {
-        accumulator[result.scope.key] = result.trends;
-        return accumulator;
-      }, {});
-
-      const baseModel = buildDepartmentTreeModel({
-        competence: executive.competence,
-        igd: executive.igd,
-        igdExact: executive.igdExact,
-        classification: executive.classification,
-        scopePayloads: scopeResults,
-      });
-
-      const nextModel = enrichDepartmentTreeWithTrends(baseModel, trendsByScope);
+      for (const scope of bundle.scopes) {
+        writeDepartmentsReadCache(
+          query,
+          scope.branch ?? undefined,
+          adaptDepartmentsToView(scope.departments),
+        );
+        writeIndicatorsReadCache(
+          query,
+          scope.branch ?? undefined,
+          adaptIndicatorsToView(scope.indicators),
+        );
+      }
 
       setModel(nextModel);
       setStrategicIndicatorsCachedValue(cacheKey, { model: nextModel });
@@ -213,7 +141,7 @@ export function useStrategicIndicatorsDepartmentTree({
       setError(
         captureStrategicIndicatorsError(err, {
           surface: "Árvore de departamentos",
-          route: "/departments",
+          route: "/departments/tree",
           method: "GET",
           competence: competence ?? null,
           branch: branch ?? null,

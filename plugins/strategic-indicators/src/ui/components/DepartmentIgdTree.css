@@ -11,7 +11,13 @@
   gap: 0;
   padding: 8px 12px 24px;
   overflow: visible;
-  min-width: max(100%, 1020px);
+  min-width: max(
+    100%,
+    calc(
+      var(--si-dept-count, 7) *
+        (var(--si-org-chart-cols, 3) * 272px + 48px) + 120px
+    )
+  );
 }
 
 .si-org-chart__toolbar-hint {
@@ -157,37 +163,56 @@
   border-radius: 2px;
 }
 
-.si-org-chart__department-blocks {
+.si-org-chart__departments-row {
   display: flex;
-  flex-direction: column;
-  gap: 28px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 20px;
   width: 100%;
+  padding: 4px 0 12px;
 }
 
-.si-org-chart__department-block {
+.si-org-chart__department-column {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
+  align-items: stretch;
+  gap: 10px;
+  min-width: calc(var(--si-org-chart-cols, 3) * 272px + 24px);
+  max-width: calc(var(--si-org-chart-cols, 3) * 300px + 32px);
 }
 
 .si-org-chart__department-anchor {
   margin: 0;
-  font-size: 15px;
+  padding: 0 4px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--si-title);
   text-align: center;
+}
+
+.si-org-chart__department-scopes {
+  display: grid;
+  grid-template-columns: repeat(var(--si-org-chart-cols, 3), minmax(240px, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+
+.si-org-chart__department-scope {
+  min-width: 0;
 }
 
 /* —— Card departamento (nível 3) —— */
 
 /* —— Cards clicáveis —— */
 
-.si-tree-card--interactive {
+.si-tree-card--interactive,
+.si-tree-dept-card__link {
   display: block;
   width: 100%;
-  max-width: 340px;
+  max-width: none;
   text-decoration: none;
   color: inherit;
   cursor: pointer;
@@ -253,125 +278,52 @@
 
 .si-tree-dept-wrap {
   width: 100%;
-  max-width: 340px;
 }
 
-.si-tree-dept {
-  width: 100%;
-  border-radius: 20px;
-  border: 2px solid var(--si-card-border);
-  background: var(--si-card-bg);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--si-title) 8%, transparent);
-  overflow: hidden;
-  text-align: left;
+.si-tree-dept-card {
+  margin: 0;
+  gap: 14px;
 }
 
-.si-tree-dept::before {
-  content: "";
-  display: block;
-  height: 5px;
-  background: var(--si-card-border);
-}
-
-.si-tree-dept--success::before {
-  background: linear-gradient(90deg, #059669, #34d399);
-}
-
-.si-tree-dept--info::before {
-  background: linear-gradient(90deg, #2563eb, #60a5fa);
-}
-
-.si-tree-dept--warning::before {
-  background: linear-gradient(90deg, #d97706, #fbbf24);
-}
-
-.si-tree-dept--danger::before {
-  background: linear-gradient(90deg, #dc2626, #f87171);
-}
-
-.si-tree-dept--empty {
-  padding: 20px;
+.si-tree-dept-card--empty {
+  min-height: 180px;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   border-style: dashed;
-  background: color-mix(in srgb, var(--si-card-bg) 90%, var(--si-text-muted));
 }
 
-.si-tree-dept--empty strong {
-  display: block;
+.si-tree-dept-card--empty strong {
   color: var(--si-title);
 }
 
-.si-tree-dept--empty p {
+.si-tree-dept-card--empty p {
   margin: 8px 0 0;
   font-size: 13px;
   color: var(--si-text-muted);
 }
 
-.si-tree-dept__head {
-  padding: 16px 16px 0;
+.si-tree-dept-card .si-department-card__summary {
+  min-height: 0;
 }
 
-.si-tree-dept__name {
-  display: block;
-  font-size: 18px;
-  color: var(--si-title);
-  line-height: 1.25;
-}
-
-.si-tree-dept__summary {
-  margin: 6px 0 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--si-text-muted);
-}
-
-.si-tree-dept__score-row {
+.si-tree-dept-card__trend {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.si-tree-dept__score-meta {
-  display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 8px;
-  min-width: 140px;
+  gap: 6px;
 }
 
-.si-tree-dept__cta {
-  margin: 0;
-  padding: 0 16px 14px;
+.si-tree-dept-card__trend-label {
   font-size: 12px;
   font-weight: 700;
   color: var(--si-text-muted);
 }
 
-.si-tree-dept__stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 14px 16px 0;
-  padding: 12px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--si-card-bg) 88%, var(--si-text-muted));
-}
-
-.si-tree-dept__stats dt {
-  font-size: 10px;
+.si-tree-dept-card__cta {
+  margin: 0;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--si-text-muted);
-}
-
-.si-tree-dept__stats dd {
-  margin: 4px 0 0;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--si-title);
+  color: var(--primary, #089bdb);
 }
 
 .si-tree-dept__actions {
@@ -435,102 +387,25 @@
 
 /* —— Card indicador (nível 4) —— */
 
-.si-tree-indicator {
+.si-tree-indicator-card {
   width: 100%;
-  max-width: none;
-  padding: 14px;
-  border-radius: 16px;
-  border: 1px solid var(--si-card-border);
-  background: var(--si-card-bg);
-  box-shadow: 0 2px 10px color-mix(in srgb, var(--si-title) 5%, transparent);
+  gap: 12px;
+  padding: 16px;
 }
 
-.si-tree-indicator__charts {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 12px;
+.si-tree-indicator-card__charts {
+  width: 100%;
 }
 
-.si-tree-indicator--success {
-  border-color: color-mix(in srgb, #059669 45%, var(--si-card-border));
-  background: linear-gradient(180deg, #f0fdf4 0%, var(--si-card-bg) 100%);
+.si-tree-indicator-card__metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.si-tree-indicator--info {
-  border-color: color-mix(in srgb, #2563eb 40%, var(--si-card-border));
-  background: linear-gradient(180deg, #eff6ff 0%, var(--si-card-bg) 100%);
-}
-
-.si-tree-indicator--warning {
-  border-color: color-mix(in srgb, #d97706 40%, var(--si-card-border));
-  background: linear-gradient(180deg, #fffbeb 0%, var(--si-card-bg) 100%);
-}
-
-.si-tree-indicator--danger {
-  border-color: color-mix(in srgb, #dc2626 40%, var(--si-card-border));
-  background: linear-gradient(180deg, #fef2f2 0%, var(--si-card-bg) 100%);
-}
-
-.si-tree-indicator--empty {
-  border-style: dashed;
-  background: var(--si-card-bg);
-}
-
-.si-tree-indicator__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.si-tree-indicator__name {
-  display: block;
-  font-size: 14px;
-  line-height: 1.3;
-  color: var(--si-title);
-}
-
-.si-tree-indicator__weight {
-  display: block;
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--si-text-muted);
-}
-
-.si-tree-indicator__metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.si-tree-indicator__metric {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--si-card-bg) 70%, var(--si-text-muted));
-  border: 1px solid color-mix(in srgb, var(--si-card-border) 80%, transparent);
-}
-
-.si-tree-indicator__metric span {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--si-text-muted);
-}
-
-.si-tree-indicator__metric strong {
+.si-tree-indicator-card__meta {
+  margin: 0;
   font-size: 12px;
-  line-height: 1.35;
   font-weight: 700;
-  color: var(--si-title);
-  word-break: break-word;
+  color: var(--si-text-muted);
 }
 
 .si-tree-indicator__value--missing {
@@ -679,11 +554,21 @@
     display: none;
   }
 
-  .si-tree-dept__stats {
+  .si-org-chart__departments-row {
+    flex-wrap: nowrap;
+    overflow: visible;
+  }
+
+  .si-org-chart__department-scopes {
     grid-template-columns: 1fr;
   }
 
-  .si-tree-indicator__metrics {
+  .si-org-chart__department-column {
+    min-width: 280px;
+    max-width: 320px;
+  }
+
+  .si-tree-indicator-card__metrics {
     grid-template-columns: 1fr;
   }
 }

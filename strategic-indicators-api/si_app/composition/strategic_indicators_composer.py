@@ -40,6 +40,9 @@ from si_app.application.use_cases.strategic_indicators.get_alerts_real_use_case 
 from si_app.application.use_cases.strategic_indicators.get_trends_real_use_case import (
     GetStrategicIndicatorsTrendsRealUseCase,
 )
+from si_app.application.use_cases.strategic_indicators.get_departments_tree_use_case import (
+    GetStrategicIndicatorsDepartmentsTreeUseCase,
+)
 from si_app.application.use_cases.strategic_indicators.list_indicator_goals_use_case import (
     ListStrategicIndicatorsIndicatorGoalsUseCase,
 )
@@ -317,6 +320,24 @@ def build_get_strategic_indicators_alerts_use_case():
 def build_get_strategic_indicators_trends_use_case():
     return GetStrategicIndicatorsTrendsRealUseCase(
         snapshot_service=build_strategic_indicators_snapshot_service(),
+    )
+
+
+def build_get_strategic_indicators_departments_tree_use_case():
+    snapshot_service = build_strategic_indicators_snapshot_service()
+    calculator = StrategicIndicatorsCalculator()
+    return GetStrategicIndicatorsDepartmentsTreeUseCase(
+        trends_use_case=GetStrategicIndicatorsTrendsRealUseCase(
+            snapshot_service=snapshot_service,
+        ),
+        departments_use_case=GetStrategicIndicatorsDepartmentsRealUseCase(
+            snapshot_service=snapshot_service,
+            calculator=calculator,
+        ),
+        indicators_use_case=GetStrategicIndicatorsUseCase(
+            snapshot_service=snapshot_service,
+            calculator=calculator,
+        ),
     )
 
 

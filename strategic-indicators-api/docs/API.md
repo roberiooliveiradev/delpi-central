@@ -36,6 +36,22 @@ Resumo executivo (IGD, departamentos, comparativo atual vs mês anterior).
 
 ---
 
+### GET `/departments/tree`
+
+**Permissão:** `strategic-indicators.view`
+
+Payload agregado para a página **Departamentos** (organograma IGD). Uma requisição por visão, usando `get_series_snapshot_optimized` (mesma base do `/trends`) por escopo — evita N chamadas paralelas a `/departments`, `/indicators` e `/trends`.
+
+| Query | Default | Descrição |
+|-------|---------|-----------|
+| `view_mode` | `consolidated` | `consolidated` (3 colunas) ou `branch` (filial única) |
+| `branch` | — | Filial quando `view_mode=branch` |
+| `months` | `6` | Meses da série (sparklines) |
+
+Resposta: `competence`, `igd`, `igd_exact`, `classification`, `scopes[]` com `departments`, `indicators` e `trends` no mesmo formato das rotas individuais.
+
+---
+
 ### GET `/departments`
 
 **Permissão:** `strategic-indicators.view`

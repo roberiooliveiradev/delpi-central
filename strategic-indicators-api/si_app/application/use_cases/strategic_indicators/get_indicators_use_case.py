@@ -5,6 +5,9 @@ from si_app.application.dto.strategic_indicators.get_indicators_response import 
     IndicatorFetchErrorResponse,
     IndicatorItemResponse,
 )
+from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
+    StrategicIndicatorsPeriodSnapshot,
+)
 from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
     StrategicIndicatorsSnapshotService,
 )
@@ -40,6 +43,12 @@ class GetStrategicIndicatorsUseCase:
             branch=branch,
         )
 
+        return self.build_from_period_snapshot(snapshot)
+
+    def build_from_period_snapshot(
+        self,
+        snapshot: StrategicIndicatorsPeriodSnapshot,
+    ) -> GetStrategicIndicatorsResponse:
         departments_by_id = {
             item.department_id: item
             for item in snapshot.calculated_departments
