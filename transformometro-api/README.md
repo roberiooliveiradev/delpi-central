@@ -54,4 +54,13 @@ HTTP (JWT):
 - `GET /transformometro/import/preview`
 - `POST /transformometro/import/apply` — body `{ "replace_existing": false, "recalc_dashboard": true }`
 
+## Integração engenharia / SI
+
+Rotas com contrato legado Transforma+ (calculador oficial):
+
+- `GET /transformometro/integrations/engineering/transforma-mais/processes`
+- `GET /transformometro/integrations/engineering/transforma-mais/processes/summary`
+
+Consumidores: `shared/transformometro_client` + `API_DELPI_INTERNAL_SERVICE_TOKEN`.
+
 Documentação: [docs/12-roadmap-e-evolucao/transformometro-app/](../docs/12-roadmap-e-evolucao/transformometro-app/README.md)

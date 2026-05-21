@@ -52,7 +52,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 **Diferença vs Transforma+ legado:** listagem legada subtrai custo compartilhado inteiro na economia diária; spec usa delta de recursos na economia bruta e não repete na líquida.
 
-## Fase 3 — Produção e desligamento planilha (1 sprint) 🚧
+## Fase 3 — Produção e desligamento planilha (1 sprint) ✅ código / 🚧 ops
 
 | Entrega | Detalhe | Status |
 |---------|---------|--------|
@@ -61,7 +61,8 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Manifesto + script registro | `register-manifest.sh`, permissões completas | ✅ repo |
 | Registro RBAC no portal | Atribuir `transformometro.*` aos perfis | Pendente (manual) |
 | Desativar escrita na planilha | somente leitura ou desligada | Pendente (Google) |
-| SI/engineering → transformometro-api HTTP | `transformometro_client` + gateway | ✅ |
+| SI/engineering → transformometro-api HTTP | `transformometro_client` + gateway + token interno | ✅ |
+| Testes integração engenharia | `tests/test_engineering_transforma_mais.py` | ✅ |
 
 ## Fase 4 — Melhorias (backlog)
 
@@ -93,6 +94,5 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 ## Próximo passo imediato
 
 1. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
-2. **Recalcular** dashboard e validar KPIs no portal
-3. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
-4. Opcional: redirecionar indicador TRANSFORMA+ do `dashboard-engineering` para esta API
+2. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
+3. **Fase 4:** rateio por família, alertas economia negativa, export Excel

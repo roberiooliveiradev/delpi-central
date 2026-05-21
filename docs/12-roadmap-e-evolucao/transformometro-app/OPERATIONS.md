@@ -65,7 +65,7 @@ Checklist (manual, Google Workspace):
 2. Na planilha `TRANSFORMA_MAIS_SHEET_ID`: restringir edição (visualizador para consulta histórica) ou mover para pasta arquivada.
 3. Remover links de edição em procedimentos internos / Apps Script de escrita.
 4. Manter `TRANSFORMA_MAIS_*` no `.env` só se ainda usar import de contingência.
-5. `dashboard-engineering` / SI continuam podendo ler Sheets até migrar indicador (Fase 3 opcional).
+5. SI e `dashboard-engineering` consomem **Postgres via transformometro-api** (não Sheets).
 
 ## Troubleshooting
 
@@ -76,6 +76,8 @@ Checklist (manual, Google Workspace):
 | Dashboard zerado | Cadastrar revisões + medições → **Recalcular** |
 | Import `uq_processos_codigo` | Usar `--replace` ou `git pull` com reconcile por `codigo_processo` |
 | Números ≠ planilha antiga | Esperado: spec usa delta de recursos na bruta; ver [OVERVIEW.md](./OVERVIEW.md) |
+| SI 401 Transformômetro | `API_DELPI_INTERNAL_SERVICE_TOKEN` nos 3 serviços; rebuild SI |
+| SI 404 Transformômetro | `TRANSFORMOMETRO_API_BASE_URL=http://transformometro-api:8000` (sem `/apps/`) |
 
 ## Auditoria
 

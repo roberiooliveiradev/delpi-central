@@ -37,6 +37,14 @@ Serviço em `infra/docker-compose.yml` e `infra/docker-compose.dev.yml`:
 | `PLUGINS_DB_*` | — | Postgres schema `transformometro` |
 | `TRANSFORMA_MAIS_SHEET_ID` + `TRANSFORMA_MAIS_GID_*` | — | Import Google Sheets |
 | `JWT_SECRET` / Keycloak | — | `delpi_auth` |
+| `API_DELPI_INTERNAL_SERVICE_TOKEN` | — | Auth S2S nas rotas `/integrations/engineering/*` (mesmo valor em SI e api-delpi) |
+| `TRANSFORMOMETRO_API_BASE_URL` | `http://transformometro-api:8000` | Só nos **consumidores** (SI, api-delpi), não neste serviço |
+
+## Testes antes do deploy
+
+```bash
+./scripts/ci-transformometro-api.sh
+```
 
 ## Migrations
 
@@ -54,3 +62,4 @@ Versões: `V001` schema, `V002` cadastro, `V003` `dashboard_calculos`.
 3. Import inicial: `python scripts/migrate_transforma_mais_sheet.py --apply --replace` (ver [OPERATIONS.md](../../docs/12-roadmap-e-evolucao/transformometro-app/OPERATIONS.md))
 4. Registrar manifesto na Core API: `plugins/transformometro/scripts/register-manifest.sh`
 5. Health: `GET /apps/transformometro-api/transformometro/health` → `db_ready: true`
+6. Integração (rede Docker): `curl -H "X-Delpi-Service-Token: $API_DELPI_INTERNAL_SERVICE_TOKEN" http://transformometro-api:8000/transformometro/integrations/engineering/transforma-mais/processes/summary`

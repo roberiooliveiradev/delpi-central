@@ -39,7 +39,7 @@ def test_baseline_row_economia_bruta_zero():
     rows = [
         row
         for row in calc.build_dashboard_rows(raw)
-        if row["revisao_id"] == "r-baseline" and row["competencia"] == "2025-02"
+        if row["revisao_id"] == "r-baseline" and row["competencia"] == "2025-01"
     ]
     assert len(rows) == 1
     assert rows[0]["economia_bruta"] == 0.0

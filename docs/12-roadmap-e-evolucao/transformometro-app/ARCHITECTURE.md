@@ -7,10 +7,13 @@ flowchart TB
   subgraph portal [Portal Minha Delpi]
     Shell[Core API + Shell]
     MFE[plugins/transformometro MFE]
+    SI[strategic-indicators-api]
+    AD[api-delpi]
   end
   subgraph tm [transformometro-api]
     HTTP[FastAPI /transformometro]
-    UC[Use cases CRUD]
+    INT[integrations/engineering/transforma-mais]
+    UC[CRUD + dashboard]
     CALC[DashboardCalculatorService]
     REPO[Postgres repositories]
   end
@@ -20,8 +23,10 @@ flowchart TB
   end
   Shell --> MFE
   MFE -->|JWT| HTTP
+  SI -->|X-Delpi-Service-Token ou JWT| INT
+  AD -->|idem| INT
   HTTP --> UC
-  HTTP --> CALC
+  INT --> CALC
   UC --> REPO
   CALC --> REPO
   REPO --> PG
@@ -127,6 +132,10 @@ Alinhada à [ESPECIFICACAO.md §15](./ESPECIFICACAO.md), com convenção Delpi:
 | Dashboard | `GET /dashboard`, `/dashboard/resumo`, `/dashboard/evolucao`, `/dashboard/processos/{id}` |
 | Catálogos | `GET /options/*` |
 | Sistema | `GET /health` |
+| Integrações | `GET /integrations/engineering/transforma-mais/processes`, `.../summary` |
+
+**URL interna (Docker):** `http://transformometro-api:8000/transformometro/...`  
+**URL pública (nginx):** `/apps/transformometro-api/transformometro/...`
 
 Respostas envelope (padrão api-delpi):
 
