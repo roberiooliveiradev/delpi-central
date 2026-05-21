@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type CSSProperties } from "react";
 import type {
   DepartmentTreeColumn,
   DepartmentTreeDepartmentNode,
@@ -97,13 +97,24 @@ function DepartmentTreeDepartmentCard({
   filterState,
   expanded,
   onToggle,
+  showDepartmentTitle = true,
 }: {
-  node: DepartmentTreeDepartmentNode;
+  node: DepartmentTreeDepartmentNode | null;
   scope: DepartmentTreeScopeConfig;
   filterState: StrategicIndicatorsFilterState;
   expanded: boolean;
   onToggle: () => void;
+  showDepartmentTitle?: boolean;
 }) {
+  if (!node) {
+    return (
+      <article className="si-dept-tree__department si-dept-tree__department--empty">
+        <strong>Sem medição</strong>
+        <p>Departamento sem dados neste escopo no período.</p>
+      </article>
+    );
+  }
+
   const { department } = node;
   const variationValue = department.variation.value;
   const variationPrefix = variationValue > 0 ? "+" : "";
@@ -111,16 +122,25 @@ function DepartmentTreeDepartmentCard({
 
   return (
     <article className="si-dept-tree__department">
-      <div className="si-dept-tree__department-head">
-        <div>
-          <strong>{department.name}</strong>
-          <p>{department.strategicSummary}</p>
+      {showDepartmentTitle ? (
+        <div className="si-dept-tree__department-head">
+          <div>
+            <strong>{department.name}</strong>
+            <p>{department.strategicSummary}</p>
+          </div>
+          <StatusBadge
+            label={department.classification}
+            variant={getScoreStatusVariant(department.score)}
+          />
         </div>
-        <StatusBadge
-          label={department.classification}
-          variant={getScoreStatusVariant(department.score)}
-        />
-      </div>
+      ) : (
+        <div className="si-dept-tree__department-head si-dept-tree__department-head--compact">
+          <StatusBadge
+            label={department.classification}
+            variant={getScoreStatusVariant(department.score)}
+          />
+        </div>
+      )}
 
       <dl className="si-dept-tree__department-metrics">
         <div>
@@ -174,77 +194,51 @@ function DepartmentTreeDepartmentCard({
   );
 }
 
-function DepartmentTreeColumnPanel({
-  column,
-  departmentOrder,
-  filterState,
-  expandedKeys,
-  onToggleDepartment,
-}: {
-  column: DepartmentTreeColumn;
-  departmentOrder: string[];
-  filterState: StrategicIndicatorsFilterState;
-  expandedKeys: Set<string>;
-  onToggleDepartment: (key: string) => void;
-}) {
-  const nodesById = useMemo(
-    () => new Map(column.departments.map((item) => [item.department.id, item])),
-    [column.departments],
-  );
-
+function DepartmentTreeScopeHeader({ column }: { column: DepartmentTreeColumn }) {
   return (
-    <section className="si-dept-tree__column">
-      <header className="si-dept-tree__column-head">
-        <div>
-          <span className="si-dept-tree__column-eyebrow">Escopo</span>
-          <strong>{column.scope.label}</strong>
-        </div>
-        {column.averageScore !== null ? (
-          <div className="si-dept-tree__column-score">
-            <span>Média IDD</span>
-            <strong>{column.averageScore.toFixed(1)}</strong>
-          </div>
-        ) : null}
-      </header>
-
-      <div className="si-dept-tree__column-body">
-        {departmentOrder.map((departmentId) => {
-          const node = nodesById.get(departmentId);
-          const expandKey = `${column.scope.key}:${departmentId}`;
-
-          if (!node) {
-            return (
-              <div
-                key={expandKey}
-                className="si-dept-tree__department si-dept-tree__department--empty"
-              >
-                <strong>Sem medição</strong>
-                <p>Departamento sem dados neste escopo no período.</p>
-              </div>
-            );
-          }
-
-          return (
-            <DepartmentTreeDepartmentCard
-              key={expandKey}
-              node={node}
-              scope={column.scope}
-              filterState={filterState}
-              expanded={expandedKeys.has(expandKey)}
-              onToggle={() => onToggleDepartment(expandKey)}
-            />
-          );
-        })}
-
-        {!column.hasData && departmentOrder.length === 0 ? (
-          <div className="si-dept-tree__department si-dept-tree__department--empty">
-            <strong>Sem medição</strong>
-            <p>Nenhum departamento retornou dados para este escopo.</p>
-          </div>
-        ) : null}
+    <header className="si-dept-tree__column-head">
+      <div>
+        <span className="si-dept-tree__column-eyebrow">Escopo</span>
+        <strong>{column.scope.label}</strong>
       </div>
-    </section>
+      {column.averageScore !== null ? (
+        <div className="si-dept-tree__column-score">
+          <span>Média IDD</span>
+          <strong>{column.averageScore.toFixed(1)}</strong>
+        </div>
+      ) : null}
+    </header>
   );
+}
+
+function resolveDepartmentLabel(
+  departmentId: string,
+  columns: DepartmentTreeColumn[],
+): string {
+  for (const column of columns) {
+    const node = column.departments.find(
+      (item) => item.department.id === departmentId,
+    );
+    if (node) {
+      return node.department.name;
+    }
+  }
+  return "Departamento";
+}
+
+function resolveDepartmentSummary(
+  departmentId: string,
+  columns: DepartmentTreeColumn[],
+): string | null {
+  for (const column of columns) {
+    const node = column.departments.find(
+      (item) => item.department.id === departmentId,
+    );
+    if (node) {
+      return node.department.strategicSummary;
+    }
+  }
+  return null;
 }
 
 export function DepartmentIgdTree({
@@ -253,6 +247,34 @@ export function DepartmentIgdTree({
   isMultiColumn,
 }: DepartmentIgdTreeProps) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(() => new Set());
+
+  const columnCount = model.columns.length;
+
+  const columnsByScope = useMemo(
+    () =>
+      model.columns.map((column) => ({
+        column,
+        nodesById: new Map(
+          column.departments.map((item) => [item.department.id, item]),
+        ),
+      })),
+    [model.columns],
+  );
+
+  const allExpandableKeys = useMemo(() => {
+    const keys: string[] = [];
+
+    for (const { column, nodesById } of columnsByScope) {
+      for (const departmentId of model.departmentOrder) {
+        const node = nodesById.get(departmentId);
+        if (node && node.indicators.length > 0) {
+          keys.push(`${column.scope.key}:${departmentId}`);
+        }
+      }
+    }
+
+    return keys;
+  }, [columnsByScope, model.departmentOrder]);
 
   const toggleDepartment = useCallback((key: string) => {
     setExpandedKeys((current) => {
@@ -266,55 +288,137 @@ export function DepartmentIgdTree({
     });
   }, []);
 
-  const columnsClass = isMultiColumn
-    ? "si-dept-tree__columns si-dept-tree__columns--multi"
-    : "si-dept-tree__columns";
+  const expandAll = useCallback(() => {
+    setExpandedKeys(new Set(allExpandableKeys));
+  }, [allExpandableKeys]);
+
+  const collapseAll = useCallback(() => {
+    setExpandedKeys(new Set());
+  }, []);
+
+  const selectedViewLabel = isMultiColumn
+    ? "Consolidado · Filial 01 · Filial 02"
+    : (model.columns[0]?.scope.label ?? "Filial");
+
+  const hasExpandable = allExpandableKeys.length > 0;
 
   return (
-    <div className="si-dept-tree">
-      <div className="si-dept-tree__root">
-        <span className="si-dept-tree__root-eyebrow">Grupo Delpi</span>
-        <strong className="si-dept-tree__root-title">IGD consolidado</strong>
-        <div className="si-dept-tree__root-metrics">
-          <div>
-            <span>IGD</span>
-            <strong>
-              {model.igd !== null ? model.igd.toFixed(1) : "—"}
-            </strong>
+    <div
+      className="si-dept-tree"
+      style={
+        { "--si-dept-tree-cols": String(columnCount) } as CSSProperties
+      }
+    >
+      <section className="si-dept-tree__level si-dept-tree__level--root">
+        <div className="si-dept-tree__root">
+          <span className="si-dept-tree__root-eyebrow">Grupo Delpi</span>
+          <strong className="si-dept-tree__root-title">IGD consolidado</strong>
+          <div className="si-dept-tree__root-metrics">
+            <div>
+              <span>IGD</span>
+              <strong>
+                {model.igd !== null ? model.igd.toFixed(1) : "—"}
+              </strong>
+            </div>
+            {model.classification ? (
+              <StatusBadge
+                label={model.classification}
+                variant={
+                  model.igd !== null
+                    ? getScoreStatusVariant(model.igd)
+                    : "neutral"
+                }
+              />
+            ) : null}
           </div>
-          {model.classification ? (
-            <StatusBadge
-              label={model.classification}
-              variant={
-                model.igd !== null
-                  ? getScoreStatusVariant(model.igd)
-                  : "neutral"
-              }
-            />
-          ) : null}
+          <p className="si-dept-tree__root-note">
+            Competência {model.competence}.
+          </p>
         </div>
-        <p className="si-dept-tree__root-note">
-          Competência {model.competence}. A árvore abaixo detalha departamentos
-          {isMultiColumn
-            ? " em Consolidado, Filial 01 e Filial 02."
-            : " na filial selecionada."}
-        </p>
-      </div>
+      </section>
 
       <div className="si-dept-tree__connector" aria-hidden="true" />
 
-      <div className={columnsClass}>
-        {model.columns.map((column: DepartmentTreeColumn) => (
-          <DepartmentTreeColumnPanel
-            key={column.scope.key}
-            column={column}
-            departmentOrder={model.departmentOrder}
-            filterState={filterState}
-            expandedKeys={expandedKeys}
-            onToggleDepartment={toggleDepartment}
-          />
-        ))}
-      </div>
+      <section className="si-dept-tree__level si-dept-tree__level--scopes">
+        <p className="si-dept-tree__level-label">
+          Visão analítica: <strong>{selectedViewLabel}</strong>
+        </p>
+
+        <div className="si-dept-tree__toolbar">
+          <span className="si-dept-tree__toolbar-hint">
+            Departamentos alinhados por linha entre os escopos.
+          </span>
+          {hasExpandable ? (
+            <div className="si-dept-tree__toolbar-actions">
+              <button
+                type="button"
+                className="si-dept-tree__toolbar-btn"
+                onClick={expandAll}
+              >
+                Expandir todos
+              </button>
+              <button
+                type="button"
+                className="si-dept-tree__toolbar-btn"
+                onClick={collapseAll}
+              >
+                Recolher todos
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="si-dept-tree__scope-headers">
+          {model.columns.map((column) => (
+            <DepartmentTreeScopeHeader key={column.scope.key} column={column} />
+          ))}
+        </div>
+
+        <div className="si-dept-tree__department-rows">
+          {model.departmentOrder.map((departmentId) => {
+            const departmentName = resolveDepartmentLabel(
+              departmentId,
+              model.columns,
+            );
+            const departmentSummary = resolveDepartmentSummary(
+              departmentId,
+              model.columns,
+            );
+
+            return (
+              <div key={departmentId} className="si-dept-tree__department-row">
+                <div className="si-dept-tree__department-row-title">
+                  <strong>{departmentName}</strong>
+                  {departmentSummary ? <span>{departmentSummary}</span> : null}
+                </div>
+
+                <div className="si-dept-tree__department-row-cells">
+                  {columnsByScope.map(({ column, nodesById }) => {
+                    const expandKey = `${column.scope.key}:${departmentId}`;
+                    const node = nodesById.get(departmentId) ?? null;
+
+                    return (
+                      <div
+                        key={expandKey}
+                        className="si-dept-tree__department-row-cell"
+                      >
+                        <DepartmentTreeDepartmentCard
+                          node={node}
+                          scope={column.scope}
+                          filterState={filterState}
+                          expanded={expandedKeys.has(expandKey)}
+                          onToggle={() => toggleDepartment(expandKey)}
+                          showDepartmentTitle={!isMultiColumn}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }
