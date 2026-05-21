@@ -1,8 +1,16 @@
 /* Organograma: IGD → Departamentos → Indicadores */
 
+.si-org-chart--single-scope {
+  --si-dept-slot-width: 420px;
+  --si-dept-gap: 28px;
+  --si-igd-card-max-width: 560px;
+  --si-tree-card-radius: 24px;
+  padding: 16px 20px 32px;
+}
+
 .si-org-chart--single-scope .si-org-chart__department-column {
-  min-width: var(--si-dept-slot-width, 360px);
-  max-width: var(--si-dept-slot-width, 360px);
+  min-width: var(--si-dept-slot-width, 420px);
+  max-width: var(--si-dept-slot-width, 420px);
 }
 
 .si-org-chart--single-scope .si-org-chart__department-scopes {
@@ -76,8 +84,13 @@
 }
 
 .si-org-chart__level--igd {
-  max-width: 420px;
+  max-width: var(--si-igd-card-max-width, 560px);
   width: 100%;
+}
+
+.si-org-chart--single-scope .si-org-chart__level-tag {
+  font-size: 12px;
+  margin-bottom: 12px;
 }
 
 .si-org-chart__level--departments {
@@ -97,11 +110,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 10px 14px;
+  padding: 12px 18px;
   border: 1px solid var(--si-card-border);
-  border-radius: 14px;
+  border-radius: 16px;
+  font-size: 13px;
   background: color-mix(in srgb, var(--si-accent, #2563eb) 10%, var(--si-card-bg));
   color: var(--si-title);
   font-size: 12px;
@@ -430,7 +444,44 @@
 
 .si-tree-dept-card {
   margin: 0;
-  gap: 14px;
+  gap: 16px;
+}
+
+.si-org-chart--single-scope .si-tree-dept-card.si-department-card,
+.si-org-chart--single-scope .si-tree-dept-wrap .si-department-card {
+  padding: 24px;
+  gap: 20px;
+  border-radius: var(--si-tree-card-radius, 24px);
+}
+
+.si-org-chart--single-scope .si-department-card__title {
+  font-size: 20px;
+}
+
+.si-org-chart--single-scope .si-department-card__short {
+  min-width: 50px;
+  height: 50px;
+  font-size: 13px;
+  border-radius: 16px;
+}
+
+.si-org-chart--single-scope .si-department-card__metric {
+  padding: 14px;
+}
+
+.si-org-chart--single-scope .si-department-card__metric-value {
+  font-size: 20px;
+}
+
+.si-org-chart--single-scope .si-department-card__summary {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.si-org-chart--single-scope .si-tree-dept__toggle {
+  padding: 12px 14px;
+  font-size: 13px;
+  border-radius: 14px;
 }
 
 .si-tree-dept-card--empty {
@@ -566,16 +617,30 @@
 
 .si-tree-dept__indicator-list--row > .si-tree-indicator-card__link {
   display: block;
-  flex: 1 1 280px;
+  flex: 1 1 300px;
   width: auto;
-  min-width: 260px;
-  max-width: 340px;
+  min-width: 280px;
+  max-width: 380px;
 }
 
 .si-tree-dept__indicator-list--multi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.si-org-chart--single-scope .si-tree-indicator-card {
+  padding: 20px;
   gap: 14px;
+  border-radius: var(--si-tree-card-radius, 24px);
+}
+
+.si-org-chart--single-scope .si-indicator-card__title {
+  font-size: 17px;
+}
+
+.si-org-chart--single-scope .si-indicator-card__goal-value {
+  font-size: 17px;
 }
 
 .si-tree-dept__indicator-list--multi-grid > .si-tree-indicator-card__link {
