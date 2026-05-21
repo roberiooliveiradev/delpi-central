@@ -11,6 +11,7 @@ type Props = {
 export function RevisaoMedicaoSection({ medicao, onChange, onSubmit }: Props) {
   return (
     <CadastroSection
+      embedded
       title="Medição operacional"
       hint="Volume, tempos e custos usados para calcular economia bruta da revisão."
     >

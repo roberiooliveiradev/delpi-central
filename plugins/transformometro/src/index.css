@@ -22,6 +22,15 @@
   --ds-card-bg: var(--surface, #ffffff);
   --ds-card-border: var(--border, #e6e6e6);
   --ds-accent: var(--primary, #089bdb);
+  --ds-input-bg: var(--surface, #ffffff);
+  --ds-surface-muted: color-mix(in srgb, var(--ds-card-bg) 94%, var(--ds-accent) 6%);
+  --ds-surface-inset: color-mix(in srgb, var(--ds-card-bg) 88%, var(--ds-text) 4%);
+  --ds-success-bg: color-mix(in srgb, #22c55e 18%, var(--ds-card-bg));
+  --ds-success-fg: #15803d;
+  --ds-warning-bg: color-mix(in srgb, #f59e0b 14%, var(--ds-card-bg));
+  --ds-warning-border: color-mix(in srgb, #f59e0b 45%, var(--ds-card-border));
+  --ds-warning-fg: color-mix(in srgb, #b45309 80%, var(--ds-text));
+  --ds-negative-fg: #b91c1c;
   --ds-font-xs: 12px;
   --ds-font-sm: 13px;
   --ds-font-md: 14px;
@@ -76,6 +85,15 @@
   --ds-text-muted: rgba(255, 255, 255, 0.72);
   --ds-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
   --ds-card-border: rgba(255, 255, 255, 0.1);
+  --ds-input-bg: color-mix(in srgb, var(--surface-2, #1b2030) 90%, black);
+  --ds-surface-muted: color-mix(in srgb, var(--ds-card-bg) 88%, white 4%);
+  --ds-surface-inset: color-mix(in srgb, var(--ds-card-bg) 75%, black 25%);
+  --ds-success-bg: color-mix(in srgb, #22c55e 22%, var(--ds-card-bg));
+  --ds-success-fg: #86efac;
+  --ds-warning-bg: color-mix(in srgb, #f59e0b 18%, var(--ds-card-bg));
+  --ds-warning-border: color-mix(in srgb, #fbbf24 40%, var(--ds-card-border));
+  --ds-warning-fg: #fde68a;
+  --ds-negative-fg: #fca5a5;
 }
 
 /* Header */
@@ -277,7 +295,7 @@
   border-radius: var(--ds-control-radius);
   border: 1px solid var(--ds-card-border);
   padding: 8px 12px;
-  background: var(--surface, #fff);
+  background: var(--ds-input-bg);
   color: var(--ds-text);
 }
 
@@ -306,8 +324,13 @@
 }
 
 .dashboard-transformometro .ds-rateio-diag--warn {
-  border-color: #f59e0b;
-  background: #fffbeb;
+  border-color: var(--ds-warning-border);
+  background: var(--ds-warning-bg);
+  color: var(--ds-text);
+}
+
+.dashboard-transformometro .ds-rateio-diag--warn .ds-rateio-diag__message {
+  color: var(--ds-warning-fg);
 }
 
 .dashboard-transformometro .ds-rateio-diag__message {
@@ -692,7 +715,7 @@
 .dashboard-transformometro .ds-table th {
   font-weight: 700;
   color: var(--ds-text-muted);
-  background: color-mix(in srgb, var(--ds-card-bg) 92%, var(--ds-accent) 8%);
+  background: var(--ds-surface-muted);
 }
 
 .dashboard-transformometro .ds-table__col--wide {
@@ -1259,7 +1282,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .ds-table__value--negative {
-  color: #b91c1c;
+  color: var(--ds-negative-fg);
   font-weight: 600;
 }
 
@@ -1313,8 +1336,8 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 }
 
 .dashboard-transformometro .ds-badge--success {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--ds-success-bg);
+  color: var(--ds-success-fg);
 }
 
 .dashboard-transformometro .ds-cadastro-panel {
@@ -1333,17 +1356,92 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   color: var(--ds-text-muted);
 }
 
-.dashboard-transformometro .ds-cadastro-panel__sections {
+/* Abas do cadastro da revisão */
+.dashboard-transformometro .ds-cadastro-tabs {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0;
+}
+
+.dashboard-transformometro .ds-cadastro-tabs__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px;
+  margin-bottom: 0;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-filter-radius);
+  background: var(--ds-surface-muted);
+}
+
+.dashboard-transformometro .ds-cadastro-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: calc(var(--ds-control-radius) - 2px);
+  background: transparent;
+  color: var(--ds-text-muted);
+  font-size: var(--ds-font-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.dashboard-transformometro .ds-cadastro-tabs__tab:hover {
+  color: var(--ds-text);
+  background: color-mix(in srgb, var(--ds-accent) 8%, transparent);
+}
+
+.dashboard-transformometro .ds-cadastro-tabs__tab.is-active {
+  color: var(--ds-accent);
+  background: var(--ds-card-bg);
+  border-color: color-mix(in srgb, var(--ds-accent) 35%, var(--ds-card-border));
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ds-text) 8%, transparent);
+}
+
+.dashboard-transformometro .ds-cadastro-tabs__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--ds-accent) 14%, var(--ds-card-bg));
+  color: var(--ds-accent);
+}
+
+.dashboard-transformometro .ds-cadastro-tabs__tab.is-active .ds-cadastro-tabs__badge {
+  background: color-mix(in srgb, var(--ds-accent) 18%, var(--ds-card-bg));
+}
+
+.dashboard-transformometro .ds-cadastro-tabs__panel {
+  padding: 1.15rem 1rem 1rem;
+  border: 1px solid var(--ds-card-border);
+  border-top: none;
+  border-radius: 0 0 var(--ds-filter-radius) var(--ds-filter-radius);
+  background: var(--ds-card-bg);
 }
 
 .dashboard-transformometro .ds-cadastro-section {
   padding: 1rem 1.15rem;
-  background: var(--ds-surface-muted, #f8fafc);
+  background: var(--ds-surface-muted);
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-card-radius);
+}
+
+.dashboard-transformometro .ds-cadastro-section--embedded {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .dashboard-transformometro .ds-cadastro-section__header {
@@ -1392,7 +1490,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 .dashboard-transformometro .ds-resource-preview {
   margin: 0.75rem 0 1rem;
   padding: 12px 14px;
-  background: var(--ds-card-bg);
+  background: var(--ds-surface-inset);
   border: 1px solid var(--ds-card-border);
   border-radius: 8px;
 }
@@ -1447,8 +1545,15 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   padding-top: 1.5rem;
 }
 
+.dashboard-transformometro .ds-filter-box--checkbox > span:first-child {
+  font-size: var(--ds-font-sm);
+  font-weight: 600;
+  color: var(--ds-text-muted);
+}
+
 .dashboard-transformometro .ds-filter-box--checkbox input {
   width: auto;
+  accent-color: var(--ds-accent);
 }
 
 .dashboard-transformometro .ds-cadastro-panel__block {

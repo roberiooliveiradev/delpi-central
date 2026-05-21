@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppProps } from "../../App";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
@@ -18,6 +18,7 @@ import {
   type Revisao,
   type VinculoRecurso,
 } from "../../data/api/transformometroApi";
+import { CadastroTabs, type CadastroTabId } from "../revisao/cadastro/CadastroTabs";
 import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestimentosSection";
 import { RevisaoMedicaoSection } from "../revisao/cadastro/RevisaoMedicaoSection";
 import { RevisaoRecursosSection } from "../revisao/cadastro/RevisaoRecursosSection";
@@ -55,6 +56,7 @@ export function RevisaoCadastroPanel({
   onError,
   onRevisaoUpdated,
 }: Props) {
+  const [activeTab, setActiveTab] = useState<CadastroTabId>("vigencia");
   const [medicao, setMedicao] = useState<Medicao>(() => emptyMedicao(revisao.revisao_id));
   const [investimentos, setInvestimentos] = useState<Investimento[]>([]);
   const [vinculos, setVinculos] = useState<VinculoRecurso[]>([]);
@@ -93,6 +95,16 @@ export function RevisaoCadastroPanel({
   useEffect(() => {
     void load();
   }, [load]);
+
+  const tabs = useMemo(
+    () => [
+      { id: "vigencia" as const, label: "Vigência" },
+      { id: "medicao" as const, label: "Medição" },
+      { id: "investimentos" as const, label: "Investimentos", badge: investimentos.length },
+      { id: "recursos" as const, label: "Recursos", badge: vinculos.length },
+    ],
+    [investimentos.length, vinculos.length]
+  );
 
   async function handleSaveRevisaoDatas(e: React.FormEvent) {
     e.preventDefault();
@@ -183,35 +195,43 @@ export function RevisaoCadastroPanel({
         </div>
       ) : null}
 
-      <div className="ds-cadastro-panel__sections">
-        <RevisaoVigenciaSection
-          revisaoDatas={revisaoDatas}
-          onChange={setRevisaoDatas}
-          onSubmit={handleSaveRevisaoDatas}
-        />
-        <RevisaoMedicaoSection
-          medicao={medicao}
-          onChange={setMedicao}
-          onSubmit={handleSaveMedicao}
-        />
-        <RevisaoInvestimentosSection
-          revisaoId={revisao.revisao_id}
-          options={options}
-          investimentos={investimentos}
-          getAccessToken={getAccessToken}
-          onError={onError}
-          onReload={load}
-        />
-        <RevisaoRecursosSection
-          revisaoId={revisao.revisao_id}
-          options={options}
-          recursos={recursos}
-          vinculos={vinculos}
-          getAccessToken={getAccessToken}
-          onError={onError}
-          onReload={load}
-        />
-      </div>
+      <CadastroTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
+        {activeTab === "vigencia" ? (
+          <RevisaoVigenciaSection
+            revisaoDatas={revisaoDatas}
+            onChange={setRevisaoDatas}
+            onSubmit={handleSaveRevisaoDatas}
+          />
+        ) : null}
+        {activeTab === "medicao" ? (
+          <RevisaoMedicaoSection
+            medicao={medicao}
+            onChange={setMedicao}
+            onSubmit={handleSaveMedicao}
+          />
+        ) : null}
+        {activeTab === "investimentos" ? (
+          <RevisaoInvestimentosSection
+            revisaoId={revisao.revisao_id}
+            options={options}
+            investimentos={investimentos}
+            getAccessToken={getAccessToken}
+            onError={onError}
+            onReload={load}
+          />
+        ) : null}
+        {activeTab === "recursos" ? (
+          <RevisaoRecursosSection
+            revisaoId={revisao.revisao_id}
+            options={options}
+            recursos={recursos}
+            vinculos={vinculos}
+            getAccessToken={getAccessToken}
+            onError={onError}
+            onReload={load}
+          />
+        ) : null}
+      </CadastroTabs>
     </div>
   );
 }

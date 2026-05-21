@@ -67,6 +67,7 @@ export function RevisaoInvestimentosSection({
 
   return (
     <CadastroSection
+      embedded
       title="Investimentos"
       hint="Custos únicos ou recorrentes ligados a esta revisão (software, equipamento, horas, etc.)."
       badge={`${investimentos.length}`}

@@ -6,12 +6,27 @@ type Props = {
   badge?: string;
   children: ReactNode;
   className?: string;
+  /** Dentro de abas: sem card duplicado, só título + conteúdo */
+  embedded?: boolean;
 };
 
-export function CadastroSection({ title, hint, badge, children, className }: Props) {
+export function CadastroSection({
+  title,
+  hint,
+  badge,
+  children,
+  className,
+  embedded = false,
+}: Props) {
   return (
     <section
-      className={["ds-cadastro-section", className].filter(Boolean).join(" ")}
+      className={[
+        "ds-cadastro-section",
+        embedded ? "ds-cadastro-section--embedded" : "",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       <header className="ds-cadastro-section__header">
         <div>

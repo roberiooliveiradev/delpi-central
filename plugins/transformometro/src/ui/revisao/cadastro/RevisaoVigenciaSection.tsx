@@ -17,6 +17,7 @@ type Props = {
 export function RevisaoVigenciaSection({ revisaoDatas, onChange, onSubmit }: Props) {
   return (
     <CadastroSection
+      embedded
       title="Vigência da revisão"
       hint="Período em que a revisão entra no cálculo do dashboard. Deixe fim vazio para vigência aberta."
     >

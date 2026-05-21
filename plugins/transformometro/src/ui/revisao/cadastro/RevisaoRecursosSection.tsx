@@ -134,6 +134,7 @@ export function RevisaoRecursosSection({
 
   return (
     <CadastroSection
+      embedded
       title="Recursos compartilhados"
       hint="Vincule ferramentas do catálogo (ChatGPT, licenças, etc.). O custo entra no rateio conforme o critério do recurso."
       badge={`${vinculos.length} vínculo(s)`}
