@@ -38,9 +38,9 @@ class StrategicDepartmentCatalogItem:
 class StrategicIndicatorMeasuredValue:
     indicator_id: str
     department_id: str
-    value: float
+    value: float | None
     source: str
-    unit_values: dict[str, float] | None = None
+    unit_values: dict[str, float | None] | None = None
 
 
 @dataclass(frozen=True)
@@ -58,12 +58,12 @@ class StrategicIndicatorCalculatedValue:
     performance_direction: str = "higher_is_better"
     strategic_description: str = ""
     source: str = ""
-    value: float = 0.0
-    score: float = 0.0
-    gap: float = 0.0
+    value: float | None = None
+    score: float | None = None
+    gap: float | None = None
     trend: str = "stable"
     classification: str = ""
-    unit_values: dict[str, float] | None = None
+    unit_values: dict[str, float | None] | None = None
     value_unit: str | None = None
     value_prefix: str | None = None
     value_suffix: str | None = None

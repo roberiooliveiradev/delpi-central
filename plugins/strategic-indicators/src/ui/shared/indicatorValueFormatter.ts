@@ -1,3 +1,30 @@
+export const MISSING_VALUE_LABEL = "Sem dados preenchidos";
+
+export function isMissingValueClassification(
+  classification: string | null | undefined,
+): boolean {
+  return (classification ?? "").trim().toLowerCase() === MISSING_VALUE_LABEL.toLowerCase();
+}
+
+export function formatIndicatorScore(
+  score: number | null | undefined,
+  options: FormatIndicatorValueOptions = {},
+): string {
+  if (score === null || score === undefined) {
+    return options.fallback ?? MISSING_VALUE_LABEL;
+  }
+
+  const numeric = Number(score);
+  if (!Number.isFinite(numeric)) {
+    return options.fallback ?? MISSING_VALUE_LABEL;
+  }
+
+  return numeric.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export type IndicatorValueFormat = {
   valueUnit?: string | null;
   valuePrefix?: string | null;
@@ -59,7 +86,7 @@ export function formatIndicatorValue(
   const numeric = normalizeNumber(value);
 
   if (numeric === null) {
-    return options.fallback ?? "—";
+    return options.fallback ?? MISSING_VALUE_LABEL;
   }
 
   const prefix = resolvePrefix(format);

@@ -99,7 +99,8 @@ export type StrategicIndicatorsPresentationApiResponse = {
       units: Array<{
         unit_id: string;
         unit_name: string;
-        score: number;
+        score: number | null;
+        has_value: boolean;
         classification: string;
       }>;
       indicators: Array<
@@ -118,10 +119,12 @@ export type StrategicIndicatorsPresentationApiResponse = {
           strategic_description: string;
           scope_type: string;
           performance_direction: string;
-          realized: Record<string, number>;
-          score: number;
-          gap: number;
+          realized: Record<string, number | null>;
+          has_value: boolean;
+          score: number | null;
+          gap: number | null;
           trend: TrendDirection;
+          classification: string;
         } & IndicatorValueFormatApiFields
       >;
       errors: Array<{
@@ -152,9 +155,10 @@ export type StrategicIndicatorsPresentationApiResponse = {
         }>;
         scope_type: string;
         performance_direction: string;
-        value: number;
-        score: number;
-        gap: number;
+        value: number | null;
+        score: number | null;
+        gap: number | null;
+        has_value: boolean;
         trend: TrendDirection;
         classification: string;
         source: string;

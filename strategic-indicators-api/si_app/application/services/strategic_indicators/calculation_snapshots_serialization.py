@@ -14,6 +14,9 @@ from si_app.application.services.strategic_indicators.strategic_indicators_snaps
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
+from si_app.application.services.strategic_indicators.period_scores_serialization import (
+    _optional_float,
+)
 from si_app.shared.json_encoding import to_json_safe
 
 CALCULATION_SNAPSHOT_SCHEMA_VERSION = 1
@@ -102,7 +105,7 @@ def deserialize_calculation_inputs(row: dict[str, Any]) -> tuple[
         StrategicIndicatorMeasuredValue(
             indicator_id=item["indicator_id"],
             department_id=item["department_id"],
-            value=float(item.get("value") or 0),
+            value=_optional_float(item.get("value")),
             source=item.get("source", ""),
             unit_values=item.get("unit_values"),
         )

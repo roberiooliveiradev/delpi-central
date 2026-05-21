@@ -31,6 +31,7 @@ export function adaptDepartmentDetailsToView(
       unitId: unit.unit_id,
       unitName: unit.unit_name,
       score: unit.score,
+      hasValue: unit.has_value,
       classification: unit.classification,
     })),
     indicators: response.indicators.map((indicator) => ({
@@ -46,8 +47,10 @@ export function adaptDepartmentDetailsToView(
       scopeType: indicator.scope_type,
       performanceDirection: indicator.performance_direction,
       realized: indicator.realized,
+      hasValue: indicator.has_value,
       score: indicator.score,
       gap: indicator.gap,
+      classification: indicator.classification,
       trend: normalizeTrend(indicator.trend),
       valueUnit: indicator.value_unit ?? null,
       valuePrefix: indicator.value_prefix ?? null,

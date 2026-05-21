@@ -7,6 +7,7 @@ import {
 } from "../presentation/labels";
 import {
   formatIndicatorGoalValue,
+  formatIndicatorScore,
   formatIndicatorValue,
 } from "../shared/indicatorValueFormatter";
 import "./IndicatorQuickDetail.css";
@@ -95,7 +96,7 @@ export function IndicatorQuickDetail({
 
         <div className="si-indicator-quick-detail__meta-item">
           <span>Nota atual</span>
-          <strong>{indicator.score.toFixed(1)}</strong>
+          <strong>{formatIndicatorScore(indicator.score)}</strong>
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">

@@ -1,4 +1,5 @@
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
+import { formatIndicatorScore } from "../shared/indicatorValueFormatter";
 import { StatusBadge } from "./StatusBadge";
 import "./IndicatorPriorityList.css";
 
@@ -17,8 +18,13 @@ export function IndicatorPriorityList({
   indicators,
 }: IndicatorPriorityListProps) {
   const prioritized = [...indicators]
-    .filter((item) => item.status === "warning" || item.status === "danger")
-    .sort((a, b) => a.score - b.score)
+    .filter(
+      (item) =>
+        item.hasValue &&
+        item.score !== null &&
+        (item.status === "warning" || item.status === "danger"),
+    )
+    .sort((a, b) => Number(a.score) - Number(b.score))
     .slice(0, 5);
 
   if (!prioritized.length) {
@@ -52,7 +58,7 @@ export function IndicatorPriorityList({
           <div className="si-indicator-priority-item__meta">
             <span>Peso interno: {indicator.weightPct}%</span>
             <span>Meta: {indicator.goalLabel}</span>
-            <span>Nota: {indicator.score.toFixed(1)}</span>
+            <span>Nota: {formatIndicatorScore(indicator.score)}</span>
           </div>
 
           <p className="si-indicator-priority-item__description">

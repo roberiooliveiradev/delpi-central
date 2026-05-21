@@ -34,9 +34,11 @@ export type DepartmentIndicator = {
   strategicDescription: string;
   scopeType: string;
   performanceDirection: PerformanceDirection;
-  realized: Record<string, number>;
-  score: number;
-  gap: number;
+  realized: Record<string, number | null>;
+  hasValue: boolean;
+  classification: string;
+  score: number | null;
+  gap: number | null;
   trend: TrendDirection;
   valueUnit: IndicatorValueUnit | null;
   valuePrefix: string | null;
@@ -47,7 +49,8 @@ export type DepartmentIndicator = {
 export type DepartmentUnit = {
   unitId: string;
   unitName: string;
-  score: number;
+  score: number | null;
+  hasValue: boolean;
   classification: string;
 };
 
@@ -86,7 +89,8 @@ export type StrategicIndicatorsDepartmentDetailsResponse = {
   units: Array<{
     unit_id: string;
     unit_name: string;
-    score: number;
+    score: number | null;
+    has_value: boolean;
     classification: string;
   }>;
   indicators: Array<{
@@ -101,9 +105,11 @@ export type StrategicIndicatorsDepartmentDetailsResponse = {
     strategic_description: string;
     scope_type: string;
     performance_direction: PerformanceDirection;
-    realized: Record<string, number>;
-    score: number;
-    gap: number;
+    realized: Record<string, number | null>;
+    has_value: boolean;
+    classification: string;
+    score: number | null;
+    gap: number | null;
     trend: string;
     value_unit?: IndicatorValueUnit | null;
     value_prefix?: string | null;

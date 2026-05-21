@@ -274,13 +274,13 @@ class FinancialMetricsSnapshotService:
         receivables_rows: list[dict],
         rol_with_ipi: float,
     ) -> FinancialBranchSnapshot:
-        ebitda_pct = self._average_sheet_pct(
+        ebitda_pct = self._average_sheet_metric(
             rows=ebitda_rows,
             field_name="ebitida",
             consolidated=consolidated,
             branch=None if consolidated else scope_key,
         )
-        fixed_cost_pct = self._average_sheet_pct(
+        fixed_cost_pct = self._average_sheet_metric(
             rows=fixed_cost_rows,
             field_name="custos_fixos",
             consolidated=consolidated,
@@ -296,8 +296,10 @@ class FinancialMetricsSnapshotService:
         return FinancialBranchSnapshot(
             branch=scope_key,
             rol_with_ipi=round(rol_with_ipi, 2),
-            ebitda_value=round(ebitda_pct, 2),
-            fixed_cost_value=round(fixed_cost_pct, 2),
+            ebitda_value=round(ebitda_pct, 2) if ebitda_pct is not None else 0.0,
+            fixed_cost_value=round(fixed_cost_pct, 2)
+            if fixed_cost_pct is not None
+            else 0.0,
             pmr_days=round(pmr_days, 2),
             ebitda_over_rol_pct=round(ebitda_pct, 2) if ebitda_pct is not None else None,
             fixed_cost_over_rol_pct=round(fixed_cost_pct, 2)
@@ -327,22 +329,6 @@ class FinancialMetricsSnapshotService:
                 end_date=end_date,
             )
         ]
-
-    def _average_sheet_pct(
-        self,
-        *,
-        rows: list[dict],
-        field_name: str,
-        consolidated: bool,
-        branch: str | None,
-    ) -> float:
-        value = self._average_sheet_metric(
-            rows=rows,
-            field_name=field_name,
-            consolidated=consolidated,
-            branch=branch,
-        )
-        return value if value is not None else 0.0
 
     def _average_sheet_metric(
         self,

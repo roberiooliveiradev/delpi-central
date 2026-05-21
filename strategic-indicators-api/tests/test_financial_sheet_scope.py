@@ -55,3 +55,33 @@ def test_build_snapshot_uses_sheet_pct_without_rol_division() -> None:
     assert consolidated.fixed_cost_over_rol_pct == 14.0
     assert branch_01.ebitda_over_rol_pct == 11.0
     assert branch_01.fixed_cost_over_rol_pct == 12.0
+
+
+def test_build_snapshot_returns_none_when_branch_has_no_sheet_rows() -> None:
+    service = FinancialMetricsSnapshotService(
+        ebitda_repository=MagicMock(),
+        fixed_cost_repository=MagicMock(),
+        receivables_repository=MagicMock(),
+        financial_query_repository=MagicMock(),
+    )
+    service._financial_query_repository.list_rol_by_branch.return_value = {
+        "01": {"rol_with_ipi": 1_000_000},
+    }
+
+    snapshot = service._build_snapshot(
+        start_date="01-05-2026",
+        end_date="31-05-2026",
+        branch=None,
+        rows_override={
+            "ebitda_rows": [
+                {"filial": "01", "data": "15-05-2026", "ebitida": 0.0},
+            ],
+            "fixed_cost_rows": [],
+            "receivables_rows": [],
+        },
+    )
+
+    branch_01 = next(item for item in snapshot.branches if item.branch == "01")
+
+    assert branch_01.ebitda_over_rol_pct == 0.0
+    assert branch_01.fixed_cost_over_rol_pct is None

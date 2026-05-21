@@ -1,4 +1,5 @@
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
+import { formatIndicatorScore } from "../shared/indicatorValueFormatter";
 import { StatusBadge } from "./StatusBadge";
 import "./IndicatorDepartmentOverview.css";
 
@@ -10,7 +11,7 @@ type DepartmentBucket = {
   departmentId: string;
   departmentName: string;
   totalIndicators: number;
-  averageScore: number;
+  averageScore: number | null;
   warningCount: number;
   successCount: number;
   topFocus: string;
@@ -30,11 +31,16 @@ function buildDepartmentBuckets(
   return [...grouped.entries()]
     .map(([departmentId, items]) => {
       const totalIndicators = items.length;
-      const totalScore = items.reduce(
-        (sum, item) => sum + item.score,
-        0
+      const scoredItems = items.filter(
+        (item) => item.hasValue && item.score !== null,
       );
-      const averageScore = totalIndicators ? totalScore / totalIndicators : 0;
+      const totalScore = scoredItems.reduce(
+        (sum, item) => sum + Number(item.score),
+        0,
+      );
+      const averageScore = scoredItems.length
+        ? totalScore / scoredItems.length
+        : null;
       const warningCount = items.filter(
         (item) => item.status === "warning" || item.status === "danger"
       ).length;
@@ -43,8 +49,8 @@ function buildDepartmentBuckets(
       ).length;
 
       const topFocus =
-        [...items].sort((a, b) => a.score - b.score)[0]
-          ?.indicatorName ?? "Sem indicador";
+        [...scoredItems].sort((a, b) => Number(a.score) - Number(b.score))[0]
+          ?.indicatorName ?? "Sem indicador com nota";
 
       return {
         departmentId,
@@ -90,9 +96,15 @@ export function IndicatorDepartmentOverview({
             </div>
 
             <StatusBadge
-              label={`média ${department.averageScore.toFixed(1)}`}
+              label={`média ${
+                department.averageScore === null
+                  ? formatIndicatorScore(null)
+                  : department.averageScore.toFixed(1)
+              }`}
               variant={
-                department.averageScore >= 8
+                department.averageScore === null
+                  ? "info"
+                  : department.averageScore >= 8
                   ? "success"
                   : department.averageScore >= 7
                     ? "info"

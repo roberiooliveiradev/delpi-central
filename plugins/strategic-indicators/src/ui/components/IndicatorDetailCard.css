@@ -54,6 +54,21 @@
   color: var(--si-title);
 }
 
+.si-indicator-card__goal-value--missing,
+.si-indicator-card__missing-data {
+  color: var(--si-text-muted, #6b7280);
+}
+
+.si-indicator-card__missing-data {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.si-indicator-table__score--missing {
+  color: var(--si-text-muted, #6b7280);
+}
+
 .si-indicator-card__description {
   margin: 0;
   font-size: 14px;

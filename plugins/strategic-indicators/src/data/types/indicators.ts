@@ -40,9 +40,10 @@ export type IndicatorViewItem = {
   goalPeriodicity: string;
   goalMode: GoalMode;
   monthlyTargets: MonthlyTargetItem[];
-  value: number;
-  score: number;
-  gap: number;
+  value: number | null;
+  score: number | null;
+  gap: number | null;
+  hasValue: boolean;
   trend: TrendDirection;
   classification: string;
   scopeType: string;
@@ -74,9 +75,10 @@ export type StrategicIndicatorsResponse = {
     monthly_targets: MonthlyTargetItem[];
     scope_type: string;
     performance_direction: PerformanceDirection;
-    value: number;
-    score: number;
-    gap: number;
+    value: number | null;
+    score: number | null;
+    gap: number | null;
+    has_value: boolean;
     trend: string;
     classification: string;
     source: string;

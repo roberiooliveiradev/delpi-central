@@ -1,6 +1,9 @@
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
-import { formatIndicatorGoalValue } from "../shared/indicatorValueFormatter";
+import {
+  formatIndicatorGoalValue,
+  formatIndicatorScore,
+} from "../shared/indicatorValueFormatter";
 import "./IndicatorAnalyticsTable.css";
 
 type IndicatorAnalyticsTableProps = {
@@ -62,8 +65,12 @@ export function IndicatorAnalyticsTable({
             <span>{indicator.departmentName}</span>
             <span>{indicator.weightPct}%</span>
             <span>{formatIndicatorGoalValue(indicator, competence)}</span>
-            <strong className="si-indicator-table__score">
-              {indicator.score.toFixed(1)}
+            <strong
+              className={`si-indicator-table__score${
+                !indicator.hasValue ? " si-indicator-table__score--missing" : ""
+              }`}
+            >
+              {formatIndicatorScore(indicator.score)}
             </strong>
             <StatusBadge
               label={getStatusLabel(indicator.status)}

@@ -1,4 +1,5 @@
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
+import { formatIndicatorScore } from "../shared/indicatorValueFormatter";
 import { StatusBadge } from "./StatusBadge";
 import "./IndicatorAnalyticsSummary.css";
 
@@ -7,10 +8,11 @@ type IndicatorAnalyticsSummaryProps = {
 };
 
 function averageScore(items: IndicatorAnalyticsViewItem[]) {
-  if (!items.length) return 0;
+  const scored = items.filter((item) => item.hasValue && item.score !== null);
+  if (!scored.length) return null;
 
-  const total = items.reduce((sum, item) => sum + item.score, 0);
-  return total / items.length;
+  const total = scored.reduce((sum, item) => sum + Number(item.score), 0);
+  return total / scored.length;
 }
 
 export function IndicatorAnalyticsSummary({
@@ -38,7 +40,7 @@ export function IndicatorAnalyticsSummary({
       <article className="si-indicator-summary-card">
         <span className="si-indicator-summary-card__label">Nota média</span>
         <strong className="si-indicator-summary-card__value">
-          {avg.toFixed(1)}
+          {avg === null ? formatIndicatorScore(null) : avg.toFixed(1)}
         </strong>
         <p className="si-indicator-summary-card__text">
           Média atual das notas analíticas exibidas na tabela.

@@ -39,9 +39,10 @@ export type IndicatorAnalyticsViewItem = {
   goalMode: GoalMode;
   monthlyTargets: MonthlyTargetViewItem[];
   performanceDirection: PerformanceDirection;
-  currentValue: number;
-  score: number;
-  gap: number;
+  currentValue: number | null;
+  score: number | null;
+  gap: number | null;
+  hasValue: boolean;
   trend: "up" | "down" | "stable";
   status: IndicatorAnalyticsStatus;
   source: string;

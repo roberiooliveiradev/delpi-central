@@ -27,6 +27,7 @@ export function adaptIndicatorsToView(
     value: item.value,
     score: item.score,
     gap: item.gap,
+    hasValue: item.has_value ?? item.value !== null,
     trend: normalizeTrend(item.trend),
     classification: item.classification,
     scopeType: item.scope_type,

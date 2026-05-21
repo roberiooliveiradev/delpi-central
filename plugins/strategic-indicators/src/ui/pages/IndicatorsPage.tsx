@@ -26,6 +26,7 @@ function mapClassificationToStatus(
 ): IndicatorAnalyticsViewItem["status"] {
   const normalized = classification.toLowerCase();
 
+  if (normalized.includes("sem dados")) return "info";
   if (normalized.includes("excel")) return "success";
   if (normalized.includes("alto")) return "success";
   if (normalized.includes("satisfatório")) return "info";
@@ -196,6 +197,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         currentValue: item.value,
         score: item.score,
         gap: item.gap,
+        hasValue: item.hasValue,
         trend: item.trend,
         status: mapClassificationToStatus(item.classification),
         source: item.source,

@@ -13,6 +13,8 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
 
 
 class StrategicIndicatorsCalculator:
+    MISSING_VALUE_CLASSIFICATION = "Sem dados preenchidos"
+
     def build_period_snapshot(
         self,
         *,
@@ -111,6 +113,23 @@ class StrategicIndicatorsCalculator:
 
             measurement = measurements_by_indicator.get(indicator.indicator_id)
             if measurement is None:
+                calculated.append(
+                    self._build_missing_indicator_value(
+                        indicator=indicator,
+                        source="",
+                        unit_values=None,
+                    )
+                )
+                continue
+
+            if measurement.value is None:
+                calculated.append(
+                    self._build_missing_indicator_value(
+                        indicator=indicator,
+                        source=measurement.source,
+                        unit_values=measurement.unit_values,
+                    )
+                )
                 continue
 
             comparable_goal = self.calculate_comparable_goal(
@@ -343,10 +362,13 @@ class StrategicIndicatorsCalculator:
     def resolve_trend_direction(
         self,
         *,
-        current: float,
-        previous: float,
+        current: float | None,
+        previous: float | None,
         tolerance: float = 0.09,
     ) -> str:
+        if current is None or previous is None:
+            return "stable"
+
         delta = current - previous
 
         if delta > tolerance:
@@ -370,15 +392,74 @@ class StrategicIndicatorsCalculator:
         self,
         indicators: list[StrategicIndicatorCalculatedValue],
     ) -> float:
-        if not indicators:
+        scored_indicators = [
+            item
+            for item in indicators
+            if item.value is not None and item.score is not None
+        ]
+
+        if not scored_indicators:
             return 0.0
 
-        total_weight = sum(item.weight_pct for item in indicators)
+        total_weight = sum(item.weight_pct for item in scored_indicators)
         if total_weight <= 0:
             return 0.0
 
-        weighted_sum = sum(item.score * item.weight_pct for item in indicators)
+        weighted_sum = sum(
+            float(item.score) * item.weight_pct for item in scored_indicators
+        )
         return round(weighted_sum / total_weight, 2)
+
+    def build_realized_payload(
+        self,
+        *,
+        unit_values: dict[str, float | None] | None,
+        value: float | None,
+    ) -> dict[str, float | None]:
+        if unit_values:
+            return dict(unit_values)
+
+        return {"consolidated": value}
+
+    def indicator_has_value(self, value: float | None) -> bool:
+        return value is not None
+
+    def _build_missing_indicator_value(
+        self,
+        *,
+        indicator: StrategicIndicatorCatalogItem,
+        source: str,
+        unit_values: dict[str, float | None] | None,
+    ) -> StrategicIndicatorCalculatedValue:
+        return StrategicIndicatorCalculatedValue(
+            indicator_id=indicator.indicator_id,
+            department_id=indicator.department_id,
+            indicator_name=indicator.indicator_name,
+            weight_pct=indicator.weight_pct,
+            goal_label=indicator.goal_label,
+            goal_value=indicator.goal_value,
+            goal_periodicity=indicator.goal_periodicity,
+            goal_mode=getattr(indicator, "goal_mode", "standard"),
+            monthly_targets=getattr(indicator, "monthly_targets", None),
+            scope_type=indicator.scope_type,
+            performance_direction=getattr(
+                indicator,
+                "performance_direction",
+                "higher_is_better",
+            ),
+            strategic_description=indicator.strategic_description,
+            source=source,
+            value=None,
+            score=None,
+            gap=None,
+            trend="stable",
+            classification=self.MISSING_VALUE_CLASSIFICATION,
+            unit_values=unit_values,
+            value_unit=indicator.value_unit,
+            value_prefix=indicator.value_prefix,
+            value_suffix=indicator.value_suffix,
+            value_decimals=indicator.value_decimals,
+        )
 
     def _calculate_monthly_curve_goal(
         self,

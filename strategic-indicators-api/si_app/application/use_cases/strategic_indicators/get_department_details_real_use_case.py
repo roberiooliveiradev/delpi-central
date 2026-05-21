@@ -106,9 +106,13 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
 
     def _map_indicator(self, *, current, previous) -> dict:
         previous_score = previous.score if previous is not None else current.score
-        trend = self._calculator.resolve_trend_direction(
-            current=current.score,
-            previous=previous_score,
+        trend = (
+            "stable"
+            if current.score is None
+            else self._calculator.resolve_trend_direction(
+                current=current.score,
+                previous=previous_score,
+            )
         )
 
         return {
@@ -127,7 +131,12 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
                 "performance_direction",
                 "higher_is_better",
             ),
-            "realized": current.unit_values or {"consolidated": current.value},
+            "realized": self._calculator.build_realized_payload(
+                unit_values=current.unit_values,
+                value=current.value,
+            ),
+            "has_value": self._calculator.indicator_has_value(current.value),
+            "classification": current.classification,
             "score": current.score,
             "gap": current.gap,
             "trend": trend,
@@ -146,6 +155,7 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
         competence: str | None,
     ) -> list[dict]:
         unit_scores: dict[str, list[float]] = {}
+        unit_ids: set[str] = set()
 
         for indicator in department.indicators:
             if not indicator.unit_values:
@@ -162,6 +172,11 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             )
 
             for unit_id, raw_value in indicator.unit_values.items():
+                unit_ids.add(unit_id)
+
+                if raw_value is None:
+                    continue
+
                 unit_score = self._calculator.calculate_indicator_score(
                     performance_direction=getattr(
                         indicator,
@@ -174,8 +189,18 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
                 unit_scores.setdefault(unit_id, []).append(unit_score)
 
         units: list[dict] = []
-        for unit_id, scores in unit_scores.items():
+        for unit_id in sorted(unit_ids):
+            scores = unit_scores.get(unit_id, [])
             if not scores:
+                units.append(
+                    {
+                        "unit_id": unit_id,
+                        "unit_name": self._resolve_unit_name(unit_id),
+                        "score": None,
+                        "has_value": False,
+                        "classification": self._calculator.MISSING_VALUE_CLASSIFICATION,
+                    }
+                )
                 continue
 
             avg_score = round(sum(scores) / len(scores), 3)
@@ -184,6 +209,7 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
                     "unit_id": unit_id,
                     "unit_name": self._resolve_unit_name(unit_id),
                     "score": avg_score,
+                    "has_value": True,
                     "classification": self._calculator.classify_score(avg_score),
                 }
             )

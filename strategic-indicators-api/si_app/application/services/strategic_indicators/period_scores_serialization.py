@@ -24,6 +24,13 @@ def normalize_scope_department_id(department_id: str | None) -> str:
     return (department_id or "").strip()
 
 
+def _optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+
+    return float(value)
+
+
 def serialize_period_snapshot(
     snapshot: StrategicIndicatorsPeriodSnapshot,
 ) -> dict[str, Any]:
@@ -87,9 +94,9 @@ def _indicator_from_dict(payload: dict[str, Any]) -> StrategicIndicatorCalculate
         performance_direction=payload.get("performance_direction", "higher_is_better"),
         strategic_description=payload.get("strategic_description", ""),
         source=payload.get("source", ""),
-        value=float(payload.get("value") or 0),
-        score=float(payload.get("score") or 0),
-        gap=float(payload.get("gap") or 0),
+        value=_optional_float(payload.get("value")),
+        score=_optional_float(payload.get("score")),
+        gap=_optional_float(payload.get("gap")),
         trend=payload.get("trend", "stable"),
         classification=payload.get("classification", ""),
         unit_values=payload.get("unit_values"),

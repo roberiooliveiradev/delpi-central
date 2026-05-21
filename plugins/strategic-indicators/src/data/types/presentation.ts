@@ -93,9 +93,10 @@ export type PresentationDepartmentIndicatorSnapshot = {
   strategicDescription: string;
   scopeType: string;
   performanceDirection: string;
-  currentValue: number;
-  score: number;
-  gap: number;
+  currentValue: number | null;
+  hasValue: boolean;
+  score: number | null;
+  gap: number | null;
   trend: "up" | "down" | "stable";
   trendLabel: string;
   valueUnit: string | null;
@@ -123,7 +124,8 @@ export type PresentationDepartmentFocus = {
   units: Array<{
     id: string;
     name: string;
-    score: number;
+    score: number | null;
+    hasValue: boolean;
     classification: string;
   }>;
   indicators: PresentationDepartmentIndicatorSnapshot[];
@@ -444,8 +446,14 @@ function buildDepartmentFocus(
       ),
       currentValue:
         fallbackIndicator?.value ??
-        Object.values(indicator.realized ?? {})[0] ??
-        0,
+        Object.values(indicator.realized ?? {}).find(
+          (value) => value !== null && value !== undefined,
+        ) ??
+        null,
+      hasValue:
+        indicator.hasValue ??
+        fallbackIndicator?.hasValue ??
+        fallbackIndicator?.value !== null,
       score: indicator.score,
       gap: indicator.gap,
       trend: normalizeDirection(indicator.trend),
@@ -477,6 +485,7 @@ function buildDepartmentFocus(
       id: unit.unitId,
       name: unit.unitName,
       score: unit.score,
+      hasValue: unit.hasValue,
       classification: unit.classification,
     })),
     indicators,

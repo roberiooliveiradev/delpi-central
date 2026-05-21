@@ -17,9 +17,10 @@ class IndicatorItemResponse:
     monthly_targets: list[dict] = field(default_factory=list)
     scope_type: str = "consolidated"
     performance_direction: str = "higher_is_better"
-    value: float = 0.0
-    score: float = 0.0
-    gap: float = 0.0
+    value: float | None = None
+    score: float | None = None
+    gap: float | None = None
+    has_value: bool = False
     trend: str = "stable"
     classification: str = ""
     source: str = ""

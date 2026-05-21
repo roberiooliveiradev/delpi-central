@@ -6,7 +6,9 @@ import {
 } from "../presentation/labels";
 import {
   formatIndicatorGoalValue,
+  formatIndicatorScore,
   formatIndicatorValue,
+  isMissingValueClassification,
 } from "../shared/indicatorValueFormatter";
 import "./IndicatorDetailCard.css";
 
@@ -39,8 +41,13 @@ function getValueFormat(indicator: DepartmentIndicator) {
 
 function formatRealized(indicator: DepartmentIndicator) {
   const valueFormat = getValueFormat(indicator);
+  const entries = Object.entries(indicator.realized ?? {});
 
-  return Object.entries(indicator.realized)
+  if (!entries.length) {
+    return indicator.hasValue ? "—" : "Sem dados preenchidos";
+  }
+
+  return entries
     .map(
       ([key, value]) =>
         `${getRealizedKeyLabel(key)}: ${formatIndicatorValue(value, valueFormat)}`,
@@ -109,19 +116,34 @@ export function IndicatorDetailCard({
 
       <div className="si-indicator-card__goal">
         <span className="si-indicator-card__goal-label">Score</span>
-        <strong className="si-indicator-card__goal-value">
-          {indicator.score.toFixed(2)}
+        <strong
+          className={`si-indicator-card__goal-value${
+            !indicator.hasValue ? " si-indicator-card__goal-value--missing" : ""
+          }`}
+        >
+          {formatIndicatorScore(indicator.score)}
         </strong>
       </div>
 
       <div className="si-indicator-card__goal">
         <span className="si-indicator-card__goal-label">Gap</span>
-        <strong className="si-indicator-card__goal-value">
+        <strong
+          className={`si-indicator-card__goal-value${
+            !indicator.hasValue ? " si-indicator-card__goal-value--missing" : ""
+          }`}
+        >
           {formatIndicatorValue(indicator.gap, valueFormat, {
             signed: true,
           })}
         </strong>
       </div>
+
+      {!indicator.hasValue ||
+      isMissingValueClassification(indicator.classification) ? (
+        <p className="si-indicator-card__missing-data">
+          Sem dados preenchidos para o período selecionado.
+        </p>
+      ) : null}
 
       <p className="si-indicator-card__description">
         {indicator.strategicDescription}
