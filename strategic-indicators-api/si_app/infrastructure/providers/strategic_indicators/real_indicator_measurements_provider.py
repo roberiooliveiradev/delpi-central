@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from si_app.infrastructure.concurrency.context_thread import submit_in_request_context
 from collections.abc import Callable
 
 from si_app.application.dto.strategic_indicators.catalog_models import (
@@ -430,7 +432,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
             dept_series = []
             with ThreadPoolExecutor(max_workers=len(series_collectors)) as executor:
                 future_map = {
-                    executor.submit(fetcher): name
+                    submit_in_request_context(executor, fetcher): name
                     for name, fetcher in series_collectors
                 }
                 for future in as_completed(future_map):
@@ -580,7 +582,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
 
         with ThreadPoolExecutor(max_workers=len(collectors)) as executor:
             future_map = {
-                executor.submit(fetcher): name
+                submit_in_request_context(executor, fetcher): name
                 for name, fetcher in collectors
             }
 

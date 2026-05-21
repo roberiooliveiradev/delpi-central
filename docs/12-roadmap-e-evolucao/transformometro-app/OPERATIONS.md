@@ -101,3 +101,5 @@ Variáveis:
 
 - `TRANSFORMOMETRO_API_BASE_URL` — ex.: `http://transformometro-api:8000/apps/transformometro-api/transformometro`
 - `TRANSFORMOMETRO_SERVICE_BEARER` — opcional, jobs SI sem usuário no contexto
+
+**401 Unauthorized em Indicadores (engenharia):** o SI carrega departamentos em paralelo (`ThreadPoolExecutor`). Sem propagar `contextvars`, o JWT não chega ao `transformometro-api`. O SI usa `submit_in_request_context` para repassar o token; em jobs agendados configure `TRANSFORMOMETRO_SERVICE_BEARER`.

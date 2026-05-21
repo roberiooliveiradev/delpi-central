@@ -4,6 +4,8 @@ import logging
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+
+from si_app.infrastructure.concurrency.context_thread import submit_in_request_context
 from typing import Iterable
 
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
@@ -308,23 +310,27 @@ class StrategicIndicatorsSnapshotService:
         measurements_started = time.perf_counter()
         if self._measurements_port_factory is not None:
             with ThreadPoolExecutor(max_workers=2) as executor:
-                future_current = executor.submit(
-                    self._get_measurements,
-                    start_date=current_period.start_date,
-                    end_date=current_period.end_date,
-                    competence=current_period.competence,
-                    department_id=department_id,
-                    branch=branch,
-                    measurements_port=self._measurements_port_factory(),
+                future_current = submit_in_request_context(
+                    executor,
+                    lambda: self._get_measurements(
+                        start_date=current_period.start_date,
+                        end_date=current_period.end_date,
+                        competence=current_period.competence,
+                        department_id=department_id,
+                        branch=branch,
+                        measurements_port=self._measurements_port_factory(),
+                    ),
                 )
-                future_previous = executor.submit(
-                    self._get_measurements,
-                    start_date=previous_period_resolved.start_date,
-                    end_date=previous_period_resolved.end_date,
-                    competence=previous_period_resolved.competence,
-                    department_id=department_id,
-                    branch=branch,
-                    measurements_port=self._measurements_port_factory(),
+                future_previous = submit_in_request_context(
+                    executor,
+                    lambda: self._get_measurements(
+                        start_date=previous_period_resolved.start_date,
+                        end_date=previous_period_resolved.end_date,
+                        competence=previous_period_resolved.competence,
+                        department_id=department_id,
+                        branch=branch,
+                        measurements_port=self._measurements_port_factory(),
+                    ),
                 )
                 measurements_current, errors_current = future_current.result()
                 measurements_previous, errors_previous = future_previous.result()
@@ -808,7 +814,10 @@ class StrategicIndicatorsSnapshotService:
         merged: dict[str, tuple[list[StrategicIndicatorMeasuredValue], list[dict]]] = {}
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(load_period, period) for period in periods]
+            futures = [
+                submit_in_request_context(executor, lambda p=period: load_period(p))
+                for period in periods
+            ]
             for future in futures:
                 competence, measurements = future.result()
                 merged[competence] = measurements
