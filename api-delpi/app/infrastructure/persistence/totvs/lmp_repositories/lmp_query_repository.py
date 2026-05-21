@@ -162,7 +162,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
     def _resolve_include_qtd_pi(self, request: ListLMPRequest) -> bool:
         if request.include_qtd_pi is None:
-            return True
+            return False
         return bool(request.include_qtd_pi)
 
     def _sql_aij_period_filter_clause(
@@ -1002,6 +1002,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 self._branch_filter(qb, "A.AIJ_FILIAL", requested_branch),
             )
         )
+        where_aij_base_x, params_aij_base_x = self._build_filter_sql(
+            lambda qb: (
+                self._active_filter(qb, "X.D_E_L_E_T_"),
+                self._branch_filter(qb, "X.AIJ_FILIAL", requested_branch),
+            )
+        )
 
         where_lmp_anchor, params_lmp_anchor = self._sql_lmp_anchor_process_stage_condition(
             "A.AIJ_PROVEN",
@@ -1064,6 +1070,29 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                   {where_period}
             ),
 
+            ListingAnchorOvKeys AS (
+                SELECT DISTINCT
+                    R.AIJ_FILIAL,
+                    R.AIJ_NROPOR
+                FROM AllListingAnchorRaw R
+            ),
+
+            Aij010ListingOvScoped AS (
+                SELECT
+                    X.AIJ_FILIAL,
+                    X.AIJ_NROPOR,
+                    X.AIJ_REVISA,
+                    X.AIJ_DTINIC,
+                    X.AIJ_HRINIC,
+                    X.AIJ_DTENCE,
+                    X.R_E_C_N_O_
+                FROM AIJ010 X
+                INNER JOIN ListingAnchorOvKeys K
+                    ON K.AIJ_FILIAL = X.AIJ_FILIAL
+                   AND K.AIJ_NROPOR = X.AIJ_NROPOR
+                WHERE {where_aij_base_x}
+            ),
+
             AllListingAnchorRanked AS (
                 SELECT
                     R.*,
@@ -1104,9 +1133,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                             NULLIF(X.AIJ_DTENCE, ''),
                             NULLIF(X.AIJ_DTINIC, '')
                         ) AS NEXT_DATE
-                    FROM AIJ010 X
-                    WHERE X.D_E_L_E_T_ = ''
-                      AND X.AIJ_FILIAL = A.AIJ_FILIAL
+                    FROM Aij010ListingOvScoped X
+                    WHERE X.AIJ_FILIAL = A.AIJ_FILIAL
                       AND X.AIJ_NROPOR = A.AIJ_NROPOR
                       AND (
                             X.AIJ_REVISA > A.AIJ_REVISA
@@ -1154,6 +1182,29 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                   {where_period}
             ),
 
+            LmpFinalizedOvKeys AS (
+                SELECT DISTINCT
+                    R.AIJ_FILIAL,
+                    R.AIJ_NROPOR
+                FROM LmpFinalizedAnchorRaw R
+            ),
+
+            Aij010FinalizedOvScoped AS (
+                SELECT
+                    X.AIJ_FILIAL,
+                    X.AIJ_NROPOR,
+                    X.AIJ_REVISA,
+                    X.AIJ_DTINIC,
+                    X.AIJ_HRINIC,
+                    X.AIJ_DTENCE,
+                    X.R_E_C_N_O_
+                FROM AIJ010 X
+                INNER JOIN LmpFinalizedOvKeys K
+                    ON K.AIJ_FILIAL = X.AIJ_FILIAL
+                   AND K.AIJ_NROPOR = X.AIJ_NROPOR
+                WHERE {where_aij_base_x}
+            ),
+
             LmpFinalizedAnchorRanked AS (
                 SELECT
                     R.*,
@@ -1190,9 +1241,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                             NULLIF(X.AIJ_DTENCE, ''),
                             NULLIF(X.AIJ_DTINIC, '')
                         ) AS NEXT_DATE
-                    FROM AIJ010 X
-                    WHERE X.D_E_L_E_T_ = ''
-                      AND X.AIJ_FILIAL = A.AIJ_FILIAL
+                    FROM Aij010FinalizedOvScoped X
+                    WHERE X.AIJ_FILIAL = A.AIJ_FILIAL
                       AND X.AIJ_NROPOR = A.AIJ_NROPOR
                       AND (
                             X.AIJ_REVISA > A.AIJ_REVISA
@@ -1259,11 +1309,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             *params_aij_base,
             *params_sample_anchor,
             *params_period,
+            *params_aij_base_x,
             LISTING_KIND_SAMPLE,
             LISTING_KIND_LMP,
             *params_aij_base,
             *params_lmp_finalized,
             *params_period,
+            *params_aij_base_x,
         )
         return sql, params
 

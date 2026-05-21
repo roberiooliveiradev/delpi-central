@@ -8,6 +8,12 @@ from si_app.application.dto.lmp.list_lmp_request import (
     LISTING_KIND_LMP,
     ListLMPRequest,
     resolve_dashboard_status_filter,
+    resolve_listing_type_filter,
+)
+from si_app.application.services.lmp.lmp_dashboard_cache import (
+    get_cached_lmp_dashboard,
+    lmp_dashboard_cache_key,
+    set_cached_lmp_dashboard,
 )
 from si_app.application.dto.lmp.lmp_dashboard_item import LMPDashboardItem
 from si_app.application.services.lmp_business_rules import LMPBusinessRules
@@ -111,50 +117,10 @@ class ListLMPDashboardUseCase:
                 {"nivel": nivel, "valor": round(avg, 2)}
             )
 
-        evolution_map: dict[str, dict[str, Any]] = {}
-        for item in items:
-            periodo = self._format_period_label(item.start_date)
-            sort_key = self._parse_period_sort_key(item.start_date)
-            if not periodo or not sort_key:
-                continue
-
-            bucket = evolution_map.setdefault(
-                periodo,
-                {
-                    "periodo": periodo,
-                    "sortKey": sort_key,
-                    "totalLead": 0.0,
-                    "leadCount": 0,
-                    "propostas": 0,
-                },
-            )
-            bucket["propostas"] += 1
-            if item.lead_time_util is not None:
-                bucket["totalLead"] += float(item.lead_time_util)
-                bucket["leadCount"] += 1
-            bucket["sortKey"] = min(bucket["sortKey"], sort_key)
-
-        evolution_data = [
-            {
-                "periodo": bucket["periodo"],
-                "mediaLead": round(
-                    bucket["totalLead"] / bucket["leadCount"], 2
-                )
-                if bucket["leadCount"]
-                else 0,
-                "propostas": bucket["propostas"],
-            }
-            for bucket in sorted(
-                evolution_map.values(),
-                key=lambda entry: entry["sortKey"],
-            )
-        ]
-
         return {
             "levelData": level_data,
             "statusData": status_data,
             "leadByLevel": lead_by_level,
-            "evolutionData": evolution_data,
         }
 
     def execute(
@@ -163,6 +129,18 @@ class ListLMPDashboardUseCase:
         status_filter: str = "Todos",
     ) -> Dict[str, Any]:
         resolved_status = resolve_dashboard_status_filter(status_filter)
+        listing_type_key = resolve_listing_type_filter(request.listing_type) or "Todos"
+        cache_key = lmp_dashboard_cache_key(
+            date_start=request.date_start,
+            date_end=request.date_end,
+            branch=request.branch,
+            listing_type=listing_type_key,
+            status_filter=status_filter,
+        )
+        cached = get_cached_lmp_dashboard(cache_key)
+        if cached is not None:
+            return cached
+
         query_request = replace(request, include_qtd_pi=False)
 
         rows: List[LMP] = self._repository.list_lmps(query_request)
@@ -202,7 +180,7 @@ class ListLMPDashboardUseCase:
             paginated = enriched[start:end]
             page_size = request.page_size
 
-        return {
+        result = {
             "items": [asdict(item) for item in paginated],
             "total": total,
             "page": page,
@@ -215,3 +193,5 @@ class ListLMPDashboardUseCase:
             },
             "charts": self._build_charts(enriched),
         }
+        set_cached_lmp_dashboard(cache_key, result)
+        return result

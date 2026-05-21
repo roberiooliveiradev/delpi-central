@@ -58,6 +58,9 @@ def catalog_cache_key(
 
 
 def invalidate_strategic_indicators_snapshot_cache() -> None:
+    from si_app.application.services.lmp.lmp_dashboard_cache import (
+        invalidate_lmp_dashboard_cache,
+    )
     from si_app.application.services.lmp.lmp_dashboard_summary_cache import (
         invalidate_lmp_dashboard_summary_cache,
     )
@@ -68,6 +71,7 @@ def invalidate_strategic_indicators_snapshot_cache() -> None:
 
     _measurements_cache.invalidate_all()
     _catalog_cache.invalidate_all()
+    invalidate_lmp_dashboard_cache()
     invalidate_lmp_dashboard_summary_cache()
 
     if settings.SI_PERIOD_SCORES_ENABLED:

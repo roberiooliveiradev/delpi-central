@@ -45,7 +45,7 @@ def list_lmps_route(
     page_size: Optional[int] = Query(None, ge=1),
     include_qtd_pi: Optional[bool] = Query(
         None,
-        description="Incluir contagem de PI via BOM (mais lento). Padrão: true.",
+        description="Incluir contagem de PI via BOM (mais lento). Padrão: false.",
     ),
 ):
     try:
