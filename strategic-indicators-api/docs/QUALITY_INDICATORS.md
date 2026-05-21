@@ -16,6 +16,8 @@ Indicadores permanecem `scope_type = consolidated` (medição consolidada no pai
 
 Metas consolidadas (`goal_scope_branch = ''`) do seed V009 são **inativadas**; a leitura por filial usa `branch=01` ou `02` na API.
 
+Na visão **Consolidado** (sem `branch`), os indicadores aparecem com rótulo de meta por unidade e a nota é a média do desempenho de cada filial frente à sua meta.
+
 ## Deploy
 
 ```bash

@@ -18,8 +18,10 @@ Aplica-se a **todos os departamentos** (Comercial, Financeiro, Produção, etc.)
 
 ## Resolução no painel
 
-- API sem `branch` → meta `goal_scope_branch = ''`
 - API com `branch=01` ou `02` → meta da filial; fallback para consolidado se não existir
+- API sem `branch` (visão **Consolidado**):
+  - Se existir meta consolidada (`''`), usa essa meta no cálculo
+  - Se só existirem metas por filial (`01`/`02`), o indicador **continua listado** e a nota consolidada é a **média das notas** de cada filial (realizado por `unit_values` × meta da unidade)
 
 ## Cadastro (admin)
 
