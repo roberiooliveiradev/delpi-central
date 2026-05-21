@@ -1,4 +1,10 @@
-import { useCallback, useMemo, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import type {
   DepartmentTreeColumn,
   DepartmentTreeDepartmentNode,
@@ -10,10 +16,11 @@ import { appendStrategicIndicatorsFiltersToPath } from "../shared/strategicIndic
 import {
   formatIndicatorScore,
   formatScopeAwareMetric,
-  isMissingValueClassification,
 } from "../shared/indicatorValueFormatter";
-import { getScoreStatusVariant } from "../shared/scoreVariant";
-import { StatusBadge } from "./StatusBadge";
+import {
+  getScoreStatusVariant,
+  type ScoreStatusVariant,
+} from "../shared/scoreVariant";
 import "./DepartmentIgdTree.css";
 
 type DepartmentIgdTreeProps = {
@@ -22,11 +29,11 @@ type DepartmentIgdTreeProps = {
   isMultiColumn: boolean;
 };
 
-function getDirectionLabel(direction: string) {
-  if (direction === "up") return "Alta";
-  if (direction === "down") return "Queda";
-  return "Estável";
-}
+type OrgNodeTone =
+  | "igd"
+  | "scope"
+  | "empty"
+  | ScoreStatusVariant;
 
 function buildDepartmentDetailHref(
   departmentId: string,
@@ -34,11 +41,7 @@ function buildDepartmentDetailHref(
   filterState: StrategicIndicatorsFilterState,
 ) {
   const nextFilters: StrategicIndicatorsFilterState = scope.branch
-    ? {
-        ...filterState,
-        viewMode: "branch",
-        branch: scope.branch,
-      }
+    ? { ...filterState, viewMode: "branch", branch: scope.branch }
     : filterState;
 
   return appendStrategicIndicatorsFiltersToPath(
@@ -47,167 +50,163 @@ function buildDepartmentDetailHref(
   );
 }
 
-function DepartmentTreeIndicatorRow({
-  node,
-}: {
-  node: DepartmentTreeDepartmentNode["indicators"][number];
-}) {
-  const { indicator } = node;
-  const format = {
-    valueUnit: indicator.valueUnit,
-    valuePrefix: indicator.valuePrefix,
-    valueSuffix: indicator.valueSuffix,
-    valueDecimals: indicator.valueDecimals,
-  };
-
+function OrgChartArrow() {
   return (
-    <li className="si-dept-tree__indicator">
-      <div className="si-dept-tree__indicator-head">
-        <strong>{indicator.name}</strong>
-        <span>{indicator.weightPct}%</span>
-      </div>
-      <div className="si-dept-tree__indicator-meta">
-        <span>
-          Nota:{" "}
-          <strong>
-            {indicator.hasValue
-              ? formatIndicatorScore(indicator.score)
-              : "—"}
-          </strong>
-        </span>
-        <span>
-          Realizado:{" "}
-          <strong>
-            {formatScopeAwareMetric(indicator.realized, format, {
-              fallback: "—",
-            })}
-          </strong>
-        </span>
-      </div>
-      {!isMissingValueClassification(indicator.classification) ? (
-        <StatusBadge label={indicator.classification} variant="neutral" />
-      ) : null}
-    </li>
+    <div className="si-org-chart__arrow" aria-hidden="true">
+      <span className="si-org-chart__arrow-stem" />
+      <span className="si-org-chart__arrow-head" />
+    </div>
   );
 }
 
-function DepartmentTreeDepartmentCard({
+function OrgChartNode({
+  title,
+  subtitle,
+  meta,
+  tone,
+  href,
+  action,
+  compact = false,
+}: {
+  title: string;
+  subtitle?: string;
+  meta?: string;
+  tone: OrgNodeTone;
+  href?: string;
+  action?: ReactNode;
+  compact?: boolean;
+}) {
+  const className = [
+    "si-org-chart__node",
+    `si-org-chart__node--${tone}`,
+    compact ? "si-org-chart__node--compact" : "",
+    href ? "si-org-chart__node--link" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const content = (
+    <>
+      <strong className="si-org-chart__node-title">{title}</strong>
+      {subtitle ? (
+        <span className="si-org-chart__node-subtitle">{subtitle}</span>
+      ) : null}
+      {meta ? <span className="si-org-chart__node-meta">{meta}</span> : null}
+      {action ? <div className="si-org-chart__node-action">{action}</div> : null}
+    </>
+  );
+
+  if (href) {
+    return (
+      <a href={href} className={className}>
+        {content}
+      </a>
+    );
+  }
+
+  return <div className={className}>{content}</div>;
+}
+
+function DepartmentOrgNode({
   node,
   scope,
   filterState,
   expanded,
   onToggle,
-  showDepartmentTitle = true,
 }: {
   node: DepartmentTreeDepartmentNode | null;
   scope: DepartmentTreeScopeConfig;
   filterState: StrategicIndicatorsFilterState;
   expanded: boolean;
   onToggle: () => void;
-  showDepartmentTitle?: boolean;
 }) {
   if (!node) {
     return (
-      <article className="si-dept-tree__department si-dept-tree__department--empty">
-        <strong>Sem medição</strong>
-        <p>Departamento sem dados neste escopo no período.</p>
-      </article>
+      <OrgChartNode
+        title="Sem medição"
+        subtitle={scope.label}
+        tone="empty"
+      />
     );
   }
 
   const { department } = node;
-  const variationValue = department.variation.value;
-  const variationPrefix = variationValue > 0 ? "+" : "";
+  const tone = getScoreStatusVariant(department.score);
   const indicatorCount = node.indicators.length;
 
   return (
-    <article className="si-dept-tree__department">
-      {showDepartmentTitle ? (
-        <div className="si-dept-tree__department-head">
-          <div>
-            <strong>{department.name}</strong>
-            <p>{department.strategicSummary}</p>
-          </div>
-          <StatusBadge
-            label={department.classification}
-            variant={getScoreStatusVariant(department.score)}
-          />
-        </div>
-      ) : (
-        <div className="si-dept-tree__department-head si-dept-tree__department-head--compact">
-          <StatusBadge
-            label={department.classification}
-            variant={getScoreStatusVariant(department.score)}
-          />
-        </div>
-      )}
-
-      <dl className="si-dept-tree__department-metrics">
-        <div>
-          <dt>Peso no IGD</dt>
-          <dd>{department.weightInIgd}%</dd>
-        </div>
-        <div>
-          <dt>IDD</dt>
-          <dd>{department.score.toFixed(1)}</dd>
-        </div>
-        <div>
-          <dt>Variação</dt>
-          <dd>
-            {variationPrefix}
-            {variationValue.toFixed(1)} ·{" "}
-            {getDirectionLabel(department.variation.direction)}
-          </dd>
-        </div>
-      </dl>
-
-      <div className="si-dept-tree__department-actions">
-        {indicatorCount > 0 ? (
-          <button
-            type="button"
-            className="si-dept-tree__toggle"
-            onClick={onToggle}
-            aria-expanded={expanded}
-          >
-            {expanded ? "Recolher indicadores" : `Indicadores (${indicatorCount})`}
-          </button>
-        ) : null}
-        <a
-          href={buildDepartmentDetailHref(department.id, scope, filterState)}
-          className="si-link-button"
-        >
-          Ver detalhe
-        </a>
-      </div>
+    <div className="si-org-chart__dept-stack">
+      <OrgChartNode
+        title={department.name}
+        subtitle={`IDD ${department.score.toFixed(1)}`}
+        meta={department.classification}
+        tone={tone}
+        action={
+          <>
+            <a
+              href={buildDepartmentDetailHref(
+                department.id,
+                scope,
+                filterState,
+              )}
+              className="si-org-chart__node-link"
+            >
+              Ver detalhe
+            </a>
+            {indicatorCount > 0 ? (
+              <button
+                type="button"
+                className="si-org-chart__node-btn"
+                onClick={onToggle}
+                aria-expanded={expanded}
+              >
+                {expanded
+                  ? "Recolher"
+                  : `Indicadores (${indicatorCount})`}
+              </button>
+            ) : null}
+          </>
+        }
+      />
 
       {expanded && indicatorCount > 0 ? (
-        <ul className="si-dept-tree__indicator-list">
-          {node.indicators.map((indicatorNode) => (
-            <DepartmentTreeIndicatorRow
-              key={indicatorNode.indicator.id}
-              node={indicatorNode}
-            />
-          ))}
-        </ul>
-      ) : null}
-    </article>
-  );
-}
+        <>
+          <OrgChartArrow />
+          <div className="si-org-chart__indicator-row">
+            {node.indicators.map((indicatorNode) => {
+              const { indicator } = indicatorNode;
+              const indicatorTone = indicator.hasValue
+                ? getScoreStatusVariant(indicator.score ?? 0)
+                : "empty";
 
-function DepartmentTreeScopeHeader({ column }: { column: DepartmentTreeColumn }) {
-  return (
-    <header className="si-dept-tree__column-head">
-      <div>
-        <span className="si-dept-tree__column-eyebrow">Escopo</span>
-        <strong>{column.scope.label}</strong>
-      </div>
-      {column.averageScore !== null ? (
-        <div className="si-dept-tree__column-score">
-          <span>Média IDD</span>
-          <strong>{column.averageScore.toFixed(1)}</strong>
-        </div>
+              return (
+                <OrgChartNode
+                  key={indicator.id}
+                  compact
+                  title={indicator.name}
+                  subtitle={
+                    indicator.hasValue
+                      ? formatIndicatorScore(indicator.score)
+                      : "Sem nota"
+                  }
+                  meta={formatScopeAwareMetric(
+                    indicator.realized,
+                    {
+                      valueUnit: indicator.valueUnit,
+                      valuePrefix: indicator.valuePrefix,
+                      valueSuffix: indicator.valueSuffix,
+                      valueDecimals: indicator.valueDecimals,
+                    },
+                    { fallback: "—" },
+                  )}
+                  tone={indicatorTone}
+                />
+              );
+            })}
+          </div>
+        </>
       ) : null}
-    </header>
+    </div>
   );
 }
 
@@ -224,21 +223,6 @@ function resolveDepartmentLabel(
     }
   }
   return "Departamento";
-}
-
-function resolveDepartmentSummary(
-  departmentId: string,
-  columns: DepartmentTreeColumn[],
-): string | null {
-  for (const column of columns) {
-    const node = column.departments.find(
-      (item) => item.department.id === departmentId,
-    );
-    if (node) {
-      return node.department.strategicSummary;
-    }
-  }
-  return null;
 }
 
 export function DepartmentIgdTree({
@@ -296,127 +280,118 @@ export function DepartmentIgdTree({
     setExpandedKeys(new Set());
   }, []);
 
-  const selectedViewLabel = isMultiColumn
-    ? "Consolidado · Filial 01 · Filial 02"
-    : (model.columns[0]?.scope.label ?? "Filial");
-
   const hasExpandable = allExpandableKeys.length > 0;
 
   return (
     <div
-      className="si-dept-tree"
+      className="si-org-chart"
       style={
-        { "--si-dept-tree-cols": String(columnCount) } as CSSProperties
+        { "--si-org-chart-cols": String(columnCount) } as CSSProperties
       }
     >
-      <section className="si-dept-tree__level si-dept-tree__level--root">
-        <div className="si-dept-tree__root">
-          <span className="si-dept-tree__root-eyebrow">Grupo Delpi</span>
-          <strong className="si-dept-tree__root-title">IGD consolidado</strong>
-          <div className="si-dept-tree__root-metrics">
-            <div>
-              <span>IGD</span>
-              <strong>
-                {model.igd !== null ? model.igd.toFixed(1) : "—"}
-              </strong>
-            </div>
-            {model.classification ? (
-              <StatusBadge
-                label={model.classification}
-                variant={
-                  model.igd !== null
-                    ? getScoreStatusVariant(model.igd)
-                    : "neutral"
-                }
-              />
-            ) : null}
+      <div className="si-org-chart__toolbar">
+        <span className="si-org-chart__toolbar-hint">
+          Organograma IGD → Visão → Departamentos → Indicadores
+        </span>
+        {hasExpandable ? (
+          <div className="si-org-chart__toolbar-actions">
+            <button
+              type="button"
+              className="si-org-chart__toolbar-btn"
+              onClick={expandAll}
+            >
+              Expandir todos
+            </button>
+            <button
+              type="button"
+              className="si-org-chart__toolbar-btn"
+              onClick={collapseAll}
+            >
+              Recolher todos
+            </button>
           </div>
-          <p className="si-dept-tree__root-note">
-            Competência {model.competence}.
-          </p>
+        ) : null}
+      </div>
+
+      <section className="si-org-chart__level si-org-chart__level--igd">
+        <span className="si-org-chart__level-tag">Nível 1</span>
+        <OrgChartNode
+          title="IGD"
+          subtitle="Grupo Delpi"
+          meta={
+            model.igd !== null
+              ? `${model.igd.toFixed(1)} · ${model.classification ?? ""}`
+              : "—"
+          }
+          tone="igd"
+        />
+        <p className="si-org-chart__competence">
+          Competência {model.competence}
+        </p>
+      </section>
+
+      <OrgChartArrow />
+
+      <section className="si-org-chart__level">
+        <span className="si-org-chart__level-tag">Nível 2 · Visão</span>
+        <div className="si-org-chart__fork-row">
+          {model.columns.map((column) => (
+            <div key={column.scope.key} className="si-org-chart__fork-item">
+              <OrgChartNode
+                title="Visão"
+                subtitle={column.scope.label}
+                meta={
+                  column.averageScore !== null
+                    ? `Média IDD ${column.averageScore.toFixed(1)}`
+                    : undefined
+                }
+                tone="scope"
+              />
+            </div>
+          ))}
         </div>
       </section>
 
-      <div className="si-dept-tree__connector" aria-hidden="true" />
+      <OrgChartArrow />
 
-      <section className="si-dept-tree__level si-dept-tree__level--scopes">
-        <p className="si-dept-tree__level-label">
-          Visão analítica: <strong>{selectedViewLabel}</strong>
-        </p>
+      <section className="si-org-chart__level si-org-chart__level--departments">
+        <span className="si-org-chart__level-tag">Nível 3 · Departamentos</span>
 
-        <div className="si-dept-tree__toolbar">
-          <span className="si-dept-tree__toolbar-hint">
-            Departamentos alinhados por linha entre os escopos.
-          </span>
-          {hasExpandable ? (
-            <div className="si-dept-tree__toolbar-actions">
-              <button
-                type="button"
-                className="si-dept-tree__toolbar-btn"
-                onClick={expandAll}
-              >
-                Expandir todos
-              </button>
-              <button
-                type="button"
-                className="si-dept-tree__toolbar-btn"
-                onClick={collapseAll}
-              >
-                Recolher todos
-              </button>
-            </div>
-          ) : null}
-        </div>
+        <div className="si-org-chart__department-blocks">
+          {model.departmentOrder.map((departmentId) => (
+            <div
+              key={departmentId}
+              className="si-org-chart__department-block"
+            >
+              {isMultiColumn ? (
+                <p className="si-org-chart__department-anchor">
+                  {resolveDepartmentLabel(departmentId, model.columns)}
+                </p>
+              ) : null}
 
-        <div className="si-dept-tree__scope-headers">
-          {model.columns.map((column) => (
-            <DepartmentTreeScopeHeader key={column.scope.key} column={column} />
-          ))}
-        </div>
+              <div className="si-org-chart__fork-row">
+                {columnsByScope.map(({ column, nodesById }) => {
+                  const expandKey = `${column.scope.key}:${departmentId}`;
+                  const node = nodesById.get(departmentId) ?? null;
 
-        <div className="si-dept-tree__department-rows">
-          {model.departmentOrder.map((departmentId) => {
-            const departmentName = resolveDepartmentLabel(
-              departmentId,
-              model.columns,
-            );
-            const departmentSummary = resolveDepartmentSummary(
-              departmentId,
-              model.columns,
-            );
-
-            return (
-              <div key={departmentId} className="si-dept-tree__department-row">
-                <div className="si-dept-tree__department-row-title">
-                  <strong>{departmentName}</strong>
-                  {departmentSummary ? <span>{departmentSummary}</span> : null}
-                </div>
-
-                <div className="si-dept-tree__department-row-cells">
-                  {columnsByScope.map(({ column, nodesById }) => {
-                    const expandKey = `${column.scope.key}:${departmentId}`;
-                    const node = nodesById.get(departmentId) ?? null;
-
-                    return (
-                      <div
-                        key={expandKey}
-                        className="si-dept-tree__department-row-cell"
-                      >
-                        <DepartmentTreeDepartmentCard
-                          node={node}
-                          scope={column.scope}
-                          filterState={filterState}
-                          expanded={expandedKeys.has(expandKey)}
-                          onToggle={() => toggleDepartment(expandKey)}
-                          showDepartmentTitle={!isMultiColumn}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
+                  return (
+                    <div
+                      key={expandKey}
+                      className="si-org-chart__fork-item"
+                    >
+                      <DepartmentOrgNode
+                        node={node}
+                        scope={column.scope}
+                        filterState={filterState}
+                        expanded={expandedKeys.has(expandKey)}
+                        onToggle={() => toggleDepartment(expandKey)}
+                      />
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </section>
     </div>
