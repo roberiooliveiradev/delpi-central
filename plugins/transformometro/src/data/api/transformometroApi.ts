@@ -78,6 +78,9 @@ export type Revisao = {
   aprovado_por_email?: string | null;
   data_implantacao?: string | null;
   data_fim_vigencia?: string | null;
+  descricao_revisao?: string | null;
+  motivo_revisao?: string | null;
+  observacoes?: string | null;
 };
 
 export type OptionsData = {
