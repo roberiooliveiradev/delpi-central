@@ -1,3 +1,4 @@
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { DepartmentTrendGrid } from "../components/DepartmentTrendGrid";
 import { IgdTrendTimeline } from "../components/IgdTrendTimeline";
@@ -42,6 +43,9 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
       getAccessToken,
     });
 
+  const loadingProgress = useSimulatedLoadingProgress(loading && !data);
+  const refreshingProgress = useSimulatedLoadingProgress(Boolean(refreshing && data));
+
   const referenceFilters = (
     <StrategicIndicatorsReferenceFilters
       referenceMonth={referenceMonth}
@@ -78,6 +82,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
           description="Aguarde enquanto a visão temporal do IGD e dos departamentos é preparada."
           variant="panel"
           tone="info"
+          progressPercent={loadingProgress}
         />
       </div>
     );
@@ -145,6 +150,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
           description="Os dados exibidos estão sendo atualizados para o novo período."
           variant="compact"
           tone="info"
+          progressPercent={refreshingProgress}
         />
       ) : null}
 

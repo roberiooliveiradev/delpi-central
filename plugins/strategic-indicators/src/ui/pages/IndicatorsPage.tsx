@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { useStrategicIndicators } from "../../state/hooks/useStrategicIndicators";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
@@ -127,6 +128,13 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
     getAccessToken,
   });
 
+  const loadingProgress = useSimulatedLoadingProgress(
+    loading && items.length === 0,
+  );
+  const refreshingProgress = useSimulatedLoadingProgress(
+    Boolean(refreshing && items.length > 0),
+  );
+
   const analyticsItems = useMemo<IndicatorAnalyticsViewItem[]>(
     () =>
       items.map((item) => ({
@@ -241,6 +249,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
           description="Aguarde enquanto os indicadores reais são carregados."
           variant="panel"
           tone="info"
+          progressPercent={loadingProgress}
         />
       ) : error && items.length === 0 ? (
         <StrategicIndicatorsPageError
@@ -255,6 +264,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
               description="Os dados exibidos estão sendo atualizados com o novo filtro."
               variant="compact"
               tone="info"
+              progressPercent={refreshingProgress}
             />
           ) : null}
 
