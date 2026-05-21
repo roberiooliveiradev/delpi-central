@@ -100,6 +100,7 @@ def _indicator_from_dict(payload: dict[str, Any]) -> StrategicIndicatorCalculate
         trend=payload.get("trend", "stable"),
         classification=payload.get("classification", ""),
         unit_values=payload.get("unit_values"),
+        unit_gaps=payload.get("unit_gaps"),
         value_unit=payload.get("value_unit"),
         value_prefix=payload.get("value_prefix"),
         value_suffix=payload.get("value_suffix"),

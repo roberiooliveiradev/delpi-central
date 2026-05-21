@@ -173,6 +173,64 @@ function getMonthlyTargetValue(
   return Number.isFinite(numeric) ? numeric : null;
 }
 
+const BRANCH_UNIT_LABELS: Record<string, string> = {
+  "01": "Un. 01",
+  "02": "Un. 02",
+};
+
+function formatBranchUnitLabel(branchCode: string) {
+  return BRANCH_UNIT_LABELS[branchCode] ?? `Un. ${branchCode}`;
+}
+
+export function hasMultiBranchValues(
+  values: Record<string, number | null> | undefined,
+): boolean {
+  if (!values) return false;
+
+  const branchCount = ["01", "02"].filter((code) => code in values).length;
+  return branchCount >= 2;
+}
+
+export function formatBranchScopedMetric(
+  values: Record<string, number | null> | undefined,
+  format: IndicatorValueFormat = {},
+  options: FormatIndicatorValueOptions = {},
+): string {
+  if (!values || !Object.keys(values).length) {
+    return options.fallback ?? MISSING_VALUE_LABEL;
+  }
+
+  const branchParts = ["01", "02"]
+    .filter((code) => code in values)
+    .map(
+      (code) =>
+        `${formatBranchUnitLabel(code)}: ${formatIndicatorValue(
+          values[code],
+          format,
+          options,
+        )}`,
+    );
+
+  if (branchParts.length >= 2) {
+    return branchParts.join(" | ");
+  }
+
+  if (branchParts.length === 1) {
+    return branchParts[0];
+  }
+
+  if ("consolidated" in values) {
+    return formatIndicatorValue(values.consolidated, format, options);
+  }
+
+  return Object.entries(values)
+    .map(
+      ([key, value]) =>
+        `${formatBranchUnitLabel(key)}: ${formatIndicatorValue(value, format, options)}`,
+    )
+    .join(" | ");
+}
+
 export function formatIndicatorGoalValue(
   indicator: IndicatorGoalDisplayInput,
   competence?: string | null,

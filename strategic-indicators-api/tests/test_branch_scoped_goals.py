@@ -178,3 +178,12 @@ def test_department_consolidated_score_is_average_of_branch_idds() -> None:
 
     # Filial 01: PDI 10 + Turnover 10 → IDD 10 | Filial 02: PDI 5 + Turnover 10 → IDD 7,5
     assert departments[0].score == 8.75
+
+    calculated = calculator.calculate_indicators(
+        indicators_catalog=catalog,
+        measurements=measurements,
+        competence="2026-04",
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+    )
+    assert calculated[0].unit_gaps == {"01": 0.0, "02": 5.0}

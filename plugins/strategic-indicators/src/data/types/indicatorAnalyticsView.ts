@@ -40,8 +40,10 @@ export type IndicatorAnalyticsViewItem = {
   monthlyTargets: MonthlyTargetViewItem[];
   performanceDirection: PerformanceDirection;
   currentValue: number | null;
+  realized: Record<string, number | null>;
   score: number | null;
   gap: number | null;
+  gaps: Record<string, number | null>;
   hasValue: boolean;
   trend: "up" | "down" | "stable";
   status: IndicatorAnalyticsStatus;

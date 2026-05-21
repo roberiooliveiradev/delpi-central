@@ -8,6 +8,9 @@ from si_app.application.dto.strategic_indicators.get_indicators_response import 
 from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
     StrategicIndicatorsSnapshotService,
 )
+from si_app.domain.services.strategic_indicators_calculator import (
+    StrategicIndicatorsCalculator,
+)
 
 
 class GetStrategicIndicatorsUseCase:
@@ -15,8 +18,10 @@ class GetStrategicIndicatorsUseCase:
         self,
         *,
         snapshot_service: StrategicIndicatorsSnapshotService,
+        calculator: StrategicIndicatorsCalculator | None = None,
     ) -> None:
         self._snapshot_service = snapshot_service
+        self._calculator = calculator or StrategicIndicatorsCalculator()
 
     def execute(
         self,
@@ -60,8 +65,16 @@ class GetStrategicIndicatorsUseCase:
                         "higher_is_better",
                     ),
                     value=item.value,
+                    realized=self._calculator.build_realized_payload(
+                        unit_values=item.unit_values,
+                        value=item.value,
+                    ),
                     score=item.score,
                     gap=item.gap,
+                    gaps=self._calculator.build_gaps_payload(
+                        unit_gaps=item.unit_gaps,
+                        gap=item.gap,
+                    ),
                     has_value=item.value is not None,
                     trend=item.trend,
                     classification=item.classification,

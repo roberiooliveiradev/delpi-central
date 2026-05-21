@@ -41,8 +41,10 @@ export type IndicatorViewItem = {
   goalMode: GoalMode;
   monthlyTargets: MonthlyTargetItem[];
   value: number | null;
+  realized: Record<string, number | null>;
   score: number | null;
   gap: number | null;
+  gaps: Record<string, number | null>;
   hasValue: boolean;
   trend: TrendDirection;
   classification: string;
@@ -76,8 +78,10 @@ export type StrategicIndicatorsResponse = {
     scope_type: string;
     performance_direction: PerformanceDirection;
     value: number | null;
+    realized?: Record<string, number | null>;
     score: number | null;
     gap: number | null;
+    gaps?: Record<string, number | null>;
     has_value: boolean;
     trend: string;
     classification: string;

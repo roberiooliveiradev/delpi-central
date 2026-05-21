@@ -173,6 +173,14 @@ class StrategicIndicatorsCalculator:
                     value=realized_value,
                 )
 
+            unit_gaps = self._build_unit_gaps(
+                indicator=indicator,
+                measurement=measurement,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+
             calculated.append(
                 StrategicIndicatorCalculatedValue(
                     indicator_id=indicator.indicator_id,
@@ -198,6 +206,7 @@ class StrategicIndicatorsCalculator:
                     trend="stable",
                     classification=self.classify_score(score),
                     unit_values=measurement.unit_values,
+                    unit_gaps=unit_gaps,
                     value_unit=indicator.value_unit,
                     value_prefix=indicator.value_prefix,
                     value_suffix=indicator.value_suffix,
@@ -618,6 +627,80 @@ class StrategicIndicatorsCalculator:
         )
         return round(weighted_sum / total_weight, 2)
 
+    def _build_unit_gaps(
+        self,
+        *,
+        indicator: StrategicIndicatorCatalogItem,
+        measurement: StrategicIndicatorMeasuredValue,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> dict[str, float | None] | None:
+        unit_values = measurement.unit_values
+        if not unit_values:
+            return None
+
+        branch_keys = [
+            branch_code
+            for branch_code in BRANCH_UNIT_CODES
+            if branch_code in unit_values
+        ]
+        if not branch_keys and not indicator.branch_goals:
+            return None
+
+        if not branch_keys:
+            branch_keys = [
+                branch_code
+                for branch_code in BRANCH_UNIT_CODES
+                if branch_code in (indicator.branch_goals or {})
+            ]
+
+        if len(branch_keys) < 2:
+            return None
+
+        performance_direction = getattr(
+            indicator,
+            "performance_direction",
+            "higher_is_better",
+        )
+        gaps: dict[str, float | None] = {}
+
+        for branch_code in branch_keys:
+            raw_value = unit_values.get(branch_code)
+            if raw_value is None:
+                gaps[branch_code] = None
+                continue
+
+            branch_goal = (indicator.branch_goals or {}).get(branch_code)
+            if branch_goal:
+                comparable_goal = self.calculate_comparable_goal(
+                    goal_value=float(branch_goal["goal_value"]),
+                    goal_periodicity=branch_goal["goal_periodicity"],
+                    goal_mode=branch_goal.get("goal_mode", "standard"),
+                    monthly_targets=branch_goal.get("monthly_targets") or [],
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
+            else:
+                comparable_goal = self.calculate_comparable_goal(
+                    goal_value=indicator.goal_value,
+                    goal_periodicity=indicator.goal_periodicity,
+                    goal_mode=getattr(indicator, "goal_mode", "standard"),
+                    monthly_targets=getattr(indicator, "monthly_targets", None),
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
+
+            gaps[branch_code] = self.calculate_indicator_gap(
+                performance_direction=performance_direction,
+                comparable_goal=comparable_goal,
+                value=float(raw_value),
+            )
+
+        return gaps
+
     def build_realized_payload(
         self,
         *,
@@ -628,6 +711,20 @@ class StrategicIndicatorsCalculator:
             return dict(unit_values)
 
         return {"consolidated": value}
+
+    def build_gaps_payload(
+        self,
+        *,
+        unit_gaps: dict[str, float | None] | None,
+        gap: float | None,
+    ) -> dict[str, float | None]:
+        if unit_gaps:
+            return dict(unit_gaps)
+
+        if gap is None:
+            return {}
+
+        return {"consolidated": gap}
 
     def indicator_has_value(self, value: float | None) -> bool:
         return value is not None

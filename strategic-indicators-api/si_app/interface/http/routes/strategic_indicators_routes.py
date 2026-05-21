@@ -1031,8 +1031,16 @@ def get_strategic_indicators(
                         "higher_is_better",
                     ),
                     "value": float(item.value) if item.value is not None else None,
+                    "realized": {
+                        key: float(value) if value is not None else None
+                        for key, value in (item.realized or {}).items()
+                    },
                     "score": float(item.score) if item.score is not None else None,
                     "gap": float(item.gap) if item.gap is not None else None,
+                    "gaps": {
+                        key: float(value) if value is not None else None
+                        for key, value in (item.gaps or {}).items()
+                    },
                     "trend": item.trend,
                     "classification": item.classification,
                     "source": item.source,
