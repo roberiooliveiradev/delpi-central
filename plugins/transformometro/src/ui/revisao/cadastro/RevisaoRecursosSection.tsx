@@ -4,6 +4,7 @@ import {
   createRecurso,
   createVinculo,
   deleteVinculo,
+  updateVinculo,
   type OptionsData,
   type RecursoCompartilhado,
   type VinculoRecurso,
@@ -59,6 +60,8 @@ export function RevisaoRecursosSection({
   const [showRecursoForm, setShowRecursoForm] = useState(false);
   const [recursoForm, setRecursoForm] = useState(emptyRecursoForm);
   const [vinculoForm, setVinculoForm] = useState(emptyVinculoForm);
+  const [editingVinculoId, setEditingVinculoId] = useState<string | null>(null);
+  const [editVinculoForm, setEditVinculoForm] = useState(emptyVinculoForm);
 
   const recursosDisponiveis = useMemo(
     () =>
@@ -102,6 +105,45 @@ export function RevisaoRecursosSection({
       await onReload();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao criar recurso");
+    }
+  }
+
+  function startEditVinculo(v: VinculoRecurso) {
+    setEditingVinculoId(v.vinculo_id);
+    setEditVinculoForm({
+      recurso_compartilhado_id: v.recurso_compartilhado_id,
+      data_inicio_uso: toDateInputValue(v.data_inicio_uso),
+      data_fim_uso: toDateInputValue(v.data_fim_uso),
+      ativo: Boolean(v.ativo),
+      peso_rateio: v.peso_rateio != null ? String(v.peso_rateio) : "",
+      observacoes: v.observacoes ?? "",
+    });
+  }
+
+  async function handleSaveEditVinculo(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingVinculoId) return;
+    onError(null);
+    try {
+      const peso = editVinculoForm.peso_rateio.trim()
+        ? Number.parseFloat(editVinculoForm.peso_rateio)
+        : undefined;
+      await updateVinculo(
+        editingVinculoId,
+        {
+          ativo: editVinculoForm.ativo,
+          data_inicio_uso: optionalDateField(editVinculoForm.data_inicio_uso),
+          data_fim_uso: optionalDateField(editVinculoForm.data_fim_uso),
+          peso_rateio: peso,
+          observacoes: editVinculoForm.observacoes.trim() || undefined,
+        },
+        getAccessToken
+      );
+      setEditingVinculoId(null);
+      setEditVinculoForm(emptyVinculoForm());
+      await onReload();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Erro ao atualizar vínculo");
     }
   }
 
@@ -154,37 +196,139 @@ export function RevisaoRecursosSection({
               </tr>
             </thead>
             <tbody>
-              {vinculos.map((v) => (
-                <tr key={v.vinculo_id}>
-                  <td>
-                    <strong>{v.codigo_recurso}</strong>
-                    <br />
-                    <span className="ds-table__sub">{v.nome_recurso}</span>
-                    {v.fornecedor ? (
-                      <span className="ds-table__sub"> · {v.fornecedor}</span>
-                    ) : null}
-                  </td>
-                  <td>{formatCurrency(v.valor_total_recorrente)}</td>
-                  <td>{labelCriterioRateio(v.criterio_rateio)}</td>
-                  <td>
-                    {toDateInputValue(v.data_inicio_uso) || "…"} →{" "}
-                    {toDateInputValue(v.data_fim_uso) || "…"}
-                  </td>
-                  <td>{v.peso_rateio ?? (v.criterio_rateio === "por_peso" ? "1" : "—")}</td>
-                  <td>{labelSimNao(v.ativo)}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className="ds-ghost-btn"
-                      onClick={() =>
-                        void deleteVinculo(v.vinculo_id, getAccessToken).then(() => onReload())
-                      }
-                    >
-                      Desvincular
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {vinculos.map((v) =>
+                editingVinculoId === v.vinculo_id ? (
+                  <tr key={v.vinculo_id} className="ds-table__row--editing">
+                    <td colSpan={7}>
+                      <form className="ds-cadastro-subsection" onSubmit={handleSaveEditVinculo}>
+                        <h4 className="ds-cadastro-subsection__title">
+                          Editar vínculo — {v.codigo_recurso}
+                        </h4>
+                        <div className="ds-filters-row">
+                          <label className="ds-filter-box">
+                            Início do uso
+                            <input
+                              type="date"
+                              value={editVinculoForm.data_inicio_uso}
+                              onChange={(e) =>
+                                setEditVinculoForm({
+                                  ...editVinculoForm,
+                                  data_inicio_uso: e.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="ds-filter-box">
+                            Fim do uso
+                            <input
+                              type="date"
+                              value={editVinculoForm.data_fim_uso}
+                              onChange={(e) =>
+                                setEditVinculoForm({
+                                  ...editVinculoForm,
+                                  data_fim_uso: e.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="ds-filter-box">
+                            Peso
+                            <input
+                              type="number"
+                              min={0}
+                              step="any"
+                              value={editVinculoForm.peso_rateio}
+                              onChange={(e) =>
+                                setEditVinculoForm({
+                                  ...editVinculoForm,
+                                  peso_rateio: e.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="ds-filter-box ds-filter-box--checkbox">
+                            <span>Ativo</span>
+                            <input
+                              type="checkbox"
+                              checked={editVinculoForm.ativo}
+                              onChange={(e) =>
+                                setEditVinculoForm({
+                                  ...editVinculoForm,
+                                  ativo: e.target.checked,
+                                })
+                              }
+                            />
+                          </label>
+                        </div>
+                        <label className="ds-filter-box ds-filter-box--wide">
+                          Observações
+                          <input
+                            value={editVinculoForm.observacoes}
+                            onChange={(e) =>
+                              setEditVinculoForm({
+                                ...editVinculoForm,
+                                observacoes: e.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <div className="ds-cadastro-form__actions">
+                          <button type="submit" className="ds-primary-btn">
+                            Salvar vínculo
+                          </button>
+                          <button
+                            type="button"
+                            className="ds-ghost-btn"
+                            onClick={() => {
+                              setEditingVinculoId(null);
+                              setEditVinculoForm(emptyVinculoForm());
+                            }}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={v.vinculo_id}>
+                    <td>
+                      <strong>{v.codigo_recurso}</strong>
+                      <br />
+                      <span className="ds-table__sub">{v.nome_recurso}</span>
+                      {v.fornecedor ? (
+                        <span className="ds-table__sub"> · {v.fornecedor}</span>
+                      ) : null}
+                    </td>
+                    <td>{formatCurrency(v.valor_total_recorrente)}</td>
+                    <td>{labelCriterioRateio(v.criterio_rateio)}</td>
+                    <td>
+                      {toDateInputValue(v.data_inicio_uso) || "…"} →{" "}
+                      {toDateInputValue(v.data_fim_uso) || "…"}
+                    </td>
+                    <td>{v.peso_rateio ?? (v.criterio_rateio === "por_peso" ? "1" : "—")}</td>
+                    <td>{labelSimNao(v.ativo)}</td>
+                    <td className="ds-table__actions">
+                      <button
+                        type="button"
+                        className="ds-ghost-btn"
+                        onClick={() => startEditVinculo(v)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        className="ds-ghost-btn"
+                        onClick={() =>
+                          void deleteVinculo(v.vinculo_id, getAccessToken).then(() => onReload())
+                        }
+                      >
+                        Desvincular
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         </div>

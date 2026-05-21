@@ -18,6 +18,7 @@ CATEGORIAS = ("software", "treinamento", "consultoria", "equipamento", "horas_in
 RECORRENCIAS = ("unico", "mensal", "anual")
 CRITERIO_RATEIO = ("igualitario", "por_revisoes_ativas", "por_peso")
 STATUS_RECURSO = ("ativo", "inativo")
+STATUS_APROVACAO_REVISAO = ("rascunho", "em_analise", "aprovada", "rejeitada")
 
 
 def assert_in(value: str, allowed: tuple[str, ...], field: str) -> None:
@@ -37,4 +38,5 @@ def options_payload() -> dict:
         "recorrencias": list(RECORRENCIAS),
         "criterio_rateio": list(CRITERIO_RATEIO),
         "status_recurso": list(STATUS_RECURSO),
+        "status_aprovacao_revisao": list(STATUS_APROVACAO_REVISAO),
     }
