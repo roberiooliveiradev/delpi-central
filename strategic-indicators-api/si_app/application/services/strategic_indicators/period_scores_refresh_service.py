@@ -86,7 +86,11 @@ def refresh_period_scores_materialized() -> int:
             period.competence: period for period in trend_periods
         }
         if settings.SI_PERIOD_SCORES_REFRESH_INCLUDE_PREVIOUS:
-            current = resolve_period(competence=reference_competence)
+            current = resolve_period(
+                competence=reference_competence,
+                start_date=None,
+                end_date=None,
+            )
             prev = previous_period(current)
             periods_by_competence[prev.competence] = prev
 
@@ -100,7 +104,11 @@ def refresh_period_scores_materialized() -> int:
 
                 target_periods = periods
                 if department_id:
-                    current = resolve_period(competence=reference_competence)
+                    current = resolve_period(
+                        competence=reference_competence,
+                        start_date=None,
+                        end_date=None,
+                    )
                     target_periods = [current]
 
                 snapshots = snapshot_service.get_series_snapshot_optimized(
