@@ -39,7 +39,14 @@ class UpdatePluginManifestUseCase:
         self._uow = uow
         self._validator = validator
 
-    def execute(self, plugin_id: str, manifest: Dict[str, Any]) -> UpdatePluginManifestResult:
+    def execute(
+        self,
+        plugin_id: str,
+        manifest: Dict[str, Any],
+        *,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+    ) -> UpdatePluginManifestResult:
 
         # ==========================================================
         # 1️⃣ Validação estrutural
@@ -179,6 +186,8 @@ class UpdatePluginManifestUseCase:
             name=str(manifest.get("name") or plugin.name or ""),
             description=manifest.get("description"),
             icon=manifest.get("icon"),
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
         )
 
         # ==========================================================
@@ -230,7 +239,7 @@ class UpdatePluginManifestUseCase:
                 payload={
                     "pluginId": plugin_id,
                 },
-                target_user_id=None,
+                actor_user_id=actor_user_id,
             )
         )
 

@@ -1,4 +1,4 @@
-/* Organograma: IGD → Visão → Departamentos → Indicadores */
+/* Organograma: IGD → Departamentos → Indicadores */
 
 .si-org-chart--single-scope .si-org-chart__department-column {
   min-width: 280px;
@@ -7,6 +7,11 @@
 
 .si-org-chart--single-scope .si-org-chart__department-scopes {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.si-org-chart--single-scope .si-org-chart__level--igd {
+  align-items: center;
+  width: 100%;
 }
 
 .si-org-chart {
@@ -71,7 +76,8 @@
 }
 
 .si-org-chart__level--igd {
-  max-width: 380px;
+  max-width: 420px;
+  width: 100%;
 }
 
 .si-org-chart__level--departments {
@@ -178,25 +184,77 @@
   border-radius: 2px;
 }
 
+.si-org-chart__departments-fork {
+  position: relative;
+  width: 100%;
+}
+
+.si-org-chart__departments-fork > .si-org-chart__departments-row {
+  position: relative;
+  padding-top: 28px;
+}
+
+.si-org-chart__departments-fork > .si-org-chart__departments-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 14px;
+  background: var(--si-org-line);
+  border-radius: 2px;
+}
+
+.si-org-chart__departments-fork > .si-org-chart__departments-row::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: calc(50% / var(--si-dept-count, 1));
+  right: calc(50% / var(--si-dept-count, 1));
+  height: 3px;
+  background: var(--si-org-line);
+  border-radius: 2px;
+}
+
+.si-org-chart__departments-fork[style*="--si-dept-count: 1"]
+  > .si-org-chart__departments-row::after {
+  display: none;
+}
+
 .si-org-chart__departments-row {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: flex-start;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 20px;
   width: 100%;
   padding: 4px 0 12px;
 }
 
 .si-org-chart__department-column {
+  position: relative;
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
-  min-width: calc(var(--si-org-chart-cols, 3) * 272px + 24px);
-  max-width: calc(var(--si-org-chart-cols, 3) * 300px + 32px);
+  min-width: 280px;
+  max-width: 340px;
+  padding-top: 14px;
+}
+
+.si-org-chart__department-column::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 14px;
+  background: var(--si-org-line);
+  border-radius: 2px;
 }
 
 .si-org-chart__department-anchor {
@@ -240,14 +298,6 @@
     filter 0.22s ease;
 }
 
-.si-tree-scope-card,
-.si-tree-card--static {
-  display: block;
-  width: 100%;
-  max-width: none;
-  color: inherit;
-  cursor: default;
-}
 
 .si-org-chart .si-igd-hero,
 .si-org-chart .si-trend-hero,
@@ -419,10 +469,15 @@
 .si-tree-dept__indicators {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+  width: 100%;
   padding: 0 12px 14px;
   border-top: 1px dashed var(--si-card-border);
   background: color-mix(in srgb, var(--si-card-bg) 94%, var(--si-text-muted));
+}
+
+.si-tree-dept__indicators:has(.si-tree-dept__indicator-list--row) {
+  align-items: stretch;
 }
 
 .si-tree-dept__indicator-list {
@@ -437,9 +492,14 @@
 }
 
 .si-org-chart__department-column--solo-expanded {
-  flex: 1 1 560px;
-  min-width: min(100%, 520px);
-  max-width: min(96vw, 1280px);
+  flex: 1 1 720px;
+  min-width: min(100%, 560px);
+  max-width: min(96vw, 1400px);
+}
+
+.si-tree-dept__indicators--solo-expanded {
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 .si-org-chart__department-column--open:not(.si-org-chart__department-column--solo-expanded) {
@@ -447,16 +507,21 @@
 }
 
 .si-tree-dept__indicator-list--row {
-  flex-flow: row wrap;
+  display: flex !important;
+  flex-flow: row wrap !important;
+  flex-direction: row !important;
   justify-content: flex-start;
   align-items: stretch;
   gap: 14px;
+  width: 100%;
 }
 
 .si-tree-dept__indicator-list--row > .si-tree-indicator-card__link {
-  flex: 1 1 220px;
-  min-width: 200px;
-  max-width: 300px;
+  display: block;
+  flex: 1 1 240px;
+  width: auto;
+  min-width: 220px;
+  max-width: 320px;
 }
 
 .si-tree-dept__indicator-list--multi-grid {

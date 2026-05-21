@@ -1,4 +1,5 @@
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { Card } from "../components/Card";
 import { ClassificationBand } from "../components/ClassificationBand";
 import { ContributionRanking } from "../components/ContributionRanking";
@@ -43,6 +44,9 @@ export function ExecutiveDashboardPage({
       getAccessToken,
     });
 
+  const loadingProgress = useSimulatedLoadingProgress(loading && !data);
+  const refreshingProgress = useSimulatedLoadingProgress(Boolean(refreshing && data));
+
   const filterBlock = (
     <StrategicIndicatorsReferenceFilters
       referenceMonth={referenceMonth}
@@ -76,6 +80,7 @@ export function ExecutiveDashboardPage({
           description="Aguarde enquanto o resumo executivo é carregado."
           variant="panel"
           tone="info"
+          progressPercent={loadingProgress}
         />
       </div>
     );
@@ -151,6 +156,7 @@ export function ExecutiveDashboardPage({
           description="Os dados exibidos estão sendo atualizados para o novo período."
           variant="compact"
           tone="info"
+          progressPercent={refreshingProgress}
         />
       ) : null}
 

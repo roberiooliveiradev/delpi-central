@@ -11,6 +11,25 @@ from app.domain.ports.admin_app_repository_port import (
 from app.infrastructure.db.models import App
 
 
+def _to_admin_app_dto(row: App) -> AdminAppDTO:
+    return AdminAppDTO(
+        id=row.id,
+        name=row.name,
+        description=row.description,
+        icon=row.icon,
+        type=row.type,
+        version=row.version,
+        active=row.active,
+        base_path=row.base_path,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+        created_by_user_id=str(row.created_by_user_id) if row.created_by_user_id else None,
+        created_by_email=row.created_by_email,
+        updated_by_user_id=str(row.updated_by_user_id) if row.updated_by_user_id else None,
+        updated_by_email=row.updated_by_email,
+    )
+
+
 class SqlAlchemyAdminAppRepository(AdminAppRepositoryPort):
 
     def __init__(self, session: Session):
@@ -54,19 +73,7 @@ class SqlAlchemyAdminAppRepository(AdminAppRepositoryPort):
         )
 
         return (
-            [
-                AdminAppDTO(
-                    id=row.id,
-                    name=row.name,
-                    description=row.description,
-                    icon=row.icon,
-                    type=row.type,
-                    version=row.version,
-                    active=row.active,
-                    base_path=row.base_path,
-                )
-                for row in rows
-            ],
+            [_to_admin_app_dto(row) for row in rows],
             total,
         )
 
@@ -75,16 +82,7 @@ class SqlAlchemyAdminAppRepository(AdminAppRepositoryPort):
         if not row:
             return None
 
-        return AdminAppDTO(
-            id=row.id,
-            name=row.name,
-            description=row.description,
-            icon=row.icon,
-            type=row.type,
-            version=row.version,
-            active=row.active,
-            base_path=row.base_path,
-        )
+        return _to_admin_app_dto(row)
 
     def update_metadata(self, app_id: str, name: str, description: str | None, icon: str | None) -> None:
         row = self.session.get(App, app_id)

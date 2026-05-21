@@ -40,7 +40,6 @@ import type { StrategicIndicatorsViewMode } from "../shared/strategicIndicatorsF
 import "./DepartmentSummaryCard.css";
 import "./IndicatorDetailCard.css";
 import "./IgdHeroCard.css";
-import "./TrendHeroCard.css";
 import "./DepartmentIgdTree.css";
 
 type DepartmentIgdTreeFilterControls = {
@@ -135,21 +134,26 @@ function OrgChartArrow() {
 
 function TreeIgdCard({
   model,
+  activeColumn,
   filterState,
   cardId,
   isActive,
   onActivate,
 }: {
   model: DepartmentTreeModel;
+  activeColumn: DepartmentTreeColumn | null;
   filterState: StrategicIndicatorsFilterState;
   cardId: string;
   isActive: boolean;
   onActivate: (cardId: string) => void;
 }) {
-  const badgeVariant =
+  const igdBadgeVariant =
     model.igd !== null
       ? mapScoreToBadgeVariant(model.igd)
       : ("neutral" as const);
+  const scopeScore = activeColumn?.averageScore ?? null;
+  const scopeBadgeVariant =
+    scopeScore !== null ? mapScoreToBadgeVariant(scopeScore) : ("neutral" as const);
 
   return (
     <InteractiveTreeCard
@@ -172,9 +176,33 @@ function TreeIgdCard({
             <p className="si-igd-hero__exact">Competência {model.competence}</p>
           </div>
           {model.classification ? (
-            <StatusBadge label={model.classification} variant={badgeVariant} />
+            <StatusBadge label={model.classification} variant={igdBadgeVariant} />
           ) : null}
         </div>
+
+        {activeColumn ? (
+          <div className="si-igd-hero__scope">
+            <div className="si-igd-hero__scope-headline">
+              <div>
+                <p className="si-igd-hero__scope-eyebrow">Visão analítica</p>
+                <p className="si-igd-hero__scope-value">
+                  {scopeScore !== null ? scopeScore.toFixed(1) : "—"}
+                  <span className="si-igd-hero__scope-label">
+                    {activeColumn.scope.label}
+                  </span>
+                </p>
+              </div>
+              <StatusBadge
+                label={scopeScore !== null ? "Média IDD" : "Sem dado"}
+                variant={scopeBadgeVariant}
+              />
+            </div>
+            <p className="si-igd-hero__scope-description">
+              Média dos departamentos neste escopo.
+            </p>
+          </div>
+        ) : null}
+
         {model.igdSeries.length > 0 ? (
           <TreeSparkline
             points={model.igdSeries}
@@ -185,76 +213,6 @@ function TreeIgdCard({
         ) : null}
       </section>
     </InteractiveTreeCard>
-  );
-}
-
-function TreeScopeCard({
-  column,
-  cardId,
-  isActive,
-  onActivate,
-}: {
-  column: DepartmentTreeColumn;
-  cardId: string;
-  isActive: boolean;
-  onActivate: (cardId: string) => void;
-}) {
-  const score = column.averageScore;
-  const badgeVariant =
-    score !== null ? mapScoreToBadgeVariant(score) : ("neutral" as const);
-
-  return (
-    <StaticTreeCard
-      cardId={cardId}
-      isActive={isActive}
-      onActivate={onActivate}
-      className="si-tree-scope-card"
-    >
-      <section className="si-trend-hero si-trend-hero--tree si-trend-hero--stable">
-        <div className="si-trend-hero__glow" aria-hidden />
-        <div className="si-trend-hero__header">
-          <div className="si-trend-hero__headline">
-            <p className="si-trend-hero__eyebrow">Visão analítica</p>
-            <h2 className="si-trend-hero__value">
-              {score !== null ? score.toFixed(1) : "—"}
-            </h2>
-            <p className="si-trend-hero__classification">{column.scope.label}</p>
-          </div>
-          <StatusBadge
-            label={score !== null ? "Média IDD" : "Sem dado"}
-            variant={badgeVariant}
-          />
-        </div>
-        <p className="si-trend-hero__description">
-          Média dos departamentos neste escopo.
-        </p>
-      </section>
-    </StaticTreeCard>
-  );
-}
-
-function StaticTreeCard({
-  cardId,
-  isActive,
-  onActivate,
-  className,
-  children,
-}: {
-  cardId: string;
-  isActive: boolean;
-  onActivate: (cardId: string) => void;
-  className: string;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className={`${className} si-tree-card--static${
-        isActive ? " si-tree-card--active" : ""
-      }`}
-      onMouseDown={() => onActivate(cardId)}
-    >
-      {children}
-    </div>
   );
 }
 
@@ -430,6 +388,7 @@ function DepartmentTreeCard({
   competence,
   expanded,
   indicatorListLayout,
+  isSoloExpandedDepartment,
   onToggle,
   activeCardId,
   onActivateCard,
@@ -440,6 +399,7 @@ function DepartmentTreeCard({
   competence: string;
   expanded: boolean;
   indicatorListLayout: IndicatorListLayout;
+  isSoloExpandedDepartment: boolean;
   onToggle: () => void;
   activeCardId: string | null;
   onActivateCard: (cardId: string) => void;
@@ -587,7 +547,14 @@ function DepartmentTreeCard({
       </div>
 
       {expanded && indicatorCount > 0 ? (
-        <section className="si-tree-dept__indicators" data-pan-zoom-lock="true">
+        <section
+          className={`si-tree-dept__indicators${
+            isSoloExpandedDepartment
+              ? " si-tree-dept__indicators--solo-expanded"
+              : ""
+          }`}
+          data-pan-zoom-lock="true"
+        >
           <OrgChartArrow />
           <div
             className={`si-tree-dept__indicator-list si-tree-dept__indicator-list--${indicatorListLayout}`}
@@ -620,6 +587,7 @@ export function DepartmentIgdTree({
   filterControls,
 }: DepartmentIgdTreeProps) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(() => new Set());
+  const [departmentsVisible, setDepartmentsVisible] = useState(true);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
   const activeScopeKey = resolveActiveTreeScopeKey(
@@ -664,6 +632,7 @@ export function DepartmentIgdTree({
 
   useEffect(() => {
     setExpandedKeys(new Set());
+    setDepartmentsVisible(true);
   }, [treeLayoutKey]);
 
   const toggleDepartment = useCallback((key: string) => {
@@ -679,11 +648,17 @@ export function DepartmentIgdTree({
   }, []);
 
   const expandAll = useCallback(() => {
+    setDepartmentsVisible(true);
     setExpandedKeys(new Set(allExpandableKeys));
   }, [allExpandableKeys]);
 
   const collapseAll = useCallback(() => {
+    setDepartmentsVisible(false);
     setExpandedKeys(new Set());
+  }, []);
+
+  const toggleDepartmentsVisible = useCallback(() => {
+    setDepartmentsVisible((current) => !current);
   }, []);
 
   const hasExpandable = allExpandableKeys.length > 0;
@@ -705,7 +680,6 @@ export function DepartmentIgdTree({
   }, [activeColumn, expandedKeys, model.departmentOrder, nodesById]);
 
   const expandedDepartmentCount = expandedDepartmentIds.length;
-  const indicatorListLayout = resolveIndicatorListLayout(expandedDepartmentCount);
   const soloExpandedDepartmentId =
     expandedDepartmentCount === 1 ? expandedDepartmentIds[0] : null;
 
@@ -718,26 +692,45 @@ export function DepartmentIgdTree({
     "--si-dept-count": String(departmentCount),
   } as CSSProperties;
 
-  const mapActions = hasExpandable ? (
-    <>
-      <button
-        type="button"
-        className="si-org-chart__toolbar-btn"
-        onClick={expandAll}
-      >
-        Expandir todos
-      </button>
-      <button
-        type="button"
-        className="si-org-chart__toolbar-btn"
-        onClick={collapseAll}
-      >
-        Recolher todos
-      </button>
-    </>
-  ) : null;
+  const mapActions =
+    departmentCount > 0 || hasExpandable ? (
+      <>
+        <button
+          type="button"
+          className="si-org-chart__toolbar-btn"
+          onClick={toggleDepartmentsVisible}
+        >
+          {departmentsVisible ? "Recolher departamentos" : "Expandir departamentos"}
+        </button>
+        {departmentsVisible && hasExpandable ? (
+          <>
+            <button
+              type="button"
+              className="si-org-chart__toolbar-btn"
+              onClick={expandAll}
+            >
+              Expandir indicadores
+            </button>
+            <button
+              type="button"
+              className="si-org-chart__toolbar-btn"
+              onClick={() => setExpandedKeys(new Set())}
+            >
+              Recolher indicadores
+            </button>
+          </>
+        ) : null}
+        <button
+          type="button"
+          className="si-org-chart__toolbar-btn"
+          onClick={collapseAll}
+        >
+          Recolher tudo
+        </button>
+      </>
+    ) : null;
 
-  const floatingControls = (
+  const renderFloatingControls = (viewportNav: ReactNode) => (
     <TreeMapFloatingControls
       referenceMonth={filterControls.referenceMonth}
       viewMode={filterControls.viewMode}
@@ -749,6 +742,7 @@ export function DepartmentIgdTree({
       onBranchChange={filterControls.onBranchChange}
       onTreeScopeChange={filterControls.onTreeScopeChange}
       onMonthsToCompareChange={filterControls.onMonthsToCompareChange}
+      viewportNav={viewportNav}
       actions={mapActions}
       status={filterControls.status}
     />
@@ -758,7 +752,7 @@ export function DepartmentIgdTree({
     <PanZoomCanvas
       fitToken={fitToken}
       immersive
-      floatingControls={floatingControls}
+      floatingControls={renderFloatingControls}
       className="si-org-chart-canvas"
     >
       <div
@@ -769,6 +763,7 @@ export function DepartmentIgdTree({
           <span className="si-org-chart__level-tag">IGD</span>
           <TreeIgdCard
             model={model}
+            activeColumn={activeColumn}
             filterState={filterState}
             cardId="igd:root"
             isActive={activeCardId === "igd:root"}
@@ -776,40 +771,34 @@ export function DepartmentIgdTree({
           />
         </section>
 
-        <OrgChartArrow />
+        {departmentsVisible && departmentCount > 0 ? (
+          <>
+            <OrgChartArrow />
 
-        <section className="si-org-chart__level">
-          <span className="si-org-chart__level-tag">Visão</span>
-          <div className="si-org-chart__fork-row">
-            {activeColumn ? (
-              <div className="si-org-chart__fork-item">
-                <TreeScopeCard
-                  column={activeColumn}
-                  cardId={`scope:${activeColumn.scope.key}`}
-                  isActive={activeCardId === `scope:${activeColumn.scope.key}`}
-                  onActivate={setActiveCardId}
-                />
-              </div>
-            ) : null}
-          </div>
-        </section>
+            <section className="si-org-chart__level si-org-chart__level--departments">
+              <span className="si-org-chart__level-tag">
+                Departamentos e indicadores
+              </span>
 
-        <OrgChartArrow />
-
-        <section className="si-org-chart__level si-org-chart__level--departments">
-          <span className="si-org-chart__level-tag">Departamentos e indicadores</span>
-
-          <div
-            className={`si-org-chart__departments-row${
-              expandedDepartmentCount === 1
-                ? " si-org-chart__departments-row--one-expanded"
-                : ""
-            }${
-              expandedDepartmentCount >= 2
-                ? " si-org-chart__departments-row--multi-expanded"
-                : ""
-            }`}
-          >
+              <div
+                className="si-org-chart__departments-fork"
+                style={
+                  {
+                    "--si-dept-count": String(departmentCount),
+                  } as CSSProperties
+                }
+              >
+                <div
+                  className={`si-org-chart__departments-row${
+                    expandedDepartmentCount === 1
+                      ? " si-org-chart__departments-row--one-expanded"
+                      : ""
+                  }${
+                    expandedDepartmentCount >= 2
+                      ? " si-org-chart__departments-row--multi-expanded"
+                      : ""
+                  }`}
+                >
             {model.departmentOrder.map((departmentId) => {
               const expandKey = activeColumn
                 ? `${activeColumn.scope.key}:${departmentId}`
@@ -838,7 +827,14 @@ export function DepartmentIgdTree({
                         filterState={filterState}
                         competence={model.competence}
                         expanded={isDepartmentExpanded}
-                        indicatorListLayout={indicatorListLayout}
+                        indicatorListLayout={
+                          soloExpandedDepartmentId === departmentId
+                            ? "row"
+                            : resolveIndicatorListLayout(expandedDepartmentCount)
+                        }
+                        isSoloExpandedDepartment={
+                          soloExpandedDepartmentId === departmentId
+                        }
                         onToggle={() => toggleDepartment(expandKey)}
                         activeCardId={activeCardId}
                         onActivateCard={setActiveCardId}
@@ -849,8 +845,11 @@ export function DepartmentIgdTree({
               </div>
             );
             })}
-          </div>
-        </section>
+                </div>
+              </div>
+            </section>
+          </>
+        ) : null}
       </div>
     </PanZoomCanvas>
   );

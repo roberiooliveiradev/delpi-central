@@ -9,6 +9,7 @@ import {
   Power,
   PowerOff,
   Trash2,
+  UserRound,
 } from "lucide-react";
 
 import { AuthContext } from "../../../state/AuthContext";
@@ -38,6 +39,48 @@ const normalizeAppTypeLabel = (type?: string | null) => {
 
 const getAppStatusLabel = (app: AdminApp) => {
   return app.active === false ? "Inativa" : "Ativa";
+};
+
+const formatBrazilDateTime = (value?: string | null) => {
+  if (!value) return "Não informado";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Data inválida";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
+
+const formatResponsibleUser = (app: AdminApp) => {
+  const updatedEmail = app.updated_by_email?.trim();
+  const createdEmail = app.created_by_email?.trim();
+
+  if (updatedEmail) return updatedEmail;
+  if (createdEmail) return createdEmail;
+
+  return "Não informado";
+};
+
+const buildAppAuditMeta = (app: AdminApp): string[] => {
+  const lines = [
+    `Criado em: ${formatBrazilDateTime(app.created_at)}`,
+    `Atualizado em: ${formatBrazilDateTime(app.updated_at)}`,
+  ];
+
+  if (app.created_by_email && app.created_by_email !== app.updated_by_email) {
+    lines.push(`Criado por: ${app.created_by_email}`);
+  }
+
+  return lines;
 };
 
 export const AppsTab = () => {
@@ -344,6 +387,11 @@ export const AppsTab = () => {
         renderMeta={(app) => [
           `Versão: ${app.version || "Não informada"}`,
           `Ícone: ${app.icon || "Padrão"}`,
+          ...buildAppAuditMeta(app),
+          <>
+            <UserRound size={13} />
+            Responsável: {formatResponsibleUser(app)}
+          </>,
         ]}
         renderActions={(app) => [
           {

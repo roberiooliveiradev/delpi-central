@@ -43,6 +43,13 @@ admin_apps_bp = Blueprint(
 )
 
 
+def _request_actor() -> tuple[str | None, str | None]:
+    user = getattr(g, "current_user", None)
+    if not user:
+        return None, None
+    return str(user.id), getattr(user, "email", None)
+
+
 # ==========================================================
 # LIST APPS (PLUGINS)
 # ==========================================================
@@ -139,11 +146,17 @@ def register_plugin():
             path="_global",
         )
 
+    actor_user_id, actor_email = _request_actor()
+
     try:
         with SqlAlchemyUnitOfWork() as uow:
             validator = ManifestValidator()
             uc = RegisterPluginUseCase(uow, validator)
-            result = uc.execute(manifest)
+            result = uc.execute(
+                manifest,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
 
             if not result.success:
                 return jsonify({"errors": result.errors}), 400
@@ -170,11 +183,18 @@ def update_manifest(plugin_id: str):
             path="_global",
         )
 
+    actor_user_id, actor_email = _request_actor()
+
     try:
         with SqlAlchemyUnitOfWork() as uow:
             validator = ManifestValidator()
             uc = UpdatePluginManifestUseCase(uow, validator)
-            result = uc.execute(plugin_id, manifest)
+            result = uc.execute(
+                plugin_id,
+                manifest,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
 
             if not result.success:
                 return jsonify({"errors": result.errors}), 400
@@ -219,10 +239,17 @@ def rollback(plugin_id: str):
             path="version",
         )
 
+    actor_user_id, actor_email = _request_actor()
+
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = RollbackPluginVersionUseCase(uow)
-            result = uc.execute(plugin_id, version)
+            result = uc.execute(
+                plugin_id,
+                version,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
 
             if not result.success:
                 return jsonify({"errors": result.errors}), 400
@@ -264,10 +291,17 @@ def set_plugin_active(plugin_id: str):
     data = request.get_json(silent=True) or {}
     active = bool(data.get("active", True))
 
+    actor_user_id, actor_email = _request_actor()
+
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = SetPluginActiveUseCase(uow)
-            result = uc.execute(plugin_id, active)
+            result = uc.execute(
+                plugin_id,
+                active,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
 
             if not result.success:
                 return jsonify({"errors": result.errors}), 400
@@ -296,10 +330,17 @@ def bulk_activate_plugins():
             path="ids",
         )
 
+    actor_user_id, actor_email = _request_actor()
+
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = BulkSetPluginsActiveUseCase(uow)
-            result = uc.execute(ids, active)
+            result = uc.execute(
+                ids,
+                active,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
 
             if not result.success:
                 return jsonify({"errors": result.errors}), 400

@@ -28,7 +28,13 @@ class RegisterPluginUseCase:
         self._uow = uow
         self._validator = validator
 
-    def execute(self, manifest: Dict[str, Any]) -> RegisterResult:
+    def execute(
+        self,
+        manifest: Dict[str, Any],
+        *,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+    ) -> RegisterResult:
 
         validation = self._validator.validate(manifest)
 
@@ -65,16 +71,20 @@ class RegisterPluginUseCase:
 
         if not plugin:
 
-            self._uow.plugins.create({
-                "id": plugin_id,
-                "name": manifest["name"],
-                "description": manifest.get("description"),
-                "base_path": base_path,
-                "icon": manifest.get("icon"),
-                "type": manifest.get("type"),
-                "version": version,
-                "active": True,
-            })
+            self._uow.plugins.create(
+                {
+                    "id": plugin_id,
+                    "name": manifest["name"],
+                    "description": manifest.get("description"),
+                    "base_path": base_path,
+                    "icon": manifest.get("icon"),
+                    "type": manifest.get("type"),
+                    "version": version,
+                    "active": True,
+                },
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
 
             self._uow.plugin_manifests.save(plugin_id, manifest, checksum)
 
@@ -112,7 +122,12 @@ class RegisterPluginUseCase:
                     }],
                 )
 
-            self._uow.plugins.update_version(plugin_id, version)
+            self._uow.plugins.update_version(
+                plugin_id,
+                version,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
 
             self._uow.plugin_manifests.save(plugin_id, manifest, checksum)
 
@@ -159,7 +174,7 @@ class RegisterPluginUseCase:
                     "pluginId": plugin_id,
                     "version": version,
                 },
-                target_user_id=None,
+                actor_user_id=actor_user_id,
             )
         )
 

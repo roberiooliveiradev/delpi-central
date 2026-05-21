@@ -21,8 +21,11 @@ class FakePlugins:
     def get_by_id(self, pid):
         return {"id": pid} if self._exists else None
 
-    def create(self, data):
+    def create(self, data, **kwargs):
         self.created = True
+
+    def update_version(self, plugin_id, version, **kwargs):
+        pass
 
 
 class FakeUoW:

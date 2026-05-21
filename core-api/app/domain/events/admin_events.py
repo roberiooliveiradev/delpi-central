@@ -15,10 +15,19 @@ class AdminChangedEvent(DomainEvent):
     action: str
     payload: dict
     target_user_id: Optional[str] = None
+    actor_user_id: Optional[str] = None
 
-    def __init__(self, entity: str, action: str, payload: dict, target_user_id: Optional[str] = None):
+    def __init__(
+        self,
+        entity: str,
+        action: str,
+        payload: dict,
+        target_user_id: Optional[str] = None,
+        actor_user_id: Optional[str] = None,
+    ):
         super().__init__(name="admin.changed")
         self.entity = entity
         self.action = action
         self.payload = payload
         self.target_user_id = target_user_id
+        self.actor_user_id = actor_user_id

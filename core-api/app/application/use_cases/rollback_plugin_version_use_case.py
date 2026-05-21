@@ -18,7 +18,14 @@ class RollbackPluginVersionUseCase:
     def __init__(self, uow: UnitOfWork):
         self._uow = uow
 
-    def execute(self, plugin_id: str, target_version: str) -> RollbackPluginVersionResult:
+    def execute(
+        self,
+        plugin_id: str,
+        target_version: str,
+        *,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+    ) -> RollbackPluginVersionResult:
 
         plugin = self._uow.plugins.get_by_id(plugin_id)
         if not plugin:
@@ -56,7 +63,12 @@ class RollbackPluginVersionUseCase:
             )
 
         # atualizar versão ativa
-        self._uow.plugins.update_version(plugin_id, target_version)
+        self._uow.plugins.update_version(
+            plugin_id,
+            target_version,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
 
         self._uow.plugin_manifests.save(plugin_id, manifest, str(checksum or ""))
 
@@ -96,7 +108,7 @@ class RollbackPluginVersionUseCase:
                     "pluginId": plugin_id,
                     "version": target_version,
                 },
-                target_user_id=None,
+                actor_user_id=actor_user_id,
             )
         )
 
