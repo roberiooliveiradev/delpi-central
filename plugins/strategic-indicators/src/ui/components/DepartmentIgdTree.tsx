@@ -158,6 +158,10 @@ function TreeIgdCard({
       ? mapScoreToBadgeVariant(model.igd)
       : ("neutral" as const);
   const scopeScore = activeColumn?.averageScore ?? null;
+  const duplicateScopeScore =
+    model.igd !== null &&
+    scopeScore !== null &&
+    model.igd.toFixed(1) === scopeScore.toFixed(1);
   const scopeBadgeVariant =
     scopeScore !== null ? mapScoreToBadgeVariant(scopeScore) : ("neutral" as const);
 
@@ -180,33 +184,33 @@ function TreeIgdCard({
             <h2 className="si-igd-hero__value">
               {model.igd !== null ? model.igd.toFixed(1) : "—"}
             </h2>
-            <p className="si-igd-hero__exact">Competência {model.competence}</p>
+            <p className="si-igd-hero__exact">
+              Competência {model.competence}
+              {activeColumn ? (
+                <>
+                  {" · "}
+                  <span className="si-igd-hero__scope-name">
+                    {activeColumn.scope.label}
+                  </span>
+                </>
+              ) : null}
+            </p>
+            {activeColumn ? (
+              <p className="si-igd-hero__context-hint">
+                Média dos departamentos neste escopo.
+              </p>
+            ) : null}
           </div>
           {model.classification ? (
             <StatusBadge label={model.classification} variant={igdBadgeVariant} />
           ) : null}
         </div>
 
-        {activeColumn ? (
-          <div className="si-igd-hero__scope">
-            <div className="si-igd-hero__scope-headline">
-              <div>
-                <p className="si-igd-hero__scope-eyebrow">Visão analítica</p>
-                <p className="si-igd-hero__scope-value">
-                  {scopeScore !== null ? scopeScore.toFixed(1) : "—"}
-                  <span className="si-igd-hero__scope-label">
-                    {activeColumn.scope.label}
-                  </span>
-                </p>
-              </div>
-              <StatusBadge
-                label={scopeScore !== null ? "Média IDD" : "Sem dado"}
-                variant={scopeBadgeVariant}
-              />
-            </div>
-            <p className="si-igd-hero__scope-description">
-              Média dos departamentos neste escopo.
-            </p>
+        {activeColumn && !duplicateScopeScore && scopeScore !== null ? (
+          <div className="si-igd-hero__scope-alt">
+            <span className="si-igd-hero__scope-alt-label">Média IDD do escopo</span>
+            <span className="si-igd-hero__scope-alt-value">{scopeScore.toFixed(1)}</span>
+            <StatusBadge label="Média IDD" variant={scopeBadgeVariant} />
           </div>
         ) : null}
 
