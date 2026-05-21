@@ -28,7 +28,8 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Validações | catálogos §4, exclusão lógica | ✅ |
 | UI cadastro | lista processos + novo processo + revisões no detalhe | ✅ |
 | Auditoria | `audit_logs` nas mutações | ✅ |
-| UI medições/investimentos/recursos | Formulários no detalhe da revisão (clique na linha) | ✅ |
+| UI medições/investimentos/recursos | Abas na revisão (vigência, medição, investimentos, vínculos) | ✅ |
+| Catálogo recursos (menu) | `/recursos` — CRUD global + vínculo na revisão | ✅ |
 
 **Critério de pronto:** criar processo completo só pela UI, sem abrir Sheets (baseline + melhoria + medições + vínculos).
 
@@ -74,7 +75,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Export dashboard | `GET /dashboard/export.csv` | ✅ |
 | Comparativo revisões | `GET /processos/{id}/comparativo` + tabela no detalhe | ✅ |
 | Diagnóstico rateio | `GET /revisoes/{id}/diagnostico-rateio` + painel na revisão | ✅ |
-| UI Fase 4 | Alertas + CSV no dashboard; família no cadastro; comparativo + rateio | ✅ |
+| UI Fase 4 | Alertas + CSV/Excel no dashboard; família no cadastro; comparativo + rateio; toolbar workflow | ✅ |
 | Testes | `tests/test_phase4_services.py` | ✅ |
 | Workflow de aprovação de revisão | V005 + `POST /revisoes/{id}/workflow/*`; ativação só se `aprovada` | ✅ |
 | Export Excel | `GET /dashboard/export.xls` (HTML formatado, abre no Excel) + botão no MFE | ✅ |

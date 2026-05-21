@@ -1,57 +1,64 @@
 # Status atual — Transformômetro
 
-Atualizado: 2026-05-21 (Fase 4 — alertas, export CSV, comparativo, rateio/família).
+Atualizado: 2026-05-21 (Fase 4 completa no repo + catálogo Recursos + workflow V005).
 
 ## Entregue
 
 | Área | Status |
 |------|--------|
-| API + migrations V001–V004 | ✅ Repo (V004 no próximo deploy) |
-| CRUD + UI cadastro + datas de vigência | ✅ |
-| Dashboard + recálculo materializado | ✅ |
-| Import planilha (CLI + UI + merge por código) | ✅ |
-| Dados migrados da planilha Transforma+ | ✅ (~43 processos) |
-| Rotas integração engenharia (`/transformometro/integrations/...`) | ✅ |
-| api-delpi + SI via `transformometro_client` (HTTP) | ✅ |
-| Auth S2S `API_DELPI_INTERNAL_SERVICE_TOKEN` + JWT em threads (SI) | ✅ |
-| Fase 4 — alertas, export CSV, comparativo revisões, diagnóstico rateio | ✅ |
-| Fase 4 — campos família/agrupador no cadastro de processos | ✅ |
+| API + migrations V001–V005 | ✅ Repo |
+| CRUD processos, revisões, medições, investimentos, recursos, vínculos | ✅ |
+| UI navegação | Início, Dashboard, Processos, **Recursos**, Importar |
+| Cadastro revisão (abas) | Vigência/identificação, Medição, Investimentos, Recursos (vínculos + edição inline) |
+| Workflow revisão (V005) | Rascunho → análise → aprovada/rejeitada; ativar só se aprovada |
+| Catálogo global recursos | Página `/recursos` + `PUT`/`DELETE` na API |
+| Dashboard materializado + recálculo | ✅ |
+| Fase 4 | Alertas, CSV/Excel, por-família, comparativo, diagnóstico rateio |
+| Import planilha (CLI + UI) | ✅ |
+| Integração SI / api-delpi (`transformometro_client`) | ✅ |
+| Testes API | `scripts/ci-transformometro-api.sh` (24 testes) |
 
 ## Pendente (operacional)
 
 | Item | Responsável |
 |------|-------------|
-| Registrar/atualizar manifesto na Core API + RBAC | Ops — `register-manifest.sh` |
-| Deploy Fase 4 (V004 + MFE alertas/export/comparativo) | Ops — rebuild + migrations |
-| `TRANSFORMOMETRO_API_BASE_URL=http://transformometro-api:8000` no `.env` | ✅ Produção |
+| Registrar/atualizar manifesto na Core API + RBAC (rota `/recursos`) | Ops — `register-manifest.sh` |
+| Deploy com V004–V005 + MFE recente | Ops — rebuild + migrations |
 | Planilha somente leitura | Google Workspace |
+| Export PDF dashboard | Backlog dev |
 
 ## Variáveis de produção (checklist)
 
 ```bash
 API_DELPI_INTERNAL_SERVICE_TOKEN=<mesmo valor em api-delpi, SI, transformometro-api>
 TRANSFORMOMETRO_API_BASE_URL=http://transformometro-api:8000
+TM_RUN_MIGRATIONS_ON_STARTUP=true
 ```
 
-## Comandos úteis (srv-api)
+## Comandos úteis (servidor)
 
 ```bash
 cd ~/projetos/delpi-central
 git pull
-docker compose build transformometro-api transformometro strategic-indicators-api api-delpi
-docker compose up -d --force-recreate transformometro-api transformometro strategic-indicators-api api-delpi
+docker compose build transformometro-api transformometro
+docker compose up -d --force-recreate transformometro-api transformometro
 
-# Testes locais (venv)
+# Migrations (se TM_RUN_MIGRATIONS_ON_STARTUP=false)
+docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistence.plugins.migrations_runner status
+docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistence.plugins.migrations_runner up
+
+# Manifesto (JWT apps.manage)
+export TOKEN="..." BASE_URL="https://www.minhadelpi.com.br"
+./plugins/transformometro/scripts/register-manifest.sh
+
+# Testes locais
 ./scripts/ci-transformometro-api.sh
-
-# Health + integração (token interno)
-curl -s -H "X-Delpi-Service-Token: $API_DELPI_INTERNAL_SERVICE_TOKEN" \
-  "http://transformometro-api:8000/transformometro/integrations/engineering/transforma-mais/processes/summary?start_date=2026-05-01&end_date=2026-05-31"
 ```
 
 ## Referências
 
 - [ROADMAP.md](./ROADMAP.md)
 - [OPERATIONS.md](./OPERATIONS.md)
+- [OVERVIEW.md](./OVERVIEW.md)
 - [ARCHITECTURE.md](./ARCHITECTURE.md)
 - [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md)
