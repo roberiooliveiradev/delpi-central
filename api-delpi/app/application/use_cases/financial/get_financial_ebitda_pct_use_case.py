@@ -2,6 +2,9 @@ from app.application.dto.financial.get_rol_request import GetRolRequest
 from app.application.services.financial.financial_metrics_snapshot_service import (
     FinancialMetricsSnapshotService,
 )
+from app.application.services.financial.financial_sheet_scope import (
+    CONSOLIDATED_BRANCH_KEY,
+)
 
 
 class GetFinancialEbitdaPctUseCase:
@@ -51,14 +54,16 @@ class GetFinancialEbitdaPctUseCase:
                 "ebitda_over_rol_pct": item.ebitda_over_rol_pct,
             }
             for item in snapshot.branches
+            if item.branch != CONSOLIDATED_BRANCH_KEY
         ]
 
+        consolidated_snapshot = next(
+            (item for item in snapshot.branches if item.branch == CONSOLIDATED_BRANCH_KEY),
+            None,
+        )
         consolidated_value = (
-            round(
-                sum(item["ebitda_over_rol_pct"] for item in branches) / len(branches),
-                2,
-            )
-            if branches
+            consolidated_snapshot.ebitda_over_rol_pct
+            if consolidated_snapshot and consolidated_snapshot.ebitda_over_rol_pct is not None
             else 0.0
         )
 

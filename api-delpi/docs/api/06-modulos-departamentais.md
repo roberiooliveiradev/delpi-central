@@ -23,8 +23,8 @@ Parâmetros comuns de período:
 | Método | Rota completa | Descrição |
 |---|---|---|
 | GET | `/finacial/financial/rol` | Receita Operacional Líquida (ROL). |
-| GET | `/finacial/financial/ebitda_pct` | EBITDA percentual sobre ROL. |
-| GET | `/finacial/financial/fixed_cost_pct` | Custos fixos percentuais. |
+| GET | `/finacial/financial/ebitda_pct` | EBITDA % (planilha; filial vazia = consolidado). |
+| GET | `/finacial/financial/fixed_cost_pct` | Custos fixos % (planilha; filial vazia = consolidado). |
 | GET | `/finacial/financial/pmr` | Prazo médio de recebimento. |
 
 ---

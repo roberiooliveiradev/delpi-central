@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.application.dto.financial.get_rol_request import GetRolRequest
+from app.application.services.financial.financial_sheet_scope import (
+    CONSOLIDATED_BRANCH_KEY,
+    is_consolidated_sheet_row,
+    normalize_sheet_branch,
+)
 from app.application.shared.period_resolution import (
     ResolvedPeriod,
 )
@@ -174,7 +179,7 @@ class FinancialMetricsSnapshotService:
             fixed_cost_rows = rows_override.get("fixed_cost_rows", [])
             receivables_rows = rows_override.get("receivables_rows", [])
 
-        branches = self._resolve_branches(
+        branch_codes = self._resolve_branch_codes(
             ebitda_rows=ebitda_rows,
             fixed_cost_rows=fixed_cost_rows,
             receivables_rows=receivables_rows,
@@ -182,53 +187,36 @@ class FinancialMetricsSnapshotService:
         )
 
         snapshots: list[FinancialBranchSnapshot] = []
+        rol_by_branch = self._fetch_rol_by_branch(
+            branch_codes=branch_codes,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
-        for branch_code in branches:
-            rol_payload = self._financial_query_repository.get_rol(
-                GetRolRequest(
-                    branch=branch_code,
-                    start_date=start_date,
-                    end_date=end_date,
+        if branch is None:
+            snapshots.append(
+                self._build_scope_snapshot(
+                    scope_key=CONSOLIDATED_BRANCH_KEY,
+                    consolidated=True,
+                    ebitda_rows=ebitda_rows,
+                    fixed_cost_rows=fixed_cost_rows,
+                    receivables_rows=receivables_rows,
+                    rol_with_ipi=self._sum_rol(rol_by_branch),
                 )
             )
+
+        for branch_code in branch_codes:
+            rol_payload = rol_by_branch.get(branch_code, {})
             rol_with_ipi = self._utils.to_float(rol_payload.get("rol_with_ipi")) or 0.0
 
-            ebitda_value = self._average_numeric_field(
-                rows=ebitda_rows,
-                branch=branch_code,
-                field_name="ebitida",
-            )
-
-            fixed_cost_value = self._average_numeric_field(
-                rows=fixed_cost_rows,
-                branch=branch_code,
-                field_name="custos_fixos",
-            )
-
-            pmr_days = self._average_numeric_field(
-                rows=receivables_rows,
-                branch=branch_code,
-                field_name="prazo_medio_recebimento",
-            )
-
-            ebitda_over_rol_pct = self._calculate_ratio_pct(
-                numerator=ebitda_value,
-                denominator=rol_with_ipi,
-            )
-            fixed_cost_over_rol_pct = self._calculate_ratio_pct(
-                numerator=fixed_cost_value,
-                denominator=rol_with_ipi,
-            )
-
             snapshots.append(
-                FinancialBranchSnapshot(
-                    branch=branch_code,
+                self._build_scope_snapshot(
+                    scope_key=branch_code,
+                    consolidated=False,
+                    ebitda_rows=ebitda_rows,
+                    fixed_cost_rows=fixed_cost_rows,
+                    receivables_rows=receivables_rows,
                     rol_with_ipi=rol_with_ipi,
-                    ebitda_value=round(ebitda_value, 2),
-                    fixed_cost_value=round(fixed_cost_value, 2),
-                    pmr_days=round(pmr_days, 2),
-                    ebitda_over_rol_pct=ebitda_over_rol_pct,
-                    fixed_cost_over_rol_pct=fixed_cost_over_rol_pct,
                 )
             )
 
@@ -238,7 +226,25 @@ class FinancialMetricsSnapshotService:
             branches=snapshots,
         )
 
-    def _resolve_branches(
+    def _fetch_rol_by_branch(
+        self,
+        *,
+        branch_codes: list[str],
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict[str, dict]:
+        result: dict[str, dict] = {}
+        for branch_code in branch_codes:
+            result[branch_code] = self._financial_query_repository.get_rol(
+                GetRolRequest(
+                    branch=branch_code,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            )
+        return result
+
+    def _resolve_branch_codes(
         self,
         *,
         ebitda_rows: list[dict],
@@ -249,14 +255,61 @@ class FinancialMetricsSnapshotService:
         if branch:
             return [branch]
 
-        branches = set()
+        branches: set[str] = set()
 
         for row in ebitda_rows + fixed_cost_rows + receivables_rows:
-            branch_code = self._normalize_branch(row.get("filial"))
+            branch_code = normalize_sheet_branch(row.get("filial"))
             if branch_code:
                 branches.add(branch_code)
 
         return sorted(branches)
+
+    def _build_scope_snapshot(
+        self,
+        *,
+        scope_key: str,
+        consolidated: bool,
+        ebitda_rows: list[dict],
+        fixed_cost_rows: list[dict],
+        receivables_rows: list[dict],
+        rol_with_ipi: float,
+    ) -> FinancialBranchSnapshot:
+        ebitda_pct = self._average_sheet_pct(
+            rows=ebitda_rows,
+            field_name="ebitida",
+            consolidated=consolidated,
+            branch=None if consolidated else scope_key,
+        )
+        fixed_cost_pct = self._average_sheet_pct(
+            rows=fixed_cost_rows,
+            field_name="custos_fixos",
+            consolidated=consolidated,
+            branch=None if consolidated else scope_key,
+        )
+        pmr_days = self._average_sheet_metric(
+            rows=receivables_rows,
+            field_name="prazo_medio_recebimento",
+            consolidated=consolidated,
+            branch=None if consolidated else scope_key,
+        ) or 0.0
+
+        return FinancialBranchSnapshot(
+            branch=scope_key,
+            rol_with_ipi=round(rol_with_ipi, 2),
+            ebitda_value=round(ebitda_pct, 2),
+            fixed_cost_value=round(fixed_cost_pct, 2),
+            pmr_days=round(pmr_days, 2),
+            ebitda_over_rol_pct=round(ebitda_pct, 2) if ebitda_pct is not None else None,
+            fixed_cost_over_rol_pct=round(fixed_cost_pct, 2)
+            if fixed_cost_pct is not None
+            else None,
+        )
+
+    def _sum_rol(self, rol_by_branch: dict[str, dict]) -> float:
+        total = 0.0
+        for payload in rol_by_branch.values():
+            total += self._utils.to_float(payload.get("rol_with_ipi")) or 0.0
+        return total
 
     def _filter_period_rows(
         self,
@@ -275,41 +328,46 @@ class FinancialMetricsSnapshotService:
             )
         ]
 
-    def _average_numeric_field(
+    def _average_sheet_pct(
         self,
         *,
         rows: list[dict],
-        branch: str,
         field_name: str,
+        consolidated: bool,
+        branch: str | None,
     ) -> float:
+        value = self._average_sheet_metric(
+            rows=rows,
+            field_name=field_name,
+            consolidated=consolidated,
+            branch=branch,
+        )
+        return value if value is not None else 0.0
+
+    def _average_sheet_metric(
+        self,
+        *,
+        rows: list[dict],
+        field_name: str,
+        consolidated: bool,
+        branch: str | None,
+    ) -> float | None:
         values: list[float] = []
 
         for row in rows:
-            row_branch = self._normalize_branch(row.get("filial"))
-            if row_branch != branch:
+            row_is_consolidated = is_consolidated_sheet_row(row.get("filial"))
+            if consolidated and not row_is_consolidated:
                 continue
+            if not consolidated:
+                row_branch = normalize_sheet_branch(row.get("filial"))
+                if row_branch != branch:
+                    continue
 
             number = row.get(field_name)
             if number is not None:
-                values.append(number)
+                values.append(float(number))
 
         if not values:
-            return 0.0
+            return None
 
         return sum(values) / len(values)
-
-    def _calculate_ratio_pct(
-        self,
-        *,
-        numerator: float,
-        denominator: float,
-    ) -> float | None:
-        if not denominator:
-            return None
-        return round((numerator / denominator) * 100, 2)
-
-    def _normalize_branch(self, value) -> str | None:
-        if value is None:
-            return None
-        raw = str(value).strip()
-        return raw or None
