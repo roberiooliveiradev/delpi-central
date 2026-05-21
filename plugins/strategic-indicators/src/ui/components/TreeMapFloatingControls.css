@@ -19,8 +19,37 @@
   pointer-events: auto;
 }
 
+.si-tree-map-floating--collapsed {
+  width: auto;
+  max-width: none;
+}
+
 .si-tree-map-floating__panel--collapsed {
-  padding-bottom: 10px;
+  width: auto;
+  max-width: none;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.si-tree-map-floating__panel--collapsed .si-tree-map-floating__toolbar {
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.si-tree-map-floating__toggle--compact {
+  padding: 8px 11px;
+  font-size: 11px;
+}
+
+.si-tree-map-floating__panel--collapsed .si-tree-map-floating__view-controls {
+  margin-left: 0;
+  padding: 4px;
+  background: color-mix(in srgb, var(--si-card-bg) 82%, transparent);
+  backdrop-filter: blur(8px);
 }
 
 .si-tree-map-floating__toolbar {

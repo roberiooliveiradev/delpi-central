@@ -59,7 +59,12 @@ export function TreeMapFloatingControls({
   }, []);
 
   return (
-    <div className="si-tree-map-floating" data-pan-zoom-lock="true">
+    <div
+      className={`si-tree-map-floating${
+        collapsed ? " si-tree-map-floating--collapsed" : ""
+      }`}
+      data-pan-zoom-lock="true"
+    >
       <div
         className={`si-tree-map-floating__panel${
           collapsed ? " si-tree-map-floating__panel--collapsed" : ""
@@ -68,19 +73,22 @@ export function TreeMapFloatingControls({
         <div className="si-tree-map-floating__toolbar">
           <button
             type="button"
-            className="si-tree-map-floating__toggle"
+            className={`si-tree-map-floating__toggle${
+              collapsed ? " si-tree-map-floating__toggle--compact" : ""
+            }`}
             onClick={toggleCollapsed}
             aria-expanded={!collapsed}
+            title={collapsed ? "Mostrar filtros" : "Ocultar filtros"}
           >
             {collapsed ? (
               <>
                 <ChevronDown size={16} aria-hidden />
-                Mostrar filtros
+                <span>Filtros</span>
               </>
             ) : (
               <>
                 <ChevronUp size={16} aria-hidden />
-                Ocultar filtros
+                <span>Ocultar filtros</span>
               </>
             )}
           </button>

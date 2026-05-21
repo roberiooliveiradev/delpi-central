@@ -41,3 +41,9 @@
     min-height: calc(100dvh - 48px);
   }
 }
+
+html:fullscreen .si-departments-page--immersive,
+html:-webkit-full-screen .si-departments-page--immersive {
+  min-height: 100%;
+  height: 100%;
+}
