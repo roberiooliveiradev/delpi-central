@@ -1,3 +1,5 @@
+import { DEPARTMENT_TREE_SCOPE_OPTIONS } from "../../data/departmentTreeScopes";
+import type { DepartmentTreeScopeKey } from "../../data/types/departmentTree";
 import {
   STRATEGIC_INDICATORS_BRANCH_OPTIONS,
   type StrategicIndicatorsViewMode,
@@ -10,9 +12,12 @@ type StrategicIndicatorsReferenceFiltersProps = {
   branch: string;
   monthsToCompare?: number;
   showMonthsToCompare?: boolean;
+  viewPickerVariant?: "default" | "tree";
+  treeScope?: DepartmentTreeScopeKey;
   onReferenceMonthChange: (value: string) => void;
   onViewModeChange: (value: StrategicIndicatorsViewMode) => void;
   onBranchChange: (value: string) => void;
+  onTreeScopeChange?: (scope: DepartmentTreeScopeKey) => void;
   onMonthsToCompareChange?: (value: number) => void;
   className?: string;
 };
@@ -23,9 +28,12 @@ export function StrategicIndicatorsReferenceFilters({
   branch,
   monthsToCompare = 3,
   showMonthsToCompare = false,
+  viewPickerVariant = "default",
+  treeScope = "consolidated",
   onReferenceMonthChange,
   onViewModeChange,
   onBranchChange,
+  onTreeScopeChange,
   onMonthsToCompareChange,
   className = "",
 }: StrategicIndicatorsReferenceFiltersProps) {
@@ -45,36 +53,59 @@ export function StrategicIndicatorsReferenceFilters({
         />
       </label>
 
-      <label className="si-reference-filters__field">
-        <span className="si-reference-filters__label">Visão</span>
-        <select
-          className="si-reference-filters__input"
-          value={viewMode}
-          onChange={(event) =>
-            onViewModeChange(event.target.value as StrategicIndicatorsViewMode)
-          }
-        >
-          <option value="consolidated">Consolidado</option>
-          <option value="branch">Por filial</option>
-        </select>
-      </label>
-
-      {viewMode === "branch" ? (
+      {viewPickerVariant === "tree" ? (
         <label className="si-reference-filters__field">
-          <span className="si-reference-filters__label">Filial</span>
+          <span className="si-reference-filters__label">Visão</span>
           <select
             className="si-reference-filters__input"
-            value={branch}
-            onChange={(event) => onBranchChange(event.target.value)}
+            value={treeScope}
+            onChange={(event) =>
+              onTreeScopeChange?.(event.target.value as DepartmentTreeScopeKey)
+            }
           >
-            {STRATEGIC_INDICATORS_BRANCH_OPTIONS.map((item) => (
+            {DEPARTMENT_TREE_SCOPE_OPTIONS.map((item) => (
               <option key={item.value} value={item.value}>
                 {item.label}
               </option>
             ))}
           </select>
         </label>
-      ) : null}
+      ) : (
+        <>
+          <label className="si-reference-filters__field">
+            <span className="si-reference-filters__label">Visão</span>
+            <select
+              className="si-reference-filters__input"
+              value={viewMode}
+              onChange={(event) =>
+                onViewModeChange(
+                  event.target.value as StrategicIndicatorsViewMode,
+                )
+              }
+            >
+              <option value="consolidated">Consolidado</option>
+              <option value="branch">Por filial</option>
+            </select>
+          </label>
+
+          {viewMode === "branch" ? (
+            <label className="si-reference-filters__field">
+              <span className="si-reference-filters__label">Filial</span>
+              <select
+                className="si-reference-filters__input"
+                value={branch}
+                onChange={(event) => onBranchChange(event.target.value)}
+              >
+                {STRATEGIC_INDICATORS_BRANCH_OPTIONS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+        </>
+      )}
 
       {showMonthsToCompare ? (
         <label className="si-reference-filters__field">

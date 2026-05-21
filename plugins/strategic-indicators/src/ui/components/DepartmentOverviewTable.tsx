@@ -1,5 +1,6 @@
 import type { DepartmentOverviewViewItem } from "../../data/types/departments";
 import { appendStrategicIndicatorsFiltersToPath } from "../shared/strategicIndicatorsFilterUrl";
+import { navigateStrategicIndicators } from "../shared/strategicIndicatorsNavigation";
 import { StatusBadge } from "./StatusBadge";
 import "./DepartmentOverviewTable.css";
 
@@ -77,6 +78,23 @@ export function DepartmentOverviewTable({
                   `/apps/strategic-indicators/departments/${department.id}`,
                 )}
                 className="si-link-button"
+                onClick={(event) => {
+                  if (
+                    event.defaultPrevented ||
+                    event.button !== 0 ||
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.shiftKey ||
+                    event.altKey
+                  ) {
+                    return;
+                  }
+
+                  event.preventDefault();
+                  navigateStrategicIndicators(
+                    `/apps/strategic-indicators/departments/${department.id}`,
+                  );
+                }}
               >
                 Ver detalhe
               </a>

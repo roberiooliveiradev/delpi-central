@@ -1,3 +1,9 @@
+import { useCallback } from "react";
+import {
+  applyTreeScopeSelection,
+  resolveActiveTreeScopeKey,
+} from "../../data/departmentTreeScopes";
+import type { DepartmentTreeScopeKey } from "../../data/types/departmentTree";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { DepartmentIgdTree } from "../components/DepartmentIgdTree";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
@@ -26,7 +32,18 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
     filterState,
   } = useStrategicIndicatorsFilters();
 
-  const { model, loading, refreshing, error, reload, isMultiColumn } =
+  const treeScope = resolveActiveTreeScopeKey(viewMode, branch);
+
+  const handleTreeScopeChange = useCallback(
+    (scope: DepartmentTreeScopeKey) => {
+      const next = applyTreeScopeSelection(scope);
+      setViewMode(next.viewMode);
+      setBranch(next.branch);
+    },
+    [setViewMode, setBranch],
+  );
+
+  const { model, loading, refreshing, error, reload } =
     useStrategicIndicatorsDepartmentTree({
       viewMode,
       branch,
@@ -88,15 +105,16 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
           <DepartmentIgdTree
             model={model}
             filterState={filterState}
-            isMultiColumn={isMultiColumn}
             filterControls={{
               referenceMonth,
               viewMode,
               branch,
+              treeScope,
               monthsToCompare,
               onReferenceMonthChange: setReferenceMonth,
               onViewModeChange: setViewMode,
               onBranchChange: setBranch,
+              onTreeScopeChange: handleTreeScopeChange,
               onMonthsToCompareChange: setMonthsToCompare,
               status: statusBadge,
             }}

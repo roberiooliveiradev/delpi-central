@@ -1,10 +1,25 @@
 /* Organograma: IGD → Visão → Departamentos → Indicadores */
 
+.si-org-chart--single-scope .si-org-chart__department-column {
+  min-width: 280px;
+  max-width: 340px;
+}
+
+.si-org-chart--single-scope .si-org-chart__department-scopes {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .si-org-chart {
   --si-org-chart-cols: 3;
   --si-org-line: color-mix(in srgb, var(--si-accent, #2563eb) 55%, var(--si-card-border));
   --si-org-igd-bg: linear-gradient(165deg, #1a4d7c 0%, #0f3358 100%);
   --si-org-scope-bg: linear-gradient(165deg, #2563eb 0%, #1d4ed8 100%);
+  --si-tree-card-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 4px 14px rgb(15 23 42 / 0.06);
+  --si-tree-card-shadow-hover:
+    0 2px 6px rgb(15 23 42 / 0.06),
+    0 10px 22px rgb(15 23 42 / 0.09);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -211,7 +226,6 @@
 .si-tree-card--interactive,
 .si-tree-dept-card__link,
 .si-tree-igd-card__link,
-.si-tree-scope-card__link,
 .si-tree-indicator-card__link {
   display: block;
   width: 100%;
@@ -226,14 +240,44 @@
     filter 0.22s ease;
 }
 
+.si-tree-scope-card,
+.si-tree-card--static {
+  display: block;
+  width: 100%;
+  max-width: none;
+  color: inherit;
+  cursor: default;
+}
+
+.si-org-chart .si-igd-hero,
+.si-org-chart .si-trend-hero,
+.si-org-chart .si-department-card,
+.si-org-chart .si-indicator-card {
+  box-shadow: var(--si-tree-card-shadow);
+}
+
+.si-org-chart .si-trend-hero::before {
+  opacity: 0.35;
+}
+
+.si-org-chart .si-trend-hero__glow {
+  opacity: 0.22;
+  filter: blur(16px);
+}
+
 .si-tree-card--interactive:hover {
-  transform: translateY(-5px) scale(1.01);
-  box-shadow: 0 16px 36px color-mix(in srgb, var(--si-accent, #2563eb) 18%, transparent);
-  filter: brightness(1.02);
+  transform: translateY(-3px);
+}
+
+.si-tree-card--interactive:hover .si-igd-hero,
+.si-tree-card--interactive:hover .si-trend-hero,
+.si-tree-card--interactive:hover .si-department-card,
+.si-tree-card--interactive:hover .si-indicator-card {
+  box-shadow: var(--si-tree-card-shadow-hover);
 }
 
 .si-tree-card--interactive:active {
-  transform: translateY(-2px) scale(1.005);
+  transform: translateY(-1px);
 }
 
 .si-tree-card--active {
@@ -388,6 +432,52 @@
   width: 100%;
 }
 
+.si-org-chart__departments-row--one-expanded {
+  justify-content: center;
+}
+
+.si-org-chart__department-column--solo-expanded {
+  flex: 1 1 560px;
+  min-width: min(100%, 520px);
+  max-width: min(96vw, 1280px);
+}
+
+.si-org-chart__department-column--open:not(.si-org-chart__department-column--solo-expanded) {
+  min-width: 300px;
+}
+
+.si-tree-dept__indicator-list--row {
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.si-tree-dept__indicator-list--row > .si-tree-indicator-card__link {
+  flex: 1 1 220px;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.si-tree-dept__indicator-list--multi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.si-tree-dept__indicator-list--multi-grid > .si-tree-indicator-card__link {
+  min-width: 0;
+  max-width: none;
+}
+
+.si-tree-dept__indicator-list--multi-stack {
+  flex-direction: column;
+}
+
+.si-tree-dept__indicator-list--multi-stack > .si-tree-indicator-card__link {
+  max-width: none;
+}
+
 /* —— Card indicador (nível 4) —— */
 
 .si-tree-indicator-card {
@@ -436,7 +526,7 @@
   border: 2px solid transparent;
   text-align: center;
   text-decoration: none;
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--si-title) 8%, transparent);
+  box-shadow: var(--si-tree-card-shadow);
 }
 
 .si-org-chart__node--compact {
@@ -578,7 +668,15 @@
     max-width: 320px;
   }
 
-  .si-tree-indicator-card__metrics {
+  .si-tree-dept__indicator-list--row {
+    flex-direction: column;
+  }
+
+  .si-tree-dept__indicator-list--row > .si-tree-indicator-card__link {
+    max-width: none;
+  }
+
+  .si-tree-dept__indicator-list--multi-grid {
     grid-template-columns: 1fr;
   }
 }
