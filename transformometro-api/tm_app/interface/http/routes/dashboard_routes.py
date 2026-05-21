@@ -171,3 +171,25 @@ def dashboard_export_csv(
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": 'attachment; filename="transformometro-dashboard.csv"'},
     )
+
+
+@router.get("/export.xls")
+def dashboard_export_excel(
+    filial_id: str | None = None,
+    setor_id: str | None = None,
+    familia_processo: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
+):
+    content = DashboardExportService().build_excel_html(
+        filial_id=filial_id,
+        setor_id=setor_id,
+        familia_processo=familia_processo,
+        competencia_inicio=competencia_inicio,
+        competencia_fim=competencia_fim,
+    )
+    return Response(
+        content=content.encode("utf-8"),
+        media_type="application/vnd.ms-excel; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="transformometro-dashboard.xls"'},
+    )

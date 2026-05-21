@@ -593,18 +593,40 @@ export function fetchDashboardAlertas(
   );
 }
 
-export async function downloadDashboardCsv(
+async function downloadDashboardExport(
+  path: string,
+  filename: string,
   getAccessToken?: () => string | undefined,
   params?: Record<string, string>
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
-  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/dashboard/export.csv${qs}`, {
+  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/dashboard/${path}${qs}`, {
     headers: buildAuthHeaders(getAccessToken),
   });
   if (!response.ok) {
     throw new Error(`Exportação falhou (HTTP ${response.status})`);
   }
-  return response.blob();
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+export function downloadDashboardCsv(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  return downloadDashboardExport("export.csv", "transformometro-dashboard.csv", getAccessToken, params);
+}
+
+export function downloadDashboardExcel(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  return downloadDashboardExport("export.xls", "transformometro-dashboard.xls", getAccessToken, params);
 }
 
 export function fetchProcessoComparativo(
