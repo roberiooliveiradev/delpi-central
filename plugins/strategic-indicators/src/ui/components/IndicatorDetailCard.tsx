@@ -9,6 +9,8 @@ import {
   formatBranchScopedMetric,
   formatIndicatorGoalValue,
   formatIndicatorScore,
+  formatScopeAwareMetric,
+  hasBranchScopeValues,
   hasMultiBranchValues,
   isMissingValueClassification,
 } from "../shared/indicatorValueFormatter";
@@ -18,19 +20,6 @@ type IndicatorDetailCardProps = {
   indicator: DepartmentIndicator;
   competence?: string | null;
 };
-
-function getRealizedKeyLabel(key: string) {
-  switch (key) {
-    case "consolidated":
-      return "Consolidado";
-    case "per_unit":
-      return "Por unidade";
-    case "average_of_units":
-      return "Média das unidades";
-    default:
-      return key;
-  }
-}
 
 function getValueFormat(indicator: DepartmentIndicator) {
   return {
@@ -43,32 +32,21 @@ function getValueFormat(indicator: DepartmentIndicator) {
 
 function formatRealized(indicator: DepartmentIndicator) {
   const valueFormat = getValueFormat(indicator);
+  const realized = indicator.realized ?? {};
 
-  if (hasMultiBranchValues(indicator.realized)) {
-    return formatBranchScopedMetric(indicator.realized, valueFormat);
-  }
-
-  const entries = Object.entries(indicator.realized ?? {});
-
-  if (!entries.length) {
+  if (!Object.keys(realized).length) {
     return indicator.hasValue ? "—" : "Sem dados preenchidos";
   }
 
-  return entries
-    .map(
-      ([key, value]) =>
-        `${getRealizedKeyLabel(key)}: ${formatBranchScopedMetric({ [key]: value }, valueFormat)}`,
-    )
-    .join(" · ");
+  return formatScopeAwareMetric(realized, valueFormat);
 }
 
 function formatGap(indicator: DepartmentIndicator) {
   const valueFormat = getValueFormat(indicator);
+  const gaps = indicator.gaps ?? {};
 
-  if (hasMultiBranchValues(indicator.gaps)) {
-    return formatBranchScopedMetric(indicator.gaps, valueFormat, {
-      signed: true,
-    });
+  if (hasBranchScopeValues(gaps) || hasMultiBranchValues(gaps)) {
+    return formatBranchScopedMetric(gaps, valueFormat, { signed: true });
   }
 
   return formatBranchScopedMetric(
