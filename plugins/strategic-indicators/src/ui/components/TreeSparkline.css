@@ -1,0 +1,22 @@
+.si-tree-sparkline {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--si-card-bg) 65%, transparent);
+  border: 1px solid color-mix(in srgb, var(--si-card-border) 70%, transparent);
+}
+
+.si-tree-sparkline__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--si-text-muted);
+}
+
+.si-tree-sparkline .si-presentation-sparkline--empty {
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--si-text-muted) 8%, transparent);
+}

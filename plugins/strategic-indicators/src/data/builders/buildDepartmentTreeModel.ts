@@ -49,8 +49,10 @@ function buildDepartmentNodes(
     .filter((item): item is DepartmentOverviewViewItem => Boolean(item))
     .map((department) => ({
       department,
+      series: [],
       indicators: (byDepartment.get(department.id) ?? []).map((indicator) => ({
         indicator,
+        series: [],
       })),
     }));
 }
@@ -97,6 +99,7 @@ export function buildDepartmentTreeModel({
     igd,
     igdExact,
     classification,
+    igdSeries: [],
     columns,
     departmentOrder,
   };

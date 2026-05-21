@@ -9,13 +9,20 @@ export type DepartmentTreeScopeConfig = {
   label: string;
 };
 
+export type DepartmentTreeSparkPoint = {
+  period: string;
+  value: number;
+};
+
 export type DepartmentTreeIndicatorNode = {
   indicator: IndicatorViewItem;
+  series: DepartmentTreeSparkPoint[];
 };
 
 export type DepartmentTreeDepartmentNode = {
   department: DepartmentOverviewViewItem;
   indicators: DepartmentTreeIndicatorNode[];
+  series: DepartmentTreeSparkPoint[];
 };
 
 export type DepartmentTreeColumn = {
@@ -30,6 +37,7 @@ export type DepartmentTreeModel = {
   igd: number | null;
   igdExact: number | null;
   classification: string | null;
+  igdSeries: DepartmentTreeSparkPoint[];
   columns: DepartmentTreeColumn[];
   departmentOrder: string[];
 };
