@@ -5,6 +5,7 @@ import type {
 import { PresentationDepartmentSparkline } from "./PresentationDepartmentSparkline";
 import {
   formatIndicatorGoalValue,
+  formatIndicatorScore,
   formatIndicatorValue,
 } from "../shared/indicatorValueFormatter";
 import "./PresentationDepartmentSlideScene.css";
@@ -58,22 +59,32 @@ function buildFallbackSeries(
   ];
 }
 
+function getScoredIndicators(department: PresentationDepartmentFocus) {
+  return department.indicators.filter(
+    (indicator): indicator is PresentationDepartmentFocus["indicators"][number] & {
+      score: number;
+    } => indicator.score !== null,
+  );
+}
+
 function getBestIndicator(department: PresentationDepartmentFocus) {
-  if (!department.indicators.length) return null;
-  return [...department.indicators].sort((a, b) => b.score - a.score)[0] ?? null;
+  const scored = getScoredIndicators(department);
+  if (!scored.length) return null;
+  return [...scored].sort((a, b) => b.score - a.score)[0] ?? null;
 }
 
 function getWorstIndicator(department: PresentationDepartmentFocus) {
-  if (!department.indicators.length) return null;
-  return [...department.indicators].sort((a, b) => a.score - b.score)[0] ?? null;
+  const scored = getScoredIndicators(department);
+  if (!scored.length) return null;
+  return [...scored].sort((a, b) => a.score - b.score)[0] ?? null;
 }
 
 function getCriticalIndicators(department: PresentationDepartmentFocus) {
-  return department.indicators.filter((indicator) => indicator.score < 7);
+  return getScoredIndicators(department).filter((indicator) => indicator.score < 7);
 }
 
 function getHighlightIndicators(department: PresentationDepartmentFocus) {
-  return department.indicators.filter((indicator) => indicator.score >= 9);
+  return getScoredIndicators(department).filter((indicator) => indicator.score >= 9);
 }
 
 function buildClosingSentence(department: PresentationDepartmentFocus) {
@@ -97,10 +108,16 @@ function buildIndicatorChartSeries(
   indicator: PresentationDepartmentFocus["indicators"][number],
 ) {
   if (indicator.series?.length) {
-    return indicator.series.map((point) => ({
-      period: point.period,
-      value: point.score,
-    }));
+    return indicator.series
+      .filter((point) => point.score !== null && point.score !== undefined)
+      .map((point) => ({
+        period: point.period,
+        value: point.score as number,
+      }));
+  }
+
+  if (indicator.score === null) {
+    return [];
   }
 
   return [{ period: "Atual", value: indicator.score }];
@@ -257,7 +274,7 @@ export function PresentationDepartmentSlideScene({
               <div className="si-presentation-department-slide__priority-metrics si-presentation-department-slide__priority-metrics--grid">
                 <div>
                   <span>Score</span>
-                  <strong>{formatScore(indicator.score)}</strong>
+                  <strong>{formatIndicatorScore(indicator.score)}</strong>
                 </div>
 
                 <div>

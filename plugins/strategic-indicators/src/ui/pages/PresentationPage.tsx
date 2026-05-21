@@ -460,7 +460,9 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
   const indicatorAlertsCount = data?.alerts.indicators.length ?? 0;
 
   const selectedDepartmentCriticalIndicatorsCount =
-    departmentFocus?.indicators.filter((item) => item.score < 7).length ?? 0;
+    departmentFocus?.indicators.filter(
+      (item) => item.score !== null && item.score < 7,
+    ).length ?? 0;
 
   const trendPointsCount = data?.trend?.igdSeries.length ?? 0;
 
