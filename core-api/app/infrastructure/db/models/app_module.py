@@ -17,8 +17,10 @@ class App(db.Model, TimestampMixin):
     active = db.Column(db.Boolean, default=True, nullable=False)
     created_by_user_id = db.Column(db.UUID(as_uuid=True), nullable=True)
     created_by_email = db.Column(db.String(255), nullable=True)
+    created_by_name = db.Column(db.String(150), nullable=True)
     updated_by_user_id = db.Column(db.UUID(as_uuid=True), nullable=True)
     updated_by_email = db.Column(db.String(255), nullable=True)
+    updated_by_name = db.Column(db.String(150), nullable=True)
 
     routes = db.relationship(
         "AppRoute",

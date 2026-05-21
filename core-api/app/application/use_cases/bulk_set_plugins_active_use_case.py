@@ -26,7 +26,7 @@ class BulkSetPluginsActiveUseCase:
         active: bool,
         *,
         actor_user_id: str | None = None,
-        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> BulkSetPluginsActiveResult:
 
         if not ids:
@@ -52,7 +52,7 @@ class BulkSetPluginsActiveUseCase:
             apply_app_audit(
                 plugin,
                 user_id=actor_user_id,
-                email=actor_email,
+                name=actor_name,
             )
             updated += 1
 

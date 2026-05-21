@@ -202,9 +202,9 @@ export type AdminApp = {
   created_at?: string | null;
   updated_at?: string | null;
   created_by_user_id?: string | null;
-  created_by_email?: string | null;
+  created_by_name?: string | null;
   updated_by_user_id?: string | null;
-  updated_by_email?: string | null;
+  updated_by_name?: string | null;
 };
 
 export type AdminAppRoute = {

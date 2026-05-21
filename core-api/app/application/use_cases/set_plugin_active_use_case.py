@@ -25,7 +25,7 @@ class SetPluginActiveUseCase:
         active: bool,
         *,
         actor_user_id: str | None = None,
-        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> SetPluginActiveResult:
 
         plugin = self._uow.plugins.get_by_id(plugin_id)
@@ -44,7 +44,7 @@ class SetPluginActiveUseCase:
         apply_app_audit(
             plugin,
             user_id=actor_user_id,
-            email=actor_email,
+            name=actor_name,
         )
 
         # 2️⃣ Evento global

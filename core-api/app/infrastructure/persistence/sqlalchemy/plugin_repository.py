@@ -22,13 +22,13 @@ class SqlAlchemyPluginRepository(PluginRepositoryPort):
         data: Dict[str, Any],
         *,
         actor_user_id: str | None = None,
-        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> None:
         row = App(**data)
         apply_app_audit(
             row,
             user_id=actor_user_id,
-            email=actor_email,
+            name=actor_name,
             on_create=True,
         )
         self.session.add(row)
@@ -39,13 +39,13 @@ class SqlAlchemyPluginRepository(PluginRepositoryPort):
         version: str,
         *,
         actor_user_id: str | None = None,
-        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> None:
         row = self.session.get(App, plugin_id)
         if not row:
             raise ValueError("Plugin not found")
         row.version = version
-        apply_app_audit(row, user_id=actor_user_id, email=actor_email)
+        apply_app_audit(row, user_id=actor_user_id, name=actor_name)
 
     def update_metadata(
         self,
@@ -55,7 +55,7 @@ class SqlAlchemyPluginRepository(PluginRepositoryPort):
         description: Optional[str],
         icon: Optional[str],
         actor_user_id: str | None = None,
-        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> None:
         row = self.session.get(App, plugin_id)
         if not row:
@@ -64,7 +64,7 @@ class SqlAlchemyPluginRepository(PluginRepositoryPort):
         row.name = name
         row.description = description
         row.icon = icon
-        apply_app_audit(row, user_id=actor_user_id, email=actor_email)
+        apply_app_audit(row, user_id=actor_user_id, name=actor_name)
 
     def delete(self, plugin_id: str) -> None:
         row = self.session.get(App, plugin_id)

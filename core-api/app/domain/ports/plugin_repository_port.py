@@ -16,7 +16,7 @@ class PluginRepositoryPort(ABC):
         data: Dict[str, Any],
         *,
         actor_user_id: str | None = None,
-        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> None:
         ...
 
@@ -27,7 +27,7 @@ class PluginRepositoryPort(ABC):
         version: str,
         *,
         actor_user_id: str | None = None,
-        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> None:
         ...
 
@@ -40,7 +40,7 @@ class PluginRepositoryPort(ABC):
         description: Optional[str],
         icon: Optional[str],
         actor_user_id: str | None = None,
-        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> None:
         ...
 

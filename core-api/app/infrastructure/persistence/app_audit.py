@@ -11,16 +11,16 @@ def apply_app_audit(
     row: App,
     *,
     user_id: str | None,
-    email: str | None,
+    name: str | None,
     on_create: bool = False,
 ) -> None:
     if on_create:
         if user_id:
             row.created_by_user_id = UUID(user_id)
-        if email:
-            row.created_by_email = email
+        if name:
+            row.created_by_name = name
 
     if user_id:
         row.updated_by_user_id = UUID(user_id)
-    if email:
-        row.updated_by_email = email
+    if name:
+        row.updated_by_name = name
