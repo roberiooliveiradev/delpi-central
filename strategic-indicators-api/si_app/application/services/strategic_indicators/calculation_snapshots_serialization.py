@@ -91,6 +91,7 @@ def deserialize_calculation_inputs(row: dict[str, Any]) -> tuple[
             value_prefix=item.get("value_prefix"),
             value_suffix=item.get("value_suffix"),
             value_decimals=int(item.get("value_decimals") or 2),
+            branch_goals=dict(item.get("branch_goals") or {}),
         )
         for item in row.get("indicators_catalog") or []
     ]

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 
+from si_app.shared.json_encoding import to_json_safe
+
 from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicIndicatorMeasuredValue,
 )
@@ -90,11 +92,23 @@ class PostgresStrategicIndicatorsCalculationSnapshotsRepository(
                 scope_branch,
                 scope_department_id,
                 CALCULATION_SNAPSHOT_SCHEMA_VERSION,
-                json.dumps(payload["departments_catalog"], ensure_ascii=False),
-                json.dumps(payload["indicators_catalog"], ensure_ascii=False),
-                json.dumps(payload["goals_by_department"], ensure_ascii=False),
-                json.dumps(payload["measurements"], ensure_ascii=False),
-                json.dumps(payload["measurement_errors"], ensure_ascii=False),
+                json.dumps(
+                    to_json_safe(payload["departments_catalog"]),
+                    ensure_ascii=False,
+                ),
+                json.dumps(
+                    to_json_safe(payload["indicators_catalog"]),
+                    ensure_ascii=False,
+                ),
+                json.dumps(
+                    to_json_safe(payload["goals_by_department"]),
+                    ensure_ascii=False,
+                ),
+                json.dumps(to_json_safe(payload["measurements"]), ensure_ascii=False),
+                json.dumps(
+                    to_json_safe(payload["measurement_errors"]),
+                    ensure_ascii=False,
+                ),
                 catalog_inputs_hash,
             ),
         )
