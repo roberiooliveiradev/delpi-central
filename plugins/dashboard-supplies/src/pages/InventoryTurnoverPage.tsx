@@ -37,7 +37,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
     filterState,
   } = useSuppliesFilters();
 
-  const { data, loading, refreshing, error, reload } = useSuppliesResource(
+  const { data, loading, refreshing, requestProgress, error, reload } = useSuppliesResource(
     (signal) => getInventoryTurnover(periodParams, signal),
     [
       periodParams.branch,
@@ -164,6 +164,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
         error={error}
         loading={loading}
         hasData={data !== null}
+        requestProgress={requestProgress}
         onRetry={reload}
       />
 

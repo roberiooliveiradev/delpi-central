@@ -69,7 +69,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
     filterState,
   } = useFinancialFilters();
 
-  const { rol, ebitda, fixedCost, pmr, loading, refreshing, error, reload } =
+  const { rol, ebitda, fixedCost, pmr, loading, refreshing, requestProgress, error, reload } =
     useFinancialDashboard(apiParams);
 
   const periodLabel = useMemo(
@@ -118,6 +118,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         error={error}
         loading={loading}
         hasData={hasData}
+        requestProgress={requestProgress}
         onRetry={reload}
       />
       <section className="ds-kpi-grid" aria-busy={isBusy}>

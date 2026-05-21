@@ -25,7 +25,7 @@ import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useProductionDashboard } from "../hooks/useProductionDashboard";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useProductionFilters } from "../hooks/useProductionFilters";
 import { formatPeriodLabel } from "../utils/dates";
 import { formatPercent } from "../utils/format";
@@ -51,6 +51,7 @@ export function DashboardProductionPage() {
     otd,
     loading,
     refreshing,
+    requestProgress,
     error,
     sectionErrors,
     reload,
@@ -72,8 +73,8 @@ export function DashboardProductionPage() {
     depreciation !== null ||
     oee !== null ||
     otd !== null;
-  const initialLoadingProgress = useSimulatedLoadingProgress(loading && !hasData);
-  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
+  const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
+  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
 
   const comparisonChartData = useMemo(
     () => [

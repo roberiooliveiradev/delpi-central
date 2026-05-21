@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppProps } from "../../App";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
-import { useSimulatedLoadingProgress } from "../../hooks/useSimulatedLoadingProgress";
+import {
+  useLoadingProgress,
+  useTrackedSingleFetchProgress,
+} from "../../hooks/useSimulatedLoadingProgress";
 import {
   activateRevisao,
   fetchInvestimentos,
@@ -158,7 +161,8 @@ export function RevisaoCadastroPanel({
     }
   }
 
-  const cadastroLoadingProgress = useSimulatedLoadingProgress(loading);
+  const cadastroFetchProgress = useTrackedSingleFetchProgress(loading);
+  const cadastroLoadingProgress = useLoadingProgress(loading, cadastroFetchProgress);
 
   if (loading) {
     return (

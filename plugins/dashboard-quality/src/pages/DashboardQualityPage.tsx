@@ -17,7 +17,7 @@ import { CHART_COLORS } from "../constants/chartColors";
 import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityDashboard } from "../hooks/useQualityDashboard";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import {
   formatCurrency,
@@ -76,6 +76,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
     audit5s,
     loading,
     refreshing,
+    requestProgress,
     error,
     sectionErrors,
     reload,
@@ -102,8 +103,8 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
 
   const isBusy = loading || refreshing;
   const hasData = ppmInternal !== null;
-  const initialLoadingProgress = useSimulatedLoadingProgress(loading && !hasData);
-  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
+  const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
+  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
 
   return (
     <div className="dashboard-quality dashboard-page dq-print-root">

@@ -1,4 +1,4 @@
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { AlertsExecutiveAction } from "../components/AlertsExecutiveAction";
 import { AlertsPriorityHighlights } from "../components/AlertsPriorityHighlights";
@@ -46,7 +46,7 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
     effectiveBranch,
   } = useStrategicIndicatorsFilters();
 
-  const { data, loading, refreshing, error, reload } =
+  const { data, loading, refreshing, requestProgress, error, reload } =
     useStrategicIndicatorsAlerts({
       branch: effectiveBranch,
       competence: referenceMonth,
@@ -55,8 +55,8 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
       getAccessToken,
     });
 
-  const loadingProgress = useSimulatedLoadingProgress(loading && !data);
-  const refreshingProgress = useSimulatedLoadingProgress(Boolean(refreshing && data));
+  const loadingProgress = useLoadingProgress(loading && !data, requestProgress);
+  const refreshingProgress = useLoadingProgress(Boolean(refreshing && data), requestProgress);
 
   const filters = (
     <StrategicIndicatorsReferenceFilters

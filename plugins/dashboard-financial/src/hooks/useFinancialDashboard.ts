@@ -13,6 +13,11 @@ import type {
   RolData,
 } from "../types/financial";
 import { formatFinancialApiError } from "../utils/formatFinancialApiError";
+import {
+  EMPTY_REQUEST_PROGRESS,
+  runParallelWithProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 
 type SectionErrors = {
   rol?: string;
@@ -31,6 +36,9 @@ export function useFinancialDashboard(apiParams: FinancialFilterParams) {
   const [error, setError] = useState<string | null>(null);
   const [sectionErrors, setSectionErrors] = useState<SectionErrors>({});
   const [reloadKey, setReloadKey] = useState(0);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -46,12 +54,16 @@ export function useFinancialDashboard(apiParams: FinancialFilterParams) {
         if (hasPreviousData) setRefreshing(true);
         else setLoading(true);
 
-        const results = await Promise.allSettled([
-          getRol(apiParams, controller.signal),
-          getEbitdaPct(apiParams, controller.signal),
-          getFixedCostPct(apiParams, controller.signal),
-          getPmr(apiParams, controller.signal),
-        ]);
+        const results = await runParallelWithProgress(
+          [
+            (signal) => getRol(apiParams, signal),
+            (signal) => getEbitdaPct(apiParams, signal),
+            (signal) => getFixedCostPct(apiParams, signal),
+            (signal) => getPmr(apiParams, signal),
+          ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
+          controller.signal,
+          setRequestProgress
+        );
 
         const nextErrors: SectionErrors = {};
         let successCount = 0;
@@ -111,6 +123,7 @@ export function useFinancialDashboard(apiParams: FinancialFilterParams) {
     pmr,
     loading,
     refreshing,
+    requestProgress,
     error,
     sectionErrors,
     reload,

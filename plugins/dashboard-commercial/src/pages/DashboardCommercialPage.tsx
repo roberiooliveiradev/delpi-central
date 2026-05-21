@@ -27,7 +27,7 @@ import { RolEvolutionChart } from "../components/RolEvolutionChart";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useCommercialDashboard } from "../hooks/useCommercialDashboard";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useCommercialFilters } from "../hooks/useCommercialFilters";
 import { useCommercialRolSeries } from "../hooks/useCommercialRolSeries";
 import type { ChartGranularity } from "../types/chart";
@@ -68,6 +68,7 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
     newBusinessRol,
     loading,
     refreshing,
+    requestProgress,
     error,
     sectionErrors,
     reload,
@@ -98,8 +99,8 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
   const isBusy = loading || refreshing;
   const hasData = headOfficeRol !== null || branchRol !== null;
   const isChartBusy = rolSeries.loading;
-  const initialLoadingProgress = useSimulatedLoadingProgress(loading && !hasData);
-  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
+  const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
+  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
 
   const conversionChartData = useMemo(
     () =>

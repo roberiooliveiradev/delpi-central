@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { DepartmentDetailHero } from "../components/DepartmentDetailHero";
 import { IndicatorDetailGrid } from "../components/IndicatorDetailGrid";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
@@ -50,7 +50,7 @@ export function DepartmentDetailsPage({
     />
   );
 
-  const { data, loading, refreshing, error, reload } =
+  const { data, loading, refreshing, requestProgress, error, reload } =
     useStrategicIndicatorsDepartmentDetails({
       departmentId,
       branch: effectiveBranch,
@@ -60,8 +60,8 @@ export function DepartmentDetailsPage({
       getAccessToken,
     });
 
-  const loadingProgress = useSimulatedLoadingProgress(loading && !data);
-  const refreshingProgress = useSimulatedLoadingProgress(Boolean(refreshing && data));
+  const loadingProgress = useLoadingProgress(loading && !data, requestProgress);
+  const refreshingProgress = useLoadingProgress(Boolean(refreshing && data), requestProgress);
 
   const filters = (
     <StrategicIndicatorsReferenceFilters

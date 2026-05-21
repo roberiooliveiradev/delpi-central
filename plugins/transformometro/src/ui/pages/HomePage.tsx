@@ -4,7 +4,10 @@ import { BarChart3, Layers, List, Upload } from "lucide-react";
 import type { AppProps } from "../../App";
 import { DataSourceBanner } from "../../components/DataSourceBanner";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
-import { useSimulatedLoadingProgress } from "../../hooks/useSimulatedLoadingProgress";
+import {
+  useLoadingProgress,
+  useTrackedSingleFetchProgress,
+} from "../../hooks/useSimulatedLoadingProgress";
 import { ModuleShortcut } from "../../components/ModuleShortcut";
 import { PageHeader } from "../../components/PageHeader";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
@@ -43,7 +46,8 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: HomeProps) {
     };
   }, [getAccessToken]);
 
-  const loadingProgress = useSimulatedLoadingProgress(state === "loading");
+  const fetchProgress = useTrackedSingleFetchProgress(state === "loading");
+  const loadingProgress = useLoadingProgress(state === "loading", fetchProgress);
 
   return (
     <div className="dashboard-transformometro dashboard-page">

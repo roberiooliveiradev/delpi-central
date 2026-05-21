@@ -3,7 +3,10 @@ import { Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
-import { useSimulatedLoadingProgress } from "../../hooks/useSimulatedLoadingProgress";
+import {
+  useLoadingProgress,
+  useTrackedSingleFetchProgress,
+} from "../../hooks/useSimulatedLoadingProgress";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
@@ -123,7 +126,11 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     }
   }
 
-  const catalogLoadingProgress = useSimulatedLoadingProgress(loading && !options);
+  const catalogFetchProgress = useTrackedSingleFetchProgress(loading && !options);
+  const catalogLoadingProgress = useLoadingProgress(
+    loading && !options,
+    catalogFetchProgress
+  );
 
   if (loading && !options) {
     return (

@@ -7,6 +7,11 @@ import {
   getSalesOrderOtd,
 } from "../api/commercialApi";
 import { formatCommercialApiError } from "../utils/formatCommercialApiError";
+import {
+  EMPTY_REQUEST_PROGRESS,
+  runParallelWithProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 import type {
   ClosingRateData,
   CommercialFilterParams,
@@ -31,6 +36,7 @@ type UseCommercialDashboardResult = {
   newBusinessRol: NewBusinessRolPctData | null;
   loading: boolean;
   refreshing: boolean;
+  requestProgress: RequestProgress;
   error: string | null;
   sectionErrors: SectionErrors;
   reload: () => void;
@@ -51,6 +57,9 @@ export function useCommercialDashboard(
   const [error, setError] = useState<string | null>(null);
   const [sectionErrors, setSectionErrors] = useState<SectionErrors>({});
   const [reloadKey, setReloadKey] = useState(0);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   const periodParams = {
     start_date: filters.start_date,
@@ -77,13 +86,17 @@ export function useCommercialDashboard(
         if (hasPreviousData) setRefreshing(true);
         else setLoading(true);
 
-        const results = await Promise.allSettled([
-          getHeadOfficeRolTarget(periodParams, controller.signal),
-          getBranchRolTarget(periodParams, controller.signal),
-          getClosingRate(branchParams, controller.signal),
-          getSalesOrderOtd(branchParams, controller.signal),
-          getNewBusinessRolPct(branchParams, controller.signal),
-        ]);
+        const results = await runParallelWithProgress(
+          [
+            (signal) => getHeadOfficeRolTarget(periodParams, signal),
+            (signal) => getBranchRolTarget(periodParams, signal),
+            (signal) => getClosingRate(branchParams, signal),
+            (signal) => getSalesOrderOtd(branchParams, signal),
+            (signal) => getNewBusinessRolPct(branchParams, signal),
+          ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
+          controller.signal,
+          setRequestProgress
+        );
 
         const nextErrors: SectionErrors = {};
         let successCount = 0;
@@ -150,6 +163,7 @@ export function useCommercialDashboard(
     newBusinessRol,
     loading,
     refreshing,
+    requestProgress,
     error,
     sectionErrors,
     reload,

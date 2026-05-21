@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import {
   applyTreeScopeSelection,
   resolveActiveTreeScopeKey,
@@ -44,7 +44,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
     [setViewMode, setBranch],
   );
 
-  const { model, loading, refreshing, error, reload } =
+  const { model, loading, refreshing, requestProgress, error, reload } =
     useStrategicIndicatorsDepartmentTree({
       viewMode,
       branch,
@@ -55,8 +55,8 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       getAccessToken,
     });
 
-  const loadingProgress = useSimulatedLoadingProgress(loading && !model);
-  const refreshingProgress = useSimulatedLoadingProgress(Boolean(refreshing && model));
+  const loadingProgress = useLoadingProgress(loading && !model, requestProgress);
+  const refreshingProgress = useLoadingProgress(Boolean(refreshing && model), requestProgress);
 
   const statusBadge =
     loading || refreshing ? (

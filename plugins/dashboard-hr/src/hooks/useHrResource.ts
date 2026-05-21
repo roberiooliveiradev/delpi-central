@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { formatHrApiError } from "../utils/formatHrApiError";
+import {
+  beginSingleRequestProgress,
+  EMPTY_REQUEST_PROGRESS,
+  finishSingleRequestProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 
 type UseHrResourceOptions = {
   enabled?: boolean;
@@ -10,6 +16,7 @@ type UseHrResourceResult<T> = {
   data: T | null;
   loading: boolean;
   refreshing: boolean;
+  requestProgress: RequestProgress;
   error: string | null;
   reload: () => void;
 };
@@ -24,6 +31,9 @@ export function useHrResource<T>(
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
   const enabled = options.enabled !== false;
 
   useEffect(() => {
@@ -44,6 +54,7 @@ export function useHrResource<T>(
           setLoading(true);
         }
 
+        beginSingleRequestProgress(setRequestProgress);
         const result = await fetcher(controller.signal);
         setData(result);
       } catch (err) {
@@ -52,6 +63,7 @@ export function useHrResource<T>(
         setData(null);
       } finally {
         if (!controller.signal.aborted) {
+          finishSingleRequestProgress(setRequestProgress, false);
           setLoading(false);
           setRefreshing(false);
         }
@@ -68,5 +80,5 @@ export function useHrResource<T>(
     setReloadKey((prev) => prev + 1);
   }, []);
 
-  return { data, loading, refreshing, error, reload };
+  return { data, loading, refreshing, requestProgress, error, reload };
 }

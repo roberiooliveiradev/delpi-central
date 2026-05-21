@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { useStrategicIndicators } from "../../state/hooks/useStrategicIndicators";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
@@ -118,6 +118,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
     partialSuccess,
     loading,
     refreshing,
+    requestProgress,
     error,
     reload,
   } = useStrategicIndicators({
@@ -128,11 +129,13 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
     getAccessToken,
   });
 
-  const loadingProgress = useSimulatedLoadingProgress(
+  const loadingProgress = useLoadingProgress(
     loading && items.length === 0,
+    requestProgress
   );
-  const refreshingProgress = useSimulatedLoadingProgress(
+  const refreshingProgress = useLoadingProgress(
     Boolean(refreshing && items.length > 0),
+    requestProgress
   );
 
   const analyticsItems = useMemo<IndicatorAnalyticsViewItem[]>(

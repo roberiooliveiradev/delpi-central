@@ -43,7 +43,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
     filterState,
   } = useFinancialFilters();
 
-  const { data, loading, refreshing, error, reload } = useFinancialResource(
+  const { data, loading, refreshing, requestProgress, error, reload } = useFinancialResource(
     (signal) => getEbitdaPct(apiParams, signal),
     [apiParams.branch, apiParams.end_date, apiParams.start_date]
   );
@@ -116,6 +116,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
         error={error}
         loading={loading}
         hasData={data !== null}
+        requestProgress={requestProgress}
         onRetry={reload}
       />
       <section className="ds-kpi-grid" aria-busy={isBusy}>

@@ -13,6 +13,11 @@ import type {
   SuppliesFilterParams,
 } from "../types/supplies";
 import { formatSuppliesApiError } from "../utils/formatSuppliesApiError";
+import {
+  EMPTY_REQUEST_PROGRESS,
+  runParallelWithProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 
 type SectionErrors = {
   cpv?: string;
@@ -33,6 +38,7 @@ type UseSuppliesDashboardResult = {
   inventoryTurnover: InventoryTurnoverData | null;
   loading: boolean;
   refreshing: boolean;
+  requestProgress: RequestProgress;
   error: string | null;
   sectionErrors: SectionErrors;
   reload: () => void;
@@ -52,6 +58,9 @@ export function useSuppliesDashboard({
   const [error, setError] = useState<string | null>(null);
   const [sectionErrors, setSectionErrors] = useState<SectionErrors>({});
   const [reloadKey, setReloadKey] = useState(0);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -70,12 +79,16 @@ export function useSuppliesDashboard({
         if (hasPreviousData) setRefreshing(true);
         else setLoading(true);
 
-        const results = await Promise.allSettled([
-          getCpv(periodParams, controller.signal),
-          getOtd(periodParams, controller.signal),
-          getStockValue(stockParams, controller.signal),
-          getInventoryTurnover(periodParams, controller.signal),
-        ]);
+        const results = await runParallelWithProgress(
+          [
+            (signal) => getCpv(periodParams, signal),
+            (signal) => getOtd(periodParams, signal),
+            (signal) => getStockValue(stockParams, signal),
+            (signal) => getInventoryTurnover(periodParams, signal),
+          ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
+          controller.signal,
+          setRequestProgress
+        );
 
         const nextErrors: SectionErrors = {};
         let successCount = 0;
@@ -146,6 +159,7 @@ export function useSuppliesDashboard({
     inventoryTurnover,
     loading,
     refreshing,
+    requestProgress,
     error,
     sectionErrors,
     reload,

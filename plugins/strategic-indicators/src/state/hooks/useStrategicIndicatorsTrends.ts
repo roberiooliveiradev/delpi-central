@@ -9,6 +9,12 @@ import {
 import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
 import type { TrendsDashboardViewData } from "../../data/types/trends";
 import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
+import {
+  beginSingleRequestProgress,
+  EMPTY_REQUEST_PROGRESS,
+  finishSingleRequestProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 
 type UseStrategicIndicatorsTrendsParams = {
@@ -33,6 +39,7 @@ export function useStrategicIndicatorsTrends({
   const [data, setData] = useState<TrendsDashboardViewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(EMPTY_REQUEST_PROGRESS);
   const [error, setError] = useState<StrategicIndicatorsErrorView | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -74,6 +81,7 @@ export function useStrategicIndicatorsTrends({
       });
 
       setError(null);
+      beginSingleRequestProgress(setRequestProgress);
 
       try {
         const response = await fetchStrategicIndicatorsTrends({
@@ -112,6 +120,7 @@ export function useStrategicIndicatorsTrends({
         );
       } finally {
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
+          finishSingleRequestProgress(setRequestProgress, controller.signal.aborted);
           setLoading(false);
           setRefreshing(false);
         }
@@ -132,9 +141,10 @@ export function useStrategicIndicatorsTrends({
       data,
       loading,
       refreshing,
+      requestProgress,
       error,
       reload: () => loadRef.current(),
     }),
-    [data, loading, refreshing, error],
+    [data, loading, refreshing, requestProgress, error],
   );
 }

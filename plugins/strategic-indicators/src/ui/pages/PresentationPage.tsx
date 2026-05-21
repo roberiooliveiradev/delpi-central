@@ -12,7 +12,7 @@ import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsP
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { PresentationAlertsSeverityDonut } from "../components/PresentationAlertsSeverityDonut";
 import { PresentationTrendAreaChart } from "../components/PresentationTrendAreaChart";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { useStrategicIndicatorsPresentation } from "../../state/hooks/useStrategicIndicatorsPresentation";
 import {
@@ -206,10 +206,17 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
 
   const data = presentation.data;
   const loading = presentation.loading;
-  const presentationLoadingProgress = useSimulatedLoadingProgress(presentation.loading);
-  const trendsLoadingProgress = useSimulatedLoadingProgress(presentation.trendsLoading);
-  const partialRefreshProgress = useSimulatedLoadingProgress(
-    !presentation.error && presentation.warnings.length > 0
+  const presentationLoadingProgress = useLoadingProgress(
+    presentation.loading,
+    presentation.requestProgress
+  );
+  const trendsLoadingProgress = useLoadingProgress(
+    presentation.trendsLoading,
+    presentation.requestProgress
+  );
+  const partialRefreshProgress = useLoadingProgress(
+    !presentation.error && presentation.warnings.length > 0,
+    presentation.requestProgress
   );
 
   useEffect(() => {

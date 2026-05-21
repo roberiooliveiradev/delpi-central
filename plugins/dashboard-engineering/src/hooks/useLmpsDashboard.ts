@@ -3,6 +3,12 @@ import { getLmpsDashboard } from "../api/engineeringApi";
 import type { LmpDashboardItem, LmpsDashboardParams, LmpsDashboardResponse } from "../types/lmp";
 import { formatEngineeringApiError } from "../utils/formatEngineeringApiError";
 import { inputDateToLmpApi } from "../utils/lmpDates";
+import {
+  beginSingleRequestProgress,
+  EMPTY_REQUEST_PROGRESS,
+  finishSingleRequestProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 
 type UseLmpsDashboardParams = LmpsDashboardParams;
 
@@ -12,6 +18,9 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   const stableParams = useMemo(
     () => ({
@@ -45,6 +54,7 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
         if (hasPrevious) setRefreshing(true);
         else setLoading(true);
 
+        beginSingleRequestProgress(setRequestProgress);
         const result = await getLmpsDashboard(stableParams, controller.signal);
 
         if (!controller.signal.aborted) {
@@ -56,6 +66,7 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
         }
       } finally {
         if (!controller.signal.aborted) {
+          finishSingleRequestProgress(setRequestProgress, controller.signal.aborted);
           setLoading(false);
           setRefreshing(false);
         }
@@ -86,6 +97,7 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
     charts: data?.charts ?? null,
     loading,
     refreshing,
+    requestProgress,
     error,
     reload,
   };

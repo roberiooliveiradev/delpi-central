@@ -1,15 +1,26 @@
 import { LoadingActivityCard } from "./LoadingActivityCard";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import {
+  EMPTY_REQUEST_PROGRESS,
+  useLoadingProgress,
+  type RequestProgress,
+} from "../hooks/useSimulatedLoadingProgress";
 
 type StatusAlertsProps = {
   error: string | null;
   loading: boolean;
   hasData: boolean;
+  requestProgress?: RequestProgress;
   onRetry: () => void;
 };
 
-export function StatusAlerts({ error, loading, hasData, onRetry }: StatusAlertsProps) {
-  const loadingProgress = useSimulatedLoadingProgress(loading && !hasData);
+export function StatusAlerts({
+  error,
+  loading,
+  hasData,
+  requestProgress = EMPTY_REQUEST_PROGRESS,
+  onRetry,
+}: StatusAlertsProps) {
+  const loadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
 
   return (
     <>

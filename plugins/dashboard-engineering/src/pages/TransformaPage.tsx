@@ -69,6 +69,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
     data: summary,
     loading: summaryLoading,
     refreshing: summaryRefreshing,
+    requestProgress: summaryRequestProgress,
     error: summaryError,
     reload: reloadSummary,
   } = useEngineeringResource(
@@ -80,6 +81,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
     data: processesData,
     loading: listLoading,
     refreshing: listRefreshing,
+    requestProgress: listRequestProgress,
     error: listError,
     reload: reloadList,
   } = useEngineeringResource(
@@ -106,6 +108,19 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
   const items = processesData?.items ?? [];
   const loading = summaryLoading || listLoading;
   const refreshing = summaryRefreshing || listRefreshing;
+  const requestProgress = useMemo(
+    () => ({
+      completed:
+        summaryRequestProgress.completed + listRequestProgress.completed,
+      total: summaryRequestProgress.total + listRequestProgress.total,
+    }),
+    [
+      summaryRequestProgress.completed,
+      summaryRequestProgress.total,
+      listRequestProgress.completed,
+      listRequestProgress.total,
+    ]
+  );
   const error = summaryError && listError ? summaryError : null;
   const isBusy = loading || refreshing;
   const hasData = summary !== null || processesData !== null;
@@ -200,6 +215,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         error={error}
         loading={loading}
         hasData={hasData}
+        requestProgress={requestProgress}
         onRetry={reload}
       />
 

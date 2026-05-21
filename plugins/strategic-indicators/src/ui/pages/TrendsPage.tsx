@@ -1,4 +1,4 @@
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { DepartmentTrendGrid } from "../components/DepartmentTrendGrid";
 import { IgdTrendTimeline } from "../components/IgdTrendTimeline";
@@ -35,7 +35,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
     effectiveBranch,
   } = useStrategicIndicatorsFilters();
 
-  const { data, loading, refreshing, error, reload } =
+  const { data, loading, refreshing, requestProgress, error, reload } =
     useStrategicIndicatorsTrends({
       branch: effectiveBranch,
       competence: referenceMonth,
@@ -43,8 +43,8 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
       getAccessToken,
     });
 
-  const loadingProgress = useSimulatedLoadingProgress(loading && !data);
-  const refreshingProgress = useSimulatedLoadingProgress(Boolean(refreshing && data));
+  const loadingProgress = useLoadingProgress(loading && !data, requestProgress);
+  const refreshingProgress = useLoadingProgress(Boolean(refreshing && data), requestProgress);
 
   const referenceFilters = (
     <StrategicIndicatorsReferenceFilters

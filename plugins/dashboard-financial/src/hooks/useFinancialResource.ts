@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { formatFinancialApiError } from "../utils/formatFinancialApiError";
+import {
+  beginSingleRequestProgress,
+  EMPTY_REQUEST_PROGRESS,
+  finishSingleRequestProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 
 export function useFinancialResource<T>(
   fetcher: (signal: AbortSignal) => Promise<T>,
@@ -10,6 +16,9 @@ export function useFinancialResource<T>(
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -22,6 +31,7 @@ export function useFinancialResource<T>(
         if (hasPrevious) setRefreshing(true);
         else setLoading(true);
 
+        beginSingleRequestProgress(setRequestProgress);
         const result = await fetcher(controller.signal);
 
         if (!controller.signal.aborted) {
@@ -33,6 +43,7 @@ export function useFinancialResource<T>(
         }
       } finally {
         if (!controller.signal.aborted) {
+          finishSingleRequestProgress(setRequestProgress, false);
           setLoading(false);
           setRefreshing(false);
         }
@@ -49,5 +60,5 @@ export function useFinancialResource<T>(
     setReloadKey((prev) => prev + 1);
   }, []);
 
-  return { data, loading, refreshing, error, reload };
+  return { data, loading, refreshing, requestProgress, error, reload };
 }

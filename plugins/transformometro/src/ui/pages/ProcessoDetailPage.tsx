@@ -3,7 +3,10 @@ import { ArrowLeft, Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
-import { useSimulatedLoadingProgress } from "../../hooks/useSimulatedLoadingProgress";
+import {
+  useLoadingProgress,
+  useTrackedSingleFetchProgress,
+} from "../../hooks/useSimulatedLoadingProgress";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
@@ -108,7 +111,11 @@ export function ProcessoDetailPage({
 
   const selectedRevisao = revisoes.find((r) => r.revisao_id === selectedRevisaoId);
 
-  const processLoadingProgress = useSimulatedLoadingProgress(loading && !processo);
+  const processFetchProgress = useTrackedSingleFetchProgress(loading && !processo);
+  const processLoadingProgress = useLoadingProgress(
+    loading && !processo,
+    processFetchProgress
+  );
 
   if (loading && !processo) {
     return (

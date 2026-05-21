@@ -54,7 +54,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
 
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
-  const { data, loading, refreshing, error, reload } = useSuppliesResource(
+  const { data, loading, refreshing, requestProgress, error, reload } = useSuppliesResource(
     (signal) => getOtd(periodParams, signal),
     [periodParams.branch, periodParams.end_date, periodParams.start_date]
   );
@@ -183,6 +183,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
         error={error}
         loading={loading}
         hasData={data !== null}
+        requestProgress={requestProgress}
         onRetry={reload}
       />
 
