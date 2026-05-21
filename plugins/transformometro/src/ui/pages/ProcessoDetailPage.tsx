@@ -18,6 +18,10 @@ import {
   type Revisao,
 } from "../../data/api/transformometroApi";
 import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils/dateInputs";
+import {
+  badgeClassStatusAprovacao,
+  labelStatusAprovacao,
+} from "../../utils/revisaoWorkflowLabels";
 import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -321,6 +325,7 @@ export function ProcessoDetailPage({
                     <th>Início</th>
                     <th>Implantação</th>
                     <th>Fim</th>
+                    <th>Aprovação</th>
                     <th>Ativa</th>
                   </tr>
                 </thead>
@@ -345,6 +350,11 @@ export function ProcessoDetailPage({
                       <td>{toDateInputValue(r.data_inicio_vigencia) || "—"}</td>
                       <td>{toDateInputValue(r.data_implantacao) || "—"}</td>
                       <td>{toDateInputValue(r.data_fim_vigencia) || "—"}</td>
+                      <td>
+                        <span className={badgeClassStatusAprovacao(r.status_aprovacao)}>
+                          {labelStatusAprovacao(r.status_aprovacao)}
+                        </span>
+                      </td>
                       <td>
                         {r.revisao_ativa ? (
                           <span className="ds-badge ds-badge--success">ativa</span>

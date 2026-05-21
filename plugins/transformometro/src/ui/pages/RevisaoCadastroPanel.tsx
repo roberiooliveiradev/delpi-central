@@ -20,6 +20,7 @@ import {
 } from "../../data/api/transformometroApi";
 import { CadastroTabs, type CadastroTabId } from "../revisao/cadastro/CadastroTabs";
 import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestimentosSection";
+import { RevisaoWorkflowToolbar } from "../revisao/cadastro/RevisaoWorkflowToolbar";
 import { RevisaoMedicaoSection } from "../revisao/cadastro/RevisaoMedicaoSection";
 import { RevisaoRecursosSection } from "../revisao/cadastro/RevisaoRecursosSection";
 import {
@@ -160,19 +161,13 @@ export function RevisaoCadastroPanel({
 
   return (
     <div className="ds-cadastro-panel">
-      <div className="ds-cadastro-panel__toolbar">
-        <span>
-          {revisao.versao_revisao} · {revisao.cenario_tipo}
-          {revisao.revisao_ativa ? (
-            <span className="ds-badge ds-badge--success"> ativa</span>
-          ) : null}
-        </span>
-        {!revisao.revisao_ativa ? (
-          <button type="button" className="ds-ghost-btn" onClick={() => void handleActivate()}>
-            Definir como ativa
-          </button>
-        ) : null}
-      </div>
+      <RevisaoWorkflowToolbar
+        revisao={revisao}
+        getAccessToken={getAccessToken}
+        onError={onError}
+        onUpdated={onRevisaoUpdated}
+        onActivate={handleActivate}
+      />
 
       {rateioDiag ? (
         <div

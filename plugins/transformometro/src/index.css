@@ -1340,6 +1340,48 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   color: var(--ds-success-fg);
 }
 
+.dashboard-transformometro .ds-badge--info {
+  background: color-mix(in srgb, var(--ds-accent) 18%, var(--ds-card-bg));
+  color: var(--ds-accent);
+}
+
+.dashboard-transformometro .ds-badge--danger {
+  background: var(--ds-danger-bg, #fef2f2);
+  color: var(--ds-danger-fg, #b91c1c);
+}
+
+.dashboard-transformometro .ds-cadastro-panel__workflow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 1rem;
+  padding: 12px 14px;
+  border-radius: var(--ds-radius-md, 8px);
+  background: var(--ds-subtle-bg, color-mix(in srgb, var(--ds-card-bg) 92%, var(--ds-text)));
+  border: 1px solid var(--ds-card-border);
+}
+
+.dashboard-transformometro .ds-cadastro-panel__workflow-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--ds-font-sm);
+  color: var(--ds-text-muted);
+}
+
+.dashboard-transformometro .ds-cadastro-panel__workflow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-transformometro .ds-cadastro-panel__workflow-reject-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .dashboard-transformometro .ds-cadastro-panel {
   margin-top: 1.25rem;
   padding-top: 1.25rem;

@@ -64,7 +64,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | SI/engineering → transformometro-api HTTP | `transformometro_client` + gateway + token interno | ✅ |
 | Testes integração engenharia | `tests/test_engineering_transforma_mais.py` | ✅ |
 
-## Fase 4 — Melhorias (2 sprints) ✅ MVP no repo / 🚧 workflow pendente
+## Fase 4 — Melhorias (2 sprints) ✅ MVP no repo
 
 | Entrega | Detalhe | Status |
 |---------|---------|--------|
@@ -76,7 +76,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Diagnóstico rateio | `GET /revisoes/{id}/diagnostico-rateio` + painel na revisão | ✅ |
 | UI Fase 4 | Alertas + CSV no dashboard; família no cadastro; comparativo + rateio | ✅ |
 | Testes | `tests/test_phase4_services.py` | ✅ |
-| Workflow de aprovação de revisão | — | Backlog |
+| Workflow de aprovação de revisão | V005 + `POST /revisoes/{id}/workflow/*`; ativação só se `aprovada` | ✅ |
 | Export Excel/PDF | CSV entregue; PDF/Excel formatado | Backlog |
 
 ## Matriz de reaproveitamento
@@ -103,4 +103,4 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 1. **Deploy Fase 4:** rebuild `transformometro-api` + MFE; `TM_RUN_MIGRATIONS_ON_STARTUP=true` (V004)
 2. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
 3. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
-4. **Backlog Fase 4+:** workflow aprovação revisão, export PDF/Excel
+4. **Backlog Fase 4+:** export PDF/Excel formatado

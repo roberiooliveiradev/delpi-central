@@ -73,6 +73,9 @@ export type Revisao = {
   cenario_tipo: string;
   data_inicio_vigencia: string;
   revisao_ativa: boolean;
+  status_aprovacao?: string;
+  motivo_rejeicao?: string | null;
+  aprovado_por_email?: string | null;
   data_implantacao?: string | null;
   data_fim_vigencia?: string | null;
 };
@@ -88,6 +91,7 @@ export type OptionsData = {
   tipo_investimento: string[];
   tipo_custo: string[];
   categorias: string[];
+  status_aprovacao_revisao: string[];
 };
 
 export function fetchOptions(getAccessToken?: () => string | undefined) {
@@ -155,6 +159,35 @@ export function updateRevisao(
   return request<Revisao>(`/revisoes/${revisaoId}`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(payload),
+  });
+}
+
+export function submeterRevisaoAprovacao(
+  revisaoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<Revisao>(`/revisoes/${revisaoId}/workflow/submeter`, getAccessToken, {
+    method: "POST",
+  });
+}
+
+export function aprovarRevisao(
+  revisaoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<Revisao>(`/revisoes/${revisaoId}/workflow/aprovar`, getAccessToken, {
+    method: "POST",
+  });
+}
+
+export function rejeitarRevisao(
+  revisaoId: string,
+  motivo: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<Revisao>(`/revisoes/${revisaoId}/workflow/rejeitar`, getAccessToken, {
+    method: "POST",
+    body: JSON.stringify({ motivo }),
   });
 }
 

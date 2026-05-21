@@ -38,6 +38,10 @@ from tm_app.application.services.process_revision_compare_service import (
 from tm_app.application.services.revisao_rateio_diagnostic_service import (
     RevisaoRateioDiagnosticService,
 )
+from tm_app.application.services.revisao_workflow_service import (
+    RevisaoWorkflowError,
+    RevisaoWorkflowService,
+)
 from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
 from tm_app.interface.http.schemas.crud_schemas import (
     InvestimentoBody,
@@ -46,6 +50,7 @@ from tm_app.interface.http.schemas.crud_schemas import (
     ProcessoUpdateBody,
     RecursoBody,
     RevisaoBody,
+    RevisaoRejeitarBody,
     VinculoBody,
     VinculoUpdateBody,
 )
@@ -196,9 +201,49 @@ def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
     return ok(row_to_json(row), "Revisão atualizada.")
 
 
+@router.post("/revisoes/{revisao_id}/workflow/submeter")
+def submeter_revisao_aprovacao(revisao_id: str, request: Request):
+    try:
+        row = RevisaoWorkflowService().submeter(revisao_id)
+    except RevisaoWorkflowError as exc:
+        return fail(str(exc), 400)
+    _audit(request, "revisao", revisao_id, "workflow_submeter", {})
+    return ok(row_to_json(row), "Revisão enviada para análise.")
+
+
+@router.post("/revisoes/{revisao_id}/workflow/aprovar")
+def aprovar_revisao(revisao_id: str, request: Request):
+    _, email = actor_from_request(request)
+    try:
+        row = RevisaoWorkflowService().aprovar(revisao_id, email)
+    except RevisaoWorkflowError as exc:
+        return fail(str(exc), 400)
+    _audit(request, "revisao", revisao_id, "workflow_aprovar", {"email": email})
+    return ok(row_to_json(row), "Revisão aprovada.")
+
+
+@router.post("/revisoes/{revisao_id}/workflow/rejeitar")
+def rejeitar_revisao(revisao_id: str, body: RevisaoRejeitarBody, request: Request):
+    _, email = actor_from_request(request)
+    try:
+        row = RevisaoWorkflowService().rejeitar(revisao_id, body.motivo, email)
+    except RevisaoWorkflowError as exc:
+        return fail(str(exc), 400)
+    _audit(request, "revisao", revisao_id, "workflow_rejeitar", {"email": email, "motivo": body.motivo})
+    return ok(row_to_json(row), "Revisão rejeitada.")
+
+
 @router.post("/revisoes/{revisao_id}/ativar")
 def activate_revisao(revisao_id: str, request: Request):
-    row = RevisaoRepository().activate(revisao_id)
+    repo = RevisaoRepository()
+    current = repo.get(revisao_id)
+    if not current:
+        return fail("Revisão não encontrada.", 404)
+    try:
+        RevisaoWorkflowService.ensure_can_activate(current)
+    except RevisaoWorkflowError as exc:
+        return fail(str(exc), 400)
+    row = repo.activate(revisao_id)
     if not row:
         return fail("Revisão não encontrada.", 404)
     _audit(request, "revisao", revisao_id, "activate", {})

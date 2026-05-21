@@ -35,8 +35,8 @@ class RevisaoRepository(PluginBaseRepository):
                 processo_id, versao_revisao, chave_unica_processo_revisao,
                 descricao_revisao, motivo_revisao, cenario_tipo,
                 data_implantacao, data_inicio_vigencia, data_fim_vigencia,
-                revisao_ativa, observacoes
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                revisao_ativa, observacoes, status_aprovacao
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
             (
@@ -51,6 +51,7 @@ class RevisaoRepository(PluginBaseRepository):
                 data.get("data_fim_vigencia"),
                 data.get("revisao_ativa", False),
                 data.get("observacoes"),
+                data.get("status_aprovacao", "rascunho"),
             ),
         )
         if row is None:
@@ -89,6 +90,34 @@ class RevisaoRepository(PluginBaseRepository):
                 data.get("data_fim_vigencia"),
                 data.get("revisao_ativa", False),
                 data.get("observacoes"),
+                revisao_id,
+            ),
+        )
+
+    def set_status_aprovacao(
+        self,
+        revisao_id: str,
+        status: str,
+        *,
+        aprovado_por_email: str | None = None,
+        motivo_rejeicao: str | None = None,
+    ) -> dict[str, Any] | None:
+        aprovado_em = "NOW()" if status in ("aprovada", "rejeitada") else "NULL"
+        return self.execute_returning_one(
+            f"""
+            UPDATE transformometro.revisoes SET
+                status_aprovacao = %s,
+                aprovado_em = {aprovado_em},
+                aprovado_por_email = %s,
+                motivo_rejeicao = %s,
+                updated_at = NOW()
+            WHERE revisao_id = %s AND deletado = FALSE
+            RETURNING *
+            """,
+            (
+                status,
+                aprovado_por_email,
+                motivo_rejeicao if status == "rejeitada" else None,
                 revisao_id,
             ),
         )
