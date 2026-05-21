@@ -38,7 +38,10 @@ Validação jan/2026 consolidado: total ~3,82M, não-WEG ~456k, WEG ~3,36M → *
 - **No prazo:** `C6_DATFAT <= C6_ENTREG` (último faturamento até a data prometida).
 - **%:** `linhas_no_prazo / linhas_entregues × 100`; `null` se não houver linhas no período.
 
-Rota HTTP (api-delpi / dashboard): `GET /commercial/sales-order-otd?start_date=&end_date=&branch=`.
+Rotas HTTP (api-delpi / dashboard):
+
+- `GET /commercial/sales-order-otd?start_date=&end_date=&branch=`
+- `GET /commercial/new-business-rol-pct?start_date=&end_date=&branch=`
 
 ## Deploy
 

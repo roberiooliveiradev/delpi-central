@@ -3,32 +3,32 @@ import {
   getBranchRolTarget,
   getClosingRate,
   getHeadOfficeRolTarget,
-  getNewClientsAverage,
-  getNewClientsRolPct,
+  getNewBusinessRolPct,
+  getSalesOrderOtd,
 } from "../api/commercialApi";
 import { formatCommercialApiError } from "../utils/formatCommercialApiError";
 import type {
   ClosingRateData,
   CommercialFilterParams,
-  NewClientsAverageData,
-  NewClientsRolPctData,
+  NewBusinessRolPctData,
   RolTargetData,
+  SalesOrderOtdData,
 } from "../types/commercial";
 
 type SectionErrors = {
   headOfficeRol?: string;
   branchRol?: string;
   closingRate?: string;
-  newClientsAverage?: string;
-  newClientsRol?: string;
+  salesOrderOtd?: string;
+  newBusinessRol?: string;
 };
 
 type UseCommercialDashboardResult = {
   headOfficeRol: RolTargetData | null;
   branchRol: RolTargetData | null;
   closingRate: ClosingRateData | null;
-  newClientsAverage: NewClientsAverageData | null;
-  newClientsRol: NewClientsRolPctData | null;
+  salesOrderOtd: SalesOrderOtdData | null;
+  newBusinessRol: NewBusinessRolPctData | null;
   loading: boolean;
   refreshing: boolean;
   error: string | null;
@@ -42,9 +42,8 @@ export function useCommercialDashboard(
   const [headOfficeRol, setHeadOfficeRol] = useState<RolTargetData | null>(null);
   const [branchRol, setBranchRol] = useState<RolTargetData | null>(null);
   const [closingRate, setClosingRate] = useState<ClosingRateData | null>(null);
-  const [newClientsAverage, setNewClientsAverage] =
-    useState<NewClientsAverageData | null>(null);
-  const [newClientsRol, setNewClientsRol] = useState<NewClientsRolPctData | null>(
+  const [salesOrderOtd, setSalesOrderOtd] = useState<SalesOrderOtdData | null>(null);
+  const [newBusinessRol, setNewBusinessRol] = useState<NewBusinessRolPctData | null>(
     null
   );
   const [loading, setLoading] = useState(true);
@@ -68,8 +67,8 @@ export function useCommercialDashboard(
         headOfficeRol !== null ||
         branchRol !== null ||
         closingRate !== null ||
-        newClientsAverage !== null ||
-        newClientsRol !== null;
+        salesOrderOtd !== null ||
+        newBusinessRol !== null;
 
       try {
         setError(null);
@@ -82,8 +81,8 @@ export function useCommercialDashboard(
           getHeadOfficeRolTarget(periodParams, controller.signal),
           getBranchRolTarget(periodParams, controller.signal),
           getClosingRate(branchParams, controller.signal),
-          getNewClientsAverage(branchParams, controller.signal),
-          getNewClientsRolPct(branchParams, controller.signal),
+          getSalesOrderOtd(branchParams, controller.signal),
+          getNewBusinessRolPct(branchParams, controller.signal),
         ]);
 
         const nextErrors: SectionErrors = {};
@@ -96,11 +95,8 @@ export function useCommercialDashboard(
           { key: "headOfficeRol", set: setHeadOfficeRol as (v: unknown) => void },
           { key: "branchRol", set: setBranchRol as (v: unknown) => void },
           { key: "closingRate", set: setClosingRate as (v: unknown) => void },
-          {
-            key: "newClientsAverage",
-            set: setNewClientsAverage as (v: unknown) => void,
-          },
-          { key: "newClientsRol", set: setNewClientsRol as (v: unknown) => void },
+          { key: "salesOrderOtd", set: setSalesOrderOtd as (v: unknown) => void },
+          { key: "newBusinessRol", set: setNewBusinessRol as (v: unknown) => void },
         ];
 
         results.forEach((result, index) => {
@@ -150,8 +146,8 @@ export function useCommercialDashboard(
     headOfficeRol,
     branchRol,
     closingRate,
-    newClientsAverage,
-    newClientsRol,
+    salesOrderOtd,
+    newBusinessRol,
     loading,
     refreshing,
     error,

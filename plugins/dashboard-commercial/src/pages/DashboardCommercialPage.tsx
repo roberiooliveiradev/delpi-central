@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Banknote,
   Building2,
+  PackageCheck,
   Percent,
   Target,
-  UserPlus,
-  Users,
+  TrendingUp,
 } from "lucide-react";
 import {
   Bar,
@@ -35,7 +35,6 @@ import { suggestGranularity } from "../utils/periodBuckets";
 import {
   formatInteger,
   formatCurrency,
-  formatDecimal,
   formatPercent,
 } from "../utils/format";
 
@@ -63,8 +62,8 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
     headOfficeRol,
     branchRol,
     closingRate,
-    newClientsAverage,
-    newClientsRol,
+    salesOrderOtd,
+    newBusinessRol,
     loading,
     refreshing,
     error,
@@ -193,18 +192,18 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
           loading={isBusy && !closingRate}
         />
         <KpiCard
-          title="Média mensal — clientes novos"
-          value={formatDecimal(newClientsAverage?.monthly_average, 1)}
-          subtitle={`Total ${formatInteger(newClientsAverage?.total_new_clients)} em ${formatInteger(newClientsAverage?.qtd_months)} meses · ${periodLabel}`}
-          icon={<UserPlus size={22} />}
-          loading={isBusy && !newClientsAverage}
+          title="OTD — pedidos de venda"
+          value={formatPercent(salesOrderOtd?.sales_order_otd_pct)}
+          subtitle={`${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${periodLabel}`}
+          icon={<PackageCheck size={22} />}
+          loading={isBusy && !salesOrderOtd}
         />
         <KpiCard
-          title="% ROL — clientes novos"
-          value={formatPercent(newClientsRol?.new_clients_rol_pct)}
-          subtitle={branch ? `Filial ${branch} · ${periodLabel}` : periodLabel}
-          icon={<Users size={22} />}
-          loading={isBusy && !newClientsRol}
+          title="% ROL — novos negócios"
+          value={formatPercent(newBusinessRol?.new_business_rol_pct)}
+          subtitle={`${formatCurrency(newBusinessRol?.new_business_rol)} não-WEG · ${periodLabel}`}
+          icon={<TrendingUp size={22} />}
+          loading={isBusy && !newBusinessRol}
         />
       </section>
 
@@ -283,8 +282,8 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
           <p className="dc-summary-card__description">
             <strong>ROL</strong> é valor monetário (R$) com IPI. Matriz usa filial
             01 e comparativo de filial 02. Use dia, semana, mês ou ano no gráfico
-            de evolução. A taxa de conversão e os clientes novos respeitam o
-            filtro de filial quando informado.
+            de evolução. Taxa de conversão, OTD e % ROL de novos negócios
+            respeitam o filtro de filial quando informado.
           </p>
         </article>
       </section>

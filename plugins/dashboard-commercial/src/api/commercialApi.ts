@@ -6,8 +6,10 @@ import type {
   CommercialFilterParams,
   CommercialRolSeriesData,
   NewClientsAverageData,
+  NewBusinessRolPctData,
   NewClientsRolPctData,
   RolTargetData,
+  SalesOrderOtdData,
 } from "../types/commercial";
 
 export const COMMERCIAL_API_BASE = "/apps/api-delpi/commercial";
@@ -78,6 +80,28 @@ export function getNewClientsAverage(
 ) {
   return fetchCommercialData<NewClientsAverageData>(
     "/new-clients-average",
+    params,
+    signal
+  );
+}
+
+export function getSalesOrderOtd(
+  params: CommercialFilterParams,
+  signal?: AbortSignal
+) {
+  return fetchCommercialData<SalesOrderOtdData>(
+    "/sales-order-otd",
+    params,
+    signal
+  );
+}
+
+export function getNewBusinessRolPct(
+  params: CommercialFilterParams,
+  signal?: AbortSignal
+) {
+  return fetchCommercialData<NewBusinessRolPctData>(
+    "/new-business-rol-pct",
     params,
     signal
   );

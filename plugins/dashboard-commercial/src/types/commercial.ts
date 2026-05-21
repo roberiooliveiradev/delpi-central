@@ -32,6 +32,26 @@ export type NewClientsRolPctData = {
   new_clients_rol_pct: number | null;
 };
 
+export type SalesOrderOtdData = {
+  branch?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  total_lines: number;
+  on_time_lines: number;
+  late_lines: number;
+  sales_order_otd_pct: number | null;
+};
+
+export type NewBusinessRolPctData = {
+  branch?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  total_rol: number;
+  new_business_rol: number;
+  weg_rol: number;
+  new_business_rol_pct: number | null;
+};
+
 export type CommercialFilterParams = {
   start_date?: string;
   end_date?: string;
