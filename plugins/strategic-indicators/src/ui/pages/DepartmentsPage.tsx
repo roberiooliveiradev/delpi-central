@@ -53,7 +53,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       <PageHeader
         eyebrow="MinhaDelpi"
         title="Departamentos"
-        description="Árvore do IGD: Grupo Delpi, escopos analíticos, departamentos e indicadores com acesso ao drill-down por área."
+        description="Mapa interativo do IGD Delpi com pan, zoom e drill-down por departamento."
         badge={
           loading || refreshing ? (
             <LoadingActivityBadge label="Atualizando" tone="info" />
@@ -72,7 +72,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
 
       <SectionBlock
         title="Árvore departamental do IGD"
-        description="Organograma em quatro níveis (IGD → Visão → Departamentos → Indicadores), com setas e cores por desempenho."
+        description="Mapa navegável da Delpi: arraste para mover, scroll para zoom, expandir indicadores e explorar todos os departamentos."
       >
         {loading && !model ? (
           <LoadingActivityInline

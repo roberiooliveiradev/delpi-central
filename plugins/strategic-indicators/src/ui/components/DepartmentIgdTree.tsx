@@ -21,6 +21,7 @@ import {
   getScoreStatusVariant,
   type ScoreStatusVariant,
 } from "../shared/scoreVariant";
+import { PanZoomCanvas } from "./PanZoomCanvas";
 import "./DepartmentIgdTree.css";
 
 type DepartmentIgdTreeProps = {
@@ -282,37 +283,42 @@ export function DepartmentIgdTree({
 
   const hasExpandable = allExpandableKeys.length > 0;
 
-  return (
-    <div
-      className="si-org-chart"
-      style={
-        { "--si-org-chart-cols": String(columnCount) } as CSSProperties
-      }
-    >
-      <div className="si-org-chart__toolbar">
-        <span className="si-org-chart__toolbar-hint">
-          Organograma IGD → Visão → Departamentos → Indicadores
-        </span>
-        {hasExpandable ? (
-          <div className="si-org-chart__toolbar-actions">
-            <button
-              type="button"
-              className="si-org-chart__toolbar-btn"
-              onClick={expandAll}
-            >
-              Expandir todos
-            </button>
-            <button
-              type="button"
-              className="si-org-chart__toolbar-btn"
-              onClick={collapseAll}
-            >
-              Recolher todos
-            </button>
-          </div>
-        ) : null}
-      </div>
+  const fitToken = `${model.competence}-${columnCount}-${model.departmentOrder.join("|")}`;
 
+  const toolbar = (
+    <>
+      <span className="si-org-chart__toolbar-hint">
+        Mapa Delpi · IGD → Visão → Departamentos → Indicadores
+      </span>
+      {hasExpandable ? (
+        <div className="si-org-chart__toolbar-actions">
+          <button
+            type="button"
+            className="si-org-chart__toolbar-btn"
+            onClick={expandAll}
+          >
+            Expandir todos
+          </button>
+          <button
+            type="button"
+            className="si-org-chart__toolbar-btn"
+            onClick={collapseAll}
+          >
+            Recolher todos
+          </button>
+        </div>
+      ) : null}
+    </>
+  );
+
+  return (
+    <PanZoomCanvas fitToken={fitToken} toolbar={toolbar}>
+      <div
+        className="si-org-chart"
+        style={
+          { "--si-org-chart-cols": String(columnCount) } as CSSProperties
+        }
+      >
       <section className="si-org-chart__level si-org-chart__level--igd">
         <span className="si-org-chart__level-tag">Nível 1</span>
         <OrgChartNode
@@ -394,6 +400,7 @@ export function DepartmentIgdTree({
           ))}
         </div>
       </section>
-    </div>
+      </div>
+    </PanZoomCanvas>
   );
 }

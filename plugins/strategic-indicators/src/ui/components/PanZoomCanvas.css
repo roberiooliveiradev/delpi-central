@@ -1,0 +1,111 @@
+.si-pan-zoom-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.si-pan-zoom-shell__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.si-pan-zoom-shell__toolbar {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-width: 220px;
+}
+
+.si-pan-zoom-shell__nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--si-card-bg);
+  border: 1px solid var(--si-card-border);
+}
+
+.si-pan-zoom-shell__nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--si-title);
+  cursor: pointer;
+}
+
+.si-pan-zoom-shell__nav-btn:hover {
+  background: color-mix(in srgb, var(--si-accent, #2563eb) 12%, transparent);
+}
+
+.si-pan-zoom-shell__zoom-label {
+  min-width: 44px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--si-text-muted);
+}
+
+.si-pan-zoom__viewport {
+  position: relative;
+  height: min(72vh, 760px);
+  min-height: 420px;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid var(--si-card-border);
+  background-color: color-mix(in srgb, var(--si-card-bg) 92%, var(--si-text-muted));
+  background-image:
+    radial-gradient(
+      circle,
+      color-mix(in srgb, var(--si-card-border) 80%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 22px 22px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.si-pan-zoom__viewport--dragging {
+  cursor: grabbing;
+}
+
+.si-pan-zoom__hint {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(520px, calc(100% - 28px));
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--si-card-bg) 92%, transparent);
+  border: 1px solid var(--si-card-border);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--si-text-muted);
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+
+.si-pan-zoom__surface {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+  padding: 48px 64px 80px;
+}
