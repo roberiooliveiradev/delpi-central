@@ -4,6 +4,7 @@ import logging
 
 from fastapi import APIRouter, Query, Request
 
+from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.errors import format_api_error
 
 from tm_app.core.catalogs import (
@@ -45,16 +46,8 @@ router = APIRouter(prefix="/transformometro", tags=["Transformômetro CRUD"])
 logger = logging.getLogger(__name__)
 
 
-def _actor(request: Request) -> tuple[str | None, str | None]:
-    user = getattr(request.state, "user", None) or {}
-    return (
-        str(user.get("sub") or user.get("user_id") or "") or None,
-        user.get("email"),
-    )
-
-
 def _audit(request: Request, entity_type: str, entity_id: str, action: str, payload: dict):
-    user_id, user_email = _actor(request)
+    user_id, user_email = actor_from_request(request)
     try:
         AuditRepository().log(
             entity_type=entity_type,
