@@ -1,18 +1,24 @@
 import { useEffect, useState } from "react";
+import { BarChart3, List } from "lucide-react";
+
 import type { AppProps } from "../../App";
+import { DataSourceBanner } from "../../components/DataSourceBanner";
+import { LoadingActivityCard } from "../../components/LoadingActivityCard";
+import { ModuleShortcut } from "../../components/ModuleShortcut";
+import { PageHeader } from "../../components/PageHeader";
+import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { fetchTransformometroHealth } from "../../data/api/transformometroHealthApi";
-import "./HomePage.css";
 
 type LoadState = "loading" | "ok" | "error";
 
 type HomeProps = Pick<AppProps, "getAccessToken"> & {
-  onGoDashboard?: () => void;
-  onGoProcessos?: () => void;
+  pathname?: string;
+  onNavigate: (path: string) => void;
 };
 
-export function HomePage({ getAccessToken, onGoDashboard, onGoProcessos }: HomeProps) {
+export function HomePage({ getAccessToken, pathname, onNavigate }: HomeProps) {
   const [state, setState] = useState<LoadState>("loading");
-  const [detail, setDetail] = useState<string>("");
+  const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -21,12 +27,14 @@ export function HomePage({ getAccessToken, onGoDashboard, onGoProcessos }: HomeP
       .then((payload) => {
         if (cancelled) return;
         setState("ok");
-        setDetail(JSON.stringify(payload, null, 2));
+        setDetail(payload as Record<string, unknown>);
       })
       .catch((error: unknown) => {
         if (cancelled) return;
         setState("error");
-        setDetail(error instanceof Error ? error.message : "Erro desconhecido");
+        setDetail({
+          error: error instanceof Error ? error.message : "Erro desconhecido",
+        });
       });
 
     return () => {
@@ -35,48 +43,84 @@ export function HomePage({ getAccessToken, onGoDashboard, onGoProcessos }: HomeP
   }, [getAccessToken]);
 
   return (
-    <div className="tm-home">
-      <header className="tm-home__header">
-        <h1>Transformômetro</h1>
-        <p className="tm-home__subtitle">
-          Melhorias de processo — economia, investimento, ROI e payback.
-        </p>
-      </header>
+    <div className="dashboard-transformometro dashboard-page">
+      <PageHeader
+        title="Transformômetro"
+        subtitle="Melhorias de processo — economia, investimento, ROI e payback"
+        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.home}
+        onNavigate={onNavigate}
+      />
 
-      <section className="tm-home__card">
-        <h2>Fase 2 — dashboard</h2>
-        <p>
-          Cálculo mensal por revisão (economia bruta, recorrente e líquida), ranking de
-          processos e recálculo materializado em <code>dashboard_calculos</code>.
-        </p>
+      <DataSourceBanner />
 
-        {onGoDashboard ? (
-          <p>
-            <button type="button" className="tm-home__link" onClick={onGoDashboard}>
-              Abrir dashboard →
-            </button>
-          </p>
-        ) : null}
+      {state === "loading" ? (
+        <LoadingActivityCard
+          title="Verificando API"
+          description="Conectando ao transformometro-api no portal."
+        />
+      ) : null}
 
-        {onGoProcessos ? (
-          <p>
-            <button type="button" className="tm-home__link" onClick={onGoProcessos}>
-              Cadastro de processos →
-            </button>
-          </p>
-        ) : null}
-
-        <div className={`tm-home__status tm-home__status--${state}`}>
-          {state === "loading" && "Verificando API…"}
-          {state === "ok" && "API online"}
-          {state === "error" && "Falha ao conectar na API"}
+      {state === "error" ? (
+        <div className="ds-state ds-state--error" role="alert">
+          <p>Falha ao conectar na API do Transformômetro.</p>
         </div>
+      ) : null}
 
-        {detail ? (
-          <pre className="tm-home__pre" aria-label="Resposta da API">
-            {detail}
-          </pre>
-        ) : null}
+      {state === "ok" && detail ? (
+        <section className="ds-card ds-health-card">
+          <h2 className="ds-section-title">Status do serviço</h2>
+          <dl className="ds-summary-metrics">
+            <div className="ds-summary-metric">
+              <dt>Módulo</dt>
+              <dd>{String(detail.module ?? "—")}</dd>
+            </div>
+            <div className="ds-summary-metric">
+              <dt>Fase</dt>
+              <dd>{String(detail.phase ?? "—")}</dd>
+            </div>
+            <div className="ds-summary-metric">
+              <dt>API</dt>
+              <dd>{String(detail.status ?? "online")}</dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
+
+      <section className="ds-shortcuts-grid">
+        <ModuleShortcut
+          title="Dashboard"
+          description="KPIs, evolução mensal, ranking e recálculo materializado."
+          path={TRANSFORMOMETRO_ROUTES.dashboard}
+          onNavigate={onNavigate}
+        />
+        <ModuleShortcut
+          title="Processos"
+          description="Cadastro de processos, revisões, medições, investimentos e recursos."
+          path={TRANSFORMOMETRO_ROUTES.processos}
+          onNavigate={onNavigate}
+        />
+      </section>
+
+      <section className="ds-card ds-shortcuts-section">
+        <h2 className="ds-section-title">Acesso rápido</h2>
+        <div className="ds-header-actions" style={{ marginTop: 0 }}>
+          <button
+            type="button"
+            className="ds-primary-btn"
+            onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.dashboard)}
+          >
+            <BarChart3 size={16} />
+            Abrir dashboard
+          </button>
+          <button
+            type="button"
+            className="ds-ghost-btn"
+            onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.processos)}
+          >
+            <List size={16} />
+            Gerenciar processos
+          </button>
+        </div>
       </section>
     </div>
   );

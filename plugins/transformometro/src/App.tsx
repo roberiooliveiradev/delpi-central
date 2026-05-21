@@ -33,6 +33,8 @@ export default function App({ getAccessToken, pathname }: AppProps) {
         <ProcessoDetailPage
           getAccessToken={getAccessToken}
           processoId={selectedProcessoId}
+          pathname={pathname}
+          onNavigate={navigate}
           onBack={() => setSelectedProcessoId(null)}
         />
       );
@@ -40,6 +42,8 @@ export default function App({ getAccessToken, pathname }: AppProps) {
     return (
       <ProcessosPage
         getAccessToken={getAccessToken}
+        pathname={pathname}
+        onNavigate={navigate}
         onOpenProcesso={setSelectedProcessoId}
       />
     );
@@ -50,6 +54,8 @@ export default function App({ getAccessToken, pathname }: AppProps) {
       <ProcessoDetailPage
         getAccessToken={getAccessToken}
         processoId={selectedProcessoId}
+        pathname={pathname}
+        onNavigate={navigate}
         onBack={() => setSelectedProcessoId(null)}
       />
     );
@@ -58,8 +64,8 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   return (
     <HomePage
       getAccessToken={getAccessToken}
-      onGoDashboard={() => navigate("/apps/transformometro/dashboard")}
-      onGoProcessos={() => navigate("/apps/transformometro/processos")}
+      pathname={pathname}
+      onNavigate={navigate}
     />
   );
 }

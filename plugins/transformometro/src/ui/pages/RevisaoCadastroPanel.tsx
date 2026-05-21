@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AppProps } from "../../App";
+import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   activateRevisao,
   createInvestimento,
@@ -182,7 +183,13 @@ export function RevisaoCadastroPanel({
   }
 
   if (loading) {
-    return <p className="tm-revisao-panel__loading">Carregando cadastro da revisão…</p>;
+    return (
+      <LoadingActivityCard
+        title="Carregando cadastro da revisão"
+        description="Medição, investimentos e recursos compartilhados."
+        variant="compact"
+      />
+    );
   }
 
   const recursosDisponiveis = recursos.filter(
@@ -190,21 +197,21 @@ export function RevisaoCadastroPanel({
   );
 
   return (
-    <div className="tm-revisao-panel">
-      <div className="tm-revisao-panel__toolbar">
+    <div className="ds-cadastro-panel">
+      <div className="ds-cadastro-panel__toolbar">
         <span>
           {revisao.versao_revisao} · {revisao.cenario_tipo}
         </span>
         {!revisao.revisao_ativa ? (
-          <button type="button" className="tm-btn tm-btn--ghost" onClick={() => void handleActivate()}>
+          <button type="button" className="ds-ghost-btn" onClick={() => void handleActivate()}>
             Definir como ativa
           </button>
         ) : null}
       </div>
 
-      <form className="tm-subsection tm-form" onSubmit={handleSaveMedicao}>
-        <h3>Medição operacional</h3>
-        <div className="tm-form__row">
+      <form className="ds-cadastro-panel__block" onSubmit={handleSaveMedicao}>
+        <h3 className="ds-section-title">Medição operacional</h3>
+        <div className="ds-filters-row">
           <label>
             Volume mensal
             <input
@@ -278,15 +285,16 @@ export function RevisaoCadastroPanel({
             />
           </label>
         </div>
-        <button type="submit" className="tm-btn tm-btn--primary">
+        <button type="submit" className="ds-primary-btn">
           Salvar medição
         </button>
       </form>
 
-      <section className="tm-subsection">
-        <h3>Investimentos ({investimentos.length})</h3>
+      <section className="ds-cadastro-panel__block">
+        <h3 className="ds-section-title">Investimentos ({investimentos.length})</h3>
         {investimentos.length > 0 ? (
-          <table className="tm-table tm-table--compact">
+          <div className="ds-table-wrap">
+          <table className="ds-table">
             <thead>
               <tr>
                 <th>Tipo</th>
@@ -308,7 +316,7 @@ export function RevisaoCadastroPanel({
                   <td>
                     <button
                       type="button"
-                      className="tm-btn tm-btn--ghost tm-btn--sm"
+                      className="ds-ghost-btn"
                       onClick={() =>
                         void deleteInvestimento(inv.investimento_id, getAccessToken).then(load)
                       }
@@ -320,12 +328,13 @@ export function RevisaoCadastroPanel({
               ))}
             </tbody>
           </table>
+          </div>
         ) : (
-          <p className="tm-muted">Nenhum investimento nesta revisão.</p>
+          <p className="ds-hint">Nenhum investimento nesta revisão.</p>
         )}
 
-        <form className="tm-form tm-form--inline" onSubmit={handleAddInvestimento}>
-          <div className="tm-form__row">
+        <form className="ds-cadastro-panel__block" onSubmit={handleAddInvestimento}>
+          <div className="ds-filters-row">
             <label>
               Tipo
               <select
@@ -383,16 +392,16 @@ export function RevisaoCadastroPanel({
               </select>
             </label>
           </div>
-          <button type="submit" className="tm-btn tm-btn--primary">
+          <button type="submit" className="ds-primary-btn">
             Adicionar investimento
           </button>
         </form>
       </section>
 
-      <section className="tm-subsection">
-        <h3>Recursos compartilhados vinculados ({vinculos.length})</h3>
+      <section className="ds-cadastro-panel__block">
+        <h3 className="ds-section-title">Recursos compartilhados vinculados ({vinculos.length})</h3>
         {vinculos.length > 0 ? (
-          <ul className="tm-list">
+          <ul className="ds-cadastro-list">
             {vinculos.map((v) => (
               <li key={v.vinculo_id}>
                 <span>
@@ -400,7 +409,7 @@ export function RevisaoCadastroPanel({
                 </span>
                 <button
                   type="button"
-                  className="tm-btn tm-btn--ghost tm-btn--sm"
+                  className="ds-ghost-btn"
                   onClick={() => void deleteVinculo(v.vinculo_id, getAccessToken).then(load)}
                 >
                   Desvincular
@@ -409,10 +418,10 @@ export function RevisaoCadastroPanel({
             ))}
           </ul>
         ) : (
-          <p className="tm-muted">Nenhum recurso vinculado. Rateio igualitário só conta após o vínculo.</p>
+          <p className="ds-hint">Nenhum recurso vinculado. Rateio igualitário só conta após o vínculo.</p>
         )}
 
-        <form className="tm-form tm-form--inline" onSubmit={handleAddVinculo}>
+        <form className="ds-filters-row" onSubmit={handleAddVinculo}>
           <label>
             Vincular recurso existente
             <select
@@ -427,22 +436,22 @@ export function RevisaoCadastroPanel({
               ))}
             </select>
           </label>
-          <button type="submit" className="tm-btn tm-btn--primary" disabled={!vinculoRecursoId}>
+          <button type="submit" className="ds-primary-btn" disabled={!vinculoRecursoId}>
             Vincular
           </button>
         </form>
 
         <button
           type="button"
-          className="tm-btn tm-btn--ghost"
+          className="ds-ghost-btn"
           onClick={() => setShowRecursoForm((v) => !v)}
         >
           {showRecursoForm ? "Cancelar novo recurso" : "+ Novo recurso no catálogo"}
         </button>
 
         {showRecursoForm ? (
-          <form className="tm-form" onSubmit={handleCreateRecurso}>
-            <div className="tm-form__row">
+          <form className="ds-cadastro-panel__block" onSubmit={handleCreateRecurso}>
+            <div className="ds-filters-row">
               <label>
                 Nome
                 <input
@@ -497,7 +506,7 @@ export function RevisaoCadastroPanel({
                 </select>
               </label>
             </div>
-            <button type="submit" className="tm-btn tm-btn--primary">
+            <button type="submit" className="ds-primary-btn">
               Criar recurso
             </button>
           </form>
