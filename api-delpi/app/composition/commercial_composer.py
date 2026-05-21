@@ -12,6 +12,10 @@ from app.application.use_cases.commercial.get_commercial_rol_series_use_case imp
     GetCommercialRolSeriesUseCase,
 )
 from app.infrastructure.persistence.totvs.commercial_repositories.new_clients_rol_pct_repository import NewClientsRolPctRepository
+from app.application.use_cases.commercial.get_sales_order_otd_use_case import GetSalesOrderOtdUseCase
+from app.infrastructure.persistence.totvs.commercial_repositories.sales_order_otd_repository import (
+    SalesOrderOtdRepository,
+)
 DEFAULT_HEAD_OFFICE_TARGET = 1.0
 DEFAULT_BRANCH_TARGET = 1.0
 
@@ -53,6 +57,12 @@ def build_get_new_clients_rol_pct_use_case() -> GetNewClientsRolPctUseCase:
 def build_get_commercial_rol_series_use_case() -> GetCommercialRolSeriesUseCase:
     return GetCommercialRolSeriesUseCase(
         financial_query_repository=FinancialRepository()
+    )
+
+
+def build_get_sales_order_otd_use_case() -> GetSalesOrderOtdUseCase:
+    return GetSalesOrderOtdUseCase(
+        sales_order_otd_repository=SalesOrderOtdRepository()
     )
 
 

@@ -9,8 +9,12 @@ from si_app.application.dto.commercial.new_business_rol_pct_request import (
 from si_app.application.dto.commercial.sales_conversion_rate_request import (
     SalesConversionRateRequest,
 )
+from si_app.application.dto.commercial.sales_order_otd_request import SalesOrderOtdRequest
 from si_app.application.use_cases.commercial.get_new_business_rol_pct_use_case import (
     GetNewBusinessRolPctUseCase,
+)
+from si_app.application.use_cases.commercial.get_sales_order_otd_use_case import (
+    GetSalesOrderOtdUseCase,
 )
 from si_app.application.use_cases.commercial.get_rol_target_pct_use_case import (
     GetRolTargetPctUseCase,
@@ -47,11 +51,13 @@ class CommercialMetricsSnapshotService:
         branch_rol_target_use_case: GetRolTargetPctUseCase,
         sales_conversion_rate_use_case: GetSalesConversionRateUseCase,
         new_business_rol_pct_use_case: GetNewBusinessRolPctUseCase,
+        sales_order_otd_use_case: GetSalesOrderOtdUseCase,
     ) -> None:
         self._head_office_rol_target_use_case = head_office_rol_target_use_case
         self._branch_rol_target_use_case = branch_rol_target_use_case
         self._sales_conversion_rate_use_case = sales_conversion_rate_use_case
         self._new_business_rol_pct_use_case = new_business_rol_pct_use_case
+        self._sales_order_otd_use_case = sales_order_otd_use_case
         self._cache: dict[
             tuple[str | None, str | None, str | None],
             CommercialMetricsSnapshot,
@@ -136,6 +142,13 @@ class CommercialMetricsSnapshotService:
                 end_date=end_date,
             )
         )
+        sales_order_otd_result = self._sales_order_otd_use_case.execute(
+            SalesOrderOtdRequest(
+                branch=branch,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        )
 
         sales_conversion_rate_pct = self._extract_number(
             sales_conversion_result,
@@ -144,6 +157,10 @@ class CommercialMetricsSnapshotService:
         new_business_rol_pct = self._extract_number(
             new_business_rol_result,
             ["new_business_rol_pct"],
+        )
+        sales_order_otd_pct = self._extract_number(
+            sales_order_otd_result,
+            ["sales_order_otd_pct"],
         )
 
         return CommercialMetricsSnapshot(
@@ -160,7 +177,11 @@ class CommercialMetricsSnapshotService:
                 if sales_conversion_rate_pct is not None
                 else None
             ),
-            sales_order_otd_pct=None,
+            sales_order_otd_pct=(
+                round(sales_order_otd_pct, 2)
+                if sales_order_otd_pct is not None
+                else None
+            ),
             new_business_rol_pct=(
                 round(new_business_rol_pct, 2)
                 if new_business_rol_pct is not None

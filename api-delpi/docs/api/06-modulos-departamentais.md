@@ -36,6 +36,7 @@ Parâmetros comuns de período:
 | GET | `/commercial/head_office_rol_target_pct` | Meta % ROL matriz (filial fixa `01`). |
 | GET | `/commercial/branch_rol_target_pct` | Meta % ROL filial (filial fixa `02`). |
 | GET | `/commercial/closing-rate` | Taxa de conversão de vendas. |
+| GET | `/commercial/sales-order-otd` | OTD de pedidos de venda (linhas SC6 entregues no prazo). |
 | GET | `/commercial/new-clients-average` | Média mensal de novos clientes. |
 | GET | `/commercial/new-clients-rol-pct` | % do ROL de clientes novos. |
 

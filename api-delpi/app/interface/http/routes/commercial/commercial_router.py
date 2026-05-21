@@ -12,6 +12,7 @@ from app.application.dto.commercial.new_clients_rol_pct_request import NewClient
 from app.application.dto.commercial.commercial_rol_series_request import (
     CommercialRolSeriesRequest,
 )
+from app.application.dto.commercial.sales_order_otd_request import SalesOrderOtdRequest
 from app.composition.commercial_composer import (
     build_get_head_office_rol_target_pct_use_case,
     build_get_branch_rol_target_pct_use_case,
@@ -19,6 +20,7 @@ from app.composition.commercial_composer import (
     build_get_new_clients_average_use_case,
     build_get_new_clients_rol_pct_use_case,
     build_get_commercial_rol_series_use_case,
+    build_get_sales_order_otd_use_case,
 )
 
 
@@ -196,6 +198,41 @@ def get_new_clients_average(
             status_code=500,
         )
     
+
+@router.get("/sales-order-otd")
+@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+def get_sales_order_otd(
+    branch: Optional[str] = Query(None, min_length=2, max_length=2),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+):
+    try:
+        use_case = build_get_sales_order_otd_use_case()
+
+        request = SalesOrderOtdRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        result = use_case.execute(request)
+
+        return success_response(
+            data=result,
+            message="Sales order on-time delivery percentage fetched successfully.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Validation error while fetching sales order OTD: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while fetching sales order OTD: {exc}")
+        return error_response(
+            "Internal error while fetching sales order OTD.",
+            status_code=500,
+        )
+
 
 @router.get("/new-clients-rol-pct")
 @require_any_permission(["api-delpi.access", "dashboard-commercial.view"])

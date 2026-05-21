@@ -13,6 +13,12 @@ from si_app.application.use_cases.commercial.get_new_business_rol_pct_use_case i
 from si_app.infrastructure.persistence.totvs.commercial_repositories.new_business_rol_pct_repository import (
     NewBusinessRolPctRepository,
 )
+from si_app.application.use_cases.commercial.get_sales_order_otd_use_case import (
+    GetSalesOrderOtdUseCase,
+)
+from si_app.infrastructure.persistence.totvs.commercial_repositories.sales_order_otd_repository import (
+    SalesOrderOtdRepository,
+)
 from si_app.infrastructure.providers.strategic_indicators.commercial_indicators_snapshot_provider import (
     CommercialIndicatorsSnapshotProvider,
 )
@@ -55,12 +61,19 @@ def build_get_new_business_rol_pct_use_case() -> GetNewBusinessRolPctUseCase:
     )
 
 
+def build_get_sales_order_otd_use_case() -> GetSalesOrderOtdUseCase:
+    return GetSalesOrderOtdUseCase(
+        sales_order_otd_repository=SalesOrderOtdRepository()
+    )
+
+
 def build_commercial_metrics_snapshot_service() -> CommercialMetricsSnapshotService:
     return CommercialMetricsSnapshotService(
         head_office_rol_target_use_case=build_get_head_office_rol_target_pct_use_case(),
         branch_rol_target_use_case=build_get_branch_rol_target_pct_use_case(),
         sales_conversion_rate_use_case=build_get_sales_conversion_rate_use_case(),
         new_business_rol_pct_use_case=build_get_new_business_rol_pct_use_case(),
+        sales_order_otd_use_case=build_get_sales_order_otd_use_case(),
     )
 
 

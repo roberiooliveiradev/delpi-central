@@ -10,7 +10,7 @@
 | `commercial-rol-matrix` | ROL Matriz | 25% | por unidade | Curva mensal R$ | `commercial_head_office_rol_target` | TOTVS filial 01 |
 | `commercial-rol-branch` | ROL Filial | 25% | por unidade | Curva mensal R$ | `commercial_branch_rol_target` | TOTVS filial 02 |
 | `commercial-closing-rate` | Taxa de Fechamento de Negócios | 15% | consolidado | 10% | `commercial_sales_conversion_rate` | Existente |
-| `commercial-sales-order-otd` | OTD de Pedidos de Venda | 15% | consolidado | 95% | `commercial_sales_order_otd` | **A criar** — snapshot retorna `null` |
+| `commercial-sales-order-otd` | OTD de Pedidos de Venda | 15% | consolidado | 95% | `commercial_sales_order_otd` | `SC6010` + `SC5010` (`SalesOrderOtdRepository`) |
 | `commercial-new-business-rol` | % ROL de Novos Negócios | 15% | consolidado | Curva mensal % | `commercial_new_business_rol_pct` | ROL não-WEG / ROL total (`NewBusinessRolPctRepository`) |
 
 **Inativos:** `commercial-new-clients`, `commercial-new-rol` (substituído por `commercial-new-business-rol`).
@@ -30,10 +30,19 @@ Comercial usa a regra global de metas por filial — ver [INDICATOR_GOALS_SCOPE.
 
 Validação jan/2026 consolidado: total ~3,82M, não-WEG ~456k, WEG ~3,36M → **~11,95%**.
 
-## Próximos passos (rotas TOTVS)
+## OTD de Pedidos de Venda (regra)
 
-1. `GET` OTD pedidos de venda → preencher `sales_order_otd_pct` no snapshot.
-2. Após deploy: `refresh_period_scores.py`.
+- **Unidade:** linha de pedido (`SC6010`: filial + número + item), com cabeçalho ativo em `SC5010`.
+- **Período:** `C6_ENTREG` (data prevista de entrega) no intervalo consultado.
+- **Considera:** linha totalmente entregue (`C6_QTDENT >= C6_QTDVEN`, `C6_QTDVEN > 0`), com `C6_DATFAT` preenchida; exclui bloqueios (`C6_BLQ`, `C6_BLOQUEI`).
+- **No prazo:** `C6_DATFAT <= C6_ENTREG` (último faturamento até a data prometida).
+- **%:** `linhas_no_prazo / linhas_entregues × 100`; `null` se não houver linhas no período.
+
+Rota HTTP (api-delpi / dashboard): `GET /commercial/sales-order-otd?start_date=&end_date=&branch=`.
+
+## Deploy
+
+Após publicar: `run_migrations.py up` (se pendente) e `refresh_period_scores.py`.
 
 ## Planilha do usuário
 
