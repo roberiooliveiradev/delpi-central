@@ -127,7 +127,8 @@ PROIBIDO:
 
 - [x] 2.1 Séries consolidadas (7 deptos) em `real_indicator_measurements_provider.py`
 - [x] 2.2 Catálogo estrutural uma vez em `get_series_snapshot_optimized`
-- [x] 2.3 Tabela `period_scores` (Postgres) + cache de série em trends
+- [x] 2.3 Tabela `period_scores` (Postgres) + leitura em executive/departments/indicators
+- [x] 2.3b Job periódico (`period_scores_refresh`) a cada 5 min + `refresh_state` (V011)
 - [x] 2.4 Presentation `?include=` (API); trends-only sem comparativo
 - [x] 2.4b MFE split trends
 
@@ -140,7 +141,8 @@ PROIBIDO:
 - [x] 3.4b Transforma+ — cache TTL de `load_raw_data` (6 abas)
 - [x] 3.4c Financial — `list_rol_by_branch` (1 query TOTVS por período)
 - [x] 3.4d LMP — cache TTL do resumo + `resolve_dashboard_status` (SI sem lead time)
-- [x] 3.5 Warm-up — `scripts/warmup_si_snapshots.py` + `SI_WARMUP_ON_STARTUP`
+- [x] 3.5 Warm-up — `scripts/warmup_si_snapshots.py` + `SI_WARMUP_ON_STARTUP` (legado se refresh desligado)
+- [x] 3.6 Materialização — `scripts/refresh_period_scores.py` + `SI_PERIOD_SCORES_REFRESH_*`
 
 ### Fase 4 — MFE (`plugins/strategic-indicators`)
 
@@ -160,13 +162,19 @@ PROIBIDO:
 
 | Variável | Default | Uso |
 |----------|---------|-----|
-| `SI_SNAPSHOT_CACHE_TTL_SECONDS` | `600` | TTL cache medições/catálogo entre requests |
+| `SI_SNAPSHOT_CACHE_TTL_SECONDS` | `300` no Compose | TTL cache in-process entre requests |
 | `LOG_LEVEL` | `INFO` | Logs `strategic_indicators.*` |
 | `TOTVS_POOL_ENABLED` | `true` | Reutiliza conexões pyodbc entre queries |
 | `TOTVS_POOL_MAX_SIZE` | `8` | Máx. conexões simultâneas (7 deptos + margem) |
-| `SI_WARMUP_ON_STARTUP` | `true` no Compose | Thread em background aquece executive + trends no boot |
-| `SI_WARMUP_TRENDS_MONTHS` | `6` | Meses pré-carregados no warm-up |
-| `SI_PERIOD_SCORES_ENABLED` | `true` | Persiste scores por competência (trends sem TOTVS) |
+| `SI_WARMUP_ON_STARTUP` | `false` no Compose | Warm-up legado (só se `SI_PERIOD_SCORES_REFRESH_ENABLED=false`) |
+| `SI_WARMUP_TRENDS_MONTHS` | `6` | Meses no warm-up legado |
+| `SI_PERIOD_SCORES_ENABLED` | `true` | Lê/grava `period_scores` nas rotas de leitura |
+| `SI_PERIOD_SCORES_REFRESH_ENABLED` | `true` | Scheduler recalcula scores a cada N segundos |
+| `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS` | `300` | Intervalo do job (mín. 60s) |
+| `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | `6` | Meses materializados (consolidado) |
+| `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `true` | Mês atual por departamento |
+| `SI_PERIOD_SCORES_REFRESH_INCLUDE_PREVIOUS` | `true` | Garante comparativo mês anterior |
+| `SI_PERIOD_SCORES_REFRESH_BRANCHES` | vazio | Filiais extras (CSV); vazio = consolidado |
 
 ---
 
@@ -187,11 +195,11 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 
 | Item | Prioridade | Notas |
 |------|------------|-------|
-| Backfill `period_scores` | Média | Script/job para competências históricas; trends ficam instantâneos quando todos os meses existem na tabela |
+| Backfill `period_scores` | Média | `refresh_period_scores.py` com competências antigas ou aumentar `REFRESH_TRENDS_MONTHS` |
 | Metas por ano (2025, etc.) | Baixa | Admin `duplicate-year`; hoje há fallback automático |
 | Paginação admin extra | Baixa | Ex.: histórico de metas se volume crescer |
 | Unificar migrations | Housekeeping | Remover duplicata legada em `api-delpi/migrations/plugins/strategic-indicators/` |
-| Executive materializado | Evolução | Similar a `period_scores` para cold start &lt; 10s |
+| Refresh por filial | Baixa | `SI_PERIOD_SCORES_REFRESH_BRANCHES` com códigos TOTVS |
 
 ---
 
@@ -210,5 +218,6 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-18 | Warm-up executive + trends (`warmup_si_snapshots.py`, `SI_WARMUP_ON_STARTUP`) |
 | 2026-05-18 | Admin: batch monthly_targets; change-requests paginado; bench alerts |
 | 2026-05-18 | `period_scores` (V010): trends lê scores do Postgres quando todos os meses existem |
+| 2026-05-19 | `refresh_state` (V011) + scheduler 5 min: executive/departments/indicators leem Postgres; TOTVS só no job |
 | 2026-05-18 | Fallback metas + `snapshot_models` (fix série 6m e boot 502) |
 | 2026-05-18 | Documentação completa SI: OVERVIEW, DATABASE, MFE, DEPLOYMENT, DEVELOPMENT, OPERATIONS, CODE_STRUCTURE, DATA_SOURCES |

@@ -48,6 +48,31 @@ class Settings:
         str(_get_env("SI_PERIOD_SCORES_ENABLED", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}
     )
+    SI_PERIOD_SCORES_REFRESH_ENABLED: bool = (
+        str(_get_env("SI_PERIOD_SCORES_REFRESH_ENABLED", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
+    SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS: int = int(
+        _get_env("SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS", default="300") or "300"
+    )
+    SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS: int = int(
+        _get_env("SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS", default="6") or "6"
+    )
+    SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT: bool = (
+        str(
+            _get_env("SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT", default="true") or "true"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
+    SI_PERIOD_SCORES_REFRESH_INCLUDE_PREVIOUS: bool = (
+        str(
+            _get_env("SI_PERIOD_SCORES_REFRESH_INCLUDE_PREVIOUS", default="true") or "true"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
+    SI_PERIOD_SCORES_REFRESH_BRANCHES: str = str(
+        _get_env("SI_PERIOD_SCORES_REFRESH_BRANCHES", default="") or ""
+    )
     SI_RUN_MIGRATIONS_ON_STARTUP: bool = (
         str(_get_env("SI_RUN_MIGRATIONS_ON_STARTUP", default="false") or "false").lower()
         in {"1", "true", "yes", "on"}

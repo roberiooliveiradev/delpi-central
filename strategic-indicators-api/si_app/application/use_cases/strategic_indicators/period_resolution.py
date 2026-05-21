@@ -4,7 +4,6 @@ from calendar import monthrange
 from dataclasses import dataclass
 from datetime import date
 
-
 @dataclass(frozen=True)
 class ResolvedPeriod:
     competence: str
@@ -62,6 +61,62 @@ def previous_competence(competence: str) -> str:
     if month == 1:
         return f"{year - 1}-12"
     return f"{year}-{str(month - 1).zfill(2)}"
+
+
+def is_standard_competence_period(period: ResolvedPeriod) -> bool:
+    expected_start, expected_end = build_month_range(period.competence)
+    return period.start_date == expected_start and period.end_date == expected_end
+
+
+def build_trend_periods(
+    *,
+    reference_competence: str | None = None,
+    months: int = 6,
+) -> list[ResolvedPeriod]:
+    reference = _parse_competence_date(reference_competence)
+    resolved_months = max(2, min(months, 12))
+    periods: list[ResolvedPeriod] = []
+
+    year = reference.year
+    month = reference.month
+
+    for offset in range(resolved_months - 1, -1, -1):
+        current_year = year
+        current_month = month - offset
+
+        while current_month <= 0:
+            current_month += 12
+            current_year -= 1
+
+        while current_month > 12:
+            current_month -= 12
+            current_year += 1
+
+        competence = f"{current_year}-{str(current_month).zfill(2)}"
+        first_day = f"01-{str(current_month).zfill(2)}-{current_year}"
+        last_day = monthrange(current_year, current_month)[1]
+        last_date = (
+            f"{str(last_day).zfill(2)}-{str(current_month).zfill(2)}-{current_year}"
+        )
+
+        periods.append(
+            ResolvedPeriod(
+                competence=competence,
+                start_date=first_day,
+                end_date=last_date,
+            )
+        )
+
+    return periods
+
+
+def _parse_competence_date(competence: str | None) -> date:
+    if competence:
+        year_str, month_str = competence.split("-")
+        return date(int(year_str), int(month_str), 1)
+
+    today = date.today()
+    return date(today.year, today.month, 1)
 
 
 def build_month_range(competence: str) -> tuple[str, str]:

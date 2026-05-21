@@ -10,6 +10,9 @@ from fastapi.responses import HTMLResponse
 
 from contextlib import asynccontextmanager
 
+from si_app.application.services.strategic_indicators.period_scores_scheduler import (
+    schedule_period_scores_refresh,
+)
 from si_app.application.services.strategic_indicators.snapshot_warmup_service import (
     schedule_strategic_indicators_warmup,
 )
@@ -51,7 +54,9 @@ ALLOWED_ORIGINS = build_allowed_origins()
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     run_migrations_on_startup()
-    schedule_strategic_indicators_warmup()
+    schedule_period_scores_refresh()
+    if settings.SI_WARMUP_ON_STARTUP and not settings.SI_PERIOD_SCORES_REFRESH_ENABLED:
+        schedule_strategic_indicators_warmup()
     yield
 
 

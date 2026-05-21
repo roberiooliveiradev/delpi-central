@@ -8,6 +8,7 @@ from typing import Iterable
 
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
+    is_standard_competence_period,
     previous_period,
     resolve_period,
 )
@@ -169,6 +170,7 @@ class StrategicIndicatorsSnapshotService:
         end_date: str | None = None,
         department_id: str | None = None,
         branch: str | None = None,
+        force_compute: bool = False,
     ) -> StrategicIndicatorsPeriodSnapshot:
         started = time.perf_counter()
         period = resolve_period(
@@ -176,6 +178,22 @@ class StrategicIndicatorsSnapshotService:
             start_date=start_date,
             end_date=end_date,
         )
+
+        if not force_compute:
+            stored = self._load_stored_period_snapshot(
+                period=period,
+                department_id=department_id,
+                branch=branch,
+            )
+            if stored is not None:
+                logger.info(
+                    "si_period_scores_hit competence=%s department_id=%s branch=%s ms=%.0f",
+                    period.competence,
+                    department_id,
+                    branch,
+                    (time.perf_counter() - started) * 1000,
+                )
+                return stored
 
         catalog = self.get_catalog_snapshot(
             competence=period.competence,
@@ -200,6 +218,11 @@ class StrategicIndicatorsSnapshotService:
             measurement_errors=measurement_errors,
             department_id=department_id,
         )
+        self._persist_period_snapshot(
+            snapshot=snapshot,
+            department_id=department_id,
+            branch=branch,
+        )
         logger.info(
             "si_snapshot period=%s department_id=%s branch=%s total_ms=%.0f",
             period.competence,
@@ -217,6 +240,7 @@ class StrategicIndicatorsSnapshotService:
         end_date: str | None = None,
         department_id: str | None = None,
         branch: str | None = None,
+        force_compute: bool = False,
     ) -> StrategicIndicatorsComparativeSnapshot:
         started = time.perf_counter()
         current_period = resolve_period(
@@ -225,6 +249,42 @@ class StrategicIndicatorsSnapshotService:
             end_date=end_date,
         )
         previous_period_resolved = previous_period(current_period)
+
+        if not force_compute:
+            stored_current = self._load_stored_period_snapshot(
+                period=current_period,
+                department_id=department_id,
+                branch=branch,
+            )
+            stored_previous = self._load_stored_period_snapshot(
+                period=previous_period_resolved,
+                department_id=department_id,
+                branch=branch,
+            )
+            if stored_current is not None and stored_previous is not None:
+                catalog = self.get_catalog_snapshot(
+                    competence=current_period.competence,
+                    start_date=current_period.start_date,
+                    end_date=current_period.end_date,
+                    department_id=department_id,
+                    branch=branch,
+                )
+                logger.info(
+                    (
+                        "si_period_scores_hit_comparative current=%s previous=%s "
+                        "department_id=%s branch=%s ms=%.0f"
+                    ),
+                    current_period.competence,
+                    previous_period_resolved.competence,
+                    department_id,
+                    branch,
+                    (time.perf_counter() - started) * 1000,
+                )
+                return StrategicIndicatorsComparativeSnapshot(
+                    catalog=catalog,
+                    current=stored_current,
+                    previous=stored_previous,
+                )
 
         measurements_started = time.perf_counter()
         if self._measurements_port_factory is not None:
@@ -297,6 +357,16 @@ class StrategicIndicatorsSnapshotService:
             measurements=measurements_previous,
             measurement_errors=errors_previous,
             department_id=department_id,
+        )
+        self._persist_period_snapshot(
+            snapshot=current,
+            department_id=department_id,
+            branch=branch,
+        )
+        self._persist_period_snapshot(
+            snapshot=previous,
+            department_id=department_id,
+            branch=branch,
         )
         build_ms = (time.perf_counter() - build_started) * 1000
         total_ms = (time.perf_counter() - started) * 1000
@@ -415,6 +485,7 @@ class StrategicIndicatorsSnapshotService:
         periods: list[ResolvedPeriod],
         department_id: str | None = None,
         branch: str | None = None,
+        force_compute: bool = False,
     ) -> list[StrategicIndicatorsPeriodSnapshot]:
         started = time.perf_counter()
         scope_branch = normalize_scope_branch(branch)
@@ -422,7 +493,8 @@ class StrategicIndicatorsSnapshotService:
 
         stored_snapshots: dict[str, StrategicIndicatorsPeriodSnapshot] = {}
         if (
-            settings.SI_PERIOD_SCORES_ENABLED
+            not force_compute
+            and settings.SI_PERIOD_SCORES_ENABLED
             and self._period_scores_repository is not None
             and periods
         ):
@@ -564,16 +636,11 @@ class StrategicIndicatorsSnapshotService:
                 classification=classification,
             )
             snapshots.append(snapshot)
-
-            if (
-                settings.SI_PERIOD_SCORES_ENABLED
-                and self._period_scores_repository is not None
-            ):
-                self._period_scores_repository.upsert_period_snapshot(
-                    snapshot=snapshot,
-                    scope_branch=scope_branch,
-                    scope_department_id=scope_department_id,
-                )
+            self._persist_period_snapshot(
+                snapshot=snapshot,
+                department_id=department_id,
+                branch=branch,
+            )
 
         catalog_ms = (time.perf_counter() - catalog_started) * 1000
         build_ms = (time.perf_counter() - build_started) * 1000
@@ -595,6 +662,46 @@ class StrategicIndicatorsSnapshotService:
             total_ms,
         )
         return snapshots
+
+    def _load_stored_period_snapshot(
+        self,
+        *,
+        period: ResolvedPeriod,
+        department_id: str | None,
+        branch: str | None,
+    ) -> StrategicIndicatorsPeriodSnapshot | None:
+        if not settings.SI_PERIOD_SCORES_ENABLED:
+            return None
+        if self._period_scores_repository is None:
+            return None
+        if not is_standard_competence_period(period):
+            return None
+
+        return self._period_scores_repository.get_period_snapshot(
+            competence=period.competence,
+            scope_branch=normalize_scope_branch(branch),
+            scope_department_id=normalize_scope_department_id(department_id),
+        )
+
+    def _persist_period_snapshot(
+        self,
+        *,
+        snapshot: StrategicIndicatorsPeriodSnapshot,
+        department_id: str | None,
+        branch: str | None,
+    ) -> None:
+        if not settings.SI_PERIOD_SCORES_ENABLED:
+            return
+        if self._period_scores_repository is None:
+            return
+        if not is_standard_competence_period(snapshot.period):
+            return
+
+        self._period_scores_repository.upsert_period_snapshot(
+            snapshot=snapshot,
+            scope_branch=normalize_scope_branch(branch),
+            scope_department_id=normalize_scope_department_id(department_id),
+        )
 
     def _load_measurements_by_period_parallel(
         self,

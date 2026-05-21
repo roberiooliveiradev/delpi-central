@@ -48,11 +48,15 @@ Ver [gateway-nginx.md](../../docs/02-infraestrutura/gateway-nginx.md).
 | Variável | Default | Descrição |
 |----------|---------|-----------|
 | `SI_API_ROOT_PATH` | `/apps/strategic-indicators-api` | Prefixo OpenAPI e links |
-| `SI_SNAPSHOT_CACHE_TTL_SECONDS` | `600` | Cache in-process medições/catálogo |
-| `SI_WARMUP_ON_STARTUP` | `false` (`true` no Compose dev) | Warm-up em thread no boot |
-| `SI_WARMUP_TRENDS_MONTHS` | `6` | Meses aquecidos no warm-up |
-| `SI_PERIOD_SCORES_ENABLED` | `true` | Grava/lê `period_scores` |
-| `SI_RUN_MIGRATIONS_ON_STARTUP` | `false` (`true` dev) | Migrations antes do warm-up |
+| `SI_SNAPSHOT_CACHE_TTL_SECONDS` | `300` no Compose | Cache in-process medições/catálogo |
+| `SI_WARMUP_ON_STARTUP` | `false` | Warm-up legado (use se refresh desligado) |
+| `SI_WARMUP_TRENDS_MONTHS` | `6` | Meses no warm-up legado |
+| `SI_PERIOD_SCORES_ENABLED` | `true` | Grava/lê `period_scores` nas rotas |
+| `SI_PERIOD_SCORES_REFRESH_ENABLED` | `true` | Job periódico de materialização |
+| `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS` | `300` | Intervalo do job (segundos) |
+| `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | `6` | Meses materializados (consolidado) |
+| `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `true` | Mês atual por departamento |
+| `SI_RUN_MIGRATIONS_ON_STARTUP` | `false` (`true` dev) | Migrations no boot |
 | `TOTVS_POOL_ENABLED` | `true` | Pool pyodbc |
 | `TOTVS_POOL_MAX_SIZE` | `8` | Conexões máx. no pool |
 | `LOG_LEVEL` | `INFO` | Logs `strategic_indicators.*` |

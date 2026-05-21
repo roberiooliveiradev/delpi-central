@@ -6,7 +6,7 @@ from si_app.application.dto.supplies.get_cpv_request import GetCPVRequest
 
 class CpvQueryRepository(BaseRepository, CpvQueryRepositoryPort):
 
-    DEFAULT_CFOPS = ("5101", "5102", "6101", "6102")
+    DEFAULT_CFOPS = ("5101", "5102", "5124", "6101", "6102", "6124", "7101", "6109")
 
     def _build_filters(self, request: GetCPVRequest):
         qb = QueryBuilder()

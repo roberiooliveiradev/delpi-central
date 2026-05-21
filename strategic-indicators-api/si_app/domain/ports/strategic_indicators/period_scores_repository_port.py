@@ -11,6 +11,16 @@ if TYPE_CHECKING:
 
 class StrategicIndicatorsPeriodScoresRepositoryPort(ABC):
     @abstractmethod
+    def get_period_snapshot(
+        self,
+        *,
+        competence: str,
+        scope_branch: str,
+        scope_department_id: str,
+    ) -> StrategicIndicatorsPeriodSnapshot | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_period_snapshots(
         self,
         *,
