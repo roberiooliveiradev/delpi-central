@@ -9,6 +9,7 @@ import {
   type Processo,
   type Revisao,
 } from "../../data/api/transformometroApi";
+import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
 import "./ProcessosPage.css";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -22,6 +23,7 @@ export function ProcessoDetailPage({ getAccessToken, processoId, onBack }: Props
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showRevisaoForm, setShowRevisaoForm] = useState(false);
+  const [selectedRevisaoId, setSelectedRevisaoId] = useState<string | null>(null);
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
     cenario_tipo: "baseline",
@@ -156,35 +158,60 @@ export function ProcessoDetailPage({ getAccessToken, processoId, onBack }: Props
 
       <section className="tm-card">
         <h2>Revisões ({revisoes.length})</h2>
+        <p className="tm-muted">
+          Clique em uma revisão para cadastrar medição, investimentos e recursos compartilhados.
+        </p>
         {revisoes.length === 0 ? (
           <p>Nenhuma revisão. Cadastre baseline e melhoria para mensurar economia.</p>
         ) : (
-          <table className="tm-table">
-            <thead>
-              <tr>
-                <th>Versão</th>
-                <th>Cenário</th>
-                <th>Vigência</th>
-                <th>Ativa</th>
-              </tr>
-            </thead>
-            <tbody>
-              {revisoes.map((r) => (
-                <tr key={r.revisao_id}>
-                  <td>{r.versao_revisao}</td>
-                  <td>{r.cenario_tipo}</td>
-                  <td>{r.data_inicio_vigencia}</td>
-                  <td>
-                    {r.revisao_ativa ? (
-                      <span className="tm-badge tm-badge--active">ativa</span>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
+          <>
+            <table className="tm-table">
+              <thead>
+                <tr>
+                  <th>Versão</th>
+                  <th>Cenário</th>
+                  <th>Vigência</th>
+                  <th>Ativa</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {revisoes.map((r) => (
+                  <tr
+                    key={r.revisao_id}
+                    className={
+                      selectedRevisaoId === r.revisao_id ? "tm-table__row--selected" : undefined
+                    }
+                    onClick={() =>
+                      setSelectedRevisaoId((id) =>
+                        id === r.revisao_id ? null : r.revisao_id
+                      )
+                    }
+                  >
+                    <td>{r.versao_revisao}</td>
+                    <td>{r.cenario_tipo}</td>
+                    <td>{r.data_inicio_vigencia}</td>
+                    <td>
+                      {r.revisao_ativa ? (
+                        <span className="tm-badge tm-badge--active">ativa</span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {selectedRevisaoId && options && revisoes.find((r) => r.revisao_id === selectedRevisaoId) ? (
+              <RevisaoCadastroPanel
+                revisao={revisoes.find((r) => r.revisao_id === selectedRevisaoId)!}
+                options={options}
+                getAccessToken={getAccessToken}
+                onError={setError}
+                onRevisaoUpdated={load}
+              />
+            ) : null}
+          </>
         )}
       </section>
     </div>

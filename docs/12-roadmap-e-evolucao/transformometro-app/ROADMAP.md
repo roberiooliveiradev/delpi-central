@@ -28,9 +28,9 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Validações | catálogos §4, exclusão lógica | ✅ |
 | UI cadastro | lista processos + novo processo + revisões no detalhe | ✅ |
 | Auditoria | `audit_logs` nas mutações | ✅ |
-| UI medições/investimentos/recursos | Formulários no detalhe da revisão | Pendente |
+| UI medições/investimentos/recursos | Formulários no detalhe da revisão (clique na linha) | ✅ |
 
-**Critério de pronto:** criar processo completo só pela UI, sem abrir Sheets.
+**Critério de pronto:** criar processo completo só pela UI, sem abrir Sheets (baseline + melhoria + medições + vínculos).
 
 **Deploy:** rebuild `transformometro-api` e `transformometro` no servidor (`TM_RUN_MIGRATIONS_ON_STARTUP=true` aplica V002).
 
@@ -85,8 +85,6 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 ## Próximo passo imediato
 
-1. Aprovar estrutura de pastas e permissões ([OVERVIEW.md](./OVERVIEW.md))
-2. Iniciar **Fase 0** (scaffold API + MFE + migration V001)
-3. Paralelo: extrair calculador com suite de testes da planilha
-
-Quando quiser começar a implementação da Fase 0 no código, peça explicitamente para subir o scaffold no repositório.
+1. **Deploy** Fase 1 no servidor (rebuild `transformometro-api` + `transformometro`)
+2. Registrar app no Core API (manifesto + permissões)
+3. Iniciar **Fase 2** — `DashboardCalculatorService`, testes golden, UI dashboard

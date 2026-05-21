@@ -116,3 +116,77 @@
   background: #dcfce7;
   color: #15803d;
 }
+
+.tm-muted {
+  margin: 0 0 0.75rem;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.tm-table__row--selected {
+  background: #eff6ff !important;
+}
+
+.tm-revisao-panel {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.tm-revisao-panel__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.tm-revisao-panel__loading {
+  margin: 1rem 0 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.tm-subsection {
+  margin-bottom: 1.5rem;
+}
+
+.tm-subsection h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.tm-table--compact th,
+.tm-table--compact td {
+  padding: 0.45rem 0.4rem;
+}
+
+.tm-table--compact tbody tr {
+  cursor: default;
+}
+
+.tm-btn--sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.tm-list {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.tm-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+}
+
+.tm-form--inline {
+  margin-top: 0.75rem;
+}
