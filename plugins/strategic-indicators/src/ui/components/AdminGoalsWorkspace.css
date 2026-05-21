@@ -31,6 +31,10 @@
   margin-bottom: 14px;
 }
 
+.si-admin-goals-filters .si-admin-form-field select {
+  width: 100%;
+}
+
 .si-admin-goals-table {
   display: grid;
   gap: 10px;

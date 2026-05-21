@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { fetchAdminDepartmentIndicators } from "../../data/api/strategicIndicatorsSettingsApi";
 import { InfoState } from "./InfoState";
 import { IndicatorGoalForm } from "./IndicatorGoalForm";
 import { DrawerPanel } from "./DrawerPanel";
@@ -6,6 +7,7 @@ import { AdminInlineToolPanel } from "./AdminInlineToolPanel";
 import { ActiveToggle } from "./ActiveToggle";
 import { AnnualGoalsWorkspace } from "./AnnualGoalsWorkspace";
 import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndicatorGoals";
+import { useStrategicIndicatorsAdminDepartments } from "../../state/hooks/useStrategicIndicatorsAdminDepartments";
 import { useStrategicIndicatorsGoalYearsOverview } from "../../state/hooks/useStrategicIndicatorsGoalYearsOverview";
 import type {
   DuplicateStrategicIndicatorGoalsYearRequest,
@@ -26,9 +28,21 @@ type AdminGoalsWorkspaceProps = {
 
 type BulkToolMode = "create_year" | "duplicate" | "fill" | null;
 
+type CatalogIndicatorOption = {
+  indicatorId: string;
+  indicatorName: string;
+  departmentId: string;
+  departmentName: string;
+};
+
 export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps) {
   const yearsOverview = useStrategicIndicatorsGoalYearsOverview({ getAccessToken });
+  const departments = useStrategicIndicatorsAdminDepartments({ getAccessToken });
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [catalogIndicators, setCatalogIndicators] = useState<CatalogIndicatorOption[]>(
+    [],
+  );
+  const [catalogIndicatorsLoading, setCatalogIndicatorsLoading] = useState(false);
 
   const goals = useStrategicIndicatorGoals({
     getAccessToken,
@@ -50,13 +64,127 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
     }
   }, [selectedYear]);
 
+  useEffect(() => {
+    if (departments.items.length === 0) {
+      setCatalogIndicators([]);
+      return;
+    }
+
+    let cancelled = false;
+    setCatalogIndicatorsLoading(true);
+
+    void (async () => {
+      try {
+        const departmentById = new Map(
+          departments.items.map((department) => [
+            department.department_id,
+            department.department_name,
+          ]),
+        );
+
+        const responses = await Promise.all(
+          departments.items.map((department) =>
+            fetchAdminDepartmentIndicators(
+              department.department_id,
+              getAccessToken,
+            ),
+          ),
+        );
+
+        if (cancelled) return;
+
+        const merged: CatalogIndicatorOption[] = [];
+        responses.forEach((response, index) => {
+          const department = departments.items[index];
+          if (!department) return;
+
+          response.items.forEach((indicator) => {
+            merged.push({
+              indicatorId: indicator.indicator_id,
+              indicatorName: indicator.indicator_name,
+              departmentId: department.department_id,
+              departmentName:
+                departmentById.get(department.department_id) ??
+                department.department_name,
+            });
+          });
+        });
+
+        merged.sort((left, right) => {
+          const departmentCompare = left.departmentName.localeCompare(
+            right.departmentName,
+            "pt-BR",
+          );
+          if (departmentCompare !== 0) return departmentCompare;
+          return left.indicatorName.localeCompare(right.indicatorName, "pt-BR");
+        });
+
+        setCatalogIndicators(merged);
+      } catch {
+        if (!cancelled) {
+          setCatalogIndicators([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setCatalogIndicatorsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [departments.items, getAccessToken]);
+
+  const departmentFilterOptions = useMemo(
+    () =>
+      [...departments.items].sort((left, right) =>
+        left.department_name.localeCompare(right.department_name, "pt-BR"),
+      ),
+    [departments.items],
+  );
+
+  const indicatorFilterOptions = useMemo(() => {
+    const departmentId = goals.selectedDepartmentId.trim();
+    const pool = departmentId
+      ? catalogIndicators.filter((item) => item.departmentId === departmentId)
+      : catalogIndicators;
+
+    return pool.map((item) => ({
+      value: item.indicatorId,
+      label: departmentId
+        ? item.indicatorName
+        : `${item.indicatorName} · ${item.departmentName}`,
+    }));
+  }, [catalogIndicators, goals.selectedDepartmentId]);
+
   const indicatorOptions = useMemo(() => {
+    if (indicatorFilterOptions.length > 0) {
+      return indicatorFilterOptions;
+    }
+
     const map = new Map<string, string>();
     goals.items.forEach((item) => {
       map.set(item.indicator_id, item.indicator_name || item.indicator_id);
     });
     return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
-  }, [goals.items]);
+  }, [indicatorFilterOptions, goals.items]);
+
+  useEffect(() => {
+    const selectedId = goals.selectedIndicatorId.trim();
+    if (!selectedId) return;
+
+    const stillValid = indicatorFilterOptions.some(
+      (option) => option.value === selectedId,
+    );
+    if (!stillValid) {
+      goals.setSelectedIndicatorId("");
+    }
+  }, [
+    goals.selectedIndicatorId,
+    goals.setSelectedIndicatorId,
+    indicatorFilterOptions,
+  ]);
 
   const selectedYearOverview = useMemo(
     () =>
@@ -348,20 +476,50 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
 
               <div className="si-admin-goals-filters">
                 <label className="si-admin-form-field">
-                  <span>Filtrar indicador</span>
-                  <input
-                    value={goals.selectedIndicatorId}
-                    onChange={(e) => goals.setSelectedIndicatorId(e.target.value)}
-                    placeholder="ID do indicador"
-                  />
-                </label>
-                <label className="si-admin-form-field">
                   <span>Departamento</span>
-                  <input
+                  <select
                     value={goals.selectedDepartmentId}
-                    onChange={(e) => goals.setSelectedDepartmentId(e.target.value)}
-                    placeholder="ID do departamento"
-                  />
+                    disabled={departments.loading}
+                    onChange={(event) => {
+                      goals.setSelectedDepartmentId(event.target.value);
+                      goals.setSelectedIndicatorId("");
+                    }}
+                  >
+                    <option value="">Todos os departamentos</option>
+                    {departmentFilterOptions.map((department) => (
+                      <option
+                        key={department.department_id}
+                        value={department.department_id}
+                      >
+                        {department.department_name}
+                        {department.short_name
+                          ? ` (${department.short_name})`
+                          : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="si-admin-form-field">
+                  <span>Indicador</span>
+                  <select
+                    value={goals.selectedIndicatorId}
+                    disabled={catalogIndicatorsLoading || departments.loading}
+                    onChange={(event) =>
+                      goals.setSelectedIndicatorId(event.target.value)
+                    }
+                  >
+                    <option value="">
+                      {catalogIndicatorsLoading
+                        ? "Carregando indicadores..."
+                        : "Todos os indicadores"}
+                    </option>
+                    {indicatorFilterOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
 
