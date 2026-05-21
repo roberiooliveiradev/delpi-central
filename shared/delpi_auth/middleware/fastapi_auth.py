@@ -6,7 +6,14 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 
 from ..jwt_validator import validate_token
-from ..request_context import set_current_user, reset_current_user, clear_current_user
+from ..request_context import (
+    set_current_user,
+    reset_current_user,
+    clear_current_user,
+    set_request_authorization,
+    reset_request_authorization,
+    clear_request_authorization,
+)
 
 
 CORE_API_URL = "http://core-api:8000"
@@ -61,6 +68,7 @@ async def load_user_rbac(token: str):
 
 async def jwt_middleware(request: Request, call_next):
     clear_current_user()
+    clear_request_authorization()
 
     path = request.url.path
     if is_public_path(path):
@@ -72,6 +80,7 @@ async def jwt_middleware(request: Request, call_next):
 
     token = auth_header.split(" ", 1)[1]
     context_token = None
+    auth_context_token = set_request_authorization(auth_header)
 
     try:
         claims = validate_token(token)
@@ -80,6 +89,7 @@ async def jwt_middleware(request: Request, call_next):
         name = claims.get("name") or email or "Usuário"
 
         if not sub or not email:
+            reset_request_authorization(auth_context_token)
             return JSONResponse(status_code=401, content={"detail": "Invalid token claims"})
 
         rbac = await load_user_rbac(token)
@@ -99,6 +109,7 @@ async def jwt_middleware(request: Request, call_next):
         context_token = set_current_user(user)
 
     except Exception as exc:
+        reset_request_authorization(auth_context_token)
         return JSONResponse(status_code=401, content={"detail": f"Invalid token: {exc}"})
 
     try:
@@ -106,6 +117,7 @@ async def jwt_middleware(request: Request, call_next):
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail":f"Error: {e}"})
     finally:
+        reset_request_authorization(auth_context_token)
         if context_token is not None:
             reset_current_user(context_token)
         else:

@@ -100,6 +100,7 @@ Cliente compartilhado: `shared/transformometro_client` (`TransformometroApiClien
 Variáveis:
 
 - `TRANSFORMOMETRO_API_BASE_URL` — ex.: `http://transformometro-api:8000/apps/transformometro-api/transformometro`
-- `TRANSFORMOMETRO_SERVICE_BEARER` — opcional, jobs SI sem usuário no contexto
+- `API_DELPI_INTERNAL_SERVICE_TOKEN` — token **já previsto** no `infra/.env` de produção (`append-missing-env-production.sh`); mesmo valor em `transformometro-api`, `strategic-indicators-api` e `api-delpi`. Header: `X-Delpi-Service-Token` (padrão DELPI, igual conceito ao `CORE_API_INTEGRATIONS_SERVICE_TOKEN` da Core API).
+- `TRANSFORMOMETRO_SERVICE_BEARER` — legado opcional; evitar duplicar segredo.
 
-**401 Unauthorized em Indicadores (engenharia):** o SI carrega departamentos em paralelo (`ThreadPoolExecutor`). Sem propagar `contextvars`, o JWT não chega ao `transformometro-api`. O SI usa `submit_in_request_context` para repassar o token; em jobs agendados configure `TRANSFORMOMETRO_SERVICE_BEARER`.
+**401 em Indicadores:** JWT em threads (`submit_in_request_context` + `request_authorization`), ignorar snapshot/cache com 401 antigo, e garantir `API_DELPI_INTERNAL_SERVICE_TOKEN` no `.env`.

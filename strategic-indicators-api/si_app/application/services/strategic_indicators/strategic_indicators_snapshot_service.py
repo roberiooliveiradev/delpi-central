@@ -51,6 +51,9 @@ from si_app.application.services.strategic_indicators.snapshot_shared_cache impo
     catalog_cache_key,
     measurements_cache_key,
 )
+from si_app.application.services.strategic_indicators.measurement_errors import (
+    has_transformometro_auth_error,
+)
 from si_app.config import settings
 from si_app.domain.ports.strategic_indicators.calculation_snapshots_repository_port import (
     StrategicIndicatorsCalculationSnapshotsRepositoryPort,
@@ -197,7 +200,9 @@ class StrategicIndicatorsSnapshotService:
                 department_id=department_id,
                 branch=branch,
             )
-            if stored is not None:
+            if stored is not None and not has_transformometro_auth_error(
+                stored.measurement_errors
+            ):
                 logger.info(
                     "si_period_scores_hit competence=%s department_id=%s branch=%s ms=%.0f",
                     period.competence,
@@ -206,6 +211,16 @@ class StrategicIndicatorsSnapshotService:
                     (time.perf_counter() - started) * 1000,
                 )
                 return stored
+            if stored is not None:
+                logger.warning(
+                    (
+                        "si_period_scores_skip_stale_transformometro_auth "
+                        "competence=%s department_id=%s branch=%s"
+                    ),
+                    period.competence,
+                    department_id,
+                    branch,
+                )
 
         catalog = self.get_catalog_snapshot(
             competence=period.competence,
@@ -844,12 +859,16 @@ class StrategicIndicatorsSnapshotService:
 
         cached = self._measurements_cache.get(key)
         if cached is not None:
-            return cached
+            _items, errors = cached
+            if not has_transformometro_auth_error(errors):
+                return cached
 
         cached = shared_measurements_cache.get(key)
         if cached is not None:
-            self._measurements_cache[key] = cached
-            return cached
+            _items, errors = cached
+            if not has_transformometro_auth_error(errors):
+                self._measurements_cache[key] = cached
+                return cached
 
         port = measurements_port or self._measurements_port
         measurements_started = time.perf_counter()
