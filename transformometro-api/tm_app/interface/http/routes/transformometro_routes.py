@@ -32,7 +32,7 @@ def module_health():
     return {
         "status": "online" if db_ready else "degraded",
         "module": "transformometro",
-        "phase": "2-dashboard",
+        "phase": "4-melhorias",
         "db_ready": db_ready,
         "db_hint": db_hint,
     }
