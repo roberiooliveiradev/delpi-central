@@ -72,7 +72,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
 
       <SectionBlock
         title="Árvore departamental do IGD"
-        description="Do topo (IGD Delpi) até os indicadores de cada departamento. Expanda os indicadores ou abra o detalhe do departamento."
+        description="Linha 1: IGD Delpi. Linha 2: visão selecionada e departamentos alinhados por escopo. Use expandir/recolher todos para os indicadores."
       >
         {loading && !model ? (
           <LoadingActivityInline
