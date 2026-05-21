@@ -13,7 +13,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Compose + gateway | URLs `/apps/transformometro` e `/apps/transformometro-api` | ✅ |
 | Build MFE | `npm run build` no plugin | ✅ |
 | Registro no Core API | App + permissões iniciais | Pendente (manual) |
-| CI mínimo | lint + testes do calculador | Fase 2 |
+| CI mínimo | `scripts/ci-transformometro-api.sh` (pytest calculador + import) | ✅ |
 
 **Critério de pronto:** `GET /health` e MFE “hello” carregando no portal com JWT.
 
@@ -34,7 +34,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 **Deploy:** rebuild `transformometro-api` e `transformometro` no servidor (`TM_RUN_MIGRATIONS_ON_STARTUP=true` aplica V002).
 
-## Fase 2 — Cálculo e dashboard (2 sprints) 🚧 MVP no repo
+## Fase 2 — Cálculo e dashboard (2 sprints) ✅ MVP no repo
 
 **Objetivo:** paridade com Apps Script / `dashboard_calculos`.
 
@@ -46,7 +46,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | `POST /dashboard/recalcular` | Rebuild síncrono TRUNCATE + insert | ✅ |
 | `GET /dashboard/resumo`, `/evolucao`, `/processos` | Filtros filial/período; fallback cálculo em memória | ✅ |
 | UI dashboard | Cards, tabela evolução, ranking, botão recalcular | ✅ |
-| Migração planilha | script import + relatório diff | Pendente |
+| Migração planilha | `scripts/migrate_transforma_mais_sheet.py`, `GET/POST /import/*`, UI `/import` | ✅ |
 
 **Critério de pronto:** números batem com planilha para amostra de ≥10 processos (incl. economia negativa).
 
@@ -90,7 +90,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 ## Próximo passo imediato
 
-1. **Deploy** Fase 2 (`TM_RUN_MIGRATIONS_ON_STARTUP` aplica V003; rebuild API + MFE)
-2. Rodar **Recalcular** no dashboard após cadastrar dados
-3. Script de **import da planilha** + diff contra golden
-4. Registrar app no Core API (manifesto + permissões)
+1. **Deploy** (`TM_RUN_MIGRATIONS_ON_STARTUP=true`; rebuild `transformometro-api` + `transformometro`)
+2. Configurar `TRANSFORMA_MAIS_*` no ambiente da API e registrar app no Core API (incl. `transformometro.admin`)
+3. **Importar planilha** (UI ou CLI) e validar diff do calculador
+4. Desligar escrita na planilha (Fase 3)

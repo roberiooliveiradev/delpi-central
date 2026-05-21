@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, List } from "lucide-react";
+import { BarChart3, List, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { DataSourceBanner } from "../../components/DataSourceBanner";
@@ -99,6 +99,12 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: HomeProps) {
           path={TRANSFORMOMETRO_ROUTES.processos}
           onNavigate={onNavigate}
         />
+        <ModuleShortcut
+          title="Importar planilha"
+          description="Migração Transforma+ (Sheets) com validação e diff do calculador."
+          path={TRANSFORMOMETRO_ROUTES.import}
+          onNavigate={onNavigate}
+        />
       </section>
 
       <section className="ds-card ds-shortcuts-section">
@@ -119,6 +125,14 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: HomeProps) {
           >
             <List size={16} />
             Gerenciar processos
+          </button>
+          <button
+            type="button"
+            className="ds-ghost-btn"
+            onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.import)}
+          >
+            <Upload size={16} />
+            Importar planilha
           </button>
         </div>
       </section>

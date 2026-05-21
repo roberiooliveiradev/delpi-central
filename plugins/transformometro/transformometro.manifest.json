@@ -32,6 +32,12 @@
       "name": "Recalcular dashboard",
       "description": "Permite disparar o recálculo mensal derivado.",
       "module": "transformometro"
+    },
+    {
+      "code": "transformometro.admin",
+      "name": "Administrar Transformômetro",
+      "description": "Importação da planilha, auditoria e operações avançadas.",
+      "module": "transformometro"
     }
   ],
   "routes": [
@@ -60,6 +66,15 @@
       "icon": "list",
       "entry": null,
       "order": 22,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/transformometro/import",
+      "label": "Importar",
+      "permission": "transformometro.admin",
+      "icon": "upload",
+      "entry": null,
+      "order": 23,
       "showInMenu": true
     }
   ],

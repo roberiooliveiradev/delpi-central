@@ -6,3 +6,4 @@ PyJWT
 psycopg[binary]
 python-jose[cryptography]
 pytest
+requests

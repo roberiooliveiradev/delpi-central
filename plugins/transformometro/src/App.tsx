@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DashboardPage } from "./ui/pages/DashboardPage";
 import { HomePage } from "./ui/pages/HomePage";
 import { ProcessoDetailPage } from "./ui/pages/ProcessoDetailPage";
+import { ImportPage } from "./ui/pages/ImportPage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
 
 export type AppProps = {
@@ -20,6 +21,16 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   if (pathname === "/apps/transformometro/dashboard" || pathname?.endsWith("/dashboard")) {
     return (
       <DashboardPage
+        getAccessToken={getAccessToken}
+        pathname={pathname}
+        onNavigate={navigate}
+      />
+    );
+  }
+
+  if (pathname === "/apps/transformometro/import" || pathname?.endsWith("/import")) {
+    return (
+      <ImportPage
         getAccessToken={getAccessToken}
         pathname={pathname}
         onNavigate={navigate}

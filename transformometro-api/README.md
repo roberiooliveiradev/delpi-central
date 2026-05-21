@@ -27,4 +27,30 @@ PLUGINS_DB_HOST=localhost PLUGINS_DB_PORT=5433 ...
 python -m tm_app.infrastructure.persistence.plugins.migrations_runner up
 ```
 
+## Testes
+
+```bash
+make test
+# ou: ../../scripts/ci-transformometro-api.sh
+```
+
+## Importação da planilha (Transforma+)
+
+Variáveis (mesmos GIDs do `api-delpi` / `infra/.env`):
+
+- `TRANSFORMA_MAIS_SHEET_ID`
+- `TRANSFORMA_MAIS_GID_PROCESSOS`, `_REVISAO`, `_MEDICOES`, `_INVESTIMENTOS`, `_RECURSOS_COMPARTILHADOS`, `_REVISAO_RECURSOS_COMPARTILHADOS`
+
+CLI:
+
+```bash
+python scripts/migrate_transforma_mais_sheet.py --preview
+python scripts/migrate_transforma_mais_sheet.py --apply --replace   # truncate + import + recalc
+```
+
+HTTP (JWT):
+
+- `GET /transformometro/import/preview`
+- `POST /transformometro/import/apply` — body `{ "replace_existing": false, "recalc_dashboard": true }`
+
 Documentação: [docs/12-roadmap-e-evolucao/transformometro-app/](../docs/12-roadmap-e-evolucao/transformometro-app/README.md)

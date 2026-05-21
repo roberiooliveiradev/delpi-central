@@ -378,6 +378,46 @@ export function fetchDashboardEvolucao(
   );
 }
 
+export type ImportPreviewResult = {
+  validation: {
+    ok: boolean;
+    errors: string[];
+    sheet_counts: Record<string, number>;
+  };
+  sheet_summary?: {
+    solucoes_implementadas?: number;
+    economia_liquida_total?: number;
+    economia_bruta_total?: number;
+    roi_medio?: number | null;
+  } | null;
+  db_counts?: Record<string, number>;
+  db_summary?: ImportPreviewResult["sheet_summary"];
+};
+
+export type ImportApplyResult = {
+  imported: Record<string, number>;
+  recalc?: { rows_upserted: number; elapsed_ms: number };
+  diff: {
+    items: { metric: string; sheet: number; database: number; delta: number; match: boolean }[];
+    all_match: boolean;
+  };
+  validation: { sheet_counts: Record<string, number> };
+};
+
+export function previewSheetImport(getAccessToken?: () => string | undefined) {
+  return request<ImportPreviewResult>("/import/preview", getAccessToken);
+}
+
+export function applySheetImport(
+  payload: { replace_existing?: boolean; recalc_dashboard?: boolean; csv_dir?: string },
+  getAccessToken?: () => string | undefined
+) {
+  return request<ImportApplyResult>("/import/apply", getAccessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function fetchDashboardProcessos(
   getAccessToken?: () => string | undefined,
   params?: Record<string, string>
