@@ -122,7 +122,9 @@ class StrategicIndicatorsCalculator:
                 )
                 continue
 
-            if measurement.value is None:
+            if measurement.value is None and not (
+                indicator.branch_goals and measurement.unit_values
+            ):
                 calculated.append(
                     self._build_missing_indicator_value(
                         indicator=indicator,
@@ -132,32 +134,43 @@ class StrategicIndicatorsCalculator:
                 )
                 continue
 
-            comparable_goal = self.calculate_comparable_goal(
-                goal_value=indicator.goal_value,
-                goal_periodicity=indicator.goal_periodicity,
-                goal_mode=getattr(indicator, "goal_mode", "standard"),
-                monthly_targets=getattr(indicator, "monthly_targets", None),
-                start_date=start_date,
-                end_date=end_date,
-                competence=competence,
-            )
-
             performance_direction = getattr(
                 indicator,
                 "performance_direction",
                 "higher_is_better",
             )
 
-            score = self.calculate_indicator_score(
+            branch_scoped_score = self._calculate_branch_scoped_indicator_score(
+                indicator=indicator,
+                measurement=measurement,
                 performance_direction=performance_direction,
-                comparable_goal=comparable_goal,
-                value=measurement.value,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
             )
-            gap = self.calculate_indicator_gap(
-                performance_direction=performance_direction,
-                comparable_goal=comparable_goal,
-                value=measurement.value,
-            )
+            if branch_scoped_score is not None:
+                score, gap, realized_value = branch_scoped_score
+            else:
+                realized_value = measurement.value
+                comparable_goal = self.calculate_comparable_goal(
+                    goal_value=indicator.goal_value,
+                    goal_periodicity=indicator.goal_periodicity,
+                    goal_mode=getattr(indicator, "goal_mode", "standard"),
+                    monthly_targets=getattr(indicator, "monthly_targets", None),
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
+                score = self.calculate_indicator_score(
+                    performance_direction=performance_direction,
+                    comparable_goal=comparable_goal,
+                    value=realized_value,
+                )
+                gap = self.calculate_indicator_gap(
+                    performance_direction=performance_direction,
+                    comparable_goal=comparable_goal,
+                    value=realized_value,
+                )
 
             calculated.append(
                 StrategicIndicatorCalculatedValue(
@@ -175,8 +188,8 @@ class StrategicIndicatorsCalculator:
                     strategic_description=indicator.strategic_description,
                     source=measurement.source,
                     value=(
-                        round(measurement.value, 2)
-                        if measurement.value is not None
+                        round(realized_value, 2)
+                        if realized_value is not None
                         else None
                     ),
                     score=score,
@@ -387,6 +400,67 @@ class StrategicIndicatorsCalculator:
         if score >= 6:
             return "Regular, Exige Ação"
         return "Crítico"
+
+    def _calculate_branch_scoped_indicator_score(
+        self,
+        *,
+        indicator: StrategicIndicatorCatalogItem,
+        measurement: StrategicIndicatorMeasuredValue,
+        performance_direction: str,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> tuple[float, float | None, float | None] | None:
+        branch_goals = indicator.branch_goals
+        unit_values = measurement.unit_values
+        if not branch_goals or not unit_values:
+            return None
+
+        branch_scores: list[float] = []
+        branch_values: list[float] = []
+        branch_gaps: list[float] = []
+
+        for branch_code, branch_goal in branch_goals.items():
+            branch_value = unit_values.get(branch_code)
+            if branch_value is None:
+                continue
+
+            comparable_goal = self.calculate_comparable_goal(
+                goal_value=float(branch_goal["goal_value"]),
+                goal_periodicity=branch_goal["goal_periodicity"],
+                goal_mode=branch_goal.get("goal_mode", "standard"),
+                monthly_targets=branch_goal.get("monthly_targets") or [],
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+            branch_scores.append(
+                self.calculate_indicator_score(
+                    performance_direction=performance_direction,
+                    comparable_goal=comparable_goal,
+                    value=float(branch_value),
+                )
+            )
+            branch_gap = self.calculate_indicator_gap(
+                performance_direction=performance_direction,
+                comparable_goal=comparable_goal,
+                value=float(branch_value),
+            )
+            if branch_gap is not None:
+                branch_gaps.append(branch_gap)
+            branch_values.append(float(branch_value))
+
+        if not branch_scores:
+            return None
+
+        score = round(sum(branch_scores) / len(branch_scores), 2)
+        gap = (
+            round(sum(branch_gaps) / len(branch_gaps), 2)
+            if branch_gaps
+            else None
+        )
+        realized_value = round(sum(branch_values) / len(branch_values), 2)
+        return score, gap, realized_value
 
     def _calculate_department_score(
         self,

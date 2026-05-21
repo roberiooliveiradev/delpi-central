@@ -359,6 +359,107 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             result[row["indicator_id"]] = item
         return result
 
+    def list_branch_scoped_goals_map(
+        self,
+        *,
+        indicator_ids: list[str],
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        department_id: str | None = None,
+    ) -> dict[str, dict[str, dict]]:
+        normalized_ids = [
+            str(indicator_id).strip()
+            for indicator_id in indicator_ids
+            if indicator_id is not None and str(indicator_id).strip()
+        ]
+        if not normalized_ids:
+            return {}
+
+        year = self._resolve_goal_year(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        placeholders = ", ".join("%s" for _ in normalized_ids)
+        params: list = [year, *normalized_ids]
+
+        query = f"""
+            SELECT
+                ig.id,
+                ig.indicator_id,
+                ig.goal_year,
+                ig.goal_label,
+                ig.goal_value,
+                ig.goal_periodicity,
+                ig.goal_mode,
+                ig.goal_scope_branch,
+                ig.version,
+                ig.is_active,
+                ig.valid_from,
+                ig.valid_to,
+                ig.notes,
+                ig.created_at,
+                ig.updated_at
+            FROM strategic_indicators.indicator_goals ig
+            INNER JOIN strategic_indicators.department_indicators di
+                ON di.indicator_id = ig.indicator_id
+            INNER JOIN strategic_indicators.departments d
+                ON d.department_id = di.department_id
+            WHERE ig.goal_year = %s
+              AND ig.is_active = TRUE
+              AND di.is_active = TRUE
+              AND d.is_active = TRUE
+              AND ig.goal_scope_branch IN ('01', '02')
+              AND ig.indicator_id IN ({placeholders})
+        """
+
+        if department_id:
+            query += " AND di.department_id = %s"
+            params.append(department_id)
+
+        reference_date = competence_reference_date(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        query = self._append_goal_validity_filter(
+            query,
+            reference_date=reference_date,
+            params=params,
+        )
+        query += """
+            ORDER BY
+                ig.indicator_id ASC,
+                ig.goal_scope_branch ASC,
+                ig.version DESC,
+                ig.updated_at DESC
+        """
+
+        rows = self.fetch_all(query, tuple(params))
+        if not rows:
+            return {}
+
+        goal_ids = [row["id"] for row in rows]
+        monthly_by_goal = self._list_monthly_targets_batch(goal_ids)
+
+        result: dict[str, dict[str, dict]] = {}
+        for row in rows:
+            indicator_id = row["indicator_id"]
+            scope_branch = normalize_goal_scope_branch(row.get("goal_scope_branch"))
+            if scope_branch not in {"01", "02"}:
+                continue
+            if indicator_id not in result:
+                result[indicator_id] = {}
+            if scope_branch in result[indicator_id]:
+                continue
+
+            item = dict(row)
+            item["monthly_targets"] = monthly_by_goal.get(row["id"], [])
+            result[indicator_id][scope_branch] = item
+
+        return result
+
     def list_latest_active_goals_map(
         self,
         *,

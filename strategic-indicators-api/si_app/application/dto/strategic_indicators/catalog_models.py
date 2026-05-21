@@ -22,6 +22,7 @@ class StrategicIndicatorCatalogItem:
     value_prefix: str | None = None
     value_suffix: str | None = None
     value_decimals: int = 2
+    branch_goals: dict[str, dict] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

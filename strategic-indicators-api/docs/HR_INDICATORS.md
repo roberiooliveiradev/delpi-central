@@ -13,6 +13,8 @@
 
 Metas usam `goal_scope_branch` (`01`, `02`). O departamento permanece `consolidated`; o score por filial usa a meta do escopo correspondente.
 
+Na visão **Consolidado**, a nota de cada indicador é a média das notas por filial (quando só há metas 01/02).
+
 ## Fontes Portal RH (`indicators_indicator.code`)
 
 | Indicador SI | Código Portal | Realizado |

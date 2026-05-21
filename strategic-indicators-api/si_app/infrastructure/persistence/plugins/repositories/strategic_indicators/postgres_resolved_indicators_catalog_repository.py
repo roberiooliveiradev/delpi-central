@@ -14,6 +14,11 @@ from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_indicator_goals_repository import (
     PostgresStrategicIndicatorsIndicatorGoalsRepository,
 )
+from si_app.shared.branch_scoped_goals import (
+    format_branch_scoped_goal_label,
+    pick_primary_branch_goal,
+)
+from si_app.shared.goal_scope import normalize_goal_scope_branch
 
 logger = logging.getLogger("strategic_indicators.catalog")
 
@@ -70,42 +75,105 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                         goal.get("goal_year"),
                     )
 
+        branch_goals_by_indicator: dict[str, dict[str, dict]] = {}
+        if not normalize_goal_scope_branch(branch):
+            still_missing = [
+                item.indicator_id
+                for item in structural_items
+                if item.indicator_id not in goals_by_indicator
+            ]
+            if still_missing:
+                branch_goals_by_indicator = (
+                    self._indicator_goals_repository.list_branch_scoped_goals_map(
+                        indicator_ids=still_missing,
+                        department_id=department_id,
+                        competence=competence,
+                        start_date=start_date,
+                        end_date=end_date,
+                    )
+                )
+
         resolved: list[StrategicIndicatorCatalogItem] = []
 
         for item in structural_items:
             goal = goals_by_indicator.get(item.indicator_id)
-            if not goal:
-                logger.warning(
-                    "si_goal_missing indicator_id=%s competence=%s",
-                    item.indicator_id,
-                    competence,
-                )
+            branch_goals = branch_goals_by_indicator.get(item.indicator_id, {})
+
+            if goal:
+                resolved.append(self._catalog_item_from_goal(item, goal, branch_goals={}))
                 continue
 
-            resolved.append(
-                StrategicIndicatorCatalogItem(
-                    indicator_id=item.indicator_id,
-                    department_id=item.department_id,
-                    indicator_name=item.indicator_name,
-                    weight_pct=item.weight_pct,
-                    goal_label=goal["goal_label"],
-                    goal_value=float(goal["goal_value"]),
-                    goal_periodicity=goal["goal_periodicity"],
-                    goal_mode=goal.get("goal_mode", "standard"),
-                    monthly_targets=goal.get("monthly_targets") or [],
-                    scope_type=item.scope_type,
-                    performance_direction=getattr(
-                        item,
-                        "performance_direction",
-                        "higher_is_better",
-                    ),
-                    strategic_description=item.strategic_description,
-                    source_key=item.source_key,
-                    value_unit=item.value_unit,
-                    value_prefix=item.value_prefix,
-                    value_suffix=item.value_suffix,
-                    value_decimals=item.value_decimals,
-                )
+            if branch_goals:
+                resolved.append(self._catalog_item_from_branch_goals(item, branch_goals))
+                continue
+
+            logger.warning(
+                "si_goal_missing indicator_id=%s competence=%s",
+                item.indicator_id,
+                competence,
             )
 
         return resolved
+
+    @staticmethod
+    def _catalog_item_from_goal(
+        item: StrategicIndicatorCatalogItem,
+        goal: dict,
+        *,
+        branch_goals: dict[str, dict],
+    ) -> StrategicIndicatorCatalogItem:
+        return StrategicIndicatorCatalogItem(
+            indicator_id=item.indicator_id,
+            department_id=item.department_id,
+            indicator_name=item.indicator_name,
+            weight_pct=item.weight_pct,
+            goal_label=goal["goal_label"],
+            goal_value=float(goal["goal_value"]),
+            goal_periodicity=goal["goal_periodicity"],
+            goal_mode=goal.get("goal_mode", "standard"),
+            monthly_targets=goal.get("monthly_targets") or [],
+            scope_type=item.scope_type,
+            performance_direction=getattr(
+                item,
+                "performance_direction",
+                "higher_is_better",
+            ),
+            strategic_description=item.strategic_description,
+            source_key=item.source_key,
+            value_unit=item.value_unit,
+            value_prefix=item.value_prefix,
+            value_suffix=item.value_suffix,
+            value_decimals=item.value_decimals,
+            branch_goals=branch_goals,
+        )
+
+    @staticmethod
+    def _catalog_item_from_branch_goals(
+        item: StrategicIndicatorCatalogItem,
+        branch_goals: dict[str, dict],
+    ) -> StrategicIndicatorCatalogItem:
+        primary_goal = pick_primary_branch_goal(branch_goals)
+        return StrategicIndicatorCatalogItem(
+            indicator_id=item.indicator_id,
+            department_id=item.department_id,
+            indicator_name=item.indicator_name,
+            weight_pct=item.weight_pct,
+            goal_label=format_branch_scoped_goal_label(branch_goals),
+            goal_value=float(primary_goal["goal_value"]),
+            goal_periodicity=primary_goal["goal_periodicity"],
+            goal_mode=primary_goal.get("goal_mode", "standard"),
+            monthly_targets=primary_goal.get("monthly_targets") or [],
+            scope_type=item.scope_type,
+            performance_direction=getattr(
+                item,
+                "performance_direction",
+                "higher_is_better",
+            ),
+            strategic_description=item.strategic_description,
+            source_key=item.source_key,
+            value_unit=item.value_unit,
+            value_prefix=item.value_prefix,
+            value_suffix=item.value_suffix,
+            value_decimals=item.value_decimals,
+            branch_goals=branch_goals,
+        )
