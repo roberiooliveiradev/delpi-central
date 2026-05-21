@@ -49,6 +49,10 @@ class EngineeringTransformaMaisService:
 
 
 def _map_process_row(row: dict) -> dict:
+    implantacao = row.get("data_implantacao")
+    if hasattr(implantacao, "isoformat"):
+        implantacao = implantacao.isoformat()
+
     return {
         "id": row.get("processo_id"),
         "name_process": row.get("nome_processo") or "",
@@ -57,7 +61,7 @@ def _map_process_row(row: dict) -> dict:
         "daily_savings": row.get("economia_diaria"),
         "payback_months": row.get("payback_meses"),
         "status": row.get("status_processo"),
-        "implementetion_date": row.get("data_implantacao"),
+        "implementetion_date": implantacao,
     }
 
 
