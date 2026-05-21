@@ -1,0 +1,82 @@
+.si-tree-ring {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.si-tree-ring svg {
+  transform: rotate(-90deg);
+}
+
+.si-tree-ring__track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--si-card-border) 90%, transparent);
+  stroke-width: 6;
+}
+
+.si-tree-ring__progress {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.45s ease;
+}
+
+.si-tree-ring--igd .si-tree-ring__progress {
+  stroke: #93c5fd;
+}
+
+.si-tree-ring--scope .si-tree-ring__progress {
+  stroke: #60a5fa;
+}
+
+.si-tree-ring--success .si-tree-ring__progress {
+  stroke: #059669;
+}
+
+.si-tree-ring--info .si-tree-ring__progress {
+  stroke: #2563eb;
+}
+
+.si-tree-ring--warning .si-tree-ring__progress {
+  stroke: #d97706;
+}
+
+.si-tree-ring--danger .si-tree-ring__progress {
+  stroke: #dc2626;
+}
+
+.si-tree-ring--empty .si-tree-ring__progress {
+  stroke: var(--si-text-muted);
+}
+
+.si-tree-ring__label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.si-tree-ring__label span {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--si-text-muted);
+}
+
+.si-tree-ring__label strong {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--si-title);
+  line-height: 1;
+}
+
+.si-tree-ring--igd .si-tree-ring__label span,
+.si-tree-ring--igd .si-tree-ring__label strong,
+.si-tree-ring--scope .si-tree-ring__label span,
+.si-tree-ring--scope .si-tree-ring__label strong {
+  color: #fff;
+}

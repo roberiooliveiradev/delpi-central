@@ -182,9 +182,82 @@
 
 /* —— Card departamento (nível 3) —— */
 
-.si-tree-dept {
+/* —— Cards clicáveis —— */
+
+.si-tree-card--interactive {
+  display: block;
   width: 100%;
   max-width: 340px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    filter 0.22s ease;
+}
+
+.si-tree-card--interactive:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 16px 36px color-mix(in srgb, var(--si-accent, #2563eb) 18%, transparent);
+  filter: brightness(1.02);
+}
+
+.si-tree-card--interactive:active {
+  transform: translateY(-2px) scale(1.005);
+}
+
+.si-tree-card--active {
+  outline: 3px solid color-mix(in srgb, var(--si-accent, #2563eb) 55%, transparent);
+  outline-offset: 3px;
+}
+
+.si-tree-card__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #fff 22%, transparent);
+  font-size: 11px;
+  font-weight: 800;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.si-tree-card--interactive:hover .si-tree-card__open,
+.si-tree-card--active .si-tree-card__open {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.si-org-chart__igd-card,
+.si-org-chart__scope-card {
+  max-width: 260px;
+  text-align: center;
+}
+
+.si-org-chart__igd-charts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.si-tree-dept-wrap {
+  width: 100%;
+  max-width: 340px;
+}
+
+.si-tree-dept {
+  width: 100%;
   border-radius: 20px;
   border: 2px solid var(--si-card-border);
   background: var(--si-card-bg);
@@ -255,29 +328,25 @@
 .si-tree-dept__score-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 12px;
   margin-top: 12px;
 }
 
-.si-tree-dept__idd {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--si-text-muted);
+.si-tree-dept__score-meta {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 140px;
 }
 
-.si-tree-dept__idd em {
-  display: block;
-  margin-top: 2px;
-  font-size: 28px;
-  font-style: normal;
-  font-weight: 800;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--si-title);
+.si-tree-dept__cta {
+  margin: 0;
+  padding: 0 16px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--si-text-muted);
 }
 
 .si-tree-dept__stats {
@@ -368,11 +437,20 @@
 
 .si-tree-indicator {
   width: 100%;
+  max-width: none;
   padding: 14px;
   border-radius: 16px;
   border: 1px solid var(--si-card-border);
   background: var(--si-card-bg);
   box-shadow: 0 2px 10px color-mix(in srgb, var(--si-title) 5%, transparent);
+}
+
+.si-tree-indicator__charts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .si-tree-indicator--success {

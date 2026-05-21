@@ -72,7 +72,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
 
       <SectionBlock
         title="Árvore departamental do IGD"
-        description="Mapa navegável da Delpi: arraste para mover, scroll para zoom, expandir indicadores e explorar todos os departamentos."
+        description="Mapa navegável com cards clicáveis, gráficos de evolução (6 meses), anel de nota e drill-down para painel, tendências e departamentos."
       >
         {loading && !model ? (
           <LoadingActivityInline
