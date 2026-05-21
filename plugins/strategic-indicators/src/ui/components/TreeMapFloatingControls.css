@@ -219,15 +219,39 @@
     flex-basis: 100%;
   }
 
-  .si-tree-map-floating__view-controls {
+  .si-tree-map-floating:not(.si-tree-map-floating--collapsed) .si-tree-map-floating__view-controls {
     margin-left: 0;
     width: 100%;
     justify-content: space-between;
   }
 }
 
+@media (max-width: 900px) {
+  .si-tree-map-floating {
+    max-width: calc(100vw - 20px);
+  }
+
+  .si-tree-map-floating__panel {
+    padding: 10px 12px;
+    border-radius: 16px;
+  }
+
+  .si-tree-map-floating__panel--collapsed .si-tree-map-floating__toolbar {
+    flex-wrap: wrap;
+    max-width: calc(100vw - 24px);
+  }
+
+  .si-tree-map-floating--collapsed .si-tree-map-floating__view-controls {
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 640px) {
-  .si-tree-map-floating__toolbar {
+  .si-tree-map-floating {
+    max-width: calc(100vw - 16px);
+  }
+
+  .si-tree-map-floating:not(.si-tree-map-floating--collapsed) .si-tree-map-floating__toolbar {
     flex-direction: column;
     align-items: stretch;
   }
@@ -236,12 +260,50 @@
     grid-template-columns: 1fr;
   }
 
+  .si-tree-map-floating__panel--collapsed .si-tree-map-floating__toolbar {
+    flex-direction: row;
+    align-items: center;
+  }
+
   .si-tree-view-toggle {
     flex: 1;
+    min-width: 0;
   }
 
   .si-tree-view-toggle__btn {
     flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    font-size: 11px;
     text-align: center;
+  }
+
+  .si-tree-map-floating__nav .si-pan-zoom__nav-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .si-tree-map-floating__nav .si-pan-zoom__zoom-label {
+    min-width: 40px;
+    font-size: 11px;
+  }
+
+  .si-tree-map-floating__nav .si-pan-zoom__nav-btn:has(.si-pan-zoom__reset-label) {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .si-tree-map-floating__toggle--compact span {
+    display: none;
+  }
+
+  .si-tree-map-floating__toggle--compact {
+    padding: 8px;
+  }
+
+  .si-tree-map-floating__status .si-status-badge {
+    font-size: 10px;
+    padding: 4px 8px;
   }
 }

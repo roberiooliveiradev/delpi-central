@@ -709,8 +709,6 @@ export function DepartmentIgdTree({
   const chartStyle = {
     "--si-org-chart-cols": "1",
     "--si-dept-count": String(departmentCount),
-    "--si-dept-slot-width": "420px",
-    "--si-dept-gap": "28px",
   } as CSSProperties;
 
   const isTreeFullyExpanded =
