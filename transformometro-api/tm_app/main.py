@@ -13,6 +13,7 @@ from tm_app.core.responses import fail
 from tm_app.interface.http.routes.crud_routes import router as crud_router
 from tm_app.interface.http.routes.dashboard_routes import router as dashboard_router
 from tm_app.interface.http.routes.import_routes import router as import_router
+from tm_app.interface.http.routes.integrations_routes import router as integrations_router
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
 from tm_app.middleware.auth_middleware import jwt_middleware
 from tm_app.startup.run_migrations_on_startup import run_migrations_on_startup
@@ -93,3 +94,4 @@ app.include_router(transformometro_router)
 app.include_router(crud_router)
 app.include_router(dashboard_router)
 app.include_router(import_router)
+app.include_router(integrations_router)

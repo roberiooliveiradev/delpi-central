@@ -49,7 +49,7 @@ Tudo gira em torno de **`revisao_id`**:
 
 ## O que não é
 
-- **Não** é extensão do painel Strategic Indicators — o SI e o `api-delpi` leem o schema `transformometro` no Postgres (`TRANSFORMA_MAIS_DATA_SOURCE=postgres`).
+- **Não** é extensão do painel Strategic Indicators — o SI e o `api-delpi` consomem dados via HTTP na `transformometro-api` (rotas `/integrations/engineering/transforma-mais/*`).
 - O `dashboard-engineering` (TRANSFORMA+) usa as mesmas rotas `/engineering/transforma-mais/*`, agora alimentadas pelo banco.
 - **Não** usa planilha como fonte permanente após go-live (Sheets só migração / contingência).
 

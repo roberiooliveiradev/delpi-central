@@ -1,27 +1,17 @@
-# app/application/use_cases/transforma_mais/get_process_summary_use_case.py
+from __future__ import annotations
+
 from app.application.dto.transforma_mais.process_summary_request import ProcessSummaryRequest
 from app.application.dto.transforma_mais.process_summary_response import ProcessSummaryResponse
-from app.domain.ports.transforma_mais.process_query_port import ProcessQueryRepositoryPort
-from app.domain.services.transforma_mais.process_summary_calculator import (
-    ProcessSummaryCalculator,
-)
+from app.domain.ports.transforma_mais.integration_port import TransformaMaisIntegrationPort
+from app.infrastructure.http.auth_header import bearer_authorization_from_context
 
 
 class GetProcessSummaryUseCase:
-    def __init__(
-        self,
-        repository: ProcessQueryRepositoryPort,
-        calculator: ProcessSummaryCalculator,
-    ):
-        self.repository = repository
-        self.calculator = calculator
+    def __init__(self, gateway: TransformaMaisIntegrationPort):
+        self._gateway = gateway
 
     def execute(self, request: ProcessSummaryRequest) -> ProcessSummaryResponse:
-        raw = self.repository.load_raw_data()
-
-        return self.calculator.build_summary(
-            raw=raw,
-            filial_id=request.filial_id,
-            start_date=request.start_date,
-            end_date=request.end_date,
+        return self._gateway.get_summary(
+            request,
+            authorization=bearer_authorization_from_context(),
         )

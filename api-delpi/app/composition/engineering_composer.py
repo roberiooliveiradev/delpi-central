@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from app.application.services.engineering.engineering_metrics_snapshot_service import (
     EngineeringMetricsSnapshotService,
 )
@@ -15,59 +17,20 @@ from app.application.use_cases.transforma_mais.list_process_use_case import (
 from app.application.use_cases.lmp.get_lmp_dashboard_summary_use_case import (
     GetLMPDashboardSummaryUseCase,
 )
-from app.domain.services.transforma_mais.process_summary_calculator import (
-    ProcessSummaryCalculator,
-)
-from app.infrastructure.persistence.google_sheets.transforma_mais.process_repository import (
-    ProcessRepository as SheetsProcessRepository,
-)
-from app.infrastructure.persistence.google_sheets.transforma_mais.sheet_sources import (
-    TransformaMaisSources,
-)
-from app.infrastructure.persistence.transformometro.process_repository import (
-    TransformometroProcessRepository,
+from app.infrastructure.gateways.transformometro_transforma_mais_gateway import (
+    TransformometroTransformaMaisGateway,
 )
 from app.infrastructure.persistence.totvs.lmp_repositories.lmp_query_repository import (
     LMPQueryRepository,
 )
-from app.infrastructure.providers.google_sheets.google_sheets_client import (
-    GoogleSheetsClient,
-)
-from app.config import settings
 
 
 def _build_lmp_repository() -> LMPQueryRepository:
     return LMPQueryRepository()
 
 
-def _build_transforma_mais_sources() -> TransformaMaisSources:
-    return TransformaMaisSources(
-        sheet_id=settings.TRANSFORMA_MAIS_SHEET_ID,
-        tabs={
-            "processos": settings.TRANSFORMA_MAIS_GID_PROCESSOS,
-            "revisao": settings.TRANSFORMA_MAIS_GID_REVISAO,
-            "medicoes": settings.TRANSFORMA_MAIS_GID_MEDICOES,
-            "investimentos": settings.TRANSFORMA_MAIS_GID_INVESTIMENTOS,
-            "recursos_compartilhados": settings.TRANSFORMA_MAIS_GID_RECURSOS_COMPARTILHADOS,
-            "revisao_recursos_compartilhados": settings.TRANSFORMA_MAIS_GID_REVISAO_RECURSOS_COMPARTILHADOS,
-        },
-    )
-
-
-def _transforma_mais_use_postgres() -> bool:
-    return str(settings.TRANSFORMA_MAIS_DATA_SOURCE or "postgres").strip().lower() != "sheets"
-
-
-def _build_transforma_mais_repository():
-    if _transforma_mais_use_postgres():
-        return TransformometroProcessRepository()
-    client = GoogleSheetsClient(timeout=int(settings.GOOGLE_SHEETS_TIMEOUT))
-    sources = _build_transforma_mais_sources()
-    return SheetsProcessRepository(client=client, sources=sources)
-
-
-def _build_transforma_mais_calculator() -> ProcessSummaryCalculator:
-    return ProcessSummaryCalculator()
+def _build_transforma_mais_gateway() -> TransformometroTransformaMaisGateway:
+    return TransformometroTransformaMaisGateway()
 
 
 def build_engineering_list_lmps_use_case() -> ListLMPUseCase:
@@ -83,17 +46,11 @@ def build_engineering_get_lmp_use_case() -> GetLMPUseCase:
 
 
 def build_engineering_list_transforma_mais_processes_use_case() -> ListProcessUseCase:
-    return ListProcessUseCase(
-        repository=_build_transforma_mais_repository(),
-        calculator=_build_transforma_mais_calculator(),
-    )
+    return ListProcessUseCase(_build_transforma_mais_gateway())
 
 
 def build_engineering_get_transforma_mais_summary_use_case() -> GetProcessSummaryUseCase:
-    return GetProcessSummaryUseCase(
-        repository=_build_transforma_mais_repository(),
-        calculator=_build_transforma_mais_calculator(),
-    )
+    return GetProcessSummaryUseCase(_build_transforma_mais_gateway())
 
 
 def build_engineering_metrics_snapshot_service() -> EngineeringMetricsSnapshotService:

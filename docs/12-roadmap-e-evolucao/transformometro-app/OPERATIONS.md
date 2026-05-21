@@ -81,13 +81,23 @@ Checklist (manual, Google Workspace):
 
 Mutações gravam em `transformometro.audit_logs` (entity_type, action, user_id, payload_json).
 
-## Fonte para engenharia e SI
+## Integração com api-delpi e Strategic Indicators
 
-`api-delpi` e `strategic-indicators-api` leem o schema **`transformometro`** quando `TRANSFORMA_MAIS_DATA_SOURCE=postgres` (padrão no compose).
+Não duplicar leitura SQL nem calculador: consumir a API oficial.
 
-Rotas inalteradas:
+| Consumidor | Rotas públicas (inalteradas) | Upstream interno |
+|------------|------------------------------|-------------------|
+| dashboard-engineering | `/apps/api-delpi/engineering/transforma-mais/*` | `transformometro-api` |
+| strategic-indicators | snapshot engenharia | `transformometro-api` |
 
-- `GET /engineering/transforma-mais/processes`
-- `GET /engineering/transforma-mais/processes/summary`
+Endpoints de integração (contrato legado engenharia):
 
-Contingência planilha: `TRANSFORMA_MAIS_DATA_SOURCE=sheets` no `.env`.
+- `GET /transformometro/integrations/engineering/transforma-mais/processes`
+- `GET /transformometro/integrations/engineering/transforma-mais/processes/summary`
+
+Cliente compartilhado: `shared/transformometro_client` (`TransformometroApiClient`).
+
+Variáveis:
+
+- `TRANSFORMOMETRO_API_BASE_URL` — ex.: `http://transformometro-api:8000/apps/transformometro-api/transformometro`
+- `TRANSFORMOMETRO_SERVICE_BEARER` — opcional, jobs SI sem usuário no contexto

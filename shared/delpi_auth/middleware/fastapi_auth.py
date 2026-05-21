@@ -92,6 +92,7 @@ async def jwt_middleware(request: Request, call_next):
             groups=rbac.get("groups", []),
             permissions=rbac.get("permissions", []),
             is_superadmin=rbac.get("is_superadmin", False),
+            access_token=token,
         )
 
         request.state.user = user

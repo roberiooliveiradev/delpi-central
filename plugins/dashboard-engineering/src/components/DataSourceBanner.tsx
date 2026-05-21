@@ -26,10 +26,10 @@ export function DataSourceBanner({ variant = "all" }: DataSourceBannerProps) {
         <article className="ds-source-banner">
           <Database size={18} aria-hidden="true" />
           <div>
-            <strong>Postgres — schema transformometro</strong>
+            <strong>API Transformômetro</strong>
             <p>
-              Ganhos, ROI e processos de melhoria vêm do cadastro oficial no
-              Transformômetro (mesma base do app dedicado).
+              Ganhos, ROI e processos via <code>transformometro-api</code> (cadastro
+              oficial no Postgres). Rotas de engenharia fazem proxy para essa API.
             </p>
           </div>
         </article>
