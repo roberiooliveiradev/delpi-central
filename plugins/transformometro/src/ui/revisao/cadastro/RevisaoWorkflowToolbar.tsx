@@ -15,7 +15,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   revisao: Revisao;
   onError: (message: string | null) => void;
   onUpdated: () => void;
-  onActivate?: () => void;
+  onActivate?: () => void | Promise<void>;
 };
 
 export function RevisaoWorkflowToolbar({
@@ -30,7 +30,7 @@ export function RevisaoWorkflowToolbar({
   const [showReject, setShowReject] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  async function run(action: () => Promise<unknown>) {
+  async function run(action: () => void | Promise<unknown>) {
     onError(null);
     setBusy(true);
     try {
