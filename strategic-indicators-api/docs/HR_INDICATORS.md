@@ -15,8 +15,9 @@ Metas usam `goal_scope_branch` (`01`, `02`). O departamento permanece `consolida
 
 Na visão **Consolidado** (`aggregation_mode = average_of_units`):
 
-- Nota de cada indicador = média das notas das filiais 01 e 02.
-- **Nota IDD do RH** = média entre o IDD da filial 01 e o IDD da filial 02.
+- Nota de cada indicador = média das notas das filiais `01` e `02`.
+- Meta, valor atual e gap exibem `01: … | 02: …` (sem prefixo "Un.").
+- **Nota IDD do RH** = média entre o IDD da filial `01` e o IDD da filial `02`.
 
 ## Fontes Portal RH (`indicators_indicator.code`)
 

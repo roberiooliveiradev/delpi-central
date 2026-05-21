@@ -9,6 +9,11 @@ def normalize_goal_scope_branch(branch: str | None) -> str:
     return (branch or "").strip()
 
 
+def format_branch_scope_label(branch_code: str) -> str:
+    """Rótulo exibido da filial (apenas o código: 01, 02, …)."""
+    return normalize_goal_scope_branch(branch_code)
+
+
 def indicator_allows_branch_goals(scope_type: str | None) -> bool:
     """Indicadores consolidated podem ter metas por filial; per_unit usa só consolidado."""
     return (scope_type or "").strip() == "consolidated"

@@ -1,8 +1,8 @@
 export type StrategicIndicatorsViewMode = "consolidated" | "branch";
 
 export const STRATEGIC_INDICATORS_BRANCH_OPTIONS = [
-  { value: "01", label: "Filial 01" },
-  { value: "02", label: "Filial 02" },
+  { value: "01", label: "01" },
+  { value: "02", label: "02" },
 ];
 
 export function getCurrentStrategicIndicatorsMonthValue() {

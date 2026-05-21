@@ -53,9 +53,9 @@ export function getGoalScopeBranchLabel(value: string | null | undefined): strin
     case "":
       return "Consolidado";
     case "01":
-      return "Filial 01 (Matriz)";
+      return "01";
     case "02":
-      return "Filial 02";
+      return "02";
     default:
       return value ?? "—";
   }
