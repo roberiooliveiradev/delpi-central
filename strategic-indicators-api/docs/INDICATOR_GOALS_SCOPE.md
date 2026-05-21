@@ -19,9 +19,11 @@ Aplica-se a **todos os departamentos** (Comercial, Financeiro, Produção, etc.)
 ## Resolução no painel
 
 - API com `branch=01` ou `02` → meta da filial; fallback para consolidado se não existir
-- API sem `branch` (visão **Consolidado**):
-  - Se existir meta consolidada (`''`), usa essa meta no cálculo
-  - Se só existirem metas por filial (`01`/`02`), o indicador **continua listado** e a nota consolidada é a **média das notas** de cada filial (realizado por `unit_values` × meta da unidade)
+- API sem `branch` (visão **Consolidado**), departamentos com `aggregation_mode = average_of_units` (RH, Qualidade):
+  - **Cada indicador:** nota = média das notas das filiais 01 e 02 (realizado da unidade × meta da unidade)
+  - **IDD do departamento:** média aritmética do IDD calculado separadamente para filial 01 e filial 02
+- Demais departamentos (`aggregation_mode = consolidated`):
+  - Meta consolidada (`''`) quando existir; senão fallback de metas 01/02 só para listar indicadores
 
 ## Cadastro (admin)
 

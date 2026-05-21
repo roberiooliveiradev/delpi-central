@@ -13,7 +13,10 @@
 
 Metas usam `goal_scope_branch` (`01`, `02`). O departamento permanece `consolidated`; o score por filial usa a meta do escopo correspondente.
 
-Na visão **Consolidado**, a nota de cada indicador é a média das notas por filial (quando só há metas 01/02).
+Na visão **Consolidado** (`aggregation_mode = average_of_units`):
+
+- Nota de cada indicador = média das notas das filiais 01 e 02.
+- **Nota IDD do RH** = média entre o IDD da filial 01 e o IDD da filial 02.
 
 ## Fontes Portal RH (`indicators_indicator.code`)
 
