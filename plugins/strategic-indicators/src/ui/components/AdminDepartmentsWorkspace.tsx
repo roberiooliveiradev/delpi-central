@@ -10,7 +10,7 @@ import type {
 import { useStrategicIndicatorsAdminDepartments } from "../../state/hooks/useStrategicIndicatorsAdminDepartments";
 import { useStrategicIndicatorsDepartmentIndicators } from "../../state/hooks/useStrategicIndicatorsDepartmentIndicators";
 import { InfoState } from "./InfoState";
-import { Modal } from "./Modal";
+import { DrawerPanel } from "./DrawerPanel";
 import { SectionBlock } from "./SectionBlock";
 import {
   getAggregationModeLabel,
@@ -99,12 +99,12 @@ export function AdminDepartmentsWorkspace({
   const departments = useStrategicIndicatorsAdminDepartments({ getAccessToken });
 
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
-  const [departmentModalOpen, setDepartmentModalOpen] = useState(false);
+  const [departmentDrawerOpen, setDepartmentDrawerOpen] = useState(false);
   const [departmentMode, setDepartmentMode] = useState<"create" | "edit">("create");
   const [departmentForm, setDepartmentForm] =
     useState<DepartmentFormState>(emptyDepartmentForm);
 
-  const [indicatorModalOpen, setIndicatorModalOpen] = useState(false);
+  const [indicatorDrawerOpen, setIndicatorDrawerOpen] = useState(false);
   const [indicatorMode, setIndicatorMode] = useState<"create" | "edit">("create");
   const [indicatorForm, setIndicatorForm] =
     useState<IndicatorFormState>(emptyIndicatorForm);
@@ -120,13 +120,13 @@ export function AdminDepartmentsWorkspace({
     [departments.items, selectedDepartmentId],
   );
 
-  function openCreateDepartmentModal() {
+  function openCreateDepartmentDrawer() {
     setDepartmentMode("create");
     setDepartmentForm(emptyDepartmentForm);
-    setDepartmentModalOpen(true);
+    setDepartmentDrawerOpen(true);
   }
 
-  function openEditDepartmentModal(item: AdminDepartmentItem) {
+  function openEditDepartmentDrawer(item: AdminDepartmentItem) {
     setDepartmentMode("edit");
     setDepartmentForm({
       department_id: item.department_id,
@@ -140,16 +140,16 @@ export function AdminDepartmentsWorkspace({
       display_order: item.display_order,
       is_active: item.is_active,
     });
-    setDepartmentModalOpen(true);
+    setDepartmentDrawerOpen(true);
   }
 
-  function openCreateIndicatorModal() {
+  function openCreateIndicatorDrawer() {
     setIndicatorMode("create");
     setIndicatorForm(emptyIndicatorForm);
-    setIndicatorModalOpen(true);
+    setIndicatorDrawerOpen(true);
   }
 
-  function openEditIndicatorModal(item: AdminDepartmentIndicatorItem) {
+  function openEditIndicatorDrawer(item: AdminDepartmentIndicatorItem) {
     setIndicatorMode("edit");
     setIndicatorForm({
       indicator_id: item.indicator_id,
@@ -166,7 +166,7 @@ export function AdminDepartmentsWorkspace({
       display_order: item.display_order,
       is_active: item.is_active,
     });
-    setIndicatorModalOpen(true);
+    setIndicatorDrawerOpen(true);
   }
 
   async function handleSubmitDepartment() {
@@ -200,7 +200,7 @@ export function AdminDepartmentsWorkspace({
       await departments.updateDepartment(departmentForm.department_id, payload);
     }
 
-    setDepartmentModalOpen(false);
+    setDepartmentDrawerOpen(false);
   }
 
   async function handleSubmitIndicator() {
@@ -242,7 +242,7 @@ export function AdminDepartmentsWorkspace({
       await departmentIndicators.updateIndicator(indicatorForm.indicator_id, payload);
     }
 
-    setIndicatorModalOpen(false);
+    setIndicatorDrawerOpen(false);
   }
 
   return (
@@ -254,7 +254,7 @@ export function AdminDepartmentsWorkspace({
           <button
             type="button"
             className="si-settings-editor__button"
-            onClick={openCreateDepartmentModal}
+            onClick={openCreateDepartmentDrawer}
           >
             Novo departamento
           </button>
@@ -284,7 +284,7 @@ export function AdminDepartmentsWorkspace({
                 title="Nenhum departamento cadastrado"
                 description="Crie o primeiro departamento administrativo para começar a configurar o módulo."
                 actionLabel="Criar departamento"
-                onAction={openCreateDepartmentModal}
+                onAction={openCreateDepartmentDrawer}
               />
             ) : (
               <div className="si-admin-list">
@@ -333,7 +333,7 @@ export function AdminDepartmentsWorkspace({
                       <button
                         type="button"
                         className="si-settings-editor__button si-settings-editor__button--secondary"
-                        onClick={() => openEditDepartmentModal(selectedDepartment)}
+                        onClick={() => openEditDepartmentDrawer(selectedDepartment)}
                       >
                         Editar
                       </button>
@@ -390,7 +390,7 @@ export function AdminDepartmentsWorkspace({
                     <button
                       type="button"
                       className="si-settings-editor__button"
-                      onClick={openCreateIndicatorModal}
+                      onClick={openCreateIndicatorDrawer}
                     >
                       Novo indicador
                     </button>
@@ -418,7 +418,7 @@ export function AdminDepartmentsWorkspace({
                       title="Nenhum indicador estrutural cadastrado"
                       description="Crie os indicadores oficiais deste departamento para habilitar metas anuais e leitura estratégica."
                       actionLabel="Criar indicador"
-                      onAction={openCreateIndicatorModal}
+                      onAction={openCreateIndicatorDrawer}
                     />
                   ) : (
                     <div className="si-admin-indicators-table">
@@ -443,7 +443,7 @@ export function AdminDepartmentsWorkspace({
                             <button
                               type="button"
                               className="si-settings-editor__button si-settings-editor__button--secondary"
-                              onClick={() => openEditIndicatorModal(item)}
+                              onClick={() => openEditIndicatorDrawer(item)}
                             >
                               Editar
                             </button>
@@ -479,12 +479,31 @@ export function AdminDepartmentsWorkspace({
         </div>
       </SectionBlock>
 
-      <Modal
-        open={departmentModalOpen}
-        onClose={() => setDepartmentModalOpen(false)}
+      <DrawerPanel
+        open={departmentDrawerOpen}
+        onClose={() => setDepartmentDrawerOpen(false)}
         title={departmentMode === "create" ? "Novo departamento" : "Editar departamento"}
         description="Defina a base executiva e estrutural do departamento."
         size="lg"
+        footer={
+          <>
+            <button
+              type="button"
+              className="si-settings-editor__button si-settings-editor__button--secondary"
+              onClick={() => setDepartmentDrawerOpen(false)}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="si-settings-editor__button"
+              onClick={() => void handleSubmitDepartment()}
+              disabled={departments.saving}
+            >
+              {departments.saving ? "Salvando..." : "Salvar"}
+            </button>
+          </>
+        }
       >
         <div className="si-admin-form-grid">
           <label className="si-admin-form-field">
@@ -616,31 +635,33 @@ export function AdminDepartmentsWorkspace({
           </label>
         </div>
 
-        <div className="si-admin-modal-actions">
-          <button
-            type="button"
-            className="si-settings-editor__button si-settings-editor__button--secondary"
-            onClick={() => setDepartmentModalOpen(false)}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="si-settings-editor__button"
-            onClick={() => void handleSubmitDepartment()}
-            disabled={departments.saving}
-          >
-            {departments.saving ? "Salvando..." : "Salvar"}
-          </button>
-        </div>
-      </Modal>
+      </DrawerPanel>
 
-      <Modal
-        open={indicatorModalOpen}
-        onClose={() => setIndicatorModalOpen(false)}
+      <DrawerPanel
+        open={indicatorDrawerOpen}
+        onClose={() => setIndicatorDrawerOpen(false)}
         title={indicatorMode === "create" ? "Novo indicador estrutural" : "Editar indicador estrutural"}
         description="Defina a estrutura oficial do indicador dentro do departamento."
-        size="lg"
+        size="xl"
+        footer={
+          <>
+            <button
+              type="button"
+              className="si-settings-editor__button si-settings-editor__button--secondary"
+              onClick={() => setIndicatorDrawerOpen(false)}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="si-settings-editor__button"
+              onClick={() => void handleSubmitIndicator()}
+              disabled={departmentIndicators.saving}
+            >
+              {departmentIndicators.saving ? "Salvando..." : "Salvar"}
+            </button>
+          </>
+        }
       >
         <div className="si-admin-form-grid">
           <label className="si-admin-form-field">
@@ -831,24 +852,7 @@ export function AdminDepartmentsWorkspace({
           </label>
         </div>
 
-        <div className="si-admin-modal-actions">
-          <button
-            type="button"
-            className="si-settings-editor__button si-settings-editor__button--secondary"
-            onClick={() => setIndicatorModalOpen(false)}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="si-settings-editor__button"
-            onClick={() => void handleSubmitIndicator()}
-            disabled={departmentIndicators.saving}
-          >
-            {departmentIndicators.saving ? "Salvando..." : "Salvar"}
-          </button>
-        </div>
-      </Modal>
+      </DrawerPanel>
     </div>
   );
 }

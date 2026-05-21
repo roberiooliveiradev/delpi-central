@@ -45,6 +45,7 @@ export type IndicatorAnalyticsViewItem = {
   hasValue: boolean;
   trend: "up" | "down" | "stable";
   status: IndicatorAnalyticsStatus;
+  scopeType?: string;
   source: string;
 
   valueUnit: IndicatorValueUnit | null;

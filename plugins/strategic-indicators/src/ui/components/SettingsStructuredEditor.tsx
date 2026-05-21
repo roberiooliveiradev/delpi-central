@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type {
   StrategicIndicatorsSettingsResponse,
   StrategicIndicatorsSettingsUpdateRequest,
@@ -6,7 +6,6 @@ import type {
 import { useSettingsDraft } from "../../state/hooks/useSettingsDraft";
 import { SettingsParametersForm } from "./SettingsParametersForm";
 import { SettingsGovernanceForm } from "./SettingsGovernanceForm";
-import { Modal } from "./Modal";
 import "./SettingsStructuredEditor.css";
 
 type SettingsStructuredEditorProps = {
@@ -57,26 +56,8 @@ export function SettingsStructuredEditor({
     setOpenSection(null);
   }
 
-  function handleCloseModal() {
-    setOpenSection(null);
-  }
-
   return (
     <section className="si-settings-admin-shell">
-      <div className="si-settings-editor__header">
-        <div className="si-settings-editor__meta-group">
-          <div className="si-settings-editor__summary">
-            <span>Blocos editáveis</span>
-            <strong>2</strong>
-          </div>
-
-          <div className="si-settings-editor__summary">
-            <span>Modelo de escrita</span>
-            <strong>Parâmetros + Governança</strong>
-          </div>
-        </div>
-      </div>
-
       {sectionMessage ? (
         <div className="si-settings-editor__alert si-settings-editor__alert--success">
           {sectionMessage}
@@ -89,22 +70,40 @@ export function SettingsStructuredEditor({
         </div>
       ) : null}
 
-      <div className="si-settings-admin-grid">
-        <AdminCard
-          title="Parâmetros"
-          description="Parâmetros globais do módulo e convenções oficiais."
+      <div className="si-settings-global-editor">
+        <AdminExpandCard
+          title="Parâmetros globais"
+          description="Convenções e parâmetros centrais do módulo."
           meta={`${summary.parametersCount} parâmetros`}
-          status="Configuração global"
-          onEdit={() => setOpenSection("parameters")}
-        />
+          expanded={openSection === "parameters"}
+          onToggle={() =>
+            setOpenSection((current) =>
+              current === "parameters" ? null : "parameters",
+            )
+          }
+        >
+          <SettingsParametersForm
+            items={draft.parameters.items}
+            onChange={setParameterItems}
+          />
+        </AdminExpandCard>
 
-        <AdminCard
+        <AdminExpandCard
           title="Governança"
-          description="Regras administrativas e observações estruturais do módulo."
+          description="Regras administrativas e observações estruturais."
           meta={`${summary.governanceCount} itens`}
-          status="Políticas do módulo"
-          onEdit={() => setOpenSection("governance")}
-        />
+          expanded={openSection === "governance"}
+          onToggle={() =>
+            setOpenSection((current) =>
+              current === "governance" ? null : "governance",
+            )
+          }
+        >
+          <SettingsGovernanceForm
+            items={draft.governance.items}
+            onChange={setGovernanceItems}
+          />
+        </AdminExpandCard>
       </div>
 
       <div className="si-settings-admin-actions">
@@ -129,71 +128,42 @@ export function SettingsStructuredEditor({
           {saving ? "Salvando..." : "Salvar configurações"}
         </button>
       </div>
-
-      <Modal
-        open={openSection === "parameters"}
-        onClose={handleCloseModal}
-        title="Editar parâmetros"
-        description="Atualize os parâmetros globais utilizados pela área administrativa."
-        size="lg"
-      >
-        <SettingsParametersForm
-          items={draft.parameters.items}
-          onChange={setParameterItems}
-        />
-      </Modal>
-
-      <Modal
-        open={openSection === "governance"}
-        onClose={handleCloseModal}
-        title="Editar governança"
-        description="Atualize notas e regras administrativas do módulo."
-        size="lg"
-      >
-        <SettingsGovernanceForm
-          items={draft.governance.items}
-          onChange={setGovernanceItems}
-        />
-      </Modal>
     </section>
   );
 }
 
-function AdminCard({
+function AdminExpandCard({
   title,
   description,
   meta,
-  status,
-  onEdit,
+  expanded,
+  onToggle,
+  children,
 }: {
   title: string;
   description: string;
   meta: string;
-  status: string;
-  onEdit: () => void;
+  expanded: boolean;
+  onToggle: () => void;
+  children: ReactNode;
 }) {
   return (
-    <article className="si-settings-admin-card">
-      <div className="si-settings-admin-card__content">
-        <div className="si-settings-admin-card__top">
-          <h4 className="si-settings-admin-card__title">{title}</h4>
-          <span className="si-settings-admin-card__status">{status}</span>
+    <article className={`si-settings-expand-card ${expanded ? "is-expanded" : ""}`}>
+      <button
+        type="button"
+        className="si-settings-expand-card__trigger"
+        onClick={onToggle}
+        aria-expanded={expanded}
+      >
+        <div className="si-settings-expand-card__text">
+          <strong>{title}</strong>
+          <span>{description}</span>
+          <small>{meta}</small>
         </div>
+        <span className="si-settings-expand-card__chevron">{expanded ? "−" : "+"}</span>
+      </button>
 
-        <p className="si-settings-admin-card__description">{description}</p>
-
-        <div className="si-settings-admin-card__meta">{meta}</div>
-      </div>
-
-      <div className="si-settings-admin-card__actions">
-        <button
-          type="button"
-          className="si-settings-editor__button si-settings-editor__button--secondary"
-          onClick={onEdit}
-        >
-          Editar
-        </button>
-      </div>
+      {expanded ? <div className="si-settings-expand-card__body">{children}</div> : null}
     </article>
   );
 }

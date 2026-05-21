@@ -13,6 +13,7 @@ import { StrategicIndicatorsErrorState } from "../components/StrategicIndicators
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { getScopeTypeLabel } from "../presentation/labels";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
@@ -70,21 +71,6 @@ function buildPartialErrorDescription(
     .join("\n");
 }
 
-function formatGoalMode(goalMode?: string) {
-  if (goalMode === "monthly_curve") return "curva mensal";
-  return "meta padrão";
-}
-
-function formatGoalPeriodicity(goalPeriodicity?: string) {
-  if (goalPeriodicity === "daily") return "diária";
-  if (goalPeriodicity === "weekly") return "semanal";
-  if (goalPeriodicity === "monthly") return "mensal";
-  if (goalPeriodicity === "quarterly") return "trimestral";
-  if (goalPeriodicity === "semiannual") return "semestral";
-  if (goalPeriodicity === "yearly") return "anual";
-  return goalPeriodicity || "não informada";
-}
-
 function formatMetaSource(source?: string) {
   if (!source) return "fonte não informada";
 
@@ -104,32 +90,6 @@ function formatMetaSource(source?: string) {
   if (normalized.includes("hr")) return "RH";
 
   return source;
-}
-
-function formatPerformanceDirection(performanceDirection?: string) {
-  if (performanceDirection === "lower_is_better") return "quanto menor, melhor";
-  return "quanto maior, melhor";
-}
-
-function buildIndicatorNarrative(item: {
-  source: string;
-  goalLabel: string;
-  goalPeriodicity: string;
-  goalMode?: string;
-  performanceDirection?: string;
-  monthlyTargets?: Array<{ month_number: number; target_value: number }>;
-}) {
-  const goalModeLabel = formatGoalMode(item.goalMode);
-  const directionLabel = formatPerformanceDirection(item.performanceDirection);
-  const periodicityLabel = formatGoalPeriodicity(item.goalPeriodicity);
-  const sourceLabel = formatMetaSource(item.source);
-
-  const monthlyCurveHint =
-    item.goalMode === "monthly_curve" && (item.monthlyTargets?.length ?? 0) > 0
-      ? ` • ${item.monthlyTargets?.length ?? 0} metas mensais`
-      : "";
-
-  return `${sourceLabel} • Meta ${item.goalLabel} • Periodicidade ${periodicityLabel} • ${goalModeLabel} • ${directionLabel}${monthlyCurveHint}`;
 }
 
 export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
@@ -174,17 +134,8 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         departmentId: item.departmentId,
         departmentName: item.departmentName,
         indicatorName: item.name,
-        strategicDescription: buildIndicatorNarrative({
-          source: item.source,
-          goalLabel: item.goalLabel,
-          goalPeriodicity: item.goalPeriodicity,
-          goalMode: item.goalMode,
-          performanceDirection: item.performanceDirection,
-          monthlyTargets: item.monthlyTargets.map((target) => ({
-            month_number: target.month_number,
-            target_value: target.target_value,
-          })),
-        }),
+        strategicDescription: `${getScopeTypeLabel(item.scopeType)} · ${formatMetaSource(item.source)} · Meta ${item.goalLabel}`,
+        scopeType: item.scopeType,
         weightPct: item.weightPct,
         goalLabel: item.goalLabel,
         goalValue: item.goalValue,

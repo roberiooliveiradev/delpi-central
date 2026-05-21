@@ -6,7 +6,7 @@
 
 .si-indicator-table__row {
   display: grid;
-  grid-template-columns: minmax(100px, 2fr) 120px 90px 120px 80px minmax(100px, 1fr);
+  grid-template-columns: minmax(100px, 2fr) 110px 90px 70px 120px 80px minmax(100px, 1fr);
   gap: 16px;
   align-items: center;
   padding: 16px 18px;

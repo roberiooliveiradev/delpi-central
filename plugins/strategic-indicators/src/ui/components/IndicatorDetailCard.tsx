@@ -3,6 +3,7 @@ import {
   getGoalModeLabel,
   getGoalPeriodicityLabel,
   getPerformanceDirectionLabel,
+  getScopeTypeLabel,
 } from "../presentation/labels";
 import {
   formatIndicatorGoalValue,
@@ -74,6 +75,13 @@ export function IndicatorDetailCard({
         <span className="si-indicator-card__goal-label">Meta</span>
         <strong className="si-indicator-card__goal-value">
           {formatIndicatorGoalValue(indicator, competence)}
+        </strong>
+      </div>
+
+      <div className="si-indicator-card__goal">
+        <span className="si-indicator-card__goal-label">Escopo</span>
+        <strong className="si-indicator-card__goal-value">
+          {getScopeTypeLabel(indicator.scopeType)}
         </strong>
       </div>
 

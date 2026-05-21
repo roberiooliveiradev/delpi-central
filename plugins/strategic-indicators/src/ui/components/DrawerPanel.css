@@ -1,0 +1,113 @@
+.si-drawer-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.si-drawer-root__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(0, 24, 48, 0.42);
+  cursor: pointer;
+}
+
+.si-drawer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(100vw, 720px);
+  max-width: 100%;
+  height: 100%;
+  background: var(--surface, #fff);
+  border-left: 1px solid var(--border);
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.14);
+  animation: si-drawer-slide 0.22s ease-out;
+}
+
+.si-drawer--md {
+  width: min(100vw, 520px);
+}
+
+.si-drawer--lg {
+  width: min(100vw, 720px);
+}
+
+.si-drawer--xl {
+  width: min(100vw, 920px);
+}
+
+.si-drawer__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2, #f7f7f7) 55%, var(--surface));
+}
+
+.si-drawer__title {
+  margin: 0 0 6px;
+  font-size: 20px;
+  color: var(--si-title);
+}
+
+.si-drawer__description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--si-text-muted);
+}
+
+.si-drawer__close {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--si-title);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.si-drawer__body {
+  flex: 1;
+  overflow: auto;
+  padding: 20px 22px;
+}
+
+.si-drawer__footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 22px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+@keyframes si-drawer-slide {
+  from {
+    transform: translateX(100%);
+    opacity: 0.4;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .si-drawer,
+  .si-drawer--md,
+  .si-drawer--lg,
+  .si-drawer--xl {
+    width: 100vw;
+  }
+}

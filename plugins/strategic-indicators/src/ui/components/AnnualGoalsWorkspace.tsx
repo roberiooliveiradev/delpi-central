@@ -11,6 +11,7 @@ import { Modal } from "./Modal";
 import {
   getGoalModeLabel,
   getGoalPeriodicityLabel,
+  getGoalScopeBranchLabel,
 } from "../presentation/labels";
 import "./AnnualGoalsWorkspace.css";
 
@@ -25,6 +26,8 @@ type AnnualGoalsWorkspaceProps = {
   fixedTargetYear: number | null;
   onClose: () => void;
   getAccessToken?: () => string | undefined;
+  /** Renderiza o formulário inline (sem modal), para painéis administrativos. */
+  embedded?: boolean;
 };
 
 type BulkGoalRow = {
@@ -33,6 +36,7 @@ type BulkGoalRow = {
   goal_value: number;
   goal_periodicity: "monthly" | "annual" | "quarterly" | "weekly";
   goal_mode: "standard" | "monthly_curve";
+  goal_scope_branch: "" | "01" | "02";
   monthly_targets: Array<{
     month_number: number;
     target_value: number;
@@ -45,6 +49,7 @@ const emptyBulkRow: BulkGoalRow = {
   goal_value: 0,
   goal_periodicity: "monthly",
   goal_mode: "standard",
+  goal_scope_branch: "",
   monthly_targets: [],
 };
 
@@ -54,6 +59,7 @@ export function AnnualGoalsWorkspace({
   fixedTargetYear,
   onClose,
   getAccessToken,
+  embedded = false,
 }: AnnualGoalsWorkspaceProps) {
   const goals = useStrategicIndicatorGoals({ getAccessToken });
   const yearsOverview = useStrategicIndicatorsGoalYearsOverview({ getAccessToken });
@@ -69,7 +75,7 @@ export function AnnualGoalsWorkspace({
   );
 
   useEffect(() => {
-    if (!open) return;
+    if (!open && !embedded) return;
 
     if (typeof fixedTargetYear === "number") {
       if (mode === "duplicate_into_year") {
@@ -91,7 +97,7 @@ export function AnnualGoalsWorkspace({
     }
 
     setOverwriteExisting(false);
-  }, [open, mode, fixedTargetYear]);
+  }, [open, embedded, mode, fixedTargetYear]);
 
   const resolvedTargetYear = useMemo(
     () =>
@@ -114,6 +120,7 @@ export function AnnualGoalsWorkspace({
           goal_value: Number(item.goal_value || 0),
           goal_periodicity: item.goal_periodicity,
           goal_mode: item.goal_mode,
+          goal_scope_branch: item.goal_scope_branch,
           monthly_targets:
             item.goal_mode === "monthly_curve" ? item.monthly_targets : [],
         })),
@@ -147,64 +154,45 @@ export function AnnualGoalsWorkspace({
     onClose();
   }
 
-  const title =
-    mode === "create_year"
-      ? "Novo ano"
-      : mode === "duplicate_into_year"
-        ? `Duplicar metas de ${sourceYear} para outro ano`
-        : `Preencher metas faltantes de ${resolvedTargetYear}`;
+  const footer = (
+    <>
+      <button
+        type="button"
+        className="si-settings-editor__button si-settings-editor__button--secondary"
+        onClick={onClose}
+      >
+        Cancelar
+      </button>
 
-  const description =
-    mode === "create_year"
-      ? "Crie um novo ciclo anual e, se quiser, já adicione metas iniciais."
-      : mode === "duplicate_into_year"
-        ? "Use o ano selecionado como origem e informe o ano de destino."
-        : "Complete metas ausentes do ano selecionado usando outro ciclo como referência.";
+      <button
+        type="button"
+        className="si-settings-editor__button"
+        onClick={() => {
+          if (mode === "create_year") {
+            void handleSubmitCreateYear();
+            return;
+          }
+          if (mode === "duplicate_into_year") {
+            void handleSubmitDuplicateYear();
+            return;
+          }
+          void handleSubmitFillMissing();
+        }}
+        disabled={goals.saving}
+      >
+        {goals.saving
+          ? "Processando..."
+          : mode === "create_year"
+            ? "Criar ano"
+            : mode === "duplicate_into_year"
+              ? "Duplicar"
+              : "Preencher"}
+      </button>
+    </>
+  );
 
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={title}
-      description={description}
-      size="lg"
-      footer={
-        <>
-          <button
-            type="button"
-            className="si-settings-editor__button si-settings-editor__button--secondary"
-            onClick={onClose}
-          >
-            Cancelar
-          </button>
-
-          <button
-            type="button"
-            className="si-settings-editor__button"
-            onClick={() => {
-              if (mode === "create_year") {
-                void handleSubmitCreateYear();
-                return;
-              }
-              if (mode === "duplicate_into_year") {
-                void handleSubmitDuplicateYear();
-                return;
-              }
-              void handleSubmitFillMissing();
-            }}
-            disabled={goals.saving}
-          >
-            {goals.saving
-              ? "Processando..."
-              : mode === "create_year"
-                ? "Criar ano"
-                : mode === "duplicate_into_year"
-                  ? "Duplicar"
-                  : "Preencher"}
-          </button>
-        </>
-      }
-    >
+  const body = (
+    <>
       {goals.error ? (
         <InfoState
           title="Falha ao processar operação"
@@ -373,6 +361,27 @@ export function AnnualGoalsWorkspace({
                       {getGoalModeLabel("monthly_curve")}
                     </option>
                   </select>
+
+                  <select
+                    value={row.goal_scope_branch}
+                    aria-label="Escopo da meta"
+                    onChange={(event) =>
+                      setBulkRows((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index
+                            ? {
+                                ...item,
+                                goal_scope_branch: event.target.value as BulkGoalRow["goal_scope_branch"],
+                              }
+                            : item,
+                        ),
+                      )
+                    }
+                  >
+                    <option value="">{getGoalScopeBranchLabel("")}</option>
+                    <option value="01">{getGoalScopeBranchLabel("01")}</option>
+                    <option value="02">{getGoalScopeBranchLabel("02")}</option>
+                  </select>
                 </div>
               ))}
 
@@ -387,6 +396,44 @@ export function AnnualGoalsWorkspace({
           </div>
         ) : null}
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="si-annual-goals-embedded">
+        {body}
+        <div className="si-annual-goals-embedded__footer">{footer}</div>
+      </div>
+    );
+  }
+
+  if (!open) return null;
+
+  const modalTitle =
+    mode === "create_year"
+      ? "Novo ano"
+      : mode === "duplicate_into_year"
+        ? `Duplicar metas de ${sourceYear} para outro ano`
+        : `Preencher metas faltantes de ${resolvedTargetYear}`;
+
+  const modalDescription =
+    mode === "create_year"
+      ? "Crie um novo ciclo anual e, se quiser, já adicione metas iniciais."
+      : mode === "duplicate_into_year"
+        ? "Use o ano selecionado como origem e informe o ano de destino."
+        : "Complete metas ausentes do ano selecionado usando outro ciclo como referência.";
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={modalTitle}
+      description={modalDescription}
+      size="lg"
+      footer={footer}
+    >
+      {body}
     </Modal>
   );
 }

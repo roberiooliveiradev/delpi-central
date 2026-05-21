@@ -2,8 +2,6 @@ import { useMemo, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { SettingsHero } from "../components/SettingsHero";
 import { SettingsStatusStrip } from "../components/SettingsStatusStrip";
-import { SettingsParametersPanel } from "../components/SettingsParametersPanel";
-import { SettingsGovernancePanel } from "../components/SettingsGovernancePanel";
 import { AuditWorkspacePanel } from "../components/AuditWorkspacePanel";
 import { SectionBlock } from "../components/SectionBlock";
 import { InfoState } from "../components/InfoState";
@@ -17,8 +15,9 @@ import type {
   SettingsGovernanceItem,
 } from "../../data/types/settings";
 
-import { DepartmentsListPanel } from "../components/DepartmentsListPanel";
-import { GoalYearsListPanel } from "../components/GoalYearsListPanel";
+import { AdminDepartmentsWorkspace } from "../components/AdminDepartmentsWorkspace";
+import { AdminGoalsWorkspace } from "../components/AdminGoalsWorkspace";
+import { SettingsStructuredEditor } from "../components/SettingsStructuredEditor";
 import {
   getMetaSourceLabel,
 } from "../presentation/labels";
@@ -216,7 +215,7 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
             title="Departamentos"
             description="Gerencie a estrutura administrativa do módulo e abra cada departamento em um workspace focado no catálogo estrutural."
           >
-            <DepartmentsListPanel getAccessToken={getAccessToken} />
+            <AdminDepartmentsWorkspace getAccessToken={getAccessToken} />
           </SectionBlock>
         ) : null}
 
@@ -225,7 +224,7 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
             title="Metas anuais"
             description="Gerencie ciclos anuais, metas por indicador e operações em lote como duplicação e preenchimento."
           >
-            <GoalYearsListPanel getAccessToken={getAccessToken} />
+            <AdminGoalsWorkspace getAccessToken={getAccessToken} />
           </SectionBlock>
         ) : null}
 
@@ -240,10 +239,11 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
                 description="Aguarde enquanto parâmetros e governança são carregados."
               />
             ) : (
-              <div className="si-settings-global-grid">
-                <SettingsParametersPanel items={dashboardData?.parameters ?? []} />
-                <SettingsGovernancePanel items={dashboardData?.governance ?? []} />
-              </div>
+              <SettingsStructuredEditor
+                data={settings.data}
+                saving={settings.saving}
+                onSave={settings.save}
+              />
             )}
           </SectionBlock>
         ) : null}

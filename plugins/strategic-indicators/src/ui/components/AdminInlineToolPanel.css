@@ -1,0 +1,37 @@
+.si-admin-inline-tool {
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.si-admin-inline-tool__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.si-admin-inline-tool__title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  color: var(--si-title);
+}
+
+.si-admin-inline-tool__description {
+  margin: 0;
+  font-size: 13px;
+  color: var(--si-text-muted);
+}
+
+.si-admin-inline-tool__footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
