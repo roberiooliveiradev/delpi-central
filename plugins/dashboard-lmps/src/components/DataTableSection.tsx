@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
 import { useClientPagination } from "../hooks/useClientPagination";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import {
+  useLoadingProgress,
+  useTrackedSingleFetchProgress,
+} from "../hooks/useSimulatedLoadingProgress";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 import { Pagination } from "./Pagination";
@@ -93,9 +96,16 @@ export function DataTableSection<T>({
   const handlePageChange = serverPagination?.onPageChange ?? setPage;
 
   const showInitialLoading = loading && rows.length === 0;
-  const initialLoadingProgress = useSimulatedLoadingProgress(showInitialLoading);
-  const refreshLoadingProgress = useSimulatedLoadingProgress(
-    refreshing && rows.length > 0
+  const showRefreshLoading = refreshing && rows.length > 0;
+  const initialFetchProgress = useTrackedSingleFetchProgress(showInitialLoading);
+  const refreshFetchProgress = useTrackedSingleFetchProgress(showRefreshLoading);
+  const initialLoadingProgress = useLoadingProgress(
+    showInitialLoading,
+    initialFetchProgress
+  );
+  const refreshLoadingProgress = useLoadingProgress(
+    showRefreshLoading,
+    refreshFetchProgress
   );
 
   return (

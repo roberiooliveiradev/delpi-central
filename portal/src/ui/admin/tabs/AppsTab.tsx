@@ -61,11 +61,11 @@ const formatBrazilDateTime = (value?: string | null) => {
 };
 
 const formatResponsibleUser = (app: AdminApp) => {
-  const updatedEmail = app.updated_by_email?.trim();
-  const createdEmail = app.created_by_email?.trim();
+  const updatedName = app.updated_by_name?.trim();
+  const createdName = app.created_by_name?.trim();
 
-  if (updatedEmail) return updatedEmail;
-  if (createdEmail) return createdEmail;
+  if (updatedName) return updatedName;
+  if (createdName) return createdName;
 
   return "Não informado";
 };
@@ -76,8 +76,8 @@ const buildAppAuditMeta = (app: AdminApp): string[] => {
     `Atualizado em: ${formatBrazilDateTime(app.updated_at)}`,
   ];
 
-  if (app.created_by_email && app.created_by_email !== app.updated_by_email) {
-    lines.push(`Criado por: ${app.created_by_email}`);
+  if (app.created_by_name && app.created_by_name !== app.updated_by_name) {
+    lines.push(`Criado por: ${app.created_by_name}`);
   }
 
   return lines;

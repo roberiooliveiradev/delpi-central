@@ -9,6 +9,12 @@ import {
 import type { ExecutiveDashboardViewData } from "../../data/types/executiveSummary";
 import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
 import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
+import {
+  beginSingleRequestProgress,
+  EMPTY_REQUEST_PROGRESS,
+  finishSingleRequestProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 import {
   prefetchStrategicIndicatorsDepartments,
@@ -36,6 +42,9 @@ export function useStrategicIndicatorsExecutiveSummary({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<StrategicIndicatorsErrorView | null>(null);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -76,6 +85,7 @@ export function useStrategicIndicatorsExecutiveSummary({
       });
 
       setError(null);
+      beginSingleRequestProgress(setRequestProgress);
 
       try {
         const response = await fetchStrategicIndicatorsExecutiveSummary({
@@ -133,6 +143,7 @@ export function useStrategicIndicatorsExecutiveSummary({
         );
       } finally {
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
+          finishSingleRequestProgress(setRequestProgress, false);
           setLoading(false);
           setRefreshing(false);
         }
@@ -153,9 +164,10 @@ export function useStrategicIndicatorsExecutiveSummary({
       data,
       loading,
       refreshing,
+      requestProgress,
       error,
       reload: () => loadRef.current(),
     }),
-    [data, loading, refreshing, error],
+    [data, loading, refreshing, requestProgress, error],
   );
 }

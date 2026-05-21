@@ -66,7 +66,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
     filterState,
   } = filters;
 
-  const { cpv, otd, stockValue, inventoryTurnover, loading, refreshing, error, reload } =
+  const { cpv, otd, stockValue, inventoryTurnover, loading, refreshing, requestProgress, error, reload } =
     useSuppliesDashboard({ periodParams, stockParams });
 
   const periodLabel = useMemo(
@@ -100,6 +100,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         error={error}
         loading={loading}
         hasData={hasData}
+        requestProgress={requestProgress}
         onRetry={reload}
       />
       <section className="ds-kpi-grid" aria-busy={isBusy}>

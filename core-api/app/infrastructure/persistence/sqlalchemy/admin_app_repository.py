@@ -8,10 +8,42 @@ from app.domain.ports.admin_app_repository_port import (
     AdminAppRepositoryPort,
     AdminAppDTO,
 )
-from app.infrastructure.db.models import App
+from app.infrastructure.db.models import App, User
 
 
-def _to_admin_app_dto(row: App) -> AdminAppDTO:
+def _load_user_names(session, rows: list[App]) -> dict[str, str]:
+    user_ids: set = set()
+
+    for row in rows:
+        if row.created_by_user_id:
+            user_ids.add(row.created_by_user_id)
+        if row.updated_by_user_id:
+            user_ids.add(row.updated_by_user_id)
+
+    if not user_ids:
+        return {}
+
+    return {
+        str(user.id): user.name
+        for user in session.query(User).filter(User.id.in_(user_ids)).all()
+    }
+
+
+def _resolve_audit_name(
+    stored_name: str | None,
+    user_id,
+    names_by_id: dict[str, str],
+) -> str | None:
+    if stored_name and stored_name.strip():
+        return stored_name.strip()
+
+    if user_id:
+        return names_by_id.get(str(user_id))
+
+    return None
+
+
+def _to_admin_app_dto(row: App, names_by_id: dict[str, str]) -> AdminAppDTO:
     return AdminAppDTO(
         id=row.id,
         name=row.name,
@@ -24,9 +56,17 @@ def _to_admin_app_dto(row: App) -> AdminAppDTO:
         created_at=row.created_at,
         updated_at=row.updated_at,
         created_by_user_id=str(row.created_by_user_id) if row.created_by_user_id else None,
-        created_by_email=row.created_by_email,
+        created_by_name=_resolve_audit_name(
+            row.created_by_name,
+            row.created_by_user_id,
+            names_by_id,
+        ),
         updated_by_user_id=str(row.updated_by_user_id) if row.updated_by_user_id else None,
-        updated_by_email=row.updated_by_email,
+        updated_by_name=_resolve_audit_name(
+            row.updated_by_name,
+            row.updated_by_user_id,
+            names_by_id,
+        ),
     )
 
 
@@ -72,8 +112,10 @@ class SqlAlchemyAdminAppRepository(AdminAppRepositoryPort):
             .all()
         )
 
+        names_by_id = _load_user_names(self.session, rows)
+
         return (
-            [_to_admin_app_dto(row) for row in rows],
+            [_to_admin_app_dto(row, names_by_id) for row in rows],
             total,
         )
 
@@ -82,7 +124,8 @@ class SqlAlchemyAdminAppRepository(AdminAppRepositoryPort):
         if not row:
             return None
 
-        return _to_admin_app_dto(row)
+        names_by_id = _load_user_names(self.session, [row])
+        return _to_admin_app_dto(row, names_by_id)
 
     def update_metadata(self, app_id: str, name: str, description: str | None, icon: str | None) -> None:
         row = self.session.get(App, app_id)

@@ -11,6 +11,10 @@ import {
 import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
 import type { PresentationViewData } from "../../data/types/presentation";
 import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
+import {
+  EMPTY_REQUEST_PROGRESS,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 
 type UseStrategicIndicatorsPresentationParams = {
@@ -40,6 +44,9 @@ export function useStrategicIndicatorsPresentation({
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [error, setError] = useState<StrategicIndicatorsErrorView | null>(null);
   const [warnings, setWarnings] = useState<PresentationWarningItem[]>([]);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -69,6 +76,7 @@ export function useStrategicIndicatorsPresentation({
 
       setError(null);
       setTrendsLoading(true);
+      setRequestProgress({ completed: 0, total: 2 });
 
       try {
         const overviewPayload = await fetchStrategicIndicatorsPresentation({
@@ -90,8 +98,7 @@ export function useStrategicIndicatorsPresentation({
         setPayload(overviewPayload);
         setWarnings(adaptPresentationWarnings(overviewPayload));
         hasLoadedOnceRef.current = true;
-        setLoading(false);
-        setRefreshing(false);
+        setRequestProgress({ completed: 1, total: 2 });
 
         const overviewDepartmentIds = overviewPayload.departments_overview.map(
           (department) => department.id,
@@ -134,6 +141,7 @@ export function useStrategicIndicatorsPresentation({
 
         setPayload(nextPayload);
         setWarnings(adaptPresentationWarnings(nextPayload));
+        setRequestProgress({ completed: 2, total: 2 });
       } catch (err) {
         if (requestId !== requestIdRef.current || controller.signal.aborted) {
           return;
@@ -199,6 +207,7 @@ export function useStrategicIndicatorsPresentation({
       data,
       loading,
       refreshing,
+      requestProgress,
       trendsLoading,
       error,
       warnings,
@@ -212,6 +221,7 @@ export function useStrategicIndicatorsPresentation({
       data,
       loading,
       refreshing,
+      requestProgress,
       trendsLoading,
       error,
       warnings,

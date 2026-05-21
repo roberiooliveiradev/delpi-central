@@ -30,7 +30,12 @@ import { DataTableSection } from "../../components/DataTableSection";
 import { FilterBar } from "../../components/FilterBar";
 import { KpiCard } from "../../components/KpiCard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
-import { useSimulatedLoadingProgress } from "../../hooks/useSimulatedLoadingProgress";
+import {
+  EMPTY_REQUEST_PROGRESS,
+  runParallelWithProgress,
+  useLoadingProgress,
+  type RequestProgress,
+} from "../../hooks/useSimulatedLoadingProgress";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { CHART_COLORS } from "../../constants/chartColors";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
@@ -83,6 +88,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [alertas, setAlertas] = useState<DashboardAlertItem[]>([]);
   const [porFamilia, setPorFamilia] = useState<DashboardFamiliaItem[]>([]);
   const [exportando, setExportando] = useState(false);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   const apiParams = useMemo(() => {
     const params: Record<string, string> = {};
@@ -96,26 +104,40 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   }, [branch, dateEnd, dateStart, setorId]);
 
   const load = useCallback(async () => {
+    const controller = new AbortController();
     setRefreshing(true);
     setError(null);
     try {
-      const [r, ev, proc, opts, al, fam] = await Promise.all([
-        fetchDashboardResumo(getAccessToken, apiParams),
-        fetchDashboardEvolucao(getAccessToken, apiParams),
-        fetchDashboardProcessos(getAccessToken, apiParams),
-        fetchOptions(getAccessToken),
-        fetchDashboardAlertas(getAccessToken, {
-          ...apiParams,
-          meses_consecutivos: "3",
-        }),
-        fetchDashboardPorFamilia(getAccessToken, apiParams),
-      ]);
-      setResumo(r);
-      setEvolucao(ev.items);
-      setProcessos(proc.items);
-      setOptions(opts);
-      setAlertas(al.items);
-      setPorFamilia(fam.items);
+      const results = await runParallelWithProgress(
+        [
+          async () => fetchDashboardResumo(getAccessToken, apiParams),
+          async () => fetchDashboardEvolucao(getAccessToken, apiParams),
+          async () => fetchDashboardProcessos(getAccessToken, apiParams),
+          async () => fetchOptions(getAccessToken),
+          async () =>
+            fetchDashboardAlertas(getAccessToken, {
+              ...apiParams,
+              meses_consecutivos: "3",
+            }),
+          async () => fetchDashboardPorFamilia(getAccessToken, apiParams),
+        ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
+        controller.signal,
+        setRequestProgress
+      );
+
+      const [r, ev, proc, opts, al, fam] = results.map((result) => {
+        if (result.status === "rejected") {
+          throw result.reason;
+        }
+        return result.value;
+      });
+
+      setResumo(r as DashboardResumo);
+      setEvolucao((ev as { items: DashboardEvolucaoItem[] }).items);
+      setProcessos((proc as { items: DashboardProcessoItem[] }).items);
+      setOptions(opts as OptionsData);
+      setAlertas((al as { items: DashboardAlertItem[] }).items);
+      setPorFamilia((fam as { items: DashboardFamiliaItem[] }).items);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dashboard");
     } finally {
@@ -173,7 +195,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
   const isBusy = loading || refreshing;
   const hasData = resumo !== null || evolucao.length > 0 || processos.length > 0;
-  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
+  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
 
   const savingsChartData = useMemo(
     () =>
@@ -338,6 +360,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         error={error}
         loading={loading}
         hasData={hasData}
+        requestProgress={requestProgress}
         onRetry={() => void load()}
       />
 

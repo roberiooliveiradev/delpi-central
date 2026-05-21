@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import { getHrBranches, getHrSnapshot } from "../api/hrApi";
 import type { HrFilterParams } from "../types/hr";
+import type { RequestProgress } from "../utils/loadingProgress";
 import { useHrResource } from "./useHrResource";
 
 export function useHrDashboard(apiParams: HrFilterParams) {
@@ -25,6 +26,20 @@ export function useHrDashboard(apiParams: HrFilterParams) {
   const loading = snapshotResource.loading || branchesResource.loading;
   const refreshing = snapshotResource.refreshing || branchesResource.refreshing;
 
+  const requestProgress = useMemo<RequestProgress>(() => {
+    const total =
+      snapshotResource.requestProgress.total + branchesResource.requestProgress.total;
+    const completed =
+      (snapshotResource.loading ? 0 : snapshotResource.requestProgress.completed) +
+      (branchesResource.loading ? 0 : branchesResource.requestProgress.completed);
+    return { completed, total: total || 2 };
+  }, [
+    snapshotResource.loading,
+    snapshotResource.requestProgress,
+    branchesResource.loading,
+    branchesResource.requestProgress,
+  ]);
+
   const reload = () => {
     snapshotResource.reload();
     branchesResource.reload();
@@ -35,6 +50,7 @@ export function useHrDashboard(apiParams: HrFilterParams) {
     branchOptions,
     loading,
     refreshing,
+    requestProgress,
     error,
     reload,
   };

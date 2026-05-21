@@ -27,7 +27,7 @@ import { QualityPageHeader } from "../components/QualityPageHeader";
 import { CHART_COLORS } from "../constants/chartColors";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useKaizenSummary } from "../hooks/useQualityQueries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
@@ -92,8 +92,12 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
     [apiParams, debouncedTitle, debouncedStatus]
   );
 
-  const { data, loading, error, reload } = useKaizenSummary(summaryParams);
-  const initialLoadingProgress = useSimulatedLoadingProgress(loading && !data);
+  const { data, loading, requestProgress, error, reload } =
+    useKaizenSummary(summaryParams);
+  const initialLoadingProgress = useLoadingProgress(
+    loading && !data,
+    requestProgress
+  );
   const items = data?.list_kaizen ?? [];
 
   useEffect(() => {

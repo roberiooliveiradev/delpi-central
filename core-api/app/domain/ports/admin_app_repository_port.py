@@ -18,9 +18,9 @@ class AdminAppDTO:
     created_at: datetime | None = None
     updated_at: datetime | None = None
     created_by_user_id: str | None = None
-    created_by_email: str | None = None
+    created_by_name: str | None = None
     updated_by_user_id: str | None = None
-    updated_by_email: str | None = None
+    updated_by_name: str | None = None
 
 
 class AdminAppRepositoryPort(Protocol):

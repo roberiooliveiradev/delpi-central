@@ -45,7 +45,7 @@ class UpdatePluginManifestUseCase:
         manifest: Dict[str, Any],
         *,
         actor_user_id: str | None = None,
-        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> UpdatePluginManifestResult:
 
         # ==========================================================
@@ -187,7 +187,7 @@ class UpdatePluginManifestUseCase:
             description=manifest.get("description"),
             icon=manifest.get("icon"),
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
+            actor_name=actor_name,
         )
 
         # ==========================================================

@@ -6,7 +6,7 @@ import { AuditWorkspacePanel } from "../components/AuditWorkspacePanel";
 import { SectionBlock } from "../components/SectionBlock";
 import { InfoState } from "../components/InfoState";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { SettingsSummaryCards } from "../components/SettingsSummaryCards";
 import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
 import type { SettingsDashboardData } from "../../data/types/settingsDashboard";
@@ -40,11 +40,13 @@ type SettingsTab =
 export function SettingsPage({ getAccessToken }: SettingsPageProps) {
   const settings = useStrategicIndicatorsSettings({ getAccessToken });
   const [activeTab, setActiveTab] = useState<SettingsTab>("overview");
-  const overviewLoadingProgress = useSimulatedLoadingProgress(
-    settings.loading && activeTab === "overview"
+  const overviewLoadingProgress = useLoadingProgress(
+    settings.loading && activeTab === "overview",
+    settings.requestProgress
   );
-  const globalLoadingProgress = useSimulatedLoadingProgress(
-    settings.loading && activeTab === "global"
+  const globalLoadingProgress = useLoadingProgress(
+    settings.loading && activeTab === "global",
+    settings.requestProgress
   );
 
   const dashboardData = useMemo<SettingsDashboardData | null>(() => {

@@ -26,7 +26,7 @@ import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import type { ChartGranularity } from "../types/chart";
 import type { LmpDashboardItem } from "../types/lmp";
 import { buildLmpFallbackCharts, parseLmpDateNumber } from "../utils/lmpCharts";
@@ -92,7 +92,7 @@ export function DashboardLmpsPage() {
   const debouncedDateStart = useDebouncedValue(dateStart, FILTER_DEBOUNCE_MS);
   const debouncedDateEnd = useDebouncedValue(dateEnd, FILTER_DEBOUNCE_MS);
 
-  const { items, summary, charts, loading, refreshing, error, reload } =
+  const { items, summary, charts, loading, refreshing, requestProgress, error, reload } =
     useLmpsDashboard({
       date_start: debouncedDateStart || undefined,
       date_end: debouncedDateEnd || undefined,
@@ -117,8 +117,8 @@ export function DashboardLmpsPage() {
 
   const hasData = sortedItems.length > 0 || summary !== null;
   const isBusy = loading || refreshing;
-  const initialLoadingProgress = useSimulatedLoadingProgress(loading && !hasData);
-  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
+  const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
+  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
 
   const fallbackCharts = useMemo(
     () => buildLmpFallbackCharts(sortedItems),

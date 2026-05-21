@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getLmpsDashboard, type LmpsDashboardResponse } from "../api/lmpApi";
+import {
+  beginSingleRequestProgress,
+  EMPTY_REQUEST_PROGRESS,
+  finishSingleRequestProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 
 type UseLmpsDashboardParams = {
   date_start?: string;
@@ -18,6 +24,7 @@ type UseLmpsDashboardResult = {
   charts: LmpsDashboardResponse["charts"] | null;
   loading: boolean;
   refreshing: boolean;
+  requestProgress: RequestProgress;
   error: string | null;
   reload: () => void;
 };
@@ -30,6 +37,9 @@ export function useLmpsDashboard(
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   const stableParams = useMemo(
     () => ({
@@ -67,6 +77,7 @@ export function useLmpsDashboard(
           setLoading(true);
         }
 
+        beginSingleRequestProgress(setRequestProgress);
         const result = await getLmpsDashboard(stableParams, controller.signal);
 
         if (!controller.signal.aborted) {
@@ -82,6 +93,7 @@ export function useLmpsDashboard(
         }
       } finally {
         if (!controller.signal.aborted) {
+          finishSingleRequestProgress(setRequestProgress, false);
           setLoading(false);
           setRefreshing(false);
         }
@@ -114,6 +126,7 @@ export function useLmpsDashboard(
     charts: data?.charts ?? null,
     loading,
     refreshing,
+    requestProgress,
     error,
     reload,
   };

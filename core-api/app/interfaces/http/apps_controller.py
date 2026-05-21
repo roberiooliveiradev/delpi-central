@@ -47,7 +47,7 @@ def _request_actor() -> tuple[str | None, str | None]:
     user = getattr(g, "current_user", None)
     if not user:
         return None, None
-    return str(user.id), getattr(user, "email", None)
+    return str(user.id), getattr(user, "name", None)
 
 
 # ==========================================================
@@ -146,7 +146,7 @@ def register_plugin():
             path="_global",
         )
 
-    actor_user_id, actor_email = _request_actor()
+    actor_user_id, actor_name = _request_actor()
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -155,7 +155,7 @@ def register_plugin():
             result = uc.execute(
                 manifest,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+                actor_name=actor_name,
             )
 
             if not result.success:
@@ -183,7 +183,7 @@ def update_manifest(plugin_id: str):
             path="_global",
         )
 
-    actor_user_id, actor_email = _request_actor()
+    actor_user_id, actor_name = _request_actor()
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -193,7 +193,7 @@ def update_manifest(plugin_id: str):
                 plugin_id,
                 manifest,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+                actor_name=actor_name,
             )
 
             if not result.success:
@@ -239,7 +239,7 @@ def rollback(plugin_id: str):
             path="version",
         )
 
-    actor_user_id, actor_email = _request_actor()
+    actor_user_id, actor_name = _request_actor()
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -248,7 +248,7 @@ def rollback(plugin_id: str):
                 plugin_id,
                 version,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+                actor_name=actor_name,
             )
 
             if not result.success:
@@ -291,7 +291,7 @@ def set_plugin_active(plugin_id: str):
     data = request.get_json(silent=True) or {}
     active = bool(data.get("active", True))
 
-    actor_user_id, actor_email = _request_actor()
+    actor_user_id, actor_name = _request_actor()
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -300,7 +300,7 @@ def set_plugin_active(plugin_id: str):
                 plugin_id,
                 active,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+                actor_name=actor_name,
             )
 
             if not result.success:
@@ -330,7 +330,7 @@ def bulk_activate_plugins():
             path="ids",
         )
 
-    actor_user_id, actor_email = _request_actor()
+    actor_user_id, actor_name = _request_actor()
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -339,7 +339,7 @@ def bulk_activate_plugins():
                 ids,
                 active,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+                actor_name=actor_name,
             )
 
             if not result.success:

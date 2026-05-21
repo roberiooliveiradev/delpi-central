@@ -10,7 +10,7 @@ import { EngineeringStatusAlerts } from "../components/EngineeringStatusAlerts";
 import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringDashboard } from "../hooks/useEngineeringDashboard";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { formatPeriodLabel } from "../utils/dates";
 import {
   formatCurrency,
@@ -53,6 +53,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
     lmpSummary,
     loading,
     refreshing,
+    requestProgress,
     error,
     sectionErrors,
     reload,
@@ -65,7 +66,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
   const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
   const isBusy = loading || refreshing;
   const hasData = transforma !== null || lmpSummary !== null;
-  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
+  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
 
   return (
     <div className="dashboard-engineering dashboard-page">
@@ -87,6 +88,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         error={error}
         loading={loading}
         hasData={hasData}
+        requestProgress={requestProgress}
         onRetry={reload}
       />
       {refreshing && hasData ? (

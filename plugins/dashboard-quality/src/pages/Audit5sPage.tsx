@@ -23,7 +23,7 @@ import { QualityPageHeader } from "../components/QualityPageHeader";
 import { CHART_COLORS } from "../constants/chartColors";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { useAudit5sSummary } from "../hooks/useQualityQueries";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import type { ChartGranularity } from "../types/chart";
@@ -70,8 +70,12 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
     [apiParams.branch, apiParams.date_start, apiParams.date_end]
   );
 
-  const { data, loading, error, reload } = useAudit5sSummary(summaryParams);
-  const initialLoadingProgress = useSimulatedLoadingProgress(loading && !data);
+  const { data, loading, requestProgress, error, reload } =
+    useAudit5sSummary(summaryParams);
+  const initialLoadingProgress = useLoadingProgress(
+    loading && !data,
+    requestProgress
+  );
   const items = data?.list_audits ?? [];
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { Card } from "../components/Card";
 import { ClassificationBand } from "../components/ClassificationBand";
 import { ContributionRanking } from "../components/ContributionRanking";
@@ -35,7 +35,7 @@ export function ExecutiveDashboardPage({
     effectiveBranch,
   } = useStrategicIndicatorsFilters();
 
-  const { data, loading, refreshing, error, reload } =
+  const { data, loading, refreshing, requestProgress, error, reload } =
     useStrategicIndicatorsExecutiveSummary({
       branch: effectiveBranch,
       competence: referenceMonth,
@@ -44,8 +44,8 @@ export function ExecutiveDashboardPage({
       getAccessToken,
     });
 
-  const loadingProgress = useSimulatedLoadingProgress(loading && !data);
-  const refreshingProgress = useSimulatedLoadingProgress(Boolean(refreshing && data));
+  const loadingProgress = useLoadingProgress(loading && !data, requestProgress);
+  const refreshingProgress = useLoadingProgress(Boolean(refreshing && data), requestProgress);
 
   const filterBlock = (
     <StrategicIndicatorsReferenceFilters

@@ -49,7 +49,7 @@ export function StockPage({ pathname }: StockPageProps) {
     filterState,
   } = useSuppliesFilters();
 
-  const { data, loading, refreshing, error, reload } = useSuppliesResource(
+  const { data, loading, refreshing, requestProgress, error, reload } = useSuppliesResource(
     (signal) => getStockValue(stockParams, signal),
     [stockParams.branch, stockParams.location]
   );
@@ -148,6 +148,7 @@ export function StockPage({ pathname }: StockPageProps) {
         error={error}
         loading={loading}
         hasData={data !== null}
+        requestProgress={requestProgress}
         onRetry={reload}
       />
 

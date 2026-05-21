@@ -33,7 +33,7 @@ class RegisterPluginUseCase:
         manifest: Dict[str, Any],
         *,
         actor_user_id: str | None = None,
-        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> RegisterResult:
 
         validation = self._validator.validate(manifest)
@@ -83,7 +83,7 @@ class RegisterPluginUseCase:
                     "active": True,
                 },
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+                actor_name=actor_name,
             )
 
             self._uow.plugin_manifests.save(plugin_id, manifest, checksum)
@@ -126,7 +126,7 @@ class RegisterPluginUseCase:
                 plugin_id,
                 version,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+                actor_name=actor_name,
             )
 
             self._uow.plugin_manifests.save(plugin_id, manifest, checksum)

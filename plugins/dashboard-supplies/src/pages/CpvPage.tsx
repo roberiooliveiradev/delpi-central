@@ -51,7 +51,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
     filterState,
   } = useSuppliesFilters();
 
-  const { data, loading, refreshing, error, reload } = useSuppliesResource(
+  const { data, loading, refreshing, requestProgress, error, reload } = useSuppliesResource(
     (signal) => getCpv(periodParams, signal),
     [periodParams.branch, periodParams.end_date, periodParams.start_date]
   );
@@ -148,6 +148,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
         error={error}
         loading={loading}
         hasData={data !== null}
+        requestProgress={requestProgress}
         onRetry={reload}
       />
 

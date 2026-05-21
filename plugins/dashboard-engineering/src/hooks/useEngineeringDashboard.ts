@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { getLmpsDashboard, getTransformaSummary } from "../api/engineeringApi";
 import type { EngineeringFilterParams, TransformaSummary } from "../types/engineering";
-import type { LmpsDashboardSummary } from "../types/lmp";
+import type { LmpsDashboardResponse, LmpsDashboardSummary } from "../types/lmp";
 import { formatEngineeringApiError } from "../utils/formatEngineeringApiError";
+import {
+  EMPTY_REQUEST_PROGRESS,
+  runParallelWithProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 import { inputDateToLmpApi } from "../utils/lmpDates";
 
 type SectionErrors = {
@@ -18,6 +23,9 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
   const [error, setError] = useState<string | null>(null);
   const [sectionErrors, setSectionErrors] = useState<SectionErrors>({});
   const [reloadKey, setReloadKey] = useState(0);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -38,16 +46,20 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
           status: "Todos",
         };
 
-        const results = await Promise.allSettled([
-          getTransformaSummary(apiParams, controller.signal),
-          getLmpsDashboard(lmpParams, controller.signal),
-        ]);
+        const results = await runParallelWithProgress(
+          [
+            (signal) => getTransformaSummary(apiParams, signal),
+            (signal) => getLmpsDashboard(lmpParams, signal),
+          ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
+          controller.signal,
+          setRequestProgress
+        );
 
         const nextErrors: SectionErrors = {};
         let successCount = 0;
 
         if (results[0].status === "fulfilled") {
-          setTransforma(results[0].value);
+          setTransforma(results[0].value as TransformaSummary);
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.transforma =
@@ -56,7 +68,7 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
         }
 
         if (results[1].status === "fulfilled") {
-          setLmpSummary(results[1].value.summary);
+          setLmpSummary((results[1].value as LmpsDashboardResponse).summary);
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.lmp =
@@ -100,6 +112,7 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
     lmpSummary,
     loading,
     refreshing,
+    requestProgress,
     error,
     sectionErrors,
     reload,

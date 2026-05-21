@@ -21,6 +21,12 @@ import {
   getStrategicIndicatorsCachedValue,
   setStrategicIndicatorsCachedValue,
 } from "../../data/cache/strategicIndicatorsReadCache";
+import {
+  beginSingleRequestProgress,
+  EMPTY_REQUEST_PROGRESS,
+  finishSingleRequestProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
 
@@ -69,6 +75,9 @@ export function useStrategicIndicatorsDepartmentTree({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<StrategicIndicatorsErrorView | null>(null);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -127,6 +136,7 @@ export function useStrategicIndicatorsDepartmentTree({
     });
 
     setError(null);
+    beginSingleRequestProgress(setRequestProgress);
 
     try {
       const token = getAccessTokenRef.current;
@@ -183,6 +193,7 @@ export function useStrategicIndicatorsDepartmentTree({
       );
     } finally {
       if (requestId === requestIdRef.current) {
+        finishSingleRequestProgress(setRequestProgress, controller.signal.aborted);
         setLoading(false);
         setRefreshing(false);
       }
@@ -206,9 +217,10 @@ export function useStrategicIndicatorsDepartmentTree({
       model,
       loading,
       refreshing,
+      requestProgress,
       error,
       reload,
     }),
-    [model, loading, refreshing, error, reload],
+    [model, loading, refreshing, requestProgress, error, reload],
   );
 }

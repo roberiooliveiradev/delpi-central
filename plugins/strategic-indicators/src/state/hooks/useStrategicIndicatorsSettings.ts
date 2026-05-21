@@ -7,6 +7,12 @@ import type {
   StrategicIndicatorsSettingsResponse,
   StrategicIndicatorsSettingsUpdateRequest,
 } from "../../data/types/settings";
+import {
+  beginSingleRequestProgress,
+  EMPTY_REQUEST_PROGRESS,
+  finishSingleRequestProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 
 type UseStrategicIndicatorsSettingsParams = {
   getAccessToken?: () => string | undefined;
@@ -19,6 +25,7 @@ export function useStrategicIndicatorsSettings({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(EMPTY_REQUEST_PROGRESS);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -48,6 +55,7 @@ export function useStrategicIndicatorsSettings({
       }
 
       setError(null);
+      beginSingleRequestProgress(setRequestProgress);
 
       try {
         const response = await fetchStrategicIndicatorsSettings(
@@ -73,6 +81,7 @@ export function useStrategicIndicatorsSettings({
         );
       } finally {
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
+          finishSingleRequestProgress(setRequestProgress, controller.signal.aborted);
           setLoading(false);
           setRefreshing(false);
         }
@@ -128,6 +137,7 @@ export function useStrategicIndicatorsSettings({
       data,
       loading,
       refreshing,
+      requestProgress,
       saving,
       error,
       successMessage,

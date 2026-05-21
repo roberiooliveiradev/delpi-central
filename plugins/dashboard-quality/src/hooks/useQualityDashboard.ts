@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { formatQualityApiError } from "../utils/formatQualityApiError";
 import {
+  EMPTY_REQUEST_PROGRESS,
+  runParallelWithProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
+import {
   getAudit5sSummary,
   getKaizenSummary,
   getPpmExternalSummary,
@@ -32,6 +37,7 @@ type UseQualityDashboardResult = {
   audit5s: Audit5sSummary | null;
   loading: boolean;
   refreshing: boolean;
+  requestProgress: RequestProgress;
   error: string | null;
   sectionErrors: SectionErrors;
   reload: () => void;
@@ -49,6 +55,9 @@ export function useQualityDashboard(
   const [error, setError] = useState<string | null>(null);
   const [sectionErrors, setSectionErrors] = useState<SectionErrors>({});
   const [reloadKey, setReloadKey] = useState(0);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   const stableFilters = {
     branch: filters.branch || undefined,
@@ -94,18 +103,22 @@ export function useQualityDashboard(
           end_date: stableFilters.date_end,
         };
 
-        const results = await Promise.allSettled([
-          getPpmInternalSummary(ppmParams, controller.signal),
-          getPpmExternalSummary(ppmParams, controller.signal),
-          getKaizenSummary(kaizenParams, controller.signal),
-          getAudit5sSummary(auditParams, controller.signal),
-        ]);
+        const results = await runParallelWithProgress(
+          [
+            (signal) => getPpmInternalSummary(ppmParams, signal),
+            (signal) => getPpmExternalSummary(ppmParams, signal),
+            (signal) => getKaizenSummary(kaizenParams, signal),
+            (signal) => getAudit5sSummary(auditParams, signal),
+          ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
+          controller.signal,
+          setRequestProgress
+        );
 
         const nextErrors: SectionErrors = {};
         let successCount = 0;
 
         if (results[0].status === "fulfilled") {
-          setPpmInternal(results[0].value);
+          setPpmInternal(results[0].value as PpmSummary);
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.ppmInternal =
@@ -114,7 +127,7 @@ export function useQualityDashboard(
         }
 
         if (results[1].status === "fulfilled") {
-          setPpmExternal(results[1].value);
+          setPpmExternal(results[1].value as PpmSummary);
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.ppmExternal =
@@ -123,7 +136,7 @@ export function useQualityDashboard(
         }
 
         if (results[2].status === "fulfilled") {
-          setKaizen(results[2].value);
+          setKaizen(results[2].value as KaizenSummary);
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.kaizen =
@@ -132,7 +145,7 @@ export function useQualityDashboard(
         }
 
         if (results[3].status === "fulfilled") {
-          setAudit5s(results[3].value);
+          setAudit5s(results[3].value as Audit5sSummary);
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.audit5s =
@@ -174,6 +187,7 @@ export function useQualityDashboard(
     audit5s,
     loading,
     refreshing,
+    requestProgress,
     error,
     sectionErrors,
     reload,

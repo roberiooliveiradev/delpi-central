@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import { FilterBar } from "../components/FilterBar";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { KpiCard } from "../components/KpiCard";
 import { PpmSparkline } from "../components/PpmSparkline";
 import { ModuleShortcut, PPM_SHORTCUT_HREF } from "../components/ModuleShortcut";
@@ -16,6 +17,7 @@ import { CHART_COLORS } from "../constants/chartColors";
 import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityDashboard } from "../hooks/useQualityDashboard";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import {
   formatCurrency,
@@ -74,6 +76,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
     audit5s,
     loading,
     refreshing,
+    requestProgress,
     error,
     sectionErrors,
     reload,
@@ -99,6 +102,9 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
   );
 
   const isBusy = loading || refreshing;
+  const hasData = ppmInternal !== null;
+  const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
+  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
 
   return (
     <div className="dashboard-quality dashboard-page dq-print-root">
@@ -133,10 +139,22 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         </div>
       ) : null}
 
-      {loading && !ppmInternal ? (
-        <div className="dq-state dq-state--loading" aria-live="polite">
-          Carregando indicadores…
-        </div>
+      {refreshing && hasData ? (
+        <LoadingActivityCard
+          title="Atualizando indicadores de qualidade"
+          description="Recalculando PPM, kaizens e auditorias 5S com os filtros selecionados."
+          variant="compact"
+          sticky
+          progressPercent={refreshLoadingProgress}
+        />
+      ) : null}
+
+      {loading && !hasData ? (
+        <LoadingActivityCard
+          title="Carregando indicadores de qualidade"
+          description="Buscando PPM interno e externo, kaizens e auditorias 5S."
+          progressPercent={initialLoadingProgress}
+        />
       ) : null}
 
       <section className="dq-kpi-grid" aria-busy={isBusy}>

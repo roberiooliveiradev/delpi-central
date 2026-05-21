@@ -15,6 +15,11 @@ import type {
   ProductionFilterParams,
 } from "../types/production";
 import { formatProductionApiError } from "../utils/formatProductionApiError";
+import {
+  EMPTY_REQUEST_PROGRESS,
+  runParallelWithProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 
 type SectionErrors = {
   directLabor?: string;
@@ -32,6 +37,7 @@ type UseProductionDashboardResult = {
   otd: OtdPctData | null;
   loading: boolean;
   refreshing: boolean;
+  requestProgress: RequestProgress;
   error: string | null;
   sectionErrors: SectionErrors;
   reload: () => void;
@@ -55,6 +61,9 @@ export function useProductionDashboard(
   const [error, setError] = useState<string | null>(null);
   const [sectionErrors, setSectionErrors] = useState<SectionErrors>({});
   const [reloadKey, setReloadKey] = useState(0);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
+    EMPTY_REQUEST_PROGRESS
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -74,13 +83,17 @@ export function useProductionDashboard(
         if (hasPreviousData) setRefreshing(true);
         else setLoading(true);
 
-        const results = await Promise.allSettled([
-          getDirectLaborCostPct(filters, controller.signal),
-          getProductionCostPct(filters, controller.signal),
-          getDepreciationPct(filters, controller.signal),
-          getOverallEquipmentEffectivenessPct(filters, controller.signal),
-          getOnTimeDeliveryPct(filters, controller.signal),
-        ]);
+        const results = await runParallelWithProgress(
+          [
+            (signal) => getDirectLaborCostPct(filters, signal),
+            (signal) => getProductionCostPct(filters, signal),
+            (signal) => getDepreciationPct(filters, signal),
+            (signal) => getOverallEquipmentEffectivenessPct(filters, signal),
+            (signal) => getOnTimeDeliveryPct(filters, signal),
+          ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
+          controller.signal,
+          setRequestProgress
+        );
 
         const nextErrors: SectionErrors = {};
         let successCount = 0;
@@ -145,6 +158,7 @@ export function useProductionDashboard(
     otd,
     loading,
     refreshing,
+    requestProgress,
     error,
     sectionErrors,
     reload,

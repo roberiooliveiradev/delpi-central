@@ -24,7 +24,7 @@ class RollbackPluginVersionUseCase:
         target_version: str,
         *,
         actor_user_id: str | None = None,
-        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> RollbackPluginVersionResult:
 
         plugin = self._uow.plugins.get_by_id(plugin_id)
@@ -67,7 +67,7 @@ class RollbackPluginVersionUseCase:
             plugin_id,
             target_version,
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
+            actor_name=actor_name,
         )
 
         self._uow.plugin_manifests.save(plugin_id, manifest, str(checksum or ""))

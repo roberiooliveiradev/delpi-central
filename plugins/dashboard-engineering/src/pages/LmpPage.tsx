@@ -30,7 +30,7 @@ import { CHART_COLORS } from "../constants/chartColors";
 import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
-import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import type { LmpDashboardItem } from "../types/lmp";
 import type { ChartGranularity } from "../types/chart";
 import { buildLmpFallbackCharts } from "../utils/lmpCharts";
@@ -79,7 +79,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
   const [status, setStatus] = useState("Todos");
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
-  const { items, summary, charts, loading, refreshing, error, reload } =
+  const { items, summary, charts, loading, refreshing, requestProgress, error, reload } =
     useLmpsDashboard({
       date_start: dateStart || undefined,
       date_end: dateEnd || undefined,
@@ -193,7 +193,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
 
   const isBusy = loading || refreshing;
   const hasData = sortedItems.length > 0 || summary !== null;
-  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
+  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
   const hasCharts =
     resolvedCharts.levelData.some((d) => d.value > 0) ||
     resolvedCharts.statusData.some((d) => d.value > 0);
@@ -225,6 +225,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
         error={error}
         loading={loading}
         hasData={hasData}
+        requestProgress={requestProgress}
         onRetry={reload}
       />
 

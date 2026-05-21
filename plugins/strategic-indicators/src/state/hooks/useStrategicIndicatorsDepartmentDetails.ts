@@ -4,6 +4,12 @@ import { fetchStrategicIndicatorsDepartmentDetails } from "../../data/api/strate
 import type { DepartmentDetailsViewData } from "../../data/types/departmentDetails";
 import type { StrategicIndicatorsErrorView } from "../../data/errors/strategicIndicatorsError";
 import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
+import {
+  beginSingleRequestProgress,
+  EMPTY_REQUEST_PROGRESS,
+  finishSingleRequestProgress,
+  type RequestProgress,
+} from "../utils/loadingProgress";
 
 type UseStrategicIndicatorsDepartmentDetailsParams = {
   departmentId: string;
@@ -25,6 +31,7 @@ export function useStrategicIndicatorsDepartmentDetails({
   const [data, setData] = useState<DepartmentDetailsViewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [requestProgress, setRequestProgress] = useState<RequestProgress>(EMPTY_REQUEST_PROGRESS);
   const [error, setError] = useState<StrategicIndicatorsErrorView | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -67,6 +74,7 @@ export function useStrategicIndicatorsDepartmentDetails({
       }
 
       setError(null);
+      beginSingleRequestProgress(setRequestProgress);
 
       try {
         const response = await fetchStrategicIndicatorsDepartmentDetails({
@@ -102,6 +110,7 @@ export function useStrategicIndicatorsDepartmentDetails({
         );
       } finally {
         if (requestId === requestIdRef.current && !controller.signal.aborted) {
+          finishSingleRequestProgress(setRequestProgress, controller.signal.aborted);
           setLoading(false);
           setRefreshing(false);
         }
@@ -122,9 +131,10 @@ export function useStrategicIndicatorsDepartmentDetails({
       data,
       loading,
       refreshing,
+      requestProgress,
       error,
       reload: () => loadRef.current(),
     }),
-    [data, loading, refreshing, error],
+    [data, loading, refreshing, requestProgress, error],
   );
 }

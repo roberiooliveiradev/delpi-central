@@ -30,7 +30,7 @@ export function RolPage({ pathname }: RolPageProps) {
     filterState,
   } = useFinancialFilters();
 
-  const { data, loading, refreshing, error, reload } = useFinancialResource(
+  const { data, loading, refreshing, requestProgress, error, reload } = useFinancialResource(
     (signal) => getRol(apiParams, signal),
     [apiParams.branch, apiParams.end_date, apiParams.start_date]
   );
@@ -102,6 +102,7 @@ export function RolPage({ pathname }: RolPageProps) {
         error={error}
         loading={loading}
         hasData={data !== null}
+        requestProgress={requestProgress}
         onRetry={reload}
       />
       <section className="ds-kpi-grid" aria-busy={isBusy}>

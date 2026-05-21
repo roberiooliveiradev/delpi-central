@@ -18,11 +18,13 @@ import {
 } from "recharts";
 
 import { ChartCard } from "../components/ChartCard";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useHrDashboard } from "../hooks/useHrDashboard";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useHrFilters } from "../hooks/useHrFilters";
 import type { HrBranchMetrics } from "../types/hr";
 import { formatPeriodLabel } from "../utils/dates";
@@ -65,7 +67,7 @@ export function DashboardHrPage() {
     apiParams,
   } = useHrFilters();
 
-  const { snapshot, branchOptions, loading, refreshing, error, reload } =
+  const { snapshot, branchOptions, loading, refreshing, requestProgress, error, reload } =
     useHrDashboard(apiParams);
 
   const periodLabel = useMemo(
@@ -74,6 +76,9 @@ export function DashboardHrPage() {
   );
 
   const isBusy = loading || refreshing;
+  const hasData = snapshot !== null;
+  const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
+  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
   const selectedBranch = pickBranchMetrics(snapshot, branch);
 
   const absenteeism = selectedBranch
@@ -142,6 +147,24 @@ export function DashboardHrPage() {
             Tentar novamente
           </button>
         </section>
+      ) : null}
+
+      {refreshing && hasData ? (
+        <LoadingActivityCard
+          title="Atualizando indicadores de RH"
+          description="Recalculando absenteísmo, turnover e treinamento com os filtros selecionados."
+          variant="compact"
+          sticky
+          progressPercent={refreshLoadingProgress}
+        />
+      ) : null}
+
+      {loading && !hasData ? (
+        <LoadingActivityCard
+          title="Carregando indicadores de RH"
+          description="Buscando absenteísmo, turnover, satisfação, PDI e horas de treinamento."
+          progressPercent={initialLoadingProgress}
+        />
       ) : null}
 
       <section className="dh-kpi-grid" aria-busy={isBusy}>
