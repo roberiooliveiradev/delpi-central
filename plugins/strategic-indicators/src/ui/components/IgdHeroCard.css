@@ -117,3 +117,51 @@
 .si-igd-hero--tree .si-igd-hero__highlights {
   display: none;
 }
+
+.si-igd-hero--tree .si-igd-hero__scope {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--primary, #089bdb) 16%, var(--si-card-border));
+  background: color-mix(in srgb, var(--primary, #089bdb) 6%, var(--surface, #ffffff));
+}
+
+.si-igd-hero__scope-headline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.si-igd-hero__scope-eyebrow {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary, #089bdb);
+}
+
+.si-igd-hero__scope-value {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.05;
+  font-weight: 900;
+  color: var(--si-title);
+}
+
+.si-igd-hero__scope-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--si-text-muted);
+}
+
+.si-igd-hero__scope-description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--si-text-muted);
+}

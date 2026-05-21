@@ -1,4 +1,4 @@
-/* Organograma: IGD → Visão → Departamentos → Indicadores */
+/* Organograma: IGD → Departamentos → Indicadores */
 
 .si-org-chart--single-scope .si-org-chart__department-column {
   min-width: 280px;
@@ -9,22 +9,9 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
-.si-org-chart--single-scope .si-org-chart__level:not(.si-org-chart__level--departments) {
+.si-org-chart--single-scope .si-org-chart__level--igd {
   align-items: center;
   width: 100%;
-}
-
-.si-org-chart--single-scope .si-org-chart__fork-row {
-  grid-template-columns: minmax(280px, 360px);
-  justify-content: center;
-  justify-items: center;
-  width: 100%;
-  max-width: 100%;
-}
-
-.si-org-chart--single-scope .si-org-chart__fork-item {
-  width: 100%;
-  max-width: 360px;
 }
 
 .si-org-chart {
@@ -89,7 +76,8 @@
 }
 
 .si-org-chart__level--igd {
-  max-width: 380px;
+  max-width: 420px;
+  width: 100%;
 }
 
 .si-org-chart__level--departments {
@@ -196,25 +184,77 @@
   border-radius: 2px;
 }
 
+.si-org-chart__departments-fork {
+  position: relative;
+  width: 100%;
+}
+
+.si-org-chart__departments-fork > .si-org-chart__departments-row {
+  position: relative;
+  padding-top: 28px;
+}
+
+.si-org-chart__departments-fork > .si-org-chart__departments-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 14px;
+  background: var(--si-org-line);
+  border-radius: 2px;
+}
+
+.si-org-chart__departments-fork > .si-org-chart__departments-row::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: calc(50% / var(--si-dept-count, 1));
+  right: calc(50% / var(--si-dept-count, 1));
+  height: 3px;
+  background: var(--si-org-line);
+  border-radius: 2px;
+}
+
+.si-org-chart__departments-fork[style*="--si-dept-count: 1"]
+  > .si-org-chart__departments-row::after {
+  display: none;
+}
+
 .si-org-chart__departments-row {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: flex-start;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 20px;
   width: 100%;
   padding: 4px 0 12px;
 }
 
 .si-org-chart__department-column {
+  position: relative;
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
-  min-width: calc(var(--si-org-chart-cols, 3) * 272px + 24px);
-  max-width: calc(var(--si-org-chart-cols, 3) * 300px + 32px);
+  min-width: 280px;
+  max-width: 340px;
+  padding-top: 14px;
+}
+
+.si-org-chart__department-column::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 14px;
+  background: var(--si-org-line);
+  border-radius: 2px;
 }
 
 .si-org-chart__department-anchor {
@@ -258,14 +298,6 @@
     filter 0.22s ease;
 }
 
-.si-tree-scope-card,
-.si-tree-card--static {
-  display: block;
-  width: 100%;
-  max-width: none;
-  color: inherit;
-  cursor: default;
-}
 
 .si-org-chart .si-igd-hero,
 .si-org-chart .si-trend-hero,
