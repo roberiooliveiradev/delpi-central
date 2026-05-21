@@ -28,12 +28,14 @@ import {
   downloadDashboardCsv,
   fetchDashboardAlertas,
   fetchDashboardEvolucao,
+  fetchDashboardPorFamilia,
   fetchDashboardProcessos,
   fetchDashboardResumo,
   fetchOptions,
   recalcularDashboard,
   type DashboardAlertItem,
   type DashboardEvolucaoItem,
+  type DashboardFamiliaItem,
   type DashboardProcessoItem,
   type DashboardResumo,
   type OptionsData,
@@ -68,6 +70,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [recalculando, setRecalculando] = useState(false);
   const [alertas, setAlertas] = useState<DashboardAlertItem[]>([]);
+  const [porFamilia, setPorFamilia] = useState<DashboardFamiliaItem[]>([]);
   const [exportando, setExportando] = useState(false);
 
   const apiParams = useMemo(() => {
@@ -85,7 +88,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     setRefreshing(true);
     setError(null);
     try {
-      const [r, ev, proc, opts, al] = await Promise.all([
+      const [r, ev, proc, opts, al, fam] = await Promise.all([
         fetchDashboardResumo(getAccessToken, apiParams),
         fetchDashboardEvolucao(getAccessToken, apiParams),
         fetchDashboardProcessos(getAccessToken, apiParams),
@@ -94,12 +97,14 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           ...apiParams,
           meses_consecutivos: "3",
         }),
+        fetchDashboardPorFamilia(getAccessToken, apiParams),
       ]);
       setResumo(r);
       setEvolucao(ev.items);
       setProcessos(proc.items);
       setOptions(opts);
       setAlertas(al.items);
+      setPorFamilia(fam.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dashboard");
     } finally {
@@ -175,6 +180,38 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           value: item.economia_diaria ?? 0,
         })),
     [processos]
+  );
+
+  const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[]>(
+    () => [
+      { key: "familia", header: "Família", render: (row) => row.familia_processo },
+      {
+        key: "processos",
+        header: "Processos",
+        className: "ds-table__col--numeric",
+        render: (row) => formatInteger(row.processos),
+      },
+      {
+        key: "bruta",
+        header: "Economia bruta",
+        className: "ds-table__col--numeric",
+        render: (row) => formatCurrency(row.economia_bruta),
+      },
+      {
+        key: "liquida",
+        header: "Economia líquida",
+        className: "ds-table__col--numeric",
+        render: (row) => {
+          const negative = row.economia_liquida_mes < 0;
+          return (
+            <span className={negative ? "ds-table__value--negative" : undefined}>
+              {formatCurrency(row.economia_liquida_mes)}
+            </span>
+          );
+        },
+      },
+    ],
+    []
   );
 
   const processColumns = useMemo<DataTableColumn<DashboardProcessoItem>[]>(
@@ -404,6 +441,19 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             </ResponsiveContainer>
           </ChartCard>
         </section>
+      ) : null}
+
+      {porFamilia.length > 0 ? (
+        <DataTableSection
+          title="Resumo por família"
+          hint="Processos com família preenchida no cadastro"
+          columns={familiaColumns}
+          rows={porFamilia}
+          rowKey={(row) => row.familia_processo}
+          loading={loading}
+          refreshing={refreshing}
+          emptyMessage=""
+        />
       ) : null}
 
       <DataTableSection

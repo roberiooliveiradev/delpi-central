@@ -431,6 +431,13 @@ export function fetchDashboardProcessos(
   );
 }
 
+export type DashboardFamiliaItem = {
+  familia_processo: string;
+  processos: number;
+  economia_bruta: number;
+  economia_liquida_mes: number;
+};
+
 export type DashboardAlertItem = {
   processo_id: string;
   codigo_processo?: string;
@@ -468,6 +475,17 @@ export type RateioDiagnostic = {
   rateio_excede_ganho: boolean;
   message: string;
 };
+
+export function fetchDashboardPorFamilia(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  const qs = params ? `?${new URLSearchParams(params)}` : "";
+  return request<{ total: number; items: DashboardFamiliaItem[] }>(
+    `/dashboard/por-familia${qs}`,
+    getAccessToken
+  );
+}
 
 export function fetchDashboardAlertas(
   getAccessToken?: () => string | undefined,

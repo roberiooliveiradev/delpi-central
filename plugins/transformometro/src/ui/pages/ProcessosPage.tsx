@@ -36,6 +36,7 @@ export function ProcessosPage({
   const [setorId, setSetorId] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQ, setSearchQ] = useState("");
+  const [familiaFilter, setFamiliaFilter] = useState("");
   const [form, setForm] = useState({
     nome_processo: "",
     filial_id: "01",
@@ -51,8 +52,9 @@ export function ProcessosPage({
     if (setorId) params.setor_id = setorId;
     if (statusFilter) params.status = statusFilter;
     if (searchQ.trim()) params.q = searchQ.trim();
+    if (familiaFilter.trim()) params.familia_processo = familiaFilter.trim();
     return params;
-  }, [filialId, searchQ, setorId, statusFilter]);
+  }, [familiaFilter, filialId, searchQ, setorId, statusFilter]);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -189,6 +191,16 @@ export function ProcessosPage({
               </option>
             ))}
           </select>
+        </div>
+        <div className="ds-filter-box">
+          <label htmlFor="tm-proc-familia">Família</label>
+          <input
+            id="tm-proc-familia"
+            type="search"
+            placeholder="ex.: ia"
+            value={familiaFilter}
+            onChange={(e) => setFamiliaFilter(e.target.value)}
+          />
         </div>
       </section>
 

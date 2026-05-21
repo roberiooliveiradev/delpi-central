@@ -69,7 +69,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Entrega | Detalhe | Status |
 |---------|---------|--------|
 | Migration V004 | `familia_processo`, `agrupador_ferramenta` em `processos` | ✅ |
-| Rateio / família | Campos no CRUD + filtro listagem + `GET /dashboard/por-familia` | ✅ API |
+| Rateio / família | CRUD, filtro listagem, `GET /dashboard/por-familia` + tabela no dashboard | ✅ |
 | Alertas economia negativa | `GET /dashboard/alertas` (≥ N meses consecutivos) | ✅ |
 | Export dashboard | `GET /dashboard/export.csv` | ✅ |
 | Comparativo revisões | `GET /processos/{id}/comparativo` + tabela no detalhe | ✅ |

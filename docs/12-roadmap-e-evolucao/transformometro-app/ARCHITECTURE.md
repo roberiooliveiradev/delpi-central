@@ -129,7 +129,9 @@ Alinhada à [ESPECIFICACAO.md §15](./ESPECIFICACAO.md), com convenção Delpi:
 | Medições | CRUD + `GET /revisoes/{id}/medicoes` |
 | Investimentos | CRUD + cálculo `valor_total` |
 | Recursos | CRUD recursos + vínculos |
-| Dashboard | `GET /dashboard`, `/dashboard/resumo`, `/dashboard/evolucao`, `/dashboard/processos/{id}` |
+| Dashboard | `GET /dashboard/resumo`, `/evolucao`, `/processos`, `/alertas`, `/por-familia`, `/export.csv`, `POST /recalcular` |
+| Processos (Fase 4) | `GET /processos/{id}/comparativo`; filtros `familia_processo` na listagem |
+| Revisões (Fase 4) | `GET /revisoes/{id}/diagnostico-rateio` |
 | Catálogos | `GET /options/*` |
 | Sistema | `GET /health` |
 | Integrações | `GET /integrations/engineering/transforma-mais/processes`, `.../summary` |
