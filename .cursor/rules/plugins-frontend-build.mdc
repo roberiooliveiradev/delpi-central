@@ -1,0 +1,27 @@
+---
+description: Build obrigatório do MFE antes de commit em plugins
+globs: plugins/**/*
+alwaysApply: false
+---
+
+# Plugins — build antes de commit
+
+Ao alterar código em `plugins/` (microfrontends):
+
+1. Rodar build do plugin afetado antes de considerar a tarefa concluída.
+2. Corrigir erros de `tsc` e `vite build` antes de commitar.
+3. Incluir no mesmo fluxo de entrega (commit quando o usuário pedir commit ou ao finalizar a alteração de front).
+
+## Strategic Indicators
+
+```bash
+cd plugins/strategic-indicators && npm run build
+```
+
+(`tsc -b && vite build`)
+
+## Outros plugins
+
+Usar o script `build` do `package.json` do plugin correspondente.
+
+Não commitar alterações de front com build quebrado.
