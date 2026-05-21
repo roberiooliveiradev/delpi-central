@@ -21,7 +21,8 @@ export default function App({ getAccessToken, pathname }: AppProps) {
     return (
       <DashboardPage
         getAccessToken={getAccessToken}
-        onGoProcessos={() => navigate("/apps/transformometro/processos")}
+        pathname={pathname}
+        onNavigate={navigate}
       />
     );
   }
