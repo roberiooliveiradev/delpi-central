@@ -82,8 +82,6 @@ export function IndicatorDetailCard({
   indicator,
   competence,
 }: IndicatorDetailCardProps) {
-  const valueFormat = getValueFormat(indicator);
-
   return (
     <article className="si-indicator-card">
       <div className="si-indicator-card__header">

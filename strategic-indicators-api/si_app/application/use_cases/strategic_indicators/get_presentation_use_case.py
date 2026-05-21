@@ -445,6 +445,10 @@ class GetStrategicIndicatorsPresentationUseCase:
             "classification": current.classification,
             "score": current.score,
             "gap": current.gap,
+            "gaps": self._calculator.build_gaps_payload(
+                unit_gaps=current.unit_gaps,
+                gap=current.gap,
+            ),
             "trend": trend,
             "value_unit": getattr(current, "value_unit", None),
             "value_prefix": getattr(current, "value_prefix", None),
@@ -561,8 +565,16 @@ class GetStrategicIndicatorsPresentationUseCase:
                         "higher_is_better",
                     ),
                     "value": item.value,
+                    "realized": self._calculator.build_realized_payload(
+                        unit_values=item.unit_values,
+                        value=item.value,
+                    ),
                     "score": item.score,
                     "gap": item.gap,
+                    "gaps": self._calculator.build_gaps_payload(
+                        unit_gaps=item.unit_gaps,
+                        gap=item.gap,
+                    ),
                     "has_value": self._calculator.indicator_has_value(item.value),
                     "trend": item.trend,
                     "classification": item.classification,
