@@ -19,6 +19,7 @@ import {
 } from "recharts";
 
 import { ChartCard } from "../components/ChartCard";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { ChartToolbar } from "../components/ChartToolbar";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
@@ -26,6 +27,7 @@ import { RolEvolutionChart } from "../components/RolEvolutionChart";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useCommercialDashboard } from "../hooks/useCommercialDashboard";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useCommercialFilters } from "../hooks/useCommercialFilters";
 import { useCommercialRolSeries } from "../hooks/useCommercialRolSeries";
 import type { ChartGranularity } from "../types/chart";
@@ -96,6 +98,8 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
   const isBusy = loading || refreshing;
   const hasData = headOfficeRol !== null || branchRol !== null;
   const isChartBusy = rolSeries.loading;
+  const initialLoadingProgress = useSimulatedLoadingProgress(loading && !hasData);
+  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
 
   const conversionChartData = useMemo(
     () =>
@@ -163,10 +167,22 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
         </div>
       ) : null}
 
+      {refreshing && hasData ? (
+        <LoadingActivityCard
+          title="Atualizando indicadores comerciais"
+          description="Recalculando ROL, conversão e OTD com os filtros selecionados."
+          variant="compact"
+          sticky
+          progressPercent={refreshLoadingProgress}
+        />
+      ) : null}
+
       {loading && !hasData ? (
-        <div className="dc-state dc-state--loading" aria-live="polite">
-          Carregando indicadores…
-        </div>
+        <LoadingActivityCard
+          title="Carregando indicadores comerciais"
+          description="Buscando ROL, taxa de conversão, OTD e novos negócios no TOTVS."
+          progressPercent={initialLoadingProgress}
+        />
       ) : null}
 
       <section className="dc-kpi-grid" aria-busy={isBusy}>

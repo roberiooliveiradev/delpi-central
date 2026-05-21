@@ -19,11 +19,13 @@ import {
 } from "lucide-react";
 
 import { ChartCard } from "../components/ChartCard";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useProductionDashboard } from "../hooks/useProductionDashboard";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useProductionFilters } from "../hooks/useProductionFilters";
 import { formatPeriodLabel } from "../utils/dates";
 import { formatPercent } from "../utils/format";
@@ -70,6 +72,8 @@ export function DashboardProductionPage() {
     depreciation !== null ||
     oee !== null ||
     otd !== null;
+  const initialLoadingProgress = useSimulatedLoadingProgress(loading && !hasData);
+  const refreshLoadingProgress = useSimulatedLoadingProgress(refreshing && hasData);
 
   const comparisonChartData = useMemo(
     () => [
@@ -136,10 +140,22 @@ export function DashboardProductionPage() {
         </div>
       ) : null}
 
+      {refreshing && hasData ? (
+        <LoadingActivityCard
+          title="Atualizando indicadores de produção"
+          description="Recalculando MO, custos, OEE e OTD com os filtros selecionados."
+          variant="compact"
+          sticky
+          progressPercent={refreshLoadingProgress}
+        />
+      ) : null}
+
       {loading && !hasData ? (
-        <div className="dp-state dp-state--loading" aria-live="polite">
-          Carregando indicadores…
-        </div>
+        <LoadingActivityCard
+          title="Carregando indicadores de produção"
+          description="Buscando MO direta, custo de produção, depreciação, OEE e OTD."
+          progressPercent={initialLoadingProgress}
+        />
       ) : null}
 
       <section className="dp-kpi-grid" aria-busy={isBusy}>
