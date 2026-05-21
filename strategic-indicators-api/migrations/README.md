@@ -26,6 +26,8 @@ O diretório `api-delpi/migrations/plugins/strategic-indicators/` é legado — 
 | V013 | indicator_goals unique | Uma meta ativa por indicador/ano (índice parcial) |
 | V014 | catalog_inputs_hash | Fingerprint do catálogo em materializados |
 | V015 | commercial restructure | Catálogo Comercial: pesos/metas, OTD pedidos, % ROL novos negócios |
+| V016 | goal_scope_branch | Metas por consolidado / filial 01 / 02 (todos indicadores `consolidated`) |
+| V017 | scope all consolidated | Reaplica `supports_branch_goals` para todo `scope_type = consolidated` |
 
 ## Comandos
 

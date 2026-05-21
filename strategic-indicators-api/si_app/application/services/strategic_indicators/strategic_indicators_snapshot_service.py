@@ -144,6 +144,7 @@ class StrategicIndicatorsSnapshotService:
             start_date=start_date,
             end_date=end_date,
             department_id=department_id,
+            branch=branch,
         )
 
         goals_by_department: dict[str, str] = {}
@@ -628,6 +629,7 @@ class StrategicIndicatorsSnapshotService:
                     start_date=period.start_date,
                     end_date=period.end_date,
                     department_id=department_id,
+                    branch=branch,
                 )
             )
             catalog = StrategicIndicatorsCatalogSnapshot(

@@ -43,6 +43,7 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         start_date: str | None = None,
         end_date: str | None = None,
         department_id: str | None = None,
+        scope_branch: str | None = None,
     ) -> dict[str, dict]:
         """Metas ativas (versão mais recente) por ``indicator_id`` para o período."""
         raise NotImplementedError
@@ -56,6 +57,7 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         competence: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        scope_branch: str | None = None,
     ) -> dict[str, dict]:
         """Meta ativa mais recente por indicador (qualquer ano), para fallback em séries históricas."""
         raise NotImplementedError
@@ -152,3 +154,7 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
     @abstractmethod
     def list_goal_years_overview(self) -> list[dict]:
         raise NotImplementedError
+
+    def get_indicator_goal_policy(self, indicator_id: str) -> dict | None:
+        """Retorna scope_type e supports_branch_goals do indicador."""
+        return None

@@ -17,6 +17,10 @@
 
 Soma dos pesos no catálogo: **95%** (ajuste opcional no admin para 100%).
 
+## Metas por escopo
+
+Comercial usa a regra global de metas por filial — ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
+
 ## % ROL de Novos Negócios (regra)
 
 - **ROL total:** faturamento líquido no período (mesma base do comercial: `SD2010` + TES `F4_DUPLIC = 'S'`, menos devolução, desconto e impostos).

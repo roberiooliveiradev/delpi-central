@@ -3,10 +3,12 @@ import type {
   CreateStrategicIndicatorGoalRequest,
   GoalMode,
   GoalPeriodicity,
+  GoalScopeBranch,
   MonthlyTargetItem,
   StrategicIndicatorGoalItem,
   UpdateStrategicIndicatorGoalRequest,
 } from "../../data/types/indicatorGoals";
+import { getGoalScopeBranchLabel } from "../presentation/labels";
 import "./IndicatorGoalForm.css";
 
 type IndicatorOption = {
@@ -95,6 +97,7 @@ export function IndicatorGoalForm({
   const [goalPeriodicity, setGoalPeriodicity] =
     useState<GoalPeriodicity>("monthly");
   const [goalMode, setGoalMode] = useState<GoalMode>("standard");
+  const [goalScopeBranch, setGoalScopeBranch] = useState<GoalScopeBranch | string>("");
   const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetItem[]>(
     buildEmptyMonthlyTargets(),
   );
@@ -117,6 +120,7 @@ export function IndicatorGoalForm({
       setGoalValue(0);
       setGoalPeriodicity("monthly");
       setGoalMode("standard");
+      setGoalScopeBranch("");
       setMonthlyTargets(buildEmptyMonthlyTargets());
       setValidFrom("");
       setValidTo("");
@@ -131,6 +135,7 @@ export function IndicatorGoalForm({
     setGoalValue(initialValue.goal_value);
     setGoalPeriodicity(initialValue.goal_periodicity);
     setGoalMode(initialValue.goal_mode);
+    setGoalScopeBranch(initialValue.goal_scope_branch ?? "");
     setMonthlyTargets(normalizeMonthlyTargets(initialValue.monthly_targets));
     setValidFrom(initialValue.valid_from ?? "");
     setValidTo(initialValue.valid_to ?? "");
@@ -214,6 +219,7 @@ export function IndicatorGoalForm({
       await onCreate({
         indicator_id: indicatorId.trim(),
         goal_year: Number(goalYear),
+        goal_scope_branch: goalScopeBranch,
         goal_label: goalLabel.trim(),
         goal_value: resolvedGoalValue,
         goal_periodicity: goalPeriodicity,
@@ -294,6 +300,23 @@ export function IndicatorGoalForm({
             <option value="monthly_curve">Curva mensal</option>
           </select>
         </Field>
+
+        {!isEditing ? (
+          <Field label="Escopo da meta">
+            <select
+              value={goalScopeBranch}
+              onChange={(e) => setGoalScopeBranch(e.target.value)}
+            >
+              <option value="">{getGoalScopeBranchLabel("")}</option>
+              <option value="01">{getGoalScopeBranchLabel("01")}</option>
+              <option value="02">{getGoalScopeBranchLabel("02")}</option>
+            </select>
+          </Field>
+        ) : (
+          <Field label="Escopo da meta">
+            <input value={getGoalScopeBranchLabel(goalScopeBranch)} readOnly />
+          </Field>
+        )}
 
         <Field label="Periodicidade">
           <select

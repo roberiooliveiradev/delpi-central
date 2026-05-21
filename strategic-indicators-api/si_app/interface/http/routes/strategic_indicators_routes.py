@@ -134,6 +134,7 @@ def _serialize_goal_item(item: dict) -> dict:
         "goal_value": float(item.get("goal_value") or 0),
         "goal_periodicity": item.get("goal_periodicity"),
         "goal_mode": item.get("goal_mode", "standard"),
+        "goal_scope_branch": item.get("goal_scope_branch") or "",
         "monthly_targets": item.get("monthly_targets") or [],
         "version": item.get("version"),
         "is_active": item.get("is_active"),
@@ -673,6 +674,7 @@ def create_indicator_goal(
                 goal_value=body.goal_value,
                 goal_periodicity=body.goal_periodicity,
                 goal_mode=body.goal_mode,
+                goal_scope_branch=body.goal_scope_branch,
                 monthly_targets=[
                     item.model_dump() for item in (body.monthly_targets or [])
                 ],

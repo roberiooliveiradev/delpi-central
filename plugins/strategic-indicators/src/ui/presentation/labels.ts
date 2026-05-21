@@ -48,6 +48,19 @@ export function getScopeTypeLabel(value: string | null | undefined): string {
   }
 }
 
+export function getGoalScopeBranchLabel(value: string | null | undefined): string {
+  switch ((value ?? "").trim()) {
+    case "":
+      return "Consolidado";
+    case "01":
+      return "Filial 01 (Matriz)";
+    case "02":
+      return "Filial 02";
+    default:
+      return value ?? "—";
+  }
+}
+
 export function getPerformanceDirectionLabel(
   value: string | null | undefined,
 ): string {

@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from si_app.application.services.strategic_indicators.goal_scope_validation import (
+    validate_goal_scope_branch,
+)
+from si_app.application.use_cases.strategic_indicators.create_indicator_goal_use_case import (
+    StrategicIndicatorsIndicatorGoalValidationError,
+)
 from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port import (
     StrategicIndicatorsIndicatorGoalsRepositoryPort,
 )
@@ -80,6 +86,18 @@ class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
                         "monthly_targets só pode ser informado quando goal_mode=monthly_curve."
                     )
 
+            policy = self._repository.get_indicator_goal_policy(indicator_id)
+            if not policy:
+                raise ValueError("indicator_id não encontrado no catálogo.")
+
+            try:
+                goal_scope_branch = validate_goal_scope_branch(
+                    goal_scope_branch=item.get("goal_scope_branch"),
+                    scope_type=str(policy.get("scope_type") or "consolidated"),
+                )
+            except StrategicIndicatorsIndicatorGoalValidationError as exc:
+                raise ValueError(str(exc)) from exc
+
             normalized_items.append(
                 {
                     "indicator_id": indicator_id,
@@ -87,6 +105,7 @@ class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
                     "goal_value": goal_value,
                     "goal_periodicity": goal_periodicity,
                     "goal_mode": goal_mode,
+                    "goal_scope_branch": goal_scope_branch,
                     "monthly_targets": monthly_targets if goal_mode == "monthly_curve" else [],
                     "valid_from": item.get("valid_from"),
                     "valid_to": item.get("valid_to"),

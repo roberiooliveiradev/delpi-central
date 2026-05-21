@@ -11,6 +11,8 @@ export type MonthlyTargetItem = {
   target_value: number;
 };
 
+export type GoalScopeBranch = "" | "01" | "02";
+
 export type StrategicIndicatorGoalItem = {
   id: string;
   indicator_id: string;
@@ -20,6 +22,7 @@ export type StrategicIndicatorGoalItem = {
   goal_value: number;
   goal_periodicity: GoalPeriodicity;
   goal_mode: GoalMode;
+  goal_scope_branch: GoalScopeBranch | string;
   monthly_targets: MonthlyTargetItem[];
   version: number;
   is_active: boolean;
@@ -49,6 +52,7 @@ export type CreateStrategicIndicatorGoalRequest = {
   goal_value: number;
   goal_periodicity: GoalPeriodicity;
   goal_mode: GoalMode;
+  goal_scope_branch?: GoalScopeBranch | string;
   monthly_targets: MonthlyTargetItem[];
   valid_from?: string | null;
   valid_to?: string | null;
@@ -72,6 +76,7 @@ export type BulkCreateStrategicIndicatorGoalItemRequest = {
   goal_value: number;
   goal_periodicity: GoalPeriodicity;
   goal_mode: GoalMode;
+  goal_scope_branch?: GoalScopeBranch | string;
   monthly_targets: MonthlyTargetItem[];
   valid_from?: string | null;
   valid_to?: string | null;

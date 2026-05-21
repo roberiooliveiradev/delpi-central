@@ -154,6 +154,7 @@ class CreateIndicatorGoalBodySchema(BaseModel):
     goal_value: float = 0
     goal_periodicity: str
     goal_mode: str = "standard"
+    goal_scope_branch: str = ""
     monthly_targets: List[MonthlyTargetItemSchema] = Field(default_factory=list)
     valid_from: Optional[str] = None
     valid_to: Optional[str] = None
@@ -212,6 +213,9 @@ class BulkCreateIndicatorGoalItemSchema(BaseModel):
     goal_label: str
     goal_value: float
     goal_periodicity: str
+    goal_mode: str = "standard"
+    goal_scope_branch: str = ""
+    monthly_targets: List[MonthlyTargetItemSchema] = Field(default_factory=list)
     valid_from: Optional[str] = None
     valid_to: Optional[str] = None
     notes: Optional[str] = None

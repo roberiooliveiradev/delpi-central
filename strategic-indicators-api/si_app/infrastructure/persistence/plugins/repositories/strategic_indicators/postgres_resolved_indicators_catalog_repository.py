@@ -32,6 +32,7 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
         start_date: str | None = None,
         end_date: str | None = None,
         department_id: str | None = None,
+        branch: str | None = None,
     ) -> list[StrategicIndicatorCatalogItem]:
         structural_items = self._catalog_repository.list_structural_indicators_catalog(
             department_id=department_id,
@@ -42,6 +43,7 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             start_date=start_date,
             end_date=end_date,
             department_id=department_id,
+            scope_branch=branch,
         )
 
         missing_indicator_ids = [
@@ -56,6 +58,7 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                 competence=competence,
                 start_date=start_date,
                 end_date=end_date,
+                scope_branch=branch,
             )
             for indicator_id, goal in fallback_goals.items():
                 if indicator_id not in goals_by_indicator:

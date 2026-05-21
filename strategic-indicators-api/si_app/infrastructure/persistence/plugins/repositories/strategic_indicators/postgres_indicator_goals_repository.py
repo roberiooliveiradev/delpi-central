@@ -11,12 +11,56 @@ from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port im
 from si_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
 )
+from si_app.shared.goal_scope import normalize_goal_scope_branch
 
 
 class PostgresStrategicIndicatorsIndicatorGoalsRepository(
     PluginBaseRepository,
     StrategicIndicatorsIndicatorGoalsRepositoryPort,
 ):
+    @staticmethod
+    def _resolved_goal_scope_filter(
+        *,
+        scope_branch: str | None,
+        params: list,
+    ) -> str:
+        normalized = normalize_goal_scope_branch(scope_branch)
+        if normalized:
+            params.append(normalized)
+            return " AND ig.goal_scope_branch IN (%s, '')"
+        return " AND ig.goal_scope_branch = ''"
+
+    @staticmethod
+    def _resolved_goal_scope_order(
+        *,
+        scope_branch: str | None,
+        params: list,
+    ) -> str:
+        normalized = normalize_goal_scope_branch(scope_branch)
+        if normalized:
+            params.append(normalized)
+            return """
+                CASE
+                    WHEN ig.goal_scope_branch = %s THEN 0
+                    WHEN ig.goal_scope_branch = '' THEN 1
+                    ELSE 2
+                END,
+            """
+        return ""
+
+    def get_indicator_goal_policy(self, indicator_id: str) -> dict | None:
+        return self.fetch_one(
+            """
+            SELECT
+                indicator_id,
+                scope_type,
+                supports_branch_goals
+            FROM strategic_indicators.department_indicators
+            WHERE indicator_id = %s
+            """,
+            (indicator_id,),
+        )
+
     @staticmethod
     def _append_goal_validity_filter(
         query: str,
@@ -51,6 +95,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 ig.goal_value,
                 ig.goal_periodicity,
                 ig.goal_mode,
+                ig.goal_scope_branch,
                 ig.version,
                 ig.is_active,
                 ig.valid_from,
@@ -90,6 +135,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             ORDER BY
                 d.display_order ASC,
                 di.display_order ASC,
+                ig.goal_scope_branch ASC,
                 ig.goal_year DESC,
                 ig.version DESC
         """
@@ -113,6 +159,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 ig.goal_value,
                 ig.goal_periodicity,
                 ig.goal_mode,
+                ig.goal_scope_branch,
                 ig.version,
                 ig.is_active,
                 ig.valid_from,
@@ -135,7 +182,13 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             query += " AND ig.goal_year = %s"
             params.append(goal_year)
 
-        query += " ORDER BY ig.goal_year DESC, ig.version DESC, ig.created_at DESC"
+        query += """
+            ORDER BY
+                ig.goal_year DESC,
+                ig.goal_scope_branch ASC,
+                ig.version DESC,
+                ig.created_at DESC
+        """
 
         rows = self.fetch_all(query, tuple(params))
         return self._attach_monthly_targets(rows)
@@ -147,6 +200,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         competence: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        scope_branch: str | None = None,
     ) -> dict | None:
         year = self._resolve_goal_year(
             competence=competence,
@@ -154,7 +208,17 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             end_date=end_date,
         )
 
-        query = """
+        params: list = [indicator_id, year]
+        scope_order = self._resolved_goal_scope_order(
+            scope_branch=scope_branch,
+            params=params,
+        )
+        scope_filter = self._resolved_goal_scope_filter(
+            scope_branch=scope_branch,
+            params=params,
+        )
+
+        query = f"""
             SELECT
                 id,
                 indicator_id,
@@ -163,6 +227,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 goal_value,
                 goal_periodicity,
                 goal_mode,
+                goal_scope_branch,
                 version,
                 is_active,
                 valid_from,
@@ -170,14 +235,18 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 notes,
                 created_at,
                 updated_at
-            FROM strategic_indicators.indicator_goals
+            FROM strategic_indicators.indicator_goals ig
             WHERE indicator_id = %s
               AND goal_year = %s
               AND is_active = TRUE
-            ORDER BY version DESC, updated_at DESC
+              {scope_filter}
+            ORDER BY
+                {scope_order}
+                version DESC,
+                updated_at DESC
             LIMIT 1
         """
-        row = self.fetch_one(query, (indicator_id, year))
+        row = self.fetch_one(query, tuple(params))
         if not row:
             return None
 
@@ -193,6 +262,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         start_date: str | None = None,
         end_date: str | None = None,
         department_id: str | None = None,
+        scope_branch: str | None = None,
     ) -> dict[str, dict]:
         year = self._resolve_goal_year(
             competence=competence,
@@ -200,7 +270,17 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             end_date=end_date,
         )
 
-        query = """
+        params: list = [year]
+        scope_filter = self._resolved_goal_scope_filter(
+            scope_branch=scope_branch,
+            params=params,
+        )
+        scope_order = self._resolved_goal_scope_order(
+            scope_branch=scope_branch,
+            params=params,
+        )
+
+        query = f"""
             SELECT DISTINCT ON (ig.indicator_id)
                 ig.id,
                 ig.indicator_id,
@@ -209,6 +289,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 ig.goal_value,
                 ig.goal_periodicity,
                 ig.goal_mode,
+                ig.goal_scope_branch,
                 ig.version,
                 ig.is_active,
                 ig.valid_from,
@@ -225,8 +306,8 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
               AND ig.is_active = TRUE
               AND di.is_active = TRUE
               AND d.is_active = TRUE
+              {scope_filter}
         """
-        params: list = [year]
 
         if department_id:
             query += " AND di.department_id = %s"
@@ -243,9 +324,10 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             params=params,
         )
 
-        query += """
+        query += f"""
             ORDER BY
                 ig.indicator_id,
+                {scope_order}
                 ig.version DESC,
                 ig.updated_at DESC
         """
@@ -272,6 +354,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         competence: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        scope_branch: str | None = None,
     ) -> dict[str, dict]:
         normalized_ids = [
             str(indicator_id).strip()
@@ -282,6 +365,16 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             return {}
 
         placeholders = ", ".join("%s" for _ in normalized_ids)
+        params: list = list(normalized_ids)
+        scope_filter = self._resolved_goal_scope_filter(
+            scope_branch=scope_branch,
+            params=params,
+        )
+        scope_order = self._resolved_goal_scope_order(
+            scope_branch=scope_branch,
+            params=params,
+        )
+
         query = f"""
             SELECT DISTINCT ON (ig.indicator_id)
                 ig.id,
@@ -291,6 +384,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 ig.goal_value,
                 ig.goal_periodicity,
                 ig.goal_mode,
+                ig.goal_scope_branch,
                 ig.version,
                 ig.is_active,
                 ig.valid_from,
@@ -307,8 +401,8 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
               AND ig.is_active = TRUE
               AND di.is_active = TRUE
               AND d.is_active = TRUE
+              {scope_filter}
         """
-        params: list = list(normalized_ids)
 
         if department_id:
             query += " AND di.department_id = %s"
@@ -325,10 +419,11 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             params=params,
         )
 
-        query += """
+        query += f"""
             ORDER BY
                 ig.indicator_id,
                 ig.goal_year DESC,
+                {scope_order}
                 ig.version DESC,
                 ig.updated_at DESC
         """
@@ -448,6 +543,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         goal_value: float,
         goal_periodicity: str,
         goal_mode: str,
+        goal_scope_branch: str = "",
         monthly_targets: list[dict],
         valid_from: str | None,
         valid_to: str | None,
@@ -455,13 +551,19 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         actor_user_id: str | None,
         actor_email: str | None,
     ) -> dict:
+        goal_scope_branch = normalize_goal_scope_branch(goal_scope_branch)
+
         version_query = """
             SELECT COALESCE(MAX(version), 0) AS max_version
             FROM strategic_indicators.indicator_goals
             WHERE indicator_id = %s
               AND goal_year = %s
+              AND goal_scope_branch = %s
         """
-        row = self.fetch_one(version_query, (indicator_id, goal_year))
+        row = self.fetch_one(
+            version_query,
+            (indicator_id, goal_year, goal_scope_branch),
+        )
         next_version = int((row or {}).get("max_version") or 0) + 1
 
         try:
@@ -474,6 +576,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     goal_value,
                     goal_periodicity,
                     goal_mode,
+                    goal_scope_branch,
                     version,
                     is_active,
                     valid_from,
@@ -484,7 +587,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     updated_by_user_id,
                     updated_by_email
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING *
                 """,
                 (
@@ -494,6 +597,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     goal_value,
                     goal_periodicity,
                     goal_mode,
+                    goal_scope_branch,
                     next_version,
                     valid_from,
                     valid_to,
@@ -599,7 +703,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
     ) -> dict:
         target = self.fetch_one(
             """
-            SELECT id, indicator_id, goal_year
+            SELECT id, indicator_id, goal_year, goal_scope_branch
             FROM strategic_indicators.indicator_goals
             WHERE id = %s
             """,
@@ -619,12 +723,14 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     updated_at = NOW()
                 WHERE indicator_id = %s
                   AND goal_year = %s
+                  AND goal_scope_branch = %s
                 """,
                 (
                     actor_user_id,
                     actor_email,
                     target["indicator_id"],
                     target["goal_year"],
+                    target.get("goal_scope_branch") or "",
                 ),
             )
 
@@ -720,6 +826,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     goal_value=float(item["goal_value"]),
                     goal_periodicity=item["goal_periodicity"],
                     goal_mode=item.get("goal_mode", "standard"),
+                    goal_scope_branch=item.get("goal_scope_branch") or "",
                     monthly_targets=item.get("monthly_targets") or [],
                     valid_from=item.get("valid_from"),
                     valid_to=item.get("valid_to"),
@@ -748,6 +855,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             SELECT
                 id,
                 indicator_id,
+                goal_scope_branch,
                 goal_label,
                 goal_value,
                 goal_periodicity,
@@ -772,16 +880,19 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         created_items: list[dict] = []
 
         for row in source_rows:
+            goal_scope_branch = row.get("goal_scope_branch") or ""
+
             existing = self.fetch_one(
                 """
                 SELECT id
                 FROM strategic_indicators.indicator_goals
                 WHERE indicator_id = %s
                   AND goal_year = %s
+                  AND goal_scope_branch = %s
                   AND is_active = TRUE
                 LIMIT 1
                 """,
-                (row["indicator_id"], target_year),
+                (row["indicator_id"], target_year, goal_scope_branch),
             )
 
             if existing and not overwrite_existing:
@@ -798,12 +909,14 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                         updated_at = NOW()
                     WHERE indicator_id = %s
                       AND goal_year = %s
+                      AND goal_scope_branch = %s
                     """,
                     (
                         actor_user_id,
                         actor_email,
                         row["indicator_id"],
                         target_year,
+                        goal_scope_branch,
                     ),
                 )
 
@@ -813,8 +926,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 FROM strategic_indicators.indicator_goals
                 WHERE indicator_id = %s
                   AND goal_year = %s
+                  AND goal_scope_branch = %s
                 """,
-                (row["indicator_id"], target_year),
+                (row["indicator_id"], target_year, goal_scope_branch),
             )
             next_version = int((version_row or {}).get("max_version") or 0) + 1
 
@@ -827,6 +941,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     goal_value,
                     goal_periodicity,
                     goal_mode,
+                    goal_scope_branch,
                     version,
                     is_active,
                     valid_from,
@@ -839,7 +954,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     updated_by_user_id,
                     updated_by_email
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING *
                 """,
                 (
@@ -849,6 +964,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     row["goal_value"],
                     row["goal_periodicity"],
                     row.get("goal_mode", "standard"),
+                    goal_scope_branch,
                     next_version,
                     row.get("valid_from"),
                     row.get("valid_to"),

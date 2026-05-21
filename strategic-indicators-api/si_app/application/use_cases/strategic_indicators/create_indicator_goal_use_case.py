@@ -3,6 +3,9 @@ from __future__ import annotations
 from si_app.application.dto.strategic_indicators.create_indicator_goal_request import (
     CreateStrategicIndicatorsIndicatorGoalRequest,
 )
+from si_app.application.services.strategic_indicators.goal_scope_validation import (
+    validate_goal_scope_branch,
+)
 from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port import (
     StrategicIndicatorsIndicatorGoalsRepositoryPort,
 )
@@ -30,6 +33,17 @@ class CreateStrategicIndicatorsIndicatorGoalUseCase:
 
         monthly_targets = request.monthly_targets if request.goal_mode.strip() == "monthly_curve" else []
 
+        policy = self._repository.get_indicator_goal_policy(request.indicator_id.strip())
+        if not policy:
+            raise StrategicIndicatorsIndicatorGoalValidationError(
+                "indicator_id não encontrado no catálogo."
+            )
+
+        goal_scope_branch = validate_goal_scope_branch(
+            goal_scope_branch=request.goal_scope_branch,
+            scope_type=str(policy.get("scope_type") or "consolidated"),
+        )
+
         return self._repository.create_indicator_goal(
             indicator_id=request.indicator_id.strip(),
             goal_year=request.goal_year,
@@ -37,6 +51,7 @@ class CreateStrategicIndicatorsIndicatorGoalUseCase:
             goal_value=float(request.goal_value),
             goal_periodicity=request.goal_periodicity.strip(),
             goal_mode=request.goal_mode.strip(),
+            goal_scope_branch=goal_scope_branch,
             monthly_targets=monthly_targets,
             valid_from=request.valid_from,
             valid_to=request.valid_to,

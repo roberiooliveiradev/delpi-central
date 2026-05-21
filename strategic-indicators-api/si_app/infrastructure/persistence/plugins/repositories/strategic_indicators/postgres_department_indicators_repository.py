@@ -76,6 +76,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix,
                 value_suffix,
                 value_decimals,
+                supports_branch_goals,
                 is_active,
                 display_order,
                 created_by_user_id,
@@ -86,6 +87,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
             VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s,
+                (%s = 'consolidated'),
                 TRUE, %s, %s, %s, %s, %s
             )
             RETURNING *
@@ -105,6 +107,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix,
                 value_suffix,
                 value_decimals,
+                scope_type,
                 display_order,
                 actor_user_id,
                 actor_email,
@@ -145,6 +148,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix = %s,
                 value_suffix = %s,
                 value_decimals = %s,
+                supports_branch_goals = (%s = 'consolidated'),
                 is_active = %s,
                 display_order = %s,
                 updated_by_user_id = %s,
@@ -166,6 +170,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix,
                 value_suffix,
                 value_decimals,
+                scope_type,
                 is_active,
                 display_order,
                 actor_user_id,

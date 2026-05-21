@@ -16,5 +16,6 @@ class StrategicIndicatorsResolvedIndicatorsCatalogRepositoryPort(ABC):
         start_date: str | None = None,
         end_date: str | None = None,
         department_id: str | None = None,
+        branch: str | None = None,
     ) -> list[StrategicIndicatorCatalogItem]:
         raise NotImplementedError
