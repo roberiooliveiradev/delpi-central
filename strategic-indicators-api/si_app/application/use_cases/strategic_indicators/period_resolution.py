@@ -110,6 +110,26 @@ def build_trend_periods(
     return periods
 
 
+def competence_reference_date(
+    *,
+    competence: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> date:
+    """Último dia do mês da competência (ou hoje) para filtrar vigência de metas."""
+    if competence:
+        parsed = _parse_competence_date(competence)
+        last_day = monthrange(parsed.year, parsed.month)[1]
+        return date(parsed.year, parsed.month, last_day)
+
+    for value in (end_date, start_date):
+        if value and len(value) >= 10:
+            day_str, month_str, year_str = value.split("-")
+            return date(int(year_str), int(month_str), int(day_str))
+
+    return date.today()
+
+
 def _parse_competence_date(competence: str | None) -> date:
     if competence:
         year_str, month_str = competence.split("-")

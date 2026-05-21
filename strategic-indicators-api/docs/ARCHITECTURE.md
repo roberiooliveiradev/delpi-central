@@ -67,7 +67,7 @@ Recomendação de negócio: duplicar metas para anos anteriores via admin (`dupl
 | HTTP leitura | `Cache-Control`, `ETag` | 300s (`si_read_route_support`) |
 | `period_scores` | Postgres V010 | Persiste snapshot calculado por competência/escopo |
 
-Mutações em **settings**, **metas** ou estrutura admin chamam `invalidate_strategic_indicators_snapshot_cache()`.
+Mutações em **settings**, **metas** ou estrutura admin chamam `invalidate_strategic_indicators_snapshot_cache()` (limpa cache in-process e apaga `period_scores` + `calculation_snapshots` no Postgres).
 
 ## Warm-up
 

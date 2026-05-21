@@ -23,6 +23,8 @@ O diretório `api-delpi/migrations/plugins/strategic-indicators/` é legado — 
 | V010 | period_scores | Scores por competência/escopo (indicadores materializados) |
 | V011 | refresh_state | Estado do job periódico de refresh (5 min) |
 | V012 | calculation_snapshots | Insumos do cálculo (catálogo, metas, medições) por competência/escopo |
+| V013 | indicator_goals unique | Uma meta ativa por indicador/ano (índice parcial) |
+| V014 | catalog_inputs_hash | Fingerprint do catálogo em materializados |
 
 ## Comandos
 

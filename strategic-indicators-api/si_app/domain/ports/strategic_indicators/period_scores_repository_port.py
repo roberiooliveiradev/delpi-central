@@ -37,6 +37,7 @@ class StrategicIndicatorsPeriodScoresRepositoryPort(ABC):
         snapshot: StrategicIndicatorsPeriodSnapshot,
         scope_branch: str,
         scope_department_id: str,
+        catalog_inputs_hash: str | None = None,
     ) -> None:
         raise NotImplementedError
 

@@ -53,6 +53,9 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         *,
         indicator_ids: list[str],
         department_id: str | None = None,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> dict[str, dict]:
         """Meta ativa mais recente por indicador (qualquer ano), para fallback em séries históricas."""
         raise NotImplementedError

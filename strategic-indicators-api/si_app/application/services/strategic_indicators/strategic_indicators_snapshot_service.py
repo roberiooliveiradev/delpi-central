@@ -31,6 +31,9 @@ from si_app.domain.ports.strategic_indicators.resolved_indicators_catalog_reposi
 from si_app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
+from si_app.application.services.strategic_indicators.catalog_inputs_fingerprint import (
+    build_catalog_inputs_fingerprint,
+)
 from si_app.application.services.strategic_indicators.period_scores_serialization import (
     normalize_scope_branch,
     normalize_scope_department_id,
@@ -237,6 +240,7 @@ class StrategicIndicatorsSnapshotService:
             snapshot=snapshot,
             department_id=department_id,
             branch=branch,
+            catalog=catalog,
         )
         logger.info(
             "si_snapshot period=%s department_id=%s branch=%s total_ms=%.0f",
@@ -373,15 +377,33 @@ class StrategicIndicatorsSnapshotService:
             measurement_errors=errors_previous,
             department_id=department_id,
         )
+        self._persist_calculation_snapshot(
+            period=current_period,
+            catalog=catalog_current,
+            measurements=measurements_current,
+            measurement_errors=errors_current,
+            department_id=department_id,
+            branch=branch,
+        )
+        self._persist_calculation_snapshot(
+            period=previous_period_resolved,
+            catalog=catalog_previous,
+            measurements=measurements_previous,
+            measurement_errors=errors_previous,
+            department_id=department_id,
+            branch=branch,
+        )
         self._persist_period_snapshot(
             snapshot=current,
             department_id=department_id,
             branch=branch,
+            catalog=catalog_current,
         )
         self._persist_period_snapshot(
             snapshot=previous,
             department_id=department_id,
             branch=branch,
+            catalog=catalog_previous,
         )
         build_ms = (time.perf_counter() - build_started) * 1000
         total_ms = (time.perf_counter() - started) * 1000
@@ -663,6 +685,7 @@ class StrategicIndicatorsSnapshotService:
                 snapshot=snapshot,
                 department_id=department_id,
                 branch=branch,
+                catalog=catalog,
             )
 
         catalog_ms = (time.perf_counter() - catalog_started) * 1000
@@ -723,6 +746,7 @@ class StrategicIndicatorsSnapshotService:
         if not is_standard_competence_period(period):
             return
 
+        catalog_inputs_hash = build_catalog_inputs_fingerprint(catalog)
         self._calculation_snapshots_repository.upsert_calculation_snapshot(
             period=period,
             catalog=catalog,
@@ -730,6 +754,7 @@ class StrategicIndicatorsSnapshotService:
             measurement_errors=measurement_errors,
             scope_branch=normalize_scope_branch(branch),
             scope_department_id=normalize_scope_department_id(department_id),
+            catalog_inputs_hash=catalog_inputs_hash,
         )
 
     def _persist_period_snapshot(
@@ -738,6 +763,7 @@ class StrategicIndicatorsSnapshotService:
         snapshot: StrategicIndicatorsPeriodSnapshot,
         department_id: str | None,
         branch: str | None,
+        catalog: StrategicIndicatorsCatalogSnapshot | None = None,
     ) -> None:
         if not settings.SI_PERIOD_SCORES_ENABLED:
             return
@@ -746,10 +772,14 @@ class StrategicIndicatorsSnapshotService:
         if not is_standard_competence_period(snapshot.period):
             return
 
+        catalog_inputs_hash = (
+            build_catalog_inputs_fingerprint(catalog) if catalog is not None else None
+        )
         self._period_scores_repository.upsert_period_snapshot(
             snapshot=snapshot,
             scope_branch=normalize_scope_branch(branch),
             scope_department_id=normalize_scope_department_id(department_id),
+            catalog_inputs_hash=catalog_inputs_hash,
         )
 
     def _load_measurements_by_period_parallel(

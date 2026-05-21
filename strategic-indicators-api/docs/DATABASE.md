@@ -19,6 +19,8 @@ Migrations: `strategic-indicators-api/migrations/` (runner próprio).
 | V010 | `period_scores` (indicadores materializados) |
 | V011 | `refresh_state` (estado do job de refresh) |
 | V012 | `calculation_snapshots` (insumos materializados do cálculo) |
+| V013 | Índice único: uma meta ativa por `indicator_id` + `goal_year` |
+| V014 | `catalog_inputs_hash` em `calculation_snapshots` e `period_scores` |
 
 Detalhes dos arquivos: [../migrations/README.md](../migrations/README.md).
 
@@ -64,6 +66,12 @@ Rotas de leitura (`executive-summary`, `departments`, `indicators`, `trends`) co
 Atualizado pelo mesmo job de `period_scores` (padrão: a cada 5 min, `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS=300`). Flag: `SI_CALCULATION_SNAPSHOTS_ENABLED` (default `true`).
 
 Diferença em relação a **`period_scores`**: `period_scores` guarda o **resultado** (IGD, scores, classificação); `calculation_snapshots` guarda o que entrou no cálculo.
+
+**Governança (V013–V014):**
+
+- Metas: `valid_from` / `valid_to` respeitados na resolução por competência (último dia do mês).
+- Mutações admin invalidam cache in-process **e** apagam `period_scores` + `calculation_snapshots` (próximo refresh ou leitura recalcula).
+- `catalog_inputs_hash`: SHA-256 truncado do catálogo+metas no momento do upsert.
 
 ## Comandos
 

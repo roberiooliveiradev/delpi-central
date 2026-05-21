@@ -195,7 +195,10 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 
 | Item | Prioridade | Notas |
 |------|------------|-------|
-| Backfill `period_scores` | Média | `refresh_period_scores.py` com competências antigas ou aumentar `REFRESH_TRENDS_MONTHS` |
+| Backfill `period_scores` / `calculation_snapshots` | Média | `refresh_period_scores.py` (materializa ambos) |
+| `catalog_inputs_hash` (V014) | Feito | Detectar divergência catálogo vs materializado |
+| Meta ativa única por ano (V013) | Feito | Índice parcial + dedupe na migration |
+| Vigência `valid_from`/`valid_to` | Feito | Filtro SQL na resolução de metas |
 | Metas por ano (2025, etc.) | Baixa | Admin `duplicate-year`; hoje há fallback automático |
 | Paginação admin extra | Baixa | Ex.: histórico de metas se volume crescer |
 | Unificar migrations | Housekeeping | Remover duplicata legada em `api-delpi/migrations/plugins/strategic-indicators/` |

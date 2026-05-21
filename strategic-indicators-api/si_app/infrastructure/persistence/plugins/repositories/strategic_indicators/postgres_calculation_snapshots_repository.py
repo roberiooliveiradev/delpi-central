@@ -36,6 +36,7 @@ class PostgresStrategicIndicatorsCalculationSnapshotsRepository(
         measurement_errors: list[dict],
         scope_branch: str,
         scope_department_id: str,
+        catalog_inputs_hash: str | None = None,
     ) -> None:
         payload = serialize_calculation_inputs(
             period=period,
@@ -57,11 +58,13 @@ class PostgresStrategicIndicatorsCalculationSnapshotsRepository(
                 goals_by_department,
                 measurements,
                 measurement_errors,
+                catalog_inputs_hash,
                 computed_at
             )
             VALUES (
                 %s, %s, %s, %s, %s, %s,
                 %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb,
+                %s,
                 NOW()
             )
             ON CONFLICT (competence, scope_branch, scope_department_id)
@@ -74,6 +77,7 @@ class PostgresStrategicIndicatorsCalculationSnapshotsRepository(
                 goals_by_department = EXCLUDED.goals_by_department,
                 measurements = EXCLUDED.measurements,
                 measurement_errors = EXCLUDED.measurement_errors,
+                catalog_inputs_hash = EXCLUDED.catalog_inputs_hash,
                 computed_at = NOW()
         """
 
@@ -91,6 +95,7 @@ class PostgresStrategicIndicatorsCalculationSnapshotsRepository(
                 json.dumps(payload["goals_by_department"], ensure_ascii=False),
                 json.dumps(payload["measurements"], ensure_ascii=False),
                 json.dumps(payload["measurement_errors"], ensure_ascii=False),
+                catalog_inputs_hash,
             ),
         )
 

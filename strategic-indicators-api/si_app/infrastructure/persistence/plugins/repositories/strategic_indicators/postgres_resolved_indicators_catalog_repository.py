@@ -53,6 +53,9 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             fallback_goals = self._indicator_goals_repository.list_latest_active_goals_map(
                 indicator_ids=missing_indicator_ids,
                 department_id=department_id,
+                competence=competence,
+                start_date=start_date,
+                end_date=end_date,
             )
             for indicator_id, goal in fallback_goals.items():
                 if indicator_id not in goals_by_indicator:

@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from datetime import date
+
+from si_app.application.use_cases.strategic_indicators.period_resolution import (
+    competence_reference_date,
+)
 from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port import (
     StrategicIndicatorsIndicatorGoalsRepositoryPort,
 )
@@ -12,6 +17,22 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
     PluginBaseRepository,
     StrategicIndicatorsIndicatorGoalsRepositoryPort,
 ):
+    @staticmethod
+    def _append_goal_validity_filter(
+        query: str,
+        *,
+        reference_date: date,
+        params: list,
+    ) -> str:
+        params.extend([reference_date, reference_date])
+        return (
+            query
+            + """
+              AND (ig.valid_from IS NULL OR ig.valid_from <= %s::date)
+              AND (ig.valid_to IS NULL OR ig.valid_to >= %s::date)
+            """
+        )
+
     def list_indicator_goals(
         self,
         *,
@@ -211,6 +232,17 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             query += " AND di.department_id = %s"
             params.append(department_id)
 
+        reference_date = competence_reference_date(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        query = self._append_goal_validity_filter(
+            query,
+            reference_date=reference_date,
+            params=params,
+        )
+
         query += """
             ORDER BY
                 ig.indicator_id,
@@ -237,6 +269,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         *,
         indicator_ids: list[str],
         department_id: str | None = None,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> dict[str, dict]:
         normalized_ids = [
             str(indicator_id).strip()
@@ -278,6 +313,17 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         if department_id:
             query += " AND di.department_id = %s"
             params.append(department_id)
+
+        reference_date = competence_reference_date(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        query = self._append_goal_validity_filter(
+            query,
+            reference_date=reference_date,
+            params=params,
+        )
 
         query += """
             ORDER BY
