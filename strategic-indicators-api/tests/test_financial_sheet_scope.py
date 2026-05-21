@@ -85,3 +85,61 @@ def test_build_snapshot_returns_none_when_branch_has_no_sheet_rows() -> None:
 
     assert branch_01.ebitda_over_rol_pct == 0.0
     assert branch_01.fixed_cost_over_rol_pct is None
+
+
+def test_build_snapshot_returns_none_pmr_without_receivables_rows() -> None:
+    service = FinancialMetricsSnapshotService(
+        ebitda_repository=MagicMock(),
+        fixed_cost_repository=MagicMock(),
+        receivables_repository=MagicMock(),
+        financial_query_repository=MagicMock(),
+    )
+    service._financial_query_repository.list_rol_by_branch.return_value = {
+        "02": {"rol_with_ipi": 500_000},
+    }
+
+    snapshot = service._build_snapshot(
+        start_date="01-05-2026",
+        end_date="31-05-2026",
+        branch=None,
+        rows_override={
+            "ebitda_rows": [
+                {"filial": "02", "data": "15-05-2026", "ebitida": 10.0},
+            ],
+            "fixed_cost_rows": [],
+            "receivables_rows": [],
+        },
+    )
+
+    branch_02 = next(item for item in snapshot.branches if item.branch == "02")
+
+    assert branch_02.pmr_days is None
+
+
+def test_build_snapshot_keeps_zero_pmr_when_sheet_has_zero() -> None:
+    service = FinancialMetricsSnapshotService(
+        ebitda_repository=MagicMock(),
+        fixed_cost_repository=MagicMock(),
+        receivables_repository=MagicMock(),
+        financial_query_repository=MagicMock(),
+    )
+    service._financial_query_repository.list_rol_by_branch.return_value = {
+        "02": {"rol_with_ipi": 500_000},
+    }
+
+    snapshot = service._build_snapshot(
+        start_date="01-05-2026",
+        end_date="31-05-2026",
+        branch=None,
+        rows_override={
+            "ebitda_rows": [],
+            "fixed_cost_rows": [],
+            "receivables_rows": [
+                {"filial": "02", "data": "15-05-2026", "prazo_medio_recebimento": 0},
+            ],
+        },
+    )
+
+    branch_02 = next(item for item in snapshot.branches if item.branch == "02")
+
+    assert branch_02.pmr_days == 0.0

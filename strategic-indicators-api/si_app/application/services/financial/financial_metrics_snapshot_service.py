@@ -35,7 +35,7 @@ class FinancialBranchSnapshot:
     rol_with_ipi: float
     ebitda_value: float
     fixed_cost_value: float
-    pmr_days: float
+    pmr_days: float | None
     ebitda_over_rol_pct: float | None
     fixed_cost_over_rol_pct: float | None
 
@@ -278,7 +278,7 @@ class FinancialMetricsSnapshotService:
             field_name="prazo_medio_recebimento",
             consolidated=consolidated,
             branch=None if consolidated else scope_key,
-        ) or 0.0
+        )
 
         return FinancialBranchSnapshot(
             branch=scope_key,
@@ -287,7 +287,7 @@ class FinancialMetricsSnapshotService:
             fixed_cost_value=round(fixed_cost_pct, 2)
             if fixed_cost_pct is not None
             else 0.0,
-            pmr_days=round(pmr_days, 2),
+            pmr_days=round(pmr_days, 2) if pmr_days is not None else None,
             ebitda_over_rol_pct=round(ebitda_pct, 2) if ebitda_pct is not None else None,
             fixed_cost_over_rol_pct=round(fixed_cost_pct, 2)
             if fixed_cost_pct is not None

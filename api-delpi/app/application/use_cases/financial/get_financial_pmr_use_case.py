@@ -2,6 +2,9 @@ from app.application.dto.financial.get_rol_request import GetRolRequest
 from app.application.services.financial.financial_metrics_snapshot_service import (
     FinancialMetricsSnapshotService,
 )
+from app.application.services.financial.financial_sheet_scope import (
+    CONSOLIDATED_BRANCH_KEY,
+)
 
 
 class GetFinancialPmrUseCase:
@@ -29,7 +32,7 @@ class GetFinancialPmrUseCase:
                     "branch": request.branch,
                     "start_date": request.start_date,
                     "end_date": request.end_date,
-                    "pmr_days": 0.0,
+                    "pmr_days": None,
                 }
 
             return {
@@ -45,12 +48,16 @@ class GetFinancialPmrUseCase:
                 "pmr_days": item.pmr_days,
             }
             for item in snapshot.branches
+            if item.branch != CONSOLIDATED_BRANCH_KEY
         ]
 
+        valid_pmr = [
+            float(item["pmr_days"])
+            for item in branches
+            if item["pmr_days"] is not None
+        ]
         consolidated_value = (
-            round(sum(item["pmr_days"] for item in branches) / len(branches), 2)
-            if branches
-            else 0.0
+            round(sum(valid_pmr) / len(valid_pmr), 2) if valid_pmr else None
         )
 
         return {

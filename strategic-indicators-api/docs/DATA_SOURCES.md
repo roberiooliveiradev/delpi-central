@@ -25,7 +25,7 @@ O painel SI **não** armazena valores realizados no Postgres (exceto cache `peri
 
 | Departamento | Fontes principais | Coletor (si_app) |
 |--------------|-------------------|------------------|
-| Financeiro | TOTVS (ROL), Google Sheets (EBITDA e custo fixo já em %; filial vazia = consolidado; filial preenchida = por unidade), recebíveis. Sem linhas no período → `ebitda_over_rol_pct` / `fixed_cost_over_rol_pct` = `null` (não `0`). | `financial_indicators_snapshot_provider` |
+| Financeiro | TOTVS (ROL), Google Sheets (EBITDA e custo fixo já em %; filial vazia = consolidado; filial preenchida = por unidade), recebíveis (PMR). Sem linhas no período → `ebitda_over_rol_pct` / `fixed_cost_over_rol_pct` / `pmr_days` = `null` (não `0`). | `financial_indicators_snapshot_provider` |
 | Comercial | TOTVS (conversão, novos clientes, ROL novos) | `commercial_indicators_snapshot_provider` |
 | Produção | TOTVS (OTD, OEE), Sheets (MO, custo, depreciação) | `production_indicators_snapshot_provider` |
 | Qualidade | TOTVS (PPM, NC), Sheets (Kaizen, 5S) | `quality_indicators_snapshot_provider` |
