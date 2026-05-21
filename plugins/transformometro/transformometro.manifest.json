@@ -87,12 +87,21 @@
       "showInMenu": true
     },
     {
+      "path": "/apps/transformometro/recursos",
+      "label": "Recursos",
+      "permission": "transformometro.shared-resources.manage",
+      "icon": "layers",
+      "entry": null,
+      "order": 23,
+      "showInMenu": true
+    },
+    {
       "path": "/apps/transformometro/import",
       "label": "Importar",
       "permission": "transformometro.admin",
       "icon": "upload",
       "entry": null,
-      "order": 23,
+      "order": 24,
       "showInMenu": true
     }
   ],

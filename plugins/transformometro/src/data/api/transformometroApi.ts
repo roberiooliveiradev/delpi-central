@@ -339,6 +339,30 @@ export function createRecurso(
   });
 }
 
+export function updateRecurso(
+  recursoId: string,
+  payload: Partial<RecursoCompartilhado> & {
+    nome_recurso: string;
+    tipo_custo: string;
+    recorrencia: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<RecursoCompartilhado>(`/recursos-compartilhados/${recursoId}`, getAccessToken, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteRecurso(
+  recursoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<null>(`/recursos-compartilhados/${recursoId}`, getAccessToken, {
+    method: "DELETE",
+  });
+}
+
 export function fetchVinculos(
   revisaoId: string,
   getAccessToken?: () => string | undefined

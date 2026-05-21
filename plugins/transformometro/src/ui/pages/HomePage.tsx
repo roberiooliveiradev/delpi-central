@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, List, Upload } from "lucide-react";
+import { BarChart3, Layers, List, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { DataSourceBanner } from "../../components/DataSourceBanner";
@@ -100,6 +100,12 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: HomeProps) {
           onNavigate={onNavigate}
         />
         <ModuleShortcut
+          title="Recursos compartilhados"
+          description="Catálogo global de licenças e ferramentas (ChatGPT, assinaturas) para rateio."
+          path={TRANSFORMOMETRO_ROUTES.recursos}
+          onNavigate={onNavigate}
+        />
+        <ModuleShortcut
           title="Importar planilha"
           description="Migração Transforma+ (Sheets) com validação e diff do calculador."
           path={TRANSFORMOMETRO_ROUTES.import}
@@ -125,6 +131,14 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: HomeProps) {
           >
             <List size={16} />
             Gerenciar processos
+          </button>
+          <button
+            type="button"
+            className="ds-ghost-btn"
+            onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.recursos)}
+          >
+            <Layers size={16} />
+            Catálogo de recursos
           </button>
           <button
             type="button"

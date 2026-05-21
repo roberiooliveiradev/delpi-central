@@ -12,23 +12,13 @@ import {
 import { optionalDateField, toDateInputValue } from "../../../utils/dateInputs";
 import { labelCriterioRateio, labelSimNao } from "../../../utils/catalogLabels";
 import { formatCurrency } from "../../../utils/format";
+import { RecursoCatalogFormFields } from "../../recursos/RecursoCatalogFormFields";
+import {
+  emptyRecursoForm,
+  payloadFromRecursoForm,
+} from "../../recursos/recursoCatalogForm";
 import { CadastroSection } from "./CadastroSection";
 import { RecursoPreviewCard } from "./RecursoPreviewCard";
-
-export const emptyRecursoForm = () => ({
-  nome_recurso: "",
-  categoria_recurso: "",
-  fornecedor: "",
-  tipo_custo: "assinatura",
-  recorrencia: "mensal",
-  valor_total_recorrente: 0,
-  criterio_rateio: "igualitario",
-  status_recurso: "ativo",
-  centro_custo: "",
-  data_inicio_vigencia: "",
-  data_fim_vigencia: "",
-  observacoes: "",
-});
 
 export const emptyVinculoForm = () => ({
   recurso_compartilhado_id: "",
@@ -82,23 +72,7 @@ export function RevisaoRecursosSection({
     e.preventDefault();
     onError(null);
     try {
-      const created = await createRecurso(
-        {
-          nome_recurso: recursoForm.nome_recurso.trim(),
-          tipo_custo: recursoForm.tipo_custo,
-          recorrencia: recursoForm.recorrencia,
-          valor_total_recorrente: recursoForm.valor_total_recorrente,
-          criterio_rateio: recursoForm.criterio_rateio,
-          status_recurso: recursoForm.status_recurso,
-          categoria_recurso: recursoForm.categoria_recurso.trim() || undefined,
-          fornecedor: recursoForm.fornecedor.trim() || undefined,
-          centro_custo: recursoForm.centro_custo.trim() || undefined,
-          observacoes: recursoForm.observacoes.trim() || undefined,
-          data_inicio_vigencia: optionalDateField(recursoForm.data_inicio_vigencia),
-          data_fim_vigencia: optionalDateField(recursoForm.data_fim_vigencia),
-        },
-        getAccessToken
-      );
+      const created = await createRecurso(payloadFromRecursoForm(recursoForm), getAccessToken);
       setShowRecursoForm(false);
       setRecursoForm(emptyRecursoForm());
       setVinculoForm({ ...emptyVinculoForm(), recurso_compartilhado_id: created.recurso_compartilhado_id });
@@ -426,154 +400,12 @@ export function RevisaoRecursosSection({
         {showRecursoForm ? (
           <form className="ds-cadastro-subsection" onSubmit={handleCreateRecurso}>
             <h4 className="ds-cadastro-subsection__title">Novo recurso no catálogo</h4>
-            <div className="ds-filters-row">
-              <label className="ds-filter-box ds-filter-box--wide">
-                Nome *
-                <input
-                  required
-                  value={recursoForm.nome_recurso}
-                  onChange={(e) =>
-                    setRecursoForm({ ...recursoForm, nome_recurso: e.target.value })
-                  }
-                />
-              </label>
-              <label className="ds-filter-box">
-                Categoria
-                <select
-                  value={recursoForm.categoria_recurso}
-                  onChange={(e) =>
-                    setRecursoForm({ ...recursoForm, categoria_recurso: e.target.value })
-                  }
-                >
-                  <option value="">—</option>
-                  {options.categorias.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="ds-filter-box">
-                Fornecedor
-                <input
-                  value={recursoForm.fornecedor}
-                  onChange={(e) =>
-                    setRecursoForm({ ...recursoForm, fornecedor: e.target.value })
-                  }
-                />
-              </label>
-              <label className="ds-filter-box">
-                Tipo de custo *
-                <select
-                  value={recursoForm.tipo_custo}
-                  onChange={(e) => setRecursoForm({ ...recursoForm, tipo_custo: e.target.value })}
-                >
-                  {(options.tipo_custo ?? ["fixo", "variavel", "assinatura", "licenca"]).map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="ds-filter-box">
-                Recorrência *
-                <select
-                  value={recursoForm.recorrencia}
-                  onChange={(e) => setRecursoForm({ ...recursoForm, recorrencia: e.target.value })}
-                >
-                  {options.recorrencias.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="ds-filter-box">
-                Valor mensal (R$) *
-                <input
-                  type="number"
-                  min={0}
-                  step="any"
-                  required
-                  value={recursoForm.valor_total_recorrente}
-                  onChange={(e) =>
-                    setRecursoForm({
-                      ...recursoForm,
-                      valor_total_recorrente: Number(e.target.value),
-                    })
-                  }
-                />
-              </label>
-              <label className="ds-filter-box">
-                Critério de rateio *
-                <select
-                  value={recursoForm.criterio_rateio}
-                  onChange={(e) =>
-                    setRecursoForm({ ...recursoForm, criterio_rateio: e.target.value })
-                  }
-                >
-                  {options.criterio_rateio.map((c) => (
-                    <option key={c} value={c}>
-                      {labelCriterioRateio(c)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="ds-filter-box">
-                Status *
-                <select
-                  value={recursoForm.status_recurso}
-                  onChange={(e) =>
-                    setRecursoForm({ ...recursoForm, status_recurso: e.target.value })
-                  }
-                >
-                  {options.status_recurso.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="ds-filter-box">
-                Centro de custo
-                <input
-                  value={recursoForm.centro_custo}
-                  onChange={(e) =>
-                    setRecursoForm({ ...recursoForm, centro_custo: e.target.value })
-                  }
-                />
-              </label>
-              <label className="ds-filter-box">
-                Início vigência (catálogo)
-                <input
-                  type="date"
-                  value={recursoForm.data_inicio_vigencia}
-                  onChange={(e) =>
-                    setRecursoForm({ ...recursoForm, data_inicio_vigencia: e.target.value })
-                  }
-                />
-              </label>
-              <label className="ds-filter-box">
-                Fim vigência (catálogo)
-                <input
-                  type="date"
-                  value={recursoForm.data_fim_vigencia}
-                  onChange={(e) =>
-                    setRecursoForm({ ...recursoForm, data_fim_vigencia: e.target.value })
-                  }
-                />
-              </label>
-            </div>
-            <label className="ds-filter-box ds-filter-box--wide">
-              Observações do catálogo
-              <input
-                value={recursoForm.observacoes}
-                onChange={(e) => setRecursoForm({ ...recursoForm, observacoes: e.target.value })}
-              />
-            </label>
-            <button type="submit" className="ds-primary-btn">
-              Salvar no catálogo e selecionar
-            </button>
+            <RecursoCatalogFormFields
+              form={recursoForm}
+              options={options}
+              onChange={setRecursoForm}
+              submitLabel="Salvar no catálogo e selecionar"
+            />
           </form>
         ) : null}
       </div>
