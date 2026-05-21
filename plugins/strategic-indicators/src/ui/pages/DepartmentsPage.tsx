@@ -72,7 +72,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
 
       <SectionBlock
         title="Árvore departamental do IGD"
-        description="Linha 1: IGD Delpi. Linha 2: visão selecionada e departamentos alinhados por escopo. Use expandir/recolher todos para os indicadores."
+        description="Organograma em quatro níveis (IGD → Visão → Departamentos → Indicadores), com setas e cores por desempenho."
       >
         {loading && !model ? (
           <LoadingActivityInline
