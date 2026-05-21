@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useSimulatedLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import {
   applyTreeScopeSelection,
   resolveActiveTreeScopeKey,
@@ -54,6 +55,9 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       getAccessToken,
     });
 
+  const loadingProgress = useSimulatedLoadingProgress(loading && !model);
+  const refreshingProgress = useSimulatedLoadingProgress(Boolean(refreshing && model));
+
   const statusBadge =
     loading || refreshing ? (
       <LoadingActivityBadge label="Atualizando" tone="info" />
@@ -70,6 +74,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
             description="Montando IGD, IDDs e indicadores com série dos últimos meses."
             variant="panel"
             tone="info"
+            progressPercent={loadingProgress}
           />
         </div>
       ) : error && !model ? (
@@ -88,6 +93,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
                 description="Recalculando escopos para o novo filtro."
                 variant="compact"
                 tone="info"
+                progressPercent={refreshingProgress}
               />
             </div>
           ) : null}

@@ -133,23 +133,14 @@
   z-index: 4;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: center;
   pointer-events: none;
 }
 
 .si-pan-zoom__floating-controls {
-  flex: 1;
+  width: 100%;
   min-width: 0;
-}
-
-.si-pan-zoom__floating-nav {
-  flex-shrink: 0;
   pointer-events: auto;
-}
-
-.si-pan-zoom__floating-nav .si-pan-zoom__nav {
-  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
 }
 
 .si-pan-zoom__hint {

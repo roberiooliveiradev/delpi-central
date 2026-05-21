@@ -9,6 +9,24 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+.si-org-chart--single-scope .si-org-chart__level:not(.si-org-chart__level--departments) {
+  align-items: center;
+  width: 100%;
+}
+
+.si-org-chart--single-scope .si-org-chart__fork-row {
+  grid-template-columns: minmax(280px, 360px);
+  justify-content: center;
+  justify-items: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+.si-org-chart--single-scope .si-org-chart__fork-item {
+  width: 100%;
+  max-width: 360px;
+}
+
 .si-org-chart {
   --si-org-chart-cols: 3;
   --si-org-line: color-mix(in srgb, var(--si-accent, #2563eb) 55%, var(--si-card-border));
@@ -419,10 +437,15 @@
 .si-tree-dept__indicators {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+  width: 100%;
   padding: 0 12px 14px;
   border-top: 1px dashed var(--si-card-border);
   background: color-mix(in srgb, var(--si-card-bg) 94%, var(--si-text-muted));
+}
+
+.si-tree-dept__indicators:has(.si-tree-dept__indicator-list--row) {
+  align-items: stretch;
 }
 
 .si-tree-dept__indicator-list {
@@ -437,9 +460,14 @@
 }
 
 .si-org-chart__department-column--solo-expanded {
-  flex: 1 1 560px;
-  min-width: min(100%, 520px);
-  max-width: min(96vw, 1280px);
+  flex: 1 1 720px;
+  min-width: min(100%, 560px);
+  max-width: min(96vw, 1400px);
+}
+
+.si-tree-dept__indicators--solo-expanded {
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 .si-org-chart__department-column--open:not(.si-org-chart__department-column--solo-expanded) {
@@ -447,16 +475,21 @@
 }
 
 .si-tree-dept__indicator-list--row {
-  flex-flow: row wrap;
+  display: flex !important;
+  flex-flow: row wrap !important;
+  flex-direction: row !important;
   justify-content: flex-start;
   align-items: stretch;
   gap: 14px;
+  width: 100%;
 }
 
 .si-tree-dept__indicator-list--row > .si-tree-indicator-card__link {
-  flex: 1 1 220px;
-  min-width: 200px;
-  max-width: 300px;
+  display: block;
+  flex: 1 1 240px;
+  width: auto;
+  min-width: 220px;
+  max-width: 320px;
 }
 
 .si-tree-dept__indicator-list--multi-grid {

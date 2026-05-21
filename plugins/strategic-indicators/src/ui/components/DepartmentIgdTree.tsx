@@ -430,6 +430,7 @@ function DepartmentTreeCard({
   competence,
   expanded,
   indicatorListLayout,
+  isSoloExpandedDepartment,
   onToggle,
   activeCardId,
   onActivateCard,
@@ -440,6 +441,7 @@ function DepartmentTreeCard({
   competence: string;
   expanded: boolean;
   indicatorListLayout: IndicatorListLayout;
+  isSoloExpandedDepartment: boolean;
   onToggle: () => void;
   activeCardId: string | null;
   onActivateCard: (cardId: string) => void;
@@ -587,7 +589,14 @@ function DepartmentTreeCard({
       </div>
 
       {expanded && indicatorCount > 0 ? (
-        <section className="si-tree-dept__indicators" data-pan-zoom-lock="true">
+        <section
+          className={`si-tree-dept__indicators${
+            isSoloExpandedDepartment
+              ? " si-tree-dept__indicators--solo-expanded"
+              : ""
+          }`}
+          data-pan-zoom-lock="true"
+        >
           <OrgChartArrow />
           <div
             className={`si-tree-dept__indicator-list si-tree-dept__indicator-list--${indicatorListLayout}`}
@@ -705,7 +714,6 @@ export function DepartmentIgdTree({
   }, [activeColumn, expandedKeys, model.departmentOrder, nodesById]);
 
   const expandedDepartmentCount = expandedDepartmentIds.length;
-  const indicatorListLayout = resolveIndicatorListLayout(expandedDepartmentCount);
   const soloExpandedDepartmentId =
     expandedDepartmentCount === 1 ? expandedDepartmentIds[0] : null;
 
@@ -737,7 +745,7 @@ export function DepartmentIgdTree({
     </>
   ) : null;
 
-  const floatingControls = (
+  const renderFloatingControls = (viewportNav: ReactNode) => (
     <TreeMapFloatingControls
       referenceMonth={filterControls.referenceMonth}
       viewMode={filterControls.viewMode}
@@ -749,6 +757,7 @@ export function DepartmentIgdTree({
       onBranchChange={filterControls.onBranchChange}
       onTreeScopeChange={filterControls.onTreeScopeChange}
       onMonthsToCompareChange={filterControls.onMonthsToCompareChange}
+      viewportNav={viewportNav}
       actions={mapActions}
       status={filterControls.status}
     />
@@ -758,7 +767,7 @@ export function DepartmentIgdTree({
     <PanZoomCanvas
       fitToken={fitToken}
       immersive
-      floatingControls={floatingControls}
+      floatingControls={renderFloatingControls}
       className="si-org-chart-canvas"
     >
       <div
@@ -838,7 +847,14 @@ export function DepartmentIgdTree({
                         filterState={filterState}
                         competence={model.competence}
                         expanded={isDepartmentExpanded}
-                        indicatorListLayout={indicatorListLayout}
+                        indicatorListLayout={
+                          soloExpandedDepartmentId === departmentId
+                            ? "row"
+                            : resolveIndicatorListLayout(expandedDepartmentCount)
+                        }
+                        isSoloExpandedDepartment={
+                          soloExpandedDepartmentId === departmentId
+                        }
                         onToggle={() => toggleDepartment(expandKey)}
                         activeCardId={activeCardId}
                         onActivateCard={setActiveCardId}

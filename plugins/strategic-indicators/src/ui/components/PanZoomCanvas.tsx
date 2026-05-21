@@ -14,7 +14,7 @@ type PanZoomCanvasProps = {
   children: ReactNode;
   fitToken?: string | number;
   toolbar?: ReactNode;
-  floatingControls?: ReactNode;
+  floatingControls?: ReactNode | ((viewportNav: ReactNode) => ReactNode);
   className?: string;
   allowFullscreen?: boolean;
   immersive?: boolean;
@@ -153,10 +153,13 @@ export function PanZoomCanvas({
           <div className="si-pan-zoom__floating-bar" data-pan-zoom-lock="true">
             {floatingControls ? (
               <div className="si-pan-zoom__floating-controls">
-                {floatingControls}
+                {typeof floatingControls === "function"
+                  ? floatingControls(nav)
+                  : floatingControls}
               </div>
-            ) : null}
-            <div className="si-pan-zoom__floating-nav">{nav}</div>
+            ) : (
+              <div className="si-pan-zoom__floating-nav">{nav}</div>
+            )}
           </div>
         ) : null}
 
