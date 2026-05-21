@@ -272,3 +272,69 @@ export function deleteVinculo(
     method: "DELETE",
   });
 }
+
+export type DashboardResumo = {
+  solucoes_implementadas: number;
+  economia_liquida_total: number;
+  economia_bruta_total: number;
+  horas_economizadas_total?: number;
+  investimento_unico_total?: number;
+  custo_recorrente_total?: number;
+  roi_medio: number | null;
+  linhas_materializadas?: number;
+};
+
+export type DashboardEvolucaoItem = {
+  competencia: string;
+  economia_bruta: number;
+  investimento_unico_mes?: number;
+  custo_recorrente_mes: number;
+  economia_liquida_mes: number;
+};
+
+export type DashboardProcessoItem = {
+  processo_id: string;
+  codigo_processo: string;
+  nome_processo: string;
+  economia_diaria: number | null;
+  economia_liquida_mes?: number;
+  economia_bruta?: number;
+};
+
+export function recalcularDashboard(getAccessToken?: () => string | undefined) {
+  return request<{ rows_upserted: number; elapsed_ms: number }>(
+    "/dashboard/recalcular",
+    getAccessToken,
+    { method: "POST" }
+  );
+}
+
+export function fetchDashboardResumo(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  const qs = params ? `?${new URLSearchParams(params)}` : "";
+  return request<DashboardResumo>(`/dashboard/resumo${qs}`, getAccessToken);
+}
+
+export function fetchDashboardEvolucao(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  const qs = params ? `?${new URLSearchParams(params)}` : "";
+  return request<{ total: number; items: DashboardEvolucaoItem[] }>(
+    `/dashboard/evolucao${qs}`,
+    getAccessToken
+  );
+}
+
+export function fetchDashboardProcessos(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  const qs = params ? `?${new URLSearchParams(params)}` : "";
+  return request<{ total: number; items: DashboardProcessoItem[] }>(
+    `/dashboard/processos${qs}`,
+    getAccessToken
+  );
+}

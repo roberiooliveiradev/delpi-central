@@ -34,18 +34,23 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 **Deploy:** rebuild `transformometro-api` e `transformometro` no servidor (`TM_RUN_MIGRATIONS_ON_STARTUP=true` aplica V002).
 
-## Fase 2 — Cálculo e dashboard (2 sprints)
+## Fase 2 — Cálculo e dashboard (2 sprints) 🚧 MVP no repo
 
 **Objetivo:** paridade com Apps Script / `dashboard_calculos`.
 
-| Entrega | Detalhe |
-|---------|---------|
-| `DashboardCalculatorService` | Calculador spec-compliant + testes golden |
-| `POST /dashboard/recalcular` | Job síncrono ou background |
-| UI dashboard | cards, evolução mensal, ranking, filtros |
-| Migração | script import planilha atual + relatório diff |
+| Entrega | Detalhe | Status |
+|---------|---------|--------|
+| Migration V003 `dashboard_calculos` | Materialização por revisão + competência | ✅ |
+| `DashboardCalculatorService` | Spec (max economias, delta recursos, líquida = bruta − recorrente) | ✅ |
+| Testes golden | `tests/test_dashboard_calculator.py` + fixture JSON | ✅ |
+| `POST /dashboard/recalcular` | Rebuild síncrono TRUNCATE + insert | ✅ |
+| `GET /dashboard/resumo`, `/evolucao`, `/processos` | Filtros filial/período; fallback cálculo em memória | ✅ |
+| UI dashboard | Cards, tabela evolução, ranking, botão recalcular | ✅ |
+| Migração planilha | script import + relatório diff | Pendente |
 
 **Critério de pronto:** números batem com planilha para amostra de ≥10 processos (incl. economia negativa).
+
+**Diferença vs Transforma+ legado:** listagem legada subtrai custo compartilhado inteiro na economia diária; spec usa delta de recursos na economia bruta e não repete na líquida.
 
 ## Fase 3 — Produção e desligamento planilha (1 sprint)
 
@@ -85,6 +90,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 ## Próximo passo imediato
 
-1. **Deploy** Fase 1 no servidor (rebuild `transformometro-api` + `transformometro`)
-2. Registrar app no Core API (manifesto + permissões)
-3. Iniciar **Fase 2** — `DashboardCalculatorService`, testes golden, UI dashboard
+1. **Deploy** Fase 2 (`TM_RUN_MIGRATIONS_ON_STARTUP` aplica V003; rebuild API + MFE)
+2. Rodar **Recalcular** no dashboard após cadastrar dados
+3. Script de **import da planilha** + diff contra golden
+4. Registrar app no Core API (manifesto + permissões)

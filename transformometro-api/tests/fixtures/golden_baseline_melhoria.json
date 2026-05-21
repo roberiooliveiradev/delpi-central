@@ -1,0 +1,92 @@
+{
+  "processos": [
+    {
+      "processo_id": "p1",
+      "codigo_processo": "PROC-0001",
+      "nome_processo": "Processo teste",
+      "filial_id": "01",
+      "setor_id": "engenharia",
+      "status_processo": "ativo",
+      "created_at": "2025-01-01",
+      "deletado": false
+    }
+  ],
+  "revisoes": [
+    {
+      "revisao_id": "r-baseline",
+      "processo_id": "p1",
+      "versao_revisao": "1.0.0",
+      "cenario_tipo": "baseline",
+      "data_inicio_vigencia": "2025-01-01",
+      "revisao_ativa": false,
+      "deletado": false
+    },
+    {
+      "revisao_id": "r-melhoria",
+      "processo_id": "p1",
+      "versao_revisao": "2.0.0",
+      "cenario_tipo": "melhoria",
+      "data_inicio_vigencia": "2025-02-01",
+      "revisao_ativa": true,
+      "deletado": false
+    }
+  ],
+  "medicoes": [
+    {
+      "revisao_id": "r-baseline",
+      "volume_mensal": 100,
+      "tempo_medio_execucao_min": 60,
+      "percentual_retrabalho": 0.1,
+      "custo_hora_mao_obra": 50,
+      "custo_unitario_retrabalho": 0,
+      "tempo_retrabalho_min": 10,
+      "quantidade_erros_mes": 0,
+      "custo_unitario_erro": 0,
+      "custo_outros_desperdicios": 0,
+      "deletado": false
+    },
+    {
+      "revisao_id": "r-melhoria",
+      "volume_mensal": 100,
+      "tempo_medio_execucao_min": 30,
+      "percentual_retrabalho": 0.05,
+      "custo_hora_mao_obra": 50,
+      "custo_unitario_retrabalho": 0,
+      "tempo_retrabalho_min": 10,
+      "quantidade_erros_mes": 0,
+      "custo_unitario_erro": 0,
+      "custo_outros_desperdicios": 0,
+      "deletado": false
+    }
+  ],
+  "investimentos": [],
+  "recursos_compartilhados": [
+    {
+      "recurso_compartilhado_id": "rc1",
+      "codigo_recurso": "RC-0001",
+      "nome_recurso": "Assinatura IA",
+      "tipo_custo": "assinatura",
+      "recorrencia": "mensal",
+      "valor_total_recorrente": 300,
+      "criterio_rateio": "igualitario",
+      "status_recurso": "ativo",
+      "deletado": false
+    }
+  ],
+  "revisao_recursos_compartilhados": [
+    {
+      "vinculo_id": "v1",
+      "revisao_id": "r-baseline",
+      "recurso_compartilhado_id": "rc1",
+      "ativo": true,
+      "deletado": false
+    },
+    {
+      "vinculo_id": "v2",
+      "revisao_id": "r-melhoria",
+      "recurso_compartilhado_id": "rc1",
+      "ativo": true,
+      "deletado": false
+    }
+  ]
+}

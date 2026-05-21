@@ -190,3 +190,25 @@
 .tm-form--inline {
   margin-top: 0.75rem;
 }
+
+.tm-dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.tm-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tm-stat__label {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.tm-stat strong {
+  font-size: 1.25rem;
+}

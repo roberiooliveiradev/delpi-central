@@ -6,10 +6,11 @@ import "./HomePage.css";
 type LoadState = "loading" | "ok" | "error";
 
 type HomeProps = Pick<AppProps, "getAccessToken"> & {
+  onGoDashboard?: () => void;
   onGoProcessos?: () => void;
 };
 
-export function HomePage({ getAccessToken, onGoProcessos }: HomeProps) {
+export function HomePage({ getAccessToken, onGoDashboard, onGoProcessos }: HomeProps) {
   const [state, setState] = useState<LoadState>("loading");
   const [detail, setDetail] = useState<string>("");
 
@@ -43,16 +44,24 @@ export function HomePage({ getAccessToken, onGoProcessos }: HomeProps) {
       </header>
 
       <section className="tm-home__card">
-        <h2>Fase 1 — cadastro</h2>
+        <h2>Fase 2 — dashboard</h2>
         <p>
-          API com CRUD de processos, revisões, medições, investimentos e recursos no
-          PostgreSQL. Use o cadastro para substituir a planilha.
+          Cálculo mensal por revisão (economia bruta, recorrente e líquida), ranking de
+          processos e recálculo materializado em <code>dashboard_calculos</code>.
         </p>
+
+        {onGoDashboard ? (
+          <p>
+            <button type="button" className="tm-home__link" onClick={onGoDashboard}>
+              Abrir dashboard →
+            </button>
+          </p>
+        ) : null}
 
         {onGoProcessos ? (
           <p>
             <button type="button" className="tm-home__link" onClick={onGoProcessos}>
-              Abrir lista de processos →
+              Cadastro de processos →
             </button>
           </p>
         ) : null}

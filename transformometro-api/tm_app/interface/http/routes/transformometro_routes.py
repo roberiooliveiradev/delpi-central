@@ -11,5 +11,5 @@ def module_health():
     return {
         "status": "online",
         "module": "transformometro",
-        "phase": "1-crud",
+        "phase": "2-dashboard",
     }
