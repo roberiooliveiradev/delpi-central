@@ -64,7 +64,7 @@ class PluginBaseRepository:
         except Exception as exc:
             self._connection.rollback()
             logger.exception("execute_returning_one failed")
-            raise PluginsRepositoryError("Falha ao gravar registro.") from exc
+            raise PluginsRepositoryError(f"Falha ao gravar registro: {exc}") from exc
 
     def execute(
         self,
@@ -81,4 +81,4 @@ class PluginBaseRepository:
         except Exception as exc:
             self._connection.rollback()
             logger.exception("execute failed")
-            raise PluginsRepositoryError("Falha ao executar comando.") from exc
+            raise PluginsRepositoryError(f"Falha ao executar comando: {exc}") from exc

@@ -23,9 +23,31 @@ async function request<T>(
     },
   });
 
-  const body = (await response.json()) as ApiEnvelope<T>;
+  let body: ApiEnvelope<T> & { detail?: unknown };
+  try {
+    body = (await response.json()) as ApiEnvelope<T> & { detail?: unknown };
+  } catch {
+    throw new Error(
+      response.ok
+        ? "Resposta inválida da API."
+        : `Erro HTTP ${response.status} — verifique se transformometro-api está no ar e as migrations V002 foram aplicadas.`
+    );
+  }
+
   if (!response.ok || !body.success) {
-    throw new Error(body.message || `Erro HTTP ${response.status}`);
+    const detail =
+      typeof body.detail === "string"
+        ? body.detail
+        : Array.isArray(body.detail)
+          ? body.detail
+              .map((item: { msg?: string; loc?: unknown[] }) => {
+                const loc = Array.isArray(item.loc) ? item.loc.join(".") : "";
+                return loc ? `${loc}: ${item.msg ?? ""}` : (item.msg ?? "");
+              })
+              .filter(Boolean)
+              .join("; ")
+          : "";
+    throw new Error(body.message || detail || `Erro HTTP ${response.status}`);
   }
   return body.data;
 }

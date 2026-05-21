@@ -1,11 +1,15 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
 
 from tm_app.config import settings
+from tm_app.core.errors import format_api_error
+from tm_app.core.responses import fail
 from tm_app.interface.http.routes.crud_routes import router as crud_router
 from tm_app.interface.http.routes.dashboard_routes import router as dashboard_router
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
@@ -50,6 +54,23 @@ app = FastAPI(
     root_path=settings.TM_API_ROOT_PATH,
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(_request: Request, exc: RequestValidationError):
+    details = exc.errors()
+    first = details[0] if details else {}
+    loc = ".".join(str(part) for part in first.get("loc", []))
+    msg = first.get("msg", "Dados inválidos.")
+    message = f"{loc}: {msg}" if loc else msg
+    return fail(message, 422)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(_request: Request, exc: Exception):
+    logging.getLogger(__name__).exception("unhandled_exception")
+    return fail(format_api_error(exc), 500)
+
 
 app.middleware("http")(jwt_middleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Query, Request
+
+from tm_app.core.errors import format_api_error
 
 from tm_app.core.catalogs import (
     CENARIO_TIPO,
@@ -38,6 +42,7 @@ from tm_app.interface.http.schemas.crud_schemas import (
 )
 
 router = APIRouter(prefix="/transformometro", tags=["Transformômetro CRUD"])
+logger = logging.getLogger(__name__)
 
 
 def _actor(request: Request) -> tuple[str | None, str | None]:
@@ -50,14 +55,23 @@ def _actor(request: Request) -> tuple[str | None, str | None]:
 
 def _audit(request: Request, entity_type: str, entity_id: str, action: str, payload: dict):
     user_id, user_email = _actor(request)
-    AuditRepository().log(
-        entity_type=entity_type,
-        entity_id=entity_id,
-        action=action,
-        user_id=user_id,
-        user_email=user_email,
-        payload=payload,
-    )
+    try:
+        AuditRepository().log(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            action=action,
+            user_id=user_id,
+            user_email=user_email,
+            payload=payload,
+        )
+    except Exception as exc:
+        logger.warning(
+            "audit_log_failed entity=%s id=%s action=%s err=%s",
+            entity_type,
+            entity_id,
+            action,
+            format_api_error(exc),
+        )
 
 
 def _validate_processo_body(body: ProcessoCreateBody):
@@ -101,7 +115,8 @@ def create_processo(body: ProcessoCreateBody, request: Request):
     except ValueError as exc:
         return fail(str(exc), 400)
     except Exception as exc:
-        return fail(str(exc), 500)
+        logger.exception("create_processo_failed")
+        return fail(format_api_error(exc), 500)
 
     pid = str(row["processo_id"])
     _audit(request, "processo", pid, "create", body.model_dump())

@@ -9,6 +9,7 @@ from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
 
 class ProcessoRepository(PluginBaseRepository):
     def next_codigo(self) -> str:
+        # Inclui registros deletados: uq_processos_codigo vale para todos.
         row = self.fetch_one(
             """
             SELECT COALESCE(
