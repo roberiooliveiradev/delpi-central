@@ -94,9 +94,11 @@ export type PresentationDepartmentIndicatorSnapshot = {
   scopeType: string;
   performanceDirection: string;
   currentValue: number | null;
+  realized: Record<string, number | null>;
   hasValue: boolean;
   score: number | null;
   gap: number | null;
+  gaps: Record<string, number | null>;
   trend: "up" | "down" | "stable";
   trendLabel: string;
   valueUnit: string | null;
@@ -450,12 +452,17 @@ function buildDepartmentFocus(
           (value) => value !== null && value !== undefined,
         ) ??
         null,
+      realized:
+        fallbackIndicator?.realized ??
+        indicator.realized ??
+        {},
       hasValue:
         indicator.hasValue ??
         fallbackIndicator?.hasValue ??
         fallbackIndicator?.value !== null,
       score: indicator.score,
       gap: indicator.gap,
+      gaps: fallbackIndicator?.gaps ?? indicator.gaps ?? {},
       trend: normalizeDirection(indicator.trend),
       trendLabel: getTrendLabel(indicator.trend),
       valueUnit: fallbackIndicator?.valueUnit ?? indicator.valueUnit,

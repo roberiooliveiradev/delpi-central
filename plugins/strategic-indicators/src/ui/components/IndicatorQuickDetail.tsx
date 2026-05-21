@@ -6,11 +6,10 @@ import {
   getPerformanceDirectionLabel,
 } from "../presentation/labels";
 import {
-  formatBranchScopedMetric,
+  formatIndicatorGapDisplay,
   formatIndicatorGoalValue,
+  formatIndicatorRealizedDisplay,
   formatIndicatorScore,
-  hasBranchScopeValues,
-  hasMultiBranchValues,
 } from "../shared/indicatorValueFormatter";
 import "./IndicatorQuickDetail.css";
 
@@ -44,12 +43,6 @@ export function IndicatorQuickDetail({
     valueSuffix: indicator.valueSuffix,
     valueDecimals: indicator.valueDecimals,
   };
-  const showBranchBreakdown =
-    hasMultiBranchValues(indicator.realized) ||
-    hasMultiBranchValues(indicator.gaps) ||
-    hasBranchScopeValues(indicator.realized) ||
-    hasBranchScopeValues(indicator.gaps);
-
   return (
     <aside className="si-indicator-quick-detail">
       <div className="si-indicator-quick-detail__header">
@@ -109,28 +102,13 @@ export function IndicatorQuickDetail({
         <div className="si-indicator-quick-detail__meta-item">
           <span>Valor atual</span>
           <strong>
-            {showBranchBreakdown
-              ? formatBranchScopedMetric(indicator.realized, valueFormat)
-              : formatBranchScopedMetric(
-                  { consolidated: indicator.currentValue },
-                  valueFormat,
-                )}
+            {formatIndicatorRealizedDisplay(indicator, valueFormat)}
           </strong>
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">
           <span>Gap</span>
-          <strong>
-            {showBranchBreakdown
-              ? formatBranchScopedMetric(indicator.gaps, valueFormat, {
-                  signed: true,
-                })
-              : formatBranchScopedMetric(
-                  { consolidated: indicator.gap },
-                  valueFormat,
-                  { signed: true },
-                )}
-          </strong>
+          <strong>{formatIndicatorGapDisplay(indicator, valueFormat)}</strong>
         </div>
 
         {indicator.goalMode === "monthly_curve" ? (

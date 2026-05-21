@@ -4,9 +4,10 @@ import type {
 } from "../../data/types/presentation";
 import { PresentationDepartmentSparkline } from "./PresentationDepartmentSparkline";
 import {
+  formatIndicatorGapDisplay,
   formatIndicatorGoalValue,
+  formatIndicatorRealizedDisplay,
   formatIndicatorScore,
-  formatIndicatorValue,
 } from "../shared/indicatorValueFormatter";
 import "./PresentationDepartmentSlideScene.css";
 
@@ -280,7 +281,7 @@ export function PresentationDepartmentSlideScene({
                 <div>
                   <span>Valor atual</span>
                   <strong>
-                    {formatIndicatorValue(indicator.currentValue, valueFormat)}
+                    {formatIndicatorRealizedDisplay(indicator, valueFormat)}
                   </strong>
                 </div>
 
@@ -292,9 +293,7 @@ export function PresentationDepartmentSlideScene({
                 <div>
                   <span>Gap</span>
                   <strong>
-                    {formatIndicatorValue(indicator.gap, valueFormat, {
-                      signed: true,
-                    })}
+                    {formatIndicatorGapDisplay(indicator, valueFormat)}
                   </strong>
                 </div>
 
