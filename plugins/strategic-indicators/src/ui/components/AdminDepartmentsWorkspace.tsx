@@ -12,6 +12,7 @@ import { useStrategicIndicatorsDepartmentIndicators } from "../../state/hooks/us
 import { InfoState } from "./InfoState";
 import { DrawerPanel } from "./DrawerPanel";
 import { SectionBlock } from "./SectionBlock";
+import { ActiveToggle } from "./ActiveToggle";
 import {
   getAggregationModeLabel,
   getPerformanceDirectionLabel,
@@ -358,15 +359,22 @@ export function AdminDepartmentsWorkspace({
                         Editar
                       </button>
 
-                      <button
-                        type="button"
-                        className="si-settings-editor__button si-settings-editor__button--secondary"
-                        onClick={() =>
-                          void departments.deactivateDepartment(selectedDepartment.department_id)
-                        }
-                      >
-                        Desativar
-                      </button>
+                      <ActiveToggle
+                        active={selectedDepartment.is_active}
+                        disabled={departments.saving}
+                        ariaLabel={`Situação do departamento ${selectedDepartment.department_name}`}
+                        onToggle={(nextActive) => {
+                          if (nextActive) {
+                            void departments.activateDepartment(
+                              selectedDepartment.department_id,
+                            );
+                          } else {
+                            void departments.deactivateDepartment(
+                              selectedDepartment.department_id,
+                            );
+                          }
+                        }}
+                      />
 
                       <button
                         type="button"
@@ -487,15 +495,22 @@ export function AdminDepartmentsWorkspace({
                               Editar
                             </button>
 
-                            <button
-                              type="button"
-                              className="si-settings-editor__button si-settings-editor__button--secondary"
-                              onClick={() =>
-                                void departmentIndicators.deactivateIndicator(item.indicator_id)
-                              }
-                            >
-                              Desativar
-                            </button>
+                            <ActiveToggle
+                              active={item.is_active}
+                              disabled={departmentIndicators.saving}
+                              ariaLabel={`Situação do indicador ${item.indicator_name}`}
+                              onToggle={(nextActive) => {
+                                if (nextActive) {
+                                  void departmentIndicators.activateIndicator(
+                                    item.indicator_id,
+                                  );
+                                } else {
+                                  void departmentIndicators.deactivateIndicator(
+                                    item.indicator_id,
+                                  );
+                                }
+                              }}
+                            />
 
                             <button
                               type="button"

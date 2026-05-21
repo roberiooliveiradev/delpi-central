@@ -3,6 +3,7 @@ import { InfoState } from "./InfoState";
 import { IndicatorGoalForm } from "./IndicatorGoalForm";
 import { DrawerPanel } from "./DrawerPanel";
 import { AdminInlineToolPanel } from "./AdminInlineToolPanel";
+import { ActiveToggle } from "./ActiveToggle";
 import { AnnualGoalsWorkspace } from "./AnnualGoalsWorkspace";
 import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndicatorGoals";
 import { useStrategicIndicatorsGoalYearsOverview } from "../../state/hooks/useStrategicIndicatorsGoalYearsOverview";
@@ -438,25 +439,18 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                         >
                           Histórico
                         </button>
-                        {!item.is_active ? (
-                          <button
-                            type="button"
-                            className="si-settings-editor__button si-settings-editor__button--secondary"
-                            onClick={() => void goals.activateGoal(item.id)}
-                            disabled={goals.saving}
-                          >
-                            Ativar
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="si-settings-editor__button si-settings-editor__button--secondary"
-                            onClick={() => void goals.deactivateGoal(item.id)}
-                            disabled={goals.saving}
-                          >
-                            Inativar
-                          </button>
-                        )}
+                        <ActiveToggle
+                          active={item.is_active}
+                          disabled={goals.saving}
+                          ariaLabel={`Situação da meta ${item.goal_label}`}
+                          onToggle={(nextActive) => {
+                            if (nextActive) {
+                              void goals.activateGoal(item.id);
+                            } else {
+                              void goals.deactivateGoal(item.id);
+                            }
+                          }}
+                        />
                         <button
                           type="button"
                           className="si-settings-editor__button si-settings-editor__button--secondary"

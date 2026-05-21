@@ -209,8 +209,13 @@
 .si-admin-modal-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-top: 12px;
+}
+
+.si-admin-detail-card__actions {
+  align-items: center;
 }
 
 .si-admin-form-grid {
