@@ -4,6 +4,7 @@ import {
   bulkCreateStrategicIndicatorGoals,
   createStrategicIndicatorGoal,
   deactivateStrategicIndicatorGoal,
+  deleteStrategicIndicatorGoal,
   duplicateStrategicIndicatorGoalsYear,
   fetchStrategicIndicatorGoalHistory,
   fetchStrategicIndicatorGoals,
@@ -240,6 +241,30 @@ export function useStrategicIndicatorGoals({
     [load],
   );
 
+  const deleteGoal = useCallback(
+    async (goalId: string) => {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      try {
+        await deleteStrategicIndicatorGoal(goalId, getAccessTokenRef.current);
+        setSuccessMessage("Meta analítica excluída com sucesso.");
+        await load();
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao excluir a meta analítica.",
+        );
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [load],
+  );
+
   const bulkCreateGoals = useCallback(
     async (payload: BulkCreateStrategicIndicatorGoalsRequest) => {
       setSaving(true);
@@ -345,6 +370,7 @@ export function useStrategicIndicatorGoals({
       updateGoal,
       activateGoal,
       deactivateGoal,
+      deleteGoal,
       bulkCreateGoals,
       duplicateGoalsYear,
       fillMissingGoals,
@@ -369,6 +395,7 @@ export function useStrategicIndicatorGoals({
       updateGoal,
       activateGoal,
       deactivateGoal,
+      deleteGoal,
       bulkCreateGoals,
       duplicateGoalsYear,
       fillMissingGoals,

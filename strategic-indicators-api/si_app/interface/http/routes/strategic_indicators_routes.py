@@ -80,6 +80,7 @@ from si_app.composition.strategic_indicators_composer import (
     build_update_strategic_indicators_indicator_goal_use_case,
     build_activate_strategic_indicators_indicator_goal_use_case,
     build_deactivate_strategic_indicators_indicator_goal_use_case,
+    build_delete_strategic_indicators_indicator_goal_use_case,
     build_list_strategic_indicators_admin_departments_use_case,
     build_create_strategic_indicators_admin_department_use_case,
     build_update_strategic_indicators_admin_department_use_case,
@@ -711,6 +712,9 @@ def update_indicator_goal(
         result = use_case.execute(
             UpdateStrategicIndicatorsIndicatorGoalRequest(
                 goal_id=goal_id,
+                indicator_id=body.indicator_id,
+                goal_year=body.goal_year,
+                goal_scope_branch=body.goal_scope_branch,
                 goal_label=body.goal_label,
                 goal_value=body.goal_value,
                 goal_periodicity=body.goal_periodicity,
@@ -762,7 +766,7 @@ def activate_indicator_goal(
         ) from exc
 
 
-@router.delete("/indicator-goals/{goal_id}")
+@router.post("/indicator-goals/{goal_id}/deactivate")
 @require_permission("strategic-indicators.settings.manage")
 def deactivate_indicator_goal(
     goal_id: str,
@@ -784,6 +788,31 @@ def deactivate_indicator_goal(
         raise HTTPException(
             status_code=500,
             detail=f"Falha ao desativar meta analítica: {exc}",
+        ) from exc
+
+
+@router.delete("/indicator-goals/{goal_id}")
+@require_permission("strategic-indicators.settings.manage")
+def delete_indicator_goal(
+    goal_id: str,
+    request: Request,
+):
+    try:
+        actor_user_id, actor_email = _extract_actor(request)
+
+        use_case = build_delete_strategic_indicators_indicator_goal_use_case()
+        result = use_case.execute(
+            goal_id=goal_id,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        )
+        return _invalidate_read_cache_after_mutation(result)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao excluir meta analítica: {exc}",
         ) from exc
 
 

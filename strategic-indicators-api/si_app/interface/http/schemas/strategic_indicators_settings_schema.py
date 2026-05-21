@@ -77,6 +77,7 @@ class CreateDepartmentBodySchema(BaseModel):
 
 
 class UpdateDepartmentBodySchema(BaseModel):
+    new_department_id: Optional[str] = None
     department_name: str
     short_name: str
     strategic_summary: str = ""
@@ -124,6 +125,7 @@ class CreateDepartmentIndicatorBodySchema(BaseModel):
 
 
 class UpdateDepartmentIndicatorBodySchema(BaseModel):
+    new_indicator_id: Optional[str] = None
     indicator_name: str
     weight_pct: float
     scope_type: str
@@ -178,6 +180,9 @@ class CreateIndicatorGoalBodySchema(BaseModel):
 
 
 class UpdateIndicatorGoalBodySchema(BaseModel):
+    indicator_id: Optional[str] = None
+    goal_year: Optional[int] = None
+    goal_scope_branch: Optional[str] = None
     goal_label: str
     goal_value: float = 0
     goal_periodicity: str

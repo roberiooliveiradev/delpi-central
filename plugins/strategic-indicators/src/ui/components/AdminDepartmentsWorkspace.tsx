@@ -101,11 +101,13 @@ export function AdminDepartmentsWorkspace({
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
   const [departmentDrawerOpen, setDepartmentDrawerOpen] = useState(false);
   const [departmentMode, setDepartmentMode] = useState<"create" | "edit">("create");
+  const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(null);
   const [departmentForm, setDepartmentForm] =
     useState<DepartmentFormState>(emptyDepartmentForm);
 
   const [indicatorDrawerOpen, setIndicatorDrawerOpen] = useState(false);
   const [indicatorMode, setIndicatorMode] = useState<"create" | "edit">("create");
+  const [editingIndicatorId, setEditingIndicatorId] = useState<string | null>(null);
   const [indicatorForm, setIndicatorForm] =
     useState<IndicatorFormState>(emptyIndicatorForm);
 
@@ -122,12 +124,14 @@ export function AdminDepartmentsWorkspace({
 
   function openCreateDepartmentDrawer() {
     setDepartmentMode("create");
+    setEditingDepartmentId(null);
     setDepartmentForm(emptyDepartmentForm);
     setDepartmentDrawerOpen(true);
   }
 
   function openEditDepartmentDrawer(item: AdminDepartmentItem) {
     setDepartmentMode("edit");
+    setEditingDepartmentId(item.department_id);
     setDepartmentForm({
       department_id: item.department_id,
       department_name: item.department_name,
@@ -145,12 +149,14 @@ export function AdminDepartmentsWorkspace({
 
   function openCreateIndicatorDrawer() {
     setIndicatorMode("create");
+    setEditingIndicatorId(null);
     setIndicatorForm(emptyIndicatorForm);
     setIndicatorDrawerOpen(true);
   }
 
   function openEditIndicatorDrawer(item: AdminDepartmentIndicatorItem) {
     setIndicatorMode("edit");
+    setEditingIndicatorId(item.indicator_id);
     setIndicatorForm({
       indicator_id: item.indicator_id,
       indicator_name: item.indicator_name,
@@ -184,7 +190,8 @@ export function AdminDepartmentsWorkspace({
       };
 
       await departments.createDepartment(payload);
-    } else {
+    } else if (editingDepartmentId) {
+      const nextDepartmentId = departmentForm.department_id.trim();
       const payload: UpdateAdminDepartmentRequest = {
         department_name: departmentForm.department_name.trim(),
         short_name: departmentForm.short_name.trim(),
@@ -197,7 +204,15 @@ export function AdminDepartmentsWorkspace({
         is_active: departmentForm.is_active,
       };
 
-      await departments.updateDepartment(departmentForm.department_id, payload);
+      if (nextDepartmentId !== editingDepartmentId) {
+        payload.new_department_id = nextDepartmentId;
+      }
+
+      await departments.updateDepartment(editingDepartmentId, payload);
+
+      if (selectedDepartmentId === editingDepartmentId && nextDepartmentId) {
+        setSelectedDepartmentId(nextDepartmentId);
+      }
     }
 
     setDepartmentDrawerOpen(false);
@@ -223,7 +238,8 @@ export function AdminDepartmentsWorkspace({
       };
 
       await departmentIndicators.createIndicator(payload);
-    } else {
+    } else if (editingIndicatorId) {
+      const nextIndicatorId = indicatorForm.indicator_id.trim();
       const payload: UpdateAdminDepartmentIndicatorRequest = {
         indicator_name: indicatorForm.indicator_name.trim(),
         weight_pct: Number(indicatorForm.weight_pct || 0),
@@ -239,7 +255,11 @@ export function AdminDepartmentsWorkspace({
         is_active: indicatorForm.is_active,
       };
 
-      await departmentIndicators.updateIndicator(indicatorForm.indicator_id, payload);
+      if (nextIndicatorId !== editingIndicatorId) {
+        payload.new_indicator_id = nextIndicatorId;
+      }
+
+      await departmentIndicators.updateIndicator(editingIndicatorId, payload);
     }
 
     setIndicatorDrawerOpen(false);
@@ -425,18 +445,37 @@ export function AdminDepartmentsWorkspace({
                       {departmentIndicators.items.map((item) => (
                         <article
                           key={item.indicator_id}
-                          className="si-admin-indicators-table__row"
+                          className={`si-admin-indicators-table__row ${
+                            item.is_active ? "" : "is-inactive"
+                          }`}
                         >
-                          <div>
-                            <strong>{item.indicator_name}</strong>
+                          <div className="si-admin-indicators-table__main">
+                            <div className="si-admin-indicators-table__title-row">
+                              <strong>{item.indicator_name}</strong>
+                              <code className="si-admin-id-chip">{item.indicator_id}</code>
+                            </div>
                             <p>{item.strategic_description || "Sem descrição estratégica."}</p>
                           </div>
 
                           <div className="si-admin-indicators-table__meta">
-                            <span>{item.weight_pct}%</span>
-                            <span>{getScopeTypeLabel(item.scope_type)}</span>
-                            <span>{getIndicatorFormatLabel(item)}</span>
-                            <span>{item.is_active ? "Ativo" : "Inativo"}</span>
+                            <span className="si-admin-meta-chip si-admin-meta-chip--weight">
+                              {item.weight_pct}%
+                            </span>
+                            <span className="si-admin-meta-chip si-admin-meta-chip--scope">
+                              {getScopeTypeLabel(item.scope_type)}
+                            </span>
+                            <span className="si-admin-meta-chip">
+                              {getIndicatorFormatLabel(item)}
+                            </span>
+                            <span
+                              className={
+                                item.is_active
+                                  ? "si-admin-meta-chip si-admin-meta-chip--active"
+                                  : "si-admin-meta-chip si-admin-meta-chip--inactive"
+                              }
+                            >
+                              {item.is_active ? "Ativo" : "Inativo"}
+                            </span>
                           </div>
 
                           <div className="si-admin-indicators-table__actions">
@@ -461,9 +500,16 @@ export function AdminDepartmentsWorkspace({
                             <button
                               type="button"
                               className="si-settings-editor__button si-settings-editor__button--secondary"
-                              onClick={() =>
-                                void departmentIndicators.removeIndicator(item.indicator_id)
-                              }
+                              onClick={() => {
+                                if (
+                                  !window.confirm(
+                                    `Excluir permanentemente o indicador "${item.indicator_name}"? Metas vinculadas também serão removidas.`,
+                                  )
+                                ) {
+                                  return;
+                                }
+                                void departmentIndicators.removeIndicator(item.indicator_id);
+                              }}
                             >
                               Excluir
                             </button>
@@ -516,7 +562,6 @@ export function AdminDepartmentsWorkspace({
                   department_id: event.target.value,
                 }))
               }
-              disabled={departmentMode === "edit"}
             />
           </label>
 
@@ -674,7 +719,6 @@ export function AdminDepartmentsWorkspace({
                   indicator_id: event.target.value,
                 }))
               }
-              disabled={indicatorMode === "edit"}
             />
           </label>
 

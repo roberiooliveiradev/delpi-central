@@ -6,6 +6,9 @@ from si_app.domain.ports.strategic_indicators.department_indicators_repository_p
 from si_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
 )
+from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.catalog_admin_cascade import (
+    delete_indicator_goals_cascade,
+)
 
 
 class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
@@ -120,6 +123,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
         self,
         *,
         indicator_id: str,
+        new_indicator_id: str | None,
         indicator_name: str,
         weight_pct: float,
         scope_type: str,
@@ -135,6 +139,111 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
         actor_user_id: str | None,
         actor_email: str | None,
     ) -> dict:
+        current_id = indicator_id.strip()
+        target_id = (new_indicator_id or current_id).strip()
+
+        if not target_id:
+            raise ValueError("indicator_id é obrigatório.")
+
+        before = self.fetch_one(
+            """
+            SELECT *
+            FROM strategic_indicators.department_indicators
+            WHERE indicator_id = %s
+            """,
+            (current_id,),
+        )
+        if not before:
+            raise ValueError("Indicador estrutural não encontrado.")
+
+        if target_id != current_id:
+            conflict = self.fetch_one(
+                """
+                SELECT indicator_id
+                FROM strategic_indicators.department_indicators
+                WHERE indicator_id = %s
+                """,
+                (target_id,),
+            )
+            if conflict:
+                raise ValueError(
+                    f"Já existe um indicador com o id '{target_id}'."
+                )
+
+            try:
+                self.execute(
+                    """
+                    INSERT INTO strategic_indicators.department_indicators (
+                        indicator_id,
+                        department_id,
+                        indicator_name,
+                        weight_pct,
+                        scope_type,
+                        performance_direction,
+                        strategic_description,
+                        source_key,
+                        value_unit,
+                        value_prefix,
+                        value_suffix,
+                        value_decimals,
+                        supports_branch_goals,
+                        is_active,
+                        display_order,
+                        created_by_user_id,
+                        created_by_email,
+                        updated_by_user_id,
+                        updated_by_email
+                    )
+                    VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        (%s = 'consolidated'),
+                        %s, %s, %s, %s, %s, %s
+                    )
+                    """,
+                    (
+                        target_id,
+                        before["department_id"],
+                        indicator_name,
+                        weight_pct,
+                        scope_type,
+                        performance_direction,
+                        strategic_description,
+                        source_key,
+                        value_unit,
+                        value_prefix,
+                        value_suffix,
+                        value_decimals,
+                        scope_type,
+                        is_active,
+                        display_order,
+                        before.get("created_by_user_id"),
+                        before.get("created_by_email"),
+                        actor_user_id,
+                        actor_email,
+                    ),
+                )
+                self.execute(
+                    """
+                    UPDATE strategic_indicators.indicator_goals
+                    SET indicator_id = %s, updated_at = NOW()
+                    WHERE indicator_id = %s
+                    """,
+                    (target_id, current_id),
+                )
+                self.execute(
+                    """
+                    DELETE FROM strategic_indicators.department_indicators
+                    WHERE indicator_id = %s
+                    """,
+                    (current_id,),
+                )
+                self.commit()
+                current_id = target_id
+            except Exception:
+                self.rollback()
+                raise
+
         query = """
             UPDATE strategic_indicators.department_indicators
             SET
@@ -175,7 +284,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 display_order,
                 actor_user_id,
                 actor_email,
-                indicator_id,
+                current_id,
             ),
         )
 
@@ -259,26 +368,20 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
         if not before:
             raise ValueError("Indicador estrutural não encontrado.")
 
-        goals_count = self.fetch_one(
-            """
-            SELECT COUNT(*) AS total
-            FROM strategic_indicators.indicator_goals
-            WHERE indicator_id = %s
-            """,
-            (indicator_id,),
-        )
-        if int((goals_count or {}).get("total") or 0) > 0:
-            raise ValueError(
-                "Não é possível excluir o indicador porque ainda existem metas vinculadas."
+        try:
+            delete_indicator_goals_cascade(self, indicator_id=indicator_id)
+            self.execute(
+                """
+                DELETE FROM strategic_indicators.department_indicators
+                WHERE indicator_id = %s
+                """,
+                (indicator_id,),
             )
+            self.commit()
+        except Exception:
+            self.rollback()
+            raise
 
-        self.execute(
-            """
-            DELETE FROM strategic_indicators.department_indicators
-            WHERE indicator_id = %s
-            """,
-            (indicator_id,),
-        )
         return {
             "message": "Indicador estrutural excluído com sucesso.",
             "indicator_id": indicator_id,

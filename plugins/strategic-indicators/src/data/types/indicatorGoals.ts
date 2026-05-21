@@ -60,6 +60,9 @@ export type CreateStrategicIndicatorGoalRequest = {
 };
 
 export type UpdateStrategicIndicatorGoalRequest = {
+  indicator_id?: string;
+  goal_year?: number;
+  goal_scope_branch?: GoalScopeBranch | string;
   goal_label: string;
   goal_value: number;
   goal_periodicity: GoalPeriodicity;

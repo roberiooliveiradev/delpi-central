@@ -202,7 +202,7 @@ export function IndicatorGoalForm({
       goalMode === "monthly_curve" ? monthlyTargets : [];
 
     if (isEditing && initialValue && onUpdate) {
-      await onUpdate(initialValue.id, {
+      const payload: UpdateStrategicIndicatorGoalRequest = {
         goal_label: goalLabel.trim(),
         goal_value: resolvedGoalValue,
         goal_periodicity: goalPeriodicity,
@@ -211,7 +211,20 @@ export function IndicatorGoalForm({
         valid_from: validFrom || null,
         valid_to: validTo || null,
         notes: notes || null,
-      });
+      };
+
+      if (indicatorId.trim() !== initialValue.indicator_id) {
+        payload.indicator_id = indicatorId.trim();
+      }
+      if (Number(goalYear) !== Number(initialValue.goal_year)) {
+        payload.goal_year = Number(goalYear);
+      }
+      const initialScope = initialValue.goal_scope_branch ?? "";
+      if (goalScopeBranch !== initialScope) {
+        payload.goal_scope_branch = goalScopeBranch;
+      }
+
+      await onUpdate(initialValue.id, payload);
       return;
     }
 
@@ -241,48 +254,36 @@ export function IndicatorGoalForm({
       ) : null}
 
       <div className="si-modal-form__grid">
-        {!isEditing ? (
-          <Field label="Indicador">
-            {normalizedIndicatorOptions.length > 0 ? (
-              <select
-                value={indicatorId}
-                onChange={(e) => setIndicatorId(e.target.value)}
-                autoFocus
-              >
-                <option value="">Selecione</option>
-                {normalizedIndicatorOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                value={indicatorId}
-                onChange={(e) => setIndicatorId(e.target.value)}
-                autoFocus
-              />
-            )}
-          </Field>
-        ) : (
-          <Field label="Indicador">
-            <input value={indicatorId} readOnly />
-          </Field>
-        )}
-
-        {!isEditing ? (
-          <Field label="Ano da meta">
+        <Field label="Indicador">
+          {normalizedIndicatorOptions.length > 0 ? (
+            <select
+              value={indicatorId}
+              onChange={(e) => setIndicatorId(e.target.value)}
+              autoFocus={!isEditing}
+            >
+              <option value="">Selecione</option>
+              {normalizedIndicatorOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          ) : (
             <input
-              type="number"
-              value={goalYear}
-              onChange={(e) => setGoalYear(Number(e.target.value))}
+              value={indicatorId}
+              onChange={(e) => setIndicatorId(e.target.value)}
+              autoFocus={!isEditing}
             />
-          </Field>
-        ) : (
-          <Field label="Ano da meta">
-            <input value={goalYear} readOnly />
-          </Field>
-        )}
+          )}
+        </Field>
+
+        <Field label="Ano da meta">
+          <input
+            type="number"
+            value={goalYear}
+            onChange={(e) => setGoalYear(Number(e.target.value))}
+          />
+        </Field>
 
         <Field label="Nome da meta" fullWidth>
           <input
@@ -301,22 +302,16 @@ export function IndicatorGoalForm({
           </select>
         </Field>
 
-        {!isEditing ? (
-          <Field label="Escopo da meta">
-            <select
-              value={goalScopeBranch}
-              onChange={(e) => setGoalScopeBranch(e.target.value)}
-            >
-              <option value="">{getGoalScopeBranchLabel("")}</option>
-              <option value="01">{getGoalScopeBranchLabel("01")}</option>
-              <option value="02">{getGoalScopeBranchLabel("02")}</option>
-            </select>
-          </Field>
-        ) : (
-          <Field label="Escopo da meta">
-            <input value={getGoalScopeBranchLabel(goalScopeBranch)} readOnly />
-          </Field>
-        )}
+        <Field label="Escopo da meta">
+          <select
+            value={goalScopeBranch}
+            onChange={(e) => setGoalScopeBranch(e.target.value)}
+          >
+            <option value="">{getGoalScopeBranchLabel("")}</option>
+            <option value="01">{getGoalScopeBranchLabel("01")}</option>
+            <option value="02">{getGoalScopeBranchLabel("02")}</option>
+          </select>
+        </Field>
 
         <Field label="Periodicidade">
           <select

@@ -43,8 +43,11 @@ class UpdateStrategicIndicatorsAdminDepartmentUseCase:
         if weight_pct < 0 or weight_pct > 100:
             raise ValueError("weight_pct deve estar entre 0 e 100.")
 
+        new_department_id = (body.get("new_department_id") or "").strip() or None
+
         return self._repository.update_department(
             department_id=department_id.strip(),
+            new_department_id=new_department_id,
             department_name=department_name,
             short_name=short_name,
             strategic_summary=strategic_summary,

@@ -3,6 +3,9 @@ from __future__ import annotations
 from si_app.application.dto.strategic_indicators.update_indicator_goal_request import (
     UpdateStrategicIndicatorsIndicatorGoalRequest,
 )
+from si_app.application.services.strategic_indicators.goal_scope_validation import (
+    validate_goal_scope_branch,
+)
 from si_app.application.services.strategic_indicators.indicator_goal_validation_error import (
     StrategicIndicatorsIndicatorGoalValidationError,
 )
@@ -29,8 +32,54 @@ class UpdateStrategicIndicatorsIndicatorGoalUseCase:
 
         monthly_targets = request.monthly_targets if request.goal_mode.strip() == "monthly_curve" else []
 
+        indicator_id = (request.indicator_id or "").strip() or None
+        goal_year = request.goal_year
+        goal_scope_branch = request.goal_scope_branch
+
+        if goal_year is not None and (goal_year < 2020 or goal_year > 2100):
+            raise StrategicIndicatorsIndicatorGoalValidationError(
+                "goal_year inválido."
+            )
+
+        resolved_indicator_id: str | None = None
+        resolved_goal_year: int | None = None
+        resolved_scope_branch: str | None = None
+
+        if indicator_id or goal_year is not None or goal_scope_branch is not None:
+            existing = self._repository.fetch_goal_identity(request.goal_id.strip())
+            if not existing:
+                raise StrategicIndicatorsIndicatorGoalValidationError(
+                    "Meta não encontrada."
+                )
+
+            resolved_indicator_id = indicator_id or str(existing.get("indicator_id") or "")
+            resolved_goal_year = (
+                goal_year
+                if goal_year is not None
+                else int(existing.get("goal_year") or 0)
+            )
+            scope_input = (
+                goal_scope_branch
+                if goal_scope_branch is not None
+                else existing.get("goal_scope_branch")
+            )
+
+            policy = self._repository.get_indicator_goal_policy(resolved_indicator_id)
+            if not policy:
+                raise StrategicIndicatorsIndicatorGoalValidationError(
+                    "indicator_id não encontrado no catálogo."
+                )
+
+            resolved_scope_branch = validate_goal_scope_branch(
+                goal_scope_branch=scope_input,
+                scope_type=str(policy.get("scope_type") or "consolidated"),
+            )
+
         return self._repository.update_indicator_goal(
             goal_id=request.goal_id,
+            indicator_id=resolved_indicator_id,
+            goal_year=resolved_goal_year,
+            goal_scope_branch=resolved_scope_branch,
             goal_label=request.goal_label.strip(),
             goal_value=float(request.goal_value),
             goal_periodicity=request.goal_periodicity.strip(),

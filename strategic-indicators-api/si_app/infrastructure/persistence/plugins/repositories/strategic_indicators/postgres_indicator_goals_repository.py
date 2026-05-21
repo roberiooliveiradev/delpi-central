@@ -11,6 +11,9 @@ from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port im
 from si_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
 )
+from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.catalog_admin_cascade import (
+    delete_indicator_goal_hard,
+)
 from si_app.shared.goal_scope import normalize_goal_scope_branch
 
 
@@ -59,6 +62,16 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             WHERE indicator_id = %s
             """,
             (indicator_id,),
+        )
+
+    def fetch_goal_identity(self, goal_id: str) -> dict | None:
+        return self.fetch_one(
+            """
+            SELECT id, indicator_id, goal_year, goal_scope_branch
+            FROM strategic_indicators.indicator_goals
+            WHERE id = %s
+            """,
+            (goal_id,),
         )
 
     @staticmethod
@@ -628,6 +641,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         self,
         *,
         goal_id: str,
+        indicator_id: str | None,
+        goal_year: int | None,
+        goal_scope_branch: str | None,
         goal_label: str,
         goal_value: float,
         goal_periodicity: str,
@@ -640,10 +656,48 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         actor_email: str | None,
     ) -> dict:
         try:
+            if indicator_id or goal_year is not None or goal_scope_branch is not None:
+                current = self.fetch_goal_identity(goal_id)
+                if not current:
+                    raise ValueError("Meta não encontrada.")
+
+                target_indicator = indicator_id or current["indicator_id"]
+                target_year = goal_year if goal_year is not None else current["goal_year"]
+                target_scope = (
+                    goal_scope_branch
+                    if goal_scope_branch is not None
+                    else (current.get("goal_scope_branch") or "")
+                )
+
+                conflict = self.fetch_one(
+                    """
+                    SELECT id
+                    FROM strategic_indicators.indicator_goals
+                    WHERE indicator_id = %s
+                      AND goal_year = %s
+                      AND goal_scope_branch = %s
+                      AND id <> %s
+                    LIMIT 1
+                    """,
+                    (
+                        target_indicator,
+                        target_year,
+                        target_scope,
+                        goal_id,
+                    ),
+                )
+                if conflict:
+                    raise ValueError(
+                        "Já existe meta para este indicador, ano e escopo."
+                    )
+
             updated = self.execute_returning_one(
                 """
                 UPDATE strategic_indicators.indicator_goals
                 SET
+                    indicator_id = COALESCE(%s, indicator_id),
+                    goal_year = COALESCE(%s, goal_year),
+                    goal_scope_branch = COALESCE(%s, goal_scope_branch),
                     goal_label = %s,
                     goal_value = %s,
                     goal_periodicity = %s,
@@ -658,6 +712,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 RETURNING *
                 """,
                 (
+                    indicator_id,
+                    goal_year,
+                    goal_scope_branch,
                     goal_label,
                     goal_value,
                     goal_periodicity,
@@ -759,6 +816,29 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         except Exception:
             self.rollback()
             raise
+
+    def delete_indicator_goal(
+        self,
+        *,
+        goal_id: str,
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        before = self.fetch_goal_identity(goal_id)
+        if not before:
+            raise ValueError("Meta não encontrada.")
+
+        try:
+            delete_indicator_goal_hard(self, goal_id=goal_id)
+            self.commit()
+        except Exception:
+            self.rollback()
+            raise
+
+        return {
+            "message": "Meta analítica excluída com sucesso.",
+            "goal_id": goal_id,
+        }
 
     def deactivate_indicator_goal(
         self,

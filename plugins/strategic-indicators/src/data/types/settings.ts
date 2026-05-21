@@ -106,6 +106,7 @@ export type CreateAdminDepartmentRequest = {
 };
 
 export type UpdateAdminDepartmentRequest = {
+  new_department_id?: string;
   department_name: string;
   short_name: string;
   strategic_summary?: string;
@@ -166,6 +167,7 @@ export type CreateAdminDepartmentIndicatorRequest = {
 };
 
 export type UpdateAdminDepartmentIndicatorRequest = {
+  new_indicator_id?: string;
   indicator_name: string;
   weight_pct: number;
   scope_type: ScopeType;

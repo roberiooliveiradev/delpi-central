@@ -457,6 +457,23 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                             Inativar
                           </button>
                         )}
+                        <button
+                          type="button"
+                          className="si-settings-editor__button si-settings-editor__button--secondary"
+                          onClick={() => {
+                            if (
+                              !window.confirm(
+                                "Excluir permanentemente esta meta? Metas e curvas mensais vinculadas serão removidas.",
+                              )
+                            ) {
+                              return;
+                            }
+                            void goals.deleteGoal(item.id);
+                          }}
+                          disabled={goals.saving}
+                        >
+                          Excluir
+                        </button>
                       </div>
                     </article>
                   ))}

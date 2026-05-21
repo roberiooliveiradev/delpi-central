@@ -55,6 +55,9 @@ from si_app.application.use_cases.strategic_indicators.update_indicator_goal_use
 from si_app.application.use_cases.strategic_indicators.activate_indicator_goal_use_case import (
     ActivateStrategicIndicatorsIndicatorGoalUseCase,
 )
+from si_app.application.use_cases.strategic_indicators.delete_indicator_goal_use_case import (
+    DeleteStrategicIndicatorsIndicatorGoalUseCase,
+)
 from si_app.application.use_cases.strategic_indicators.deactivate_indicator_goal_use_case import (
     DeactivateStrategicIndicatorsIndicatorGoalUseCase,
 )
@@ -345,6 +348,11 @@ def build_activate_strategic_indicators_indicator_goal_use_case():
 def build_deactivate_strategic_indicators_indicator_goal_use_case():
     repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
     return DeactivateStrategicIndicatorsIndicatorGoalUseCase(repository)
+
+
+def build_delete_strategic_indicators_indicator_goal_use_case():
+    repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
+    return DeleteStrategicIndicatorsIndicatorGoalUseCase(repository)
 
 
 def build_list_strategic_indicators_admin_departments_use_case():

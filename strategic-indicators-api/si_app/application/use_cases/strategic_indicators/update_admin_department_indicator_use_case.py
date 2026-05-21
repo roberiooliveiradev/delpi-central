@@ -50,8 +50,11 @@ class UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
         if value_decimals < 0 or value_decimals > 6:
             raise ValueError("value_decimals deve estar entre 0 e 6.")
 
+        new_indicator_id = (body.get("new_indicator_id") or "").strip() or None
+
         return self._repository.update_department_indicator(
             indicator_id=indicator_id.strip(),
+            new_indicator_id=new_indicator_id,
             indicator_name=indicator_name,
             weight_pct=weight_pct,
             scope_type=scope_type,

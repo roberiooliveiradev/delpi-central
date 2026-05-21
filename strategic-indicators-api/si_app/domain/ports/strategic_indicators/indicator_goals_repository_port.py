@@ -116,6 +116,24 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def delete_indicator_goal(
+        self,
+        *,
+        goal_id: str,
+        actor_user_id: str | None,
+        actor_email: str | None,
+    ) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_indicator_goal_policy(self, indicator_id: str) -> dict | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def fetch_goal_identity(self, goal_id: str) -> dict | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def bulk_create_indicator_goals(
         self,
         *,
@@ -154,7 +172,3 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
     @abstractmethod
     def list_goal_years_overview(self) -> list[dict]:
         raise NotImplementedError
-
-    def get_indicator_goal_policy(self, indicator_id: str) -> dict | None:
-        """Retorna scope_type e supports_branch_goals do indicador."""
-        return None

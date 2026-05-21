@@ -152,6 +152,26 @@ export async function deactivateStrategicIndicatorGoal(
   goalId: string,
   getAccessToken?: GetToken,
 ): Promise<{ id: string }> {
+  const response = await fetch(
+    `${BASE_URL}/indicator-goals/${goalId}/deactivate`,
+    {
+      method: "POST",
+      headers: buildHeaders(getAccessToken),
+    },
+  );
+
+  if (!response.ok) {
+    const message = await safeReadError(response);
+    throw new Error(message || "Falha ao desativar meta analítica.");
+  }
+
+  return response.json();
+}
+
+export async function deleteStrategicIndicatorGoal(
+  goalId: string,
+  getAccessToken?: GetToken,
+): Promise<{ message: string; goal_id: string }> {
   const response = await fetch(`${BASE_URL}/indicator-goals/${goalId}`, {
     method: "DELETE",
     headers: buildHeaders(getAccessToken),
@@ -159,7 +179,7 @@ export async function deactivateStrategicIndicatorGoal(
 
   if (!response.ok) {
     const message = await safeReadError(response);
-    throw new Error(message || "Falha ao desativar meta analítica.");
+    throw new Error(message || "Falha ao excluir meta analítica.");
   }
 
   return response.json();

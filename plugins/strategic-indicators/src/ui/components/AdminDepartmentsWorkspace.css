@@ -50,9 +50,18 @@
 .si-admin-list__item-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  font-size: 13px;
-  color: var(--text-muted);
+  gap: 8px;
+  font-size: 12px;
+}
+
+.si-admin-list__item-meta span {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2, #f4f4f5) 80%, var(--surface));
+  color: var(--text);
 }
 
 .si-admin-detail-card {
@@ -101,6 +110,12 @@
   letter-spacing: 0.04em;
 }
 
+.si-admin-detail-card__grid strong {
+  display: block;
+  font-size: 15px;
+  color: var(--text);
+}
+
 .si-admin-indicators-table {
   display: grid;
   gap: 12px;
@@ -111,15 +126,83 @@
   background: var(--surface);
   border-radius: 16px;
   padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.si-admin-indicators-table__row.is-inactive {
+  border-color: color-mix(in srgb, var(--warning, #b54708) 35%, var(--border));
+  background: color-mix(in srgb, var(--warning, #b54708) 6%, var(--surface));
+}
+
+.si-admin-indicators-table__main p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.si-admin-indicators-table__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.si-admin-indicators-table__title-row strong {
+  font-size: 16px;
+  color: var(--text);
+}
+
+.si-admin-id-chip {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary, #089bdb) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--primary, #089bdb) 28%, transparent);
+  color: var(--text);
 }
 
 .si-admin-indicators-table__meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  color: var(--text-muted);
-  font-size: 13px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.si-admin-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--border);
+  background: var(--surface-2, #f4f4f5);
+  color: var(--text);
+}
+
+.si-admin-meta-chip--weight {
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
+  background: color-mix(in srgb, var(--primary, #089bdb) 14%, var(--surface));
+}
+
+.si-admin-meta-chip--scope {
+  border-color: color-mix(in srgb, #6366f1 35%, transparent);
+  background: color-mix(in srgb, #6366f1 12%, var(--surface));
+}
+
+.si-admin-meta-chip--active {
+  border-color: color-mix(in srgb, var(--success, #067647) 40%, transparent);
+  background: color-mix(in srgb, var(--success, #067647) 14%, var(--surface));
+  color: color-mix(in srgb, var(--success, #067647) 85%, var(--text));
+}
+
+.si-admin-meta-chip--inactive {
+  border-color: color-mix(in srgb, var(--warning, #b54708) 45%, transparent);
+  background: color-mix(in srgb, var(--warning, #b54708) 16%, var(--surface));
+  color: color-mix(in srgb, var(--warning, #b54708) 90%, var(--text));
 }
 
 .si-admin-indicators-table__actions,

@@ -6,6 +6,9 @@ from dataclasses import dataclass, field
 @dataclass
 class UpdateStrategicIndicatorsIndicatorGoalRequest:
     goal_id: str
+    indicator_id: str | None = None
+    goal_year: int | None = None
+    goal_scope_branch: str | None = None
     goal_label: str
     goal_value: float
     goal_periodicity: str
