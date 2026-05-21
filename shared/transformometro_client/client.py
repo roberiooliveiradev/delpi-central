@@ -25,7 +25,7 @@ class TransformometroApiClient:
         raw = (
             base_url
             or os.getenv("TRANSFORMOMETRO_API_BASE_URL")
-            or "http://transformometro-api:8000/apps/transformometro-api/transformometro"
+            or "http://transformometro-api:8000"
         )
         self._base_url = raw.rstrip("/")
         self._timeout = timeout_seconds
@@ -37,7 +37,7 @@ class TransformometroApiClient:
         authorization: str | None = None,
     ) -> dict[str, Any]:
         return self._get(
-            "/integrations/engineering/transforma-mais/processes",
+            "/transformometro/integrations/engineering/transforma-mais/processes",
             params=params,
             authorization=authorization,
         )
@@ -49,7 +49,7 @@ class TransformometroApiClient:
         authorization: str | None = None,
     ) -> dict[str, Any]:
         return self._get(
-            "/integrations/engineering/transforma-mais/processes/summary",
+            "/transformometro/integrations/engineering/transforma-mais/processes/summary",
             params=params,
             authorization=authorization,
         )

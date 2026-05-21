@@ -98,6 +98,7 @@ append_kv "STRATEGIC_INDICATORS_DOCKERFILE" "Dockerfile"
 append_kv "STRATEGIC_INDICATORS_PYTHONPATH" "/app"
 append_kv "SI_MEASUREMENTS_BACKEND" "api_delpi_http"
 append_kv "SI_MEASUREMENTS_STUB" "false"
+append_kv "TRANSFORMOMETRO_API_BASE_URL" "http://transformometro-api:8000"
 
 echo
 echo "Concluído. Recrie os serviços que leem .env:"

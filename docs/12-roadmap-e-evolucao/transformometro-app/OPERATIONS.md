@@ -99,7 +99,7 @@ Cliente compartilhado: `shared/transformometro_client` (`TransformometroApiClien
 
 Variáveis:
 
-- `TRANSFORMOMETRO_API_BASE_URL` — ex.: `http://transformometro-api:8000/apps/transformometro-api/transformometro`
+- `TRANSFORMOMETRO_API_BASE_URL` — chamadas **entre containers**: `http://transformometro-api:8000` (sem `/apps/...`; o nginx faz rewrite só no browser). Rotas: `/transformometro/integrations/engineering/transforma-mais/*`
 - `API_DELPI_INTERNAL_SERVICE_TOKEN` — token **já previsto** no `infra/.env` de produção (`append-missing-env-production.sh`); mesmo valor em `transformometro-api`, `strategic-indicators-api` e `api-delpi`. Header: `X-Delpi-Service-Token` (padrão DELPI, igual conceito ao `CORE_API_INTEGRATIONS_SERVICE_TOKEN` da Core API).
 - `TRANSFORMOMETRO_SERVICE_BEARER` — legado opcional; evitar duplicar segredo.
 
