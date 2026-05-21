@@ -288,14 +288,6 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
                 scope_label="Consolidado",
                 branch=None,
             ),
-            *[
-                _TreeScopeConfig(
-                    scope_key=branch_code,
-                    scope_label=f"Filial {branch_code}",
-                    branch=branch_code,
-                )
-                for branch_code in BRANCH_UNIT_CODES
-            ],
         ]
 
     @staticmethod

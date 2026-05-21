@@ -211,7 +211,6 @@
 .si-tree-card--interactive,
 .si-tree-dept-card__link,
 .si-tree-igd-card__link,
-.si-tree-scope-card__link,
 .si-tree-indicator-card__link {
   display: block;
   width: 100%;
@@ -224,6 +223,15 @@
     box-shadow 0.22s ease,
     border-color 0.22s ease,
     filter 0.22s ease;
+}
+
+.si-tree-scope-card,
+.si-tree-card--static {
+  display: block;
+  width: 100%;
+  max-width: none;
+  color: inherit;
+  cursor: default;
 }
 
 .si-tree-card--interactive:hover {

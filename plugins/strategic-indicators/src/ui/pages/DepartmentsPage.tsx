@@ -26,7 +26,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
     filterState,
   } = useStrategicIndicatorsFilters();
 
-  const { model, loading, refreshing, error, reload, isMultiColumn } =
+  const { model, loading, refreshing, error, reload } =
     useStrategicIndicatorsDepartmentTree({
       viewMode,
       branch,
@@ -88,7 +88,6 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
           <DepartmentIgdTree
             model={model}
             filterState={filterState}
-            isMultiColumn={isMultiColumn}
             filterControls={{
               referenceMonth,
               viewMode,

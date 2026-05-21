@@ -18,9 +18,5 @@ export function resolveDepartmentTreeScopes(
     ];
   }
 
-  return [
-    { key: "consolidated", branch: undefined, label: "Consolidado" },
-    { key: "01", branch: "01", label: "Filial 01" },
-    { key: "02", branch: "02", label: "Filial 02" },
-  ];
+  return [{ key: "consolidated", branch: undefined, label: "Consolidado" }];
 }

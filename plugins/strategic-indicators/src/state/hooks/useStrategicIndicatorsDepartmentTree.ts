@@ -177,8 +177,7 @@ export function useStrategicIndicatorsDepartmentTree({
       refreshing,
       error,
       reload,
-      isMultiColumn: viewMode === "consolidated",
     }),
-    [model, loading, refreshing, error, reload, viewMode],
+    [model, loading, refreshing, error, reload],
   );
 }
