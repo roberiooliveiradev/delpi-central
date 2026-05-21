@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "transformometro",
+  "name": "Transformômetro",
+  "description": "Cadastro e mensuração de melhorias de processo — economia, investimento, ROI e payback.",
+  "icon": "gauge",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/transformometro",
+  "entry": "/apps/transformometro/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "transformometro.view",
+      "name": "Acessar Transformômetro",
+      "description": "Permite abrir o dashboard e listagens do Transformômetro.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.processes.manage",
+      "name": "Gerenciar processos",
+      "description": "Permite criar e editar processos.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.revisions.manage",
+      "name": "Gerenciar revisões",
+      "description": "Permite criar revisões e ativar cenários.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.dashboard.recalculate",
+      "name": "Recalcular dashboard",
+      "description": "Permite disparar o recálculo mensal derivado.",
+      "module": "transformometro"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/transformometro",
+      "label": "Transformômetro",
+      "permission": "transformometro.view",
+      "icon": "gauge",
+      "entry": null,
+      "order": 20,
+      "showInMenu": true
+    }
+  ],
+  "backend": {
+    "audience": "delpi-central",
+    "baseUrl": "/apps/transformometro-api/transformometro",
+    "issuer": "https://www.minhadelpi.com.br/auth",
+    "required": true,
+    "serviceName": "transformometro-api",
+    "validateJwt": true
+  },
+  "ui": {
+    "renderMode": "federated"
+  }
+}
