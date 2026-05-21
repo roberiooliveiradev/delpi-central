@@ -66,7 +66,7 @@ class BulkSetPluginsActiveUseCase:
                     "active": active,
                     "updated": updated,
                 },
-                target_user_id=None,  # broadcast
+                actor_user_id=actor_user_id,
             )
         )
 

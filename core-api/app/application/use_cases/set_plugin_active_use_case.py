@@ -56,7 +56,7 @@ class SetPluginActiveUseCase:
                     "pluginId": plugin_id,
                     "active": active,
                 },
-                target_user_id=None,  # broadcast
+                actor_user_id=actor_user_id,
             )
         )
 

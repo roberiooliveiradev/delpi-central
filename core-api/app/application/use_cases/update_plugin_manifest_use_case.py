@@ -239,7 +239,7 @@ class UpdatePluginManifestUseCase:
                 payload={
                     "pluginId": plugin_id,
                 },
-                target_user_id=None,
+                actor_user_id=actor_user_id,
             )
         )
 

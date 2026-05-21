@@ -239,10 +239,17 @@ def rollback(plugin_id: str):
             path="version",
         )
 
+    actor_user_id, actor_email = _request_actor()
+
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = RollbackPluginVersionUseCase(uow)
-            result = uc.execute(plugin_id, version)
+            result = uc.execute(
+                plugin_id,
+                version,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
 
             if not result.success:
                 return jsonify({"errors": result.errors}), 400

@@ -174,7 +174,7 @@ class RegisterPluginUseCase:
                     "pluginId": plugin_id,
                     "version": version,
                 },
-                target_user_id=None,
+                actor_user_id=actor_user_id,
             )
         )
 
