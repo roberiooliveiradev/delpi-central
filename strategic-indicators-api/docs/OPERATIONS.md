@@ -103,6 +103,7 @@ docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py up
 ```bash
 docker compose -f infra/docker-compose.yml restart strategic-indicators-api
 docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py --competence 2026-04
 ```
 
 Confirme `period_scores` para a competência (via container da API, sem depender de `.env` no shell):

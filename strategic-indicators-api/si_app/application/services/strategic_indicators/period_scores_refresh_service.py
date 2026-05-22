@@ -41,24 +41,34 @@ def _parse_branch_scopes() -> list[str | None]:
     return scopes or [None]
 
 
-def _department_scopes(*, include_per_department: bool) -> list[str | None]:
+def _department_scopes(
+    *,
+    include_per_department: bool,
+    reference_competence: str,
+) -> list[str | None]:
     scopes: list[str | None] = [None]
     if not include_per_department:
         return scopes
 
     snapshot_service = build_strategic_indicators_snapshot_service()
     catalog = snapshot_service.get_catalog_snapshot(
-        competence=current_competence(),
+        competence=reference_competence,
     )
     for department in catalog.departments_catalog:
         scopes.append(department.department_id)
     return scopes
 
 
-def refresh_period_scores_materialized() -> int:
+def refresh_period_scores_materialized(
+    *,
+    reference_competence: str | None = None,
+) -> int:
     """
     Recalcula e persiste period_scores e calculation_snapshots para os escopos configurados.
     Retorna quantidade de períodos gravados (upserts).
+
+    `reference_competence`: competência YYYY-MM de referência para a janela de tendência
+    (default: mês atual do servidor).
     """
     if not settings.SI_PERIOD_SCORES_ENABLED:
         logger.info("si_period_scores_refresh_skipped disabled")
@@ -68,9 +78,16 @@ def refresh_period_scores_materialized() -> int:
     state_repo.mark_started()
     started = time.perf_counter()
 
+    resolved_reference = (reference_competence or current_competence()).strip()
+    resolve_period(
+        competence=resolved_reference,
+        start_date=None,
+        end_date=None,
+    )
+
     logger.info(
         "si_period_scores_refresh_start competence=%s trends_months=%d",
-        current_competence(),
+        resolved_reference,
         settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS,
     )
 
@@ -80,7 +97,7 @@ def refresh_period_scores_materialized() -> int:
         )
 
         snapshot_service = build_strategic_indicators_snapshot_service()
-        reference_competence = current_competence()
+        reference_competence = resolved_reference
         trend_periods = build_trend_periods(
             reference_competence=reference_competence,
             months=settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS,
@@ -89,6 +106,7 @@ def refresh_period_scores_materialized() -> int:
         branch_scopes = _parse_branch_scopes()
         department_scopes = _department_scopes(
             include_per_department=settings.SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT,
+            reference_competence=reference_competence,
         )
 
         periods_by_competence: dict[str, object] = {

@@ -15,6 +15,11 @@ def main() -> None:
         description="Materializa period_scores no Postgres (mesmo job do scheduler).",
     )
     parser.add_argument(
+        "--competence",
+        default=None,
+        help="Competência de referência YYYY-MM (default: mês atual do servidor)",
+    )
+    parser.add_argument(
         "--log-level",
         default="INFO",
         help="Nível de log (DEBUG, INFO, ...)",
@@ -26,14 +31,23 @@ def main() -> None:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
+    competence_label = args.competence or "mês atual"
     print(
-        "si_refresh_start (consulta TOTVS/Sheets/RH; pode levar 1–3 min em produção)...",
+        (
+            f"si_refresh_start competence={competence_label} "
+            "(consulta TOTVS/Sheets/RH; pode levar 1–3 min em produção)..."
+        ),
         flush=True,
     )
     started = time.perf_counter()
-    upserted = refresh_period_scores_materialized()
+    upserted = refresh_period_scores_materialized(
+        reference_competence=args.competence,
+    )
     elapsed_ms = (time.perf_counter() - started) * 1000
-    print(f"refresh_ok periods={upserted} {elapsed_ms:.0f} ms", flush=True)
+    print(
+        f"refresh_ok competence={competence_label} periods={upserted} {elapsed_ms:.0f} ms",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

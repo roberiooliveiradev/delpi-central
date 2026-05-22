@@ -49,4 +49,8 @@ O provider `hr_indicators_snapshot_provider` alimenta medições reais para o c�
 - **PDI:** valor consolidado = soma das filiais (contagem).
 - **Avaliações:** valor consolidado = média das filiais (%).
 
-Após deploy, executar `refresh_period_scores.py` para o departamento `hr`.
+Após deploy:
+
+```bash
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py --competence 2026-04
+```

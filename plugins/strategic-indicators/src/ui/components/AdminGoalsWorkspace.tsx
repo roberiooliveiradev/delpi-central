@@ -547,6 +547,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                   }}
                 />
               ) : (
+                <div className="si-admin-goals-table-scroll">
                 <div className="si-admin-goals-table">
                   <div className="si-admin-goals-table__head">
                     <span>Indicador</span>
@@ -633,6 +634,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                       </div>
                     </article>
                   ))}
+                </div>
                 </div>
               )}
 
