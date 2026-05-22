@@ -30,7 +30,7 @@ import type { ChartGranularity } from "../types/chart";
 import type { TransformaProcess } from "../types/engineering";
 import { buildTransformaSavingsSeries } from "../utils/chartMonthlySeries";
 import { formatPeriodLabel } from "../utils/dates";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { suggestGranularity } from "../utils/periodBuckets";
 import {
   formatCurrency,
@@ -237,42 +237,55 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         <KpiCard
           title="Ganhos brutos no período"
           value={formatCurrency(summary?.total_gross_savings_in_period)}
-          subtitle={formatGoalSubtitle(periodLabel, summary)}
+          {...buildKpiGoalPresentation(
+            periodLabel,
+            summary,
+            undefined,
+            { realizedValue: summary?.total_gross_savings_in_period },
+          )}
           icon={<Coins size={22} />}
           loading={isBusy && !summary}
         />
         <KpiCard
           title="Economia líquida"
           value={formatCurrency(summary?.total_net_savings_until_now)}
-          subtitle="Acumulado no recorte"
+          contextLabel="Acumulado no recorte"
           icon={<Coins size={22} />}
           loading={isBusy && !summary}
         />
         <KpiCard
           title="Soluções implementadas"
           value={formatInteger(summary?.implemented_solutions_count)}
-          subtitle="Cenários de melhoria"
+          contextLabel="Cenários de melhoria"
           icon={<Lightbulb size={22} />}
           loading={isBusy && !summary}
         />
         <KpiCard
           title="Horas economizadas"
           value={formatDecimal(summary?.total_hours_saved_until_now, 1)}
-          subtitle={periodLabel}
+          contextLabel={periodLabel}
           icon={<Clock size={22} />}
           loading={isBusy && !summary}
         />
         <KpiCard
           title="ROI médio"
           value={formatPercent(summary?.average_roi, 1)}
-          subtitle={formatGoalSubtitle("Média no período", summary, (v) => formatPercent(v, 1))}
+          {...buildKpiGoalPresentation(
+            "Média no período",
+            summary,
+            (v) => formatPercent(v, 1),
+            {
+              realizedValue: summary?.average_roi,
+              showGoal: false,
+            },
+          )}
           icon={<Percent size={22} />}
           loading={isBusy && !summary}
         />
         <KpiCard
           title="Processos listados"
           value={String(processesData?.total ?? items.length)}
-          subtitle="Com filtros aplicados"
+          contextLabel="Com filtros aplicados"
           icon={<Lightbulb size={22} />}
           loading={isBusy && !processesData}
         />
