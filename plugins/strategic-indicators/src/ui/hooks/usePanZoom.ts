@@ -6,6 +6,10 @@ import {
   type PointerEvent as ReactPointerEvent,
   type WheelEvent as ReactWheelEvent,
 } from "react";
+import {
+  loadPersistedPanZoomTransform,
+  savePersistedPanZoomTransform,
+} from "./panZoomViewPersistence";
 
 export type PanZoomTransform = {
   x: number;
@@ -18,7 +22,13 @@ type UsePanZoomOptions = {
   maxScale?: number;
   zoomStep?: number;
   fitPadding?: number;
+  /** Quando true, refaz fit ao mudar o token (ex.: layout novo). */
+  autoFitOnTokenChange?: boolean;
   fitToken?: string | number;
+  /** Restaura zoom/posição entre recargas de dados e mudanças de filtro. */
+  persistKey?: string;
+  /** Ajusta à tela na primeira visita se não houver vista salva. */
+  fitOnMount?: boolean;
 };
 
 const DEFAULT_TRANSFORM: PanZoomTransform = { x: 0, y: 0, scale: 1 };
@@ -65,11 +75,21 @@ export function usePanZoom({
   maxScale = 2.5,
   zoomStep = 0.15,
   fitPadding = 48,
+  autoFitOnTokenChange = false,
   fitToken,
+  persistKey,
+  fitOnMount = true,
 }: UsePanZoomOptions = {}) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [transform, setTransform] = useState<PanZoomTransform>(DEFAULT_TRANSFORM);
+  const [transform, setTransform] = useState<PanZoomTransform>(() => {
+    if (!persistKey) {
+      return DEFAULT_TRANSFORM;
+    }
+
+    return loadPersistedPanZoomTransform(persistKey) ?? DEFAULT_TRANSFORM;
+  });
+  const didInitialFitRef = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
   const transformRef = useRef(transform);
   const spacePressedRef = useRef(false);
@@ -221,14 +241,46 @@ export function usePanZoom({
   }, []);
 
   useEffect(() => {
-    if (fitToken === undefined) return;
+    if (!persistKey) {
+      return;
+    }
+
+    const handle = window.setTimeout(() => {
+      savePersistedPanZoomTransform(persistKey, transformRef.current);
+    }, 120);
+
+    return () => window.clearTimeout(handle);
+  }, [persistKey, transform]);
+
+  useEffect(() => {
+    if (!fitOnMount || didInitialFitRef.current) {
+      return;
+    }
+
+    if (persistKey && loadPersistedPanZoomTransform(persistKey)) {
+      didInitialFitRef.current = true;
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      fitToView();
+      didInitialFitRef.current = true;
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [fitOnMount, fitToView, persistKey]);
+
+  useEffect(() => {
+    if (!autoFitOnTokenChange || fitToken === undefined) {
+      return;
+    }
 
     const frame = window.requestAnimationFrame(() => {
       fitToView();
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [fitToken, fitToView]);
+  }, [autoFitOnTokenChange, fitToken, fitToView]);
 
   const clearTouchGestures = useCallback(() => {
     touchPanRef.current = null;

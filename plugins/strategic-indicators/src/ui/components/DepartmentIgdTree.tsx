@@ -718,8 +718,6 @@ export function DepartmentIgdTree({
 
   const departmentCount = model.departmentOrder.length;
 
-  const fitToken = treeLayoutKey;
-
   const chartStyle = {
     "--si-org-chart-cols": "1",
     "--si-dept-count": String(departmentCount),
@@ -782,7 +780,7 @@ export function DepartmentIgdTree({
 
   return (
     <PanZoomCanvas
-      fitToken={fitToken}
+      persistViewKey="si-strategic-indicators-departments-map"
       immersive
       floatingControls={renderFloatingControls}
       className="si-org-chart-canvas"
