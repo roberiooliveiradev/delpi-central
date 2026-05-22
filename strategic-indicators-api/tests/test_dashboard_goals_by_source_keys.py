@@ -44,6 +44,9 @@ class _FakeGoalsRepository:
             }
         }
 
+    def list_branch_scoped_goals_map(self, **kwargs) -> dict[str, dict[str, dict]]:
+        return {}
+
     def list_latest_active_goals_map(self, **kwargs) -> dict[str, dict]:
         return {}
 
@@ -67,3 +70,4 @@ def test_dashboard_goals_returns_comparable_goal_for_source_key() -> None:
     assert items[0]["comparable_goal"] == 10.0
     assert items[0]["has_goal"] is True
     assert items[0]["goal_scope_branch"] == ""
+    assert items[0]["goal_scope_label"] == "Meta consolidada"

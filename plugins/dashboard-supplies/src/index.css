@@ -381,6 +381,30 @@
   border: 1px solid color-mix(in srgb, var(--ds-card-border) 88%, transparent);
 }
 
+.dashboard-supplies .ds-kpi-badge--scope {
+  color: #1e40af;
+  background: color-mix(in srgb, var(--ds-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ds-accent) 28%, transparent);
+}
+
+.dashboard-supplies .ds-kpi-badge--info {
+  color: #1e3a5f;
+  font-weight: 600;
+  white-space: normal;
+  max-width: 100%;
+  background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
+  border: 1px solid color-mix(in srgb, var(--ds-accent) 22%, transparent);
+}
+
+:root[data-theme="dark"] .dashboard-supplies .ds-kpi-badge--scope {
+  color: #93c5fd;
+  border-color: color-mix(in srgb, var(--ds-accent) 38%, transparent);
+}
+
+:root[data-theme="dark"] .dashboard-supplies .ds-kpi-badge--info {
+  color: #bfdbfe;
+}
+
 :root[data-theme="dark"] .dashboard-supplies .ds-kpi-badge--success {
   color: #86efac;
   background: color-mix(in srgb, #22c55e 22%, transparent);

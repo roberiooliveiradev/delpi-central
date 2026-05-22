@@ -2,10 +2,17 @@ export type PerformanceDirection = "higher_is_better" | "lower_is_better";
 
 export type GoalPerformanceTone = "success" | "warning";
 
+export type GoalScopeBadgeTone = "scope" | "info";
+
 export type GoalPerformanceBadge = {
   tone: GoalPerformanceTone;
   statusLabel: string;
   directionLabel: string;
+};
+
+export type GoalScopeBadge = {
+  tone: GoalScopeBadgeTone;
+  label: string;
 };
 
 export type DashboardGoalFields = {
@@ -14,6 +21,8 @@ export type DashboardGoalFields = {
   target?: number | null;
   has_goal?: boolean;
   goal_scope_branch?: string | null;
+  goal_scope_label?: string | null;
+  goal_scope_hint?: string | null;
   scope_type?: string | null;
   performance_direction?: PerformanceDirection | string | null;
   value_unit?: string | null;
@@ -22,7 +31,8 @@ export type DashboardGoalFields = {
 
 export type KpiGoalPresentation = {
   goalLabel: string | null;
-  goalScopeLabel: string | null;
+  goalScopeBadge: GoalScopeBadge | null;
+  goalScopeHint: string | null;
   goalPerformanceBadge: GoalPerformanceBadge | null;
   contextLabel: string;
 };
@@ -30,17 +40,51 @@ export type KpiGoalPresentation = {
 export function formatGoalScopeLabel(
   goalScopeBranch?: string | null,
   scopeType?: string | null,
-): string | null {
+): string {
   const branch = (goalScopeBranch ?? "").trim();
+  if (branch === "01" || branch === "02") {
+    return `Meta filial ${branch}`;
+  }
   if (branch) {
-    return `Filial ${branch}`;
+    return `Meta filial ${branch}`;
   }
 
   if ((scopeType ?? "").trim() === "per_unit") {
-    return "Por unidade";
+    return "Meta por unidade";
   }
 
-  return "Consolidado";
+  return "Meta consolidada";
+}
+
+export function resolveGoalScopeBadge(
+  goal?: DashboardGoalFields | null,
+): GoalScopeBadge | null {
+  if (!goal) {
+    return null;
+  }
+
+  const hint = goal.goal_scope_hint?.trim();
+  if (hint) {
+    return { tone: "info", label: hint };
+  }
+
+  const apiLabel = goal.goal_scope_label?.trim();
+  if (apiLabel) {
+    return { tone: "scope", label: apiLabel };
+  }
+
+  const goalLabel = goal.goal_label?.trim();
+  const hasComparable =
+    goal.comparable_goal != null && goal.comparable_goal > 0;
+
+  if (!goalLabel && !hasComparable && goal.has_goal !== true) {
+    return null;
+  }
+
+  return {
+    tone: "scope",
+    label: formatGoalScopeLabel(goal.goal_scope_branch, goal.scope_type),
+  };
 }
 
 export function formatPerformanceDirectionLabel(
@@ -141,14 +185,15 @@ export function buildKpiGoalPresentation(
   options?: { showGoal?: boolean; realizedValue?: number | null },
 ): KpiGoalPresentation {
   const showGoal = options?.showGoal ?? true;
+  const scopeBadge = showGoal ? resolveGoalScopeBadge(goal) : null;
   const goalLabel = showGoal ? resolveGoalLabel(goal, formatComparable) : null;
+  const scopeHint =
+    scopeBadge?.tone === "info" ? scopeBadge.label : goal?.goal_scope_hint?.trim() || null;
 
   return {
     goalLabel,
-    goalScopeLabel:
-      showGoal && goalLabel
-        ? formatGoalScopeLabel(goal?.goal_scope_branch, goal?.scope_type)
-        : null,
+    goalScopeBadge: scopeBadge?.tone === "scope" ? scopeBadge : null,
+    goalScopeHint: scopeHint,
     goalPerformanceBadge: showGoal
       ? resolveGoalPerformanceBadge(options?.realizedValue, goal)
       : null,

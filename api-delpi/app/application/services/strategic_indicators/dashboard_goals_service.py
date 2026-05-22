@@ -60,7 +60,11 @@ class DashboardGoalsService:
             return payload
 
         goal_fields = self._flatten_goal(goal)
-        if goal_fields.get("comparable_goal") is None and not goal_fields.get("goal_label"):
+        if (
+            goal_fields.get("comparable_goal") is None
+            and not goal_fields.get("goal_label")
+            and not goal_fields.get("goal_scope_hint")
+        ):
             return payload
         target_block = payload
 
@@ -206,6 +210,8 @@ class DashboardGoalsService:
                 "goal_periodicity": None,
                 "goal_mode": None,
                 "goal_scope_branch": None,
+                "goal_scope_label": None,
+                "goal_scope_hint": None,
                 "scope_type": None,
                 "performance_direction": None,
                 "indicator_id": None,
@@ -227,6 +233,8 @@ class DashboardGoalsService:
             "goal_periodicity": goal.get("goal_periodicity"),
             "goal_mode": goal.get("goal_mode"),
             "goal_scope_branch": goal.get("goal_scope_branch"),
+            "goal_scope_label": goal.get("goal_scope_label"),
+            "goal_scope_hint": goal.get("goal_scope_hint"),
             "scope_type": goal.get("scope_type"),
             "performance_direction": goal.get("performance_direction"),
             "indicator_id": goal.get("indicator_id"),
