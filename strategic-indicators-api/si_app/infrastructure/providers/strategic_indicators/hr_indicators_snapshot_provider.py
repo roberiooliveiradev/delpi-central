@@ -118,6 +118,10 @@ class HrIndicatorsSnapshotProvider(
             item.branch_code: item.performance_reviews_completion_pct
             for item in snapshot.branches
         }
+        satisfaction_unit_values = {
+            item.branch_code: item.internal_satisfaction_pct
+            for item in snapshot.branches
+        }
 
         items = [
             {
@@ -157,11 +161,12 @@ class HrIndicatorsSnapshotProvider(
                 {
                     "department_id": "hr",
                     "indicator_id": "hr-satisfaction",
-                    "value": float(snapshot.internal_satisfaction_pct),
+                    "value": self._resolve_indicator_value(
+                        unit_values=satisfaction_unit_values,
+                        branch=branch,
+                    ),
                     "source": "portal_rh_satisfaction",
-                    "unit_values": {
-                        "consolidated": float(snapshot.internal_satisfaction_pct)
-                    },
+                    "unit_values": satisfaction_unit_values,
                 }
             )
 

@@ -19,6 +19,7 @@ class HrBranchSnapshot:
     active_pdi_count: float | None = None
     active_pdi_pct: float | None = None
     performance_reviews_completion_pct: float | None = None
+    internal_satisfaction_pct: float | None = None
 
 
 @dataclass(frozen=True)
@@ -73,16 +74,7 @@ class HrMetricsSnapshotService:
         if not periods:
             return result
 
-        satisfaction_by_competence = self._repository.get_internal_satisfaction_snapshot_series(
-            periods=periods,
-        )
-
         for period in periods:
-            internal_satisfaction_raw = satisfaction_by_competence.get(period.competence, {})
-            internal_satisfaction_override = self._to_float(
-                internal_satisfaction_raw.get("value")
-            )
-
             key = (period.start_date, period.end_date, branch)
             cached = self._cache.get(key)
             if cached is not None:
@@ -93,7 +85,7 @@ class HrMetricsSnapshotService:
                 start_date=period.start_date,
                 end_date=period.end_date,
                 branch=branch,
-                internal_satisfaction_override=internal_satisfaction_override,
+                internal_satisfaction_override=None,
             )
             self._cache[key] = snapshot
             result[period.competence] = snapshot
@@ -238,6 +230,12 @@ class HrMetricsSnapshotService:
                     end_date=end_date,
                 )
             )
+            satisfaction_raw = self._repository.get_internal_satisfaction_snapshot(
+                branch_code=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            internal_satisfaction_branch = self._to_float(satisfaction_raw.get("value"))
 
             total_absence_hours = self._to_float(absenteeism_raw.get("total_absence_hours")) or 0.0
             expected_hours = self._to_float(absenteeism_raw.get("expected_hours")) or 0.0
@@ -288,6 +286,9 @@ class HrMetricsSnapshotService:
                     )
                     if performance_reviews_completion_pct is not None
                     else None,
+                    internal_satisfaction_pct=round(internal_satisfaction_branch, 2)
+                    if internal_satisfaction_branch is not None
+                    else None,
                 )
             )
 
@@ -320,16 +321,17 @@ class HrMetricsSnapshotService:
             else None
         )
 
-        if internal_satisfaction_override is None:
-            internal_satisfaction_raw = self._repository.get_internal_satisfaction_snapshot(
-                start_date=start_date,
-                end_date=end_date,
-            )
-            internal_satisfaction_pct = self._to_float(
-                internal_satisfaction_raw.get("value")
-            )
-        else:
+        satisfaction_values = [
+            item.internal_satisfaction_pct
+            for item in branch_snapshots
+            if item.internal_satisfaction_pct is not None
+        ]
+        if internal_satisfaction_override is not None:
             internal_satisfaction_pct = internal_satisfaction_override
+        elif satisfaction_values:
+            internal_satisfaction_pct = sum(satisfaction_values) / len(satisfaction_values)
+        else:
+            internal_satisfaction_pct = None
 
         return HrMetricsSnapshot(
             start_date=start_date,
