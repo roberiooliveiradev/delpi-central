@@ -155,7 +155,7 @@ export type InventoryTurnoverData = {
     strict_idd_period: boolean;
     period_reference: number;
   };
-  stock_context: {
+  stock_context: DashboardGoalFields & {
     total_stock_value: number;
     total_stock_quantity: number;
     total_records: number;
