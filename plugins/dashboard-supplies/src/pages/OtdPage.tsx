@@ -32,7 +32,7 @@ import type { ChartGranularity } from "../types/chart";
 import { buildOtdTrendSeries } from "../utils/chartMonthlySeries";
 import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatInteger, formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 320;
@@ -192,7 +192,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
         <KpiCard
           title="OTD"
           value={formatPercent(data?.summary.otd_percentage)}
-          subtitle={formatGoalSubtitle(periodLabel, data?.summary, formatPercent)}
+          {...buildKpiGoalPresentation(periodLabel, data?.summary, formatPercent)}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !data}
         />

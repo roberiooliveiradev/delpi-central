@@ -6,6 +6,7 @@ from typing import Any
 from strategic_indicators_client import StrategicIndicatorsApiClient, StrategicIndicatorsApiError
 
 from app.application.services.strategic_indicators.dashboard_goal_dates import (
+    normalize_si_branch,
     normalize_si_period_date,
 )
 from app.utils.logger import log_error
@@ -145,6 +146,7 @@ class DashboardGoalsService:
     ) -> dict[str, dict[str, Any]]:
         start_date = normalize_si_period_date(start_date)
         end_date = normalize_si_period_date(end_date)
+        branch = normalize_si_branch(branch)
 
         normalized_keys = tuple(
             sorted({str(key).strip() for key in source_keys if str(key).strip()})

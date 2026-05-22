@@ -1,4 +1,5 @@
 from app.application.services.strategic_indicators.dashboard_goal_dates import (
+    normalize_si_branch,
     normalize_si_period_date,
 )
 
@@ -9,3 +10,8 @@ def test_normalize_si_period_date_from_iso() -> None:
 
 def test_normalize_si_period_date_keeps_delpi_format() -> None:
     assert normalize_si_period_date("22-05-2026") == "22-05-2026"
+
+
+def test_normalize_si_branch_pads_totvs_code() -> None:
+    assert normalize_si_branch("2") == "02"
+    assert normalize_si_branch("") is None

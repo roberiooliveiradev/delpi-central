@@ -311,14 +311,34 @@
 }
 
 .dashboard-supplies .ds-kpi-value {
-  margin: 0 0 4px;
+  margin: 0 0 8px;
   font-size: var(--ds-font-kpi);
   line-height: 1.1;
   color: var(--ds-title);
 }
 
+.dashboard-supplies .ds-kpi-goal {
+  margin: 0 0 6px;
+  font-size: clamp(18px, 1.55vw, 28px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ds-accent);
+  letter-spacing: -0.02em;
+}
+
+.dashboard-supplies .ds-kpi-goal-prefix {
+  font-size: 0.72em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--ds-accent) 72%, var(--ds-text-muted));
+}
+
+.dashboard-supplies .ds-kpi-context,
 .dashboard-supplies .ds-kpi-subtitle {
-  font-size: var(--ds-font-xs);
+  display: block;
+  font-size: var(--ds-font-sm);
+  line-height: 1.35;
   color: var(--ds-text-muted);
 }
 

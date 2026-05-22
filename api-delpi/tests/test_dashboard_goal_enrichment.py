@@ -24,7 +24,7 @@ def test_enrich_dashboard_metric_attaches_goal_at_root() -> None:
     with (
         patch.object(service, "get_goal", return_value=_sample_goal()),
         patch(
-            "app.interface.http.routes.shared.dashboard_goal_enrichment.get_dashboard_goals_service",
+            "app.application.services.strategic_indicators.dashboard_goals_service.get_dashboard_goals_service",
             return_value=service,
         ),
     ):
@@ -44,7 +44,7 @@ def test_enrich_dashboard_metric_attaches_goal_under_summary_key() -> None:
     with (
         patch.object(service, "get_goal", return_value=_sample_goal()),
         patch(
-            "app.interface.http.routes.shared.dashboard_goal_enrichment.get_dashboard_goals_service",
+            "app.application.services.strategic_indicators.dashboard_goals_service.get_dashboard_goals_service",
             return_value=service,
         ),
     ):
@@ -64,7 +64,7 @@ def test_enrich_dashboard_metric_leaves_payload_when_goal_missing() -> None:
     with (
         patch.object(service, "get_goal", return_value=None),
         patch(
-            "app.interface.http.routes.shared.dashboard_goal_enrichment.get_dashboard_goals_service",
+            "app.application.services.strategic_indicators.dashboard_goals_service.get_dashboard_goals_service",
             return_value=service,
         ),
     ):

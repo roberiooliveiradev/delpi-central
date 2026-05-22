@@ -18,7 +18,7 @@ import {
   formatDecimal,
   formatInteger,
 } from "../utils/format";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 
 type MetricRow = { label: string; value: string };
 
@@ -173,7 +173,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
         <KpiCard
           title="Giro (meses)"
           value={formatDecimal(data?.summary.inventory_turnover_months, 2)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel} · ${periodLabel}`,
             data?.summary,
             (v) => formatDecimal(v, 2),
