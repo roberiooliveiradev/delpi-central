@@ -134,6 +134,8 @@ def get_stock_value(
         request = GetStockValueRequest(
             branch=branch,
             location=location,
+            start_date=start_date,
+            end_date=end_date,
             top_limit=top_limit,
         )
 

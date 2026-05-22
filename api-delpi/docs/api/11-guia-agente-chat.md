@@ -65,7 +65,7 @@ Permissão: `api-delpi.data` ou `api-delpi.access.full`.
 
 | O usuário quer… | Método e rota | `operationId` |
 |---|---|---|
-| Valor total de estoque (KPI) | `GET /supplies/stock-value` | `get_supplies_stock_value` |
+| Valor total de estoque (KPI) | `GET /supplies/stock-value` | `get_supplies_stock_value` — sem datas: SB2 atual; com `start_date`+`end_date`: estimativa SB9+SD3 ([detalhes](./supplies-estoque-historico.md)) |
 | Giro de estoque (IDD) | `GET /supplies/inventory-turnover` | (ver OpenAPI) |
 | CPV / OTD compras | `/supplies/cpv`, `/supplies/otd` | (ver OpenAPI) |
 

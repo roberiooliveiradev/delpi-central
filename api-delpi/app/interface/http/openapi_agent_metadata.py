@@ -108,7 +108,14 @@ SUPPLIES_STOCK_VALUE = agent_route(
     summary="Valor total de estoque (suprimentos)",
     description=(
         "Métrica agregada do valor total de estoque da empresa ou filial — indicador de suprimentos. "
-        "Não usar para saldo de um produto/código; para item use estoque do produto (/products/{code}/stock)."
+        "Sem start_date/end_date: saldo atual em SB2010 (B2_VATU1). "
+        "Com start_date e end_date: estimativa histórica pelo último fechamento em SB9010 (B9_VINI1) "
+        "mais movimentações líquidas em SD3010 até o fim do período "
+        "(entrada D3_TM < '500', saída caso contrário; intervalo [start_date, end_date] inclusivo, "
+        "fim exclusivo no dia seguinte). Retorna bloco estimation quando histórico. "
+        "location não se aplica no modo histórico. "
+        "Não usar para saldo de um produto/código; para item use estoque do produto (/products/{code}/stock). "
+        "Detalhes: docs/api/supplies-estoque-historico.md."
     ),
     operation_id="get_supplies_stock_value",
 )

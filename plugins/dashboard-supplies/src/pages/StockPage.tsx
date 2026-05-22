@@ -52,7 +52,12 @@ export function StockPage({ pathname }: StockPageProps) {
 
   const { data, loading, refreshing, requestProgress, error, reload } = useSuppliesResource(
     (signal) => getStockValue(stockParams, signal),
-    [stockParams.branch, stockParams.location]
+    [
+      stockParams.branch,
+      stockParams.location,
+      stockParams.start_date,
+      stockParams.end_date,
+    ]
   );
 
   const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
