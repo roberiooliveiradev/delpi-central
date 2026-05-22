@@ -23,6 +23,8 @@ class StrategicIndicatorCatalogItem:
     value_suffix: str | None = None
     value_decimals: int = 2
     branch_goals: dict[str, dict] = field(default_factory=dict)
+    resolved_goal_scope_branch: str = ""
+    has_resolved_goal: bool = True
 
 
 @dataclass(frozen=True)

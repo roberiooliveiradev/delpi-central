@@ -202,6 +202,8 @@ def test_scope_branch_02_uses_filial_unit_value_and_goal() -> None:
         scope_type="consolidated",
         performance_direction="higher_is_better",
         branch_goals={},
+        resolved_goal_scope_branch="02",
+        has_resolved_goal=True,
     )
 
     calculated = calculator.calculate_indicators(
@@ -227,6 +229,47 @@ def test_scope_branch_02_uses_filial_unit_value_and_goal() -> None:
     assert calculated[0].score < 8.0
 
 
+def test_scope_branch_keeps_consolidated_value_when_no_branch_goal() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    indicator = StrategicIndicatorCatalogItem(
+        indicator_id="engineering-transforma",
+        department_id="engineering",
+        indicator_name="Ganhos TRANSFORMA+",
+        weight_pct=40,
+        goal_label="Sem meta para filial 01",
+        goal_value=0.0,
+        goal_periodicity="monthly",
+        scope_type="consolidated",
+        performance_direction="higher_is_better",
+        branch_goals={},
+        resolved_goal_scope_branch="",
+        has_resolved_goal=False,
+    )
+
+    calculated = calculator.calculate_indicators(
+        indicators_catalog=[indicator],
+        measurements=[
+            StrategicIndicatorMeasuredValue(
+                indicator_id="engineering-transforma",
+                department_id="engineering",
+                value=14845.85,
+                source="transforma",
+                unit_values={"01": 6949.99, "02": 7895.86},
+            )
+        ],
+        competence="2026-04",
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        scope_branch="01",
+    )
+
+    assert len(calculated) == 1
+    assert calculated[0].value == 14845.85
+    assert calculated[0].score is None
+    assert calculated[0].classification == calculator.MISSING_GOAL_CLASSIFICATION
+    assert calculated[0].unit_values is None
+
+
 def test_scope_branch_02_department_average_of_units_single_branch() -> None:
     calculator = StrategicIndicatorsCalculator()
     catalog = [
@@ -241,6 +284,8 @@ def test_scope_branch_02_department_average_of_units_single_branch() -> None:
             scope_type="consolidated",
             performance_direction="higher_is_better",
             branch_goals={},
+            resolved_goal_scope_branch="02",
+            has_resolved_goal=True,
         )
     ]
     measurements = [

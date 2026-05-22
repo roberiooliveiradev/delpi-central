@@ -34,7 +34,10 @@
   backdrop-filter: none;
 }
 
-/* Desktop: uma linha — filhos das rows participam do flex do toolbar */
+/*
+ * Desktop (>1100px): uma linha — filhos das rows participam do flex do toolbar.
+ * Breakpoints SI: 1100 tablet | 768 phone | 480 phone estreito.
+ */
 .si-tree-map-floating__toolbar {
   display: flex;
   flex-wrap: nowrap;
@@ -231,7 +234,7 @@
   letter-spacing: 0.02em;
 }
 
-@media (min-width: 1025px) and (max-width: 1280px) {
+@media (min-width: 1101px) and (max-width: 1280px) {
   .si-tree-map-floating {
     max-width: calc(100vw - 32px);
   }
@@ -247,8 +250,8 @@
   }
 }
 
-/* Tablet e mobile: empilhar em linhas (evita sobreposição até ~1024px, ex. iPad Air 820px) */
-@media (max-width: 1024px) {
+/* ≤1100px: empilhar (tablet, iPad, janela estreita — mesmo corte das páginas SI) */
+@media (max-width: 1100px) {
   .si-tree-map-floating {
     max-width: calc(100vw - 20px);
   }
@@ -336,6 +339,14 @@
   }
 }
 
+/* Controles de zoom podem quebrar linha em tablets estreitos */
+@media (max-width: 900px) {
+  .si-tree-map-floating__row--viewport > .si-tree-map-floating__view-controls {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+}
+
 /* Telas estreitas: filtros em 2 colunas */
 @media (max-width: 768px) {
   .si-tree-map-floating {
@@ -351,10 +362,6 @@
     grid-column: 1 / -1;
   }
 
-  .si-tree-map-floating__row--viewport > .si-tree-map-floating__view-controls {
-    flex-wrap: wrap;
-    row-gap: 6px;
-  }
 }
 
 @media (max-width: 480px) {

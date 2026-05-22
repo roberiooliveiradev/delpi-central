@@ -14,7 +14,10 @@ from si_app.infrastructure.persistence.plugins.plugin_base_repository import (
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.catalog_admin_cascade import (
     delete_indicator_goal_hard,
 )
-from si_app.shared.goal_scope import normalize_goal_scope_branch
+from si_app.shared.goal_scope import (
+    normalize_goal_scope_branch,
+    uses_strict_branch_goal_resolution,
+)
 
 
 class PostgresStrategicIndicatorsIndicatorGoalsRepository(
@@ -30,6 +33,8 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         normalized = normalize_goal_scope_branch(scope_branch)
         if normalized:
             params.append(normalized)
+            if uses_strict_branch_goal_resolution(scope_branch):
+                return " AND ig.goal_scope_branch = %s"
             return " AND ig.goal_scope_branch IN (%s, '')"
         return " AND ig.goal_scope_branch = ''"
 
@@ -45,7 +50,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         (valid_from/valid_to), pois o CASE entra no ORDER BY após o WHERE.
         """
         normalized = normalize_goal_scope_branch(scope_branch)
-        if normalized:
+        if normalized and not uses_strict_branch_goal_resolution(scope_branch):
             return (
                 """
                 CASE

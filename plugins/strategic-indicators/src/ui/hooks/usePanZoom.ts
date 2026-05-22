@@ -7,6 +7,8 @@ import {
   type WheelEvent as ReactWheelEvent,
 } from "react";
 
+import { isSiTabletOrNarrowViewport } from "../shared/strategicIndicatorsLayout";
+
 export type PanZoomTransform = {
   x: number;
   y: number;
@@ -37,14 +39,6 @@ function isInteractivePanTarget(target: EventTarget | null) {
       'button, a, input, select, textarea, label, [data-pan-zoom-lock="true"]',
     ),
   );
-}
-
-function isMobileFitViewport() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return window.matchMedia("(max-width: 1024px)").matches;
 }
 
 function getTouchDistance(touches: TouchList) {
@@ -165,7 +159,7 @@ export function usePanZoom({
       return;
     }
 
-    const mobile = isMobileFitViewport();
+    const mobile = isSiTabletOrNarrowViewport();
     const mobileMinScale = Math.max(minScale, 0.55);
 
     if (mobile) {

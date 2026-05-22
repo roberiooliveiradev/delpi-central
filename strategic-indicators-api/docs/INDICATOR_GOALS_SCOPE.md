@@ -18,7 +18,9 @@ Aplica-se a **todos os departamentos** (Comercial, Financeiro, Produção, etc.)
 
 ## Resolução no painel
 
-- API com `branch=01` ou `02` → meta da filial; fallback para consolidado se não existir
+- API com `branch=01` ou `02` → meta **somente** da filial (`goal_scope_branch` igual à visão); **sem** fallback para consolidado
+- Indicador com medição consolidada (ex.: Engenharia, `aggregation_mode = consolidated`, sem `branch_goals`): filtro por filial mantém **valor consolidado**; meta exibe *Sem meta para filial XX* se não houver meta cadastrada para aquela filial
+- RH/Qualidade (`average_of_units` ou `branch_goals` preenchido): filtro por filial usa realizado e meta da unidade `01`/`02`
 - API sem `branch` (visão **Consolidado**), departamentos com `aggregation_mode = average_of_units` (RH, Qualidade):
   - **Cada indicador:** nota = média das notas das filiais 01 e 02 (realizado da unidade × meta da unidade)
   - **IDD do departamento:** média aritmética do IDD calculado separadamente para filial 01 e filial 02

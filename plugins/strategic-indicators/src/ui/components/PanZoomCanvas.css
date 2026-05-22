@@ -238,7 +238,7 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
   display: none;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1100px) {
   .si-pan-zoom__floating-bar {
     top: 6px;
     left: 6px;
@@ -247,12 +247,6 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
 
   .si-pan-zoom-shell--immersive .si-pan-zoom__surface {
     padding-top: clamp(118px, 16vh, 168px);
-  }
-}
-
-@media (max-width: 768px) {
-  .si-pan-zoom-shell--immersive .si-pan-zoom__surface {
-    padding-top: clamp(140px, 22vh, 200px);
   }
 
   .si-pan-zoom__hint-text--desktop {
@@ -272,6 +266,12 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
     justify-content: center;
     text-align: center;
     font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  .si-pan-zoom-shell--immersive .si-pan-zoom__surface {
+    padding-top: clamp(140px, 22vh, 200px);
   }
 }
 

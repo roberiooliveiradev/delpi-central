@@ -1,22 +1,20 @@
+/**
+ * Filtros de referência — breakpoints alinhados ao organograma e páginas SI:
+ * ≤1100 tablet | ≤768 phone | ≤480 phone estreito
+ */
+
 .si-reference-filters {
   display: grid;
-  grid-template-columns:
-    minmax(180px, 220px)
-    minmax(180px, 220px)
-    minmax(180px, 220px);
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 14px;
   align-items: end;
   width: 100%;
-  max-width: 720px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .si-reference-filters--with-comparison {
-  grid-template-columns:
-    minmax(180px, 220px)
-    minmax(180px, 220px)
-    minmax(180px, 220px)
-    minmax(180px, 220px);
-  max-width: 954px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .si-reference-filters__field {
@@ -52,17 +50,46 @@
   border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
 }
 
-@media (max-width: 1100px) {
-  .si-reference-filters,
+@media (max-width: 1280px) {
   .si-reference-filters--with-comparison {
-    grid-template-columns: repeat(2, minmax(180px, 1fr));
-    max-width: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 1100px) {
+  .si-reference-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 10px;
+  }
+
+  .si-reference-filters--with-comparison {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .si-reference-filters,
+  .si-reference-filters--with-comparison {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .si-reference-filters__field:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
   .si-reference-filters,
   .si-reference-filters--with-comparison {
     grid-template-columns: 1fr;
+  }
+
+  .si-reference-filters__field:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+
+  .si-reference-filters__input {
+    min-height: 40px;
+    font-size: 14px;
   }
 }
