@@ -27,8 +27,6 @@ function buildLmpQuery(params: LmpsDashboardParams = {}): string {
   }
   if (params.page) searchParams.set("page", String(params.page));
   if (params.page_size) searchParams.set("page_size", String(params.page_size));
-  if (params.scope) searchParams.set("scope", params.scope);
-
   const query = searchParams.toString();
   return query ? `?${query}` : "";
 }
