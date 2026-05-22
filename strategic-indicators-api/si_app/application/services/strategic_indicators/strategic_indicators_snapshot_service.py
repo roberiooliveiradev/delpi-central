@@ -489,6 +489,12 @@ class StrategicIndicatorsSnapshotService:
             end_date=period.end_date,
             competence=period.competence,
             scope_branch=branch,
+            precalculated_indicators=calculated_indicators,
+        )
+
+        calculated_departments = self._calculator.reconcile_period_snapshot_departments(
+            calculated_departments=calculated_departments,
+            calculated_indicators=calculated_indicators,
         )
 
         for index, department in enumerate(calculated_departments):
@@ -626,7 +632,7 @@ class StrategicIndicatorsSnapshotService:
         for period in periods:
             cached_snapshot = stored_snapshots.get(period.competence)
             if cached_snapshot is not None:
-                snapshots.append(cached_snapshot)
+                snapshots.append(self._reconcile_stored_period_snapshot(cached_snapshot))
                 continue
 
             indicators_catalog = (
@@ -708,10 +714,37 @@ class StrategicIndicatorsSnapshotService:
         if not is_standard_competence_period(period):
             return None
 
-        return self._period_scores_repository.get_period_snapshot(
+        stored = self._period_scores_repository.get_period_snapshot(
             competence=period.competence,
             scope_branch=normalize_scope_branch(branch),
             scope_department_id=normalize_scope_department_id(department_id),
+        )
+        if stored is None:
+            return None
+
+        return self._reconcile_stored_period_snapshot(stored)
+
+    def _reconcile_stored_period_snapshot(
+        self,
+        stored: StrategicIndicatorsPeriodSnapshot,
+    ) -> StrategicIndicatorsPeriodSnapshot:
+        reconciled_departments = self._calculator.reconcile_period_snapshot_departments(
+            calculated_departments=stored.calculated_departments,
+            calculated_indicators=stored.calculated_indicators,
+        )
+        igd, igd_exact, classification = self._calculator.calculate_igd(
+            reconciled_departments
+        )
+
+        return StrategicIndicatorsPeriodSnapshot(
+            period=stored.period,
+            measurements=stored.measurements,
+            measurement_errors=stored.measurement_errors,
+            calculated_indicators=stored.calculated_indicators,
+            calculated_departments=reconciled_departments,
+            igd=igd,
+            igd_exact=igd_exact,
+            classification=classification,
         )
 
     def _persist_calculation_snapshot(

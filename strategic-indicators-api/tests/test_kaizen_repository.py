@@ -62,3 +62,41 @@ def test_kaizen_summary_counts_only_implemented_in_period() -> None:
 
     assert summary.total_kaizens == 1
     assert summary.list_kaizen[0].title == "Abril"
+    assert summary.total_savings == 7.0
+
+
+def test_kaizen_financial_gain_includes_implanted_before_period() -> None:
+    repository = _build_repository(
+        [
+            {
+                "filial": "01",
+                "descricao": "Janeiro",
+                "status": "implantado",
+                "data": "16/01/2026",
+                "ganho_diario": "10",
+                "deleted": "FALSE",
+            },
+            {
+                "filial": "01",
+                "descricao": "Abril",
+                "status": "implantado",
+                "data": "24/04/2026",
+                "ganho_diario": "5",
+                "deleted": "FALSE",
+            },
+        ]
+    )
+
+    summary = repository.get_kaizen_summary(
+        KaizenSummaryRequest(
+            title=None,
+            status=None,
+            date_start="01-04-2026",
+            date_end="30-04-2026",
+            branch="01",
+        )
+    )
+
+    assert summary.total_kaizens == 1
+    assert summary.list_kaizen[0].title == "Abril"
+    assert summary.total_savings == 10 * 30 + 5 * 7
