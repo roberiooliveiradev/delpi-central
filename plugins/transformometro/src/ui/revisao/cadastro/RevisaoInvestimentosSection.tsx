@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { AppProps } from "../../../App";
+import { Pagination } from "../../../components/Pagination";
+import { useClientPagination } from "../../../hooks/useClientPagination";
 import {
   createInvestimento,
   deleteInvestimento,
@@ -8,6 +10,8 @@ import {
 } from "../../../data/api/transformometroApi";
 import { optionalDateField, todayDateInput, toDateInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
+
+const CADASTRO_TABLE_PAGE_SIZE = 10;
 
 const emptyInvForm = () => ({
   tipo_investimento: "unico",
@@ -37,6 +41,10 @@ export function RevisaoInvestimentosSection({
   onReload,
 }: Props) {
   const [invForm, setInvForm] = useState(emptyInvForm);
+  const { slice, page, setPage, total } = useClientPagination(
+    investimentos,
+    CADASTRO_TABLE_PAGE_SIZE
+  );
 
   async function handleAddInvestimento(e: React.FormEvent) {
     e.preventDefault();
@@ -73,6 +81,7 @@ export function RevisaoInvestimentosSection({
       badge={`${investimentos.length}`}
     >
       {investimentos.length > 0 ? (
+        <>
         <div className="ds-table-wrap ds-cadastro-section__table">
           <table className="ds-table ds-table--compact">
             <thead>
@@ -88,7 +97,7 @@ export function RevisaoInvestimentosSection({
               </tr>
             </thead>
             <tbody>
-              {investimentos.map((inv) => (
+              {slice.map((inv) => (
                 <tr key={inv.investimento_id}>
                   <td>{inv.tipo_investimento}</td>
                   <td>{inv.descricao_item}</td>
@@ -113,6 +122,14 @@ export function RevisaoInvestimentosSection({
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={page}
+          pageSize={CADASTRO_TABLE_PAGE_SIZE}
+          total={total}
+          onPageChange={setPage}
+          hideWhenSinglePage
+        />
+        </>
       ) : (
         <p className="ds-state-box">Nenhum investimento nesta revisão.</p>
       )}

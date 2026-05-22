@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
+import type { DataTableColumn } from "../../components/DataTable";
+import { DataTableSection } from "../../components/DataTableSection";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   useLoadingProgress,
@@ -111,6 +113,82 @@ export function ProcessoDetailPage({
   }
 
   const selectedRevisao = revisoes.find((r) => r.revisao_id === selectedRevisaoId);
+
+  const comparativoColumns = useMemo<DataTableColumn<RevisionCompareItem>[]>(
+    () => [
+      { key: "versao", header: "Versão", render: (row) => row.versao_revisao ?? "—" },
+      { key: "cenario", header: "Cenário", render: (row) => row.cenario_tipo ?? "—" },
+      { key: "ativa", header: "Ativa", render: (row) => (row.revisao_ativa ? "sim" : "—") },
+      {
+        key: "competencia",
+        header: "Última competência",
+        render: (row) => row.ultima_competencia ?? "—",
+      },
+      {
+        key: "meses",
+        header: "Meses c/ dados",
+        className: "ds-table__col--numeric",
+        render: (row) => row.meses_com_dados ?? 0,
+      },
+      {
+        key: "bruta",
+        header: "Economia bruta",
+        className: "ds-table__col--numeric",
+        render: (row) => row.totais.economia_bruta.toLocaleString("pt-BR"),
+      },
+      {
+        key: "liquida",
+        header: "Economia líquida",
+        className: "ds-table__col--numeric",
+        render: (row) => row.totais.economia_liquida_mes.toLocaleString("pt-BR"),
+      },
+      {
+        key: "horas",
+        header: "Horas/mês",
+        className: "ds-table__col--numeric",
+        render: (row) => row.totais.horas_economizadas_mes.toLocaleString("pt-BR"),
+      },
+    ],
+    []
+  );
+
+  const revisaoColumns = useMemo<DataTableColumn<Revisao>[]>(
+    () => [
+      { key: "versao", header: "Versão", render: (r) => r.versao_revisao },
+      { key: "cenario", header: "Cenário", render: (r) => r.cenario_tipo },
+      {
+        key: "inicio",
+        header: "Início",
+        render: (r) => toDateInputValue(r.data_inicio_vigencia) || "—",
+      },
+      {
+        key: "impl",
+        header: "Implantação",
+        render: (r) => toDateInputValue(r.data_implantacao) || "—",
+      },
+      { key: "fim", header: "Fim", render: (r) => toDateInputValue(r.data_fim_vigencia) || "—" },
+      {
+        key: "aprovacao",
+        header: "Aprovação",
+        render: (r) => (
+          <span className={badgeClassStatusAprovacao(r.status_aprovacao)}>
+            {labelStatusAprovacao(r.status_aprovacao)}
+          </span>
+        ),
+      },
+      {
+        key: "ativa",
+        header: "Ativa",
+        render: (r) =>
+          r.revisao_ativa ? (
+            <span className="ds-badge ds-badge--success">ativa</span>
+          ) : (
+            "—"
+          ),
+      },
+    ],
+    []
+  );
 
   const processFetchProgress = useTrackedSingleFetchProgress(loading && !processo);
   const processLoadingProgress = useLoadingProgress(
@@ -279,119 +357,47 @@ export function ProcessoDetailPage({
       ) : null}
 
       {comparativo.length > 0 ? (
-        <section className="ds-card ds-table-section">
-          <div className="ds-table-section__header">
-            <h2 className="ds-section-title">Comparativo de revisões</h2>
-          </div>
-          <div className="ds-table-wrap">
-            <table className="ds-table">
-              <thead>
-                <tr>
-                  <th>Versão</th>
-                  <th>Cenário</th>
-                  <th>Ativa</th>
-                  <th>Última competência</th>
-                  <th>Meses c/ dados</th>
-                  <th>Economia bruta</th>
-                  <th>Economia líquida</th>
-                  <th>Horas/mês</th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparativo.map((row) => (
-                  <tr key={row.revisao_id}>
-                    <td>{row.versao_revisao ?? "—"}</td>
-                    <td>{row.cenario_tipo ?? "—"}</td>
-                    <td>{row.revisao_ativa ? "sim" : "—"}</td>
-                    <td>{row.ultima_competencia ?? "—"}</td>
-                    <td>{row.meses_com_dados ?? 0}</td>
-                    <td>{row.totais.economia_bruta.toLocaleString("pt-BR")}</td>
-                    <td>{row.totais.economia_liquida_mes.toLocaleString("pt-BR")}</td>
-                    <td>{row.totais.horas_economizadas_mes.toLocaleString("pt-BR")}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <DataTableSection
+          title="Comparativo de revisões"
+          columns={comparativoColumns}
+          rows={comparativo}
+          rowKey={(row) => row.revisao_id}
+          hideSearch
+          pageSize={10}
+          emptyMessage=""
+        />
       ) : null}
 
-      <section className="ds-card ds-table-section ds-table-section--interactive">
-        <div className="ds-table-section__header">
-          <h2 className="ds-section-title">Revisões ({revisoes.length})</h2>
-        </div>
-        <p className="ds-hint">
-          Clique em uma revisão para cadastrar medição, investimentos e recursos compartilhados.
-        </p>
+      <DataTableSection
+        title={`Revisões (${revisoes.length})`}
+        columns={revisaoColumns}
+        rows={revisoes}
+        rowKey={(r) => r.revisao_id}
+        hideSearch
+        pageSize={10}
+        emptyMessage="Nenhuma revisão. Cadastre baseline e melhoria para mensurar economia."
+        onRowClick={(r) =>
+          setSelectedRevisaoId((id) => (id === r.revisao_id ? null : r.revisao_id))
+        }
+        getRowClassName={(r) =>
+          selectedRevisaoId === r.revisao_id ? "ds-table__row--selected" : undefined
+        }
+        footer={
+          <p className="ds-hint">
+            Clique em uma revisão para cadastrar medição, investimentos e recursos compartilhados.
+          </p>
+        }
+      />
 
-        {revisoes.length === 0 ? (
-          <p className="ds-state-box">Nenhuma revisão. Cadastre baseline e melhoria para mensurar economia.</p>
-        ) : (
-          <>
-            <div className="ds-table-wrap">
-              <table className="ds-table ds-table--clickable">
-                <thead>
-                  <tr>
-                    <th>Versão</th>
-                    <th>Cenário</th>
-                    <th>Início</th>
-                    <th>Implantação</th>
-                    <th>Fim</th>
-                    <th>Aprovação</th>
-                    <th>Ativa</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {revisoes.map((r) => (
-                    <tr
-                      key={r.revisao_id}
-                      className={[
-                        "ds-table__row--clickable",
-                        selectedRevisaoId === r.revisao_id ? "ds-table__row--selected" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      onClick={() =>
-                        setSelectedRevisaoId((id) =>
-                          id === r.revisao_id ? null : r.revisao_id
-                        )
-                      }
-                    >
-                      <td>{r.versao_revisao}</td>
-                      <td>{r.cenario_tipo}</td>
-                      <td>{toDateInputValue(r.data_inicio_vigencia) || "—"}</td>
-                      <td>{toDateInputValue(r.data_implantacao) || "—"}</td>
-                      <td>{toDateInputValue(r.data_fim_vigencia) || "—"}</td>
-                      <td>
-                        <span className={badgeClassStatusAprovacao(r.status_aprovacao)}>
-                          {labelStatusAprovacao(r.status_aprovacao)}
-                        </span>
-                      </td>
-                      <td>
-                        {r.revisao_ativa ? (
-                          <span className="ds-badge ds-badge--success">ativa</span>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {selectedRevisao && options ? (
-              <RevisaoCadastroPanel
-                revisao={selectedRevisao}
-                options={options}
-                getAccessToken={getAccessToken}
-                onError={setError}
-                onRevisaoUpdated={load}
-              />
-            ) : null}
-          </>
-        )}
-      </section>
+      {selectedRevisao && options ? (
+        <RevisaoCadastroPanel
+          revisao={selectedRevisao}
+          options={options}
+          getAccessToken={getAccessToken}
+          onError={setError}
+          onRevisaoUpdated={load}
+        />
+      ) : null}
     </TransformometroShell>
   );
 }

@@ -24,6 +24,7 @@ import {
 
 import type { AppProps } from "../../App";
 import { ChartCard } from "../../components/ChartCard";
+import { ChartGranularityToggle } from "../../components/ChartGranularityToggle";
 import { DataSourceBanner } from "../../components/DataSourceBanner";
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
@@ -57,13 +58,15 @@ import {
   type DashboardResumo,
   type OptionsData,
 } from "../../data/api/transformometroApi";
+import type { ChartGranularity } from "../../types/chart";
 import {
   dateInputToCompetencia,
   formatPeriodLabel,
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
-  monthKeyToLabel,
 } from "../../utils/dates";
+import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
+import { suggestGranularity } from "../../utils/periodBuckets";
 import { formatCurrency, formatDecimal, formatInteger, formatPercent } from "../../utils/format";
 
 const CHART_HEIGHT = 320;
@@ -89,6 +92,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [alertas, setAlertas] = useState<DashboardAlertItem[]>([]);
   const [porFamilia, setPorFamilia] = useState<DashboardFamiliaItem[]>([]);
   const [exportando, setExportando] = useState(false);
+  const [savingsGranularity, setSavingsGranularity] = useState<ChartGranularity>(() =>
+    suggestGranularity(getFirstDayOfMonthInputValue(), getTodayInputValue())
+  );
   const [requestProgress, setRequestProgress] = useState<RequestProgress>(
     EMPTY_REQUEST_PROGRESS
   );
@@ -151,6 +157,10 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    setSavingsGranularity(suggestGranularity(dateStart, dateEnd));
+  }, [dateStart, dateEnd]);
+
   async function handleExportCsv() {
     setExportando(true);
     setError(null);
@@ -198,15 +208,26 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const hasData = resumo !== null || evolucao.length > 0 || processos.length > 0;
   const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
 
-  const savingsChartData = useMemo(
-    () =>
-      evolucao.map((item) => ({
-        name: monthKeyToLabel(item.competencia),
-        bruta: item.economia_bruta,
-        liquida: item.economia_liquida_mes,
-      })),
-    [evolucao]
+  const savingsChart = useMemo(
+    () => buildEvolucaoSavingsSeries(evolucao, dateStart, dateEnd, savingsGranularity),
+    [dateEnd, dateStart, evolucao, savingsGranularity]
   );
+
+  const savingsChartData = savingsChart.points;
+
+  const savingsChartHint = useMemo(() => {
+    const parts = [periodLabel];
+    if (savingsGranularity === "day" && savingsChart.dayProrated) {
+      parts.push("economia diária proporcional ao total mensal");
+    }
+    if (savingsGranularity === "year") {
+      parts.push("soma por ano");
+    }
+    if (savingsChart.truncated) {
+      parts.push("primeiros 60 intervalos");
+    }
+    return parts.join(" · ");
+  }, [periodLabel, savingsChart.dayProrated, savingsChart.truncated, savingsGranularity]);
 
   const topDailyChart = useMemo(
     () =>
@@ -440,7 +461,17 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       </section>
 
       <section className="ds-charts-grid">
-        <ChartCard title="Economia no período" hint={periodLabel}>
+        <ChartCard
+          title="Economia no período"
+          hint={savingsChartHint}
+          toolbar={
+            <ChartGranularityToggle
+              idPrefix="tm-dashboard-savings"
+              value={savingsGranularity}
+              onChange={setSavingsGranularity}
+            />
+          }
+        >
           {savingsChartData.length === 0 && !isBusy ? (
             <p className="ds-state-box">
               Sem dados no período. Cadastre processos, execute Recalcular e ajuste os

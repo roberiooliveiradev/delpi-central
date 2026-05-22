@@ -677,7 +677,21 @@
 }
 
 .dashboard-transformometro .ds-chart-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.dashboard-transformometro .ds-chart-card__header-main {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.dashboard-transformometro .ds-chart-card__toolbar {
+  flex-shrink: 0;
 }
 
 .dashboard-transformometro .ds-chart-card__title {
@@ -744,6 +758,20 @@
   text-align: center;
   color: var(--ds-text-muted);
   padding: 24px;
+}
+
+.dashboard-transformometro .ds-table-section__footer {
+  margin: 0 0 12px;
+}
+
+.dashboard-transformometro .ds-table-section__footer .ds-hint {
+  margin: 0;
+}
+
+.dashboard-transformometro .ds-cadastro-section__pagination {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ds-card-border);
 }
 
 .dashboard-transformometro .ds-table-section__meta-group {

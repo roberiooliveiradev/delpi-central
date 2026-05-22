@@ -17,8 +17,12 @@ import {
   emptyRecursoForm,
   payloadFromRecursoForm,
 } from "../../recursos/recursoCatalogForm";
+import { Pagination } from "../../../components/Pagination";
+import { useClientPagination } from "../../../hooks/useClientPagination";
 import { CadastroSection } from "./CadastroSection";
 import { RecursoPreviewCard } from "./RecursoPreviewCard";
+
+const CADASTRO_TABLE_PAGE_SIZE = 10;
 
 export const emptyVinculoForm = () => ({
   recurso_compartilhado_id: "",
@@ -67,6 +71,7 @@ export function RevisaoRecursosSection({
   );
 
   const exigePeso = recursoSelecionado?.criterio_rateio === "por_peso";
+  const { slice, page, setPage, total } = useClientPagination(vinculos, CADASTRO_TABLE_PAGE_SIZE);
 
   async function handleCreateRecurso(e: React.FormEvent) {
     e.preventDefault();
@@ -83,6 +88,10 @@ export function RevisaoRecursosSection({
   }
 
   function startEditVinculo(v: VinculoRecurso) {
+    const index = vinculos.findIndex((item) => item.vinculo_id === v.vinculo_id);
+    if (index >= 0) {
+      setPage(Math.floor(index / CADASTRO_TABLE_PAGE_SIZE) + 1);
+    }
     setEditingVinculoId(v.vinculo_id);
     setEditVinculoForm({
       recurso_compartilhado_id: v.recurso_compartilhado_id,
@@ -156,6 +165,7 @@ export function RevisaoRecursosSection({
       badge={`${vinculos.length} vínculo(s)`}
     >
       {vinculos.length > 0 ? (
+        <>
         <div className="ds-table-wrap ds-cadastro-section__table">
           <table className="ds-table ds-table--compact">
             <thead>
@@ -170,7 +180,7 @@ export function RevisaoRecursosSection({
               </tr>
             </thead>
             <tbody>
-              {vinculos.map((v) =>
+              {slice.map((v) =>
                 editingVinculoId === v.vinculo_id ? (
                   <tr key={v.vinculo_id} className="ds-table__row--editing">
                     <td colSpan={7}>
@@ -306,6 +316,14 @@ export function RevisaoRecursosSection({
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={page}
+          pageSize={CADASTRO_TABLE_PAGE_SIZE}
+          total={total}
+          onPageChange={setPage}
+          hideWhenSinglePage
+        />
+        </>
       ) : (
         <p className="ds-state-box">Nenhum recurso vinculado. O rateio só considera recursos com vínculo ativo.</p>
       )}

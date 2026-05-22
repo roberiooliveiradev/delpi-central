@@ -3,19 +3,31 @@ type PaginationProps = {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+  /** Oculta controles quando há uma única página (padrão: true). */
+  hideWhenSinglePage?: boolean;
 };
 
-export function Pagination({ page, pageSize, total, onPageChange }: PaginationProps) {
+export function Pagination({
+  page,
+  pageSize,
+  total,
+  onPageChange,
+  hideWhenSinglePage = true,
+}: PaginationProps) {
   const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
   const canPrev = page > 1;
   const canNext = page < totalPages;
 
   if (total === 0) return null;
+  if (hideWhenSinglePage && totalPages <= 1) return null;
+
+  const rangeStart = (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, total);
 
   return (
-    <div className="ds-pagination">
+    <div className="ds-pagination" role="navigation" aria-label="Paginação da tabela">
       <span className="ds-pagination__info">
-        Página {page} de {totalPages} · {total} registro(s)
+        Exibindo {rangeStart}–{rangeEnd} de {total} · Página {page} de {totalPages}
       </span>
       <div className="ds-pagination__actions">
         <button
