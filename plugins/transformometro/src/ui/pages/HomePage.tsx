@@ -35,6 +35,7 @@ import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { CHART_COLORS } from "../../constants/chartColors";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { buildProcessoPath } from "../../utils/routeParser";
 import {
   fetchDashboardEvolucao,
   fetchDashboardProcessos,
@@ -155,12 +156,38 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
 
   const processColumns = useMemo<DataTableColumn<DashboardProcessoItem>[]>(
     () => [
-      { key: "codigo", header: "Código", render: (row) => row.codigo_processo ?? "—" },
+      {
+        key: "codigo",
+        header: "Código",
+        render: (row) =>
+          row.processo_id ? (
+            <button
+              type="button"
+              className="ds-link-btn"
+              onClick={() => onNavigate(buildProcessoPath(row.processo_id))}
+            >
+              {row.codigo_processo ?? "—"}
+            </button>
+          ) : (
+            row.codigo_processo ?? "—"
+          ),
+      },
       {
         key: "nome",
         header: "Processo",
         className: "ds-table__col--wide",
-        render: (row) => row.nome_processo ?? "—",
+        render: (row) =>
+          row.processo_id ? (
+            <button
+              type="button"
+              className="ds-link-btn"
+              onClick={() => onNavigate(buildProcessoPath(row.processo_id))}
+            >
+              {row.nome_processo ?? "—"}
+            </button>
+          ) : (
+            row.nome_processo ?? "—"
+          ),
       },
       {
         key: "liquida",
@@ -183,7 +210,7 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
         render: (row) => formatCurrency(row.economia_diaria),
       },
     ],
-    []
+    [onNavigate]
   );
 
   const isLoading = state === "loading";

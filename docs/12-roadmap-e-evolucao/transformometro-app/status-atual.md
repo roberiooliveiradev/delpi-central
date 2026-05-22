@@ -16,7 +16,9 @@ Atualizado: 2026-05-21 (Fase 4 completa no repo + catálogo Recursos + workflow 
 | Fase 4 | Alertas, CSV/Excel, por-família, comparativo, diagnóstico rateio |
 | Import planilha (CLI + UI) | ✅ |
 | Integração SI / api-delpi (`transformometro_client`) | ✅ |
-| Testes API | `scripts/ci-transformometro-api.sh` (24 testes) |
+| Testes API | `scripts/ci-transformometro-api.sh` |
+| URLs processo/revisão no MFE | `/processos/{id}` e `/processos/{id}/revisoes/{revisaoId}` |
+| Recálculo incremental | `POST /dashboard/recalcular?processo_id=` ou `revisao_id=` |
 
 ## Pendente (operacional)
 

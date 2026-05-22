@@ -448,9 +448,24 @@ export type DashboardProcessoItem = {
   economia_bruta?: number;
 };
 
-export function recalcularDashboard(getAccessToken?: () => string | undefined) {
-  return request<{ rows_upserted: number; elapsed_ms: number }>(
-    "/dashboard/recalcular",
+export type DashboardRecalcResult = {
+  mode: "full" | "incremental";
+  rows_upserted: number;
+  rows_deleted?: number;
+  elapsed_ms: number;
+  revisao_id?: string;
+  processo_id?: string;
+  competencia_inicio?: string;
+  competencia_fim?: string;
+};
+
+export function recalcularDashboard(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  const qs = params ? `?${new URLSearchParams(params)}` : "";
+  return request<DashboardRecalcResult>(
+    `/dashboard/recalcular${qs}`,
     getAccessToken,
     { method: "POST" }
   );

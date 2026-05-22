@@ -24,6 +24,12 @@ function isActive(path: string, currentPath?: string): boolean {
       currentPath === `${TRANSFORMOMETRO_ROUTES.home}/`
     );
   }
+  if (path === TRANSFORMOMETRO_ROUTES.processos) {
+    return (
+      currentPath === path ||
+      currentPath.startsWith(`${path}/`)
+    );
+  }
   return currentPath === path || currentPath.startsWith(`${path}/`);
 }
 

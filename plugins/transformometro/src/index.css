@@ -175,6 +175,23 @@
   cursor: wait;
 }
 
+.dashboard-transformometro .ds-link-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ds-accent);
+  font: inherit;
+  font-weight: 600;
+  text-align: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dashboard-transformometro .ds-link-btn:hover {
+  color: color-mix(in srgb, var(--ds-accent) 80%, var(--ds-title));
+}
+
 /* Filters */
 .dashboard-transformometro .ds-filters-row {
   display: grid;

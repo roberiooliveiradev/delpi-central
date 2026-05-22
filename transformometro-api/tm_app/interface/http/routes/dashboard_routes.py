@@ -18,8 +18,20 @@ router = APIRouter(prefix="/transformometro/dashboard", tags=["Transformômetro 
 
 
 @router.post("/recalcular")
-def recalcular_dashboard():
-    result = DashboardRecalcService().recalculate()
+def recalcular_dashboard(
+    revisao_id: str | None = None,
+    processo_id: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
+):
+    result = DashboardRecalcService().recalculate(
+        revisao_id=revisao_id,
+        processo_id=processo_id,
+        competencia_inicio=competencia_inicio,
+        competencia_fim=competencia_fim,
+    )
+    if result.get("mode") == "incremental":
+        return ok(result, "Recálculo incremental concluído.")
     return ok(result, "Dashboard recalculado.")
 
 

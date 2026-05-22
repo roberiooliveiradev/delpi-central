@@ -45,7 +45,7 @@ make test
 | Processos / revisões | `/processos`, `/revisoes`, `/revisoes/{id}/ativar` |
 | Workflow | `POST /revisoes/{id}/workflow/submeter`, `/aprovar`, `/rejeitar` |
 | Recursos | `/recursos-compartilhados`, vínculos `/revisao-recursos-compartilhados` |
-| Dashboard | `/dashboard/resumo`, `/alertas`, `/export.csv`, `/export.xls`, `POST /recalcular` |
+| Dashboard | `/dashboard/resumo`, `/alertas`, `/export.csv`, `/export.xls`, `POST /recalcular` (full ou `?processo_id=` / `?revisao_id=` / competências) |
 | Integração | `/integrations/engineering/transforma-mais/processes` |
 
 ## Importação da planilha (Transforma+)
