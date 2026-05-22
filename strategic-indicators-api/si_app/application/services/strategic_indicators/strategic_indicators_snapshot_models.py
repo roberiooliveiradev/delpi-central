@@ -34,6 +34,12 @@ class StrategicIndicatorsPeriodSnapshot:
 
 
 @dataclass(frozen=True)
+class PeriodScoresCacheEntry:
+    snapshot: StrategicIndicatorsPeriodSnapshot
+    catalog_inputs_hash: str | None = None
+
+
+@dataclass(frozen=True)
 class StrategicIndicatorsComparativeSnapshot:
     catalog: StrategicIndicatorsCatalogSnapshot
     current: StrategicIndicatorsPeriodSnapshot

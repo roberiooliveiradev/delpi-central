@@ -74,6 +74,8 @@ O refresh (`scripts/refresh_period_scores.py`) grava uma linha por combinação:
 
 Após deploy com metas por filial, rode o refresh manualmente se o job periódico ainda não tiver preenchido `01`/`02` para a competência desejada.
 
+Se o catálogo/metas mudarem (ex.: V021 desativa meta consolidada e cria metas `01`/`02`), a API **invalida** `period_scores` cujo `catalog_inputs_hash` não bate com o catálogo atual e recalcula na próxima leitura. Se o organograma ainda mostrar *Nenhum indicador neste escopo* em Produção, execute `scripts/refresh_period_scores.py` para a competência.
+
 ## UI (MFE)
 
 | Contexto | Rótulo exibido |

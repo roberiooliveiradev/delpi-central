@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
+        PeriodScoresCacheEntry,
         StrategicIndicatorsPeriodSnapshot,
     )
 
@@ -17,7 +18,7 @@ class StrategicIndicatorsPeriodScoresRepositoryPort(ABC):
         competence: str,
         scope_branch: str,
         scope_department_id: str,
-    ) -> StrategicIndicatorsPeriodSnapshot | None:
+    ) -> PeriodScoresCacheEntry | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -27,7 +28,7 @@ class StrategicIndicatorsPeriodScoresRepositoryPort(ABC):
         competences: list[str],
         scope_branch: str,
         scope_department_id: str,
-    ) -> dict[str, StrategicIndicatorsPeriodSnapshot]:
+    ) -> dict[str, PeriodScoresCacheEntry]:
         raise NotImplementedError
 
     @abstractmethod
