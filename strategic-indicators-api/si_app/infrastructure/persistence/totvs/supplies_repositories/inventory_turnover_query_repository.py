@@ -8,6 +8,7 @@ from si_app.application.dto.supplies.get_inventory_turnover_request import (
 from si_app.domain.ports.supplies.inventory_turnover_query_repository_port import (
     InventoryTurnoverQueryRepositoryPort,
 )
+from si_app.shared.branch_filter import effective_query_branch
 
 
 class InventoryTurnoverQueryRepository(
@@ -20,8 +21,9 @@ class InventoryTurnoverQueryRepository(
         qb = QueryBuilder()
         qb.raw("SB2.D_E_L_E_T_ = ''")
 
-        if request.branch:
-            qb.eq("SB2.B2_FILIAL", request.branch)
+        branch = effective_query_branch(request.branch)
+        if branch:
+            qb.eq("SB2.B2_FILIAL", branch)
 
         if request.location:
             qb.eq("SB2.B2_LOCAL", request.location)
@@ -33,8 +35,9 @@ class InventoryTurnoverQueryRepository(
         qb.raw("SD3.D_E_L_E_T_ = ''")
         qb.raw("SF4.D_E_L_E_T_ = ''")
 
-        if request.branch:
-            qb.eq("SD3.D3_FILIAL", request.branch)
+        branch = effective_query_branch(request.branch)
+        if branch:
+            qb.eq("SD3.D3_FILIAL", branch)
 
         qb.date_range("SD3.D3_EMISSAO", request.start_date, request.end_date)
         qb.in_list("SF4.F4_CF", self.DEFAULT_CFOPS)

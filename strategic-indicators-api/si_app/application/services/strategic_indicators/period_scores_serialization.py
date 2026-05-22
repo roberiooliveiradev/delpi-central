@@ -13,11 +13,15 @@ from si_app.application.services.strategic_indicators.strategic_indicators_snaps
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
+from si_app.shared.branch_filter import effective_query_branch
 from si_app.shared.json_encoding import to_json_safe
 
 
 def normalize_scope_branch(branch: str | None) -> str:
-    return (branch or "").strip()
+    effective = effective_query_branch(branch)
+    if effective is None:
+        return ""
+    return effective
 
 
 def normalize_scope_department_id(department_id: str | None) -> str:

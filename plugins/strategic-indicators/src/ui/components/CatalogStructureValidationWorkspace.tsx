@@ -251,7 +251,7 @@ export function CatalogStructureValidationWorkspace({
                   )}
                 </div>
 
-                <div>
+                <div className="si-catalog-validation__cell--goals">
                   <GoalScopeBadges
                     consolidated={row.goalCoverage.consolidated}
                     branch01={row.goalCoverage.branch01}
@@ -260,7 +260,7 @@ export function CatalogStructureValidationWorkspace({
                   <small>{row.goalCoverage.activeCount} meta(s) ativa(s)</small>
                 </div>
 
-                <div>
+                <div className="si-catalog-validation__cell--status">
                   <span
                     className={`si-catalog-validation__badge severity-${row.worstSeverity}`}
                   >
