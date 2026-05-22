@@ -684,8 +684,17 @@
   margin-bottom: var(--ds-section-gap);
 }
 
-.dashboard-engineering .ds-charts-grid--single {
+.dashboard-engineering .ds-charts-grid.ds-charts-grid--single,
+.dashboard-engineering .ds-charts-grid > :only-child {
+  grid-column: 1 / -1;
+}
+
+.dashboard-engineering .ds-charts-grid.ds-charts-grid--single {
   grid-template-columns: 1fr;
+}
+
+.dashboard-engineering .ds-chart-section--tall .ds-chart-card {
+  min-height: 0;
 }
 
 .dashboard-engineering .ds-metric-pairs {
