@@ -6,6 +6,7 @@ from si_app.application.dto.supplies.get_stock_value_request import GetStockValu
 from si_app.domain.ports.supplies.stock_value_query_repository_port import (
     StockValueQueryRepositoryPort,
 )
+from si_app.shared.branch_filter import effective_query_branch
 
 
 class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
@@ -136,7 +137,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
 
     def _build_historical_query(self, request: GetStockValueRequest) -> tuple[str, tuple]:
         period_start, period_end_exclusive = self._resolve_historical_period(request)
-        branch = request.branch
+        branch = effective_query_branch(request.branch)
 
         sb9_filter, sb9_params = self._branch_filter_clause("B9_FILIAL", branch)
         sb9_b9_filter, sb9_b9_params = self._branch_filter_clause("B9.B9_FILIAL", branch)
@@ -169,8 +170,9 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         qb = QueryBuilder()
         qb.raw("SB2.D_E_L_E_T_ = ''")
 
-        if request.branch:
-            qb.eq("SB2.B2_FILIAL", request.branch)
+        branch = effective_query_branch(request.branch)
+        if branch:
+            qb.eq("SB2.B2_FILIAL", branch)
 
         if request.location:
             qb.eq("SB2.B2_LOCAL", request.location)
