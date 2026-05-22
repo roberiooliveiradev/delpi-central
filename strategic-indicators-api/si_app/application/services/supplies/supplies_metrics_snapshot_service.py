@@ -131,6 +131,8 @@ class SuppliesMetricsSnapshotService:
         stock_value_result = self._get_stock_value_use_case.execute(
             GetStockValueRequest(
                 branch=branch,
+                start_date=start_date,
+                end_date=end_date,
             )
         )
 

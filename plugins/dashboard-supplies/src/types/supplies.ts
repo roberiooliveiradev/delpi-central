@@ -117,6 +117,14 @@ export type StockTopProduct = {
   total_stock_quantity?: number;
 };
 
+export type StockValueEstimation = {
+  enabled: boolean;
+  method: string;
+  start_date: string;
+  end_date_exclusive: string;
+  note: string;
+};
+
 export type StockValueData = {
   branch: string;
   location: string;
@@ -124,6 +132,7 @@ export type StockValueData = {
   by_branch: StockValueByLocation[];
   by_location: StockValueByLocation[];
   top_products: StockTopProduct[];
+  estimation?: StockValueEstimation;
 };
 
 export type InventoryTurnoverSummary = DashboardGoalFields & {
