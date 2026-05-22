@@ -7,6 +7,7 @@ from si_app.application.services.strategic_indicators.period_scores_serializatio
     serialize_period_snapshot,
 )
 from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
+    PeriodScoresCacheEntry,
     StrategicIndicatorsPeriodSnapshot,
 )
 from si_app.domain.ports.strategic_indicators.period_scores_repository_port import (
@@ -27,7 +28,7 @@ class PostgresStrategicIndicatorsPeriodScoresRepository(
         competence: str,
         scope_branch: str,
         scope_department_id: str,
-    ) -> StrategicIndicatorsPeriodSnapshot | None:
+    ) -> PeriodScoresCacheEntry | None:
         row = self.fetch_one(
             """
             SELECT
@@ -39,7 +40,8 @@ class PostgresStrategicIndicatorsPeriodScoresRepository(
                 classification,
                 calculated_departments,
                 calculated_indicators,
-                measurement_errors
+                measurement_errors,
+                catalog_inputs_hash
             FROM strategic_indicators.period_scores
             WHERE competence = %s
               AND scope_branch = %s
@@ -49,7 +51,10 @@ class PostgresStrategicIndicatorsPeriodScoresRepository(
         )
         if not row:
             return None
-        return deserialize_period_snapshot(row)
+        return PeriodScoresCacheEntry(
+            snapshot=deserialize_period_snapshot(row),
+            catalog_inputs_hash=row.get("catalog_inputs_hash"),
+        )
 
     def list_period_snapshots(
         self,
@@ -57,7 +62,7 @@ class PostgresStrategicIndicatorsPeriodScoresRepository(
         competences: list[str],
         scope_branch: str,
         scope_department_id: str,
-    ) -> dict[str, StrategicIndicatorsPeriodSnapshot]:
+    ) -> dict[str, PeriodScoresCacheEntry]:
         if not competences:
             return {}
 
@@ -73,7 +78,8 @@ class PostgresStrategicIndicatorsPeriodScoresRepository(
                 classification,
                 calculated_departments,
                 calculated_indicators,
-                measurement_errors
+                measurement_errors,
+                catalog_inputs_hash
             FROM strategic_indicators.period_scores
             WHERE scope_branch = %s
               AND scope_department_id = %s
@@ -82,12 +88,15 @@ class PostgresStrategicIndicatorsPeriodScoresRepository(
             (scope_branch, scope_department_id, *competences),
         )
 
-        result: dict[str, StrategicIndicatorsPeriodSnapshot] = {}
+        result: dict[str, PeriodScoresCacheEntry] = {}
         for row in rows:
             competence = str(row.get("competence") or "").strip()
             if not competence:
                 continue
-            result[competence] = deserialize_period_snapshot(row)
+            result[competence] = PeriodScoresCacheEntry(
+                snapshot=deserialize_period_snapshot(row),
+                catalog_inputs_hash=row.get("catalog_inputs_hash"),
+            )
         return result
 
     def upsert_period_snapshot(

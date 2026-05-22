@@ -41,6 +41,7 @@ from si_app.application.services.strategic_indicators.period_scores_serializatio
     normalize_scope_department_id,
 )
 from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
+    PeriodScoresCacheEntry,
     StrategicIndicatorsCatalogSnapshot,
     StrategicIndicatorsComparativeSnapshot,
     StrategicIndicatorsPeriodSnapshot,
@@ -569,11 +570,23 @@ class StrategicIndicatorsSnapshotService:
             and self._period_scores_repository is not None
             and periods
         ):
-            stored_snapshots = self._period_scores_repository.list_period_snapshots(
+            stored_entries = self._period_scores_repository.list_period_snapshots(
                 competences=[period.competence for period in periods],
                 scope_branch=scope_branch,
                 scope_department_id=scope_department_id,
             )
+            for period in periods:
+                entry = stored_entries.get(period.competence)
+                if entry is None:
+                    continue
+                if not self._period_scores_cache_is_current(
+                    entry=entry,
+                    period=period,
+                    department_id=department_id,
+                    branch=branch,
+                ):
+                    continue
+                stored_snapshots[period.competence] = entry.snapshot
 
         periods_to_compute = [
             period
@@ -714,15 +727,69 @@ class StrategicIndicatorsSnapshotService:
         if not is_standard_competence_period(period):
             return None
 
-        stored = self._period_scores_repository.get_period_snapshot(
+        entry = self._period_scores_repository.get_period_snapshot(
             competence=period.competence,
             scope_branch=normalize_scope_branch(branch),
             scope_department_id=normalize_scope_department_id(department_id),
         )
-        if stored is None:
+        if entry is None:
             return None
 
-        return self._reconcile_stored_period_snapshot(stored)
+        if not self._period_scores_cache_is_current(
+            entry=entry,
+            period=period,
+            department_id=department_id,
+            branch=branch,
+        ):
+            return None
+
+        return self._reconcile_stored_period_snapshot(entry.snapshot)
+
+    def _period_scores_cache_is_current(
+        self,
+        *,
+        entry: PeriodScoresCacheEntry,
+        period: ResolvedPeriod,
+        department_id: str | None,
+        branch: str | None,
+    ) -> bool:
+        stored_hash = (entry.catalog_inputs_hash or "").strip()
+        if not stored_hash:
+            logger.info(
+                (
+                    "si_period_scores_stale missing_catalog_hash "
+                    "competence=%s department_id=%s branch=%s"
+                ),
+                period.competence,
+                department_id,
+                branch,
+            )
+            return False
+
+        catalog = self.get_catalog_snapshot(
+            competence=period.competence,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            department_id=department_id,
+            branch=branch,
+        )
+        current_hash = build_catalog_inputs_fingerprint(catalog)
+        if stored_hash == current_hash:
+            return True
+
+        logger.info(
+            (
+                "si_period_scores_stale catalog_hash_mismatch "
+                "competence=%s department_id=%s branch=%s "
+                "stored=%s current=%s"
+            ),
+            period.competence,
+            department_id,
+            branch,
+            stored_hash,
+            current_hash,
+        )
+        return False
 
     def _reconcile_stored_period_snapshot(
         self,
