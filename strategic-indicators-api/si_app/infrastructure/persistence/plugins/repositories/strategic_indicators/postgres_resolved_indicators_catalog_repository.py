@@ -18,7 +18,11 @@ from si_app.shared.branch_scoped_goals import (
     format_branch_scoped_goal_label,
     pick_primary_branch_goal,
 )
-from si_app.shared.goal_scope import normalize_goal_scope_branch
+from si_app.shared.goal_scope import (
+    is_branch_unit_scope,
+    missing_goal_label_for_view,
+    normalize_goal_scope_branch,
+)
 
 logger = logging.getLogger("strategic_indicators.catalog")
 
@@ -94,6 +98,7 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                 )
 
         resolved: list[StrategicIndicatorCatalogItem] = []
+        view_branch = normalize_goal_scope_branch(branch)
 
         for item in structural_items:
             goal = goals_by_indicator.get(item.indicator_id)
@@ -105,6 +110,15 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
 
             if branch_goals:
                 resolved.append(self._catalog_item_from_branch_goals(item, branch_goals))
+                continue
+
+            if is_branch_unit_scope(view_branch):
+                resolved.append(
+                    self._catalog_item_missing_goal_for_branch_view(
+                        item,
+                        view_branch=view_branch,
+                    )
+                )
                 continue
 
             logger.warning(
@@ -145,6 +159,43 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             value_suffix=item.value_suffix,
             value_decimals=item.value_decimals,
             branch_goals=branch_goals,
+            resolved_goal_scope_branch=normalize_goal_scope_branch(
+                goal.get("goal_scope_branch"),
+            ),
+            has_resolved_goal=True,
+        )
+
+    @staticmethod
+    def _catalog_item_missing_goal_for_branch_view(
+        item: StrategicIndicatorCatalogItem,
+        *,
+        view_branch: str,
+    ) -> StrategicIndicatorCatalogItem:
+        return StrategicIndicatorCatalogItem(
+            indicator_id=item.indicator_id,
+            department_id=item.department_id,
+            indicator_name=item.indicator_name,
+            weight_pct=item.weight_pct,
+            goal_label=missing_goal_label_for_view(view_branch),
+            goal_value=0.0,
+            goal_periodicity="monthly",
+            goal_mode="standard",
+            monthly_targets=[],
+            scope_type=item.scope_type,
+            performance_direction=getattr(
+                item,
+                "performance_direction",
+                "higher_is_better",
+            ),
+            strategic_description=item.strategic_description,
+            source_key=item.source_key,
+            value_unit=item.value_unit,
+            value_prefix=item.value_prefix,
+            value_suffix=item.value_suffix,
+            value_decimals=item.value_decimals,
+            branch_goals={},
+            resolved_goal_scope_branch="",
+            has_resolved_goal=False,
         )
 
     @staticmethod
@@ -176,4 +227,6 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             value_suffix=item.value_suffix,
             value_decimals=item.value_decimals,
             branch_goals=branch_goals,
+            resolved_goal_scope_branch="",
+            has_resolved_goal=True,
         )
