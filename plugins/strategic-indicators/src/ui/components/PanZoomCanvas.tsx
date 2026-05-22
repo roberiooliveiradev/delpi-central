@@ -213,8 +213,11 @@ export function PanZoomCanvas({
 
         <div className="si-pan-zoom__hint">
           <Move size={14} aria-hidden />
-          <span>
+          <span className="si-pan-zoom__hint-text si-pan-zoom__hint-text--desktop">
             Arraste para navegar · Scroll ou pinça para zoom · Espaço + arraste
+          </span>
+          <span className="si-pan-zoom__hint-text si-pan-zoom__hint-text--mobile">
+            Um dedo: arrastar · Dois dedos: pinça para zoom
           </span>
         </div>
 

@@ -234,6 +234,30 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
   backdrop-filter: blur(4px);
 }
 
+.si-pan-zoom__hint-text--mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .si-pan-zoom__hint-text--desktop {
+    display: none;
+  }
+
+  .si-pan-zoom__hint-text--mobile {
+    display: inline;
+  }
+
+  .si-pan-zoom__hint {
+    display: inline-flex;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    max-width: none;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
 .si-pan-zoom__surface {
   position: absolute;
   top: 0;
@@ -275,10 +299,6 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
 @media (max-width: 640px) {
   .si-pan-zoom-shell--immersive .si-pan-zoom__surface {
     padding: 22px 10px 44px;
-  }
-
-  .si-pan-zoom__hint {
-    display: none;
   }
 
   .si-pan-zoom__nav .si-pan-zoom__zoom-label {

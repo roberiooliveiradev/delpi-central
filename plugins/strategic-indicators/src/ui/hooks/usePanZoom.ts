@@ -39,6 +39,27 @@ function isInteractivePanTarget(target: EventTarget | null) {
   );
 }
 
+function isMobileFitViewport() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.matchMedia("(max-width: 768px)").matches;
+}
+
+function getTouchDistance(touches: TouchList) {
+  if (touches.length < 2) {
+    return 0;
+  }
+
+  const first = touches[0];
+  const second = touches[1];
+  return Math.hypot(
+    first.clientX - second.clientX,
+    first.clientY - second.clientY,
+  );
+}
+
 export function usePanZoom({
   minScale = 0.25,
   maxScale = 2.5,
@@ -50,9 +71,16 @@ export function usePanZoom({
   const contentRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState<PanZoomTransform>(DEFAULT_TRANSFORM);
   const [isDragging, setIsDragging] = useState(false);
+  const transformRef = useRef(transform);
   const spacePressedRef = useRef(false);
   const dragRef = useRef<{
     pointerId: number;
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+  } | null>(null);
+  const touchPanRef = useRef<{
     startX: number;
     startY: number;
     originX: number;
@@ -66,6 +94,10 @@ export function usePanZoom({
     originX: number;
     originY: number;
   } | null>(null);
+
+  useEffect(() => {
+    transformRef.current = transform;
+  }, [transform]);
 
   const applyZoomAtPoint = useCallback(
     (clientX: number, clientY: number, nextScale: number) => {
@@ -98,9 +130,9 @@ export function usePanZoom({
     applyZoomAtPoint(
       rect.left + rect.width / 2,
       rect.top + rect.height / 2,
-      transform.scale * (1 + zoomStep),
+      transformRef.current.scale * (1 + zoomStep),
     );
-  }, [applyZoomAtPoint, transform.scale, zoomStep]);
+  }, [applyZoomAtPoint, zoomStep]);
 
   const zoomOut = useCallback(() => {
     const viewport = viewportRef.current;
@@ -110,9 +142,9 @@ export function usePanZoom({
     applyZoomAtPoint(
       rect.left + rect.width / 2,
       rect.top + rect.height / 2,
-      transform.scale * (1 - zoomStep),
+      transformRef.current.scale * (1 - zoomStep),
     );
-  }, [applyZoomAtPoint, transform.scale, zoomStep]);
+  }, [applyZoomAtPoint, zoomStep]);
 
   const resetView = useCallback(() => {
     setTransform(DEFAULT_TRANSFORM);
@@ -130,6 +162,22 @@ export function usePanZoom({
 
     if (!contentWidth || !contentHeight) {
       resetView();
+      return;
+    }
+
+    const mobile = isMobileFitViewport();
+    const mobileMinScale = Math.max(minScale, 0.55);
+
+    if (mobile) {
+      const scale = clamp(
+        (viewportWidth - fitPadding) / contentWidth,
+        mobileMinScale,
+        1,
+      );
+      const x = (viewportWidth - contentWidth * scale) / 2;
+      const y = Math.max(12, fitPadding / 4);
+
+      setTransform({ x, y, scale });
       return;
     }
 
@@ -182,7 +230,148 @@ export function usePanZoom({
     return () => window.cancelAnimationFrame(frame);
   }, [fitToken, fitToView]);
 
+  const clearTouchGestures = useCallback(() => {
+    touchPanRef.current = null;
+    pinchRef.current = null;
+  }, []);
+
+  const applyPinch = useCallback(
+    (touches: TouchList) => {
+      const pinch = pinchRef.current;
+      const viewport = viewportRef.current;
+      if (!pinch || !viewport || touches.length !== 2) {
+        return;
+      }
+
+      const distance = getTouchDistance(touches);
+      if (!distance || !pinch.distance) {
+        return;
+      }
+
+      const rect = viewport.getBoundingClientRect();
+      const midpointX =
+        (touches[0].clientX + touches[1].clientX) / 2 - rect.left;
+      const midpointY =
+        (touches[0].clientY + touches[1].clientY) / 2 - rect.top;
+      const nextScale = clamp(
+        pinch.scale * (distance / pinch.distance),
+        minScale,
+        maxScale,
+      );
+      const ratio = nextScale / pinch.scale;
+
+      setTransform({
+        scale: nextScale,
+        x: midpointX - (midpointX - pinch.originX) * ratio,
+        y: midpointY - (midpointY - pinch.originY) * ratio,
+      });
+    },
+    [maxScale, minScale],
+  );
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) {
+      return;
+    }
+
+    const onTouchStart = (event: TouchEvent) => {
+      if (event.touches.length === 2) {
+        dragRef.current = null;
+        touchPanRef.current = null;
+        setIsDragging(false);
+
+        const rect = viewport.getBoundingClientRect();
+        const current = transformRef.current;
+        const distance = getTouchDistance(event.touches);
+        const midpointX =
+          (event.touches[0].clientX + event.touches[1].clientX) / 2 - rect.left;
+        const midpointY =
+          (event.touches[0].clientY + event.touches[1].clientY) / 2 - rect.top;
+
+        pinchRef.current = {
+          distance,
+          scale: current.scale,
+          midpointX,
+          midpointY,
+          originX: current.x,
+          originY: current.y,
+        };
+        return;
+      }
+
+      if (event.touches.length === 1 && !pinchRef.current) {
+        if (isInteractivePanTarget(event.target)) {
+          return;
+        }
+
+        const touch = event.touches[0];
+        const current = transformRef.current;
+        touchPanRef.current = {
+          startX: touch.clientX,
+          startY: touch.clientY,
+          originX: current.x,
+          originY: current.y,
+        };
+      }
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (event.touches.length === 2 && pinchRef.current) {
+        event.preventDefault();
+        applyPinch(event.touches);
+        return;
+      }
+
+      const pan = touchPanRef.current;
+      if (event.touches.length === 1 && pan && !pinchRef.current) {
+        event.preventDefault();
+        const touch = event.touches[0];
+        setTransform((current) => ({
+          ...current,
+          x: pan.originX + (touch.clientX - pan.startX),
+          y: pan.originY + (touch.clientY - pan.startY),
+        }));
+      }
+    };
+
+    const onTouchEnd = (event: TouchEvent) => {
+      if (event.touches.length === 0) {
+        clearTouchGestures();
+        return;
+      }
+
+      if (event.touches.length === 1) {
+        pinchRef.current = null;
+        const touch = event.touches[0];
+        const current = transformRef.current;
+        touchPanRef.current = {
+          startX: touch.clientX,
+          startY: touch.clientY,
+          originX: current.x,
+          originY: current.y,
+        };
+      }
+    };
+
+    viewport.addEventListener("touchstart", onTouchStart, { passive: true });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: false });
+    viewport.addEventListener("touchend", onTouchEnd, { passive: true });
+    viewport.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    return () => {
+      viewport.removeEventListener("touchstart", onTouchStart);
+      viewport.removeEventListener("touchmove", onTouchMove);
+      viewport.removeEventListener("touchend", onTouchEnd);
+      viewport.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [applyPinch, clearTouchGestures]);
+
   const canStartPan = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") {
+      return false;
+    }
+
     if (isInteractivePanTarget(event.target)) {
       return false;
     }
@@ -197,17 +386,18 @@ export function usePanZoom({
       }
 
       event.preventDefault();
+      clearTouchGestures();
       dragRef.current = {
         pointerId: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
-        originX: transform.x,
-        originY: transform.y,
+        originX: transformRef.current.x,
+        originY: transformRef.current.y,
       };
       setIsDragging(true);
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [canStartPan, transform.x, transform.y],
+    [canStartPan, clearTouchGestures],
   );
 
   const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
@@ -240,70 +430,11 @@ export function usePanZoom({
       applyZoomAtPoint(
         event.clientX,
         event.clientY,
-        transform.scale * factor,
+        transformRef.current.scale * factor,
       );
     },
-    [applyZoomAtPoint, transform.scale, zoomStep],
+    [applyZoomAtPoint, zoomStep],
   );
-
-  const getTouchDistance = (touches: React.TouchList) => {
-    if (touches.length < 2) return 0;
-    const first = touches[0];
-    const second = touches[1];
-    const dx = first.clientX - second.clientX;
-    const dy = first.clientY - second.clientY;
-    return Math.hypot(dx, dy);
-  };
-
-  const handleTouchStart = useCallback(
-    (event: React.TouchEvent<HTMLDivElement>) => {
-      if (event.touches.length !== 2 || !viewportRef.current) return;
-
-      const viewport = viewportRef.current;
-      const rect = viewport.getBoundingClientRect();
-      const distance = getTouchDistance(event.touches);
-      const midpointX =
-        (event.touches[0].clientX + event.touches[1].clientX) / 2 - rect.left;
-      const midpointY =
-        (event.touches[0].clientY + event.touches[1].clientY) / 2 - rect.top;
-
-      pinchRef.current = {
-        distance,
-        scale: transform.scale,
-        midpointX,
-        midpointY,
-        originX: transform.x,
-        originY: transform.y,
-      };
-    },
-    [transform.scale, transform.x, transform.y],
-  );
-
-  const handleTouchMove = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
-    const pinch = pinchRef.current;
-    if (!pinch || event.touches.length !== 2) return;
-
-    event.preventDefault();
-    const distance = getTouchDistance(event.touches);
-    if (!distance || !pinch.distance) return;
-
-    const nextScale = clamp(
-      pinch.scale * (distance / pinch.distance),
-      minScale,
-      maxScale,
-    );
-    const ratio = nextScale / pinch.scale;
-
-    setTransform({
-      scale: nextScale,
-      x: pinch.midpointX - (pinch.midpointX - pinch.originX) * ratio,
-      y: pinch.midpointY - (pinch.midpointY - pinch.originY) * ratio,
-    });
-  }, [maxScale, minScale]);
-
-  const handleTouchEnd = useCallback(() => {
-    pinchRef.current = null;
-  }, []);
 
   const surfaceStyle = {
     transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
@@ -328,10 +459,6 @@ export function usePanZoom({
       onPointerMove: handlePointerMove,
       onPointerUp: endDrag,
       onPointerCancel: endDrag,
-      onTouchStart: handleTouchStart,
-      onTouchMove: handleTouchMove,
-      onTouchEnd: handleTouchEnd,
-      onTouchCancel: handleTouchEnd,
     },
   };
 }
