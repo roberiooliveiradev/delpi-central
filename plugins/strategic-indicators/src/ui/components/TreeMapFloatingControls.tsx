@@ -97,23 +97,7 @@ export function TreeMapFloatingControls({
             <div className="si-tree-map-floating__status">{status}</div>
           ) : null}
 
-          {actions || viewportNav ? (
-            <div
-              className="si-tree-map-floating__view-controls"
-              aria-label="Controles de visualização"
-            >
-              {actions ? (
-                <div className="si-tree-map-floating__tree-actions">{actions}</div>
-              ) : null}
-              {viewportNav ? (
-                <div className="si-tree-map-floating__nav">{viewportNav}</div>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-
-        {!collapsed ? (
-          <div className="si-tree-map-floating__body">
+          {!collapsed ? (
             <StrategicIndicatorsReferenceFilters
               referenceMonth={referenceMonth}
               viewMode={viewMode}
@@ -129,8 +113,22 @@ export function TreeMapFloatingControls({
               onMonthsToCompareChange={onMonthsToCompareChange}
               className="si-tree-map-floating__filters"
             />
-          </div>
-        ) : null}
+          ) : null}
+
+          {actions || viewportNav ? (
+            <div
+              className="si-tree-map-floating__view-controls"
+              aria-label="Controles de visualização"
+            >
+              {actions ? (
+                <div className="si-tree-map-floating__tree-actions">{actions}</div>
+              ) : null}
+              {viewportNav ? (
+                <div className="si-tree-map-floating__nav">{viewportNav}</div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

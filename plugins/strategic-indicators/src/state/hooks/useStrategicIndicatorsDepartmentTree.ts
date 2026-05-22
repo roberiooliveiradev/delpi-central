@@ -68,7 +68,7 @@ export function useStrategicIndicatorsDepartmentTree({
   competence,
   startDate,
   endDate,
-  months = 6,
+  months = 3,
   getAccessToken,
 }: UseStrategicIndicatorsDepartmentTreeParams) {
   const [model, setModel] = useState<DepartmentTreeModel | null>(null);

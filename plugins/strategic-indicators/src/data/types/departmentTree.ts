@@ -37,6 +37,7 @@ export type DepartmentTreeModel = {
   igd: number | null;
   igdExact: number | null;
   classification: string | null;
+  trendMonths?: number;
   igdSeries: DepartmentTreeSparkPoint[];
   columns: DepartmentTreeColumn[];
   departmentOrder: string[];

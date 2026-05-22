@@ -54,10 +54,12 @@
 
 .si-tree-map-floating__toolbar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-wrap: nowrap;
+  align-items: flex-end;
   justify-content: flex-start;
   gap: 10px 12px;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .si-tree-map-floating__toggle {
@@ -78,18 +80,21 @@
   border-color: color-mix(in srgb, var(--si-accent, #2563eb) 45%, var(--si-card-border));
 }
 
-.si-tree-map-floating__body {
+.si-tree-map-floating__filters.si-reference-filters {
   display: flex;
-  flex-wrap: wrap;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
   align-items: flex-end;
-  gap: 10px 14px;
+  gap: 10px 12px;
+  min-width: 0;
+  max-width: none;
+  grid-template-columns: none;
 }
 
-.si-tree-map-floating__filters.si-reference-filters {
-  grid-template-columns: repeat(4, minmax(140px, 1fr));
-  max-width: none;
-  gap: 10px 12px;
-  flex: 1 1 520px;
+.si-tree-map-floating__filters .si-reference-filters__field {
+  flex: 1 1 0;
+  min-width: 148px;
+  max-width: 200px;
 }
 
 .si-tree-map-floating__filters .si-reference-filters__input {
@@ -214,15 +219,18 @@
     max-width: calc(100vw - 32px);
   }
 
+  .si-tree-map-floating:not(.si-tree-map-floating--collapsed) .si-tree-map-floating__toolbar {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
   .si-tree-map-floating__filters.si-reference-filters {
-    grid-template-columns: repeat(2, minmax(130px, 1fr));
     flex-basis: 100%;
+    flex-wrap: wrap;
   }
 
   .si-tree-map-floating:not(.si-tree-map-floating--collapsed) .si-tree-map-floating__view-controls {
-    margin-left: 0;
-    width: 100%;
-    justify-content: space-between;
+    margin-left: auto;
   }
 }
 
@@ -252,12 +260,17 @@
   }
 
   .si-tree-map-floating:not(.si-tree-map-floating--collapsed) .si-tree-map-floating__toolbar {
-    flex-direction: column;
+    flex-wrap: wrap;
     align-items: stretch;
   }
 
   .si-tree-map-floating__filters.si-reference-filters {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .si-tree-map-floating__filters .si-reference-filters__field {
+    max-width: none;
   }
 
   .si-tree-map-floating__panel--collapsed .si-tree-map-floating__toolbar {

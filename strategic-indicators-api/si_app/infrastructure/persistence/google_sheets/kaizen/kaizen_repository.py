@@ -67,21 +67,26 @@ class KaizenRepository(KaizenQueryRepositoryPort):
     def _parse_date_safe(self, value: Optional[str]):
         return parse_spreadsheet_date(value)
 
-    def _was_active_in_range(
+    def _implemented_in_range(
         self,
         implemented_at: Optional[str],
         range_start: Optional[str],
         range_end: Optional[str],
     ) -> bool:
+        """Kaizen entra no período quando a data de implantação (coluna data) cai no intervalo."""
         impl_date = self._parse_date_safe(implemented_at)
         if impl_date is None:
             return False
 
-        end = self._parse_date_safe(range_end) if range_end else date.today()
-        if end is None:
+        start = self._parse_date_safe(range_start) if range_start else None
+        end = self._parse_date_safe(range_end) if range_end else None
+
+        if start is not None and impl_date < start:
+            return False
+        if end is not None and impl_date > end:
             return False
 
-        return impl_date <= end
+        return True
 
     def _days_active_in_range(
         self,
@@ -149,7 +154,7 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             title_ok = True
             status_ok = True
             branch_ok = True
-            period_ok = self._was_active_in_range(
+            period_ok = self._implemented_in_range(
                 row.get("date_implemented"),
                 request.date_start,
                 request.date_end,

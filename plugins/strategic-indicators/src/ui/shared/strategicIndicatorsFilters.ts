@@ -49,3 +49,27 @@ export function resolveStrategicIndicatorsBranch(
 ) {
   return viewMode === "branch" ? branch : undefined;
 }
+
+export function isStrategicIndicatorsDepartmentsRoute(
+  pathname = typeof window !== "undefined" ? window.location.pathname : "",
+): boolean {
+  return pathname.includes("/strategic-indicators/departments");
+}
+
+export function getDefaultMonthsToCompare(
+  pathname = typeof window !== "undefined" ? window.location.pathname : "",
+): number {
+  return isStrategicIndicatorsDepartmentsRoute(pathname) ? 3 : 6;
+}
+
+export function formatComparisonMonthsLabel(months: number): string {
+  return `${months} ${months === 1 ? "mês" : "meses"}`;
+}
+
+export function sliceTrendPoints<T>(points: readonly T[], months: number): T[] {
+  if (months <= 0 || points.length <= months) {
+    return [...points];
+  }
+
+  return points.slice(-months);
+}

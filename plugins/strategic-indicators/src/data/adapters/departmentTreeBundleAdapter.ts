@@ -44,5 +44,9 @@ export function adaptDepartmentTreeBundleToModel(
     return accumulator;
   }, {});
 
-  return enrichDepartmentTreeWithTrends(baseModel, trendsByScope);
+  return enrichDepartmentTreeWithTrends(
+    baseModel,
+    trendsByScope,
+    Math.max(2, response.months ?? 6),
+  );
 }

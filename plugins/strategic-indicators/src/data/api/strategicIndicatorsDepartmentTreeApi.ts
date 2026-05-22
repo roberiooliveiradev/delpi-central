@@ -53,7 +53,7 @@ export async function fetchStrategicIndicatorsDepartmentTree({
   competence,
   startDate,
   endDate,
-  months = 6,
+  months = 3,
   getAccessToken,
   signal,
 }: FetchStrategicIndicatorsDepartmentTreeParams): Promise<StrategicIndicatorsDepartmentTreeResponse> {
