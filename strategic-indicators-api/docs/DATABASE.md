@@ -50,7 +50,7 @@ Colunas relevantes: `igd`, `igd_exact`, `classification`, `calculated_department
 Rotas de leitura (`executive-summary`, `departments`, `indicators`, `trends`, `alerts`, `presentation`) consultam esta tabela quando o período é mês calendário padrão e o registro existe para o par `(competence, scope_branch, scope_department_id)`.
 
 - Visão **consolidado** na API: `scope_branch = ''`.
-- Visão **por filial** (`branch=01` ou `02`): exige linha com o mesmo `scope_branch`; sem ela a API recalcula em tempo real (consulta metas + medições).
+- Visão **por filial** (`branch=01` ou `02`): exige linha com o mesmo `scope_branch`; sem ela a API recalcula em tempo real (consulta metas + medições). Metas resolvidas usam filtro estrito `goal_scope_branch = filial` (sem fallback para `''`) — ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
 
 O job `SI_PERIOD_SCORES_REFRESH_*` recalcula e grava a cada 5 minutos (padrão). Após mudanças de metas ou correção de bug na resolução por filial, execute `scripts/refresh_period_scores.py` manualmente.
 

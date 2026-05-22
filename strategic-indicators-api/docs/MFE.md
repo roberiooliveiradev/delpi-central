@@ -45,9 +45,45 @@ Quando a API retorna `has_value: false` ou `value` / `score` `null`:
 - `realized` pode trazer chaves com `null` por filial; cada unidade é formatada com o mesmo rótulo de ausência.
 - Médias de departamento/unidade na UI consideram apenas indicadores com `hasValue` e `score` numérico.
 - Metas e gaps multi-filial na visão consolidado: **`01: valor | 02: valor`** (código da filial, sem prefixo "Un.") — `formatBranchScopedMetric` em `indicatorValueFormatter.ts`.
-- Filtro de filial e admin de metas exibem rótulos `01`, `02` (`getGoalScopeBranchLabel` em `ui/presentation/labels.ts`).
+- Admin de metas: escopo da meta com rótulos `01`, `02` (`getGoalScopeBranchLabel` em `ui/presentation/labels.ts`).
 
-Contrato da API: [API.md](./API.md) e regras de cálculo: [ARCHITECTURE.md](./ARCHITECTURE.md).
+Contrato da API: [API.md](./API.md) e regras de cálculo / metas: [ARCHITECTURE.md](./ARCHITECTURE.md), [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
+
+## Rótulos da visão (consolidado vs filial)
+
+O filtro global **Visão** (`StrategicIndicatorsReferenceFilters`) define se os painéis leem a API com ou sem `branch`.
+
+| `viewMode` | Rótulo na UI | Query na API |
+|------------|--------------|--------------|
+| `consolidated` | **Consolidado** | sem `branch` |
+| `branch` + filial `01`/`02` | **Filial 01** / **Filial 02** | `branch=01` ou `02` |
+
+Helpers:
+
+| Arquivo | Função |
+|---------|--------|
+| `ui/shared/strategicIndicatorsFilters.ts` | `getFilterViewScopeLabel`, `resolveStrategicIndicatorsBranch` |
+| `ui/presentation/labels.ts` | `getGoalScopeBranchLabel` (cadastro de metas) |
+| `data/departmentTreeScopes.ts` | `Filial 01` / `Filial 02` no organograma |
+
+**Página Indicadores** (`IndicatorsPage`): cada linha recebe `viewScopeLabel` — usado na coluna **Escopo**, no subtítulo (`strategicDescription`) e repassado ao detalhe rápido.
+
+**Valor atual / gap** (`indicatorValueFormatter.ts`): com filtro por filial, `formatIndicatorRealizedDisplay` e `formatIndicatorGapDisplay` recebem `IndicatorDisplayContext` (`filterViewScopeLabel`, `activeBranch`) para substituir o prefixo **`Consolidado:`** por **`Filial 01:`** (ou `02`) quando o payload traz a chave `consolidated` no mapa `realized`/`gaps`.
+
+**Sem meta na filial:** a API envia `goal_label` como *Sem meta para filial XX*; classificação **Sem meta para esta visão** quando há realizado mas não há meta para o escopo (ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md)).
+
+## Breakpoints de layout (SI)
+
+Constantes compartilhadas em `ui/shared/strategicIndicatorsLayout.ts` (alinhadas ao CSS do plugin):
+
+| Token | Largura | Uso |
+|-------|---------|-----|
+| `desktopCompact` | ≤1280px | Toolbar / filtros compactos |
+| `tablet` | ≤1100px | Empilhamento (organograma, barra flutuante) |
+| `phone` | ≤768px | Filtros em 2 colunas |
+| `phoneNarrow` | ≤480px | Filtros em 1 coluna; controles de zoom em coluna |
+
+`isSiTabletOrNarrowViewport()` — usado em `usePanZoom` para fit inicial em tablet.
 
 ## Erros padronizados (todas as páginas analíticas)
 
@@ -116,9 +152,10 @@ Detalhes: [PERFORMANCE_IMPLEMENTATION.md](./PERFORMANCE_IMPLEMENTATION.md).
 Componente `StrategicIndicatorsReferenceFilters`:
 
 - **Mês de referência** — `competence` (`YYYY-MM`)
-- **Visão** — consolidado vs filial (`branch`)
+- **Visão** — consolidado vs por filial (`viewMode` + `branch`)
+- **Meses para comparar** — em `/departments` (padrão 3 meses)
 
-Helpers: `ui/shared/strategicIndicatorsFilters.ts`.
+Helpers: `ui/shared/strategicIndicatorsFilters.ts`, persistência em `strategicIndicatorsFilterUrl.ts`.
 
 ## Build e deploy
 

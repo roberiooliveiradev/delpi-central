@@ -14,7 +14,7 @@ import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsP
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
-import { getScopeTypeLabel } from "../presentation/labels";
+import { getFilterViewScopeLabel } from "../shared/strategicIndicatorsFilters";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
@@ -138,6 +138,11 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
     requestProgress
   );
 
+  const viewScopeLabel = useMemo(
+    () => getFilterViewScopeLabel(viewMode, branch),
+    [viewMode, branch],
+  );
+
   const analyticsItems = useMemo<IndicatorAnalyticsViewItem[]>(
     () =>
       items.map((item) => ({
@@ -145,8 +150,9 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         departmentId: item.departmentId,
         departmentName: item.departmentName,
         indicatorName: item.name,
-        strategicDescription: `${getScopeTypeLabel(item.scopeType)} · ${formatMetaSource(item.source)} · Meta ${item.goalLabel}`,
+        strategicDescription: `${viewScopeLabel} · ${formatMetaSource(item.source)} · Meta ${item.goalLabel}`,
         scopeType: item.scopeType,
+        viewScopeLabel,
         weightPct: item.weightPct,
         goalLabel: item.goalLabel,
         goalValue: item.goalValue,
@@ -171,7 +177,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         valueSuffix: item.valueSuffix,
         valueDecimals: item.valueDecimals,
       })),
-    [items],
+    [items, viewScopeLabel],
   );
 
   const departmentOptions = useMemo(
@@ -342,6 +348,8 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
               <IndicatorQuickDetail
                 indicator={resolvedSelectedIndicator}
                 competence={referenceMonth}
+                viewMode={viewMode}
+                branch={branch}
               />
             </div>
           </SectionBlock>

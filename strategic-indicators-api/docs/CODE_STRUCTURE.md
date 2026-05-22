@@ -67,7 +67,8 @@ Metas por filial: ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
 
 | Arquivo | Cobertura |
 |---------|-----------|
-| `tests/test_branch_scoped_goals.py` | Rótulos e média consolidada por filial |
+| `tests/test_branch_scoped_goals.py` | Metas/realizado por filial, valor consolidado sem meta na filial |
+| `tests/test_goal_scope_helpers.py` | `indicator_uses_branch_unit_measurement`, resolução estrita |
 | `tests/test_indicator_goals_sql_param_order.py` | Ordem dos parâmetros SQL em metas por filial |
 | `tests/test_goal_scope_validation.py` | Validação de escopo no admin |
 

@@ -48,6 +48,8 @@ export type IndicatorAnalyticsViewItem = {
   trend: "up" | "down" | "stable";
   status: IndicatorAnalyticsStatus;
   scopeType?: string;
+  /** Rótulo da visão do filtro (Consolidado ou Filial 01/02). */
+  viewScopeLabel: string;
   source: string;
 
   valueUnit: IndicatorValueUnit | null;

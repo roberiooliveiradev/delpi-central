@@ -129,6 +129,12 @@ Esperado: linhas com `scope_branch` `''`, `01` e `02`.
 
 **Ação:** corrigir API + `refresh_period_scores.py` até existirem linhas para `01` e `02`.
 
+### Filtro por filial: meta “Sem meta para filial XX” ou rótulo “Filial 01” na UI
+
+**Comportamento esperado (2026-05):** departamentos com medição consolidada (ex.: Engenharia) mantêm o **realizado consolidado** na visão por filial; a meta só aparece se existir `goal_scope_branch` `01`/`02`. A UI deve mostrar **Filial 01/02** (não “Consolidado”) em Escopo, leitura estratégica e prefixo de valor/gap — ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md) e [MFE.md](./MFE.md).
+
+**Se ainda aparecer meta consolidada na filial:** redeploy da API (`uses_strict_branch_goal_resolution`) e refresh de `period_scores` para a competência.
+
 ### 502 Bad Gateway em todas as rotas
 
 **Causa:** container `strategic-indicators-api` não sobe (crash no import).

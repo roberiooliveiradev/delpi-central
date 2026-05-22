@@ -40,6 +40,10 @@ export type IndicatorValueFormat = {
 type FormatIndicatorValueOptions = {
   signed?: boolean;
   fallback?: string;
+  /** Substitui o rótulo "Consolidado" quando a visão do painel é por filial. */
+  filterViewScopeLabel?: string;
+  /** Filial ativa (01/02) para prefixar valores unitários. */
+  activeBranch?: string;
 };
 
 function normalizeNumber(value: number | null | undefined): number | null {
@@ -179,8 +183,17 @@ const UNIT_SCOPE_LABELS: Record<string, string> = {
   branch: "Filial",
 };
 
-function formatBranchUnitLabel(scopeKey: string) {
+function formatBranchUnitLabel(
+  scopeKey: string,
+  options: FormatIndicatorValueOptions = {},
+) {
   const normalized = scopeKey.trim();
+  const activeBranch = (options.activeBranch ?? "").trim();
+
+  if (activeBranch && normalized === activeBranch) {
+    return options.filterViewScopeLabel ?? `Filial ${activeBranch}`;
+  }
+
   return UNIT_SCOPE_LABELS[normalized] ?? normalized;
 }
 
@@ -212,7 +225,14 @@ const SEMANTIC_SCOPE_KEYS = new Set([
   "average_of_units",
 ]);
 
-function getSemanticScopeLabel(key: string): string {
+function getSemanticScopeLabel(
+  key: string,
+  options: FormatIndicatorValueOptions = {},
+): string {
+  if (key === "consolidated" && options.filterViewScopeLabel) {
+    return options.filterViewScopeLabel;
+  }
+
   switch (key) {
     case "consolidated":
       return "Consolidado";
@@ -242,8 +262,8 @@ export function formatScopeAwareMetric(
   return Object.entries(values)
     .map(([key, value]) => {
       const label = SEMANTIC_SCOPE_KEYS.has(key)
-        ? getSemanticScopeLabel(key)
-        : formatBranchUnitLabel(key);
+        ? getSemanticScopeLabel(key, options)
+        : formatBranchUnitLabel(key, options);
       return `${label}: ${formatIndicatorValue(value, format, options)}`;
     })
     .join(" · ");
@@ -260,7 +280,7 @@ export function formatBranchScopedMetric(
 
   const branchParts = listBranchScopeKeys(values).map(
     (code) =>
-      `${formatBranchUnitLabel(code)}: ${formatIndicatorValue(
+      `${formatBranchUnitLabel(code, options)}: ${formatIndicatorValue(
         values[code],
         format,
         options,
@@ -282,7 +302,7 @@ export function formatBranchScopedMetric(
   return Object.entries(values)
     .map(
       ([key, value]) =>
-        `${formatBranchUnitLabel(key)}: ${formatIndicatorValue(value, format, options)}`,
+        `${formatBranchUnitLabel(key, options)}: ${formatIndicatorValue(value, format, options)}`,
     )
     .join(" | ");
 }
@@ -295,6 +315,23 @@ export type IndicatorScopedMetricsInput = {
   currentValue?: number | null;
   hasValue?: boolean;
 };
+
+export type IndicatorDisplayContext = {
+  filterViewScopeLabel?: string;
+  activeBranch?: string;
+};
+
+function mergeDisplayContext(
+  options: FormatIndicatorValueOptions = {},
+  displayContext?: IndicatorDisplayContext,
+): FormatIndicatorValueOptions {
+  return {
+    ...options,
+    filterViewScopeLabel:
+      displayContext?.filterViewScopeLabel ?? options.filterViewScopeLabel,
+    activeBranch: displayContext?.activeBranch ?? options.activeBranch,
+  };
+}
 
 function hasScopedMetricMap(
   values: Record<string, number | null> | undefined,
@@ -314,11 +351,13 @@ function hasScopedMetricMap(
 export function formatIndicatorGapDisplay(
   metrics: Pick<IndicatorScopedMetricsInput, "gap" | "gaps">,
   format: IndicatorValueFormat = {},
+  displayContext?: IndicatorDisplayContext,
 ): string {
   const gaps = metrics.gaps ?? {};
+  const scopedOptions = mergeDisplayContext({ signed: true }, displayContext);
 
   if (hasScopedMetricMap(gaps)) {
-    return formatScopeAwareMetric(gaps, format, { signed: true });
+    return formatScopeAwareMetric(gaps, format, scopedOptions);
   }
 
   return formatIndicatorValue(metrics.gap ?? null, format, { signed: true });
@@ -331,11 +370,13 @@ export function formatIndicatorRealizedDisplay(
     "realized" | "value" | "currentValue" | "hasValue"
   >,
   format: IndicatorValueFormat = {},
+  displayContext?: IndicatorDisplayContext,
 ): string {
   const realized = metrics.realized ?? {};
+  const scopedOptions = mergeDisplayContext({}, displayContext);
 
   if (hasScopedMetricMap(realized)) {
-    return formatScopeAwareMetric(realized, format);
+    return formatScopeAwareMetric(realized, format, scopedOptions);
   }
 
   const single = metrics.currentValue ?? metrics.value ?? null;

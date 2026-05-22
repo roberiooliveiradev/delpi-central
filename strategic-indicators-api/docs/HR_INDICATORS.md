@@ -13,6 +13,8 @@
 
 Metas usam `goal_scope_branch` (`01`, `02`). O departamento permanece `consolidated`; o score por filial usa a meta do escopo correspondente.
 
+Com `branch=01` ou `02` na API, o realizado e a meta são da filial; na UI o rótulo da visão é **Filial 01/02** (ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md)).
+
 Na visão **Consolidado** (`aggregation_mode = average_of_units`):
 
 - Nota de cada indicador = média das notas das filiais `01` e `02`.
