@@ -24,6 +24,13 @@
   align-items: start;
 }
 
+.si-admin-goals-workspace,
+.si-admin-goals-master-detail,
+.si-admin-goals-master-detail .si-admin-master-detail__detail {
+  height: auto;
+  min-height: 0;
+}
+
 .si-admin-goals-filters {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -19,6 +19,7 @@ import type {
 
 import { AdminDepartmentsWorkspace } from "../components/AdminDepartmentsWorkspace";
 import { AdminGoalsWorkspace } from "../components/AdminGoalsWorkspace";
+import { CatalogStructureValidationWorkspace } from "../components/CatalogStructureValidationWorkspace";
 import { SettingsStructuredEditor } from "../components/SettingsStructuredEditor";
 import {
   getMetaSourceLabel,
@@ -34,6 +35,7 @@ type SettingsTab =
   | "overview"
   | "departments"
   | "goals"
+  | "catalog"
   | "global"
   | "audit";
 
@@ -100,6 +102,13 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
             "Fluxo principal para metas analíticas, ciclos anuais e operações em lote.",
         },
         {
+          id: "catalog-validation",
+          title: "Catálogo e validação",
+          status: "ready",
+          description:
+            "Lista departamentos, indicadores e metas com checagem de agregação e escopos.",
+        },
+        {
           id: "global-settings",
           title: "Configurações globais",
           status: "ready",
@@ -143,6 +152,7 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
           ["overview", "Painel"],
           ["departments", "Departamentos"],
           ["goals", "Metas anuais"],
+          ["catalog", "Catálogo e validação"],
           ["global", "Configurações globais"],
           ["audit", "Auditoria"],
         ] as const).map(([tabId, label]) => (
@@ -243,6 +253,15 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
             description="Gerencie ciclos anuais, metas por indicador e operações em lote como duplicação e preenchimento."
           >
             <AdminGoalsWorkspace getAccessToken={getAccessToken} />
+          </SectionBlock>
+        ) : null}
+
+        {activeTab === "catalog" ? (
+          <SectionBlock
+            title="Catálogo e validação"
+            description="Compare agregação do departamento, escopo do indicador e metas ativas do ano para identificar inconsistências antes de publicar o painel."
+          >
+            <CatalogStructureValidationWorkspace getAccessToken={getAccessToken} />
           </SectionBlock>
         ) : null}
 

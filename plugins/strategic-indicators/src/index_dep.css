@@ -4659,10 +4659,16 @@ body {
   padding: 24px;
 }
 
+.content:has(.si-settings-page) {
+  align-items: flex-start;
+}
+
+.content:has(.si-settings-page) > div,
 .app-host-federated:has(.si-settings-page),
 .app-host-federated:has(.si-settings-page) > div {
   height: auto;
   min-height: 0;
+  flex: 0 0 auto;
 }
 
 .si-settings-tabbar,
