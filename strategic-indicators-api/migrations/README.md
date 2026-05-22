@@ -34,6 +34,7 @@ O diretório `api-delpi/migrations/plugins/strategic-indicators/` é legado — 
 | V021 | per_unit_branch_goals | `supports_branch_goals` em `per_unit`; duplica metas consolidadas de Produção para filiais 01 e 02 |
 | V022 | supplies_average_of_units | `aggregation_mode = average_of_units` para Suprimentos |
 | V023 | supplies_branch_goals_2026 | Metas 2026 Suprimentos: duplica consolidado → Filial 01/02 (indicadores ativos) |
+| V024 | department_aggregation_alignment | Comercial/Engenharia `consolidated`; Produção/Suprimentos `average_of_units` |
 
 ## Comandos
 

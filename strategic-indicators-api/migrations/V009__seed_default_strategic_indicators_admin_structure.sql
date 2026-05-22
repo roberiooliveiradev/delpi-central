@@ -122,7 +122,7 @@ VALUES
     'Crescimento sustentável de receita',
     'Conversão, novos clientes e expansão',
     17.00,
-    'consolidated',
+    'average_of_units',
     TRUE,
     3
 ),
@@ -158,7 +158,7 @@ VALUES
     'Compras e estoque sob controle',
     'CPV, OTD e capital empatado',
     12.00,
-    'average_of_units',
+    'consolidated',
     TRUE,
     6
 ),
@@ -170,7 +170,7 @@ VALUES
     'Entrega no prazo com geração de valor',
     'Projetos e inovação aplicada',
     10.00,
-    'consolidated',
+    'average_of_units',
     TRUE,
     7
 )

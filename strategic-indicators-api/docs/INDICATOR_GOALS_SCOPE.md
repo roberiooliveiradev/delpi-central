@@ -17,6 +17,8 @@ Indicadores separados por unidade (ex.: ROL Matriz / ROL Filial no Comercial) co
 
 **Migration V023 (Suprimentos):** mesma lógica para metas 2026 dos indicadores **ativos** de Suprimentos (`supplies-cpv`, `supplies-otd`, `supplies-stock-turnover`, `supplies-stock-value`). Indicador inativo (`supplies-negotiation-savings`) não entra. Requer V022 (`average_of_units`).
 
+**Migration V024:** alinha `aggregation_mode` (Comercial/Engenharia consolidado; Produção/Suprimentos média das unidades). Não altere arquivos de migrations já aplicados (ex.: V009) — o runner valida checksum.
+
 Aplica-se a **todos os departamentos** (Comercial, Financeiro, Produção, etc.), não só ao Comercial.
 
 ## Tabela `indicator_goals`
