@@ -4,13 +4,23 @@
 }
 
 /*
- * O portal usa `.app-host-federated { height: 100% }` + `.content { overflow-y: auto }`.
- * Isso deixa um “vão” scrollável abaixo do conteúdo após mutações na aba Metas anuais.
+ * Portal: `.content` é flex e estica o filho; o host federado força height 100%.
+ * Ao selecionar o ano em Metas anuais, sobra área vazia rolável abaixo do painel.
  */
+.content:has(.si-settings-page) {
+  align-items: flex-start;
+}
+
+.content:has(.si-settings-page) > div,
 .app-host-federated:has(.si-settings-page),
 .app-host-federated:has(.si-settings-page) > div {
   height: auto;
   min-height: 0;
+  flex: 0 0 auto;
+}
+
+.si-settings-page {
+  width: 100%;
 }
 
 .si-settings-tabbar {

@@ -408,9 +408,27 @@ body,
   min-width: 0;
 }
 
-.app-host-federated, .app-host-federated > div  {
+.app-host-federated,
+.app-host-federated > div {
   height: 100%;
   min-height: 100%;
+}
+
+/*
+ * Configurações (MFE): não esticar o wrapper do scroll do portal.
+ * .content é flex — o filho crescia até a altura da viewport e deixava
+ * área vazia rolável abaixo do conteúdo ao selecionar o ano das metas.
+ */
+.content:has(.si-settings-page) {
+  align-items: flex-start;
+}
+
+.content:has(.si-settings-page) > div,
+.app-host-federated:has(.si-settings-page),
+.app-host-federated:has(.si-settings-page) > div {
+  height: auto;
+  min-height: 0;
+  flex: 0 0 auto;
 }
 
 .app-host-embedded {
