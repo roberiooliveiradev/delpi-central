@@ -91,8 +91,15 @@ def list_lmps_dashboard_route(
         None,
         description="Filtro de tipo: Todos, LMP, Amostra ou Outro.",
     ),
-    page: Optional[int] = Query(None, ge=1),
-    page_size: Optional[int] = Query(None, ge=1),
+    page: Optional[int] = Query(1, ge=1),
+    page_size: Optional[int] = Query(50, ge=1, le=500),
+    scope: Optional[str] = Query(
+        None,
+        description=(
+            "aggregates: KPIs e gráficos; items: tabela paginada; "
+            "full ou omitido: resposta completa (padrão)."
+        ),
+    ),
 ):
     try:
         dto = ListLMPRequest(
@@ -105,14 +112,24 @@ def list_lmps_dashboard_route(
         )
 
         use_case = build_engineering_list_lmps_dashboard_use_case()
-        result = enrich_dashboard_metric(
-            use_case.execute(dto, status_filter=status),
-            source_key=goal_keys.ENGINEERING_LMP,
-            start_date=date_start,
-            end_date=date_end,
-            branch=branch,
-            summary_key="summary",
+        payload = use_case.execute(
+            dto,
+            status_filter=status,
+            scope=scope,
         )
+        summary = payload.get("summary")
+        if isinstance(summary, dict):
+            payload = {
+                **payload,
+                "summary": enrich_dashboard_metric(
+                    summary,
+                    source_key=goal_keys.ENGINEERING_LMP,
+                    start_date=date_start,
+                    end_date=date_end,
+                    branch=branch,
+                ),
+            }
+        result = payload
 
         return success_response(
             data=result,

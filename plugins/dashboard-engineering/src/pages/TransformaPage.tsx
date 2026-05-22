@@ -39,7 +39,8 @@ import {
   formatPercent,
 } from "../utils/format";
 
-const CHART_HEIGHT = 320;
+const LINE_CHART_HEIGHT = 320;
+const TOP_BAR_ROW_HEIGHT = 40;
 
 type TransformaPageProps = { pathname?: string };
 
@@ -156,6 +157,11 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
           value: item.daily_savings ?? 0,
         })),
     [items]
+  );
+
+  const topSavingsChartHeight = useMemo(
+    () => Math.max(280, topSavingsChart.length * TOP_BAR_ROW_HEIGHT + 48),
+    [topSavingsChart.length]
   );
 
   const columns = useMemo<DataTableColumn<TransformaProcess>[]>(
@@ -300,15 +306,22 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
           />
           {savingsChartData.length === 0 && !isBusy ? (
             <p className="ds-state-box">
-              Sem economia no agrupamento. Use mês/ano com resumo mensal ou dia/semana
-              com processos que tenham data de implantação.
+              Sem economia líquida no período para o agrupamento selecionado.
             </p>
           ) : (
-            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+            <ResponsiveContainer width="100%" height={LINE_CHART_HEIGHT}>
               <LineChart data={savingsChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={(v) => formatCurrency(Number(v))} width={72} />
+                <YAxis
+                  tickFormatter={(v) => formatCurrency(Number(v))}
+                  width={88}
+                  domain={[
+                    0,
+                    (dataMax: number) =>
+                      dataMax > 0 ? Math.ceil(dataMax * 1.15) : 1,
+                  ]}
+                />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
                 <Line
                   type="monotone"
@@ -324,15 +337,19 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
       </section>
 
       {topSavingsChart.length > 0 ? (
-        <section className="ds-charts-grid ds-charts-grid--single">
+        <section className="ds-chart-section ds-chart-section--tall">
           <ChartCard title="Top economia diária" hint="10 maiores no filtro">
-            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <BarChart data={topSavingsChart} layout="vertical" margin={{ left: 8 }}>
+            <ResponsiveContainer width="100%" height={topSavingsChartHeight}>
+              <BarChart
+                data={topSavingsChart}
+                layout="vertical"
+                margin={{ left: 4, right: 16, top: 8, bottom: 8 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" tickFormatter={(v) => formatCurrency(Number(v))} />
-                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="name" width={168} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                <Bar dataKey="value" radius={[0, 8, 8, 0]} maxBarSize={28}>
+                <Bar dataKey="value" radius={[0, 8, 8, 0]} maxBarSize={32}>
                   {topSavingsChart.map((_, index) => (
                     <Cell
                       key={index}

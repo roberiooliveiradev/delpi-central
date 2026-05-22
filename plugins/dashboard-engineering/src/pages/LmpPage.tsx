@@ -80,14 +80,26 @@ export function LmpPage({ pathname }: LmpPageProps) {
   const [status, setStatus] = useState("Todos");
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
-  const { items, summary, charts, loading, refreshing, requestProgress, error, reload } =
-    useLmpsDashboard({
-      date_start: dateStart || undefined,
-      date_end: dateEnd || undefined,
-      branch: branch || undefined,
-      listing_type: listingType,
-      status,
-    });
+  const {
+    items,
+    summary,
+    charts,
+    total,
+    page,
+    pageSize,
+    setPage,
+    loading,
+    refreshing,
+    requestProgress,
+    error,
+    reload,
+  } = useLmpsDashboard({
+    date_start: dateStart || undefined,
+    date_end: dateEnd || undefined,
+    branch: branch || undefined,
+    listing_type: listingType,
+    status,
+  });
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -193,7 +205,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
   );
 
   const isBusy = loading || refreshing;
-  const hasData = sortedItems.length > 0 || summary !== null;
+  const hasData = summary !== null || total > 0;
   const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
   const hasCharts =
     resolvedCharts.levelData.some((d) => d.value > 0) ||
@@ -402,10 +414,16 @@ export function LmpPage({ pathname }: LmpPageProps) {
         rowKey={(row) =>
           `${row.branch ?? "x"}-${row.listing_kind ?? "x"}-${row.sale_number}`
         }
-        loading={loading && sortedItems.length === 0}
+        loading={loading && items.length === 0 && summary === null}
         refreshing={refreshing}
         emptyMessage="Nenhum registro encontrado para os filtros informados."
         searchPlaceholder="Buscar proposta, descrição, status…"
+        serverPagination={{
+          page,
+          pageSize,
+          total,
+          onPageChange: setPage,
+        }}
         getSearchText={(row) =>
           [
             row.branch,

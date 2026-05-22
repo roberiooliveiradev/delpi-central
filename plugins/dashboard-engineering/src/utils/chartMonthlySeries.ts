@@ -2,7 +2,6 @@ import type { ChartGranularity } from "../types/chart";
 import type { TransformaMonthlyItem, TransformaProcess } from "../types/engineering";
 import { dateToMonthKey } from "./dates";
 import { buildPeriodBuckets } from "./periodBuckets";
-import { aggregateSumByPeriod } from "./timeSeriesAggregation";
 
 export type OtdMonthlyLike = {
   month?: string | number;
@@ -118,44 +117,103 @@ export function buildOtdTrendSeries(
   });
 }
 
-export function buildTransformaSavingsSeries(
-  processes: TransformaProcess[],
+function monthKeyFromTransformaItem(item: TransformaMonthlyItem): string | null {
+  const rawMonth = item.month?.trim() ?? "";
+  if (rawMonth.length === 7) return rawMonth;
+  return dateToMonthKey(rawMonth.length >= 6 ? `${rawMonth}-01` : rawMonth);
+}
+
+function buildTransformaNetByMonth(
   monthly: TransformaMonthlyItem[],
   dateStart?: string,
   dateEnd?: string,
-  granularity: ChartGranularity = "month"
-): Array<{ name: string; net: number }> {
-  const datedProcesses = processes.filter((item) => item.implementetion_date);
+): Map<string, number> {
+  const byMonth = new Map<string, number>();
 
-  if (datedProcesses.length > 0) {
-    const points = aggregateSumByPeriod({
-      items: datedProcesses,
-      getDate: (item) => item.implementetion_date,
-      getQuantity: (item) => item.daily_savings ?? 0,
-      dateStart,
-      dateEnd,
-      granularity,
-    });
-
-    return points.map((point) => ({
-      name: point.periodo,
-      net: point.value,
-    }));
+  for (const item of monthly) {
+    const key = monthKeyFromTransformaItem(item);
+    if (!key || !monthInRange(key, dateStart, dateEnd)) continue;
+    byMonth.set(key, Number(item.net_savings_month ?? 0));
   }
 
-  if (granularity === "day" || granularity === "week") {
+  return byMonth;
+}
+
+/** Distribui net_savings_month uniformemente nos dias do mês dentro do recorte. */
+function buildTransformaNetDailyFromMonthly(
+  byMonth: Map<string, number>,
+  dateStart?: string,
+  dateEnd?: string,
+): Array<{ name: string; net: number; sortKey: string }> {
+  const { buckets } = buildPeriodBuckets(dateStart, dateEnd, "day");
+  const daysPerMonth = new Map<string, number>();
+
+  for (const bucket of buckets) {
+    const monthKey = bucket.key.slice(0, 7);
+    daysPerMonth.set(monthKey, (daysPerMonth.get(monthKey) ?? 0) + 1);
+  }
+
+  return buckets.map((bucket) => {
+    const monthKey = bucket.key.slice(0, 7);
+    const monthNet = byMonth.get(monthKey) ?? 0;
+    const daysInMonth = daysPerMonth.get(monthKey) ?? 1;
+
+    return {
+      name: bucket.label,
+      sortKey: bucket.key,
+      net: Number((monthNet / daysInMonth).toFixed(2)),
+    };
+  });
+}
+
+function buildTransformaNetWeeklyFromDaily(
+  daily: Array<{ name: string; net: number; sortKey: string }>,
+  dateStart?: string,
+  dateEnd?: string,
+): Array<{ name: string; net: number }> {
+  const { buckets } = buildPeriodBuckets(dateStart, dateEnd, "week");
+  const totals = new Map<string, number>();
+
+  for (const point of daily) {
+    const bucket = buckets.find(
+      (candidate) =>
+        point.sortKey >= candidate.key && point.sortKey <= candidate.date_end,
+    );
+    if (!bucket) continue;
+    totals.set(bucket.key, (totals.get(bucket.key) ?? 0) + point.net);
+  }
+
+  return buckets.map((bucket) => ({
+    name: bucket.label,
+    net: Number((totals.get(bucket.key) ?? 0).toFixed(2)),
+  }));
+}
+
+/**
+ * Série de economia líquida alinhada ao resumo da API (monthly_breakdown.net_savings_month).
+ * Não usa economia/dia por data de implantação — isso zerava o gráfico com filtro diário.
+ */
+export function buildTransformaSavingsSeries(
+  _processes: TransformaProcess[],
+  monthly: TransformaMonthlyItem[],
+  dateStart?: string,
+  dateEnd?: string,
+  granularity: ChartGranularity = "month",
+): Array<{ name: string; net: number }> {
+  const byMonth = buildTransformaNetByMonth(monthly, dateStart, dateEnd);
+  if (byMonth.size === 0) {
     return [];
   }
 
-  const byMonth = new Map<string, number>();
-  for (const item of monthly) {
-    const rawMonth = item.month?.trim() ?? "";
-    const key =
-      rawMonth.length === 7
-        ? rawMonth
-        : dateToMonthKey(rawMonth.length >= 6 ? `${rawMonth}-01` : rawMonth);
-    if (!key || !monthInRange(key, dateStart, dateEnd)) continue;
-    byMonth.set(key, Number(item.net_savings_month ?? 0));
+  if (granularity === "day") {
+    return buildTransformaNetDailyFromMonthly(byMonth, dateStart, dateEnd).map(
+      ({ name, net }) => ({ name, net }),
+    );
+  }
+
+  if (granularity === "week") {
+    const daily = buildTransformaNetDailyFromMonthly(byMonth, dateStart, dateEnd);
+    return buildTransformaNetWeeklyFromDaily(daily, dateStart, dateEnd);
   }
 
   if (granularity === "month") {
