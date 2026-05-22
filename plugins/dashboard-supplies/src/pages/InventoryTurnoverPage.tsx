@@ -199,7 +199,12 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
         <KpiCard
           title="Estoque"
           value={formatCurrency(data?.summary.total_stock_value)}
-          subtitle="Base do numerador"
+          {...buildKpiGoalPresentation(
+            `${branchLabel} · ${locationLabel}`,
+            data?.stock_context,
+            undefined,
+            { realizedValue: data?.summary.total_stock_value },
+          )}
           icon={<Warehouse size={22} />}
           loading={isBusy && !data}
         />

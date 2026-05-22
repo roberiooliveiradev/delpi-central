@@ -194,6 +194,16 @@ def get_inventory_turnover(
             summary_key="summary",
         )
 
+        stock_context = result.get("stock_context")
+        if isinstance(stock_context, dict):
+            result["stock_context"] = enrich_dashboard_metric(
+                stock_context,
+                source_key=goal_keys.SUPPLIES_STOCK_VALUE,
+                start_date=start_date,
+                end_date=end_date,
+                branch=branch,
+            )
+
         return success_response(
             data=result,
             message="Giro de estoque buscado com sucesso.",
