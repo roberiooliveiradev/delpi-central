@@ -992,11 +992,17 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         if competence and len(competence) >= 4:
             return int(competence[:4])
 
+        from si_app.application.use_cases.strategic_indicators.period_resolution import (
+            _parse_dashboard_date_parts,
+            normalize_dashboard_period_date,
+        )
+
         for value in (end_date, start_date):
-            if value and len(value) >= 10:
-                parts = value.split("-")
-                if len(parts) == 3:
-                    return int(parts[2])
+            normalized = normalize_dashboard_period_date(value)
+            parts = _parse_dashboard_date_parts(normalized) if normalized else None
+            if parts:
+                _day, _month, year = parts
+                return year
 
         raise ValueError("Não foi possível resolver o ano da meta.")
 

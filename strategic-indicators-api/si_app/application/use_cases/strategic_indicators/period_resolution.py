@@ -11,12 +11,50 @@ class ResolvedPeriod:
     end_date: str
 
 
+def normalize_dashboard_period_date(value: str | None) -> str | None:
+    """Aceita DD-MM-YYYY (padrão Delpi) ou YYYY-MM-DD (inputs HTML)."""
+    if value is None:
+        return None
+
+    trimmed = value.strip()
+    if not trimmed:
+        return None
+
+    parts = _parse_dashboard_date_parts(trimmed)
+    if parts is None:
+        return trimmed
+
+    day, month, year = parts
+    return f"{str(day).zfill(2)}-{str(month).zfill(2)}-{year}"
+
+
+def _parse_dashboard_date_parts(value: str) -> tuple[int, int, int] | None:
+    parts = value.split("-")
+    if len(parts) != 3:
+        return None
+
+    first, second, third = parts
+    if len(first) == 4:
+        try:
+            return int(third), int(second), int(first)
+        except ValueError:
+            return None
+
+    try:
+        return int(first), int(second), int(third)
+    except ValueError:
+        return None
+
+
 def resolve_period(
     *,
     competence: str | None,
     start_date: str | None,
     end_date: str | None,
 ) -> ResolvedPeriod:
+    start_date = normalize_dashboard_period_date(start_date)
+    end_date = normalize_dashboard_period_date(end_date)
+
     resolved_competence = competence or _resolve_competence_from_dates(
         start_date=start_date,
         end_date=end_date,
@@ -123,9 +161,11 @@ def competence_reference_date(
         return date(parsed.year, parsed.month, last_day)
 
     for value in (end_date, start_date):
-        if value and len(value) >= 10:
-            day_str, month_str, year_str = value.split("-")
-            return date(int(year_str), int(month_str), int(day_str))
+        normalized = normalize_dashboard_period_date(value)
+        parts = _parse_dashboard_date_parts(normalized) if normalized else None
+        if parts:
+            day, month, year = parts
+            return date(year, month, day)
 
     return date.today()
 
@@ -155,10 +195,10 @@ def _resolve_competence_from_dates(
     start_date: str | None,
     end_date: str | None,
 ) -> str:
-    if end_date and len(end_date) >= 10:
-        _day, month, year = end_date.split("-")
-        return f"{year}-{month}"
-    if start_date and len(start_date) >= 10:
-        _day, month, year = start_date.split("-")
-        return f"{year}-{month}"
+    for value in (end_date, start_date):
+        normalized = normalize_dashboard_period_date(value)
+        parts = _parse_dashboard_date_parts(normalized) if normalized else None
+        if parts:
+            _day, month, year = parts
+            return f"{year}-{str(month).zfill(2)}"
     return date.today().strftime("%Y-%m")

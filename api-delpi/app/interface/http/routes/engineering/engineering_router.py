@@ -218,8 +218,14 @@ def get_process_summary(
             end_date=end_date,
         )
 
+        summary_result = use_case.execute(request)
+        summary_payload = (
+            summary_result.to_dict()
+            if hasattr(summary_result, "to_dict")
+            else summary_result
+        )
         summary = enrich_dashboard_metric(
-            summary.to_dict(),
+            summary_payload,
             source_key=goal_keys.ENGINEERING_TRANSFORMA_MAIS,
             start_date=start_date,
             end_date=end_date,

@@ -25,6 +25,7 @@ import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { useFinancialResource } from "../hooks/useFinancialResource";
 import type { FixedCostBranchRow } from "../types/financial";
 import { formatPeriodLabel } from "../utils/dates";
+import { formatGoalSubtitle } from "../utils/goalDisplay";
 import { formatCurrency, formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 320;
@@ -119,7 +120,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
         <KpiCard
           title="Custos fixos / ROL"
           value={formatPercent(data?.fixed_cost_over_rol_pct)}
-          subtitle={periodLabel}
+          subtitle={formatGoalSubtitle(periodLabel, data, formatPercent)}
           icon={<Landmark size={22} />}
           loading={isBusy && !data}
         />
