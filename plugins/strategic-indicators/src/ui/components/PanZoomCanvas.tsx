@@ -58,6 +58,9 @@ async function exitBrowserFullscreen() {
 type PanZoomCanvasProps = {
   children: ReactNode;
   fitToken?: string | number;
+  autoFitOnTokenChange?: boolean;
+  persistViewKey?: string;
+  fitOnMount?: boolean;
   toolbar?: ReactNode;
   floatingControls?: ReactNode | ((viewportNav: ReactNode) => ReactNode);
   className?: string;
@@ -68,6 +71,9 @@ type PanZoomCanvasProps = {
 export function PanZoomCanvas({
   children,
   fitToken,
+  autoFitOnTokenChange = false,
+  persistViewKey,
+  fitOnMount = true,
   toolbar,
   floatingControls,
   className = "",
@@ -80,7 +86,14 @@ export function PanZoomCanvas({
       getFullscreenElement() === document.documentElement,
   );
   const panZoom = usePanZoom({
-    fitToken: `${fitToken ?? ""}-${isFullscreen ? "fullscreen" : "normal"}`,
+    fitToken: autoFitOnTokenChange
+      ? `${fitToken ?? ""}-${isFullscreen ? "fullscreen" : "normal"}`
+      : undefined,
+    autoFitOnTokenChange,
+    persistKey: persistViewKey
+      ? `${persistViewKey}-${isFullscreen ? "fullscreen" : "normal"}`
+      : undefined,
+    fitOnMount,
     fitPadding: isFullscreen ? 32 : immersive ? 72 : 56,
   });
 
