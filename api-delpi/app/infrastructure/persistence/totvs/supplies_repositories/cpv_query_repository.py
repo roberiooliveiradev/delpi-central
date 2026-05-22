@@ -5,22 +5,26 @@ from app.application.dto.supplies.get_cpv_request import GetCPVRequest
 
 
 class CpvQueryRepository(BaseRepository, CpvQueryRepositoryPort):
+    """CPV alinhado ao relatório Kardex: SD2010, D2_CUSTO1 e filtro por D2_CF."""
 
-    DEFAULT_CFOPS = ("5101", "5102", "5124", "6101", "6102", "6124", "7101", "6109")
+    KARDEX_DEFAULT_CFOPS = ("5101", "5124", "6101", "6124")
+
+    def _resolve_cfops(self, request: GetCPVRequest) -> tuple[str, ...]:
+        cfops = tuple(request.cfops) if request.cfops else self.KARDEX_DEFAULT_CFOPS
+        return cfops or self.KARDEX_DEFAULT_CFOPS
 
     def _build_filters(self, request: GetCPVRequest):
         qb = QueryBuilder()
 
-        qb.raw("SD3.D_E_L_E_T_ = ''")
-        qb.raw("SF4.D_E_L_E_T_ = ''")
+        qb.raw("D2.D_E_L_E_T_ = ''")
 
         if request.branch:
-            qb.eq("SD3.D3_FILIAL", request.branch)
+            qb.eq("D2.D2_FILIAL", request.branch)
 
-        qb.date_range("SD3.D3_EMISSAO", request.start_date, request.end_date)
+        qb.date_range("D2.D2_EMISSAO", request.start_date, request.end_date)
 
-        cfops = request.cfops or self.DEFAULT_CFOPS
-        qb.in_list("SF4.F4_CF", cfops)
+        cfops = self._resolve_cfops(request)
+        qb.in_list("D2.D2_CF", cfops)
 
         return qb.build()
 
@@ -29,14 +33,12 @@ class CpvQueryRepository(BaseRepository, CpvQueryRepositoryPort):
 
         sql = f"""
             SELECT
-                ISNULL(SUM(SD3.D3_CUSTO1), 0) AS cpv_total,
+                ISNULL(SUM(D2.D2_CUSTO1), 0) AS cpv_total,
                 COUNT(*) AS total_movements,
-                ISNULL(SUM(SD3.D3_QUANT), 0) AS total_quantity,
-                ISNULL(MIN(SD3.D3_EMISSAO), '') AS start_date,
-                ISNULL(MAX(SD3.D3_EMISSAO), '') AS end_date
-            FROM SD3010 SD3
-            INNER JOIN SF4010 SF4
-                ON SF4.F4_CODIGO = SD3.D3_TM
+                ISNULL(SUM(D2.D2_QUANT), 0) AS total_quantity,
+                ISNULL(MIN(D2.D2_EMISSAO), '') AS start_date,
+                ISNULL(MAX(D2.D2_EMISSAO), '') AS end_date
+            FROM SD2010 D2
             WHERE {where_clause}
         """
 
@@ -56,16 +58,13 @@ class CpvQueryRepository(BaseRepository, CpvQueryRepositoryPort):
 
         sql = f"""
             SELECT
-                SF4.F4_CF AS cfop,
-                MAX(SF4.F4_TEXTO) AS tes_description,
+                D2.D2_CF AS cfop,
                 COUNT(*) AS total_movements,
-                ISNULL(SUM(SD3.D3_QUANT), 0) AS total_quantity,
-                ISNULL(SUM(SD3.D3_CUSTO1), 0) AS cpv_total
-            FROM SD3010 SD3
-            INNER JOIN SF4010 SF4
-                ON SF4.F4_CODIGO = SD3.D3_TM
+                ISNULL(SUM(D2.D2_QUANT), 0) AS total_quantity,
+                ISNULL(SUM(D2.D2_CUSTO1), 0) AS cpv_total
+            FROM SD2010 D2
             WHERE {where_clause}
-            GROUP BY SF4.F4_CF
+            GROUP BY D2.D2_CF
             ORDER BY cpv_total DESC, cfop
         """
 
@@ -77,17 +76,18 @@ class CpvQueryRepository(BaseRepository, CpvQueryRepositoryPort):
 
         sql = f"""
             SELECT
-                SD3.D3_TM AS tm,
-                SF4.F4_CF AS cfop,
+                D2.D2_TES AS tm,
+                D2.D2_CF AS cfop,
                 MAX(SF4.F4_TEXTO) AS tes_description,
                 COUNT(*) AS total_movements,
-                ISNULL(SUM(SD3.D3_QUANT), 0) AS total_quantity,
-                ISNULL(SUM(SD3.D3_CUSTO1), 0) AS cpv_total
-            FROM SD3010 SD3
+                ISNULL(SUM(D2.D2_QUANT), 0) AS total_quantity,
+                ISNULL(SUM(D2.D2_CUSTO1), 0) AS cpv_total
+            FROM SD2010 D2
             INNER JOIN SF4010 SF4
-                ON SF4.F4_CODIGO = SD3.D3_TM
+                ON SF4.F4_CODIGO = D2.D2_TES
+               AND SF4.D_E_L_E_T_ = ''
             WHERE {where_clause}
-            GROUP BY SD3.D3_TM, SF4.F4_CF
+            GROUP BY D2.D2_TES, D2.D2_CF
             ORDER BY cpv_total DESC, tm
         """
 
@@ -100,19 +100,17 @@ class CpvQueryRepository(BaseRepository, CpvQueryRepositoryPort):
 
         sql = f"""
             SELECT TOP {limit}
-                SD3.D3_COD AS product_code,
+                D2.D2_COD AS product_code,
                 MAX(SB1.B1_DESC) AS product_description,
                 COUNT(*) AS total_movements,
-                ISNULL(SUM(SD3.D3_QUANT), 0) AS total_quantity,
-                ISNULL(SUM(SD3.D3_CUSTO1), 0) AS cpv_total
-            FROM SD3010 SD3
-            INNER JOIN SF4010 SF4
-                ON SF4.F4_CODIGO = SD3.D3_TM
+                ISNULL(SUM(D2.D2_QUANT), 0) AS total_quantity,
+                ISNULL(SUM(D2.D2_CUSTO1), 0) AS cpv_total
+            FROM SD2010 D2
             LEFT JOIN SB1010 SB1
                 ON SB1.D_E_L_E_T_ = ''
-            AND SB1.B1_COD = SD3.D3_COD
+               AND SB1.B1_COD = D2.D2_COD
             WHERE {where_clause}
-            GROUP BY SD3.D3_COD
+            GROUP BY D2.D2_COD
             ORDER BY cpv_total DESC, product_code
         """
 
@@ -125,15 +123,13 @@ class CpvQueryRepository(BaseRepository, CpvQueryRepositoryPort):
 
         sql = f"""
             SELECT TOP {limit}
-                SD3.D3_DOC AS document,
+                D2.D2_DOC AS document,
                 COUNT(*) AS total_movements,
-                ISNULL(SUM(SD3.D3_QUANT), 0) AS total_quantity,
-                ISNULL(SUM(SD3.D3_CUSTO1), 0) AS cpv_total
-            FROM SD3010 SD3
-            INNER JOIN SF4010 SF4
-                ON SF4.F4_CODIGO = SD3.D3_TM
+                ISNULL(SUM(D2.D2_QUANT), 0) AS total_quantity,
+                ISNULL(SUM(D2.D2_CUSTO1), 0) AS cpv_total
+            FROM SD2010 D2
             WHERE {where_clause}
-            GROUP BY SD3.D3_DOC
+            GROUP BY D2.D2_DOC
             ORDER BY cpv_total DESC, document
         """
 
