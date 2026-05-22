@@ -151,6 +151,8 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 /* Buttons */
@@ -341,9 +343,13 @@
 /* KPI grid */
 .dashboard-transformometro .ds-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--ds-grid-gap);
   margin-bottom: var(--ds-section-gap);
+}
+
+.dashboard-transformometro .ds-kpi-grid--responsive {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .dashboard-transformometro .ds-kpi-header {
@@ -476,12 +482,18 @@
 
 .dashboard-transformometro .ds-nav {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  max-width: 100%;
+  padding-bottom: 4px;
   margin-top: 12px;
+  gap: 8px;
 }
 
 .dashboard-transformometro .ds-nav__link {
+  flex-shrink: 0;
   padding: 6px 12px;
   border-radius: 999px;
   font-size: var(--ds-font-sm);
@@ -1648,4 +1660,101 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
 
 .dashboard-transformometro .ds-health-card {
   margin-bottom: var(--ds-section-gap);
+}
+
+.dashboard-transformometro .ds-health-card--inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-transformometro .ds-health-card__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-transformometro .ds-health-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  background: var(--ds-surface-muted);
+  color: var(--ds-text-muted);
+  border: 1px solid var(--ds-card-border);
+}
+
+.dashboard-transformometro .ds-health-pill--ok {
+  background: var(--ds-success-bg);
+  color: var(--ds-success-fg);
+  border-color: color-mix(in srgb, var(--ds-success-fg) 25%, transparent);
+}
+
+.dashboard-transformometro .ds-health-card__hint {
+  margin: 0;
+  flex: 1 1 200px;
+}
+
+.dashboard-transformometro .ds-module-shortcut__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ds-accent) 12%, transparent);
+  color: var(--ds-accent);
+}
+
+.dashboard-transformometro .ds-cta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboard-transformometro .ds-cta-strip .ds-primary-btn {
+  flex-shrink: 0;
+}
+
+.dashboard-transformometro .ds-cadastro-panel__workflow {
+  flex-wrap: wrap;
+}
+
+.dashboard-transformometro .ds-cadastro-panel__workflow-actions {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-transformometro .ds-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-transformometro .ds-header-actions {
+    width: 100%;
+  }
+
+  .dashboard-transformometro .ds-header-actions .ds-primary-btn,
+  .dashboard-transformometro .ds-header-actions .ds-ghost-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .dashboard-transformometro .ds-cta-strip {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-transformometro .ds-cta-strip .ds-primary-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }

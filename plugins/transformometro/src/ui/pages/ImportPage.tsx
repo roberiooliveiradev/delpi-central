@@ -4,6 +4,7 @@ import { Upload } from "lucide-react";
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
+import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   applySheetImport,
@@ -64,7 +65,7 @@ export function ImportPage({ getAccessToken, pathname, onNavigate }: Props) {
   const validation = preview?.validation;
 
   return (
-    <div className="dashboard-transformometro dashboard-page">
+    <TransformometroShell>
       <PageHeader
         title="Importar planilha"
         subtitle="Migração Transforma+ (Google Sheets) para o Postgres do Transformômetro"
@@ -162,6 +163,6 @@ export function ImportPage({ getAccessToken, pathname, onNavigate }: Props) {
           <pre className="ds-code-block">{JSON.stringify(result, null, 2)}</pre>
         </section>
       ) : null}
-    </div>
+    </TransformometroShell>
   );
 }

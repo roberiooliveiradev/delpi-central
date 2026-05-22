@@ -9,6 +9,7 @@ import {
 } from "../../hooks/useSimulatedLoadingProgress";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
+import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   createRevisao,
@@ -119,7 +120,7 @@ export function ProcessoDetailPage({
 
   if (loading && !processo) {
     return (
-      <div className="dashboard-transformometro dashboard-page">
+      <TransformometroShell>
         <button type="button" className="ds-ghost-btn" onClick={onBack}>
           <ArrowLeft size={16} />
           Voltar
@@ -129,13 +130,13 @@ export function ProcessoDetailPage({
           description="Buscando dados do processo e revisões."
           progressPercent={processLoadingProgress}
         />
-      </div>
+      </TransformometroShell>
     );
   }
 
   if (!processo) {
     return (
-      <div className="dashboard-transformometro dashboard-page">
+      <TransformometroShell>
         <button type="button" className="ds-ghost-btn" onClick={onBack}>
           <ArrowLeft size={16} />
           Voltar
@@ -146,12 +147,12 @@ export function ProcessoDetailPage({
             Tentar novamente
           </button>
         </div>
-      </div>
+      </TransformometroShell>
     );
   }
 
   return (
-    <div className="dashboard-transformometro dashboard-page">
+    <TransformometroShell>
       <PageHeader
         title={`${processo.codigo_processo} — ${processo.nome_processo}`}
         subtitle={[
@@ -391,6 +392,6 @@ export function ProcessoDetailPage({
           </>
         )}
       </section>
-    </div>
+    </TransformometroShell>
   );
 }
