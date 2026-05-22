@@ -281,7 +281,7 @@ class ProductionIndicatorsSnapshotProvider(
         value_getter,
     ) -> dict:
         value = value_getter(snapshot)
-        normalized_value = float(value) if value is not None else 0.0
+        normalized_value = float(value) if value is not None else None
         unit_key = snapshot.branch if snapshot.branch else "consolidated"
 
         return {

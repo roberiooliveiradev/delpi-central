@@ -1,5 +1,7 @@
 # Metas por escopo (consolidado / filial)
 
+**Última atualização:** 2026-05-21
+
 **Migrations:** `V016` (coluna e índice), `V017` (supports_branch_goals), `V018`/`V019` (seeds RH/Qualidade), `V020` (agregação consolidada)
 
 ## Regra global
@@ -18,14 +20,29 @@ Aplica-se a **todos os departamentos** (Comercial, Financeiro, Produção, etc.)
 
 ## Resolução no painel
 
-- API com `branch=01` ou `02` → meta **somente** da filial (`goal_scope_branch` igual à visão); **sem** fallback para consolidado
-- Indicador com medição consolidada (ex.: Engenharia, `aggregation_mode = consolidated`, sem `branch_goals`): filtro por filial mantém **valor consolidado**; meta exibe *Sem meta para filial XX* se não houver meta cadastrada para aquela filial
-- RH/Qualidade (`average_of_units` ou `branch_goals` preenchido): filtro por filial usa realizado e meta da unidade `01`/`02`
-- API sem `branch` (visão **Consolidado**), departamentos com `aggregation_mode = average_of_units` (RH, Qualidade):
+### Query `branch=01` ou `02` (visão por filial)
+
+| Situação | Meta | Realizado | Nota |
+|----------|------|-----------|------|
+| Meta cadastrada com `goal_scope_branch` = filial da visão | Meta da filial | Conforme tabela abaixo | Calculada |
+| Sem meta para a filial (só consolidado `''`) | `goal_label`: **Sem meta para filial XX** | Conforme tabela abaixo | `null` — classificação **Sem meta para esta visão** |
+| Engenharia, Financeiro, Produção, etc. (`aggregation_mode = consolidated`, sem `branch_goals`) | Sem meta para filial (se não cadastrada) | **Valor consolidado** (`measurement.value`) | Sem meta → nota `null` |
+| RH, Qualidade (`average_of_units` ou `branch_goals` na competência) | Meta da filial | Realizado da unidade `01`/`02` | Calculada |
+
+Regras de implementação (`goal_scope.py`, `StrategicIndicatorsCalculator`):
+
+- SQL: `list_resolved_goals_map` com `branch` ativo usa `goal_scope_branch = %s` (**sem** `IN ('', %s)`).
+- Realizado por filial só quando `indicator_uses_branch_unit_measurement` (metas por unidade preenchidas ou meta resolvida para aquela filial).
+- Catálogo: indicadores sem meta na filial continuam listados (`_catalog_item_missing_goal_for_branch_view`).
+
+### Sem `branch` (visão Consolidado)
+
+- Departamentos `average_of_units` (RH, Qualidade):
   - **Cada indicador:** nota = média das notas das filiais 01 e 02 (realizado da unidade × meta da unidade)
   - **IDD do departamento:** média aritmética do IDD calculado separadamente para filial 01 e filial 02
 - Demais departamentos (`aggregation_mode = consolidated`):
-  - Meta consolidada (`''`) quando existir; senão fallback de metas 01/02 só para listar indicadores
+  - Meta consolidada (`goal_scope_branch = ''`) quando existir
+  - Se não houver meta consolidada mas existirem metas `01`/`02`, o catálogo monta `branch_goals` para exibição agregada na visão consolidado
 
 ## Cadastro (admin)
 
@@ -36,8 +53,10 @@ No formulário de metas, escolher **Escopo da meta**: Consolidado, Filial 01 ou 
 ## Implementação (`postgres_indicator_goals_repository`)
 
 - `list_resolved_goals_map` / `list_latest_active_goals_map`: filtram por `goal_scope_branch` e vigência (`valid_from` / `valid_to` no último dia da competência).
-- Com `branch=01` ou `02`, o `ORDER BY` prioriza a meta da filial (`CASE WHEN goal_scope_branch = %s`).
-- **Importante:** os parâmetros do `CASE` no `ORDER BY` devem ser enviados **depois** dos parâmetros de vigência no array Python — ordem incorreta gerava `operator does not exist: character varying = date` (corrigido em `cbc91c5`).
+- Com `branch=01` ou `02`: filtro estrito `goal_scope_branch = %s` (`uses_strict_branch_goal_resolution`).
+- Visão consolidado (`branch` vazio): apenas metas com `goal_scope_branch = ''`.
+- **Histórico:** versões antigas usavam `IN (%s, '')` + `ORDER BY CASE` (fallback para meta consolidada na filial). Removido para alinhar ao comportamento acima.
+- **Importante:** quando o `CASE` no `ORDER BY` era usado, os parâmetros deviam vir **depois** dos de vigência — bug `character varying = date` (corrigido em `cbc91c5`).
 
 ## Materialização (`period_scores`)
 
@@ -53,4 +72,18 @@ Após deploy com metas por filial, rode o refresh manualmente se o job periódic
 
 ## UI (MFE)
 
-Rótulos de filial na meta, realizado e gap: `01: valor | 02: valor` (sem prefixo "Un."). Ver [MFE.md](./MFE.md).
+| Contexto | Rótulo exibido |
+|----------|----------------|
+| Filtro **Consolidado** | `Consolidado` (`getFilterViewScopeLabel`) |
+| Filtro **Por filial** (01/02) | `Filial 01`, `Filial 02` — coluna Escopo, leitura estratégica, prefixo de valor/gap |
+| Visão consolidado, várias filiais no `realized` | `01: valor \| 02: valor` (`formatBranchScopedMetric`) |
+| Admin — escopo da meta | `01`, `02` (`getGoalScopeBranchLabel`) |
+
+Detalhes: [MFE.md](./MFE.md) — seção *Rótulos da visão*.
+
+## Metas `monthly_curve` (Comercial)
+
+- Meta comparável do período = soma dos `indicator_goal_monthly_targets` do mês da competência.
+- Se a curva não vier no catálogo (lista vazia) e `goal_value > 0`, o calculador usa **fallback** para meta padrão do período (evita IDD/nota `0` indevidos).
+- Medições da Produção com valor `null` na fonte permanecem **sem dado** (não viram `0.0` artificial).
+- Depois de deploy com correção no calculador, execute `scripts/refresh_period_scores.py` para atualizar `period_scores` que ainda guardam IDD zerado.

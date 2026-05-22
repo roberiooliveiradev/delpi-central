@@ -1,6 +1,5 @@
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
-import { getScopeTypeLabel } from "../presentation/labels";
 import {
   formatIndicatorGoalValue,
   formatIndicatorScore,
@@ -65,7 +64,7 @@ export function IndicatorAnalyticsTable({
             </div>
 
             <span>{indicator.departmentName}</span>
-            <span>{getScopeTypeLabel(indicator.scopeType)}</span>
+            <span>{indicator.viewScopeLabel}</span>
             <span>{indicator.weightPct}%</span>
             <span>{formatIndicatorGoalValue(indicator, competence)}</span>
             <strong

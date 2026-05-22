@@ -64,11 +64,25 @@ Regras na API de leitura:
 
 Implementação principal:
 
-- `StrategicIndicatorsCalculator` — `MISSING_VALUE_CLASSIFICATION`, `_build_missing_indicator_value`, média de departamento só com indicadores pontuados.
+- `StrategicIndicatorsCalculator` — `MISSING_VALUE_CLASSIFICATION`, `MISSING_GOAL_CLASSIFICATION`, `_build_missing_indicator_value`, `_build_indicator_without_goal_for_view`, média de departamento só com indicadores pontuados.
 - Financeiro (Sheets) — `_average_sheet_metric` retorna `null` se não houver linhas no intervalo; **não** converte ausência em `0` (api-delpi espelha a mesma regra).
-- MFE — `formatIndicatorValue` / `formatIndicatorScore` exibem **Sem dados preenchidos** quando o valor ou a nota são `null`.
+- MFE — `formatIndicatorValue` / `formatIndicatorScore` exibem **Sem dados preenchidos** quando o valor ou a nota são `null`; rótulos da visão em [MFE.md](./MFE.md).
 
-**Pendente de alinhamento nas fontes:** Produção ainda pode enviar `0` quando não há dado; Qualidade (PPM) usa `default_value=0.0` em alguns indicadores. Ver [DATA_SOURCES.md](./DATA_SOURCES.md).
+**Produção:** medições sem valor na fonte permanecem `null` no provider (não são convertidas para `0.0` antes do cálculo).
+
+**Pendente de alinhamento nas fontes:** Qualidade (PPM) usa `default_value=0.0` em alguns indicadores. Ver [DATA_SOURCES.md](./DATA_SOURCES.md).
+
+## Filtro por filial (`branch`) vs. escopo do indicador
+
+Documentação completa: [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
+
+Resumo do `StrategicIndicatorsCalculator` + catálogo resolvido:
+
+1. **Meta:** com `branch` na query, só entra meta com `goal_scope_branch` igual à filial; não há fallback para `''`.
+2. **Realizado:** chave `01`/`02` em `unit_values` só pontua por unidade se houver `branch_goals` ou meta resolvida para aquela filial; caso contrário permanece `measurement.value` (consolidado).
+3. **Listagem:** indicador sem meta na filial ainda aparece no painel com `goal_label` *Sem meta para filial XX* e nota `null`.
+
+Helpers compartilhados: `si_app/shared/goal_scope.py` (`indicator_uses_branch_unit_measurement`, `uses_strict_branch_goal_resolution`).
 
 ## Metas em séries históricas
 
@@ -78,7 +92,8 @@ O seed padrão (V009) cadastra metas para o ano corrente (ex.: 2026). Trends com
 |---------------|-----------|
 | Meta do `goal_year` da competência | Preferência quando existe |
 | Fallback | Meta ativa mais recente do indicador (log `si_goal_year_fallback`) |
-| Sem meta alguma | Indicador omitido do catálogo resolvido (log `si_goal_missing`) |
+| Sem meta alguma (visão consolidado) | Indicador omitido do catálogo resolvido (log `si_goal_missing`) |
+| Sem meta na filial (visão `branch=01/02`) | Indicador listado com `has_resolved_goal=false` e rótulo *Sem meta para filial XX* |
 
 Recomendação de negócio: duplicar metas para anos anteriores via admin (`duplicate-year`) em vez de depender só do fallback.
 

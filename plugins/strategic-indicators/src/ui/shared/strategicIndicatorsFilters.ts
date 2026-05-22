@@ -50,6 +50,18 @@ export function resolveStrategicIndicatorsBranch(
   return viewMode === "branch" ? branch : undefined;
 }
 
+/** Rótulo da visão ativa nos painéis (filtro consolidado vs filial). */
+export function getFilterViewScopeLabel(
+  viewMode: StrategicIndicatorsViewMode,
+  branch: string,
+): string {
+  if (viewMode === "branch" && branch.trim()) {
+    return `Filial ${branch.trim()}`;
+  }
+
+  return "Consolidado";
+}
+
 export function isStrategicIndicatorsDepartmentsRoute(
   pathname = typeof window !== "undefined" ? window.location.pathname : "",
 ): boolean {

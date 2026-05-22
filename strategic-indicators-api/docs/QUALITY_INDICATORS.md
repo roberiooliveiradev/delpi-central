@@ -14,7 +14,9 @@ Indicadores permanecem `scope_type = consolidated` (medição consolidada no pai
 | Nota 5S | 80% | 80% |
 | Ganhos financeiros Kaizen | Curva mensal: R$ 4.500 (jan–jun), R$ 9.000 (jul–dez) | R$ 4.500/mês (padrão) |
 
-Metas consolidadas (`goal_scope_branch = ''`) do seed V009 são **inativadas**; a leitura por filial usa `branch=01` ou `02` na API.
+Metas consolidadas (`goal_scope_branch = ''`) do seed V009 são **inativadas**; a leitura por filial usa `branch=01` ou `02` na API (sem fallback para meta consolidada na query).
+
+Na UI, filtro por filial exibe rótulo **Filial 01/02** — [MFE.md](./MFE.md).
 
 Na visão **Consolidado** (`aggregation_mode = average_of_units`):
 

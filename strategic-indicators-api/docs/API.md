@@ -20,7 +20,7 @@ Documentação interativa: `/apps/strategic-indicators-api/docs`
 | Query | Descrição |
 |-------|-----------|
 | `department_id` | Filtrar por departamento |
-| `branch` | Filial (visão por unidade) |
+| `branch` | Filial `01` ou `02` — visão por unidade; ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md) |
 | `competence` | Competência `YYYY-MM` (ex.: `2026-05`) |
 | `start_date`, `end_date` | Intervalo alternativo |
 
@@ -110,6 +110,17 @@ Campos relevantes quando **não há medição** no período:
 ```
 
 `GET /departments/{id}` e `GET /presentation` usam o mesmo contrato em `indicators` / `realized` (valores `null` por filial quando não houver dado na unidade).
+
+#### Visão por filial (`branch=01` ou `02`)
+
+| Campo | Comportamento |
+|-------|---------------|
+| `goal_label` | Meta da filial ou **Sem meta para filial XX** (sem reutilizar meta consolidada) |
+| `value` / `realized` | Realizado da unidade quando o indicador usa medição por filial; senão **valor consolidado** |
+| `score` | `null` se não houver meta para o escopo da visão |
+| `classification` | **Sem meta para esta visão** (com realizado) ou **Sem dados preenchidos** |
+
+Departamentos com medição consolidada (ex.: Engenharia): filtrar por filial **não** troca o realizado para `unit_values[01]`; apenas a meta e a nota seguem o escopo da filial.
 
 ---
 

@@ -5,6 +5,8 @@ import {
   getGoalPeriodicityLabel,
   getPerformanceDirectionLabel,
 } from "../presentation/labels";
+import { resolveStrategicIndicatorsBranch } from "../shared/strategicIndicatorsFilters";
+import type { StrategicIndicatorsViewMode } from "../shared/strategicIndicatorsFilters";
 import {
   formatIndicatorGapDisplay,
   formatIndicatorGoalValue,
@@ -16,6 +18,8 @@ import "./IndicatorQuickDetail.css";
 type IndicatorQuickDetailProps = {
   indicator: IndicatorAnalyticsViewItem | null;
   competence?: string | null;
+  viewMode?: StrategicIndicatorsViewMode;
+  branch?: string;
 };
 
 function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
@@ -28,6 +32,8 @@ function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
 export function IndicatorQuickDetail({
   indicator,
   competence,
+  viewMode = "consolidated",
+  branch = "01",
 }: IndicatorQuickDetailProps) {
   if (!indicator) {
     return (
@@ -42,6 +48,10 @@ export function IndicatorQuickDetail({
     valuePrefix: indicator.valuePrefix,
     valueSuffix: indicator.valueSuffix,
     valueDecimals: indicator.valueDecimals,
+  };
+  const displayContext = {
+    filterViewScopeLabel: indicator.viewScopeLabel,
+    activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
   };
   return (
     <aside className="si-indicator-quick-detail">
@@ -102,13 +112,13 @@ export function IndicatorQuickDetail({
         <div className="si-indicator-quick-detail__meta-item">
           <span>Valor atual</span>
           <strong>
-            {formatIndicatorRealizedDisplay(indicator, valueFormat)}
+            {formatIndicatorRealizedDisplay(indicator, valueFormat, displayContext)}
           </strong>
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">
           <span>Gap</span>
-          <strong>{formatIndicatorGapDisplay(indicator, valueFormat)}</strong>
+          <strong>{formatIndicatorGapDisplay(indicator, valueFormat, displayContext)}</strong>
         </div>
 
         {indicator.goalMode === "monthly_curve" ? (
