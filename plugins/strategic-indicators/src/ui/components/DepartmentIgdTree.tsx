@@ -619,7 +619,9 @@ export function DepartmentIgdTree({
   filterState,
   filterControls,
 }: DepartmentIgdTreeProps) {
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(() => new Set());
+  const [expandedDepartmentIds, setExpandedDepartmentIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [departmentsVisible, setDepartmentsVisible] = useState(true);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
@@ -644,37 +646,37 @@ export function DepartmentIgdTree({
     [activeColumn],
   );
 
-  const allExpandableKeys = useMemo(() => {
-    if (!activeColumn) {
-      return [];
-    }
-
-    const keys: string[] = [];
-
-    for (const departmentId of model.departmentOrder) {
+  const allExpandableDepartmentIds = useMemo(() => {
+    return model.departmentOrder.filter((departmentId) => {
       const node = nodesById.get(departmentId);
-      if (node && node.indicators.length > 0) {
-        keys.push(`${activeColumn.scope.key}:${departmentId}`);
-      }
-    }
+      return Boolean(node && node.indicators.length > 0);
+    });
+  }, [model.departmentOrder, nodesById]);
 
-    return keys;
-  }, [activeColumn, model.departmentOrder, nodesById]);
-
-  const treeLayoutKey = `${model.competence}-${activeScopeKey}-${model.departmentOrder.join("|")}`;
+  const departmentOrderKey = model.departmentOrder.join("|");
 
   useEffect(() => {
-    setExpandedKeys(new Set());
-    setDepartmentsVisible(true);
-  }, [treeLayoutKey]);
+    setExpandedDepartmentIds((current) => {
+      const validIds = new Set(model.departmentOrder);
+      const next = new Set<string>();
 
-  const toggleDepartment = useCallback((key: string) => {
-    setExpandedKeys((current) => {
+      for (const departmentId of current) {
+        if (validIds.has(departmentId)) {
+          next.add(departmentId);
+        }
+      }
+
+      return next.size === current.size ? current : next;
+    });
+  }, [departmentOrderKey, model.departmentOrder]);
+
+  const toggleDepartment = useCallback((departmentId: string) => {
+    setExpandedDepartmentIds((current) => {
       const next = new Set(current);
-      if (next.has(key)) {
-        next.delete(key);
+      if (next.has(departmentId)) {
+        next.delete(departmentId);
       } else {
-        next.add(key);
+        next.add(departmentId);
       }
       return next;
     });
@@ -682,39 +684,34 @@ export function DepartmentIgdTree({
 
   const expandAll = useCallback(() => {
     setDepartmentsVisible(true);
-    setExpandedKeys(new Set(allExpandableKeys));
-  }, [allExpandableKeys]);
+    setExpandedDepartmentIds(new Set(allExpandableDepartmentIds));
+  }, [allExpandableDepartmentIds]);
 
   const collapseAll = useCallback(() => {
     setDepartmentsVisible(false);
-    setExpandedKeys(new Set());
+    setExpandedDepartmentIds(new Set());
   }, []);
 
   const toggleDepartmentsVisible = useCallback(() => {
     setDepartmentsVisible((current) => !current);
   }, []);
 
-  const hasExpandable = allExpandableKeys.length > 0;
+  const hasExpandable = allExpandableDepartmentIds.length > 0;
 
-  const expandedDepartmentIds = useMemo(() => {
-    if (!activeColumn) {
-      return [];
-    }
-
+  const openDepartmentIds = useMemo(() => {
     return model.departmentOrder.filter((departmentId) => {
-      const expandKey = `${activeColumn.scope.key}:${departmentId}`;
-      if (!expandedKeys.has(expandKey)) {
+      if (!expandedDepartmentIds.has(departmentId)) {
         return false;
       }
 
       const node = nodesById.get(departmentId);
       return Boolean(node && node.indicators.length > 0);
     });
-  }, [activeColumn, expandedKeys, model.departmentOrder, nodesById]);
+  }, [expandedDepartmentIds, model.departmentOrder, nodesById]);
 
-  const expandedDepartmentCount = expandedDepartmentIds.length;
+  const expandedDepartmentCount = openDepartmentIds.length;
   const soloExpandedDepartmentId =
-    expandedDepartmentCount === 1 ? expandedDepartmentIds[0] : null;
+    expandedDepartmentCount === 1 ? openDepartmentIds[0] : null;
 
   const departmentCount = model.departmentOrder.length;
 
@@ -725,10 +722,13 @@ export function DepartmentIgdTree({
 
   const isTreeFullyExpanded =
     departmentsVisible &&
-    (allExpandableKeys.length === 0 ||
-      allExpandableKeys.every((key) => expandedKeys.has(key)));
+    (allExpandableDepartmentIds.length === 0 ||
+      allExpandableDepartmentIds.every((departmentId) =>
+        expandedDepartmentIds.has(departmentId),
+      ));
 
-  const isTreeFullyCollapsed = !departmentsVisible && expandedKeys.size === 0;
+  const isTreeFullyCollapsed =
+    !departmentsVisible && expandedDepartmentIds.size === 0;
 
   const mapActions =
     departmentCount > 0 || hasExpandable ? (
@@ -827,10 +827,8 @@ export function DepartmentIgdTree({
                   }`}
                 >
             {model.departmentOrder.map((departmentId) => {
-              const expandKey = activeColumn
-                ? `${activeColumn.scope.key}:${departmentId}`
-                : "";
-              const isDepartmentExpanded = expandedKeys.has(expandKey);
+              const isDepartmentExpanded =
+                expandedDepartmentIds.has(departmentId);
 
               return (
               <div
@@ -863,7 +861,7 @@ export function DepartmentIgdTree({
                         isSoloExpandedDepartment={
                           soloExpandedDepartmentId === departmentId
                         }
-                        onToggle={() => toggleDepartment(expandKey)}
+                        onToggle={() => toggleDepartment(departmentId)}
                         activeCardId={activeCardId}
                         onActivateCard={setActiveCardId}
                       />
