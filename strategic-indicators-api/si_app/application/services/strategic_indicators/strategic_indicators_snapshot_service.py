@@ -496,6 +496,12 @@ class StrategicIndicatorsSnapshotService:
         calculated_departments = self._calculator.reconcile_period_snapshot_departments(
             calculated_departments=calculated_departments,
             calculated_indicators=calculated_indicators,
+            indicators_catalog=catalog.indicators_catalog,
+            measurements=measurements,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            competence=period.competence,
+            scope_branch=branch,
         )
 
         for index, department in enumerate(calculated_departments):
@@ -743,7 +749,18 @@ class StrategicIndicatorsSnapshotService:
         ):
             return None
 
-        return self._reconcile_stored_period_snapshot(entry.snapshot)
+        catalog = self.get_catalog_snapshot(
+            competence=period.competence,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            department_id=department_id,
+            branch=branch,
+        )
+        return self._reconcile_stored_period_snapshot(
+            entry.snapshot,
+            indicators_catalog=catalog.indicators_catalog,
+            branch=branch,
+        )
 
     def _period_scores_cache_is_current(
         self,
@@ -794,10 +811,19 @@ class StrategicIndicatorsSnapshotService:
     def _reconcile_stored_period_snapshot(
         self,
         stored: StrategicIndicatorsPeriodSnapshot,
+        *,
+        indicators_catalog: list | None = None,
+        branch: str | None = None,
     ) -> StrategicIndicatorsPeriodSnapshot:
         reconciled_departments = self._calculator.reconcile_period_snapshot_departments(
             calculated_departments=stored.calculated_departments,
             calculated_indicators=stored.calculated_indicators,
+            indicators_catalog=indicators_catalog,
+            measurements=stored.measurements,
+            start_date=stored.period.start_date,
+            end_date=stored.period.end_date,
+            competence=stored.period.competence,
+            scope_branch=branch,
         )
         igd, igd_exact, classification = self._calculator.calculate_igd(
             reconciled_departments

@@ -1,4 +1,5 @@
 import { useEffect, useId, type PropsWithChildren, type ReactNode } from "react";
+import { lockPageScroll } from "../utils/pageScrollLock";
 import "./DrawerPanel.css";
 
 type DrawerPanelProps = PropsWithChildren<{
@@ -29,12 +30,11 @@ export function DrawerPanel({
       if (event.key === "Escape") onClose();
     }
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlockPageScroll = lockPageScroll();
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlockPageScroll();
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [open, onClose]);

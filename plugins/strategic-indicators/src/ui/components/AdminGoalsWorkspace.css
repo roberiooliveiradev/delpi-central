@@ -21,7 +21,7 @@
 }
 
 .si-admin-goals-master-detail {
-  min-height: 420px;
+  align-items: start;
 }
 
 .si-admin-goals-filters {
