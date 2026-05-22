@@ -20,8 +20,22 @@
   gap: 8px;
 }
 
+.si-admin-goals-workspace .si-admin-detail-card__header {
+  flex-wrap: wrap;
+}
+
+.si-admin-goals-workspace .si-admin-detail-card__actions {
+  max-width: 100%;
+}
+
 .si-admin-goals-master-detail {
   align-items: start;
+}
+
+.si-admin-goals-workspace {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .si-admin-goals-workspace,
@@ -29,6 +43,31 @@
 .si-admin-goals-master-detail .si-admin-master-detail__detail {
   height: auto;
   min-height: 0;
+}
+
+.si-admin-goals-master-detail {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.si-admin-goals-master-detail .si-admin-master-detail__master,
+.si-admin-goals-master-detail .si-admin-master-detail__detail {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.si-admin-goals-workspace .si-admin-list__item:hover {
+  transform: none;
+}
+
+.si-admin-goals-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
 }
 
 .si-admin-goals-filters {
@@ -53,6 +92,7 @@
   grid-template-columns: minmax(160px, 1.4fr) 110px minmax(140px, 1fr) minmax(120px, 0.9fr) 90px minmax(200px, 1.2fr);
   gap: 10px;
   align-items: center;
+  min-width: min(100%, 860px);
 }
 
 .si-admin-goals-table__head {

@@ -9,6 +9,7 @@ from si_app.application.use_cases.strategic_indicators.period_resolution import 
 from si_app.domain.ports.strategic_indicators.commercial_indicators_snapshot_port import (
     StrategicIndicatorsCommercialIndicatorsSnapshotPort,
 )
+from si_app.shared.branch_filter import build_unit_values_for_consolidated_department
 
 
 class CommercialIndicatorsSnapshotProvider(
@@ -32,7 +33,7 @@ class CommercialIndicatorsSnapshotProvider(
             snapshot = self._commercial_metrics_snapshot_service.get_snapshot(
                 start_date=start_date,
                 end_date=end_date,
-                branch=branch,
+                branch=None,
             )
         except Exception as exc:
             scope = branch or "consolidated"
@@ -47,7 +48,7 @@ class CommercialIndicatorsSnapshotProvider(
                 ],
             }
 
-        return self._map_snapshot_to_result(snapshot=snapshot)
+        return self._map_snapshot_to_result(snapshot=snapshot, view_branch=branch)
 
     def get_commercial_indicators_snapshot_series(
         self,
@@ -58,7 +59,7 @@ class CommercialIndicatorsSnapshotProvider(
         try:
             snapshots = self._commercial_metrics_snapshot_service.get_snapshot_series(
                 periods=periods,
-                branch=branch,
+                branch=None,
             )
         except Exception as exc:
             scope = branch or "consolidated"
@@ -84,13 +85,19 @@ class CommercialIndicatorsSnapshotProvider(
                 result[period.competence] = {"items": [], "errors": []}
                 continue
 
-            result[period.competence] = self._map_snapshot_to_result(snapshot=snapshot)
+            result[period.competence] = self._map_snapshot_to_result(
+                snapshot=snapshot,
+                view_branch=branch,
+            )
 
         return result
 
-    def _map_snapshot_to_result(self, *, snapshot) -> dict:
-        requested_key = snapshot.requested_branch or "consolidated"
-
+    def _map_snapshot_to_result(
+        self,
+        *,
+        snapshot,
+        view_branch: str | None = None,
+    ) -> dict:
         return {
             "items": [
                 self._build_measurement(
@@ -105,27 +112,45 @@ class CommercialIndicatorsSnapshotProvider(
                     value=snapshot.branch_rol_value,
                     unit_values={"branch": snapshot.branch_rol_value},
                 ),
-                self._build_measurement(
+                self._build_consolidated_measurement(
                     indicator_id="commercial-closing-rate",
                     source="commercial_sales_conversion_rate",
                     value=snapshot.sales_conversion_rate_pct,
-                    unit_values={requested_key: snapshot.sales_conversion_rate_pct},
+                    view_branch=view_branch,
                 ),
-                self._build_measurement(
+                self._build_consolidated_measurement(
                     indicator_id="commercial-sales-order-otd",
                     source="commercial_sales_order_otd",
                     value=snapshot.sales_order_otd_pct,
-                    unit_values={requested_key: snapshot.sales_order_otd_pct},
+                    view_branch=view_branch,
                 ),
-                self._build_measurement(
+                self._build_consolidated_measurement(
                     indicator_id="commercial-new-business-rol",
                     source="commercial_new_business_rol_pct",
                     value=snapshot.new_business_rol_pct,
-                    unit_values={requested_key: snapshot.new_business_rol_pct},
+                    view_branch=view_branch,
                 ),
             ],
             "errors": [],
         }
+
+    def _build_consolidated_measurement(
+        self,
+        *,
+        indicator_id: str,
+        source: str,
+        value: float | None,
+        view_branch: str | None,
+    ) -> dict:
+        return self._build_measurement(
+            indicator_id=indicator_id,
+            source=source,
+            value=value,
+            unit_values=build_unit_values_for_consolidated_department(
+                consolidated_value=value,
+                view_branch=view_branch,
+            ),
+        )
 
     def _build_measurement(
         self,

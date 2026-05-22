@@ -134,6 +134,7 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             "realized": self._calculator.build_realized_payload(
                 unit_values=current.unit_values,
                 value=current.value,
+                department_id=current.department_id,
             ),
             "has_value": self._calculator.indicator_has_value(current.value),
             "classification": current.classification,
@@ -142,6 +143,7 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             "gaps": self._calculator.build_gaps_payload(
                 unit_gaps=current.unit_gaps,
                 gap=current.gap,
+                department_id=current.department_id,
             ),
             "trend": trend,
             "value_unit": getattr(current, "value_unit", None),

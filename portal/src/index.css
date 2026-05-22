@@ -415,20 +415,27 @@ body,
 }
 
 /*
- * Configurações (MFE): não esticar o wrapper do scroll do portal.
- * .content é flex — o filho crescia até a altura da viewport e deixava
- * área vazia rolável abaixo do conteúdo ao selecionar o ano das metas.
+ * Configurações (MFE): um único scroll em `.content`, sem esticar o host federado.
+ * Evita barra vertical fantasma e overflow horizontal ao abrir Metas anuais.
  */
 .content:has(.si-settings-page) {
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-x: clip;
 }
 
+.content:has(.si-settings-page) > .app-host,
+.content:has(.si-settings-page) > .app-host-federated,
 .content:has(.si-settings-page) > div,
 .app-host-federated:has(.si-settings-page),
 .app-host-federated:has(.si-settings-page) > div {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: auto;
   min-height: 0;
   flex: 0 0 auto;
+  overflow: visible;
 }
 
 .app-host-embedded {

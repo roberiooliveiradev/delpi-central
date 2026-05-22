@@ -4660,15 +4660,23 @@ body {
 }
 
 .content:has(.si-settings-page) {
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-x: clip;
 }
 
+.content:has(.si-settings-page) > .app-host,
+.content:has(.si-settings-page) > .app-host-federated,
 .content:has(.si-settings-page) > div,
 .app-host-federated:has(.si-settings-page),
 .app-host-federated:has(.si-settings-page) > div {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: auto;
   min-height: 0;
   flex: 0 0 auto;
+  overflow: visible;
 }
 
 .si-settings-tabbar,

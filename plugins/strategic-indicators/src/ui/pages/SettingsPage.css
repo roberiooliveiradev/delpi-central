@@ -1,26 +1,43 @@
 .si-settings-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 24px;
+  overflow-x: clip;
   background: var(--app-canvas, var(--bg, #ffffff));
 }
 
 /*
- * Portal: `.content` é flex e estica o filho; o host federado força height 100%.
- * Ao selecionar o ano em Metas anuais, sobra área vazia rolável abaixo do painel.
+ * Portal: `.content` é flex row por padrão; o host federado força height 100%.
+ * Metas anuais (master-detail + tabela) vazava largura e criava scroll duplo.
  */
 .content:has(.si-settings-page) {
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-x: clip;
 }
 
+.content:has(.si-settings-page) > .app-host,
+.content:has(.si-settings-page) > .app-host-federated,
 .content:has(.si-settings-page) > div,
 .app-host-federated:has(.si-settings-page),
 .app-host-federated:has(.si-settings-page) > div {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: auto;
   min-height: 0;
   flex: 0 0 auto;
+  overflow: visible;
 }
 
-.si-settings-page {
+.si-settings-sections,
+.si-settings-sections .si-section-block,
+.si-settings-sections .si-section-block__content {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .si-settings-tabbar {

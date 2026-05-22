@@ -77,12 +77,14 @@ class GetStrategicIndicatorsUseCase:
                     realized=self._calculator.build_realized_payload(
                         unit_values=item.unit_values,
                         value=item.value,
+                        department_id=item.department_id,
                     ),
                     score=item.score,
                     gap=item.gap,
                     gaps=self._calculator.build_gaps_payload(
                         unit_gaps=item.unit_gaps,
                         gap=item.gap,
+                        department_id=item.department_id,
                     ),
                     has_value=item.value is not None,
                     trend=item.trend,

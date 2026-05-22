@@ -10,7 +10,10 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicIndicatorCatalogItem,
     StrategicIndicatorMeasuredValue,
 )
-from si_app.shared.branch_filter import is_consolidated_aggregation_department
+from si_app.shared.branch_filter import (
+    consolidated_measurement_value,
+    is_consolidated_aggregation_department,
+)
 from si_app.shared.goal_scope import (
     BRANCH_UNIT_CODES,
     indicator_uses_branch_unit_measurement,
@@ -1015,7 +1018,16 @@ class StrategicIndicatorsCalculator:
         *,
         unit_values: dict[str, float | None] | None,
         value: float | None,
+        department_id: str | None = None,
     ) -> dict[str, float | None]:
+        if is_consolidated_aggregation_department(department_id):
+            return {
+                "consolidated": consolidated_measurement_value(
+                    value=value,
+                    unit_values=unit_values,
+                )
+            }
+
         if unit_values:
             return dict(unit_values)
 
@@ -1026,7 +1038,13 @@ class StrategicIndicatorsCalculator:
         *,
         unit_gaps: dict[str, float | None] | None,
         gap: float | None,
+        department_id: str | None = None,
     ) -> dict[str, float | None]:
+        if is_consolidated_aggregation_department(department_id):
+            if gap is None:
+                return {}
+            return {"consolidated": gap}
+
         if unit_gaps:
             return dict(unit_gaps)
 
