@@ -26,16 +26,6 @@
   backdrop-filter: blur(4px);
 }
 
-.si-departments-page__state-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: min(420px, 60vh);
-  padding: 120px 24px 48px;
-  box-sizing: border-box;
-}
-
 .si-departments-page__refresh-banner {
   position: absolute;
   left: 12px;
@@ -47,11 +37,6 @@
 }
 
 @media (max-width: 900px) {
-  .si-departments-page__state-placeholder {
-    padding-top: 96px;
-    padding-inline: 16px;
-  }
-
   .si-departments-page__overlay {
     padding: 16px;
   }
