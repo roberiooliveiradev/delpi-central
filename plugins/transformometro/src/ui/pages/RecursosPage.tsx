@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
+import type { DataTableColumn } from "../../components/DataTable";
+import { DataTableSection } from "../../components/DataTableSection";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   useLoadingProgress,
@@ -41,7 +43,6 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQ, setSearchQ] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyRecursoForm);
@@ -67,18 +68,6 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const filtered = useMemo(() => {
-    const q = searchQ.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter(
-      (r) =>
-        r.nome_recurso.toLowerCase().includes(q) ||
-        r.codigo_recurso.toLowerCase().includes(q) ||
-        (r.fornecedor ?? "").toLowerCase().includes(q) ||
-        (r.categoria_recurso ?? "").toLowerCase().includes(q)
-    );
-  }, [items, searchQ]);
 
   function startCreate() {
     setEditingId(null);
@@ -126,6 +115,68 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
       setError(err instanceof Error ? err.message : "Erro ao excluir recurso");
     }
   }
+
+  const columns: DataTableColumn<RecursoCompartilhado>[] = [
+    { key: "codigo", header: "Código", render: (r) => r.codigo_recurso },
+    {
+      key: "nome",
+      header: "Nome",
+      className: "ds-table__col--wide",
+      render: (r) => (
+        <>
+          <strong>{r.nome_recurso}</strong>
+          {r.fornecedor ? <span className="ds-table__sub"> · {r.fornecedor}</span> : null}
+        </>
+      ),
+    },
+    {
+      key: "custo",
+      header: "Custo/mês",
+      className: "ds-table__col--numeric",
+      render: (r) => formatCurrency(r.valor_total_recorrente),
+    },
+    { key: "rateio", header: "Rateio", render: (r) => labelCriterioRateio(r.criterio_rateio) },
+    { key: "status", header: "Status", render: (r) => r.status_recurso },
+    {
+      key: "vigencia",
+      header: "Vigência",
+      render: (r) => (
+        <>
+          {toDateInputValue(r.data_inicio_vigencia) || "…"} →{" "}
+          {toDateInputValue(r.data_fim_vigencia) || "…"}
+        </>
+      ),
+    },
+    {
+      key: "acoes",
+      header: "",
+      className: "ds-table__actions",
+      render: (r) => (
+        <>
+          <button
+            type="button"
+            className="ds-ghost-btn"
+            onClick={(event) => {
+              event.stopPropagation();
+              startEdit(r);
+            }}
+          >
+            Editar
+          </button>
+          <button
+            type="button"
+            className="ds-ghost-btn"
+            onClick={(event) => {
+              event.stopPropagation();
+              void handleDelete(r);
+            }}
+          >
+            Excluir
+          </button>
+        </>
+      ),
+    },
+  ];
 
   const catalogFetchProgress = useTrackedSingleFetchProgress(loading && !options);
   const catalogLoadingProgress = useLoadingProgress(
@@ -181,74 +232,21 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
         .
       </p>
 
-      <section className="ds-card ds-table-section">
-        <div className="ds-table-toolbar">
-          <label className="ds-table-search">
-            <span className="ds-table-search__label">Buscar</span>
-            <input
-              className="ds-table-search__input"
-              placeholder="Código, nome, fornecedor…"
-              value={searchQ}
-              onChange={(e) => setSearchQ(e.target.value)}
-            />
-          </label>
-          <span className="ds-table-section__meta">{filtered.length} recurso(s)</span>
-        </div>
-
-        {filtered.length === 0 ? (
-          <p className="ds-state-box">
-            Nenhum recurso no catálogo. Cadastre licenças e ferramentas compartilhadas.
-          </p>
-        ) : (
-          <div className="ds-table-wrap">
-            <table className="ds-table">
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Nome</th>
-                  <th>Custo/mês</th>
-                  <th>Rateio</th>
-                  <th>Status</th>
-                  <th>Vigência</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((r) => (
-                  <tr key={r.recurso_compartilhado_id}>
-                    <td>{r.codigo_recurso}</td>
-                    <td>
-                      <strong>{r.nome_recurso}</strong>
-                      {r.fornecedor ? (
-                        <span className="ds-table__sub"> · {r.fornecedor}</span>
-                      ) : null}
-                    </td>
-                    <td>{formatCurrency(r.valor_total_recorrente)}</td>
-                    <td>{labelCriterioRateio(r.criterio_rateio)}</td>
-                    <td>{r.status_recurso}</td>
-                    <td>
-                      {toDateInputValue(r.data_inicio_vigencia) || "…"} →{" "}
-                      {toDateInputValue(r.data_fim_vigencia) || "…"}
-                    </td>
-                    <td className="ds-table__actions">
-                      <button type="button" className="ds-ghost-btn" onClick={() => startEdit(r)}>
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="ds-ghost-btn"
-                        onClick={() => void handleDelete(r)}
-                      >
-                        Excluir
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <DataTableSection
+        title="Catálogo de recursos"
+        columns={columns}
+        rows={items}
+        rowKey={(r) => r.recurso_compartilhado_id}
+        loading={loading}
+        refreshing={refreshing}
+        searchPlaceholder="Código, nome, fornecedor…"
+        getSearchText={(r) =>
+          [r.codigo_recurso, r.nome_recurso, r.fornecedor, r.categoria_recurso]
+            .filter(Boolean)
+            .join(" ")
+        }
+        emptyMessage="Nenhum recurso no catálogo. Cadastre licenças e ferramentas compartilhadas."
+      />
 
       {showForm && options ? (
         <section className="ds-card ds-cadastro-subsection">

@@ -24,6 +24,7 @@ import {
 
 import type { AppProps } from "../../App";
 import { ChartCard } from "../../components/ChartCard";
+import { ChartGranularityToggle } from "../../components/ChartGranularityToggle";
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DataSourceBanner } from "../../components/DataSourceBanner";
@@ -43,13 +44,15 @@ import {
   type DashboardResumo,
 } from "../../data/api/transformometroApi";
 import { fetchTransformometroHealth } from "../../data/api/transformometroHealthApi";
+import type { ChartGranularity } from "../../types/chart";
 import {
   dateInputToCompetencia,
   formatPeriodLabel,
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
-  monthKeyToLabel,
 } from "../../utils/dates";
+import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
+import { suggestGranularity } from "../../utils/periodBuckets";
 import { formatCurrency, formatInteger, formatPercent } from "../../utils/format";
 
 const CHART_HEIGHT_HOME = 260;
@@ -70,6 +73,9 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
   const [evolucao, setEvolucao] = useState<DashboardEvolucaoItem[]>([]);
   const [processos, setProcessos] = useState<DashboardProcessoItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [savingsGranularity, setSavingsGranularity] = useState<ChartGranularity>(() =>
+    suggestGranularity(getFirstDayOfMonthInputValue(), getTodayInputValue())
+  );
 
   const apiParams = useMemo(() => {
     const params: Record<string, string> = {};
@@ -110,15 +116,27 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
     void load();
   }, [load]);
 
-  const savingsChartData = useMemo(
-    () =>
-      evolucao.map((item) => ({
-        name: monthKeyToLabel(item.competencia),
-        bruta: item.economia_bruta,
-        liquida: item.economia_liquida_mes,
-      })),
-    [evolucao]
+  useEffect(() => {
+    setSavingsGranularity(suggestGranularity(dateStart, dateEnd));
+  }, [dateStart, dateEnd]);
+
+  const savingsChart = useMemo(
+    () => buildEvolucaoSavingsSeries(evolucao, dateStart, dateEnd, savingsGranularity),
+    [dateEnd, dateStart, evolucao, savingsGranularity]
   );
+
+  const savingsChartData = savingsChart.points;
+
+  const savingsChartHint = useMemo(() => {
+    const parts = [periodLabel];
+    if (savingsGranularity === "day" && savingsChart.dayProrated) {
+      parts.push("economia diária proporcional ao total mensal");
+    }
+    if (savingsChart.truncated) {
+      parts.push("primeiros 60 intervalos");
+    }
+    return parts.join(" · ");
+  }, [periodLabel, savingsChart.dayProrated, savingsChart.truncated, savingsGranularity]);
 
   const topDailyChart = useMemo(
     () =>
@@ -248,7 +266,17 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
       </section>
 
       <section className="ds-charts-grid">
-        <ChartCard title="Evolução mensal" hint={periodLabel}>
+        <ChartCard
+          title="Economia no período"
+          hint={savingsChartHint}
+          toolbar={
+            <ChartGranularityToggle
+              idPrefix="tm-home-savings"
+              value={savingsGranularity}
+              onChange={setSavingsGranularity}
+            />
+          }
+        >
           {savingsChartData.length === 0 && !isLoading ? (
             <p className="ds-state-box">Sem competências no período. Abra o dashboard ou recalcule.</p>
           ) : (
@@ -304,7 +332,7 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
         title="Destaques do período"
         hint="Clique em Dashboard completo para filtros e exportação"
         columns={processColumns}
-        rows={processos.slice(0, 10)}
+        rows={processos}
         rowKey={(row) => row.processo_id}
         loading={isLoading}
         pageSize={10}

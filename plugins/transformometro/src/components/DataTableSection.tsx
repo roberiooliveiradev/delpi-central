@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 
 import { useClientPagination } from "../hooks/useClientPagination";
@@ -10,7 +10,7 @@ import { DataTable, type DataTableColumn } from "./DataTable";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 import { Pagination } from "./Pagination";
 
-const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_TABLE_PAGE_SIZE = 20;
 
 function buildSearchText<T>(row: T, columns: DataTableColumn<T>[]): string {
   return columns
@@ -36,6 +36,13 @@ export type DataTableSectionProps<T> = {
   refreshing?: boolean;
   emptyMessage?: string;
   pageSize?: number;
+  searchPlaceholder?: string;
+  getSearchText?: (row: T) => string;
+  hideSearch?: boolean;
+  onRowClick?: (row: T) => void;
+  getRowClassName?: (row: T) => string | undefined;
+  footer?: ReactNode;
+  interactive?: boolean;
 };
 
 export function DataTableSection<T>({
@@ -47,7 +54,14 @@ export function DataTableSection<T>({
   loading = false,
   refreshing = false,
   emptyMessage = "Nenhum registro encontrado.",
-  pageSize = DEFAULT_PAGE_SIZE,
+  pageSize = DEFAULT_TABLE_PAGE_SIZE,
+  searchPlaceholder = "Buscar na tabela…",
+  getSearchText,
+  hideSearch = false,
+  onRowClick,
+  getRowClassName,
+  footer,
+  interactive = Boolean(onRowClick),
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
 
@@ -55,10 +69,20 @@ export function DataTableSection<T>({
     const query = search.trim().toLowerCase();
     if (!query) return rows;
 
-    return rows.filter((row) => buildSearchText(row, columns).includes(query));
-  }, [rows, search, columns]);
+    return rows.filter((row) => {
+      const haystack = (getSearchText ?? ((item) => buildSearchText(item, columns)))(
+        row
+      ).toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [rows, search, columns, getSearchText]);
 
   const { page, setPage, slice, total } = useClientPagination(filteredRows, pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   const showInitialLoading = loading && rows.length === 0;
   const showRefreshLoading = refreshing && rows.length > 0;
   const initialFetchProgress = useTrackedSingleFetchProgress(showInitialLoading);
@@ -72,8 +96,16 @@ export function DataTableSection<T>({
     refreshFetchProgress
   );
 
+  const sectionClass = [
+    "ds-card",
+    "ds-table-section",
+    interactive ? "ds-table-section--interactive" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <section className="ds-card ds-table-section" aria-busy={loading || refreshing}>
+    <section className={sectionClass} aria-busy={loading || refreshing}>
       <div className="ds-table-section__header">
         <h2 className="ds-section-title">{title}</h2>
         <div className="ds-table-section__meta-group">
@@ -81,6 +113,8 @@ export function DataTableSection<T>({
           <span className="ds-table-section__meta">{total} registro(s)</span>
         </div>
       </div>
+
+      {footer ? <div className="ds-table-section__footer">{footer}</div> : null}
 
       {refreshing && rows.length > 0 ? (
         <LoadingActivityCard
@@ -100,25 +134,29 @@ export function DataTableSection<T>({
         />
       ) : (
         <>
-          <div className="ds-table-toolbar">
-            <div className="ds-table-search" role="search">
-              <Search size={16} aria-hidden="true" className="ds-table-search__icon" />
-              <input
-                type="search"
-                className="ds-table-search__input"
-                value={search}
-                placeholder="Buscar na tabela…"
-                onChange={(event) => setSearch(event.target.value)}
-                aria-label="Filtrar registros da tabela"
-              />
+          {!hideSearch ? (
+            <div className="ds-table-toolbar">
+              <div className="ds-table-search" role="search">
+                <Search size={16} aria-hidden="true" className="ds-table-search__icon" />
+                <input
+                  type="search"
+                  className="ds-table-search__input"
+                  value={search}
+                  placeholder={searchPlaceholder}
+                  onChange={(event) => setSearch(event.target.value)}
+                  aria-label="Filtrar registros da tabela"
+                />
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <DataTable
             columns={columns}
             rows={slice}
             rowKey={rowKey}
             emptyMessage={emptyMessage}
+            onRowClick={onRowClick}
+            getRowClassName={getRowClassName}
           />
 
           <Pagination

@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
+import { DataTableSection } from "../../components/DataTableSection";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -296,55 +297,24 @@ export function ProcessosPage({
         </section>
       ) : null}
 
-      <section className="ds-card ds-table-section ds-table-section--interactive">
-        <div className="ds-table-section__header">
-          <h2 className="ds-section-title">Lista de processos</h2>
-          <span className="ds-table-section__meta">{items.length} registro(s)</span>
-        </div>
-        <p className="ds-hint">Clique em uma linha para abrir revisões, medições e investimentos.</p>
-        <div className="ds-table-wrap">
-          <table className="ds-table ds-table--clickable">
-            <thead>
-              <tr>
-                {columns.map((col) => (
-                  <th key={col.key} className={col.className}>
-                    {col.header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading && items.length === 0 ? (
-                <tr>
-                  <td colSpan={columns.length} className="ds-table__empty">
-                    Carregando…
-                  </td>
-                </tr>
-              ) : items.length === 0 ? (
-                <tr>
-                  <td colSpan={columns.length} className="ds-table__empty">
-                    Nenhum processo. Use Novo processo para cadastrar.
-                  </td>
-                </tr>
-              ) : (
-                items.map((row) => (
-                  <tr
-                    key={row.processo_id}
-                    className="ds-table__row--clickable"
-                    onClick={() => onOpenProcesso(row.processo_id)}
-                  >
-                    {columns.map((col) => (
-                      <td key={col.key} className={col.className}>
-                        {col.render(row)}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DataTableSection
+        title="Lista de processos"
+        hint="Filtros acima aplicam na API"
+        columns={columns}
+        rows={items}
+        rowKey={(row) => row.processo_id}
+        loading={loading}
+        refreshing={refreshing}
+        hideSearch
+        pageSize={15}
+        emptyMessage="Nenhum processo. Use Novo processo para cadastrar."
+        onRowClick={(row) => onOpenProcesso(row.processo_id)}
+        footer={
+          <p className="ds-hint">
+            Clique em uma linha para abrir revisões, medições e investimentos.
+          </p>
+        }
+      />
     </TransformometroShell>
   );
 }
