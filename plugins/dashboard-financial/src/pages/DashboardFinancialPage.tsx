@@ -22,6 +22,7 @@ import { FINANCIAL_ROUTES } from "../constants/routes";
 import { useFinancialDashboard } from "../hooks/useFinancialDashboard";
 import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { formatPeriodLabel } from "../utils/dates";
+import { formatGoalSubtitle } from "../utils/goalDisplay";
 import {
   formatCurrency,
   formatDecimal,
@@ -132,29 +133,33 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         <KpiCard
           title="EBITDA / ROL"
           value={formatPercent(ebitda?.ebitda_over_rol_pct)}
-          subtitle={
+          subtitle={formatGoalSubtitle(
             ebitda?.ebitda_value != null
-              ? `EBITDA ${formatCurrency(ebitda.ebitda_value)}`
-              : periodLabel
-          }
+              ? `EBITDA ${formatCurrency(ebitda.ebitda_value)} · ${periodLabel}`
+              : periodLabel,
+            ebitda,
+            formatPercent,
+          )}
           icon={<Percent size={22} />}
           loading={isBusy && !ebitda}
         />
         <KpiCard
           title="Custos fixos / ROL"
           value={formatPercent(fixedCost?.fixed_cost_over_rol_pct)}
-          subtitle={
+          subtitle={formatGoalSubtitle(
             fixedCost?.fixed_cost_value != null
-              ? `Fixos ${formatCurrency(fixedCost.fixed_cost_value)}`
-              : periodLabel
-          }
+              ? `Fixos ${formatCurrency(fixedCost.fixed_cost_value)} · ${periodLabel}`
+              : periodLabel,
+            fixedCost,
+            formatPercent,
+          )}
           icon={<Landmark size={22} />}
           loading={isBusy && !fixedCost}
         />
         <KpiCard
           title="PMR (dias)"
           value={formatDecimal(pmr?.pmr_days, 1)}
-          subtitle={periodLabel}
+          subtitle={formatGoalSubtitle(periodLabel, pmr, (v) => formatDecimal(v, 1))}
           icon={<Clock size={22} />}
           loading={isBusy && !pmr}
         />

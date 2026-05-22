@@ -35,6 +35,7 @@ import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "../utils/dates";
+import { formatGoalSubtitle } from "../utils/goalDisplay";
 import { exportLmpsDashboardCsv } from "../utils/exportLmpsCsv";
 import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
 import { suggestGranularity } from "../utils/periodBuckets";
@@ -258,7 +259,12 @@ export function DashboardLmpsPage() {
               maximumFractionDigits: 2,
             }
           )}%`}
-          subtitle={periodLabel}
+          subtitle={formatGoalSubtitle(periodLabel, summary, (v) =>
+            `${v.toLocaleString("pt-BR", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}%`,
+          )}
           icon={<CircleGauge size={22} />}
         />
         <KpiCard

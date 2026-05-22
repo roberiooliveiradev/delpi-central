@@ -1,3 +1,5 @@
+import type { DashboardGoalFields } from "../utils/goalDisplay";
+
 export type LmpStatus = "Pontual" | "Atrasado" | "Andamento" | "Retornada";
 export type LmpNivel = "Nível 1" | "Nível 2" | "Nível 3";
 export type LmpListingKind = "LMP" | "AMOSTRA" | "OUTRO";
@@ -18,7 +20,7 @@ export type LmpDashboardItem = {
   status: LmpStatus;
 };
 
-export type LmpsDashboardSummary = {
+export type LmpsDashboardSummary = DashboardGoalFields & {
   total_lmps: number;
   total_items?: number;
   percent_dentro_prazo: number;

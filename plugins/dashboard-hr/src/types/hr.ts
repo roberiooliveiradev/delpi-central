@@ -1,3 +1,5 @@
+import type { DashboardGoalFields } from "../utils/goalDisplay";
+
 export type HrFilterParams = {
   start_date?: string;
   end_date?: string;
@@ -18,6 +20,7 @@ export type HrSnapshot = {
   internal_satisfaction_pct: number | null;
   active_pdi_pct: number | null;
   branches: HrBranchMetrics[];
+  goals_by_metric?: Record<string, DashboardGoalFields | null>;
 };
 
 export type HrBranchesResponse = {

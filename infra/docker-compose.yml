@@ -519,6 +519,7 @@ services:
       - .env
 
     environment:
+      STRATEGIC_INDICATORS_API_BASE_URL: http://strategic-indicators-api:8000
       # O CÓDIGO DA API ESPERA ESSES NOMES:
       DB_HOST: ${TOTVS_DB_HOST}
       DB_PORT: ${TOTVS_DB_PORT}
@@ -561,6 +562,7 @@ services:
       - keycloak
       - postgres-plugins
       - transformometro-api
+      - strategic-indicators-api
 
     networks:
       - delpi-network

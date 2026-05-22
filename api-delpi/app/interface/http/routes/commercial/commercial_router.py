@@ -14,6 +14,7 @@ from app.application.dto.commercial.commercial_rol_series_request import (
 )
 from app.application.dto.commercial.new_business_rol_pct_request import NewBusinessRolPctRequest
 from app.application.dto.commercial.sales_order_otd_request import SalesOrderOtdRequest
+from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.commercial_composer import (
     build_get_head_office_rol_target_pct_use_case,
     build_get_branch_rol_target_pct_use_case,
@@ -24,6 +25,7 @@ from app.composition.commercial_composer import (
     build_get_sales_order_otd_use_case,
     build_get_new_business_rol_pct_use_case,
 )
+from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 
 router = APIRouter(prefix="/commercial", tags=["Comercial"])
@@ -44,7 +46,14 @@ def get_head_office_rol_target_pct(
             end_date=end_date,
         )
 
-        result = use_case.execute(request)
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.COMMERCIAL_HEAD_OFFICE_ROL,
+            start_date=start_date,
+            end_date=end_date,
+            branch="01",
+            recompute_target_pct_from="rol",
+        )
 
         return success_response(
             data=result,
@@ -78,7 +87,14 @@ def get_branch_rol_target_pct(
             end_date=end_date,
         )
 
-        result = use_case.execute(request)
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.COMMERCIAL_BRANCH_ROL,
+            start_date=start_date,
+            end_date=end_date,
+            branch="02",
+            recompute_target_pct_from="rol",
+        )
 
         return success_response(
             data=result,
@@ -147,7 +163,13 @@ def get_sales_conversion_rate(
             end_date=end_date,
         )
 
-        result = use_case.execute(request)
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.COMMERCIAL_SALES_CONVERSION,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
         return success_response(
             data=result,
@@ -217,7 +239,13 @@ def get_sales_order_otd(
             end_date=end_date,
         )
 
-        result = use_case.execute(request)
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.COMMERCIAL_SALES_ORDER_OTD,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
         return success_response(
             data=result,
@@ -252,7 +280,13 @@ def get_new_business_rol_pct(
             end_date=end_date,
         )
 
-        result = use_case.execute(request)
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.COMMERCIAL_NEW_BUSINESS_ROL,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
         return success_response(
             data=result,

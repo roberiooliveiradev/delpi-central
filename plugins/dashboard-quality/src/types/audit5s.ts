@@ -1,3 +1,5 @@
+import type { DashboardGoalFields } from "../utils/goalDisplay";
+
 export type Audit5sSummaryParams = {
   start_date?: string;
   end_date?: string;
@@ -16,7 +18,7 @@ export type Audit5s = {
   branch: string | null;
 };
 
-export type Audit5sSummary = {
+export type Audit5sSummary = DashboardGoalFields & {
   start_date: string | null;
   end_date: string | null;
   average_score: number;

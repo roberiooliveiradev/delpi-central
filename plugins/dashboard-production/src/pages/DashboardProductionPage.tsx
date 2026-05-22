@@ -28,6 +28,7 @@ import { useProductionDashboard } from "../hooks/useProductionDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useProductionFilters } from "../hooks/useProductionFilters";
 import { formatPeriodLabel } from "../utils/dates";
+import { formatGoalSubtitle } from "../utils/goalDisplay";
 import { formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 300;
@@ -163,35 +164,55 @@ export function DashboardProductionPage() {
         <KpiCard
           title="MO direta / ROL"
           value={formatPercent(directLabor?.direct_labor_cost_pct)}
-          subtitle={`${branchLabel} · ${periodLabel}`}
+          subtitle={formatGoalSubtitle(
+            `${branchLabel} · ${periodLabel}`,
+            directLabor,
+            formatPercent,
+          )}
           icon={<Users size={22} />}
           loading={isBusy && !directLabor}
         />
         <KpiCard
           title="Custo de produção / ROL"
           value={formatPercent(productionCost?.production_cost_pct)}
-          subtitle={`${branchLabel} · ${periodLabel}`}
+          subtitle={formatGoalSubtitle(
+            `${branchLabel} · ${periodLabel}`,
+            productionCost,
+            formatPercent,
+          )}
           icon={<Coins size={22} />}
           loading={isBusy && !productionCost}
         />
         <KpiCard
           title="Depreciação / ROL"
           value={formatPercent(depreciation?.depreciation_pct)}
-          subtitle={`${branchLabel} · ${periodLabel}`}
+          subtitle={formatGoalSubtitle(
+            `${branchLabel} · ${periodLabel}`,
+            depreciation,
+            formatPercent,
+          )}
           icon={<Percent size={22} />}
           loading={isBusy && !depreciation}
         />
         <KpiCard
           title="OEE"
           value={formatPercent(oee?.overall_equipment_effectiveness_pct)}
-          subtitle={`TOTVS · ${branchLabel} · ${periodLabel}`}
+          subtitle={formatGoalSubtitle(
+            `TOTVS · ${branchLabel} · ${periodLabel}`,
+            oee,
+            formatPercent,
+          )}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !oee}
         />
         <KpiCard
           title="OTD — entrega no prazo"
           value={formatPercent(otd?.on_time_delivery_pct)}
-          subtitle={`TOTVS · ${branchLabel} · ${periodLabel}`}
+          subtitle={formatGoalSubtitle(
+            `TOTVS · ${branchLabel} · ${periodLabel}`,
+            otd,
+            formatPercent,
+          )}
           icon={<Truck size={22} />}
           loading={isBusy && !otd}
         />

@@ -22,6 +22,7 @@ from app.application.dto.ppm.list_ppm_request import ListPpmRequest
 from app.application.dto.ppm.ppm_series_request import PpmSeriesRequest
 from app.application.dto.ppm.ppm_summary_request import PpmSummaryRequest
 
+from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.quality_composer import (
     build_get_audit_5s_summary_use_case,
     build_get_kaizen_summary_use_case,
@@ -32,6 +33,7 @@ from app.composition.quality_composer import (
     build_list_ppm_use_case,
     build_list_quality_branches_use_case,
 )
+from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 router = APIRouter(prefix="/quality", tags=["Qualidade"])
 
@@ -167,9 +169,15 @@ def get_kaizen_summary(
             date_end=date_end,
         )
 
-        summary = use_case.execute(request)
+        summary = enrich_dashboard_metric(
+            use_case.execute(request).to_dict(),
+            source_key=goal_keys.QUALITY_KAIZEN_IDEAS,
+            start_date=date_start,
+            end_date=date_end,
+            branch=branch,
+        )
 
-        return success_response(data=summary.to_dict())
+        return success_response(data=summary)
 
     except ValueError as exc:
         log_error(f"Erro de validação ao gerar resumo de kaizens: {exc}")
@@ -199,9 +207,15 @@ def get_audit_5s_summary(
             branch=branch,
         )
 
-        summary = use_case.execute(request)
+        summary = enrich_dashboard_metric(
+            use_case.execute(request).to_dict(),
+            source_key=goal_keys.QUALITY_AUDIT_5S,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
-        return success_response(data=summary.to_dict())
+        return success_response(data=summary)
 
     except ValueError as exc:
         log_error(f"Erro de validação ao gerar resumo das auditorias 5S: {exc}")
@@ -231,9 +245,15 @@ def get_internal_ppm_summary(
         )
 
         use_case = build_get_ppm_summary_use_case()
-        result = use_case.execute(dto)
+        result = enrich_dashboard_metric(
+            use_case.execute(dto).to_dict(),
+            source_key=goal_keys.QUALITY_PPM_INTERNAL,
+            start_date=date_start,
+            end_date=date_end,
+            branch=branch,
+        )
 
-        return success_response(data=result.to_dict())
+        return success_response(data=result)
 
     except ValueError as exc:
         log_error(f"Erro de validação ao buscar resumo de PPM interno: {exc}")
@@ -263,9 +283,15 @@ def get_external_ppm_summary(
         )
 
         use_case = build_get_ppm_summary_use_case()
-        result = use_case.execute(dto)
+        result = enrich_dashboard_metric(
+            use_case.execute(dto).to_dict(),
+            source_key=goal_keys.QUALITY_PPM_EXTERNAL,
+            start_date=date_start,
+            end_date=date_end,
+            branch=branch,
+        )
 
-        return success_response(data=result.to_dict())
+        return success_response(data=result)
 
     except ValueError as exc:
         log_error(f"Erro de validação ao buscar resumo de PPM externo: {exc}")

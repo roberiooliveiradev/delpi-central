@@ -327,6 +327,18 @@ Query `branch=01|02` exige coluna `goal_scope_branch` (V016+) e API com ordem co
 
 ---
 
+## Integrações internas (dashboards departamentais)
+
+| Método | Rota | Auth |
+|--------|------|------|
+| GET | `/strategic-indicators/integrations/dashboard-goals?source_keys=...` | `API_DELPI_INTERNAL_SERVICE_TOKEN` (header interno) ou JWT |
+
+Parâmetros: `source_keys` (vírgula), `start_date`, `end_date`, `branch`, `competence`, `department_id`.
+
+Retorna metas resolvidas por `department_indicators.source_key`, com `comparable_goal` proporcional ao período (mesma regra do cálculo do SI).
+
+Consumidor: **api-delpi** via `strategic_indicators_client` (padrão Transformômetro).
+
 ## Autenticação
 
 Middleware `jwt_middleware` (`delpi_auth`) valida o token Keycloak.

@@ -1,0 +1,38 @@
+"""Mapeamento entre rotas dos dashboards departamentais e source_key do catálogo SI."""
+
+COMMERCIAL_HEAD_OFFICE_ROL = "commercial_head_office_rol_target"
+COMMERCIAL_BRANCH_ROL = "commercial_branch_rol_target"
+COMMERCIAL_SALES_CONVERSION = "commercial_sales_conversion_rate"
+COMMERCIAL_SALES_ORDER_OTD = "commercial_sales_order_otd"
+COMMERCIAL_NEW_BUSINESS_ROL = "commercial_new_business_rol_pct"
+
+PRODUCTION_DIRECT_LABOR = "production_direct_labor"
+PRODUCTION_COST = "production_cost"
+PRODUCTION_DEPRECIATION = "production_depreciation"
+PRODUCTION_OEE = "production_oee"
+PRODUCTION_OTD = "production_otd"
+
+FINANCIAL_EBITDA = "financial_ebitda"
+FINANCIAL_FIXED_COST = "financial_fixed_cost"
+FINANCIAL_PMR = "financial_pmr"
+
+SUPPLIES_CPV = "supplies_cpv"
+SUPPLIES_OTD = "supplies_otd"
+SUPPLIES_STOCK_VALUE = "supplies_stock_value"
+SUPPLIES_STOCK_TURNOVER = "supplies_stock_turnover"
+
+HR_ABSENTEEISM = "hr_absenteeism"
+HR_TURNOVER = "hr_turnover"
+HR_SATISFACTION = "hr_satisfaction"
+HR_PDI = "hr_pdi"
+HR_TRAINING_HOURS = "hr_training_hours"
+HR_PERFORMANCE_REVIEWS = "hr_performance_reviews_completion"
+
+QUALITY_PPM_INTERNAL = "quality_ppm_internal"
+QUALITY_PPM_EXTERNAL = "quality_ppm_external"
+QUALITY_KAIZEN_IDEAS = "quality_kaizen_ideas"
+QUALITY_AUDIT_5S = "quality_audit_5s"
+QUALITY_KAIZEN_FINANCIAL = "quality_kaizen_financial"
+
+ENGINEERING_LMP = "lmp"
+ENGINEERING_TRANSFORMA_MAIS = "transforma_mais"

@@ -42,6 +42,7 @@ import {
   parseLmpDateNumber,
 } from "../utils/lmpDisplay";
 import { formatPeriodLabel } from "../utils/dates";
+import { formatGoalSubtitle } from "../utils/goalDisplay";
 import { formatDecimal, formatInteger, formatPercent } from "../utils/format";
 
 const PIE_HEIGHT = 320;
@@ -243,7 +244,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
         <KpiCard
           title="% LMP dentro do prazo"
           value={formatPercent(summary?.percent_dentro_prazo, 2)}
-          subtitle={periodLabel}
+          subtitle={formatGoalSubtitle(periodLabel, summary, (v) => formatPercent(v, 2))}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !summary}
         />

@@ -7,6 +7,7 @@ from app.utils.logger import log_error
 from app.application.dto.production.production_request import ProductionRequest
 from app.application.dto.financial.get_rol_request import GetRolRequest
 
+from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.production_composer import (
     build_get_direct_labor_cost_pct_use_case,
     build_get_production_cost_pct_use_case,
@@ -14,6 +15,7 @@ from app.composition.production_composer import (
     build_get_overall_equipment_effectiveness_pct_use_case,
     build_get_on_time_delivery_pct_use_case,
 )
+from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 router = APIRouter(prefix="/production", tags=["Produção"])
 
@@ -40,7 +42,13 @@ def get_direct_labor_cost_pct(
             end_date=end_date,
         )
 
-        result = use_case.execute(request, request_rol)
+        result = enrich_dashboard_metric(
+            use_case.execute(request, request_rol),
+            source_key=goal_keys.PRODUCTION_DIRECT_LABOR,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
         return success_response(
             data=result,
@@ -81,7 +89,13 @@ def get_production_cost_pct(
             end_date=end_date,
         )
 
-        result = use_case.execute(request, request_rol)
+        result = enrich_dashboard_metric(
+            use_case.execute(request, request_rol),
+            source_key=goal_keys.PRODUCTION_COST,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
         return success_response(
             data=result,
@@ -122,7 +136,13 @@ def get_depreciation_pct(
             end_date=end_date,
         )
 
-        result = use_case.execute(request, request_rol)
+        result = enrich_dashboard_metric(
+            use_case.execute(request, request_rol),
+            source_key=goal_keys.PRODUCTION_DEPRECIATION,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
         return success_response(
             data=result,
@@ -157,8 +177,13 @@ def get_overall_equipment_effectiveness_pct(
             end_date=end_date,
         )
 
-        result = use_case.execute(request)
-
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.PRODUCTION_OEE,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
         return success_response(
             data=result,
@@ -193,7 +218,13 @@ def get_on_time_delivery_pct(
             end_date=end_date,
         )
 
-        result = use_case.execute(request)
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.PRODUCTION_OTD,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
         return success_response(
             data=result,

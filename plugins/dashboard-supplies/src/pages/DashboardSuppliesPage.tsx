@@ -16,6 +16,7 @@ import { SUPPLIES_ROUTES } from "../constants/routes";
 import { useSuppliesDashboard } from "../hooks/useSuppliesDashboard";
 import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { formatPeriodLabel } from "../utils/dates";
+import { formatGoalSubtitle } from "../utils/goalDisplay";
 import {
   formatCurrency,
   formatDecimal,
@@ -107,35 +108,53 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         <KpiCard
           title="CPV total"
           value={formatCurrency(cpv?.summary.cpv_total)}
-          subtitle={`${branchLabel} · ${periodLabel}`}
+          subtitle={formatGoalSubtitle(
+            `${branchLabel} · ${periodLabel}`,
+            cpv?.summary,
+          )}
           icon={<TrendingUp size={22} />}
           loading={isBusy && !cpv}
         />
         <KpiCard
           title="CPV / ROL"
           value={formatPercent(cpv?.summary.cpv_percentage)}
-          subtitle={`ROL ${formatCurrency(cpv?.summary.rol_with_ipi)}`}
+          subtitle={formatGoalSubtitle(
+            `ROL ${formatCurrency(cpv?.summary.rol_with_ipi)}`,
+            cpv?.summary,
+            formatPercent,
+          )}
           icon={<Percent size={22} />}
           loading={isBusy && !cpv}
         />
         <KpiCard
           title="OTD compras"
           value={formatPercent(otd?.summary.otd_percentage)}
-          subtitle={`${formatInteger(otd?.summary.on_time_lines)} / ${formatInteger(otd?.summary.total_lines)} linhas`}
+          subtitle={formatGoalSubtitle(
+            `${formatInteger(otd?.summary.on_time_lines)} / ${formatInteger(otd?.summary.total_lines)} linhas`,
+            otd?.summary,
+            formatPercent,
+          )}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !otd}
         />
         <KpiCard
           title="Valor de estoque"
           value={formatCurrency(stockValue?.summary.total_stock_value)}
-          subtitle={`${branchLabel} · ${locationLabel}`}
+          subtitle={formatGoalSubtitle(
+            `${branchLabel} · ${locationLabel}`,
+            stockValue?.summary,
+          )}
           icon={<Warehouse size={22} />}
           loading={isBusy && !stockValue}
         />
         <KpiCard
           title="Giro IDD (meses)"
           value={formatDecimal(inventoryTurnover?.summary.inventory_turnover_months, 2)}
-          subtitle={periodLabel}
+          subtitle={formatGoalSubtitle(
+            periodLabel,
+            inventoryTurnover?.summary,
+            (v) => formatDecimal(v, 2),
+          )}
           icon={<Package size={22} />}
           loading={isBusy && !inventoryTurnover}
         />

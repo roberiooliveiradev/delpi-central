@@ -1,3 +1,4 @@
+import type { DashboardGoalFields } from "../utils/goalDisplay";
 import { httpGet } from "./httpClient";
 import type {
   ApiSuccessResponse,
@@ -7,7 +8,7 @@ import type {
   Page,
 } from "../types/lmp";
 
-export type LmpsDashboardSummary = {
+export type LmpsDashboardSummary = DashboardGoalFields & {
   total_lmps: number;
   total_items?: number;
   percent_dentro_prazo: number;

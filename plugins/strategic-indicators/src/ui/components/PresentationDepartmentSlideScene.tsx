@@ -2,6 +2,7 @@ import type {
   PresentationDepartmentFocus,
   PresentationSparklinePoint,
 } from "../../data/types/presentation";
+import { resolveIndicatorSparklineDirection } from "../../data/utils/resolveScoreTrendDirection";
 import { PresentationDepartmentSparkline } from "./PresentationDepartmentSparkline";
 import {
   formatIndicatorGapDisplay,
@@ -246,6 +247,11 @@ export function PresentationDepartmentSlideScene({
       <div className="si-presentation-department-slide__priority-grid si-presentation-department-slide__priority-grid--indicators">
         {department.indicators.map((indicator) => {
           const valueFormat = getIndicatorValueFormat(indicator);
+          const chartSeries = buildIndicatorChartSeries(indicator);
+          const sparklineDirection = resolveIndicatorSparklineDirection(
+            chartSeries,
+            indicator.trend,
+          );
 
           return (
             <article
@@ -256,17 +262,17 @@ export function PresentationDepartmentSlideScene({
                 <h4>{indicator.name}</h4>
                 <span
                   className={`si-status-badge si-status-badge--${getDirectionVariant(
-                    indicator.trend,
+                    sparklineDirection,
                   )}`}
                 >
-                  {indicator.trendLabel}
+                  {getDirectionText(sparklineDirection)}
                 </span>
               </div>
 
               <div className="si-presentation-department-slide__indicator-chart">
                 <PresentationDepartmentSparkline
-                  points={buildIndicatorChartSeries(indicator)}
-                  direction={indicator.trend}
+                  points={chartSeries}
+                  direction={sparklineDirection}
                   height={88}
                   compact
                 />

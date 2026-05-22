@@ -34,6 +34,7 @@ import { getScopeTypeLabel } from "../presentation/labels";
 import { StatusBadge } from "./StatusBadge";
 import { PanZoomCanvas } from "./PanZoomCanvas";
 import { TreeMapFloatingControls } from "./TreeMapFloatingControls";
+import { resolveIndicatorSparklineDirection } from "../../data/utils/resolveScoreTrendDirection";
 import { TreeSparkline } from "./TreeSparkline";
 import {
   formatComparisonMonthsLabel,
@@ -310,6 +311,11 @@ function IndicatorTreeCard({
   const badgeVariant = indicator.hasValue
     ? mapScoreToBadgeVariant(indicator.score ?? 0)
     : "neutral";
+  const visibleSeries = sliceTrendPoints(series, monthsToCompare);
+  const sparklineDirection = resolveIndicatorSparklineDirection(
+    visibleSeries,
+    indicator.trend,
+  );
 
   return (
     <InteractiveTreeCard
@@ -327,11 +333,11 @@ function IndicatorTreeCard({
           </span>
         </div>
 
-        {series.length > 0 ? (
+        {visibleSeries.length > 0 ? (
           <TreeSparkline
             key={`indicator-series-${indicator.id}-${monthsToCompare}`}
-            points={sliceTrendPoints(series, monthsToCompare)}
-            direction={indicator.trend}
+            points={visibleSeries}
+            direction={sparklineDirection}
             height={52}
             label={`Histórico · ${formatComparisonMonthsLabel(monthsToCompare)}`}
           />
@@ -392,7 +398,7 @@ function IndicatorTreeCard({
             <StatusBadge label="Sem dado" variant="neutral" />
           )}
           <span className="si-tree-indicator-card__meta">
-            {getTrendLabel(indicator.trend)} ·{" "}
+            {getTrendLabel(sparklineDirection)} ·{" "}
             {getScopeTypeLabel(indicator.scopeType)}
           </span>
         </div>

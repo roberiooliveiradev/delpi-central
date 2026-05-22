@@ -1,3 +1,5 @@
+import type { DashboardGoalFields } from "../utils/goalDisplay";
+
 export type SuppliesFilterParams = {
   start_date?: string;
   end_date?: string;
@@ -6,7 +8,7 @@ export type SuppliesFilterParams = {
   top_limit?: number;
 };
 
-export type CpvSummary = {
+export type CpvSummary = DashboardGoalFields & {
   cpv_total: number;
   rol_with_ipi: number;
   cpv_percentage: number;
@@ -39,7 +41,7 @@ export type CpvData = {
   top_documents: CpvBreakdownItem[];
 };
 
-export type OtdSummary = {
+export type OtdSummary = DashboardGoalFields & {
   total_lines: number;
   on_time_lines: number;
   late_lines: number;
@@ -91,7 +93,7 @@ export type OtdData = {
   late_deliveries: LateDeliveryItem[];
 };
 
-export type StockValueSummary = {
+export type StockValueSummary = DashboardGoalFields & {
   total_stock_value: number;
   total_stock_quantity: number;
   total_records: number;
@@ -124,7 +126,7 @@ export type StockValueData = {
   top_products: StockTopProduct[];
 };
 
-export type InventoryTurnoverSummary = {
+export type InventoryTurnoverSummary = DashboardGoalFields & {
   inventory_turnover_months: number;
   inventory_turnover_times: number;
   total_stock_value: number;

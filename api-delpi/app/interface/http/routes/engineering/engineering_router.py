@@ -11,6 +11,7 @@ from app.application.dto.transforma_mais.process_request import ProcessRequest
 from app.application.dto.transforma_mais.process_summary_request import (
     ProcessSummaryRequest,
 )
+from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.engineering_composer import (
     build_engineering_get_lmp_use_case,
     build_engineering_get_transforma_mais_summary_use_case,
@@ -24,6 +25,7 @@ from app.interface.http.openapi_agent_metadata import (
     LMP_DASHBOARD,
     LMP_LIST,
 )
+from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.utils.logger import log_error
 
 router = APIRouter(prefix="/engineering", tags=["Engenharia"])
@@ -103,7 +105,14 @@ def list_lmps_dashboard_route(
         )
 
         use_case = build_engineering_list_lmps_dashboard_use_case()
-        result = use_case.execute(dto, status_filter=status)
+        result = enrich_dashboard_metric(
+            use_case.execute(dto, status_filter=status),
+            source_key=goal_keys.ENGINEERING_LMP,
+            start_date=date_start,
+            end_date=date_end,
+            branch=branch,
+            summary_key="summary",
+        )
 
         return success_response(
             data=result,
@@ -209,10 +218,16 @@ def get_process_summary(
             end_date=end_date,
         )
 
-        summary = use_case.execute(request)
+        summary = enrich_dashboard_metric(
+            summary.to_dict(),
+            source_key=goal_keys.ENGINEERING_TRANSFORMA_MAIS,
+            start_date=start_date,
+            end_date=end_date,
+            branch=filial_id,
+        )
 
         return success_response(
-            data=summary.to_dict(),
+            data=summary,
             message="Resumo dos processos do Transforma Mais carregado com sucesso.",
         )
 
