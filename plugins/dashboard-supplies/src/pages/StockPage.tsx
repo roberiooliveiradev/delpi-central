@@ -60,6 +60,11 @@ export function StockPage({ pathname }: StockPageProps) {
     ]
   );
 
+  const hasHistoricalPeriod = Boolean(
+    stockParams.start_date && stockParams.end_date
+  );
+  const isEstimatedStock = Boolean(data?.estimation?.enabled);
+
   const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
   const locationLabel = location ? `Local ${location}` : "Todas";
 
@@ -134,14 +139,18 @@ export function StockPage({ pathname }: StockPageProps) {
     <div className="dashboard-supplies dashboard-page">
       <FilterBar
         title="Estoque"
-        subtitle="Posição atual por filial e localização (snapshot)"
+        subtitle={
+          hasHistoricalPeriod
+            ? "Valor estimado no período (SB9 + movimentações SD3)"
+            : "Posição atual por filial e localização (SB2)"
+        }
         currentPath={pathname ?? SUPPLIES_ROUTES.stock}
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
         location={location}
-        showPeriodFilters={false}
+        showLocationFilter={!hasHistoricalPeriod}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}
@@ -150,6 +159,12 @@ export function StockPage({ pathname }: StockPageProps) {
         refreshing={refreshing}
       />
       <DataSourceBanner />
+      {isEstimatedStock ? (
+        <div className="ds-state-box" role="status">
+          {data?.estimation?.note ??
+            "Valor estimado; não substitui fechamento oficial da SB9."}
+        </div>
+      ) : null}
       <SuppliesStatusAlerts
         error={error}
         loading={loading}
@@ -214,7 +229,11 @@ export function StockPage({ pathname }: StockPageProps) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">Sem saldo por localização.</div>
+            <div className="ds-state-box">
+              {isEstimatedStock
+                ? "Detalhe por localização disponível apenas no estoque atual (SB2)."
+                : "Sem saldo por localização."}
+            </div>
           )}
         </ChartCard>
 
@@ -247,6 +266,11 @@ export function StockPage({ pathname }: StockPageProps) {
 
       <DataTableSection
         title="Top produtos por valor em estoque"
+        hint={
+          isEstimatedStock
+            ? "Ranking por produto não está disponível no modo histórico estimado."
+            : undefined
+        }
         columns={productColumns}
         rows={data?.top_products ?? []}
         rowKey={(row) => `${row.product_code}-${row.location}`}

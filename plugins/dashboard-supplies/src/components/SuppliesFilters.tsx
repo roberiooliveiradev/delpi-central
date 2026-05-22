@@ -8,6 +8,7 @@ type SuppliesFiltersProps = {
   onBranchChange: (value: string) => void;
   onLocationChange: (value: string) => void;
   showPeriodFilters?: boolean;
+  showLocationFilter?: boolean;
   className?: string;
 };
 
@@ -21,6 +22,7 @@ export function SuppliesFilters({
   onBranchChange,
   onLocationChange,
   showPeriodFilters = true,
+  showLocationFilter = true,
   className = "",
 }: SuppliesFiltersProps) {
   return (
@@ -59,16 +61,18 @@ export function SuppliesFilters({
           <option value="02">02 — Filial</option>
         </select>
       </div>
-      <div className="ds-filter-box">
-        <label htmlFor="ds-location">Localização (estoque / IDD)</label>
-        <input
-          id="ds-location"
-          type="text"
-          value={location}
-          placeholder="Todas"
-          onChange={(e) => onLocationChange(e.target.value)}
-        />
-      </div>
+      {showLocationFilter ? (
+        <div className="ds-filter-box">
+          <label htmlFor="ds-location">Localização (estoque / IDD)</label>
+          <input
+            id="ds-location"
+            type="text"
+            value={location}
+            placeholder="Todas"
+            onChange={(e) => onLocationChange(e.target.value)}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

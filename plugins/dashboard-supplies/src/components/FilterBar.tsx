@@ -13,6 +13,7 @@ type FilterBarProps = {
   branch: string;
   location: string;
   showPeriodFilters?: boolean;
+  showLocationFilter?: boolean;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchChange: (value: string) => void;
@@ -31,6 +32,7 @@ export function FilterBar({
   branch,
   location,
   showPeriodFilters = true,
+  showLocationFilter = true,
   onDateStartChange,
   onDateEndChange,
   onBranchChange,
@@ -54,6 +56,7 @@ export function FilterBar({
         branch={branch}
         location={location}
         showPeriodFilters={showPeriodFilters}
+        showLocationFilter={showLocationFilter}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
         onBranchChange={onBranchChange}
