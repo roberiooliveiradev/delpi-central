@@ -1,6 +1,7 @@
 from si_app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from si_app.domain.ports.supplies.cpv_query_repository_port import CpvQueryRepositoryPort
 from si_app.infrastructure.persistence.totvs.query_builder import QueryBuilder
+from si_app.shared.branch_filter import effective_query_branch
 from si_app.application.dto.supplies.get_cpv_request import GetCPVRequest
 
 
@@ -14,8 +15,9 @@ class CpvQueryRepository(BaseRepository, CpvQueryRepositoryPort):
         qb.raw("SD3.D_E_L_E_T_ = ''")
         qb.raw("SF4.D_E_L_E_T_ = ''")
 
-        if request.branch:
-            qb.eq("SD3.D3_FILIAL", request.branch)
+        branch = effective_query_branch(request.branch)
+        if branch:
+            qb.eq("SD3.D3_FILIAL", branch)
 
         qb.date_range("SD3.D3_EMISSAO", request.start_date, request.end_date)
 

@@ -10,6 +10,7 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicIndicatorCatalogItem,
     StrategicIndicatorMeasuredValue,
 )
+from si_app.shared.branch_filter import is_consolidated_aggregation_department
 from si_app.shared.goal_scope import (
     BRANCH_UNIT_CODES,
     indicator_uses_branch_unit_measurement,
@@ -148,7 +149,14 @@ class StrategicIndicatorsCalculator:
                 "higher_is_better",
             )
 
-            if active_branch in BRANCH_UNIT_CODES:
+            scoring_branch = active_branch
+            if (
+                active_branch in BRANCH_UNIT_CODES
+                and is_consolidated_aggregation_department(indicator.department_id)
+            ):
+                scoring_branch = ""
+
+            if scoring_branch in BRANCH_UNIT_CODES:
                 if not getattr(indicator, "has_resolved_goal", True):
                     calculated.append(
                         self._build_indicator_without_goal_for_view(
@@ -166,12 +174,12 @@ class StrategicIndicatorsCalculator:
                         "resolved_goal_scope_branch",
                         "",
                     ),
-                    view_branch=active_branch,
+                    view_branch=scoring_branch,
                 ):
                     branch_indicator_score = self._calculate_indicator_for_branch_code(
                         indicator=indicator,
                         measurement=measurement,
-                        branch_code=active_branch,
+                        branch_code=scoring_branch,
                         performance_direction=performance_direction,
                         start_date=start_date,
                         end_date=end_date,
@@ -189,10 +197,11 @@ class StrategicIndicatorsCalculator:
 
                     score, gap, realized_value = branch_indicator_score
                     unit_values = measurement.unit_values or {}
+                    display_branch = active_branch
                     unit_gaps = (
-                        {active_branch: gap}
+                        {display_branch: gap}
                         if gap is not None
-                        else {active_branch: None}
+                        else {display_branch: None}
                     )
                     calculated.append(
                         StrategicIndicatorCalculatedValue(
@@ -220,7 +229,7 @@ class StrategicIndicatorsCalculator:
                             classification=self.classify_score(score),
                             unit_values={
                                 key: unit_values.get(key)
-                                for key in (active_branch,)
+                                for key in (display_branch, "consolidated")
                                 if key in unit_values
                             }
                             or None,

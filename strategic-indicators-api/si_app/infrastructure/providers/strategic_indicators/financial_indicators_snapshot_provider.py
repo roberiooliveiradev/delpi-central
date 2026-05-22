@@ -12,6 +12,7 @@ from si_app.application.use_cases.strategic_indicators.period_resolution import 
 from si_app.domain.ports.strategic_indicators.financial_indicators_snapshot_port import (
     StrategicIndicatorsFinancialIndicatorsSnapshotPort,
 )
+from si_app.shared.branch_filter import effective_query_branch
 
 
 class FinancialIndicatorsSnapshotProvider(
@@ -155,9 +156,21 @@ class FinancialIndicatorsSnapshotProvider(
         unit_values: dict[str, float | None],
         branch: str | None,
     ) -> float | None:
-        if branch:
-            value = unit_values.get(branch)
-            return round(float(value), 2) if value is not None else None
+        view_branch = effective_query_branch(branch)
+        if view_branch:
+            consolidated_value = unit_values.get(CONSOLIDATED_BRANCH_KEY)
+            if consolidated_value is None:
+                valid = [
+                    float(value) for value in unit_values.values() if value is not None
+                ]
+                consolidated_value = (
+                    sum(valid) / len(valid) if valid else None
+                )
+            return (
+                round(float(consolidated_value), 2)
+                if consolidated_value is not None
+                else None
+            )
 
         consolidated_value = unit_values.get(CONSOLIDATED_BRANCH_KEY)
         if consolidated_value is not None:

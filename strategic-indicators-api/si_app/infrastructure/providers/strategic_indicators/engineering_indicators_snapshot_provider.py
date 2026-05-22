@@ -9,6 +9,7 @@ from si_app.application.use_cases.strategic_indicators.period_resolution import 
 from si_app.domain.ports.strategic_indicators.engineering_indicators_snapshot_port import (
     StrategicIndicatorsEngineeringIndicatorsSnapshotPort,
 )
+from si_app.shared.branch_filter import build_unit_values_for_consolidated_department
 
 
 class EngineeringIndicatorsSnapshotProvider(
@@ -32,7 +33,7 @@ class EngineeringIndicatorsSnapshotProvider(
             snapshot = self._engineering_metrics_snapshot_service.get_snapshot(
                 start_date=start_date,
                 end_date=end_date,
-                branch=branch,
+                branch=None,
             )
         except Exception as exc:
             scope = branch or "consolidated"
@@ -47,27 +48,30 @@ class EngineeringIndicatorsSnapshotProvider(
                 ],
             }
 
-        unit_key = branch or "consolidated"
+        projects_value = snapshot.lmp_projects_on_time_pct
+        transforma_value = snapshot.transforma_mais_financial_gain
 
         return {
             "items": [
                 {
                     "department_id": "engineering",
                     "indicator_id": "engineering-projects-on-time",
-                    "value": snapshot.lmp_projects_on_time_pct,
+                    "value": projects_value,
                     "source": "lmp",
-                    "unit_values": {
-                        unit_key: snapshot.lmp_projects_on_time_pct,
-                    },
+                    "unit_values": build_unit_values_for_consolidated_department(
+                        consolidated_value=projects_value,
+                        view_branch=branch,
+                    ),
                 },
                 {
                     "department_id": "engineering",
                     "indicator_id": "engineering-transforma-plus",
-                    "value": snapshot.transforma_mais_financial_gain,
+                    "value": transforma_value,
                     "source": "transforma_mais",
-                    "unit_values": {
-                        unit_key: snapshot.transforma_mais_financial_gain,
-                    },
+                    "unit_values": build_unit_values_for_consolidated_department(
+                        consolidated_value=transforma_value,
+                        view_branch=branch,
+                    ),
                 },
             ],
             "errors": [],
@@ -82,7 +86,7 @@ class EngineeringIndicatorsSnapshotProvider(
         try:
             snapshots = self._engineering_metrics_snapshot_service.get_snapshot_series(
                 periods=periods,
-                branch=branch,
+                branch=None,
             )
         except Exception as exc:
             scope = branch or "consolidated"
@@ -108,27 +112,30 @@ class EngineeringIndicatorsSnapshotProvider(
                 result[period.competence] = {"items": [], "errors": []}
                 continue
 
-            unit_key = branch or "consolidated"
+            projects_value = snapshot.lmp_projects_on_time_pct
+            transforma_value = snapshot.transforma_mais_financial_gain
 
             result[period.competence] = {
                 "items": [
                     {
                         "department_id": "engineering",
                         "indicator_id": "engineering-projects-on-time",
-                        "value": snapshot.lmp_projects_on_time_pct,
+                        "value": projects_value,
                         "source": "lmp",
-                        "unit_values": {
-                            unit_key: snapshot.lmp_projects_on_time_pct,
-                        },
+                        "unit_values": build_unit_values_for_consolidated_department(
+                            consolidated_value=projects_value,
+                            view_branch=branch,
+                        ),
                     },
                     {
                         "department_id": "engineering",
                         "indicator_id": "engineering-transforma-plus",
-                        "value": snapshot.transforma_mais_financial_gain,
+                        "value": transforma_value,
                         "source": "transforma_mais",
-                        "unit_values": {
-                            unit_key: snapshot.transforma_mais_financial_gain,
-                        },
+                        "unit_values": build_unit_values_for_consolidated_department(
+                            consolidated_value=transforma_value,
+                            view_branch=branch,
+                        ),
                     },
                 ],
                 "errors": [],

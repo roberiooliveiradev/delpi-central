@@ -6,6 +6,7 @@ from si_app.application.dto.production.production_request import ProductionReque
 from si_app.domain.entities.production.direct_labor_cost import DirectLaborCost
 from si_app.shared.utils.spreadsheet_date import spreadsheet_date_in_range
 from si_app.infrastructure.persistence.google_sheets.utils import Utils
+from si_app.shared.branch_filter import effective_query_branch
 
 
 class DirectLaborRepository(DirectLaborRepositoryPort):
@@ -36,7 +37,8 @@ class DirectLaborRepository(DirectLaborRepositoryPort):
         return direct_labor_costs
 
     def _matches_request(self, row: dict, request: ProductionRequest) -> bool:
-        if request.branch and row.get("filial") != request.branch:
+        branch = effective_query_branch(request.branch)
+        if branch and row.get("filial") != branch:
             return False
 
         return spreadsheet_date_in_range(

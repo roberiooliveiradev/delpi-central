@@ -9,6 +9,8 @@ from si_app.application.use_cases.strategic_indicators.period_resolution import 
 from si_app.domain.ports.strategic_indicators.production_indicators_snapshot_port import (
     StrategicIndicatorsProductionIndicatorsSnapshotPort,
 )
+from si_app.shared.branch_filter import effective_query_branch
+from si_app.shared.goal_scope import BRANCH_UNIT_CODES
 
 
 class ProductionIndicatorsSnapshotProvider(
@@ -240,9 +242,10 @@ class ProductionIndicatorsSnapshotProvider(
         start_date: str | None,
         end_date: str | None,
     ):
-        if branch:
+        effective_branch = effective_query_branch(branch)
+        if effective_branch:
             return self._production_metrics_snapshot_service.get_unit_snapshot(
-                branch=branch,
+                branch=effective_branch,
                 start_date=start_date,
                 end_date=end_date,
             )
@@ -282,14 +285,49 @@ class ProductionIndicatorsSnapshotProvider(
     ) -> dict:
         value = value_getter(snapshot)
         normalized_value = float(value) if value is not None else None
-        unit_key = snapshot.branch if snapshot.branch else "consolidated"
 
         return {
             "department_id": "production",
             "indicator_id": indicator_id,
             "value": normalized_value,
             "source": source,
-            "unit_values": {
-                unit_key: normalized_value,
-            },
+            "unit_values": self._build_unit_values(
+                snapshot=snapshot,
+                value_getter=value_getter,
+                consolidated_value=normalized_value,
+            ),
         }
+
+    def _build_unit_values(
+        self,
+        *,
+        snapshot,
+        value_getter,
+        consolidated_value: float | None,
+    ) -> dict[str, float | None]:
+        if snapshot.branch:
+            return {snapshot.branch: consolidated_value}
+
+        unit_values: dict[str, float | None] = {
+            "consolidated": consolidated_value,
+        }
+        start_date = snapshot.start_date
+        end_date = snapshot.end_date
+
+        for branch_code in BRANCH_UNIT_CODES:
+            try:
+                unit_snapshot = (
+                    self._production_metrics_snapshot_service.get_unit_snapshot(
+                        branch=branch_code,
+                        start_date=start_date,
+                        end_date=end_date,
+                    )
+                )
+                branch_raw = value_getter(unit_snapshot)
+                unit_values[branch_code] = (
+                    float(branch_raw) if branch_raw is not None else None
+                )
+            except Exception:
+                unit_values[branch_code] = None
+
+        return unit_values

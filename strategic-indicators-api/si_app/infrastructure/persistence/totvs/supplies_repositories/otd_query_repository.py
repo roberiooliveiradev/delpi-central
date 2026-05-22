@@ -2,6 +2,7 @@ from si_app.infrastructure.persistence.totvs.base_repository import BaseReposito
 from si_app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from si_app.application.dto.supplies.get_otd_request import GetOTDRequest
 from si_app.domain.ports.supplies.otd_query_repository_port import OtdQueryRepositoryPort
+from si_app.shared.branch_filter import effective_query_branch
 
 
 class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
@@ -9,8 +10,9 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
     def _build_monthly_filters(self, request: GetOTDRequest):
         qb = QueryBuilder()
 
-        if request.branch:
-            qb.eq("FILIAL", request.branch)
+        branch = effective_query_branch(request.branch)
+        if branch:
+            qb.eq("FILIAL", branch)
 
         qb.date_range("MES_ANO", request.start_date, request.end_date)
 
@@ -19,8 +21,9 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
     def _build_details_filters(self, request: GetOTDRequest):
         qb = QueryBuilder()
 
-        if request.branch:
-            qb.eq("FILIAL", request.branch)
+        branch = effective_query_branch(request.branch)
+        if branch:
+            qb.eq("FILIAL", branch)
 
         qb.date_range("DT_DIGITACAO", request.start_date, request.end_date)
 

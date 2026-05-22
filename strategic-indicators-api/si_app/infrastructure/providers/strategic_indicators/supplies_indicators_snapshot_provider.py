@@ -9,6 +9,7 @@ from si_app.application.use_cases.strategic_indicators.period_resolution import 
 from si_app.domain.ports.strategic_indicators.supplies_indicators_snapshot_port import (
     StrategicIndicatorsSuppliesIndicatorsSnapshotPort,
 )
+from si_app.shared.goal_scope import BRANCH_UNIT_CODES
 
 
 class SuppliesIndicatorsSnapshotProvider(
@@ -89,38 +90,92 @@ class SuppliesIndicatorsSnapshotProvider(
         return result
 
     def _map_snapshot_to_result(self, *, snapshot) -> dict:
-        unit_key = snapshot.branch or "consolidated"
-
         return {
             "items": [
-                {
-                    "department_id": "supplies",
-                    "indicator_id": "supplies-cpv",
-                    "value": snapshot.cpv_pct,
-                    "source": "supplies_cpv",
-                    "unit_values": {unit_key: snapshot.cpv_pct},
-                },
-                {
-                    "department_id": "supplies",
-                    "indicator_id": "supplies-stock-turnover",
-                    "value": snapshot.inventory_turnover_months,
-                    "source": "supplies_inventory_turnover",
-                    "unit_values": {unit_key: snapshot.inventory_turnover_months},
-                },
-                {
-                    "department_id": "supplies",
-                    "indicator_id": "supplies-otd",
-                    "value": snapshot.otd_pct,
-                    "source": "supplies_otd",
-                    "unit_values": {unit_key: snapshot.otd_pct},
-                },
-                {
-                    "department_id": "supplies",
-                    "indicator_id": "supplies-stock-value",
-                    "value": snapshot.stock_value,
-                    "source": "supplies_stock_value",
-                    "unit_values": {unit_key: snapshot.stock_value},
-                },
+                self._build_indicator_measurement(
+                    snapshot=snapshot,
+                    indicator_id="supplies-cpv",
+                    source="supplies_cpv",
+                    value=snapshot.cpv_pct,
+                ),
+                self._build_indicator_measurement(
+                    snapshot=snapshot,
+                    indicator_id="supplies-stock-turnover",
+                    source="supplies_inventory_turnover",
+                    value=snapshot.inventory_turnover_months,
+                ),
+                self._build_indicator_measurement(
+                    snapshot=snapshot,
+                    indicator_id="supplies-otd",
+                    source="supplies_otd",
+                    value=snapshot.otd_pct,
+                ),
+                self._build_indicator_measurement(
+                    snapshot=snapshot,
+                    indicator_id="supplies-stock-value",
+                    source="supplies_stock_value",
+                    value=snapshot.stock_value,
+                ),
             ],
             "errors": [],
         }
+
+    def _build_indicator_measurement(
+        self,
+        *,
+        snapshot,
+        indicator_id: str,
+        source: str,
+        value: float,
+    ) -> dict:
+        return {
+            "department_id": "supplies",
+            "indicator_id": indicator_id,
+            "value": value,
+            "source": source,
+            "unit_values": self._build_unit_values(
+                snapshot=snapshot,
+                consolidated_value=value,
+                value_attr=self._value_attr_for_indicator(indicator_id),
+            ),
+        }
+
+    @staticmethod
+    def _value_attr_for_indicator(indicator_id: str) -> str:
+        mapping = {
+            "supplies-cpv": "cpv_pct",
+            "supplies-stock-turnover": "inventory_turnover_months",
+            "supplies-otd": "otd_pct",
+            "supplies-stock-value": "stock_value",
+        }
+        return mapping[indicator_id]
+
+    def _build_unit_values(
+        self,
+        *,
+        snapshot,
+        consolidated_value: float,
+        value_attr: str,
+    ) -> dict[str, float | None]:
+        if snapshot.branch:
+            return {snapshot.branch: consolidated_value}
+
+        unit_values: dict[str, float | None] = {
+            "consolidated": consolidated_value,
+        }
+
+        for branch_code in BRANCH_UNIT_CODES:
+            try:
+                unit_snapshot = self._supplies_metrics_snapshot_service.get_snapshot(
+                    start_date=snapshot.start_date,
+                    end_date=snapshot.end_date,
+                    branch=branch_code,
+                )
+                branch_value = getattr(unit_snapshot, value_attr, None)
+                unit_values[branch_code] = (
+                    float(branch_value) if branch_value is not None else None
+                )
+            except Exception:
+                unit_values[branch_code] = None
+
+        return unit_values

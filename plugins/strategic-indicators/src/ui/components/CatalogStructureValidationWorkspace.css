@@ -90,14 +90,24 @@
 .si-catalog-validation__table {
   display: grid;
   gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
 
 .si-catalog-validation__table-head,
 .si-catalog-validation__table-row {
   display: grid;
-  grid-template-columns: minmax(100px, 0.9fr) minmax(120px, 1fr) minmax(140px, 1.2fr) 90px 72px 72px minmax(220px, 1.6fr);
-  gap: 10px;
+  grid-template-columns:
+    minmax(72px, 0.75fr)
+    minmax(128px, 1fr)
+    minmax(160px, 1.35fr)
+    minmax(88px, 0.7fr)
+    minmax(132px, 132px)
+    minmax(96px, 96px)
+    minmax(220px, 1.5fr);
+  gap: 12px 18px;
   align-items: start;
+  min-width: 1040px;
 }
 
 .si-catalog-validation__table-head {
@@ -105,14 +115,28 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
-  padding: 0 12px;
+  padding: 0 16px;
 }
 
 .si-catalog-validation__table-row {
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 12px;
+  padding: 14px 16px;
   background: var(--surface);
+}
+
+.si-catalog-validation__cell--goals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding-right: 8px;
+}
+
+.si-catalog-validation__cell--status {
+  display: flex;
+  align-items: flex-start;
+  padding-right: 12px;
 }
 
 .si-catalog-validation__table-row.severity-error {
@@ -136,16 +160,21 @@
 
 .si-catalog-validation__scopes {
   display: inline-flex;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.si-catalog-validation__cell--goals small {
+  line-height: 1.35;
 }
 
 .si-catalog-validation__scopes span {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
-  height: 24px;
-  padding: 0 6px;
+  min-width: 32px;
+  height: 26px;
+  padding: 0 8px;
   border-radius: 8px;
   font-size: 11px;
   font-weight: 600;

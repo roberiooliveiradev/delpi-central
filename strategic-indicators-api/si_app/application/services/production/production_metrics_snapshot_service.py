@@ -25,6 +25,7 @@ from si_app.domain.ports.production.overall_equipment_effectiveness_repository_p
 from si_app.domain.ports.production.production_cost_repository_port import (
     ProductionCostRepositoryPort,
 )
+from si_app.shared.branch_filter import effective_query_branch
 
 
 @dataclass(frozen=True)
@@ -74,8 +75,14 @@ class ProductionMetricsSnapshotService:
         start_date: str | None,
         end_date: str | None,
     ) -> ProductionUnitMetricsSnapshot:
+        effective_branch = effective_query_branch(branch)
+        if not effective_branch:
+            return self.get_consolidated_snapshot(
+                start_date=start_date,
+                end_date=end_date,
+            )
         return self._build_snapshot(
-            branch=branch,
+            branch=effective_branch,
             start_date=start_date,
             end_date=end_date,
         )
@@ -88,16 +95,18 @@ class ProductionMetricsSnapshotService:
     ) -> dict[str, ProductionUnitMetricsSnapshot]:
         result: dict[str, ProductionUnitMetricsSnapshot] = {}
 
+        effective_branch = effective_query_branch(branch)
+
         for period in periods:
-            key = (branch, period.start_date, period.end_date)
+            key = (effective_branch, period.start_date, period.end_date)
             cached = self._cache.get(key)
             if cached is not None:
                 result[period.competence] = cached
                 continue
 
-            if branch:
+            if effective_branch:
                 snapshot = self.get_unit_snapshot(
-                    branch=branch,
+                    branch=effective_branch,
                     start_date=period.start_date,
                     end_date=period.end_date,
                 )
@@ -131,18 +140,19 @@ class ProductionMetricsSnapshotService:
         start_date: str | None,
         end_date: str | None,
     ) -> ProductionUnitMetricsSnapshot:
-        key = (branch, start_date, end_date)
+        effective_branch = effective_query_branch(branch)
+        key = (effective_branch, start_date, end_date)
         cached = self._cache.get(key)
         if cached is not None:
             return cached
 
         production_request = ProductionRequest(
-            branch=branch,
+            branch=effective_branch,
             start_date=start_date,
             end_date=end_date,
         )
         rol_request = GetRolRequest(
-            branch=branch,
+            branch=effective_branch,
             start_date=start_date,
             end_date=end_date,
         )
@@ -176,7 +186,7 @@ class ProductionMetricsSnapshotService:
         otd = self._on_time_delivery_repository.get_on_time_delivery(production_request)
 
         snapshot = ProductionUnitMetricsSnapshot(
-            branch=branch,
+            branch=effective_branch,
             start_date=start_date,
             end_date=end_date,
             rol_with_ipi=rol_with_ipi,

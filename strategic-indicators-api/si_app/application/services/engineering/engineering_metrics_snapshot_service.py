@@ -13,6 +13,7 @@ from si_app.application.use_cases.strategic_indicators.period_resolution import 
 from si_app.application.use_cases.transforma_mais.get_process_summary_use_case import (
     GetProcessSummaryUseCase,
 )
+from si_app.shared.branch_filter import effective_query_branch
 
 
 @dataclass(frozen=True)
@@ -45,7 +46,8 @@ class EngineeringMetricsSnapshotService:
         end_date: str | None,
         branch: str | None = None,
     ) -> EngineeringMetricsSnapshot:
-        key = (start_date, end_date, branch)
+        effective_branch = effective_query_branch(branch)
+        key = (start_date, end_date, effective_branch)
         cached = self._cache.get(key)
         if cached is not None:
             return cached
@@ -53,7 +55,7 @@ class EngineeringMetricsSnapshotService:
         snapshot = self._build_snapshot(
             start_date=start_date,
             end_date=end_date,
-            branch=branch,
+            branch=effective_branch,
         )
         self._cache[key] = snapshot
         return snapshot
@@ -66,8 +68,10 @@ class EngineeringMetricsSnapshotService:
     ) -> dict[str, EngineeringMetricsSnapshot]:
         result: dict[str, EngineeringMetricsSnapshot] = {}
 
+        effective_branch = effective_query_branch(branch)
+
         for period in periods:
-            key = (period.start_date, period.end_date, branch)
+            key = (period.start_date, period.end_date, effective_branch)
             cached = self._cache.get(key)
             if cached is not None:
                 result[period.competence] = cached
@@ -76,7 +80,7 @@ class EngineeringMetricsSnapshotService:
             snapshot = self._build_snapshot(
                 start_date=period.start_date,
                 end_date=period.end_date,
-                branch=branch,
+                branch=effective_branch,
             )
             self._cache[key] = snapshot
             result[period.competence] = snapshot

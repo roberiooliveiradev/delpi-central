@@ -19,6 +19,7 @@ from si_app.application.use_cases.supplies.get_otd_use_case import GetOTDUseCase
 from si_app.application.use_cases.supplies.get_stock_value_use_case import (
     GetStockValueUseCase,
 )
+from si_app.shared.branch_filter import effective_query_branch
 
 
 @dataclass(frozen=True)
@@ -57,7 +58,8 @@ class SuppliesMetricsSnapshotService:
         end_date: str | None,
         branch: str | None = None,
     ) -> SuppliesMetricsSnapshot:
-        key = (branch, start_date, end_date)
+        effective_branch = effective_query_branch(branch)
+        key = (effective_branch, start_date, end_date)
         cached = self._cache.get(key)
         if cached is not None:
             return cached
@@ -65,7 +67,7 @@ class SuppliesMetricsSnapshotService:
         snapshot = self._build_snapshot(
             start_date=start_date,
             end_date=end_date,
-            branch=branch,
+            branch=effective_branch,
         )
         self._cache[key] = snapshot
         return snapshot
@@ -78,8 +80,10 @@ class SuppliesMetricsSnapshotService:
     ) -> dict[str, SuppliesMetricsSnapshot]:
         result: dict[str, SuppliesMetricsSnapshot] = {}
 
+        effective_branch = effective_query_branch(branch)
+
         for period in periods:
-            key = (branch, period.start_date, period.end_date)
+            key = (effective_branch, period.start_date, period.end_date)
             cached = self._cache.get(key)
             if cached is not None:
                 result[period.competence] = cached
@@ -88,7 +92,7 @@ class SuppliesMetricsSnapshotService:
             snapshot = self._build_snapshot(
                 start_date=period.start_date,
                 end_date=period.end_date,
-                branch=branch,
+                branch=effective_branch,
             )
             self._cache[key] = snapshot
             result[period.competence] = snapshot

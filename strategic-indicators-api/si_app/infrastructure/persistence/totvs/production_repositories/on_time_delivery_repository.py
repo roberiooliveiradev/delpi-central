@@ -1,5 +1,6 @@
 from si_app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from si_app.infrastructure.persistence.totvs.query_builder import QueryBuilder
+from si_app.shared.branch_filter import effective_query_branch
 from si_app.application.dto.production.production_request import ProductionRequest
 from si_app.domain.entities.production.on_time_delivery import OnTimeDelivery
 from si_app.domain.ports.production.on_time_delivery_repository_port import OnTimeDeliveryRepositoryPort
@@ -14,8 +15,9 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
         qb = QueryBuilder()
         qb.raw("OP.D_E_L_E_T_ = ''")
 
-        if request.branch:
-            qb.eq("OP.C2_FILIAL", request.branch)
+        branch = effective_query_branch(request.branch)
+        if branch:
+            qb.eq("OP.C2_FILIAL", branch)
 
         qb.raw("OP.C2_DATPRF IS NOT NULL")
         qb.raw("OP.C2_DATRF IS NOT NULL")
@@ -75,8 +77,9 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
         qb = QueryBuilder()
         qb.raw("OP.D_E_L_E_T_ = ''")
 
-        if request.branch:
-            qb.eq("OP.C2_FILIAL", request.branch)
+        branch = effective_query_branch(request.branch)
+        if branch:
+            qb.eq("OP.C2_FILIAL", branch)
 
         qb.raw("OP.C2_DATPRF IS NOT NULL")
         qb.raw("OP.C2_DATRF IS NOT NULL")
