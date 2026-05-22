@@ -49,7 +49,7 @@ export function FilterBar({
         refreshing={refreshing}
         actions={headerActions}
       />
-      <section className="ds-filters-row">
+      <section className="ds-filters-row ds-no-print">
         <div className="ds-filter-box">
           <label htmlFor="tm-date-start">Data inicial</label>
           <input
