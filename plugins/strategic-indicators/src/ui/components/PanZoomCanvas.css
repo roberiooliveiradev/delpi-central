@@ -238,13 +238,19 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .si-pan-zoom__floating-bar {
     top: 6px;
     left: 6px;
     right: 6px;
   }
 
+  .si-pan-zoom-shell--immersive .si-pan-zoom__surface {
+    padding-top: clamp(118px, 16vh, 168px);
+  }
+}
+
+@media (max-width: 768px) {
   .si-pan-zoom-shell--immersive .si-pan-zoom__surface {
     padding-top: clamp(140px, 22vh, 200px);
   }

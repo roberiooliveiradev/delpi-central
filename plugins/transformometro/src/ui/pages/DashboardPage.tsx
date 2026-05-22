@@ -37,6 +37,7 @@ import {
   type RequestProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
 import { StatusAlerts } from "../../components/StatusAlerts";
+import { TransformometroShell } from "../../components/TransformometroShell";
 import { CHART_COLORS } from "../../constants/chartColors";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
@@ -306,7 +307,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   );
 
   return (
-    <div className="dashboard-transformometro dashboard-page">
+    <TransformometroShell>
       <FilterBar
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
         onNavigate={onNavigate}
@@ -438,7 +439,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         />
       </section>
 
-      <section className="ds-chart-section">
+      <section className="ds-charts-grid">
         <ChartCard title="Economia no período" hint={periodLabel}>
           {savingsChartData.length === 0 && !isBusy ? (
             <p className="ds-state-box">
@@ -448,7 +449,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <LineChart data={savingsChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis tickFormatter={(v) => formatCurrency(Number(v))} width={72} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
@@ -472,16 +473,19 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             </ResponsiveContainer>
           )}
         </ChartCard>
-      </section>
 
-      {topDailyChart.length > 0 ? (
-        <section className="ds-charts-grid ds-charts-grid--single">
-          <ChartCard title="Top economia diária" hint="10 maiores no recorte">
+        <ChartCard
+          title="Top economia diária"
+          hint={topDailyChart.length > 0 ? "10 maiores no recorte" : "Sem ranking no período"}
+        >
+          {topDailyChart.length === 0 && !isBusy ? (
+            <p className="ds-state-box">Nenhum processo com economia diária no recorte.</p>
+          ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <BarChart data={topDailyChart} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
                 <XAxis type="number" tickFormatter={(v) => formatCurrency(Number(v))} />
-                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
                 <Bar dataKey="value" radius={[0, 8, 8, 0]} maxBarSize={28}>
                   {topDailyChart.map((_, index) => (
@@ -490,9 +494,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </ChartCard>
-        </section>
-      ) : null}
+          )}
+        </ChartCard>
+      </section>
 
       {porFamilia.length > 0 ? (
         <DataTableSection
@@ -517,6 +521,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         refreshing={refreshing}
         emptyMessage="Nenhum processo com economia calculada. Cadastre revisões e medições, depois Recalcular."
       />
-    </div>
+    </TransformometroShell>
   );
 }

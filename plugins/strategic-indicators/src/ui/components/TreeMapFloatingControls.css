@@ -231,29 +231,26 @@
   letter-spacing: 0.02em;
 }
 
-/* Tablet: toolbar com scroll horizontal se necessário */
-@media (max-width: 1100px) {
+@media (min-width: 1025px) and (max-width: 1280px) {
   .si-tree-map-floating {
-    max-width: calc(100vw - 24px);
-  }
-
-  .si-tree-map-floating__toolbar {
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: thin;
-    padding-bottom: 2px;
+    max-width: calc(100vw - 32px);
   }
 
   .si-tree-map-floating__filters .si-reference-filters__field {
-    min-width: 116px;
-    max-width: 156px;
+    min-width: 112px;
+    max-width: 150px;
+  }
+
+  .si-tree-view-toggle__btn {
+    padding: 7px 8px;
+    font-size: 11px;
   }
 }
 
-/* Mobile: empilhar em linhas sem sobreposição */
-@media (max-width: 768px) {
+/* Tablet e mobile: empilhar em linhas (evita sobreposição até ~1024px, ex. iPad Air 820px) */
+@media (max-width: 1024px) {
   .si-tree-map-floating {
-    max-width: calc(100vw - 16px);
+    max-width: calc(100vw - 20px);
   }
 
   .si-tree-map-floating__panel {
@@ -267,7 +264,6 @@
     align-items: stretch;
     gap: 8px;
     overflow: visible;
-    padding-bottom: 0;
   }
 
   .si-tree-map-floating__row {
@@ -288,21 +284,19 @@
     width: 100%;
   }
 
-  .si-tree-map-floating__filters.si-reference-filters {
+  .si-tree-map-floating__filters.si-reference-filters,
+  .si-tree-map-floating__filters.si-reference-filters--with-comparison {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px 10px;
     width: 100%;
+    max-width: none;
   }
 
   .si-tree-map-floating__filters .si-reference-filters__field {
     min-width: 0;
     max-width: none;
     width: 100%;
-  }
-
-  .si-tree-map-floating__filters .si-reference-filters__field:last-child {
-    grid-column: 1 / -1;
   }
 
   .si-tree-map-floating__row--viewport {
@@ -314,23 +308,52 @@
     margin-left: 0;
     width: 100%;
     justify-content: center;
-    flex-wrap: wrap;
-    row-gap: 6px;
+    flex-wrap: nowrap;
+    gap: 6px;
     padding: 6px;
   }
 
-  .si-tree-map-floating__tree-actions,
-  .si-tree-map-floating__nav {
-    max-width: 100%;
+  .si-tree-map-floating--collapsed .si-tree-map-floating__toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
   }
 
-  .si-tree-view-toggle {
-    max-width: 100%;
+  .si-tree-map-floating--collapsed .si-tree-map-floating__row--head,
+  .si-tree-map-floating--collapsed .si-tree-map-floating__row--viewport {
+    display: flex;
+    width: auto;
   }
 
-  .si-tree-view-toggle__btn {
-    padding: 7px 8px;
-    font-size: 11px;
+  .si-tree-map-floating--collapsed .si-tree-map-floating__row--viewport {
+    margin-left: auto;
+  }
+
+  .si-tree-map-floating--collapsed
+    .si-tree-map-floating__row--viewport
+    > .si-tree-map-floating__view-controls {
+    width: auto;
+  }
+}
+
+/* Telas estreitas: filtros em 2 colunas */
+@media (max-width: 768px) {
+  .si-tree-map-floating {
+    max-width: calc(100vw - 16px);
+  }
+
+  .si-tree-map-floating__filters.si-reference-filters,
+  .si-tree-map-floating__filters.si-reference-filters--with-comparison {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .si-tree-map-floating__filters .si-reference-filters__field:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .si-tree-map-floating__row--viewport > .si-tree-map-floating__view-controls {
+    flex-wrap: wrap;
+    row-gap: 6px;
   }
 }
 
@@ -388,32 +411,6 @@
   .si-tree-map-floating__status .si-status-badge {
     font-size: 10px;
     padding: 4px 8px;
-  }
-}
-
-/* Colapsado em mobile: só cabeçalho + controles em linha */
-@media (max-width: 768px) {
-  .si-tree-map-floating--collapsed .si-tree-map-floating__toolbar {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .si-tree-map-floating--collapsed .si-tree-map-floating__row--head,
-  .si-tree-map-floating--collapsed .si-tree-map-floating__row--viewport {
-    display: flex;
-    width: auto;
-  }
-
-  .si-tree-map-floating--collapsed .si-tree-map-floating__row--viewport {
-    margin-left: auto;
-  }
-
-  .si-tree-map-floating--collapsed
-    .si-tree-map-floating__row--viewport
-    > .si-tree-map-floating__view-controls {
-    width: auto;
-    flex-direction: row;
   }
 }
 

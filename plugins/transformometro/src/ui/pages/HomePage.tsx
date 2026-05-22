@@ -1,163 +1,364 @@
-import { useEffect, useState } from "react";
-import { BarChart3, Layers, List, Upload } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  BarChart3,
+  Coins,
+  Layers,
+  Lightbulb,
+  List,
+  Percent,
+  Upload,
+} from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import type { AppProps } from "../../App";
+import { ChartCard } from "../../components/ChartCard";
+import type { DataTableColumn } from "../../components/DataTable";
+import { DataTableSection } from "../../components/DataTableSection";
 import { DataSourceBanner } from "../../components/DataSourceBanner";
-import { LoadingActivityCard } from "../../components/LoadingActivityCard";
-import {
-  useLoadingProgress,
-  useTrackedSingleFetchProgress,
-} from "../../hooks/useSimulatedLoadingProgress";
+import { KpiCard } from "../../components/KpiCard";
 import { ModuleShortcut } from "../../components/ModuleShortcut";
 import { PageHeader } from "../../components/PageHeader";
+import { StatusAlerts } from "../../components/StatusAlerts";
+import { TransformometroShell } from "../../components/TransformometroShell";
+import { CHART_COLORS } from "../../constants/chartColors";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import {
+  fetchDashboardEvolucao,
+  fetchDashboardProcessos,
+  fetchDashboardResumo,
+  type DashboardEvolucaoItem,
+  type DashboardProcessoItem,
+  type DashboardResumo,
+} from "../../data/api/transformometroApi";
 import { fetchTransformometroHealth } from "../../data/api/transformometroHealthApi";
+import {
+  dateInputToCompetencia,
+  formatPeriodLabel,
+  getFirstDayOfMonthInputValue,
+  getTodayInputValue,
+  monthKeyToLabel,
+} from "../../utils/dates";
+import { formatCurrency, formatInteger, formatPercent } from "../../utils/format";
+
+const CHART_HEIGHT_HOME = 260;
 
 type LoadState = "loading" | "ok" | "error";
 
-type HomeProps = Pick<AppProps, "getAccessToken"> & {
+type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
 };
 
-export function HomePage({ getAccessToken, pathname, onNavigate }: HomeProps) {
+export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
+  const [dateStart] = useState(getFirstDayOfMonthInputValue);
+  const [dateEnd] = useState(getTodayInputValue);
   const [state, setState] = useState<LoadState>("loading");
-  const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
+  const [health, setHealth] = useState<Record<string, unknown> | null>(null);
+  const [resumo, setResumo] = useState<DashboardResumo | null>(null);
+  const [evolucao, setEvolucao] = useState<DashboardEvolucaoItem[]>([]);
+  const [processos, setProcessos] = useState<DashboardProcessoItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const apiParams = useMemo(() => {
+    const params: Record<string, string> = {};
+    const inicio = dateInputToCompetencia(dateStart);
+    const fim = dateInputToCompetencia(dateEnd);
+    if (inicio) params.competencia_inicio = inicio;
+    if (fim) params.competencia_fim = fim;
+    return params;
+  }, [dateEnd, dateStart]);
+
+  const periodLabel = useMemo(
+    () => formatPeriodLabel(dateStart, dateEnd),
+    [dateStart, dateEnd]
+  );
+
+  const load = useCallback(async () => {
+    setState("loading");
+    setError(null);
+    try {
+      const [healthPayload, r, ev, proc] = await Promise.all([
+        fetchTransformometroHealth(getAccessToken),
+        fetchDashboardResumo(getAccessToken, apiParams),
+        fetchDashboardEvolucao(getAccessToken, apiParams),
+        fetchDashboardProcessos(getAccessToken, apiParams),
+      ]);
+      setHealth(healthPayload as Record<string, unknown>);
+      setResumo(r);
+      setEvolucao(ev.items);
+      setProcessos(proc.items);
+      setState("ok");
+    } catch (err) {
+      setState("error");
+      setError(err instanceof Error ? err.message : "Erro ao carregar visão geral");
+    }
+  }, [apiParams, getAccessToken]);
 
   useEffect(() => {
-    let cancelled = false;
+    void load();
+  }, [load]);
 
-    fetchTransformometroHealth(getAccessToken)
-      .then((payload) => {
-        if (cancelled) return;
-        setState("ok");
-        setDetail(payload as Record<string, unknown>);
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return;
-        setState("error");
-        setDetail({
-          error: error instanceof Error ? error.message : "Erro desconhecido",
-        });
-      });
+  const savingsChartData = useMemo(
+    () =>
+      evolucao.map((item) => ({
+        name: monthKeyToLabel(item.competencia),
+        bruta: item.economia_bruta,
+        liquida: item.economia_liquida_mes,
+      })),
+    [evolucao]
+  );
 
-    return () => {
-      cancelled = true;
-    };
-  }, [getAccessToken]);
+  const topDailyChart = useMemo(
+    () =>
+      [...processos]
+        .sort((a, b) => (b.economia_diaria ?? 0) - (a.economia_diaria ?? 0))
+        .slice(0, 8)
+        .map((item) => ({
+          name:
+            (item.nome_processo?.length ?? 0) > 22
+              ? `${item.nome_processo.slice(0, 22)}…`
+              : item.nome_processo,
+          value: item.economia_diaria ?? 0,
+        })),
+    [processos]
+  );
 
-  const fetchProgress = useTrackedSingleFetchProgress(state === "loading");
-  const loadingProgress = useLoadingProgress(state === "loading", fetchProgress);
+  const processColumns = useMemo<DataTableColumn<DashboardProcessoItem>[]>(
+    () => [
+      { key: "codigo", header: "Código", render: (row) => row.codigo_processo ?? "—" },
+      {
+        key: "nome",
+        header: "Processo",
+        className: "ds-table__col--wide",
+        render: (row) => row.nome_processo ?? "—",
+      },
+      {
+        key: "liquida",
+        header: "Líquida/mês",
+        className: "ds-table__col--numeric",
+        render: (row) => {
+          const value = row.economia_liquida_mes;
+          const negative = value != null && value < 0;
+          return (
+            <span className={negative ? "ds-table__value--negative" : undefined}>
+              {formatCurrency(value)}
+            </span>
+          );
+        },
+      },
+      {
+        key: "daily",
+        header: "Economia/dia",
+        className: "ds-table__col--numeric",
+        render: (row) => formatCurrency(row.economia_diaria),
+      },
+    ],
+    []
+  );
+
+  const isLoading = state === "loading";
 
   return (
-    <div className="dashboard-transformometro dashboard-page">
+    <TransformometroShell>
       <PageHeader
         title="Transformômetro"
         subtitle="Melhorias de processo — economia, investimento, ROI e payback"
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.home}
         onNavigate={onNavigate}
-      />
-
-      <DataSourceBanner />
-
-      {state === "loading" ? (
-        <LoadingActivityCard
-          title="Verificando API"
-          description="Conectando ao transformometro-api no portal."
-          progressPercent={loadingProgress}
-        />
-      ) : null}
-
-      {state === "error" ? (
-        <div className="ds-state ds-state--error" role="alert">
-          <p>Falha ao conectar na API do Transformômetro.</p>
-        </div>
-      ) : null}
-
-      {state === "ok" && detail ? (
-        <section className="ds-card ds-health-card">
-          <h2 className="ds-section-title">Status do serviço</h2>
-          <dl className="ds-summary-metrics">
-            <div className="ds-summary-metric">
-              <dt>Módulo</dt>
-              <dd>{String(detail.module ?? "—")}</dd>
-            </div>
-            <div className="ds-summary-metric">
-              <dt>Fase</dt>
-              <dd>{String(detail.phase ?? "—")}</dd>
-            </div>
-            <div className="ds-summary-metric">
-              <dt>API</dt>
-              <dd>{String(detail.status ?? "online")}</dd>
-            </div>
-          </dl>
-        </section>
-      ) : null}
-
-      <section className="ds-shortcuts-grid">
-        <ModuleShortcut
-          title="Dashboard"
-          description="KPIs, evolução mensal, ranking e recálculo materializado."
-          path={TRANSFORMOMETRO_ROUTES.dashboard}
-          onNavigate={onNavigate}
-        />
-        <ModuleShortcut
-          title="Processos"
-          description="Cadastro de processos, revisões, medições, investimentos e recursos."
-          path={TRANSFORMOMETRO_ROUTES.processos}
-          onNavigate={onNavigate}
-        />
-        <ModuleShortcut
-          title="Recursos compartilhados"
-          description="Catálogo global de licenças e ferramentas (ChatGPT, assinaturas) para rateio."
-          path={TRANSFORMOMETRO_ROUTES.recursos}
-          onNavigate={onNavigate}
-        />
-        <ModuleShortcut
-          title="Importar planilha"
-          description="Migração Transforma+ (Sheets) com validação e diff do calculador."
-          path={TRANSFORMOMETRO_ROUTES.import}
-          onNavigate={onNavigate}
-        />
-      </section>
-
-      <section className="ds-card ds-shortcuts-section">
-        <h2 className="ds-section-title">Acesso rápido</h2>
-        <div className="ds-header-actions" style={{ marginTop: 0 }}>
+        onRefresh={() => void load()}
+        refreshing={isLoading}
+        actions={
           <button
             type="button"
             className="ds-primary-btn"
             onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.dashboard)}
           >
             <BarChart3 size={16} />
-            Abrir dashboard
+            Dashboard completo
           </button>
-          <button
-            type="button"
-            className="ds-ghost-btn"
-            onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.processos)}
-          >
-            <List size={16} />
-            Gerenciar processos
-          </button>
-          <button
-            type="button"
-            className="ds-ghost-btn"
-            onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.recursos)}
-          >
-            <Layers size={16} />
-            Catálogo de recursos
-          </button>
-          <button
-            type="button"
-            className="ds-ghost-btn"
-            onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.import)}
-          >
-            <Upload size={16} />
-            Importar planilha
-          </button>
-        </div>
+        }
+      />
+
+      <DataSourceBanner />
+
+      <StatusAlerts
+        error={error}
+        loading={isLoading}
+        hasData={resumo !== null || evolucao.length > 0}
+        onRetry={() => void load()}
+      />
+
+      {state === "ok" && health && !isLoading ? (
+        <section className="ds-card ds-health-card ds-health-card--inline">
+          <div className="ds-health-card__status">
+            <span className="ds-health-pill ds-health-pill--ok">
+              API {String(health.status ?? "online")}
+            </span>
+            <span className="ds-health-pill">Fase {String(health.phase ?? "—")}</span>
+            <span className="ds-health-pill">Módulo {String(health.module ?? "transformometro")}</span>
+          </div>
+          <p className="ds-hint ds-health-card__hint">
+            Período automático: <strong>{periodLabel}</strong>. Ajuste filtros no dashboard
+            completo.
+          </p>
+        </section>
+      ) : null}
+
+      <section className="ds-kpi-grid ds-kpi-grid--responsive" aria-busy={isLoading}>
+        <KpiCard
+          title="Economia líquida"
+          value={formatCurrency(resumo?.economia_liquida_total)}
+          subtitle={periodLabel}
+          icon={<Coins size={22} />}
+          loading={isLoading && !resumo}
+        />
+        <KpiCard
+          title="Economia bruta"
+          value={formatCurrency(resumo?.economia_bruta_total)}
+          subtitle="Consolidado no período"
+          icon={<Coins size={22} />}
+          loading={isLoading && !resumo}
+        />
+        <KpiCard
+          title="Soluções"
+          value={formatInteger(resumo?.solucoes_implementadas)}
+          subtitle="Melhoria, automação e correção"
+          icon={<Lightbulb size={22} />}
+          loading={isLoading && !resumo}
+        />
+        <KpiCard
+          title="ROI médio"
+          value={formatPercent(resumo?.roi_medio, 1)}
+          subtitle="Acumulado no recorte"
+          icon={<Percent size={22} />}
+          loading={isLoading && !resumo}
+        />
       </section>
-    </div>
+
+      <section className="ds-charts-grid">
+        <ChartCard title="Evolução mensal" hint={periodLabel}>
+          {savingsChartData.length === 0 && !isLoading ? (
+            <p className="ds-state-box">Sem competências no período. Abra o dashboard ou recalcule.</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={CHART_HEIGHT_HOME}>
+              <LineChart data={savingsChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis tickFormatter={(v) => formatCurrency(Number(v))} width={68} />
+                <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+                <Line
+                  type="monotone"
+                  dataKey="bruta"
+                  name="Bruta"
+                  stroke={CHART_COLORS[1]}
+                  strokeWidth={2}
+                  dot={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="liquida"
+                  name="Líquida"
+                  stroke={CHART_COLORS[0]}
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+
+        <ChartCard title="Top economia diária" hint="Até 8 processos">
+          {topDailyChart.length === 0 && !isLoading ? (
+            <p className="ds-state-box">Nenhum processo com economia calculada.</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={CHART_HEIGHT_HOME}>
+              <BarChart data={topDailyChart} layout="vertical" margin={{ left: 4, right: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
+                <XAxis type="number" tickFormatter={(v) => formatCurrency(Number(v))} />
+                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10 }} />
+                <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+                <Bar dataKey="value" radius={[0, 6, 6, 0]} maxBarSize={22}>
+                  {topDailyChart.map((_, index) => (
+                    <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+      </section>
+
+      <DataTableSection
+        title="Destaques do período"
+        hint="Clique em Dashboard completo para filtros e exportação"
+        columns={processColumns}
+        rows={processos.slice(0, 10)}
+        rowKey={(row) => row.processo_id}
+        loading={isLoading}
+        pageSize={10}
+        emptyMessage="Nenhum processo com economia no mês. Cadastre revisões e execute Recalcular."
+      />
+
+      <section className="ds-shortcuts-grid ds-shortcuts-grid--home">
+        <ModuleShortcut
+          title="Dashboard"
+          description="Alertas, família, export CSV/Excel e recálculo."
+          path={TRANSFORMOMETRO_ROUTES.dashboard}
+          onNavigate={onNavigate}
+          icon={<BarChart3 size={20} />}
+        />
+        <ModuleShortcut
+          title="Processos"
+          description="Revisões, medição, investimentos e vínculos."
+          path={TRANSFORMOMETRO_ROUTES.processos}
+          onNavigate={onNavigate}
+          icon={<List size={20} />}
+        />
+        <ModuleShortcut
+          title="Recursos"
+          description="Catálogo global de licenças e ferramentas."
+          path={TRANSFORMOMETRO_ROUTES.recursos}
+          onNavigate={onNavigate}
+          icon={<Layers size={20} />}
+        />
+        <ModuleShortcut
+          title="Importar"
+          description="Migração Transforma+ com validação."
+          path={TRANSFORMOMETRO_ROUTES.import}
+          onNavigate={onNavigate}
+          icon={<Upload size={20} />}
+        />
+      </section>
+
+      <section className="ds-card ds-cta-strip">
+        <div>
+          <h2 className="ds-section-title">Explorar dados</h2>
+          <p className="ds-hint">
+            Filtros por filial, setor, alertas de economia negativa e comparativo de revisões no
+            dashboard analítico.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="ds-primary-btn"
+          onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.dashboard)}
+        >
+          Abrir dashboard
+          <ArrowRight size={16} />
+        </button>
+      </section>
+    </TransformometroShell>
   );
 }

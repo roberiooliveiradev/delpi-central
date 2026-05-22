@@ -1,11 +1,20 @@
+import type { ReactNode } from "react";
+
 type ModuleShortcutProps = {
   title: string;
   description: string;
   path: string;
   onNavigate: (path: string) => void;
+  icon?: ReactNode;
 };
 
-export function ModuleShortcut({ title, description, path, onNavigate }: ModuleShortcutProps) {
+export function ModuleShortcut({
+  title,
+  description,
+  path,
+  onNavigate,
+  icon,
+}: ModuleShortcutProps) {
   return (
     <a
       href={path}
@@ -16,6 +25,11 @@ export function ModuleShortcut({ title, description, path, onNavigate }: ModuleS
         onNavigate(path);
       }}
     >
+      {icon ? (
+        <span className="ds-module-shortcut__icon" aria-hidden="true">
+          {icon}
+        </span>
+      ) : null}
       <h3 className="ds-module-shortcut__title">{title}</h3>
       <p className="ds-module-shortcut__description">{description}</p>
     </a>

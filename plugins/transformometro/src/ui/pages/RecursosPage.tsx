@@ -9,6 +9,7 @@ import {
 } from "../../hooks/useSimulatedLoadingProgress";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
+import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   createRecurso,
@@ -134,16 +135,18 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
 
   if (loading && !options) {
     return (
-      <LoadingActivityCard
-        title="Carregando catálogo de recursos"
-        description="Licenças, assinaturas e ferramentas compartilhadas."
-        progressPercent={catalogLoadingProgress}
-      />
+      <TransformometroShell>
+        <LoadingActivityCard
+          title="Carregando catálogo de recursos"
+          description="Licenças, assinaturas e ferramentas compartilhadas."
+          progressPercent={catalogLoadingProgress}
+        />
+      </TransformometroShell>
     );
   }
 
   return (
-    <div className="dashboard-transformometro dashboard-page">
+    <TransformometroShell>
       <PageHeader
         title="Recursos compartilhados"
         subtitle="Catálogo global — vincule às revisões em Processos para rateio no dashboard"
@@ -270,6 +273,6 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
           </form>
         </section>
       ) : null}
-    </div>
+    </TransformometroShell>
   );
 }

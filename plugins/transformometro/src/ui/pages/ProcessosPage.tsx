@@ -5,6 +5,7 @@ import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
+import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   createProcesso,
@@ -116,7 +117,7 @@ export function ProcessosPage({
   );
 
   return (
-    <div className="dashboard-transformometro dashboard-page">
+    <TransformometroShell>
       <PageHeader
         title="Processos"
         subtitle="Cadastro mestre das melhorias monitoradas no PostgreSQL"
@@ -344,6 +345,6 @@ export function ProcessosPage({
           </table>
         </div>
       </section>
-    </div>
+    </TransformometroShell>
   );
 }
