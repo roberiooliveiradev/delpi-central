@@ -113,7 +113,7 @@ SUPPLIES_STOCK_VALUE = agent_route(
         "mais movimentações líquidas em SD3010 até o fim do período "
         "(entrada D3_TM < '500', saída caso contrário; intervalo [start_date, end_date] inclusivo, "
         "fim exclusivo no dia seguinte). Retorna bloco estimation quando histórico. "
-        "location não se aplica no modo histórico. "
+        "location filtra SB9/SD3 no modo histórico. "
         "Não usar para saldo de um produto/código; para item use estoque do produto (/products/{code}/stock). "
         "Detalhes: docs/api/supplies-estoque-historico.md."
     ),

@@ -54,12 +54,6 @@ class GetStockValueUseCase:
         if start > end:
             raise ValueError("start_date não pode ser maior que end_date.")
 
-        if request.location:
-            raise ValueError(
-                "Filtro por localização não está disponível para estoque histórico estimado. "
-                "Use apenas branch ou remova location."
-            )
-
         period_start = start.strftime("%Y%m%d")
         period_end_exclusive = (end + timedelta(days=1)).strftime("%Y%m%d")
         return period_start, period_end_exclusive

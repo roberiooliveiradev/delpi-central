@@ -29,8 +29,8 @@ Regras:
 
 - Histórico exige **os dois** parâmetros de data.
 - `start_date` não pode ser maior que `end_date`.
-- Com datas, `location` retorna erro `400` (não há quebra por local na estimativa).
-- `by_location` e `top_products` vêm vazios no modo histórico.
+- Com datas, `location` filtra o fechamento SB9 e as movimentações SD3 por `B9_LOCAL` / `D3_LOCAL`.
+- `by_location` e `top_products` usam agregação estimada por local e por produto (SB9 + SD3).
 
 ---
 
@@ -144,8 +144,22 @@ GET /supplies/stock-value?branch=02&location=01
       "period_net_value": -855519.157
     }
   ],
-  "by_location": [],
-  "top_products": [],
+  "by_location": [
+    {
+      "branch": "02",
+      "location": "01",
+      "total_stock_value": 1200000.0,
+      "total_stock_quantity": 5000.0
+    }
+  ],
+  "top_products": [
+    {
+      "product_code": "10080047",
+      "product_description": "Produto exemplo",
+      "total_stock_value": 250000.0,
+      "total_stock_quantity": 120.0
+    }
+  ],
   "estimation": {
     "enabled": true,
     "method": "sb9_last_closure_plus_sd3_movements",
@@ -161,7 +175,7 @@ GET /supplies/stock-value?branch=02&location=01
 ## Limitações
 
 - Resultado de **análise gerencial**, não substitui fechamento contábil oficial na SB9.
-- Sem detalhamento por produto ou local no modo histórico.
+- Detalhamento por produto/local é estimado (não replica saldo SB2 linha a linha).
 - Depende da consistência das movimentações SD3 e do último fechamento SB9 disponível.
 
 Referência de validação interna: documento *Método de Cálculo do Valor de Estoque em Abril/2026* (cenários abril/2026 e março/2025).
