@@ -5,25 +5,41 @@ import type {
   DepartmentTreeSparkPoint,
 } from "../types/departmentTree";
 
+function trimSeries(
+  points: DepartmentTreeSparkPoint[],
+  months: number,
+): DepartmentTreeSparkPoint[] {
+  if (months <= 0 || points.length <= months) {
+    return points;
+  }
+
+  return points.slice(-months);
+}
+
 function mapDepartmentSeries(
   trends: TrendsDashboardViewData | null | undefined,
   departmentId: string,
+  months: number,
 ): DepartmentTreeSparkPoint[] {
   const department = trends?.departments.find((item) => item.id === departmentId);
   if (!department?.series?.length) {
     return [];
   }
 
-  return department.series.map((point) => ({
-    period: point.period,
-    value: point.score,
-  }));
+  return trimSeries(
+    department.series.map((point) => ({
+      period: point.period,
+      value: point.score,
+    })),
+    months,
+  );
 }
 
 function mapIndicatorSeries(
   trends: TrendsDashboardViewData | null | undefined,
   departmentId: string,
   indicatorId: string,
+  months: number,
 ): DepartmentTreeSparkPoint[] {
   const indicators = trends?.indicatorSeriesByDepartmentId?.[departmentId] ?? [];
   const match = indicators.find((item) => item.indicatorId === indicatorId);
@@ -31,28 +47,36 @@ function mapIndicatorSeries(
     return [];
   }
 
-  return match.series.map((point) => ({
-    period: point.period,
-    value: point.score,
-  }));
+  return trimSeries(
+    match.series.map((point) => ({
+      period: point.period,
+      value: point.score,
+    })),
+    months,
+  );
 }
 
 function mapIgdSeries(
   trends: TrendsDashboardViewData | null | undefined,
+  months: number,
 ): DepartmentTreeSparkPoint[] {
   if (!trends?.igdSeries?.length) {
     return [];
   }
 
-  return trends.igdSeries.map((point) => ({
-    period: point.period,
-    value: point.value,
-  }));
+  return trimSeries(
+    trends.igdSeries.map((point) => ({
+      period: point.period,
+      value: point.value,
+    })),
+    months,
+  );
 }
 
 export function enrichDepartmentTreeWithTrends(
   model: DepartmentTreeModel,
   trendsByScope: Partial<Record<DepartmentTreeScopeKey, TrendsDashboardViewData>>,
+  months: number,
 ): DepartmentTreeModel {
   const primaryTrends =
     trendsByScope.consolidated ??
@@ -62,7 +86,8 @@ export function enrichDepartmentTreeWithTrends(
 
   return {
     ...model,
-    igdSeries: mapIgdSeries(primaryTrends),
+    trendMonths: months,
+    igdSeries: mapIgdSeries(primaryTrends, months),
     columns: model.columns.map((column) => {
       const scopeTrends = trendsByScope[column.scope.key] ?? primaryTrends;
 
@@ -70,13 +95,14 @@ export function enrichDepartmentTreeWithTrends(
         ...column,
         departments: column.departments.map((node) => ({
           ...node,
-          series: mapDepartmentSeries(scopeTrends, node.department.id),
+          series: mapDepartmentSeries(scopeTrends, node.department.id, months),
           indicators: node.indicators.map((indicatorNode) => ({
             ...indicatorNode,
             series: mapIndicatorSeries(
               scopeTrends,
               node.department.id,
               indicatorNode.indicator.id,
+              months,
             ),
           })),
         })),

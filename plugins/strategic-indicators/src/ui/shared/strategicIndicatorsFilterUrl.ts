@@ -1,5 +1,6 @@
 import {
   getCurrentStrategicIndicatorsMonthValue,
+  getDefaultMonthsToCompare,
   type StrategicIndicatorsViewMode,
 } from "./strategicIndicatorsFilters";
 
@@ -19,7 +20,7 @@ function defaultFilterState(): StrategicIndicatorsFilterState {
     referenceMonth: getCurrentStrategicIndicatorsMonthValue(),
     viewMode: "consolidated",
     branch: "01",
-    monthsToCompare: 6,
+    monthsToCompare: getDefaultMonthsToCompare(),
   };
 }
 
@@ -137,7 +138,11 @@ export function buildStrategicIndicatorsFilterSearchParams(
     params.set("branch", state.branch);
   }
 
-  if (state.monthsToCompare !== 6) {
+  const defaultMonths = getDefaultMonthsToCompare(
+    typeof window !== "undefined" ? window.location.pathname : "",
+  );
+
+  if (state.monthsToCompare !== defaultMonths) {
     params.set("months", String(state.monthsToCompare));
   }
 

@@ -35,7 +35,11 @@ import { StatusBadge } from "./StatusBadge";
 import { PanZoomCanvas } from "./PanZoomCanvas";
 import { TreeMapFloatingControls } from "./TreeMapFloatingControls";
 import { TreeSparkline } from "./TreeSparkline";
-import type { StrategicIndicatorsViewMode } from "../shared/strategicIndicatorsFilters";
+import {
+  formatComparisonMonthsLabel,
+  sliceTrendPoints,
+  type StrategicIndicatorsViewMode,
+} from "../shared/strategicIndicatorsFilters";
 import "./DepartmentSummaryCard.css";
 import "./IndicatorDetailCard.css";
 import { IGD_HERO_DESCRIPTION } from "./IgdHeroCard";
@@ -135,6 +139,7 @@ function OrgChartArrow() {
 function TreeIgdCard({
   model,
   filterState,
+  monthsToCompare,
   cardId,
   isActive,
   onActivate,
@@ -144,6 +149,7 @@ function TreeIgdCard({
 }: {
   model: DepartmentTreeModel;
   filterState: StrategicIndicatorsFilterState;
+  monthsToCompare: number;
   cardId: string;
   isActive: boolean;
   onActivate: (cardId: string) => void;
@@ -196,10 +202,11 @@ function TreeIgdCard({
 
           {model.igdSeries.length > 0 ? (
             <TreeSparkline
-              points={model.igdSeries}
+              key={`igd-series-${monthsToCompare}`}
+              points={sliceTrendPoints(model.igdSeries, monthsToCompare)}
               direction="stable"
               height={64}
-              label="Evolução · últimos meses"
+              label={`Evolução · ${formatComparisonMonthsLabel(monthsToCompare)}`}
             />
           ) : null}
         </section>
@@ -284,6 +291,7 @@ function InteractiveTreeCard({
 function IndicatorTreeCard({
   indicatorNode,
   competence,
+  monthsToCompare,
   href,
   cardId,
   isActive,
@@ -291,6 +299,7 @@ function IndicatorTreeCard({
 }: {
   indicatorNode: DepartmentTreeIndicatorNode;
   competence: string;
+  monthsToCompare: number;
   href: string;
   cardId: string;
   isActive: boolean;
@@ -320,10 +329,11 @@ function IndicatorTreeCard({
 
         {series.length > 0 ? (
           <TreeSparkline
-            points={series}
+            key={`indicator-series-${indicator.id}-${monthsToCompare}`}
+            points={sliceTrendPoints(series, monthsToCompare)}
             direction={indicator.trend}
             height={52}
-            label="Histórico · últimos meses"
+            label={`Histórico · ${formatComparisonMonthsLabel(monthsToCompare)}`}
           />
         ) : null}
 
@@ -405,6 +415,7 @@ function DepartmentTreeCard({
   scope,
   filterState,
   competence,
+  monthsToCompare,
   expanded,
   indicatorListLayout,
   isSoloExpandedDepartment,
@@ -416,6 +427,7 @@ function DepartmentTreeCard({
   scope: DepartmentTreeScopeConfig;
   filterState: StrategicIndicatorsFilterState;
   competence: string;
+  monthsToCompare: number;
   expanded: boolean;
   indicatorListLayout: IndicatorListLayout;
   isSoloExpandedDepartment: boolean;
@@ -513,10 +525,11 @@ function DepartmentTreeCard({
               {getDirectionLabel(department.variation.direction)}
             </span>
             <TreeSparkline
-              points={node.series}
+              key={`dept-series-${department.id}-${monthsToCompare}`}
+              points={sliceTrendPoints(node.series, monthsToCompare)}
               direction={department.variation.direction}
               height={52}
-              label="IDD · 6 meses"
+              label={`IDD · ${formatComparisonMonthsLabel(monthsToCompare)}`}
             />
           </div>
 
@@ -586,6 +599,7 @@ function DepartmentTreeCard({
                   key={indicatorNode.indicator.id}
                   indicatorNode={indicatorNode}
                   competence={competence}
+                  monthsToCompare={monthsToCompare}
                   href={detailHref}
                   cardId={indicatorCardId}
                   isActive={activeCardId === indicatorCardId}
@@ -782,6 +796,7 @@ export function DepartmentIgdTree({
           <TreeIgdCard
             model={model}
             filterState={filterState}
+            monthsToCompare={filterControls.monthsToCompare}
             cardId="igd:root"
             isActive={activeCardId === "igd:root"}
             onActivate={setActiveCardId}
@@ -840,6 +855,7 @@ export function DepartmentIgdTree({
                         scope={activeColumn.scope}
                         filterState={filterState}
                         competence={model.competence}
+                        monthsToCompare={filterControls.monthsToCompare}
                         expanded={isDepartmentExpanded}
                         indicatorListLayout={
                           soloExpandedDepartmentId === departmentId
