@@ -29,11 +29,18 @@ def build_catalog_inputs_fingerprint(
                 [
                     {
                         "indicator_id": item.indicator_id,
+                        "department_id": item.department_id,
                         "weight_pct": item.weight_pct,
                         "goal_value": item.goal_value,
                         "goal_label": item.goal_label,
+                        "goal_periodicity": item.goal_periodicity,
                         "goal_mode": item.goal_mode,
                         "monthly_targets": item.monthly_targets,
+                        "scope_type": item.scope_type,
+                        "performance_direction": item.performance_direction,
+                        "branch_goals": item.branch_goals,
+                        "resolved_goal_scope_branch": item.resolved_goal_scope_branch,
+                        "has_resolved_goal": item.has_resolved_goal,
                     }
                     for item in catalog.indicators_catalog
                 ],

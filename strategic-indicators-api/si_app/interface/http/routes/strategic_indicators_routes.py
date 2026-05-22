@@ -410,10 +410,12 @@ def create_admin_department(body: CreateDepartmentBodySchema, request: Request):
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_create_strategic_indicators_admin_department_use_case()
-        return use_case.execute(
-            body=body.model_dump(),
-            actor_user_id=actor_user_id,
-            actor_email=actor_email,
+        return _invalidate_read_cache_after_mutation(
+            use_case.execute(
+                body=body.model_dump(),
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -434,11 +436,13 @@ def update_admin_department(
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_update_strategic_indicators_admin_department_use_case()
-        return use_case.execute(
-            department_id=department_id,
-            body=body.model_dump(),
-            actor_user_id=actor_user_id,
-            actor_email=actor_email,
+        return _invalidate_read_cache_after_mutation(
+            use_case.execute(
+                department_id=department_id,
+                body=body.model_dump(),
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -455,10 +459,12 @@ def deactivate_admin_department(department_id: str, request: Request):
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_deactivate_strategic_indicators_admin_department_use_case()
-        return use_case.execute(
-            department_id=department_id,
-            actor_user_id=actor_user_id,
-            actor_email=actor_email,
+        return _invalidate_read_cache_after_mutation(
+            use_case.execute(
+                department_id=department_id,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -475,10 +481,12 @@ def delete_admin_department(department_id: str, request: Request):
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_delete_strategic_indicators_admin_department_use_case()
-        return use_case.execute(
-            department_id=department_id,
-            actor_user_id=actor_user_id,
-            actor_email=actor_email,
+        return _invalidate_read_cache_after_mutation(
+            use_case.execute(
+                department_id=department_id,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -512,11 +520,13 @@ def create_admin_department_indicator(
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_create_strategic_indicators_admin_department_indicator_use_case()
-        return use_case.execute(
-            department_id=department_id,
-            body=body.model_dump(),
-            actor_user_id=actor_user_id,
-            actor_email=actor_email,
+        return _invalidate_read_cache_after_mutation(
+            use_case.execute(
+                department_id=department_id,
+                body=body.model_dump(),
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -537,11 +547,13 @@ def update_admin_department_indicator(
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_update_strategic_indicators_admin_department_indicator_use_case()
-        return use_case.execute(
-            indicator_id=indicator_id,
-            body=body.model_dump(),
-            actor_user_id=actor_user_id,
-            actor_email=actor_email,
+        return _invalidate_read_cache_after_mutation(
+            use_case.execute(
+                indicator_id=indicator_id,
+                body=body.model_dump(),
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -558,10 +570,12 @@ def activate_admin_department_indicator(indicator_id: str, request: Request):
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_activate_strategic_indicators_admin_department_indicator_use_case()
-        return use_case.execute(
-            indicator_id=indicator_id,
-            actor_user_id=actor_user_id,
-            actor_email=actor_email,
+        return _invalidate_read_cache_after_mutation(
+            use_case.execute(
+                indicator_id=indicator_id,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -578,10 +592,12 @@ def deactivate_admin_department_indicator(indicator_id: str, request: Request):
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_deactivate_strategic_indicators_admin_department_indicator_use_case()
-        return use_case.execute(
-            indicator_id=indicator_id,
-            actor_user_id=actor_user_id,
-            actor_email=actor_email,
+        return _invalidate_read_cache_after_mutation(
+            use_case.execute(
+                indicator_id=indicator_id,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -598,10 +614,12 @@ def delete_admin_department_indicator(indicator_id: str, request: Request):
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_delete_strategic_indicators_admin_department_indicator_use_case()
-        return use_case.execute(
-            indicator_id=indicator_id,
-            actor_user_id=actor_user_id,
-            actor_email=actor_email,
+        return _invalidate_read_cache_after_mutation(
+            use_case.execute(
+                indicator_id=indicator_id,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -1194,10 +1212,12 @@ def activate_admin_department(department_id: str, request: Request):
     try:
         actor_user_id, actor_email = _extract_actor(request)
         use_case = build_activate_strategic_indicators_admin_department_use_case()
-        return use_case.execute(
-            department_id=department_id,
-            actor_user_id=actor_user_id,
-            actor_email=actor_email,
+        return _invalidate_read_cache_after_mutation(
+            use_case.execute(
+                department_id=department_id,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            )
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

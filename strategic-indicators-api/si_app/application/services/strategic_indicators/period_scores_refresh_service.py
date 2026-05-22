@@ -75,7 +75,9 @@ def refresh_period_scores_materialized() -> int:
     )
 
     try:
-        invalidate_strategic_indicators_snapshot_cache()
+        invalidate_strategic_indicators_snapshot_cache(
+            schedule_materialized_refresh=False,
+        )
 
         snapshot_service = build_strategic_indicators_snapshot_service()
         reference_competence = current_competence()

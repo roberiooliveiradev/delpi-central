@@ -52,6 +52,12 @@ class Settings:
         str(_get_env("SI_PERIOD_SCORES_REFRESH_ENABLED", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}
     )
+    SI_PERIOD_SCORES_REFRESH_ON_CONFIG_CHANGE: bool = (
+        str(
+            _get_env("SI_PERIOD_SCORES_REFRESH_ON_CONFIG_CHANGE", default="true") or "true"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
     SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS: int = int(
         _get_env("SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS", default="300") or "300"
     )

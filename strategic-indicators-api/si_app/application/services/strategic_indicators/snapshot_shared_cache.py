@@ -57,9 +57,15 @@ def catalog_cache_key(
     )
 
 
-def invalidate_strategic_indicators_snapshot_cache() -> None:
+def invalidate_strategic_indicators_snapshot_cache(
+    *,
+    schedule_materialized_refresh: bool = True,
+) -> None:
     from si_app.application.services.lmp.lmp_dashboard_cache import (
         invalidate_lmp_dashboard_cache,
+    )
+    from si_app.application.services.strategic_indicators.snapshot_refresh_coordinator import (
+        schedule_period_scores_refresh_after_config_change,
     )
     from si_app.application.services.lmp.lmp_dashboard_summary_cache import (
         invalidate_lmp_dashboard_summary_cache,
@@ -82,3 +88,6 @@ def invalidate_strategic_indicators_snapshot_cache() -> None:
 
     if settings.SI_CALCULATION_SNAPSHOTS_ENABLED:
         PostgresStrategicIndicatorsCalculationSnapshotsRepository().delete_all()
+
+    if schedule_materialized_refresh:
+        schedule_period_scores_refresh_after_config_change()
