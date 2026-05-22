@@ -98,8 +98,11 @@ SUPPLIES_OTD = agent_route(
 SUPPLIES_INVENTORY_TURNOVER = agent_route(
     summary="Giro de estoque / IDD (suprimentos)",
     description=(
-        "Giro de estoque (IDD) por filial, local e período. "
-        "Use para giro, rotatividade ou IDD — não para saldo de um item nem valor total em R$."
+        "Giro de estoque (IDD) por filial, local e período: estoque ÷ CPV médio mensal. "
+        "O valor de estoque usa o mesmo método de /supplies/stock-value "
+        "(SB2 atual sem datas; SB9010+SD3010 estimado com start_date e end_date). "
+        "CPV vem de SD3010 no período (CFOPs 5101/5102/6101/6102). "
+        "Use para giro, rotatividade ou IDD — não para saldo de um item."
     ),
     operation_id="get_supplies_inventory_turnover",
 )

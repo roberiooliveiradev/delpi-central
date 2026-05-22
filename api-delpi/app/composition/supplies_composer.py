@@ -45,8 +45,10 @@ def build_get_stock_value_use_case() -> GetStockValueUseCase:
 
 
 def build_get_inventory_turnover_use_case() -> GetInventoryTurnoverUseCase:
-    repository = InventoryTurnoverQueryRepository()
-    return GetInventoryTurnoverUseCase(repository)
+    return GetInventoryTurnoverUseCase(
+        repository=InventoryTurnoverQueryRepository(),
+        stock_repository=StockValueQueryRepository(),
+    )
 
 
 def build_supplies_metrics_snapshot_service() -> SuppliesMetricsSnapshotService:
