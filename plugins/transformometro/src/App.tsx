@@ -1,93 +1,75 @@
-import { useState } from "react";
 import { DashboardPage } from "./ui/pages/DashboardPage";
 import { HomePage } from "./ui/pages/HomePage";
 import { ProcessoDetailPage } from "./ui/pages/ProcessoDetailPage";
 import { ImportPage } from "./ui/pages/ImportPage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
 import { RecursosPage } from "./ui/pages/RecursosPage";
+import { useTransformometroRouterPath } from "./hooks/useTransformometroRouterPath";
+import { TRANSFORMOMETRO_ROUTES } from "./constants/routes";
+import { buildProcessoPath, parseTransformometroPath } from "./utils/routeParser";
+import { navigateTransformometro } from "./utils/navigation";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
 };
 
-function navigate(path: string) {
-  window.history.pushState({}, "", path);
-  window.dispatchEvent(new PopStateEvent("popstate"));
-}
+export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
+  const pathname = useTransformometroRouterPath(pathnameFromHost);
+  const route = parseTransformometroPath(pathname);
 
-export default function App({ getAccessToken, pathname }: AppProps) {
-  const [selectedProcessoId, setSelectedProcessoId] = useState<string | null>(null);
+  const onNavigate = navigateTransformometro;
 
-  if (pathname === "/apps/transformometro/dashboard" || pathname?.endsWith("/dashboard")) {
+  if (route.view === "dashboard") {
     return (
       <DashboardPage
         getAccessToken={getAccessToken}
         pathname={pathname}
-        onNavigate={navigate}
+        onNavigate={onNavigate}
       />
     );
   }
 
-  if (pathname === "/apps/transformometro/import" || pathname?.endsWith("/import")) {
+  if (route.view === "import") {
     return (
-      <ImportPage
-        getAccessToken={getAccessToken}
-        pathname={pathname}
-        onNavigate={navigate}
-      />
+      <ImportPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
     );
   }
 
-  if (pathname === "/apps/transformometro/recursos" || pathname?.endsWith("/recursos")) {
+  if (route.view === "recursos") {
     return (
-      <RecursosPage
+      <RecursosPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
+    );
+  }
+
+  if (route.view === "processo" && route.processoId) {
+    return (
+      <ProcessoDetailPage
         getAccessToken={getAccessToken}
+        processoId={route.processoId}
+        revisaoId={route.revisaoId ?? null}
         pathname={pathname}
-        onNavigate={navigate}
+        onNavigate={onNavigate}
+        onRevisaoChange={(revisaoId) =>
+          onNavigate(buildProcessoPath(route.processoId!, revisaoId))
+        }
+        onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.processos)}
       />
     );
   }
 
-  if (pathname === "/apps/transformometro/processos" || pathname?.endsWith("/processos")) {
-    if (selectedProcessoId) {
-      return (
-        <ProcessoDetailPage
-          getAccessToken={getAccessToken}
-          processoId={selectedProcessoId}
-          pathname={pathname}
-          onNavigate={navigate}
-          onBack={() => setSelectedProcessoId(null)}
-        />
-      );
-    }
+  if (route.view === "processos") {
     return (
       <ProcessosPage
         getAccessToken={getAccessToken}
         pathname={pathname}
-        onNavigate={navigate}
-        onOpenProcesso={setSelectedProcessoId}
-      />
-    );
-  }
-
-  if (selectedProcessoId) {
-    return (
-      <ProcessoDetailPage
-        getAccessToken={getAccessToken}
-        processoId={selectedProcessoId}
-        pathname={pathname}
-        onNavigate={navigate}
-        onBack={() => setSelectedProcessoId(null)}
+        onNavigate={onNavigate}
+        onOpenProcesso={(id) => onNavigate(buildProcessoPath(id))}
       />
     );
   }
 
   return (
-    <HomePage
-      getAccessToken={getAccessToken}
-      pathname={pathname}
-      onNavigate={navigate}
-    />
+    <HomePage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
   );
 }

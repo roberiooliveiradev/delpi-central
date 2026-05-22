@@ -43,6 +43,7 @@ import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { CHART_COLORS } from "../../constants/chartColors";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { buildProcessoPath } from "../../utils/routeParser";
 import {
   downloadDashboardCsv,
   downloadDashboardExcel,
@@ -289,13 +290,41 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "codigo",
         header: "Código",
-        render: (row) => row.codigo_processo ?? "—",
+        render: (row) =>
+          row.processo_id ? (
+            <button
+              type="button"
+              className="ds-link-btn"
+              onClick={(event) => {
+                event.stopPropagation();
+                onNavigate(buildProcessoPath(row.processo_id));
+              }}
+            >
+              {row.codigo_processo ?? "—"}
+            </button>
+          ) : (
+            row.codigo_processo ?? "—"
+          ),
       },
       {
         key: "nome",
         header: "Processo",
         className: "ds-table__col--wide",
-        render: (row) => row.nome_processo ?? "—",
+        render: (row) =>
+          row.processo_id ? (
+            <button
+              type="button"
+              className="ds-link-btn"
+              onClick={(event) => {
+                event.stopPropagation();
+                onNavigate(buildProcessoPath(row.processo_id));
+              }}
+            >
+              {row.nome_processo ?? "—"}
+            </button>
+          ) : (
+            row.nome_processo ?? "—"
+          ),
       },
       {
         key: "daily",
@@ -332,7 +361,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         render: (row) => formatCurrency(row.economia_bruta),
       },
     ],
-    []
+    [onNavigate]
   );
 
   return (

@@ -39,51 +39,132 @@ class DashboardDataRepository(PluginBaseRepository):
 
 
 class DashboardCalculoRepository(PluginBaseRepository):
-    def replace_all(self, rows: list[dict[str, Any]]) -> int:
-        self.execute("TRUNCATE transformometro.dashboard_calculos")
+    def _insert_row(self, row: dict[str, Any]) -> None:
+        self.execute(
+            """
+            INSERT INTO transformometro.dashboard_calculos (
+                dashboard_calculo_id, revisao_id, processo_id, competencia,
+                filial_id, setor_id, cenario_tipo, revisao_ativa,
+                economia_tempo, economia_retrabalho, economia_erros, economia_outros,
+                economia_recursos_compartilhados, economia_bruta,
+                investimento_unico_mes, custo_recorrente_mes, economia_liquida_mes,
+                custo_recursos_compartilhados_mes, horas_economizadas_mes
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+            ON CONFLICT (dashboard_calculo_id) DO UPDATE SET
+                revisao_id = EXCLUDED.revisao_id,
+                processo_id = EXCLUDED.processo_id,
+                competencia = EXCLUDED.competencia,
+                filial_id = EXCLUDED.filial_id,
+                setor_id = EXCLUDED.setor_id,
+                cenario_tipo = EXCLUDED.cenario_tipo,
+                revisao_ativa = EXCLUDED.revisao_ativa,
+                economia_tempo = EXCLUDED.economia_tempo,
+                economia_retrabalho = EXCLUDED.economia_retrabalho,
+                economia_erros = EXCLUDED.economia_erros,
+                economia_outros = EXCLUDED.economia_outros,
+                economia_recursos_compartilhados = EXCLUDED.economia_recursos_compartilhados,
+                economia_bruta = EXCLUDED.economia_bruta,
+                investimento_unico_mes = EXCLUDED.investimento_unico_mes,
+                custo_recorrente_mes = EXCLUDED.custo_recorrente_mes,
+                economia_liquida_mes = EXCLUDED.economia_liquida_mes,
+                custo_recursos_compartilhados_mes = EXCLUDED.custo_recursos_compartilhados_mes,
+                horas_economizadas_mes = EXCLUDED.horas_economizadas_mes,
+                calculated_at = NOW()
+            """,
+            (
+                row["dashboard_calculo_id"],
+                row["revisao_id"],
+                row["processo_id"],
+                row["competencia"],
+                row.get("filial_id"),
+                row.get("setor_id"),
+                row["cenario_tipo"],
+                row.get("revisao_ativa", False),
+                row.get("economia_tempo", 0),
+                row.get("economia_retrabalho", 0),
+                row.get("economia_erros", 0),
+                row.get("economia_outros", 0),
+                row.get("economia_recursos_compartilhados", 0),
+                row.get("economia_bruta", 0),
+                row.get("investimento_unico_mes", 0),
+                row.get("custo_recorrente_mes", 0),
+                row.get("economia_liquida_mes", 0),
+                row.get("custo_recursos_compartilhados_mes", 0),
+                row.get("horas_economizadas_mes", 0),
+            ),
+        )
+
+    def upsert_rows(self, rows: list[dict[str, Any]]) -> int:
         if not rows:
             return 0
-
-        inserted = 0
         for row in rows:
-            self.execute(
-                """
-                INSERT INTO transformometro.dashboard_calculos (
-                    dashboard_calculo_id, revisao_id, processo_id, competencia,
-                    filial_id, setor_id, cenario_tipo, revisao_ativa,
-                    economia_tempo, economia_retrabalho, economia_erros, economia_outros,
-                    economia_recursos_compartilhados, economia_bruta,
-                    investimento_unico_mes, custo_recorrente_mes, economia_liquida_mes,
-                    custo_recursos_compartilhados_mes, horas_economizadas_mes
-                ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                )
-                """,
-                (
-                    row["dashboard_calculo_id"],
-                    row["revisao_id"],
-                    row["processo_id"],
-                    row["competencia"],
-                    row.get("filial_id"),
-                    row.get("setor_id"),
-                    row["cenario_tipo"],
-                    row.get("revisao_ativa", False),
-                    row.get("economia_tempo", 0),
-                    row.get("economia_retrabalho", 0),
-                    row.get("economia_erros", 0),
-                    row.get("economia_outros", 0),
-                    row.get("economia_recursos_compartilhados", 0),
-                    row.get("economia_bruta", 0),
-                    row.get("investimento_unico_mes", 0),
-                    row.get("custo_recorrente_mes", 0),
-                    row.get("economia_liquida_mes", 0),
-                    row.get("custo_recursos_compartilhados_mes", 0),
-                    row.get("horas_economizadas_mes", 0),
-                ),
+            self._insert_row(row)
+        return len(rows)
+
+    def replace_all(self, rows: list[dict[str, Any]]) -> int:
+        self.execute("TRUNCATE transformometro.dashboard_calculos")
+        return self.upsert_rows(rows)
+
+    def delete_by_revisao(self, revisao_id: str) -> int:
+        row = self.fetch_one(
+            """
+            WITH deleted AS (
+                DELETE FROM transformometro.dashboard_calculos
+                WHERE revisao_id = %s
+                RETURNING 1
             )
-            inserted += 1
-        return inserted
+            SELECT COUNT(*)::int AS total FROM deleted
+            """,
+            (revisao_id,),
+        )
+        return int((row or {}).get("total") or 0)
+
+    def delete_by_processo(self, processo_id: str) -> int:
+        row = self.fetch_one(
+            """
+            WITH deleted AS (
+                DELETE FROM transformometro.dashboard_calculos
+                WHERE processo_id = %s
+                RETURNING 1
+            )
+            SELECT COUNT(*)::int AS total FROM deleted
+            """,
+            (processo_id,),
+        )
+        return int((row or {}).get("total") or 0)
+
+    def delete_by_competencia_range(
+        self,
+        *,
+        competencia_inicio: str | None = None,
+        competencia_fim: str | None = None,
+    ) -> int:
+        clauses: list[str] = []
+        params: list[Any] = []
+        if competencia_inicio:
+            clauses.append("competencia >= %s")
+            params.append(competencia_inicio)
+        if competencia_fim:
+            clauses.append("competencia <= %s")
+            params.append(competencia_fim)
+        if not clauses:
+            return 0
+        where_sql = " AND ".join(clauses)
+        row = self.fetch_one(
+            f"""
+            WITH deleted AS (
+                DELETE FROM transformometro.dashboard_calculos
+                WHERE {where_sql}
+                RETURNING 1
+            )
+            SELECT COUNT(*)::int AS total FROM deleted
+            """,
+            tuple(params),
+        )
+        return int((row or {}).get("total") or 0)
 
     def count(self) -> int:
         row = self.fetch_one("SELECT COUNT(*)::int AS total FROM transformometro.dashboard_calculos")

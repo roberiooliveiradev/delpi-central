@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, RefreshCw } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
@@ -19,6 +19,7 @@ import {
   fetchProcesso,
   fetchProcessoComparativo,
   fetchRevisoes,
+  recalcularDashboard,
   type OptionsData,
   type Processo,
   type RevisionCompareItem,
@@ -33,16 +34,20 @@ import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
+  revisaoId?: string | null;
   pathname?: string;
   onNavigate: (path: string) => void;
+  onRevisaoChange: (revisaoId: string | null) => void;
   onBack: () => void;
 };
 
 export function ProcessoDetailPage({
   getAccessToken,
   processoId,
+  revisaoId = null,
   pathname,
   onNavigate,
+  onRevisaoChange,
   onBack,
 }: Props) {
   const [processo, setProcesso] = useState<Processo | null>(null);
@@ -52,7 +57,7 @@ export function ProcessoDetailPage({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showRevisaoForm, setShowRevisaoForm] = useState(false);
-  const [selectedRevisaoId, setSelectedRevisaoId] = useState<string | null>(null);
+  const [recalculando, setRecalculando] = useState(false);
   const [comparativo, setComparativo] = useState<RevisionCompareItem[]>([]);
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
@@ -89,6 +94,19 @@ export function ProcessoDetailPage({
     void load();
   }, [load]);
 
+  async function handleRecalcProcesso() {
+    setRecalculando(true);
+    setError(null);
+    try {
+      await recalcularDashboard(getAccessToken, { processo_id: processoId });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao recalcular processo");
+    } finally {
+      setRecalculando(false);
+    }
+  }
+
   async function handleCreateRevisao(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -112,7 +130,7 @@ export function ProcessoDetailPage({
     }
   }
 
-  const selectedRevisao = revisoes.find((r) => r.revisao_id === selectedRevisaoId);
+  const selectedRevisao = revisoes.find((r) => r.revisao_id === revisaoId);
 
   const comparativoColumns = useMemo<DataTableColumn<RevisionCompareItem>[]>(
     () => [
@@ -254,6 +272,15 @@ export function ProcessoDetailPage({
             </button>
             <button
               type="button"
+              className="ds-ghost-btn"
+              disabled={recalculando || refreshing}
+              onClick={() => void handleRecalcProcesso()}
+            >
+              <RefreshCw size={16} />
+              {recalculando ? "Recalculando…" : "Recalcular processo"}
+            </button>
+            <button
+              type="button"
               className="ds-primary-btn"
               onClick={() => setShowRevisaoForm((v) => !v)}
             >
@@ -377,10 +404,10 @@ export function ProcessoDetailPage({
         pageSize={10}
         emptyMessage="Nenhuma revisão. Cadastre baseline e melhoria para mensurar economia."
         onRowClick={(r) =>
-          setSelectedRevisaoId((id) => (id === r.revisao_id ? null : r.revisao_id))
+          onRevisaoChange(revisaoId === r.revisao_id ? null : r.revisao_id)
         }
         getRowClassName={(r) =>
-          selectedRevisaoId === r.revisao_id ? "ds-table__row--selected" : undefined
+          revisaoId === r.revisao_id ? "ds-table__row--selected" : undefined
         }
         footer={
           <p className="ds-hint">

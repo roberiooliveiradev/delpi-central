@@ -80,6 +80,8 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Workflow de aprovação de revisão | V005 + `POST /revisoes/{id}/workflow/*`; ativação só se `aprovada` | ✅ |
 | Export Excel | `GET /dashboard/export.xls` (HTML formatado, abre no Excel) + botão no MFE | ✅ |
 | Export PDF | Botão imprimir + CSS `@media print` no dashboard | ✅ |
+| URLs processo/revisão | `/processos/{id}` e `/revisoes/{id}` no MFE | ✅ |
+| Recálculo incremental | `POST /recalcular` com escopo | ✅ |
 
 ## Matriz de reaproveitamento
 
@@ -105,4 +107,4 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 1. **Deploy:** rebuild `transformometro-api` + MFE; `TM_RUN_MIGRATIONS_ON_STARTUP=true` (V004–V005); registrar manifesto (rota `/recursos`)
 2. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
 3. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
-4. **Backlog Fase 4+:** recálculo incremental de competências; notificações de workflow
+4. **Backlog Fase 4+:** notificações de workflow
