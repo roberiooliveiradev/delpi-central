@@ -145,7 +145,6 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel}`,
             stockValue?.summary,
-            formatCurrency,
           )}
           icon={<Warehouse size={22} />}
           loading={isBusy && !stockValue}

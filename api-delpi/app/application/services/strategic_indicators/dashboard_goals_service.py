@@ -56,17 +56,22 @@ class DashboardGoalsService:
             branch=branch,
             department_id=department_id,
         )
-        if not goal or goal.get("comparable_goal") is None:
+        if not goal:
             return payload
 
         goal_fields = self._flatten_goal(goal)
+        if goal_fields.get("comparable_goal") is None and not goal_fields.get("goal_label"):
+            return payload
         target_block = payload
 
         if summary_key and isinstance(payload.get(summary_key), dict):
             target_block = payload[summary_key]
             enriched_block = {**target_block, **goal_fields}
-            comparable = float(goal["comparable_goal"])
-            if comparable > 0 and recompute_target_pct_from:
+            comparable_raw = goal_fields.get("comparable_goal")
+            comparable = (
+                float(comparable_raw) if comparable_raw is not None else None
+            )
+            if comparable is not None and comparable > 0 and recompute_target_pct_from:
                 realized = self._resolve_realized_value(
                     enriched_block,
                     recompute_target_pct_from=recompute_target_pct_from,
@@ -80,8 +85,9 @@ class DashboardGoalsService:
             return {**payload, summary_key: enriched_block}
 
         enriched = {**payload, **goal_fields}
-        comparable = float(goal["comparable_goal"])
-        if comparable > 0 and recompute_target_pct_from:
+        comparable_raw = goal_fields.get("comparable_goal")
+        comparable = float(comparable_raw) if comparable_raw is not None else None
+        if comparable is not None and comparable > 0 and recompute_target_pct_from:
             realized = self._resolve_realized_value(
                 enriched,
                 recompute_target_pct_from=recompute_target_pct_from,
