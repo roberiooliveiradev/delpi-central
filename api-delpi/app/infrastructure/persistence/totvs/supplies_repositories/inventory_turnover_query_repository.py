@@ -14,18 +14,17 @@ class InventoryTurnoverQueryRepository(
     BaseRepository,
     InventoryTurnoverQueryRepositoryPort,
 ):
-    DEFAULT_CFOPS = ("5101", "5102", "6101", "6102")
+    KARDEX_DEFAULT_CFOPS = ("5101", "5124", "6101", "6124")
 
     def _build_cpv_filters(self, request: GetInventoryTurnoverRequest):
         qb = QueryBuilder()
-        qb.raw("SD3.D_E_L_E_T_ = ''")
-        qb.raw("SF4.D_E_L_E_T_ = ''")
+        qb.raw("D2.D_E_L_E_T_ = ''")
 
         if request.branch:
-            qb.eq("SD3.D3_FILIAL", request.branch)
+            qb.eq("D2.D2_FILIAL", request.branch)
 
-        qb.date_range("SD3.D3_EMISSAO", request.start_date, request.end_date)
-        qb.in_list("SF4.F4_CF", self.DEFAULT_CFOPS)
+        qb.date_range("D2.D2_EMISSAO", request.start_date, request.end_date)
+        qb.in_list("D2.D2_CF", self.KARDEX_DEFAULT_CFOPS)
 
         return qb.build()
 
@@ -35,14 +34,12 @@ class InventoryTurnoverQueryRepository(
         sql = f"""
             SELECT
                 ? AS branch,
-                ISNULL(MIN(SD3.D3_EMISSAO), '') AS start_date,
-                ISNULL(MAX(SD3.D3_EMISSAO), '') AS end_date,
-                ISNULL(SUM(SD3.D3_CUSTO1), 0) AS cpv_total,
+                ISNULL(MIN(D2.D2_EMISSAO), '') AS start_date,
+                ISNULL(MAX(D2.D2_EMISSAO), '') AS end_date,
+                ISNULL(SUM(D2.D2_CUSTO1), 0) AS cpv_total,
                 COUNT(*) AS total_movements,
-                ISNULL(SUM(SD3.D3_QUANT), 0) AS total_quantity
-            FROM SD3010 SD3
-            INNER JOIN SF4010 SF4
-                ON SF4.F4_CODIGO = SD3.D3_TM
+                ISNULL(SUM(D2.D2_QUANT), 0) AS total_quantity
+            FROM SD2010 D2
             WHERE {where_clause}
         """
 

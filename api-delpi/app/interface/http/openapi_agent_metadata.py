@@ -76,10 +76,10 @@ LMP_BY_SALE = agent_route(
 )
 
 SUPPLIES_CPV = agent_route(
-    summary="CPV — custo de produção vendido (suprimentos)",
+    summary="CPV — custo de produto vendido (Kardex / suprimentos)",
     description=(
-        "Indicador CPV agregado por filial e período, com ranking dos principais itens. "
-        "Use quando o usuário mencionar CPV, custo de produção vendido ou ranking de custo em suprimentos. "
+        "Indicador CPV agregado por filial e período (SD2010, SUM(D2_CUSTO1), CFOPs Kardex). "
+        "Use quando o usuário mencionar CPV, custo de produto vendido ou ranking de custo em suprimentos. "
         "Não usar para estoque de um produto nem valor total de estoque da empresa."
     ),
     operation_id="get_supplies_cpv",
@@ -101,7 +101,7 @@ SUPPLIES_INVENTORY_TURNOVER = agent_route(
         "Giro de estoque (IDD) por filial, local e período: estoque ÷ CPV médio mensal. "
         "O valor de estoque usa o mesmo método de /supplies/stock-value "
         "(SB2 atual sem datas; SB9010+SD3010 estimado com start_date e end_date). "
-        "CPV vem de SD3010 no período (CFOPs 5101/5102/6101/6102). "
+        "CPV vem de SD2010 (D2_CUSTO1, D2_EMISSAO) no período, CFOPs Kardex 5101/5124/6101/6124. "
         "Use para giro, rotatividade ou IDD — não para saldo de um item."
     ),
     operation_id="get_supplies_inventory_turnover",

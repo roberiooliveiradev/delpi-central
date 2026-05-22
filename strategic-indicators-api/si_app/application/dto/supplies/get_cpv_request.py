@@ -8,4 +8,4 @@ class GetCPVRequest:
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     top_limit: int = 5
-    cfops: Sequence[str] = field(default_factory=lambda: ("5101", "5102", "6101", "6102"))
+    cfops: Sequence[str] = field(default_factory=lambda: ("5101", "5124", "6101", "6124"))

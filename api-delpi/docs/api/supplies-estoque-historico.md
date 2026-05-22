@@ -196,4 +196,4 @@ IDD (meses) = valor_estoque ÷ CPV_médio_mensal
 Giro (vezes) = CPV_total ÷ valor_estoque
 ```
 
-O CPV continua vindo de `SD3010` no período, com CFOPs `5101`, `5102`, `6101`, `6102`.
+O CPV vem de `SD2010` no período (`SUM(D2_CUSTO1)`, `D2_EMISSAO`), com CFOPs Kardex `5101`, `5124`, `6101`, `6124` (`D2_CF`).
