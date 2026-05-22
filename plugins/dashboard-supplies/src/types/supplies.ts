@@ -169,4 +169,5 @@ export type InventoryTurnoverData = {
     total_quantity: number;
     cpv_average_monthly: number;
   };
+  stock_estimation?: StockValueEstimation;
 };

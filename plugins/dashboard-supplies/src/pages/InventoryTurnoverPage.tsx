@@ -152,6 +152,13 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
       />
       <DataSourceBanner />
 
+      {data?.stock_estimation?.enabled ? (
+        <div className="ds-state-box" role="status">
+          {data.stock_estimation.note ??
+            "Estoque estimado (SB9 + SD3), alinhado à tela de Estoque."}
+        </div>
+      ) : null}
+
       {!iddValid && data ? (
         <div className="ds-state ds-state--warning" role="status">
           <p>

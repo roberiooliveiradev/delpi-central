@@ -63,7 +63,8 @@ export type NotificationCategory =
   | "company_event"
   | "announcement"
   | "custom"
-  | "controle_mp";
+  | "controle_mp"
+  | "transformometro";
 
 export type NotificationPresentation = "text" | "html" | "template";
 

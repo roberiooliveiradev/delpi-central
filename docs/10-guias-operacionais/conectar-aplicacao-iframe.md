@@ -250,6 +250,8 @@ Detalhe técnico: [embedded-app-deep-links.md](../05-portal/embedded-app-deep-li
 
 ### 5.4 Nova categoria de notificação
 
+Apps no monorepo com categoria dedicada: `controle_mp`, `transformometro` (workflow de revisões — ver [NOTIFICACOES-WORKFLOW.md](../12-roadmap-e-evolucao/transformometro-app/NOTIFICACOES-WORKFLOW.md)).
+
 Se o app usar categoria nova (ex.: `meu_app`):
 
 1. Adicionar em `core-api/app/domain/notifications/notification_constants.py`

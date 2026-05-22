@@ -179,3 +179,21 @@ GET /supplies/stock-value?branch=02&location=01
 - Depende da consistência das movimentações SD3 e do último fechamento SB9 disponível.
 
 Referência de validação interna: documento *Método de Cálculo do Valor de Estoque em Abril/2026* (cenários abril/2026 e março/2025).
+
+---
+
+## Uso no giro de estoque (IDD)
+
+A rota `GET /supplies/inventory-turnover` reutiliza **o mesmo estoque** de `/supplies/stock-value`:
+
+- Com `start_date` e `end_date`: estimativa SB9010 + SD3010 (fim do período).
+- Sem datas no estoque: saldo atual SB2010 (o IDD ainda exige datas para o CPV).
+
+Fórmulas do IDD (inalteradas):
+
+```text
+IDD (meses) = valor_estoque ÷ CPV_médio_mensal
+Giro (vezes) = CPV_total ÷ valor_estoque
+```
+
+O CPV continua vindo de `SD3010` no período, com CFOPs `5101`, `5102`, `6101`, `6102`.

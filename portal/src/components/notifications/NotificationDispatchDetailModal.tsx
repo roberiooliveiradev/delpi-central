@@ -29,6 +29,7 @@ const CATEGORY_LABELS: Record<NotificationCategory, string> = {
   announcement: "Comunicado",
   custom: "Personalizada",
   controle_mp: "Controle MP",
+  transformometro: "Transformômetro",
 };
 
 const RECIPIENT_PREVIEW_LIMIT = 80;

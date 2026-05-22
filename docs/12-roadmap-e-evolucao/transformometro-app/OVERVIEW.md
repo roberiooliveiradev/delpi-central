@@ -1,6 +1,6 @@
 # Visão geral — Transformômetro App
 
-**Última atualização:** 2026-05-21 (navegação completa, catálogo Recursos, workflow V005, export Excel)
+**Última atualização:** 2026-05-21 (URLs processo/revisão, notificações workflow, deep link portal)
 
 ## O que é
 
@@ -31,11 +31,17 @@ Hoje isso vive em **Google Sheets + Apps Script**. A meta é uma aplicação web
 |------|--------|
 | `/apps/transformometro` | Início (status API + atalhos) |
 | `/apps/transformometro/dashboard` | KPIs, alertas, export CSV/Excel, recalcular |
-| `/apps/transformometro/processos` | Lista e detalhe (revisões) |
+| `/apps/transformometro/processos` | Lista de processos |
+| `/apps/transformometro/processos/{id}` | Detalhe do processo |
+| `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Detalhe com revisão selecionada |
 | `/apps/transformometro/recursos` | Catálogo global de recursos compartilhados |
 | `/apps/transformometro/import` | Importação planilha (admin) |
 
-No **detalhe da revisão** (Processos → clicar revisão): abas **Vigência**, **Medição**, **Investimentos**, **Recursos** (vínculos).
+No detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos** (vínculos) e toolbar de **workflow** (submeter → aprovar/rejeitar → ativar).
+
+### Notificações (portal)
+
+Com `TM_NOTIFICATIONS_ENABLED=true`, submeter/aprovar/rejeitar gera alerta no sino (categoria `transformometro`). Detalhes: [NOTIFICACOES-WORKFLOW.md](./NOTIFICACOES-WORKFLOW.md).
 
 ## Fluxo do usuário
 
@@ -124,3 +130,4 @@ O app novo deve seguir a **especificação** (incluindo `economia_recursos_compa
 - [ARCHITECTURE.md](./ARCHITECTURE.md)
 - [ROADMAP.md](./ROADMAP.md)
 - [ESPECIFICACAO.md](./ESPECIFICACAO.md)
+- [NOTIFICACOES-WORKFLOW.md](./NOTIFICACOES-WORKFLOW.md)

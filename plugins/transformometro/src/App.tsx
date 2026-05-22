@@ -4,6 +4,7 @@ import { ProcessoDetailPage } from "./ui/pages/ProcessoDetailPage";
 import { ImportPage } from "./ui/pages/ImportPage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
 import { RecursosPage } from "./ui/pages/RecursosPage";
+import { useDelpiPortalBridge } from "./hooks/useDelpiPortalBridge";
 import { useTransformometroRouterPath } from "./hooks/useTransformometroRouterPath";
 import { TRANSFORMOMETRO_ROUTES } from "./constants/routes";
 import { buildProcessoPath, parseTransformometroPath } from "./utils/routeParser";
@@ -17,6 +18,8 @@ export type AppProps = {
 export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   const pathname = useTransformometroRouterPath(pathnameFromHost);
   const route = parseTransformometroPath(pathname);
+
+  useDelpiPortalBridge(pathname);
 
   const onNavigate = navigateTransformometro;
 

@@ -11,6 +11,7 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [ROADMAP.md](./ROADMAP.md) | Fases de entrega, dependências, o que reaproveitar do legado |
 | [ESPECIFICACAO.md](./ESPECIFICACAO.md) | Especificação funcional completa (origem: planilha + Apps Script) |
 | [OPERATIONS.md](./OPERATIONS.md) | Runbook: import, recalcular, planilha, troubleshooting |
+| [NOTIFICACOES-WORKFLOW.md](./NOTIFICACOES-WORKFLOW.md) | Alertas no portal (submeter/aprovar/rejeitar), envs, deep link |
 | [status-atual.md](./status-atual.md) | Snapshot do que está em produção |
 | [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md) | Docker, compose, migrations, checklist |
 

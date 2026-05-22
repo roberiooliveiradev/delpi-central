@@ -3,15 +3,33 @@ from datetime import date, datetime, timedelta
 from app.application.dto.supplies.get_inventory_turnover_request import (
     GetInventoryTurnoverRequest,
 )
+from app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
 from app.domain.ports.supplies.inventory_turnover_query_repository_port import (
     InventoryTurnoverQueryRepositoryPort,
+)
+from app.domain.ports.supplies.stock_value_query_repository_port import (
+    StockValueQueryRepositoryPort,
 )
 
 
 class GetInventoryTurnoverUseCase:
 
-    def __init__(self, repository: InventoryTurnoverQueryRepositoryPort):
+    def __init__(
+        self,
+        repository: InventoryTurnoverQueryRepositoryPort,
+        stock_repository: StockValueQueryRepositoryPort,
+    ):
         self._repository = repository
+        self._stock_repository = stock_repository
+
+    @staticmethod
+    def _to_stock_request(request: GetInventoryTurnoverRequest) -> GetStockValueRequest:
+        return GetStockValueRequest(
+            branch=request.branch,
+            location=request.location,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
 
     def _parse_date(self, value: str | None) -> date | None:
         if not value:
@@ -94,7 +112,9 @@ class GetInventoryTurnoverUseCase:
         return average, "partial_period_monthlyized", days
 
     def execute(self, request: GetInventoryTurnoverRequest) -> dict:
-        stock_context = self._repository.get_stock_context(request)
+        stock_context = self._stock_repository.get_stock_value_summary(
+            self._to_stock_request(request)
+        )
         cpv_context = self._repository.get_cpv_context(request)
 
         total_stock_value = float(stock_context.get("total_stock_value") or 0)
@@ -141,7 +161,9 @@ class GetInventoryTurnoverUseCase:
             if total_stock_quantity > 0 else 0
         )
 
-        return {
+        stock_request = self._to_stock_request(request)
+
+        payload = {
             "branch": stock_context.get("branch") or request.branch or "consolidated",
             "location": stock_context.get("location") or request.location or "all",
             "start_date": start_date.strftime("%Y%m%d"),
@@ -174,3 +196,17 @@ class GetInventoryTurnoverUseCase:
                 "cpv_average_monthly": cpv_average_monthly,
             },
         }
+
+        if stock_request.uses_historical_estimation:
+            payload["stock_estimation"] = {
+                "enabled": True,
+                "method": "sb9_last_closure_plus_sd3_movements",
+                "start_date": start_date.strftime("%Y%m%d"),
+                "end_date_exclusive": (end_date + timedelta(days=1)).strftime("%Y%m%d"),
+                "note": (
+                    "Estoque estimado pelo mesmo método de /supplies/stock-value "
+                    "(SB9010 + SD3010)."
+                ),
+            }
+
+        return payload
