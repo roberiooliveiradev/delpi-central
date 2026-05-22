@@ -17,6 +17,8 @@ def _sample_goal() -> dict:
         "comparable_goal": 95.0,
         "has_goal": True,
         "goal_scope_branch": "",
+        "goal_scope_label": "Meta consolidada",
+        "goal_scope_hint": None,
         "scope_type": "consolidated",
         "performance_direction": "higher_is_better",
     }
@@ -40,6 +42,7 @@ def test_enrich_dashboard_metric_attaches_goal_at_root() -> None:
     assert result["comparable_goal"] == 95.0
     assert result["has_goal"] is True
     assert result["goal_scope_branch"] == ""
+    assert result["goal_scope_label"] == "Meta consolidada"
     assert result["performance_direction"] == "higher_is_better"
     assert result["otd_percentage"] == 88.0
 
@@ -86,6 +89,35 @@ def test_enrich_dashboard_metric_attaches_goal_label_without_comparable() -> Non
         )
 
     assert result["summary"]["goal_label"] == "R$ 13.500.000,00"
+
+
+def test_enrich_dashboard_metric_attaches_scope_hint_without_goal() -> None:
+    service = DashboardGoalsService()
+    goal = {
+        "source_key": "supplies_cpv",
+        "goal_label": None,
+        "comparable_goal": None,
+        "has_goal": False,
+        "goal_scope_hint": (
+            "Metas cadastradas apenas por filial (01 e 02). "
+            "Selecione uma filial no filtro."
+        ),
+    }
+    with (
+        patch.object(service, "get_goal", return_value=goal),
+        patch(
+            "app.application.services.strategic_indicators.dashboard_goals_service.get_dashboard_goals_service",
+            return_value=service,
+        ),
+    ):
+        result = enrich_dashboard_metric(
+            {"summary": {"cpv_percentage": 42.0}},
+            source_key="supplies_cpv",
+            summary_key="summary",
+        )
+
+    assert result["summary"]["goal_scope_hint"] is not None
+    assert "filial" in result["summary"]["goal_scope_hint"].lower()
 
 
 def test_enrich_dashboard_metric_leaves_payload_when_goal_missing() -> None:

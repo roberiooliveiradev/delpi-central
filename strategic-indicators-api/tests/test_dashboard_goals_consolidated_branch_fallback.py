@@ -28,6 +28,18 @@ class _FakeIndicatorsRepository:
 
 class _FakeGoalsRepository:
     def list_resolved_goals_map(self, **kwargs) -> dict[str, dict]:
+        scope_branch = kwargs.get("scope_branch")
+        if scope_branch:
+            return {
+                "supplies-cpv": {
+                    "goal_label": "50,5%",
+                    "goal_value": 50.5,
+                    "goal_periodicity": "monthly",
+                    "goal_mode": "standard",
+                    "goal_scope_branch": scope_branch,
+                    "monthly_targets": [],
+                }
+            }
         return {}
 
     def list_latest_active_goals_map(self, **kwargs) -> dict[str, dict]:
@@ -54,7 +66,7 @@ class _FakeGoalsRepository:
         }
 
 
-def test_consolidated_view_uses_branch_goals_when_consolidated_meta_missing() -> None:
+def test_consolidated_view_hints_branch_goals_when_consolidated_meta_missing() -> None:
     use_case = GetDashboardGoalsBySourceKeysUseCase(
         indicators_repository=_FakeIndicatorsRepository(),
         goals_repository=_FakeGoalsRepository(),
@@ -69,5 +81,28 @@ def test_consolidated_view_uses_branch_goals_when_consolidated_meta_missing() ->
     )
 
     assert len(items) == 1
+    assert items[0]["goal_label"] is None
+    assert items[0]["has_goal"] is False
+    assert items[0]["goal_scope_hint"] is not None
+    assert "filial" in items[0]["goal_scope_hint"].lower()
+
+
+def test_branch_view_resolves_branch_goal_with_scope_label() -> None:
+    use_case = GetDashboardGoalsBySourceKeysUseCase(
+        indicators_repository=_FakeIndicatorsRepository(),
+        goals_repository=_FakeGoalsRepository(),
+        calculator=StrategicIndicatorsCalculator(),
+    )
+
+    items = use_case.execute(
+        source_keys=["supplies_cpv"],
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        branch="01",
+    )
+
+    assert len(items) == 1
     assert items[0]["goal_label"] == "50,5%"
     assert items[0]["has_goal"] is True
+    assert items[0]["goal_scope_label"] == "Meta filial 01"
+    assert items[0]["goal_scope_branch"] == "01"

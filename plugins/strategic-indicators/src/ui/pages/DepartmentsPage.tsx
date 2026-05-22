@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, type ReactNode } from "react";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import {
   applyTreeScopeSelection,
@@ -7,10 +7,12 @@ import {
 import type { DepartmentTreeScopeKey } from "../../data/types/departmentTree";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { DepartmentIgdTree } from "../components/DepartmentIgdTree";
+import { PanZoomCanvas } from "../components/PanZoomCanvas";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
 import { StatusBadge } from "../components/StatusBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
+import { TreeMapFloatingControls } from "../components/TreeMapFloatingControls";
 import { useStrategicIndicatorsDepartmentTree } from "../../state/hooks/useStrategicIndicatorsDepartmentTree";
 import "./DepartmentsPage.css";
 
@@ -65,25 +67,54 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       <StatusBadge label="API Real" variant="success" />
     );
 
+  const renderFloatingControls = (viewportNav: ReactNode) => (
+    <TreeMapFloatingControls
+      referenceMonth={referenceMonth}
+      viewMode={viewMode}
+      branch={branch}
+      treeScope={treeScope}
+      monthsToCompare={monthsToCompare}
+      onReferenceMonthChange={setReferenceMonth}
+      onViewModeChange={setViewMode}
+      onBranchChange={setBranch}
+      onTreeScopeChange={handleTreeScopeChange}
+      onMonthsToCompareChange={setMonthsToCompare}
+      viewportNav={viewportNav}
+      status={statusBadge}
+    />
+  );
+
+  const renderInitialStateShell = (content: ReactNode) => (
+    <PanZoomCanvas
+      persistViewKey="si-strategic-indicators-departments-map"
+      immersive
+      fitOnMount={false}
+      floatingControls={renderFloatingControls}
+      className="si-org-chart-canvas"
+    >
+      <div className="si-departments-page__state-placeholder">{content}</div>
+    </PanZoomCanvas>
+  );
+
   return (
     <div className="si-departments-page si-departments-page--immersive">
       {loading && !model ? (
-        <div className="si-departments-page__overlay">
+        renderInitialStateShell(
           <LoadingActivityInline
             title="Carregando mapa departamental"
             description="Montando IGD, IDDs e indicadores com série dos últimos meses."
             variant="panel"
             tone="info"
             progressPercent={loadingProgress}
-          />
-        </div>
+          />,
+        )
       ) : error && !model ? (
-        <div className="si-departments-page__overlay">
+        renderInitialStateShell(
           <StrategicIndicatorsPageError
             error={error}
             onAction={() => void reload()}
-          />
-        </div>
+          />,
+        )
       ) : model ? (
         <>
           {refreshing ? (

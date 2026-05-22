@@ -14,7 +14,12 @@ from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port im
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_department_indicators_repository import (
     PostgresStrategicIndicatorsDepartmentIndicatorsRepository,
 )
-from si_app.shared.goal_scope import BRANCH_UNIT_CODES, normalize_goal_scope_branch
+from si_app.shared.goal_scope import (
+    BRANCH_UNIT_CODES,
+    format_goal_scope_label,
+    normalize_goal_scope_branch,
+    resolve_goal_scope_hint_for_view,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -71,14 +76,14 @@ class GetDashboardGoalsBySourceKeysUseCase:
             start_date=start_date,
             end_date=end_date,
         )
-        scope_branch = normalize_goal_scope_branch(branch)
+        view_branch = normalize_goal_scope_branch(branch)
 
         goals_by_indicator = self._goals_repository.list_resolved_goals_map(
             competence=period.competence,
             start_date=period.start_date,
             end_date=period.end_date,
             department_id=department_id,
-            scope_branch=scope_branch or None,
+            scope_branch=view_branch or None,
         )
 
         missing_ids = [
@@ -93,39 +98,47 @@ class GetDashboardGoalsBySourceKeysUseCase:
                 competence=period.competence,
                 start_date=period.start_date,
                 end_date=period.end_date,
-                scope_branch=scope_branch or None,
+                scope_branch=view_branch or None,
             )
             for indicator_id, goal in fallback.items():
                 if indicator_id not in goals_by_indicator:
                     goals_by_indicator[indicator_id] = goal
 
-        if not scope_branch:
-            still_missing = [
-                item["indicator_id"]
-                for item in indicators
-                if item["indicator_id"] not in goals_by_indicator
-            ]
-            if still_missing:
-                branch_goals = self._goals_repository.list_branch_scoped_goals_map(
-                    indicator_ids=still_missing,
-                    department_id=department_id,
-                    competence=period.competence,
-                    start_date=period.start_date,
-                    end_date=period.end_date,
-                )
-                for indicator_id, by_branch in branch_goals.items():
-                    merged = self._merge_branch_goals_for_consolidated_view(by_branch)
-                    if merged:
-                        goals_by_indicator[indicator_id] = merged
+        indicator_ids = [item["indicator_id"] for item in indicators]
+        consolidated_by_indicator = self._goals_repository.list_resolved_goals_map(
+            competence=period.competence,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            department_id=department_id,
+            scope_branch=None,
+        )
+        branch_goals_by_indicator = self._goals_repository.list_branch_scoped_goals_map(
+            indicator_ids=indicator_ids,
+            department_id=department_id,
+            competence=period.competence,
+            start_date=period.start_date,
+            end_date=period.end_date,
+        )
 
         items: list[dict] = []
         for indicator in indicators:
-            goal = goals_by_indicator.get(indicator["indicator_id"])
+            indicator_id = indicator["indicator_id"]
+            goal = goals_by_indicator.get(indicator_id)
+            goal_scope_hint = None
+            if goal is None:
+                goal_scope_hint = resolve_goal_scope_hint_for_view(
+                    view_branch=view_branch,
+                    consolidated_goal=consolidated_by_indicator.get(indicator_id),
+                    branch_goals=branch_goals_by_indicator.get(indicator_id),
+                )
+
             items.append(
                 self._serialize_item(
                     indicator=indicator,
                     goal=goal,
                     period=period,
+                    view_branch=view_branch,
+                    goal_scope_hint=goal_scope_hint,
                 )
             )
 
@@ -137,6 +150,8 @@ class GetDashboardGoalsBySourceKeysUseCase:
         indicator: dict,
         goal: dict | None,
         period,
+        view_branch: str,
+        goal_scope_hint: str | None,
     ) -> dict:
         goal_value = float(goal["goal_value"]) if goal and goal.get("goal_value") is not None else None
         comparable_goal = None
@@ -156,6 +171,10 @@ class GetDashboardGoalsBySourceKeysUseCase:
             if goal
             else ""
         )
+        has_resolved_goal = goal is not None and (
+            (comparable_goal is not None and comparable_goal > 0)
+            or bool(goal.get("goal_label"))
+        )
 
         return {
             "source_key": indicator.get("source_key"),
@@ -164,6 +183,11 @@ class GetDashboardGoalsBySourceKeysUseCase:
             "department_id": indicator.get("department_id"),
             "scope_type": indicator.get("scope_type"),
             "goal_scope_branch": goal_scope_branch,
+            "goal_scope_label": format_goal_scope_label(goal_scope_branch)
+            if has_resolved_goal
+            else None,
+            "goal_scope_hint": goal_scope_hint,
+            "view_branch": view_branch or None,
             "performance_direction": indicator.get("performance_direction"),
             "value_unit": indicator.get("value_unit"),
             "value_prefix": indicator.get("value_prefix"),
@@ -174,44 +198,6 @@ class GetDashboardGoalsBySourceKeysUseCase:
             "goal_periodicity": goal.get("goal_periodicity") if goal else None,
             "goal_mode": goal.get("goal_mode") if goal else None,
             "comparable_goal": comparable_goal,
-            "has_goal": comparable_goal is not None and comparable_goal > 0,
+            "has_goal": has_resolved_goal,
             "monthly_targets": goal.get("monthly_targets") if goal else [],
         }
-
-    @staticmethod
-    def _merge_branch_goals_for_consolidated_view(
-        by_branch: dict[str, dict],
-    ) -> dict | None:
-        ordered_branches = [
-            code
-            for code in BRANCH_UNIT_CODES
-            if code in by_branch and by_branch[code].get("goal_label")
-        ]
-        if not ordered_branches:
-            ordered_branches = [
-                code
-                for code in sorted(by_branch.keys())
-                if by_branch[code].get("goal_label")
-            ]
-        if not ordered_branches:
-            return None
-
-        labels = [str(by_branch[code]["goal_label"]).strip() for code in ordered_branches]
-        unique_labels = list(dict.fromkeys(labels))
-        base = by_branch[ordered_branches[0]]
-
-        if len(unique_labels) == 1:
-            merged_label = unique_labels[0]
-        else:
-            merged_label = " · ".join(
-                f"{code}: {by_branch[code]['goal_label']}"
-                for code in ordered_branches
-                if by_branch[code].get("goal_label")
-            )
-
-        return {
-            **base,
-            "goal_label": merged_label,
-            "goal_scope_branch": "",
-        }
-
