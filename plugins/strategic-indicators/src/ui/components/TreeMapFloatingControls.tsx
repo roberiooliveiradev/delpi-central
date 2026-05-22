@@ -71,61 +71,67 @@ export function TreeMapFloatingControls({
         }`}
       >
         <div className="si-tree-map-floating__toolbar">
-          <button
-            type="button"
-            className={`si-tree-map-floating__toggle${
-              collapsed ? " si-tree-map-floating__toggle--compact" : ""
-            }`}
-            onClick={toggleCollapsed}
-            aria-expanded={!collapsed}
-            title={collapsed ? "Mostrar filtros" : "Ocultar filtros"}
-          >
-            {collapsed ? (
-              <>
-                <ChevronDown size={16} aria-hidden />
-                <span>Filtros</span>
-              </>
-            ) : (
-              <>
-                <ChevronUp size={16} aria-hidden />
-                <span>Ocultar filtros</span>
-              </>
-            )}
-          </button>
+          <div className="si-tree-map-floating__row si-tree-map-floating__row--head">
+            <button
+              type="button"
+              className={`si-tree-map-floating__toggle${
+                collapsed ? " si-tree-map-floating__toggle--compact" : ""
+              }`}
+              onClick={toggleCollapsed}
+              aria-expanded={!collapsed}
+              title={collapsed ? "Mostrar filtros" : "Ocultar filtros"}
+            >
+              {collapsed ? (
+                <>
+                  <ChevronDown size={16} aria-hidden />
+                  <span>Filtros</span>
+                </>
+              ) : (
+                <>
+                  <ChevronUp size={16} aria-hidden />
+                  <span>Ocultar filtros</span>
+                </>
+              )}
+            </button>
 
-          {status ? (
-            <div className="si-tree-map-floating__status">{status}</div>
-          ) : null}
+            {status ? (
+              <div className="si-tree-map-floating__status">{status}</div>
+            ) : null}
+          </div>
 
           {!collapsed ? (
-            <StrategicIndicatorsReferenceFilters
-              referenceMonth={referenceMonth}
-              viewMode={viewMode}
-              branch={branch}
-              treeScope={treeScope}
-              monthsToCompare={monthsToCompare}
-              showMonthsToCompare
-              viewPickerVariant="tree"
-              onReferenceMonthChange={onReferenceMonthChange}
-              onViewModeChange={onViewModeChange}
-              onBranchChange={onBranchChange}
-              onTreeScopeChange={onTreeScopeChange}
-              onMonthsToCompareChange={onMonthsToCompareChange}
-              className="si-tree-map-floating__filters"
-            />
+            <div className="si-tree-map-floating__row si-tree-map-floating__row--filters">
+              <StrategicIndicatorsReferenceFilters
+                referenceMonth={referenceMonth}
+                viewMode={viewMode}
+                branch={branch}
+                treeScope={treeScope}
+                monthsToCompare={monthsToCompare}
+                showMonthsToCompare
+                viewPickerVariant="tree"
+                onReferenceMonthChange={onReferenceMonthChange}
+                onViewModeChange={onViewModeChange}
+                onBranchChange={onBranchChange}
+                onTreeScopeChange={onTreeScopeChange}
+                onMonthsToCompareChange={onMonthsToCompareChange}
+                className="si-tree-map-floating__filters"
+              />
+            </div>
           ) : null}
 
           {actions || viewportNav ? (
-            <div
-              className="si-tree-map-floating__view-controls"
-              aria-label="Controles de visualização"
-            >
-              {actions ? (
-                <div className="si-tree-map-floating__tree-actions">{actions}</div>
-              ) : null}
-              {viewportNav ? (
-                <div className="si-tree-map-floating__nav">{viewportNav}</div>
-              ) : null}
+            <div className="si-tree-map-floating__row si-tree-map-floating__row--viewport">
+              <div
+                className="si-tree-map-floating__view-controls"
+                aria-label="Controles de visualização"
+              >
+                {actions ? (
+                  <div className="si-tree-map-floating__tree-actions">{actions}</div>
+                ) : null}
+                {viewportNav ? (
+                  <div className="si-tree-map-floating__nav">{viewportNav}</div>
+                ) : null}
+              </div>
             </div>
           ) : null}
         </div>

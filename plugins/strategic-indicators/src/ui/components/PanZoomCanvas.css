@@ -239,6 +239,16 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
 }
 
 @media (max-width: 768px) {
+  .si-pan-zoom__floating-bar {
+    top: 6px;
+    left: 6px;
+    right: 6px;
+  }
+
+  .si-pan-zoom-shell--immersive .si-pan-zoom__surface {
+    padding-top: clamp(140px, 22vh, 200px);
+  }
+
   .si-pan-zoom__hint-text--desktop {
     display: none;
   }
@@ -255,6 +265,7 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
     max-width: none;
     justify-content: center;
     text-align: center;
+    font-size: 11px;
   }
 }
 
@@ -276,6 +287,11 @@ html:-webkit-full-screen .si-pan-zoom-shell--immersive .si-pan-zoom__viewport,
     top: 8px;
     left: 8px;
     right: 8px;
+    align-items: stretch;
+  }
+
+  .si-pan-zoom__floating-controls {
+    max-width: 100%;
   }
 
   .si-pan-zoom-shell--immersive .si-pan-zoom__surface {
