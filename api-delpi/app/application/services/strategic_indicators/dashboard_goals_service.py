@@ -5,6 +5,9 @@ from typing import Any
 
 from strategic_indicators_client import StrategicIndicatorsApiClient, StrategicIndicatorsApiError
 
+from app.application.services.strategic_indicators.dashboard_goal_dates import (
+    normalize_si_period_date,
+)
 from app.utils.logger import log_error
 
 
@@ -26,8 +29,8 @@ class DashboardGoalsService:
     ) -> dict[str, Any] | None:
         goals_map = self._load_goals_map(
             source_keys=[source_key],
-            start_date=start_date,
-            end_date=end_date,
+            start_date=normalize_si_period_date(start_date),
+            end_date=normalize_si_period_date(end_date),
             branch=branch,
             department_id=department_id,
         )
@@ -140,6 +143,9 @@ class DashboardGoalsService:
         branch: str | None,
         department_id: str | None,
     ) -> dict[str, dict[str, Any]]:
+        start_date = normalize_si_period_date(start_date)
+        end_date = normalize_si_period_date(end_date)
+
         normalized_keys = tuple(
             sorted({str(key).strip() for key in source_keys if str(key).strip()})
         )

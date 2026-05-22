@@ -138,8 +138,6 @@ def get_stock_value(
         result = enrich_dashboard_metric(
             use_case.execute(request),
             source_key=goal_keys.SUPPLIES_STOCK_VALUE,
-            start_date=start_date,
-            end_date=end_date,
             branch=branch,
             summary_key="summary",
         )

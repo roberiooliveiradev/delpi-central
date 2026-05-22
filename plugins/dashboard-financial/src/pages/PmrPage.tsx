@@ -25,6 +25,7 @@ import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { useFinancialResource } from "../hooks/useFinancialResource";
 import type { PmrBranchRow } from "../types/financial";
 import { formatPeriodLabel } from "../utils/dates";
+import { formatGoalSubtitle } from "../utils/goalDisplay";
 import { formatDecimal } from "../utils/format";
 
 const CHART_HEIGHT = 320;
@@ -107,7 +108,7 @@ export function PmrPage({ pathname }: PmrPageProps) {
         <KpiCard
           title="PMR (dias)"
           value={formatDecimal(data?.pmr_days, 1)}
-          subtitle={periodLabel}
+          subtitle={formatGoalSubtitle(periodLabel, data, (v) => formatDecimal(v, 1))}
           icon={<Clock size={22} />}
           loading={isBusy && !data}
         />

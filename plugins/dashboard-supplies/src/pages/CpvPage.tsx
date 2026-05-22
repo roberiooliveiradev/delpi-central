@@ -32,6 +32,7 @@ import {
   formatInteger,
   formatPercent,
 } from "../utils/format";
+import { formatGoalSubtitle } from "../utils/goalDisplay";
 
 const CHART_HEIGHT = 320;
 
@@ -156,14 +157,18 @@ export function CpvPage({ pathname }: CpvPageProps) {
         <KpiCard
           title="CPV total"
           value={formatCurrency(data?.summary.cpv_total)}
-          subtitle={periodLabel}
+          subtitle={formatGoalSubtitle(periodLabel, data?.summary)}
           icon={<TrendingUp size={22} />}
           loading={isBusy && !data}
         />
         <KpiCard
           title="CPV / ROL"
           value={formatPercent(data?.summary.cpv_percentage)}
-          subtitle={`ROL ${formatCurrency(data?.summary.rol_with_ipi)}`}
+          subtitle={formatGoalSubtitle(
+            `ROL ${formatCurrency(data?.summary.rol_with_ipi)}`,
+            data?.summary,
+            formatPercent,
+          )}
           icon={<Percent size={22} />}
           loading={isBusy && !data}
         />
