@@ -47,8 +47,8 @@ export type LmpsDashboardResponse = {
   total: number;
   page: number;
   page_size: number;
-  summary: LmpsDashboardSummary | null;
-  charts?: LmpsDashboardCharts | null;
+  summary: LmpsDashboardSummary;
+  charts?: LmpsDashboardCharts;
 };
 
 export type LmpsDashboardParams = {
@@ -59,5 +59,4 @@ export type LmpsDashboardParams = {
   status?: string;
   page?: number;
   page_size?: number;
-  scope?: "aggregates" | "items" | "full";
 };

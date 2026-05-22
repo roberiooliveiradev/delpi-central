@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getLmpsDashboard, getTransformaSummary } from "../api/engineeringApi";
 import type { EngineeringFilterParams, TransformaSummary } from "../types/engineering";
+import { LMP_DASHBOARD_PAGE_SIZE } from "./useLmpsDashboard";
 import type { LmpsDashboardResponse, LmpsDashboardSummary } from "../types/lmp";
 import { formatEngineeringApiError } from "../utils/formatEngineeringApiError";
 import {
@@ -51,7 +52,7 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
             (signal) => getTransformaSummary(apiParams, signal),
             (signal) =>
               getLmpsDashboard(
-                { ...lmpParams, scope: "aggregates", page: 1, page_size: 1 },
+                { ...lmpParams, page: 1, page_size: LMP_DASHBOARD_PAGE_SIZE },
                 signal
               ),
           ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
@@ -72,8 +73,7 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
         }
 
         if (results[1].status === "fulfilled") {
-          const lmpPayload = results[1].value as LmpsDashboardResponse;
-          setLmpSummary(lmpPayload.summary ?? null);
+          setLmpSummary((results[1].value as LmpsDashboardResponse).summary);
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.lmp =

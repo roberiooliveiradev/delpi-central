@@ -4,14 +4,15 @@ import type { LmpDashboardItem, LmpsDashboardParams, LmpsDashboardResponse } fro
 import { formatEngineeringApiError } from "../utils/formatEngineeringApiError";
 import { inputDateToLmpApi } from "../utils/lmpDates";
 import {
+  beginSingleRequestProgress,
   EMPTY_REQUEST_PROGRESS,
-  runParallelWithProgress,
+  finishSingleRequestProgress,
   type RequestProgress,
 } from "../utils/loadingProgress";
 
 export const LMP_DASHBOARD_PAGE_SIZE = 50;
 
-type UseLmpsDashboardParams = LmpsDashboardParams;
+type UseLmpsDashboardParams = Omit<LmpsDashboardParams, "page" | "page_size">;
 
 export function useLmpsDashboard(params: UseLmpsDashboardParams) {
   const [data, setData] = useState<LmpsDashboardResponse | null>(null);
@@ -62,62 +63,18 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
         if (hasPrevious) setRefreshing(true);
         else setLoading(true);
 
-        const baseParams = {
-          ...stableParams,
-          page,
-          page_size: LMP_DASHBOARD_PAGE_SIZE,
-        };
-
-        const results = await runParallelWithProgress(
-          [
-            (signal) =>
-              getLmpsDashboard(
-                { ...baseParams, scope: "aggregates" },
-                signal
-              ),
-            (signal) =>
-              getLmpsDashboard({ ...baseParams, scope: "items" }, signal),
-          ],
-          controller.signal,
-          setRequestProgress
+        beginSingleRequestProgress(setRequestProgress);
+        const result = await getLmpsDashboard(
+          {
+            ...stableParams,
+            page,
+            page_size: LMP_DASHBOARD_PAGE_SIZE,
+          },
+          controller.signal
         );
 
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        const aggregates =
-          results[0].status === "fulfilled"
-            ? (results[0].value as LmpsDashboardResponse)
-            : null;
-        const itemsPayload =
-          results[1].status === "fulfilled"
-            ? (results[1].value as LmpsDashboardResponse)
-            : null;
-
-        if (!aggregates && !itemsPayload) {
-          const reason =
-            results[0].status === "rejected"
-              ? results[0].reason
-              : results[1].status === "rejected"
-                ? results[1].reason
-                : new Error("Erro ao carregar LMPs");
-          throw reason;
-        }
-
-        setData({
-          items: itemsPayload?.items ?? [],
-          total: aggregates?.total ?? itemsPayload?.total ?? 0,
-          page: itemsPayload?.page ?? page,
-          page_size: itemsPayload?.page_size ?? LMP_DASHBOARD_PAGE_SIZE,
-          summary: aggregates?.summary ?? null,
-          charts: aggregates?.charts ?? null,
-        });
-
-        if (aggregates && !itemsPayload) {
-          setError("Indicadores carregados; falha ao listar registros.");
-        } else if (!aggregates && itemsPayload) {
-          setError("Registros carregados; falha nos indicadores agregados.");
+        if (!controller.signal.aborted) {
+          setData(result);
         }
       } catch (reason) {
         if (!controller.signal.aborted) {
@@ -125,6 +82,7 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
         }
       } finally {
         if (!controller.signal.aborted) {
+          finishSingleRequestProgress(setRequestProgress, controller.signal.aborted);
           setLoading(false);
           setRefreshing(false);
         }
