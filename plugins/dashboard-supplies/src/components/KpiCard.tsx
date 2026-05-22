@@ -5,6 +5,8 @@ type KpiCardProps = {
   value: string;
   contextLabel?: string;
   goalLabel?: string | null;
+  goalScopeLabel?: string | null;
+  goalStatusLabel?: string | null;
   subtitle?: string;
   icon: ReactNode;
   loading?: boolean;
@@ -15,11 +17,15 @@ export function KpiCard({
   value,
   contextLabel,
   goalLabel = null,
+  goalScopeLabel = null,
+  goalStatusLabel = null,
   subtitle,
   icon,
   loading = false,
 }: KpiCardProps) {
   const resolvedGoal = goalLabel ?? null;
+  const resolvedScope = goalScopeLabel?.trim() || null;
+  const resolvedStatus = goalStatusLabel?.trim() || null;
   const resolvedContext = subtitle ?? contextLabel ?? "";
 
   return (
@@ -31,6 +37,14 @@ export function KpiCard({
           {resolvedGoal ? (
             <p className="ds-kpi-goal">
               <span className="ds-kpi-goal-prefix">Meta</span> {resolvedGoal}
+              {resolvedScope ? (
+                <span className="ds-kpi-goal-scope"> · {resolvedScope}</span>
+              ) : null}
+            </p>
+          ) : null}
+          {resolvedStatus ? (
+            <p className="ds-kpi-goal-status" role="status">
+              {resolvedStatus}
             </p>
           ) : null}
           <span className="ds-kpi-context">{resolvedContext}</span>

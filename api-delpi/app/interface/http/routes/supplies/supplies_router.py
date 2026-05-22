@@ -124,6 +124,8 @@ def get_otd(
 def get_stock_value(
     branch: str | None = Query(default=None),
     location: str | None = Query(default=None),
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
     top_limit: int = Query(default=10, ge=1, le=50),
 ):
     try:
@@ -138,6 +140,8 @@ def get_stock_value(
         result = enrich_dashboard_metric(
             use_case.execute(request),
             source_key=goal_keys.SUPPLIES_STOCK_VALUE,
+            start_date=start_date,
+            end_date=end_date,
             branch=branch,
             summary_key="summary",
         )

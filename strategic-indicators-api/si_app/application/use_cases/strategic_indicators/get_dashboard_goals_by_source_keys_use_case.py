@@ -151,12 +151,19 @@ class GetDashboardGoalsBySourceKeysUseCase:
                 competence=period.competence,
             )
 
+        goal_scope_branch = (
+            normalize_goal_scope_branch(goal.get("goal_scope_branch"))
+            if goal
+            else ""
+        )
+
         return {
             "source_key": indicator.get("source_key"),
             "indicator_id": indicator.get("indicator_id"),
             "indicator_name": indicator.get("indicator_name"),
             "department_id": indicator.get("department_id"),
             "scope_type": indicator.get("scope_type"),
+            "goal_scope_branch": goal_scope_branch,
             "performance_direction": indicator.get("performance_direction"),
             "value_unit": indicator.get("value_unit"),
             "value_prefix": indicator.get("value_prefix"),

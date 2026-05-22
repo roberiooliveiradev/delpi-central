@@ -144,7 +144,9 @@ export function useSuppliesDashboard({
     periodParams.location,
     periodParams.start_date,
     stockParams.branch,
+    stockParams.end_date,
     stockParams.location,
+    stockParams.start_date,
     reloadKey,
   ]);
 

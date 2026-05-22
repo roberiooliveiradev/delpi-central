@@ -334,6 +334,25 @@
   color: color-mix(in srgb, var(--ds-accent) 72%, var(--ds-text-muted));
 }
 
+.dashboard-supplies .ds-kpi-goal-scope {
+  font-size: 0.62em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--ds-accent) 55%, var(--ds-text-muted));
+}
+
+.dashboard-supplies .ds-kpi-goal-status {
+  margin: 0 0 6px;
+  font-size: var(--ds-font-sm);
+  font-weight: 600;
+  line-height: 1.35;
+  color: #b45309;
+}
+
+:root[data-theme="dark"] .dashboard-supplies .ds-kpi-goal-status {
+  color: #fbbf24;
+}
+
 .dashboard-supplies .ds-kpi-context,
 .dashboard-supplies .ds-kpi-subtitle {
   display: block;

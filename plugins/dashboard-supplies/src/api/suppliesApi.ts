@@ -66,7 +66,10 @@ export function getOtd(params: SuppliesFilterParams, signal?: AbortSignal) {
 }
 
 export function getStockValue(
-  params: Pick<SuppliesFilterParams, "branch" | "location" | "top_limit">,
+  params: Pick<
+    SuppliesFilterParams,
+    "branch" | "location" | "top_limit" | "start_date" | "end_date"
+  >,
   signal?: AbortSignal
 ) {
   return fetchSuppliesData<StockValueData>(

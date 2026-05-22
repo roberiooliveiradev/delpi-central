@@ -192,7 +192,9 @@ export function OtdPage({ pathname }: OtdPageProps) {
         <KpiCard
           title="OTD"
           value={formatPercent(data?.summary.otd_percentage)}
-          {...buildKpiGoalPresentation(periodLabel, data?.summary, formatPercent)}
+          {...buildKpiGoalPresentation(periodLabel, data?.summary, formatPercent, {
+            realizedValue: data?.summary.otd_percentage,
+          })}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !data}
         />

@@ -44,6 +44,8 @@ export function useSuppliesFilters() {
   };
 
   const stockParams: SuppliesFilterParams = {
+    start_date: inputDateToApi(dateStart),
+    end_date: inputDateToApi(dateEnd),
     branch: branch || undefined,
     location: location || undefined,
   };
