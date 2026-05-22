@@ -49,7 +49,11 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
         const results = await runParallelWithProgress(
           [
             (signal) => getTransformaSummary(apiParams, signal),
-            (signal) => getLmpsDashboard(lmpParams, signal),
+            (signal) =>
+              getLmpsDashboard(
+                { ...lmpParams, scope: "aggregates", page: 1, page_size: 1 },
+                signal
+              ),
           ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
           controller.signal,
           setRequestProgress
@@ -68,7 +72,8 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
         }
 
         if (results[1].status === "fulfilled") {
-          setLmpSummary((results[1].value as LmpsDashboardResponse).summary);
+          const lmpPayload = results[1].value as LmpsDashboardResponse;
+          setLmpSummary(lmpPayload.summary ?? null);
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.lmp =

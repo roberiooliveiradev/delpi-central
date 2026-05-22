@@ -442,6 +442,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             SELECT
                 C.AD1_FILIAL AS branch,
                 C.AD1_NROPOR AS sale_number,
+                C.LISTING_KIND AS listing_kind,
                 C.LMP_START_DATE AS start_date,
                 C.LMP_END_DATE AS end_date,
                 H.ENGINEERING_STATUS AS engineering_status,
@@ -455,6 +456,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             GROUP BY
                 C.AD1_FILIAL,
                 C.AD1_NROPOR,
+                C.LISTING_KIND,
                 C.LMP_START_DATE,
                 C.LMP_END_DATE,
                 H.ENGINEERING_STATUS,
@@ -1808,9 +1810,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
 
     def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:
+        listing_filter = self._resolve_listing_type_filter(request, lmp_only=False)
+        lmp_only = listing_filter == LISTING_KIND_LMP
         sql, params = self._sql_lmp_summary_rows_query(
             request,
             include_qtd_pi=self._resolve_include_qtd_pi(request),
+            lmp_only=lmp_only,
         )
 
         with self as repo:
@@ -1820,6 +1825,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             {
                 "branch": row.get("branch"),
                 "sale_number": row.get("sale_number"),
+                "listing_kind": row.get("listing_kind"),
                 "start_date": row.get("start_date"),
                 "end_date": row.get("end_date"),
                 "engineering_status": row.get("engineering_status"),
