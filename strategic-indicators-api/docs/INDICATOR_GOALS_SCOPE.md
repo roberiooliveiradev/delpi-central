@@ -15,6 +15,8 @@ Indicadores separados por unidade (ex.: ROL Matriz / ROL Filial no Comercial) co
 
 **Migration V021 (Produção):** metas consolidadas ativas de indicadores `per_unit` do departamento Produção são desativadas e recriadas em duplicata para `goal_scope_branch` `01` e `02` (mesmo `goal_label`, valor e curva mensal). Ajuste valores por filial depois no admin, se necessário.
 
+**Migration V023 (Suprimentos):** mesma lógica para metas 2026 dos indicadores **ativos** de Suprimentos (`supplies-cpv`, `supplies-otd`, `supplies-stock-turnover`, `supplies-stock-value`). Indicador inativo (`supplies-negotiation-savings`) não entra. Requer V022 (`average_of_units`).
+
 Aplica-se a **todos os departamentos** (Comercial, Financeiro, Produção, etc.), não só ao Comercial.
 
 ## Tabela `indicator_goals`
@@ -41,7 +43,7 @@ Regras de implementação (`goal_scope.py`, `StrategicIndicatorsCalculator`):
 
 ### Sem `branch` (visão Consolidado)
 
-- Departamentos `average_of_units` (RH, Qualidade):
+- Departamentos `average_of_units` (RH, Qualidade, Produção, Suprimentos):
   - **Cada indicador:** nota = média das notas das filiais 01 e 02 (realizado da unidade × meta da unidade)
   - **IDD do departamento:** média aritmética do IDD calculado separadamente para filial 01 e filial 02
 - Demais departamentos (`aggregation_mode = consolidated`):
