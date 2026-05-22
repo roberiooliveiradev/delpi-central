@@ -525,7 +525,11 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
 
               {goals.error ? (
                 <InfoState
-                  title="Falha ao carregar metas"
+                  title={
+                    goals.loading || goals.items.length === 0
+                      ? "Falha ao carregar metas"
+                      : "Erro ao salvar ou atualizar meta"
+                  }
                   description={goals.error}
                   actionLabel="Recarregar"
                   onAction={() => void goals.reload()}

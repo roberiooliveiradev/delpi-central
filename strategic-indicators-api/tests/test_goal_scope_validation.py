@@ -28,9 +28,11 @@ def test_validate_goal_scope_branch_filial_01():
     )
 
 
-def test_validate_goal_scope_branch_rejects_per_unit_with_filial():
-    with pytest.raises(StrategicIndicatorsIndicatorGoalValidationError):
+def test_validate_goal_scope_branch_allows_per_unit_with_filial():
+    assert (
         validate_goal_scope_branch(
             goal_scope_branch="02",
             scope_type="per_unit",
         )
+        == "02"
+    )

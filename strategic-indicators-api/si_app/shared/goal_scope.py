@@ -25,8 +25,13 @@ def format_branch_scope_label(branch_code: str) -> str:
 
 
 def indicator_allows_branch_goals(scope_type: str | None) -> bool:
-    """Indicadores consolidated podem ter metas por filial; per_unit usa só consolidado."""
-    return (scope_type or "").strip() == "consolidated"
+    """
+    Metas por filial (01/02) para indicadores consolidated e per_unit.
+
+    per_unit mede realizado por unidade; metas distintas por filial usam
+    goal_scope_branch, sem precisar duplicar o indicador (ex.: ROL Matriz/Filial).
+    """
+    return (scope_type or "").strip() in {"consolidated", "per_unit"}
 
 
 def supports_branch_goals_for_scope_type(scope_type: str | None) -> bool:

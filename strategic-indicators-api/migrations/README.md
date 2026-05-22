@@ -31,6 +31,7 @@ O diretório `api-delpi/migrations/plugins/strategic-indicators/` é legado — 
 | V018 | quality_branch_goals_2026 | Metas Qualidade 01/02; inativa metas consolidadas legadas |
 | V019 | hr_branch_goals_and_catalog | Catálogo RH (6 indicadores), metas 2026 por filial, PDI contagem |
 | V020 | hr_quality_average_of_units | `aggregation_mode = average_of_units` para RH e Qualidade |
+| V021 | per_unit_branch_goals | `supports_branch_goals` em `per_unit`; duplica metas consolidadas de Produção para filiais 01 e 02 |
 
 ## Comandos
 

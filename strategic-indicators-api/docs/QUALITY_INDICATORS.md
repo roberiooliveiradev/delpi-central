@@ -32,3 +32,5 @@ Na visão **Consolidado** (`aggregation_mode = average_of_units`):
 docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py up
 docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py
 ```
+
+Produção (metas por filial 01/02 em indicadores `per_unit`): ver migration `V021__per_unit_branch_goals.sql` e [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
