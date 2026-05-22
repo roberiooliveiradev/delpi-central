@@ -16,6 +16,9 @@ def _sample_goal() -> dict:
         "goal_label": "≥ 95%",
         "comparable_goal": 95.0,
         "has_goal": True,
+        "goal_scope_branch": "",
+        "scope_type": "consolidated",
+        "performance_direction": "higher_is_better",
     }
 
 
@@ -36,6 +39,8 @@ def test_enrich_dashboard_metric_attaches_goal_at_root() -> None:
     assert result["goal_label"] == "≥ 95%"
     assert result["comparable_goal"] == 95.0
     assert result["has_goal"] is True
+    assert result["goal_scope_branch"] == ""
+    assert result["performance_direction"] == "higher_is_better"
     assert result["otd_percentage"] == 88.0
 
 

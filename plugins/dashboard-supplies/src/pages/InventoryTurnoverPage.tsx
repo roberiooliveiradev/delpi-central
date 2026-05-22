@@ -177,6 +177,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
             `${branchLabel} · ${locationLabel} · ${periodLabel}`,
             data?.summary,
             (v) => formatDecimal(v, 2),
+            { realizedValue: data?.summary.inventory_turnover_months },
           )}
           icon={<Package size={22} />}
           loading={isBusy && !data}

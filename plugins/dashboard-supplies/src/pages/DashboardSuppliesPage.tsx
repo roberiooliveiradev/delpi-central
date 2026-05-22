@@ -124,6 +124,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             `ROL ${formatCurrency(cpv?.summary.rol_with_ipi)}`,
             cpv?.summary,
             formatPercent,
+            { realizedValue: cpv?.summary.cpv_percentage },
           )}
           icon={<Percent size={22} />}
           loading={isBusy && !cpv}
@@ -135,6 +136,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             `${formatInteger(otd?.summary.on_time_lines)} / ${formatInteger(otd?.summary.total_lines)} linhas`,
             otd?.summary,
             formatPercent,
+            { realizedValue: otd?.summary.otd_percentage },
           )}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !otd}
@@ -145,6 +147,8 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel}`,
             stockValue?.summary,
+            undefined,
+            { realizedValue: stockValue?.summary.total_stock_value },
           )}
           icon={<Warehouse size={22} />}
           loading={isBusy && !stockValue}
@@ -152,8 +156,11 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         <KpiCard
           title="Giro IDD (meses)"
           value={formatDecimal(inventoryTurnover?.summary.inventory_turnover_months, 2)}
-          {...buildKpiGoalPresentation(periodLabel, inventoryTurnover?.summary, (v) =>
-            formatDecimal(v, 2),
+          {...buildKpiGoalPresentation(
+            periodLabel,
+            inventoryTurnover?.summary,
+            (v) => formatDecimal(v, 2),
+            { realizedValue: inventoryTurnover?.summary.inventory_turnover_months },
           )}
           icon={<Package size={22} />}
           loading={isBusy && !inventoryTurnover}

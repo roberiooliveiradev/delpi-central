@@ -160,6 +160,8 @@ export function StockPage({ pathname }: StockPageProps) {
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel}`,
             data?.summary,
+            undefined,
+            { realizedValue: data?.summary.total_stock_value },
           )}
           icon={<Warehouse size={22} />}
           loading={isBusy && !data}

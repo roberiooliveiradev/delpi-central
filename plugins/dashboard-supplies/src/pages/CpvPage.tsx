@@ -170,6 +170,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
             `ROL ${formatCurrency(data?.summary.rol_with_ipi)}`,
             data?.summary,
             formatPercent,
+            { realizedValue: data?.summary.cpv_percentage },
           )}
           icon={<Percent size={22} />}
           loading={isBusy && !data}

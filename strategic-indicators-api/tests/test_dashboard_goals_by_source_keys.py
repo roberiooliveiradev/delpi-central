@@ -39,6 +39,7 @@ class _FakeGoalsRepository:
                 "goal_value": 10.0,
                 "goal_periodicity": "monthly",
                 "goal_mode": "standard",
+                "goal_scope_branch": "",
                 "monthly_targets": [],
             }
         }
@@ -65,3 +66,4 @@ def test_dashboard_goals_returns_comparable_goal_for_source_key() -> None:
     assert items[0]["goal_label"] == "10%"
     assert items[0]["comparable_goal"] == 10.0
     assert items[0]["has_goal"] is True
+    assert items[0]["goal_scope_branch"] == ""
