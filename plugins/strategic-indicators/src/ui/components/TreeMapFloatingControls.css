@@ -1,16 +1,16 @@
 .si-tree-map-floating {
   display: flex;
   width: 100%;
-  max-width: min(1280px, calc(100vw - 48px));
+  max-width: calc(100vw - 48px);
   pointer-events: none;
 }
 
 .si-tree-map-floating__panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
   width: 100%;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 18px;
   background: color-mix(in srgb, var(--si-card-bg) 94%, transparent);
   border: 1px solid var(--si-card-border);
@@ -57,13 +57,16 @@
   flex-wrap: nowrap;
   align-items: flex-end;
   justify-content: flex-start;
-  gap: 10px 12px;
+  gap: 8px 10px;
+  width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: thin;
 }
 
 .si-tree-map-floating__toggle {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
@@ -82,19 +85,20 @@
 
 .si-tree-map-floating__filters.si-reference-filters {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   flex-wrap: nowrap;
   align-items: flex-end;
-  gap: 10px 12px;
+  gap: 8px 10px;
   min-width: 0;
   max-width: none;
   grid-template-columns: none;
 }
 
 .si-tree-map-floating__filters .si-reference-filters__field {
-  flex: 1 1 0;
-  min-width: 148px;
-  max-width: 200px;
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 128px;
+  max-width: 172px;
 }
 
 .si-tree-map-floating__filters .si-reference-filters__input {
@@ -113,19 +117,22 @@
 
 .si-tree-map-floating__view-controls {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-left: auto;
-  padding: 5px;
+  padding: 4px 5px;
   border-radius: 16px;
   background: color-mix(in srgb, var(--si-card-bg) 88%, var(--si-text-muted));
   border: 1px solid var(--si-card-border);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface, #ffffff) 40%, transparent);
+  white-space: nowrap;
 }
 
 .si-tree-map-floating__tree-actions {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
 }
 
@@ -141,7 +148,7 @@
 .si-tree-view-toggle__btn {
   border: none;
   border-radius: 10px;
-  padding: 8px 14px;
+  padding: 7px 10px;
   background: transparent;
   color: var(--si-text-muted);
   font-size: 12px;
@@ -167,6 +174,7 @@
 
 .si-tree-map-floating__nav {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
 }
 
@@ -214,26 +222,6 @@
   letter-spacing: 0.02em;
 }
 
-@media (max-width: 1100px) {
-  .si-tree-map-floating {
-    max-width: calc(100vw - 32px);
-  }
-
-  .si-tree-map-floating:not(.si-tree-map-floating--collapsed) .si-tree-map-floating__toolbar {
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .si-tree-map-floating__filters.si-reference-filters {
-    flex-basis: 100%;
-    flex-wrap: wrap;
-  }
-
-  .si-tree-map-floating:not(.si-tree-map-floating--collapsed) .si-tree-map-floating__view-controls {
-    margin-left: auto;
-  }
-}
-
 @media (max-width: 900px) {
   .si-tree-map-floating {
     max-width: calc(100vw - 20px);
@@ -259,18 +247,9 @@
     max-width: calc(100vw - 16px);
   }
 
-  .si-tree-map-floating:not(.si-tree-map-floating--collapsed) .si-tree-map-floating__toolbar {
-    flex-wrap: wrap;
-    align-items: stretch;
-  }
-
-  .si-tree-map-floating__filters.si-reference-filters {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .si-tree-map-floating__filters .si-reference-filters__field {
-    max-width: none;
+    min-width: 112px;
+    max-width: 148px;
   }
 
   .si-tree-map-floating__panel--collapsed .si-tree-map-floating__toolbar {
