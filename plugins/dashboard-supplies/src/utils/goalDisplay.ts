@@ -1,5 +1,13 @@
 export type PerformanceDirection = "higher_is_better" | "lower_is_better";
 
+export type GoalPerformanceTone = "success" | "warning";
+
+export type GoalPerformanceBadge = {
+  tone: GoalPerformanceTone;
+  statusLabel: string;
+  directionLabel: string;
+};
+
 export type DashboardGoalFields = {
   goal_label?: string | null;
   comparable_goal?: number | null;
@@ -15,7 +23,7 @@ export type DashboardGoalFields = {
 export type KpiGoalPresentation = {
   goalLabel: string | null;
   goalScopeLabel: string | null;
-  goalStatusLabel: string | null;
+  goalPerformanceBadge: GoalPerformanceBadge | null;
   contextLabel: string;
 };
 
@@ -64,10 +72,16 @@ export function isGoalOnTrack(
   return realized >= comparableGoal;
 }
 
-export function resolveGoalPerformanceStatusLabel(
+export function resolveOffTrackStatusLabel(
+  direction?: PerformanceDirection | string | null,
+): string {
+  return direction === "lower_is_better" ? "Acima da meta" : "Abaixo da meta";
+}
+
+export function resolveGoalPerformanceBadge(
   realized: number | null | undefined,
   goal?: DashboardGoalFields | null,
-): string | null {
+): GoalPerformanceBadge | null {
   if (realized == null || !goal) {
     return null;
   }
@@ -78,18 +92,18 @@ export function resolveGoalPerformanceStatusLabel(
   }
 
   const direction = goal.performance_direction ?? "higher_is_better";
-  if (isGoalOnTrack(realized, comparable, direction)) {
-    return null;
-  }
-
   const directionLabel = formatPerformanceDirectionLabel(direction);
   if (!directionLabel) {
     return null;
   }
 
-  const statusLabel =
-    direction === "lower_is_better" ? "Acima da meta" : "Abaixo da meta";
-  return `${statusLabel} · ${directionLabel}`;
+  const onTrack = isGoalOnTrack(realized, comparable, direction);
+
+  return {
+    tone: onTrack ? "success" : "warning",
+    statusLabel: onTrack ? "Dentro da meta" : resolveOffTrackStatusLabel(direction),
+    directionLabel,
+  };
 }
 
 export function resolveGoalLabel(
@@ -131,12 +145,12 @@ export function buildKpiGoalPresentation(
 
   return {
     goalLabel,
-    goalScopeLabel: showGoal && goalLabel ? formatGoalScopeLabel(
-      goal?.goal_scope_branch,
-      goal?.scope_type,
-    ) : null,
-    goalStatusLabel: showGoal
-      ? resolveGoalPerformanceStatusLabel(options?.realizedValue, goal)
+    goalScopeLabel:
+      showGoal && goalLabel
+        ? formatGoalScopeLabel(goal?.goal_scope_branch, goal?.scope_type)
+        : null,
+    goalPerformanceBadge: showGoal
+      ? resolveGoalPerformanceBadge(options?.realizedValue, goal)
       : null,
     contextLabel,
   };

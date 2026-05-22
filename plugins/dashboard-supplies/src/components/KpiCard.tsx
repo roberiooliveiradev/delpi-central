@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
 
+import type { GoalPerformanceBadge } from "../utils/goalDisplay";
+
 type KpiCardProps = {
   title: string;
   value: string;
   contextLabel?: string;
   goalLabel?: string | null;
   goalScopeLabel?: string | null;
-  goalStatusLabel?: string | null;
+  goalPerformanceBadge?: GoalPerformanceBadge | null;
   subtitle?: string;
   icon: ReactNode;
   loading?: boolean;
@@ -18,14 +20,13 @@ export function KpiCard({
   contextLabel,
   goalLabel = null,
   goalScopeLabel = null,
-  goalStatusLabel = null,
+  goalPerformanceBadge = null,
   subtitle,
   icon,
   loading = false,
 }: KpiCardProps) {
   const resolvedGoal = goalLabel ?? null;
   const resolvedScope = goalScopeLabel?.trim() || null;
-  const resolvedStatus = goalStatusLabel?.trim() || null;
   const resolvedContext = subtitle ?? contextLabel ?? "";
 
   return (
@@ -42,10 +43,17 @@ export function KpiCard({
               ) : null}
             </p>
           ) : null}
-          {resolvedStatus ? (
-            <p className="ds-kpi-goal-status" role="status">
-              {resolvedStatus}
-            </p>
+          {goalPerformanceBadge ? (
+            <div className="ds-kpi-badges" role="status" aria-label="Desempenho em relação à meta">
+              <span
+                className={`ds-kpi-badge ds-kpi-badge--${goalPerformanceBadge.tone}`}
+              >
+                {goalPerformanceBadge.statusLabel}
+              </span>
+              <span className="ds-kpi-badge ds-kpi-badge--direction">
+                {goalPerformanceBadge.directionLabel}
+              </span>
+            </div>
           ) : null}
           <span className="ds-kpi-context">{resolvedContext}</span>
         </div>
