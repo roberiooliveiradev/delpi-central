@@ -440,6 +440,7 @@ class GetStrategicIndicatorsPresentationUseCase:
             "realized": self._calculator.build_realized_payload(
                 unit_values=current.unit_values,
                 value=current.value,
+                department_id=current.department_id,
             ),
             "has_value": self._calculator.indicator_has_value(current.value),
             "classification": current.classification,
@@ -448,6 +449,7 @@ class GetStrategicIndicatorsPresentationUseCase:
             "gaps": self._calculator.build_gaps_payload(
                 unit_gaps=current.unit_gaps,
                 gap=current.gap,
+                department_id=current.department_id,
             ),
             "trend": trend,
             "value_unit": getattr(current, "value_unit", None),
@@ -568,12 +570,14 @@ class GetStrategicIndicatorsPresentationUseCase:
                     "realized": self._calculator.build_realized_payload(
                         unit_values=item.unit_values,
                         value=item.value,
+                        department_id=item.department_id,
                     ),
                     "score": item.score,
                     "gap": item.gap,
                     "gaps": self._calculator.build_gaps_payload(
                         unit_gaps=item.unit_gaps,
                         gap=item.gap,
+                        department_id=item.department_id,
                     ),
                     "has_value": self._calculator.indicator_has_value(item.value),
                     "trend": item.trend,

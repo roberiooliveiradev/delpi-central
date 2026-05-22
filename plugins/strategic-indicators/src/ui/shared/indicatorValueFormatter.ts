@@ -203,6 +203,28 @@ function listBranchScopeKeys(values: Record<string, number | null>): string[] {
     .sort();
 }
 
+/** Deptos consolidados (Engenharia, etc.): mesmo valor em filial e consolidado → só rótulo Consolidado. */
+function consolidatedOnlyDisplayValues(
+  values: Record<string, number | null> | undefined,
+): Record<string, number | null> | null {
+  if (!values || values.consolidated === null || values.consolidated === undefined) {
+    return null;
+  }
+
+  const branchKeys = listBranchScopeKeys(values);
+  if (!branchKeys.length) {
+    return null;
+  }
+
+  const consolidated = values.consolidated;
+  const allMatch = branchKeys.every((code) => values[code] === consolidated);
+  if (!allMatch) {
+    return null;
+  }
+
+  return { consolidated };
+}
+
 export function hasMultiBranchValues(
   values: Record<string, number | null> | undefined,
 ): boolean {
@@ -253,6 +275,15 @@ export function formatScopeAwareMetric(
 ): string {
   if (!values || !Object.keys(values).length) {
     return options.fallback ?? MISSING_VALUE_LABEL;
+  }
+
+  const consolidatedOnly = consolidatedOnlyDisplayValues(values);
+  if (consolidatedOnly) {
+    return `${getSemanticScopeLabel("consolidated", options)}: ${formatIndicatorValue(
+      consolidatedOnly.consolidated,
+      format,
+      options,
+    )}`;
   }
 
   if (hasBranchScopeValues(values)) {

@@ -41,13 +41,13 @@ def build_unit_values_for_consolidated_department(
     view_branch: str | None = None,
 ) -> dict[str, float | None]:
     """
-    Departamentos com IDD consolidado: visão filial repete o mesmo realizado.
+    Departamentos com IDD consolidado: medição única (chave consolidated).
+
+    A visão filial no painel repete o mesmo valor via calculador/API; não
+    duplicar 01/02 em unit_values para evitar rótulo "02:" no realizado.
     """
-    unit_values: dict[str, float | None] = {"consolidated": consolidated_value}
-    effective_branch = effective_query_branch(view_branch)
-    if effective_branch is not None:
-        unit_values[effective_branch] = consolidated_value
-    return unit_values
+    _ = view_branch
+    return {"consolidated": consolidated_value}
 
 
 def consolidated_measurement_value(

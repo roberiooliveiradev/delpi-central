@@ -11,13 +11,22 @@ from si_app.domain.services.strategic_indicators_calculator import (
 from si_app.shared.branch_filter import build_unit_values_for_consolidated_department
 
 
-def test_build_unit_values_repeats_consolidated_on_branch_view() -> None:
+def test_build_unit_values_keeps_consolidated_only_for_display() -> None:
     unit_values = build_unit_values_for_consolidated_department(
         consolidated_value=15_000.0,
         view_branch="02",
     )
-    assert unit_values["consolidated"] == 15_000.0
-    assert unit_values["02"] == 15_000.0
+    assert unit_values == {"consolidated": 15_000.0}
+
+
+def test_build_realized_payload_strips_branch_keys_for_engineering() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    realized = calculator.build_realized_payload(
+        unit_values={"consolidated": 100.0, "02": 100.0},
+        value=100.0,
+        department_id="engineering",
+    )
+    assert realized == {"consolidated": 100.0}
 
 
 def test_engineering_branch_view_uses_full_consolidated_realized() -> None:

@@ -12,7 +12,7 @@ from si_app.application.use_cases.strategic_indicators.period_resolution import 
 from si_app.domain.ports.strategic_indicators.financial_indicators_snapshot_port import (
     StrategicIndicatorsFinancialIndicatorsSnapshotPort,
 )
-from si_app.shared.branch_filter import effective_query_branch
+from si_app.shared.branch_filter import build_unit_values_for_consolidated_department
 
 
 class FinancialIndicatorsSnapshotProvider(
@@ -36,7 +36,7 @@ class FinancialIndicatorsSnapshotProvider(
             snapshot = self._financial_metrics_snapshot_service.get_snapshot(
                 start_date=start_date,
                 end_date=end_date,
-                branch=branch,
+                branch=None,
             )
         except Exception as exc:
             scope = branch or "consolidated"
@@ -65,7 +65,7 @@ class FinancialIndicatorsSnapshotProvider(
         try:
             snapshots = self._financial_metrics_snapshot_service.get_snapshot_series(
                 periods=periods,
-                branch=branch,
+                branch=None,
             )
         except Exception as exc:
             scope = branch or "consolidated"
@@ -104,79 +104,73 @@ class FinancialIndicatorsSnapshotProvider(
         snapshot,
         branch: str | None,
     ) -> dict:
-        ebitda_unit_values = {
-            item.branch: item.ebitda_over_rol_pct for item in snapshot.branches
-        }
-        fixed_cost_unit_values = {
-            item.branch: item.fixed_cost_over_rol_pct for item in snapshot.branches
-        }
-        pmr_unit_values = {
-            item.branch: item.pmr_days for item in snapshot.branches
-        }
+        ebitda_value = self._consolidated_metric(
+            snapshot,
+            getter=lambda item: item.ebitda_over_rol_pct,
+        )
+        fixed_cost_value = self._consolidated_metric(
+            snapshot,
+            getter=lambda item: item.fixed_cost_over_rol_pct,
+        )
+        pmr_value = self._consolidated_metric(
+            snapshot,
+            getter=lambda item: item.pmr_days,
+        )
 
         return {
             "items": [
                 {
                     "department_id": "financial",
                     "indicator_id": "financial-ebitda",
-                    "value": self._resolve_indicator_value(
-                        unit_values=ebitda_unit_values,
-                        branch=branch,
-                    ),
+                    "value": ebitda_value,
                     "source": "financial_ebitda",
-                    "unit_values": ebitda_unit_values,
+                    "unit_values": build_unit_values_for_consolidated_department(
+                        consolidated_value=ebitda_value,
+                        view_branch=branch,
+                    ),
                 },
                 {
                     "department_id": "financial",
                     "indicator_id": "financial-fixed-cost",
-                    "value": self._resolve_indicator_value(
-                        unit_values=fixed_cost_unit_values,
-                        branch=branch,
-                    ),
+                    "value": fixed_cost_value,
                     "source": "financial_fixed_cost",
-                    "unit_values": fixed_cost_unit_values,
+                    "unit_values": build_unit_values_for_consolidated_department(
+                        consolidated_value=fixed_cost_value,
+                        view_branch=branch,
+                    ),
                 },
                 {
                     "department_id": "financial",
                     "indicator_id": "financial-pmr",
-                    "value": self._resolve_indicator_value(
-                        unit_values=pmr_unit_values,
-                        branch=branch,
-                    ),
+                    "value": pmr_value,
                     "source": "financial_pmr",
-                    "unit_values": pmr_unit_values,
+                    "unit_values": build_unit_values_for_consolidated_department(
+                        consolidated_value=pmr_value,
+                        view_branch=branch,
+                    ),
                 },
             ],
             "errors": [],
         }
 
-    def _resolve_indicator_value(
-        self,
-        *,
-        unit_values: dict[str, float | None],
-        branch: str | None,
-    ) -> float | None:
-        view_branch = effective_query_branch(branch)
-        if view_branch:
-            consolidated_value = unit_values.get(CONSOLIDATED_BRANCH_KEY)
-            if consolidated_value is None:
-                valid = [
-                    float(value) for value in unit_values.values() if value is not None
-                ]
-                consolidated_value = (
-                    sum(valid) / len(valid) if valid else None
-                )
-            return (
-                round(float(consolidated_value), 2)
-                if consolidated_value is not None
-                else None
-            )
+    def _consolidated_metric(self, snapshot, *, getter) -> float | None:
+        consolidated_branch = next(
+            (
+                item
+                for item in snapshot.branches
+                if item.branch == CONSOLIDATED_BRANCH_KEY
+            ),
+            None,
+        )
+        if consolidated_branch is not None:
+            raw = getter(consolidated_branch)
+            return round(float(raw), 2) if raw is not None else None
 
-        consolidated_value = unit_values.get(CONSOLIDATED_BRANCH_KEY)
-        if consolidated_value is not None:
-            return round(float(consolidated_value), 2)
-
-        valid = [float(value) for value in unit_values.values() if value is not None]
+        valid = [
+            float(getter(item))
+            for item in snapshot.branches
+            if getter(item) is not None
+        ]
         if not valid:
             return None
 
