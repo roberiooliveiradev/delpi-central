@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from si_app.application.dto.strategic_indicators.catalog_models import (
+    StrategicDepartmentCalculatedValue,
     StrategicDepartmentCatalogItem,
+    StrategicIndicatorCalculatedValue,
     StrategicIndicatorCatalogItem,
     StrategicIndicatorMeasuredValue,
 )
@@ -132,3 +134,107 @@ def test_production_null_measurement_is_not_scored_as_zero() -> None:
     assert calculated[0].value is None
     assert calculated[0].score is None
     assert calculated[0].classification == calculator.MISSING_VALUE_CLASSIFICATION
+
+
+def test_reconcile_department_score_from_stale_zero_with_scored_indicators() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    indicators = [
+        StrategicIndicatorCalculatedValue(
+            indicator_id="commercial-rol-matrix",
+            department_id="commercial",
+            indicator_name="ROL Matriz",
+            weight_pct=25,
+            goal_label="Meta",
+            goal_value=748_000.0,
+            goal_periodicity="monthly",
+            goal_mode="monthly_curve",
+            value=656_697.11,
+            score=8.78,
+            gap=91_302.89,
+            classification="Alto Desempenho",
+            unit_values={"matrix": 656_697.11},
+        ),
+        StrategicIndicatorCalculatedValue(
+            indicator_id="commercial-closing-rate",
+            department_id="commercial",
+            indicator_name="Taxa de Fechamento",
+            weight_pct=15,
+            goal_label="10%",
+            goal_value=10.0,
+            goal_periodicity="monthly",
+            value=7.55,
+            score=7.55,
+            gap=2.45,
+            classification="Satisfatório com Alertas",
+            unit_values={"consolidated": 7.55},
+        ),
+    ]
+    stale_department = StrategicDepartmentCalculatedValue(
+        department_id="commercial",
+        department_name="Comercial",
+        short_name="COM",
+        weight_pct=17,
+        strategic_summary="",
+        aggregation_mode="consolidated",
+        score=0.0,
+        contribution=0.0,
+        classification="Crítico",
+        trend="stable",
+        indicators=indicators,
+    )
+
+    reconciled = calculator.reconcile_period_snapshot_departments(
+        calculated_departments=[stale_department],
+        calculated_indicators=indicators,
+    )
+
+    assert len(reconciled) == 1
+    assert reconciled[0].score > 0
+    assert reconciled[0].contribution > 0
+    assert reconciled[0].classification != "Crítico"
+
+
+def test_reconcile_uses_flat_indicators_when_nested_scores_are_missing() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    scored = StrategicIndicatorCalculatedValue(
+        indicator_id="commercial-rol-matrix",
+        department_id="commercial",
+        indicator_name="ROL Matriz",
+        weight_pct=25,
+        goal_label="Meta",
+        goal_value=748_000.0,
+        goal_periodicity="monthly",
+        value=656_697.11,
+        score=8.78,
+    )
+    stale_nested = StrategicIndicatorCalculatedValue(
+        indicator_id="commercial-rol-matrix",
+        department_id="commercial",
+        indicator_name="ROL Matriz",
+        weight_pct=25,
+        goal_label="Meta",
+        goal_value=748_000.0,
+        goal_periodicity="monthly",
+        value=656_697.11,
+        score=None,
+    )
+    stale_department = StrategicDepartmentCalculatedValue(
+        department_id="commercial",
+        department_name="Comercial",
+        short_name="COM",
+        weight_pct=17,
+        strategic_summary="",
+        aggregation_mode="consolidated",
+        score=0.0,
+        contribution=0.0,
+        classification="Crítico",
+        trend="stable",
+        indicators=[stale_nested],
+    )
+
+    reconciled = calculator.reconcile_period_snapshot_departments(
+        calculated_departments=[stale_department],
+        calculated_indicators=[scored],
+    )
+
+    assert reconciled[0].score == 8.78

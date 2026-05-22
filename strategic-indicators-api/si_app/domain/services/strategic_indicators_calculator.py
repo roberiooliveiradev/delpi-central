@@ -338,17 +338,24 @@ class StrategicIndicatorsCalculator:
         end_date: str | None = None,
         competence: str | None = None,
         scope_branch: str | None = None,
+        precalculated_indicators: list[StrategicIndicatorCalculatedValue] | None = None,
     ) -> list[StrategicDepartmentCalculatedValue]:
         indicators_by_department: dict[str, list[StrategicIndicatorCalculatedValue]] = {}
 
-        for item in self.calculate_indicators(
-            indicators_catalog=indicators_catalog,
-            measurements=measurements,
-            start_date=start_date,
-            end_date=end_date,
-            competence=competence,
-            scope_branch=scope_branch,
-        ):
+        calculated_indicators = (
+            precalculated_indicators
+            if precalculated_indicators is not None
+            else self.calculate_indicators(
+                indicators_catalog=indicators_catalog,
+                measurements=measurements,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+                scope_branch=scope_branch,
+            )
+        )
+
+        for item in calculated_indicators:
             indicators_by_department.setdefault(item.department_id, []).append(item)
 
         calculated_departments: list[StrategicDepartmentCalculatedValue] = []
@@ -796,6 +803,101 @@ class StrategicIndicatorsCalculator:
             float(item.score) * item.weight_pct for item in scored_indicators
         )
         return round(weighted_sum / total_weight, 2)
+
+    def _department_indicators_for_score(
+        self,
+        department: StrategicDepartmentCalculatedValue,
+        *,
+        indicators_by_department: dict[str, list[StrategicIndicatorCalculatedValue]]
+        | None = None,
+    ) -> list[StrategicIndicatorCalculatedValue]:
+        nested = list(department.indicators)
+        flat = (
+            list(indicators_by_department.get(department.department_id, []))
+            if indicators_by_department
+            else []
+        )
+
+        if not nested:
+            return flat
+
+        if not flat:
+            return nested
+
+        return self._merge_indicator_scores(nested, flat)
+
+    def _merge_indicator_scores(
+        self,
+        primary: list[StrategicIndicatorCalculatedValue],
+        secondary: list[StrategicIndicatorCalculatedValue],
+    ) -> list[StrategicIndicatorCalculatedValue]:
+        merged: dict[str, StrategicIndicatorCalculatedValue] = {}
+
+        for item in primary + secondary:
+            existing = merged.get(item.indicator_id)
+            if existing is None:
+                merged[item.indicator_id] = item
+                continue
+
+            if existing.score is None and item.score is not None:
+                merged[item.indicator_id] = item
+
+        return list(merged.values())
+
+    def _refresh_department_score(
+        self,
+        department: StrategicDepartmentCalculatedValue,
+        *,
+        indicators: list[StrategicIndicatorCalculatedValue],
+    ) -> StrategicDepartmentCalculatedValue:
+        department_score = self._calculate_department_score(indicators)
+
+        return StrategicDepartmentCalculatedValue(
+            department_id=department.department_id,
+            department_name=department.department_name,
+            short_name=department.short_name,
+            weight_pct=department.weight_pct,
+            strategic_summary=department.strategic_summary,
+            aggregation_mode=department.aggregation_mode,
+            score=department_score,
+            contribution=round((department_score * department.weight_pct) / 100.0, 2),
+            classification=self.classify_score(department_score),
+            trend=department.trend,
+            indicators=indicators,
+        )
+
+    def reconcile_period_snapshot_departments(
+        self,
+        *,
+        calculated_departments: list[StrategicDepartmentCalculatedValue],
+        calculated_indicators: list[StrategicIndicatorCalculatedValue] | None = None,
+    ) -> list[StrategicDepartmentCalculatedValue]:
+        """
+        Recalcula IDD/contribuição do departamento a partir dos indicadores pontuados.
+
+        Corrige snapshots materializados em que department.score ficou 0 enquanto os
+        indicadores já tinham nota (ex.: Comercial/Produção após correção de metas).
+        """
+        indicators_by_department: dict[str, list[StrategicIndicatorCalculatedValue]] = {}
+        for item in calculated_indicators or []:
+            indicators_by_department.setdefault(item.department_id, []).append(item)
+
+        reconciled: list[StrategicDepartmentCalculatedValue] = []
+        for department in calculated_departments:
+            indicators = sorted(
+                self._department_indicators_for_score(
+                    department,
+                    indicators_by_department=indicators_by_department,
+                ),
+                key=lambda item: item.indicator_name,
+            )
+            refreshed = self._refresh_department_score(
+                department,
+                indicators=indicators,
+            )
+            reconciled.append(refreshed)
+
+        return reconciled
 
     def _build_unit_gaps(
         self,

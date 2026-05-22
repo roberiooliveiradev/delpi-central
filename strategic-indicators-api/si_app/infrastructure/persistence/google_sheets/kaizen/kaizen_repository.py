@@ -88,6 +88,33 @@ class KaizenRepository(KaizenQueryRepositoryPort):
 
         return True
 
+    def _contributes_savings_in_range(
+        self,
+        implemented_at: Optional[str],
+        range_start: Optional[str],
+        range_end: Optional[str],
+    ) -> bool:
+        """
+        Ganhos do mês: kaizen implantado até o fim do período e com dias ativos
+        dentro do intervalo (inclui implantações anteriores ao início do mês).
+        """
+        impl_date = self._parse_date_safe(implemented_at)
+        if impl_date is None:
+            return False
+
+        end = self._parse_date_safe(range_end) if range_end else None
+        if end is not None and impl_date > end:
+            return False
+
+        return (
+            self._days_active_in_range(
+                implemented_at=implemented_at,
+                range_start=range_start,
+                range_end=range_end,
+            )
+            > 0
+        )
+
     def _days_active_in_range(
         self,
         implemented_at: Optional[str],
@@ -149,16 +176,12 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             if self._is_implemented(row["status"])
         ]
 
-        filtered_rows = []
+        count_rows: list[dict] = []
+        savings_rows: list[dict] = []
         for row in implemented_rows:
             title_ok = True
             status_ok = True
             branch_ok = True
-            period_ok = self._implemented_in_range(
-                row.get("date_implemented"),
-                request.date_start,
-                request.date_end,
-            )
 
             if request.title:
                 title_ok = request.title.strip().lower() in (row.get("title") or "").strip().lower()
@@ -169,8 +192,22 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             if request.branch:
                 branch_ok = (row.get("branch") or "").strip() == request.branch.strip()
 
-            if title_ok and status_ok and branch_ok and period_ok:
-                filtered_rows.append(row)
+            if not (title_ok and status_ok and branch_ok):
+                continue
+
+            if self._implemented_in_range(
+                row.get("date_implemented"),
+                request.date_start,
+                request.date_end,
+            ):
+                count_rows.append(row)
+
+            if self._contributes_savings_in_range(
+                row.get("date_implemented"),
+                request.date_start,
+                request.date_end,
+            ):
+                savings_rows.append(row)
 
         kaizens = [
             Kaizen(
@@ -184,7 +221,7 @@ class KaizenRepository(KaizenQueryRepositoryPort):
                 daily_savings=row["daily_savings"],
                 branch=row.get("branch"),
             )
-            for row in filtered_rows
+            for row in count_rows
         ]
 
         total_savings = sum(
@@ -193,7 +230,7 @@ class KaizenRepository(KaizenQueryRepositoryPort):
                 range_start=request.date_start,
                 range_end=request.date_end,
             )
-            for row in filtered_rows
+            for row in savings_rows
         )
 
         return KaizenSummaryResponse(
