@@ -150,7 +150,7 @@ export function StockPage({ pathname }: StockPageProps) {
         dateEnd={dateEnd}
         branch={branch}
         location={location}
-        showLocationFilter={!hasHistoricalPeriod}
+        showLocationFilter
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}
@@ -229,11 +229,7 @@ export function StockPage({ pathname }: StockPageProps) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">
-              {isEstimatedStock
-                ? "Detalhe por localização disponível apenas no estoque atual (SB2)."
-                : "Sem saldo por localização."}
-            </div>
+            <div className="ds-state-box">Sem saldo por localização no período.</div>
           )}
         </ChartCard>
 
@@ -266,11 +262,6 @@ export function StockPage({ pathname }: StockPageProps) {
 
       <DataTableSection
         title="Top produtos por valor em estoque"
-        hint={
-          isEstimatedStock
-            ? "Ranking por produto não está disponível no modo histórico estimado."
-            : undefined
-        }
         columns={productColumns}
         rows={data?.top_products ?? []}
         rowKey={(row) => `${row.product_code}-${row.location}`}

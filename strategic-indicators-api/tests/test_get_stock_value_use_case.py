@@ -56,14 +56,15 @@ def test_execute_requires_both_dates_for_historical_mode():
         use_case.execute(GetStockValueRequest(start_date="2026-04-01"))
 
 
-def test_execute_rejects_location_with_historical_mode():
+def test_execute_allows_location_with_historical_mode():
     use_case = _build_use_case()
 
-    with pytest.raises(ValueError, match="localização"):
-        use_case.execute(
-            GetStockValueRequest(
-                start_date="2026-04-01",
-                end_date="2026-04-30",
-                location="01",
-            )
+    result = use_case.execute(
+        GetStockValueRequest(
+            start_date="2026-04-01",
+            end_date="2026-04-30",
+            location="01",
         )
+    )
+
+    assert result["estimation"]["enabled"] is True
