@@ -61,7 +61,7 @@ Parâmetros comuns de período:
 |---|---|---|
 | GET | `/supplies/cpv` | Custo de produto vendido (top fornecedores). |
 | GET | `/supplies/otd` | On-Time Delivery compras. |
-| GET | `/supplies/stock-value` | Valor total de estoque. |
+| GET | `/supplies/stock-value` | Valor total de estoque (atual ou histórico estimado). Ver [supplies-estoque-historico.md](./supplies-estoque-historico.md). |
 | GET | `/supplies/inventory-turnover` | Giro de estoque (IDD). |
 
 Parâmetros adicionais:
@@ -70,7 +70,7 @@ Parâmetros adicionais:
 |---|---|
 | `/cpv`, `/otd` | `top_limit` (default `5`, máx. `20`) |
 | `/otd` | `details_limit` (default `20`, máx. `100`) |
-| `/stock-value` | `location`, `top_limit` |
+| `/stock-value` | `start_date`, `end_date` (histórico estimado SB9+SD3; ambos obrigatórios juntos), `location` (só modo atual), `top_limit` |
 | `/inventory-turnover` | `location`, `strict_idd_period` (bool) |
 
 ---
