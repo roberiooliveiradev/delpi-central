@@ -245,6 +245,16 @@ class StrategicIndicatorsCalculator:
                 score, gap, realized_value = branch_scoped_score
             else:
                 realized_value = measurement.value
+                if realized_value is None:
+                    calculated.append(
+                        self._build_missing_indicator_value(
+                            indicator=indicator,
+                            source=measurement.source,
+                            unit_values=measurement.unit_values,
+                        )
+                    )
+                    continue
+
                 comparable_goal = self.calculate_comparable_goal(
                     goal_value=indicator.goal_value,
                     goal_periodicity=indicator.goal_periodicity,
@@ -254,6 +264,16 @@ class StrategicIndicatorsCalculator:
                     end_date=end_date,
                     competence=competence,
                 )
+                if comparable_goal <= 0:
+                    calculated.append(
+                        self._build_indicator_without_goal_for_view(
+                            indicator=indicator,
+                            measurement=measurement,
+                            source=measurement.source,
+                        )
+                    )
+                    continue
+
                 score = self.calculate_indicator_score(
                     performance_direction=performance_direction,
                     comparable_goal=comparable_goal,
@@ -406,13 +426,41 @@ class StrategicIndicatorsCalculator:
         normalized_goal_mode = (goal_mode or "standard").strip().lower()
 
         if normalized_goal_mode == "monthly_curve":
-            return self._calculate_monthly_curve_goal(
+            curve_goal = self._calculate_monthly_curve_goal(
                 monthly_targets=monthly_targets or [],
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
             )
+            if curve_goal > 0:
+                return curve_goal
+            if goal_value > 0:
+                return self._calculate_standard_period_goal(
+                    goal_value=goal_value,
+                    goal_periodicity=goal_periodicity,
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
+            return 0.0
 
+        return self._calculate_standard_period_goal(
+            goal_value=goal_value,
+            goal_periodicity=goal_periodicity,
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+
+    def _calculate_standard_period_goal(
+        self,
+        *,
+        goal_value: float,
+        goal_periodicity: str,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> float:
         if goal_value <= 0:
             return 0.0
 

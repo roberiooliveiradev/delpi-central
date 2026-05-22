@@ -68,7 +68,9 @@ Implementação principal:
 - Financeiro (Sheets) — `_average_sheet_metric` retorna `null` se não houver linhas no intervalo; **não** converte ausência em `0` (api-delpi espelha a mesma regra).
 - MFE — `formatIndicatorValue` / `formatIndicatorScore` exibem **Sem dados preenchidos** quando o valor ou a nota são `null`; rótulos da visão em [MFE.md](./MFE.md).
 
-**Pendente de alinhamento nas fontes:** Produção ainda pode enviar `0` quando não há dado; Qualidade (PPM) usa `default_value=0.0` em alguns indicadores. Ver [DATA_SOURCES.md](./DATA_SOURCES.md).
+**Produção:** medições sem valor na fonte permanecem `null` no provider (não são convertidas para `0.0` antes do cálculo).
+
+**Pendente de alinhamento nas fontes:** Qualidade (PPM) usa `default_value=0.0` em alguns indicadores. Ver [DATA_SOURCES.md](./DATA_SOURCES.md).
 
 ## Filtro por filial (`branch`) vs. escopo do indicador
 

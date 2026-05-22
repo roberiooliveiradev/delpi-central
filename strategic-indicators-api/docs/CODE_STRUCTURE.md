@@ -69,6 +69,7 @@ Metas por filial: ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
 |---------|-----------|
 | `tests/test_branch_scoped_goals.py` | Metas/realizado por filial, valor consolidado sem meta na filial |
 | `tests/test_goal_scope_helpers.py` | `indicator_uses_branch_unit_measurement`, resolução estrita |
+| `tests/test_commercial_production_scoring.py` | Curva mensal, Comercial/Produção sem nota 0 indevida |
 | `tests/test_indicator_goals_sql_param_order.py` | Ordem dos parâmetros SQL em metas por filial |
 | `tests/test_goal_scope_validation.py` | Validação de escopo no admin |
 

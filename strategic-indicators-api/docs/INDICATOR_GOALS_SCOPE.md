@@ -80,3 +80,10 @@ Após deploy com metas por filial, rode o refresh manualmente se o job periódic
 | Admin — escopo da meta | `01`, `02` (`getGoalScopeBranchLabel`) |
 
 Detalhes: [MFE.md](./MFE.md) — seção *Rótulos da visão*.
+
+## Metas `monthly_curve` (Comercial)
+
+- Meta comparável do período = soma dos `indicator_goal_monthly_targets` do mês da competência.
+- Se a curva não vier no catálogo (lista vazia) e `goal_value > 0`, o calculador usa **fallback** para meta padrão do período (evita IDD/nota `0` indevidos).
+- Medições da Produção com valor `null` na fonte permanecem **sem dado** (não viram `0.0` artificial).
+- Depois de deploy com correção no calculador, execute `scripts/refresh_period_scores.py` para atualizar `period_scores` que ainda guardam IDD zerado.

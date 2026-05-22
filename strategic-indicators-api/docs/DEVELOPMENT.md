@@ -92,6 +92,7 @@ export PYTHONPATH="$(pwd)/strategic-indicators-api:$(pwd)/shared"
 pip install pytest  # se ainda não instalado
 pytest strategic-indicators-api/tests/test_branch_scoped_goals.py \
        strategic-indicators-api/tests/test_goal_scope_helpers.py \
+       strategic-indicators-api/tests/test_commercial_production_scoring.py \
        strategic-indicators-api/tests/test_indicator_goals_sql_param_order.py \
        strategic-indicators-api/tests/test_goal_scope_validation.py -q
 ```
