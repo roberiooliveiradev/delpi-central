@@ -3,7 +3,9 @@ import type { ReactNode } from "react";
 type KpiCardProps = {
   title: string;
   value: string;
-  subtitle: string;
+  contextLabel?: string;
+  goalLabel?: string | null;
+  subtitle?: string;
   icon: ReactNode;
   loading?: boolean;
 };
@@ -11,17 +13,27 @@ type KpiCardProps = {
 export function KpiCard({
   title,
   value,
+  contextLabel,
+  goalLabel = null,
   subtitle,
   icon,
   loading = false,
 }: KpiCardProps) {
+  const resolvedGoal = goalLabel ?? null;
+  const resolvedContext = subtitle ?? contextLabel ?? "";
+
   return (
     <article className="ds-card ds-kpi-card">
       <div className="ds-kpi-header">
         <div>
           <p className="ds-kpi-title">{title}</p>
           <h3 className="ds-kpi-value">{loading ? "…" : value}</h3>
-          <span className="ds-kpi-subtitle">{subtitle}</span>
+          {resolvedGoal ? (
+            <p className="ds-kpi-goal">
+              <span className="ds-kpi-goal-prefix">Meta</span> {resolvedGoal}
+            </p>
+          ) : null}
+          <span className="ds-kpi-context">{resolvedContext}</span>
         </div>
         <div className="ds-kpi-icon" aria-hidden="true">
           {icon}

@@ -30,7 +30,7 @@ import {
   formatDecimal,
   formatInteger,
 } from "../utils/format";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 
 const CHART_HEIGHT = 320;
 
@@ -157,9 +157,10 @@ export function StockPage({ pathname }: StockPageProps) {
         <KpiCard
           title="Valor total"
           value={formatCurrency(data?.summary.total_stock_value)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel}`,
             data?.summary,
+            formatCurrency,
           )}
           icon={<Warehouse size={22} />}
           loading={isBusy && !data}

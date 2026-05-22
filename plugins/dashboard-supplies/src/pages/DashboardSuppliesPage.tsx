@@ -16,7 +16,7 @@ import { SUPPLIES_ROUTES } from "../constants/routes";
 import { useSuppliesDashboard } from "../hooks/useSuppliesDashboard";
 import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { formatPeriodLabel } from "../utils/dates";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import {
   formatCurrency,
   formatDecimal,
@@ -108,9 +108,11 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         <KpiCard
           title="CPV total"
           value={formatCurrency(cpv?.summary.cpv_total)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             cpv?.summary,
+            undefined,
+            { showGoal: false },
           )}
           icon={<TrendingUp size={22} />}
           loading={isBusy && !cpv}
@@ -118,7 +120,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         <KpiCard
           title="CPV / ROL"
           value={formatPercent(cpv?.summary.cpv_percentage)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `ROL ${formatCurrency(cpv?.summary.rol_with_ipi)}`,
             cpv?.summary,
             formatPercent,
@@ -129,7 +131,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         <KpiCard
           title="OTD compras"
           value={formatPercent(otd?.summary.otd_percentage)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${formatInteger(otd?.summary.on_time_lines)} / ${formatInteger(otd?.summary.total_lines)} linhas`,
             otd?.summary,
             formatPercent,
@@ -140,9 +142,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         <KpiCard
           title="Valor de estoque"
           value={formatCurrency(stockValue?.summary.total_stock_value)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel}`,
             stockValue?.summary,
+            formatCurrency,
           )}
           icon={<Warehouse size={22} />}
           loading={isBusy && !stockValue}
@@ -150,10 +153,8 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         <KpiCard
           title="Giro IDD (meses)"
           value={formatDecimal(inventoryTurnover?.summary.inventory_turnover_months, 2)}
-          subtitle={formatGoalSubtitle(
-            periodLabel,
-            inventoryTurnover?.summary,
-            (v) => formatDecimal(v, 2),
+          {...buildKpiGoalPresentation(periodLabel, inventoryTurnover?.summary, (v) =>
+            formatDecimal(v, 2),
           )}
           icon={<Package size={22} />}
           loading={isBusy && !inventoryTurnover}

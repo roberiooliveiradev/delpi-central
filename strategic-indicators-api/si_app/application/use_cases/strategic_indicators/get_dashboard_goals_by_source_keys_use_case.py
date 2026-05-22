@@ -14,7 +14,7 @@ from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port im
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_department_indicators_repository import (
     PostgresStrategicIndicatorsDepartmentIndicatorsRepository,
 )
-from si_app.shared.goal_scope import normalize_goal_scope_branch
+from si_app.shared.goal_scope import BRANCH_UNIT_CODES, normalize_goal_scope_branch
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +99,25 @@ class GetDashboardGoalsBySourceKeysUseCase:
                 if indicator_id not in goals_by_indicator:
                     goals_by_indicator[indicator_id] = goal
 
+        if not scope_branch:
+            still_missing = [
+                item["indicator_id"]
+                for item in indicators
+                if item["indicator_id"] not in goals_by_indicator
+            ]
+            if still_missing:
+                branch_goals = self._goals_repository.list_branch_scoped_goals_map(
+                    indicator_ids=still_missing,
+                    department_id=department_id,
+                    competence=period.competence,
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                )
+                for indicator_id, by_branch in branch_goals.items():
+                    merged = self._merge_branch_goals_for_consolidated_view(by_branch)
+                    if merged:
+                        goals_by_indicator[indicator_id] = merged
+
         items: list[dict] = []
         for indicator in indicators:
             goal = goals_by_indicator.get(indicator["indicator_id"])
@@ -151,3 +170,41 @@ class GetDashboardGoalsBySourceKeysUseCase:
             "has_goal": comparable_goal is not None and comparable_goal > 0,
             "monthly_targets": goal.get("monthly_targets") if goal else [],
         }
+
+    @staticmethod
+    def _merge_branch_goals_for_consolidated_view(
+        by_branch: dict[str, dict],
+    ) -> dict | None:
+        ordered_branches = [
+            code
+            for code in BRANCH_UNIT_CODES
+            if code in by_branch and by_branch[code].get("goal_label")
+        ]
+        if not ordered_branches:
+            ordered_branches = [
+                code
+                for code in sorted(by_branch.keys())
+                if by_branch[code].get("goal_label")
+            ]
+        if not ordered_branches:
+            return None
+
+        labels = [str(by_branch[code]["goal_label"]).strip() for code in ordered_branches]
+        unique_labels = list(dict.fromkeys(labels))
+        base = by_branch[ordered_branches[0]]
+
+        if len(unique_labels) == 1:
+            merged_label = unique_labels[0]
+        else:
+            merged_label = " · ".join(
+                f"{code}: {by_branch[code]['goal_label']}"
+                for code in ordered_branches
+                if by_branch[code].get("goal_label")
+            )
+
+        return {
+            **base,
+            "goal_label": merged_label,
+            "goal_scope_branch": "",
+        }
+
