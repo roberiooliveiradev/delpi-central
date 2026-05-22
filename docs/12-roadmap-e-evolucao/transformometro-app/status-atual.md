@@ -25,7 +25,7 @@ Atualizado: 2026-05-21 (Fase 4 completa no repo + catálogo Recursos + workflow 
 | Registrar/atualizar manifesto na Core API + RBAC (rota `/recursos`) | Ops — `register-manifest.sh` |
 | Deploy com V004–V005 + MFE recente | Ops — rebuild + migrations |
 | Planilha somente leitura | Google Workspace |
-| Export PDF dashboard | Backlog dev |
+| Export PDF dashboard | ✅ Impressão/PDF via navegador (`PDF / Imprimir` no dashboard) |
 
 ## Variáveis de produção (checklist)
 

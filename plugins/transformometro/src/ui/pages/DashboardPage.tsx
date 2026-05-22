@@ -30,6 +30,8 @@ import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { FilterBar } from "../../components/FilterBar";
 import { KpiCard } from "../../components/KpiCard";
+import { PrintReportButton } from "../../components/PrintReportButton";
+import { PrintReportSummary } from "../../components/PrintReportSummary";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   EMPTY_REQUEST_PROGRESS,
@@ -204,6 +206,12 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     [dateStart, dateEnd]
   );
   const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
+  const printBranchLabel = useMemo(() => {
+    if (!branch) return "Consolidado";
+    const found = options?.filiais?.find((f) => f.id === branch);
+    return found ? `${found.id} — ${found.label}` : branch;
+  }, [branch, options?.filiais]);
+  const printSetorLabel = setorId || "Todos";
   const isBusy = loading || refreshing;
   const hasData = resumo !== null || evolucao.length > 0 || processos.length > 0;
   const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
@@ -328,7 +336,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   );
 
   return (
-    <TransformometroShell>
+    <TransformometroShell printRoot>
       <FilterBar
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
         onNavigate={onNavigate}
@@ -345,6 +353,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         refreshing={refreshing}
         headerActions={
           <>
+            <PrintReportButton disabled={isBusy && !hasData} />
             <button
               type="button"
               className="ds-ghost-btn"
@@ -376,28 +385,42 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         }
       />
 
-      <DataSourceBanner />
+      <PrintReportSummary
+        title="Dashboard Transformômetro"
+        dateStart={dateStart}
+        dateEnd={dateEnd}
+        branchLabel={printBranchLabel}
+        setorLabel={printSetorLabel}
+      />
 
-      <StatusAlerts
+      <div className="ds-no-print">
+        <DataSourceBanner />
+      </div>
+
+      <div className="ds-no-print">
+        <StatusAlerts
         error={error}
         loading={loading}
         hasData={hasData}
         requestProgress={requestProgress}
         onRetry={() => void load()}
-      />
+        />
+      </div>
 
       {refreshing && hasData ? (
-        <LoadingActivityCard
-          title="Atualizando dashboard"
-          description="Atualizando KPIs, gráficos e ranking de processos."
-          variant="compact"
-          sticky
-          progressPercent={refreshLoadingProgress}
-        />
+        <div className="ds-no-print">
+          <LoadingActivityCard
+            title="Atualizando dashboard"
+            description="Atualizando KPIs, gráficos e ranking de processos."
+            variant="compact"
+            sticky
+            progressPercent={refreshLoadingProgress}
+          />
+        </div>
       ) : null}
 
       {alertas.length > 0 ? (
-        <section className="ds-card ds-alert-panel">
+        <section className="ds-card ds-alert-panel ds-no-print">
           <h2 className="ds-section-title">
             <AlertTriangle size={18} />
             Alertas — economia líquida negativa (≥3 meses)
@@ -465,11 +488,13 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           title="Economia no período"
           hint={savingsChartHint}
           toolbar={
-            <ChartGranularityToggle
-              idPrefix="tm-dashboard-savings"
-              value={savingsGranularity}
-              onChange={setSavingsGranularity}
-            />
+            <div className="ds-no-print">
+              <ChartGranularityToggle
+                idPrefix="tm-dashboard-savings"
+                value={savingsGranularity}
+                onChange={setSavingsGranularity}
+              />
+            </div>
           }
         >
           {savingsChartData.length === 0 && !isBusy ? (
