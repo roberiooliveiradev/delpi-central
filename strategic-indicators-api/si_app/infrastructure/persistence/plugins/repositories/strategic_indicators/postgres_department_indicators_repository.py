@@ -6,6 +6,7 @@ from si_app.domain.ports.strategic_indicators.department_indicators_repository_p
 from si_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
 )
+from si_app.shared.goal_scope import supports_branch_goals_for_scope_type
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.catalog_admin_cascade import (
     delete_indicator_goals_cascade,
 )
@@ -90,7 +91,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
             VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s,
-                (%s = 'consolidated'),
+                %s,
                 TRUE, %s, %s, %s, %s, %s
             )
             RETURNING *
@@ -110,7 +111,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix,
                 value_suffix,
                 value_decimals,
-                scope_type,
+                supports_branch_goals_for_scope_type(scope_type),
                 display_order,
                 actor_user_id,
                 actor_email,
@@ -197,7 +198,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                     VALUES (
                         %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s,
-                        (%s = 'consolidated'),
+                        %s,
                         %s, %s, %s, %s, %s, %s
                     )
                     """,
@@ -214,7 +215,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                         value_prefix,
                         value_suffix,
                         value_decimals,
-                        scope_type,
+                        supports_branch_goals_for_scope_type(scope_type),
                         is_active,
                         display_order,
                         before.get("created_by_user_id"),
@@ -257,7 +258,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix = %s,
                 value_suffix = %s,
                 value_decimals = %s,
-                supports_branch_goals = (%s = 'consolidated'),
+                supports_branch_goals = %s,
                 is_active = %s,
                 display_order = %s,
                 updated_by_user_id = %s,
@@ -279,7 +280,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix,
                 value_suffix,
                 value_decimals,
-                scope_type,
+                supports_branch_goals_for_scope_type(scope_type),
                 is_active,
                 display_order,
                 actor_user_id,

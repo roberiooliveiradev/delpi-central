@@ -24,9 +24,8 @@ def validate_goal_scope_branch(
 
     if normalized and not indicator_allows_branch_goals(scope_type):
         raise StrategicIndicatorsIndicatorGoalValidationError(
-            "Indicadores por unidade (per_unit) usam apenas meta consolidada; "
-            "goal_scope_branch deve ser vazio. Para metas por filial, use indicadores consolidated "
-            "ou indicadores separados por unidade (ex.: ROL Matriz / ROL Filial)."
+            "goal_scope_branch inválido para este indicador. "
+            "Use vazio (consolidado), 01 ou 02 conforme o escopo da meta."
         )
 
     return normalized

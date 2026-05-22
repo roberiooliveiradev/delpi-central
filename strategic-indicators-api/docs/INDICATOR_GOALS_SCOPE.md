@@ -2,14 +2,18 @@
 
 **Última atualização:** 2026-05-21
 
-**Migrations:** `V016` (coluna e índice), `V017` (supports_branch_goals), `V018`/`V019` (seeds RH/Qualidade), `V020` (agregação consolidada)
+**Migrations:** `V016` (coluna e índice), `V017` (supports_branch_goals), `V018`/`V019` (seeds RH/Qualidade), `V020` (agregação consolidada), `V021` (metas por filial em `per_unit`)
 
 ## Regra global
 
 | `scope_type` do indicador | Metas permitidas |
 |---------------------------|------------------|
-| `consolidated` | Consolidado (`''`) + filial `01` + filial `02` (cada uma `standard` ou `monthly_curve`) |
-| `per_unit` | Apenas consolidado (`''`) — metas por unidade usam indicadores separados (ex.: ROL Matriz / ROL Filial) |
+| `consolidated` | Consolidado (`''`) + filial `01` + filial `02` |
+| `per_unit` | Consolidado (`''`) + filial `01` + filial `02` (realizado por unidade; meta por filial na mesma estrutura) |
+
+Indicadores separados por unidade (ex.: ROL Matriz / ROL Filial no Comercial) continuam válidos quando cada unidade precisa de **fonte de dado** distinta, não apenas meta distinta.
+
+**Migration V021 (Produção):** metas consolidadas ativas de indicadores `per_unit` do departamento Produção são desativadas e recriadas em duplicata para `goal_scope_branch` `01` e `02` (mesmo `goal_label`, valor e curva mensal). Ajuste valores por filial depois no admin, se necessário.
 
 Aplica-se a **todos os departamentos** (Comercial, Financeiro, Produção, etc.), não só ao Comercial.
 
@@ -48,7 +52,7 @@ Regras de implementação (`goal_scope.py`, `StrategicIndicatorsCalculator`):
 
 No formulário de metas, escolher **Escopo da meta**: Consolidado, Filial 01 ou Filial 02.
 
-`supports_branch_goals` em `department_indicators` é sincronizado automaticamente: `TRUE` quando `scope_type = consolidated`.
+`supports_branch_goals` em `department_indicators` é sincronizado automaticamente: `TRUE` quando `scope_type` é `consolidated` ou `per_unit`.
 
 ## Implementação (`postgres_indicator_goals_repository`)
 
