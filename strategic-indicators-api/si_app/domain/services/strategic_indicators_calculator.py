@@ -849,8 +849,31 @@ class StrategicIndicatorsCalculator:
         department: StrategicDepartmentCalculatedValue,
         *,
         indicators: list[StrategicIndicatorCalculatedValue],
+        indicators_catalog: list[StrategicIndicatorCatalogItem] | None = None,
+        measurements_by_indicator: dict[str, StrategicIndicatorMeasuredValue] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        competence: str | None = None,
+        scope_branch: str | None = None,
     ) -> StrategicDepartmentCalculatedValue:
-        department_score = self._calculate_department_score(indicators)
+        aggregation_mode = (department.aggregation_mode or "").strip()
+
+        if aggregation_mode == "average_of_units" and indicators_catalog and measurements_by_indicator:
+            department_catalog = [
+                item
+                for item in indicators_catalog
+                if item.department_id == department.department_id
+            ]
+            department_score = self._calculate_department_score_average_of_units(
+                indicators_catalog=department_catalog,
+                measurements_by_indicator=measurements_by_indicator,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+                filter_branch=normalize_goal_scope_branch(scope_branch) or None,
+            )
+        else:
+            department_score = self._calculate_department_score(indicators)
 
         return StrategicDepartmentCalculatedValue(
             department_id=department.department_id,
@@ -871,16 +894,26 @@ class StrategicIndicatorsCalculator:
         *,
         calculated_departments: list[StrategicDepartmentCalculatedValue],
         calculated_indicators: list[StrategicIndicatorCalculatedValue] | None = None,
+        indicators_catalog: list[StrategicIndicatorCatalogItem] | None = None,
+        measurements: list[StrategicIndicatorMeasuredValue] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        competence: str | None = None,
+        scope_branch: str | None = None,
     ) -> list[StrategicDepartmentCalculatedValue]:
         """
-        Recalcula IDD/contribuição do departamento a partir dos indicadores pontuados.
+        Recalcula IDD/contribuição do departamento conforme `aggregation_mode`.
 
-        Corrige snapshots materializados em que department.score ficou 0 enquanto os
-        indicadores já tinham nota (ex.: Comercial/Produção após correção de metas).
+        - `consolidated`: média ponderada das notas dos indicadores já calculados.
+        - `average_of_units`: média dos IDDs por filial (ou IDD da filial filtrada).
         """
         indicators_by_department: dict[str, list[StrategicIndicatorCalculatedValue]] = {}
         for item in calculated_indicators or []:
             indicators_by_department.setdefault(item.department_id, []).append(item)
+
+        measurements_by_indicator = {
+            item.indicator_id: item for item in (measurements or [])
+        }
 
         reconciled: list[StrategicDepartmentCalculatedValue] = []
         for department in calculated_departments:
@@ -894,6 +927,12 @@ class StrategicIndicatorsCalculator:
             refreshed = self._refresh_department_score(
                 department,
                 indicators=indicators,
+                indicators_catalog=indicators_catalog,
+                measurements_by_indicator=measurements_by_indicator,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+                scope_branch=scope_branch,
             )
             reconciled.append(refreshed)
 

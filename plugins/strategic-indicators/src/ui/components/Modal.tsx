@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import type { PropsWithChildren, ReactNode } from "react";
 import { X } from "lucide-react";
+import { lockPageScroll } from "../utils/pageScrollLock";
 import "./Modal.css";
 
 type ModalSize = "sm" | "md" | "lg" | "xl";
@@ -41,8 +42,7 @@ export function Modal({
       return;
     }
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlockPageScroll = lockPageScroll();
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -53,7 +53,7 @@ export function Modal({
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlockPageScroll();
       document.removeEventListener("keydown", handleKeyDown);
       hasAutoFocusedRef.current = false;
     };

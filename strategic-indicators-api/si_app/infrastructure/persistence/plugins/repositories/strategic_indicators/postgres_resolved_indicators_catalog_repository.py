@@ -46,13 +46,21 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
         structural_items = self._catalog_repository.list_structural_indicators_catalog(
             department_id=department_id,
         )
+        departments_catalog = self._catalog_repository.list_departments_catalog()
+        aggregation_by_department = {
+            item.department_id: (item.aggregation_mode or "consolidated").strip()
+            for item in departments_catalog
+        }
 
-        goals_by_indicator = self._indicator_goals_repository.list_resolved_goals_map(
+        view_branch = normalize_goal_scope_branch(branch)
+        goals_by_indicator = self._resolve_goals_for_view(
+            structural_items=structural_items,
+            aggregation_by_department=aggregation_by_department,
             competence=competence,
             start_date=start_date,
             end_date=end_date,
             department_id=department_id,
-            scope_branch=branch,
+            view_branch=view_branch,
         )
 
         missing_indicator_ids = [
@@ -98,7 +106,6 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                 )
 
         resolved: list[StrategicIndicatorCatalogItem] = []
-        view_branch = normalize_goal_scope_branch(branch)
 
         for item in structural_items:
             goal = goals_by_indicator.get(item.indicator_id)
@@ -128,6 +135,62 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             )
 
         return resolved
+
+    def _resolve_goals_for_view(
+        self,
+        *,
+        structural_items: list[StrategicIndicatorCatalogItem],
+        aggregation_by_department: dict[str, str],
+        competence: str | None,
+        start_date: str | None,
+        end_date: str | None,
+        department_id: str | None,
+        view_branch: str,
+    ) -> dict[str, dict]:
+        """
+        Visão filial: departamentos `average_of_units` usam meta 01/02;
+        departamentos `consolidated` repetem meta consolidada (mesmo IDD da visão consolidado).
+        """
+        if not is_branch_unit_scope(view_branch):
+            return self._indicator_goals_repository.list_resolved_goals_map(
+                competence=competence,
+                start_date=start_date,
+                end_date=end_date,
+                department_id=department_id,
+                scope_branch=view_branch,
+            )
+
+        consolidated_dept_ids = {
+            dept_id
+            for dept_id, mode in aggregation_by_department.items()
+            if mode != "average_of_units"
+        }
+
+        goals_consolidated = self._indicator_goals_repository.list_resolved_goals_map(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+            department_id=department_id,
+            scope_branch="",
+        )
+        goals_branch = self._indicator_goals_repository.list_resolved_goals_map(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+            department_id=department_id,
+            scope_branch=view_branch,
+        )
+
+        merged: dict[str, dict] = {}
+        for item in structural_items:
+            if item.department_id in consolidated_dept_ids:
+                goal = goals_consolidated.get(item.indicator_id)
+            else:
+                goal = goals_branch.get(item.indicator_id)
+            if goal is not None:
+                merged[item.indicator_id] = goal
+
+        return merged
 
     @staticmethod
     def _catalog_item_from_goal(

@@ -4659,6 +4659,12 @@ body {
   padding: 24px;
 }
 
+.app-host-federated:has(.si-settings-page),
+.app-host-federated:has(.si-settings-page) > div {
+  height: auto;
+  min-height: 0;
+}
+
 .si-settings-tabbar,
 .si-settings-status-strip,
 .si-settings-hero,

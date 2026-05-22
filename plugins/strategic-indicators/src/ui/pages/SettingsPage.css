@@ -3,6 +3,16 @@
   background: var(--app-canvas, var(--bg, #ffffff));
 }
 
+/*
+ * O portal usa `.app-host-federated { height: 100% }` + `.content { overflow-y: auto }`.
+ * Isso deixa um “vão” scrollável abaixo do conteúdo após mutações na aba Metas anuais.
+ */
+.app-host-federated:has(.si-settings-page),
+.app-host-federated:has(.si-settings-page) > div {
+  height: auto;
+  min-height: 0;
+}
+
 .si-settings-tabbar {
   display: flex;
   flex-wrap: wrap;

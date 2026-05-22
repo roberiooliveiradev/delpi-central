@@ -34,8 +34,8 @@ Aplica-se a **todos os departamentos** (Comercial, Financeiro, Produção, etc.)
 |----------|------|-----------|------|
 | Meta cadastrada com `goal_scope_branch` = filial da visão | Meta da filial | Conforme tabela abaixo | Calculada |
 | Sem meta para a filial (só consolidado `''`) | `goal_label`: **Sem meta para filial XX** | Conforme tabela abaixo | `null` — classificação **Sem meta para esta visão** |
-| Engenharia, Financeiro, Produção, etc. (`aggregation_mode = consolidated`, sem `branch_goals`) | Sem meta para filial (se não cadastrada) | **Valor consolidado** (`measurement.value`) | Sem meta → nota `null` |
-| RH, Qualidade (`average_of_units` ou `branch_goals` na competência) | Meta da filial | Realizado da unidade `01`/`02` | Calculada |
+| Departamentos `aggregation_mode = consolidated` (Comercial, Engenharia, Financeiro, …) | **Meta consolidada** (`goal_scope_branch = ''`) — mesma da visão Consolidado | **Valor consolidado** (`measurement.value`) | Mesmo IDD/nota da visão Consolidado |
+| RH, Qualidade, Produção, Suprimentos (`average_of_units`) | Meta da filial `01`/`02` | Realizado da unidade `01`/`02` | Calculada por filial |
 
 Regras de implementação (`goal_scope.py`, `StrategicIndicatorsCalculator`):
 
