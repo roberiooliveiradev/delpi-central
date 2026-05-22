@@ -17,12 +17,14 @@ from app.interface.http.openapi_agent_metadata import (
     SUPPLIES_OTD,
     SUPPLIES_STOCK_VALUE,
 )
+from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.supplies_composer import (
     build_get_cpv_use_case,
     build_get_otd_use_case,
     build_get_stock_value_use_case,
     build_get_inventory_turnover_use_case,
 )
+from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 router = APIRouter(prefix="/supplies", tags=["Suprimentos"])
 
@@ -45,7 +47,14 @@ def get_cpv(
             top_limit=top_limit,
         )
 
-        result = use_case.execute(request)
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.SUPPLIES_CPV,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            summary_key="summary",
+        )
 
         return success_response(
             data=result,
@@ -84,7 +93,14 @@ def get_otd(
             details_limit=details_limit,
         )
 
-        result = use_case.execute(request)
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.SUPPLIES_OTD,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            summary_key="summary",
+        )
 
         return success_response(
             data=result,
@@ -119,7 +135,14 @@ def get_stock_value(
             top_limit=top_limit,
         )
 
-        result = use_case.execute(request)
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.SUPPLIES_STOCK_VALUE,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            summary_key="summary",
+        )
 
         return success_response(
             data=result,
@@ -158,7 +181,14 @@ def get_inventory_turnover(
             strict_idd_period=strict_idd_period,
         )
 
-        result = use_case.execute(request)
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.SUPPLIES_STOCK_TURNOVER,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            summary_key="summary",
+        )
 
         return success_response(
             data=result,

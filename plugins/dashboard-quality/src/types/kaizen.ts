@@ -1,3 +1,5 @@
+import type { DashboardGoalFields } from "../utils/goalDisplay";
+
 export type KaizenSummaryParams = {
   title?: string;
   status?: string;
@@ -18,7 +20,7 @@ export type Kaizen = {
   branch: string | null;
 };
 
-export type KaizenSummary = {
+export type KaizenSummary = DashboardGoalFields & {
   date_start: string | null;
   date_end: string | null;
   total_kaizens: number;

@@ -6,12 +6,14 @@ from app.utils.logger import log_error
 from delpi_auth.authorization import require_any_permission
 
 from app.application.dto.financial.get_rol_request import GetRolRequest
+from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.financial_composer import (
     build_get_rol_use_case,
     build_get_financial_ebitda_pct_use_case,
     build_get_financial_fixed_cost_pct_use_case,
     build_get_financial_pmr_use_case,
 )
+from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 
 router = APIRouter(tags=["Financeiro"])
@@ -59,7 +61,13 @@ def get_ebitda_pct(
         )
 
         use_case = build_get_financial_ebitda_pct_use_case()
-        result = use_case.execute(dto)
+        result = enrich_dashboard_metric(
+            use_case.execute(dto),
+            source_key=goal_keys.FINANCIAL_EBITDA,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
         return success_response(
             data=result,
@@ -93,7 +101,13 @@ def get_fixed_cost_pct(
         )
 
         use_case = build_get_financial_fixed_cost_pct_use_case()
-        result = use_case.execute(dto)
+        result = enrich_dashboard_metric(
+            use_case.execute(dto),
+            source_key=goal_keys.FINANCIAL_FIXED_COST,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
         return success_response(
             data=result,
@@ -127,7 +141,13 @@ def get_pmr(
         )
 
         use_case = build_get_financial_pmr_use_case()
-        result = use_case.execute(dto)
+        result = enrich_dashboard_metric(
+            use_case.execute(dto),
+            source_key=goal_keys.FINANCIAL_PMR,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+        )
 
         return success_response(
             data=result,

@@ -1,3 +1,5 @@
+import type { DashboardGoalFields } from "../utils/goalDisplay";
+
 export type FinancialFilterParams = {
   start_date?: string;
   end_date?: string;
@@ -35,7 +37,7 @@ export type EbitdaBranchRow = FinancialBranchMetric & {
   ebitda_over_rol_pct: number;
 };
 
-export type EbitdaPctData = {
+export type EbitdaPctData = DashboardGoalFields & {
   branch: string | null;
   start_date: string;
   end_date: string;
@@ -51,7 +53,7 @@ export type FixedCostBranchRow = FinancialBranchMetric & {
   fixed_cost_over_rol_pct: number;
 };
 
-export type FixedCostPctData = {
+export type FixedCostPctData = DashboardGoalFields & {
   branch: string | null;
   start_date: string;
   end_date: string;
@@ -65,7 +67,7 @@ export type PmrBranchRow = FinancialBranchMetric & {
   pmr_days: number;
 };
 
-export type PmrData = {
+export type PmrData = DashboardGoalFields & {
   branch: string | null;
   start_date: string;
   end_date: string;

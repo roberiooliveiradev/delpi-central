@@ -40,6 +40,9 @@ from si_app.application.use_cases.strategic_indicators.get_alerts_real_use_case 
 from si_app.application.use_cases.strategic_indicators.get_trends_real_use_case import (
     GetStrategicIndicatorsTrendsRealUseCase,
 )
+from si_app.application.use_cases.strategic_indicators.get_dashboard_goals_by_source_keys_use_case import (
+    GetDashboardGoalsBySourceKeysUseCase,
+)
 from si_app.application.use_cases.strategic_indicators.get_departments_tree_use_case import (
     GetStrategicIndicatorsDepartmentsTreeUseCase,
 )
@@ -338,6 +341,12 @@ def build_get_strategic_indicators_departments_tree_use_case():
             snapshot_service=snapshot_service,
             calculator=calculator,
         ),
+    )
+
+
+def build_get_dashboard_goals_by_source_keys_use_case():
+    return GetDashboardGoalsBySourceKeysUseCase(
+        goals_repository=PostgresStrategicIndicatorsIndicatorGoalsRepository(),
     )
 
 

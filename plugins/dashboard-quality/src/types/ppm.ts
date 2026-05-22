@@ -1,3 +1,4 @@
+import type { DashboardGoalFields } from "../utils/goalDisplay";
 import type { PaginationParams } from "./pagination";
 
 export type PpmType = "internal" | "external";
@@ -8,7 +9,7 @@ export type DateRangeParams = {
   date_end?: string;
 };
 
-export type PpmSummary = {
+export type PpmSummary = DashboardGoalFields & {
   type: PpmType;
   branch: string | null;
   date_start: string | null;

@@ -30,6 +30,7 @@ import type { ChartGranularity } from "../types/chart";
 import type { TransformaProcess } from "../types/engineering";
 import { buildTransformaSavingsSeries } from "../utils/chartMonthlySeries";
 import { formatPeriodLabel } from "../utils/dates";
+import { formatGoalSubtitle } from "../utils/goalDisplay";
 import { suggestGranularity } from "../utils/periodBuckets";
 import {
   formatCurrency,
@@ -236,7 +237,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         <KpiCard
           title="Ganhos brutos no período"
           value={formatCurrency(summary?.total_gross_savings_in_period)}
-          subtitle={periodLabel}
+          subtitle={formatGoalSubtitle(periodLabel, summary)}
           icon={<Coins size={22} />}
           loading={isBusy && !summary}
         />
@@ -264,7 +265,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         <KpiCard
           title="ROI médio"
           value={formatPercent(summary?.average_roi, 1)}
-          subtitle="Média no período"
+          subtitle={formatGoalSubtitle("Média no período", summary, (v) => formatPercent(v, 1))}
           icon={<Percent size={22} />}
           loading={isBusy && !summary}
         />

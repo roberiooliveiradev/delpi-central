@@ -1,3 +1,5 @@
+import type { DashboardGoalFields } from "../utils/goalDisplay";
+
 export type EngineeringFilterParams = {
   start_date?: string;
   end_date?: string;
@@ -34,7 +36,7 @@ export type TransformaMonthlyItem = {
   net_savings_month: number;
 };
 
-export type TransformaSummary = {
+export type TransformaSummary = DashboardGoalFields & {
   implemented_solutions_count: number;
   total_net_savings_until_now: number;
   total_hours_saved_until_now: number;

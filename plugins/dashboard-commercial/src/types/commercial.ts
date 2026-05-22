@@ -1,13 +1,15 @@
-export type RolTargetData = {
+import type { DashboardGoalFields } from "../utils/goalDisplay";
+
+export type RolTargetData = DashboardGoalFields & {
   branch: string;
   start_date?: string | null;
   end_date?: string | null;
   rol: number;
-  target: number;
+  target: number | null;
   rol_target_pct: number | null;
 };
 
-export type ClosingRateData = {
+export type ClosingRateData = DashboardGoalFields & {
   branch?: string | null;
   start_date?: string | null;
   end_date?: string | null;
@@ -32,7 +34,7 @@ export type NewClientsRolPctData = {
   new_clients_rol_pct: number | null;
 };
 
-export type SalesOrderOtdData = {
+export type SalesOrderOtdData = DashboardGoalFields & {
   branch?: string | null;
   start_date?: string | null;
   end_date?: string | null;
@@ -42,7 +44,7 @@ export type SalesOrderOtdData = {
   sales_order_otd_pct: number | null;
 };
 
-export type NewBusinessRolPctData = {
+export type NewBusinessRolPctData = DashboardGoalFields & {
   branch?: string | null;
   start_date?: string | null;
   end_date?: string | null;

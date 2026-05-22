@@ -15,13 +15,18 @@ from app.infrastructure.providers.database.portal_rh_postgres_connection import 
     PortalRhDatabaseConnectionError,
 )
 from app.interface.http.routes.hr.date_params import normalize_portal_rh_date
+from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
+from app.application.services.strategic_indicators.dashboard_goals_service import (
+    get_dashboard_goals_service,
+)
+from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.utils.logger import log_error
 
 router = APIRouter(prefix="/hr", tags=["Recursos Humanos"])
 
 
-def _snapshot_payload(snapshot) -> dict:
-    return {
+def _snapshot_payload(snapshot, *, start_date: str | None = None, end_date: str | None = None, branch: str | None = None) -> dict:
+    payload = {
         "start_date": snapshot.start_date,
         "end_date": snapshot.end_date,
         "internal_satisfaction_pct": snapshot.internal_satisfaction_pct,
@@ -41,6 +46,21 @@ def _snapshot_payload(snapshot) -> dict:
             for branch in snapshot.branches
         ],
     }
+    return get_dashboard_goals_service().attach_goals_index(
+        payload,
+        field_source_keys={
+            "internal_satisfaction_pct": goal_keys.HR_SATISFACTION,
+            "active_pdi_pct": goal_keys.HR_PDI,
+            "active_pdi_count": goal_keys.HR_PDI,
+            "performance_reviews_completion_pct": goal_keys.HR_PERFORMANCE_REVIEWS,
+            "absenteeism_pct": goal_keys.HR_ABSENTEEISM,
+            "turnover_pct": goal_keys.HR_TURNOVER,
+            "training_hours_per_collaborator": goal_keys.HR_TRAINING_HOURS,
+        },
+        start_date=start_date,
+        end_date=end_date,
+        branch=branch,
+    )
 
 
 def _hr_query_dates(
@@ -99,7 +119,12 @@ def get_hr_snapshot(
             branch=branch,
         )
         return success_response(
-            data=_snapshot_payload(snapshot),
+            data=_snapshot_payload(
+                snapshot,
+                start_date=normalize_portal_rh_date(start_date),
+                end_date=normalize_portal_rh_date(end_date),
+                branch=branch,
+            ),
             message="Indicadores de RH obtidos com sucesso.",
         )
     except ValueError as exc:
@@ -141,7 +166,13 @@ def get_hr_active_pdi_count(
             branch=branch,
         )
         return success_response(
-            data=data,
+            data=enrich_dashboard_metric(
+                data,
+                source_key=goal_keys.HR_PDI,
+                start_date=start,
+                end_date=end,
+                branch=branch,
+            ),
             message="Contagem de PDIs ativos obtida com sucesso.",
         )
     except ValueError as exc:
@@ -183,7 +214,13 @@ def get_hr_performance_reviews_completion(
             branch=branch,
         )
         return success_response(
-            data=data,
+            data=enrich_dashboard_metric(
+                data,
+                source_key=goal_keys.HR_PERFORMANCE_REVIEWS,
+                start_date=start,
+                end_date=end,
+                branch=branch,
+            ),
             message="Percentual de avaliações de desempenho concluídas obtido com sucesso.",
         )
     except ValueError as exc:

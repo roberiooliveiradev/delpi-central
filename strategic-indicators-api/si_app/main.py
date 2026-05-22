@@ -18,6 +18,9 @@ from si_app.application.services.strategic_indicators.snapshot_warmup_service im
 )
 from si_app.startup.run_migrations_on_startup import run_migrations_on_startup
 from si_app.config import settings
+from si_app.interface.http.routes.integrations_routes import (
+    router as strategic_indicators_integrations_router,
+)
 from si_app.interface.http.routes.strategic_indicators_routes import (
     router as strategic_indicators_router,
 )
@@ -119,6 +122,7 @@ def health():
     return {"status": "online"}
 
 app.include_router(strategic_indicators_router)
+app.include_router(strategic_indicators_integrations_router)
 
 
 @app.get("/docs", include_in_schema=False)

@@ -47,6 +47,51 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
         """
         return self.fetch_all(query, (department_id,))
 
+    def list_active_indicators_by_source_keys(
+        self,
+        source_keys: list[str],
+        *,
+        department_id: str | None = None,
+    ) -> list[dict]:
+        normalized_keys = [
+            str(key).strip()
+            for key in source_keys
+            if key is not None and str(key).strip()
+        ]
+        if not normalized_keys:
+            return []
+
+        placeholders = ", ".join(["%s"] * len(normalized_keys))
+        params: list = list(normalized_keys)
+
+        query = f"""
+            SELECT
+                indicator_id,
+                department_id,
+                indicator_name,
+                weight_pct,
+                scope_type,
+                performance_direction,
+                strategic_description,
+                source_key,
+                value_unit,
+                value_prefix,
+                value_suffix,
+                value_decimals,
+                is_active,
+                display_order
+            FROM strategic_indicators.department_indicators
+            WHERE is_active = TRUE
+              AND source_key IN ({placeholders})
+        """
+
+        if department_id:
+            query += " AND department_id = %s"
+            params.append(department_id)
+
+        query += " ORDER BY display_order ASC, indicator_name ASC"
+        return self.fetch_all(query, tuple(params))
+
     def create_department_indicator(
         self,
         *,

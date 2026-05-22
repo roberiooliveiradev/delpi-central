@@ -35,6 +35,7 @@ import {
 import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
+import { formatGoalSubtitle } from "../utils/goalDisplay";
 import { formatScore } from "../utils/format";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { suggestGranularity } from "../utils/periodBuckets";
@@ -233,7 +234,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         <KpiCard
           title="Nota média"
           value={formatScore(data?.average_score)}
-          subtitle={periodLabel}
+          subtitle={formatGoalSubtitle(periodLabel, data, formatScore)}
           icon={<Star size={22} />}
           loading={loading && !data}
         />

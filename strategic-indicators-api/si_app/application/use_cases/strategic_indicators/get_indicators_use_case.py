@@ -35,7 +35,7 @@ class GetStrategicIndicatorsUseCase:
         branch: str | None = None,
         competence: str | None = None,
     ) -> GetStrategicIndicatorsResponse:
-        snapshot = self._snapshot_service.get_period_snapshot(
+        comparative = self._snapshot_service.get_current_and_previous_snapshot(
             competence=competence,
             start_date=start_date,
             end_date=end_date,
@@ -43,15 +43,24 @@ class GetStrategicIndicatorsUseCase:
             branch=branch,
         )
 
-        return self.build_from_period_snapshot(snapshot)
+        return self.build_from_period_snapshot(
+            comparative.current,
+            previous_snapshot=comparative.previous,
+        )
 
     def build_from_period_snapshot(
         self,
         snapshot: StrategicIndicatorsPeriodSnapshot,
+        *,
+        previous_snapshot: StrategicIndicatorsPeriodSnapshot | None = None,
     ) -> GetStrategicIndicatorsResponse:
         departments_by_id = {
             item.department_id: item
             for item in snapshot.calculated_departments
+        }
+        previous_indicators_by_id = {
+            item.indicator_id: item
+            for item in (previous_snapshot.calculated_indicators if previous_snapshot else [])
         }
 
         return GetStrategicIndicatorsResponse(
@@ -87,7 +96,10 @@ class GetStrategicIndicatorsUseCase:
                         department_id=item.department_id,
                     ),
                     has_value=item.value is not None,
-                    trend=item.trend,
+                    trend=self._resolve_indicator_trend(
+                        current=item,
+                        previous=previous_indicators_by_id.get(item.indicator_id),
+                    ),
                     classification=item.classification,
                     source=item.source,
                     value_unit=getattr(item, "value_unit", None),
@@ -105,4 +117,14 @@ class GetStrategicIndicatorsUseCase:
                 )
                 for error in snapshot.measurement_errors
             ],
+        )
+
+    def _resolve_indicator_trend(self, *, current, previous) -> str:
+        if current.score is None:
+            return "stable"
+
+        previous_score = previous.score if previous is not None else current.score
+        return self._calculator.resolve_trend_direction(
+            current=current.score,
+            previous=previous_score,
         )

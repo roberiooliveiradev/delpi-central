@@ -154,7 +154,7 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
             "branch": scope.branch,
             "current_snapshot": current_snapshot,
             "departments": self._map_departments(current_snapshot, previous_snapshot),
-            "indicators": self._map_indicators(current_snapshot),
+            "indicators": self._map_indicators(current_snapshot, previous_snapshot),
             "trends": trends,
         }
 
@@ -184,12 +184,16 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
 
     def _map_indicators(
         self,
-        snapshot: StrategicIndicatorsPeriodSnapshot | None,
+        current: StrategicIndicatorsPeriodSnapshot | None,
+        previous: StrategicIndicatorsPeriodSnapshot | None,
     ) -> dict:
-        if snapshot is None:
+        if current is None:
             return {"items": [], "errors": [], "partial_success": False}
 
-        response = self._indicators_use_case.build_from_period_snapshot(snapshot)
+        response = self._indicators_use_case.build_from_period_snapshot(
+            current,
+            previous_snapshot=previous,
+        )
         return self._serialize_indicators_response(response)
 
     @staticmethod
