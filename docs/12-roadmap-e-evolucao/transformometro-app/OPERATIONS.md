@@ -63,6 +63,12 @@ Atribuir ao perfil de engenharia/gestão, no mínimo:
 - `transformometro.shared-resources.manage` (catálogo Recursos)
 - `transformometro.admin` (import planilha)
 
+## Notificações de workflow (portal)
+
+Guia completo: [NOTIFICACOES-WORKFLOW.md](./NOTIFICACOES-WORKFLOW.md).
+
+Resumo: variáveis em `infra/.env` / `infra/.env.prod` → serviço `transformometro-api`. Após alterar: `docker compose up -d --force-recreate transformometro-api` (e rebuild Core API + Portal na primeira vez, categoria `transformometro`).
+
 ## Desligar escrita na planilha Google
 
 Checklist (manual, Google Workspace):
@@ -84,6 +90,7 @@ Checklist (manual, Google Workspace):
 | Números ≠ planilha antiga | Esperado: spec usa delta de recursos na bruta; ver [OVERVIEW.md](./OVERVIEW.md) |
 | SI 401 Transformômetro | `API_DELPI_INTERNAL_SERVICE_TOKEN` nos 3 serviços; rebuild SI |
 | SI 404 Transformômetro | `TRANSFORMOMETRO_API_BASE_URL=http://transformometro-api:8000` (sem `/apps/`) |
+| Sino sem alerta de revisão | `TM_NOTIFICATIONS_ENABLED=true`, aprovadores preenchidos, token Core API igual ao `infra/.env` |
 
 ## Auditoria
 

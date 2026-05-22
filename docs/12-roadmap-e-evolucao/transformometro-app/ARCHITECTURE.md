@@ -186,11 +186,33 @@ Manifesto `transformometro.manifest.json` (espelho do SI):
 |---------|--------|
 | `/apps/transformometro` | Início + health |
 | `/apps/transformometro/dashboard` | Cards, gráficos, alertas, export CSV/Excel, recalcular |
-| `/apps/transformometro/processos` | Lista; detalhe com revisões (clique na linha) |
+| `/apps/transformometro/processos` | Lista |
+| `/apps/transformometro/processos/{id}` | Detalhe + revisões |
+| `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Mesma tela com revisão na URL |
 | `/apps/transformometro/recursos` | Catálogo global (CRUD) |
 | `/apps/transformometro/import` | Import planilha |
 
-Detalhe da revisão (estado no MFE, sem URL própria): abas **Vigência** (datas + descrição/motivo/observações), **Medição**, **Investimentos**, **Recursos** (vínculos editáveis). Toolbar de **workflow** acima das abas.
+Detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos**; toolbar de **workflow** acima das abas. Roteamento por URL (`routeParser`, `useDelpiPortalBridge`).
+
+### Portal (iframe / federated)
+
+| Mensagem | Direção | Uso |
+|----------|---------|-----|
+| `DELPI_NAVIGATE` | Portal → MFE | Deep link de notificação (`metadata.deepPath`) |
+| `DELPI_EMBEDDED_ROUTE` | MFE → portal | Sincroniza barra de URL ao navegar |
+
+Ver [NOTIFICACOES-WORKFLOW.md](./NOTIFICACOES-WORKFLOW.md) e [embedded-app-deep-links.md](../../05-portal/embedded-app-deep-links.md).
+
+## Notificações de workflow
+
+Após `POST /revisoes/{id}/workflow/*`, a API opcionalmente chama `POST {TM_CORE_API_URL}/integrations/notifications` (`CoreNotificationsClient`).
+
+| Evento | Destinatários |
+|--------|----------------|
+| Submeter | `TM_WORKFLOW_APPROVER_EMAILS` / `ROLE_IDS` |
+| Aprovar / rejeitar | E-mail do último `workflow_submeter` em `audit_logs` |
+
+Configuração: `infra/.env` (`TM_NOTIFICATIONS_*`). Implementação: `revisao_workflow_notification_service.py`.
 
 ## Integração infra
 
@@ -199,7 +221,7 @@ Espelhar `strategic-indicators` em `infra/docker-compose.dev.yml`:
 - Serviço `transformometro-api` (porta interna 8000, `TM_API_ROOT_PATH`)
 - Serviço `transformometro` (Vite dev / build estático)
 - Traefik/nginx: `/apps/transformometro` e `/apps/transformometro-api`
-- Variáveis: `PLUGINS_DB_*`, `TM_DB_SCHEMA=transformometro`
+- Variáveis: `PLUGINS_DB_*`, `TM_RUN_MIGRATIONS_ON_STARTUP`, `TRANSFORMA_MAIS_*`, `TM_NOTIFICATIONS_*` (ver [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md))
 - Registro Core API: `POST /core-api/admin/apps/register` com manifesto
 
 ## Auditoria

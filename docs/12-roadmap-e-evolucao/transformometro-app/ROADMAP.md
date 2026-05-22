@@ -82,6 +82,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Export PDF | Botão imprimir + CSS `@media print` no dashboard | ✅ |
 | URLs processo/revisão | `/processos/{id}` e `/revisoes/{id}` no MFE | ✅ |
 | Recálculo incremental | `POST /recalcular` com escopo | ✅ |
+| Notificações workflow | Core API + deep link MFE (`DELPI_NAVIGATE`) | ✅ |
 
 ## Matriz de reaproveitamento
 
@@ -107,4 +108,4 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 1. **Deploy:** rebuild `transformometro-api` + MFE; `TM_RUN_MIGRATIONS_ON_STARTUP=true` (V004–V005); registrar manifesto (rota `/recursos`)
 2. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
 3. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
-4. **Backlog Fase 4+:** notificações de workflow
+4. **Notificações:** habilitar `TM_NOTIFICATIONS_ENABLED` + aprovadores em produção — ver [NOTIFICACOES-WORKFLOW.md](./NOTIFICACOES-WORKFLOW.md)

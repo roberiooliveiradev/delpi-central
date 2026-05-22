@@ -43,10 +43,25 @@ make test
 | Grupo | Exemplos |
 |-------|----------|
 | Processos / revisões | `/processos`, `/revisoes`, `/revisoes/{id}/ativar` |
-| Workflow | `POST /revisoes/{id}/workflow/submeter`, `/aprovar`, `/rejeitar` |
+| Workflow | `POST /revisoes/{id}/workflow/submeter`, `/aprovar`, `/rejeitar` (+ notificações Core API, opcional) |
 | Recursos | `/recursos-compartilhados`, vínculos `/revisao-recursos-compartilhados` |
 | Dashboard | `/dashboard/resumo`, `/alertas`, `/export.csv`, `/export.xls`, `POST /recalcular` (full ou `?processo_id=` / `?revisao_id=` / competências) |
 | Integração | `/integrations/engineering/transforma-mais/processes` |
+
+## Notificações de workflow (portal)
+
+Quando habilitado, submeter/aprovar/rejeitar dispara alertas no sino do portal (categoria `transformometro`, deep link para a revisão).
+
+```env
+TM_NOTIFICATIONS_ENABLED=true
+TM_CORE_API_URL=http://core-api:8000
+CORE_API_INTEGRATIONS_SERVICE_TOKEN=<mesmo valor da Core API>
+TM_PORTAL_ROUTE=/apps/transformometro
+TM_WORKFLOW_APPROVER_EMAILS=aprovador@delpi.com.br
+# TM_WORKFLOW_APPROVER_ROLE_IDS=<uuid>,<uuid>
+```
+
+Documentação: [NOTIFICACOES-WORKFLOW.md](../docs/12-roadmap-e-evolucao/transformometro-app/NOTIFICACOES-WORKFLOW.md), [conectar-aplicacao-iframe.md](../docs/10-guias-operacionais/conectar-aplicacao-iframe.md).
 
 ## Importação da planilha (Transforma+)
 

@@ -11,6 +11,7 @@ from app.domain.services.permission_resolver import PermissionResolver
 # sourceApp lógico (integrações) → id do plugin no portal
 _SOURCE_APP_PLUGIN_ALIASES: dict[str, str] = {
     "controle_mp": "controle-mp",
+    "transformometro": "transformometro",
 }
 
 

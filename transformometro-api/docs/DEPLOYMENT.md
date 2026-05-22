@@ -40,6 +40,12 @@ Serviço em `infra/docker-compose.yml` e `infra/docker-compose.dev.yml`:
 | `JWT_SECRET` / Keycloak | — | `delpi_auth` |
 | `API_DELPI_INTERNAL_SERVICE_TOKEN` | — | Auth S2S nas rotas `/integrations/engineering/*` (mesmo valor em SI e api-delpi) |
 | `TRANSFORMOMETRO_API_BASE_URL` | `http://transformometro-api:8000` | Só nos **consumidores** (SI, api-delpi), não neste serviço |
+| `TM_NOTIFICATIONS_ENABLED` | `false` | Dispara alertas no portal ao submeter/aprovar/rejeitar revisão |
+| `TM_CORE_API_URL` | `http://core-api:8000` | Base da Core API na rede Docker (`POST …/integrations/notifications`) |
+| `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | — | Mesmo valor de `infra/.env` / Core API (`X-Delpi-Service-Token`) |
+| `TM_PORTAL_ROUTE` | `/apps/transformometro` | `action.target` + prefixo do deep link |
+| `TM_WORKFLOW_APPROVER_EMAILS` | — | Destinatários na submissão (CSV) |
+| `TM_WORKFLOW_APPROVER_ROLE_IDS` | — | Papéis RBAC na submissão (CSV de UUIDs) |
 
 ## Testes antes do deploy
 

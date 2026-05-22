@@ -47,7 +47,7 @@ Model: `app/infrastructure/db/models/notification.py`.
 | `title` | Título opcional |
 | `message` | Texto principal / fallback |
 | `type` | Severidade visual: `info`, `success`, `warning`, `error` |
-| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `custom` |
+| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `custom`, `controle_mp`, `transformometro` |
 | `presentation` | `text`, `html`, `template` |
 | `html_content` | HTML sanitizado (`bleach`) |
 | `action_type`, `action_label`, `action_target` | CTA (`portal_route`, `external_url`) |
@@ -160,7 +160,7 @@ Usado pelo modal RBAC do Portal para papéis, grupos e data de nascimento. Body 
 | Parâmetro | Valores | Default |
 |-----------|---------|---------|
 | `status` | `all`, `unread`, `read` | `all` |
-| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `custom` | — |
+| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `custom`, `controle_mp`, `transformometro` | — |
 | `important` | `true` (somente importantes) | — |
 | `limit` | 1–100 | `20` |
 | `offset` | ≥ 0 | `0` |

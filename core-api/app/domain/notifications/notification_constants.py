@@ -10,6 +10,7 @@ ALLOWED_NOTIFICATION_CATEGORIES = frozenset({
     "announcement",
     "custom",
     "controle_mp",
+    "transformometro",
 })
 
 ALLOWED_PRESENTATION_MODES = frozenset({"text", "html", "template"})
@@ -24,4 +25,5 @@ CATEGORY_DEFAULT_ICONS = {
     "announcement": "megaphone",
     "custom": "bell",
     "controle_mp": "message-circle",
+    "transformometro": "gauge",
 }

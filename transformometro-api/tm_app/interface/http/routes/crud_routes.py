@@ -38,6 +38,9 @@ from tm_app.application.services.process_revision_compare_service import (
 from tm_app.application.services.revisao_rateio_diagnostic_service import (
     RevisaoRateioDiagnosticService,
 )
+from tm_app.application.services.revisao_workflow_notification_service import (
+    RevisaoWorkflowNotificationService,
+)
 from tm_app.application.services.revisao_workflow_service import (
     RevisaoWorkflowError,
     RevisaoWorkflowService,
@@ -203,11 +206,16 @@ def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
 
 @router.post("/revisoes/{revisao_id}/workflow/submeter")
 def submeter_revisao_aprovacao(revisao_id: str, request: Request):
+    _, actor_email = actor_from_request(request)
     try:
         row = RevisaoWorkflowService().submeter(revisao_id)
     except RevisaoWorkflowError as exc:
         return fail(str(exc), 400)
     _audit(request, "revisao", revisao_id, "workflow_submeter", {})
+    try:
+        RevisaoWorkflowNotificationService().notify_submitted(row, actor_email=actor_email)
+    except Exception as exc:
+        logger.warning("workflow_notify_submitted_failed revisao=%s err=%s", revisao_id, exc)
     return ok(row_to_json(row), "Revisão enviada para análise.")
 
 
@@ -219,6 +227,12 @@ def aprovar_revisao(revisao_id: str, request: Request):
     except RevisaoWorkflowError as exc:
         return fail(str(exc), 400)
     _audit(request, "revisao", revisao_id, "workflow_aprovar", {"email": email})
+    try:
+        RevisaoWorkflowNotificationService().notify_decision(
+            row, decision="aprovada", actor_email=email
+        )
+    except Exception as exc:
+        logger.warning("workflow_notify_aprovar_failed revisao=%s err=%s", revisao_id, exc)
     return ok(row_to_json(row), "Revisão aprovada.")
 
 
@@ -230,6 +244,15 @@ def rejeitar_revisao(revisao_id: str, body: RevisaoRejeitarBody, request: Reques
     except RevisaoWorkflowError as exc:
         return fail(str(exc), 400)
     _audit(request, "revisao", revisao_id, "workflow_rejeitar", {"email": email, "motivo": body.motivo})
+    try:
+        RevisaoWorkflowNotificationService().notify_decision(
+            row,
+            decision="rejeitada",
+            actor_email=email,
+            motivo=body.motivo,
+        )
+    except Exception as exc:
+        logger.warning("workflow_notify_rejeitar_failed revisao=%s err=%s", revisao_id, exc)
     return ok(row_to_json(row), "Revisão rejeitada.")
 
 
