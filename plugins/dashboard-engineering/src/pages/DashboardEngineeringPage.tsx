@@ -12,7 +12,7 @@ import { useEngineeringDashboard } from "../hooks/useEngineeringDashboard";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { formatPeriodLabel } from "../utils/dates";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import {
   formatCurrency,
   formatDecimal,
@@ -112,10 +112,11 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         <KpiCard
           title="% LMP dentro do prazo"
           value={formatPercent(lmpSummary?.percent_dentro_prazo, 2)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             lmpSummary,
             (v) => formatPercent(v, 2),
+            { realizedValue: lmpSummary?.percent_dentro_prazo },
           )}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !lmpSummary}
@@ -123,7 +124,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         <KpiCard
           title="Lead time médio (dias úteis)"
           value={formatDecimal(lmpSummary?.avg_lead_time, 2)}
-          subtitle="Média no período"
+          contextLabel="Média no período"
           icon={<Clock size={22} />}
           loading={isBusy && !lmpSummary}
         />
@@ -132,16 +133,18 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
           value={formatInteger(
             lmpSummary?.total_items ?? lmpSummary?.total_lmps
           )}
-          subtitle="LMPs / amostras no recorte"
+          contextLabel="LMPs / amostras no recorte"
           icon={<BarChart3 size={22} />}
           loading={isBusy && !lmpSummary}
         />
         <KpiCard
           title="Ganhos brutos TRANSFORMA+"
           value={formatCurrency(transforma?.total_gross_savings_in_period)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             transforma,
+            undefined,
+            { realizedValue: transforma?.total_gross_savings_in_period },
           )}
           icon={<Coins size={22} />}
           loading={isBusy && !transforma}
@@ -149,17 +152,21 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         <KpiCard
           title="Soluções implementadas"
           value={formatInteger(transforma?.implemented_solutions_count)}
-          subtitle="Melhorias na planilha"
+          contextLabel="Melhorias na planilha"
           icon={<Lightbulb size={22} />}
           loading={isBusy && !transforma}
         />
         <KpiCard
           title="ROI médio TRANSFORMA+"
           value={formatPercent(transforma?.average_roi, 1)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             "No período filtrado",
             transforma,
             (v) => formatPercent(v, 1),
+            {
+              realizedValue: transforma?.average_roi,
+              showGoal: false,
+            },
           )}
           icon={<Percent size={22} />}
           loading={isBusy && !transforma}

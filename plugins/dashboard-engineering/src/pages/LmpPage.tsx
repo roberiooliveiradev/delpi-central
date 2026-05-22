@@ -42,7 +42,7 @@ import {
   parseLmpDateNumber,
 } from "../utils/lmpDisplay";
 import { formatPeriodLabel } from "../utils/dates";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatDecimal, formatInteger, formatPercent } from "../utils/format";
 
 const PIE_HEIGHT = 320;
@@ -244,21 +244,26 @@ export function LmpPage({ pathname }: LmpPageProps) {
         <KpiCard
           title="% LMP dentro do prazo"
           value={formatPercent(summary?.percent_dentro_prazo, 2)}
-          subtitle={formatGoalSubtitle(periodLabel, summary, (v) => formatPercent(v, 2))}
+          {...buildKpiGoalPresentation(
+            periodLabel,
+            summary,
+            (v) => formatPercent(v, 2),
+            { realizedValue: summary?.percent_dentro_prazo },
+          )}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !summary}
         />
         <KpiCard
           title="Lead time médio útil"
           value={`${formatDecimal(summary?.avg_lead_time, 2)} dias`}
-          subtitle="Média no período"
+          contextLabel="Média no período"
           icon={<Clock3 size={22} />}
           loading={isBusy && !summary}
         />
         <KpiCard
           title="Total de propostas"
           value={formatInteger(totalPropostas)}
-          subtitle={
+          contextLabel={
             status !== "Todos" || listingType !== "Todos"
               ? "Registros no filtro"
               : "Período filtrado"
