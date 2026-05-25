@@ -183,5 +183,17 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_latest_goals_ignoring_validity(
+        self,
+        *,
+        indicator_ids: list[str],
+        department_id: str | None = None,
+        competence: str | None = None,
+        scope_branch: str | None = None,
+    ) -> dict[str, dict]:
+        """Meta ativa mais recente sem filtro de vigência (valid_from/valid_to)."""
+        raise NotImplementedError
+
+    @abstractmethod
     def list_goal_years_overview(self) -> list[dict]:
         raise NotImplementedError

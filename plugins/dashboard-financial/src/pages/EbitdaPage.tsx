@@ -25,7 +25,7 @@ import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { useFinancialResource } from "../hooks/useFinancialResource";
 import type { EbitdaBranchRow } from "../types/financial";
 import { formatPeriodLabel } from "../utils/dates";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatCurrency, formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 320;
@@ -124,7 +124,12 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
         <KpiCard
           title="EBITDA / ROL"
           value={formatPercent(data?.ebitda_over_rol_pct)}
-          subtitle={formatGoalSubtitle(periodLabel, data, formatPercent)}
+          {...buildKpiGoalPresentation(
+            periodLabel,
+            data,
+            formatPercent,
+            { realizedValue: data?.ebitda_over_rol_pct },
+          )}
           icon={<Percent size={22} />}
           loading={isBusy && !data}
         />

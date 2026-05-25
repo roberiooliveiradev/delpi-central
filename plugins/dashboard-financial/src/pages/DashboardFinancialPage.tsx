@@ -22,7 +22,7 @@ import { FINANCIAL_ROUTES } from "../constants/routes";
 import { useFinancialDashboard } from "../hooks/useFinancialDashboard";
 import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { formatPeriodLabel } from "../utils/dates";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import {
   formatCurrency,
   formatDecimal,
@@ -133,12 +133,13 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         <KpiCard
           title="EBITDA / ROL"
           value={formatPercent(ebitda?.ebitda_over_rol_pct)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             ebitda?.ebitda_value != null
               ? `EBITDA ${formatCurrency(ebitda.ebitda_value)} · ${periodLabel}`
               : periodLabel,
             ebitda,
             formatPercent,
+            { realizedValue: ebitda?.ebitda_over_rol_pct },
           )}
           icon={<Percent size={22} />}
           loading={isBusy && !ebitda}
@@ -146,12 +147,13 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         <KpiCard
           title="Custos fixos / ROL"
           value={formatPercent(fixedCost?.fixed_cost_over_rol_pct)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             fixedCost?.fixed_cost_value != null
               ? `Fixos ${formatCurrency(fixedCost.fixed_cost_value)} · ${periodLabel}`
               : periodLabel,
             fixedCost,
             formatPercent,
+            { realizedValue: fixedCost?.fixed_cost_over_rol_pct },
           )}
           icon={<Landmark size={22} />}
           loading={isBusy && !fixedCost}
@@ -159,7 +161,12 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         <KpiCard
           title="PMR (dias)"
           value={formatDecimal(pmr?.pmr_days, 1)}
-          subtitle={formatGoalSubtitle(periodLabel, pmr, (v) => formatDecimal(v, 1))}
+          {...buildKpiGoalPresentation(
+            periodLabel,
+            pmr,
+            (v) => formatDecimal(v, 1),
+            { realizedValue: pmr?.pmr_days },
+          )}
           icon={<Clock size={22} />}
           loading={isBusy && !pmr}
         />

@@ -1319,6 +1319,100 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             "items": created_items,
         }
 
+    def list_latest_goals_ignoring_validity(
+        self,
+        *,
+        indicator_ids: list[str],
+        department_id: str | None = None,
+        competence: str | None = None,
+        scope_branch: str | None = None,
+    ) -> dict[str, dict]:
+        normalized_ids = [
+            str(indicator_id).strip()
+            for indicator_id in indicator_ids
+            if indicator_id is not None and str(indicator_id).strip()
+        ]
+        if not normalized_ids:
+            return {}
+
+        year = self._resolve_goal_year(
+            competence=competence,
+            start_date=None,
+            end_date=None,
+        ) if competence else None
+
+        placeholders = ", ".join("%s" for _ in normalized_ids)
+        params: list = list(normalized_ids)
+        scope_filter = self._resolved_goal_scope_filter(
+            scope_branch=scope_branch,
+            params=params,
+        )
+        scope_order, scope_order_params = self._resolved_goal_scope_order(
+            scope_branch=scope_branch,
+        )
+
+        query = f"""
+            SELECT DISTINCT ON (ig.indicator_id)
+                ig.id,
+                ig.indicator_id,
+                ig.goal_year,
+                ig.goal_label,
+                ig.goal_value,
+                ig.goal_periodicity,
+                ig.goal_mode,
+                ig.goal_scope_branch,
+                ig.version,
+                ig.is_active,
+                ig.valid_from,
+                ig.valid_to,
+                ig.notes,
+                ig.created_at,
+                ig.updated_at
+            FROM strategic_indicators.indicator_goals ig
+            INNER JOIN strategic_indicators.department_indicators di
+                ON di.indicator_id = ig.indicator_id
+            INNER JOIN strategic_indicators.departments d
+                ON d.department_id = di.department_id
+            WHERE ig.indicator_id IN ({placeholders})
+              AND ig.is_active = TRUE
+              AND di.is_active = TRUE
+              AND d.is_active = TRUE
+              {scope_filter}
+        """
+
+        if department_id:
+            query += " AND di.department_id = %s"
+            params.append(department_id)
+
+        if year is not None:
+            query += " AND ig.goal_year <= %s"
+            params.append(year)
+
+        params.extend(scope_order_params)
+
+        query += f"""
+            ORDER BY
+                ig.indicator_id,
+                ig.goal_year DESC,
+                {scope_order}
+                ig.version DESC,
+                ig.updated_at DESC
+        """
+
+        rows = self.fetch_all(query, tuple(params))
+        if not rows:
+            return {}
+
+        goal_ids = [row["id"] for row in rows]
+        monthly_by_goal = self._list_monthly_targets_batch(goal_ids)
+
+        result: dict[str, dict] = {}
+        for row in rows:
+            item = dict(row)
+            item["monthly_targets"] = monthly_by_goal.get(row["id"], [])
+            result[row["indicator_id"]] = item
+        return result
+
     def list_goal_years_overview(self) -> list[dict]:
         query = """
             SELECT
