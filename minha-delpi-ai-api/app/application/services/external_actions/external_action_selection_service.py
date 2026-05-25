@@ -88,6 +88,17 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+        if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.STRUCTURE:
+            selected = self._select_product_action(
+                message,
+                product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=ChatProductQueryIntent.STRUCTURE,
+            )
+
+            if selected:
+                return selected
+
         if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.STOCK:
             selected = self._select_product_action(
                 message,
@@ -168,6 +179,21 @@ class ExternalActionSelectionService:
             "carteira",
             "estrutura",
             "bom",
+            "roteiro",
+            "fornecedor",
+            "fornecedores",
+            "supplier",
+            "preço",
+            "preco",
+            "pricing",
+            "movimenta",
+            "inspeç",
+            "inspec",
+            "nota",
+            "fiscal",
+            "nfe",
+            "clientes",
+            "customer",
         ]
 
         return any(term in value for term in terms)
@@ -925,7 +951,44 @@ class ExternalActionSelectionService:
             for term in ("estrutura", "bom", "bill of material", "composição", "composicao")
         )
 
-        has_specific_sub_intent = wants_purchases or wants_sales or wants_open_orders or wants_structure
+        wants_guide = any(
+            term in normalized
+            for term in ("roteiro", "guide", "rota de fabricação", "rota de fabricacao")
+        )
+        wants_suppliers = any(
+            term in normalized
+            for term in ("fornecedor", "fornecedore", "supplier")
+        )
+        wants_pricing = any(
+            term in normalized
+            for term in ("preço", "preco", "pricing", "tabela de preço", "tabela de preco")
+        )
+        wants_customers = any(
+            term in normalized
+            for term in ("cliente", "customer")
+        )
+        wants_parents = any(
+            term in normalized
+            for term in ("produto pai", "produtos pai", "parent", "where used", "onde é usado", "onde e usado")
+        )
+        wants_movements = any(
+            term in normalized
+            for term in ("movimentaç", "movimentac", "internal-movement")
+        )
+        wants_invoices = any(
+            term in normalized
+            for term in ("nota fiscal", "notas fiscai", "nfe", "invoice")
+        )
+        wants_inspection = any(
+            term in normalized
+            for term in ("inspeção", "inspecao", "inspection", "qualidade")
+        )
+
+        has_specific_sub_intent = (
+            wants_purchases or wants_sales or wants_open_orders or wants_structure
+            or wants_guide or wants_suppliers or wants_pricing or wants_customers
+            or wants_parents or wants_movements or wants_invoices or wants_inspection
+        )
 
         def score(action: dict) -> int:
             haystack = " ".join(
@@ -948,7 +1011,44 @@ class ExternalActionSelectionService:
             if wants_structure and "/structure" in path:
                 value += 120
 
-            if intent == ChatProductQueryIntent.STOCK:
+            if wants_guide and "/guide" in path:
+                value += 120
+
+            if wants_suppliers and "/suppliers" in path:
+                value += 120
+
+            if wants_pricing and "/pricing" in path:
+                value += 120
+
+            if wants_customers and "/customers" in path:
+                value += 120
+
+            if wants_parents and "/parents" in path:
+                value += 120
+
+            if wants_movements and "/internal-movements" in path:
+                value += 120
+
+            if wants_invoices and "/inbound-invoice" in path:
+                value += 120
+
+            if wants_inspection and "/inspection" in path:
+                value += 120
+
+            if intent == ChatProductQueryIntent.STRUCTURE:
+                if "/structure" in path:
+                    value += 150
+
+                if "structure" in haystack or "estrutura" in haystack or "bom" in haystack:
+                    value += 40
+
+                if "analyser" in haystack:
+                    value -= 40
+
+                if "search" in path:
+                    value -= 80
+
+            elif intent == ChatProductQueryIntent.STOCK:
                 if "/products/{code}/stock" in haystack or path.endswith("/stock"):
                     value += 120
 

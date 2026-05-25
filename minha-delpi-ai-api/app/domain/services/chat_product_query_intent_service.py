@@ -4,6 +4,7 @@ import re
 class ChatProductQueryIntent:
     DESCRIPTION = "description"
     STOCK = "stock"
+    STRUCTURE = "structure"
     FULL = "full"
 
 
@@ -19,6 +20,9 @@ class ChatProductQueryIntentService:
 
         if cls._looks_like_mixed_documental_operational(normalized):
             return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_structure_question(normalized):
+            return ChatProductQueryIntent.STRUCTURE
 
         if cls._looks_like_stock_question(normalized):
             return ChatProductQueryIntent.STOCK
@@ -169,6 +173,8 @@ class ChatProductQueryIntentService:
             cls.references_previous_product(message)
             or cls._looks_like_stock_question(normalized)
             or cls._looks_like_description_question(normalized)
+            or cls._looks_like_structure_question(normalized)
+            or cls._looks_like_product_sub_intent(normalized)
         ):
             return None
 
@@ -297,6 +303,55 @@ class ChatProductQueryIntentService:
             "sku",
             "código do item",
             "codigo do item",
+        ]
+
+        return any(term in normalized for term in terms)
+
+    @classmethod
+    def _looks_like_structure_question(cls, normalized: str) -> bool:
+        terms = [
+            "estrutura",
+            "bom",
+            "bill of material",
+            "composição",
+            "composicao",
+            "componentes",
+            "árvore do produto",
+            "arvore do produto",
+        ]
+
+        return any(term in normalized for term in terms)
+
+    @classmethod
+    def _looks_like_product_sub_intent(cls, normalized: str) -> bool:
+        """Reconhece perguntas sobre aspectos específicos de um produto que
+        implicam necessidade de código (ex: 'qual o roteiro?', 'fornecedores?')."""
+        terms = [
+            "roteiro",
+            "guide",
+            "fornecedor",
+            "fornecedore",
+            "supplier",
+            "preço",
+            "preco",
+            "pricing",
+            "compra",
+            "purchase",
+            "venda",
+            "faturamento",
+            "carteira",
+            "movimentaç",
+            "movimentac",
+            "inspeção",
+            "inspecao",
+            "nota",
+            "fiscal",
+            "nfe",
+            "cliente",
+            "customer",
+            "pai",
+            "parent",
+            "where used",
         ]
 
         return any(term in normalized for term in terms)
