@@ -137,6 +137,91 @@ def list_lmps_dashboard_route(
         )
 
 
+@router.get("/lmps/dashboard/summary")
+@require_any_permission(
+    ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
+)
+def lmps_dashboard_summary_route(
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
+    status: str = Query("Todos"),
+    branch: Optional[str] = None,
+    listing_type: Optional[str] = Query(None),
+):
+    try:
+        dto = ListLMPRequest(
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+            listing_type=listing_type,
+        )
+
+        use_case = build_engineering_list_lmps_dashboard_use_case()
+        summary = use_case.execute_summary(dto, status_filter=status)
+        summary = enrich_dashboard_metric(
+            summary,
+            source_key=goal_keys.ENGINEERING_LMP,
+            start_date=date_start,
+            end_date=date_end,
+            branch=branch,
+        )
+
+        return success_response(
+            data=summary,
+            message="KPIs do dashboard de LMPs carregados com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação ao carregar summary de LMPs: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao carregar summary de LMPs: {exc}")
+        return error_response(
+            "Erro interno ao carregar KPIs de LMPs.",
+            status_code=500,
+        )
+
+
+@router.get("/lmps/dashboard/charts")
+@require_any_permission(
+    ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]
+)
+def lmps_dashboard_charts_route(
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
+    status: str = Query("Todos"),
+    branch: Optional[str] = None,
+    listing_type: Optional[str] = Query(None),
+):
+    try:
+        dto = ListLMPRequest(
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+            listing_type=listing_type,
+        )
+
+        use_case = build_engineering_list_lmps_dashboard_use_case()
+        charts = use_case.execute_charts(dto, status_filter=status)
+
+        return success_response(
+            data=charts,
+            message="Gráficos do dashboard de LMPs carregados com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação ao carregar charts de LMPs: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao carregar charts de LMPs: {exc}")
+        return error_response(
+            "Erro interno ao carregar gráficos de LMPs.",
+            status_code=500,
+        )
+
+
 @router.get("/lmps/{sale_number}", **LMP_BY_SALE)
 @require_any_permission(
     ["api-delpi.access", "dashboard-engineering.view", "dashboard-lmps.view"]

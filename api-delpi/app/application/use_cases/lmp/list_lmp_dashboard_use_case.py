@@ -102,37 +102,32 @@ class ListLMPDashboardUseCase:
             "leadByLevel": lead_by_level,
         }
 
-    def execute(
+    def _build_base_cache_key(
         self,
         request: ListLMPRequest,
-        status_filter: str = "Todos",
-        *,
-        scope: str | None = None,
-    ) -> Dict[str, Any]:
-        del scope  # mantido na assinatura por compatibilidade com chamadas antigas
+        status_filter: str,
+    ) -> str:
+        listing_type_key = resolve_listing_type_filter(request.listing_type) or "Todos"
+        return lmp_dashboard_cache_key(
+            date_start=request.date_start,
+            date_end=request.date_end,
+            branch=request.branch,
+            listing_type=listing_type_key,
+            status_filter=status_filter,
+        )
+
+    def _load_enriched(
+        self,
+        request: ListLMPRequest,
+        status_filter: str,
+    ) -> tuple[List[LMPDashboardItem], List[LMPDashboardItem], List[LMPDashboardItem]]:
+        """Carrega, enriquece e filtra as LMPs. Retorna (all, lmp_only, filtered)."""
+        base_key = self._build_base_cache_key(request, status_filter) + "|enriched"
+        cached = get_cached_lmp_dashboard(base_key)
+        if cached is not None:
+            return cached["all"], cached["lmp_only"], cached["filtered"]
 
         resolved_status = resolve_dashboard_status_filter(status_filter)
-        listing_type_key = resolve_listing_type_filter(request.listing_type) or "Todos"
-        page = request.page or 1
-        page_size = request.page_size or DEFAULT_DASHBOARD_PAGE_SIZE
-
-        cache_key = "|".join(
-            [
-                lmp_dashboard_cache_key(
-                    date_start=request.date_start,
-                    date_end=request.date_end,
-                    branch=request.branch,
-                    listing_type=listing_type_key,
-                    status_filter=status_filter,
-                ),
-                f"page={page}",
-                f"size={page_size}",
-            ]
-        )
-        cached = get_cached_lmp_dashboard(cache_key)
-        if cached is not None:
-            return cached
-
         query_request = replace(request, include_qtd_pi=False)
 
         rows: List[LMP] = self._repository.list_lmps(query_request)
@@ -140,10 +135,20 @@ class ListLMPDashboardUseCase:
         lmp_enriched = [
             item for item in enriched_all if item.listing_kind == LISTING_KIND_LMP
         ]
-        enriched = self._filter_items_by_status(enriched_all, resolved_status)
+        filtered = self._filter_items_by_status(enriched_all, resolved_status)
 
-        total = len(enriched)
+        set_cached_lmp_dashboard(base_key, {
+            "all": enriched_all,
+            "lmp_only": lmp_enriched,
+            "filtered": filtered,
+        })
+        return enriched_all, lmp_enriched, filtered
 
+    def _compute_summary(
+        self,
+        lmp_enriched: List[LMPDashboardItem],
+        total_items: int,
+    ) -> Dict[str, Any]:
         lead_items = [
             item for item in lmp_enriched if item.lead_time_util is not None
         ]
@@ -161,22 +166,66 @@ class ListLMPDashboardUseCase:
             else 0
         )
 
+        return {
+            "total_lmps": total_lmps_for_kpi,
+            "total_items": total_items,
+            "percent_dentro_prazo": round(percent_dentro_prazo, 2),
+            "avg_lead_time": round(avg_lead_time, 2),
+        }
+
+    def execute_summary(
+        self,
+        request: ListLMPRequest,
+        status_filter: str = "Todos",
+    ) -> Dict[str, Any]:
+        """Fase 1: apenas KPIs (summary)."""
+        _, lmp_enriched, filtered = self._load_enriched(request, status_filter)
+        return self._compute_summary(lmp_enriched, len(filtered))
+
+    def execute_charts(
+        self,
+        request: ListLMPRequest,
+        status_filter: str = "Todos",
+    ) -> Dict[str, Any]:
+        """Fase 2: dados dos gráficos."""
+        _, _, filtered = self._load_enriched(request, status_filter)
+        return self._build_charts(filtered)
+
+    def execute(
+        self,
+        request: ListLMPRequest,
+        status_filter: str = "Todos",
+        *,
+        scope: str | None = None,
+    ) -> Dict[str, Any]:
+        del scope
+
+        page = request.page or 1
+        page_size = request.page_size or DEFAULT_DASHBOARD_PAGE_SIZE
+
+        cache_key = "|".join([
+            self._build_base_cache_key(request, status_filter),
+            f"page={page}",
+            f"size={page_size}",
+        ])
+        cached = get_cached_lmp_dashboard(cache_key)
+        if cached is not None:
+            return cached
+
+        _, lmp_enriched, filtered = self._load_enriched(request, status_filter)
+        total = len(filtered)
+
         start = (page - 1) * page_size
         end = start + page_size
-        paginated = enriched[start:end]
+        paginated = filtered[start:end]
 
         result = {
             "items": [asdict(item) for item in paginated],
             "total": total,
             "page": page,
             "page_size": page_size,
-            "summary": {
-                "total_lmps": total_lmps_for_kpi,
-                "total_items": total,
-                "percent_dentro_prazo": round(percent_dentro_prazo, 2),
-                "avg_lead_time": round(avg_lead_time, 2),
-            },
-            "charts": self._build_charts(enriched),
+            "summary": self._compute_summary(lmp_enriched, total),
+            "charts": self._build_charts(filtered),
         }
         set_cached_lmp_dashboard(cache_key, result)
         return result
