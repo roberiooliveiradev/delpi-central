@@ -21,6 +21,16 @@ PRODUCT_CODE_CASES = [
         "10080047",
         "assistant: Produto 10080047: TERM. PINO RETO",
     ),
+    (
+        "o que mais pode me dizer sobre um produto?",
+        "10070088",
+        "assistant: Produto 10070088: CABO PP CIRCULAR",
+    ),
+    (
+        "mais informações sobre o item",
+        "10080047",
+        "assistant: Produto 10080047: TERM. PINO RETO",
+    ),
 ]
 
 OPERATIONAL_FAST_PATH_CASES = [

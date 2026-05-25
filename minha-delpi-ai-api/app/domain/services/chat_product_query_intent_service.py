@@ -77,9 +77,46 @@ class ChatProductQueryIntentService:
             "mesma referencia",
             "dele",
             "dela",
+            "sobre o produto",
+            "sobre o item",
+            "sobre esse",
+            "sobre este",
         ]
 
-        return any(term in normalized for term in terms)
+        return any(term in normalized for term in terms) or cls._looks_like_product_followup(
+            normalized
+        )
+
+    @classmethod
+    def _looks_like_product_followup(cls, normalized: str) -> bool:
+        followup_terms = [
+            "o que mais",
+            "que mais",
+            "mais informações",
+            "mais informacoes",
+            "outras informações",
+            "outras informacoes",
+            "algo mais",
+            "mais sobre",
+            "mais dados",
+            "mais detalhes",
+            "o que mais pode",
+            "o que mais tem",
+            "o que mais sabe",
+            "o que mais consegue",
+        ]
+        product_terms = [
+            "produto",
+            "item",
+            "material",
+            "código",
+            "codigo",
+        ]
+
+        has_followup = any(term in normalized for term in followup_terms)
+        has_product_ref = any(term in normalized for term in product_terms)
+
+        return has_followup and has_product_ref
 
     @classmethod
     def normalize_product_code(cls, raw: str) -> str:
