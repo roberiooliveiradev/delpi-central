@@ -133,7 +133,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
           <div className="si-departments-page__overlay">
             <LoadingActivityInline
               title="Carregando mapa departamental"
-              description="Montando IGD, IDDs e indicadores com série dos últimos meses."
+              description="Buscando IGD, departamentos e indicadores do período atual…"
               variant="panel"
               tone="info"
               progressPercent={loadingProgress}
@@ -156,7 +156,11 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
             <div className="si-departments-page__refresh-banner">
               <LoadingActivityInline
                 title="Atualizando mapa"
-                description="Recalculando escopos para o novo filtro."
+                description={
+                  requestProgress.completed < requestProgress.total
+                    ? "Carregando séries históricas (sparklines)…"
+                    : "Recalculando escopos para o novo filtro."
+                }
                 variant="compact"
                 tone="info"
                 progressPercent={refreshingProgress}
