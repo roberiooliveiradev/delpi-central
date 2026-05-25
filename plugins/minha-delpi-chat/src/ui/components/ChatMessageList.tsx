@@ -22,10 +22,13 @@ import {
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatActionResults } from "./ChatActionResults";
+import { ChatRichTable } from "./ChatRichTable";
 import { ChatSources } from "./ChatSources";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
+import { getPresentationFromStreamingToolCalls } from "./chatPresentation";
 
 import "./ChatMessageList.css";
+import "./ChatRichTable.css";
 
 const SCROLL_NEAR_BOTTOM_THRESHOLD_PX = 96;
 const PIN_USER_MESSAGE_TOP_PADDING_PX = 12;
@@ -73,6 +76,16 @@ function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
   }
 
   return [];
+}
+
+function renderPresentation(toolCalls: ChatToolCall[]) {
+  const presentation = getPresentationFromStreamingToolCalls(toolCalls);
+
+  if (!presentation || presentation.type !== "table") {
+    return null;
+  }
+
+  return <ChatRichTable presentation={presentation} />;
 }
 
 type MessageAttachment = {
@@ -620,6 +633,7 @@ export function ChatMessageList({
 
           {!isUser ? (
             <>
+              {renderPresentation(getMessageToolCalls(message))}
               <ChatActionResults toolCalls={getMessageToolCalls(message)} />
               <ChatSources sources={filterVisibleChatSources(getMessageSources(message))} />
             </>
@@ -703,6 +717,7 @@ export function ChatMessageList({
                 </div>
               )}
 
+              {renderPresentation(streamingToolCalls)}
               <ChatActionResults toolCalls={streamingToolCalls} />
               <ChatSources sources={filterVisibleChatSources(streamingSources)} />
             </div>
