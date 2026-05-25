@@ -112,10 +112,11 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `LLM_PROVIDER` | `ollama` ou `vllm` |
 | `OLLAMA_BASE_URL` | `http://ollama:11434` |
 | `OLLAMA_MODEL` | Default **`qwen2.5:1.5b`** (CPU, resposta rápida). Use `qwen2.5:3b` só se priorizar qualidade textual e aceitar latência maior |
-| `OLLAMA_NUM_CTX` | Janela de contexto (ex.: `1536` prod, `2048` dev) |
-| `OLLAMA_NUM_THREAD` | Threads CPU (`0` = automático) |
-| `OLLAMA_NUM_PARALLEL` / `OLLAMA_MAX_LOADED_MODELS` / `OLLAMA_KEEP_ALIVE` | Serviço `ollama` no Compose |
-| `LLM_MAX_TOKENS` | `num_predict` Ollama (ex.: `768`) |
+| `OLLAMA_NUM_CTX` | Janela de contexto. **Prod CPU (4 vCPU/8 GB):** `1024`; dev: `2048` |
+| `OLLAMA_NUM_THREAD` | Threads CPU. Usar = nº de cores reais. **Prod 4 vCPU:** `4` |
+| `OLLAMA_MAX_LOADED_MODELS` | Modelos simultâneos em RAM. **Prod 8 GB:** `1` (evita swap thrashing) |
+| `OLLAMA_NUM_PARALLEL` / `OLLAMA_KEEP_ALIVE` | Serviço `ollama` no Compose |
+| `LLM_MAX_TOKENS` | `num_predict` Ollama. **Prod CPU:** `256`; dev: `768` |
 | `CHAT_SESSION_TITLE_LLM_ENABLED` | `false` em prod recomendado (título rápido + refine opcional em background) |
 | `CHAT_FAST_PATH_ENABLED` | `true` — pula RAG/tools em cumprimentos curtos (`olá`, `oi`) |
 | `CHAT_TOOL_ROUTER_ENABLED` | `false` em CPU — evita LLM extra antes de cada resposta |
