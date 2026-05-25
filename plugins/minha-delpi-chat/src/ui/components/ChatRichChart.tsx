@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -25,6 +25,17 @@ const DEFAULT_COLORS = [
   "#06b6d4", "#ec4899", "#84cc16", "#f97316", "#6366f1",
 ];
 
+function useIsDarkMode(): boolean {
+  return useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return (
+      document.documentElement.classList.contains("dark") ||
+      document.body.classList.contains("dark") ||
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    );
+  }, []);
+}
+
 export function ChatRichChart({
   presentation,
 }: {
@@ -32,11 +43,17 @@ export function ChatRichChart({
 }) {
   const { title, chartType, data, config } = presentation;
   const [downloadReady, setDownloadReady] = useState(false);
+  const isDark = useIsDarkMode();
 
   const xAxis = config?.xAxis || guessXAxis(data);
   const yAxes = normalizeYAxes(config?.yAxis, data, xAxis);
   const colors = config?.colors || DEFAULT_COLORS;
   const showLegend = config?.legend !== false && yAxes.length > 1;
+  const gridColor = isDark ? "#334155" : "#e2e8f0";
+  const tickStyle = { fontSize: 11, fill: isDark ? "#94a3b8" : "#64748b" };
+  const tooltipStyle = isDark
+    ? { backgroundColor: "#1e293b", border: "1px solid #334155", color: "#e2e8f0" }
+    : undefined;
 
   const exportPng = useCallback(() => {
     const svg = document.querySelector(".mdc-rich-chart__container svg");
@@ -83,12 +100,22 @@ export function ChatRichChart({
 
       <div className="mdc-rich-chart__container">
         <ResponsiveContainer width="100%" height={280}>
-          {renderChart(chartType, data, xAxis, yAxes, colors, showLegend)}
+          {renderChart(chartType, data, xAxis, yAxes, colors, showLegend, {
+            gridColor,
+            tickStyle,
+            tooltipStyle,
+          })}
         </ResponsiveContainer>
       </div>
     </div>
   );
 }
+
+type ThemeConfig = {
+  gridColor: string;
+  tickStyle: { fontSize: number; fill: string };
+  tooltipStyle?: React.CSSProperties;
+};
 
 function renderChart(
   type: string,
@@ -97,6 +124,7 @@ function renderChart(
   yAxes: string[],
   colors: string[],
   showLegend: boolean,
+  theme: ThemeConfig,
 ) {
   const commonProps = { data, margin: { top: 10, right: 20, left: 10, bottom: 5 } };
 
@@ -104,10 +132,10 @@ function renderChart(
     case "line":
       return (
         <LineChart {...commonProps}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey={xAxis} tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} />
-          <Tooltip />
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
+          <XAxis dataKey={xAxis} tick={theme.tickStyle} />
+          <YAxis tick={theme.tickStyle} />
+          <Tooltip contentStyle={theme.tooltipStyle} />
           {showLegend && <Legend />}
           {yAxes.map((key, i) => (
             <Line
@@ -125,10 +153,10 @@ function renderChart(
     case "area":
       return (
         <AreaChart {...commonProps}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey={xAxis} tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} />
-          <Tooltip />
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
+          <XAxis dataKey={xAxis} tick={theme.tickStyle} />
+          <YAxis tick={theme.tickStyle} />
+          <Tooltip contentStyle={theme.tooltipStyle} />
           {showLegend && <Legend />}
           {yAxes.map((key, i) => (
             <Area
@@ -146,7 +174,7 @@ function renderChart(
     case "pie":
       return (
         <PieChart>
-          <Tooltip />
+          <Tooltip contentStyle={theme.tooltipStyle} />
           {showLegend && <Legend />}
           <Pie
             data={data}
@@ -170,10 +198,10 @@ function renderChart(
     default:
       return (
         <BarChart {...commonProps}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey={xAxis} tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} />
-          <Tooltip />
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
+          <XAxis dataKey={xAxis} tick={theme.tickStyle} />
+          <YAxis tick={theme.tickStyle} />
+          <Tooltip contentStyle={theme.tooltipStyle} />
           {showLegend && <Legend />}
           {yAxes.map((key, i) => (
             <Bar

@@ -78,9 +78,12 @@ function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
   return [];
 }
 
-function renderPresentation(toolCalls: ChatToolCall[]) {
+function renderPresentation(
+  toolCalls: ChatToolCall[],
+  onDrillDown?: (query: string) => void,
+) {
   if (!toolCalls || !toolCalls.length) return null;
-  return <ChatRichPresentation toolCalls={toolCalls} />;
+  return <ChatRichPresentation toolCalls={toolCalls} onDrillDown={onDrillDown} />;
 }
 
 type MessageAttachment = {
@@ -628,7 +631,7 @@ export function ChatMessageList({
 
           {!isUser ? (
             <>
-              {renderPresentation(getMessageToolCalls(message))}
+              {renderPresentation(getMessageToolCalls(message), onReuseMessage)}
               <ChatActionResults toolCalls={getMessageToolCalls(message)} />
               <ChatSources sources={filterVisibleChatSources(getMessageSources(message))} />
             </>
@@ -712,7 +715,7 @@ export function ChatMessageList({
                 </div>
               )}
 
-              {renderPresentation(streamingToolCalls)}
+              {renderPresentation(streamingToolCalls, onReuseMessage)}
               <ChatActionResults toolCalls={streamingToolCalls} />
               <ChatSources sources={filterVisibleChatSources(streamingSources)} />
             </div>

@@ -506,7 +506,7 @@ class ExternalActionResultPresenter:
             {"key": "order_number", "label": "Pedido"},
             {"key": "branch", "label": "Filial"},
             {"key": "description", "label": "Descrição"},
-            {"key": "date", "label": "Data"},
+            {"key": "date", "label": "Data", "dataType": "date"},
             {"key": "stage", "label": "Etapa"},
         ]
 
@@ -540,6 +540,41 @@ class ExternalActionResultPresenter:
             "rows": rows,
         }
 
+    _COLUMN_TYPE_MAP = {
+        "currency": (
+            "valor", "preco", "price", "custo", "cost", "total", "revenue",
+            "faturamento", "receita", "vlr", "vl_", "last_purchase_price",
+            "standard_cost", "unit_price", "net_value", "gross_value",
+        ),
+        "percent": (
+            "pct", "percent", "taxa", "rate", "margem", "margin", "otd",
+            "giro", "eficiencia", "yield",
+        ),
+        "date": (
+            "data", "date", "emissao", "criacao", "atualizacao", "inicio",
+            "fim", "vencimento", "dt_", "created", "updated", "last_revision",
+        ),
+        "quantity": (
+            "qtd", "quantidade", "qty", "quantity", "saldo", "disponivel",
+            "reservado", "estoque", "volume", "current_quantity",
+            "available_quantity", "committed_quantity", "reserved_quantity",
+        ),
+    }
+
+    def _infer_column_type(self, key: str) -> str | None:
+        lowered = key.lower()
+        for data_type, tokens in self._COLUMN_TYPE_MAP.items():
+            if any(token in lowered for token in tokens):
+                return data_type
+        return None
+
+    def _enrich_column(self, key: str, label: str) -> dict:
+        col = {"key": key, "label": label}
+        data_type = self._infer_column_type(key)
+        if data_type:
+            col["dataType"] = data_type
+        return col
+
     def _build_items_table(self, items: list, title: str = "Dados retornados") -> dict | None:
         if not items:
             return None
@@ -562,14 +597,14 @@ class ExternalActionResultPresenter:
         ]
 
         columns = [
-            {"key": key, "label": label}
+            self._enrich_column(key, label)
             for key, label in preferred_columns
             if key in first
         ]
 
         if not columns:
             columns = [
-                {"key": key, "label": self._humanize_key(key)}
+                self._enrich_column(key, self._humanize_key(key))
                 for key in list(first.keys())[:12]
             ]
 

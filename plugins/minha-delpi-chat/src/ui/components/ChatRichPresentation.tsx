@@ -12,8 +12,10 @@ type ViewMode = "primary" | "table";
 
 export function ChatRichPresentation({
   toolCalls,
+  onDrillDown,
 }: {
   toolCalls: ChatToolCall[];
+  onDrillDown?: (query: string) => void;
 }) {
   const { primary, table } = getPresentationPairFromToolCalls(toolCalls);
   const [viewMode, setViewMode] = useState<ViewMode>("primary");
@@ -62,7 +64,7 @@ export function ChatRichPresentation({
         <ChatRichChart presentation={current} />
       )}
       {current.type === "table" && (
-        <ChatRichTable presentation={current} />
+        <ChatRichTable presentation={current} onDrillDown={onDrillDown} />
       )}
     </div>
   );
