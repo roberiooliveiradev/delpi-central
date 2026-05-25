@@ -416,7 +416,11 @@ export function LmpPage({ pathname }: LmpPageProps) {
         }
         loading={loading && items.length === 0}
         refreshing={refreshing}
-        emptyMessage="Nenhum registro encontrado para os filtros informados."
+        emptyMessage={
+          loading
+            ? "Carregando registros…"
+            : "Nenhum registro encontrado para os filtros informados."
+        }
         searchPlaceholder="Buscar proposta, descrição, status…"
         serverPagination={{
           page,

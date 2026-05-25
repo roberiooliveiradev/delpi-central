@@ -93,14 +93,23 @@ export function DashboardLmpsPage() {
   const debouncedDateStart = useDebouncedValue(dateStart, FILTER_DEBOUNCE_MS);
   const debouncedDateEnd = useDebouncedValue(dateEnd, FILTER_DEBOUNCE_MS);
 
-  const { items, summary, charts, loading, refreshing, requestProgress, error, reload } =
-    useLmpsDashboard({
-      date_start: debouncedDateStart || undefined,
-      date_end: debouncedDateEnd || undefined,
-      branch: branch || undefined,
-      listing_type: listingType,
-      status,
-    });
+  const {
+    items,
+    itemsTotal,
+    summary,
+    charts,
+    loading,
+    refreshing,
+    requestProgress,
+    error,
+    reload,
+  } = useLmpsDashboard({
+    date_start: debouncedDateStart || undefined,
+    date_end: debouncedDateEnd || undefined,
+    branch: branch || undefined,
+    listing_type: listingType,
+    status,
+  });
 
   const dashboardItems = items as LmpDashboardItem[];
   const periodLabel = useMemo(
@@ -118,8 +127,8 @@ export function DashboardLmpsPage() {
 
   const hasData = sortedItems.length > 0 || summary !== null;
   const isBusy = loading || refreshing;
-  const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
-  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
+  const initialLoadingProgress = useLoadingProgress(loading, requestProgress);
+  const refreshLoadingProgress = useLoadingProgress(refreshing, requestProgress);
 
   const fallbackCharts = useMemo(
     () => buildLmpFallbackCharts(sortedItems),
@@ -212,7 +221,7 @@ export function DashboardLmpsPage() {
   );
 
   const totalPropostas =
-    summary?.total_items ?? summary?.total_lmps ?? sortedItems.length;
+    summary?.total_items ?? summary?.total_lmps ?? (itemsTotal || sortedItems.length);
 
   const handleExportCsv = useCallback(() => {
     exportLmpsDashboardCsv(sortedItems, {
@@ -288,32 +297,40 @@ export function DashboardLmpsPage() {
         />
       </section>
 
-      {loading && !hasData ? (
+      {loading ? (
         <LoadingActivityCard
           title="Carregando dashboard de LMPs"
-          description="Buscando propostas, indicadores e gráficos no TOTVS."
+          description={
+            requestProgress.completed === 0
+              ? "Buscando indicadores no TOTVS…"
+              : requestProgress.completed === 1
+              ? "Indicadores carregados. Buscando gráficos…"
+              : "Gráficos carregados. Buscando registros da tabela…"
+          }
           progressPercent={initialLoadingProgress}
         />
-      ) : error && !hasData ? (
+      ) : null}
+
+      {error && !hasData && !loading ? (
         <section className="lmps-charts-grid">
           <ChartCard title="Erro">
             <div className="lmps-state-box lmps-state-box-error">{error}</div>
           </ChartCard>
         </section>
-      ) : (
-        <>
-          {error && hasData && (
-            <section className="lmps-charts-grid">
-              <div className="lmps-state-box lmps-state-box-error">
-                Não foi possível atualizar os dados. Exibindo última carga válida.{" "}
-                {error}
-              </div>
-            </section>
-          )}
+      ) : null}
 
-          {hasCharts ? (
-            <>
-              <section className="lmps-charts-grid lmps-charts-grid-top">
+      {error && hasData && !loading ? (
+        <section className="lmps-charts-grid">
+          <div className="lmps-state-box lmps-state-box-error">
+            Não foi possível atualizar os dados. Exibindo última carga válida.{" "}
+            {error}
+          </div>
+        </section>
+      ) : null}
+
+      {hasCharts ? (
+        <>
+          <section className="lmps-charts-grid lmps-charts-grid-top">
                 <ChartCard title="Contagem por Nível">
                   <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
                     <PieChart>
@@ -433,34 +450,36 @@ export function DashboardLmpsPage() {
             </>
           ) : null}
 
-          <DataTableSection
-            title="Registros filtrados"
-            hint={periodLabel}
-            columns={tableColumns}
-            rows={sortedItems}
-            rowKey={(row) =>
-              `${row.branch ?? "sem-filial"}-${row.listing_kind ?? "sem-tipo"}-${row.sale_number}`
-            }
-            loading={loading && sortedItems.length === 0}
-            refreshing={refreshing}
-            emptyMessage="Nenhum registro encontrado para os filtros informados."
-            searchPlaceholder="Buscar proposta, descrição, status…"
-            getSearchText={(row) =>
-              [
-                row.branch,
-                row.sale_number,
-                row.sale_description,
-                row.engineering_status,
-                row.nivel,
-                row.status,
-                formatListingKind(row.listing_kind),
-              ]
-                .filter(Boolean)
-                .join(" ")
-            }
-          />
-        </>
-      )}
+      <DataTableSection
+        title="Registros filtrados"
+        hint={periodLabel}
+        columns={tableColumns}
+        rows={sortedItems}
+        rowKey={(row) =>
+          `${row.branch ?? "sem-filial"}-${row.listing_kind ?? "sem-tipo"}-${row.sale_number}`
+        }
+        loading={loading && sortedItems.length === 0}
+        refreshing={refreshing}
+        emptyMessage={
+          loading
+            ? "Carregando registros…"
+            : "Nenhum registro encontrado para os filtros informados."
+        }
+        searchPlaceholder="Buscar proposta, descrição, status…"
+        getSearchText={(row) =>
+          [
+            row.branch,
+            row.sale_number,
+            row.sale_description,
+            row.engineering_status,
+            row.nivel,
+            row.status,
+            formatListingKind(row.listing_kind),
+          ]
+            .filter(Boolean)
+            .join(" ")
+        }
+      />
     </main>
   );
 }

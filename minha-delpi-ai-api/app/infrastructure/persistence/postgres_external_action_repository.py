@@ -227,7 +227,21 @@ class PostgresExternalActionRepository:
         if allowed_ids:
             db_query = db_query.filter(ExternalActionModel.action_id.in_(allowed_ids))
 
-        if any(
+        is_supplies_kpi = any(
+            term in normalized
+            for term in ["giro de estoque", "giro do estoque", "valor de estoque", "valor total de estoque", "idd"]
+        )
+
+        if is_supplies_kpi:
+            db_query = db_query.filter(
+                db.or_(
+                    ExternalActionModel.path.ilike("%supplies%"),
+                    ExternalActionModel.summary.ilike("%supri%"),
+                    ExternalActionModel.operation_id.ilike("%supplies%"),
+                    ExternalActionModel.operation_id.ilike("%inventory%"),
+                )
+            )
+        elif any(
             term in normalized
             for term in [
                 "produto",
@@ -239,6 +253,13 @@ class PostgresExternalActionRepository:
                 "stock",
                 "descrição",
                 "descricao",
+                "busque",
+                "buscar",
+                "pesquise",
+                "procure",
+                "traga",
+                "search",
+                "exemplos",
             ]
         ):
             db_query = db_query.filter(
@@ -251,12 +272,37 @@ class PostgresExternalActionRepository:
                     ExternalActionModel.description.ilike("%produto%"),
                 )
             )
-        elif any(term in normalized for term in ["lmp", "lmps"]):
+        elif any(term in normalized for term in ["lmp", "lmps", "amostra", " ov "]):
             db_query = db_query.filter(
                 db.or_(
                     ExternalActionModel.path.ilike("%lmp%"),
                     ExternalActionModel.summary.ilike("%lmp%"),
                     ExternalActionModel.description.ilike("%lmp%"),
+                )
+            )
+        elif any(
+            term in normalized
+            for term in [
+                "cpv", "otd", "giro", "suprimento", "supplies",
+                "valor de estoque", "valor total", "inventory",
+            ]
+        ):
+            db_query = db_query.filter(
+                db.or_(
+                    ExternalActionModel.path.ilike("%supplies%"),
+                    ExternalActionModel.summary.ilike("%supri%"),
+                    ExternalActionModel.operation_id.ilike("%supplies%"),
+                    ExternalActionModel.operation_id.ilike("%inventory%"),
+                )
+            )
+        elif any(
+            term in normalized
+            for term in ["ordens de venda", "pedidos de venda", "listar ov", "vendas do período"]
+        ):
+            db_query = db_query.filter(
+                db.or_(
+                    ExternalActionModel.path.ilike("%/sales%"),
+                    ExternalActionModel.operation_id.ilike("%sale_orders%"),
                 )
             )
         elif any(term in normalized for term in ["sql", "data", "dados", "query", "select "]):

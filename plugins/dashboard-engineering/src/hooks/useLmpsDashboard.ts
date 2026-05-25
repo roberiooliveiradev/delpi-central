@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  getLmpsDashboard,
   getLmpsDashboardSummary,
   getLmpsDashboardCharts,
+  getLmpsDashboardItems,
 } from "../api/engineeringApi";
 import type {
   LmpDashboardItem,
@@ -72,6 +72,9 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
 
       try {
         setError(null);
+        setItems([]);
+        setTotal(0);
+
         if (hasPrevious) setRefreshing(true);
         else setLoading(true);
 
@@ -96,24 +99,23 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
         setCharts(chartsResult);
         setRequestProgress({ completed: 2, total: TOTAL_PHASES });
 
-        // After charts are loaded, render the page
-        setLoading(false);
-        setRefreshing(false);
-
-        // Phase 3: Full items (paginated)
-        const fullResult = await getLmpsDashboard(
+        // Phase 3: Items (paginated)
+        const itemsResult = await getLmpsDashboardItems(
           { ...stableParams, page, page_size: LMP_DASHBOARD_PAGE_SIZE },
           controller.signal,
         );
         if (controller.signal.aborted) return;
-        setItems(fullResult.items);
-        setTotal(fullResult.total);
-        setCurrentPage(fullResult.page);
-        setPageSize(fullResult.page_size);
+        setItems(itemsResult.items);
+        setTotal(itemsResult.total);
+        setCurrentPage(itemsResult.page);
+        setPageSize(itemsResult.page_size);
         setRequestProgress({ completed: 3, total: TOTAL_PHASES });
       } catch (reason) {
         if (!controller.signal.aborted) {
           setError(formatEngineeringApiError(reason));
+        }
+      } finally {
+        if (!controller.signal.aborted) {
           setLoading(false);
           setRefreshing(false);
         }

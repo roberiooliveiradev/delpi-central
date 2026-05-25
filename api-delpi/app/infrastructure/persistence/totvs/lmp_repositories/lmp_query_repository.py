@@ -443,6 +443,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             SELECT
                 C.AD1_FILIAL AS branch,
                 C.AD1_NROPOR AS sale_number,
+                C.AD1_DESCRI AS sale_description,
                 C.LISTING_KIND AS listing_kind,
                 C.LMP_START_DATE AS start_date,
                 C.LMP_END_DATE AS end_date,
@@ -457,6 +458,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             GROUP BY
                 C.AD1_FILIAL,
                 C.AD1_NROPOR,
+                C.AD1_DESCRI,
                 C.LISTING_KIND,
                 C.LMP_START_DATE,
                 C.LMP_END_DATE,
@@ -1826,6 +1828,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             {
                 "branch": row.get("branch"),
                 "sale_number": row.get("sale_number"),
+                "sale_description": (row.get("sale_description") or "").strip(),
                 "listing_kind": row.get("listing_kind"),
                 "start_date": row.get("start_date"),
                 "end_date": row.get("end_date"),

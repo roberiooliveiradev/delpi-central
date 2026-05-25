@@ -134,3 +134,22 @@ export async function getLmpsDashboardCharts(
   );
   return response.data;
 }
+
+export type LmpsDashboardItemsResponse = {
+  items: LmpDashboardItem[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+export async function getLmpsDashboardItems(
+  params: LmpsDashboardParams,
+  signal?: AbortSignal,
+): Promise<LmpsDashboardItemsResponse> {
+  const query = buildQuery(params);
+  const response = await httpGet<ApiSuccessResponse<LmpsDashboardItemsResponse>>(
+    `/apps/api-delpi/engineering/lmps/dashboard/items${query}`,
+    { signal },
+  );
+  return response.data;
+}
