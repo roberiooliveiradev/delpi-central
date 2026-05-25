@@ -181,10 +181,10 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={comparisonChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
               <YAxis tickFormatter={(v) => `${v}%`} width={48} />
               <Tooltip formatter={(v) => formatPercent(Number(v))} />
-              <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={72}>
+              <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={56}>
                 {comparisonChartData.map((entry, index) => (
                   <Cell
                     key={entry.key}

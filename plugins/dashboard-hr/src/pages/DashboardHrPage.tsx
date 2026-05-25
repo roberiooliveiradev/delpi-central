@@ -240,8 +240,8 @@ export function DashboardHrPage() {
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <BarChart data={branchChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
+                <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
                 <Legend />
                 <Bar
@@ -267,8 +267,8 @@ export function DashboardHrPage() {
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <BarChart data={trainingChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
+                <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
                 <Bar
                   dataKey="horas"

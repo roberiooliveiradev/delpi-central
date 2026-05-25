@@ -342,8 +342,8 @@ export function LmpPage({ pathname }: LmpPageProps) {
               <ResponsiveContainer width="100%" height={BAR_HEIGHT}>
                 <BarChart data={resolvedCharts.leadByLevel}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="nivel" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
+                  <XAxis dataKey="nivel" tick={{ fontSize: 11 }} interval={0} />
+                  <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Bar
                     dataKey="valor"
