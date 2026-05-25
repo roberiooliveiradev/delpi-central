@@ -158,24 +158,23 @@ export function resolveGoalLabel(
     return null;
   }
 
+  if (goal.comparable_goal != null && formatComparable) {
+    return formatComparable(goal.comparable_goal);
+  }
+
+  if (goal.comparable_goal != null) {
+    const suffix = goal.value_suffix?.trim();
+    if (suffix) {
+      return `${goal.comparable_goal} ${suffix}`;
+    }
+    return String(goal.comparable_goal);
+  }
+
   if (goal.goal_label) {
     return goal.goal_label;
   }
 
-  if (goal.comparable_goal == null) {
-    return null;
-  }
-
-  if (formatComparable) {
-    return formatComparable(goal.comparable_goal);
-  }
-
-  const suffix = goal.value_suffix?.trim();
-  if (suffix) {
-    return `${goal.comparable_goal} ${suffix}`;
-  }
-
-  return String(goal.comparable_goal);
+  return null;
 }
 
 export function buildKpiGoalPresentation(
