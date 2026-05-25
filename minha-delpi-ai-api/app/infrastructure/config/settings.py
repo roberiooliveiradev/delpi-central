@@ -203,3 +203,10 @@ class Settings:
     CHAT_NATIVE_TOOL_CALLING_ENABLED = (
         os.getenv("CHAT_NATIVE_TOOL_CALLING_ENABLED", "false").lower() == "true"
     )
+
+    OLLAMA_WARMUP_ON_STARTUP = (
+        os.getenv("OLLAMA_WARMUP_ON_STARTUP", "true").lower() == "true"
+    )
+    CHAT_FAST_PATH_SLIM_PROMPT = (
+        os.getenv("CHAT_FAST_PATH_SLIM_PROMPT", "true").lower() == "true"
+    )

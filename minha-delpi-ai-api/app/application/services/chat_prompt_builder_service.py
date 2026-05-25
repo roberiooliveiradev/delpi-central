@@ -1,6 +1,28 @@
+_FAST_PATH_SYSTEM_PROMPT = (
+    "Você é o assistente Minha DELPI. "
+    "Responda de forma breve e cordial em português. "
+    "Não invente dados internos."
+)
+
+
 class ChatPromptBuilderService:
     def __init__(self, prompt_policy_service):
         self.prompt_policy_service = prompt_policy_service
+
+    def build_fast_path_messages(
+        self,
+        *,
+        current_message: str,
+        history: list | None = None,
+    ) -> list[dict]:
+        messages = [{"role": "system", "content": _FAST_PATH_SYSTEM_PROMPT}]
+
+        for item in history or []:
+            if item.role in {"user", "assistant"}:
+                messages.append({"role": item.role, "content": item.content})
+
+        messages.append({"role": "user", "content": current_message})
+        return messages
 
     def build_messages(
         self,

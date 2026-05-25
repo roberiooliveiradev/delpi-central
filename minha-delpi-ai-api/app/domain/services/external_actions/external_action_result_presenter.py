@@ -53,6 +53,9 @@ class ExternalActionResultPresenter:
             if items and isinstance(items[0], dict) and "sale_number" in items[0]:
                 return self._present_lmp_page(root)
 
+            if items and isinstance(items[0], dict) and "order_number" in items[0]:
+                return self._present_sale_orders(root, items)
+
             return self._present_items(items)
 
         return {
@@ -239,6 +242,49 @@ class ExternalActionResultPresenter:
             "titulo": "Consulta SQL",
             "linhas": linhas,
             "dados": {"rows": rows[:20]},
+        }
+
+    def _present_sale_orders(self, root: dict, items: list) -> dict:
+        total = root.get("total")
+
+        if not items:
+            return {
+                "titulo": "Ordens de Venda",
+                "linhas": ["Nenhuma ordem de venda encontrada para o período."],
+                "dados": root,
+            }
+
+        linhas = []
+
+        for item in items[:12]:
+            if not isinstance(item, dict):
+                continue
+
+            order = item.get("order_number") or "?"
+            desc = item.get("description") or ""
+            branch = item.get("branch") or ""
+            date = item.get("date") or ""
+            stage = item.get("stage") or ""
+
+            parts = [f"OV {order}"]
+            if branch:
+                parts.append(f"Fil. {branch}")
+            if date:
+                parts.append(date)
+            if stage:
+                parts.append(stage)
+
+            header = " · ".join(parts)
+            line = f"{header}: {desc}".rstrip(": ") if desc else header
+            linhas.append(line)
+
+        if total is not None:
+            linhas.append(f"Total: {total} ordem(ns) (página {root.get('page', 1)}).")
+
+        return {
+            "titulo": "Ordens de Venda",
+            "linhas": linhas or ["Nenhuma ordem de venda encontrada."],
+            "dados": {"total": total, "items": items[:12]},
         }
 
     def _present_items(self, items: list) -> dict:

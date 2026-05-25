@@ -194,7 +194,7 @@ class SendChatMessageUseCase:
             message_id=user_message.id,
         )
 
-        if operational_optimize or direct_answer:
+        if operational_optimize or direct_answer or fast_path:
             admin_guidelines_prompt, active_guidelines = "", []
         else:
             admin_guidelines_prompt, active_guidelines = self._build_admin_guidelines_prompt(
@@ -203,6 +203,11 @@ class SendChatMessageUseCase:
 
         if direct_answer:
             llm_messages = []
+        elif fast_path and Settings.CHAT_FAST_PATH_SLIM_PROMPT:
+            llm_messages = self.prompt_builder_service.build_fast_path_messages(
+                current_message=message,
+                history=history[-2:] if history else [],
+            )
         else:
             llm_messages = self.prompt_builder_service.build_messages(
                 history=history,
