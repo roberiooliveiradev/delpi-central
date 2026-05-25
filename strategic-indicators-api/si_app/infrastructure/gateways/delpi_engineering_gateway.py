@@ -128,3 +128,22 @@ class DelpiLmpGateway(LMPQueryRepositoryPort):
             }
             for it in items_raw
         ]
+
+    def get_computed_dashboard_summary(
+        self, request: ListLMPRequest,
+    ) -> dict[str, float | int | None]:
+        """Call api-delpi's pre-computed summary endpoint (faster than fetching all rows)."""
+        params: dict[str, str | None] = {
+            "date_start": request.date_start,
+            "date_end": request.date_end,
+            "branch": request.branch,
+        }
+        data = self._client.get_lmp_dashboard_summary(
+            params=params,
+            authorization=bearer_authorization_from_context(),
+        )
+        return {
+            "total_lmps": int(data.get("total_lmps") or 0),
+            "percent_dentro_prazo": float(data.get("percent_dentro_prazo") or 0.0),
+            "avg_lead_time": float(data.get("avg_lead_time") or 0.0),
+        }

@@ -28,8 +28,11 @@ const DEFAULT_COLORS = [
 function useIsDarkMode(): boolean {
   return useMemo(() => {
     if (typeof window === "undefined") return false;
+    const root = document.documentElement;
+    if (root.getAttribute("data-theme") === "dark") return true;
+    if (root.getAttribute("data-theme") === "light") return false;
     return (
-      document.documentElement.classList.contains("dark") ||
+      root.classList.contains("dark") ||
       document.body.classList.contains("dark") ||
       window.matchMedia("(prefers-color-scheme: dark)").matches
     );

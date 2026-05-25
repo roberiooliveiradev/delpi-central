@@ -63,9 +63,10 @@ class ExecuteExternalActionUseCase:
         )
 
         sanitized_data = self.policy.sanitize_response(result["data"])
-        presentation = self.presenter.build_presentation(sanitized_data)
+        action_path = action.get("path") or ""
+        presentation = self.presenter.build_presentation(sanitized_data, path=action_path)
         chart_presentation = self.presenter.build_chart_presentation(
-            sanitized_data, path=action.get("path") or "",
+            sanitized_data, path=action_path,
         )
 
         self.audit_repository.log(

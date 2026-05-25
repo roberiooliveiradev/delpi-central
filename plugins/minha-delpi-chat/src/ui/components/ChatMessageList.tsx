@@ -43,7 +43,6 @@ type ChatMessageListProps = {
   isStreaming?: boolean;
   isLoading?: boolean;
   onUseSuggestion?: (value: string) => void;
-  onEditMessage?: (messageId: string, content: string) => Promise<ChatMessage | null>;
   onEditAndResendMessage?: (
     messageId: string,
     content: string,
@@ -230,7 +229,6 @@ export function ChatMessageList({
   isStreaming,
   isLoading,
   onUseSuggestion,
-  onEditMessage,
   onEditAndResendMessage,
   onReuseMessage,
   onMessageFeedback,
@@ -429,15 +427,6 @@ export function ChatMessageList({
     wasStreamingRef.current = isActiveStream;
   }, [isActiveStream, scrollToBottom]);
 
-  async function handleSaveEdit(messageId: string) {
-    const updated = await onEditMessage?.(messageId, editingContent);
-
-    if (updated) {
-      setEditingMessageId(null);
-      setEditingContent("");
-    }
-  }
-
   async function handleSaveAndResend(messageId: string) {
     const updated = await onEditAndResendMessage?.(messageId, editingContent);
 
@@ -600,7 +589,7 @@ export function ChatMessageList({
 
                   if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
                     event.preventDefault();
-                    void handleSaveEdit(message.id);
+                    void handleSaveAndResend(message.id);
                   }
                 }}
               />
@@ -609,16 +598,13 @@ export function ChatMessageList({
                 <button type="button" onClick={cancelEditMessage}>
                   Cancelar
                 </button>
-                <button type="button" onClick={() => void handleSaveEdit(message.id)}>
-                  Salvar
-                </button>
                 <button
                   type="button"
                   className="mdc-chat-message-edit-actions__primary"
                   disabled={Boolean(isStreaming)}
                   onClick={() => void handleSaveAndResend(message.id)}
                 >
-                  Salvar e reenviar
+                  Enviar
                 </button>
               </div>
             </div>

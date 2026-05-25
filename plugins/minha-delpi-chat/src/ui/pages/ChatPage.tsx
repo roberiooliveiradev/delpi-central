@@ -110,7 +110,6 @@ export function ChatPage({
     unpinSession,
     archiveSession,
     unarchiveSession,
-    editMessage,
     editAndResendMessage,
     reuseMessage,
     setMessageFeedback,
@@ -1062,7 +1061,6 @@ export function ChatPage({
                 isStreaming={isStreamingActiveSession}
                 isLoading={isLoadingMessages && messages.length === 0}
                 onUseSuggestion={setDraft}
-                onEditMessage={editMessage}
                 onEditAndResendMessage={editAndResendMessage}
                 onReuseMessage={reuseMessage}
                 onMessageFeedback={setMessageFeedback}

@@ -1,3 +1,5 @@
+import logging
+
 from si_app.application.dto.lmp.list_lmp_request import ListLMPRequest
 from si_app.application.dto.lmp.lmp_dashboard_summary_response import (
     LMPDashboardSummaryResponse,
@@ -9,6 +11,8 @@ from si_app.application.services.lmp.lmp_dashboard_summary_cache import (
 )
 from si_app.application.services.lmp_business_rules import LMPBusinessRules
 from si_app.domain.ports.lmp.lmp_query_repository_port import LMPQueryRepositoryPort
+
+logger = logging.getLogger(__name__)
 
 
 class GetLMPDashboardSummaryUseCase:
@@ -37,6 +41,38 @@ class GetLMPDashboardSummaryUseCase:
         if cached is not None:
             return cached
 
+        get_computed = getattr(self._repository, "get_computed_dashboard_summary", None)
+        if callable(get_computed):
+            response = self._execute_from_computed_summary(request, get_computed)
+        else:
+            response = self._execute_from_rows(
+                request,
+                include_avg_lead_time=include_avg_lead_time,
+                include_qtd_pi=include_qtd_pi,
+            )
+
+        set_cached_lmp_dashboard_summary(cache_key, response)
+        return response
+
+    def _execute_from_computed_summary(
+        self,
+        request: ListLMPRequest,
+        get_computed,
+    ) -> LMPDashboardSummaryResponse:
+        computed = get_computed(request)
+        return LMPDashboardSummaryResponse(
+            total_lmps=int(computed.get("total_lmps") or 0),
+            percent_dentro_prazo=float(computed.get("percent_dentro_prazo") or 0.0),
+            avg_lead_time=float(computed.get("avg_lead_time") or 0.0),
+        )
+
+    def _execute_from_rows(
+        self,
+        request: ListLMPRequest,
+        *,
+        include_avg_lead_time: bool,
+        include_qtd_pi: bool,
+    ) -> LMPDashboardSummaryResponse:
         summary_request = ListLMPRequest(
             date_start=request.date_start,
             date_end=request.date_end,
@@ -85,10 +121,8 @@ class GetLMPDashboardSummaryUseCase:
             else 0.0
         )
 
-        response = LMPDashboardSummaryResponse(
+        return LMPDashboardSummaryResponse(
             total_lmps=total_lmps,
             percent_dentro_prazo=percent_dentro_prazo,
             avg_lead_time=avg_lead_time,
         )
-        set_cached_lmp_dashboard_summary(cache_key, response)
-        return response

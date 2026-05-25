@@ -16,14 +16,15 @@
 }
 
 .mdc-expand-modal {
-  background: var(--mdc-bg-surface, #fff);
+  background: var(--mdc-card-bg, var(--mdc-bg, #fff));
+  border: 1px solid var(--mdc-card-border, #e6e6e6);
   border-radius: 12px;
   width: 100%;
   max-width: 1100px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--mdc-card-shadow, 0 8px 32px rgba(0, 0, 0, 0.18));
   overflow: hidden;
   animation: mdc-expand-scale-in 0.2s ease;
 }
@@ -38,13 +39,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.8rem 1.2rem;
-  border-bottom: 1px solid var(--mdc-border, #e2e8f0);
+  border-bottom: 1px solid var(--mdc-card-border, #e6e6e6);
 }
 
 .mdc-expand-modal__title {
   font-weight: 600;
   font-size: 0.9rem;
-  color: var(--mdc-text-primary, #1e293b);
+  color: var(--mdc-title, #003866);
 }
 
 .mdc-expand-modal__toolbar {
@@ -58,10 +59,10 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.3rem 0.6rem;
-  border: 1px solid var(--mdc-border, #e2e8f0);
+  border: 1px solid var(--mdc-card-border, #e6e6e6);
   border-radius: 6px;
-  background: var(--mdc-bg-surface, #fff);
-  color: var(--mdc-text-secondary, #64748b);
+  background: var(--mdc-control-bg, #fff);
+  color: var(--mdc-text-muted, #64748b);
   font-size: 0.72rem;
   font-weight: 500;
   cursor: pointer;
@@ -69,9 +70,9 @@
 }
 
 .mdc-expand-modal__tool-btn:hover {
-  background: var(--mdc-bg-hover, #f1f5f9);
-  color: var(--mdc-text-primary, #1e293b);
-  border-color: var(--mdc-primary, #0ea5e9);
+  background: color-mix(in srgb, var(--mdc-primary, #089bdb) 8%, transparent);
+  color: var(--mdc-text, #111);
+  border-color: var(--mdc-primary, #089bdb);
 }
 
 .mdc-expand-modal__close {
@@ -83,13 +84,13 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--mdc-text-secondary, #64748b);
+  color: var(--mdc-text-muted, #64748b);
   cursor: pointer;
   transition: background 0.1s;
 }
 
 .mdc-expand-modal__close:hover {
-  background: var(--mdc-bg-hover, #f1f5f9);
+  background: color-mix(in srgb, var(--mdc-primary, #089bdb) 8%, transparent);
 }
 
 .mdc-expand-modal__body {
