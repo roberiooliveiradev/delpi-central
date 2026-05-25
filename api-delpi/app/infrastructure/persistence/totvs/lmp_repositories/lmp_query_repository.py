@@ -659,18 +659,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             )
         )
 
-        where_evento_global_x, params_evento_global_x = self._build_filter_sql(
-            lambda qb: self._branch_filter(qb, "X.AIJ_FILIAL", requested_branch)
-        )
-
         where_eng_support_e, params_eng_support_e = self._sql_engineering_support_process_stage_condition(
             "E.AIJ_PROVEN",
             "E.AIJ_STAGE",
         )
 
-        where_eng_support_x, params_eng_support_x = self._sql_engineering_support_process_stage_condition(
-            "X.AIJ_PROVEN",
-            "X.AIJ_STAGE",
+        where_eng_support_next, params_eng_support_next = self._sql_engineering_support_process_stage_condition(
+            "E.NEXT_PROVEN",
+            "E.NEXT_STAGE",
         )
 
         where_lmp_anchor_rank_e, params_lmp_anchor_rank_e = self._sql_lmp_anchor_process_stage_condition(
@@ -685,6 +681,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     ON SCOPE_A.AD1_FILIAL = A.AIJ_FILIAL
                    AND SCOPE_A.AD1_NROPOR = A.AIJ_NROPOR
             """
+
+        win = """PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR
+                        ORDER BY
+                            A.AIJ_REVISA,
+                            A.AIJ_DTINIC,
+                            A.AIJ_HRINIC,
+                            A.AIJ_STAGE,
+                            A.R_E_C_N_O_"""
 
         sql = f"""
             TodosEventosOV AS (
@@ -703,15 +707,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     A.AIJ_HISTOR,
                     A.AIJ_STATUS,
                     A.R_E_C_N_O_,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR
-                        ORDER BY
-                            A.AIJ_REVISA,
-                            A.AIJ_DTINIC,
-                            A.AIJ_HRINIC,
-                            A.AIJ_STAGE,
-                            A.R_E_C_N_O_
-                    ) AS ORDEM_GLOBAL
+                    LEAD(A.AIJ_REVISA) OVER ({win}) AS NEXT_REVISA,
+                    LEAD(A.AIJ_PROVEN) OVER ({win}) AS NEXT_PROVEN,
+                    LEAD(A.AIJ_STAGE)  OVER ({win}) AS NEXT_STAGE,
+                    LEAD(A.AIJ_DTINIC) OVER ({win}) AS NEXT_DTINIC,
+                    LEAD(A.AIJ_HRINIC) OVER ({win}) AS NEXT_HRINIC,
+                    LEAD(A.AIJ_DTENCE) OVER ({win}) AS NEXT_DTENCE,
+                    LEAD(A.AIJ_HRENCE) OVER ({win}) AS NEXT_HRENCE
                 FROM AIJ010 A
                 {scope_join_a}
                 WHERE {where_aij_base_a}
@@ -733,48 +735,18 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     E.AIJ_HISTOR,
                     E.AIJ_STATUS,
                     E.R_E_C_N_O_,
-                    E.ORDEM_GLOBAL,
-                    NEXT_EVT.PROXIMA_REVISA_GLOBAL,
-                    NEXT_EVT.PROXIMO_PROVEN_GLOBAL,
-                    NEXT_EVT.PROXIMO_STAGE_GLOBAL,
-                    NEXT_EVT.PROXIMO_DTINIC_GLOBAL,
-                    NEXT_EVT.PROXIMO_HRINIC_GLOBAL,
-                    NEXT_EVT.PROXIMO_DTENCE_GLOBAL,
-                    NEXT_EVT.PROXIMO_HRENCE_GLOBAL,
-                    NEXT_EVT.PROXIMO_EH_ENG_GLOBAL
+                    E.NEXT_REVISA  AS PROXIMA_REVISA_GLOBAL,
+                    E.NEXT_PROVEN  AS PROXIMO_PROVEN_GLOBAL,
+                    E.NEXT_STAGE   AS PROXIMO_STAGE_GLOBAL,
+                    E.NEXT_DTINIC  AS PROXIMO_DTINIC_GLOBAL,
+                    E.NEXT_HRINIC  AS PROXIMO_HRINIC_GLOBAL,
+                    E.NEXT_DTENCE  AS PROXIMO_DTENCE_GLOBAL,
+                    E.NEXT_HRENCE  AS PROXIMO_HRENCE_GLOBAL,
+                    CASE
+                        WHEN {where_eng_support_next} THEN 1
+                        ELSE 0
+                    END AS PROXIMO_EH_ENG_GLOBAL
                 FROM TodosEventosOV E
-                OUTER APPLY (
-                    SELECT TOP 1
-                        X.AIJ_REVISA AS PROXIMA_REVISA_GLOBAL,
-                        X.AIJ_PROVEN AS PROXIMO_PROVEN_GLOBAL,
-                        X.AIJ_STAGE AS PROXIMO_STAGE_GLOBAL,
-                        X.AIJ_DTINIC AS PROXIMO_DTINIC_GLOBAL,
-                        X.AIJ_HRINIC AS PROXIMO_HRINIC_GLOBAL,
-                        X.AIJ_DTENCE AS PROXIMO_DTENCE_GLOBAL,
-                        X.AIJ_HRENCE AS PROXIMO_HRENCE_GLOBAL,
-                        CASE
-                            WHEN {where_eng_support_x} THEN 1
-                            ELSE 0
-                        END AS PROXIMO_EH_ENG_GLOBAL
-                    FROM TodosEventosOV X
-                    WHERE {where_evento_global_x}
-                      AND X.AIJ_FILIAL = E.AIJ_FILIAL
-                      AND X.AIJ_NROPOR = E.AIJ_NROPOR
-                      AND X.ORDEM_GLOBAL > E.ORDEM_GLOBAL
-                      AND (
-                            X.AIJ_DTINIC > E.AIJ_DTINIC
-                            OR (
-                                X.AIJ_DTINIC = E.AIJ_DTINIC
-                                AND ISNULL(X.AIJ_HRINIC, '') > ISNULL(E.AIJ_HRINIC, '')
-                            )
-                          )
-                    ORDER BY
-                        X.AIJ_DTINIC,
-                        X.AIJ_HRINIC,
-                        X.AIJ_REVISA,
-                        X.AIJ_STAGE,
-                        X.R_E_C_N_O_
-                ) NEXT_EVT
                 WHERE {where_eng_support_e}
             ),
 
@@ -975,8 +947,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
         params = (
             *params_aij_base_a,
-            *params_eng_support_x,
-            *params_evento_global_x,
+            *params_eng_support_next,
             *params_eng_support_e,
             self._engineering_status_returned_label(),
             self._engineering_status_in_progress_label(),
@@ -1090,7 +1061,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     X.AIJ_DTINIC,
                     X.AIJ_HRINIC,
                     X.AIJ_DTENCE,
-                    X.R_E_C_N_O_
+                    X.R_E_C_N_O_,
+                    LEAD(
+                        COALESCE(NULLIF(X.AIJ_DTENCE, ''), NULLIF(X.AIJ_DTINIC, ''))
+                    ) OVER (
+                        PARTITION BY X.AIJ_FILIAL, X.AIJ_NROPOR
+                        ORDER BY X.AIJ_DTINIC, X.AIJ_HRINIC, X.AIJ_REVISA, X.R_E_C_N_O_
+                    ) AS NEXT_EVENT_DATE
                 FROM AIJ010 X
                 INNER JOIN ListingAnchorOvKeys K
                     ON K.AIJ_FILIAL = X.AIJ_FILIAL
@@ -1128,43 +1105,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     A.AIJ_DTINIC AS ANCHOR_START_DATE,
                     COALESCE(
                         NULLIF(A.AIJ_DTENCE, ''),
-                        NEXT_EVT.NEXT_DATE
+                        S.NEXT_EVENT_DATE
                     ) AS ANCHOR_END_DATE,
                     A.RN_DESC
                 FROM AllListingAnchorRanked A
-                OUTER APPLY (
-                    SELECT TOP 1
-                        COALESCE(
-                            NULLIF(X.AIJ_DTENCE, ''),
-                            NULLIF(X.AIJ_DTINIC, '')
-                        ) AS NEXT_DATE
-                    FROM Aij010ListingOvScoped X
-                    WHERE X.AIJ_FILIAL = A.AIJ_FILIAL
-                      AND X.AIJ_NROPOR = A.AIJ_NROPOR
-                      AND (
-                            X.AIJ_REVISA > A.AIJ_REVISA
-                            OR (
-                                X.AIJ_REVISA = A.AIJ_REVISA
-                                AND (
-                                    X.AIJ_DTINIC > A.AIJ_DTINIC
-                                    OR (
-                                        X.AIJ_DTINIC = A.AIJ_DTINIC
-                                        AND ISNULL(X.AIJ_HRINIC, '') > ISNULL(A.AIJ_HRINIC, '')
-                                    )
-                                    OR (
-                                        X.AIJ_DTINIC = A.AIJ_DTINIC
-                                        AND ISNULL(X.AIJ_HRINIC, '') = ISNULL(A.AIJ_HRINIC, '')
-                                        AND X.R_E_C_N_O_ > A.R_E_C_N_O_
-                                    )
-                                )
-                            )
-                      )
-                    ORDER BY
-                        X.AIJ_DTINIC ASC,
-                        X.AIJ_HRINIC ASC,
-                        X.AIJ_REVISA ASC,
-                        X.R_E_C_N_O_ ASC
-                ) NEXT_EVT
+                LEFT JOIN Aij010ListingOvScoped S
+                    ON S.AIJ_FILIAL  = A.AIJ_FILIAL
+                   AND S.AIJ_NROPOR  = A.AIJ_NROPOR
+                   AND S.R_E_C_N_O_  = A.R_E_C_N_O_
                 WHERE A.RN_DESC = 1
             ),
 
@@ -1202,7 +1150,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     X.AIJ_DTINIC,
                     X.AIJ_HRINIC,
                     X.AIJ_DTENCE,
-                    X.R_E_C_N_O_
+                    X.R_E_C_N_O_,
+                    LEAD(
+                        COALESCE(NULLIF(X.AIJ_DTENCE, ''), NULLIF(X.AIJ_DTINIC, ''))
+                    ) OVER (
+                        PARTITION BY X.AIJ_FILIAL, X.AIJ_NROPOR
+                        ORDER BY X.AIJ_DTINIC, X.AIJ_HRINIC, X.AIJ_REVISA, X.R_E_C_N_O_
+                    ) AS NEXT_EVENT_DATE
                 FROM AIJ010 X
                 INNER JOIN LmpFinalizedOvKeys K
                     ON K.AIJ_FILIAL = X.AIJ_FILIAL
@@ -1236,43 +1190,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     A.AIJ_DTINIC AS ANCHOR_START_DATE,
                     COALESCE(
                         NULLIF(A.AIJ_DTENCE, ''),
-                        NEXT_EVT.NEXT_DATE
+                        S.NEXT_EVENT_DATE
                     ) AS ANCHOR_END_DATE,
                     A.RN_DESC
                 FROM LmpFinalizedAnchorRanked A
-                OUTER APPLY (
-                    SELECT TOP 1
-                        COALESCE(
-                            NULLIF(X.AIJ_DTENCE, ''),
-                            NULLIF(X.AIJ_DTINIC, '')
-                        ) AS NEXT_DATE
-                    FROM Aij010FinalizedOvScoped X
-                    WHERE X.AIJ_FILIAL = A.AIJ_FILIAL
-                      AND X.AIJ_NROPOR = A.AIJ_NROPOR
-                      AND (
-                            X.AIJ_REVISA > A.AIJ_REVISA
-                            OR (
-                                X.AIJ_REVISA = A.AIJ_REVISA
-                                AND (
-                                    X.AIJ_DTINIC > A.AIJ_DTINIC
-                                    OR (
-                                        X.AIJ_DTINIC = A.AIJ_DTINIC
-                                        AND ISNULL(X.AIJ_HRINIC, '') > ISNULL(A.AIJ_HRINIC, '')
-                                    )
-                                    OR (
-                                        X.AIJ_DTINIC = A.AIJ_DTINIC
-                                        AND ISNULL(X.AIJ_HRINIC, '') = ISNULL(A.AIJ_HRINIC, '')
-                                        AND X.R_E_C_N_O_ > A.R_E_C_N_O_
-                                    )
-                                )
-                            )
-                      )
-                    ORDER BY
-                        X.AIJ_DTINIC ASC,
-                        X.AIJ_HRINIC ASC,
-                        X.AIJ_REVISA ASC,
-                        X.R_E_C_N_O_ ASC
-                ) NEXT_EVT
+                LEFT JOIN Aij010FinalizedOvScoped S
+                    ON S.AIJ_FILIAL  = A.AIJ_FILIAL
+                   AND S.AIJ_NROPOR  = A.AIJ_NROPOR
+                   AND S.R_E_C_N_O_  = A.R_E_C_N_O_
                 WHERE A.RN_DESC = 1
             ),
 
