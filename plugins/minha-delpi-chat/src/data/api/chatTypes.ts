@@ -39,7 +39,11 @@ export type ChatPresentation =
   | {
       type: "table";
       title: string;
-      columns: { key: string; label: string }[];
+      columns: {
+        key: string;
+        label: string;
+        dataType?: "text" | "number" | "currency" | "date" | "percent" | "quantity";
+      }[];
       rows: Record<string, unknown>[];
     }
   | {
