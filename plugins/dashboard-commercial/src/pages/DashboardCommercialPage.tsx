@@ -197,6 +197,8 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
             formatCurrency,
             { realizedValue: headOfficeRol?.rol },
           )}
+          goalScopeBadge={null}
+          goalScopeHint={null}
           icon={<Banknote size={22} />}
           loading={isBusy && !headOfficeRol}
         />
@@ -209,6 +211,8 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
             formatCurrency,
             { realizedValue: branchRol?.rol },
           )}
+          goalScopeBadge={null}
+          goalScopeHint={null}
           icon={<Building2 size={22} />}
           loading={isBusy && !branchRol}
         />
