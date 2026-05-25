@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getLmpsDashboard } from "../api/engineeringApi";
-import type { LmpDashboardItem, LmpsDashboardParams, LmpsDashboardResponse } from "../types/lmp";
+import {
+  getLmpsDashboard,
+  getLmpsDashboardSummary,
+  getLmpsDashboardCharts,
+} from "../api/engineeringApi";
+import type {
+  LmpDashboardItem,
+  LmpsDashboardCharts,
+  LmpsDashboardParams,
+  LmpsDashboardSummary,
+} from "../types/lmp";
 import { formatEngineeringApiError } from "../utils/formatEngineeringApiError";
 import { inputDateToLmpApi } from "../utils/lmpDates";
 import {
-  beginSingleRequestProgress,
   EMPTY_REQUEST_PROGRESS,
-  finishSingleRequestProgress,
   type RequestProgress,
 } from "../utils/loadingProgress";
 
@@ -15,7 +22,12 @@ export const LMP_DASHBOARD_PAGE_SIZE = 50;
 type UseLmpsDashboardParams = Omit<LmpsDashboardParams, "page" | "page_size">;
 
 export function useLmpsDashboard(params: UseLmpsDashboardParams) {
-  const [data, setData] = useState<LmpsDashboardResponse | null>(null);
+  const [summary, setSummary] = useState<LmpsDashboardSummary | null>(null);
+  const [charts, setCharts] = useState<LmpsDashboardCharts | null>(null);
+  const [items, setItems] = useState<LmpDashboardItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(LMP_DASHBOARD_PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,33 +68,52 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
     const controller = new AbortController();
 
     async function run() {
-      const hasPrevious = data !== null;
+      const hasPrevious = summary !== null || charts !== null;
 
       try {
         setError(null);
         if (hasPrevious) setRefreshing(true);
         else setLoading(true);
 
-        beginSingleRequestProgress(setRequestProgress);
-        const result = await getLmpsDashboard(
-          {
-            ...stableParams,
-            page,
-            page_size: LMP_DASHBOARD_PAGE_SIZE,
-          },
-          controller.signal
-        );
+        const TOTAL_PHASES = 3;
+        setRequestProgress({ completed: 0, total: TOTAL_PHASES });
 
-        if (!controller.signal.aborted) {
-          setData(result);
-        }
+        // Phase 1: Summary (KPIs)
+        const summaryResult = await getLmpsDashboardSummary(
+          stableParams,
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setSummary(summaryResult);
+        setRequestProgress({ completed: 1, total: TOTAL_PHASES });
+
+        // Phase 2: Charts
+        const chartsResult = await getLmpsDashboardCharts(
+          stableParams,
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setCharts(chartsResult);
+        setRequestProgress({ completed: 2, total: TOTAL_PHASES });
+
+        // After charts are loaded, render the page
+        setLoading(false);
+        setRefreshing(false);
+
+        // Phase 3: Full items (paginated)
+        const fullResult = await getLmpsDashboard(
+          { ...stableParams, page, page_size: LMP_DASHBOARD_PAGE_SIZE },
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setItems(fullResult.items);
+        setTotal(fullResult.total);
+        setCurrentPage(fullResult.page);
+        setPageSize(fullResult.page_size);
+        setRequestProgress({ completed: 3, total: TOTAL_PHASES });
       } catch (reason) {
         if (!controller.signal.aborted) {
           setError(formatEngineeringApiError(reason));
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          finishSingleRequestProgress(setRequestProgress, controller.signal.aborted);
           setLoading(false);
           setRefreshing(false);
         }
@@ -108,13 +139,13 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
   }, []);
 
   return {
-    data,
-    items: (data?.items ?? []) as LmpDashboardItem[],
-    summary: data?.summary ?? null,
-    charts: data?.charts ?? null,
-    total: data?.total ?? 0,
-    page: data?.page ?? page,
-    pageSize: data?.page_size ?? LMP_DASHBOARD_PAGE_SIZE,
+    data: summary ? { items, total, page: currentPage, page_size: pageSize, summary, charts } : null,
+    items,
+    summary,
+    charts,
+    total,
+    page: currentPage,
+    pageSize,
     setPage,
     loading,
     refreshing,

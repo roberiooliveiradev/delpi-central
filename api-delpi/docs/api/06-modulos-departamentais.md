@@ -84,14 +84,18 @@ Parâmetros adicionais:
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/engineering/lmps` | Lista LMPs com filtros de data/filial. |
-| GET | `/engineering/lmps/dashboard` | Dashboard agregado (`status` default `Todos`). |
+| GET | `/engineering/lmps/dashboard` | Dashboard agregado (`status` default `Todos`). Dados completos com items paginados. |
+| GET | `/engineering/lmps/dashboard/summary` | Apenas KPIs (total_lmps, percent_dentro_prazo, avg_lead_time). Fase 1 do carregamento progressivo. |
+| GET | `/engineering/lmps/dashboard/charts` | Dados de gráficos (levelData, statusData, leadByLevel, evolutionData). Fase 2 do carregamento progressivo. |
 | GET | `/engineering/lmps/{sale_number}` | Detalhe por número de venda/ordem. |
+
+> **Carregamento progressivo:** o frontend chama `/summary` → `/charts` → `/dashboard` em sequência. A página renderiza após receber charts (fase 2), enquanto os items da tabela carregam em background (fase 3).
 
 | Query (listagem) | Descrição |
 |---|---|
 | `date_start`, `date_end` | Período. |
 | `branch` | Filial. |
-| `page`, `page_size` | Paginação. |
+| `page`, `page_size` | Paginação (apenas `/dashboard`). |
 
 ### Transforma Mais
 

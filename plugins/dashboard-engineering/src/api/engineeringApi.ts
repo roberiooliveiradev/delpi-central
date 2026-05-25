@@ -5,7 +5,12 @@ import type {
   TransformaProcessesList,
   TransformaSummary,
 } from "../types/engineering";
-import type { LmpsDashboardParams, LmpsDashboardResponse } from "../types/lmp";
+import type {
+  LmpsDashboardParams,
+  LmpsDashboardResponse,
+  LmpsDashboardSummary,
+  LmpsDashboardCharts,
+} from "../types/lmp";
 import { inputDateToLmpApi } from "../utils/lmpDates";
 
 export const ENGINEERING_API_BASE = "/apps/api-delpi/engineering";
@@ -98,5 +103,33 @@ export async function getLmpsDashboard(
     throw new Error(response.message || "Erro ao carregar LMPs");
   }
 
+  return response.data;
+}
+
+export async function getLmpsDashboardSummary(
+  params: Omit<LmpsDashboardParams, "page" | "page_size">,
+  signal?: AbortSignal,
+): Promise<LmpsDashboardSummary> {
+  const response = await httpGet<ApiSuccessResponse<LmpsDashboardSummary>>(
+    `${ENGINEERING_API_BASE}/lmps/dashboard/summary${buildLmpQuery(params)}`,
+    { signal },
+  );
+  if (response.success === false) {
+    throw new Error(response.message || "Erro ao carregar KPIs de LMPs");
+  }
+  return response.data;
+}
+
+export async function getLmpsDashboardCharts(
+  params: Omit<LmpsDashboardParams, "page" | "page_size">,
+  signal?: AbortSignal,
+): Promise<LmpsDashboardCharts> {
+  const response = await httpGet<ApiSuccessResponse<LmpsDashboardCharts>>(
+    `${ENGINEERING_API_BASE}/lmps/dashboard/charts${buildLmpQuery(params)}`,
+    { signal },
+  );
+  if (response.success === false) {
+    throw new Error(response.message || "Erro ao carregar gráficos de LMPs");
+  }
   return response.data;
 }
