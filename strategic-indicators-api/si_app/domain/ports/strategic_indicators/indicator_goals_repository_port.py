@@ -183,6 +183,19 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_branch_scoped_goals_ignoring_validity(
+        self,
+        *,
+        indicator_ids: list[str],
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        department_id: str | None = None,
+    ) -> dict[str, dict[str, dict]]:
+        """Metas ativas por filial (01/02) sem filtro de vigência (valid_from/valid_to)."""
+        raise NotImplementedError
+
+    @abstractmethod
     def list_latest_goals_ignoring_validity(
         self,
         *,
