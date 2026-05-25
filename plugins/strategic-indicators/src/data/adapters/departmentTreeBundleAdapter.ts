@@ -7,11 +7,15 @@ import type { DepartmentTreeScopeConfig, DepartmentTreeModel } from "../types/de
 import type {
   StrategicIndicatorsDepartmentTreeResponse,
   StrategicIndicatorsDepartmentTreeScopeApi,
+  StrategicIndicatorsTreeSnapshotResponse,
+  StrategicIndicatorsTreeTrendsResponse,
 } from "../types/departmentTreeBundle";
 import type { DepartmentTreeScopeKey } from "../types/departmentTree";
 import type { TrendsDashboardViewData } from "../types/trends";
 
-function mapScopeConfig(scope: StrategicIndicatorsDepartmentTreeScopeApi): DepartmentTreeScopeConfig {
+function mapScopeConfig(
+  scope: Pick<StrategicIndicatorsDepartmentTreeScopeApi, "scope_key" | "scope_label" | "branch">,
+): DepartmentTreeScopeConfig {
   return {
     key: scope.scope_key,
     branch: scope.branch ?? undefined,
@@ -42,6 +46,44 @@ export function adaptDepartmentTreeBundleToModel(
   >((accumulator, item) => {
     accumulator[item.scope.key] = item.trends;
     return accumulator;
+  }, {});
+
+  return enrichDepartmentTreeWithTrends(
+    baseModel,
+    trendsByScope,
+    Math.max(2, response.months ?? 6),
+  );
+}
+
+/** Fase 1 — monta a árvore sem sparklines. */
+export function adaptTreeSnapshotToModel(
+  response: StrategicIndicatorsTreeSnapshotResponse,
+): DepartmentTreeModel {
+  const scopePayloads = response.scopes.map((scope) => ({
+    scope: mapScopeConfig(scope),
+    departments: adaptDepartmentsToView(scope.departments),
+    indicators: adaptIndicatorsToView(scope.indicators),
+  }));
+
+  return buildDepartmentTreeModel({
+    competence: response.competence,
+    igd: response.igd,
+    igdExact: response.igd_exact,
+    classification: response.classification,
+    scopePayloads,
+  });
+}
+
+/** Fase 2 — enriquece a árvore existente com sparklines. */
+export function mergeTreeTrendsIntoModel(
+  baseModel: DepartmentTreeModel,
+  response: StrategicIndicatorsTreeTrendsResponse,
+): DepartmentTreeModel {
+  const trendsByScope = response.scopes.reduce<
+    Partial<Record<DepartmentTreeScopeKey, TrendsDashboardViewData>>
+  >((acc, scope) => {
+    acc[scope.scope_key] = adaptTrendsToView(scope.trends);
+    return acc;
   }, {});
 
   return enrichDepartmentTreeWithTrends(

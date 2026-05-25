@@ -344,6 +344,30 @@ def build_get_strategic_indicators_departments_tree_use_case():
     )
 
 
+def build_get_departments_tree_snapshot_use_case():
+    from si_app.application.use_cases.strategic_indicators.get_departments_tree_snapshot_use_case import (
+        GetDepartmentsTreeSnapshotUseCase,
+    )
+
+    tree_uc = build_get_strategic_indicators_departments_tree_use_case()
+    return GetDepartmentsTreeSnapshotUseCase(
+        tree_use_case=tree_uc,
+        trends_use_case=tree_uc._trends_use_case,
+    )
+
+
+def build_get_departments_tree_trends_use_case():
+    from si_app.application.use_cases.strategic_indicators.get_departments_tree_trends_use_case import (
+        GetDepartmentsTreeTrendsUseCase,
+    )
+
+    tree_uc = build_get_strategic_indicators_departments_tree_use_case()
+    return GetDepartmentsTreeTrendsUseCase(
+        tree_use_case=tree_uc,
+        trends_use_case=tree_uc._trends_use_case,
+    )
+
+
 def build_get_dashboard_goals_by_source_keys_use_case():
     return GetDashboardGoalsBySourceKeysUseCase(
         goals_repository=PostgresStrategicIndicatorsIndicatorGoalsRepository(),

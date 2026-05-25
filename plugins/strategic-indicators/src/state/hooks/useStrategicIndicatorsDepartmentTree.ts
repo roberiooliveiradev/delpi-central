@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { adaptDepartmentTreeBundleToModel } from "../../data/adapters/departmentTreeBundleAdapter";
+import {
+  adaptTreeSnapshotToModel,
+  mergeTreeTrendsIntoModel,
+} from "../../data/adapters/departmentTreeBundleAdapter";
 import { adaptDepartmentsToView } from "../../data/adapters/departmentsAdapter";
 import { adaptIndicatorsToView } from "../../data/adapters/indicatorsAdapter";
 import {
@@ -7,7 +10,10 @@ import {
   resolveActiveTreeScopeKey,
   resolveDepartmentTreeScopes,
 } from "../../data/departmentTreeScopes";
-import { fetchStrategicIndicatorsDepartmentTree } from "../../data/api/strategicIndicatorsDepartmentTreeApi";
+import {
+  fetchDepartmentTreeSnapshot,
+  fetchDepartmentTreeTrends,
+} from "../../data/api/strategicIndicatorsDepartmentTreeApi";
 import {
   writeDepartmentsReadCache,
   writeIndicatorsReadCache,
@@ -22,9 +28,7 @@ import {
   setStrategicIndicatorsCachedValue,
 } from "../../data/cache/strategicIndicatorsReadCache";
 import {
-  beginSingleRequestProgress,
   EMPTY_REQUEST_PROGRESS,
-  finishSingleRequestProgress,
   type RequestProgress,
 } from "../utils/loadingProgress";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
@@ -136,32 +140,31 @@ export function useStrategicIndicatorsDepartmentTree({
     });
 
     setError(null);
-    beginSingleRequestProgress(setRequestProgress);
+    setRequestProgress({ completed: 0, total: 2 });
+
+    const token = getAccessTokenRef.current;
+    const branchParam = viewMode === "branch" ? branch : undefined;
 
     try {
-      const token = getAccessTokenRef.current;
-      const bundle = await fetchStrategicIndicatorsDepartmentTree({
+      const snapshot = await fetchDepartmentTreeSnapshot({
         viewMode,
-        branch: viewMode === "branch" ? branch : undefined,
+        branch: branchParam,
         competence,
         startDate,
         endDate,
-        months,
         getAccessToken: token,
         signal: controller.signal,
       });
 
-      if (requestId !== requestIdRef.current) {
-        return;
-      }
+      if (requestId !== requestIdRef.current) return;
 
-      const nextModel = narrowDepartmentTreeModel(
-        adaptDepartmentTreeBundleToModel(bundle),
+      const snapshotModel = narrowDepartmentTreeModel(
+        adaptTreeSnapshotToModel(snapshot),
         viewMode,
         branch,
       );
 
-      for (const scope of bundle.scopes) {
+      for (const scope of snapshot.scopes) {
         writeDepartmentsReadCache(
           query,
           scope.branch ?? undefined,
@@ -174,9 +177,35 @@ export function useStrategicIndicatorsDepartmentTree({
         );
       }
 
-      setModel(nextModel);
-      setStrategicIndicatorsCachedValue(cacheKey, { model: nextModel });
+      setModel(snapshotModel);
+      setLoading(false);
       hasLoadedOnceRef.current = true;
+      setRequestProgress({ completed: 1, total: 2 });
+
+      const trends = await fetchDepartmentTreeTrends({
+        viewMode,
+        branch: branchParam,
+        competence,
+        startDate,
+        endDate,
+        months,
+        getAccessToken: token,
+        signal: controller.signal,
+      });
+
+      if (requestId !== requestIdRef.current) return;
+
+      const enrichedModel = narrowDepartmentTreeModel(
+        mergeTreeTrendsIntoModel(
+          adaptTreeSnapshotToModel(snapshot),
+          trends,
+        ),
+        viewMode,
+        branch,
+      );
+
+      setModel(enrichedModel);
+      setStrategicIndicatorsCachedValue(cacheKey, { model: enrichedModel });
     } catch (err) {
       if (requestId !== requestIdRef.current || controller.signal.aborted) {
         return;
@@ -193,7 +222,7 @@ export function useStrategicIndicatorsDepartmentTree({
       );
     } finally {
       if (requestId === requestIdRef.current) {
-        finishSingleRequestProgress(setRequestProgress, controller.signal.aborted);
+        setRequestProgress({ completed: 2, total: 2 });
         setLoading(false);
         setRefreshing(false);
       }

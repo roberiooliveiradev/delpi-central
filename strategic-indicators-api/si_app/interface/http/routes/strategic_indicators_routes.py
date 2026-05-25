@@ -99,6 +99,8 @@ from si_app.composition.strategic_indicators_composer import (
     build_activate_strategic_indicators_admin_department_use_case,
     build_activate_strategic_indicators_admin_department_indicator_use_case,
     build_get_strategic_indicators_presentation_use_case,
+    build_get_departments_tree_snapshot_use_case,
+    build_get_departments_tree_trends_use_case,
 )
 
 router = APIRouter(
@@ -1003,6 +1005,82 @@ def get_strategic_indicators_departments_tree(
         raise HTTPException(
             status_code=500,
             detail=f"Falha ao carregar árvore de departamentos: {exc}",
+        ) from exc
+
+
+@router.get("/departments/tree/snapshot")
+@require_permission("strategic-indicators.view")
+def get_strategic_indicators_departments_tree_snapshot(
+    view_mode: str = Query("consolidated"),
+    branch: str | None = Query(None),
+    competence: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+):
+    try:
+        from si_app.application.use_cases.strategic_indicators.get_departments_tree_snapshot_use_case import (
+            GetDepartmentsTreeSnapshotRequest,
+        )
+
+        return run_logged_read_route(
+            route="departments-tree-snapshot",
+            competence=competence,
+            department_id=None,
+            branch=branch,
+            months=None,
+            handler=lambda: build_get_departments_tree_snapshot_use_case().execute(
+                GetDepartmentsTreeSnapshotRequest(
+                    view_mode=view_mode,
+                    branch=branch,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            ),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar snapshot da árvore de departamentos: {exc}",
+        ) from exc
+
+
+@router.get("/departments/tree/trends")
+@require_permission("strategic-indicators.view")
+def get_strategic_indicators_departments_tree_trends(
+    view_mode: str = Query("consolidated"),
+    branch: str | None = Query(None),
+    competence: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+    months: int = Query(6, ge=2, le=12),
+):
+    try:
+        from si_app.application.use_cases.strategic_indicators.get_departments_tree_trends_use_case import (
+            GetDepartmentsTreeTrendsRequest,
+        )
+
+        return run_logged_read_route(
+            route="departments-tree-trends",
+            competence=competence,
+            department_id=None,
+            branch=branch,
+            months=months,
+            handler=lambda: build_get_departments_tree_trends_use_case().execute(
+                GetDepartmentsTreeTrendsRequest(
+                    view_mode=view_mode,
+                    branch=branch,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
+                    months=months,
+                )
+            ),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao carregar trends da árvore de departamentos: {exc}",
         ) from exc
 
 
