@@ -105,6 +105,33 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                     )
                 )
 
+        final_missing_ids = [
+            item.indicator_id
+            for item in structural_items
+            if (
+                item.indicator_id not in goals_by_indicator
+                and item.indicator_id not in branch_goals_by_indicator
+            )
+        ]
+        expired_goals_by_indicator: dict[str, dict] = {}
+        if final_missing_ids:
+            expired_goals_by_indicator = (
+                self._indicator_goals_repository.list_latest_goals_ignoring_validity(
+                    indicator_ids=final_missing_ids,
+                    department_id=department_id,
+                    competence=competence,
+                    scope_branch=branch,
+                )
+            )
+            for indicator_id, goal in expired_goals_by_indicator.items():
+                logger.info(
+                    "si_goal_validity_fallback indicator_id=%s competence=%s goal_year=%s valid_to=%s",
+                    indicator_id,
+                    competence,
+                    goal.get("goal_year"),
+                    goal.get("valid_to"),
+                )
+
         resolved: list[StrategicIndicatorCatalogItem] = []
 
         for item in structural_items:
@@ -117,6 +144,13 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
 
             if branch_goals:
                 resolved.append(self._catalog_item_from_branch_goals(item, branch_goals))
+                continue
+
+            expired_goal = expired_goals_by_indicator.get(item.indicator_id)
+            if expired_goal:
+                resolved.append(
+                    self._catalog_item_from_goal(item, expired_goal, branch_goals={})
+                )
                 continue
 
             if is_branch_unit_scope(view_branch):
