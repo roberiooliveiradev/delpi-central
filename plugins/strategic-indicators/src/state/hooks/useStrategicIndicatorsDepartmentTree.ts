@@ -179,6 +179,7 @@ export function useStrategicIndicatorsDepartmentTree({
 
       setModel(snapshotModel);
       setLoading(false);
+      setRefreshing(true);
       hasLoadedOnceRef.current = true;
       setRequestProgress({ completed: 1, total: 2 });
 
