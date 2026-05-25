@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { getLmpsDashboard, getTransformaSummary } from "../api/engineeringApi";
+import { getLmpsDashboardSummary, getTransformaSummary } from "../api/engineeringApi";
 import type { EngineeringFilterParams, TransformaSummary } from "../types/engineering";
-import { LMP_DASHBOARD_PAGE_SIZE } from "./useLmpsDashboard";
-import type { LmpsDashboardResponse, LmpsDashboardSummary } from "../types/lmp";
+import type { LmpsDashboardSummary } from "../types/lmp";
 import { formatEngineeringApiError } from "../utils/formatEngineeringApiError";
 import {
   EMPTY_REQUEST_PROGRESS,
@@ -50,11 +49,7 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
         const results = await runParallelWithProgress(
           [
             (signal) => getTransformaSummary(apiParams, signal),
-            (signal) =>
-              getLmpsDashboard(
-                { ...lmpParams, page: 1, page_size: LMP_DASHBOARD_PAGE_SIZE },
-                signal
-              ),
+            (signal) => getLmpsDashboardSummary(lmpParams, signal),
           ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
           controller.signal,
           setRequestProgress
@@ -73,7 +68,7 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
         }
 
         if (results[1].status === "fulfilled") {
-          setLmpSummary((results[1].value as LmpsDashboardResponse).summary);
+          setLmpSummary(results[1].value as LmpsDashboardSummary);
           successCount += 1;
         } else if (!controller.signal.aborted) {
           nextErrors.lmp =

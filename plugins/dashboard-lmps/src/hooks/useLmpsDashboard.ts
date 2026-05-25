@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getLmpsDashboard, type LmpsDashboardResponse } from "../api/lmpApi";
 import {
-  beginSingleRequestProgress,
+  getLmpsDashboard,
+  getLmpsDashboardSummary,
+  getLmpsDashboardCharts,
+  type LmpsDashboardResponse,
+  type LmpsDashboardSummary,
+  type LmpsDashboardCharts,
+} from "../api/lmpApi";
+import {
   EMPTY_REQUEST_PROGRESS,
-  finishSingleRequestProgress,
   type RequestProgress,
 } from "../utils/loadingProgress";
 
@@ -20,8 +25,8 @@ type UseLmpsDashboardParams = {
 type UseLmpsDashboardResult = {
   data: LmpsDashboardResponse | null;
   items: LmpsDashboardResponse["items"];
-  summary: LmpsDashboardResponse["summary"] | null;
-  charts: LmpsDashboardResponse["charts"] | null;
+  summary: LmpsDashboardSummary | null;
+  charts: LmpsDashboardCharts | null;
   loading: boolean;
   refreshing: boolean;
   requestProgress: RequestProgress;
@@ -33,6 +38,8 @@ export function useLmpsDashboard(
   params: UseLmpsDashboardParams
 ): UseLmpsDashboardResult {
   const [data, setData] = useState<LmpsDashboardResponse | null>(null);
+  const [summary, setSummary] = useState<LmpsDashboardSummary | null>(null);
+  const [charts, setCharts] = useState<LmpsDashboardCharts | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +73,7 @@ export function useLmpsDashboard(
     const controller = new AbortController();
 
     async function run() {
-      const hasPreviousData = data !== null;
+      const hasPreviousData = summary !== null || charts !== null;
 
       try {
         setError(null);
@@ -77,12 +84,39 @@ export function useLmpsDashboard(
           setLoading(true);
         }
 
-        beginSingleRequestProgress(setRequestProgress);
-        const result = await getLmpsDashboard(stableParams, controller.signal);
+        const TOTAL_PHASES = 3;
+        setRequestProgress({ completed: 0, total: TOTAL_PHASES });
 
-        if (!controller.signal.aborted) {
-          setData(result);
-        }
+        // Phase 1: Summary (KPIs)
+        const summaryResult = await getLmpsDashboardSummary(
+          stableParams,
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setSummary(summaryResult);
+        setRequestProgress({ completed: 1, total: TOTAL_PHASES });
+
+        // Phase 2: Charts
+        const chartsResult = await getLmpsDashboardCharts(
+          stableParams,
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setCharts(chartsResult);
+        setRequestProgress({ completed: 2, total: TOTAL_PHASES });
+
+        // After charts loaded, render the page
+        setLoading(false);
+        setRefreshing(false);
+
+        // Phase 3: Full items (paginated)
+        const fullResult = await getLmpsDashboard(
+          stableParams,
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setData(fullResult);
+        setRequestProgress({ completed: 3, total: TOTAL_PHASES });
       } catch (err) {
         if (!controller.signal.aborted) {
           setError(
@@ -90,10 +124,6 @@ export function useLmpsDashboard(
               ? err.message
               : "Erro ao carregar dashboard de LMPs"
           );
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          finishSingleRequestProgress(setRequestProgress, false);
           setLoading(false);
           setRefreshing(false);
         }
@@ -122,8 +152,8 @@ export function useLmpsDashboard(
   return {
     data,
     items: data?.items ?? [],
-    summary: data?.summary ?? null,
-    charts: data?.charts ?? null,
+    summary,
+    charts,
     loading,
     refreshing,
     requestProgress,

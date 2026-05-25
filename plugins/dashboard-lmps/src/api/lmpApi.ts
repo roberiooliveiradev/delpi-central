@@ -110,3 +110,27 @@ export async function getLmpsDashboard(
 
   return response.data;
 }
+
+export async function getLmpsDashboardSummary(
+  params: LmpsDashboardParams,
+  signal?: AbortSignal,
+): Promise<LmpsDashboardSummary> {
+  const query = buildQuery(params);
+  const response = await httpGet<ApiSuccessResponse<LmpsDashboardSummary>>(
+    `/apps/api-delpi/engineering/lmps/dashboard/summary${query}`,
+    { signal },
+  );
+  return response.data;
+}
+
+export async function getLmpsDashboardCharts(
+  params: LmpsDashboardParams,
+  signal?: AbortSignal,
+): Promise<LmpsDashboardCharts> {
+  const query = buildQuery(params);
+  const response = await httpGet<ApiSuccessResponse<LmpsDashboardCharts>>(
+    `/apps/api-delpi/engineering/lmps/dashboard/charts${query}`,
+    { signal },
+  );
+  return response.data;
+}

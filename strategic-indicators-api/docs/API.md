@@ -52,6 +52,37 @@ Resposta: `competence`, `igd`, `igd_exact`, `classification`, `scopes[]` com `de
 
 ---
 
+### GET `/departments/tree/snapshot`
+
+**Permissão:** `strategic-indicators.view`
+
+Fase 1 do carregamento progressivo — retorna apenas o snapshot do período atual (KPIs, scores, classificação) **sem** séries históricas (sparklines). Ideal para renderizar a página rapidamente enquanto os dados de tendência carregam em background.
+
+| Query | Default | Descrição |
+|-------|---------|-----------|
+| `view_mode` | `consolidated` | `consolidated` ou `branch` |
+| `branch` | — | Filial quando `view_mode=branch` |
+
+Resposta: mesmo formato de `/departments/tree`, porém `trends` vem como array vazio em cada escopo.
+
+---
+
+### GET `/departments/tree/trends`
+
+**Permissão:** `strategic-indicators.view`
+
+Fase 2 do carregamento progressivo — retorna apenas as séries históricas (sparklines) para complementar o snapshot já exibido.
+
+| Query | Default | Descrição |
+|-------|---------|-----------|
+| `view_mode` | `consolidated` | `consolidated` ou `branch` |
+| `branch` | — | Filial quando `view_mode=branch` |
+| `months` | `6` | Meses da série |
+
+Resposta: objeto com `scopes[]` contendo apenas `trends` por departamento/indicador, sem repetir `departments` ou `indicators`.
+
+---
+
 ### GET `/departments`
 
 **Permissão:** `strategic-indicators.view`
