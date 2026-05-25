@@ -192,6 +192,13 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
               onMonthsToCompareChange: setMonthsToCompare,
               status: statusBadge,
             }}
+            extraActions={
+              <RefreshSnapshotButton
+                getAccessToken={getAccessToken}
+                onRefreshed={() => void reload()}
+                disabled={loading || refreshing}
+              />
+            }
           />
         </>
       ) : null}
