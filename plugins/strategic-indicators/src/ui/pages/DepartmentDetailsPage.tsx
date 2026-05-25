@@ -64,6 +64,14 @@ export function DepartmentDetailsPage({
   const loadingProgress = useLoadingProgress(loading && !data, requestProgress);
   const refreshingProgress = useLoadingProgress(Boolean(refreshing && data), requestProgress);
 
+  const refreshButton = (
+    <RefreshSnapshotButton
+      getAccessToken={getAccessToken}
+      onRefreshed={() => void reload()}
+      disabled={loading || refreshing}
+    />
+  );
+
   const filters = (
     <StrategicIndicatorsReferenceFilters
       referenceMonth={referenceMonth}
@@ -84,6 +92,7 @@ export function DepartmentDetailsPage({
           title="Departamento"
           description="Carregando visão detalhada da área."
           badge={<LoadingActivityBadge label="Carregando" tone="neutral" />}
+          actions={refreshButton}
         />
 
         <SectionBlock
@@ -113,6 +122,7 @@ export function DepartmentDetailsPage({
           title="Departamento não encontrado"
           description="Não foi possível localizar a área solicitada."
           badge={<StatusBadge label="Indisponível" variant="warning" />}
+          actions={refreshButton}
         />
 
         <SectionBlock
@@ -148,13 +158,7 @@ export function DepartmentDetailsPage({
             <StatusBadge label="Drill-down real" variant="success" />
           )
         }
-        actions={
-          <RefreshSnapshotButton
-            getAccessToken={getAccessToken}
-            onRefreshed={() => void reload()}
-            disabled={loading || refreshing}
-          />
-        }
+        actions={refreshButton}
       />
 
       <SectionBlock
