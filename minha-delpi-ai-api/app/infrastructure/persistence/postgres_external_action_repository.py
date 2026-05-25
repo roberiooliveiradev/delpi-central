@@ -260,6 +260,18 @@ class PostgresExternalActionRepository:
                 "traga",
                 "search",
                 "exemplos",
+                "estrutura",
+                "bom",
+                "roteiro",
+                "fornecedor",
+                "compra",
+                "venda",
+                "preço",
+                "preco",
+                "movimentação",
+                "movimentacao",
+                "inspeção",
+                "inspecao",
             ]
         ):
             db_query = db_query.filter(
