@@ -1091,14 +1091,17 @@ class ExternalActionSelectionService:
                 if path == "/products/{code}":
                     value += 200
 
+                if "/products/{code}/analyser" in haystack:
+                    value += 180
+
                 if "/description" in path:
                     value += 150
 
-                if "analyser" in haystack or "analyzer" in haystack:
-                    value -= 30
-
                 if "stock" in path or "structure" in path or "parents" in path:
                     value -= 80
+
+                if "search" in path:
+                    value -= 100
 
             else:
                 if not has_specific_sub_intent:

@@ -24,6 +24,10 @@ class ExternalActionResultPresenter:
     }
 
     def present(self, data) -> dict:
+        error = self._detect_api_error(data)
+        if error:
+            return error
+
         root = self._unwrap_data(data)
         product = root.get("product") if isinstance(root, dict) else None
 
@@ -65,6 +69,48 @@ class ExternalActionResultPresenter:
             "titulo": "Resultado da API",
             "linhas": ["A API retornou dados autorizados para a consulta."],
             "dados": root,
+        }
+
+    def _detect_api_error(self, data) -> dict | None:
+        if not isinstance(data, dict):
+            return None
+
+        detail = data.get("detail") or data.get("error") or data.get("message")
+        status = data.get("status_code") or data.get("status")
+
+        is_error_detail = isinstance(detail, str) and detail.lower() in (
+            "not found", "unauthorized", "forbidden", "internal server error",
+            "bad request", "service unavailable",
+        )
+
+        is_error_status = isinstance(status, int) and status >= 400
+
+        if not is_error_detail and not is_error_status:
+            if isinstance(data.get("success"), bool) and not data["success"]:
+                msg = str(data.get("message") or "Erro desconhecido na API.")
+                return {
+                    "titulo": "Erro na consulta",
+                    "linhas": [msg],
+                    "dados": None,
+                }
+            return None
+
+        error_messages = {
+            "not found": "O recurso solicitado não foi encontrado. "
+                         "O código informado pode não existir ou não ter dados cadastrados.",
+            "unauthorized": "Sem autorização para acessar este recurso.",
+            "forbidden": "Acesso negado ao recurso solicitado.",
+        }
+
+        if isinstance(detail, str):
+            msg = error_messages.get(detail.lower(), f"A API retornou um erro: {detail}")
+        else:
+            msg = f"A API retornou erro (status {status})."
+
+        return {
+            "titulo": "Erro na consulta",
+            "linhas": [msg],
+            "dados": None,
         }
 
     def _unwrap_data(self, data):
