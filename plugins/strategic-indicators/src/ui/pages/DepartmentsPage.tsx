@@ -11,6 +11,7 @@ import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsP
 import { StatusBadge } from "../components/StatusBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
+import { TreeMapFloatingControls } from "../components/TreeMapFloatingControls";
 import { useStrategicIndicatorsDepartmentTree } from "../../state/hooks/useStrategicIndicatorsDepartmentTree";
 import "./DepartmentsPage.css";
 
@@ -65,25 +66,47 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       <StatusBadge label="API Real" variant="success" />
     );
 
+  const floatingControls = (
+    <TreeMapFloatingControls
+      referenceMonth={referenceMonth}
+      viewMode={viewMode}
+      branch={branch}
+      treeScope={treeScope}
+      monthsToCompare={monthsToCompare}
+      onReferenceMonthChange={setReferenceMonth}
+      onViewModeChange={setViewMode}
+      onBranchChange={setBranch}
+      onTreeScopeChange={handleTreeScopeChange}
+      onMonthsToCompareChange={setMonthsToCompare}
+      status={statusBadge}
+    />
+  );
+
   return (
     <div className="si-departments-page si-departments-page--immersive">
       {loading && !model ? (
-        <div className="si-departments-page__overlay">
-          <LoadingActivityInline
-            title="Carregando mapa departamental"
-            description="Montando IGD, IDDs e indicadores com série dos últimos meses."
-            variant="panel"
-            tone="info"
-            progressPercent={loadingProgress}
-          />
-        </div>
+        <>
+          {floatingControls}
+          <div className="si-departments-page__overlay">
+            <LoadingActivityInline
+              title="Carregando mapa departamental"
+              description="Montando IGD, IDDs e indicadores com série dos últimos meses."
+              variant="panel"
+              tone="info"
+              progressPercent={loadingProgress}
+            />
+          </div>
+        </>
       ) : error && !model ? (
-        <div className="si-departments-page__overlay">
-          <StrategicIndicatorsPageError
-            error={error}
-            onAction={() => void reload()}
-          />
-        </div>
+        <>
+          {floatingControls}
+          <div className="si-departments-page__overlay">
+            <StrategicIndicatorsPageError
+              error={error}
+              onAction={() => void reload()}
+            />
+          </div>
+        </>
       ) : model ? (
         <>
           {refreshing ? (
