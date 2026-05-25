@@ -113,6 +113,7 @@ export type SendChatMessagePayload = {
   message: string;
   context?: string;
   attachmentIds?: string[];
+  agentKey?: string | null;
 };
 
 export type SendChatMessageResponse = {

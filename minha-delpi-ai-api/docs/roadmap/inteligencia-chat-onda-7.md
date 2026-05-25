@@ -19,6 +19,8 @@ Facilitar a **configuração de agentes** no builder (templates de instruções)
 | 7.4 | Calibração RAG | Guia `rag-context-min-score-calibracao.md` + tabela em `variaveis-de-ambiente.md` | Concluído |
 | 7.5 | Homologação latência | Configuração de prod otimizada; medição validada (11s greeting, meta < 15s) | Concluído |
 | 7.6 | Seleção OVs vs LMP | Heurística `list_sale_orders` sem confundir com LMP | Concluído |
+| 7.7 | Busca por descrição + roteamento | Heurística `product_search`, direct responses (search/OVs), filtros expandidos | Concluído |
+| 7.8 | Associação agent_key via context bar | Sessions criadas pelo seletor inferior agora vinculam corretamente o agente | Concluído |
 
 ---
 
@@ -79,11 +81,43 @@ Confirmação antes de substituir instruções já preenchidas.
 
 ---
 
+## 7.7 — Busca de produtos por descrição e melhorias de roteamento
+
+Entrega adicional (maio/2026) para cobrir cenários reais de uso operacional.
+
+| Melhoria | Descrição |
+|----------|-----------|
+| Heurística `product_search` | Detecta intenção de busca por descrição ("traga 3 exemplos de cabo pp") e roteia para `/products/search` |
+| Direct response `product_search` | Formata resultados de busca (código, descrição, tipo, unidade) sem passar pelo LLM |
+| Direct response `sale_orders` | Formata lista de OVs (filial, pedido, descrição, data, etapa) |
+| Presenter refinado | `ExternalActionResultPresenter` distingue corretamente LMP, OVs e search |
+| Filtros no repositório | Termos de busca expandidos (pesquise, traga, exemplos, busque) no filtro de candidatos |
+| Prioridade `giro de estoque` | KPI de suprimentos não confunde com rota de produtos |
+| OVs genérica vs específica | Prioriza `/sales/` (listagem) sobre `/sales/{code}` (produto específico) |
+
+---
+
+## 7.8 — Associação de agente em sessões via barra de contexto
+
+**Bug:** sessões criadas ao selecionar o agente pelo seletor inferior (context bar) ficavam sem `agent_key`. O sistema não carregava external actions e o LLM respondia genericamente sem acesso ao ERP.
+
+**Causa raiz:** o `requestedAgentKey` passado ao `useChatSession` derivava apenas de `activeAgentPageKey` (navegação à página do agente), ignorando `contextAgentKey` (seletor inferior).
+
+**Correções:**
+
+1. **Frontend (`ChatPage.tsx`):** `requestedAgentKey = activeAgentPageKey ?? contextAgentKey ?? null`
+2. **Frontend (`useChatStreaming.ts`):** envia `agentKey` no payload do stream
+3. **Backend (stream/send use cases):** se sessão sem `agent_key` e request traz um, atualiza a sessão no banco
+4. **Repositório:** novo método `update_session_agent_key`
+5. **DB:** sessões existentes sem `agent_key` corrigidas via SQL (`UPDATE 72 rows`)
+
+---
+
 ## Próximos passos
 
 1. Reimportar OpenAPI e reindexar `api-delpi-rotas-agente.md` após deploy.
-2. Opcional: resposta direta dedicada para `list_sale_orders` e mais rotas comerciais no OpenAPI.
-3. Considerar upgrade de RAM do servidor (16 GB) para atingir < 5s em greetings.
+2. Considerar upgrade de RAM do servidor (16 GB) para atingir < 5s em greetings.
+3. Onda 8 — a definir (possível: melhoria de contexto conversacional, cache de resultados de actions).
 
 ---
 

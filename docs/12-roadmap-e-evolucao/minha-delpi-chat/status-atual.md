@@ -32,7 +32,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 - **Feedback** thumbs up/down nas respostas do assistente
 - Segurança de entrada (sanitização, anti-injection, modo enforce/monitor)
 - Inteligência configurável: RAG híbrido, rerank, loop agentic, cache de embeddings (admin)
-- **Pipeline operacional (Onda 6):** fast path, seleção heurística de actions OpenAPI, resposta direta (produto/LMP/SQL), metadados `intelligence` (timings, action, pipeline)
+- **Pipeline operacional (Ondas 6–7):** fast path (slim prompt), warm-up Ollama, seleção heurística de actions OpenAPI (produto/search/OVs/giro/LMP/SQL), resposta direta sem LLM (produto/search/OVs/LMP/SQL), metadados `intelligence` (timings, action, pipeline)
 - Timeline de mensagens (estilo mensageiro), pin no topo durante stream, primeira pergunta visível ao enviar
 
 ### Painel administrativo
@@ -54,7 +54,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 - **Admin itens 1–15:** concluídos — ver `admin-minha-delpi-chat.md`
 - **Gestão de agentes ondas 1–7:** concluídas — ver `agentes-gestao-melhorias.md`
 - **Inteligência do chat ondas 1–6:** concluídas — ver `roadmap/README.md` e `inteligencia-chat-onda-6.md` em `minha-delpi-ai-api`
-- **Inteligência Onda 7:** concluída — templates (7.1), OpenAPI CPV/OTD/vendas (7.2), regressão (7.3), calibração RAG (7.4), homologação latência em prod (7.5), seleção OVs vs LMP (7.6)
+- **Inteligência Onda 7:** concluída — templates (7.1), OpenAPI CPV/OTD/vendas (7.2), regressão (7.3), calibração RAG (7.4), homologação latência em prod (7.5), seleção OVs vs LMP (7.6), busca por descrição + roteamento (7.7), fix associação agent_key via context bar (7.8)
 - **Melhorias futuras:** concluídas neste repositório — ver `melhorias-futuras.md`
 - **Pendente externo:** RBAC com perfis formais no `core-api`
 
@@ -140,4 +140,6 @@ Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadma
 7. ~~OpenAPI CPV/OTD/vendas + regressão~~ — concluído (Onda 7.2–7.3)
 8. ~~Calibração `RAG_CONTEXT_MIN_SCORE`~~ — guia publicado (Onda 7.4)
 9. ~~Homologação latência < 15s em CPU prod~~ — concluído (Onda 7.5, 11s greeting)
-10. Onda 8 — a definir (possível: warm-up Ollama no startup, reducão de prompt para fast paths, upgrade RAM servidor)
+10. ~~Warm-up Ollama no startup~~ — concluído (Onda 7, `ollama_warmup_service.py`)
+11. ~~Redução de prompt para fast paths~~ — concluído (Onda 7, `CHAT_FAST_PATH_SLIM_PROMPT`)
+12. Onda 8 — a definir (possível: melhoria de contexto conversacional, cache de resultados de actions, upgrade RAM servidor)

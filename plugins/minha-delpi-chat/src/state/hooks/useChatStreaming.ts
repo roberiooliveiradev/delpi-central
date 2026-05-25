@@ -16,6 +16,7 @@ type StreamMessageParams = {
   message: string;
   context?: string;
   attachmentIds?: string[];
+  agentKey?: string | null;
   onStatus?: (message: string) => void;
   onSources?: (sources: ChatSource[]) => void;
   onToolCalls?: (toolCalls: ChatToolCall[]) => void;
@@ -98,6 +99,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       message,
       context,
       attachmentIds,
+      agentKey,
       onStatus,
       onSources,
       onToolCalls,
@@ -114,6 +116,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
               message,
               context,
               attachmentIds,
+              agentKey: agentKey ?? undefined,
             },
             streamCallbacks,
             {

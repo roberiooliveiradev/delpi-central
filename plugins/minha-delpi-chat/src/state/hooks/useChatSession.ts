@@ -846,6 +846,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         message,
         context: sessionForMessage.context ?? "geral",
         attachmentIds,
+        agentKey: options.agentKey,
         ...buildStreamCallbacks(sessionForMessage),
       });
     } catch (err) {

@@ -90,6 +90,14 @@ class SendChatMessageUseCase:
         if session.user_id != user_id:
             raise ChatSessionAccessDeniedError()
 
+        if request.agent_key and not session.agent_key:
+            self.chat_repository.update_session_agent_key(
+                session_id=session_id,
+                user_id=user_id,
+                agent_key=request.agent_key,
+            )
+            object.__setattr__(session, "agent_key", request.agent_key)
+
         workspace_context = self._build_workspace_context(session, user_id)
         attachments = self._get_message_attachments(request, user_id, session_id)
 

@@ -78,7 +78,7 @@ export function ChatPage({
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
 
-  const requestedAgentKey = activeAgentPageKey ?? null;
+  const requestedAgentKey = activeAgentPageKey ?? contextAgentKey ?? null;
 
   const {
     sessions,
