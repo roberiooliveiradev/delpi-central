@@ -22,7 +22,7 @@ import type { ChartGranularity } from "../types/chart";
 import type { PpmItem, PpmType } from "../types/ppm";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatDecimal, formatPpm } from "../utils/format";
 import {
   downloadChartSeriesCsv,
@@ -282,10 +282,11 @@ export function PpmPage({ pathname }: PpmPageProps) {
         <KpiCard
           title={`PPM ${typeLabel}`}
           value={formatPpm(summary?.ppm)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `Produzido: ${formatDecimal(summary?.total_produzido_un)} un · ${periodLabel}`,
             summary,
             formatPpm,
+            { realizedValue: summary?.ppm },
           )}
           icon={
             ppmType === "internal" ? (
