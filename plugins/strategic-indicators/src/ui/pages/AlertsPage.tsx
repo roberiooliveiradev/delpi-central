@@ -59,6 +59,14 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
   const loadingProgress = useLoadingProgress(loading && !data, requestProgress);
   const refreshingProgress = useLoadingProgress(Boolean(refreshing && data), requestProgress);
 
+  const refreshButton = (
+    <RefreshSnapshotButton
+      getAccessToken={getAccessToken}
+      onRefreshed={() => void reload()}
+      disabled={loading || refreshing}
+    />
+  );
+
   const filters = (
     <StrategicIndicatorsReferenceFilters
       referenceMonth={referenceMonth}
@@ -78,6 +86,7 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
           title="Alertas"
           description="Carregando visão de criticidade e priorização do painel."
           badge={<LoadingActivityBadge label="Carregando" tone="neutral" />}
+          actions={refreshButton}
         />
 
         <SectionBlock
@@ -106,6 +115,7 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
           title="Alertas"
           description="Não foi possível carregar a visão de alertas do painel."
           badge={<StatusBadge label="Erro" variant="warning" />}
+          actions={refreshButton}
         />
 
         <SectionBlock
@@ -142,13 +152,7 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
             <StatusBadge label="API Real" variant="warning" />
           )
         }
-        actions={
-          <RefreshSnapshotButton
-            getAccessToken={getAccessToken}
-            onRefreshed={() => void reload()}
-            disabled={loading || refreshing}
-          />
-        }
+        actions={refreshButton}
       />
 
       <SectionBlock

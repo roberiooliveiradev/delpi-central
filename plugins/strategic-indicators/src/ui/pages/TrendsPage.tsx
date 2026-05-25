@@ -47,6 +47,14 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
   const loadingProgress = useLoadingProgress(loading && !data, requestProgress);
   const refreshingProgress = useLoadingProgress(Boolean(refreshing && data), requestProgress);
 
+  const refreshButton = (
+    <RefreshSnapshotButton
+      getAccessToken={getAccessToken}
+      onRefreshed={() => void reload()}
+      disabled={loading || refreshing}
+    />
+  );
+
   const referenceFilters = (
     <StrategicIndicatorsReferenceFilters
       referenceMonth={referenceMonth}
@@ -69,6 +77,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
           title="Tendências"
           description="Carregando visão temporal do IGD e dos departamentos."
           badge={<LoadingActivityBadge label="Carregando" tone="neutral" />}
+          actions={refreshButton}
         />
 
         <SectionBlock
@@ -97,6 +106,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
           title="Tendências"
           description="Não foi possível carregar a visão temporal do painel."
           badge={<StatusBadge label="Erro" variant="warning" />}
+          actions={refreshButton}
         />
 
         <SectionBlock
@@ -136,13 +146,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
             <StatusBadge label="API Real" variant="success" />
           )
         }
-        actions={
-          <RefreshSnapshotButton
-            getAccessToken={getAccessToken}
-            onRefreshed={() => void reload()}
-            disabled={loading || refreshing}
-          />
-        }
+        actions={refreshButton}
       />
 
       <SectionBlock

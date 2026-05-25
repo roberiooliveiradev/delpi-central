@@ -48,6 +48,14 @@ export function ExecutiveDashboardPage({
   const loadingProgress = useLoadingProgress(loading && !data, requestProgress);
   const refreshingProgress = useLoadingProgress(Boolean(refreshing && data), requestProgress);
 
+  const refreshButton = (
+    <RefreshSnapshotButton
+      getAccessToken={getAccessToken}
+      onRefreshed={() => void reload()}
+      disabled={loading || refreshing}
+    />
+  );
+
   const filterBlock = (
     <StrategicIndicatorsReferenceFilters
       referenceMonth={referenceMonth}
@@ -67,6 +75,7 @@ export function ExecutiveDashboardPage({
           title="Indicadores Estratégicos"
           description="Carregando visão executiva do IGD e dos IDDs departamentais."
           badge={<LoadingActivityBadge label="Carregando" tone="neutral" />}
+          actions={refreshButton}
         />
 
         <SectionBlock
@@ -95,6 +104,7 @@ export function ExecutiveDashboardPage({
           title="Indicadores Estratégicos"
           description="Não foi possível carregar a visão executiva do painel."
           badge={<StatusBadge label="Erro" variant="warning" />}
+          actions={refreshButton}
         />
 
         <SectionBlock
@@ -142,13 +152,7 @@ export function ExecutiveDashboardPage({
             <StatusBadge label="API Real" variant="success" />
           )
         }
-        actions={
-          <RefreshSnapshotButton
-            getAccessToken={getAccessToken}
-            onRefreshed={() => void reload()}
-            disabled={loading || refreshing}
-          />
-        }
+        actions={refreshButton}
       />
 
       <SectionBlock
