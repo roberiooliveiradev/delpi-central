@@ -29,7 +29,6 @@ type UseLmpsDashboardResult = {
   summary: LmpsDashboardSummary | null;
   charts: LmpsDashboardCharts | null;
   loading: boolean;
-  itemsLoading: boolean;
   refreshing: boolean;
   requestProgress: RequestProgress;
   error: string | null;
@@ -43,7 +42,6 @@ export function useLmpsDashboard(
   const [charts, setCharts] = useState<LmpsDashboardCharts | null>(null);
   const [itemsData, setItemsData] = useState<LmpsDashboardItemsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [itemsLoading, setItemsLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -80,6 +78,7 @@ export function useLmpsDashboard(
 
       try {
         setError(null);
+        setItemsData(null);
 
         if (hasPreviousData) {
           setRefreshing(true);
@@ -108,11 +107,7 @@ export function useLmpsDashboard(
         setCharts(chartsResult);
         setRequestProgress({ completed: 2, total: TOTAL_PHASES });
 
-        setLoading(false);
-        setRefreshing(false);
-
-        // Phase 3: Items (paginated) — loaded in background
-        setItemsLoading(true);
+        // Phase 3: Items (paginated)
         const itemsResult = await getLmpsDashboardItems(
           stableParams,
           controller.signal,
@@ -127,12 +122,11 @@ export function useLmpsDashboard(
               ? err.message
               : "Erro ao carregar dashboard de LMPs"
           );
-          setLoading(false);
-          setRefreshing(false);
         }
       } finally {
         if (!controller.signal.aborted) {
-          setItemsLoading(false);
+          setLoading(false);
+          setRefreshing(false);
         }
       }
     }
@@ -162,7 +156,6 @@ export function useLmpsDashboard(
     summary,
     charts,
     loading,
-    itemsLoading,
     refreshing,
     requestProgress,
     error,
