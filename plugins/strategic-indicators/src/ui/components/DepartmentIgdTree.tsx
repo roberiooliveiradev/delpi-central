@@ -65,6 +65,7 @@ type DepartmentIgdTreeProps = {
   model: DepartmentTreeModel;
   filterState: StrategicIndicatorsFilterState;
   filterControls: DepartmentIgdTreeFilterControls;
+  extraActions?: ReactNode;
 };
 
 type IndicatorListLayout = "row" | "multi-grid" | "multi-stack";
@@ -624,6 +625,7 @@ export function DepartmentIgdTree({
   model,
   filterState,
   filterControls,
+  extraActions,
 }: DepartmentIgdTreeProps) {
   const [expandedDepartmentIds, setExpandedDepartmentIds] = useState<Set<string>>(
     () => new Set(),
@@ -779,7 +781,7 @@ export function DepartmentIgdTree({
       onTreeScopeChange={filterControls.onTreeScopeChange}
       onMonthsToCompareChange={filterControls.onMonthsToCompareChange}
       viewportNav={viewportNav}
-      actions={mapActions}
+      actions={<>{mapActions}{extraActions}</>}
       status={filterControls.status}
     />
   );
