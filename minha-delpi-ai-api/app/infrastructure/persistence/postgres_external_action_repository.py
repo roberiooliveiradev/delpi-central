@@ -243,7 +243,7 @@ class PostgresExternalActionRepository:
         ):
             db_query = db_query.filter(
                 db.or_(
-                    ExternalActionModel.path.ilike("%product%"),
+                    ExternalActionModel.path.ilike("%products%"),
                     ExternalActionModel.path.ilike("%produto%"),
                     ExternalActionModel.summary.ilike("%product%"),
                     ExternalActionModel.summary.ilike("%produto%"),
