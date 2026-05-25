@@ -1,6 +1,12 @@
 # app/infrastructure/providers/totvs/database.py
+import os
+
 import pyodbc
 from app.config import settings
+
+TOTVS_CONNECT_TIMEOUT = int(os.getenv("TOTVS_CONNECT_TIMEOUT", "10"))
+TOTVS_QUERY_TIMEOUT = int(os.getenv("TOTVS_QUERY_TIMEOUT", "60"))
+
 
 def get_connection():
     connection = pyodbc.connect(
@@ -10,6 +16,8 @@ def get_connection():
         f"UID={settings.DB_USER};"
         f"PWD={settings.DB_PASSWORD};"
         "Encrypt=no;"
-        "TrustServerCertificate=yes;"
+        "TrustServerCertificate=yes;",
+        timeout=TOTVS_CONNECT_TIMEOUT,
     )
+    connection.timeout = TOTVS_QUERY_TIMEOUT
     return connection
