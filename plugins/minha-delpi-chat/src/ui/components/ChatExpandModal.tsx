@@ -1,11 +1,18 @@
-import { X, Maximize2, FileSpreadsheet, FileText, Image } from "lucide-react";
-import { useRef, useState } from "react";
+import { X, Maximize2, FileSpreadsheet, FileText, Image, Copy } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { ChatRichTable } from "./ChatRichTable";
 import { ChatRichChart } from "./ChatRichChart";
 import { ChatRichKpi } from "./ChatRichKpi";
 import { ModalPortal } from "./ModalPortal";
 import { exportToXlsx, exportToPdf, exportChartToPng } from "./exportUtils";
+
+function copyKpiToClipboard(presentation: Extract<ChatPresentation, { type: "kpi" }>) {
+  const lines = presentation.cards.map(
+    (c) => `${c.label}: ${c.value}${c.unit || ""}${c.delta ? ` (${c.delta})` : ""}`
+  );
+  navigator.clipboard?.writeText(`${presentation.title}\n${lines.join("\n")}`);
+}
 
 export function ChatExpandModal({
   presentation,
@@ -15,14 +22,28 @@ export function ChatExpandModal({
   onClose: () => void;
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const title =
     "title" in presentation ? presentation.title : "Visualização";
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKey);
+    modalRef.current?.focus();
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
 
   return (
     <ModalPortal>
       <div
         className="mdc-expand-modal__backdrop"
-        role="presentation"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        ref={modalRef}
+        tabIndex={-1}
         onMouseDown={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
@@ -56,6 +77,15 @@ export function ChatExpandModal({
                   title="Exportar PNG"
                 >
                   <Image size={15} /> PNG
+                </button>
+              )}
+              {presentation.type === "kpi" && (
+                <button
+                  className="mdc-expand-modal__tool-btn"
+                  onClick={() => copyKpiToClipboard(presentation)}
+                  title="Copiar dados"
+                >
+                  <Copy size={15} /> Copiar
                 </button>
               )}
               <button
