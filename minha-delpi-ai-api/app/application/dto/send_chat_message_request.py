@@ -10,3 +10,4 @@ class SendChatMessageRequest:
     access_token: str | None = None
     attachment_ids: list[str] | None = None
     resend_from_message_id: str | None = None
+    agent_key: str | None = None

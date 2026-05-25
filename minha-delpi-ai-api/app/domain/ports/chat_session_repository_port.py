@@ -36,6 +36,15 @@ class ChatSessionRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def update_session_agent_key(
+        self,
+        session_id: UUID,
+        user_id: UUID,
+        agent_key: str,
+    ) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_session_by_id(self, session_id: UUID) -> ChatSession | None:
         raise NotImplementedError
 

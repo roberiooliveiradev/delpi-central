@@ -2011,6 +2011,7 @@ def send_message(session_id: str):
                 context=payload.get("context"),
                 access_token=g.access_token,
                 attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
+                agent_key=payload.get("agentKey") or payload.get("agent_key") or None,
             )
         )
 
@@ -2060,6 +2061,7 @@ def stream_message(session_id: str):
         context=payload.get("context"),
         access_token=g.access_token,
         attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
+        agent_key=payload.get("agentKey") or payload.get("agent_key") or None,
     )
 
     return _stream_chat_response(session_id, request_dto)
