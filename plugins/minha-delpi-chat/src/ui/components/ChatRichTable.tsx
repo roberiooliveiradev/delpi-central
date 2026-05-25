@@ -10,8 +10,10 @@ type SortConfig = {
 
 export function ChatRichTable({
   presentation,
+  onDrillDown,
 }: {
   presentation: TablePresentation;
+  onDrillDown?: (query: string) => void;
 }) {
   const { title, columns, rows } = presentation;
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
@@ -145,9 +147,20 @@ export function ChatRichTable({
           </thead>
           <tbody>
             {sorted.map((row, idx) => (
-              <tr key={idx}>
+              <tr
+                key={idx}
+                className={onDrillDown ? "mdc-rich-table__tr--clickable" : ""}
+                onClick={() => {
+                  if (!onDrillDown) return;
+                  const query = buildDrillDownQuery(row, columns);
+                  if (query) onDrillDown(query);
+                }}
+                title={onDrillDown ? "Clique para detalhar" : undefined}
+              >
                 {columns.map((col) => (
-                  <td key={col.key}>{formatCellValue(row[col.key])}</td>
+                  <td key={col.key} className={getAlignClass(col.key, row[col.key])}>
+                    {formatCellValue(row[col.key], col.key)}
+                  </td>
                 ))}
               </tr>
             ))}
@@ -164,12 +177,73 @@ export function ChatRichTable({
   );
 }
 
-function formatCellValue(value: unknown): string {
+function buildDrillDownQuery(
+  row: Record<string, unknown>,
+  columns: { key: string; label: string }[],
+): string | null {
+  const codeCol = columns.find((c) =>
+    /^(code|codigo|cod|id|numero|number|nropor)$/i.test(c.key)
+  );
+  const descCol = columns.find((c) =>
+    /^(description|descricao|descri|nome|name|produto|product)$/i.test(c.key)
+  );
+
+  const code = codeCol ? String(row[codeCol.key] ?? "") : "";
+  const desc = descCol ? String(row[descCol.key] ?? "") : "";
+
+  if (code) {
+    return `Detalhe do item ${code}${desc ? ` (${desc})` : ""}`;
+  }
+  if (desc) {
+    return `Mais informações sobre ${desc}`;
+  }
+  const firstVal = String(row[columns[0]?.key] ?? "");
+  return firstVal ? `Detalhe de ${firstVal}` : null;
+}
+
+const CURRENCY_KEYS = /valor|preco|price|custo|cost|total|revenue|faturamento|receita|saldo|vlr|vl_/i;
+const PERCENT_KEYS = /pct|percent|taxa|rate|margem|margin|otd|giro|eficiencia/i;
+const DATE_KEYS = /data|date|emissao|criacao|atualizacao|inicio|fim|vencimento|dt_|created|updated/i;
+const QTY_KEYS = /qtd|quantidade|qty|quantity|saldo|disponivel|reservado|estoque|volume/i;
+
+function getAlignClass(key: string, value: unknown): string {
+  if (typeof value === "number" || CURRENCY_KEYS.test(key) || QTY_KEYS.test(key) || PERCENT_KEYS.test(key)) {
+    return "mdc-rich-table__td--right";
+  }
+  return "";
+}
+
+function formatCellValue(value: unknown, columnKey?: string): string {
   if (value == null) return "—";
   if (typeof value === "boolean") return value ? "Sim" : "Não";
+
+  const key = columnKey || "";
+
   if (typeof value === "number") {
+    if (CURRENCY_KEYS.test(key)) {
+      return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+    if (PERCENT_KEYS.test(key)) {
+      return `${value.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%`;
+    }
+    if (QTY_KEYS.test(key)) {
+      return value.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
     if (Number.isInteger(value)) return value.toLocaleString("pt-BR");
     return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
   }
-  return String(value);
+
+  const str = String(value);
+
+  if (DATE_KEYS.test(key) || /^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      if (str.includes("T") || str.length > 10) {
+        return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+      }
+      return d.toLocaleDateString("pt-BR");
+    }
+  }
+
+  return str;
 }
