@@ -113,15 +113,13 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       onTreeScopeChange={handleTreeScopeChange}
       onMonthsToCompareChange={setMonthsToCompare}
       status={statusBadge}
-      actions={
-        <>
-          {!model ? disabledMapActions : null}
-          <RefreshSnapshotButton
-            getAccessToken={getAccessToken}
-            onRefreshed={() => void reload()}
-            disabled={loading || refreshing}
-          />
-        </>
+      actions={!model ? disabledMapActions : undefined}
+      headerActions={
+        <RefreshSnapshotButton
+          getAccessToken={getAccessToken}
+          onRefreshed={() => void reload()}
+          disabled={loading || refreshing}
+        />
       }
       viewportNav={!model ? disabledNav : undefined}
     />

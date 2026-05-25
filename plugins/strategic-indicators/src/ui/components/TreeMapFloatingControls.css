@@ -97,6 +97,10 @@
   flex-shrink: 0;
 }
 
+.si-tree-map-floating__header-actions {
+  flex-shrink: 0;
+}
+
 .si-tree-map-floating__filters.si-reference-filters {
   display: flex;
   flex-wrap: nowrap;

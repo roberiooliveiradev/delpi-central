@@ -781,7 +781,8 @@ export function DepartmentIgdTree({
       onTreeScopeChange={filterControls.onTreeScopeChange}
       onMonthsToCompareChange={filterControls.onMonthsToCompareChange}
       viewportNav={viewportNav}
-      actions={<>{mapActions}{extraActions}</>}
+      actions={mapActions}
+      headerActions={extraActions}
       status={filterControls.status}
     />
   );
