@@ -51,7 +51,7 @@ def get_head_office_rol_target_pct(
             source_key=goal_keys.COMMERCIAL_HEAD_OFFICE_ROL,
             start_date=start_date,
             end_date=end_date,
-            branch="01",
+            branch=None,
             recompute_target_pct_from="rol",
         )
 
@@ -92,7 +92,7 @@ def get_branch_rol_target_pct(
             source_key=goal_keys.COMMERCIAL_BRANCH_ROL,
             start_date=start_date,
             end_date=end_date,
-            branch="02",
+            branch=None,
             recompute_target_pct_from="rol",
         )
 
