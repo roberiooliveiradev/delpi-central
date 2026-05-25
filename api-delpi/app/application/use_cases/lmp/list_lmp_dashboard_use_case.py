@@ -199,7 +199,7 @@ class ListLMPDashboardUseCase:
             items.append(LMPDashboardItem(
                 branch=row.get("branch"),
                 sale_number=row.get("sale_number"),
-                sale_description="",
+                sale_description=row.get("sale_description") or "",
                 listing_kind=row.get("listing_kind"),
                 start_date=row.get("start_date"),
                 end_date=row.get("end_date"),
@@ -241,6 +241,30 @@ class ListLMPDashboardUseCase:
         resolved_status = resolve_dashboard_status_filter(status_filter)
         filtered = self._filter_items_by_status(items, resolved_status)
         return self._build_charts(filtered)
+
+    def execute_items(
+        self,
+        request: ListLMPRequest,
+        status_filter: str = "Todos",
+    ) -> Dict[str, Any]:
+        """Fase 3: itens paginados — reutiliza summary rows (query leve, cacheada)."""
+        items = self._load_summary_rows(request)
+        resolved_status = resolve_dashboard_status_filter(status_filter)
+        filtered = self._filter_items_by_status(items, resolved_status)
+        total = len(filtered)
+
+        page = request.page or 1
+        page_size = request.page_size or DEFAULT_DASHBOARD_PAGE_SIZE
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated = filtered[start:end]
+
+        return {
+            "items": [asdict(item) for item in paginated],
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
 
     def execute(
         self,

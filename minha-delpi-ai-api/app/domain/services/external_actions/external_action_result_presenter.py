@@ -123,6 +123,9 @@ class ExternalActionResultPresenter:
         if not isinstance(items, list):
             return None
 
+        if items and isinstance(items[0], dict) and "sale_number" not in items[0] and "saleNumber" not in items[0]:
+            return None
+
         total = root.get("total")
 
         if not items and total in (0, None):

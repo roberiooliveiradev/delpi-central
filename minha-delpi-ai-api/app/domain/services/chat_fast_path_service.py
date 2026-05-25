@@ -52,11 +52,11 @@ class ChatFastPathService:
 
         normalized = _normalize_text(text)
 
-        if _KNOWLEDGE_HINT_RE.search(normalized):
-            return False
-
         if _SMALL_TALK_RE.match(normalized):
             return True
+
+        if _KNOWLEDGE_HINT_RE.search(normalized):
+            return False
 
         word_count = len(normalized.split())
 

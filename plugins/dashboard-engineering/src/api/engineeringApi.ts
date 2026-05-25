@@ -133,3 +133,24 @@ export async function getLmpsDashboardCharts(
   }
   return response.data;
 }
+
+export type LmpsDashboardItemsResponse = {
+  items: LmpsDashboardResponse["items"];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+export async function getLmpsDashboardItems(
+  params: LmpsDashboardParams,
+  signal?: AbortSignal,
+): Promise<LmpsDashboardItemsResponse> {
+  const response = await httpGet<ApiSuccessResponse<LmpsDashboardItemsResponse>>(
+    `${ENGINEERING_API_BASE}/lmps/dashboard/items${buildLmpQuery(params)}`,
+    { signal },
+  );
+  if (response.success === false) {
+    throw new Error(response.message || "Erro ao carregar itens de LMPs");
+  }
+  return response.data;
+}

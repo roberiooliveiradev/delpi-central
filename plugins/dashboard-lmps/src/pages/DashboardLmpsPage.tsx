@@ -93,14 +93,24 @@ export function DashboardLmpsPage() {
   const debouncedDateStart = useDebouncedValue(dateStart, FILTER_DEBOUNCE_MS);
   const debouncedDateEnd = useDebouncedValue(dateEnd, FILTER_DEBOUNCE_MS);
 
-  const { items, summary, charts, loading, refreshing, requestProgress, error, reload } =
-    useLmpsDashboard({
-      date_start: debouncedDateStart || undefined,
-      date_end: debouncedDateEnd || undefined,
-      branch: branch || undefined,
-      listing_type: listingType,
-      status,
-    });
+  const {
+    items,
+    itemsTotal,
+    summary,
+    charts,
+    loading,
+    itemsLoading,
+    refreshing,
+    requestProgress,
+    error,
+    reload,
+  } = useLmpsDashboard({
+    date_start: debouncedDateStart || undefined,
+    date_end: debouncedDateEnd || undefined,
+    branch: branch || undefined,
+    listing_type: listingType,
+    status,
+  });
 
   const dashboardItems = items as LmpDashboardItem[];
   const periodLabel = useMemo(
@@ -212,7 +222,7 @@ export function DashboardLmpsPage() {
   );
 
   const totalPropostas =
-    summary?.total_items ?? summary?.total_lmps ?? sortedItems.length;
+    summary?.total_items ?? summary?.total_lmps ?? (itemsTotal || sortedItems.length);
 
   const handleExportCsv = useCallback(() => {
     exportLmpsDashboardCsv(sortedItems, {
@@ -441,9 +451,13 @@ export function DashboardLmpsPage() {
             rowKey={(row) =>
               `${row.branch ?? "sem-filial"}-${row.listing_kind ?? "sem-tipo"}-${row.sale_number}`
             }
-            loading={loading && sortedItems.length === 0}
-            refreshing={refreshing}
-            emptyMessage="Nenhum registro encontrado para os filtros informados."
+            loading={itemsLoading && sortedItems.length === 0}
+            refreshing={refreshing || (itemsLoading && sortedItems.length > 0)}
+            emptyMessage={
+              itemsLoading
+                ? "Carregando registros…"
+                : "Nenhum registro encontrado para os filtros informados."
+            }
             searchPlaceholder="Buscar proposta, descrição, status…"
             getSearchText={(row) =>
               [

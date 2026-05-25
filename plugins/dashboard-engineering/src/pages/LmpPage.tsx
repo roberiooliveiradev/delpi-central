@@ -89,6 +89,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
     pageSize,
     setPage,
     loading,
+    itemsLoading,
     refreshing,
     requestProgress,
     error,
@@ -414,9 +415,13 @@ export function LmpPage({ pathname }: LmpPageProps) {
         rowKey={(row) =>
           `${row.branch ?? "x"}-${row.listing_kind ?? "x"}-${row.sale_number}`
         }
-        loading={loading && items.length === 0}
-        refreshing={refreshing}
-        emptyMessage="Nenhum registro encontrado para os filtros informados."
+        loading={itemsLoading && items.length === 0}
+        refreshing={refreshing || (itemsLoading && items.length > 0)}
+        emptyMessage={
+          itemsLoading
+            ? "Carregando registros…"
+            : "Nenhum registro encontrado para os filtros informados."
+        }
         searchPlaceholder="Buscar proposta, descrição, status…"
         serverPagination={{
           page,

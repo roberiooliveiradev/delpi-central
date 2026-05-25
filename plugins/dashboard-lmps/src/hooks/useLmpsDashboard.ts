@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  getLmpsDashboard,
   getLmpsDashboardSummary,
   getLmpsDashboardCharts,
-  type LmpsDashboardResponse,
+  getLmpsDashboardItems,
   type LmpsDashboardSummary,
   type LmpsDashboardCharts,
+  type LmpsDashboardItemsResponse,
 } from "../api/lmpApi";
+import type { LmpDashboardItem } from "../types/lmp";
 import {
   EMPTY_REQUEST_PROGRESS,
   type RequestProgress,
@@ -23,11 +24,12 @@ type UseLmpsDashboardParams = {
 };
 
 type UseLmpsDashboardResult = {
-  data: LmpsDashboardResponse | null;
-  items: LmpsDashboardResponse["items"];
+  items: LmpDashboardItem[];
+  itemsTotal: number;
   summary: LmpsDashboardSummary | null;
   charts: LmpsDashboardCharts | null;
   loading: boolean;
+  itemsLoading: boolean;
   refreshing: boolean;
   requestProgress: RequestProgress;
   error: string | null;
@@ -37,10 +39,11 @@ type UseLmpsDashboardResult = {
 export function useLmpsDashboard(
   params: UseLmpsDashboardParams
 ): UseLmpsDashboardResult {
-  const [data, setData] = useState<LmpsDashboardResponse | null>(null);
   const [summary, setSummary] = useState<LmpsDashboardSummary | null>(null);
   const [charts, setCharts] = useState<LmpsDashboardCharts | null>(null);
+  const [itemsData, setItemsData] = useState<LmpsDashboardItemsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [itemsLoading, setItemsLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -105,17 +108,17 @@ export function useLmpsDashboard(
         setCharts(chartsResult);
         setRequestProgress({ completed: 2, total: TOTAL_PHASES });
 
-        // After charts loaded, render the page
         setLoading(false);
         setRefreshing(false);
 
-        // Phase 3: Full items (paginated)
-        const fullResult = await getLmpsDashboard(
+        // Phase 3: Items (paginated) — loaded in background
+        setItemsLoading(true);
+        const itemsResult = await getLmpsDashboardItems(
           stableParams,
           controller.signal,
         );
         if (controller.signal.aborted) return;
-        setData(fullResult);
+        setItemsData(itemsResult);
         setRequestProgress({ completed: 3, total: TOTAL_PHASES });
       } catch (err) {
         if (!controller.signal.aborted) {
@@ -126,6 +129,10 @@ export function useLmpsDashboard(
           );
           setLoading(false);
           setRefreshing(false);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setItemsLoading(false);
         }
       }
     }
@@ -150,11 +157,12 @@ export function useLmpsDashboard(
   }, []);
 
   return {
-    data,
-    items: data?.items ?? [],
+    items: itemsData?.items ?? [],
+    itemsTotal: itemsData?.total ?? 0,
     summary,
     charts,
     loading,
+    itemsLoading,
     refreshing,
     requestProgress,
     error,
