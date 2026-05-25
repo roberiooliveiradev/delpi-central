@@ -34,7 +34,7 @@ import type { ChartGranularity } from "../types/chart";
 import { downloadRolSeriesCsv } from "../utils/chartSeriesExport";
 import { formatPeriodLabel } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import {
   formatInteger,
   formatCurrency,
@@ -191,24 +191,35 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
         <KpiCard
           title="ROL — Matriz (01)"
           value={formatCurrency(headOfficeRol?.rol)}
-          subtitle={formatGoalSubtitle(periodLabel, headOfficeRol, formatCurrency)}
+          {...buildKpiGoalPresentation(
+            periodLabel,
+            headOfficeRol,
+            formatCurrency,
+            { realizedValue: headOfficeRol?.rol },
+          )}
           icon={<Banknote size={22} />}
           loading={isBusy && !headOfficeRol}
         />
         <KpiCard
           title="ROL — Filial (02)"
           value={formatCurrency(branchRol?.rol)}
-          subtitle={formatGoalSubtitle(`Filial 02 · ${periodLabel}`, branchRol, formatCurrency)}
+          {...buildKpiGoalPresentation(
+            `Filial 02 · ${periodLabel}`,
+            branchRol,
+            formatCurrency,
+            { realizedValue: branchRol?.rol },
+          )}
           icon={<Building2 size={22} />}
           loading={isBusy && !branchRol}
         />
         <KpiCard
           title="Taxa de conversão"
           value={formatPercent(closingRate?.sales_conversion_rate_pct)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${formatInteger(closingRate?.qtd_won)} ganhas / ${formatInteger(closingRate?.qtd_proposals)} propostas · ${periodLabel}`,
             closingRate,
             formatPercent,
+            { realizedValue: closingRate?.sales_conversion_rate_pct },
           )}
           icon={<Percent size={22} />}
           loading={isBusy && !closingRate}
@@ -216,10 +227,11 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
         <KpiCard
           title="OTD — pedidos de venda"
           value={formatPercent(salesOrderOtd?.sales_order_otd_pct)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${periodLabel}`,
             salesOrderOtd,
             formatPercent,
+            { realizedValue: salesOrderOtd?.sales_order_otd_pct },
           )}
           icon={<PackageCheck size={22} />}
           loading={isBusy && !salesOrderOtd}
@@ -227,10 +239,11 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
         <KpiCard
           title="% ROL — novos negócios"
           value={formatPercent(newBusinessRol?.new_business_rol_pct)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${formatCurrency(newBusinessRol?.new_business_rol)} não-WEG · ${periodLabel}`,
             newBusinessRol,
             formatPercent,
+            { realizedValue: newBusinessRol?.new_business_rol_pct },
           )}
           icon={<TrendingUp size={22} />}
           loading={isBusy && !newBusinessRol}
