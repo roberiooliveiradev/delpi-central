@@ -26,7 +26,7 @@ def test_build_snapshot_uses_sheet_pct_without_rol_division() -> None:
         financial_query_repository=MagicMock(),
     )
     service._financial_query_repository.list_rol_by_branch.return_value = {
-        "01": {"rol_with_ipi": 1_000_000},
+        "01": {"rol": 1_000_000},
     }
 
     snapshot = service._build_snapshot(
@@ -65,7 +65,7 @@ def test_build_snapshot_returns_none_when_branch_has_no_sheet_rows() -> None:
         financial_query_repository=MagicMock(),
     )
     service._financial_query_repository.list_rol_by_branch.return_value = {
-        "01": {"rol_with_ipi": 1_000_000},
+        "01": {"rol": 1_000_000},
     }
 
     snapshot = service._build_snapshot(
@@ -95,7 +95,7 @@ def test_build_snapshot_returns_none_pmr_without_receivables_rows() -> None:
         financial_query_repository=MagicMock(),
     )
     service._financial_query_repository.list_rol_by_branch.return_value = {
-        "02": {"rol_with_ipi": 500_000},
+        "02": {"rol": 500_000},
     }
 
     snapshot = service._build_snapshot(
@@ -124,7 +124,7 @@ def test_build_snapshot_keeps_zero_pmr_when_sheet_has_zero() -> None:
         financial_query_repository=MagicMock(),
     )
     service._financial_query_repository.list_rol_by_branch.return_value = {
-        "02": {"rol_with_ipi": 500_000},
+        "02": {"rol": 500_000},
     }
 
     snapshot = service._build_snapshot(

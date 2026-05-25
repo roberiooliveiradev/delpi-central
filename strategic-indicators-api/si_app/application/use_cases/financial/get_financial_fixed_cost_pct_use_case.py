@@ -33,7 +33,7 @@ class GetFinancialFixedCostPctUseCase:
                     "start_date": request.start_date,
                     "end_date": request.end_date,
                     "fixed_cost_value": 0.0,
-                    "rol_with_ipi": 0.0,
+                    "rol": 0.0,
                     "fixed_cost_over_rol_pct": 0.0,
                 }
 
@@ -42,7 +42,7 @@ class GetFinancialFixedCostPctUseCase:
                 "start_date": request.start_date,
                 "end_date": request.end_date,
                 "fixed_cost_value": branch_snapshot.fixed_cost_value,
-                "rol_with_ipi": branch_snapshot.rol_with_ipi,
+                "rol": branch_snapshot.rol,
                 "fixed_cost_over_rol_pct": branch_snapshot.fixed_cost_over_rol_pct,
             }
 
@@ -50,7 +50,7 @@ class GetFinancialFixedCostPctUseCase:
             {
                 "branch": item.branch,
                 "fixed_cost_value": item.fixed_cost_value,
-                "rol_with_ipi": item.rol_with_ipi,
+                "rol": item.rol,
                 "fixed_cost_over_rol_pct": item.fixed_cost_over_rol_pct,
             }
             for item in snapshot.branches

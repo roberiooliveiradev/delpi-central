@@ -33,7 +33,7 @@ class ProductionUnitMetricsSnapshot:
     branch: str | None
     start_date: str | None
     end_date: str | None
-    rol_with_ipi: float
+    rol: float
     average_direct_labor_cost: float
     average_production_cost: float
     average_depreciation_cost: float
@@ -158,7 +158,7 @@ class ProductionMetricsSnapshotService:
         )
 
         rol_payload = self._financial_query_repository.get_rol(rol_request)
-        rol_with_ipi = self._to_float(rol_payload.get("rol_with_ipi")) or 0.0
+        rol_value = self._to_float(rol_payload.get("rol")) or 0.0
 
         direct_labor_items = self._direct_labor_repository.get_direct_labor_cost(
             production_request
@@ -189,21 +189,21 @@ class ProductionMetricsSnapshotService:
             branch=effective_branch,
             start_date=start_date,
             end_date=end_date,
-            rol_with_ipi=rol_with_ipi,
+            rol=rol_value,
             average_direct_labor_cost=average_direct_labor_cost,
             average_production_cost=average_production_cost,
             average_depreciation_cost=average_depreciation_cost,
             direct_labor_cost_pct=self._calculate_pct(
                 numerator=average_direct_labor_cost,
-                denominator=rol_with_ipi,
+                denominator=rol_value,
             ),
             production_cost_pct=self._calculate_pct(
                 numerator=average_production_cost,
-                denominator=rol_with_ipi,
+                denominator=rol_value,
             ),
             depreciation_pct=self._calculate_pct(
                 numerator=average_depreciation_cost,
-                denominator=rol_with_ipi,
+                denominator=rol_value,
             ),
             oee_pct=self._to_float(getattr(oee, "oee_pct", None)),
             otd_pct=self._to_float(getattr(otd, "on_time_delivery_pct", None)),

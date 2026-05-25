@@ -51,7 +51,7 @@ def test_financial_provider_exposes_consolidated_unit_values_on_branch_view() ->
         branches=[
             FinancialBranchSnapshot(
                 branch=CONSOLIDATED_BRANCH_KEY,
-                rol_with_ipi=1_000_000.0,
+                rol=1_000_000.0,
                 ebitda_value=125_000.0,
                 fixed_cost_value=80_000.0,
                 pmr_days=45.0,
@@ -60,7 +60,7 @@ def test_financial_provider_exposes_consolidated_unit_values_on_branch_view() ->
             ),
             FinancialBranchSnapshot(
                 branch="01",
-                rol_with_ipi=500_000.0,
+                rol=500_000.0,
                 ebitda_value=55_000.0,
                 fixed_cost_value=35_000.0,
                 pmr_days=40.0,

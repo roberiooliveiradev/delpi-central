@@ -1,6 +1,6 @@
 # Arquitetura — Strategic Indicators
 
-**Última atualização:** 2026-05-21
+**Última atualização:** 2026-05-25
 
 ## Visão geral
 
@@ -10,7 +10,7 @@ Portal (shell)
         └── GET /apps/strategic-indicators-api/strategic-indicators/*
               └── strategic-indicators-api (FastAPI, si_app)
                     ├── Postgres plugins (catálogo, metas, settings, period_scores)
-                    ├── TOTVS / SQL Server (medições operacionais)
+                    ├── api-delpi via HTTP (medições operacionais TOTVS)
                     ├── Google Sheets (Transforma+, etc.)
                     └── Portal RH (quando aplicável)
 ```
@@ -23,8 +23,47 @@ A **api-delpi** não monta mais o router `/strategic-indicators`. Toda leitura e
 |------------|-----------------|------------------|
 | MFE | `delpi-strategic-indicators` | UI React (Module Federation) |
 | API SI | `delpi-strategic-indicators-api` | Snapshots, cálculo IGD/IDD, admin |
+| API Delpi | `delpi-api-delpi` | Fonte de dados operacionais TOTVS (SQL Server) |
 | Gateway | `delpi-gateway` | Proxy `/apps/strategic-indicators-api/` e `/apps/strategic-indicators/` |
 | Postgres plugins | `delpi-postgres-plugins` | Schema `strategic_indicators` |
+
+## Integração HTTP com api-delpi (padrão Gateway)
+
+A partir de maio/2026, o SI não acessa mais o TOTVS/SQL Server diretamente. Consome a **api-delpi** via HTTP, seguindo o padrão já estabelecido pela integração com a `transformometro-api`.
+
+### Gateways
+
+Criados em `si_app/infrastructure/gateways/`:
+
+| Gateway | Endpoints consumidos |
+|---------|---------------------|
+| `delpi_commercial_gateway.py` | `GET /commercial/*` |
+| `delpi_financial_gateway.py` | `GET /financial/rol` |
+| `delpi_production_gateway.py` | `GET /production/*_pct` |
+| `delpi_supplies_gateway.py` | `GET /supplies/*` |
+| `delpi_quality_gateway.py` | `GET /quality/ppm/*`, `/quality/nonconformities`, `/quality/branches` |
+| `delpi_engineering_gateway.py` | `GET /engineering/lmps*` |
+| `transformometro_transforma_mais_gateway.py` | `GET /transformometro/*` (já existia) |
+
+### Fluxo
+
+1. O composer instancia o gateway passando um `DelpiApiClient` (de `shared/delpi_api_client`).
+2. O gateway implementa o port do domínio (ex.: `FinancialQueryRepositoryPort`).
+3. No execute, o gateway chama `GET /financial/rol` na api-delpi e converte o JSON para a entidade esperada pelo use case.
+4. Headers de autenticação são propagados via `bearer_authorization_from_context()`.
+
+### Variáveis de ambiente
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `DELPI_API_URL` | `http://delpi-api-delpi:8000` | Base URL da api-delpi |
+| `DELPI_API_TIMEOUT` | `30` | Timeout HTTP em segundos |
+| `DELPI_KNOWN_BRANCHES` | `01,02` | Filiais usadas por métodos `list_*_by_branch` |
+
+### Estratégias de adaptação
+
+- **`list_*_by_branch`**: api-delpi não expõe endpoint de listagem por filial. Os gateways de produção e financeiro iteram sobre `DELPI_KNOWN_BRANCHES` fazendo uma chamada por filial.
+- **`_CachedFetch` (suprimentos)**: endpoints de suprimentos retornam JSON extenso. O mixin cacheia a resposta por parâmetros dentro da mesma instância, evitando chamadas duplicadas.
 
 ## Pacote `si_app`
 
@@ -33,7 +72,8 @@ Código derivado da api-delpi, podado para o grafo alcançável a partir de `mai
 - `interface/http/routes/strategic_indicators_routes.py` — rotas
 - `composition/strategic_indicators_composer.py` — DI
 - `application/services/strategic_indicators/` — snapshots, warm-up, cache
-- `infrastructure/providers/strategic_indicators/` — coletores TOTVS/Sheets/RH
+- `infrastructure/gateways/delpi_*_gateway.py` — adapters HTTP para api-delpi
+- `infrastructure/providers/strategic_indicators/` — coletores Sheets/RH
 - `infrastructure/persistence/plugins/repositories/strategic_indicators/` — Postgres
 
 Modelos de snapshot (`StrategicIndicatorsPeriodSnapshot`, etc.) ficam em `strategic_indicators_snapshot_models.py` para evitar import circular com `period_scores_serialization`.
