@@ -56,6 +56,9 @@ class ExternalActionResultPresenter:
             if items and isinstance(items[0], dict) and "order_number" in items[0]:
                 return self._present_sale_orders(root, items)
 
+            if items and isinstance(items[0], dict) and "code" in items[0] and "description" in items[0]:
+                return self._present_product_search(root, items)
+
             return self._present_items(items)
 
         return {
@@ -245,6 +248,46 @@ class ExternalActionResultPresenter:
             "titulo": "Consulta SQL",
             "linhas": linhas,
             "dados": {"rows": rows[:20]},
+        }
+
+    def _present_product_search(self, root: dict, items: list) -> dict:
+        total = root.get("total")
+
+        if not items:
+            return {
+                "titulo": "Busca de produtos",
+                "linhas": ["Nenhum produto encontrado para a busca."],
+                "dados": root,
+            }
+
+        linhas = []
+
+        for item in items[:15]:
+            if not isinstance(item, dict):
+                continue
+
+            code = item.get("code") or "?"
+            desc = item.get("description") or ""
+            tipo = item.get("type") or ""
+            unit = item.get("unit") or ""
+
+            parts = [f"**{code}**"]
+            if desc:
+                parts.append(desc)
+            if tipo:
+                parts.append(f"({tipo})")
+            if unit:
+                parts.append(f"[{unit}]")
+
+            linhas.append(" — ".join(parts[:2]) + (f" {parts[2]}" if len(parts) > 2 else "") + (f" {parts[3]}" if len(parts) > 3 else ""))
+
+        if total is not None and total > len(items):
+            linhas.append(f"Total encontrado: {total} produto(s).")
+
+        return {
+            "titulo": "Busca de produtos",
+            "linhas": linhas or ["Nenhum produto encontrado."],
+            "dados": {"total": total, "items": [{"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")} for i in items[:15]]},
         }
 
     def _present_sale_orders(self, root: dict, items: list) -> dict:

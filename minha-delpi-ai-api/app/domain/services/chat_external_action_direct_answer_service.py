@@ -6,6 +6,7 @@ from app.domain.services.chat_product_query_intent_service import (
 
 class ChatExternalActionKind:
     PRODUCT = "product"
+    PRODUCT_SEARCH = "product_search"
     SALE_ORDERS = "sale_orders"
     LMP_LIST = "lmp_list"
     LMP_DETAIL = "lmp_detail"
@@ -28,6 +29,10 @@ class ChatExternalActionDirectAnswerService:
             or "list_sale_orders" in normalized_operation
         ) and "/products/" not in normalized_path:
             return ChatExternalActionKind.SALE_ORDERS
+
+        if "/search" in normalized_path or "search_products" in normalized_operation:
+            if "busca" in titulo or titulo == "busca de produtos":
+                return ChatExternalActionKind.PRODUCT_SEARCH
 
         if "/products/" in normalized_path or "produto" in titulo:
             return ChatExternalActionKind.PRODUCT
@@ -70,6 +75,9 @@ class ChatExternalActionDirectAnswerService:
 
         if kind == ChatExternalActionKind.SALE_ORDERS:
             return cls._format_sale_orders(humanized)
+
+        if kind == ChatExternalActionKind.PRODUCT_SEARCH:
+            return cls._format_product_search(humanized)
 
         if kind == ChatExternalActionKind.PRODUCT:
             intent = ChatProductQueryIntentService.detect(message)
@@ -170,6 +178,18 @@ class ChatExternalActionDirectAnswerService:
 
         if len(lines) > 12:
             body += f"\n- … e mais {len(lines) - 12} item(ns)."
+
+        return f"**{title}**\n\n{body}"
+
+    @classmethod
+    def _format_product_search(cls, humanized: dict) -> str | None:
+        lines = cls._clean_lines(humanized)
+
+        if not lines:
+            return "**Busca de produtos**\n\nNenhum produto encontrado para a busca informada."
+
+        title = str(humanized.get("titulo") or "Busca de produtos").strip()
+        body = "\n".join(f"- {line}" for line in lines[:15])
 
         return f"**{title}**\n\n{body}"
 

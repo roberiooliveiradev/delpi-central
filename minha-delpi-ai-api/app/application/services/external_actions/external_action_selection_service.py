@@ -118,6 +118,16 @@ class ExternalActionSelectionService:
                 intent=ChatProductQueryIntent.FULL,
             )
 
+        if not product_code and self._looks_like_product_search(normalized):
+            selected = self._select_product_search_action(
+                message,
+                normalized,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if selected:
+                return selected
+
         if self._looks_like_sql_or_data_query(message):
             return self._select_sql_or_data_action(
                 message,
@@ -156,6 +166,8 @@ class ExternalActionSelectionService:
             "vendas",
             "faturamento",
             "carteira",
+            "estrutura",
+            "bom",
         ]
 
         return any(term in value for term in terms)
@@ -341,6 +353,8 @@ class ExternalActionSelectionService:
             limit=80,
         )
 
+        best = None
+
         for action in candidates:
             if action.get("method") != "GET":
                 continue
@@ -350,7 +364,6 @@ class ExternalActionSelectionService:
 
             if not (
                 path.rstrip("/").endswith("/sales")
-                or path.rstrip("/").endswith("/sales/")
                 or "list_sale_orders" in operation_id
             ):
                 continue
@@ -358,16 +371,25 @@ class ExternalActionSelectionService:
             if "/lmps" in path or "lmp" in path:
                 continue
 
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": action["actionId"],
-                    "parameters": self._build_sale_orders_parameters(action),
-                },
-                "reason": "A pergunta solicita listagem de ordens de venda.",
-            }
+            if "{" in path and best is not None:
+                continue
 
-        return None
+            best = action
+
+            if "list_sale_orders" in operation_id or "{" not in path:
+                break
+
+        if not best:
+            return None
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": best["actionId"],
+                "parameters": self._build_sale_orders_parameters(best),
+            },
+            "reason": "A pergunta solicita listagem de ordens de venda.",
+        }
 
     def _build_sale_orders_parameters(self, action: dict) -> dict:
         parameters = {}
@@ -408,6 +430,144 @@ class ExternalActionSelectionService:
             ) or bool(self._extract_sale_number(value))
 
         return False
+
+    def _looks_like_product_search(self, value: str) -> bool:
+        search_triggers = (
+            "busque", "buscar", "pesquise", "pesquisar",
+            "procure", "procurar", "encontre", "encontrar",
+            "traga", "liste", "listar", "exemplos de",
+            "existe algum", "existem", "tem algum",
+            "quais produtos", "quais itens", "quais materiais",
+            "search", "find",
+        )
+        product_context = (
+            "produto", "item", "material", "cabo", "parafuso",
+            "chapa", "tubo", "peça", "peca", "insumo", "mp",
+            "componente", "motor", "válvula", "valvula",
+            "rolamento", "filtro", "conector", "anel",
+        )
+
+        has_trigger = any(term in value for term in search_triggers)
+        has_product_context = any(term in value for term in product_context)
+
+        if has_trigger and has_product_context:
+            return True
+
+        if has_trigger and len(value.split()) >= 3:
+            if not any(
+                term in value
+                for term in ("lmp", "ov", "cpv", "otd", "sql", "estoque total", "giro")
+            ):
+                return True
+
+        return False
+
+    def _extract_search_description(self, message: str) -> str:
+        normalized = str(message or "").lower().strip()
+
+        patterns = [
+            r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(?:exemplos?\s+de\s+)(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
+            r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(?:produtos?|itens?|materiais?)\s+(?:d[eoa]\s+(?:tipo\s+)?|com\s+(?:descri[çc][ãa]o\s+)?|tipo\s+)(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
+            r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
+            r"(?:quais|quantos?)\s+(?:produtos?|itens?|materiais?)\s+(?:existem?|tem|há)\s+(?:com\s+(?:descri[çc][ãa]o\s+)?|d[eoa]\s+(?:tipo\s+)?|tipo\s+)(.+?)$",
+            r"(?:quais|quantos?)\s+(?:produtos?|itens?|materiais?)\s+(.+?)$",
+            r"(?:existe|tem)\s+(?:algum|alguma)\s+(.+?)(?:\s+no\s+sistema|\s+cadastrado)?$",
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, normalized)
+            if match:
+                result = match.group(1).strip()
+                result = re.sub(
+                    r"^(produtos?|itens?|materiais?|exemplos?|tipo|com|de)\s+",
+                    "",
+                    result,
+                )
+                if result:
+                    return result
+
+        stop_words = {
+            "busque", "buscar", "pesquise", "pesquisar", "procure", "procurar",
+            "encontre", "encontrar", "traga", "liste", "listar", "exemplos",
+            "de", "produtos", "produto", "itens", "item", "materiais", "material",
+            "me", "para", "mim", "os", "as", "o", "a", "um", "uma", "no", "na",
+            "do", "da", "com", "que", "são", "sao", "tipo", "descrição", "descricao",
+        }
+
+        words = normalized.split()
+        description_words = []
+
+        for word in words:
+            cleaned = word.strip(",.!?;:")
+            if cleaned.isdigit() and len(cleaned) <= 2:
+                continue
+            if cleaned not in stop_words:
+                description_words.append(cleaned)
+
+        return " ".join(description_words[-4:]) if description_words else normalized
+
+    def _select_product_search_action(
+        self,
+        message: str,
+        normalized: str,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        candidates = self._list_allowed_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            limit=80,
+        )
+
+        for action in candidates:
+            if action.get("method") != "GET":
+                continue
+
+            path = str(action.get("path") or "").lower()
+            operation_id = str(action.get("operationId") or "").lower()
+
+            if "search" not in path and "search" not in operation_id:
+                continue
+
+            description_query = self._extract_search_description(message)
+            page_size = self._extract_search_limit(normalized)
+
+            parameters = {}
+            for parameter in action.get("parametersSchema") or []:
+                name = parameter.get("name")
+                if not name:
+                    continue
+                lowered = name.lower()
+                if lowered in {"description", "descricao", "query", "q", "search", "term"}:
+                    parameters[name] = description_query
+                elif lowered == "page":
+                    parameters[name] = 1
+                elif lowered in {"page_size", "pagesize", "limit"}:
+                    parameters[name] = page_size
+
+            if not parameters:
+                parameters = {"description": description_query, "page_size": page_size}
+
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": action["actionId"],
+                    "parameters": parameters,
+                },
+                "reason": f"Busca de produtos por descrição: '{description_query}'.",
+            }
+
+        return None
+
+    def _extract_search_limit(self, value: str) -> int:
+        match = re.search(r"\b(\d{1,2})\s+(?:exemplos?|produtos?|itens?|resultados?)", value)
+        if match:
+            return min(int(match.group(1)), 20)
+
+        match = re.search(r"(?:exemplos?|produtos?|itens?|resultados?)\s+(\d{1,2})\b", value)
+        if match:
+            return min(int(match.group(1)), 20)
+
+        return 5
 
     def _looks_like_sql_or_data_query(self, message: str) -> bool:
         normalized = str(message or "").lower()
@@ -760,8 +920,12 @@ class ExternalActionSelectionService:
             term in normalized
             for term in ("carteira", "pedidos em aberto", "pedido em aberto", "open-orders")
         )
+        wants_structure = any(
+            term in normalized
+            for term in ("estrutura", "bom", "bill of material", "composição", "composicao")
+        )
 
-        has_specific_sub_intent = wants_purchases or wants_sales or wants_open_orders
+        has_specific_sub_intent = wants_purchases or wants_sales or wants_open_orders or wants_structure
 
         def score(action: dict) -> int:
             haystack = " ".join(
@@ -780,6 +944,9 @@ class ExternalActionSelectionService:
 
             elif wants_sales and "/sales" in path and "open-orders" not in path:
                 value += 100
+
+            if wants_structure and "/structure" in path:
+                value += 120
 
             if intent == ChatProductQueryIntent.STOCK:
                 if "/products/{code}/stock" in haystack or path.endswith("/stock"):

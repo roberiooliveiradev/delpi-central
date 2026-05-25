@@ -29,7 +29,6 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(LMP_DASHBOARD_PAGE_SIZE);
   const [loading, setLoading] = useState(true);
-  const [itemsLoading, setItemsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -73,6 +72,9 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
 
       try {
         setError(null);
+        setItems([]);
+        setTotal(0);
+
         if (hasPrevious) setRefreshing(true);
         else setLoading(true);
 
@@ -97,11 +99,7 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
         setCharts(chartsResult);
         setRequestProgress({ completed: 2, total: TOTAL_PHASES });
 
-        setLoading(false);
-        setRefreshing(false);
-
-        // Phase 3: Items (paginated) — loaded in background
-        setItemsLoading(true);
+        // Phase 3: Items (paginated)
         const itemsResult = await getLmpsDashboardItems(
           { ...stableParams, page, page_size: LMP_DASHBOARD_PAGE_SIZE },
           controller.signal,
@@ -115,12 +113,11 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
       } catch (reason) {
         if (!controller.signal.aborted) {
           setError(formatEngineeringApiError(reason));
-          setLoading(false);
-          setRefreshing(false);
         }
       } finally {
         if (!controller.signal.aborted) {
-          setItemsLoading(false);
+          setLoading(false);
+          setRefreshing(false);
         }
       }
     }
@@ -153,7 +150,6 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
     pageSize,
     setPage,
     loading,
-    itemsLoading,
     refreshing,
     requestProgress,
     error,
