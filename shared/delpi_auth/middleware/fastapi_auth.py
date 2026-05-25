@@ -14,6 +14,7 @@ from ..request_context import (
     reset_request_authorization,
     clear_request_authorization,
 )
+from ..service_token import request_has_valid_internal_service_token
 
 
 CORE_API_URL = "http://core-api:8000"
@@ -73,6 +74,30 @@ async def jwt_middleware(request: Request, call_next):
     path = request.url.path
     if is_public_path(path):
         return await call_next(request)
+
+    if request_has_valid_internal_service_token(request):
+        service_user = SimpleNamespace(
+            id="internal-service",
+            email="service@delpi.internal",
+            name="Serviço Interno",
+            roles=["internal-service"],
+            groups=[],
+            permissions=[],
+            is_superadmin=True,
+            access_token=None,
+        )
+        request.state.user = service_user
+        context_token = set_current_user(service_user)
+        auth_context_token = set_request_authorization(
+            request.headers.get("Authorization") or ""
+        )
+        try:
+            return await call_next(request)
+        except Exception as e:
+            return JSONResponse(status_code=500, content={"detail": f"Error: {e}"})
+        finally:
+            reset_request_authorization(auth_context_token)
+            reset_current_user(context_token)
 
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
