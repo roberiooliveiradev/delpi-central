@@ -5,6 +5,7 @@ class ChatProductQueryIntent:
     DESCRIPTION = "description"
     STOCK = "stock"
     STRUCTURE = "structure"
+    PARENTS = "parents"
     FULL = "full"
 
 
@@ -20,6 +21,9 @@ class ChatProductQueryIntentService:
 
         if cls._looks_like_mixed_documental_operational(normalized):
             return ChatProductQueryIntent.FULL
+
+        if cls._looks_like_parents_question(normalized):
+            return ChatProductQueryIntent.PARENTS
 
         if cls._looks_like_structure_question(normalized):
             return ChatProductQueryIntent.STRUCTURE
@@ -174,6 +178,7 @@ class ChatProductQueryIntentService:
             or cls._looks_like_stock_question(normalized)
             or cls._looks_like_description_question(normalized)
             or cls._looks_like_structure_question(normalized)
+            or cls._looks_like_parents_question(normalized)
             or cls._looks_like_product_sub_intent(normalized)
         ):
             return None
@@ -305,6 +310,39 @@ class ChatProductQueryIntentService:
             "codigo do item",
         ]
 
+        return any(term in normalized for term in terms)
+
+    @classmethod
+    def _looks_like_parents_question(cls, normalized: str) -> bool:
+        terms = (
+            "onde é usado",
+            "onde e usado",
+            "onde é utilizado",
+            "onde e utilizado",
+            "produto pai",
+            "produtos pai",
+            "itens pai",
+            "item pai",
+            "parent",
+            "parents",
+            "where used",
+            "utilizado em",
+            "usado em",
+            "aplicação do produto",
+            "aplicacao do produto",
+            "onde usa ",
+            "onde utiliza",
+            "é usado em",
+            "e usado em",
+            "em quais produtos é usado",
+            "em quais produtos e usado",
+            "em quais itens é usado",
+            "em quais itens e usado",
+            "quem usa o",
+            "quem utiliza o",
+            "faz parte de",
+            "componente de qual",
+        )
         return any(term in normalized for term in terms)
 
     @classmethod

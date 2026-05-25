@@ -1,6 +1,6 @@
 # Fontes de dados — medições do painel
 
-**Última atualização:** 2026-05-21
+**Última atualização:** 2026-05-25
 
 O painel SI **não** armazena valores realizados no Postgres (exceto cache `period_scores`). Os realizados vêm de fontes operacionais por `source_key` / departamento.
 
@@ -23,23 +23,29 @@ O painel SI **não** armazena valores realizados no Postgres (exceto cache `peri
 
 ## Resumo por departamento
 
-| Departamento | Fontes principais | Coletor (si_app) |
-|--------------|-------------------|------------------|
-| Financeiro | TOTVS (ROL), Google Sheets (EBITDA e custo fixo já em %; filial vazia = consolidado; filial preenchida = por unidade), recebíveis (PMR). Sem linhas no período → `ebitda_over_rol_pct` / `fixed_cost_over_rol_pct` / `pmr_days` = `null` (não `0`). | `financial_indicators_snapshot_provider` |
-| Comercial | TOTVS: ROL matriz/filial, taxa fechamento, OTD pedidos (`SC6`/`SC5`), % ROL novos negócios (exclui WEG). Catálogo V015. | `commercial_indicators_snapshot_provider` |
-| Produção | TOTVS (OTD, OEE), Sheets (MO, custo, depreciação) | `production_indicators_snapshot_provider` |
-| Qualidade | TOTVS (PPM, NC), Sheets (Kaizen, 5S) | `quality_indicators_snapshot_provider` |
-| Suprimentos | TOTVS (CPV, giro, OTD, estoque) | `supplies_indicators_snapshot_provider` |
-| Engenharia | TOTVS (LMP), Transforma+ (Sheets) | `engineering_indicators_snapshot_provider` |
-| RH | Portal RH (Postgres) | `hr_indicators_snapshot_provider` |
+| Departamento | Fontes principais | Acesso | Coletor (si_app) |
+|--------------|-------------------|--------|------------------|
+| Financeiro | ROL (TOTVS), EBITDA/custo fixo (Sheets), recebíveis/PMR (Sheets) | `api-delpi` HTTP + Sheets | `financial_indicators_snapshot_provider` |
+| Comercial | ROL por segmento, taxa fechamento, OTD pedidos, % novos negócios | `api-delpi` HTTP | `commercial_indicators_snapshot_provider` |
+| Produção | OTD e OEE (TOTVS), MO/custo/depreciação (Sheets) | `api-delpi` HTTP + Sheets | `production_indicators_snapshot_provider` |
+| Qualidade | PPM e NC (TOTVS), Kaizen e 5S (Sheets) | `api-delpi` HTTP + Sheets | `quality_indicators_snapshot_provider` |
+| Suprimentos | CPV, giro de estoque, OTD, estoque (TOTVS) | `api-delpi` HTTP | `supplies_indicators_snapshot_provider` |
+| Engenharia | LMP (TOTVS), Transforma+ (Sheets) | `api-delpi` HTTP + Sheets | `engineering_indicators_snapshot_provider` |
+| RH | Portal RH (Postgres) | direto | `hr_indicators_snapshot_provider` |
 
 Composição: `real_indicator_measurements_provider.py` — paraleliza departamentos na visão consolidada.
 
-## TOTVS (SQL Server)
+## Migração para HTTP (api-delpi)
 
-- Variáveis: `DB_*` no container (mapeadas de `TOTVS_DB_*` no Compose)
-- Pool: `TOTVS_POOL_ENABLED`, `TOTVS_POOL_MAX_SIZE`
-- Otimizações SI: produção consolidada (uma passagem), financial `list_rol_by_branch`
+A partir de maio/2026, o SI **não acessa mais o TOTVS/SQL Server diretamente**. Todas as medições operacionais TOTVS são obtidas via HTTP da api-delpi, usando o client compartilhado `shared/delpi_api_client`.
+
+Os repositórios TOTVS originais (`si_app/infrastructure/persistence/totvs/`) foram substituídos por gateways HTTP (`si_app/infrastructure/gateways/delpi_*_gateway.py`). Os ports de domínio não mudaram — a troca é transparente para use cases e services.
+
+## api-delpi (HTTP)
+
+- Client compartilhado: `shared/delpi_api_client/client.py` (`DelpiApiClient`)
+- Variáveis: `DELPI_API_URL`, `DELPI_API_TIMEOUT`, `DELPI_KNOWN_BRANCHES`
+- Autenticação: `bearer_authorization_from_context()` propaga o token do request original
 
 ## Google Sheets
 

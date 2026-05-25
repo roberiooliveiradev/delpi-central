@@ -12,6 +12,7 @@ from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
+from app.application.services.chat_user_context_service import ChatUserContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
 from app.application.services.rag_context_service import RagContextService
@@ -217,6 +218,7 @@ class SendChatMessageUseCase:
                 history=history[-2:] if history else [],
             )
         else:
+            user_context = self._build_user_context(request.access_token)
             llm_messages = self.prompt_builder_service.build_messages(
                 history=history,
                 current_message=message,
@@ -233,6 +235,7 @@ class SendChatMessageUseCase:
                 ),
                 history_summary=history_summary,
                 operational_mode=operational_optimize,
+                user_context=user_context,
             )
 
         started_at = time.perf_counter()
@@ -531,3 +534,12 @@ class SendChatMessageUseCase:
             session_id=session_id,
             attachment_ids=attachment_ids,
         )
+
+    def _build_user_context(self, access_token: str | None) -> str:
+        if not access_token:
+            return ""
+
+        from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
+
+        service = ChatUserContextService(core_api_gateway=CoreApiHttpGateway())
+        return service.build_user_context(access_token)

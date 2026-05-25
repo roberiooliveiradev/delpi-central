@@ -88,6 +88,17 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+        if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.PARENTS:
+            selected = self._select_product_action(
+                message,
+                product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=ChatProductQueryIntent.PARENTS,
+            )
+
+            if selected:
+                return selected
+
         if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.STRUCTURE:
             selected = self._select_product_action(
                 message,
@@ -194,6 +205,11 @@ class ExternalActionSelectionService:
             "nfe",
             "clientes",
             "customer",
+            "onde é usado",
+            "onde e usado",
+            "produto pai",
+            "parent",
+            "where used",
         ]
 
         return any(term in value for term in terms)
@@ -1057,6 +1073,19 @@ class ExternalActionSelectionService:
 
                 if "analyser" in haystack:
                     value -= 40
+
+            elif intent == ChatProductQueryIntent.PARENTS:
+                if "/parents" in path:
+                    value += 200
+
+                if "parent" in haystack or "pai" in haystack:
+                    value += 40
+
+                if "analyser" in haystack:
+                    value -= 40
+
+                if "search" in path:
+                    value -= 80
 
             elif intent == ChatProductQueryIntent.DESCRIPTION:
                 if "analyser" in haystack or "analyzer" in haystack:

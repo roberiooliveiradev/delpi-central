@@ -33,7 +33,7 @@ class GetFinancialEbitdaPctUseCase:
                     "start_date": request.start_date,
                     "end_date": request.end_date,
                     "ebitda_value": 0.0,
-                    "rol_with_ipi": 0.0,
+                    "rol": 0.0,
                     "ebitda_over_rol_pct": 0.0,
                 }
 
@@ -42,7 +42,7 @@ class GetFinancialEbitdaPctUseCase:
                 "start_date": request.start_date,
                 "end_date": request.end_date,
                 "ebitda_value": branch_snapshot.ebitda_value,
-                "rol_with_ipi": branch_snapshot.rol_with_ipi,
+                "rol": branch_snapshot.rol,
                 "ebitda_over_rol_pct": branch_snapshot.ebitda_over_rol_pct,
             }
 
@@ -50,7 +50,7 @@ class GetFinancialEbitdaPctUseCase:
             {
                 "branch": item.branch,
                 "ebitda_value": item.ebitda_value,
-                "rol_with_ipi": item.rol_with_ipi,
+                "rol": item.rol,
                 "ebitda_over_rol_pct": item.ebitda_over_rol_pct,
             }
             for item in snapshot.branches

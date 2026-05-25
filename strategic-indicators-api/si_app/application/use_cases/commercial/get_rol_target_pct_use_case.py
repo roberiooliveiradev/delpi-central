@@ -20,7 +20,7 @@ class GetRolTargetPctUseCase:
         )
 
         rol_result = self._financial_query_repository.get_rol(rol_request)
-        rol_value = rol_result.get("rol_with_ipi", 0)
+        rol_value = rol_result.get("rol", 0)
 
         rol_target_pct = (rol_value / self._target_value) * 100 if self._target_value else None
 

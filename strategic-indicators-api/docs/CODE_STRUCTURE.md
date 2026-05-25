@@ -28,10 +28,13 @@ domain/
   ports/strategic_indicators/           # Contratos (repos, measurements)
 
 infrastructure/
+  gateways/delpi_*_gateway.py             # Adapters HTTP para api-delpi
+  gateways/transformometro_*_gateway.py   # Adapter HTTP para transformometro-api
+  http/auth_header.py                     # bearer_authorization_from_context()
   persistence/plugins/repositories/strategic_indicators/  # Postgres
-  providers/strategic_indicators/         # Coletores TOTVS/Sheets/RH + medições
+  providers/strategic_indicators/         # Coletores Sheets/RH + medições
   cache/ttl_cache.py
-  providers/database/                   # Pool TOTVS, Postgres plugins
+  providers/database/                   # Pool Postgres plugins
 
 composition/
   strategic_indicators_composer.py      # DI (factories dos use cases)
@@ -78,7 +81,11 @@ Metas por filial: ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
 Pacote monorepo `shared/` (instalado com `pip install -e ./shared[fastapi]`):
 
 - `delpi_auth` — JWT, `@require_permission`
+- `delpi_api_client` — HTTP client para api-delpi (`DelpiApiClient`)
+- `transformometro_client` — HTTP client para transformometro-api
 
-## O que foi removido da api-delpi
+## O que foi removido / depreciado
 
-Todo o grafo acima **não** deve existir em `api-delpi/app/` após a extração. A api-delpi mantém apenas composers departamentais para rotas `/financial`, `/commercial`, etc., e `application/shared/period_resolution.py` para resolução de competência.
+- Os 15 repositórios TOTVS em `si_app/infrastructure/persistence/totvs/` estão **depreciados** — mantidos no código como fallback, mas não são mais injetados pelos composers.
+- O pool TOTVS (`BaseRepository`, `QueryBuilder`) pode ser removido em PR futura quando a validação estiver completa.
+- A api-delpi mantém apenas composers departamentais para rotas `/financial`, `/commercial`, etc., e `application/shared/period_resolution.py` para resolução de competência.

@@ -117,7 +117,7 @@ Entrega adicional (maio/2026) para cobrir cenários reais de uso operacional.
 
 1. Reimportar OpenAPI e reindexar `api-delpi-rotas-agente.md` após deploy.
 2. Considerar upgrade de RAM do servidor (16 GB) para atingir < 5s em greetings.
-3. Onda 8 — a definir (possível: melhoria de contexto conversacional, cache de resultados de actions).
+3. ~~Onda 8~~ → Concluída: [inteligencia-chat-onda-8.md](./inteligencia-chat-onda-8.md) (sub-rotas structure/parents, despacho por intent).
 
 ---
 

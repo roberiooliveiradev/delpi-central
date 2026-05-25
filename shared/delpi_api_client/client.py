@@ -6,7 +6,7 @@ import os
 from typing import Any, Mapping
 
 import httpx
-from shared_http import apply_internal_service_headers
+from delpi_auth.service_token import apply_internal_service_headers
 
 _DEFAULT_TIMEOUT = 30.0
 
@@ -71,17 +71,17 @@ class DelpiApiClient:
         return self._get("/commercial/new-clients-rol-pct", params=params, authorization=authorization)
 
     def get_sales_conversion_rate(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
-        return self._get("/commercial/sales-conversion-rate", params=params, authorization=authorization)
+        return self._get("/commercial/closing-rate", params=params, authorization=authorization)
 
     def get_sales_order_otd(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/commercial/sales-order-otd", params=params, authorization=authorization)
 
     # -- Production --
     def get_overall_equipment_effectiveness(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
-        return self._get("/production/overall-equipment-effectiveness-pct", params=params, authorization=authorization)
+        return self._get("/production/overall_equipment_effectiveness_pct", params=params, authorization=authorization)
 
     def get_on_time_delivery(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
-        return self._get("/production/on-time-delivery-pct", params=params, authorization=authorization)
+        return self._get("/production/on_time_delivery_pct", params=params, authorization=authorization)
 
     # -- Supplies --
     def get_cpv(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:

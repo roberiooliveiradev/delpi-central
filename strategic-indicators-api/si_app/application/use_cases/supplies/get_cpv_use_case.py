@@ -29,11 +29,11 @@ class GetCPVUseCase:
         rol_data = self._financial_repository.get_rol(rol_request)
 
         cpv_total = float(summary.get("cpv_total") or 0)
-        rol_with_ipi = float(rol_data.get("rol_with_ipi") or 0)
+        rol_value = float(rol_data.get("rol") or 0)
         total_movements = int(summary.get("total_movements") or 0)
         total_quantity = float(summary.get("total_quantity") or 0)
 
-        cpv_percentage = (cpv_total / rol_with_ipi * 100) if rol_with_ipi > 0 else 0
+        cpv_percentage = (cpv_total / rol_value * 100) if rol_value > 0 else 0
         average_cost_per_movement = (cpv_total / total_movements) if total_movements > 0 else 0
         average_cost_per_unit = (cpv_total / total_quantity) if total_quantity > 0 else 0
 
@@ -43,7 +43,7 @@ class GetCPVUseCase:
             "end_date": summary.get("end_date") or request.end_date or "",
             "summary": {
                 "cpv_total": cpv_total,
-                "rol_with_ipi": rol_with_ipi,
+                "rol": rol_value,
                 "cpv_percentage": cpv_percentage,
                 "total_movements": total_movements,
                 "total_quantity": total_quantity,
@@ -55,7 +55,6 @@ class GetCPVUseCase:
                 "returns": rol_data.get("returns", 0),
                 "discounts": rol_data.get("discounts", 0),
                 "rol": rol_data.get("rol", 0),
-                "rol_with_ipi": rol_data.get("rol_with_ipi", 0),
                 "ipi_separated": rol_data.get("ipi_separated", 0),
             },
             "by_cfop": by_cfop,
