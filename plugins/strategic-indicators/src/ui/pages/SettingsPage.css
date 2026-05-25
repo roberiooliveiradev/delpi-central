@@ -11,11 +11,15 @@
 /*
  * Portal: `.content` é flex row por padrão; o host federado força height 100%.
  * Metas anuais (master-detail + tabela) vazava largura e criava scroll duplo.
+ * `overflow-y: auto` garante rolagem vertical dentro de `.content` — sem
+ * isso, `overflow-x: clip` (diferente de `hidden`) não força `overflow-y`
+ * para `auto`, deixando o conteúdo transbordar e criar scroll no body.
  */
 .content:has(.si-settings-page) {
   flex-direction: column;
   align-items: stretch;
   overflow-x: clip;
+  overflow-y: auto;
 }
 
 .content:has(.si-settings-page) > .app-host,
@@ -29,7 +33,7 @@
   height: auto;
   min-height: 0;
   flex: 0 0 auto;
-  overflow: visible;
+  overflow-x: clip;
 }
 
 .si-settings-sections,
