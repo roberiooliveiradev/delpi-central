@@ -20,6 +20,7 @@ type TreeMapFloatingControlsProps = {
   onMonthsToCompareChange: (value: number) => void;
   viewportNav?: ReactNode;
   actions?: ReactNode;
+  headerActions?: ReactNode;
   status?: ReactNode;
 };
 
@@ -44,6 +45,7 @@ export function TreeMapFloatingControls({
   onMonthsToCompareChange,
   viewportNav,
   actions,
+  headerActions,
   status,
 }: TreeMapFloatingControlsProps) {
   const [collapsed, setCollapsed] = useState(readFiltersCollapsedPreference);
@@ -96,6 +98,10 @@ export function TreeMapFloatingControls({
 
             {status ? (
               <div className="si-tree-map-floating__status">{status}</div>
+            ) : null}
+
+            {headerActions ? (
+              <div className="si-tree-map-floating__header-actions">{headerActions}</div>
             ) : null}
           </div>
 
