@@ -4,7 +4,9 @@ import { getPresentationPairFromToolCalls } from "./chatPresentation";
 import { ChatRichTable } from "./ChatRichTable";
 import { ChatRichChart } from "./ChatRichChart";
 import { ChatRichKpi } from "./ChatRichKpi";
+import { ExpandButton } from "./ChatExpandModal";
 import "./ChatRichKpi.css";
+import "./ChatExpandModal.css";
 
 type ViewMode = "primary" | "table";
 
@@ -21,7 +23,14 @@ export function ChatRichPresentation({
   }
 
   if (primary.type === "kpi") {
-    return <ChatRichKpi presentation={primary} />;
+    return (
+      <div className="mdc-rich-presentation">
+        <div className="mdc-rich-presentation__actions">
+          <ExpandButton presentation={primary} />
+        </div>
+        <ChatRichKpi presentation={primary} />
+      </div>
+    );
   }
 
   const hasToggle = primary.type === "chart" && table?.type === "table";
@@ -29,22 +38,25 @@ export function ChatRichPresentation({
 
   return (
     <div className="mdc-rich-presentation">
-      {hasToggle && (
-        <div className="mdc-rich-presentation__toggle">
-          <button
-            className={`mdc-rich-chart__toggle-btn ${viewMode === "primary" ? "mdc-rich-chart__toggle-btn--active" : ""}`}
-            onClick={() => setViewMode("primary")}
-          >
-            📊 Gráfico
-          </button>
-          <button
-            className={`mdc-rich-chart__toggle-btn ${viewMode === "table" ? "mdc-rich-chart__toggle-btn--active" : ""}`}
-            onClick={() => setViewMode("table")}
-          >
-            📋 Tabela
-          </button>
-        </div>
-      )}
+      <div className="mdc-rich-presentation__actions">
+        {hasToggle && (
+          <>
+            <button
+              className={`mdc-rich-chart__toggle-btn ${viewMode === "primary" ? "mdc-rich-chart__toggle-btn--active" : ""}`}
+              onClick={() => setViewMode("primary")}
+            >
+              📊 Gráfico
+            </button>
+            <button
+              className={`mdc-rich-chart__toggle-btn ${viewMode === "table" ? "mdc-rich-chart__toggle-btn--active" : ""}`}
+              onClick={() => setViewMode("table")}
+            >
+              📋 Tabela
+            </button>
+          </>
+        )}
+        <ExpandButton presentation={current} />
+      </div>
 
       {current.type === "chart" && (
         <ChatRichChart presentation={current} />
