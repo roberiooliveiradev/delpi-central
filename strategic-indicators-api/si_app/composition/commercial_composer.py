@@ -2,68 +2,74 @@ from si_app.application.services.commercial.commercial_metrics_snapshot_service 
     CommercialMetricsSnapshotService,
 )
 from si_app.application.use_cases.commercial.get_rol_target_pct_use_case import GetRolTargetPctUseCase
-from si_app.infrastructure.persistence.totvs.financial_repositories.financial_repository import FinancialRepository
+from si_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
 from si_app.application.use_cases.commercial.get_sales_conversion_rate_use_case import GetSalesConversionRateUseCase
-from si_app.infrastructure.persistence.totvs.commercial_repositories.sales_conversion_rate_repository import SalesConversionRateRepository
 from si_app.application.use_cases.commercial.get_new_clients_average_use_case import GetNewClientsAverageUseCase
-from si_app.infrastructure.persistence.totvs.commercial_repositories.new_clients_average_repository import NewClientsAverageRepository
 from si_app.application.use_cases.commercial.get_new_business_rol_pct_use_case import (
     GetNewBusinessRolPctUseCase,
-)
-from si_app.infrastructure.persistence.totvs.commercial_repositories.new_business_rol_pct_repository import (
-    NewBusinessRolPctRepository,
 )
 from si_app.application.use_cases.commercial.get_sales_order_otd_use_case import (
     GetSalesOrderOtdUseCase,
 )
-from si_app.infrastructure.persistence.totvs.commercial_repositories.sales_order_otd_repository import (
-    SalesOrderOtdRepository,
-)
 from si_app.infrastructure.providers.strategic_indicators.commercial_indicators_snapshot_provider import (
     CommercialIndicatorsSnapshotProvider,
 )
+from si_app.infrastructure.gateways.delpi_commercial_gateway import (
+    DelpiNewBusinessRolPctGateway,
+    DelpiNewClientsAverageGateway,
+    DelpiSalesConversionRateGateway,
+    DelpiSalesOrderOtdGateway,
+)
+from delpi_api_client import DelpiApiClient
 
 DEFAULT_HEAD_OFFICE_TARGET = 1.0
 DEFAULT_BRANCH_TARGET = 1.0
 
+_delpi_client: DelpiApiClient | None = None
+
+
+def _get_delpi_client() -> DelpiApiClient:
+    global _delpi_client
+    if _delpi_client is None:
+        _delpi_client = DelpiApiClient()
+    return _delpi_client
+
 
 def build_get_head_office_rol_target_pct_use_case() -> GetRolTargetPctUseCase:
-    financial_query_repository = FinancialRepository()
     return GetRolTargetPctUseCase(
-        financial_query_repository=financial_query_repository,
+        financial_query_repository=DelpiFinancialGateway(_get_delpi_client()),
         target_value=DEFAULT_HEAD_OFFICE_TARGET,
     )
 
 
 def build_get_branch_rol_target_pct_use_case() -> GetRolTargetPctUseCase:
-    financial_query_repository = FinancialRepository()
     return GetRolTargetPctUseCase(
-        financial_query_repository=financial_query_repository,
+        financial_query_repository=DelpiFinancialGateway(_get_delpi_client()),
         target_value=DEFAULT_BRANCH_TARGET,
     )
 
 
 def build_get_sales_conversion_rate_use_case() -> GetSalesConversionRateUseCase:
     return GetSalesConversionRateUseCase(
-        sales_conversion_rate_repository=SalesConversionRateRepository()
+        sales_conversion_rate_repository=DelpiSalesConversionRateGateway(_get_delpi_client())
     )
 
 
 def build_get_new_clients_average_use_case() -> GetNewClientsAverageUseCase:
     return GetNewClientsAverageUseCase(
-        new_clients_average_repository=NewClientsAverageRepository()
+        new_clients_average_repository=DelpiNewClientsAverageGateway(_get_delpi_client())
     )
 
 
 def build_get_new_business_rol_pct_use_case() -> GetNewBusinessRolPctUseCase:
     return GetNewBusinessRolPctUseCase(
-        new_business_rol_pct_repository=NewBusinessRolPctRepository()
+        new_business_rol_pct_repository=DelpiNewBusinessRolPctGateway(_get_delpi_client())
     )
 
 
 def build_get_sales_order_otd_use_case() -> GetSalesOrderOtdUseCase:
     return GetSalesOrderOtdUseCase(
-        sales_order_otd_repository=SalesOrderOtdRepository()
+        sales_order_otd_repository=DelpiSalesOrderOtdGateway(_get_delpi_client())
     )
 
 

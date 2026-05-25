@@ -25,11 +25,9 @@ from si_app.infrastructure.persistence.google_sheets.kaizen.kaizen_repository im
     KaizenRepository,
 )
 from si_app.infrastructure.persistence.google_sheets.utils import Utils
-from si_app.infrastructure.persistence.totvs.nonconformity_repositories.nonconformity_query_repository import (
-    NonconformityQueryRepository,
-)
-from si_app.infrastructure.persistence.totvs.ppm_repositories.ppm_query_repository import (
-    PpmQueryRepository,
+from si_app.infrastructure.gateways.delpi_quality_gateway import (
+    DelpiNonconformityGateway,
+    DelpiPpmGateway,
 )
 from si_app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
@@ -37,6 +35,16 @@ from si_app.infrastructure.providers.google_sheets.google_sheets_client import (
 from si_app.infrastructure.providers.strategic_indicators.quality_indicators_snapshot_provider import (
     QualityIndicatorsSnapshotProvider,
 )
+from delpi_api_client import DelpiApiClient
+
+_delpi_client: DelpiApiClient | None = None
+
+
+def _get_delpi_client() -> DelpiApiClient:
+    global _delpi_client
+    if _delpi_client is None:
+        _delpi_client = DelpiApiClient()
+    return _delpi_client
 
 
 def _build_google_sheets_client() -> GoogleSheetsClient:
@@ -65,12 +73,12 @@ def _build_audit_5s_repository() -> Audit5SRepository:
     )
 
 
-def _build_ppm_repository() -> PpmQueryRepository:
-    return PpmQueryRepository()
+def _build_ppm_gateway() -> DelpiPpmGateway:
+    return DelpiPpmGateway(_get_delpi_client())
 
 
-def _build_nonconformity_repository() -> NonconformityQueryRepository:
-    return NonconformityQueryRepository()
+def _build_nonconformity_gateway() -> DelpiNonconformityGateway:
+    return DelpiNonconformityGateway(_get_delpi_client())
 
 
 def build_get_kaizen_summary_use_case() -> GetKaizenSummaryUseCase:
@@ -82,15 +90,15 @@ def build_get_audit_5s_summary_use_case() -> GetAudit5SSummaryUseCase:
 
 
 def build_get_ppm_summary_use_case() -> GetPpmSummaryUseCase:
-    return GetPpmSummaryUseCase(_build_ppm_repository())
+    return GetPpmSummaryUseCase(_build_ppm_gateway())
 
 
 def build_list_ppm_use_case() -> ListPpmUseCase:
-    return ListPpmUseCase(_build_ppm_repository())
+    return ListPpmUseCase(_build_ppm_gateway())
 
 
 def build_list_nonconformity_use_case() -> ListNonconformityUseCase:
-    return ListNonconformityUseCase(_build_nonconformity_repository())
+    return ListNonconformityUseCase(_build_nonconformity_gateway())
 
 
 def build_quality_metrics_snapshot_service() -> QualityMetricsSnapshotService:
