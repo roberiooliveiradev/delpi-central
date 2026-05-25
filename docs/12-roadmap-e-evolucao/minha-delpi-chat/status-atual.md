@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado após **Onda 6** (concluída) e **Onda 7** em andamento — templates, OpenAPI, regressão e calibração RAG (maio/2026).
+> Atualizado após **Onda 7** (concluída) — templates, OpenAPI, regressão, calibração RAG e homologação de latência em prod (maio/2026).
 
 ## Visão geral
 
@@ -54,7 +54,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 - **Admin itens 1–15:** concluídos — ver `admin-minha-delpi-chat.md`
 - **Gestão de agentes ondas 1–7:** concluídas — ver `agentes-gestao-melhorias.md`
 - **Inteligência do chat ondas 1–6:** concluídas — ver `roadmap/README.md` e `inteligencia-chat-onda-6.md` em `minha-delpi-ai-api`
-- **Inteligência Onda 7:** quase concluída — templates (7.1), OpenAPI CPV/OTD/vendas (7.2), regressão (7.3), calibração RAG documentada (7.4); falta homologação latência em prod (7.5)
+- **Inteligência Onda 7:** concluída — templates (7.1), OpenAPI CPV/OTD/vendas (7.2), regressão (7.3), calibração RAG (7.4), homologação latência em prod (7.5), seleção OVs vs LMP (7.6)
 - **Melhorias futuras:** concluídas neste repositório — ver `melhorias-futuras.md`
 - **Pendente externo:** RBAC com perfis formais no `core-api`
 
@@ -83,9 +83,13 @@ docker compose -f docker-compose.dev.yml --env-file .env exec minha-delpi-ai-api
 
 Local (WSL) com `DATABASE_URL` apontando para `localhost:5433` — ver [09-deploy-migrations-schema.md](../../../minha-delpi-ai-api/docs/api/09-deploy-migrations-schema.md).
 
-## LLM em produção (provisório)
+## LLM em produção
 
-- Provider: **Ollama** (`qwen2.5:1.5b` chat + `bge-m3` embeddings; CPU sem GPU). Qualidade vem do pipeline (actions, RAG, fast paths), não de modelo maior
+- Provider: **Ollama** (`qwen2.5:1.5b` chat + `bge-m3` embeddings; CPU sem GPU)
+- Servidor: Intel Xeon Gold 5418Y (4 vCPUs), 7.8 GB RAM
+- Configuração otimizada: `OLLAMA_NUM_THREAD=4`, `OLLAMA_MAX_LOADED_MODELS=1`, `OLLAMA_NUM_CTX=1024`, `LLM_MAX_TOKENS=256`
+- Latência medida: **11s** greeting, **< 5s** consulta operacional (direct response)
+- Qualidade vem do pipeline (actions, RAG, fast paths), não de modelo maior
 - vLLM pendente de host com GPU — ver `homologacao-vllm-producao.md`
 
 ## Endpoints de verificação rápida
@@ -118,7 +122,7 @@ Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadma
 
 **Após deploy da api-delpi:** reimportar OpenAPI no provider do agente e reindexar o documento de rotas na base de conhecimento.
 
-**Homologação pendente:** latência &lt; 15s em CPU para pergunta operacional típica (estoque por código).
+**Homologação concluída:** latência 11s (greeting) e < 5s (consulta operacional direct response) em CPU prod — meta < 15s atingida.
 
 ## api-delpi e agentes
 
@@ -135,4 +139,5 @@ Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadma
 6. ~~Templates de system prompt no builder~~ — concluído (Onda 7.1)
 7. ~~OpenAPI CPV/OTD/vendas + regressão~~ — concluído (Onda 7.2–7.3)
 8. ~~Calibração `RAG_CONTEXT_MIN_SCORE`~~ — guia publicado (Onda 7.4)
-9. Homologação latência &lt; 15s em CPU prod (Onda 7.5 — checklist no guia RAG)
+9. ~~Homologação latência < 15s em CPU prod~~ — concluído (Onda 7.5, 11s greeting)
+10. Onda 8 — a definir (possível: warm-up Ollama no startup, reducão de prompt para fast paths, upgrade RAM servidor)
