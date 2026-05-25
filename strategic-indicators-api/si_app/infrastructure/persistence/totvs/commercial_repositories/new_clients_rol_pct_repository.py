@@ -11,31 +11,35 @@ class NewClientsRolPctRepository(BaseRepository, NewClientsRolPctRepositoryPort)
         self,
         request: NewClientsRolPctRequest
     ) -> NewClientsRolPct:
-        faturamento_qb = QueryBuilder()
-        faturamento_qb.raw("D2.D_E_L_E_T_ = ''")
-
-        if request.branch:
-            faturamento_qb.eq("D2.D2_FILIAL", request.branch)
-
-        faturamento_qb.date_range("D2.D2_EMISSAO", request.start_date, request.end_date)
-
-        faturamento_where_clause, faturamento_where_params = faturamento_qb.build()
-
         primeira_ov_qb = QueryBuilder()
         primeira_ov_qb.raw("AD1.D_E_L_E_T_ = ''")
-
         if request.branch:
             primeira_ov_qb.eq("AD1.AD1_FILIAL", request.branch)
-
         primeira_ov_qb.raw("AD1.AD1_CODCLI <> ''")
         primeira_ov_qb.raw("AD1.AD1_LOJCLI <> ''")
+        primeira_ov_where, primeira_ov_params = primeira_ov_qb.build()
 
-        primeira_ov_where_clause, primeira_ov_where_params = primeira_ov_qb.build()
+        periodo_ov_qb = QueryBuilder()
+        periodo_ov_qb.date_range("PRIMEIRA_DATA", request.start_date, request.end_date)
+        periodo_ov_where, periodo_ov_params = periodo_ov_qb.build()
 
-        periodo_primeira_ov_qb = QueryBuilder()
-        periodo_primeira_ov_qb.date_range("PRIMEIRA_DATA", request.start_date, request.end_date)
+        vendas_qb = QueryBuilder()
+        vendas_qb.raw("D2.D_E_L_E_T_ = ''")
+        if request.branch:
+            vendas_qb.eq("D2.D2_FILIAL", request.branch)
+        vendas_qb.date_range("D2.D2_EMISSAO", request.start_date, request.end_date)
+        vendas_where, vendas_params = vendas_qb.build()
 
-        periodo_primeira_ov_where_clause, periodo_primeira_ov_where_params = periodo_primeira_ov_qb.build()
+        exists_qb = QueryBuilder()
+        exists_qb.date_range("D1X.D1_DTDIGIT", request.start_date, request.end_date)
+        exists_where, exists_params = exists_qb.build()
+
+        dev_qb = QueryBuilder()
+        dev_qb.raw("D1.D_E_L_E_T_ = ''")
+        if request.branch:
+            dev_qb.eq("D1.D1_FILIAL", request.branch)
+        dev_qb.date_range("D1.D1_DTDIGIT", request.start_date, request.end_date)
+        dev_where, dev_params = dev_qb.build()
 
         sql = f"""
             WITH primeira_ov_cliente AS (
@@ -45,12 +49,13 @@ class NewClientsRolPctRepository(BaseRepository, NewClientsRolPctRepositoryPort)
                     AD1.AD1_LOJCLI,
                     MIN(AD1.AD1_DATA) AS PRIMEIRA_DATA
                 FROM AD1010 AD1
-                WHERE {primeira_ov_where_clause}
+                WHERE {primeira_ov_where}
                 GROUP BY
                     AD1.AD1_FILIAL,
                     AD1.AD1_CODCLI,
                     AD1.AD1_LOJCLI
             ),
+
             novos_clientes AS (
                 SELECT
                     AD1_FILIAL,
@@ -58,58 +63,142 @@ class NewClientsRolPctRepository(BaseRepository, NewClientsRolPctRepositoryPort)
                     AD1_LOJCLI,
                     PRIMEIRA_DATA
                 FROM primeira_ov_cliente
-                WHERE {periodo_primeira_ov_where_clause}
+                WHERE {periodo_ov_where}
             ),
-            base_faturamento AS (
+
+            VENDAS AS (
                 SELECT
                     D2.D2_FILIAL,
                     D2.D2_CLIENTE,
                     D2.D2_LOJA,
-                    ISNULL(D2.D2_TOTAL, 0) AS VALOR_ITEM,
-                    ISNULL(D2.D2_VALDEV, 0) AS VALOR_DEVOLUCAO,
-                    ISNULL(D2.D2_VALICM, 0) AS VALOR_ICMS,
-                    ISNULL(D2.D2_VALISS, 0) AS VALOR_ISS,
-                    ISNULL(D2.D2_VALPIS, 0) AS VALOR_PIS,
-                    ISNULL(D2.D2_VALCOF, 0) AS VALOR_COFINS,
-                    ISNULL(D2.D2_VALIPI, 0) AS VALOR_IPI,
-                    ISNULL(D2.D2_DESCON, 0) + ISNULL(D2.D2_DESC, 0) AS VALOR_DESCONTO,
+                    SUM(CONVERT(FLOAT,
+                        ISNULL(D2.D2_TOTAL, 0)
+                        - ISNULL(D2.D2_VALICM, 0)
+                        - ISNULL(D2.D2_VALIMP5, 0)
+                        - ISNULL(D2.D2_VALIMP6, 0)
+                    )) AS VLR_VENDA
 
-                    CASE
-                        WHEN ISNULL(F4.F4_DUPLIC, '') = 'S'
-                        THEN ISNULL(D2.D2_TOTAL, 0)
-                        ELSE 0
-                    END AS VALOR_FATURAMENTO
                 FROM SD2010 D2
+
+                LEFT JOIN SA1010 A1
+                    ON  A1.D_E_L_E_T_ = ''
+                    AND A1.A1_COD  = D2.D2_CLIENTE
+                    AND A1.A1_LOJA = D2.D2_LOJA
+
                 LEFT JOIN SF4010 F4
                     ON  F4.D_E_L_E_T_ = ''
-                    AND F4.F4_CODIGO  = D2.D2_TES
+                    AND F4.F4_CODIGO = D2.D2_TES
                     AND (
                             F4.F4_FILIAL = D2.D2_FILIAL
                          OR F4.F4_FILIAL = ''
                          OR F4.F4_FILIAL IS NULL
                     )
-                WHERE {faturamento_where_clause}
+
+                WHERE {vendas_where}
+                    AND ISNULL(A1.A1_NOME, '') <> ''
+                    AND ISNULL(D2.D2_TIPO, '') <> 'D'
+
+                    AND (
+                        D2.D2_CF NOT IN ('5911', '6151')
+                        OR (
+                            D2.D2_FILIAL = '01'
+                            AND D2.D2_CF IN ('5911', '6911')
+                            AND D2.D2_COD LIKE '90%'
+                            AND ISNULL(F4.F4_DUPLIC, '')  = 'N'
+                            AND ISNULL(F4.F4_ESTOQUE, '') = 'S'
+                            AND D2.D2_UM = 'MI'
+                        )
+                    )
+
+                    AND (
+                        ISNULL(F4.F4_DUPLIC, '') = 'S'
+
+                        OR (
+                            ISNULL(F4.F4_DUPLIC, '')  = 'N'
+                            AND ISNULL(F4.F4_ESTOQUE, '') = 'S'
+                            AND ISNULL(F4.F4_FINALID, '') = 'BAIXA ESTOQUE'
+                            AND D2.D2_CF  = '5927'
+                            AND D2.D2_UM  = 'MI'
+                            AND EXISTS (
+                                SELECT 1
+                                FROM SD1010 D1X
+                                WHERE
+                                    D1X.D_E_L_E_T_ = ''
+                                    AND D1X.D1_FILIAL  = D2.D2_FILIAL
+                                    AND D1X.D1_FORNECE = D2.D2_CLIENTE
+                                    AND D1X.D1_LOJA    = D2.D2_LOJA
+                                    AND {exists_where}
+                                    AND (
+                                        D1X.D1_CF IN ('1201', '2201')
+                                        OR D1X.D1_TIPO = 'D'
+                                    )
+                            )
+                        )
+
+                        OR (
+                            D2.D2_FILIAL = '01'
+                            AND D2.D2_CF IN ('5911', '6911')
+                            AND D2.D2_COD LIKE '90%'
+                            AND ISNULL(F4.F4_DUPLIC, '')  = 'N'
+                            AND ISNULL(F4.F4_ESTOQUE, '') = 'S'
+                            AND D2.D2_UM = 'MI'
+                        )
+                    )
+
+                GROUP BY D2.D2_FILIAL, D2.D2_CLIENTE, D2.D2_LOJA
             ),
+
+            DEVOLUCOES AS (
+                SELECT
+                    D1.D1_FILIAL,
+                    D1.D1_FORNECE,
+                    D1.D1_LOJA,
+                    SUM(CONVERT(FLOAT,
+                        ISNULL(D1.D1_TOTAL, 0)
+                        - ISNULL(D1.D1_VALICM, 0)
+                        - ISNULL(D1.D1_VALIMP5, 0)
+                        - ISNULL(D1.D1_VALIMP6, 0)
+                    )) AS VLR_DEVOLUCAO
+
+                FROM SD1010 D1
+
+                WHERE {dev_where}
+                    AND (
+                        D1.D1_CF IN ('1201', '2201')
+                        OR D1.D1_TIPO = 'D'
+                    )
+
+                GROUP BY D1.D1_FILIAL, D1.D1_FORNECE, D1.D1_LOJA
+            ),
+
+            ROL_POR_CLIENTE AS (
+                SELECT
+                    ISNULL(V.D2_FILIAL, D.D1_FILIAL)    AS FILIAL,
+                    ISNULL(V.D2_CLIENTE, D.D1_FORNECE)   AS COD_CLIENTE,
+                    ISNULL(V.D2_LOJA, D.D1_LOJA)         AS LOJA,
+                    ISNULL(V.VLR_VENDA, 0)
+                    - ISNULL(D.VLR_DEVOLUCAO, 0)          AS ROL_CLIENTE
+                FROM VENDAS V
+                FULL OUTER JOIN DEVOLUCOES D
+                    ON  D.D1_FILIAL  = V.D2_FILIAL
+                    AND D.D1_FORNECE = V.D2_CLIENTE
+                    AND D.D1_LOJA    = V.D2_LOJA
+            ),
+
             rol_total AS (
-                SELECT
-                    ISNULL(SUM(VALOR_FATURAMENTO), 0)
-                    - ISNULL(SUM(VALOR_DEVOLUCAO), 0)
-                    - ISNULL(SUM(VALOR_DESCONTO), 0)
-                    - ISNULL(SUM(VALOR_ICMS + VALOR_ISS + VALOR_PIS + VALOR_COFINS + VALOR_IPI), 0) AS TOTAL_ROL
-                FROM base_faturamento
+                SELECT ISNULL(SUM(ROL_CLIENTE), 0) AS TOTAL_ROL
+                FROM ROL_POR_CLIENTE
             ),
+
             rol_novos_clientes AS (
-                SELECT
-                    ISNULL(SUM(BF.VALOR_FATURAMENTO), 0)
-                    - ISNULL(SUM(BF.VALOR_DEVOLUCAO), 0)
-                    - ISNULL(SUM(BF.VALOR_DESCONTO), 0)
-                    - ISNULL(SUM(BF.VALOR_ICMS + BF.VALOR_ISS + BF.VALOR_PIS + BF.VALOR_COFINS + BF.VALOR_IPI), 0) AS NEW_CLIENTS_ROL
-                FROM base_faturamento BF
+                SELECT ISNULL(SUM(RC.ROL_CLIENTE), 0) AS NEW_CLIENTS_ROL
+                FROM ROL_POR_CLIENTE RC
                 INNER JOIN novos_clientes NC
-                    ON NC.AD1_FILIAL = BF.D2_FILIAL
-                AND NC.AD1_CODCLI = BF.D2_CLIENTE
-                AND NC.AD1_LOJCLI = BF.D2_LOJA
+                    ON  NC.AD1_FILIAL  = RC.FILIAL
+                    AND NC.AD1_CODCLI  = RC.COD_CLIENTE
+                    AND NC.AD1_LOJCLI  = RC.LOJA
             )
+
             SELECT
                 ? AS branch,
                 ? AS start_date,
@@ -127,9 +216,11 @@ class NewClientsRolPctRepository(BaseRepository, NewClientsRolPctRepositoryPort)
         """
 
         params = (
-            primeira_ov_where_params
-            + periodo_primeira_ov_where_params
-            + faturamento_where_params
+            primeira_ov_params
+            + periodo_ov_params
+            + vendas_params
+            + exists_params
+            + dev_params
             + (
                 request.branch or "consolidated",
                 request.start_date or "",
