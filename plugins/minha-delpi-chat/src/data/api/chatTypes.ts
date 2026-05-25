@@ -34,6 +34,18 @@ export type ChatPresentation =
       rows: Record<string, unknown>[];
     }
   | {
+      type: "chart";
+      title: string;
+      chartType: "bar" | "line" | "pie" | "area";
+      data: Record<string, unknown>[];
+      config?: {
+        xAxis?: string;
+        yAxis?: string | string[];
+        colors?: string[];
+        legend?: boolean;
+      };
+    }
+  | {
       type: "json";
       title: string;
       data: unknown;
