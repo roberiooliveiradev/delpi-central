@@ -72,12 +72,17 @@ export function StockPage({ pathname }: StockPageProps) {
     () =>
       (data?.by_location ?? [])
         .filter((item) => Number(item.total_stock_value ?? 0) > 0)
-        .map((item) => ({
-          name: item.location ?? "—",
-          value: Number(item.total_stock_value ?? 0),
-        })),
+        .map((item) => {
+          const raw = item.location ?? "—";
+          return {
+            name: raw.length > 20 ? `${raw.slice(0, 20)}…` : raw,
+            value: Number(item.total_stock_value ?? 0),
+          };
+        }),
     [data?.by_location]
   );
+
+  const byLocationChartHeight = Math.max(280, byLocationChart.length * 40 + 48);
 
   const byBranchChart = useMemo(
     () =>
@@ -212,13 +217,13 @@ export function StockPage({ pathname }: StockPageProps) {
       <section className="ds-charts-grid">
         <ChartCard title="Estoque por localização">
           {byLocationChart.length > 0 ? (
-            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <BarChart data={byLocationChart} layout="vertical" margin={{ left: 8 }}>
+            <ResponsiveContainer width="100%" height={byLocationChartHeight}>
+              <BarChart data={byLocationChart} layout="vertical" margin={{ left: 4, right: 16, top: 8, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" tickFormatter={formatChartCurrencyAxis} />
-                <YAxis type="category" dataKey="name" width={72} />
+                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                <Bar dataKey="value" name="Valor">
+                <Bar dataKey="value" name="Valor" radius={[0, 8, 8, 0]} maxBarSize={32}>
                   {byLocationChart.map((entry, index) => (
                     <Cell
                       key={entry.name}

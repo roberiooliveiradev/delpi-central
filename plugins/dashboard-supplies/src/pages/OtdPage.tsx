@@ -85,16 +85,21 @@ export function OtdPage({ pathname }: OtdPageProps) {
 
   const lateSuppliersChart = useMemo(
     () =>
-      (data?.top_late_suppliers ?? []).slice(0, 10).map((item) => ({
-        name:
+      (data?.top_late_suppliers ?? []).slice(0, 10).map((item) => {
+        const raw =
           item.supplier_name ??
           item.supplier ??
           item.supplier_code ??
-          "Fornecedor",
-        value: Number(item.late_lines ?? 0),
-      })),
+          "Fornecedor";
+        return {
+          name: raw.length > 24 ? `${raw.slice(0, 24)}…` : raw,
+          value: Number(item.late_lines ?? 0),
+        };
+      }),
     [data?.top_late_suppliers]
   );
+
+  const lateSuppliersChartHeight = Math.max(280, lateSuppliersChart.length * 40 + 48);
 
   const supplierColumns = useMemo<DataTableColumn<LateSupplierItem>[]>(
     () => [
@@ -253,13 +258,13 @@ export function OtdPage({ pathname }: OtdPageProps) {
 
         <ChartCard title="Fornecedores com mais atrasos">
           {lateSuppliersChart.length > 0 ? (
-            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <BarChart data={lateSuppliersChart} layout="vertical" margin={{ left: 8 }}>
+            <ResponsiveContainer width="100%" height={lateSuppliersChartHeight}>
+              <BarChart data={lateSuppliersChart} layout="vertical" margin={{ left: 4, right: 16, top: 8, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" allowDecimals={false} />
-                <YAxis type="category" dataKey="name" width={130} />
+                <YAxis type="category" dataKey="name" width={160} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="value" name="Linhas atrasadas">
+                <Bar dataKey="value" name="Linhas atrasadas" radius={[0, 8, 8, 0]} maxBarSize={32}>
                   {lateSuppliersChart.map((entry, index) => (
                     <Cell
                       key={entry.name}

@@ -230,10 +230,10 @@ export function DashboardProductionPage() {
         >
           {hasChartValues ? (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <BarChart data={comparisonChartData} layout="vertical" margin={{ left: 12 }}>
+              <BarChart data={comparisonChartData} layout="vertical" margin={{ left: 4, right: 16, top: 8, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" unit="%" />
-                <YAxis type="category" dataKey="name" width={120} />
+                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
                 <Tooltip
                   formatter={(value) =>
                     formatPercent(typeof value === "number" ? value : Number(value))

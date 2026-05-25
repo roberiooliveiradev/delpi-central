@@ -73,12 +73,17 @@ export function CpvPage({ pathname }: CpvPageProps) {
 
   const byTmChart = useMemo(
     () =>
-      (data?.by_tm ?? []).slice(0, 12).map((item) => ({
-        name: item.tm ?? "—",
-        value: Number(item.cpv_total ?? 0),
-      })),
+      (data?.by_tm ?? []).slice(0, 12).map((item) => {
+        const raw = item.tm ?? "—";
+        return {
+          name: raw.length > 20 ? `${raw.slice(0, 20)}…` : raw,
+          value: Number(item.cpv_total ?? 0),
+        };
+      }),
     [data?.by_tm]
   );
+
+  const byTmChartHeight = Math.max(280, byTmChart.length * 40 + 48);
 
   const productColumns = useMemo<DataTableColumn<CpvBreakdownItem>[]>(
     () => [
@@ -197,7 +202,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <BarChart data={byCfopChart} margin={{ left: 8, right: 16 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
                 <YAxis tickFormatter={formatChartCurrencyAxis} width={72} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
                 <Bar dataKey="value" name="CPV">
@@ -217,13 +222,13 @@ export function CpvPage({ pathname }: CpvPageProps) {
 
         <ChartCard title="CPV por TM" hint="Top tipos de movimento (TES).">
           {byTmChart.length > 0 ? (
-            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <BarChart data={byTmChart} layout="vertical" margin={{ left: 8 }}>
+            <ResponsiveContainer width="100%" height={byTmChartHeight}>
+              <BarChart data={byTmChart} layout="vertical" margin={{ left: 4, right: 16, top: 8, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" tickFormatter={formatChartCurrencyAxis} />
-                <YAxis type="category" dataKey="name" width={56} />
+                <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                <Bar dataKey="value" name="CPV" fill={CHART_COLORS[1]} />
+                <Bar dataKey="value" name="CPV" fill={CHART_COLORS[1]} radius={[0, 8, 8, 0]} maxBarSize={32} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

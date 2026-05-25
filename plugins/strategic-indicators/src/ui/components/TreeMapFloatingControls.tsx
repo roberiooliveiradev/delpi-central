@@ -96,11 +96,11 @@ export function TreeMapFloatingControls({
               )}
             </button>
 
-            {status ? (
+            {!collapsed && status ? (
               <div className="si-tree-map-floating__status">{status}</div>
             ) : null}
 
-            {headerActions ? (
+            {!collapsed && headerActions ? (
               <div className="si-tree-map-floating__header-actions">{headerActions}</div>
             ) : null}
           </div>

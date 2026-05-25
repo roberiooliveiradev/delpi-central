@@ -310,7 +310,7 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={conversionChartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
               <YAxis allowDecimals={false} />
               <Tooltip />
               <Legend />
