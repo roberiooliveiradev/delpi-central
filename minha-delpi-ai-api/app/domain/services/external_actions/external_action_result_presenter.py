@@ -666,28 +666,69 @@ class ExternalActionResultPresenter:
         value = root.get("value") or root.get("percentage") or root.get("current")
         target = root.get("target") or root.get("meta")
         previous = root.get("previous") or root.get("anterior")
+        unit = root.get("unit") or root.get("unidade") or ""
 
         if value is not None:
-            chart_data = [{"name": "Atual", "valor": value}]
-            if target is not None:
-                chart_data.append({"name": "Meta", "valor": target})
-            if previous is not None:
-                chart_data.append({"name": "Anterior", "valor": previous})
+            cards = []
+            trend = None
+            delta = None
 
-            if len(chart_data) >= 2:
+            if previous is not None:
+                try:
+                    diff = float(value) - float(previous)
+                    if diff > 0:
+                        trend = "up"
+                        delta = f"+{self._format_num(diff)}{unit}"
+                    elif diff < 0:
+                        trend = "down"
+                        delta = f"{self._format_num(diff)}{unit}"
+                    else:
+                        trend = "stable"
+                except (ValueError, TypeError):
+                    pass
+
+            cards.append({
+                "label": "Atual",
+                "value": value,
+                "unit": unit,
+                "trend": trend,
+                "delta": delta,
+                "color": "#0ea5e9",
+            })
+
+            if target is not None:
+                cards.append({
+                    "label": "Meta",
+                    "value": target,
+                    "unit": unit,
+                    "color": "#10b981",
+                })
+
+            if previous is not None:
+                cards.append({
+                    "label": "Anterior",
+                    "value": previous,
+                    "unit": unit,
+                    "color": "#94a3b8",
+                })
+
+            if cards:
                 return {
-                    "type": "chart",
+                    "type": "kpi",
                     "title": self._kpi_title(path),
-                    "chartType": "bar",
-                    "data": chart_data,
-                    "config": {
-                        "xAxis": "name",
-                        "yAxis": ["valor"],
-                        "colors": ["#0ea5e9", "#10b981", "#94a3b8"],
-                    },
+                    "cards": cards,
                 }
 
         return None
+
+    def _format_num(self, value) -> str:
+        try:
+            num = float(value)
+            if num == int(num):
+                return str(int(num))
+            return f"{num:.2f}"
+        except (ValueError, TypeError):
+            return str(value)
 
     def _kpi_title(self, path: str) -> str:
         if "cpv" in path:

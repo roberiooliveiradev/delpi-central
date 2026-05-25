@@ -3,6 +3,8 @@ import type { ChatToolCall } from "../../data/api/chatTypes";
 import { getPresentationPairFromToolCalls } from "./chatPresentation";
 import { ChatRichTable } from "./ChatRichTable";
 import { ChatRichChart } from "./ChatRichChart";
+import { ChatRichKpi } from "./ChatRichKpi";
+import "./ChatRichKpi.css";
 
 type ViewMode = "primary" | "table";
 
@@ -16,6 +18,10 @@ export function ChatRichPresentation({
 
   if (!primary) {
     return null;
+  }
+
+  if (primary.type === "kpi") {
+    return <ChatRichKpi presentation={primary} />;
   }
 
   const hasToggle = primary.type === "chart" && table?.type === "table";

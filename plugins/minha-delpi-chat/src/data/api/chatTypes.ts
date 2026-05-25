@@ -26,6 +26,15 @@ export type ChatSource = {
   attachmentId?: string | null;
 };
 
+export type ChatKpiCard = {
+  label: string;
+  value: string | number;
+  unit?: string;
+  trend?: "up" | "down" | "stable";
+  delta?: string;
+  color?: string;
+};
+
 export type ChatPresentation =
   | {
       type: "table";
@@ -44,6 +53,11 @@ export type ChatPresentation =
         colors?: string[];
         legend?: boolean;
       };
+    }
+  | {
+      type: "kpi";
+      title: string;
+      cards: ChatKpiCard[];
     }
   | {
       type: "json";
