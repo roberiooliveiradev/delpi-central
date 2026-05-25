@@ -350,7 +350,7 @@ class ChatToolContextService:
         path = metadata.get("path")
         provider = metadata.get("provider")
 
-        humanized = self.external_action_result_presenter.present(data)
+        humanized = self.external_action_result_presenter.present(data, path=path or "")
 
         payload = {
             "tool": "execute_external_action",
@@ -402,7 +402,7 @@ class ChatToolContextService:
         if not Settings.CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED:
             return None
 
-        humanized = self.external_action_result_presenter.present(data)
+        humanized = self.external_action_result_presenter.present(data, path=path or "")
 
         return ChatExternalActionDirectAnswerService.format(
             humanized,

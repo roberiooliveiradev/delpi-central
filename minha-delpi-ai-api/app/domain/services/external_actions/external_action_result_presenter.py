@@ -23,7 +23,7 @@ class ExternalActionResultPresenter:
         "physical_location": "Localização física",
     }
 
-    def present(self, data) -> dict:
+    def present(self, data, *, path: str = "") -> dict:
         error = self._detect_api_error(data)
         if error:
             return error
@@ -60,16 +60,64 @@ class ExternalActionResultPresenter:
             if items and isinstance(items[0], dict) and "order_number" in items[0]:
                 return self._present_sale_orders(root, items)
 
+            title = self._infer_items_title(items, path)
             if items and isinstance(items[0], dict) and "code" in items[0] and "description" in items[0]:
-                return self._present_product_search(root, items)
+                return self._present_product_search(root, items, title=title)
 
-            return self._present_items(items)
+            return self._present_items(items, title=title)
+
+        if isinstance(root, dict) and self._looks_like_kpi_response(root, path):
+            kpi = self._build_kpi_chart(root, path)
+            if kpi:
+                return {
+                    "titulo": kpi.get("title", "Indicador"),
+                    "linhas": [f"{kpi.get('title', 'Indicador')}: veja os dados abaixo."],
+                    "dados": root,
+                    "apresentacao": kpi,
+                }
 
         return {
             "titulo": "Resultado da API",
             "linhas": ["A API retornou dados autorizados para a consulta."],
             "dados": root,
         }
+
+    def _infer_items_title(self, items: list, path: str) -> str | None:
+        if not path:
+            if items and isinstance(items[0], dict):
+                if "level" in items[0] or "quantity" in items[0]:
+                    if "code" in items[0]:
+                        return "Estrutura do produto"
+                if "branch" in items[0] or "warehouse" in items[0]:
+                    return "Estoque do produto"
+            return None
+
+        lowered = path.lower()
+        if "/structure" in lowered:
+            return "Estrutura do produto"
+        if "/parents" in lowered:
+            return "Produtos pai (onde é usado)"
+        if "/stock" in lowered:
+            return "Estoque do produto"
+        if "/suppliers" in lowered:
+            return "Fornecedores do produto"
+        if "/customers" in lowered:
+            return "Clientes do produto"
+        if "/guide" in lowered:
+            return "Roteiro do produto"
+        if "/inspection" in lowered:
+            return "Inspeção do produto"
+        if "/internal-movements" in lowered:
+            return "Movimentações internas"
+        if "/inbound-invoice" in lowered:
+            return "Notas fiscais de entrada"
+        if "/outbound-invoice" in lowered:
+            return "Notas fiscais de saída"
+        if "/purchases" in lowered:
+            return "Compras do produto"
+        if "/sales" in lowered:
+            return "Vendas do produto"
+        return None
 
     def _detect_api_error(self, data) -> dict | None:
         if not isinstance(data, dict):
@@ -363,12 +411,13 @@ class ExternalActionResultPresenter:
             "dados": {"rows": rows[:100]},
         }
 
-    def _present_product_search(self, root: dict, items: list) -> dict:
+    def _present_product_search(self, root: dict, items: list, *, title: str | None = None) -> dict:
+        titulo = title or "Busca de produtos"
         total = root.get("total")
 
         if not items:
             return {
-                "titulo": "Busca de produtos",
+                "titulo": titulo,
                 "linhas": ["Nenhum produto encontrado para a busca."],
                 "dados": root,
             }
@@ -398,7 +447,7 @@ class ExternalActionResultPresenter:
             linhas.append(f"Total encontrado: {total} produto(s).")
 
         return {
-            "titulo": "Busca de produtos",
+            "titulo": titulo,
             "linhas": linhas or ["Nenhum produto encontrado."],
             "dados": {"total": total, "items": [{"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")} for i in items[:15]]},
         }
@@ -446,7 +495,8 @@ class ExternalActionResultPresenter:
             "dados": {"total": total, "items": items[:12]},
         }
 
-    def _present_items(self, items: list) -> dict:
+    def _present_items(self, items: list, *, title: str | None = None) -> dict:
+        titulo = title or "Resultado operacional"
         linhas = [f"A API retornou {len(items)} registro(s)."]
 
         stock_lines = []
@@ -455,6 +505,8 @@ class ExternalActionResultPresenter:
                 continue
 
             if "warehouse" in item and "available_quantity" in item:
+                if not title:
+                    titulo = "Estoque do produto"
                 stock_lines.append(
                     "Filial {branch}, armazém {warehouse}: atual {current}, disponível {available}, empenhada {committed}. Local: {location}.".format(
                         branch=item.get("branch"),
@@ -470,7 +522,7 @@ class ExternalActionResultPresenter:
             linhas = stock_lines
 
         return {
-            "titulo": "Resultado operacional",
+            "titulo": titulo,
             "linhas": linhas,
             "dados": {
                 "items": items[:10],
@@ -502,7 +554,7 @@ class ExternalActionResultPresenter:
         return None
 
 
-    def build_presentation(self, data) -> dict | None:
+    def build_presentation(self, data, *, path: str = "") -> dict | None:
         root = self._unwrap_data(data)
 
         if isinstance(root, list) and root and isinstance(root[0], dict):
@@ -526,10 +578,12 @@ class ExternalActionResultPresenter:
             if "order_number" in items[0]:
                 return self._build_sale_orders_table(items, root)
 
-            if "code" in items[0] and "description" in items[0]:
-                return self._build_product_search_table(items, root)
+            title = self._infer_items_title(items, path)
 
-            return self._build_items_table(items)
+            if "code" in items[0] and "description" in items[0]:
+                return self._build_product_search_table(items, root, title=title)
+
+            return self._build_items_table(items, title=title)
 
         stock = root.get("stock")
         if isinstance(stock, dict) and isinstance(stock.get("items"), list):
@@ -666,23 +720,36 @@ class ExternalActionResultPresenter:
             "rows": rows,
         }
 
-    def _build_product_search_table(self, items: list, root: dict) -> dict:
-        columns = [
-            {"key": "code", "label": "Código"},
-            {"key": "description", "label": "Descrição"},
-            {"key": "type", "label": "Tipo"},
-            {"key": "unit", "label": "Unidade"},
-        ]
+    def _build_product_search_table(self, items: list, root: dict, *, title: str | None = None) -> dict:
+        first = items[0] if items else {}
+        has_extra = any(k in first for k in ("quantity", "level", "lot_quantity"))
 
-        rows = [
-            {"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")}
-            for i in items[:100]
-            if isinstance(i, dict)
-        ]
+        if has_extra:
+            all_keys = {}
+            for item in items[:100]:
+                for k in item:
+                    if k not in all_keys:
+                        all_keys[k] = True
+            columns = [self._enrich_column(k, self._humanize_key(k)) for k in all_keys]
+            rows = items[:100]
+        else:
+            columns = [
+                {"key": "code", "label": "Código"},
+                {"key": "description", "label": "Descrição"},
+                {"key": "type", "label": "Tipo"},
+                {"key": "unit", "label": "Unidade"},
+            ]
+            rows = [
+                {"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")}
+                for i in items[:100]
+                if isinstance(i, dict)
+            ]
+
+        table_title = title or f"Busca de produtos ({root.get('total', len(rows))} resultado(s))"
 
         return {
             "type": "table",
-            "title": f"Busca de produtos ({root.get('total', len(rows))} resultado(s))",
+            "title": table_title,
             "columns": columns,
             "rows": rows,
         }
