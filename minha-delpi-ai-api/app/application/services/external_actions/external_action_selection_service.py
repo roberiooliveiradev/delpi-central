@@ -530,6 +530,9 @@ class ExternalActionSelectionService:
 
         action = ranked[0]
 
+        if action.get("selectionScore") is None:
+            return None
+
         return {
             "name": "execute_external_action",
             "arguments": {
@@ -758,6 +761,8 @@ class ExternalActionSelectionService:
             for term in ("carteira", "pedidos em aberto", "pedido em aberto", "open-orders")
         )
 
+        has_specific_sub_intent = wants_purchases or wants_sales or wants_open_orders
+
         def score(action: dict) -> int:
             haystack = " ".join(
                 str(action.get(key) or "")
@@ -794,11 +799,12 @@ class ExternalActionSelectionService:
                     value += 20
 
             else:
-                if "/products/{code}/analyser" in haystack:
-                    value += 100
+                if not has_specific_sub_intent:
+                    if "/products/{code}/analyser" in haystack:
+                        value += 100
 
-                if "analyser" in haystack or "analyzer" in haystack:
-                    value += 60
+                    if "analyser" in haystack or "analyzer" in haystack:
+                        value += 60
 
                 if "/products/{code}" in haystack:
                     value += 25

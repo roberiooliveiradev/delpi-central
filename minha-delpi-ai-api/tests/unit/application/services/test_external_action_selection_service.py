@@ -147,3 +147,36 @@ def test_select_supplies_stock_value_for_aggregate_question():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "supplies-stock-value"
+
+
+def test_generic_fallback_returns_none_without_semantic_score():
+    """Sem ranker semântico, fallback genérico não deve selecionar action aleatória."""
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "depreciation",
+                    "method": "GET",
+                    "path": "/production/depreciation_pct",
+                    "operationId": "get_depreciation_pct",
+                    "summary": "Depreciação % ROL",
+                    "parametersSchema": [],
+                },
+                {
+                    "actionId": "stock-value",
+                    "method": "GET",
+                    "path": "/supplies/stock-value",
+                    "operationId": "get_supplies_stock_value",
+                    "summary": "Valor total estoque",
+                    "parametersSchema": [],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "o que mais pode me dizer sobre um produto?",
+        allowed_action_ids=["depreciation", "stock-value"],
+    )
+
+    assert selected is None
