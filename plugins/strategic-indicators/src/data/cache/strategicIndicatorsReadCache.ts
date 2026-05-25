@@ -39,3 +39,7 @@ export function setStrategicIndicatorsCachedValue<T>(key: string, value: T): voi
     storedAt: Date.now(),
   });
 }
+
+export function clearAllStrategicIndicatorsCache(): void {
+  store.clear();
+}

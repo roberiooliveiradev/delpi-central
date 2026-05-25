@@ -392,19 +392,27 @@ class ExternalActionResultPresenter:
     def build_presentation(self, data) -> dict | None:
         root = self._unwrap_data(data)
 
+        if isinstance(root, list) and root and isinstance(root[0], dict):
+            return self._build_items_table(root, title="Consulta SQL")
+
         if not isinstance(root, dict):
             return None
 
         product = root.get("product")
         if isinstance(product, dict):
-            return {
-                "type": "json",
-                "title": f"Produto {product.get('code') or ''}".strip(),
-                "data": self.present(data),
-            }
+            return self._build_product_table(product, root)
 
         items = root.get("items")
-        if isinstance(items, list) and items:
+        if isinstance(items, list) and items and isinstance(items[0], dict):
+            if "sale_number" in items[0] or "saleNumber" in items[0]:
+                return self._build_lmp_table(items, root)
+
+            if "order_number" in items[0]:
+                return self._build_sale_orders_table(items, root)
+
+            if "code" in items[0] and "description" in items[0]:
+                return self._build_product_search_table(items, root)
+
             return self._build_items_table(items)
 
         stock = root.get("stock")
@@ -414,7 +422,123 @@ class ExternalActionResultPresenter:
                 title="Estoque do produto",
             )
 
+        parents = root.get("parents")
+        if isinstance(parents, list) and parents:
+            return self._build_items_table(parents, title="Produtos pai (onde é usado)")
+
+        structure = root.get("structure")
+        if isinstance(structure, dict) and isinstance(structure.get("items"), list):
+            return self._build_items_table(
+                structure["items"],
+                title="Estrutura do produto",
+            )
+
         return None
+
+    def _build_product_table(self, product: dict, root: dict) -> dict:
+        columns = [
+            {"key": "campo", "label": "Campo"},
+            {"key": "valor", "label": "Valor"},
+        ]
+
+        field_map = [
+            ("code", "Código"),
+            ("description", "Descrição"),
+            ("type", "Tipo"),
+            ("unit", "Unidade"),
+            ("group_code", "Grupo"),
+            ("active", "Ativo"),
+            ("default_warehouse", "Armazém padrão"),
+            ("last_purchase_price", "Último preço compra"),
+            ("standard_cost", "Custo padrão"),
+            ("last_revision_date", "Última revisão"),
+            ("ncm_ipi_position", "NCM"),
+        ]
+
+        rows = [
+            {"campo": label, "valor": product.get(key)}
+            for key, label in field_map
+            if product.get(key) is not None
+        ]
+
+        for key in ("guide", "inspection", "structure", "customers", "suppliers"):
+            value = root.get(key)
+            if isinstance(value, dict) and value.get("total") is not None:
+                rows.append({"campo": self._label_collection(key), "valor": f"{value['total']} registro(s)"})
+
+        return {
+            "type": "table",
+            "title": f"Produto {product.get('code', '')}",
+            "columns": columns,
+            "rows": rows,
+        }
+
+    def _build_lmp_table(self, items: list, root: dict) -> dict:
+        columns = [
+            {"key": "sale_number", "label": "OV"},
+            {"key": "branch", "label": "Filial"},
+            {"key": "listing_kind", "label": "Tipo"},
+            {"key": "status", "label": "Status"},
+            {"key": "sale_description", "label": "Descrição"},
+        ]
+
+        rows = []
+        for item in items[:50]:
+            if not isinstance(item, dict):
+                continue
+            rows.append({
+                "sale_number": item.get("sale_number") or item.get("saleNumber"),
+                "branch": item.get("branch"),
+                "listing_kind": item.get("listing_kind") or item.get("listingKind"),
+                "status": item.get("status") or item.get("engineering_status"),
+                "sale_description": item.get("sale_description") or item.get("saleDescription"),
+            })
+
+        return {
+            "type": "table",
+            "title": f"LMPs ({root.get('total', len(rows))} registro(s))",
+            "columns": columns,
+            "rows": rows,
+        }
+
+    def _build_sale_orders_table(self, items: list, root: dict) -> dict:
+        columns = [
+            {"key": "order_number", "label": "Pedido"},
+            {"key": "branch", "label": "Filial"},
+            {"key": "description", "label": "Descrição"},
+            {"key": "date", "label": "Data"},
+            {"key": "stage", "label": "Etapa"},
+        ]
+
+        rows = [item for item in items[:50] if isinstance(item, dict)]
+
+        return {
+            "type": "table",
+            "title": f"Ordens de Venda ({root.get('total', len(rows))} registro(s))",
+            "columns": columns,
+            "rows": rows,
+        }
+
+    def _build_product_search_table(self, items: list, root: dict) -> dict:
+        columns = [
+            {"key": "code", "label": "Código"},
+            {"key": "description", "label": "Descrição"},
+            {"key": "type", "label": "Tipo"},
+            {"key": "unit", "label": "Unidade"},
+        ]
+
+        rows = [
+            {"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")}
+            for i in items[:50]
+            if isinstance(i, dict)
+        ]
+
+        return {
+            "type": "table",
+            "title": f"Busca de produtos ({root.get('total', len(rows))} resultado(s))",
+            "columns": columns,
+            "rows": rows,
+        }
 
     def _build_items_table(self, items: list, title: str = "Dados retornados") -> dict | None:
         if not items:

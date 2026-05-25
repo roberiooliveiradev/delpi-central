@@ -1,3 +1,4 @@
+import { clearAllStrategicIndicatorsCache } from "../cache/strategicIndicatorsReadCache";
 import { STRATEGIC_INDICATORS_API_BASE } from "./strategicIndicatorsApiBase";
 
 const BASE_URL = STRATEGIC_INDICATORS_API_BASE;
@@ -26,4 +27,6 @@ export async function invalidateStrategicIndicatorsCache(
       `Falha ao invalidar cache do backend (${response.status}).`,
     );
   }
+
+  clearAllStrategicIndicatorsCache();
 }

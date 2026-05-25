@@ -14,7 +14,7 @@ from si_app.shared.json_encoding import to_json_safe
 
 logger = logging.getLogger("strategic_indicators.http")
 
-READ_CACHE_MAX_AGE_SECONDS = 300
+READ_CACHE_MAX_AGE_SECONDS = 0
 
 
 def run_logged_read_route(
@@ -94,7 +94,7 @@ def json_read_response(
     return JSONResponse(
         content=safe_payload,
         headers={
-            "Cache-Control": f"private, max-age={READ_CACHE_MAX_AGE_SECONDS}",
+            "Cache-Control": "private, no-cache",
             "ETag": f'"{etag}"',
         },
     )
