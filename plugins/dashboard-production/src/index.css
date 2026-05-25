@@ -317,9 +317,104 @@
   color: var(--dp-title);
 }
 
-.dashboard-production .dp-kpi-subtitle {
+.dashboard-production .dp-kpi-subtitle,
+.dashboard-production .dp-kpi-context {
+  display: block;
   font-size: var(--dp-font-xs);
   color: var(--dp-text-muted);
+}
+
+.dashboard-production .dp-kpi-goal {
+  margin: 0 0 6px;
+  font-size: clamp(18px, 1.55vw, 28px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--dp-accent, #089bdb);
+  letter-spacing: -0.02em;
+}
+
+.dashboard-production .dp-kpi-goal-prefix {
+  font-size: 0.72em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--dp-accent, #089bdb) 72%, var(--dp-text-muted));
+}
+
+.dashboard-production .dp-kpi-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.dashboard-production .dp-kpi-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.dashboard-production .dp-kpi-badge--success {
+  color: #166534;
+  background: color-mix(in srgb, #22c55e 18%, transparent);
+  border: 1px solid color-mix(in srgb, #22c55e 35%, transparent);
+}
+
+.dashboard-production .dp-kpi-badge--warning {
+  color: #9a3412;
+  background: color-mix(in srgb, #f97316 16%, transparent);
+  border: 1px solid color-mix(in srgb, #f97316 32%, transparent);
+}
+
+.dashboard-production .dp-kpi-badge--direction {
+  color: var(--dp-text-muted);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--dp-text-muted) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dp-card-border, #e2e8f0) 88%, transparent);
+}
+
+.dashboard-production .dp-kpi-badge--scope {
+  color: #1e40af;
+  background: color-mix(in srgb, var(--dp-accent, #089bdb) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dp-accent, #089bdb) 28%, transparent);
+}
+
+.dashboard-production .dp-kpi-badge--info {
+  color: #1e3a5f;
+  font-weight: 600;
+  white-space: normal;
+  max-width: 100%;
+  background: color-mix(in srgb, var(--dp-accent, #089bdb) 8%, var(--dp-card-bg, #fff));
+  border: 1px solid color-mix(in srgb, var(--dp-accent, #089bdb) 22%, transparent);
+}
+
+:root[data-theme="dark"] .dashboard-production .dp-kpi-badge--scope {
+  color: #93c5fd;
+  border-color: color-mix(in srgb, var(--dp-accent, #089bdb) 38%, transparent);
+}
+
+:root[data-theme="dark"] .dashboard-production .dp-kpi-badge--info {
+  color: #bfdbfe;
+}
+
+:root[data-theme="dark"] .dashboard-production .dp-kpi-badge--success {
+  color: #86efac;
+  background: color-mix(in srgb, #22c55e 22%, transparent);
+  border-color: color-mix(in srgb, #22c55e 40%, transparent);
+}
+
+:root[data-theme="dark"] .dashboard-production .dp-kpi-badge--warning {
+  color: #fdba74;
+  background: color-mix(in srgb, #f97316 24%, transparent);
+  border-color: color-mix(in srgb, #f97316 42%, transparent);
 }
 
 .dashboard-production .dp-kpi-icon {
@@ -1084,6 +1179,7 @@
 
   .dashboard-production .dp-kpi-title,
   .dashboard-production .dp-kpi-subtitle,
+  .dashboard-production .dp-kpi-context,
   .dashboard-production .dp-chart-card__title {
     color: #222 !important;
   }

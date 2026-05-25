@@ -28,7 +28,7 @@ import { useProductionDashboard } from "../hooks/useProductionDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useProductionFilters } from "../hooks/useProductionFilters";
 import { formatPeriodLabel } from "../utils/dates";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 300;
@@ -164,10 +164,11 @@ export function DashboardProductionPage() {
         <KpiCard
           title="MO direta / ROL"
           value={formatPercent(directLabor?.direct_labor_cost_pct)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             directLabor,
             formatPercent,
+            { realizedValue: directLabor?.direct_labor_cost_pct },
           )}
           icon={<Users size={22} />}
           loading={isBusy && !directLabor}
@@ -175,10 +176,11 @@ export function DashboardProductionPage() {
         <KpiCard
           title="Custo de produção / ROL"
           value={formatPercent(productionCost?.production_cost_pct)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             productionCost,
             formatPercent,
+            { realizedValue: productionCost?.production_cost_pct },
           )}
           icon={<Coins size={22} />}
           loading={isBusy && !productionCost}
@@ -186,10 +188,11 @@ export function DashboardProductionPage() {
         <KpiCard
           title="Depreciação / ROL"
           value={formatPercent(depreciation?.depreciation_pct)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             depreciation,
             formatPercent,
+            { realizedValue: depreciation?.depreciation_pct },
           )}
           icon={<Percent size={22} />}
           loading={isBusy && !depreciation}
@@ -197,10 +200,11 @@ export function DashboardProductionPage() {
         <KpiCard
           title="OEE"
           value={formatPercent(oee?.overall_equipment_effectiveness_pct)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
             oee,
             formatPercent,
+            { realizedValue: oee?.overall_equipment_effectiveness_pct },
           )}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !oee}
@@ -208,10 +212,11 @@ export function DashboardProductionPage() {
         <KpiCard
           title="OTD — entrega no prazo"
           value={formatPercent(otd?.on_time_delivery_pct)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
             otd,
             formatPercent,
+            { realizedValue: otd?.on_time_delivery_pct },
           )}
           icon={<Truck size={22} />}
           loading={isBusy && !otd}
