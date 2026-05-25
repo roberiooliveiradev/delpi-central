@@ -145,6 +145,9 @@ class Settings:
     CHAT_OPERATIONAL_FAST_PATH_ENABLED = (
         os.getenv("CHAT_OPERATIONAL_FAST_PATH_ENABLED", "true").lower() == "true"
     )
+    CHAT_USER_CONTEXT_ENABLED = (
+        os.getenv("CHAT_USER_CONTEXT_ENABLED", "true").lower() == "true"
+    )
     CHAT_TOOL_ROUTER_MAX_ACTIONS = int(os.getenv("CHAT_TOOL_ROUTER_MAX_ACTIONS", "20"))
 
     CHAT_HISTORY_SUMMARY_ENABLED = (
