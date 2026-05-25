@@ -15,6 +15,7 @@ import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { TopAlertHighlight } from "../components/TopAlertHighlight";
+import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
 import { useStrategicIndicatorsAlerts } from "../../state/hooks/useStrategicIndicatorsAlerts";
 import "./AlertsPage.css";
 
@@ -140,6 +141,13 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
           ) : (
             <StatusBadge label="API Real" variant="warning" />
           )
+        }
+        actions={
+          <RefreshSnapshotButton
+            getAccessToken={getAccessToken}
+            onRefreshed={() => void reload()}
+            disabled={loading || refreshing}
+          />
         }
       />
 

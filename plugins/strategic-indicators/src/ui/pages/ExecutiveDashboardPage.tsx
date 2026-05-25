@@ -12,6 +12,7 @@ import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
+import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import { useStrategicIndicatorsExecutiveSummary } from "../../state/hooks/useStrategicIndicatorsExecutiveSummary";
 import "./ExecutiveDashboardPage.css";
@@ -140,6 +141,13 @@ export function ExecutiveDashboardPage({
           ) : (
             <StatusBadge label="API Real" variant="success" />
           )
+        }
+        actions={
+          <RefreshSnapshotButton
+            getAccessToken={getAccessToken}
+            onRefreshed={() => void reload()}
+            disabled={loading || refreshing}
+          />
         }
       />
 

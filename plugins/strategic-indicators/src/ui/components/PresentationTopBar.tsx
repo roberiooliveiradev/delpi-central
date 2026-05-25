@@ -35,6 +35,7 @@ type PresentationTopBarProps = {
   onMonthsChange: (value: number) => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  actions?: import("react").ReactNode;
 };
 
 const DEFAULT_MONTHS_OPTIONS: MonthsOption[] = [
@@ -65,6 +66,7 @@ export function PresentationTopBar({
   onMonthsChange,
   isFullscreen = false,
   onToggleFullscreen,
+  actions,
 }: PresentationTopBarProps) {
   const showBranchFilter = viewMode === "branch";
 
@@ -310,6 +312,8 @@ export function PresentationTopBar({
           ) : (
             <StatusBadge label="API real" variant="success" />
           )}
+
+          {actions ?? null}
         </div>
       </div>
 

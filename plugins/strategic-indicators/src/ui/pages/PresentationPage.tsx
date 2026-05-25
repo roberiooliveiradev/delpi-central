@@ -7,6 +7,7 @@ import { PresentationEdgeNavigation } from "../components/PresentationEdgeNaviga
 import { PresentationHero } from "../components/PresentationHero";
 import { PresentationNarrativeStrip } from "../components/PresentationNarrativeStrip";
 import { PresentationTopBar } from "../components/PresentationTopBar";
+import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
 import { InfoState } from "../components/InfoState";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
@@ -1251,6 +1252,13 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
           onMonthsChange={handleMonthsChange}
           isFullscreen={isFullscreen}
           onToggleFullscreen={handleToggleFullscreen}
+          actions={
+            <RefreshSnapshotButton
+              getAccessToken={getAccessToken}
+              onRefreshed={() => void presentation.reload()}
+              disabled={presentation.loading || presentation.refreshing}
+            />
+          }
         />
 
         <div className="si-presentation-stage">

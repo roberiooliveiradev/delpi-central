@@ -11,6 +11,7 @@ import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsP
 import { StatusBadge } from "../components/StatusBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
+import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
 import { TreeMapFloatingControls } from "../components/TreeMapFloatingControls";
 import { useStrategicIndicatorsDepartmentTree } from "../../state/hooks/useStrategicIndicatorsDepartmentTree";
 import "./DepartmentsPage.css";
@@ -79,6 +80,13 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       onTreeScopeChange={handleTreeScopeChange}
       onMonthsToCompareChange={setMonthsToCompare}
       status={statusBadge}
+      actions={
+        <RefreshSnapshotButton
+          getAccessToken={getAccessToken}
+          onRefreshed={() => void reload()}
+          disabled={loading || refreshing}
+        />
+      }
     />
   );
 
