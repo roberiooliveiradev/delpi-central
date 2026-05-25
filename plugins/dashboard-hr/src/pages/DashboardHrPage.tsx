@@ -28,7 +28,7 @@ import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useHrFilters } from "../hooks/useHrFilters";
 import type { HrBranchMetrics } from "../types/hr";
 import { formatPeriodLabel } from "../utils/dates";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { averageNullable, formatDecimal, formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 280;
@@ -172,10 +172,11 @@ export function DashboardHrPage() {
         <KpiCard
           title="Absenteísmo"
           value={formatPercent(absenteeism)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             periodLabel,
             snapshot?.goals_by_metric?.absenteeism_pct,
             formatPercent,
+            { realizedValue: absenteeism },
           )}
           icon={<UserMinus size={22} />}
           loading={loading}
@@ -183,10 +184,11 @@ export function DashboardHrPage() {
         <KpiCard
           title="Turnover"
           value={formatPercent(turnover)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             periodLabel,
             snapshot?.goals_by_metric?.turnover_pct,
             formatPercent,
+            { realizedValue: turnover },
           )}
           icon={<TrendingDown size={22} />}
           loading={loading}
@@ -194,10 +196,11 @@ export function DashboardHrPage() {
         <KpiCard
           title="Satisfação interna"
           value={formatPercent(satisfaction)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             "Consolidado no período",
             snapshot?.goals_by_metric?.internal_satisfaction_pct,
             formatPercent,
+            { realizedValue: satisfaction },
           )}
           icon={<Smile size={22} />}
           loading={loading}
@@ -205,10 +208,11 @@ export function DashboardHrPage() {
         <KpiCard
           title="PDI ativos"
           value={formatPercent(activePdi)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             branch ? `Filial ${branch}` : "Média das filiais",
             snapshot?.goals_by_metric?.active_pdi_pct,
             formatPercent,
+            { realizedValue: activePdi },
           )}
           icon={<Award size={22} />}
           loading={loading}
@@ -216,10 +220,11 @@ export function DashboardHrPage() {
         <KpiCard
           title="Horas treinamento / colaborador"
           value={formatDecimal(trainingHours, 2)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             periodLabel,
             snapshot?.goals_by_metric?.training_hours_per_collaborator,
             (value) => formatDecimal(value, 2),
+            { realizedValue: trainingHours },
           )}
           icon={<BookOpen size={22} />}
           loading={loading}
