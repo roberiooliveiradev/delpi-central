@@ -139,6 +139,11 @@ class ExternalActionResultPresenter:
             "ncm": product.get("ncm_ipi_position"),
         }
 
+        detail_list = self._extract_product_detail_list(root)
+
+        if detail_list:
+            return self._present_product_with_details(product_summary, detail_list, root)
+
         linhas = [
             f"Produto {product_summary['code']}: {product_summary['description']}.",
             f"Tipo {product_summary['type']}, unidade {product_summary['unit']}, grupo {product_summary['groupCode']}.",
@@ -163,6 +168,68 @@ class ExternalActionResultPresenter:
                 "guideTotal": self._total(root.get("guide")),
                 "inspectionTotal": self._total(root.get("inspection")),
                 "structureTotal": self._total(root.get("structure")),
+            },
+        }
+
+    def _extract_product_detail_list(self, root: dict) -> list | None:
+        detail_keys = (
+            "prices", "stock", "purchases", "sales", "billing",
+            "suppliers", "customers", "movements", "invoices",
+            "open_orders", "items",
+        )
+        for key in detail_keys:
+            value = root.get(key)
+            if isinstance(value, list) and value and isinstance(value[0], dict):
+                return value
+        return None
+
+    def _present_product_with_details(
+        self, product_summary: dict, detail_list: list, root: dict
+    ) -> dict:
+        code = product_summary.get("code") or ""
+        desc = product_summary.get("description") or ""
+
+        linhas = [f"Produto {code}: {desc}."]
+
+        for item in detail_list[:5]:
+            preview = ", ".join(
+                f"{k}={v}" for k, v in list(item.items())[:6] if v is not None
+            )
+            linhas.append(f"- {preview}")
+
+        if len(detail_list) > 5:
+            linhas.append(f"… e mais {len(detail_list) - 5} registro(s).")
+
+        all_keys = {}
+        for item in detail_list[:100]:
+            for k in item:
+                if k not in all_keys:
+                    all_keys[k] = True
+
+        columns = [self._enrich_column(k, self._humanize_key(k)) for k in all_keys]
+        rows = detail_list[:100]
+
+        title = f"Dados do produto {code}"
+        if "prices" in root:
+            title = f"Preços do produto {code}"
+        elif "stock" in root:
+            title = f"Estoque do produto {code}"
+        elif "purchases" in root:
+            title = f"Compras do produto {code}"
+        elif "sales" in root or "billing" in root:
+            title = f"Vendas do produto {code}"
+        elif "open_orders" in root:
+            title = f"Pedidos em aberto do produto {code}"
+
+        return {
+            "titulo": title,
+            "linhas": linhas,
+            "dados": {"product": product_summary, "items": rows},
+            "apresentacao": {
+                "type": "table",
+                "title": title,
+                "columns": columns,
+                "rows": rows,
             },
         }
 
@@ -446,6 +513,9 @@ class ExternalActionResultPresenter:
 
         product = root.get("product")
         if isinstance(product, dict):
+            detail_list = self._extract_product_detail_list(root)
+            if detail_list:
+                return self._build_product_detail_table(product, detail_list, root)
             return self._build_product_table(product, root)
 
         items = root.get("items")
@@ -515,6 +585,37 @@ class ExternalActionResultPresenter:
         return {
             "type": "table",
             "title": f"Produto {product.get('code', '')}",
+            "columns": columns,
+            "rows": rows,
+        }
+
+    def _build_product_detail_table(self, product: dict, detail_list: list, root: dict) -> dict:
+        code = product.get("code", "")
+
+        title = f"Dados do produto {code}"
+        if "prices" in root:
+            title = f"Preços do produto {code}"
+        elif "stock" in root:
+            title = f"Estoque do produto {code}"
+        elif "purchases" in root:
+            title = f"Compras do produto {code}"
+        elif "sales" in root or "billing" in root:
+            title = f"Vendas do produto {code}"
+        elif "open_orders" in root:
+            title = f"Pedidos em aberto do produto {code}"
+
+        all_keys = {}
+        for item in detail_list[:100]:
+            for k in item:
+                if k not in all_keys:
+                    all_keys[k] = True
+
+        columns = [self._enrich_column(k, self._humanize_key(k)) for k in all_keys]
+        rows = detail_list[:100]
+
+        return {
+            "type": "table",
+            "title": title,
             "columns": columns,
             "rows": rows,
         }
