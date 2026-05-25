@@ -1,5 +1,10 @@
 import type { ChatMessage, ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
 
+export type PresentationPair = {
+  primary: ChatPresentation | null;
+  table: ChatPresentation | null;
+};
+
 function getPresentationFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): ChatPresentation | null {
@@ -20,6 +25,37 @@ function getPresentationFromToolCalls(
   }
 
   return null;
+}
+
+function getTablePresentationFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): ChatPresentation | null {
+  if (!Array.isArray(toolCalls)) {
+    return null;
+  }
+
+  for (const toolCall of toolCalls) {
+    const tablePresentation = (toolCall.metadata as Record<string, unknown>)?.tablePresentation;
+
+    if (
+      tablePresentation &&
+      typeof tablePresentation === "object" &&
+      "type" in (tablePresentation as Record<string, unknown>)
+    ) {
+      return tablePresentation as ChatPresentation;
+    }
+  }
+
+  return null;
+}
+
+export function getPresentationPairFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): PresentationPair {
+  return {
+    primary: getPresentationFromToolCalls(toolCalls),
+    table: getTablePresentationFromToolCalls(toolCalls),
+  };
 }
 
 export function getPresentationFromMessages(

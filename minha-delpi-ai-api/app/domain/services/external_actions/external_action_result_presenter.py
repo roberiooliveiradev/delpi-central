@@ -582,3 +582,187 @@ class ExternalActionResultPresenter:
 
     def _humanize_key(self, key: str) -> str:
         return str(key).replace("_", " ").strip().capitalize()
+
+    def build_chart_presentation(self, data, *, path: str = "") -> dict | None:
+        """Gera presentation tipo chart quando os dados são adequados para visualização gráfica."""
+        root = self._unwrap_data(data)
+
+        if not isinstance(root, dict):
+            if isinstance(root, list) and root and isinstance(root[0], dict):
+                return self._try_chart_from_rows(root)
+            return None
+
+        items = root.get("items")
+        if isinstance(items, list) and items and isinstance(items[0], dict):
+            if self._is_stock_data(items[0]):
+                return self._build_stock_chart(items)
+
+            return self._try_chart_from_rows(items)
+
+        if self._looks_like_kpi_response(root, path):
+            return self._build_kpi_chart(root, path)
+
+        return None
+
+    def _is_stock_data(self, row: dict) -> bool:
+        return "warehouse" in row and (
+            "available_quantity" in row or "current_quantity" in row
+        )
+
+    def _build_stock_chart(self, items: list) -> dict | None:
+        if len(items) < 2:
+            return None
+
+        chart_data = []
+        for item in items[:20]:
+            if not isinstance(item, dict):
+                continue
+            label = f"Fil.{item.get('branch', '?')}/{item.get('warehouse', '?')}"
+            chart_data.append({
+                "name": label,
+                "Qtd. atual": item.get("current_quantity") or 0,
+                "Disponível": item.get("available_quantity") or 0,
+                "Empenhada": item.get("committed_quantity") or 0,
+            })
+
+        if not chart_data:
+            return None
+
+        return {
+            "type": "chart",
+            "title": "Estoque por filial/armazém",
+            "chartType": "bar",
+            "data": chart_data,
+            "config": {
+                "xAxis": "name",
+                "yAxis": ["Qtd. atual", "Disponível", "Empenhada"],
+                "colors": ["#0ea5e9", "#10b981", "#f59e0b"],
+                "legend": True,
+            },
+        }
+
+    def _looks_like_kpi_response(self, root: dict, path: str) -> bool:
+        kpi_paths = ("cpv", "otd", "inventory-turnover", "stock-value")
+        if any(token in path for token in kpi_paths):
+            return True
+
+        kpi_keys = ("value", "percentage", "current", "previous", "target")
+        return sum(1 for k in kpi_keys if k in root) >= 2
+
+    def _build_kpi_chart(self, root: dict, path: str) -> dict | None:
+        periods = root.get("periods") or root.get("series") or root.get("history")
+        if isinstance(periods, list) and len(periods) >= 2:
+            return {
+                "type": "chart",
+                "title": self._kpi_title(path),
+                "chartType": "line",
+                "data": periods[:24],
+                "config": {
+                    "xAxis": "period",
+                    "legend": True,
+                },
+            }
+
+        value = root.get("value") or root.get("percentage") or root.get("current")
+        target = root.get("target") or root.get("meta")
+        previous = root.get("previous") or root.get("anterior")
+        unit = root.get("unit") or root.get("unidade") or ""
+
+        if value is not None:
+            cards = []
+            trend = None
+            delta = None
+
+            if previous is not None:
+                try:
+                    diff = float(value) - float(previous)
+                    if diff > 0:
+                        trend = "up"
+                        delta = f"+{self._format_num(diff)}{unit}"
+                    elif diff < 0:
+                        trend = "down"
+                        delta = f"{self._format_num(diff)}{unit}"
+                    else:
+                        trend = "stable"
+                except (ValueError, TypeError):
+                    pass
+
+            cards.append({
+                "label": "Atual",
+                "value": value,
+                "unit": unit,
+                "trend": trend,
+                "delta": delta,
+                "color": "#0ea5e9",
+            })
+
+            if target is not None:
+                cards.append({
+                    "label": "Meta",
+                    "value": target,
+                    "unit": unit,
+                    "color": "#10b981",
+                })
+
+            if previous is not None:
+                cards.append({
+                    "label": "Anterior",
+                    "value": previous,
+                    "unit": unit,
+                    "color": "#94a3b8",
+                })
+
+            if cards:
+                return {
+                    "type": "kpi",
+                    "title": self._kpi_title(path),
+                    "cards": cards,
+                }
+
+        return None
+
+    def _format_num(self, value) -> str:
+        try:
+            num = float(value)
+            if num == int(num):
+                return str(int(num))
+            return f"{num:.2f}"
+        except (ValueError, TypeError):
+            return str(value)
+
+    def _kpi_title(self, path: str) -> str:
+        if "cpv" in path:
+            return "CPV — Custo de Produção Vendido"
+        if "otd" in path:
+            return "OTD — On Time Delivery"
+        if "inventory-turnover" in path:
+            return "Giro de Estoque (IDD)"
+        if "stock-value" in path:
+            return "Valor Total de Estoque"
+        return "Indicador"
+
+    def _try_chart_from_rows(self, rows: list) -> dict | None:
+        if len(rows) < 2 or not isinstance(rows[0], dict):
+            return None
+
+        first = rows[0]
+        numeric_keys = [k for k, v in first.items() if isinstance(v, (int, float))]
+        string_keys = [k for k, v in first.items() if isinstance(v, str)]
+
+        if not numeric_keys or not string_keys:
+            return None
+
+        if len(rows) > 12:
+            return None
+
+        return {
+            "type": "chart",
+            "title": "Visualização dos dados",
+            "chartType": "bar",
+            "data": rows[:20],
+            "config": {
+                "xAxis": string_keys[0],
+                "yAxis": numeric_keys[:3],
+                "legend": len(numeric_keys) > 1,
+            },
+        }

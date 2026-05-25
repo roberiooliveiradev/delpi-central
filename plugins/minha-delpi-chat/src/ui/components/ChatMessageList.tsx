@@ -22,13 +22,13 @@ import {
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatActionResults } from "./ChatActionResults";
-import { ChatRichTable } from "./ChatRichTable";
+import { ChatRichPresentation } from "./ChatRichPresentation";
 import { ChatSources } from "./ChatSources";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
-import { getPresentationFromStreamingToolCalls } from "./chatPresentation";
 
 import "./ChatMessageList.css";
 import "./ChatRichTable.css";
+import "./ChatRichChart.css";
 
 const SCROLL_NEAR_BOTTOM_THRESHOLD_PX = 96;
 const PIN_USER_MESSAGE_TOP_PADDING_PX = 12;
@@ -79,13 +79,8 @@ function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
 }
 
 function renderPresentation(toolCalls: ChatToolCall[]) {
-  const presentation = getPresentationFromStreamingToolCalls(toolCalls);
-
-  if (!presentation || presentation.type !== "table") {
-    return null;
-  }
-
-  return <ChatRichTable presentation={presentation} />;
+  if (!toolCalls || !toolCalls.length) return null;
+  return <ChatRichPresentation toolCalls={toolCalls} />;
 }
 
 type MessageAttachment = {

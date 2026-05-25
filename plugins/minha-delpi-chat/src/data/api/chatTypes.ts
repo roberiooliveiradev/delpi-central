@@ -26,12 +26,38 @@ export type ChatSource = {
   attachmentId?: string | null;
 };
 
+export type ChatKpiCard = {
+  label: string;
+  value: string | number;
+  unit?: string;
+  trend?: "up" | "down" | "stable";
+  delta?: string;
+  color?: string;
+};
+
 export type ChatPresentation =
   | {
       type: "table";
       title: string;
       columns: { key: string; label: string }[];
       rows: Record<string, unknown>[];
+    }
+  | {
+      type: "chart";
+      title: string;
+      chartType: "bar" | "line" | "pie" | "area";
+      data: Record<string, unknown>[];
+      config?: {
+        xAxis?: string;
+        yAxis?: string | string[];
+        colors?: string[];
+        legend?: boolean;
+      };
+    }
+  | {
+      type: "kpi";
+      title: string;
+      cards: ChatKpiCard[];
     }
   | {
       type: "json";

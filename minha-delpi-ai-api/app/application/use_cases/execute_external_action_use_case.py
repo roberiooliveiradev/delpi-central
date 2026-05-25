@@ -64,6 +64,9 @@ class ExecuteExternalActionUseCase:
 
         sanitized_data = self.policy.sanitize_response(result["data"])
         presentation = self.presenter.build_presentation(sanitized_data)
+        chart_presentation = self.presenter.build_chart_presentation(
+            sanitized_data, path=action.get("path") or "",
+        )
 
         self.audit_repository.log(
             user_id=UUID(user_id),
@@ -105,7 +108,8 @@ class ExecuteExternalActionUseCase:
             "metadata": {
                 "durationMs": result["durationMs"],
                 "sensitivity": action["sensitivity"],
-                "presentation": presentation,
+                "presentation": chart_presentation or presentation,
+                "tablePresentation": presentation if chart_presentation else None,
             },
         }
 
