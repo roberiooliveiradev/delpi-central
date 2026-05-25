@@ -6,6 +6,7 @@ from app.domain.services.chat_product_query_intent_service import (
 
 class ChatExternalActionKind:
     PRODUCT = "product"
+    SALE_ORDERS = "sale_orders"
     LMP_LIST = "lmp_list"
     LMP_DETAIL = "lmp_detail"
     SUPPLIES = "supplies"
@@ -21,6 +22,12 @@ class ChatExternalActionDirectAnswerService:
         normalized_path = str(path or "").lower()
         normalized_operation = str(operation_id or "").lower()
         titulo = str(humanized.get("titulo") or "").lower()
+
+        if (
+            normalized_path.rstrip("/").endswith("/sales")
+            or "list_sale_orders" in normalized_operation
+        ) and "/products/" not in normalized_path:
+            return ChatExternalActionKind.SALE_ORDERS
 
         if "/products/" in normalized_path or "produto" in titulo:
             return ChatExternalActionKind.PRODUCT
@@ -60,6 +67,9 @@ class ChatExternalActionDirectAnswerService:
         operation_id: str | None = None,
     ) -> str | None:
         kind = cls.classify(path=path, operation_id=operation_id, humanized=humanized)
+
+        if kind == ChatExternalActionKind.SALE_ORDERS:
+            return cls._format_sale_orders(humanized)
 
         if kind == ChatExternalActionKind.PRODUCT:
             intent = ChatProductQueryIntentService.detect(message)
@@ -160,6 +170,21 @@ class ChatExternalActionDirectAnswerService:
 
         if len(lines) > 12:
             body += f"\n- … e mais {len(lines) - 12} item(ns)."
+
+        return f"**{title}**\n\n{body}"
+
+    @classmethod
+    def _format_sale_orders(cls, humanized: dict) -> str | None:
+        lines = cls._clean_lines(humanized)
+
+        if not lines:
+            return "**Ordens de Venda**\n\nNenhuma ordem de venda encontrada para o período informado."
+
+        title = str(humanized.get("titulo") or "Ordens de Venda").strip()
+        body = "\n".join(f"- {line}" for line in lines[:12])
+
+        if len(lines) > 12:
+            body += f"\n- … e mais {len(lines) - 12} registro(s)."
 
         return f"**{title}**\n\n{body}"
 

@@ -3,6 +3,7 @@ from flask import Flask
 from app.extensions.db import db
 from app.extensions.migrate import migrate
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.llm.ollama_warmup_service import warmup_ollama
 from app.infrastructure.logging.json_logging import configure_logging
 from app.interfaces.http.auth_middleware import register_auth_middleware
 from app.interfaces.http.error_handlers import register_error_handlers
@@ -39,5 +40,7 @@ def create_application() -> Flask:
     app.register_blueprint(tool_bp)
 
     register_error_handlers(app)
+
+    warmup_ollama()
 
     return app
