@@ -105,6 +105,35 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                     )
                 )
 
+        if not normalize_goal_scope_branch(branch):
+            still_missing_for_branch = [
+                item.indicator_id
+                for item in structural_items
+                if (
+                    item.indicator_id not in goals_by_indicator
+                    and item.indicator_id not in branch_goals_by_indicator
+                )
+            ]
+            if still_missing_for_branch:
+                expired_branch_goals = (
+                    self._indicator_goals_repository.list_branch_scoped_goals_ignoring_validity(
+                        indicator_ids=still_missing_for_branch,
+                        department_id=department_id,
+                        competence=competence,
+                        start_date=start_date,
+                        end_date=end_date,
+                    )
+                )
+                for indicator_id, bg in expired_branch_goals.items():
+                    if indicator_id not in branch_goals_by_indicator:
+                        branch_goals_by_indicator[indicator_id] = bg
+                        logger.info(
+                            "si_branch_goal_validity_fallback indicator_id=%s competence=%s branches=%s",
+                            indicator_id,
+                            competence,
+                            list(bg.keys()),
+                        )
+
         final_missing_ids = [
             item.indicator_id
             for item in structural_items

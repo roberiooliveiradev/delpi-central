@@ -41,7 +41,7 @@ import {
 import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatCurrency, formatDecimal } from "../utils/format";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { suggestGranularity } from "../utils/periodBuckets";
@@ -265,7 +265,12 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         <KpiCard
           title="Total de kaizens"
           value={String(data?.total_kaizens ?? (loading ? "…" : 0))}
-          subtitle={formatGoalSubtitle(periodLabel, data, formatDecimal)}
+          {...buildKpiGoalPresentation(
+            periodLabel,
+            data,
+            formatDecimal,
+            { realizedValue: data?.total_kaizens },
+          )}
           icon={<Lightbulb size={22} />}
           loading={loading && !data}
         />

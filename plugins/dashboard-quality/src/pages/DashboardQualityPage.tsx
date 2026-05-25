@@ -19,7 +19,7 @@ import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityDashboard } from "../hooks/useQualityDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useQualityFilters } from "../hooks/useQualityFilters";
-import { formatGoalDescription, formatGoalSubtitle } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import {
   formatCurrency,
   formatDecimal,
@@ -162,10 +162,11 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         <KpiCard
           title="PPM interno"
           value={formatPpm(ppmInternal?.ppm)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `Devolvido: ${formatDecimal(ppmInternal?.total_devolvido_un)} un · ${periodLabel}`,
             ppmInternal,
             formatPpm,
+            { realizedValue: ppmInternal?.ppm },
           )}
           icon={<Factory size={22} />}
           loading={isBusy && !ppmInternal}
@@ -179,10 +180,11 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         <KpiCard
           title="PPM externo"
           value={formatPpm(ppmExternal?.ppm)}
-          subtitle={formatGoalSubtitle(
+          {...buildKpiGoalPresentation(
             `Devolvido: ${formatDecimal(ppmExternal?.total_devolvido_un)} un · ${periodLabel}`,
             ppmExternal,
             formatPpm,
+            { realizedValue: ppmExternal?.ppm },
           )}
           icon={<Truck size={22} />}
           loading={isBusy && !ppmExternal}
@@ -199,9 +201,12 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
       <section className="dq-summary-grid" aria-busy={isBusy}>
         <SummaryCard
           title="Kaizens"
-          description={formatGoalDescription(
-            "Resumo de melhorias implementadas no período.",
+          description="Resumo de melhorias implementadas no período."
+          {...buildKpiGoalPresentation(
+            periodLabel,
             kaizen,
+            formatDecimal,
+            { realizedValue: kaizen?.total_kaizens },
           )}
           icon={<Lightbulb size={22} />}
           loading={isBusy && !kaizen}
@@ -222,9 +227,12 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         />
         <SummaryCard
           title="Auditoria 5S"
-          description={formatGoalDescription(
-            "Média de notas das auditorias realizadas.",
+          description="Média de notas das auditorias realizadas."
+          {...buildKpiGoalPresentation(
+            periodLabel,
             audit5s,
+            formatScore,
+            { realizedValue: audit5s?.average_score },
           )}
           icon={<ClipboardCheck size={22} />}
           loading={isBusy && !audit5s}
