@@ -74,10 +74,12 @@ class LMPBusinessRules:
         if end < start:
             return 0
 
-        cursor = start
-        count = 0
+        total_days = (end - start).days + 1
+        full_weeks, remaining = divmod(total_days, 7)
+        count = full_weeks * 5
 
-        while cursor <= end:
+        cursor = start + timedelta(days=full_weeks * 7)
+        for _ in range(remaining):
             if not cls.is_weekend(cursor):
                 count += 1
             cursor += timedelta(days=1)

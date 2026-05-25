@@ -4,7 +4,7 @@ from typing import Any
 
 from app.infrastructure.cache.ttl_cache import TtlCache
 
-_LMP_DASHBOARD_TTL_SECONDS = 120.0
+_LMP_DASHBOARD_TTL_SECONDS = 300.0
 
 _lmp_dashboard_cache: TtlCache[dict[str, Any]] = TtlCache(
     ttl_seconds=_LMP_DASHBOARD_TTL_SECONDS,
