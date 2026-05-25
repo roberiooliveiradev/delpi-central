@@ -511,13 +511,17 @@ services:
       PORTAL_RH_DB_PASSWORD: ${PORTAL_RH_DB_PASSWORD}
       PORTAL_RH_DB_CONNECT_TIMEOUT: ${PORTAL_RH_DB_CONNECT_TIMEOUT}
       PORTAL_RH_DB_SSLMODE: ${PORTAL_RH_DB_SSLMODE}
-      
+
+      STRATEGIC_INDICATORS_API_BASE_URL: http://strategic-indicators-api:8000
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN}
+
     volumes:
       - ../api-delpi:/app
 
     depends_on:
       - keycloak
       - postgres-plugins
+      - strategic-indicators-api
 
     networks:
       - delpi-network
