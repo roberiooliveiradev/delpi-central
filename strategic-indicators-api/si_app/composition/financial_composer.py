@@ -13,9 +13,8 @@ from si_app.infrastructure.persistence.google_sheets.financial.financial_fixed_c
 from si_app.infrastructure.persistence.google_sheets.financial.financial_receivables_repository import (
     FinancialReceivablesRepository,
 )
-from si_app.infrastructure.persistence.totvs.financial_repositories.financial_repository import (
-    FinancialRepository,
-)
+from si_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
+from delpi_api_client import DelpiApiClient
 from si_app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
 )
@@ -68,6 +67,10 @@ def _build_financial_receivables_repository(
     )
 
 
+def _build_delpi_financial_gateway() -> DelpiFinancialGateway:
+    return DelpiFinancialGateway(DelpiApiClient())
+
+
 def build_financial_metrics_snapshot_service() -> FinancialMetricsSnapshotService:
     client = _build_google_sheets_client()
 
@@ -75,7 +78,7 @@ def build_financial_metrics_snapshot_service() -> FinancialMetricsSnapshotServic
         ebitda_repository=_build_financial_ebitda_repository(client),
         fixed_cost_repository=_build_financial_fixed_cost_repository(client),
         receivables_repository=_build_financial_receivables_repository(client),
-        financial_query_repository=FinancialRepository(),
+        financial_query_repository=_build_delpi_financial_gateway(),
     )
 
 
@@ -86,8 +89,7 @@ def build_get_financial_indicators_snapshot_port() -> FinancialIndicatorsSnapsho
 
 
 def build_get_rol_use_case() -> GetRolUseCase:
-    repository = FinancialRepository()
-    return GetRolUseCase(repository)
+    return GetRolUseCase(_build_delpi_financial_gateway())
 
 
 def build_get_financial_ebitda_pct_use_case() -> GetFinancialEbitdaPctUseCase:

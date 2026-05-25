@@ -27,18 +27,24 @@ from si_app.infrastructure.persistence.google_sheets.production.direct_labor_rep
 from si_app.infrastructure.persistence.google_sheets.production.production_cost_repository import (
     ProductionCostRepository,
 )
-from si_app.infrastructure.persistence.totvs.financial_repositories.financial_repository import (
-    FinancialRepository,
-)
-from si_app.infrastructure.persistence.totvs.production_repositories.on_time_delivery_repository import (
-    OnTimeDeliveryRepository,
-)
-from si_app.infrastructure.persistence.totvs.production_repositories.overall_equipment_effectiveness_repository import (
-    OverallEquipmentEffectivenessRepository,
+from si_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
+from si_app.infrastructure.gateways.delpi_production_gateway import (
+    DelpiOeeGateway,
+    DelpiOtdProductionGateway,
 )
 from si_app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
 )
+from delpi_api_client import DelpiApiClient
+
+_delpi_client: DelpiApiClient | None = None
+
+
+def _get_delpi_client() -> DelpiApiClient:
+    global _delpi_client
+    if _delpi_client is None:
+        _delpi_client = DelpiApiClient()
+    return _delpi_client
 
 
 def _build_google_sheets_client() -> GoogleSheetsClient:
@@ -76,49 +82,50 @@ def _build_depreciation_repository(
 
 
 def build_production_metrics_snapshot_service() -> ProductionMetricsSnapshotService:
-    client = _build_google_sheets_client()
+    client_gs = _build_google_sheets_client()
+    delpi = _get_delpi_client()
 
     return ProductionMetricsSnapshotService(
-        direct_labor_repository=_build_direct_labor_repository(client),
-        production_cost_repository=_build_production_cost_repository(client),
-        depreciation_repository=_build_depreciation_repository(client),
-        overall_equipment_effectiveness_repository=OverallEquipmentEffectivenessRepository(),
-        on_time_delivery_repository=OnTimeDeliveryRepository(),
-        financial_query_repository=FinancialRepository(),
+        direct_labor_repository=_build_direct_labor_repository(client_gs),
+        production_cost_repository=_build_production_cost_repository(client_gs),
+        depreciation_repository=_build_depreciation_repository(client_gs),
+        overall_equipment_effectiveness_repository=DelpiOeeGateway(delpi),
+        on_time_delivery_repository=DelpiOtdProductionGateway(delpi),
+        financial_query_repository=DelpiFinancialGateway(delpi),
     )
 
 
 def build_get_direct_labor_cost_pct_use_case() -> GetDirectLaborCostPctUseCase:
-    client = _build_google_sheets_client()
+    client_gs = _build_google_sheets_client()
     return GetDirectLaborCostPctUseCase(
-        direct_labor_repository=_build_direct_labor_repository(client),
-        financial_query_repository=FinancialRepository(),
+        direct_labor_repository=_build_direct_labor_repository(client_gs),
+        financial_query_repository=DelpiFinancialGateway(_get_delpi_client()),
     )
 
 
 def build_get_production_cost_pct_use_case() -> GetProductionCostPctUseCase:
-    client = _build_google_sheets_client()
+    client_gs = _build_google_sheets_client()
     return GetProductionCostPctUseCase(
-        production_cost_repository=_build_production_cost_repository(client),
-        financial_query_repository=FinancialRepository(),
+        production_cost_repository=_build_production_cost_repository(client_gs),
+        financial_query_repository=DelpiFinancialGateway(_get_delpi_client()),
     )
 
 
 def build_get_depreciation_pct_use_case() -> GetDepreciationPctUseCase:
-    client = _build_google_sheets_client()
+    client_gs = _build_google_sheets_client()
     return GetDepreciationPctUseCase(
-        depreciation_repository=_build_depreciation_repository(client),
-        financial_query_repository=FinancialRepository(),
+        depreciation_repository=_build_depreciation_repository(client_gs),
+        financial_query_repository=DelpiFinancialGateway(_get_delpi_client()),
     )
 
 
 def build_get_overall_equipment_effectiveness_pct_use_case() -> GetOverallEquipmentEffectivenessPctUseCase:
     return GetOverallEquipmentEffectivenessPctUseCase(
-        overall_equipment_effectiveness_repository=OverallEquipmentEffectivenessRepository()
+        overall_equipment_effectiveness_repository=DelpiOeeGateway(_get_delpi_client())
     )
 
 
 def build_get_on_time_delivery_pct_use_case() -> GetOnTimeDeliveryPctUseCase:
     return GetOnTimeDeliveryPctUseCase(
-        on_time_delivery_repository=OnTimeDeliveryRepository()
+        on_time_delivery_repository=DelpiOtdProductionGateway(_get_delpi_client())
     )

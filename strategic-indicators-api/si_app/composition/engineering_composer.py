@@ -20,13 +20,23 @@ from si_app.application.use_cases.lmp.get_lmp_dashboard_summary_use_case import 
 from si_app.infrastructure.gateways.transformometro_transforma_mais_gateway import (
     TransformometroTransformaMaisGateway,
 )
-from si_app.infrastructure.persistence.totvs.lmp_repositories.lmp_query_repository import (
-    LMPQueryRepository,
+from si_app.infrastructure.gateways.delpi_engineering_gateway import (
+    DelpiLmpGateway,
 )
+from delpi_api_client import DelpiApiClient
+
+_delpi_client: DelpiApiClient | None = None
 
 
-def _build_lmp_repository() -> LMPQueryRepository:
-    return LMPQueryRepository()
+def _get_delpi_client() -> DelpiApiClient:
+    global _delpi_client
+    if _delpi_client is None:
+        _delpi_client = DelpiApiClient()
+    return _delpi_client
+
+
+def _build_lmp_gateway() -> DelpiLmpGateway:
+    return DelpiLmpGateway(_get_delpi_client())
 
 
 def _build_transforma_mais_gateway() -> TransformometroTransformaMaisGateway:
@@ -34,15 +44,15 @@ def _build_transforma_mais_gateway() -> TransformometroTransformaMaisGateway:
 
 
 def build_engineering_list_lmps_use_case() -> ListLMPUseCase:
-    return ListLMPUseCase(_build_lmp_repository())
+    return ListLMPUseCase(_build_lmp_gateway())
 
 
 def build_engineering_list_lmps_dashboard_use_case() -> ListLMPDashboardUseCase:
-    return ListLMPDashboardUseCase(_build_lmp_repository())
+    return ListLMPDashboardUseCase(_build_lmp_gateway())
 
 
 def build_engineering_get_lmp_use_case() -> GetLMPUseCase:
-    return GetLMPUseCase(_build_lmp_repository())
+    return GetLMPUseCase(_build_lmp_gateway())
 
 
 def build_engineering_list_transforma_mais_processes_use_case() -> ListProcessUseCase:
@@ -71,4 +81,4 @@ def build_engineering_indicators_snapshot_provider():
 
 
 def build_engineering_get_lmp_dashboard_summary_use_case() -> GetLMPDashboardSummaryUseCase:
-    return GetLMPDashboardSummaryUseCase(_build_lmp_repository())
+    return GetLMPDashboardSummaryUseCase(_build_lmp_gateway())
