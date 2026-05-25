@@ -415,13 +415,15 @@ body,
 }
 
 /*
- * Configurações (MFE): um único scroll em `.content`, sem esticar o host federado.
- * Evita barra vertical fantasma e overflow horizontal ao abrir Metas anuais.
+ * Configurações (MFE): `.content` vira coluna com scroll vertical único.
+ * Sem isso, o host federado (height: 100%) esticava além do viewport e
+ * criava barra fantasma ou scroll duplo a cada mudança de estado no plugin.
  */
 .content:has(.si-settings-page) {
   flex-direction: column;
   align-items: stretch;
   overflow-x: clip;
+  overflow-y: auto;
 }
 
 .content:has(.si-settings-page) > .app-host,
@@ -435,7 +437,7 @@ body,
   height: auto;
   min-height: 0;
   flex: 0 0 auto;
-  overflow: visible;
+  overflow-x: clip;
 }
 
 .app-host-embedded {

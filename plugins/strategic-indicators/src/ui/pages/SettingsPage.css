@@ -9,32 +9,10 @@
 }
 
 /*
- * Portal: `.content` é flex row por padrão; o host federado força height 100%.
- * Metas anuais (master-detail + tabela) vazava largura e criava scroll duplo.
- * `overflow-y: auto` garante rolagem vertical dentro de `.content` — sem
- * isso, `overflow-x: clip` (diferente de `hidden`) não força `overflow-y`
- * para `auto`, deixando o conteúdo transbordar e criar scroll no body.
+ * Overrides de layout para `.content` e `.app-host-federated` vivem
+ * exclusivamente em portal/src/index.css (regras :has(.si-settings-page)).
+ * Mantê-los em um só lugar evita conflito de cascade entre portal e plugin.
  */
-.content:has(.si-settings-page) {
-  flex-direction: column;
-  align-items: stretch;
-  overflow-x: clip;
-  overflow-y: auto;
-}
-
-.content:has(.si-settings-page) > .app-host,
-.content:has(.si-settings-page) > .app-host-federated,
-.content:has(.si-settings-page) > div,
-.app-host-federated:has(.si-settings-page),
-.app-host-federated:has(.si-settings-page) > div {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  height: auto;
-  min-height: 0;
-  flex: 0 0 auto;
-  overflow-x: clip;
-}
 
 .si-settings-sections,
 .si-settings-sections .si-section-block,
