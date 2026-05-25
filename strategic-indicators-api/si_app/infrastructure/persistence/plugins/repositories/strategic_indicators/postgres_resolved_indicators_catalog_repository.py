@@ -133,6 +133,7 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                 item.indicator_id,
                 competence,
             )
+            resolved.append(self._catalog_item_without_goal(item))
 
         return resolved
 
@@ -226,6 +227,37 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                 goal.get("goal_scope_branch"),
             ),
             has_resolved_goal=True,
+        )
+
+    @staticmethod
+    def _catalog_item_without_goal(
+        item: StrategicIndicatorCatalogItem,
+    ) -> StrategicIndicatorCatalogItem:
+        return StrategicIndicatorCatalogItem(
+            indicator_id=item.indicator_id,
+            department_id=item.department_id,
+            indicator_name=item.indicator_name,
+            weight_pct=item.weight_pct,
+            goal_label=item.goal_label or "Meta não definida",
+            goal_value=item.goal_value or 0.0,
+            goal_periodicity=item.goal_periodicity or "monthly",
+            goal_mode="standard",
+            monthly_targets=[],
+            scope_type=item.scope_type,
+            performance_direction=getattr(
+                item,
+                "performance_direction",
+                "higher_is_better",
+            ),
+            strategic_description=item.strategic_description,
+            source_key=item.source_key,
+            value_unit=item.value_unit,
+            value_prefix=item.value_prefix,
+            value_suffix=item.value_suffix,
+            value_decimals=item.value_decimals,
+            branch_goals={},
+            resolved_goal_scope_branch="",
+            has_resolved_goal=False,
         )
 
     @staticmethod
