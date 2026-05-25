@@ -28,6 +28,7 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 | Descrição, ficha, visão geral do item | `GET /products/{code}/analyser` | `get_product_analyser` |
 | Saldo / estoque / disponível **de um código** | `GET /products/{code}/stock` | `get_product_stock` |
 | Estrutura / BOM / componentes | `GET /products/{code}/structure` | `get_product_structure` |
+| **Onde é usado / produto pai / where used** | `GET /products/{code}/parents` | `get_product_parents` |
 | Fornecedores do item | `GET /products/{code}/suppliers` | (ver catálogo) |
 | Histórico de compras | `GET /products/{code}/purchases` | `get_product_purchases` |
 | Resumo de vendas do item | `GET /products/{code}/sales` | `get_product_sales_summary` |
@@ -44,6 +45,9 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 - “Qual a descrição do produto 10.080.055?” → `get_product_analyser`
 - “Tem estoque do 10080047 na filial 01?” → `get_product_stock`
 - “Busca parafuso M8 na descrição” → `search_products`
+- “Qual a estrutura do 10080001?” → `get_product_structure`
+- “Onde é usado o 10080001?” → `get_product_parents`
+- “Produto pai do 10080001” → `get_product_parents`
 
 ---
 
@@ -138,6 +142,8 @@ Inclua estes termos ao interpretar a pergunta:
 |---------|--------|
 | Produto | produto, item, código, referência, ref, SKU, material, MP, insumo |
 | Estoque item | estoque, saldo, disponível, quantidade, posição, armazém |
+| Estrutura/BOM | estrutura, componentes, composição, bill of materials, BOM |
+| Onde é usado | onde é usado, produto pai, parent, where used, utilizado em, faz parte de |
 | LMP | LMP, lista de materiais de projeto, amostra, ordem de venda, OV |
 | SQL | SQL, consulta, SELECT, query, dados |
 | KPI estoque | valor total de estoque, valor em estoque, indicador suprimentos |
