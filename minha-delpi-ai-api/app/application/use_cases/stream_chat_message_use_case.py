@@ -207,6 +207,12 @@ class StreamChatMessageUseCase:
         )
         direct_answer = ChatExternalActionDirectResponseService.resolve_answer(tool_context)
 
+        if not direct_answer and ChatUserContextService.is_user_identity_question(message):
+            user_direct = self._resolve_user_identity_answer(request.access_token, message)
+            if user_direct:
+                direct_answer = user_direct
+                skip_rag = True
+
         if skip_rag:
             rag = {"context": "", "sources": []}
         else:
@@ -767,3 +773,12 @@ class StreamChatMessageUseCase:
 
         service = ChatUserContextService(core_api_gateway=CoreApiHttpGateway())
         return service.build_user_context(access_token)
+
+    def _resolve_user_identity_answer(self, access_token: str | None, message: str) -> str | None:
+        if not access_token:
+            return None
+
+        from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
+
+        service = ChatUserContextService(core_api_gateway=CoreApiHttpGateway())
+        return service.build_direct_answer(access_token, message)
