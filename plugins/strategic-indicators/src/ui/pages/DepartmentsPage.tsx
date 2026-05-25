@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { Minus, Plus, Maximize2, RotateCcw } from "lucide-react";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import {
   applyTreeScopeSelection,
@@ -67,6 +68,38 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       <StatusBadge label="API Real" variant="success" />
     );
 
+  const disabledNav = (
+    <div className="si-pan-zoom__nav" aria-label="Navegação do mapa">
+      <button type="button" className="si-pan-zoom__nav-btn" disabled title="Diminuir zoom" aria-label="Diminuir zoom">
+        <Minus size={16} />
+      </button>
+      <span className="si-pan-zoom__zoom-label">100%</span>
+      <button type="button" className="si-pan-zoom__nav-btn" disabled title="Aumentar zoom" aria-label="Aumentar zoom">
+        <Plus size={16} />
+      </button>
+      <button type="button" className="si-pan-zoom__nav-btn" disabled title="Tela cheia" aria-label="Entrar em tela cheia">
+        <Maximize2 size={16} />
+      </button>
+      <button type="button" className="si-pan-zoom__nav-btn" disabled title="Ajustar à tela" aria-label="Ajustar à tela">
+        <RotateCcw size={16} />
+      </button>
+      <button type="button" className="si-pan-zoom__nav-btn" disabled title="Zoom 100% e posição inicial" aria-label="Restaurar visualização">
+        <span className="si-pan-zoom__reset-label">100%</span>
+      </button>
+    </div>
+  );
+
+  const disabledMapActions = (
+    <div className="si-tree-view-toggle" role="group" aria-label="Expandir ou recolher organograma">
+      <button type="button" className="si-tree-view-toggle__btn" disabled>
+        Expandir tudo
+      </button>
+      <button type="button" className="si-tree-view-toggle__btn" disabled>
+        Recolher tudo
+      </button>
+    </div>
+  );
+
   const floatingControls = (
     <TreeMapFloatingControls
       referenceMonth={referenceMonth}
@@ -81,12 +114,16 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       onMonthsToCompareChange={setMonthsToCompare}
       status={statusBadge}
       actions={
-        <RefreshSnapshotButton
-          getAccessToken={getAccessToken}
-          onRefreshed={() => void reload()}
-          disabled={loading || refreshing}
-        />
+        <>
+          {!model ? disabledMapActions : null}
+          <RefreshSnapshotButton
+            getAccessToken={getAccessToken}
+            onRefreshed={() => void reload()}
+            disabled={loading || refreshing}
+          />
+        </>
       }
+      viewportNav={!model ? disabledNav : undefined}
     />
   );
 
