@@ -419,11 +419,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         request: ListLMPRequest,
         *,
         include_qtd_pi: bool,
+        lmp_only: bool = True,
     ) -> Tuple[str, tuple]:
         ctes_sql, ctes_params = self._sql_lmp_base_dataset_ctes(
             request,
             include_qtd_pi=include_qtd_pi,
-            lmp_only=True,
+            lmp_only=lmp_only,
         )
 
         qtd_pi_select = "ISNULL(PI.QTD_PI, 0) AS qtd_pi" if include_qtd_pi else "0 AS qtd_pi"
