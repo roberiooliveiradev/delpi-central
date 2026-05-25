@@ -21,6 +21,7 @@ import { AdminDepartmentsWorkspace } from "../components/AdminDepartmentsWorkspa
 import { AdminGoalsWorkspace } from "../components/AdminGoalsWorkspace";
 import { CatalogStructureValidationWorkspace } from "../components/CatalogStructureValidationWorkspace";
 import { SettingsStructuredEditor } from "../components/SettingsStructuredEditor";
+import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
 import {
   getMetaSourceLabel,
 } from "../presentation/labels";
@@ -130,6 +131,13 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
         eyebrow="Indicadores Estratégicos"
         title="Administração do módulo"
         description="Central administrativa do modelo novo: departamentos, indicadores estruturais, metas anuais, parâmetros globais e auditoria."
+        actions={
+          <RefreshSnapshotButton
+            getAccessToken={getAccessToken}
+            onRefreshed={() => void settings.reload()}
+            disabled={settings.loading || settings.saving}
+          />
+        }
       />
 
       <SettingsHero

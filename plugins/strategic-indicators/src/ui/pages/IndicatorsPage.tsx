@@ -17,6 +17,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { getFilterViewScopeLabel } from "../shared/strategicIndicatorsFilters";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
+import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
 import "./IndicatorsPage.css";
 
@@ -242,6 +243,13 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
           ) : (
             <StatusBadge label="API Real" variant="success" />
           )
+        }
+        actions={
+          <RefreshSnapshotButton
+            getAccessToken={getAccessToken}
+            onRefreshed={() => void reload()}
+            disabled={loading || refreshing}
+          />
         }
       />
 

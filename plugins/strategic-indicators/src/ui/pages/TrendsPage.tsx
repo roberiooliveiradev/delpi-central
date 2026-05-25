@@ -15,6 +15,7 @@ import { TrendHighlights } from "../components/TrendHighlights";
 import { TrendMonthComparison } from "../components/TrendMonthComparison";
 import { TrendPriorityList } from "../components/TrendPriorityList";
 import { TrendSummaryCards } from "../components/TrendSummaryCards";
+import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
 import { useStrategicIndicatorsTrends } from "../../state/hooks/useStrategicIndicatorsTrends";
 import "./TrendsPage.css";
 
@@ -134,6 +135,13 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
           ) : (
             <StatusBadge label="API Real" variant="success" />
           )
+        }
+        actions={
+          <RefreshSnapshotButton
+            getAccessToken={getAccessToken}
+            onRefreshed={() => void reload()}
+            disabled={loading || refreshing}
+          />
         }
       />
 

@@ -203,6 +203,13 @@ def strategic_indicators_health():
     return payload
 
 
+@router.post("/cache/invalidate")
+@require_permission("strategic-indicators.view")
+def invalidate_cache():
+    invalidate_strategic_indicators_snapshot_cache()
+    return {"status": "ok", "message": "Cache invalidado com sucesso."}
+
+
 @router.get("/executive-summary")
 @require_permission("strategic-indicators.view")
 def get_strategic_indicators_executive_summary(
