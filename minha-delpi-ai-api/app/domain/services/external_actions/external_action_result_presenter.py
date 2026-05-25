@@ -225,7 +225,7 @@ class ExternalActionResultPresenter:
             return {
                 "titulo": "Consulta SQL",
                 "linhas": [f"A consulta retornou {len(rows)} registro(s)."],
-                "dados": {"rows": rows[:20]},
+                "dados": {"rows": rows[:100]},
             }
 
         linhas = [f"A consulta retornou {len(rows)} registro(s)."]
@@ -247,7 +247,7 @@ class ExternalActionResultPresenter:
         return {
             "titulo": "Consulta SQL",
             "linhas": linhas,
-            "dados": {"rows": rows[:20]},
+            "dados": {"rows": rows[:100]},
         }
 
     def _present_product_search(self, root: dict, items: list) -> dict:
@@ -483,7 +483,7 @@ class ExternalActionResultPresenter:
         ]
 
         rows = []
-        for item in items[:50]:
+        for item in items[:100]:
             if not isinstance(item, dict):
                 continue
             rows.append({
@@ -510,7 +510,7 @@ class ExternalActionResultPresenter:
             {"key": "stage", "label": "Etapa"},
         ]
 
-        rows = [item for item in items[:50] if isinstance(item, dict)]
+        rows = [item for item in items[:100] if isinstance(item, dict)]
 
         return {
             "type": "table",
@@ -529,7 +529,7 @@ class ExternalActionResultPresenter:
 
         rows = [
             {"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")}
-            for i in items[:50]
+            for i in items[:100]
             if isinstance(i, dict)
         ]
 
@@ -612,7 +612,7 @@ class ExternalActionResultPresenter:
             "type": "table",
             "title": title,
             "columns": columns,
-            "rows": items[:50],
+            "rows": items[:100],
         }
 
     def _humanize_key(self, key: str) -> str:
