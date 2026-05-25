@@ -197,6 +197,10 @@ export function ChatPage({
             return;
           }
 
+          if (hasOutboundInFlight) {
+            return;
+          }
+
           clearWorkspaceError();
           clearError();
           setCanvasDocument(null);
