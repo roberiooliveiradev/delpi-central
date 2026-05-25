@@ -447,7 +447,7 @@ class ExternalActionSelectionService:
             if lowered in {"page"}:
                 parameters[name] = 1
             elif lowered in {"page_size", "pagesize", "limit"}:
-                parameters[name] = 20
+                parameters[name] = 50
 
         return parameters
 
@@ -926,12 +926,12 @@ class ExternalActionSelectionService:
             if lowered in {"page"}:
                 parameters[name] = 1
             elif lowered in {"page_size", "pagesize", "limit"}:
-                parameters[name] = 5
+                parameters[name] = 50
             elif lowered == "status" and "/dashboard" in path:
                 parameters[name] = "Todos"
 
         if not parameters:
-            parameters = {"page": 1, "page_size": 5}
+            parameters = {"page": 1, "page_size": 50}
 
         return parameters
 
@@ -1168,7 +1168,7 @@ class ExternalActionSelectionService:
                 parameters[name] = 1
 
             elif lowered in {"page_size", "pagesize", "limit"}:
-                parameters[name] = 200 if is_full_listing else 5
+                parameters[name] = 200 if is_full_listing else 50
 
             elif lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
                 parameters[name] = 99 if is_full_listing else 10
