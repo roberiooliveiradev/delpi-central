@@ -1088,11 +1088,17 @@ class ExternalActionSelectionService:
                     value -= 80
 
             elif intent == ChatProductQueryIntent.DESCRIPTION:
-                if "analyser" in haystack or "analyzer" in haystack:
-                    value += 70
+                if path == "/products/{code}":
+                    value += 200
 
-                if "/products/{code}" in haystack and "stock" not in haystack:
-                    value += 20
+                if "/description" in path:
+                    value += 150
+
+                if "analyser" in haystack or "analyzer" in haystack:
+                    value -= 30
+
+                if "stock" in path or "structure" in path or "parents" in path:
+                    value -= 80
 
             else:
                 if not has_specific_sub_intent:
@@ -1125,6 +1131,8 @@ class ExternalActionSelectionService:
 
     def _build_product_parameters(self, action: dict, code: str) -> dict:
         parameters = {}
+        path = (action.get("path") or "").lower()
+        is_full_listing = "/structure" in path or "/parents" in path
 
         for parameter in action.get("parametersSchema") or []:
             name = parameter.get("name")
@@ -1160,7 +1168,10 @@ class ExternalActionSelectionService:
                 parameters[name] = 1
 
             elif lowered in {"page_size", "pagesize", "limit"}:
-                parameters[name] = 5
+                parameters[name] = 200 if is_full_listing else 5
+
+            elif lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
+                parameters[name] = 99 if is_full_listing else 10
 
         return parameters
 

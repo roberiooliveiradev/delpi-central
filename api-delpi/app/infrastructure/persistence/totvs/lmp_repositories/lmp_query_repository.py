@@ -376,19 +376,50 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         *,
         include_qtd_pi: bool,
     ) -> Tuple[str, tuple]:
-        base_sql, base_params = self._sql_lmp_base_rows_dataset_query(
+        ctes_sql, ctes_params = self._sql_lmp_base_dataset_ctes(
             request,
             include_qtd_pi=include_qtd_pi,
-            order_by=False,
         )
 
+        qtd_pi_join = """
+            LEFT JOIN PI_COUNT_BY_OV PI
+                ON PI.ADJ_FILIAL = C.AD1_FILIAL
+               AND PI.ADJ_NROPOR = C.AD1_NROPOR
+               AND PI.ADJ_REVISA = C.AD1_REVISA
+        """ if include_qtd_pi else ""
+
+        qtd_pi_group_by = ",\n                    PI.QTD_PI" if include_qtd_pi else ""
+
         sql = f"""
+            WITH
+            {ctes_sql}
             SELECT COUNT(*) AS total
             FROM (
-                {base_sql}
+                SELECT
+                    C.AD1_FILIAL,
+                    C.AD1_NROPOR
+                FROM CandidateLMPs C
+                LEFT JOIN EngenhariaResumoUltimaRevisao H
+                    ON H.AIJ_FILIAL = C.AD1_FILIAL
+                   AND H.AIJ_NROPOR = C.AD1_NROPOR
+                {qtd_pi_join}
+                GROUP BY
+                    C.AD1_FILIAL,
+                    C.AD1_NROPOR,
+                    C.AD1_DESCRI,
+                    C.LISTING_KIND,
+                    C.LMP_START_DATE,
+                    C.LMP_END_DATE,
+                    H.ENGINEERING_STATUS,
+                    H.QTD_PASSAGENS_ENG,
+                    H.QTD_PASSAGENS_ENCERRADAS,
+                    H.QTD_AVANCOU_ENG,
+                    H.QTD_RETORNOU_ENG,
+                    H.TEMPO_TOTAL_MINUTOS_ENG
+                    {qtd_pi_group_by}
             ) BASE_ROWS
         """
-        return sql, base_params
+        return sql, ctes_params
 
     def _sql_lmp_base_rows_paged_query(
         self,

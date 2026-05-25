@@ -47,6 +47,33 @@
   color: var(--mdc-text-primary, #1e293b);
 }
 
+.mdc-expand-modal__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mdc-expand-modal__tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--mdc-border, #e2e8f0);
+  border-radius: 6px;
+  background: var(--mdc-bg-surface, #fff);
+  color: var(--mdc-text-secondary, #64748b);
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.mdc-expand-modal__tool-btn:hover {
+  background: var(--mdc-bg-hover, #f1f5f9);
+  color: var(--mdc-text-primary, #1e293b);
+  border-color: var(--mdc-primary, #0ea5e9);
+}
+
 .mdc-expand-modal__close {
   display: flex;
   align-items: center;

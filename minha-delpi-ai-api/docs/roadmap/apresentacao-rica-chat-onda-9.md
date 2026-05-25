@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 9: Apresentação Rica de Dados
 
-**Status:** planejado (maio/2026)  
+**Status:** ✅ concluído (maio/2026)  
 **Pré-requisitos:** [Onda 8](./inteligencia-chat-onda-8.md)
 
 ## Objetivo
@@ -168,16 +168,42 @@ type ReportSection = { title?: string; content: string; presentation?: ChatPrese
 
 ---
 
-## Critérios de aceite (Fase 1)
+## Entregas realizadas
 
-- [ ] Pergunta "estoque do 10080001" renderiza tabela com colunas (Filial, Armazém, Quantidade, Disponível)
-- [ ] Tabela possui sort ao clicar no header
-- [ ] Botão "Baixar CSV" gera arquivo `.csv` correto (UTF-8 BOM)
-- [ ] Botão "Copiar" coloca tabela formatada no clipboard
-- [ ] Respostas de "lista LMPs" e "ordens de venda" também renderizam tabela
-- [ ] Dados JSON brutos ainda acessíveis em modo expandido (collapse)
-- [ ] Performance: renderização < 100ms para tabelas de até 100 linhas
-- [ ] Mobile: tabela com scroll horizontal e headers fixos
+### Fase 1 — Tabelas Ricas ✅
+- `ChatRichTable` component com sort por coluna, scroll horizontal, headers fixos
+- Backend emite `presentation.table` para stock, SQL, produto, LMP, OVs, parents, structure
+- Export CSV (UTF-8 BOM), copiar para clipboard
+
+### Fase 2 — Gráficos ✅
+- `ChatRichChart` component (bar, line, pie, area) via Recharts
+- Heurística backend para detectar dados gráficos (multi-filial, KPIs, séries)
+- Toggle tabela ↔ gráfico quando ambos disponíveis
+- Export PNG do gráfico
+
+### Fase 3 — Cards e KPIs ✅
+- `ChatRichKpi` component com grid responsivo (2-4 cards)
+- Backend emite `presentation.kpi` para indicadores com value/target/previous
+- Tendência (↑/↓/→) e delta calculados automaticamente
+- Cards com borda colorida e formatação pt-BR
+
+### Fase 4 — Canvas Expandível ✅
+- `ChatExpandModal` com botão "Expandir" em todas as visualizações
+- Modal tela cheia (max 1100px) com animação fade-in + scale
+- Tabela/gráfico/KPI renderizados com mais espaço
+- Fechar com ESC ou click no backdrop
+
+### Fase 5 — Export & Download ✅
+- Toolbar unificada no modal expandido
+- Export XLSX (SheetJS, lazy-loaded em chunk separado)
+- Export PDF (jsPDF + autoTable, landscape)
+- Export PNG para gráficos (SVG → Canvas 2x resolução)
+- Copiar KPIs para clipboard
+
+### Fase 6 — Refinamentos ✅
+- Acessibilidade: role="dialog", aria-modal, aria-label, tabIndex
+- Keyboard: ESC para fechar modal
+- Copiar KPIs como texto formatado
 
 ---
 
