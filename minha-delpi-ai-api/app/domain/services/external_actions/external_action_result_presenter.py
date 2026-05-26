@@ -76,11 +76,62 @@ class ExternalActionResultPresenter:
                     "apresentacao": kpi,
                 }
 
+        if isinstance(root, dict) and root:
+            fallback = self._present_dict_fallback(root, path)
+            if fallback:
+                return fallback
+
         return {
-            "titulo": "Resultado da API",
+            "titulo": self._fallback_title(path) or "Resultado da API",
             "linhas": ["A API retornou dados autorizados para a consulta."],
             "dados": root,
         }
+
+    def _fallback_title(self, path: str) -> str | None:
+        if not path:
+            return None
+        lowered = path.lower()
+        if "dashboard" in lowered:
+            if "lmp" in lowered:
+                return "Dashboard de LMPs"
+            return "Dashboard"
+        if "/commercial/" in lowered:
+            return "Indicador Comercial"
+        if "/financial/" in lowered or "/finacial/" in lowered:
+            return "Indicador Financeiro"
+        if "/production/" in lowered:
+            return "Indicador de Produção"
+        if "/hr/" in lowered:
+            return "Indicador de RH"
+        if "/quality/" in lowered:
+            return "Indicador de Qualidade"
+        return None
+
+    def _present_dict_fallback(self, root: dict, path: str) -> dict | None:
+        if not root:
+            return None
+
+        linhas = []
+        title = self._fallback_title(path) or "Resultado da consulta"
+
+        for key, value in root.items():
+            if isinstance(value, dict):
+                sub_items = [f"{k}: {v}" for k, v in value.items()]
+                label = self._humanize_key(key)
+                linhas.append(f"**{label}:** {', '.join(sub_items[:8])}")
+            elif isinstance(value, list) and value:
+                linhas.append(f"**{self._humanize_key(key)}:** {len(value)} item(ns)")
+            elif value is not None:
+                linhas.append(f"**{self._humanize_key(key)}:** {value}")
+
+        if linhas:
+            return {
+                "titulo": title,
+                "linhas": linhas[:12],
+                "dados": root,
+            }
+
+        return None
 
     def _infer_items_title(self, items: list, path: str) -> str | None:
         if not path:
@@ -908,7 +959,8 @@ class ExternalActionResultPresenter:
         if kpi_count >= 2 or (kpi_count >= 1 and has_series):
             return True
 
-        if not root.get("items") and len(root) <= 8:
+        has_nested = any(isinstance(v, (dict, list)) for v in root.values())
+        if not root.get("items") and not has_nested and len(root) <= 8:
             numeric_count = sum(1 for v in root.values() if isinstance(v, (int, float)))
             if numeric_count >= 2:
                 return True
@@ -985,7 +1037,33 @@ class ExternalActionResultPresenter:
                     "cards": cards,
                 }
 
+        cards = self._build_generic_kpi_cards(root, path)
+        if cards:
+            return {
+                "type": "kpi",
+                "title": self._kpi_title(path),
+                "cards": cards,
+            }
+
         return None
+
+    def _build_generic_kpi_cards(self, root: dict, path: str) -> list | None:
+        colors = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
+        cards = []
+        idx = 0
+        for key, val in root.items():
+            if not isinstance(val, (int, float)):
+                continue
+            cards.append({
+                "label": self._humanize_key(key),
+                "value": val,
+                "unit": "%" if "pct" in key or "percent" in key or "rate" in key else "",
+                "color": colors[idx % len(colors)],
+            })
+            idx += 1
+            if idx >= 6:
+                break
+        return cards if len(cards) >= 2 else None
 
     def _format_num(self, value) -> str:
         try:
@@ -1005,6 +1083,46 @@ class ExternalActionResultPresenter:
             return "Giro de Estoque (IDD)"
         if "stock-value" in path:
             return "Valor Total de Estoque"
+        if "closing-rate" in path:
+            return "Taxa de Conversão de Vendas"
+        if "ebitda" in path:
+            return "EBITDA"
+        if "pmr" in path:
+            return "PMR — Prazo Médio de Recebimento"
+        if "fixed_cost" in path:
+            return "Custo Fixo"
+        if "new-clients" in path:
+            return "Novos Clientes"
+        if "new-business" in path:
+            return "Novos Negócios"
+        if "snapshot" in path:
+            return "Indicadores de RH"
+        if "pdi" in path:
+            return "PDIs Ativos"
+        if "completion" in path:
+            return "Avaliações de Desempenho"
+        if "depreciation" in path:
+            return "Depreciação"
+        if "labor_cost" in path or "direct_labor" in path:
+            return "Custo de Mão de Obra"
+        if "production_cost" in path:
+            return "Custo de Produção"
+        if "effectiveness" in path or "oee" in path:
+            return "OEE — Eficiência de Equipamentos"
+        if "delivery" in path:
+            return "OTD — Entrega no Prazo"
+        if "lmp" in path:
+            return "Dashboard de LMPs"
+        if "/commercial/" in path:
+            return "Indicador Comercial"
+        if "/financial/" in path or "/finacial/" in path:
+            return "Indicador Financeiro"
+        if "/production/" in path:
+            return "Indicador de Produção"
+        if "/hr/" in path:
+            return "Indicador de RH"
+        if "/quality/" in path:
+            return "Indicador de Qualidade"
         return "Indicador"
 
     def _try_chart_from_rows(self, rows: list) -> dict | None:
