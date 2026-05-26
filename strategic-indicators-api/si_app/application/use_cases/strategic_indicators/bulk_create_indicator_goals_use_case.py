@@ -26,7 +26,6 @@ class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
         *,
         body: dict,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         goal_year = int(body.get("goal_year") or 0)
         items = body.get("items") or []
@@ -117,5 +116,4 @@ class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
             goal_year=goal_year,
             items=normalized_items,
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
         )

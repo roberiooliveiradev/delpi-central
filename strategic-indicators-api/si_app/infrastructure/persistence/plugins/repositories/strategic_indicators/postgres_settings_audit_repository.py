@@ -21,7 +21,6 @@ class PostgresStrategicIndicatorsSettingsAuditRepository(
         payload_before: dict | None,
         payload_after: dict | None,
         changed_by_user_id: str | None,
-        changed_by_email: str | None,
     ) -> None:
         query = """
             INSERT INTO strategic_indicators.settings_audit (
@@ -47,7 +46,7 @@ class PostgresStrategicIndicatorsSettingsAuditRepository(
                 if payload_after is not None
                 else None,
                 changed_by_user_id,
-                changed_by_email,
+                None,
             ),
         )
 

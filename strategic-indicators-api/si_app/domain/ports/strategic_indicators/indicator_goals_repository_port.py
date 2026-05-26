@@ -88,7 +88,6 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         valid_to: str | None,
         notes: str | None,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -104,7 +103,6 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         valid_to: str | None,
         notes: str | None,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -114,7 +112,6 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         *,
         goal_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -124,7 +121,6 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         *,
         goal_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -134,7 +130,6 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         *,
         goal_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -153,7 +148,6 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         goal_year: int,
         items: list[dict],
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -166,7 +160,6 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         indicator_ids: list[str] | None,
         overwrite_existing: bool,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -178,7 +171,6 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         indicator_ids: list[str],
         copy_from_year: int | None,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 

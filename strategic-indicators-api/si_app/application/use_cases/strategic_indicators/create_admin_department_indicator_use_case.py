@@ -24,7 +24,6 @@ class CreateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
         department_id: str,
         body: dict,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         if not department_id.strip():
             raise ValueError("department_id é obrigatório.")
@@ -68,5 +67,4 @@ class CreateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
             value_decimals=value_decimals,
             display_order=int(body.get("display_order") or 0),
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
         )

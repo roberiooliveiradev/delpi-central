@@ -89,7 +89,6 @@ class UpdateStrategicIndicatorsIndicatorGoalUseCase:
             valid_to=request.valid_to,
             notes=request.notes.strip() if request.notes else None,
             actor_user_id=request.actor_user_id,
-            actor_email=request.actor_email,
         )
 
     def _validate_request(

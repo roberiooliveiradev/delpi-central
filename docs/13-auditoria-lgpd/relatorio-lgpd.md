@@ -14,7 +14,7 @@
 | 2 | [Direitos do Titular — Exclusão e Anonimização](#2-direitos-do-titular--exclusão-e-anonimização) | 6 | 6 | 0 |
 | 3 | [Direitos do Titular — Portabilidade e Acesso](#3-direitos-do-titular--portabilidade-e-acesso) | 2 | 2 | 0 |
 | 4 | [Segurança de Dados Pessoais](#4-segurança-de-dados-pessoais) | 10 | 10 | 0 |
-| 5 | [Minimização e Finalidade dos Dados](#5-minimização-e-finalidade-dos-dados) | 5 | 4 | 1 |
+| 5 | [Minimização e Finalidade dos Dados](#5-minimização-e-finalidade-dos-dados) | 5 | 5 | 0 |
 | 6 | [Retenção e Ciclo de Vida dos Dados](#6-retenção-e-ciclo-de-vida-dos-dados) | 4 | 4 | 0 |
 | 7 | [Transparência e Registro de Tratamento](#7-transparência-e-registro-de-tratamento) | 3 | 3 | 0 |
 | 8 | [Compartilhamento e Transferência de Dados](#8-compartilhamento-e-transferência-de-dados) | 4 | 4 | 0 |
@@ -548,7 +548,7 @@
 | 5.1 | birth_date sem finalidade | ✅ | Documentado finalidade (aniversários + RH) com docstring LGPD (Fase 8) |
 | 5.2 | IP address sem truncamento | ✅ | `truncate_ip()` remove último octeto antes de armazenar (Fase 10) |
 | 5.3 | Payload completo nos audit logs | ✅ | `_mask_personal_data()` no transformometro (Fase 6) |
-| 5.4 | Emails denormalizados | ⚠️ | Requer migração de schema separada (alto risco) |
+| 5.4 | Emails denormalizados | ✅ | Parou de gravar email nas tabelas SI; colunas mantidas p/ histórico; job de retenção anonimiza |
 | 5.5 | Mensagens de chat sem retenção | ✅ | CLI de retenção + aviso de privacidade ao usuário (Fase 8) |
 | 6.1 | Ausência de política de retenção | ✅ | Jobs de retenção em core-api, transformometro e strategic-indicators (Fases 3, 8) |
 | 6.2 | Redis presence sem TTL | ✅ | Já adequado (TTL 90s nativo) |

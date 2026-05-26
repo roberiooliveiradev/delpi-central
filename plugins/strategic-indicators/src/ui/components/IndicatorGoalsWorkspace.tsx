@@ -290,7 +290,7 @@ export function IndicatorGoalsWorkspace({
                   </span>
                   <span>Situação: {item.is_active ? "Ativa" : "Inativa"}</span>
                   <span>Atualizado em: {formatDateTime(item.updated_at)}</span>
-                  <span>Atualizado por: {item.updated_by_email ?? "-"}</span>
+                  <span>Atualizado por: {item.updated_by_email ?? item.updated_by_user_id ?? "-"}</span>
                 </div>
               </article>
             ))}

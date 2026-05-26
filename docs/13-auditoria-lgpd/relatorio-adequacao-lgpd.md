@@ -282,7 +282,7 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 | 5.1 | birth_date sem finalidade clara | ✅ Resolvido | 8 |
 | 5.2 | IP address sem truncamento | ✅ Resolvido | 10 |
 | 5.3 | Payload completo nos audit logs | ✅ Resolvido | 6 |
-| 5.4 | Emails denormalizados em tabelas | ⚠️ Pendente | — |
+| 5.4 | Emails denormalizados em tabelas | ✅ Resolvido | 11 |
 | 5.5 | Mensagens de chat sem retenção | ✅ Resolvido | 8 |
 | 6.1 | Ausência de política de retenção | ✅ Resolvido | 3 |
 | 6.2 | Redis presence sem TTL | ✅ Já adequado | — |
@@ -313,10 +313,9 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 **Ação aplicada:** Removido o fallback legado `TRANSFORMOMETRO_SERVICE_BEARER` em `api-delpi`, `strategic-indicators-api` e `shared/transformometro_client`. A comunicação inter-serviço agora usa exclusivamente `API_DELPI_INTERNAL_SERVICE_TOKEN` via header `X-Delpi-Service-Token`.  
 **Pendência futura (fora de escopo):** Migrar para OAuth2 client credentials com tokens JWT de curta duração em revisão arquitetural.
 
-### 5.4 — Emails denormalizados em tabelas (BAIXA)
+### 5.4 — Emails denormalizados em tabelas (RESOLVIDO)
 
-**Requer:** Migração de schema em múltiplas tabelas/APIs (core-api, strategic-indicators-api).  
-**Ação:** Substituir colunas `created_by_email`/`updated_by_email` por FK `created_by_user_id`/`updated_by_user_id` e resolver via JOIN. Alto risco — executar como projeto separado com testes de regressão.
+**Ação aplicada:** Removido `actor_email` de toda a cadeia de escrita do `strategic-indicators-api` (ports, use cases, repositórios, rotas). Novos registros gravam `NULL` nas colunas `*_by_email`. Colunas SQL mantidas para compatibilidade com dados históricos (que serão anonimizados pelo job de retenção). Frontend já faz fallback para `user_id` quando email é `null`. No `core-api`, as colunas `_by_email` em `apps` já não eram populadas em novas escritas.
 
 ### 8.1 — JWT repassado entre microsserviços internos (RISCO ACEITO)
 
@@ -349,7 +348,7 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 |------|---------|---------------|
 | 4.1 — Credenciais em `.env` | Risco aceito | Servidor privado, `.env` fora do Git, `credential_guard` impede senhas fracas |
 | 4.8 — Token de serviço estático | Resolvido | Legado removido; usar `API_DELPI_INTERNAL_SERVICE_TOKEN` exclusivamente |
-| 5.4 — Emails denormalizados | Adiado | Requer migração de schema em múltiplas APIs — projeto separado |
+| 5.4 — Emails denormalizados | Resolvido | Parou de gravar; colunas mantidas para dados históricos |
 | 8.1 — JWT inter-serviço | Risco aceito | Rede Docker privada, JWT curto, necessário para RBAC |
 
 ---

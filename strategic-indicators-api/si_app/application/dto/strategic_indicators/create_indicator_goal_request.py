@@ -17,4 +17,3 @@ class CreateStrategicIndicatorsIndicatorGoalRequest:
     valid_to: str | None = None
     notes: str | None = None
     actor_user_id: str | None = None
-    actor_email: str | None = None

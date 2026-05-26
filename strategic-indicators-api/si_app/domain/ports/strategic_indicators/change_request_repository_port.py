@@ -22,7 +22,6 @@ class StrategicIndicatorsChangeRequestRepositoryPort(ABC):
         target_block: str,
         proposed_payload: dict,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -33,7 +32,6 @@ class StrategicIndicatorsChangeRequestRepositoryPort(ABC):
         change_request_id: str,
         comment_text: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -43,6 +41,5 @@ class StrategicIndicatorsChangeRequestRepositoryPort(ABC):
         *,
         change_request_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError

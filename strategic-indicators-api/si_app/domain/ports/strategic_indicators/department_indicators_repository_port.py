@@ -30,7 +30,6 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         value_decimals: int,
         display_order: int,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -52,7 +51,6 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         is_active: bool,
         display_order: int,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -62,7 +60,6 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         *,
         indicator_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -72,7 +69,6 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         *,
         indicator_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -82,7 +78,6 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         *,
         indicator_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 

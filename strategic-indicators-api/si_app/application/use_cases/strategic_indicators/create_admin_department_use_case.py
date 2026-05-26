@@ -19,7 +19,6 @@ class CreateStrategicIndicatorsAdminDepartmentUseCase:
         *,
         body: dict,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         department_id = (body.get("department_id") or "").strip()
         department_name = (body.get("department_name") or "").strip()
@@ -55,5 +54,4 @@ class CreateStrategicIndicatorsAdminDepartmentUseCase:
             aggregation_mode=aggregation_mode,
             display_order=display_order,
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
         )
