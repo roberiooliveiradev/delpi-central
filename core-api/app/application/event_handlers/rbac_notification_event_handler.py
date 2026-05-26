@@ -42,10 +42,14 @@ class RbacNotificationEventHandler:
     - Adição de grupo ou papel ao usuário
     - Adição de permissão a um papel (afeta todos os usuários com o papel)
     - Adição de papel a um grupo (afeta todos os usuários do grupo)
+
+    Calcula o delta real de apps: notifica apenas apps que o usuário
+    NÃO acessava antes da mudança.
     """
 
     def __init__(self, uow):
         self.uow = uow
+        self._auth_service = AppAuthorizationService()
 
     def handle(self, event: AdminChangedEvent) -> None:
         if event.entity != "rbac":
@@ -70,43 +74,78 @@ class RbacNotificationEventHandler:
         if event.action in _ACTIONS_USER_TARGETED:
             if not event.target_user_id:
                 return
-            self._notify_user(
-                user_id=UUID(event.target_user_id),
-                permission_codes=self._codes_for_user_event(event),
-            )
+            user_id = UUID(event.target_user_id)
+            change_codes = self._codes_for_user_event(event)
+            self._notify_if_new_apps(user_id, change_codes)
 
         elif event.action in _ACTIONS_ROLE_CHANGE:
             role_id = UUID(event.payload["roleId"])
             user_ids = self._get_user_ids_by_role(role_id)
-            perm_codes = self._codes_for_role(role_id)
+            change_codes = self._codes_for_role(role_id)
             for uid in user_ids:
-                self._notify_user(user_id=uid, permission_codes=perm_codes)
+                self._notify_if_new_apps(uid, change_codes)
 
         elif event.action in _ACTIONS_GROUP_CHANGE:
             group_id = UUID(event.payload["groupId"])
             user_ids = self._get_user_ids_by_group(group_id)
-            perm_codes = self._codes_for_group(group_id)
+            change_codes = self._codes_for_group(group_id)
             for uid in user_ids:
-                self._notify_user(user_id=uid, permission_codes=perm_codes)
+                self._notify_if_new_apps(uid, change_codes)
 
     # ------------------------------------------------------------------
-    # Notificação individual
+    # Cálculo de delta e notificação
     # ------------------------------------------------------------------
 
-    def _notify_user(self, user_id: UUID, permission_codes: list[str]) -> None:
-        if not permission_codes:
+    def _notify_if_new_apps(self, user_id: UUID, change_codes: list[str]) -> None:
+        if not change_codes:
             return
 
         user = self.uow.users.get_by_id(user_id)
         if not user or not user.active:
             return
 
-        granted_apps = self._resolve_granted_apps(permission_codes, bool(user.is_superadmin))
-        if not granted_apps:
+        is_superadmin = bool(user.is_superadmin)
+        if is_superadmin:
             return
 
+        new_apps = self._compute_new_apps(user_id, change_codes, is_superadmin)
+        if not new_apps:
+            return
+
+        self._send_notification(user, new_apps)
+
+    def _compute_new_apps(
+        self,
+        user_id: UUID,
+        change_codes: list[str],
+        is_superadmin: bool,
+    ):
+        """
+        Calcula apps REALMENTE novas: acessíveis com permissões completas,
+        mas NÃO acessíveis sem as permissões da mudança.
+        """
+        apps = self.uow.app_queries.list_active_apps_with_routes()
+        if not apps:
+            return []
+
+        resolver = PermissionResolver(self.uow.permission_queries, self.uow.cache)
+        full_codes = set(resolver.resolve(user_id, is_superadmin))
+
+        previous_codes = list(full_codes - set(change_codes))
+
+        current_apps = self._auth_service.filter_apps(apps, list(full_codes), is_superadmin)
+        previous_apps = self._auth_service.filter_apps(apps, previous_codes, is_superadmin)
+
+        previous_app_ids = {app.id for app in previous_apps}
+        return [app for app in current_apps if app.id not in previous_app_ids]
+
+    # ------------------------------------------------------------------
+    # Envio da notificação
+    # ------------------------------------------------------------------
+
+    def _send_notification(self, user, new_apps) -> None:
         template_spec = NOTIFICATION_TEMPLATES[_TEMPLATE_ID]
-        app_names_str = ", ".join(app.name for app in granted_apps)
+        app_names_str = ", ".join(app.name for app in new_apps)
         first_name = (user.name or "").split()[0] if user.name else ""
 
         title = template_spec.default_title
@@ -114,16 +153,16 @@ class RbacNotificationEventHandler:
             "{userName}", first_name
         ).replace("{appNames}", app_names_str)
 
-        if len(granted_apps) == 1:
-            action_target = granted_apps[0].base_path or "/"
-            action_label = f"Abrir {granted_apps[0].name}"
+        if len(new_apps) == 1:
+            action_target = new_apps[0].base_path or "/"
+            action_label = f"Abrir {new_apps[0].name}"
         else:
             action_target = "/"
             action_label = "Ver aplicativos"
 
         self.uow.notifications.create(
             NotificationDTO(
-                user_id=str(user_id),
+                user_id=str(user.id),
                 title=title,
                 message=message,
                 type=template_spec.default_type,
@@ -147,24 +186,11 @@ class RbacNotificationEventHandler:
         )
 
     # ------------------------------------------------------------------
-    # Resolução de apps a partir de permission codes
-    # ------------------------------------------------------------------
-
-    def _resolve_granted_apps(self, permission_codes: list[str], is_superadmin: bool):
-        apps = self.uow.app_queries.list_active_apps_with_routes()
-        if not apps:
-            return []
-
-        auth_service = AppAuthorizationService()
-        return auth_service.filter_apps(apps, permission_codes, is_superadmin)
-
-    # ------------------------------------------------------------------
     # Resolução de permission_codes por tipo de evento
     # ------------------------------------------------------------------
 
     def _codes_for_user_event(self, event: AdminChangedEvent) -> list[str]:
         payload = event.payload or {}
-        user_id = UUID(event.target_user_id)
 
         if event.action == "group_added_to_user":
             return self._codes_for_group(UUID(payload["groupId"]))
@@ -172,7 +198,9 @@ class RbacNotificationEventHandler:
         if event.action == "role_added_to_user":
             return self._codes_for_role(UUID(payload["roleId"]))
 
-        # groups_replaced / roles_replaced: permissões completas atuais
+        # groups_replaced / roles_replaced: usa todas as permissões do resolver
+        # (delta será comparado com permissões "sem nenhuma" via lógica em _compute_new_apps)
+        user_id = UUID(event.target_user_id)
         resolver = PermissionResolver(self.uow.permission_queries, self.uow.cache)
         return resolver.resolve(user_id, False)
 
