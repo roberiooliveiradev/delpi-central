@@ -153,8 +153,8 @@ services:
 
   minha-delpi-ai-api:
     build:
-      context: ../minha-delpi-ai-api
-      dockerfile: Dockerfile.prod
+      context: ..
+      dockerfile: minha-delpi-ai-api/Dockerfile.prod
 
     container_name: delpi-minha-delpi-ai-api
     restart: unless-stopped

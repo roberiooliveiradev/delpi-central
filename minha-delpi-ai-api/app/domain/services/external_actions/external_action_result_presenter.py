@@ -919,6 +919,27 @@ class ExternalActionResultPresenter:
         ("cost_center", "Centro de custo"),
     ]
 
+    _SUPPLIER_PREFERRED_COLUMNS = [
+        ("supplier_code", "Cód. fornecedor"),
+        ("supplier_name", "Fornecedor"),
+        ("supplier_part_number", "Part number"),
+        ("last_price", "Últ. preço"),
+        ("last_price_date", "Data últ. preço"),
+        ("real_avg_lead_time_days", "Lead time médio (dias)"),
+        ("registered_lead_time_days", "Lead time cadastrado"),
+        ("real_lead_time_sample_size", "Amostras"),
+    ]
+
+    _CUSTOMER_PREFERRED_COLUMNS = [
+        ("customer_code", "Cód. cliente"),
+        ("customer_name", "Cliente"),
+        ("customer_store", "Loja"),
+        ("last_sale_date", "Data últ. venda"),
+        ("last_sale_price", "Últ. preço venda"),
+        ("total_quantity", "Qtd. total"),
+        ("total_value", "Valor total"),
+    ]
+
     def _build_items_table(self, items: list, title: str = "Dados retornados") -> dict | None:
         if not items:
             return None
@@ -929,11 +950,21 @@ class ExternalActionResultPresenter:
             return None
 
         is_stock = "current_quantity" in first or "available_quantity" in first
+        is_supplier = "supplier_name" in first or "supplier_code" in first
+        is_customer = "customer_name" in first or "customer_code" in first
 
+        preferred = None
         if is_stock:
+            preferred = self._STOCK_PREFERRED_COLUMNS
+        elif is_supplier:
+            preferred = self._SUPPLIER_PREFERRED_COLUMNS
+        elif is_customer:
+            preferred = self._CUSTOMER_PREFERRED_COLUMNS
+
+        if preferred:
             columns = [
                 self._enrich_column(key, label)
-                for key, label in self._STOCK_PREFERRED_COLUMNS
+                for key, label in preferred
                 if key in first
             ]
         else:
