@@ -15,21 +15,20 @@ logger = logging.getLogger(__name__)
 
 _TEMPLATE_ID = "app_access_granted_v1"
 
+# Eventos atômicos com alvo no usuário — sabemos exatamente o que foi adicionado
 _ACTIONS_USER_TARGETED = frozenset({
     "group_added_to_user",
     "role_added_to_user",
-    "groups_replaced",
-    "roles_replaced",
 })
 
+# Eventos de mudança em papel — afetam todos os usuários com o papel
 _ACTIONS_ROLE_CHANGE = frozenset({
     "permission_added_to_role",
-    "role_permissions_replaced",
 })
 
+# Eventos de mudança em grupo — afetam todos os usuários do grupo
 _ACTIONS_GROUP_CHANGE = frozenset({
     "role_added_to_group",
-    "group_roles_replaced",
 })
 
 _ALL_HANDLED_ACTIONS = _ACTIONS_USER_TARGETED | _ACTIONS_ROLE_CHANGE | _ACTIONS_GROUP_CHANGE
@@ -39,17 +38,22 @@ class RbacNotificationEventHandler:
     """
     Dispara notificação automática quando um usuário ganha acesso a novas
     aplicações via:
-    - Adição de grupo ou papel ao usuário
+    - Adição de grupo ou papel ao usuário (atômico)
     - Adição de permissão a um papel (afeta todos os usuários com o papel)
     - Adição de papel a um grupo (afeta todos os usuários do grupo)
 
-    Calcula o delta real de apps: notifica apenas apps que o usuário
-    NÃO acessava antes da mudança.
+    NÃO trata events de "replace" (groups_replaced, roles_replaced,
+    role_permissions_replaced, group_roles_replaced) pois são operações
+    bulk onde não é possível determinar o delta sem o estado anterior.
+
+    Deduplica: se um mesmo usuário for afetado por múltiplos eventos no
+    mesmo ciclo de publish, recebe apenas uma notificação.
     """
 
     def __init__(self, uow):
         self.uow = uow
         self._auth_service = AppAuthorizationService()
+        self._notified_users: set[str] = set()
 
     def handle(self, event: AdminChangedEvent) -> None:
         if event.entity != "rbac":
@@ -100,6 +104,10 @@ class RbacNotificationEventHandler:
         if not change_codes:
             return
 
+        user_id_str = str(user_id)
+        if user_id_str in self._notified_users:
+            return
+
         user = self.uow.users.get_by_id(user_id)
         if not user or not user.active:
             return
@@ -112,6 +120,7 @@ class RbacNotificationEventHandler:
         if not new_apps:
             return
 
+        self._notified_users.add(user_id_str)
         self._send_notification(user, new_apps)
 
     def _compute_new_apps(
@@ -198,11 +207,7 @@ class RbacNotificationEventHandler:
         if event.action == "role_added_to_user":
             return self._codes_for_role(UUID(payload["roleId"]))
 
-        # groups_replaced / roles_replaced: usa todas as permissões do resolver
-        # (delta será comparado com permissões "sem nenhuma" via lógica em _compute_new_apps)
-        user_id = UUID(event.target_user_id)
-        resolver = PermissionResolver(self.uow.permission_queries, self.uow.cache)
-        return resolver.resolve(user_id, False)
+        return []
 
     def _codes_for_role(self, role_id: UUID) -> list[str]:
         perms = self.uow.permission_queries.list_permissions_by_role_id(role_id)
