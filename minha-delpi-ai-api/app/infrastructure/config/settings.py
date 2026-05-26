@@ -17,8 +17,8 @@ class Settings:
     CORE_API_TIMEOUT_SECONDS = float(os.getenv("CORE_API_TIMEOUT_SECONDS", "5"))
 
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama").lower().strip()
-    LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.2"))
-    LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "384"))
+    LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.4"))
+    LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "1536"))
     LLM_PROMPT_TOKEN_COST_PER_1K = float(
         os.getenv("LLM_PROMPT_TOKEN_COST_PER_1K", "0")
     )
@@ -36,9 +36,9 @@ class Settings:
     )
 
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:1.5b")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
     OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "300"))
-    OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "1536"))
+    OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
     OLLAMA_NUM_THREAD = int(os.getenv("OLLAMA_NUM_THREAD", "0"))
 
     VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://vllm:8000/v1")
@@ -52,9 +52,9 @@ class Settings:
     EMBEDDING_TIMEOUT_SECONDS = float(os.getenv("EMBEDDING_TIMEOUT_SECONDS", "120"))
 
     CHAT_SESSION_TITLE_LLM_ENABLED = (
-        os.getenv("CHAT_SESSION_TITLE_LLM_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_SESSION_TITLE_LLM_ENABLED", "true").lower() == "true"
     )
-    CHAT_HISTORY_MAX_MESSAGES = int(os.getenv("CHAT_HISTORY_MAX_MESSAGES", "8"))
+    CHAT_HISTORY_MAX_MESSAGES = int(os.getenv("CHAT_HISTORY_MAX_MESSAGES", "12"))
     CHAT_MESSAGE_MAX_CHARS = int(os.getenv("CHAT_MESSAGE_MAX_CHARS", "8000"))
     CHAT_INPUT_SECURITY_ENABLED = (
         os.getenv("CHAT_INPUT_SECURITY_ENABLED", "true").lower() == "true"
@@ -66,8 +66,8 @@ class Settings:
     CHAT_INPUT_SECURITY_FLAG_THRESHOLD = float(
         os.getenv("CHAT_INPUT_SECURITY_FLAG_THRESHOLD", "0.35")
     )
-    MAX_CONTEXT_CHUNKS = int(os.getenv("MAX_CONTEXT_CHUNKS", "4"))
-    MAX_CONTEXT_CHARS = int(os.getenv("MAX_CONTEXT_CHARS", "6000"))
+    MAX_CONTEXT_CHUNKS = int(os.getenv("MAX_CONTEXT_CHUNKS", "8"))
+    MAX_CONTEXT_CHARS = int(os.getenv("MAX_CONTEXT_CHARS", "12000"))
 
     RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
     RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
@@ -116,7 +116,7 @@ class Settings:
     )
 
     EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED = (
-        os.getenv("EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED", "false").lower() == "true"
+        os.getenv("EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED", "true").lower() == "true"
     )
     EXTERNAL_ACTION_SEMANTIC_RANK_LIMIT = int(
         os.getenv("EXTERNAL_ACTION_SEMANTIC_RANK_LIMIT", "40")
@@ -126,12 +126,12 @@ class Settings:
     )
 
     CHAT_TOOL_ROUTER_ENABLED = (
-        os.getenv("CHAT_TOOL_ROUTER_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_TOOL_ROUTER_ENABLED", "true").lower() == "true"
     )
     CHAT_FAST_PATH_ENABLED = (
         os.getenv("CHAT_FAST_PATH_ENABLED", "true").lower() == "true"
     )
-    CHAT_FAST_PATH_MAX_CHARS = int(os.getenv("CHAT_FAST_PATH_MAX_CHARS", "48"))
+    CHAT_FAST_PATH_MAX_CHARS = int(os.getenv("CHAT_FAST_PATH_MAX_CHARS", "30"))
     CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED = (
         os.getenv("CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED", "true").lower()
         == "true"
@@ -151,7 +151,7 @@ class Settings:
     CHAT_TOOL_ROUTER_MAX_ACTIONS = int(os.getenv("CHAT_TOOL_ROUTER_MAX_ACTIONS", "20"))
 
     CHAT_HISTORY_SUMMARY_ENABLED = (
-        os.getenv("CHAT_HISTORY_SUMMARY_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_HISTORY_SUMMARY_ENABLED", "true").lower() == "true"
     )
     CHAT_HISTORY_SUMMARY_TRIGGER_MESSAGES = int(
         os.getenv("CHAT_HISTORY_SUMMARY_TRIGGER_MESSAGES", "16")
@@ -165,7 +165,7 @@ class Settings:
     )
 
     CHAT_RAG_HYBRID_ENABLED = (
-        os.getenv("CHAT_RAG_HYBRID_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_RAG_HYBRID_ENABLED", "true").lower() == "true"
     )
     CHAT_RAG_PREFER_KEYWORD_SEARCH = (
         os.getenv("CHAT_RAG_PREFER_KEYWORD_SEARCH", "true").lower() == "true"
@@ -194,7 +194,7 @@ class Settings:
     CHAT_AGENTIC_LOOP_MAX_STEPS = int(os.getenv("CHAT_AGENTIC_LOOP_MAX_STEPS", "2"))
 
     CHAT_RAG_RERANK_ENABLED = (
-        os.getenv("CHAT_RAG_RERANK_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_RAG_RERANK_ENABLED", "true").lower() == "true"
     )
     CHAT_RAG_RERANK_KEYWORD_BOOST = float(
         os.getenv("CHAT_RAG_RERANK_KEYWORD_BOOST", "0.15")

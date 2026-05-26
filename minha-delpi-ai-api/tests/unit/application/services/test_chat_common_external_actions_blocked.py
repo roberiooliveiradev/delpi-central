@@ -38,6 +38,7 @@ def test_chat_common_does_not_execute_external_action_without_agent_actions():
 
     assert result["context"] == ""
     assert result["toolCalls"] == []
+    assert "nativeToolCalling" in result
 
 
 def test_agent_action_executes_only_when_allowed():
