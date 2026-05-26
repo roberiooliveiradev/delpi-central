@@ -98,6 +98,18 @@ class ExecuteExternalActionUseCase:
             },
         )
 
+        available_formats = ["text"]
+        if presentation:
+            available_formats.append("table")
+        if chart_presentation:
+            available_formats.append("chart")
+        elif presentation and not chart_presentation:
+            forced_chart = self.presenter.build_chart_presentation(
+                sanitized_data, path=action_path, force=True
+            )
+            if forced_chart:
+                available_formats.append("chart")
+
         return {
             "provider": provider["providerKey"],
             "actionId": action["actionId"],
@@ -111,6 +123,7 @@ class ExecuteExternalActionUseCase:
                 "sensitivity": action["sensitivity"],
                 "presentation": chart_presentation or presentation,
                 "tablePresentation": presentation if chart_presentation else None,
+                "availableFormats": available_formats,
             },
         }
 

@@ -671,9 +671,14 @@ class ExternalActionResultPresenter:
             title = self._infer_items_title(items, path)
 
             if "code" in items[0] and "description" in items[0]:
+                if len(items) >= 3:
+                    return self._build_product_search_table(items, root, title=title)
                 return self._build_product_search_table(items, root, title=title)
 
-            return self._build_items_table(items, title=title)
+            if len(items) >= 2 or self._is_tabular_data(items[0]):
+                return self._build_items_table(items, title=title)
+
+            return None
 
         stock = root.get("stock")
         if isinstance(stock, dict) and isinstance(stock.get("items"), list):
@@ -1043,13 +1048,23 @@ class ExternalActionResultPresenter:
             return self._KEY_LABELS[key]
         return str(key).replace("_", " ").strip().capitalize()
 
-    def build_chart_presentation(self, data, *, path: str = "") -> dict | None:
-        """Gera presentation tipo chart quando os dados são adequados para visualização gráfica."""
+    _NO_CHART_PATHS = (
+        "/suppliers", "/customers", "/structure", "/parents",
+        "/guide", "/inspection", "/search",
+    )
+
+    def build_chart_presentation(self, data, *, path: str = "", force: bool = False) -> dict | None:
+        """Gera presentation tipo chart APENAS quando dados são naturalmente visuais."""
+        if not force:
+            lowered_path = (path or "").lower()
+            if any(token in lowered_path for token in self._NO_CHART_PATHS):
+                return None
+
         root = self._unwrap_data(data)
 
         if not isinstance(root, dict):
             if isinstance(root, list) and root and isinstance(root[0], dict):
-                return self._try_chart_from_rows(root)
+                return self._try_chart_from_rows(root, force=force)
             return None
 
         items = root.get("items")
@@ -1057,12 +1072,22 @@ class ExternalActionResultPresenter:
             if self._is_stock_data(items[0]):
                 return self._build_stock_chart(items)
 
-            return self._try_chart_from_rows(items)
+            return self._try_chart_from_rows(items, force=force)
 
         if self._looks_like_kpi_response(root, path):
             return self._build_kpi_chart(root, path)
 
         return None
+
+    def _is_tabular_data(self, row: dict) -> bool:
+        """Dados que naturalmente beneficiam de apresentação em tabela mesmo com 1 registro."""
+        tabular_markers = [
+            "warehouse", "current_quantity", "available_quantity",
+            "supplier_code", "supplier_name", "customer_code", "customer_name",
+            "table_code", "sale_price", "invoice_number",
+            "order_number", "sale_number",
+        ]
+        return any(k in row for k in tabular_markers)
 
     def _is_stock_data(self, row: dict) -> bool:
         return "warehouse" in row and (
@@ -1285,8 +1310,19 @@ class ExternalActionResultPresenter:
             return "Indicador de Qualidade"
         return "Indicador"
 
-    def _try_chart_from_rows(self, rows: list) -> dict | None:
+    _CHART_WORTHY_NUMERIC_KEYS = {
+        "quantity", "value", "total", "amount", "price", "cost",
+        "revenue", "count", "percentage", "rate", "margin",
+        "qtd", "valor", "preco", "custo", "receita", "faturamento",
+        "saldo", "volume", "peso", "weight",
+    }
+
+    def _try_chart_from_rows(self, rows: list, *, force: bool = False) -> dict | None:
+        """Gera gráfico APENAS quando os dados são naturalmente visuais (ou force=True)."""
         if len(rows) < 2 or not isinstance(rows[0], dict):
+            return None
+
+        if not force and len(rows) > 12:
             return None
 
         first = rows[0]
@@ -1296,17 +1332,29 @@ class ExternalActionResultPresenter:
         if not numeric_keys or not string_keys:
             return None
 
-        if len(rows) > 12:
+        if force:
+            chart_numeric = numeric_keys[:3]
+        else:
+            chart_numeric = [
+                k for k in numeric_keys
+                if any(token in k.lower() for token in self._CHART_WORTHY_NUMERIC_KEYS)
+            ]
+            if not chart_numeric:
+                return None
+
+        label_key = string_keys[0]
+        labels = [str(r.get(label_key, "")) for r in rows[:12]]
+        if len(set(labels)) < 2:
             return None
 
         return {
             "type": "chart",
             "title": "Visualização dos dados",
             "chartType": "bar",
-            "data": rows[:20],
+            "data": rows[:12],
             "config": {
-                "xAxis": string_keys[0],
-                "yAxis": numeric_keys[:3],
-                "legend": len(numeric_keys) > 1,
+                "xAxis": label_key,
+                "yAxis": chart_numeric[:3],
+                "legend": len(chart_numeric) > 1,
             },
         }

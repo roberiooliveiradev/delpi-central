@@ -239,6 +239,10 @@ class ChatToolContextService:
                 operation_id=action_metadata.get("operationId"),
             )
 
+        requested_format = self._detect_requested_format(message)
+        if requested_format:
+            self._apply_format_override(safe_tool_calls, requested_format, last_external_action_data)
+
         return {
             "context": context,
             "toolCalls": safe_tool_calls,
@@ -248,6 +252,78 @@ class ChatToolContextService:
             "selectedExternalAction": selected_external_action_meta,
         }
 
+
+    _FORMAT_TABLE_HINTS = (
+        "em tabela", "formato tabela", "em formato de tabela",
+        "mostra em tabela", "mostre em tabela", "como tabela",
+        "exibir tabela", "exiba em tabela",
+    )
+    _FORMAT_CHART_HINTS = (
+        "em gráfico", "em grafico", "formato gráfico", "formato grafico",
+        "como gráfico", "como grafico", "mostra em gráfico", "mostre em gráfico",
+        "em formato de gráfico", "exibir gráfico", "exiba em gráfico",
+    )
+    _FORMAT_TEXT_HINTS = (
+        "em texto", "formato texto", "sem tabela", "sem gráfico",
+        "só texto", "so texto", "apenas texto", "formato simples",
+        "resumo", "resumido",
+    )
+
+    def _detect_requested_format(self, message: str) -> str | None:
+        """Detecta se o usuário pediu um formato específico de apresentação."""
+        lowered = (message or "").lower()
+        if any(h in lowered for h in self._FORMAT_TEXT_HINTS):
+            return "text"
+        if any(h in lowered for h in self._FORMAT_TABLE_HINTS):
+            return "table"
+        if any(h in lowered for h in self._FORMAT_CHART_HINTS):
+            return "chart"
+        return None
+
+    def _apply_format_override(
+        self,
+        safe_tool_calls: list[dict],
+        requested_format: str,
+        last_data,
+    ) -> None:
+        """Sobrescreve a presentation com base no formato solicitado pelo usuário."""
+        for tc in safe_tool_calls:
+            if tc.get("name") != "execute_external_action":
+                continue
+            meta = tc.get("metadata")
+            if not meta or not meta.get("ok"):
+                continue
+
+            if requested_format == "text":
+                meta["presentation"] = None
+                meta["tablePresentation"] = None
+
+            elif requested_format == "table":
+                table_pres = meta.get("tablePresentation") or meta.get("presentation")
+                if table_pres and table_pres.get("type") == "table":
+                    meta["presentation"] = table_pres
+                    meta["tablePresentation"] = None
+                elif last_data:
+                    path = meta.get("path") or ""
+                    forced_table = self.external_action_result_presenter.build_presentation(
+                        last_data, path=path
+                    )
+                    if forced_table:
+                        meta["presentation"] = forced_table
+                        meta["tablePresentation"] = None
+
+            elif requested_format == "chart":
+                chart_pres = meta.get("presentation")
+                if chart_pres and chart_pres.get("type") == "chart":
+                    pass
+                elif last_data:
+                    path = meta.get("path") or ""
+                    forced_chart = self.external_action_result_presenter.build_chart_presentation(
+                        last_data, path=path, force=True
+                    )
+                    if forced_chart:
+                        meta["presentation"] = forced_chart
+                        meta["tablePresentation"] = None
 
     def _build_safe_tool_metadata(
         self,
