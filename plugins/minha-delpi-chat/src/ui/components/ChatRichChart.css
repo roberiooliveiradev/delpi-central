@@ -27,6 +27,9 @@
 }
 
 .mdc-rich-chart__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   padding: 0.25rem 0.6rem;
   font-size: 0.75rem;
   border: 1px solid var(--mdc-card-border, #e6e6e6);
