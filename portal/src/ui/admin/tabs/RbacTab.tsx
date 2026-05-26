@@ -84,6 +84,7 @@ export const RbacTab = () => {
   const [selected, setSelected] = useState<string[]>([]);
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [confirmBulk, setConfirmBulk] = useState(false);
+  const [anonymizing, setAnonymizing] = useState<AdminUser | null>(null);
   const [onlineByUserId, setOnlineByUserId] = useState<
     Map<string, OnlineUserPresence>
   >(() => new Map());
@@ -268,6 +269,15 @@ export const RbacTab = () => {
 
     setSelected([]);
     setConfirmBulk(false);
+    usersResource.refetch();
+  };
+
+  const handleAnonymize = async () => {
+    if (!anonymizing) return;
+
+    await api.anonymizeUser(anonymizing.id);
+
+    setAnonymizing(null);
     usersResource.refetch();
   };
 
@@ -516,6 +526,11 @@ export const RbacTab = () => {
             label: "Editar RBAC",
             onClick: () => setEditing(user),
           },
+          {
+            label: "Anonimizar (LGPD)",
+            onClick: () => setAnonymizing(user),
+            danger: true,
+          },
         ]}
       />
 
@@ -527,6 +542,16 @@ export const RbacTab = () => {
         danger
         onCancel={() => setConfirmBulk(false)}
         onConfirm={handleBulkDelete}
+      />
+
+      <ConfirmDialog
+        open={!!anonymizing}
+        title="Anonimizar dados do usuário"
+        message={`Deseja anonimizar todos os dados pessoais de "${anonymizing?.name ?? anonymizing?.email}"? Esta ação é irreversível e atende ao direito ao esquecimento (LGPD Art. 18).`}
+        confirmText="Anonimizar"
+        danger
+        onCancel={() => setAnonymizing(null)}
+        onConfirm={handleAnonymize}
       />
 
       <UserRbacModal

@@ -281,6 +281,36 @@ function normalizeArray<T>(data: unknown): T[] {
   return [];
 }
 
+// -------------------------------------------------------
+// LGPD TYPES
+// -------------------------------------------------------
+
+export interface ConsentItem {
+  id: string;
+  user_id: string;
+  purpose: string;
+  granted: boolean;
+  granted_at: string | null;
+  revoked_at: string | null;
+}
+
+export interface PrivacyInfo {
+  dpo: { name: string; email: string };
+  privacy_policy_url: string;
+  consent_purposes: { key: string; label: string }[];
+  retention_periods: Record<string, string>;
+  data_subject_rights: string[];
+}
+
+export interface DataExportResponse {
+  exported_at: string;
+  user: Record<string, unknown>;
+  consents: ConsentItem[];
+  notifications: unknown[];
+  usage_events: unknown[];
+  audit_logs: unknown[];
+}
+
 export class CoreApi {
   private client: ApiClient;
 
@@ -439,6 +469,35 @@ export class CoreApi {
         mutedCategories: data.mutedCategories ?? [],
         mutableCategories: data.mutableCategories ?? [],
       }));
+  }
+
+  // -------------------------------------------------------
+  // LGPD — CONSENTS
+  // -------------------------------------------------------
+
+  async getConsents(): Promise<ConsentItem[]> {
+    const data = await this.client.get<unknown>("/core-api/me/consents");
+    return normalizeArray<ConsentItem>(data);
+  }
+
+  grantConsent(purpose: string) {
+    return this.client.post<ConsentItem>(`/core-api/me/consents/${purpose}`);
+  }
+
+  revokeConsent(purpose: string) {
+    return this.client.delete<ConsentItem>(`/core-api/me/consents/${purpose}`);
+  }
+
+  // -------------------------------------------------------
+  // LGPD — PRIVACY & DATA EXPORT
+  // -------------------------------------------------------
+
+  getPrivacyInfo() {
+    return this.client.get<PrivacyInfo>("/core-api/me/privacy");
+  }
+
+  getDataExport() {
+    return this.client.get<DataExportResponse>("/core-api/me/data-export");
   }
 
   dispatchNotifications(payload: DispatchNotificationsPayload) {

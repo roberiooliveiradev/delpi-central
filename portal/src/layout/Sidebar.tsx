@@ -18,6 +18,7 @@ import {
   Moon,
   Grid,
   Shield,
+  ShieldCheck,
   ChevronDown,
   ChevronRight,
   CircleDashed,
@@ -492,6 +493,17 @@ export const Sidebar = () => {
                   >
                     <User size={16} />
                     Meu Perfil
+                  </div>
+
+                  <div
+                    className="dropdown-item"
+                    onClick={() => {
+                      navigate("/privacy");
+                      setUserOpen(false);
+                    }}
+                  >
+                    <ShieldCheck size={16} />
+                    Privacidade e Dados
                   </div>
 
                   <div
