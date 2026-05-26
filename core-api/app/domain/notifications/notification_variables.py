@@ -15,6 +15,7 @@ ADMIN_VARIABLE_KEYS: frozenset[str] = frozenset(
         "eventName",
         "eventDate",
         "location",
+        "appNames",
     }
 )
 
