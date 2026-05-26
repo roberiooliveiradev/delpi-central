@@ -182,6 +182,9 @@ export function ConsentModal({ onAccepted }: ConsentModalProps) {
         {error && <div className="consent-error">{error}</div>}
 
         <div className="consent-footer">
+          <span className="consent-hint">
+            Você pode alterar suas preferências a qualquer momento em <strong>Privacidade de Dados</strong>.
+          </span>
           <button
             className="btn-primary consent-btn"
             disabled={!canAccept || saving}

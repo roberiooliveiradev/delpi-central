@@ -140,8 +140,18 @@
   padding: 18px 28px;
   border-top: 1px solid var(--border);
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   background: linear-gradient(to top, var(--surface-3), transparent);
+}
+
+.consent-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
 }
 
 .consent-btn {
