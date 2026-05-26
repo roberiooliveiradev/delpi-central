@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.infrastructure.db.models import AuditLog
+from app.domain.lgpd import truncate_ip
 
 
 class SqlAlchemyAuditRepository(AuditRepositoryPort):
@@ -21,6 +22,6 @@ class SqlAlchemyAuditRepository(AuditRepositoryPort):
                 entity_type=data.get("entity_type"),
                 entity_id=data.get("entity_id"),
                 payload=data.get("payload"),
-                ip_address=data.get("ip_address"),
+                ip_address=truncate_ip(data.get("ip_address")),
             )
         )

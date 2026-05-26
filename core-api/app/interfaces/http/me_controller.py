@@ -6,6 +6,8 @@ from uuid import UUID
 
 from flask import Blueprint, jsonify, g, request
 
+from app.domain.lgpd import truncate_ip
+
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import (
     SqlAlchemyUnitOfWork,
 )
@@ -553,7 +555,7 @@ def grant_consent():
         result = GrantConsentUseCase(uow).execute(
             user_id=str(user.id),
             purpose=purpose,
-            ip_address=request.remote_addr,
+            ip_address=truncate_ip(request.remote_addr),
             user_agent=request.headers.get("User-Agent", "")[:500],
         )
 
