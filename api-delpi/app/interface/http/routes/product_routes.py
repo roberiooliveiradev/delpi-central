@@ -93,6 +93,84 @@ def search_products_route(
         log_error(f"Erro ao buscar produtos: {e}")
         return error_response(str(e))
 
+@router.get(
+    "/{code}",
+    summary="Descrição e dados cadastrais do produto",
+    description="Retorna os dados cadastrais completos de um produto: código, descrição, tipo, unidade, grupo, custo, armazém padrão, revisão e NCM.",
+)
+@require_permission("api-delpi.access")
+def get_product_detail(code: str):
+    try:
+        dto = ListProductsRequest(code=code, page=1, page_size=1)
+        use_case = build_search_products_use_case()
+        result = use_case.execute(dto)
+
+        if not result.items:
+            from fastapi.responses import JSONResponse
+            return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+        product = result.items[0]
+        product_dict = product.to_dict() if hasattr(product, "to_dict") else vars(product)
+
+        return success_response(data={"product": product_dict})
+
+    except Exception as e:
+        log_error(f"Erro ao buscar produto {code}: {e}")
+        return error_response(str(e))
+
+
+@router.get(
+    "/{code}/summary",
+    summary="Resumo consolidado do produto",
+    description="Retorna um resumo completo com dados cadastrais, estoque por filial e preços em uma única consulta. Ideal para perguntas gerais sobre o produto.",
+)
+@require_permission("api-delpi.access")
+def get_product_summary(code: str):
+    try:
+        product_dto = ListProductsRequest(code=code, page=1, page_size=1)
+        product_uc = build_search_products_use_case()
+        product_result = product_uc.execute(product_dto)
+
+        if not product_result.items:
+            return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+        product = product_result.items[0]
+        product_dict = product.to_dict() if hasattr(product, "to_dict") else vars(product)
+
+        stock_items = []
+        try:
+            stock_dto = ListProductStockRequest(code=code)
+            stock_uc = build_list_product_stock_use_case()
+            stock_result = stock_uc.execute(stock_dto)
+            stock_items = [s.to_dict() if hasattr(s, "to_dict") else vars(s) for s in (stock_result.items or [])][:10]
+        except Exception:
+            pass
+
+        prices = []
+        try:
+            pricing_dto = GetProductPricingRequest(code=code)
+            from app.composition.product_composer import build_get_product_pricing
+            pricing_uc = build_get_product_pricing()
+            pricing_result = pricing_uc.execute(pricing_dto)
+            if hasattr(pricing_result, "to_dict"):
+                pr_data = pricing_result.to_dict()
+                prices = pr_data.get("prices") or []
+            elif hasattr(pricing_result, "prices"):
+                prices = [p.to_dict() if hasattr(p, "to_dict") else vars(p) for p in (pricing_result.prices or [])]
+        except Exception:
+            pass
+
+        return success_response(data={
+            "product": product_dict,
+            "stock": stock_items,
+            "prices": prices,
+        })
+
+    except Exception as e:
+        log_error(f"Erro ao gerar resumo do produto {code}: {e}")
+        return error_response(str(e))
+
+
 @router.get("/{code}/structure", **PRODUCT_STRUCTURE)
 @require_permission("api-delpi.access")
 def get_structure(
