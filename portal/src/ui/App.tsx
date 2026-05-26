@@ -1,5 +1,5 @@
 // src/ui/App.tsx
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Sidebar } from "../layout/Sidebar";
@@ -11,6 +11,7 @@ import { HomePage } from "./HomePage";
 import { AdminPage } from "./admin/AdminPage";
 import { AppHost } from "./AppHost";
 import { LoginPage } from "./LoginPage";
+import { ConsentModal } from "./ConsentModal";
 
 import { ProductsPage } from "../pages/ProductsPage";
 import { DelpiHealthPage } from "../pages/DelpiHealthPage";
@@ -19,6 +20,9 @@ import { MyProfile } from "./MyProfile";
 import { NotificationsPage } from "./NotificationsPage";
 import { PrivacyPage } from "./PrivacyPage";
 import { PrivacyPolicyPage } from "./PrivacyPolicyPage";
+
+import { ApiClient } from "../data/apiClient";
+import { CoreApi, type ConsentItem } from "../data/coreApi";
 
 
 
@@ -197,13 +201,45 @@ function AppShell() {
   );
 }
 
+function useConsentCheck() {
+  const { isAuthenticated, getAccessToken, coreLoaded } = useContext(AuthContext);
+  const [status, setStatus] = useState<"loading" | "pending" | "accepted">("loading");
+  const checkedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isAuthenticated || !coreLoaded) return;
+    if (checkedRef.current) return;
+    checkedRef.current = true;
+
+    async function check() {
+      try {
+        const client = new ApiClient("", getAccessToken);
+        const api = new CoreApi(client);
+        const data = await api.client.get<{ items?: ConsentItem[] }>("/core-api/me/consents");
+        const items: ConsentItem[] = Array.isArray(data?.items) ? data.items : [];
+        const hasRequired = items.some(
+          (c) => c.purpose === "data_processing" && c.granted,
+        );
+        setStatus(hasRequired ? "accepted" : "pending");
+      } catch {
+        setStatus("pending");
+      }
+    }
+
+    void check();
+  }, [isAuthenticated, coreLoaded, getAccessToken]);
+
+  const markAccepted = useCallback(() => setStatus("accepted"), []);
+
+  return { status, markAccepted };
+}
+
 export default function App() {
   const { initialized, loading, isAuthenticated } = useContext(AuthContext);
+  const { status: consentStatus, markAccepted } = useConsentCheck();
 
-  // 1) Espera init do keycloak (evita flicker)
   if (!initialized || loading) return <Loader />;
 
-  // 2) Público: /login
   if (!isAuthenticated) {
     return (
       <Routes>
@@ -213,6 +249,8 @@ export default function App() {
     );
   }
 
-  // 3) Autenticado: shell normal
+  if (consentStatus === "loading") return <Loader />;
+  if (consentStatus === "pending") return <ConsentModal onAccepted={markAccepted} />;
+
   return <AppShell />;
 }
