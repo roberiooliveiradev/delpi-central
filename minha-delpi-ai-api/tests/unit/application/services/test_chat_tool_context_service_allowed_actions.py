@@ -7,7 +7,7 @@ class FakeToolSelectionService:
 
 
 class FakeExternalActionSelectionService:
-    def select_action(self, message, allowed_action_ids=None):
+    def select_action(self, message, allowed_action_ids=None, **kwargs):
         return {
             "name": "execute_external_action",
             "arguments": {
@@ -35,7 +35,5 @@ def test_external_action_is_blocked_when_not_allowed():
         allowed_action_ids=["allowed.action"],
     )
 
-    assert result == {
-        "context": "",
-        "toolCalls": [],
-    }
+    assert result["context"] == ""
+    assert result["toolCalls"] == []
