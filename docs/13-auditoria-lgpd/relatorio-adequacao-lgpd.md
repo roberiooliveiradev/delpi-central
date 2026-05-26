@@ -2,13 +2,14 @@
 
 **Data:** 26/05/2026  
 **Responsável técnico:** Equipe de Desenvolvimento  
-**Base legal:** Lei nº 13.709/2018 (LGPD)
+**Base legal:** Lei nº 13.709/2018 (LGPD)  
+**DPO:** Michael Marotto — ti@delpi.com.br
 
 ---
 
 ## Resumo Executivo
 
-Foram realizadas **7 fases** de adequação à LGPD, totalizando **30 arquivos alterados** (941 inserções, 159 remoções) em **5 commits** dedicados. As alterações cobrem segurança, consentimento, retenção, direito ao esquecimento, portabilidade, mascaramento de logs e transparência.
+Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend e infraestrutura. Das **38 inconformidades** identificadas no relatório de auditoria, **35 foram resolvidas**. As 3 restantes requerem mudanças infraestruturais (cofre de segredos, redesign de autenticação inter-serviço) e estão documentadas na seção de pendências.
 
 ---
 
@@ -21,14 +22,24 @@ Foram realizadas **7 fases** de adequação à LGPD, totalizando **30 arquivos a
 | `e9e6a63c` | 6 | Mascarar dados pessoais em audit logs e remover exposição de erros |
 | `51b6bf41` | 4+5 | Direito ao esquecimento e portabilidade de dados |
 | `4907f841` | 3+7 | Retenção de dados, CLI de cleanup e transparência |
+| `56c79d87` | 8 | Consentimento no primeiro login, opt-out de tracking, mascarar email em diretório |
+| `1838906b` | 8 | Data retention jobs (transformometro, strategic-indicators), fix postMessage Swagger |
+| `2f876748` | 8 | Consentimento IA, retenção de chat, aviso de privacidade no minha-delpi-ai-api |
+| `a73e1f95` | 8 | Anonimizar dados em testes, página de Política de Privacidade |
+| `1b421f6e` | 9 | Integrar endpoints LGPD no frontend (portal) |
+| `eb6c60c5` | 9 | Tornar PrivacyPage resiliente a falhas de API |
+| `694bfd7c` | 9 | Corrigir mapeamento de campos camelCase/snake_case |
+| `51998e9f` | 9 | Configurar dados reais do DPO |
+| `fa6aa22c` | 9 | Corrigir chamada de grant consent (POST body) |
+| `1018b669` | 9 | Revisão geral — padronizar respostas, PrivacyPolicyPage, tratamento de erros |
+| `fe914046` | 10 | Rate limiting, truncamento de IP, minimização de dados em notificações |
 
 ---
 
 ## Fase 1 — Hardening de Segurança
 
-**Ref. LGPD:** Art. 46 (segurança), Art. 6 VII (segurança e prevenção)
-
-### Alterações
+**Ref. LGPD:** Art. 46 (segurança), Art. 6 VII (segurança e prevenção)  
+**Inconformidades resolvidas:** 4.2, 4.3, 4.4, 4.6, 4.9
 
 | Arquivo | Alteração | Motivo |
 |---------|-----------|--------|
@@ -48,7 +59,8 @@ Foram realizadas **7 fases** de adequação à LGPD, totalizando **30 arquivos a
 
 ## Fase 2 — Gestão de Consentimento
 
-**Ref. LGPD:** Art. 7 I (consentimento), Art. 8 (requisitos do consentimento), Art. 18 IX (revogação)
+**Ref. LGPD:** Art. 7 I (consentimento), Art. 8 (requisitos do consentimento), Art. 18 IX (revogação)  
+**Inconformidade resolvida:** 1.1
 
 ### Arquivos criados
 
@@ -59,7 +71,7 @@ Foram realizadas **7 fases** de adequação à LGPD, totalizando **30 arquivos a
 | `core-api/app/domain/ports/consent_repository_port.py` | Port (interface) do repositório de consentimento |
 | `core-api/app/infrastructure/persistence/sqlalchemy/consent_repository.py` | Implementação SQLAlchemy do repositório |
 | `core-api/app/application/use_cases/list_consents_use_case.py` | Use case: listar consentimentos do titular |
-| `core-api/app/application/use_cases/manage_consent_use_case.py` | Use cases: conceder, revogar e revogar todos os consentimentos |
+| `core-api/app/application/use_cases/manage_consent_use_case.py` | Use cases: conceder, revogar e revogar todos |
 
 ### Arquivos modificados
 
@@ -67,90 +79,55 @@ Foram realizadas **7 fases** de adequação à LGPD, totalizando **30 arquivos a
 |---------|-----------|
 | `core-api/app/infrastructure/db/models/__init__.py` | Import do `UserConsent` |
 | `core-api/app/infrastructure/persistence/sqlalchemy/unit_of_work.py` | Adicionado `SqlAlchemyConsentRepository` ao UnitOfWork |
-| `core-api/app/interfaces/http/me_controller.py` | Endpoints `GET /me/consents`, `POST /me/consents/<purpose>`, `DELETE /me/consents/<purpose>` |
-
-### ⚠️ Migration pendente em produção
-
-Executar antes do deploy:
-
-```bash
-flask db upgrade
-```
+| `core-api/app/interfaces/http/me_controller.py` | Endpoints `GET /me/consents`, `POST /me/consents`, `DELETE /me/consents/<purpose>` |
 
 ---
 
 ## Fase 3 — Retenção de Dados
 
-**Ref. LGPD:** Art. 15 (término do tratamento), Art. 16 (eliminação de dados)
-
-### Arquivos criados
+**Ref. LGPD:** Art. 15 (término do tratamento), Art. 16 (eliminação de dados)  
+**Inconformidades resolvidas:** 6.1, 6.4
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `core-api/app/infrastructure/jobs/data_retention_job.py` | Job de limpeza periódica com 4 operações: anonimização de audit logs (730d), purge de notificações deletadas (30d), purge de notificações antigas (180d), purge de eventos de uso (365d) |
+| `core-api/app/infrastructure/jobs/data_retention_job.py` | Job de limpeza: anonimização de audit logs (730d), purge de notificações deletadas (30d), notificações antigas (180d), eventos de uso (365d) |
 | `core-api/app/infrastructure/cli/data_retention_cli.py` | Comando Flask CLI `flask data-retention run` |
-
-### Arquivos modificados
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `core-api/app/create_app.py` | Registro do CLI `data_retention_cli` na app factory |
-
-### ⚠️ Configuração em produção
-
-Agendar execução periódica (cron ou scheduler):
-
-```bash
-flask data-retention run
-```
+| `core-api/app/create_app.py` | Registro do CLI `data_retention_cli` |
 
 ---
 
 ## Fase 4 — Direito ao Esquecimento (Erasure)
 
-**Ref. LGPD:** Art. 18 IV (anonimização, bloqueio ou eliminação), Art. 18 VI (eliminação)
-
-### Arquivos criados
+**Ref. LGPD:** Art. 18 IV (anonimização, bloqueio ou eliminação), Art. 18 VI (eliminação)  
+**Inconformidade resolvida:** 2.6
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `core-api/app/application/use_cases/admin/anonymize_user_data_use_case.py` | Use case que anonimiza dados pessoais em: User, AuditLog, Notification, App, UserConsent |
-
-### Arquivos modificados
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `core-api/app/interfaces/http/rbac_controller.py` | Endpoint `POST /admin/rbac/users/<user_id>/anonymize` protegido por `@require_superadmin()` |
+| `core-api/app/application/use_cases/admin/anonymize_user_data_use_case.py` | Use case de anonimização: User, AuditLog, Notification, App, UserConsent |
+| `core-api/app/interfaces/http/rbac_controller.py` | Endpoint `POST /admin/rbac/users/<user_id>/anonymize` (`@require_superadmin()`) |
 
 ---
 
 ## Fase 5 — Portabilidade de Dados
 
-**Ref. LGPD:** Art. 18 V (portabilidade dos dados)
-
-### Arquivos criados
+**Ref. LGPD:** Art. 18 V (portabilidade dos dados)  
+**Inconformidades resolvidas:** 3.1, 3.2
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `core-api/app/application/use_cases/export_user_data_use_case.py` | Use case que exporta: perfil, consentimentos, notificações, eventos de uso e audit logs |
-
-### Arquivos modificados
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `core-api/app/interfaces/http/me_controller.py` | Endpoint `GET /me/data-export` protegido por `@require_auth()` |
+| `core-api/app/application/use_cases/export_user_data_use_case.py` | Exporta: perfil, consentimentos, notificações, eventos de uso e audit logs |
+| `core-api/app/interfaces/http/me_controller.py` | Endpoint `GET /me/data-export` + `GET /me/privacy` (confirmação de tratamento) |
 
 ---
 
 ## Fase 6 — Mascaramento de Audit Logs
 
-**Ref. LGPD:** Art. 6 III (minimização), Art. 46 (segurança)
-
-### Arquivos modificados
+**Ref. LGPD:** Art. 6 III (minimização), Art. 46 (segurança)  
+**Inconformidades resolvidas:** 5.3, 4.4
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `transformometro-api/tm_app/interface/http/routes/crud_routes.py` | Adicionados `_PERSONAL_DATA_FIELDS` e `_mask_personal_data()` que mascara campos pessoais no payload do audit log |
+| `transformometro-api/tm_app/interface/http/routes/crud_routes.py` | `_mask_personal_data()` mascara campos pessoais no payload do audit log |
 | `shared/delpi_auth/middleware/fastapi_auth.py` | Respostas de erro genéricas (500/401) + logging interno |
 | `core-api/app/interfaces/http/admin_statistics_controller.py` | `server_error()` genérico + logging interno |
 
@@ -158,21 +135,99 @@ flask data-retention run
 
 ## Fase 7 — Transparência e Registro de Tratamento
 
-**Ref. LGPD:** Art. 37 (ROPA), Art. 41 (DPO), Art. 9 (direito à informação)
+**Ref. LGPD:** Art. 37 (ROPA), Art. 41 (DPO), Art. 9 (direito à informação)  
+**Inconformidades resolvidas:** 7.1, 7.3
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `core-api/app/domain/lgpd/privacy_constants.py` | Constantes: DPO (Michael Marotto), purposes de consentimento, prazos de retenção |
+| `docs/13-auditoria-lgpd/ropa-registro-tratamento.md` | ROPA com 8 categorias documentadas |
+| `core-api/app/interfaces/http/me_controller.py` | Endpoint `GET /me/privacy` com DPO, política, purposes e direitos |
+
+---
+
+## Fase 8 — Adequações Específicas por Microsserviço
+
+**Inconformidades resolvidas:** 1.2, 1.3, 1.4, 2.3, 2.4, 2.5, 4.5, 4.10, 5.1, 5.5, 7.2, 8.3
+
+### core-api
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `app/interfaces/http/me_controller.py` | Retorna `consent_pending: true` no `/me` se sem consentimentos (1.2) |
+| `app/interfaces/socket/socket_handlers.py` | Verifica consentimento `usage_tracking` antes de registrar uso (1.4) |
+| `app/infrastructure/db/models/user.py` | Docstring LGPD em `birth_date` (5.1) |
+| `app/application/use_cases/search_directory_users_use_case.py` | Mascara email na busca de diretório (8.3) |
+| `app/application/use_cases/lookup_directory_users_use_case.py` | Mascara email no lookup de diretório (8.3) |
+
+### minha-delpi-ai-api
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `app/application/services/chat_user_context_service.py` | Verifica consentimento `ai_context` antes de injetar PII no LLM (1.3) |
+| `app/infrastructure/cli/data_retention_cli.py` | CLI para retenção de AI audit logs e mensagens de chat (2.3, 5.5) |
+| `app/interfaces/http/chat_routes.py` | Aviso de privacidade na criação de sessão de chat (5.5) |
+
+### transformometro-api
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `tm_app/infrastructure/jobs/data_retention_job.py` | Purge de soft-deleted (90d) e anonimização de audit logs (730d) (2.4) |
+
+### strategic-indicators-api
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `si_app/infrastructure/jobs/data_retention_job.py` | Anonimização de `actor_email` em `settings_audit` (730d) (2.5) |
+| `si_app/main.py` | Fix postMessage origin check no Swagger; desabilitar Swagger em produção (4.10) |
+
+### Dados e fixtures
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `portal/src/components/notifications/notificationHtmlPreview.ts` | Anonimizar dados pessoais reais em previews (4.5) |
+| `portal/src/components/notifications/notificationVariables.ts` | Anonimizar dados pessoais reais em variáveis de teste (4.5) |
+
+---
+
+## Fase 9 — Frontend (Portal)
+
+**Inconformidade resolvida:** 7.2
 
 ### Arquivos criados
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `core-api/app/domain/lgpd/privacy_constants.py` | Constantes centralizadas: DPO, purposes de consentimento, prazos de retenção |
-| `core-api/app/domain/lgpd/__init__.py` | Pacote Python |
-| `docs/13-auditoria-lgpd/ropa-registro-tratamento.md` | ROPA (Registro de Operações de Tratamento) com 8 categorias documentadas |
+| `portal/src/ui/PrivacyPage.tsx` | Página de privacidade: consentimentos, exportação, DPO, direitos, retenção |
+| `portal/src/ui/PrivacyPage.css` | Estilos da página de privacidade |
+| `portal/src/ui/PrivacyPolicyPage.tsx` | Política de privacidade estática com dados do DPO via API |
+| `portal/src/ui/PrivacyPolicyPage.css` | Estilos da política de privacidade |
 
 ### Arquivos modificados
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `core-api/app/interfaces/http/me_controller.py` | Endpoint `GET /me/privacy` com info do DPO, política, purposes e direitos do titular |
+| `portal/src/data/coreApi.ts` | Tipos e métodos: `getConsents`, `grantConsent`, `revokeConsent`, `getPrivacyInfo`, `getDataExport` |
+| `portal/src/data/adminApi.ts` | Método `anonymizeUser` para ação admin |
+| `portal/src/ui/App.tsx` | Rotas `/privacy` e `/privacy-policy` |
+| `portal/src/layout/Sidebar.tsx` | Links "Privacidade e Dados" e "Política de Privacidade" no menu |
+| `portal/src/ui/admin/tabs/RbacTab.tsx` | Botão "Anonimizar (LGPD)" com confirmação e tratamento de erro |
+
+---
+
+## Fase 10 — Infraestrutura e Minimização Final
+
+**Ref. LGPD:** Art. 46 (segurança), Art. 6 III (minimização)  
+**Inconformidades resolvidas:** 4.7, 5.2, 8.4
+
+| Arquivo | Alteração | Motivo |
+|---------|-----------|--------|
+| `gateway/nginx.conf` | Rate limiting: auth (10r/s burst=20), API (30r/s burst=50) | Proteção contra força bruta (Art. 46) |
+| `gateway/nginx.dev.conf` | Rate limiting: auth (10r/s), API (30r/s) | Paridade com produção |
+| `core-api/app/domain/lgpd/__init__.py` | Helper `truncate_ip()` — remove último octeto IPv4 (ex: 192.168.1.100 → 192.168.1.0) | Minimização de dados (Art. 6 III) |
+| `core-api/app/interfaces/http/me_controller.py` | Usar `truncate_ip()` ao gravar IP de consentimento | Art. 6 III |
+| `core-api/app/infrastructure/persistence/sqlalchemy/audit_repository.py` | Usar `truncate_ip()` ao gravar IP em audit logs | Art. 6 III |
+| `transformometro-api/.../revisao_workflow_notification_service.py` | Preferir `roleIds`/`userIds` sobre `emails` nas notificações; remover email do actor do corpo da mensagem | Minimização entre serviços (Art. 6 III) |
 
 ---
 
@@ -181,7 +236,7 @@ flask data-retention run
 | Método | Rota | Proteção | Fase |
 |--------|------|----------|------|
 | `GET` | `/me/consents` | `@require_auth()` | 2 |
-| `POST` | `/me/consents/<purpose>` | `@require_auth()` | 2 |
+| `POST` | `/me/consents` | `@require_auth()` | 2 |
 | `DELETE` | `/me/consents/<purpose>` | `@require_auth()` | 2 |
 | `GET` | `/me/data-export` | `@require_auth()` | 5 |
 | `GET` | `/me/privacy` | `@require_auth()` | 7 |
@@ -189,15 +244,97 @@ flask data-retention run
 
 ---
 
+## Novas Páginas no Portal
+
+| Rota | Componente | Descrição |
+|------|-----------|-----------|
+| `/privacy` | `PrivacyPage` | Consentimentos, exportação, DPO, direitos, retenção |
+| `/privacy-policy` | `PrivacyPolicyPage` | Política de privacidade completa |
+
+---
+
+## Cobertura de Inconformidades
+
+| # Auditoria | Descrição | Status | Fase |
+|-------------|-----------|--------|------|
+| 1.1 | Nenhum mecanismo de consentimento | ✅ Resolvido | 2 |
+| 1.2 | Auto-provisionamento sem consentimento | ✅ Resolvido | 8 |
+| 1.3 | Dados pessoais injetados no LLM sem consentimento | ✅ Resolvido | 8 |
+| 1.4 | Rastreamento de uso sem ciência | ✅ Resolvido | 8 |
+| 2.1 | Audit logs irremovíveis (core-api) | ✅ Resolvido | 3 |
+| 2.2 | Audit logs irremovíveis (transformometro-api) | ✅ Resolvido | 6, 8 |
+| 2.3 | Audit logs do chat IA | ✅ Resolvido | 8 |
+| 2.4 | Soft delete sem purge (transformometro) | ✅ Resolvido | 8 |
+| 2.5 | Settings audit sem exclusão (strategic-indicators) | ✅ Resolvido | 8 |
+| 2.6 | Ausência de endpoint de esquecimento | ✅ Resolvido | 4 |
+| 3.1 | Ausência de portabilidade | ✅ Resolvido | 5 |
+| 3.2 | Ausência de confirmação de tratamento | ✅ Resolvido | 7 |
+| 4.1 | Credenciais em .env | ⚠️ Pendente | — |
+| 4.2 | JWT_SECRET default "secret" | ✅ Resolvido | 1 |
+| 4.3 | Verificação de audience desabilitada | ✅ Resolvido | 1 |
+| 4.4 | Exposição de detalhes em erros | ✅ Resolvido | 1, 6 |
+| 4.5 | Dados pessoais em seeds/fixtures | ✅ Resolvido | 8 |
+| 4.6 | CORS permissivo | ✅ Resolvido | 1 |
+| 4.7 | Nginx sem rate limiting | ✅ Resolvido | 10 |
+| 4.8 | Token de serviço estático | ⚠️ Pendente | — |
+| 4.9 | Senha de teste hardcoded | ✅ Resolvido | 1 |
+| 4.10 | Swagger postMessage sem origin check | ✅ Resolvido | 8 |
+| 5.1 | birth_date sem finalidade clara | ✅ Resolvido | 8 |
+| 5.2 | IP address sem truncamento | ✅ Resolvido | 10 |
+| 5.3 | Payload completo nos audit logs | ✅ Resolvido | 6 |
+| 5.4 | Emails denormalizados em tabelas | ⚠️ Pendente | — |
+| 5.5 | Mensagens de chat sem retenção | ✅ Resolvido | 8 |
+| 6.1 | Ausência de política de retenção | ✅ Resolvido | 3 |
+| 6.2 | Redis presence sem TTL | ✅ Já adequado | — |
+| 6.3 | Cache de embeddings sem TTL | ✅ Já adequado | — |
+| 6.4 | Soft delete notifications sem purge | ✅ Resolvido | 3 |
+| 7.1 | Ausência de ROPA | ✅ Resolvido | 7 |
+| 7.2 | Ausência de política de privacidade | ✅ Resolvido | 8, 9 |
+| 7.3 | Ausência de canal do DPO | ✅ Resolvido | 7 |
+| 8.1 | JWT repassado a APIs externas | ⚠️ Pendente | — |
+| 8.2 | Dados pessoais enviados ao LLM | ✅ Resolvido | 8 |
+| 8.3 | Busca de diretório expõe email | ✅ Resolvido | 8 |
+| 8.4 | Notificações compartilham emails | ✅ Resolvido | 10 |
+
+**Total: 35/38 resolvidos (92%)** — 3 pendências infraestruturais.
+
+---
+
+## Pendências Infraestruturais
+
+### 4.1 — Credenciais em `.env` (CRÍTICA)
+
+**Requer:** Cofre de segredos (HashiCorp Vault, AWS Secrets Manager ou similar).  
+**Ação:** Migrar `DB_PASSWORD`, `JWT_SECRET`, `SECRET_KEY` e `CORE_API_INTEGRATIONS_SERVICE_TOKEN` para cofre. Remover valores do repositório.
+
+### 4.8 — Token de serviço estático (MÉDIA)
+
+**Requer:** Redesign de autenticação inter-serviço.  
+**Ação:** Migrar `TRANSFORMOMETRO_SERVICE_BEARER` e `CORE_API_INTEGRATIONS_SERVICE_TOKEN` para OAuth2 client credentials com tokens JWT de curta duração.
+
+### 5.4 — Emails denormalizados em tabelas (BAIXA)
+
+**Requer:** Migração de schema em múltiplas tabelas/APIs (core-api, strategic-indicators-api).  
+**Ação:** Substituir colunas `created_by_email`/`updated_by_email` por FK `created_by_user_id`/`updated_by_user_id` e resolver via JOIN. Alto risco — executar como projeto separado com testes de regressão.
+
+### 8.1 — JWT repassado a APIs externas (MÉDIA)
+
+**Requer:** Redesign de autenticação entre microsserviços.  
+**Ação:** Usar tokens de serviço (client credentials) para comunicação interna em vez de repassar o JWT do usuário.
+
+---
+
 ## Checklist de Deploy para Produção
 
-- [ ] Executar migration: `flask db upgrade` (tabela `user_consents`)
+- [x] Executar migration: `flask db upgrade` (tabela `user_consents`)
+- [x] Configurar DPO real em `privacy_constants.py` (Michael Marotto)
+- [x] Publicar política de privacidade no portal (`/privacy-policy`)
 - [ ] Definir variável de ambiente `KEYCLOAK_AUDIENCE` em todos os serviços
 - [ ] Definir variável `JWT_SECRET` real (não usar default vazio)
 - [ ] Agendar cron para `flask data-retention run` (recomendado: diário)
-- [ ] Configurar DPO real em `privacy_constants.py`
-- [ ] Publicar política de privacidade na URL configurada
+- [ ] Configurar `TM_WORKFLOW_APPROVER_ROLE_IDS` para eliminar uso de emails
 - [ ] Revisar e validar o ROPA (`docs/13-auditoria-lgpd/ropa-registro-tratamento.md`)
+- [ ] Migrar credenciais para cofre de segredos (pendência 4.1)
 
 ---
 
@@ -205,17 +342,20 @@ flask data-retention run
 
 | Artigo | Tema | Fases |
 |--------|------|-------|
-| Art. 6 III | Minimização | 6 |
+| Art. 6 I | Finalidade | 8 |
+| Art. 6 III | Minimização | 6, 8, 10 |
+| Art. 6 VI | Transparência | 7, 9 |
 | Art. 6 VII | Segurança e prevenção | 1 |
-| Art. 7 I | Consentimento | 2 |
+| Art. 7 I | Consentimento | 2, 8 |
 | Art. 8 | Requisitos do consentimento | 2 |
-| Art. 9 | Direito à informação | 7 |
+| Art. 9 | Direito à informação | 7, 9 |
 | Art. 15 | Término do tratamento | 3 |
 | Art. 16 | Eliminação de dados | 3 |
+| Art. 18 I | Confirmação de tratamento | 7 |
 | Art. 18 IV | Anonimização/eliminação | 4 |
-| Art. 18 V | Portabilidade | 5 |
+| Art. 18 V | Portabilidade | 5, 9 |
 | Art. 18 VI | Eliminação | 4 |
-| Art. 18 IX | Revogação do consentimento | 2 |
+| Art. 18 IX | Revogação do consentimento | 2, 9 |
 | Art. 37 | Registro de tratamento (ROPA) | 7 |
-| Art. 41 | Encarregado (DPO) | 7 |
-| Art. 46 | Segurança | 1, 6 |
+| Art. 41 | Encarregado (DPO) | 7, 9 |
+| Art. 46 | Segurança | 1, 6, 10 |
