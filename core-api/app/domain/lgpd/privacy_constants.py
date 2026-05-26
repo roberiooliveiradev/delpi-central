@@ -3,8 +3,8 @@ Constantes de privacidade e LGPD.
 Centraliza informações do DPO e política de privacidade.
 """
 
-DPO_EMAIL = "dpo@empresa.com"
-DPO_NAME = "Encarregado de Proteção de Dados"
+DPO_EMAIL = "ti@delpi.com.br"
+DPO_NAME = "Michael Marotto"
 
 PRIVACY_POLICY_URL = "/privacy-policy"
 
