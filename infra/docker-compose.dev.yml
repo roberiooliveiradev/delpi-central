@@ -214,6 +214,7 @@ services:
 
     volumes:
       - ../minha-delpi-ai-api:/app
+      - ../shared/delpi_auth:/app/delpi_auth
 
     depends_on:
       - core-api

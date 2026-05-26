@@ -1,6 +1,5 @@
 from flask import Flask
 
-from delpi_auth.credential_guard import check_credentials
 from app.extensions.db import db
 from app.extensions.migrate import migrate
 from app.infrastructure.config.settings import Settings
@@ -18,7 +17,12 @@ from app.interfaces.http.routes.tool_routes import tool_bp
 
 def create_application() -> Flask:
     configure_logging(Settings.LOG_LEVEL)
-    check_credentials()
+
+    try:
+        from delpi_auth.credential_guard import check_credentials
+        check_credentials()
+    except ImportError:
+        pass
 
     app = Flask(__name__)
     app.config["SERVICE_NAME"] = Settings.SERVICE_NAME
