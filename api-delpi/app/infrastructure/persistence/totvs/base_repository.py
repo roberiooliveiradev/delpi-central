@@ -1,6 +1,6 @@
 # app/infrastructure/providers/totvs/base_repository.py
 
-from app.infrastructure.providers.totvs.database import get_connection
+from app.infrastructure.providers.totvs.database import get_connection, release_connection
 from app.utils.logger import log_error
 from app.core.exceptions import DatabaseConnectionError
 
@@ -14,7 +14,7 @@ class BaseRepository:
     Base para acesso ao banco SQL Server (Protheus).
 
     Responsabilidades:
-    - Gerenciar conexão
+    - Gerenciar conexão (com suporte a connection pool)
     - Executar queries
     - Executar JSON SQL Server (FOR JSON PATH)
     - Executar múltiplos resultsets
@@ -34,7 +34,7 @@ class BaseRepository:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._close()
+        self._close(discard=exc_type is not None)
 
     # --------------------------------------
     # Conexão
@@ -48,12 +48,14 @@ class BaseRepository:
             log_error(f"Erro ao conectar ao banco: {e}")
             raise DatabaseConnectionError(str(e))
 
-    def _close(self):
+    def _close(self, *, discard: bool = False):
         try:
             if self.cursor:
                 self.cursor.close()
+                self.cursor = None
             if self.connection:
-                self.connection.close()
+                release_connection(self.connection, discard=discard)
+                self.connection = None
         except Exception:
             pass
 
@@ -123,6 +125,31 @@ class BaseRepository:
             self.cursor.execute(query, params)
         except Exception as e:
             log_error(f"Erro ao executar nonquery: {e}")
+            raise DatabaseConnectionError(str(e))
+
+    def execute_batch_query(self, query: str, params: tuple = ()) -> list[dict]:
+        """
+        Executa batch SQL (multi-statement) e retorna o primeiro result set
+        que possua colunas. Necessário porque pyodbc/sp_executesql pode gerar
+        result sets vazios intermediários em batches com SET NOCOUNT ON.
+        """
+        try:
+            self.cursor.execute(query, params)
+
+            while self.cursor.description is None:
+                if not self.cursor.nextset():
+                    return []
+
+            columns = [desc[0] for desc in self.cursor.description]
+            rows = self.cursor.fetchall()
+
+            return [
+                self._normalize_row(dict(zip(columns, row)))
+                for row in rows
+            ]
+
+        except Exception as e:
+            log_error(f"Erro ao executar batch query: {e}")
             raise DatabaseConnectionError(str(e))
 
     # --------------------------------------

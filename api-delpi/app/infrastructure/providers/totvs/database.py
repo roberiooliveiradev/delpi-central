@@ -1,23 +1,26 @@
-# app/infrastructure/providers/totvs/database.py
-import os
+from __future__ import annotations
 
-import pyodbc
-from app.config import settings
-
-TOTVS_CONNECT_TIMEOUT = int(os.getenv("TOTVS_CONNECT_TIMEOUT", "10"))
-TOTVS_QUERY_TIMEOUT = int(os.getenv("TOTVS_QUERY_TIMEOUT", "120"))
+from app.infrastructure.providers.totvs.connection_pool import (
+    create_totvs_connection,
+    get_totvs_connection_pool,
+)
 
 
 def get_connection():
-    connection = pyodbc.connect(
-        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
-        f"SERVER={settings.DB_HOST},{settings.DB_PORT};"
-        f"DATABASE={settings.DB_DATABASE};"
-        f"UID={settings.DB_USER};"
-        f"PWD={settings.DB_PASSWORD};"
-        "Encrypt=no;"
-        "TrustServerCertificate=yes;",
-        timeout=TOTVS_CONNECT_TIMEOUT,
-    )
-    connection.timeout = TOTVS_QUERY_TIMEOUT
-    return connection
+    pool = get_totvs_connection_pool()
+    if pool is not None:
+        return pool.acquire()
+    return create_totvs_connection()
+
+
+def release_connection(connection, *, discard: bool = False) -> None:
+    pool = get_totvs_connection_pool()
+    if pool is not None:
+        pool.release(connection, discard=discard)
+        return
+
+    if connection is not None:
+        try:
+            connection.close()
+        except Exception:
+            pass
