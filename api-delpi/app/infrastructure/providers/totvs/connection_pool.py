@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import queue
+import sys
 import threading
 import time
 
@@ -11,11 +12,16 @@ import pyodbc
 from app.config import settings
 
 logger = logging.getLogger("totvs.pool")
+if not logger.handlers:
+    _h = logging.StreamHandler(sys.stderr)
+    _h.setLevel(logging.WARNING)
+    _h.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+    logger.addHandler(_h)
 
 TOTVS_CONNECT_TIMEOUT = int(os.getenv("TOTVS_CONNECT_TIMEOUT", "10"))
 TOTVS_QUERY_TIMEOUT = int(os.getenv("TOTVS_QUERY_TIMEOUT", "120"))
 TOTVS_POOL_ENABLED = os.getenv("TOTVS_POOL_ENABLED", "true").lower() in ("1", "true", "yes")
-TOTVS_POOL_MAX_SIZE = int(os.getenv("TOTVS_POOL_MAX_SIZE", "4"))
+TOTVS_POOL_MAX_SIZE = int(os.getenv("TOTVS_POOL_MAX_SIZE", "10"))
 
 _pool: TotvsConnectionPool | None = None
 _pool_lock = threading.Lock()
@@ -88,6 +94,10 @@ class TotvsConnectionPool:
 
             remaining = timeout_seconds - (time.perf_counter() - started)
             if remaining <= 0:
+                logger.warning(
+                    "totvs_pool TIMEOUT created=%d max=%d waited=%.0fs",
+                    self._created, self._max_size, timeout_seconds,
+                )
                 raise TimeoutError(
                     f"Timeout aguardando conexão TOTVS no pool (max={self._max_size})."
                 )
