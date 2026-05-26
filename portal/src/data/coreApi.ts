@@ -484,12 +484,12 @@ export class CoreApi {
   // -------------------------------------------------------
 
   async getConsents(): Promise<ConsentItem[]> {
-    const data = await this.client.get<unknown>("/core-api/me/consents");
-    return normalizeArray<ConsentItem>(data);
+    const data = await this.client.get<{ items?: unknown }>("/core-api/me/consents");
+    return normalizeArray<ConsentItem>(data?.items ?? data);
   }
 
   grantConsent(purpose: string) {
-    return this.client.post<ConsentItem>(`/core-api/me/consents/${purpose}`);
+    return this.client.post<ConsentItem>("/core-api/me/consents", { purpose });
   }
 
   revokeConsent(purpose: string) {
