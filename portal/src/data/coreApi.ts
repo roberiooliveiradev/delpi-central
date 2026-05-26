@@ -294,6 +294,14 @@ export interface ConsentItem {
   revoked_at: string | null;
 }
 
+export interface PrivacyInfoRaw {
+  dpo: { name: string; email: string };
+  privacyPolicyUrl: string;
+  consentPurposes: Record<string, string>;
+  dataRetentionDays: Record<string, number>;
+  rights: string[];
+}
+
 export interface PrivacyInfo {
   dpo: { name: string; email: string };
   privacy_policy_url: string;
@@ -492,8 +500,21 @@ export class CoreApi {
   // LGPD — PRIVACY & DATA EXPORT
   // -------------------------------------------------------
 
-  getPrivacyInfo() {
-    return this.client.get<PrivacyInfo>("/core-api/me/privacy");
+  async getPrivacyInfo(): Promise<PrivacyInfo> {
+    const raw = await this.client.get<PrivacyInfoRaw>("/core-api/me/privacy");
+    return {
+      dpo: raw.dpo,
+      privacy_policy_url: raw.privacyPolicyUrl ?? "",
+      consent_purposes: Object.entries(raw.consentPurposes ?? {}).map(
+        ([key, label]) => ({ key, label }),
+      ),
+      retention_periods: Object.fromEntries(
+        Object.entries(raw.dataRetentionDays ?? {}).map(
+          ([k, v]) => [k, `${v} dias`],
+        ),
+      ),
+      data_subject_rights: raw.rights ?? [],
+    };
   }
 
   getDataExport() {
