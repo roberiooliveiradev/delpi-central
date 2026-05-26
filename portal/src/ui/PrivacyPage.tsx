@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Shield,
@@ -35,10 +35,10 @@ const fadeUp = {
 export const PrivacyPage = () => {
   const { getAccessToken } = useContext(AuthContext);
 
-  const api = useMemo(
-    () => new CoreApi(new ApiClient("", getAccessToken)),
-    [getAccessToken],
-  );
+  const apiRef = useRef<CoreApi | null>(null);
+  if (!apiRef.current) {
+    apiRef.current = new CoreApi(new ApiClient("", getAccessToken));
+  }
 
   const [privacy, setPrivacy] = useState<PrivacyInfo | null>(null);
   const [consents, setConsents] = useState<ConsentItem[]>([]);
@@ -50,30 +50,39 @@ export const PrivacyPage = () => {
 
   useEffect(() => {
     let cancelled = false;
+    const api = apiRef.current!;
 
     const load = async () => {
-      try {
-        const [privacyData, consentData] = await Promise.all([
-          api.getPrivacyInfo(),
-          api.getConsents(),
-        ]);
+      const errors: string[] = [];
 
-        if (!cancelled) {
-          setPrivacy(privacyData);
-          setConsents(consentData);
-        }
+      try {
+        const privacyData = await api.getPrivacyInfo();
+        if (!cancelled) setPrivacy(privacyData);
       } catch {
-        if (!cancelled) setError("Erro ao carregar informações de privacidade.");
-      } finally {
-        if (!cancelled) setLoading(false);
+        errors.push("informações de privacidade");
+      }
+
+      try {
+        const consentData = await api.getConsents();
+        if (!cancelled) setConsents(consentData);
+      } catch {
+        errors.push("consentimentos");
+      }
+
+      if (!cancelled) {
+        if (errors.length > 0) {
+          setError(`Erro ao carregar: ${errors.join(", ")}. Verifique se o servidor foi atualizado.`);
+        }
+        setLoading(false);
       }
     };
 
     load();
     return () => { cancelled = true; };
-  }, [api]);
+  }, []);
 
   const handleToggle = async (purpose: string, currentlyGranted: boolean) => {
+    const api = apiRef.current!;
     setToggling(purpose);
     try {
       if (currentlyGranted) {
@@ -91,6 +100,7 @@ export const PrivacyPage = () => {
   };
 
   const handleExport = async () => {
+    const api = apiRef.current!;
     setExporting(true);
     setExportDone(false);
     try {
