@@ -468,6 +468,37 @@ def test_notification():
 
 
 # ==========================================================
+# LGPD — PRIVACY INFO
+# ==========================================================
+
+@me_bp.route("/me/privacy", methods=["GET"])
+@require_auth()
+def get_privacy_info():
+    from app.domain.lgpd.privacy_constants import (
+        DPO_EMAIL,
+        DPO_NAME,
+        PRIVACY_POLICY_URL,
+        CONSENT_PURPOSES,
+        DATA_RETENTION_DAYS,
+    )
+    return jsonify({
+        "dpo": {"name": DPO_NAME, "email": DPO_EMAIL},
+        "privacyPolicyUrl": PRIVACY_POLICY_URL,
+        "consentPurposes": CONSENT_PURPOSES,
+        "dataRetentionDays": DATA_RETENTION_DAYS,
+        "rights": [
+            "Confirmação de tratamento (Art. 18, I)",
+            "Acesso aos dados (Art. 18, II)",
+            "Correção de dados (Art. 18, III)",
+            "Anonimização/bloqueio (Art. 18, IV)",
+            "Portabilidade (Art. 18, V) — GET /me/data-export",
+            "Eliminação (Art. 18, VI) — Solicitar ao DPO",
+            "Revogação de consentimento (Art. 18, IX) — DELETE /me/consents/<purpose>",
+        ],
+    }), 200
+
+
+# ==========================================================
 # LGPD — CONSENTS
 # ==========================================================
 
@@ -540,6 +571,24 @@ def revoke_consent(purpose: str):
         return api_error("not_found", "Consent not found", status=404)
 
     return jsonify({"ok": True, "purpose": result.purpose, "granted": result.granted}), 200
+
+
+# ==========================================================
+# LGPD — DATA EXPORT (PORTABILITY)
+# ==========================================================
+
+@me_bp.route("/me/data-export", methods=["GET"])
+@require_auth()
+def export_my_data():
+    user = g.current_user
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            from app.application.use_cases.export_user_data_use_case import ExportUserDataUseCase
+            data = ExportUserDataUseCase(uow).execute(user_id=str(user.id))
+        return jsonify(data), 200
+    except Exception:
+        logger.exception("data_export_failed")
+        return api_error("export_failed", "Erro ao exportar dados.", status=500)
 
 
 # ==========================================================
