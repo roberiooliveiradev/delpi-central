@@ -224,3 +224,5 @@ docker exec delpi-strategic-indicators-api python3 -c "..."  # ver histórico no
 | 2026-05-19 | `refresh_state` (V011) + scheduler 5 min: executive/departments/indicators leem Postgres; TOTVS só no job |
 | 2026-05-18 | Fallback metas + `snapshot_models` (fix série 6m e boot 502) |
 | 2026-05-18 | Documentação completa SI: OVERVIEW, DATABASE, MFE, DEPLOYMENT, DEVELOPMENT, OPERATIONS, CODE_STRUCTURE, DATA_SOURCES |
+| 2026-05-25 | api-delpi: refatoração LMP com batch queries (temp tables em batch único pyodbc) + connection pooling |
+| 2026-05-26 | api-delpi: fix pool max=4→10 (burst ~30 req do snapshot causava TimeoutError → 500) |

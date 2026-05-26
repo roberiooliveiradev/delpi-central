@@ -98,6 +98,8 @@ Legenda de permissões:
 | GET | `/commercial/head_office_rol_target_pct` | A |
 | GET | `/commercial/branch_rol_target_pct` | A |
 | GET | `/commercial/closing-rate` | A |
+| GET | `/commercial/sales-order-otd` | A |
+| GET | `/commercial/new-business-rol-pct` | A |
 | GET | `/commercial/new-clients-average` | A |
 | GET | `/commercial/new-clients-rol-pct` | A |
 
@@ -132,6 +134,8 @@ Legenda de permissões:
 |---|---|---|
 | GET | `/engineering/lmps` | A ou L |
 | GET | `/engineering/lmps/dashboard` | A ou L |
+| GET | `/engineering/lmps/dashboard/summary` | A ou L |
+| GET | `/engineering/lmps/dashboard/charts` | A ou L |
 | GET | `/engineering/lmps/{sale_number}` | A ou L |
 | GET | `/engineering/transforma-mais/processes` | A ou L |
 | GET | `/engineering/transforma-mais/processes/summary` | A ou L |
@@ -142,6 +146,7 @@ Legenda de permissões:
 
 | Método | Endpoint | Perm. |
 |---|---|---|
+| GET | `/quality/branches` | Q |
 | GET | `/quality/nonconformities` | Q |
 | GET | `/quality/kaizens/summary` | Q |
 | GET | `/quality/audit-5s/summary` | Q |

@@ -136,8 +136,55 @@ app/application/use_cases/     → Casos de uso
 app/application/dto/           → Requests/responses tipados
 app/domain/ports/              → Interfaces de repositório
 app/infrastructure/persistence/  → TOTVS (SQL Server) e PostgreSQL
+app/infrastructure/providers/totvs/ → Pool de conexões e acesso ao banco
 app/composition/               → Injeção de dependências (composers)
 ```
+
+## Conexão TOTVS (SQL Server)
+
+### Connection pool
+
+A API usa um pool thread-safe de conexões pyodbc (`app/infrastructure/providers/totvs/connection_pool.py`). Requisições concorrentes reutilizam conexões, reduzindo overhead de abertura/fechamento.
+
+| Variável | Default | Descrição |
+|---|---|---|
+| `TOTVS_POOL_ENABLED` | `true` | Ativa o pool; `false` cria conexão descartável por request |
+| `TOTVS_POOL_MAX_SIZE` | `10` | Máx. conexões simultâneas no pool |
+| `TOTVS_CONNECT_TIMEOUT` | `10` | Timeout de abertura de conexão (segundos) |
+| `TOTVS_QUERY_TIMEOUT` | `120` | Timeout de execução de query (segundos) |
+
+**Dimensionamento:** o `strategic-indicators-api` faz ~30 requests paralelas durante o snapshot. O pool deve comportar esse burst; se o tamanho for insuficiente, requests em espera recebem `TimeoutError` (→ HTTP 500) após 60s.
+
+### BaseRepository
+
+Classe base para repositórios TOTVS (`app/infrastructure/persistence/totvs/base_repository.py`). Uso como context manager:
+
+```python
+with self as repo:
+    rows = repo.execute_query(sql, params)
+```
+
+Métodos disponíveis:
+
+| Método | Uso |
+|---|---|
+| `execute_query(sql, params)` | SELECT simples, retorna `list[dict]` |
+| `execute_nonquery(sql, params)` | DDL/DML sem retorno (CREATE TABLE, INSERT, DROP) |
+| `execute_batch_query(sql, params)` | Batch multi-statement (navega result sets via `cursor.nextset()`) |
+
+### Batch queries (LMP)
+
+As queries de engenharia LMP usam **batch SQL** — um único `cursor.execute()` com múltiplos statements (`SET NOCOUNT ON`, `SELECT INTO #TempTable`, ..., `SET NOCOUNT OFF`, `SELECT final`). Isso é necessário porque o pyodbc usa `sp_executesql` internamente, que escopa temp tables localmente; combinar tudo num batch mantém as temp tables visíveis até o SELECT final.
+
+Implementação: `_build_staged_batch()` em `lmp_query_repository.py`.
+
+## Logging
+
+| Destino | Nível | Configuração |
+|---|---|---|
+| Arquivo `logs/api_YYYYMMDD.log` | INFO+ | `app/utils/logger.py` |
+| stderr (docker logs) | WARNING+ | StreamHandler automático |
+| Pool TOTVS (stderr) | WARNING+ | Logger `totvs.pool` |
 
 ## Execução SQL (`POST /data/sql`)
 

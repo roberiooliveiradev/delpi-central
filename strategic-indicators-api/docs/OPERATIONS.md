@@ -150,6 +150,14 @@ Esperado: linhas com `scope_branch` `''`, `01` e `02`.
 
 **Ação de negócio:** duplicar metas para anos anteriores no admin.
 
+### 500 intermitente em rotas da api-delpi durante snapshot
+
+**Sintoma:** `si_measurements_loaded` com `errors=N` (N>0); logs httpx mostram `500 Internal Server Error` em rotas como `/production/on_time_delivery_pct`, `/supplies/cpv`, `/quality/ppm/internal/summary`, etc.
+
+**Causa:** o pool de conexões da **api-delpi** (`TOTVS_POOL_MAX_SIZE`) está subdimensionado para o burst de ~30 requests paralelas do snapshot. Requests excedentes aguardam 60s por uma conexão e recebem `TimeoutError` → 500.
+
+**Ação:** aumentar `TOTVS_POOL_MAX_SIZE` na api-delpi (default recomendado: `10`). Verificar via `docker exec delpi-api-delpi bash -c 'grep TIMEOUT logs/api_*.log'`.
+
 ### Executive lento na primeira carga (~10–20s)
 
 **Esperado** com cache frio e TOTVS.
@@ -175,4 +183,5 @@ Após alterar metas, settings ou estrutura admin, o cache in-process é invalida
 - Latência p95 de `executive-summary` e `trends?months=6`
 - Taxa de `*_failed` nos logs HTTP
 - `si_warmup_failed` no startup
-- Conexões TOTVS pool esgotado (`TOTVS_POOL_MAX_SIZE`)
+- Conexões TOTVS pool esgotado — tanto no SI (`TOTVS_POOL_MAX_SIZE`) quanto na **api-delpi** (warnings no stderr: `totvs_pool TIMEOUT`)
+- `si_measurements_loaded` com `errors > 0` (indica falha em rotas da api-delpi durante snapshot)
