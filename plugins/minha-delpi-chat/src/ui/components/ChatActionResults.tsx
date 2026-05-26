@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ChatToolCall } from "../../data/api/chatTypes";
 
 import "./ChatActionResults.css";
@@ -56,6 +57,27 @@ function buildActionEntries(toolCalls: ChatToolCall[]): ActionResultEntry[] {
     .filter((entry) => entry !== null);
 }
 
+function CopyApiButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <button
+      className="mdc-chat-action-result-card__copy-btn"
+      onClick={handleCopy}
+      title="Copiar resposta da API"
+    >
+      {copied ? "✓ Copiado" : "Copiar"}
+    </button>
+  );
+}
+
 export function ChatActionResults({ toolCalls }: ChatActionResultsProps) {
   const entries = buildActionEntries(toolCalls ?? []);
 
@@ -81,6 +103,7 @@ export function ChatActionResults({ toolCalls }: ChatActionResultsProps) {
                   {entry.statusCode !== undefined ? entry.statusCode : "—"}
                   {entry.ok === false ? " · erro" : entry.ok === true ? " · ok" : ""}
                 </span>
+                <CopyApiButton text={entry.responsePreview} />
               </div>
 
               {entry.path ? (

@@ -11,7 +11,8 @@
 .mdc-modal-portal .mdc-chat-archived-backdrop,
 .mdc-modal-portal .mdc-chat-confirm-backdrop,
 .mdc-modal-portal .mdc-chat-canvas-backdrop,
-.mdc-modal-portal .mdc-chat-project-settings-backdrop {
+.mdc-modal-portal .mdc-chat-project-settings-backdrop,
+.mdc-modal-portal .mdc-expand-modal__backdrop {
   position: fixed;
   inset: 0;
   z-index: 1400;

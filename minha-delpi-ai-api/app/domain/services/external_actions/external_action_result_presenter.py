@@ -919,6 +919,77 @@ class ExternalActionResultPresenter:
         ("cost_center", "Centro de custo"),
     ]
 
+    _SUPPLIER_PREFERRED_COLUMNS = [
+        ("supplier_code", "Cód. fornecedor"),
+        ("supplier_name", "Fornecedor"),
+        ("supplier_part_number", "Part number"),
+        ("last_price", "Últ. preço"),
+        ("last_price_date", "Data últ. preço"),
+        ("real_avg_lead_time_days", "Lead time médio (dias)"),
+        ("registered_lead_time_days", "Lead time cadastrado"),
+        ("real_lead_time_sample_size", "Amostras"),
+    ]
+
+    _CUSTOMER_PREFERRED_COLUMNS = [
+        ("customer_code", "Cód. cliente"),
+        ("customer_name", "Cliente"),
+        ("customer_store", "Loja"),
+        ("last_sale_date", "Data últ. venda"),
+        ("last_sale_price", "Últ. preço venda"),
+        ("total_quantity", "Qtd. total"),
+        ("total_value", "Valor total"),
+    ]
+
+    _GUIDE_PREFERRED_COLUMNS = [
+        ("sequence", "Sequência"),
+        ("step", "Etapa"),
+        ("step_description", "Descrição etapa"),
+        ("machine_code", "Cód. máquina"),
+        ("machine_name", "Máquina"),
+        ("setup_time", "Tempo setup"),
+        ("operation_time", "Tempo operação"),
+    ]
+
+    _INSPECTION_PREFERRED_COLUMNS = [
+        ("inspection_type", "Tipo inspeção"),
+        ("sequence", "Sequência"),
+        ("characteristic", "Característica"),
+        ("specification", "Especificação"),
+        ("method", "Método"),
+        ("frequency", "Frequência"),
+        ("result", "Resultado"),
+    ]
+
+    _MOVEMENT_PREFERRED_COLUMNS = [
+        ("movement_date", "Data"),
+        ("operation", "Operação"),
+        ("origin_warehouse", "Armazém origem"),
+        ("destination_warehouse", "Armazém destino"),
+        ("quantity", "Quantidade"),
+        ("document", "Documento"),
+        ("lot", "Lote"),
+    ]
+
+    _INVOICE_PREFERRED_COLUMNS = [
+        ("invoice_number", "Nº nota"),
+        ("invoice_series", "Série"),
+        ("supplier_name", "Fornecedor"),
+        ("customer_name", "Cliente"),
+        ("issue_date", "Data emissão"),
+        ("quantity", "Quantidade"),
+        ("unit_price", "Preço unitário"),
+        ("total_value", "Valor total"),
+    ]
+
+    _PRICE_PREFERRED_COLUMNS = [
+        ("table_code", "Cód. tabela"),
+        ("table_description", "Tabela"),
+        ("sale_price", "Preço venda"),
+        ("max_price", "Preço máx."),
+        ("discount_value", "Desconto"),
+        ("discount_percent", "% Desconto"),
+    ]
+
     def _build_items_table(self, items: list, title: str = "Dados retornados") -> dict | None:
         if not items:
             return None
@@ -929,11 +1000,36 @@ class ExternalActionResultPresenter:
             return None
 
         is_stock = "current_quantity" in first or "available_quantity" in first
+        is_invoice = "invoice_number" in first
+        is_guide = "step" in first and "sequence" in first
+        is_inspection = "inspection_type" in first or ("characteristic" in first and "specification" in first)
+        is_movement = "origin_warehouse" in first or "destination_warehouse" in first
+        is_price = "table_code" in first or "sale_price" in first
+        is_supplier = ("supplier_name" in first or "supplier_code" in first) and not is_invoice
+        is_customer = ("customer_name" in first or "customer_code" in first) and not is_invoice
 
+        preferred = None
         if is_stock:
+            preferred = self._STOCK_PREFERRED_COLUMNS
+        elif is_invoice:
+            preferred = self._INVOICE_PREFERRED_COLUMNS
+        elif is_guide:
+            preferred = self._GUIDE_PREFERRED_COLUMNS
+        elif is_inspection:
+            preferred = self._INSPECTION_PREFERRED_COLUMNS
+        elif is_movement:
+            preferred = self._MOVEMENT_PREFERRED_COLUMNS
+        elif is_price:
+            preferred = self._PRICE_PREFERRED_COLUMNS
+        elif is_supplier:
+            preferred = self._SUPPLIER_PREFERRED_COLUMNS
+        elif is_customer:
+            preferred = self._CUSTOMER_PREFERRED_COLUMNS
+
+        if preferred:
             columns = [
                 self._enrich_column(key, label)
-                for key, label in self._STOCK_PREFERRED_COLUMNS
+                for key, label in preferred
                 if key in first
             ]
         else:
@@ -1051,6 +1147,8 @@ class ExternalActionResultPresenter:
     _NO_CHART_PATHS = (
         "/suppliers", "/customers", "/structure", "/parents",
         "/guide", "/inspection", "/search",
+        "/purchases", "/sales", "/internal-movements",
+        "/inbound-invoice", "/outbound-invoice", "/prices",
     )
 
     def build_chart_presentation(self, data, *, path: str = "", force: bool = False) -> dict | None:
@@ -1086,6 +1184,8 @@ class ExternalActionResultPresenter:
             "supplier_code", "supplier_name", "customer_code", "customer_name",
             "table_code", "sale_price", "invoice_number",
             "order_number", "sale_number",
+            "step", "sequence", "inspection_type", "characteristic",
+            "origin_warehouse", "destination_warehouse", "movement_date",
         ]
         return any(k in row for k in tabular_markers)
 

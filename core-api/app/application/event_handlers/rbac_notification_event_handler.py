@@ -101,18 +101,25 @@ class RbacNotificationEventHandler:
         if not user or not user.active:
             return
 
-        app_names = self._resolve_app_names(permission_codes, bool(user.is_superadmin))
-        if not app_names:
+        granted_apps = self._resolve_granted_apps(permission_codes, bool(user.is_superadmin))
+        if not granted_apps:
             return
 
         template_spec = NOTIFICATION_TEMPLATES[_TEMPLATE_ID]
-        app_names_str = ", ".join(app_names)
+        app_names_str = ", ".join(app.name for app in granted_apps)
         first_name = (user.name or "").split()[0] if user.name else ""
 
         title = template_spec.default_title
         message = template_spec.default_message.replace(
             "{userName}", first_name
         ).replace("{appNames}", app_names_str)
+
+        if len(granted_apps) == 1:
+            action_target = granted_apps[0].base_path or "/"
+            action_label = f"Abrir {granted_apps[0].name}"
+        else:
+            action_target = "/"
+            action_label = "Ver aplicativos"
 
         self.uow.notifications.create(
             NotificationDTO(
@@ -124,8 +131,8 @@ class RbacNotificationEventHandler:
                 presentation="template",
                 html_content=None,
                 action_type="portal_route",
-                action_label="Ver aplicativos",
-                action_target="/apps",
+                action_label=action_label,
+                action_target=action_target,
                 icon="key-round",
                 metadata={
                     "templateId": _TEMPLATE_ID,
@@ -143,14 +150,13 @@ class RbacNotificationEventHandler:
     # Resolução de apps a partir de permission codes
     # ------------------------------------------------------------------
 
-    def _resolve_app_names(self, permission_codes: list[str], is_superadmin: bool) -> list[str]:
+    def _resolve_granted_apps(self, permission_codes: list[str], is_superadmin: bool):
         apps = self.uow.app_queries.list_active_apps_with_routes()
         if not apps:
             return []
 
         auth_service = AppAuthorizationService()
-        authorized = auth_service.filter_apps(apps, permission_codes, is_superadmin)
-        return [app.name for app in authorized]
+        return auth_service.filter_apps(apps, permission_codes, is_superadmin)
 
     # ------------------------------------------------------------------
     # Resolução de permission_codes por tipo de evento

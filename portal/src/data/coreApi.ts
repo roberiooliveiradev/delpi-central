@@ -482,9 +482,21 @@ export class CoreApi {
   // LGPD — CONSENTS
   // -------------------------------------------------------
 
+  async getConsentsRaw(): Promise<{ items: ConsentItem[]; availablePurposes: string[] }> {
+    const data = await this.client.get<{
+      items?: unknown;
+      availablePurposes?: string[];
+    }>("/core-api/me/consents");
+
+    return {
+      items: normalizeArray<ConsentItem>(data?.items ?? data),
+      availablePurposes: Array.isArray(data?.availablePurposes) ? data.availablePurposes : [],
+    };
+  }
+
   async getConsents(): Promise<ConsentItem[]> {
-    const data = await this.client.get<{ items?: unknown }>("/core-api/me/consents");
-    return normalizeArray<ConsentItem>(data?.items ?? data);
+    const raw = await this.getConsentsRaw();
+    return raw.items;
   }
 
   grantConsent(purpose: string) {
