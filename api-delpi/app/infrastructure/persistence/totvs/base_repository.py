@@ -114,6 +114,17 @@ class BaseRepository:
 
         return next(iter(result.values()))
 
+    def execute_nonquery(self, query: str, params: tuple = ()) -> None:
+        """
+        Executa SQL sem retorno de linhas (CREATE TABLE, INSERT INTO, DROP, etc.).
+        Requer conexão já aberta via context manager.
+        """
+        try:
+            self.cursor.execute(query, params)
+        except Exception as e:
+            log_error(f"Erro ao executar nonquery: {e}")
+            raise DatabaseConnectionError(str(e))
+
     # --------------------------------------
     # SQL Server JSON
     # --------------------------------------

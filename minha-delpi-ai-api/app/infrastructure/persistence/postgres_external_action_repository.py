@@ -265,13 +265,18 @@ class PostgresExternalActionRepository:
                 "roteiro",
                 "fornecedor",
                 "compra",
-                "venda",
                 "preço",
                 "preco",
+                "quanto custa",
+                "custo",
                 "movimentação",
                 "movimentacao",
                 "inspeção",
                 "inspecao",
+                "nota de entrada",
+                "nota de saída",
+                "notas de entrada",
+                "notas de saída",
             ]
         ):
             db_query = db_query.filter(
@@ -284,12 +289,18 @@ class PostgresExternalActionRepository:
                     ExternalActionModel.description.ilike("%produto%"),
                 )
             )
-        elif any(term in normalized for term in ["lmp", "lmps", "amostra", " ov "]):
+        elif any(
+            term in normalized
+            for term in ["lmp", "lmps", "amostra", " ov ", "ordens de venda", "pedidos de venda"]
+        ):
             db_query = db_query.filter(
                 db.or_(
                     ExternalActionModel.path.ilike("%lmp%"),
                     ExternalActionModel.summary.ilike("%lmp%"),
                     ExternalActionModel.description.ilike("%lmp%"),
+                    ExternalActionModel.path.ilike("%sales%"),
+                    ExternalActionModel.summary.ilike("%venda%"),
+                    ExternalActionModel.operation_id.ilike("%sale_order%"),
                 )
             )
         elif any(

@@ -208,8 +208,17 @@ class ExternalActionSelectionService:
             "onde é usado",
             "onde e usado",
             "produto pai",
+            "pai do",
             "parent",
             "where used",
+            "quanto custa",
+            "custo do",
+            "notas de entrada",
+            "notas de saída",
+            "notas de saida",
+            "nota de entrada",
+            "nota de saída",
+            "nota de saida",
         ]
 
         return any(term in value for term in terms)
@@ -413,7 +422,7 @@ class ExternalActionSelectionService:
             if "/lmps" in path or "lmp" in path:
                 continue
 
-            if "{" in path and best is not None:
+            if "/products/" in path or "{code}" in path:
                 continue
 
             best = action
@@ -977,7 +986,7 @@ class ExternalActionSelectionService:
         )
         wants_pricing = any(
             term in normalized
-            for term in ("preço", "preco", "pricing", "tabela de preço", "tabela de preco")
+            for term in ("preço", "preco", "pricing", "tabela de preço", "tabela de preco", "quanto custa", "custo do")
         )
         wants_customers = any(
             term in normalized
@@ -985,7 +994,11 @@ class ExternalActionSelectionService:
         )
         wants_parents = any(
             term in normalized
-            for term in ("produto pai", "produtos pai", "parent", "where used", "onde é usado", "onde e usado")
+            for term in (
+                "produto pai", "produtos pai", "parent", "where used",
+                "onde é usado", "onde e usado", "pai do", "pais do",
+                "quais produtos usam", "quais itens usam", "produtos que usam",
+            )
         )
         wants_movements = any(
             term in normalized
@@ -993,7 +1006,17 @@ class ExternalActionSelectionService:
         )
         wants_invoices = any(
             term in normalized
-            for term in ("nota fiscal", "notas fiscai", "nfe", "invoice")
+            for term in (
+                "nota fiscal", "notas fiscai", "nfe", "invoice",
+                "nota de entrada", "notas de entrada", "nota de saída", "nota de saida",
+                "notas de saída", "notas de saida",
+            )
+        )
+        wants_inbound = any(
+            term in normalized for term in ("entrada", "inbound", "recebimento")
+        )
+        wants_outbound = any(
+            term in normalized for term in ("saída", "saida", "outbound", "expedição", "expedicao")
         )
         wants_inspection = any(
             term in normalized
@@ -1045,8 +1068,13 @@ class ExternalActionSelectionService:
             if wants_movements and "/internal-movements" in path:
                 value += 120
 
-            if wants_invoices and "/inbound-invoice" in path:
-                value += 120
+            if wants_invoices:
+                if wants_outbound and "/outbound-invoice" in path:
+                    value += 130
+                elif wants_inbound and "/inbound-invoice" in path:
+                    value += 130
+                elif "/inbound-invoice" in path or "/outbound-invoice" in path:
+                    value += 120
 
             if wants_inspection and "/inspection" in path:
                 value += 120

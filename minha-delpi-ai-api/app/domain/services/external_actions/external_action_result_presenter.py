@@ -891,14 +891,29 @@ class ExternalActionResultPresenter:
         }
 
     def _looks_like_kpi_response(self, root: dict, path: str) -> bool:
-        kpi_paths = ("cpv", "otd", "inventory-turnover", "stock-value", "giro", "turnover", "kpi", "indicator")
+        kpi_paths = (
+            "cpv", "otd", "inventory-turnover", "stock-value", "giro",
+            "turnover", "kpi", "indicator", "snapshot",
+            "ebitda", "pmr", "pdi", "completion",
+            "closing-rate", "new-clients", "new-business",
+            "depreciation", "labor_cost", "production_cost",
+            "effectiveness", "delivery",
+        )
         if any(token in path for token in kpi_paths):
             return True
 
         kpi_keys = ("value", "percentage", "current", "previous", "target", "meta")
         has_series = any(k in root for k in ("periods", "series", "history"))
         kpi_count = sum(1 for k in kpi_keys if k in root)
-        return kpi_count >= 2 or (kpi_count >= 1 and has_series)
+        if kpi_count >= 2 or (kpi_count >= 1 and has_series):
+            return True
+
+        if not root.get("items") and len(root) <= 8:
+            numeric_count = sum(1 for v in root.values() if isinstance(v, (int, float)))
+            if numeric_count >= 2:
+                return True
+
+        return False
 
     def _build_kpi_chart(self, root: dict, path: str) -> dict | None:
         periods = root.get("periods") or root.get("series") or root.get("history")
