@@ -468,6 +468,81 @@ def test_notification():
 
 
 # ==========================================================
+# LGPD — CONSENTS
+# ==========================================================
+
+VALID_CONSENT_PURPOSES = {"data_processing", "analytics", "ai_context", "birthday_notifications", "usage_tracking"}
+
+
+@me_bp.route("/me/consents", methods=["GET"])
+@require_auth()
+def list_consents():
+    user = g.current_user
+    with SqlAlchemyUnitOfWork() as uow:
+        from app.application.use_cases.list_consents_use_case import ListConsentsUseCase
+        items = ListConsentsUseCase(uow).execute(user_id=str(user.id))
+    return jsonify({
+        "items": [
+            {
+                "id": str(c.id),
+                "purpose": c.purpose,
+                "granted": c.granted,
+                "grantedAt": c.granted_at.isoformat() if c.granted_at else None,
+                "revokedAt": c.revoked_at.isoformat() if c.revoked_at else None,
+            }
+            for c in items
+        ],
+        "availablePurposes": sorted(VALID_CONSENT_PURPOSES),
+    }), 200
+
+
+@me_bp.route("/me/consents", methods=["POST"])
+@require_auth()
+def grant_consent():
+    user = g.current_user
+    body = request.get_json(silent=True) or {}
+    purpose = (body.get("purpose") or "").strip().lower()
+
+    if purpose not in VALID_CONSENT_PURPOSES:
+        return api_error("invalid_purpose", f"Purpose must be one of: {', '.join(sorted(VALID_CONSENT_PURPOSES))}", status=400)
+
+    with SqlAlchemyUnitOfWork() as uow:
+        from app.application.use_cases.manage_consent_use_case import GrantConsentUseCase
+        result = GrantConsentUseCase(uow).execute(
+            user_id=str(user.id),
+            purpose=purpose,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get("User-Agent", "")[:500],
+        )
+
+    return jsonify({
+        "id": str(result.id),
+        "purpose": result.purpose,
+        "granted": result.granted,
+        "grantedAt": result.granted_at.isoformat() if result.granted_at else None,
+    }), 200
+
+
+@me_bp.route("/me/consents/<purpose>", methods=["DELETE"])
+@require_auth()
+def revoke_consent(purpose: str):
+    user = g.current_user
+    purpose = purpose.strip().lower()
+
+    if purpose not in VALID_CONSENT_PURPOSES:
+        return api_error("invalid_purpose", "Invalid consent purpose", status=400)
+
+    with SqlAlchemyUnitOfWork() as uow:
+        from app.application.use_cases.manage_consent_use_case import RevokeConsentUseCase
+        result = RevokeConsentUseCase(uow).execute(user_id=str(user.id), purpose=purpose)
+
+    if not result:
+        return api_error("not_found", "Consent not found", status=404)
+
+    return jsonify({"ok": True, "purpose": result.purpose, "granted": result.granted}), 200
+
+
+# ==========================================================
 # DASHBOARD
 # ==========================================================
 

@@ -22,3 +22,4 @@ from .notification_dispatch import NotificationDispatch
 
 from .audit_log import AuditLog
 from .app_usage_event import AppUsageEvent
+from .user_consent import UserConsent
