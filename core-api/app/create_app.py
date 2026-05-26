@@ -4,6 +4,7 @@ from flask import Flask
 import logging
 
 from app.infrastructure.config.settings import Config, TestingConfig
+from delpi_auth.credential_guard import check_credentials
 
 from app.extensions.db import db
 from app.extensions.migrate import migrate
@@ -48,6 +49,12 @@ def create_app(config_name: str | None = None) -> Flask:
         app.config.from_object(TestingConfig)
     else:
         app.config.from_object(Config)
+
+    # ==========================================================
+    # LGPD CREDENTIAL GUARD (Art. 46)
+    # ==========================================================
+    if config_name != "testing":
+        check_credentials()
 
     # ==========================================================
     # EXTENSIONS

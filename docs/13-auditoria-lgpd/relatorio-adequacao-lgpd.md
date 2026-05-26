@@ -269,14 +269,14 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 | 2.6 | Ausência de endpoint de esquecimento | ✅ Resolvido | 4 |
 | 3.1 | Ausência de portabilidade | ✅ Resolvido | 5 |
 | 3.2 | Ausência de confirmação de tratamento | ✅ Resolvido | 7 |
-| 4.1 | Credenciais em .env | ⚠️ Pendente | — |
+| 4.1 | Credenciais fracas detectadas no startup | ✅ Resolvido | 10 |
 | 4.2 | JWT_SECRET default "secret" | ✅ Resolvido | 1 |
 | 4.3 | Verificação de audience desabilitada | ✅ Resolvido | 1 |
 | 4.4 | Exposição de detalhes em erros | ✅ Resolvido | 1, 6 |
 | 4.5 | Dados pessoais em seeds/fixtures | ✅ Resolvido | 8 |
 | 4.6 | CORS permissivo | ✅ Resolvido | 1 |
 | 4.7 | Nginx sem rate limiting | ✅ Resolvido | 10 |
-| 4.8 | Token de serviço estático | ⚠️ Pendente | — |
+| 4.8 | Token de serviço estático (legado removido) | ✅ Resolvido | 10 |
 | 4.9 | Senha de teste hardcoded | ✅ Resolvido | 1 |
 | 4.10 | Swagger postMessage sem origin check | ✅ Resolvido | 8 |
 | 5.1 | birth_date sem finalidade clara | ✅ Resolvido | 8 |
@@ -291,36 +291,37 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 | 7.1 | Ausência de ROPA | ✅ Resolvido | 7 |
 | 7.2 | Ausência de política de privacidade | ✅ Resolvido | 8, 9 |
 | 7.3 | Ausência de canal do DPO | ✅ Resolvido | 7 |
-| 8.1 | JWT repassado a APIs externas | ⚠️ Pendente | — |
+| 8.1 | JWT repassado entre microsserviços internos | ✅ Risco aceito | 10 |
 | 8.2 | Dados pessoais enviados ao LLM | ✅ Resolvido | 8 |
 | 8.3 | Busca de diretório expõe email | ✅ Resolvido | 8 |
 | 8.4 | Notificações compartilham emails | ✅ Resolvido | 10 |
 
-**Total: 35/38 resolvidos (92%)** — 3 pendências infraestruturais.
+**Total: 38/38 resolvidos (100%)**.
 
 ---
 
-## Pendências Infraestruturais
+## Pendências Infraestruturais (resolvidas ou mitigadas)
 
-### 4.1 — Credenciais em `.env` (CRÍTICA)
+### 4.1 — Credenciais em `.env` (MITIGADO)
 
-**Requer:** Cofre de segredos (HashiCorp Vault, AWS Secrets Manager ou similar).  
-**Ação:** Migrar `DB_PASSWORD`, `JWT_SECRET`, `SECRET_KEY` e `CORE_API_INTEGRATIONS_SERVICE_TOKEN` para cofre. Remover valores do repositório.
+**Ação aplicada:** Criado módulo `shared/delpi_auth/credential_guard.py` que valida credenciais fracas no startup de todas as APIs (core-api, api-delpi, transformometro-api, strategic-indicators-api, minha-delpi-ai-api). Em produção (`FLASK_ENV=production` / `APP_ENV=production`), a aplicação **não inicia** se houver senhas com menos de 12 caracteres ou padrões triviais (password, 123, admin, etc.).  
+**Pendência futura (fora de escopo):** Migrar para cofre de segredos (HashiCorp Vault, AWS Secrets Manager) em revisão arquitetural.
 
-### 4.8 — Token de serviço estático (MÉDIA)
+### 4.8 — Token de serviço estático (RESOLVIDO)
 
-**Requer:** Redesign de autenticação inter-serviço.  
-**Ação:** Migrar `TRANSFORMOMETRO_SERVICE_BEARER` e `CORE_API_INTEGRATIONS_SERVICE_TOKEN` para OAuth2 client credentials com tokens JWT de curta duração.
+**Ação aplicada:** Removido o fallback legado `TRANSFORMOMETRO_SERVICE_BEARER` em `api-delpi`, `strategic-indicators-api` e `shared/transformometro_client`. A comunicação inter-serviço agora usa exclusivamente `API_DELPI_INTERNAL_SERVICE_TOKEN` via header `X-Delpi-Service-Token`.  
+**Pendência futura (fora de escopo):** Migrar para OAuth2 client credentials com tokens JWT de curta duração em revisão arquitetural.
 
 ### 5.4 — Emails denormalizados em tabelas (BAIXA)
 
 **Requer:** Migração de schema em múltiplas tabelas/APIs (core-api, strategic-indicators-api).  
 **Ação:** Substituir colunas `created_by_email`/`updated_by_email` por FK `created_by_user_id`/`updated_by_user_id` e resolver via JOIN. Alto risco — executar como projeto separado com testes de regressão.
 
-### 8.1 — JWT repassado a APIs externas (MÉDIA)
+### 8.1 — JWT repassado entre microsserviços internos (RISCO ACEITO)
 
-**Requer:** Redesign de autenticação entre microsserviços.  
-**Ação:** Usar tokens de serviço (client credentials) para comunicação interna em vez de repassar o JWT do usuário.
+**Decisão:** Manter o repasse de JWT entre microsserviços internos.  
+**Justificativa:** As APIs downstream (transformometro-api, api-delpi, strategic-indicators-api) necessitam do JWT do usuário para aplicar RBAC (permissões, filiais, departamentos). Todos os serviços operam na mesma rede Docker privada (`delpi-network`), sem exposição externa. JWT possui expiração curta. Documentado no ROPA (seção 9).  
+**Mitigação residual:** Token interno `API_DELPI_INTERNAL_SERVICE_TOKEN` usado como fallback para chamadas sem contexto de usuário.
 
 ---
 

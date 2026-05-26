@@ -11,6 +11,8 @@ from fastapi.responses import HTMLResponse
 
 from contextlib import asynccontextmanager
 
+from delpi_auth.credential_guard import check_credentials
+
 from si_app.application.services.strategic_indicators.period_scores_scheduler import (
     schedule_period_scores_refresh,
 )
@@ -60,6 +62,7 @@ ALLOWED_ORIGINS = build_allowed_origins()
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    check_credentials()
     run_migrations_on_startup()
     schedule_period_scores_refresh()
     if settings.SI_WARMUP_ON_STARTUP and not settings.SI_PERIOD_SCORES_REFRESH_ENABLED:

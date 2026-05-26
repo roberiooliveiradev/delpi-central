@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 from delpi_auth.request_context import get_current_user, get_request_authorization
 from delpi_auth.service_token import internal_service_authorization
 
@@ -27,7 +25,4 @@ def bearer_authorization_from_context() -> str | None:
     if internal:
         return internal
 
-    legacy = (os.getenv("TRANSFORMOMETRO_SERVICE_BEARER") or "").strip()
-    if legacy:
-        return _normalize_bearer(legacy)
     return None
