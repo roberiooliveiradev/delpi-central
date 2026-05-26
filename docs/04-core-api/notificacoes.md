@@ -47,7 +47,7 @@ Model: `app/infrastructure/db/models/notification.py`.
 | `title` | Título opcional |
 | `message` | Texto principal / fallback |
 | `type` | Severidade visual: `info`, `success`, `warning`, `error` |
-| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `custom`, `controle_mp`, `transformometro` |
+| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `access`, `custom`, `controle_mp`, `transformometro` |
 | `presentation` | `text`, `html`, `template` |
 | `html_content` | HTML sanitizado (`bleach`) |
 | `action_type`, `action_label`, `action_target` | CTA (`portal_route`, `external_url`) |
@@ -102,6 +102,22 @@ Destinatários adicionais no body: `roleIds` (papel direto + via grupo), `groupI
 | POST | `/integrations/notifications/automation/birthdays` | Envia `birthday_v1` para usuários ativos com `birth_date` = hoje (idempotente por dia) |
 
 Boas-vindas: no **primeiro login** (criação do usuário local), dispara `welcome_v1` automaticamente (respeita preferências).
+
+### Acesso a aplicações (automático via RBAC)
+
+Quando um usuário ganha acesso a novas aplicações — via adição de grupo, papel, ou mudança de permissões — o sistema dispara automaticamente `app_access_granted_v1`.
+
+| Evento RBAC | Quem é notificado |
+|---|---|
+| `group_added_to_user` | O usuário |
+| `role_added_to_user` | O usuário |
+| `groups_replaced` / `roles_replaced` | O usuário |
+| `permission_added_to_role` / `role_permissions_replaced` | Todos os usuários com o papel (direto + via grupos) |
+| `role_added_to_group` / `group_roles_replaced` | Todos os usuários do grupo |
+
+O handler (`RbacNotificationEventHandler`) calcula quais apps as novas permissões concedem, e a notificação lista os nomes. Se for uma única app, o CTA direciona diretamente para o `basePath` dela; caso contrário, leva à home.
+
+Variáveis: `{userName}` (auto, primeiro nome), `{appNames}` (nomes separados por vírgula).
 
 `users.birth_date` (YYYY-MM-DD): editável no Admin → usuário → data de nascimento.
 
@@ -160,7 +176,7 @@ Usado pelo modal RBAC do Portal para papéis, grupos e data de nascimento. Body 
 | Parâmetro | Valores | Default |
 |-----------|---------|---------|
 | `status` | `all`, `unread`, `read` | `all` |
-| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `custom`, `controle_mp`, `transformometro` | — |
+| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `access`, `custom`, `controle_mp`, `transformometro` | — |
 | `important` | `true` (somente importantes) | — |
 | `limit` | 1–100 | `20` |
 | `offset` | ≥ 0 | `0` |

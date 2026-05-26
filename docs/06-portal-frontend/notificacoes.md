@@ -111,7 +111,21 @@ Tutorial: [conectar-aplicacao-iframe.md](../10-guias-operacionais/conectar-aplic
 
 ---
 
-## 8. Relacionados
+## 8. Notificação automática de acesso
+
+Quando o admin concede acesso a apps (via grupo ou papel), o usuário recebe uma notificação automática (`app_access_granted_v1`) com:
+
+- **Título:** "Novo acesso liberado"
+- **Mensagem:** "Olá, {nome}! Você recebeu acesso a: App1, App2."
+- **CTA:** Se uma única app → "Abrir {App}" (navega direto ao `basePath`); se várias → "Ver aplicativos" (home)
+- **Ícone:** `key-round`
+- **Categoria:** `access`
+
+O template renderiza a lista de apps como itens (`<li>`) no `NotificationTemplateView`.
+
+---
+
+## 9. Relacionados
 
 - [Notificações Core API](../04-core-api/notificacoes.md)
 - [Roadmap notificações ricas](../12-roadmap-e-evolucao/notificacoes-ricas.md)

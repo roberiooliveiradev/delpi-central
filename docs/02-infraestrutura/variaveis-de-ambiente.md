@@ -112,9 +112,9 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `LLM_PROVIDER` | `ollama` ou `vllm` |
 | `OLLAMA_BASE_URL` | `http://ollama:11434` |
 | `OLLAMA_MODEL` | Default **`qwen2.5:3b`** (CPU, bom equilíbrio qualidade/velocidade). Alternativas: `qwen2.5:7b` (GPU/16GB RAM), `qwen2.5:1.5b` (mínimo) |
-| `OLLAMA_NUM_CTX` | Janela de contexto. **Recomendado:** `4096`; mínimo CPU: `2048` |
+| `OLLAMA_NUM_CTX` | Janela de contexto. **Recomendado:** `2048` (permite coexistência 3b + bge-m3 em 8GB); com 16GB+: `4096` |
 | `OLLAMA_NUM_THREAD` | Threads CPU. Usar = nº de cores reais. **Prod 4 vCPU:** `4` |
-| `OLLAMA_MAX_LOADED_MODELS` | Modelos simultâneos em RAM. **Prod 8 GB:** `1` (evita swap thrashing) |
+| `OLLAMA_MAX_LOADED_MODELS` | Modelos simultâneos em RAM. **Prod 8 GB:** `2` (chat + embeddings coexistem com ctx=2048) |
 | `OLLAMA_NUM_PARALLEL` / `OLLAMA_KEEP_ALIVE` | Serviço `ollama` no Compose |
 | `LLM_MAX_TOKENS` | `num_predict` Ollama. **Recomendado:** `1536`; mínimo: `384` |
 | `LLM_TEMPERATURE` | Criatividade das respostas. **Recomendado:** `0.4` (natural); `0.2` (mais determinístico) |
@@ -131,6 +131,9 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `MAX_CONTEXT_CHUNKS` | Chunks RAG máximos. **Recomendado:** `8` |
 | `MAX_CONTEXT_CHARS` | Chars máximos de contexto RAG. **Recomendado:** `12000` |
 | `RAG_CONTEXT_MIN_SCORE` | Default `0.35` (fallback `RAG_ASSERTIVENESS_MIN_SCORE`). Prod operacional: `0.40`–`0.45`. Ver [rag-context-min-score-calibracao.md](../../minha-delpi-ai-api/docs/roadmap/rag-context-min-score-calibracao.md) |
+| `CHAT_FAST_PATH_MAX_CHARS` | Máximo de caracteres para fast path (sem LLM). **Recomendado:** `30` |
+| `CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS` | Chars por chunk no streaming de respostas diretas. **Recomendado:** `4` |
+| `CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS` | Delay em ms entre chunks de streaming direto. **Recomendado:** `20` (efeito de escrita natural) |
 | `RAG_ASSERTIVENESS_MIN_SCORE` | Score mínimo em fluxos de assertividade (default `0.35`) |
 | `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` | Ex.: `bge-m3` |
 | `RATE_LIMIT_*` | Limites por janela |
