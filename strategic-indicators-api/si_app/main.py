@@ -129,8 +129,14 @@ app.include_router(strategic_indicators_router)
 app.include_router(strategic_indicators_integrations_router)
 
 
+_SWAGGER_ENABLED = settings.API_ENV != "production"
+
+
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger():
+    if not _SWAGGER_ENABLED:
+        return HTMLResponse(content="<h1>Docs desabilitado em produção</h1>", status_code=404)
+
     swagger_html = get_swagger_ui_html(
         openapi_url="openapi.json",
         title="Strategic Indicators API — Docs",
@@ -144,19 +150,24 @@ async def custom_swagger():
 
     const ALLOWED_ORIGINS = {allowed_origins_js};
 
+    function isOriginAllowed(origin) {{
+        if (origin === window.location.origin) return true;
+        return ALLOWED_ORIGINS.length > 0 && ALLOWED_ORIGINS.includes(origin);
+    }}
+
     function applyToken(token) {{
         if (!window.ui || !token) return;
 
         try {{
             window.ui.preauthorizeApiKey("BearerAuth", token);
-            console.log("Swagger autorizado automaticamente 🔐");
+            console.log("Swagger autorizado automaticamente");
         }} catch (error) {{
             console.warn("Falha ao aplicar token no Swagger:", error);
         }}
     }}
 
     window.addEventListener("message", function (event) {{
-        if (!ALLOWED_ORIGINS.includes(event.origin)) return;
+        if (!isOriginAllowed(event.origin)) return;
 
         if (event.data?.type === "DELPI_AUTH" && event.data?.token) {{
             window.DELPI_TOKEN = event.data.token;
