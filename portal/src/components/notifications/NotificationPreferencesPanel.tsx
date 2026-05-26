@@ -13,6 +13,7 @@ const CATEGORY_LABELS: Record<NotificationCategory, string> = {
   birthday: "Aniversário",
   company_event: "Evento",
   announcement: "Comunicado",
+  access: "Acesso",
   custom: "Personalizada",
   controle_mp: "Controle MP",
   transformometro: "Transformômetro",
