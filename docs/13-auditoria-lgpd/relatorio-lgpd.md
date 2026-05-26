@@ -523,8 +523,8 @@
 
 | # | Descrição resumida | Status | Resolução |
 |---|-------------------|--------|-----------|
-| 1.1 | Nenhum mecanismo de consentimento | ✅ | Módulo completo de gestão de consentimento (Fase 2) |
-| 1.2 | Auto-provisionamento sem consentimento | ✅ | `consent_pending` no `/me` + verificação no primeiro login (Fase 8) |
+| 1.1 | Nenhum mecanismo de consentimento | ✅ | Módulo de gestão de consentimento (Fase 2) + modal obrigatório no login com leitura da política (Fase 12) |
+| 1.2 | Auto-provisionamento sem consentimento | ✅ | `consent_pending` no `/me` (Fase 8) + modal bloqueante pós-login com política de privacidade e aceite obrigatório (Fase 12) |
 | 1.3 | Dados pessoais no LLM sem consentimento | ✅ | Verificação de consentimento `ai_context` antes de injetar PII (Fase 8) |
 | 1.4 | Rastreamento de uso sem ciência | ✅ | Verificação de consentimento `usage_tracking` no socket handler (Fase 8) |
 | 2.1 | Audit logs irremovíveis (core-api) | ✅ | Job de retenção com anonimização após 730 dias (Fase 3) |

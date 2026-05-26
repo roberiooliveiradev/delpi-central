@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado após **Onda 8** (concluída) — inteligência do chat comum, apresentação de dados flexível, modelo 3b, features de inteligência ativadas (maio/2026).
+> Atualizado após **Onda 9** (concluída) — colunas preferenciais por rota, build corrigido (shared/delpi_auth), modal expandir, botão copiar API, estabilidade de memória (maio/2026).
 
 ## Visão geral
 
@@ -56,6 +56,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 - **Inteligência do chat ondas 1–6:** concluídas — ver `roadmap/README.md` e `inteligencia-chat-onda-6.md` em `minha-delpi-ai-api`
 - **Inteligência Onda 7:** concluída — templates (7.1), OpenAPI CPV/OTD/vendas (7.2), regressão (7.3), calibração RAG (7.4), homologação latência em prod (7.5), seleção OVs vs LMP (7.6), busca por descrição + roteamento (7.7), fix associação agent_key via context bar (7.8)
 - **Inteligência Onda 8:** concluída — modelo 3b, features ativadas, apresentação inteligente, formato sob demanda
+- **Inteligência Onda 9:** concluída — colunas preferenciais por tipo de dado, build com shared/delpi_auth, modal expandir, copiar API, streaming direct response, estabilidade memória (ctx 2048)
 - **Melhorias futuras:** concluídas neste repositório — ver `melhorias-futuras.md`
 - **Pendente externo:** RBAC com perfis formais no `core-api`
 
@@ -88,10 +89,11 @@ Local (WSL) com `DATABASE_URL` apontando para `localhost:5433` — ver [09-deplo
 
 - Provider: **Ollama** (`qwen2.5:3b` chat + `bge-m3` embeddings; CPU sem GPU)
 - Servidor: Intel Xeon Gold 5418Y (4 vCPUs), 7.8 GB RAM
-- Configuração otimizada: `OLLAMA_NUM_THREAD=4`, `OLLAMA_MAX_LOADED_MODELS=1`, `OLLAMA_NUM_CTX=4096`, `LLM_MAX_TOKENS=1536`
-- Modelo 3b: 2x mais parâmetros que 1.5b, respostas mais naturais e inteligentes
+- Configuração otimizada: `OLLAMA_NUM_THREAD=4`, `OLLAMA_MAX_LOADED_MODELS=2`, `OLLAMA_NUM_CTX=2048`, `LLM_MAX_TOKENS=1536`
+- Modelo 3b (1.9 GB) + bge-m3 (1.1 GB) = ~3 GB — coexistem em 8 GB RAM com ctx=2048
 - Temperature: 0.4 (respostas mais fluidas em português)
 - Qualidade vem do modelo + pipeline (actions, RAG, fast paths, tool router, rerank)
+- Streaming em respostas diretas: 4 chars/chunk, 20ms delay (efeito de escrita natural)
 - vLLM pendente de host com GPU — ver `homologacao-vllm-producao.md`
 
 ## Endpoints de verificação rápida
@@ -142,10 +144,26 @@ Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadma
 | Flattening de objetos complexos em tabelas | Concluído |
 | Todas as rotas de produto testadas e corrigidas | Concluído |
 
+## Inteligência do chat (Onda 9) — concluída
+
+| Entrega | Status |
+|---------|--------|
+| Colunas preferenciais por tipo: fornecedores, clientes, roteiro, inspeção, movimentações, notas fiscais, preços | Concluído |
+| `product_code` removido das tabelas quando redundante (foco em dados relevantes) | Concluído |
+| Gráficos bloqueados em compras, vendas, movimentações, notas fiscais, preços | Concluído |
+| `_is_tabular_data` expandido para guide, inspection, movements (tabela mesmo com 1 registro) | Concluído |
+| Modal Expandir corrigido (registrado na modal-layer.css para portal) | Concluído |
+| Botão "Copiar" na resposta bruta da API | Concluído |
+| Dockerfile.prod: build context `.` + `shared/delpi_auth` | Concluído |
+| Dependência `python-jose` adicionada (necessária para delpi_auth) | Concluído |
+| Streaming em direct responses: 4 chars/chunk, 20ms delay (efeito de escrita) | Concluído |
+| `OLLAMA_NUM_CTX=2048` — coexistência qwen2.5:3b + bge-m3 em 8GB RAM | Concluído |
+| Perguntas ambíguas pedem esclarecimento (não encerram) | Concluído |
+
 **Produção recomendada (CPU com 8GB RAM):**
 ```env
 OLLAMA_MODEL=qwen2.5:3b
-OLLAMA_NUM_CTX=4096
+OLLAMA_NUM_CTX=2048
 LLM_MAX_TOKENS=1536
 LLM_TEMPERATURE=0.4
 CHAT_TOOL_ROUTER_ENABLED=true
@@ -158,6 +176,8 @@ MAX_CONTEXT_CHUNKS=8
 MAX_CONTEXT_CHARS=12000
 CHAT_OPERATIONAL_FAST_PATH_ENABLED=true
 CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED=true
+CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS=4
+CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS=20
 ```
 
 **Após deploy da api-delpi:** reimportar OpenAPI no provider do agente e reindexar o documento de rotas na base de conhecimento.
@@ -183,7 +203,11 @@ CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED=true
 10. ~~Redução de prompt para fast paths~~ — concluído (Onda 7, `CHAT_FAST_PATH_SLIM_PROMPT`)
 11. ~~Modelo 3b + features de inteligência~~ — concluído (Onda 8)
 12. ~~Apresentação flexível de dados~~ — concluído (Onda 8)
-13. Memória persistente entre sessões (preferências do usuário)
-14. Cache de resultados de actions frequentes
-15. Upgrade RAM servidor para modelo 7b
-16. Agentic loop multi-step habilitado em produção
+13. ~~Colunas preferenciais por rota~~ — concluído (Onda 9)
+14. ~~Modal expandir + copiar API~~ — concluído (Onda 9)
+15. ~~Streaming direct responses~~ — concluído (Onda 9)
+16. ~~Estabilidade memória (ctx 2048)~~ — concluído (Onda 9)
+17. Memória persistente entre sessões (preferências do usuário)
+18. Cache de resultados de actions frequentes
+19. Upgrade RAM servidor para modelo 7b + ctx 4096
+20. Agentic loop multi-step habilitado em produção

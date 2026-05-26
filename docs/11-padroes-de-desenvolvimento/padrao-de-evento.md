@@ -209,6 +209,15 @@ role_permissions_replaced
 user_superadmin_updated
 ```
 
+### Handlers no `EventBus`
+
+| Handler | Responsabilidade |
+|---------|-----------------|
+| `RbacEventHandler` | Invalida cache e recalcula permissões (`IamSyncService`) |
+| `RbacNotificationEventHandler` | Dispara `app_access_granted_v1` para usuários que ganharam acesso a novas apps |
+| `AdminAuditEventHandler` | Persiste auditoria de plugins/apps |
+| `SocketIOEventDispatcher` | Push em tempo real para o Portal |
+
 ---
 
 ## 11. Socket.IO

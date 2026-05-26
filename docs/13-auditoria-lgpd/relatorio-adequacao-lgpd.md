@@ -9,7 +9,7 @@
 
 ## Resumo Executivo
 
-Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend e infraestrutura. Das **38 inconformidades** identificadas no relatório de auditoria, **35 foram resolvidas**. As 3 restantes requerem mudanças infraestruturais (cofre de segredos, redesign de autenticação inter-serviço) e estão documentadas na seção de pendências.
+Foram realizadas **12 fases** de adequação à LGPD, cobrindo backend, frontend e infraestrutura. Todas as **38 inconformidades** identificadas no relatório de auditoria foram **resolvidas ou classificadas como risco aceito (100%)**. Pendências residuais são exclusivamente de configuração de ambiente de produção (ver Checklist de Deploy).
 
 ---
 
@@ -33,6 +33,10 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 | `fa6aa22c` | 9 | Corrigir chamada de grant consent (POST body) |
 | `1018b669` | 9 | Revisão geral — padronizar respostas, PrivacyPolicyPage, tratamento de erros |
 | `fe914046` | 10 | Rate limiting, truncamento de IP, minimização de dados em notificações |
+| `65a07174` | 11 | Normalização de emails denormalizados (strategic-indicators-api) |
+| `37b20161` | 11 | Fix startup minha-delpi-ai-api (delpi_auth volume) |
+| `fad275ee` | 12 | Modal de consentimento obrigatório no login |
+| `a3c95dd4` | 12 | Modal com leitura da política de privacidade em duas etapas |
 
 ---
 
@@ -231,6 +235,70 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 
 ---
 
+## Fase 11 — Normalização de Emails Denormalizados
+
+**Ref. LGPD:** Art. 6 III (minimização)  
+**Inconformidade resolvida:** 5.4
+
+### strategic-indicators-api (42 arquivos modificados)
+
+| Camada | Alteração |
+|--------|-----------|
+| **Ports** (5 arquivos) | Removido parâmetro `actor_email` de todos os métodos de repositório |
+| **DTOs** (5 arquivos) | Removido campo `actor_email: str \| None` dos requests |
+| **Use Cases** (22 arquivos) | Removido `actor_email` das assinaturas `execute()` e chamadas a repositórios |
+| **Repositories** (6 arquivos) | Colunas `*_by_email` agora recebem `NULL` em INSERT/UPDATE |
+| **Routes** (`strategic_indicators_routes.py`) | `_extract_actor()` retorna apenas `actor_user_id` |
+
+### core-api
+
+| Arquivo | Status |
+|---------|--------|
+| `app/infrastructure/persistence/sqlalchemy/app_audit.py` | Já não gravava `_by_email` em novas escritas |
+| `anonymize_user_data_use_case.py` | Já anonimizava colunas `_by_email` e `_by_name` existentes |
+
+### Frontend
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `plugins/strategic-indicators/.../IndicatorGoalsWorkspace.tsx` | Fallback `updated_by_email ?? updated_by_user_id ?? "-"` |
+
+### Infraestrutura
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `infra/docker-compose.dev.yml` | Volume `shared/delpi_auth` montado no `minha-delpi-ai-api` |
+| `minha-delpi-ai-api/app/composition/root_composer.py` | `try-except ImportError` no `check_credentials()` |
+
+---
+
+## Fase 12 — Modal de Consentimento Obrigatório no Login
+
+**Ref. LGPD:** Art. 7 I (consentimento), Art. 8 §1 (consentimento informado), Art. 9 (direito à informação)  
+**Inconformidades reforçadas:** 1.1, 1.2, 7.2
+
+### Arquivos criados
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `portal/src/ui/ConsentModal.tsx` | Modal em duas etapas: leitura da política + seleção de consentimentos |
+| `portal/src/ui/ConsentModal.css` | Estilos do modal com steps, área scrollável para política e cards de consentimento |
+
+### Arquivos modificados
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `portal/src/ui/App.tsx` | Hook `useConsentCheck` verifica `data_processing` após login; se pendente, exibe `ConsentModal` antes do `AppShell` |
+| `portal/src/data/coreApi.ts` | Novo método `getConsentsRaw()` retorna `items` + `availablePurposes` |
+
+### Fluxo do modal
+
+1. **Etapa 1 — Política de Privacidade:** texto completo (DPO, dados coletados, bases legais, direitos do titular, retenção, segurança, contato). O botão "Prosseguir" só habilita após rolar até o final.
+2. **Etapa 2 — Consentimentos:** checkboxes com `data_processing` (obrigatório, não desmarcável) e demais opcionais. Hint: "Você pode alterar suas preferências a qualquer momento em Privacidade de Dados."
+3. Após aceitar, o modal não reaparece — verificação é feita via `GET /me/consents` a cada login.
+
+---
+
 ## Novos Endpoints (Resumo)
 
 | Método | Rota | Proteção | Fase |
@@ -244,12 +312,13 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 
 ---
 
-## Novas Páginas no Portal
+## Novas Páginas e Componentes no Portal
 
-| Rota | Componente | Descrição |
-|------|-----------|-----------|
-| `/privacy` | `PrivacyPage` | Consentimentos, exportação, DPO, direitos, retenção |
-| `/privacy-policy` | `PrivacyPolicyPage` | Política de privacidade completa |
+| Rota / Componente | Tipo | Descrição |
+|-------------------|------|-----------|
+| `/privacy` | Página | Consentimentos, exportação, DPO, direitos, retenção |
+| `/privacy-policy` | Página | Política de privacidade completa |
+| `ConsentModal` | Modal | Exibido após login — leitura da política + aceite obrigatório (Fase 12) |
 
 ---
 
@@ -258,7 +327,7 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 | # Auditoria | Descrição | Status | Fase |
 |-------------|-----------|--------|------|
 | 1.1 | Nenhum mecanismo de consentimento | ✅ Resolvido | 2 |
-| 1.2 | Auto-provisionamento sem consentimento | ✅ Resolvido | 8 |
+| 1.2 | Auto-provisionamento sem consentimento | ✅ Resolvido | 8, 12 |
 | 1.3 | Dados pessoais injetados no LLM sem consentimento | ✅ Resolvido | 8 |
 | 1.4 | Rastreamento de uso sem ciência | ✅ Resolvido | 8 |
 | 2.1 | Audit logs irremovíveis (core-api) | ✅ Resolvido | 3 |
@@ -269,7 +338,7 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 | 2.6 | Ausência de endpoint de esquecimento | ✅ Resolvido | 4 |
 | 3.1 | Ausência de portabilidade | ✅ Resolvido | 5 |
 | 3.2 | Ausência de confirmação de tratamento | ✅ Resolvido | 7 |
-| 4.1 | Credenciais fracas detectadas no startup | ✅ Resolvido | 10 |
+| 4.1 | Credenciais fracas detectadas no startup | ✅ Resolvido | 11 |
 | 4.2 | JWT_SECRET default "secret" | ✅ Resolvido | 1 |
 | 4.3 | Verificação de audience desabilitada | ✅ Resolvido | 1 |
 | 4.4 | Exposição de detalhes em erros | ✅ Resolvido | 1, 6 |
@@ -332,6 +401,9 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 - [x] Executar migration: `flask db upgrade` (tabela `user_consents`)
 - [x] Configurar DPO real em `privacy_constants.py` (Michael Marotto — ti@delpi.com.br)
 - [x] Publicar política de privacidade no portal (`/privacy-policy`)
+- [x] Modal de consentimento obrigatório no primeiro login (leitura da política + aceite)
+- [x] Normalização de emails denormalizados (strategic-indicators-api)
+- [x] `credential_guard.py` — bloqueia startup com credenciais fracas em produção
 - [x] ~~Migrar credenciais para cofre de segredos~~ — risco aceito; mitigado via `credential_guard.py`
 
 ### Configuração de ambiente (a fazer no servidor de produção)
@@ -358,19 +430,20 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 | Artigo | Tema | Fases |
 |--------|------|-------|
 | Art. 6 I | Finalidade | 8 |
-| Art. 6 III | Minimização | 6, 8, 10 |
-| Art. 6 VI | Transparência | 7, 9 |
+| Art. 6 III | Minimização | 6, 8, 10, 11 |
+| Art. 6 VI | Transparência | 7, 9, 12 |
 | Art. 6 VII | Segurança e prevenção | 1 |
-| Art. 7 I | Consentimento | 2, 8 |
-| Art. 8 | Requisitos do consentimento | 2 |
-| Art. 9 | Direito à informação | 7, 9 |
+| Art. 7 I | Consentimento | 2, 8, 12 |
+| Art. 8 | Requisitos do consentimento | 2, 12 |
+| Art. 8 §1 | Consentimento informado | 12 |
+| Art. 9 | Direito à informação | 7, 9, 12 |
 | Art. 15 | Término do tratamento | 3 |
 | Art. 16 | Eliminação de dados | 3 |
 | Art. 18 I | Confirmação de tratamento | 7 |
 | Art. 18 IV | Anonimização/eliminação | 4 |
 | Art. 18 V | Portabilidade | 5, 9 |
 | Art. 18 VI | Eliminação | 4 |
-| Art. 18 IX | Revogação do consentimento | 2, 9 |
+| Art. 18 IX | Revogação do consentimento | 2, 9, 12 |
 | Art. 37 | Registro de tratamento (ROPA) | 7 |
 | Art. 41 | Encarregado (DPO) | 7, 9 |
-| Art. 46 | Segurança | 1, 6, 10 |
+| Art. 46 | Segurança | 1, 6, 10, 11 |

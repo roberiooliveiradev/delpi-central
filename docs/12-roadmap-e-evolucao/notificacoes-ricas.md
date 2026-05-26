@@ -11,12 +11,12 @@
 |------|---------|
 | **Modelo** | `type`, `category`, `presentation` (`text` \| `html` \| `template`), `action`, `htmlContent`, `metadata`, `expiresAt`, `icon` |
 | **Segurança** | HTML sanitizado com `bleach` na Core API; validação de `portal_route` e `external_url` |
-| **Templates sistema** | `welcome_v1`, `birthday_v1`, `company_event_v1` (somente leitura no Admin) |
+| **Templates sistema** | `welcome_v1`, `birthday_v1`, `company_event_v1`, `app_access_granted_v1` (somente leitura no Admin) |
 | **Templates customizados** | CRUD `GET/POST/DELETE /admin/notifications/templates` + migration `c9d0e1f2a3b4` |
 | **Variáveis** | `{userName}`, `{userFullName}`, `{userEmail}` preenchidas por destinatário no dispatch |
 | **Admin Portal** | Painéis numerados, pills de formato, múltiplos destinatários, preview por destinatário, `expiresAt` |
 | **Usuário** | Sino, home, `/notifications` (abas **Histórico** + **Preferências**), ações no card |
-| **RBAC Admin** | `PUT /admin/rbac/users/:id` com `birthDate` para automação de aniversário |
+| **RBAC Admin** | `PUT /admin/rbac/users/:id` com `birthDate` para automação de aniversário; notificação automática ao conceder acesso |
 | **API envio** | `POST /admin/notifications`, `POST /integrations/notifications` |
 | **API leitura** | `GET /me/notifications` (não lidas), `GET /me/notifications/history` (paginado + filtros) |
 | **API usuário** | `PATCH /me/notifications/<id>/important`, `DELETE /me/notifications/<id>` (soft delete) |
@@ -66,9 +66,10 @@
 
 | Template | `category` | Variáveis |
 |----------|------------|-----------|
-| Boas-vindas | `welcome` | `userName` (auto) |
-| Aniversário | `birthday` | `userName` (auto), `years` |
-| Evento empresa | `company_event` | `eventName`, `eventDate`, `location` |
+| Boas-vindas (`welcome_v1`) | `welcome` | `userName` (auto) |
+| Aniversário (`birthday_v1`) | `birthday` | `userName` (auto), `years` |
+| Evento empresa (`company_event_v1`) | `company_event` | `eventName`, `eventDate`, `location` |
+| Acesso a aplicação (`app_access_granted_v1`) | `access` | `userName` (auto), `appNames` (obrigatório) |
 
 ### Customizados
 
@@ -152,6 +153,7 @@ Detalhes: [Portal — Notificações](../06-portal-frontend/notificacoes.md).
 | **5** | ✅ | Centro `/notifications` com filtros (status, categoria, importantes), excluir e marcar importante |
 | **6** | ✅ | Automação (welcome no 1º login, aniversário via cron), destinatários por `roleIds`/`groupIds` |
 | **7** | ✅ | Rate limit em integrações; pré-visualização HTML no Admin |
+| **8** | ✅ | Template `app_access_granted_v1`; notificação automática ao conceder acesso via RBAC |
 
 ---
 
