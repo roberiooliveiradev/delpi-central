@@ -30,6 +30,14 @@ export function NotificationTemplateView({
         </ul>
       ) : null}
 
+      {definition.id === "app_access_granted_v1" && vars.appNames ? (
+        <ul className="notification-template-view__details">
+          {vars.appNames.split(",").map((app) => (
+            <li key={app.trim()}>{app.trim()}</li>
+          ))}
+        </ul>
+      ) : null}
+
       {definition.hint ? (
         <p className="notification-template-view__hint">{definition.hint}</p>
       ) : null}

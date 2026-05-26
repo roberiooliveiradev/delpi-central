@@ -48,6 +48,21 @@ export const NOTIFICATION_TEMPLATE_DEFINITIONS: NotificationTemplateDefinition[]
       { key: "location", label: "Local (opcional)", placeholder: "Auditório principal" },
     ],
   },
+  {
+    id: "app_access_granted_v1",
+    label: "Acesso a aplicação concedido",
+    category: "access",
+    defaultType: "info",
+    defaultTitle: "Novo acesso liberado",
+    defaultMessage: "Olá, {userName}! Você recebeu acesso a: {appNames}.",
+    recipientAutoVars: ["userName"],
+    recipientVars: ["userName"],
+    isSystem: true,
+    hint: "Acesse pelo menu lateral ou pela página de aplicativos.",
+    fields: [
+      { key: "appNames", label: "Aplicações", placeholder: "App1, App2, App3", required: true },
+    ],
+  },
 ];
 
 export function getTemplateDefinition(

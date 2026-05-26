@@ -24,6 +24,7 @@ def _fields_from_spec(spec: NotificationTemplateSpec) -> tuple[NotificationTempl
         "eventName": "Nome do evento",
         "eventDate": "Data",
         "location": "Local",
+        "appNames": "Aplicações",
     }
     for key in spec.required_vars:
         fields.append(
