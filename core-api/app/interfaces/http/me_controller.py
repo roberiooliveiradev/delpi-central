@@ -87,11 +87,13 @@ me_bp = Blueprint("me", __name__)
 def get_me():
     user = g.current_user
 
-    consent_pending = False
+    consent_pending = True
     with SqlAlchemyUnitOfWork() as uow:
         consents = uow.consents.list_by_user(UUID(str(user.id)))
-        if not consents:
-            consent_pending = True
+        for c in consents:
+            if c.purpose == "data_processing" and c.granted:
+                consent_pending = False
+                break
 
     payload = {
         "id": user.id,

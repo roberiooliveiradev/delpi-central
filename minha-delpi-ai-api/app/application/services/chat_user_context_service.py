@@ -80,11 +80,12 @@ class ChatUserContextService:
             )
             if resp.status_code != 200:
                 return False
-            consents = resp.json()
-            if isinstance(consents, list):
+            data = resp.json()
+            items = data.get("items") if isinstance(data, dict) else data
+            if isinstance(items, list):
                 return any(
                     c.get("purpose") == "ai_context" and c.get("granted")
-                    for c in consents
+                    for c in items
                 )
         except Exception:
             logger.debug("lgpd_consent_check_failed", exc_info=True)
