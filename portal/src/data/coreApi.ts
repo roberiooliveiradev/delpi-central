@@ -62,6 +62,7 @@ export type NotificationCategory =
   | "birthday"
   | "company_event"
   | "announcement"
+  | "access"
   | "custom"
   | "controle_mp"
   | "transformometro";

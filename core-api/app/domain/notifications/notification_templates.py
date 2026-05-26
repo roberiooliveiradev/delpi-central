@@ -51,6 +51,17 @@ NOTIFICATION_TEMPLATES: dict[str, NotificationTemplateSpec] = {
         required_vars=("eventName",),
         optional_vars=("eventDate", "location"),
     ),
+    "app_access_granted_v1": NotificationTemplateSpec(
+        id="app_access_granted_v1",
+        label="Acesso a aplicação concedido",
+        category="access",
+        default_type="info",
+        default_title="Novo acesso liberado",
+        default_message="Olá, {userName}! Você recebeu acesso a: {appNames}.",
+        required_vars=("appNames",),
+        recipient_vars=("userName",),
+        hint="Acesse pelo menu lateral ou pela página de aplicativos.",
+    ),
 }
 
 ALLOWED_TEMPLATE_IDS = frozenset(NOTIFICATION_TEMPLATES.keys())
