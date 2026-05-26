@@ -26,7 +26,7 @@ class Settings:
     # API Server
     # ==========================
     PORT: str = _get_env("PORT", "API_DELPI_PORT", default="8000")
-    JWT_SECRET: str = _get_env("JWT_SECRET", "API_DELPI_JWT_SECRET", default="secret")
+    JWT_SECRET: str = _get_env("JWT_SECRET", "API_DELPI_JWT_SECRET", default="")
     API_ENV: str = _get_env("API_DELPI_ENV", default="development")
     LOG_LEVEL: str = _get_env("LOG_LEVEL", default="INFO")
 

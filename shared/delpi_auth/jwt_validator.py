@@ -49,11 +49,14 @@ def validate_token(token: str):
     if not key:
         raise Exception("Invalid token key")
 
+    _audience = os.getenv("KEYCLOAK_AUDIENCE")
+
     payload = jwt.decode(
         token,
         key,
         algorithms=["RS256"],
-        options={"verify_aud": False},
+        audience=_audience if _audience else None,
+        options={"verify_aud": bool(_audience)},
     )
 
     return payload

@@ -20,7 +20,7 @@ def _get_env(*names: str, default=None):
 class Settings:
     TM_API_ROOT_PATH: str = _get_env("TM_API_ROOT_PATH", default="/apps/transformometro-api")
     PORT: str = _get_env("PORT", default="8000")
-    JWT_SECRET: str = _get_env("JWT_SECRET", "API_DELPI_JWT_SECRET", default="secret")
+    JWT_SECRET: str = _get_env("JWT_SECRET", "API_DELPI_JWT_SECRET", default="")
     LOG_LEVEL: str = _get_env("LOG_LEVEL", default="INFO")
     TM_RUN_MIGRATIONS_ON_STARTUP: bool = (
         str(_get_env("TM_RUN_MIGRATIONS_ON_STARTUP", default="false") or "false").lower()

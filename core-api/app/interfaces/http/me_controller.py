@@ -1,5 +1,6 @@
 # app/interfaces/http/me_controller.py
 
+import logging
 import os
 from uuid import UUID
 
@@ -69,6 +70,8 @@ from app.application.use_cases.lookup_directory_users_use_case import (
 from app.application.use_cases.search_directory_users_use_case import (
     SearchDirectoryUsersUseCase,
 )
+
+logger = logging.getLogger(__name__)
 
 me_bp = Blueprint("me", __name__)
 
@@ -251,7 +254,8 @@ def mark_notification_read(notification_id: str):
     except NotificationAccessDeniedError:
         return api_error("forbidden", "Notification does not belong to current user", status=403)
     except Exception as e:
-        return api_error("mark_failed", str(e))
+        logger.exception("mark_failed")
+        return api_error("mark_failed", "Erro ao processar notificação.", status=500)
 
 
 @me_bp.route("/me/notifications/read-all", methods=["POST"])
@@ -267,7 +271,8 @@ def mark_all_notifications_read():
         return jsonify({"ok": True}), 200
 
     except Exception as e:
-        return api_error("mark_all_failed", str(e))
+        logger.exception("mark_all_failed")
+        return api_error("mark_all_failed", "Erro ao processar notificações.", status=500)
 
 
 @me_bp.route("/me/notifications/<notification_id>", methods=["DELETE"])
@@ -289,7 +294,8 @@ def delete_notification(notification_id: str):
     except NotificationAccessDeniedError:
         return api_error("forbidden", "Notification does not belong to current user", status=403)
     except Exception as e:
-        return api_error("delete_failed", str(e))
+        logger.exception("delete_failed")
+        return api_error("delete_failed", "Erro ao excluir notificação.", status=500)
 
 
 @me_bp.route("/me/notifications/<notification_id>/important", methods=["PATCH"])
@@ -323,7 +329,8 @@ def set_notification_important(notification_id: str):
     except NotificationAccessDeniedError:
         return api_error("forbidden", "Notification does not belong to current user", status=403)
     except Exception as e:
-        return api_error("important_failed", str(e))
+        logger.exception("important_failed")
+        return api_error("important_failed", "Erro ao atualizar notificação.", status=500)
 
 
 # ==========================================================
@@ -394,7 +401,8 @@ def search_directory_users():
     except ValueError:
         return api_error("validation_error", "limit must be a number", status=400)
     except Exception as exc:
-        return api_error("search_directory_users_failed", str(exc))
+        logger.exception("search_directory_users_failed")
+        return api_error("search_directory_users_failed", "Erro ao buscar usuários.", status=500)
 
     return jsonify({"items": results}), 200
 
@@ -414,7 +422,8 @@ def lookup_directory_users():
                 user_ids=[str(item) for item in raw_ids if item],
             )
     except Exception as exc:
-        return api_error("lookup_directory_users_failed", str(exc))
+        logger.exception("lookup_directory_users_failed")
+        return api_error("lookup_directory_users_failed", "Erro ao buscar usuários.", status=500)
 
     return jsonify({"items": results}), 200
 
@@ -454,7 +463,8 @@ def test_notification():
         ), 200
 
     except Exception as e:
-        return api_error("notify_failed", str(e))
+        logger.exception("notify_failed")
+        return api_error("notify_failed", "Erro ao enviar notificação.", status=500)
 
 
 # ==========================================================

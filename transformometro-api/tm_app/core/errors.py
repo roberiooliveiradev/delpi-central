@@ -1,17 +1,23 @@
 from __future__ import annotations
 
+import logging
+
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginsRepositoryError,
 )
 
+_logger = logging.getLogger(__name__)
+
+_GENERIC_MESSAGE = "Erro interno do servidor."
+
 
 def format_api_error(exc: Exception) -> str:
-    """Extrai mensagem útil de exceções de banco/repositório."""
-    if isinstance(exc, PluginsRepositoryError) and exc.__cause__ is not None:
-        return str(exc.__cause__)
+    """Loga detalhes internos e retorna mensagem segura para o cliente."""
+    _logger.debug("api_error_detail: %s", exc, exc_info=True)
 
-    cause = getattr(exc, "__cause__", None)
-    if cause is not None:
-        return str(cause)
+    if isinstance(exc, (ValueError, PluginsRepositoryError)):
+        msg = str(exc)
+        if msg and len(msg) < 300:
+            return msg
 
-    return str(exc) or exc.__class__.__name__
+    return _GENERIC_MESSAGE

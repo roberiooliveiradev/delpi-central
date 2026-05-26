@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -36,7 +37,10 @@ def build_allowed_origins() -> list[str]:
         else:
             origins.add(settings.VITE_KC_URL.rstrip("/"))
 
-    origins.add("http://localhost")
+    # localhost only in development
+    api_env = os.getenv("API_DELPI_ENV", "development")
+    if api_env != "production":
+        origins.add("http://localhost")
     return sorted(origins)
 
 
@@ -71,7 +75,7 @@ async def validation_exception_handler(_request: Request, exc: RequestValidation
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(_request: Request, exc: Exception):
     logging.getLogger(__name__).exception("unhandled_exception")
-    return fail(format_api_error(exc), 500)
+    return fail("Erro interno do servidor.", 500)
 
 
 app.middleware("http")(jwt_middleware)
