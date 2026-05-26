@@ -41,8 +41,6 @@ class RevisaoWorkflowNotificationService:
         label = self._processo_label(processo_id)
         versao = revisao.get("versao_revisao")
         message = f"{label} — revisão v{versao} aguarda aprovação."
-        if actor_email:
-            message += f" Enviada por {actor_email}."
 
         recipients = self._approver_recipients(exclude_email=actor_email)
         if not recipients:
@@ -75,8 +73,8 @@ class RevisaoWorkflowNotificationService:
         if not processo_id or not revisao_id:
             return
 
-        submitter = self._submitter_email(revisao_id, exclude_email=actor_email)
-        if not submitter:
+        submitter_info = self._submitter_info(revisao_id, exclude_email=actor_email)
+        if not submitter_info:
             logger.info(
                 "workflow_notify_decision_skipped no_submitter revisao=%s decision=%s",
                 revisao_id,
@@ -93,10 +91,14 @@ class RevisaoWorkflowNotificationService:
             else "Transformômetro — revisão rejeitada"
         )
         message = f"{label} — revisão v{versao} foi {'aprovada' if approved else 'rejeitada'}."
-        if actor_email:
-            message += f" Por {actor_email}."
         if not approved and motivo:
             message += f" Motivo: {motivo.strip()}"
+
+        recipients: dict[str, list[str]] = {}
+        if submitter_info.get("user_id"):
+            recipients["userIds"] = [submitter_info["user_id"]]
+        elif submitter_info.get("email"):
+            recipients["emails"] = [submitter_info["email"]]
 
         self._dispatch(
             title=title,
@@ -105,7 +107,7 @@ class RevisaoWorkflowNotificationService:
             processo_id=processo_id,
             revisao_id=revisao_id,
             event=f"revisao:{decision}",
-            recipients={"emails": [submitter]},
+            recipients=recipients,
         )
 
     def _dispatch(
@@ -149,42 +151,44 @@ class RevisaoWorkflowNotificationService:
             logger.warning("workflow_notification_dispatch_empty event=%s", event)
 
     def _approver_recipients(self, *, exclude_email: str | None) -> dict[str, list[str]]:
-        emails = _parse_csv_list(settings.TM_WORKFLOW_APPROVER_EMAILS)
         role_ids = _parse_csv_list(settings.TM_WORKFLOW_APPROVER_ROLE_IDS)
 
+        if role_ids:
+            return {"roleIds": role_ids}
+
+        emails = _parse_csv_list(settings.TM_WORKFLOW_APPROVER_EMAILS)
         if exclude_email:
             normalized = exclude_email.strip().lower()
             emails = [e for e in emails if e.lower() != normalized]
 
-        payload: dict[str, list[str]] = {}
         if emails:
-            payload["emails"] = emails
-        if role_ids:
-            payload["roleIds"] = role_ids
-        return payload
+            return {"emails": emails}
+
+        return {}
 
     @staticmethod
-    def _submitter_email(revisao_id: str, *, exclude_email: str | None) -> str | None:
+    def _submitter_info(revisao_id: str, *, exclude_email: str | None) -> dict[str, str] | None:
+        """Retorna {user_id, email} do submitter, preferindo user_id (LGPD minimização)."""
         row = AuditRepository().fetch_one(
             """
-            SELECT user_email FROM transformometro.audit_logs
+            SELECT user_id, user_email FROM transformometro.audit_logs
             WHERE entity_type = 'revisao'
               AND entity_id = %s
               AND action = 'workflow_submeter'
-              AND user_email IS NOT NULL
-              AND TRIM(user_email) <> ''
             ORDER BY created_at DESC
             LIMIT 1
             """,
             (revisao_id,),
         )
-        email = (row or {}).get("user_email") if row else None
-        if not email:
+        if not row:
             return None
-        email = str(email).strip()
-        if exclude_email and email.lower() == exclude_email.strip().lower():
+        user_id = str(row.get("user_id") or "").strip()
+        email = str(row.get("user_email") or "").strip()
+        if exclude_email and email and email.lower() == exclude_email.strip().lower():
             return None
-        return email
+        if not user_id and not email:
+            return None
+        return {"user_id": user_id, "email": email}
 
     @staticmethod
     def _processo_label(processo_id: str) -> str:

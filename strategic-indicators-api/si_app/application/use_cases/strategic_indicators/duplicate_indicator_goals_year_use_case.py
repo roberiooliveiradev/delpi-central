@@ -22,7 +22,6 @@ class DuplicateStrategicIndicatorsIndicatorGoalsYearUseCase:
         *,
         body: dict,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         source_year = int(body.get("source_year") or 0)
         target_year = int(body.get("target_year") or 0)
@@ -46,5 +45,4 @@ class DuplicateStrategicIndicatorsIndicatorGoalsYearUseCase:
             indicator_ids=indicator_ids,
             overwrite_existing=overwrite_existing,
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
         )

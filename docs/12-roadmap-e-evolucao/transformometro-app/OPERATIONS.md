@@ -116,6 +116,6 @@ Variáveis:
 
 - `TRANSFORMOMETRO_API_BASE_URL` — chamadas **entre containers**: `http://transformometro-api:8000` (sem `/apps/...`; o nginx faz rewrite só no browser). Rotas: `/transformometro/integrations/engineering/transforma-mais/*`
 - `API_DELPI_INTERNAL_SERVICE_TOKEN` — token **já previsto** no `infra/.env` de produção (`append-missing-env-production.sh`); mesmo valor em `transformometro-api`, `strategic-indicators-api` e `api-delpi`. Header: `X-Delpi-Service-Token` (padrão DELPI, igual conceito ao `CORE_API_INTEGRATIONS_SERVICE_TOKEN` da Core API).
-- `TRANSFORMOMETRO_SERVICE_BEARER` — legado opcional; evitar duplicar segredo.
+- ~~`TRANSFORMOMETRO_SERVICE_BEARER`~~ — **removido** (legado, substituído por `API_DELPI_INTERNAL_SERVICE_TOKEN`).
 
 **401 em Indicadores:** JWT em threads (`submit_in_request_context` + `request_authorization`), ignorar snapshot/cache com 401 antigo, e garantir `API_DELPI_INTERNAL_SERVICE_TOKEN` no `.env`.

@@ -22,7 +22,6 @@ class StrategicIndicatorsAdminDepartmentsRepositoryPort(ABC):
         aggregation_mode: str,
         display_order: int,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -41,7 +40,6 @@ class StrategicIndicatorsAdminDepartmentsRepositoryPort(ABC):
         is_active: bool,
         display_order: int,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -51,7 +49,6 @@ class StrategicIndicatorsAdminDepartmentsRepositoryPort(ABC):
         *,
         department_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -61,7 +58,6 @@ class StrategicIndicatorsAdminDepartmentsRepositoryPort(ABC):
         *,
         department_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError
 
@@ -71,6 +67,5 @@ class StrategicIndicatorsAdminDepartmentsRepositoryPort(ABC):
         *,
         department_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         raise NotImplementedError

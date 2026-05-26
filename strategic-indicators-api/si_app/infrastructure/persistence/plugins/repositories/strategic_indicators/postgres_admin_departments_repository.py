@@ -50,7 +50,6 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
         aggregation_mode: str,
         display_order: int,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         query = """
             INSERT INTO strategic_indicators.departments (
@@ -85,9 +84,9 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
                 aggregation_mode,
                 display_order,
                 actor_user_id,
-                actor_email,
+                None,
                 actor_user_id,
-                actor_email,
+                None,
             ),
         )
 
@@ -106,7 +105,6 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
         is_active: bool,
         display_order: int,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         current_id = department_id.strip()
         target_id = (new_department_id or current_id).strip()
@@ -174,7 +172,7 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
                         before.get("created_by_user_id"),
                         before.get("created_by_email"),
                         actor_user_id,
-                        actor_email,
+                        None,
                     ),
                 )
                 self.execute(
@@ -237,7 +235,7 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
                 is_active,
                 display_order,
                 actor_user_id,
-                actor_email,
+                None,
                 current_id,
             ),
         )
@@ -247,7 +245,6 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
         *,
         department_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         query = """
             UPDATE strategic_indicators.departments
@@ -263,7 +260,7 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
             query,
             (
                 actor_user_id,
-                actor_email,
+                None,
                 department_id,
             ),
         )
@@ -278,7 +275,6 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
         *,
         department_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         query = """
             UPDATE strategic_indicators.departments
@@ -294,7 +290,7 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
             query,
             (
                 actor_user_id,
-                actor_email,
+                None,
                 department_id,
             ),
         )
@@ -309,7 +305,6 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
         *,
         department_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         before = self.fetch_one(
             """

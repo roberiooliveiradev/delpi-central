@@ -70,12 +70,6 @@ class TransformometroApiClient:
         headers: MutableMapping[str, str] = {}
         if authorization:
             headers["Authorization"] = authorization
-        else:
-            legacy = (os.getenv("TRANSFORMOMETRO_SERVICE_BEARER") or "").strip()
-            if legacy:
-                headers["Authorization"] = (
-                    legacy if legacy.startswith("Bearer ") else f"Bearer {legacy}"
-                )
 
         apply_internal_service_headers(headers)
 

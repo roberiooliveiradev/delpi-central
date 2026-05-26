@@ -17,7 +17,6 @@ class DeleteStrategicIndicatorsIndicatorGoalUseCase:
         *,
         goal_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         if not goal_id.strip():
             raise ValueError("goal_id é obrigatório.")
@@ -25,5 +24,4 @@ class DeleteStrategicIndicatorsIndicatorGoalUseCase:
         return self._repository.delete_indicator_goal(
             goal_id=goal_id.strip(),
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
         )

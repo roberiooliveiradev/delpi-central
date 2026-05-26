@@ -64,7 +64,6 @@ class PostgresStrategicIndicatorsChangeRequestRepository(
         target_block: str,
         proposed_payload: dict,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         request_code = f"SI-CR-{str(uuid4())[:8].upper()}"
 
@@ -105,7 +104,7 @@ class PostgresStrategicIndicatorsChangeRequestRepository(
                 target_block,
                 json.dumps(proposed_payload, ensure_ascii=False),
                 actor_user_id,
-                actor_email,
+                None,
             ),
         )
 
@@ -115,7 +114,6 @@ class PostgresStrategicIndicatorsChangeRequestRepository(
         change_request_id: str,
         comment_text: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         query = """
             INSERT INTO strategic_indicators.settings_change_request_comments (
@@ -140,7 +138,7 @@ class PostgresStrategicIndicatorsChangeRequestRepository(
                 change_request_id,
                 comment_text,
                 actor_user_id,
-                actor_email,
+                None,
             ),
         )
 
@@ -149,7 +147,6 @@ class PostgresStrategicIndicatorsChangeRequestRepository(
         *,
         change_request_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         query = """
             UPDATE strategic_indicators.settings_change_requests
@@ -181,7 +178,7 @@ class PostgresStrategicIndicatorsChangeRequestRepository(
             query,
             (
                 actor_user_id,
-                actor_email,
+                None,
                 change_request_id,
             ),
         )

@@ -17,7 +17,6 @@ class ActivateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
         *,
         indicator_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         if not indicator_id.strip():
             raise ValueError("indicator_id é obrigatório.")
@@ -25,5 +24,4 @@ class ActivateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
         return self._repository.activate_department_indicator(
             indicator_id=indicator_id.strip(),
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
         )

@@ -275,10 +275,14 @@ export const RbacTab = () => {
   const handleAnonymize = async () => {
     if (!anonymizing) return;
 
-    await api.anonymizeUser(anonymizing.id);
-
-    setAnonymizing(null);
-    usersResource.refetch();
+    try {
+      await api.anonymizeUser(anonymizing.id);
+      usersResource.refetch();
+    } catch {
+      alert("Erro ao anonimizar dados do usuário.");
+    } finally {
+      setAnonymizing(null);
+    }
   };
 
   const goToPreviousPage = () => {

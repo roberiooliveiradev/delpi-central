@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
+from delpi_auth.credential_guard import check_credentials
 from tm_app.config import settings
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail
@@ -49,6 +50,7 @@ ALLOWED_ORIGINS = build_allowed_origins()
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    check_credentials()
     run_migrations_on_startup()
     yield
 

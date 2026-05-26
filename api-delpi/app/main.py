@@ -12,6 +12,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 #     run_plugins_migrations_on_startup,
 # )
 
+from delpi_auth.credential_guard import check_credentials
 from app.config import settings
 from app.interface.http.routes import product_routes
 from app.interface.http.routes import system_routes
@@ -55,6 +56,7 @@ def build_allowed_origins() -> list[str]:
 
 ALLOWED_ORIGINS = build_allowed_origins()
 
+check_credentials()
 
 # ==========================================================
 # FASTAPI CONFIG

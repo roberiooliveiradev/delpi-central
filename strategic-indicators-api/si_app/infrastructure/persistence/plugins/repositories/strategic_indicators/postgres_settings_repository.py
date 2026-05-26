@@ -90,7 +90,6 @@ class PostgresStrategicIndicatorsSettingsRepository(
         parameters: dict,
         governance: dict,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
             PostgresStrategicIndicatorsSettingsAuditRepository,
@@ -120,7 +119,6 @@ class PostgresStrategicIndicatorsSettingsRepository(
                 weights=weights,
                 goals=goals,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
                 audit_repository=audit_repository,
             )
 
@@ -136,7 +134,7 @@ class PostgresStrategicIndicatorsSettingsRepository(
                     (
                         json.dumps(payload_after, ensure_ascii=False),
                         actor_user_id,
-                        actor_email,
+                        None,
                         setting_key,
                     ),
                 )
@@ -146,7 +144,6 @@ class PostgresStrategicIndicatorsSettingsRepository(
                     payload_before=payload_before,
                     payload_after=payload_after,
                     changed_by_user_id=actor_user_id,
-                    changed_by_email=actor_email,
                 )
 
             self.commit()
@@ -196,7 +193,6 @@ class PostgresStrategicIndicatorsSettingsRepository(
         weights: dict,
         goals: dict,
         actor_user_id: str | None,
-        actor_email: str | None,
         audit_repository,
     ) -> None:
         weights_by_department = {
@@ -290,7 +286,7 @@ class PostgresStrategicIndicatorsSettingsRepository(
                     new_goal["headline_goal"],
                     new_goal["supporting_focus"],
                     actor_user_id,
-                    actor_email,
+                    None,
                     department_id,
                 ),
             )
@@ -300,5 +296,4 @@ class PostgresStrategicIndicatorsSettingsRepository(
                 payload_before=payload_before,
                 payload_after=payload_after,
                 changed_by_user_id=actor_user_id,
-                changed_by_email=actor_email,
             )

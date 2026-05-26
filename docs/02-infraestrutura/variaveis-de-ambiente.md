@@ -111,20 +111,25 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `CORE_API_BASE_URL` | `http://core-api:8000` |
 | `LLM_PROVIDER` | `ollama` ou `vllm` |
 | `OLLAMA_BASE_URL` | `http://ollama:11434` |
-| `OLLAMA_MODEL` | Default **`qwen2.5:1.5b`** (CPU, resposta rápida). Use `qwen2.5:3b` só se priorizar qualidade textual e aceitar latência maior |
-| `OLLAMA_NUM_CTX` | Janela de contexto. **Prod CPU (4 vCPU/8 GB):** `1024`; dev: `2048` |
+| `OLLAMA_MODEL` | Default **`qwen2.5:3b`** (CPU, bom equilíbrio qualidade/velocidade). Alternativas: `qwen2.5:7b` (GPU/16GB RAM), `qwen2.5:1.5b` (mínimo) |
+| `OLLAMA_NUM_CTX` | Janela de contexto. **Recomendado:** `4096`; mínimo CPU: `2048` |
 | `OLLAMA_NUM_THREAD` | Threads CPU. Usar = nº de cores reais. **Prod 4 vCPU:** `4` |
 | `OLLAMA_MAX_LOADED_MODELS` | Modelos simultâneos em RAM. **Prod 8 GB:** `1` (evita swap thrashing) |
 | `OLLAMA_NUM_PARALLEL` / `OLLAMA_KEEP_ALIVE` | Serviço `ollama` no Compose |
-| `LLM_MAX_TOKENS` | `num_predict` Ollama. **Prod CPU:** `256`; dev: `768` |
-| `CHAT_SESSION_TITLE_LLM_ENABLED` | `false` em prod recomendado (título rápido + refine opcional em background) |
-| `CHAT_FAST_PATH_ENABLED` | `true` — pula RAG/tools em cumprimentos curtos (`olá`, `oi`) |
-| `CHAT_TOOL_ROUTER_ENABLED` | `false` em CPU — evita LLM extra antes de cada resposta |
-| `CHAT_RAG_HYBRID_ENABLED` | `false` em CPU — evita embedding `bge-m3` em toda pergunta |
-| `CHAT_RAG_PREFER_KEYWORD_SEARCH` | `true` com hybrid off — busca por FTS sem vetor |
+| `LLM_MAX_TOKENS` | `num_predict` Ollama. **Recomendado:** `1536`; mínimo: `384` |
+| `LLM_TEMPERATURE` | Criatividade das respostas. **Recomendado:** `0.4` (natural); `0.2` (mais determinístico) |
+| `CHAT_SESSION_TITLE_LLM_ENABLED` | `true` recomendado — títulos automáticos melhoram UX |
+| `CHAT_FAST_PATH_ENABLED` | `true` — pula RAG/tools em cumprimentos curtos (`olá`, `oi`). Max chars: `30` |
+| `CHAT_TOOL_ROUTER_ENABLED` | `true` recomendado — LLM sugere ferramentas (melhora assertividade) |
+| `CHAT_RAG_HYBRID_ENABLED` | `true` recomendado — busca vetorial + keyword combinados |
+| `CHAT_RAG_RERANK_ENABLED` | `true` recomendado — boost por overlap de keywords |
+| `CHAT_RAG_PREFER_KEYWORD_SEARCH` | `true` — usa FTS como busca principal |
+| `CHAT_HISTORY_SUMMARY_ENABLED` | `true` recomendado — sumariza conversas longas para manter contexto |
 | `CHAT_OPERATIONAL_FAST_PATH_ENABLED` | `true` — pula RAG pesado em perguntas operacionais curtas |
 | `CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED` | `true` — resposta formatada sem LLM após action |
-| `EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED` | `false` em CPU — seleção por heurística + FTS |
+| `EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED` | `true` recomendado — ranking semântico de actions via embeddings |
+| `MAX_CONTEXT_CHUNKS` | Chunks RAG máximos. **Recomendado:** `8` |
+| `MAX_CONTEXT_CHARS` | Chars máximos de contexto RAG. **Recomendado:** `12000` |
 | `RAG_CONTEXT_MIN_SCORE` | Default `0.35` (fallback `RAG_ASSERTIVENESS_MIN_SCORE`). Prod operacional: `0.40`–`0.45`. Ver [rag-context-min-score-calibracao.md](../../minha-delpi-ai-api/docs/roadmap/rag-context-min-score-calibracao.md) |
 | `RAG_ASSERTIVENESS_MIN_SCORE` | Score mínimo em fluxos de assertividade (default `0.35`) |
 | `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` | Ex.: `bge-m3` |

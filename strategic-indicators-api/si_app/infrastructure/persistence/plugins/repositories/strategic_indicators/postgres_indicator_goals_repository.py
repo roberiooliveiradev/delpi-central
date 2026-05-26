@@ -675,7 +675,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         valid_to: str | None,
         notes: str | None,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         goal_scope_branch = normalize_goal_scope_branch(goal_scope_branch)
 
@@ -729,9 +728,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     valid_to,
                     notes,
                     actor_user_id,
-                    actor_email,
+                    None,
                     actor_user_id,
-                    actor_email,
+                    None,
                 ),
             )
 
@@ -766,7 +765,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         valid_to: str | None,
         notes: str | None,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         try:
             if indicator_id or goal_year is not None or goal_scope_branch is not None:
@@ -836,7 +834,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     valid_to,
                     notes,
                     actor_user_id,
-                    actor_email,
+                    None,
                     goal_id,
                 ),
             )
@@ -869,7 +867,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         *,
         goal_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         target = self.fetch_one(
             """
@@ -897,7 +894,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 """,
                 (
                     actor_user_id,
-                    actor_email,
+                    None,
                     target["indicator_id"],
                     target["goal_year"],
                     target.get("goal_scope_branch") or "",
@@ -917,7 +914,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 """,
                 (
                     actor_user_id,
-                    actor_email,
+                    None,
                     goal_id,
                 ),
             )
@@ -935,7 +932,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         *,
         goal_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         before = self.fetch_goal_identity(goal_id)
         if not before:
@@ -958,7 +954,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         *,
         goal_id: str,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         row = self.execute_returning_one(
             """
@@ -973,7 +968,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             """,
             (
                 actor_user_id,
-                actor_email,
+                None,
                 goal_id,
             ),
         )
@@ -1012,7 +1007,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         goal_year: int,
         items: list[dict],
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         created_items: list[dict] = []
 
@@ -1031,7 +1025,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     valid_to=item.get("valid_to"),
                     notes=item.get("notes"),
                     actor_user_id=actor_user_id,
-                    actor_email=actor_email,
                 )
             )
 
@@ -1048,7 +1041,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         indicator_ids: list[str] | None,
         overwrite_existing: bool,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         source_query = """
             SELECT
@@ -1112,7 +1104,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     """,
                     (
                         actor_user_id,
-                        actor_email,
+                        None,
                         row["indicator_id"],
                         target_year,
                         goal_scope_branch,
@@ -1171,9 +1163,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     row["id"],
                     source_year,
                     actor_user_id,
-                    actor_email,
+                    None,
                     actor_user_id,
-                    actor_email,
+                    None,
                 ),
             )
 
@@ -1203,7 +1195,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         indicator_ids: list[str],
         copy_from_year: int | None,
         actor_user_id: str | None,
-        actor_email: str | None,
     ) -> dict:
         created_items: list[dict] = []
 
@@ -1293,9 +1284,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                             source["id"],
                             copy_from_year,
                             actor_user_id,
-                            actor_email,
+                            None,
                             actor_user_id,
-                            actor_email,
+                            None,
                         ),
                     )
 

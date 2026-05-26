@@ -27,7 +27,6 @@ class UpdateStrategicIndicatorsSettingsUseCase:
             parameters=request.parameters,
             governance=request.governance,
             actor_user_id=request.actor_user_id,
-            actor_email=request.actor_email,
         )
 
     def _validate_parameters(self, parameters: dict) -> None:

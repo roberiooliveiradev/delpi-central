@@ -114,18 +114,13 @@ def _invalidate_read_cache_after_mutation(result):
     return result
 
 
-def _extract_actor(request: Request) -> tuple[str | None, str | None]:
+def _extract_actor(request: Request) -> str | None:
     user_context = getattr(request.state, "user", None)
-    actor_user_id = None
-    actor_email = None
-
-    if user_context is not None:
-        actor_user_id = getattr(user_context, "id", None) or getattr(
-            user_context, "sub", None
-        )
-        actor_email = getattr(user_context, "email", None)
-
-    return actor_user_id, actor_email
+    if user_context is None:
+        return None
+    return getattr(user_context, "id", None) or getattr(
+        user_context, "sub", None
+    )
 
 
 def _serialize_goal_item(item: dict) -> dict:
@@ -277,13 +272,13 @@ async def update_strategic_indicators_settings(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
 
         dto = UpdateStrategicIndicatorsSettingsRequest(
             parameters=body.parameters.model_dump(),
             governance=body.governance.model_dump(),
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
+
         )
 
         use_case = build_update_strategic_indicators_settings_use_case()
@@ -345,7 +340,7 @@ def list_change_requests(
 @require_permission("strategic-indicators.settings.manage")
 def create_change_request(body: CreateChangeRequestBody, request: Request):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
 
         use_case = build_create_strategic_indicators_change_request_use_case()
         result = use_case.execute(
@@ -355,7 +350,7 @@ def create_change_request(body: CreateChangeRequestBody, request: Request):
                 target_block=body.target_block,
                 proposed_payload=body.proposed_payload,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
         return result
@@ -369,7 +364,7 @@ def create_change_request(body: CreateChangeRequestBody, request: Request):
 @require_permission("strategic-indicators.settings.manage")
 def add_comment(change_request_id: str, body: AddCommentBody, request: Request):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
 
         use_case = build_add_strategic_indicators_change_request_comment_use_case()
         result = use_case.execute(
@@ -377,7 +372,7 @@ def add_comment(change_request_id: str, body: AddCommentBody, request: Request):
                 change_request_id=change_request_id,
                 comment_text=body.comment_text,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
         return result
@@ -391,10 +386,10 @@ def add_comment(change_request_id: str, body: AddCommentBody, request: Request):
 @require_permission("strategic-indicators.settings.manage")
 def submit_change_request(change_request_id: str, request: Request):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
 
         use_case = build_submit_strategic_indicators_change_request_use_case()
-        result = use_case.execute(change_request_id, actor_user_id, actor_email)
+        result = use_case.execute(change_request_id, actor_user_id)
         return result
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -417,13 +412,13 @@ def list_admin_departments():
 @require_permission("strategic-indicators.settings.manage")
 def create_admin_department(body: CreateDepartmentBodySchema, request: Request):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_create_strategic_indicators_admin_department_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 body=body.model_dump(),
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
     except ValueError as exc:
@@ -443,14 +438,14 @@ def update_admin_department(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_update_strategic_indicators_admin_department_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 department_id=department_id,
                 body=body.model_dump(),
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
     except ValueError as exc:
@@ -466,13 +461,13 @@ def update_admin_department(
 @require_permission("strategic-indicators.settings.manage")
 def deactivate_admin_department(department_id: str, request: Request):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_deactivate_strategic_indicators_admin_department_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 department_id=department_id,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
     except ValueError as exc:
@@ -488,13 +483,13 @@ def deactivate_admin_department(department_id: str, request: Request):
 @require_permission("strategic-indicators.settings.manage")
 def delete_admin_department(department_id: str, request: Request):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_delete_strategic_indicators_admin_department_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 department_id=department_id,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
     except ValueError as exc:
@@ -527,14 +522,14 @@ def create_admin_department_indicator(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_create_strategic_indicators_admin_department_indicator_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 department_id=department_id,
                 body=body.model_dump(),
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
     except ValueError as exc:
@@ -554,14 +549,14 @@ def update_admin_department_indicator(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_update_strategic_indicators_admin_department_indicator_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 indicator_id=indicator_id,
                 body=body.model_dump(),
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
     except ValueError as exc:
@@ -577,13 +572,13 @@ def update_admin_department_indicator(
 @require_permission("strategic-indicators.settings.manage")
 def activate_admin_department_indicator(indicator_id: str, request: Request):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_activate_strategic_indicators_admin_department_indicator_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 indicator_id=indicator_id,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
     except ValueError as exc:
@@ -599,13 +594,13 @@ def activate_admin_department_indicator(indicator_id: str, request: Request):
 @require_permission("strategic-indicators.settings.manage")
 def deactivate_admin_department_indicator(indicator_id: str, request: Request):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_deactivate_strategic_indicators_admin_department_indicator_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 indicator_id=indicator_id,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
     except ValueError as exc:
@@ -621,13 +616,13 @@ def deactivate_admin_department_indicator(indicator_id: str, request: Request):
 @require_permission("strategic-indicators.settings.manage")
 def delete_admin_department_indicator(indicator_id: str, request: Request):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_delete_strategic_indicators_admin_department_indicator_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 indicator_id=indicator_id,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
     except ValueError as exc:
@@ -692,7 +687,7 @@ def create_indicator_goal(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
 
         use_case = build_create_strategic_indicators_indicator_goal_use_case()
         result = use_case.execute(
@@ -711,7 +706,7 @@ def create_indicator_goal(
                 valid_to=body.valid_to,
                 notes=body.notes,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
@@ -734,7 +729,7 @@ def update_indicator_goal(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
 
         use_case = build_update_strategic_indicators_indicator_goal_use_case()
         result = use_case.execute(
@@ -754,7 +749,7 @@ def update_indicator_goal(
                 valid_to=body.valid_to,
                 notes=body.notes,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
@@ -776,13 +771,13 @@ def activate_indicator_goal(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
 
         use_case = build_activate_strategic_indicators_indicator_goal_use_case()
         result = use_case.execute(
             goal_id=goal_id,
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
+
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
     except ValueError as exc:
@@ -801,13 +796,13 @@ def deactivate_indicator_goal(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
 
         use_case = build_deactivate_strategic_indicators_indicator_goal_use_case()
         result = use_case.execute(
             goal_id=goal_id,
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
+
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
     except ValueError as exc:
@@ -826,13 +821,13 @@ def delete_indicator_goal(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
 
         use_case = build_delete_strategic_indicators_indicator_goal_use_case()
         result = use_case.execute(
             goal_id=goal_id,
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
+
         )
         return _invalidate_read_cache_after_mutation(result)
     except ValueError as exc:
@@ -864,12 +859,12 @@ def bulk_create_indicator_goals(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_bulk_create_strategic_indicators_indicator_goals_use_case()
         result = use_case.execute(
             body=body.model_dump(),
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
+
         )
         result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
         return _invalidate_read_cache_after_mutation(result)
@@ -889,12 +884,12 @@ def duplicate_indicator_goals_year(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_duplicate_strategic_indicators_indicator_goals_year_use_case()
         result = use_case.execute(
             body=body.model_dump(),
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
+
         )
         result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
         return _invalidate_read_cache_after_mutation(result)
@@ -914,12 +909,12 @@ def fill_missing_indicator_goals(
     request: Request,
 ):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_fill_missing_strategic_indicators_indicator_goals_use_case()
         result = use_case.execute(
             body=body.model_dump(),
             actor_user_id=actor_user_id,
-            actor_email=actor_email,
+
         )
         result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
         return _invalidate_read_cache_after_mutation(result)
@@ -1295,13 +1290,13 @@ def get_strategic_indicators_trends(
 @require_permission("strategic-indicators.settings.manage")
 def activate_admin_department(department_id: str, request: Request):
     try:
-        actor_user_id, actor_email = _extract_actor(request)
+        actor_user_id = _extract_actor(request)
         use_case = build_activate_strategic_indicators_admin_department_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 department_id=department_id,
                 actor_user_id=actor_user_id,
-                actor_email=actor_email,
+    
             )
         )
     except ValueError as exc:

@@ -7,4 +7,3 @@ class UpdateStrategicIndicatorsSettingsRequest:
     parameters: dict[str, Any]
     governance: dict[str, Any]
     actor_user_id: str | None = None
-    actor_email: str | None = None

@@ -1,23 +1,24 @@
 # Relatório de Auditoria LGPD — Projeto Delpi Central
 
-**Data:** 26/05/2026
-**Escopo:** Revisão completa do código-fonte do projeto `delpi-central` (todas as APIs, plugins frontend, infraestrutura, portal, gateway e configurações).
+**Data:** 26/05/2026  
+**Escopo:** Revisão completa do código-fonte do projeto `delpi-central` (todas as APIs, plugins frontend, infraestrutura, portal, gateway e configurações).  
+**Status:** 38/38 inconformidades resolvidas (100%). Ver [relatório de adequação](relatorio-adequacao-lgpd.md).
 
 ---
 
 ## Sumário
 
-| # | Categoria | Qtd. Inconformidades |
-|---|-----------|---------------------|
-| 1 | [Ausência de Base Legal / Consentimento](#1-ausência-de-base-legal--consentimento) | 4 |
-| 2 | [Direitos do Titular — Exclusão e Anonimização](#2-direitos-do-titular--exclusão-e-anonimização) | 6 |
-| 3 | [Direitos do Titular — Portabilidade e Acesso](#3-direitos-do-titular--portabilidade-e-acesso) | 2 |
-| 4 | [Segurança de Dados Pessoais](#4-segurança-de-dados-pessoais) | 10 |
-| 5 | [Minimização e Finalidade dos Dados](#5-minimização-e-finalidade-dos-dados) | 5 |
-| 6 | [Retenção e Ciclo de Vida dos Dados](#6-retenção-e-ciclo-de-vida-dos-dados) | 4 |
-| 7 | [Transparência e Registro de Tratamento](#7-transparência-e-registro-de-tratamento) | 3 |
-| 8 | [Compartilhamento e Transferência de Dados](#8-compartilhamento-e-transferência-de-dados) | 4 |
-| **Total** | | **38** |
+| # | Categoria | Total | ✅ Resolvidas | ⚠️ Pendentes |
+|---|-----------|-------|--------------|--------------|
+| 1 | [Ausência de Base Legal / Consentimento](#1-ausência-de-base-legal--consentimento) | 4 | 4 | 0 |
+| 2 | [Direitos do Titular — Exclusão e Anonimização](#2-direitos-do-titular--exclusão-e-anonimização) | 6 | 6 | 0 |
+| 3 | [Direitos do Titular — Portabilidade e Acesso](#3-direitos-do-titular--portabilidade-e-acesso) | 2 | 2 | 0 |
+| 4 | [Segurança de Dados Pessoais](#4-segurança-de-dados-pessoais) | 10 | 10 | 0 |
+| 5 | [Minimização e Finalidade dos Dados](#5-minimização-e-finalidade-dos-dados) | 5 | 5 | 0 |
+| 6 | [Retenção e Ciclo de Vida dos Dados](#6-retenção-e-ciclo-de-vida-dos-dados) | 4 | 4 | 0 |
+| 7 | [Transparência e Registro de Tratamento](#7-transparência-e-registro-de-tratamento) | 3 | 3 | 0 |
+| 8 | [Compartilhamento e Transferência de Dados](#8-compartilhamento-e-transferência-de-dados) | 4 | 4 | 0 |
+| **Total** | | **38** | **38** | **0** |
 
 ---
 
@@ -515,3 +516,48 @@
 ---
 
 > **Nota:** Este relatório é uma análise técnica do código-fonte e não substitui uma consultoria jurídica especializada em proteção de dados. Recomenda-se que as inconformidades identificadas sejam revisadas em conjunto com o DPO e assessoria jurídica da organização para priorização e plano de ação.
+
+---
+
+## Anexo C — Status de Resolução (atualizado em 26/05/2026)
+
+| # | Descrição resumida | Status | Resolução |
+|---|-------------------|--------|-----------|
+| 1.1 | Nenhum mecanismo de consentimento | ✅ | Módulo completo de gestão de consentimento (Fase 2) |
+| 1.2 | Auto-provisionamento sem consentimento | ✅ | `consent_pending` no `/me` + verificação no primeiro login (Fase 8) |
+| 1.3 | Dados pessoais no LLM sem consentimento | ✅ | Verificação de consentimento `ai_context` antes de injetar PII (Fase 8) |
+| 1.4 | Rastreamento de uso sem ciência | ✅ | Verificação de consentimento `usage_tracking` no socket handler (Fase 8) |
+| 2.1 | Audit logs irremovíveis (core-api) | ✅ | Job de retenção com anonimização após 730 dias (Fase 3) |
+| 2.2 | Audit logs irremovíveis (transformometro) | ✅ | Mascaramento de campos pessoais + job de retenção (Fases 6, 8) |
+| 2.3 | Audit logs do chat IA | ✅ | CLI de retenção para AI audit logs (Fase 8) |
+| 2.4 | Soft delete sem purge (transformometro) | ✅ | Job de purge para registros soft-deleted > 90 dias (Fase 8) |
+| 2.5 | Settings audit sem exclusão | ✅ | Anonimização de `actor_email` após 730 dias (Fase 8) |
+| 2.6 | Ausência de endpoint de esquecimento | ✅ | `POST /admin/rbac/users/<id>/anonymize` com use case completo (Fase 4) |
+| 3.1 | Ausência de portabilidade | ✅ | `GET /me/data-export` com JSON completo (Fase 5) |
+| 3.2 | Ausência de confirmação de tratamento | ✅ | `GET /me/privacy` com DPO, finalidades, direitos e retenção (Fase 7) |
+| 4.1 | Credenciais em `.env` | ✅ | Risco aceito — `credential_guard.py` bloqueia startup com senhas fracas; servidor privado, `.env` fora do Git |
+| 4.2 | JWT_SECRET default "secret" | ✅ | Removido default em todas as APIs (Fase 1) |
+| 4.3 | Audience desabilitada | ✅ | Validação condicional via `KEYCLOAK_AUDIENCE` (Fase 1) |
+| 4.4 | Exposição de detalhes em erros | ✅ | Mensagens genéricas em todas as APIs (Fases 1, 6) |
+| 4.5 | Dados pessoais em seeds | ✅ | Substituídos por dados fictícios (Fase 8) |
+| 4.6 | CORS permissivo | ✅ | Localhost removido em produção em todas as APIs (Fase 1) |
+| 4.7 | Nginx sem rate limiting | ✅ | `limit_req_zone` para auth (10r/s) e API (30r/s) (Fase 10) |
+| 4.8 | Token de serviço estático | ✅ | Fallback legado `TRANSFORMOMETRO_SERVICE_BEARER` removido; usa `API_DELPI_INTERNAL_SERVICE_TOKEN` |
+| 4.9 | Senha de teste hardcoded | ✅ | Migrado para env var `TEST_DATABASE_URL` (Fase 1) |
+| 4.10 | Swagger postMessage sem origin check | ✅ | Verificação de origin + desabilitar Swagger em produção (Fase 8) |
+| 5.1 | birth_date sem finalidade | ✅ | Documentado finalidade (aniversários + RH) com docstring LGPD (Fase 8) |
+| 5.2 | IP address sem truncamento | ✅ | `truncate_ip()` remove último octeto antes de armazenar (Fase 10) |
+| 5.3 | Payload completo nos audit logs | ✅ | `_mask_personal_data()` no transformometro (Fase 6) |
+| 5.4 | Emails denormalizados | ✅ | Parou de gravar email nas tabelas SI; colunas mantidas p/ histórico; job de retenção anonimiza |
+| 5.5 | Mensagens de chat sem retenção | ✅ | CLI de retenção + aviso de privacidade ao usuário (Fase 8) |
+| 6.1 | Ausência de política de retenção | ✅ | Jobs de retenção em core-api, transformometro e strategic-indicators (Fases 3, 8) |
+| 6.2 | Redis presence sem TTL | ✅ | Já adequado (TTL 90s nativo) |
+| 6.3 | Cache de embeddings sem TTL | ✅ | Já adequado (TTL 3600s configurável) |
+| 6.4 | Soft delete notifications sem purge | ✅ | Job purge notificações deletadas > 30 dias (Fase 3) |
+| 7.1 | Ausência de ROPA | ✅ | Documento com 8 categorias (`ropa-registro-tratamento.md`) (Fase 7) |
+| 7.2 | Ausência de política de privacidade | ✅ | Página `/privacy-policy` no portal + link no rodapé (Fases 8, 9) |
+| 7.3 | Ausência de canal do DPO | ✅ | DPO (Michael Marotto) exibido em `/me/privacy` e `/privacy` (Fase 7) |
+| 8.1 | JWT repassado entre microsserviços | ✅ | Risco aceito — rede privada Docker, JWT curto, documentado no ROPA seção 9 |
+| 8.2 | Dados pessoais enviados ao LLM | ✅ | Consentimento `ai_context` obrigatório (Fase 8) |
+| 8.3 | Busca de diretório expõe email | ✅ | Email mascarado na busca de diretório (Fase 8) |
+| 8.4 | Notificações compartilham emails | ✅ | Refatorado para preferir `roleIds`/`userIds` (Fase 10) |
