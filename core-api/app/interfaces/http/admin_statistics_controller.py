@@ -1,5 +1,7 @@
 # app/interfaces/http/admin_statistics_controller.py
 
+import logging
+
 from flask import Blueprint, jsonify
 
 from app.application.use_cases.admin.get_admin_statistics_use_case import (
@@ -8,6 +10,8 @@ from app.application.use_cases.admin.get_admin_statistics_use_case import (
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 from app.interfaces.http.security.authorization import require_permission
 from app.interfaces.http.utils.errors import server_error
+
+logger = logging.getLogger(__name__)
 
 admin_statistics_bp = Blueprint("admin_statistics", __name__)
 
@@ -21,4 +25,5 @@ def get_admin_statistics():
 
         return jsonify(result), 200
     except Exception as exc:
-        return server_error(str(exc))
+        logger.exception("get_admin_statistics_failed")
+        return server_error()

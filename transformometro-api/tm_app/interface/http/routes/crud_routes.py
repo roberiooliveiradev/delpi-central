@@ -62,6 +62,24 @@ router = APIRouter(prefix="/transformometro", tags=["Transformômetro CRUD"])
 logger = logging.getLogger(__name__)
 
 
+_PERSONAL_DATA_FIELDS = frozenset({
+    "gestor_responsavel", "aprovado_por_email", "email",
+    "user_email", "fornecedor",
+})
+
+
+def _mask_personal_data(payload: dict) -> dict:
+    if not payload:
+        return payload
+    masked = {}
+    for key, value in payload.items():
+        if key in _PERSONAL_DATA_FIELDS and isinstance(value, str) and value:
+            masked[key] = value[:2] + "***"
+        else:
+            masked[key] = value
+    return masked
+
+
 def _audit(request: Request, entity_type: str, entity_id: str, action: str, payload: dict):
     user_id, user_email = actor_from_request(request)
     try:
@@ -71,7 +89,7 @@ def _audit(request: Request, entity_type: str, entity_id: str, action: str, payl
             action=action,
             user_id=user_id,
             user_email=user_email,
-            payload=payload,
+            payload=_mask_personal_data(payload),
         )
     except Exception as exc:
         logger.warning(

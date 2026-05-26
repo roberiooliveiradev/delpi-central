@@ -1,4 +1,5 @@
 # shared/delpi_auth/middleware/fastapi_auth.py
+import logging
 from types import SimpleNamespace
 
 import httpx
@@ -16,6 +17,7 @@ from ..request_context import (
 )
 from ..service_token import request_has_valid_internal_service_token
 
+logger = logging.getLogger(__name__)
 
 CORE_API_URL = "http://core-api:8000"
 
@@ -94,7 +96,8 @@ async def jwt_middleware(request: Request, call_next):
         try:
             return await call_next(request)
         except Exception as e:
-            return JSONResponse(status_code=500, content={"detail": f"Error: {e}"})
+            logger.exception("unhandled_error_service_request path=%s", path)
+            return JSONResponse(status_code=500, content={"detail": "Internal server error"})
         finally:
             reset_request_authorization(auth_context_token)
             reset_current_user(context_token)
@@ -134,13 +137,15 @@ async def jwt_middleware(request: Request, call_next):
         context_token = set_current_user(user)
 
     except Exception as exc:
+        logger.exception("token_validation_failed path=%s", path)
         reset_request_authorization(auth_context_token)
-        return JSONResponse(status_code=401, content={"detail": f"Invalid token: {exc}"})
+        return JSONResponse(status_code=401, content={"detail": "Invalid token"})
 
     try:
         return await call_next(request)
     except Exception as e:
-        return JSONResponse(status_code=500, content={"detail":f"Error: {e}"})
+        logger.exception("unhandled_error_authenticated_request path=%s", path)
+        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
     finally:
         reset_request_authorization(auth_context_token)
         if context_token is not None:
