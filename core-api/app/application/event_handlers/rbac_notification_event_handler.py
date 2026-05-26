@@ -15,18 +15,33 @@ logger = logging.getLogger(__name__)
 
 _TEMPLATE_ID = "app_access_granted_v1"
 
-_ACTIONS_WITH_TARGET_USER = frozenset({
+_ACTIONS_USER_TARGETED = frozenset({
     "group_added_to_user",
     "role_added_to_user",
     "groups_replaced",
     "roles_replaced",
 })
 
+_ACTIONS_ROLE_CHANGE = frozenset({
+    "permission_added_to_role",
+    "role_permissions_replaced",
+})
+
+_ACTIONS_GROUP_CHANGE = frozenset({
+    "role_added_to_group",
+    "group_roles_replaced",
+})
+
+_ALL_HANDLED_ACTIONS = _ACTIONS_USER_TARGETED | _ACTIONS_ROLE_CHANGE | _ACTIONS_GROUP_CHANGE
+
 
 class RbacNotificationEventHandler:
     """
     Dispara notificação automática quando um usuário ganha acesso a novas
-    aplicações via adição de grupo ou papel.
+    aplicações via:
+    - Adição de grupo ou papel ao usuário
+    - Adição de permissão a um papel (afeta todos os usuários com o papel)
+    - Adição de papel a um grupo (afeta todos os usuários do grupo)
     """
 
     def __init__(self, uow):
@@ -35,33 +50,63 @@ class RbacNotificationEventHandler:
     def handle(self, event: AdminChangedEvent) -> None:
         if event.entity != "rbac":
             return
-        if event.action not in _ACTIONS_WITH_TARGET_USER:
-            return
-        if not event.target_user_id:
+        if event.action not in _ALL_HANDLED_ACTIONS:
             return
 
         try:
-            self._process(event)
+            self._dispatch(event)
         except Exception:
             logger.exception(
-                "Falha ao disparar notificação de acesso para user=%s action=%s",
-                event.target_user_id,
+                "Falha ao disparar notificação de acesso: action=%s payload=%s",
                 event.action,
+                event.payload,
             )
 
-    def _process(self, event: AdminChangedEvent) -> None:
-        user_id = UUID(event.target_user_id)
+    # ------------------------------------------------------------------
+    # Dispatch por tipo de evento
+    # ------------------------------------------------------------------
+
+    def _dispatch(self, event: AdminChangedEvent) -> None:
+        if event.action in _ACTIONS_USER_TARGETED:
+            if not event.target_user_id:
+                return
+            self._notify_user(
+                user_id=UUID(event.target_user_id),
+                permission_codes=self._codes_for_user_event(event),
+            )
+
+        elif event.action in _ACTIONS_ROLE_CHANGE:
+            role_id = UUID(event.payload["roleId"])
+            user_ids = self._get_user_ids_by_role(role_id)
+            perm_codes = self._codes_for_role(role_id)
+            for uid in user_ids:
+                self._notify_user(user_id=uid, permission_codes=perm_codes)
+
+        elif event.action in _ACTIONS_GROUP_CHANGE:
+            group_id = UUID(event.payload["groupId"])
+            user_ids = self._get_user_ids_by_group(group_id)
+            perm_codes = self._codes_for_group(group_id)
+            for uid in user_ids:
+                self._notify_user(user_id=uid, permission_codes=perm_codes)
+
+    # ------------------------------------------------------------------
+    # Notificação individual
+    # ------------------------------------------------------------------
+
+    def _notify_user(self, user_id: UUID, permission_codes: list[str]) -> None:
+        if not permission_codes:
+            return
+
         user = self.uow.users.get_by_id(user_id)
         if not user or not user.active:
             return
 
-        new_app_names = self._resolve_new_app_names(event, user_id, bool(user.is_superadmin))
-        if not new_app_names:
+        app_names = self._resolve_app_names(permission_codes, bool(user.is_superadmin))
+        if not app_names:
             return
 
         template_spec = NOTIFICATION_TEMPLATES[_TEMPLATE_ID]
-        app_names_str = ", ".join(new_app_names)
-
+        app_names_str = ", ".join(app_names)
         first_name = (user.name or "").split()[0] if user.name else ""
 
         title = template_spec.default_title
@@ -94,55 +139,60 @@ class RbacNotificationEventHandler:
             )
         )
 
-    def _resolve_new_app_names(
-        self,
-        event: AdminChangedEvent,
-        user_id: UUID,
-        is_superadmin: bool,
-    ) -> list[str]:
-        """
-        Identifica as apps que o grupo/papel adicionado concede acesso.
-        Para ações de 'replace', resolve as permissões completas atuais.
-        """
+    # ------------------------------------------------------------------
+    # Resolução de apps a partir de permission codes
+    # ------------------------------------------------------------------
+
+    def _resolve_app_names(self, permission_codes: list[str], is_superadmin: bool) -> list[str]:
         apps = self.uow.app_queries.list_active_apps_with_routes()
         if not apps:
-            return []
-
-        permission_codes = self._get_granted_permission_codes(event, user_id)
-        if not permission_codes:
             return []
 
         auth_service = AppAuthorizationService()
         authorized = auth_service.filter_apps(apps, permission_codes, is_superadmin)
         return [app.name for app in authorized]
 
-    def _get_granted_permission_codes(
-        self,
-        event: AdminChangedEvent,
-        user_id: UUID,
-    ) -> list[str]:
-        """
-        Retorna os permission_codes concedidos pela mudança RBAC específica.
-        - group_added_to_user: permissões das roles do grupo
-        - role_added_to_user: permissões da role
-        - groups_replaced / roles_replaced: todas as permissões atuais do usuário
-        """
+    # ------------------------------------------------------------------
+    # Resolução de permission_codes por tipo de evento
+    # ------------------------------------------------------------------
+
+    def _codes_for_user_event(self, event: AdminChangedEvent) -> list[str]:
         payload = event.payload or {}
+        user_id = UUID(event.target_user_id)
 
         if event.action == "group_added_to_user":
-            group_id = UUID(payload["groupId"])
-            role_ids = self.uow.group_roles.list_role_ids(group_id)
-            codes: set[str] = set()
-            for role_id in role_ids:
-                perms = self.uow.permission_queries.list_permissions_by_role_id(role_id)
-                codes.update(p.code for p in perms)
-            return list(codes)
+            return self._codes_for_group(UUID(payload["groupId"]))
 
         if event.action == "role_added_to_user":
-            role_id = UUID(payload["roleId"])
-            perms = self.uow.permission_queries.list_permissions_by_role_id(role_id)
-            return [p.code for p in perms]
+            return self._codes_for_role(UUID(payload["roleId"]))
 
         # groups_replaced / roles_replaced: permissões completas atuais
         resolver = PermissionResolver(self.uow.permission_queries, self.uow.cache)
         return resolver.resolve(user_id, False)
+
+    def _codes_for_role(self, role_id: UUID) -> list[str]:
+        perms = self.uow.permission_queries.list_permissions_by_role_id(role_id)
+        return [p.code for p in perms]
+
+    def _codes_for_group(self, group_id: UUID) -> list[str]:
+        role_ids = self.uow.group_roles.list_role_ids(group_id)
+        codes: set[str] = set()
+        for role_id in role_ids:
+            perms = self.uow.permission_queries.list_permissions_by_role_id(role_id)
+            codes.update(p.code for p in perms)
+        return list(codes)
+
+    # ------------------------------------------------------------------
+    # Resolução de usuários afetados
+    # ------------------------------------------------------------------
+
+    def _get_user_ids_by_role(self, role_id: UUID) -> list[UUID]:
+        """Usuários com a role direta + via grupos."""
+        direct = set(self.uow.rbac_queries.list_user_ids_by_role(role_id))
+        via_group = set(self.uow.rbac_queries.list_user_ids_by_group_role(role_id))
+        return [UUID(uid) for uid in (direct | via_group)]
+
+    def _get_user_ids_by_group(self, group_id: UUID) -> list[UUID]:
+        """Usuários membros do grupo."""
+        ids = self.uow.rbac_queries.list_user_ids_by_group(group_id)
+        return [UUID(uid) for uid in ids]
