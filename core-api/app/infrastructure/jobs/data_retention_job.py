@@ -14,12 +14,14 @@ from app.infrastructure.db.models.audit_log import AuditLog
 from app.infrastructure.db.models.notification import Notification
 from app.infrastructure.db.models.app_usage_event import AppUsageEvent
 
+from app.domain.lgpd.privacy_constants import DATA_RETENTION_DAYS
+
 logger = logging.getLogger(__name__)
 
-AUDIT_LOG_RETENTION_DAYS = 730
-NOTIFICATION_RETENTION_DAYS = 180
-DELETED_NOTIFICATION_RETENTION_DAYS = 30
-USAGE_EVENT_RETENTION_DAYS = 365
+AUDIT_LOG_RETENTION_DAYS = DATA_RETENTION_DAYS.get("audit_logs", 730)
+NOTIFICATION_RETENTION_DAYS = DATA_RETENTION_DAYS.get("notifications", 180)
+DELETED_NOTIFICATION_RETENTION_DAYS = DATA_RETENTION_DAYS.get("deleted_notifications", 30)
+USAGE_EVENT_RETENTION_DAYS = DATA_RETENTION_DAYS.get("usage_events", 365)
 
 
 def run_data_retention():
