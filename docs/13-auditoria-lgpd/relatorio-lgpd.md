@@ -535,7 +535,7 @@
 | 2.6 | Ausência de endpoint de esquecimento | ✅ | `POST /admin/rbac/users/<id>/anonymize` com use case completo (Fase 4) |
 | 3.1 | Ausência de portabilidade | ✅ | `GET /me/data-export` com JSON completo (Fase 5) |
 | 3.2 | Ausência de confirmação de tratamento | ✅ | `GET /me/privacy` com DPO, finalidades, direitos e retenção (Fase 7) |
-| 4.1 | Credenciais fracas no startup | ✅ | `credential_guard.py` bloqueia startup em produção com senhas < 12 chars ou padrões triviais |
+| 4.1 | Credenciais em `.env` | ✅ | Risco aceito — `credential_guard.py` bloqueia startup com senhas fracas; servidor privado, `.env` fora do Git |
 | 4.2 | JWT_SECRET default "secret" | ✅ | Removido default em todas as APIs (Fase 1) |
 | 4.3 | Audience desabilitada | ✅ | Validação condicional via `KEYCLOAK_AUDIENCE` (Fase 1) |
 | 4.4 | Exposição de detalhes em erros | ✅ | Mensagens genéricas em todas as APIs (Fases 1, 6) |

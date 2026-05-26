@@ -302,10 +302,11 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 
 ## Pendências Infraestruturais (resolvidas ou mitigadas)
 
-### 4.1 — Credenciais em `.env` (MITIGADO)
+### 4.1 — Credenciais em `.env` (RISCO ACEITO)
 
 **Ação aplicada:** Criado módulo `shared/delpi_auth/credential_guard.py` que valida credenciais fracas no startup de todas as APIs (core-api, api-delpi, transformometro-api, strategic-indicators-api, minha-delpi-ai-api). Em produção (`FLASK_ENV=production` / `APP_ENV=production`), a aplicação **não inicia** se houver senhas com menos de 12 caracteres ou padrões triviais (password, 123, admin, etc.).  
-**Pendência futura (fora de escopo):** Migrar para cofre de segredos (HashiCorp Vault, AWS Secrets Manager) em revisão arquitetural.
+**Decisão:** Manter credenciais em `.env` com a mitigação aplicada. O servidor é privado, acesso restrito à equipe de TI, e o `.env` não é versionado no repositório. O cofre de segredos (Vault, AWS SM) será avaliado quando a infraestrutura crescer ou houver exigência de auditoria externa.  
+**Classificação:** Risco aceito — infraestrutura privada + guard de startup + senhas fortes obrigatórias.
 
 ### 4.8 — Token de serviço estático (RESOLVIDO)
 
@@ -327,15 +328,29 @@ Foram realizadas **10 fases** de adequação à LGPD, cobrindo backend, frontend
 
 ## Checklist de Deploy para Produção
 
+### Já aplicados (código)
+
 - [x] Executar migration: `flask db upgrade` (tabela `user_consents`)
-- [x] Configurar DPO real em `privacy_constants.py` (Michael Marotto)
+- [x] Configurar DPO real em `privacy_constants.py` (Michael Marotto — ti@delpi.com.br)
 - [x] Publicar política de privacidade no portal (`/privacy-policy`)
-- [ ] Definir variável de ambiente `KEYCLOAK_AUDIENCE` em todos os serviços
-- [ ] Definir variável `JWT_SECRET` real (não usar default vazio)
-- [ ] Agendar cron para `flask data-retention run` (recomendado: diário)
-- [ ] Configurar `TM_WORKFLOW_APPROVER_ROLE_IDS` para eliminar uso de emails
-- [ ] Revisar e validar o ROPA (`docs/13-auditoria-lgpd/ropa-registro-tratamento.md`)
-- [ ] Migrar credenciais para cofre de segredos (pendência 4.1)
+- [x] ~~Migrar credenciais para cofre de segredos~~ — risco aceito; mitigado via `credential_guard.py`
+
+### Configuração de ambiente (a fazer no servidor de produção)
+
+- [ ] Definir `KEYCLOAK_AUDIENCE` no `.env` — necessário para validação de audience no JWT (todas as APIs leem essa variável, mas sem valor definido a validação é ignorada)
+- [ ] Definir `JWT_SECRET` com valor forte (≥ 12 chars) — o `credential_guard` bloqueará o startup se for fraco
+- [ ] Agendar cron `flask data-retention run` no container `core-api` (recomendado: diário, ex.: `0 3 * * *`) — executa purge de dados expirados conforme política de retenção
+- [ ] Definir `TM_WORKFLOW_APPROVER_ROLE_IDS` no `.env` do `transformometro-api` — permite notificações por role em vez de emails
+- [ ] Revisar e validar o ROPA (`docs/13-auditoria-lgpd/ropa-registro-tratamento.md`) com o DPO
+
+### Decisões aceitas (não requerem ação imediata)
+
+| Item | Decisão | Justificativa |
+|------|---------|---------------|
+| 4.1 — Credenciais em `.env` | Risco aceito | Servidor privado, `.env` fora do Git, `credential_guard` impede senhas fracas |
+| 4.8 — Token de serviço estático | Resolvido | Legado removido; usar `API_DELPI_INTERNAL_SERVICE_TOKEN` exclusivamente |
+| 5.4 — Emails denormalizados | Adiado | Requer migração de schema em múltiplas APIs — projeto separado |
+| 8.1 — JWT inter-serviço | Risco aceito | Rede Docker privada, JWT curto, necessário para RBAC |
 
 ---
 
