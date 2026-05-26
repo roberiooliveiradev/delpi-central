@@ -3,7 +3,7 @@
   grid-template-columns: minmax(0, 1fr);
   gap: var(--mdc-space-2);
   align-items: end;
-  width: min(100%, 980px);
+  width: 100%;
   margin: 0 auto;
   padding: var(--mdc-space-3) var(--mdc-space-5) var(--mdc-space-5);
 }
@@ -127,7 +127,7 @@
 }
 
 .mdc-chat-conversation .mdc-chat-input {
-  width: min(100%, 980px);
+  width: 100%;
   padding: var(--mdc-space-3) var(--mdc-space-5) calc(var(--mdc-space-4) + env(safe-area-inset-bottom, 0px));
 }
 

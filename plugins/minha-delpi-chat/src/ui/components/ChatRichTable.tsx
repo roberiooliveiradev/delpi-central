@@ -229,6 +229,20 @@ function formatCellValue(value: unknown, columnKey?: string, dataType?: ColumnTy
   if (value == null) return "—";
   if (typeof value === "boolean") return value ? "Sim" : "Não";
 
+  if (Array.isArray(value)) {
+    return value
+      .map((item) =>
+        typeof item === "object" && item !== null
+          ? (item as Record<string, unknown>).code || (item as Record<string, unknown>).description || JSON.stringify(item)
+          : String(item),
+      )
+      .join(" → ");
+  }
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    return obj.code ? String(obj.code) : obj.description ? String(obj.description) : JSON.stringify(value);
+  }
+
   const key = columnKey || "";
   const colType = inferColumnType(key, dataType);
 
