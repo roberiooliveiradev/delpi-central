@@ -71,10 +71,10 @@
 
 | Campo | Detalhe |
 |-------|---------|
-| **Dados tratados** | User ID e email do criador/atualizador de metas e configurações |
+| **Dados tratados** | User ID do criador/atualizador de metas e configurações (email não é mais gravado em novos registros — Art. 6 III) |
 | **Finalidade** | Rastreabilidade de configurações |
 | **Base legal** | Legítimo interesse (Art. 7º, IX) |
-| **Retenção** | Enquanto o indicador estiver ativo; settings_audit anonimizado após 2 anos |
+| **Retenção** | Enquanto o indicador estiver ativo; settings_audit anonimizado após 2 anos; colunas `*_by_email` históricas anonimizadas pelo job de retenção |
 | **Compartilhamento** | Interno apenas |
 
 ## 8. Consentimentos (core-api)
@@ -84,6 +84,7 @@
 | **Dados tratados** | User ID, finalidade, IP truncado, user-agent, timestamps |
 | **Finalidade** | Registro de consentimento conforme LGPD |
 | **Base legal** | Obrigação legal (Art. 7º, II) |
+| **Coleta** | Modal obrigatório exibido após login (Art. 8 §1 — consentimento informado): (1) leitura da Política de Privacidade com scroll obrigatório, (2) seleção de consentimentos com `data_processing` obrigatório. O modal não reaparece após aceite. O titular pode alterar preferências a qualquer momento em "Privacidade de Dados". |
 | **Retenção** | 5 anos após revogação (evidência legal) |
 | **Compartilhamento** | Interno apenas |
 
@@ -111,3 +112,4 @@ Para exercer seus direitos (acesso, correção, exclusão, portabilidade), entre
 - **Endpoint:** `GET /me/consents` (gestão de consentimentos)
 - **Endpoint:** `GET /me/privacy` (informações sobre tratamento)
 - **Portal:** Seção "Privacidade e Dados" no menu do usuário
+- **Modal de consentimento:** Exibido automaticamente no primeiro login — leitura obrigatória da política + aceite de consentimentos
