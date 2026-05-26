@@ -1,5 +1,6 @@
 # app/interfaces/http/me_controller.py
 
+import logging
 import os
 from uuid import UUID
 
@@ -69,6 +70,8 @@ from app.application.use_cases.lookup_directory_users_use_case import (
 from app.application.use_cases.search_directory_users_use_case import (
     SearchDirectoryUsersUseCase,
 )
+
+logger = logging.getLogger(__name__)
 
 me_bp = Blueprint("me", __name__)
 
@@ -251,7 +254,8 @@ def mark_notification_read(notification_id: str):
     except NotificationAccessDeniedError:
         return api_error("forbidden", "Notification does not belong to current user", status=403)
     except Exception as e:
-        return api_error("mark_failed", str(e))
+        logger.exception("mark_failed")
+        return api_error("mark_failed", "Erro ao processar notificação.", status=500)
 
 
 @me_bp.route("/me/notifications/read-all", methods=["POST"])
@@ -267,7 +271,8 @@ def mark_all_notifications_read():
         return jsonify({"ok": True}), 200
 
     except Exception as e:
-        return api_error("mark_all_failed", str(e))
+        logger.exception("mark_all_failed")
+        return api_error("mark_all_failed", "Erro ao processar notificações.", status=500)
 
 
 @me_bp.route("/me/notifications/<notification_id>", methods=["DELETE"])
@@ -289,7 +294,8 @@ def delete_notification(notification_id: str):
     except NotificationAccessDeniedError:
         return api_error("forbidden", "Notification does not belong to current user", status=403)
     except Exception as e:
-        return api_error("delete_failed", str(e))
+        logger.exception("delete_failed")
+        return api_error("delete_failed", "Erro ao excluir notificação.", status=500)
 
 
 @me_bp.route("/me/notifications/<notification_id>/important", methods=["PATCH"])
@@ -323,7 +329,8 @@ def set_notification_important(notification_id: str):
     except NotificationAccessDeniedError:
         return api_error("forbidden", "Notification does not belong to current user", status=403)
     except Exception as e:
-        return api_error("important_failed", str(e))
+        logger.exception("important_failed")
+        return api_error("important_failed", "Erro ao atualizar notificação.", status=500)
 
 
 # ==========================================================
@@ -394,7 +401,8 @@ def search_directory_users():
     except ValueError:
         return api_error("validation_error", "limit must be a number", status=400)
     except Exception as exc:
-        return api_error("search_directory_users_failed", str(exc))
+        logger.exception("search_directory_users_failed")
+        return api_error("search_directory_users_failed", "Erro ao buscar usuários.", status=500)
 
     return jsonify({"items": results}), 200
 
@@ -414,7 +422,8 @@ def lookup_directory_users():
                 user_ids=[str(item) for item in raw_ids if item],
             )
     except Exception as exc:
-        return api_error("lookup_directory_users_failed", str(exc))
+        logger.exception("lookup_directory_users_failed")
+        return api_error("lookup_directory_users_failed", "Erro ao buscar usuários.", status=500)
 
     return jsonify({"items": results}), 200
 
@@ -454,7 +463,132 @@ def test_notification():
         ), 200
 
     except Exception as e:
-        return api_error("notify_failed", str(e))
+        logger.exception("notify_failed")
+        return api_error("notify_failed", "Erro ao enviar notificação.", status=500)
+
+
+# ==========================================================
+# LGPD — PRIVACY INFO
+# ==========================================================
+
+@me_bp.route("/me/privacy", methods=["GET"])
+@require_auth()
+def get_privacy_info():
+    from app.domain.lgpd.privacy_constants import (
+        DPO_EMAIL,
+        DPO_NAME,
+        PRIVACY_POLICY_URL,
+        CONSENT_PURPOSES,
+        DATA_RETENTION_DAYS,
+    )
+    return jsonify({
+        "dpo": {"name": DPO_NAME, "email": DPO_EMAIL},
+        "privacyPolicyUrl": PRIVACY_POLICY_URL,
+        "consentPurposes": CONSENT_PURPOSES,
+        "dataRetentionDays": DATA_RETENTION_DAYS,
+        "rights": [
+            "Confirmação de tratamento (Art. 18, I)",
+            "Acesso aos dados (Art. 18, II)",
+            "Correção de dados (Art. 18, III)",
+            "Anonimização/bloqueio (Art. 18, IV)",
+            "Portabilidade (Art. 18, V) — GET /me/data-export",
+            "Eliminação (Art. 18, VI) — Solicitar ao DPO",
+            "Revogação de consentimento (Art. 18, IX) — DELETE /me/consents/<purpose>",
+        ],
+    }), 200
+
+
+# ==========================================================
+# LGPD — CONSENTS
+# ==========================================================
+
+VALID_CONSENT_PURPOSES = {"data_processing", "analytics", "ai_context", "birthday_notifications", "usage_tracking"}
+
+
+@me_bp.route("/me/consents", methods=["GET"])
+@require_auth()
+def list_consents():
+    user = g.current_user
+    with SqlAlchemyUnitOfWork() as uow:
+        from app.application.use_cases.list_consents_use_case import ListConsentsUseCase
+        items = ListConsentsUseCase(uow).execute(user_id=str(user.id))
+    return jsonify({
+        "items": [
+            {
+                "id": str(c.id),
+                "purpose": c.purpose,
+                "granted": c.granted,
+                "grantedAt": c.granted_at.isoformat() if c.granted_at else None,
+                "revokedAt": c.revoked_at.isoformat() if c.revoked_at else None,
+            }
+            for c in items
+        ],
+        "availablePurposes": sorted(VALID_CONSENT_PURPOSES),
+    }), 200
+
+
+@me_bp.route("/me/consents", methods=["POST"])
+@require_auth()
+def grant_consent():
+    user = g.current_user
+    body = request.get_json(silent=True) or {}
+    purpose = (body.get("purpose") or "").strip().lower()
+
+    if purpose not in VALID_CONSENT_PURPOSES:
+        return api_error("invalid_purpose", f"Purpose must be one of: {', '.join(sorted(VALID_CONSENT_PURPOSES))}", status=400)
+
+    with SqlAlchemyUnitOfWork() as uow:
+        from app.application.use_cases.manage_consent_use_case import GrantConsentUseCase
+        result = GrantConsentUseCase(uow).execute(
+            user_id=str(user.id),
+            purpose=purpose,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get("User-Agent", "")[:500],
+        )
+
+    return jsonify({
+        "id": str(result.id),
+        "purpose": result.purpose,
+        "granted": result.granted,
+        "grantedAt": result.granted_at.isoformat() if result.granted_at else None,
+    }), 200
+
+
+@me_bp.route("/me/consents/<purpose>", methods=["DELETE"])
+@require_auth()
+def revoke_consent(purpose: str):
+    user = g.current_user
+    purpose = purpose.strip().lower()
+
+    if purpose not in VALID_CONSENT_PURPOSES:
+        return api_error("invalid_purpose", "Invalid consent purpose", status=400)
+
+    with SqlAlchemyUnitOfWork() as uow:
+        from app.application.use_cases.manage_consent_use_case import RevokeConsentUseCase
+        result = RevokeConsentUseCase(uow).execute(user_id=str(user.id), purpose=purpose)
+
+    if not result:
+        return api_error("not_found", "Consent not found", status=404)
+
+    return jsonify({"ok": True, "purpose": result.purpose, "granted": result.granted}), 200
+
+
+# ==========================================================
+# LGPD — DATA EXPORT (PORTABILITY)
+# ==========================================================
+
+@me_bp.route("/me/data-export", methods=["GET"])
+@require_auth()
+def export_my_data():
+    user = g.current_user
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            from app.application.use_cases.export_user_data_use_case import ExportUserDataUseCase
+            data = ExportUserDataUseCase(uow).execute(user_id=str(user.id))
+        return jsonify(data), 200
+    except Exception:
+        logger.exception("data_export_failed")
+        return api_error("export_failed", "Erro ao exportar dados.", status=500)
 
 
 # ==========================================================

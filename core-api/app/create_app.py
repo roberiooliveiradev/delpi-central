@@ -96,4 +96,10 @@ def create_app(config_name: str | None = None) -> Flask:
 
     start_notification_dispatch_scheduler(app)
 
+    # ==========================================================
+    # CLI COMMANDS
+    # ==========================================================
+    from app.infrastructure.cli.data_retention_cli import data_retention_cli
+    app.cli.add_command(data_retention_cli)
+
     return app

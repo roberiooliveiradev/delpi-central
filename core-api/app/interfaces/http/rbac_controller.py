@@ -812,6 +812,31 @@ def bulk_delete_users():
 
 
 # ==========================================================
+# LGPD — ANONYMIZE USER DATA
+# ==========================================================
+
+@rbac_bp.route("/admin/rbac/users/<user_id>/anonymize", methods=["POST"])
+@require_superadmin()
+def anonymize_user_data(user_id: str):
+    from app.application.use_cases.admin.anonymize_user_data_use_case import AnonymizeUserDataUseCase
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = AnonymizeUserDataUseCase(uow).execute(
+                target_user_id=user_id,
+                actor_user_id=str(g.current_user.id),
+            )
+        return jsonify(result), 200
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=400)
+    except LookupError as exc:
+        return api_error("not_found", str(exc), status=404)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception("anonymize_user_failed")
+        return api_error("anonymize_failed", "Erro ao anonimizar dados do usuário.", status=500)
+
+
+# ==========================================================
 # USER ROLES
 # ==========================================================
 

@@ -571,15 +571,15 @@ class ExternalActionResultPresenter:
         titulo = title or "Resultado operacional"
         linhas = [f"A API retornou {len(items)} registro(s)."]
 
-        stock_lines = []
-        for item in items[:8]:
+        detail_lines = []
+        for item in items[:10]:
             if not isinstance(item, dict):
                 continue
 
             if "warehouse" in item and "available_quantity" in item:
                 if not title:
                     titulo = "Estoque do produto"
-                stock_lines.append(
+                detail_lines.append(
                     "Filial {branch}, armazém {warehouse}: atual {current}, disponível {available}, empenhada {committed}. Local: {location}.".format(
                         branch=item.get("branch"),
                         warehouse=item.get("warehouse"),
@@ -589,15 +589,33 @@ class ExternalActionResultPresenter:
                         location=item.get("physical_location") or "não informado",
                     )
                 )
+            elif "supplier_name" in item or "supplier_code" in item:
+                name = item.get("supplier_name") or item.get("supplier_code") or "?"
+                lead = item.get("registered_lead_time_days") or item.get("real_avg_lead_time_days")
+                price = item.get("last_price")
+                parts = [f"**{name}**"]
+                if lead is not None:
+                    parts.append(f"Lead time: {lead}d")
+                if price is not None:
+                    parts.append(f"Últ. preço: R$ {price:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                detail_lines.append(" | ".join(parts))
+            elif "customer_name" in item or "customer_code" in item:
+                name = item.get("customer_name") or item.get("customer_code") or "?"
+                detail_lines.append(f"**{name}**")
+            else:
+                label_keys = ["name", "description", "supplier_name", "customer_name", "code", "number"]
+                label = next((str(item[k]) for k in label_keys if item.get(k)), None)
+                if label:
+                    detail_lines.append(label)
 
-        if stock_lines:
-            linhas = stock_lines
+        if detail_lines:
+            linhas = detail_lines
 
         return {
             "titulo": titulo,
             "linhas": linhas,
             "dados": {
-                "items": items[:10],
+                "items": items[:15],
             },
         }
 
@@ -884,6 +902,18 @@ class ExternalActionResultPresenter:
             col["dataType"] = data_type
         return col
 
+    _STOCK_PREFERRED_COLUMNS = [
+        ("branch", "Filial"),
+        ("warehouse", "Armazém"),
+        ("product_code", "Produto"),
+        ("current_quantity", "Qtd. atual"),
+        ("available_quantity", "Qtd. disponível"),
+        ("committed_quantity", "Qtd. empenhada"),
+        ("reserved_quantity", "Qtd. reservada"),
+        ("physical_location", "Localização"),
+        ("cost_center", "Centro de custo"),
+    ]
+
     def _build_items_table(self, items: list, title: str = "Dados retornados") -> dict | None:
         if not items:
             return None
@@ -893,37 +923,38 @@ class ExternalActionResultPresenter:
         if not first:
             return None
 
-        preferred_columns = [
-            ("branch", "Filial"),
-            ("warehouse", "Armazém"),
-            ("product_code", "Produto"),
-            ("current_quantity", "Qtd. atual"),
-            ("available_quantity", "Qtd. disponível"),
-            ("committed_quantity", "Qtd. empenhada"),
-            ("reserved_quantity", "Qtd. reservada"),
-            ("physical_location", "Localização"),
-            ("cost_center", "Centro de custo"),
-        ]
+        is_stock = "current_quantity" in first or "available_quantity" in first
 
-        columns = [
-            self._enrich_column(key, label)
-            for key, label in preferred_columns
-            if key in first
-        ]
+        if is_stock:
+            columns = [
+                self._enrich_column(key, label)
+                for key, label in self._STOCK_PREFERRED_COLUMNS
+                if key in first
+            ]
+        else:
+            columns = []
 
         if not columns:
+            flat_items = self._flatten_nested_field(items[:100])
+            first_flat = flat_items[0] if flat_items else first
             columns = [
                 self._enrich_column(key, self._humanize_key(key))
-                for key in list(first.keys())[:12]
-                if not isinstance(first.get(key), (list, dict))
+                for key in list(first_flat.keys())[:15]
+                if not isinstance(first_flat.get(key), (list, dict))
             ]
-
-        col_keys = {c["key"] for c in columns}
-        rows = [
-            {k: item.get(k) for k in col_keys}
-            for item in items[:100]
-            if isinstance(item, dict)
-        ]
+            col_keys = {c["key"] for c in columns}
+            rows = [
+                {k: item.get(k) for k in col_keys}
+                for item in flat_items
+                if isinstance(item, dict)
+            ]
+        else:
+            col_keys = {c["key"] for c in columns}
+            rows = [
+                {k: item.get(k) for k in col_keys}
+                for item in items[:100]
+                if isinstance(item, dict)
+            ]
 
         return {
             "type": "table",
@@ -944,6 +975,7 @@ class ExternalActionResultPresenter:
         "branch": "Filial",
         "warehouse": "Armazém",
         "product_code": "Produto",
+        "product_description": "Descrição produto",
         "current_quantity": "Qtd. atual",
         "available_quantity": "Qtd. disponível",
         "committed_quantity": "Qtd. empenhada",
@@ -956,7 +988,54 @@ class ExternalActionResultPresenter:
         "status": "Status",
         "date": "Data",
         "supplier": "Fornecedor",
+        "supplier_code": "Cód. fornecedor",
+        "supplier_name": "Fornecedor",
+        "supplier_store": "Loja",
+        "supplier_part_number": "Part number",
         "customer": "Cliente",
+        "customer_code": "Cód. cliente",
+        "customer_name": "Cliente",
+        "customer_store": "Loja",
+        "registered_lead_time_days": "Lead time (dias)",
+        "real_avg_lead_time_days": "Lead time real (média)",
+        "real_min_lead_time_days": "Lead time mín.",
+        "real_max_lead_time_days": "Lead time máx.",
+        "real_lead_time_sample_size": "Amostras",
+        "last_price": "Últ. preço",
+        "last_price_date": "Data últ. preço",
+        "catalog_code": "Cód. catálogo",
+        "barcode": "Cód. barras",
+        "sale_price": "Preço venda",
+        "max_price": "Preço máx.",
+        "discount_value": "Desconto",
+        "discount_percent": "% Desconto",
+        "table_code": "Cód. tabela",
+        "table_description": "Tabela",
+        "order_number": "Nº pedido",
+        "issue_date": "Data emissão",
+        "delivery_date": "Data entrega",
+        "invoice_number": "Nº nota",
+        "invoice_series": "Série",
+        "operation": "Operação",
+        "movement_date": "Data movimentação",
+        "origin_warehouse": "Armazém origem",
+        "destination_warehouse": "Armazém destino",
+        "last_sale_date": "Data últ. venda",
+        "last_purchase_date": "Data últ. compra",
+        "total_quantity": "Qtd. total",
+        "total_value": "Valor total",
+        "average_price": "Preço médio",
+        "state": "Estado",
+        "opening_date": "Data abertura",
+        "sequence": "Sequência",
+        "step": "Etapa",
+        "step_description": "Descrição etapa",
+        "inspection_type": "Tipo inspeção",
+        "result": "Resultado",
+        "approved": "Aprovado",
+        "rejected": "Rejeitado",
+        "lot": "Lote",
+        "lot_quantity": "Qtd. lote",
     }
 
     def _humanize_key(self, key: str) -> str:

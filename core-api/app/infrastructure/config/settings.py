@@ -83,6 +83,7 @@ class Config:
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = (
-        "postgresql://delpi:delpi123@postgres-core-test:5432/delpi_core_test"
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        "TEST_DATABASE_URL",
+        "postgresql://delpi:delpi123@postgres-core-test:5432/delpi_core_test",
     )

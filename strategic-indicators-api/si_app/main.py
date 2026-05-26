@@ -1,5 +1,6 @@
 # strategic-indicators-api — entrypoint FastAPI (só rotas /strategic-indicators + health).
 import logging
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,7 +47,10 @@ def build_allowed_origins() -> list[str]:
         else:
             origins.add(vite_kc_url.rstrip("/"))
 
-    origins.add("http://localhost")
+    # localhost only in development
+    api_env = os.getenv("API_DELPI_ENV", "development")
+    if api_env != "production":
+        origins.add("http://localhost")
 
     return sorted(origins)
 

@@ -38,6 +38,7 @@ from app.infrastructure.persistence.sqlalchemy.plugin_route_repository import Sq
 from app.infrastructure.persistence.sqlalchemy.plugin_permission_repository import SqlAlchemyPluginPermissionRepository
 
 from app.infrastructure.persistence.sqlalchemy.audit_repository import SqlAlchemyAuditRepository
+from app.infrastructure.persistence.sqlalchemy.consent_repository import SqlAlchemyConsentRepository
 
 class SqlAlchemyUnitOfWork:
     def __init__(self):
@@ -93,6 +94,11 @@ class SqlAlchemyUnitOfWork:
         # Audits
         # =========================
         self.audits = SqlAlchemyAuditRepository(self.session)
+
+        # =========================
+        # LGPD Consents
+        # =========================
+        self.consents = SqlAlchemyConsentRepository(self.session)
 
         # ======================================================
         # Aliases (compatibilidade com código antigo)
