@@ -7,7 +7,7 @@ class FakeToolSelectionService:
 
 
 class FakeExternalActionSelectionService:
-    def select_action(self, message, allowed_action_ids=None):
+    def select_action(self, message, allowed_action_ids=None, **kwargs):
         return {
             "name": "execute_external_action",
             "arguments": {
@@ -36,7 +36,8 @@ def test_chat_common_does_not_execute_external_action_without_agent_actions():
         actions_enabled=False,
     )
 
-    assert result == {"context": "", "toolCalls": []}
+    assert result["context"] == ""
+    assert result["toolCalls"] == []
 
 
 def test_agent_action_executes_only_when_allowed():

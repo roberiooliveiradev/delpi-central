@@ -54,6 +54,14 @@ class ExternalActionResultPresenter:
         items = root.get("items") if isinstance(root, dict) else None
 
         if isinstance(items, list):
+            if not items:
+                title = self._infer_items_title([], path) or "Consulta"
+                return {
+                    "titulo": title,
+                    "linhas": [f"Nenhum registro encontrado para esta consulta."],
+                    "dados": root,
+                }
+
             if items and isinstance(items[0], dict) and "sale_number" in items[0]:
                 return self._present_lmp_page(root)
 
@@ -168,6 +176,10 @@ class ExternalActionResultPresenter:
             return "Compras do produto"
         if "/sales" in lowered:
             return "Vendas do produto"
+        if "/lmp" in lowered or "/production" in lowered:
+            return "Lista de LMPs"
+        if "/sale-order" in lowered or "/orders" in lowered:
+            return "Ordens de venda"
         return None
 
     def _detect_api_error(self, data) -> dict | None:
@@ -341,15 +353,10 @@ class ExternalActionResultPresenter:
         if items and isinstance(items[0], dict) and "sale_number" not in items[0] and "saleNumber" not in items[0]:
             return None
 
+        if not items:
+            return None
+
         total = root.get("total")
-
-        if not items and total in (0, None):
-            return {
-                "titulo": "Lista de LMPs",
-                "linhas": ["Nenhuma LMP encontrada para os filtros informados."],
-                "dados": root,
-            }
-
         linhas = []
 
         for item in items[:12]:
@@ -465,6 +472,7 @@ class ExternalActionResultPresenter:
     def _present_product_search(self, root: dict, items: list, *, title: str | None = None) -> dict:
         titulo = title or "Busca de produtos"
         total = root.get("total")
+        is_hierarchy = titulo and ("pai" in titulo.lower() or "estrutura" in titulo.lower())
 
         if not items:
             return {
@@ -475,7 +483,7 @@ class ExternalActionResultPresenter:
 
         linhas = []
 
-        for item in items[:15]:
+        for item in items[:25]:
             if not isinstance(item, dict):
                 continue
 
@@ -483,6 +491,8 @@ class ExternalActionResultPresenter:
             desc = item.get("description") or ""
             tipo = item.get("type") or ""
             unit = item.get("unit") or ""
+            qty = item.get("quantity")
+            level = item.get("level")
 
             parts = [f"**{code}**"]
             if desc:
@@ -492,15 +502,26 @@ class ExternalActionResultPresenter:
             if unit:
                 parts.append(f"[{unit}]")
 
-            linhas.append(" — ".join(parts[:2]) + (f" {parts[2]}" if len(parts) > 2 else "") + (f" {parts[3]}" if len(parts) > 3 else ""))
+            line = " — ".join(parts[:2]) + (f" {parts[2]}" if len(parts) > 2 else "") + (f" {parts[3]}" if len(parts) > 3 else "")
+
+            if is_hierarchy:
+                extras = []
+                if qty is not None:
+                    extras.append(f"Qtd: {qty}")
+                if level is not None:
+                    extras.append(f"Nível: {level}")
+                if extras:
+                    line += f" | {', '.join(extras)}"
+
+            linhas.append(line)
 
         if total is not None and total > len(items):
-            linhas.append(f"Total encontrado: {total} produto(s).")
+            linhas.append(f"\nTotal encontrado: {total} produto(s).")
 
         return {
             "titulo": titulo,
             "linhas": linhas or ["Nenhum produto encontrado."],
-            "dados": {"total": total, "items": [{"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")} for i in items[:15]]},
+            "dados": {"total": total, "items": [{"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")} for i in items[:25]]},
         }
 
     def _present_sale_orders(self, root: dict, items: list) -> dict:
@@ -771,18 +792,41 @@ class ExternalActionResultPresenter:
             "rows": rows,
         }
 
+    def _flatten_nested_field(self, items: list) -> list:
+        """Converte campos complexos (list/dict) em texto legível para tabela."""
+        flattened = []
+        for item in items:
+            if not isinstance(item, dict):
+                flattened.append(item)
+                continue
+            row = {}
+            for k, v in item.items():
+                if isinstance(v, list) and v and isinstance(v[0], dict):
+                    codes = [sub.get("code") or sub.get("description") or str(sub) for sub in v[:5]]
+                    row[k] = " → ".join(codes)
+                    if len(v) > 5:
+                        row[k] += f" (+{len(v) - 5})"
+                elif isinstance(v, dict):
+                    row[k] = v.get("code") or v.get("description") or str(v)
+                else:
+                    row[k] = v
+            flattened.append(row)
+        return flattened
+
     def _build_product_search_table(self, items: list, root: dict, *, title: str | None = None) -> dict:
         first = items[0] if items else {}
         has_extra = any(k in first for k in ("quantity", "level", "lot_quantity"))
 
         if has_extra:
+            flat_items = self._flatten_nested_field(items[:100])
+            first_flat = flat_items[0] if flat_items else {}
             all_keys = {}
-            for item in items[:100]:
+            for item in flat_items:
                 for k in item:
                     if k not in all_keys:
                         all_keys[k] = True
             columns = [self._enrich_column(k, self._humanize_key(k)) for k in all_keys]
-            rows = items[:100]
+            rows = flat_items
         else:
             columns = [
                 {"key": "code", "label": "Código"},
@@ -871,16 +915,53 @@ class ExternalActionResultPresenter:
             columns = [
                 self._enrich_column(key, self._humanize_key(key))
                 for key in list(first.keys())[:12]
+                if not isinstance(first.get(key), (list, dict))
             ]
+
+        col_keys = {c["key"] for c in columns}
+        rows = [
+            {k: item.get(k) for k in col_keys}
+            for item in items[:100]
+            if isinstance(item, dict)
+        ]
 
         return {
             "type": "table",
             "title": title,
             "columns": columns,
-            "rows": items[:100],
+            "rows": rows,
         }
 
+    _KEY_LABELS = {
+        "code": "Código",
+        "description": "Descrição",
+        "type": "Tipo",
+        "unit": "Unidade",
+        "quantity": "Quantidade",
+        "level": "Nível",
+        "parents": "Pais",
+        "lot_quantity": "Qtd. lote",
+        "branch": "Filial",
+        "warehouse": "Armazém",
+        "product_code": "Produto",
+        "current_quantity": "Qtd. atual",
+        "available_quantity": "Qtd. disponível",
+        "committed_quantity": "Qtd. empenhada",
+        "reserved_quantity": "Qtd. reservada",
+        "physical_location": "Localização",
+        "cost_center": "Centro de custo",
+        "price": "Preço",
+        "cost": "Custo",
+        "total": "Total",
+        "status": "Status",
+        "date": "Data",
+        "supplier": "Fornecedor",
+        "customer": "Cliente",
+    }
+
     def _humanize_key(self, key: str) -> str:
+        if key in self._KEY_LABELS:
+            return self._KEY_LABELS[key]
         return str(key).replace("_", " ").strip().capitalize()
 
     def build_chart_presentation(self, data, *, path: str = "") -> dict | None:

@@ -33,7 +33,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--mdc-space-4);
-  width: min(100%, 980px);
+  width: 100%;
   margin: 0 auto;
   padding: var(--mdc-space-5) var(--mdc-space-5) var(--mdc-space-3);
 }
@@ -80,7 +80,7 @@
 }
 
 .mdc-chat-alert {
-  width: min(100%, 980px);
+  width: 100%;
   margin: 0 auto var(--mdc-space-3);
   padding: var(--mdc-space-3) var(--mdc-space-4);
   border: 1px solid var(--mdc-danger);

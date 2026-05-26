@@ -189,6 +189,9 @@ class ExternalActionSelectionService:
             "faturamento",
             "carteira",
             "estrutura",
+            "composição",
+            "composicao",
+            "componentes",
             "bom",
             "roteiro",
             "fornecedor",
@@ -763,16 +766,20 @@ class ExternalActionSelectionService:
         allowed_action_ids: list[str],
         intent: str = ChatProductQueryIntent.FULL,
     ) -> dict | None:
-        if not allowed_action_ids:
-            return None
+        candidates = []
 
-        allowed = {str(item) for item in allowed_action_ids}
+        if allowed_action_ids:
+            candidates = self._list_allowed_candidates(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                limit=80,
+            )
 
-        candidates = self._list_allowed_candidates(
-            message,
-            allowed_action_ids=allowed_action_ids,
-            limit=80,
-        )
+        if not candidates:
+            candidates = self.repository.find_candidate_actions(
+                message,
+                limit=80,
+            )
 
         if not candidates:
             return None
