@@ -469,6 +469,13 @@ export class AdminApi {
     );
   }
 
+  anonymizeUser(userId: string) {
+    return this.client.post<{ ok: boolean; message: string }>(
+      `/core-api/admin/rbac/users/${userId}/anonymize`,
+      {}
+    );
+  }
+
   getUserRoles(userId: string) {
     return this.client.get<PaginatedResponse<AdminRole>>(
       `/core-api/admin/rbac/users/${userId}/roles?page=1&page_size=999`

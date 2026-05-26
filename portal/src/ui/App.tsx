@@ -17,6 +17,7 @@ import { DelpiHealthPage } from "../pages/DelpiHealthPage";
 
 import { MyProfile } from "./MyProfile";
 import { NotificationsPage } from "./NotificationsPage";
+import { PrivacyPage } from "./PrivacyPage";
 
 
 
@@ -134,6 +135,7 @@ function AppShell() {
             <Route path="/delpi/health" element={<DelpiHealthPage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/profile" element={<MyProfile />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
 
