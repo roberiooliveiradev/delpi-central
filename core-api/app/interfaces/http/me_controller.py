@@ -581,7 +581,13 @@ def revoke_consent(purpose: str):
     if not result:
         return api_error("not_found", "Consent not found", status=404)
 
-    return jsonify({"ok": True, "purpose": result.purpose, "granted": result.granted}), 200
+    return jsonify({
+        "id": str(result.id),
+        "purpose": result.purpose,
+        "granted": result.granted,
+        "grantedAt": result.granted_at.isoformat() if result.granted_at else None,
+        "revokedAt": result.revoked_at.isoformat() if result.revoked_at else None,
+    }), 200
 
 
 # ==========================================================

@@ -287,11 +287,10 @@ function normalizeArray<T>(data: unknown): T[] {
 
 export interface ConsentItem {
   id: string;
-  user_id: string;
   purpose: string;
   granted: boolean;
-  granted_at: string | null;
-  revoked_at: string | null;
+  grantedAt: string | null;
+  revokedAt: string | null;
 }
 
 export interface PrivacyInfoRaw {
@@ -311,12 +310,12 @@ export interface PrivacyInfo {
 }
 
 export interface DataExportResponse {
-  exported_at: string;
-  user: Record<string, unknown>;
-  consents: ConsentItem[];
-  notifications: unknown[];
-  usage_events: unknown[];
-  audit_logs: unknown[];
+  exportDate: string;
+  profile: Record<string, unknown>;
+  consents: Record<string, unknown>[];
+  notifications: Record<string, unknown>[];
+  usageEvents: Record<string, unknown>[];
+  auditLogs: Record<string, unknown>[];
 }
 
 export class CoreApi {

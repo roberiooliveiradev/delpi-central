@@ -1,6 +1,11 @@
+import { useContext, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { FileText, ChevronLeft } from "lucide-react";
+import { FileText, ChevronLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+import { AuthContext } from "../state/AuthContext";
+import { ApiClient } from "../data/apiClient";
+import { CoreApi, type PrivacyInfo } from "../data/coreApi";
 
 import "./PrivacyPolicyPage.css";
 
@@ -15,6 +20,35 @@ const fadeUp = {
 
 export const PrivacyPolicyPage = () => {
   const navigate = useNavigate();
+  const { getAccessToken } = useContext(AuthContext);
+
+  const apiRef = useRef<CoreApi | null>(null);
+  if (!apiRef.current) {
+    apiRef.current = new CoreApi(new ApiClient("", getAccessToken));
+  }
+
+  const [privacy, setPrivacy] = useState<PrivacyInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiRef.current!.getPrivacyInfo()
+      .then((data) => { if (!cancelled) setPrivacy(data); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const dpoName = privacy?.dpo?.name || "Encarregado de Proteção de Dados";
+  const dpoEmail = privacy?.dpo?.email || "dpo@empresa.com.br";
+
+  if (loading) {
+    return (
+      <div className="privacy-policy-page" style={{ display: "flex", justifyContent: "center", padding: "4rem" }}>
+        <Loader2 className="spin" size={28} />
+      </div>
+    );
+  }
 
   return (
     <div className="privacy-policy-page">
@@ -52,13 +86,13 @@ export const PrivacyPolicyPage = () => {
         <section className="privacy-policy-page__section">
           <h2>1. Controlador dos Dados e Encarregado (DPO)</h2>
           <p>
-            O controlador dos dados pessoais tratados nesta plataforma é{" "}
-            <strong>[NOME DA EMPRESA]</strong>, pessoa jurídica de direito privado,
-            inscrita no CNPJ sob o nº [CNPJ], com sede em [ENDEREÇO].
+            O controlador dos dados pessoais tratados nesta plataforma é a{" "}
+            <strong>DELPI Energia &amp; Conectividade</strong>.
           </p>
           <p>
-            O Encarregado de Proteção de Dados (DPO) pode ser contatado pelo e-mail{" "}
-            <strong>[email do DPO]</strong> para esclarecimentos sobre o tratamento
+            O Encarregado de Proteção de Dados (DPO),{" "}
+            <strong>{dpoName}</strong>, pode ser contatado pelo e-mail{" "}
+            <strong>{dpoEmail}</strong> para esclarecimentos sobre o tratamento
             de dados pessoais ou exercício de direitos previstos na LGPD.
           </p>
         </section>
@@ -182,7 +216,7 @@ export const PrivacyPolicyPage = () => {
           <p>
             Para exercer seus direitos, acesse a seção "Privacidade e Dados" no
             menu do portal ou entre em contato com o DPO pelo e-mail{" "}
-            <strong>[email do DPO]</strong>. Responderemos no prazo legal de até
+            <strong>{dpoEmail}</strong>. Responderemos no prazo legal de até
             15 dias.
           </p>
         </section>
@@ -282,10 +316,10 @@ export const PrivacyPolicyPage = () => {
           </p>
           <ul>
             <li>
-              <strong>Encarregado (DPO):</strong> [email do DPO]
+              <strong>Encarregado (DPO):</strong> {dpoName} — {dpoEmail}
             </li>
             <li>
-              <strong>Controlador:</strong> [NOME DA EMPRESA]
+              <strong>Controlador:</strong> DELPI Energia &amp; Conectividade
             </li>
           </ul>
           <p>
