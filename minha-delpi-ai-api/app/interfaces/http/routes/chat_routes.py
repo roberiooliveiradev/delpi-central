@@ -1627,6 +1627,12 @@ def delete_artifact(artifact_id: str):
     return "", 204
 
 
+_PRIVACY_NOTICE = (
+    "Suas mensagens são armazenadas por até 1 ano. "
+    "Evite inserir dados pessoais sensíveis (CPF, endereços, etc.)."
+)
+
+
 @chat_bp.post("/sessions")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def create_session():
@@ -1656,7 +1662,9 @@ def create_session():
         db.session.rollback()
         raise
 
-    return jsonify(asdict(result)), 201
+    response_data = asdict(result)
+    response_data["privacy_notice"] = _PRIVACY_NOTICE
+    return jsonify(response_data), 201
 
 
 @chat_bp.get("/sessions")

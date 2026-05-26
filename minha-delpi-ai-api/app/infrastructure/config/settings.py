@@ -213,3 +213,7 @@ class Settings:
     CHAT_FAST_PATH_SLIM_PROMPT = (
         os.getenv("CHAT_FAST_PATH_SLIM_PROMPT", "true").lower() == "true"
     )
+
+    LGPD_REQUIRE_AI_CONSENT = (
+        os.getenv("LGPD_REQUIRE_AI_CONSENT", "false").lower() == "true"
+    )

@@ -6,6 +6,8 @@ from app.infrastructure.config.settings import Settings
 
 logger = logging.getLogger("minha-delpi-ai-api.user_context")
 
+_PII_FIELDS = ("name", "email")
+
 _USER_IDENTITY_TERMS = (
     "quem sou eu",
     "quem sou",
@@ -57,6 +59,42 @@ class ChatUserContextService:
         normalized = str(message or "").lower()
         return any(term in normalized for term in _USER_IDENTITY_TERMS)
 
+    @staticmethod
+    def _strip_pii(me: dict) -> dict:
+        """Remove campos de PII (nome, email) do dict do usuário."""
+        sanitized = dict(me)
+        for field in _PII_FIELDS:
+            sanitized.pop(field, None)
+        return sanitized
+
+    @staticmethod
+    def _has_ai_context_consent(access_token: str) -> bool:
+        """Verifica consentimento ``ai_context`` via core-api."""
+        import requests
+
+        try:
+            resp = requests.get(
+                f"{Settings.CORE_API_BASE_URL}/core-api/me/consents",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=Settings.CORE_API_TIMEOUT_SECONDS,
+            )
+            if resp.status_code != 200:
+                return False
+            consents = resp.json()
+            if isinstance(consents, list):
+                return any(
+                    c.get("purpose") == "ai_context" and c.get("granted")
+                    for c in consents
+                )
+        except Exception:
+            logger.debug("lgpd_consent_check_failed", exc_info=True)
+        return False
+
+    def _should_strip_pii(self, access_token: str) -> bool:
+        if not getattr(Settings, "LGPD_REQUIRE_AI_CONSENT", False):
+            return False
+        return not self._has_ai_context_consent(access_token)
+
     def build_user_context(self, access_token: str | None) -> str:
         if not access_token or not getattr(Settings, "CHAT_USER_CONTEXT_ENABLED", True):
             return ""
@@ -69,6 +107,9 @@ class ChatUserContextService:
 
         if not me or me.get("authorized") is False:
             return ""
+
+        if self._should_strip_pii(access_token):
+            me = self._strip_pii(me)
 
         apps = self._fetch_apps(access_token)
 
@@ -86,6 +127,9 @@ class ChatUserContextService:
 
         if not me or me.get("authorized") is False:
             return None
+
+        if self._should_strip_pii(access_token):
+            me = self._strip_pii(me)
 
         apps = self._fetch_apps(access_token)
         return self._format_direct_answer(me, apps, message)
