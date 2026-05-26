@@ -85,7 +85,13 @@ me_bp = Blueprint("me", __name__)
 def get_me():
     user = g.current_user
 
-    return jsonify({
+    consent_pending = False
+    with SqlAlchemyUnitOfWork() as uow:
+        consents = uow.consents.list_by_user(UUID(str(user.id)))
+        if not consents:
+            consent_pending = True
+
+    payload = {
         "id": user.id,
         "name": user.name,
         "email": user.email,
@@ -93,7 +99,12 @@ def get_me():
         "groups": getattr(user, "groups", []),
         "permissions": getattr(user, "permissions", []),
         "is_superadmin": getattr(user, "is_superadmin", False),
-    }), 200
+    }
+
+    if consent_pending:
+        payload["consent_pending"] = True
+
+    return jsonify(payload), 200
 
 
 # ==========================================================
