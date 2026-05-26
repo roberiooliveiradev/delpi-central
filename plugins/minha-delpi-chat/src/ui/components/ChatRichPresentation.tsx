@@ -8,7 +8,17 @@ import { ExpandButton } from "./ChatExpandModal";
 import "./ChatRichKpi.css";
 import "./ChatExpandModal.css";
 
-type ViewMode = "primary" | "table";
+type ViewMode = "chart" | "table" | "text";
+
+function getAvailableFormats(toolCalls: ChatToolCall[]): string[] {
+  for (const tc of toolCalls) {
+    const formats = (tc.metadata as Record<string, unknown>)?.availableFormats;
+    if (Array.isArray(formats)) {
+      return formats as string[];
+    }
+  }
+  return [];
+}
 
 export function ChatRichPresentation({
   toolCalls,
@@ -18,7 +28,15 @@ export function ChatRichPresentation({
   onDrillDown?: (query: string) => void;
 }) {
   const { primary, table } = getPresentationPairFromToolCalls(toolCalls);
-  const [viewMode, setViewMode] = useState<ViewMode>("primary");
+  const availableFormats = getAvailableFormats(toolCalls);
+
+  const defaultMode: ViewMode = primary?.type === "chart"
+    ? "chart"
+    : primary?.type === "table"
+      ? "table"
+      : "text";
+
+  const [viewMode, setViewMode] = useState<ViewMode>(defaultMode);
 
   if (!primary) {
     return null;
@@ -35,36 +53,78 @@ export function ChatRichPresentation({
     );
   }
 
-  const hasToggle = primary.type === "chart" && table?.type === "table";
-  const current = viewMode === "table" && table ? table : primary;
+  const hasChart = primary.type === "chart" || availableFormats.includes("chart");
+  const hasTable = primary.type === "table" || !!table || availableFormats.includes("table");
+  const showToggle = (hasChart && hasTable) || (hasChart || hasTable);
 
-  return (
-    <div className="mdc-rich-presentation">
-      <div className="mdc-rich-presentation__actions">
-        {hasToggle && (
-          <>
+  const currentPresentation = viewMode === "chart"
+    ? (primary.type === "chart" ? primary : null)
+    : viewMode === "table"
+      ? (table?.type === "table" ? table : primary.type === "table" ? primary : null)
+      : null;
+
+  if (viewMode === "text") {
+    return showToggle ? (
+      <div className="mdc-rich-presentation">
+        <div className="mdc-rich-presentation__actions">
+          {hasChart && (
             <button
-              className={`mdc-rich-chart__toggle-btn ${viewMode === "primary" ? "mdc-rich-chart__toggle-btn--active" : ""}`}
-              onClick={() => setViewMode("primary")}
+              className="mdc-rich-chart__toggle-btn"
+              onClick={() => setViewMode("chart")}
             >
               📊 Gráfico
             </button>
+          )}
+          {hasTable && (
             <button
-              className={`mdc-rich-chart__toggle-btn ${viewMode === "table" ? "mdc-rich-chart__toggle-btn--active" : ""}`}
+              className="mdc-rich-chart__toggle-btn"
               onClick={() => setViewMode("table")}
             >
               📋 Tabela
             </button>
+          )}
+        </div>
+      </div>
+    ) : null;
+  }
+
+  return (
+    <div className="mdc-rich-presentation">
+      <div className="mdc-rich-presentation__actions">
+        {showToggle && (
+          <>
+            {hasChart && (
+              <button
+                className={`mdc-rich-chart__toggle-btn ${viewMode === "chart" ? "mdc-rich-chart__toggle-btn--active" : ""}`}
+                onClick={() => setViewMode("chart")}
+              >
+                📊 Gráfico
+              </button>
+            )}
+            {hasTable && (
+              <button
+                className={`mdc-rich-chart__toggle-btn ${viewMode === "table" ? "mdc-rich-chart__toggle-btn--active" : ""}`}
+                onClick={() => setViewMode("table")}
+              >
+                📋 Tabela
+              </button>
+            )}
+            <button
+              className="mdc-rich-chart__toggle-btn"
+              onClick={() => setViewMode("text")}
+            >
+              📝 Texto
+            </button>
           </>
         )}
-        <ExpandButton presentation={current} />
+        {currentPresentation && <ExpandButton presentation={currentPresentation} />}
       </div>
 
-      {current.type === "chart" && (
-        <ChatRichChart presentation={current} />
+      {viewMode === "chart" && currentPresentation?.type === "chart" && (
+        <ChatRichChart presentation={currentPresentation} />
       )}
-      {current.type === "table" && (
-        <ChatRichTable presentation={current} onDrillDown={onDrillDown} />
+      {viewMode === "table" && currentPresentation?.type === "table" && (
+        <ChatRichTable presentation={currentPresentation} onDrillDown={onDrillDown} />
       )}
     </div>
   );

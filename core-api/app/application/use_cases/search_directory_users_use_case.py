@@ -3,6 +3,18 @@ from uuid import UUID
 from app.application.unit_of_work import UnitOfWork
 
 
+def _mask_email(email: str) -> str:
+    """Mascara o email para minimizar exposição de dados (LGPD Art. 6, III)."""
+    if not email or "@" not in email:
+        return "***"
+    local, domain = email.split("@", 1)
+    if len(local) <= 1:
+        masked_local = "*"
+    else:
+        masked_local = local[0] + "***"
+    return f"{masked_local}@{domain}"
+
+
 class SearchDirectoryUsersUseCase:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
@@ -40,7 +52,7 @@ class SearchDirectoryUsersUseCase:
                 {
                     "id": str(user.id),
                     "name": user.name,
-                    "email": user.email,
+                    "email": _mask_email(user.email),
                 }
             )
 

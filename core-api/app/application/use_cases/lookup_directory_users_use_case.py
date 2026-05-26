@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from app.application.unit_of_work import UnitOfWork
+from app.application.use_cases.search_directory_users_use_case import _mask_email
 
 
 class LookupDirectoryUsersUseCase:
@@ -25,7 +26,7 @@ class LookupDirectoryUsersUseCase:
             {
                 "id": str(user.id),
                 "name": user.name,
-                "email": user.email,
+                "email": _mask_email(user.email),
             }
             for user in users
             if user.active

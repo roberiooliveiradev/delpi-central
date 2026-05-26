@@ -1,7 +1,7 @@
 const PREVIEW_SAMPLES: Record<string, string> = {
-  userName: "Maria",
-  userFullName: "Maria Silva",
-  userEmail: "maria@empresa.com",
+  userName: "Usuária",
+  userFullName: "Usuária Teste",
+  userEmail: "usuario.teste@exemplo.com",
   eventName: "Confraternização DELPI",
   eventDate: "20/06/2026 às 19h",
   location: "Auditório principal",

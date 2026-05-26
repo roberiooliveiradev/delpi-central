@@ -127,6 +127,14 @@ def handle_app_usage_open(data):
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
+            # LGPD: respeitar opt-out de rastreamento de uso
+            from uuid import UUID
+            consent = uow.consents.get_by_user_and_purpose(
+                UUID(str(user_id)), "usage_tracking"
+            )
+            if consent and not consent.granted:
+                return
+
             RecordAppUsageUseCase(uow).execute(
                 user_id=user_id,
                 session_id=request.sid,

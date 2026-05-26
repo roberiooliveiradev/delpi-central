@@ -24,4 +24,4 @@ def test_lookup_directory_users_returns_active_profiles():
     result = LookupDirectoryUsersUseCase(uow).execute(user_ids=[str(user_id)])
 
     assert len(result) == 1
-    assert result[0]["email"] == "user@delpi.com"
+    assert result[0]["email"] == "u***@delpi.com"

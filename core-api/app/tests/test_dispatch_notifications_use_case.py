@@ -25,11 +25,11 @@ def uow():
     return unit
 
 
-def _user(user_id=None, email="a@delpi.com", active=True):
+def _user(user_id=None, email="a@delpi.com", active=True, name="User"):
     return UserDTO(
         id=user_id or uuid4(),
         email=email,
-        name="User",
+        name=name,
         active=active,
         is_superadmin=False,
         last_login_at=None,
@@ -196,7 +196,7 @@ def test_dispatch_controle_mp_skips_user_without_app_access(uow):
 
 
 def test_dispatch_welcome_template_uses_recipient_name(uow):
-    user = _user(name="Ana Paula")
+    user = _user(name="Usuaria Teste")
     uow.users.get_by_id.return_value = user
 
     use_case = DispatchNotificationsUseCase(uow)
@@ -224,5 +224,5 @@ def test_dispatch_welcome_template_uses_recipient_name(uow):
 
     assert result.created_count == 1
     created = uow.notifications.create.call_args[0][0]
-    assert "Ana" in created.message
-    assert created.metadata["vars"]["userName"] == "Ana"
+    assert "Usuaria" in created.message
+    assert created.metadata["vars"]["userName"] == "Usuaria"
