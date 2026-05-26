@@ -61,16 +61,13 @@ export function ConsentModal({ onAccepted }: ConsentModalProps) {
     async function load() {
       try {
         const api = getApi();
-        const data = await api.client.get<{
-          items?: ConsentItem[];
-          availablePurposes?: string[];
-        }>("/core-api/me/consents");
+        const raw = await api.getConsentsRaw();
 
         if (cancelled) return;
 
-        const items: ConsentItem[] = Array.isArray(data?.items) ? data.items : [];
-        const purposes: string[] = Array.isArray(data?.availablePurposes)
-          ? data.availablePurposes
+        const items = raw.items;
+        const purposes = raw.availablePurposes.length > 0
+          ? raw.availablePurposes
           : Object.keys(PURPOSE_LABELS);
 
         setConsents(items);

@@ -22,7 +22,7 @@ import { PrivacyPage } from "./PrivacyPage";
 import { PrivacyPolicyPage } from "./PrivacyPolicyPage";
 
 import { ApiClient } from "../data/apiClient";
-import { CoreApi, type ConsentItem } from "../data/coreApi";
+import { CoreApi } from "../data/coreApi";
 
 
 
@@ -215,9 +215,8 @@ function useConsentCheck() {
       try {
         const client = new ApiClient("", getAccessToken);
         const api = new CoreApi(client);
-        const data = await api.client.get<{ items?: ConsentItem[] }>("/core-api/me/consents");
-        const items: ConsentItem[] = Array.isArray(data?.items) ? data.items : [];
-        const hasRequired = items.some(
+        const raw = await api.getConsentsRaw();
+        const hasRequired = raw.items.some(
           (c) => c.purpose === "data_processing" && c.granted,
         );
         setStatus(hasRequired ? "accepted" : "pending");
