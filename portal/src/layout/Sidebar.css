@@ -327,6 +327,24 @@
   color: var(--primary);
 }
 
+.sidebar-footer__privacy-link {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  text-align: center;
+  padding: 0.5rem 0 0;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border);
+  opacity: 0.7;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.sidebar-footer__privacy-link:hover {
+  opacity: 1;
+  color: var(--primary);
+}
+
 /* =========================================
    DROPDOWNS (NOTIF + USER)
 ========================================= */

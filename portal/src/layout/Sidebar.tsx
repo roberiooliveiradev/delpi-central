@@ -25,6 +25,7 @@ import {
   User,
   LogOut,
   ChevronLeft,
+  FileText,
 } from "lucide-react";
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
@@ -507,6 +508,17 @@ export const Sidebar = () => {
                   </div>
 
                   <div
+                    className="dropdown-item"
+                    onClick={() => {
+                      navigate("/privacy-policy");
+                      setUserOpen(false);
+                    }}
+                  >
+                    <FileText size={16} />
+                    Política de Privacidade
+                  </div>
+
+                  <div
                     className="dropdown-item danger"
                     onClick={logout}
                   >
@@ -515,6 +527,13 @@ export const Sidebar = () => {
                   </div>
                 </div>
               )}
+
+              <NavLink
+                to="/privacy-policy"
+                className="sidebar-footer__privacy-link"
+              >
+                Política de Privacidade
+              </NavLink>
             </div>
           </>
         )}
