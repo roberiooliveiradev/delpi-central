@@ -1670,17 +1670,206 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         return sql, (*params_prod, *params_pi)
 
     # =========================
+    # STAGED EXECUTION (single batch com temp tables)
+    # =========================
+
+    _TEMP_CANDIDATES = "#Delpi_CandidateLMPs"
+    _TEMP_ENG_RESUMO = "#Delpi_EngResumo"
+    _TEMP_PI_COUNT = "#Delpi_PICount"
+
+    def _build_staged_batch(
+        self,
+        request: ListLMPRequest,
+        *,
+        include_qtd_pi: bool,
+        lmp_only: bool = False,
+        final_select: str,
+        final_params: tuple = (),
+    ) -> Tuple[str, tuple]:
+        """
+        Monta um batch SQL único que:
+        1. Limpa temp tables residuais (pooling)
+        2. Cria temp tables por fase (SET NOCOUNT ON)
+        3. Executa o SELECT final (SET NOCOUNT OFF)
+        """
+        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(
+            request, lmp_only=lmp_only,
+        )
+
+        cte_hist, params_hist = self._sql_historico_ov_cte(
+            scope_cte_name=self._TEMP_CANDIDATES,
+            requested_branch=request.branch,
+        )
+
+        parts = [
+            "SET NOCOUNT ON;",
+            f"DROP TABLE IF EXISTS {self._TEMP_PI_COUNT};",
+            f"DROP TABLE IF EXISTS {self._TEMP_ENG_RESUMO};",
+            f"DROP TABLE IF EXISTS {self._TEMP_CANDIDATES};",
+            f"WITH\n{cte_candidates}\nSELECT * INTO {self._TEMP_CANDIDATES} FROM CandidateLMPs;",
+            f"WITH\n{cte_hist}\nSELECT * INTO {self._TEMP_ENG_RESUMO} FROM EngenhariaResumoUltimaRevisao;",
+        ]
+        all_params: list = [*params_candidates, *params_hist]
+
+        if include_qtd_pi:
+            cte_prod, params_prod = self._sql_produtos_lmp_cte(
+                scope_cte_name=self._TEMP_CANDIDATES,
+                requested_branch=request.branch,
+            )
+            cte_pi, params_pi = self._sql_pi_total_by_ov_ctes_from_produtos_lmp()
+            parts.append(
+                f"WITH\n{cte_prod},\n{cte_pi}\n"
+                f"SELECT * INTO {self._TEMP_PI_COUNT} FROM PI_COUNT_BY_OV;"
+            )
+            all_params.extend([*params_prod, *params_pi])
+
+        parts.append("SET NOCOUNT OFF;")
+        parts.append(f"{final_select}")
+        all_params.extend(final_params)
+
+        return "\n".join(parts), tuple(all_params)
+
+    def _staged_final_select(
+        self,
+        *,
+        include_qtd_pi: bool,
+        order_by: bool,
+        summary_only: bool = False,
+    ) -> str:
+        qtd_pi_select = "ISNULL(PI.QTD_PI, 0) AS qtd_pi" if include_qtd_pi else "0 AS qtd_pi"
+        qtd_pi_join = f"""
+            LEFT JOIN {self._TEMP_PI_COUNT} PI
+                ON PI.ADJ_FILIAL = C.AD1_FILIAL
+               AND PI.ADJ_NROPOR = C.AD1_NROPOR
+               AND PI.ADJ_REVISA = C.AD1_REVISA
+        """ if include_qtd_pi else ""
+        qtd_pi_group_by = ",\n                PI.QTD_PI" if include_qtd_pi else ""
+        order_clause = """
+            ORDER BY
+                C.LMP_START_DATE DESC,
+                C.AD1_NROPOR DESC
+        """ if order_by else ""
+
+        if summary_only:
+            return f"""
+                SELECT
+                    C.AD1_FILIAL AS branch,
+                    C.AD1_NROPOR AS sale_number,
+                    C.AD1_DESCRI AS sale_description,
+                    C.LISTING_KIND AS listing_kind,
+                    C.LMP_START_DATE AS start_date,
+                    C.LMP_END_DATE AS end_date,
+                    H.ENGINEERING_STATUS AS engineering_status,
+                    H.TEMPO_TOTAL_MINUTOS_ENG AS engineering_total_minutes,
+                    {qtd_pi_select}
+                FROM {self._TEMP_CANDIDATES} C
+                LEFT JOIN {self._TEMP_ENG_RESUMO} H
+                    ON H.AIJ_FILIAL = C.AD1_FILIAL
+                   AND H.AIJ_NROPOR = C.AD1_NROPOR
+                {qtd_pi_join}
+                GROUP BY
+                    C.AD1_FILIAL,
+                    C.AD1_NROPOR,
+                    C.AD1_DESCRI,
+                    C.LISTING_KIND,
+                    C.LMP_START_DATE,
+                    C.LMP_END_DATE,
+                    H.ENGINEERING_STATUS,
+                    H.TEMPO_TOTAL_MINUTOS_ENG
+                    {qtd_pi_group_by}
+                {order_clause}
+            """
+
+        return f"""
+            SELECT
+                C.AD1_FILIAL AS branch,
+                C.AD1_NROPOR AS sale_number,
+                C.AD1_DESCRI AS sale_description,
+                C.LISTING_KIND AS listing_kind,
+                C.LMP_START_DATE AS start_date,
+                C.LMP_END_DATE AS end_date,
+                H.ENGINEERING_STATUS AS engineering_status,
+                H.QTD_PASSAGENS_ENG AS qtd_engineering_entries,
+                H.QTD_PASSAGENS_ENCERRADAS AS qtd_engineering_closed,
+                H.QTD_AVANCOU_ENG AS qtd_advanced_from_engineering,
+                H.QTD_RETORNOU_ENG AS qtd_returned_from_engineering,
+                H.TEMPO_TOTAL_MINUTOS_ENG AS engineering_total_minutes,
+                {qtd_pi_select}
+            FROM {self._TEMP_CANDIDATES} C
+            LEFT JOIN {self._TEMP_ENG_RESUMO} H
+                ON H.AIJ_FILIAL = C.AD1_FILIAL
+               AND H.AIJ_NROPOR = C.AD1_NROPOR
+            {qtd_pi_join}
+            GROUP BY
+                C.AD1_FILIAL,
+                C.AD1_NROPOR,
+                C.AD1_DESCRI,
+                C.LISTING_KIND,
+                C.LMP_START_DATE,
+                C.LMP_END_DATE,
+                H.ENGINEERING_STATUS,
+                H.QTD_PASSAGENS_ENG,
+                H.QTD_PASSAGENS_ENCERRADAS,
+                H.QTD_AVANCOU_ENG,
+                H.QTD_RETORNOU_ENG,
+                H.TEMPO_TOTAL_MINUTOS_ENG
+                {qtd_pi_group_by}
+            {order_clause}
+        """
+
+    def _staged_count_select(self, *, include_qtd_pi: bool) -> str:
+        qtd_pi_join = f"""
+            LEFT JOIN {self._TEMP_PI_COUNT} PI
+                ON PI.ADJ_FILIAL = C.AD1_FILIAL
+               AND PI.ADJ_NROPOR = C.AD1_NROPOR
+               AND PI.ADJ_REVISA = C.AD1_REVISA
+        """ if include_qtd_pi else ""
+        qtd_pi_group_by = ",\n                    PI.QTD_PI" if include_qtd_pi else ""
+
+        return f"""
+            SELECT COUNT(*) AS total
+            FROM (
+                SELECT
+                    C.AD1_FILIAL,
+                    C.AD1_NROPOR
+                FROM {self._TEMP_CANDIDATES} C
+                LEFT JOIN {self._TEMP_ENG_RESUMO} H
+                    ON H.AIJ_FILIAL = C.AD1_FILIAL
+                   AND H.AIJ_NROPOR = C.AD1_NROPOR
+                {qtd_pi_join}
+                GROUP BY
+                    C.AD1_FILIAL,
+                    C.AD1_NROPOR,
+                    C.AD1_DESCRI,
+                    C.LISTING_KIND,
+                    C.LMP_START_DATE,
+                    C.LMP_END_DATE,
+                    H.ENGINEERING_STATUS,
+                    H.QTD_PASSAGENS_ENG,
+                    H.QTD_PASSAGENS_ENCERRADAS,
+                    H.QTD_AVANCOU_ENG,
+                    H.QTD_RETORNOU_ENG,
+                    H.TEMPO_TOTAL_MINUTOS_ENG
+                    {qtd_pi_group_by}
+            ) BASE_ROWS
+        """
+
+    # =========================
     # PUBLIC METHODS
     # =========================
     def list_lmps(self, request: ListLMPRequest) -> List[LMP]:
-        sql, params = self._sql_lmp_base_rows_query(
-            request,
-            include_qtd_pi=self._resolve_include_qtd_pi(request),
+        include_qtd_pi = self._resolve_include_qtd_pi(request)
+        final_select = self._staged_final_select(
+            include_qtd_pi=include_qtd_pi, order_by=True,
         )
-
+        batch_sql, batch_params = self._build_staged_batch(
+            request,
+            include_qtd_pi=include_qtd_pi,
+            final_select=final_select,
+        )
         with self as repo:
-            rows = repo.execute_query(sql, params)
-            return [LMP(**row) for row in rows]
+            rows = repo.execute_batch_query(batch_sql, batch_params)
+        return [LMP(**row) for row in rows]
 
     def list_lmps_page(self, request: ListLMPRequest) -> Page[LMP]:
         if not request.page_size:
@@ -1694,26 +1883,52 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             )
 
         include_qtd_pi = self._resolve_include_qtd_pi(request)
-        count_sql, count_params = self._sql_lmp_base_rows_count_query(
-            request,
-            include_qtd_pi=include_qtd_pi,
+        page = request.page or 1
+        page_size = request.page_size or 0
+        offset = (page - 1) * page_size
+
+        count_select = self._staged_count_select(include_qtd_pi=include_qtd_pi)
+        rows_select = self._staged_final_select(
+            include_qtd_pi=include_qtd_pi, order_by=True,
         )
-        page_sql, page_params = self._sql_lmp_base_rows_paged_query(
+        combined_final = f"""
+            {count_select};
+            {rows_select}
+            OFFSET ? ROWS
+            FETCH NEXT ? ROWS ONLY
+        """
+        batch_sql, batch_params = self._build_staged_batch(
             request,
             include_qtd_pi=include_qtd_pi,
+            final_select=combined_final,
+            final_params=(offset, page_size),
         )
 
         with self as repo:
-            total_row = repo.execute_one(count_sql, count_params)
-            total = int((total_row or {}).get("total") or 0)
+            repo.cursor.execute(batch_sql, batch_params)
 
-            rows = repo.execute_query(page_sql, page_params)
+            while repo.cursor.description is None:
+                if not repo.cursor.nextset():
+                    return Page(items=[], total=0, page=page, page_size=page_size)
+
+            total_row = repo.cursor.fetchone()
+            total = int(total_row[0] if total_row else 0)
+
+            if not repo.cursor.nextset() or repo.cursor.description is None:
+                return Page(items=[], total=total, page=page, page_size=page_size)
+
+            columns = [desc[0] for desc in repo.cursor.description]
+            raw_rows = repo.cursor.fetchall()
+            rows = [
+                repo._normalize_row(dict(zip(columns, row)))
+                for row in raw_rows
+            ]
 
         return Page(
             items=[LMP(**row) for row in rows],
             total=total,
-            page=request.page or 1,
-            page_size=request.page_size,
+            page=page,
+            page_size=page_size,
         )
 
     def get_lmp(self, request: GetLMPRequest) -> LMP:
@@ -1771,14 +1986,22 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:
         listing_filter = self._resolve_listing_type_filter(request, lmp_only=False)
         lmp_only = listing_filter == LISTING_KIND_LMP
-        sql, params = self._sql_lmp_summary_rows_query(
+        include_qtd_pi = self._resolve_include_qtd_pi(request)
+
+        final_select = self._staged_final_select(
+            include_qtd_pi=include_qtd_pi,
+            order_by=True,
+            summary_only=True,
+        )
+        batch_sql, batch_params = self._build_staged_batch(
             request,
-            include_qtd_pi=self._resolve_include_qtd_pi(request),
+            include_qtd_pi=include_qtd_pi,
             lmp_only=lmp_only,
+            final_select=final_select,
         )
 
         with self as repo:
-            rows = repo.execute_query(sql, params)
+            rows = repo.execute_batch_query(batch_sql, batch_params)
 
         return [
             {
