@@ -2248,6 +2248,23 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
                 elif event_type == "token":
                     yield _sse("token", {"content": event.get("content", "")})
 
+                elif event_type == "assistant_pending":
+                    yield _sse(
+                        "assistant_pending",
+                        {"messageId": event.get("messageId")},
+                    )
+
+                elif event_type == "playback":
+                    yield _sse(
+                        "playback",
+                        {
+                            "messageId": event.get("messageId"),
+                            "answer": event.get("answer", ""),
+                            "sources": event.get("sources", []),
+                            "toolCalls": event.get("toolCalls", []),
+                        },
+                    )
+
                 elif event_type == "done":
                     yield _sse(
                         "done",

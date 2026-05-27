@@ -82,6 +82,7 @@ export function ChatPage({
     streamingSources,
     streamingToolCalls,
     streamingStatus,
+    streamingShowPresentation,
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,
@@ -1107,6 +1108,7 @@ export function ChatPage({
                 streamingSources={streamingSources}
                 streamingToolCalls={streamingToolCalls}
                 streamingStatus={streamingStatus}
+                streamingShowPresentation={streamingShowPresentation}
                 isStreaming={isStreamingActiveSession}
                 isLoading={isLoadingMessages && messages.length === 0}
                 onEditAndResendMessage={editAndResendMessage}

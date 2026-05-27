@@ -44,7 +44,7 @@ export function ChatRichPresentation({
 
   if (primary.type === "kpi") {
     return (
-      <div className="mdc-rich-presentation">
+      <div className="mdc-rich-presentation mdc-rich-presentation--enter">
         <div className="mdc-rich-presentation__actions">
           <ExpandButton presentation={primary} />
         </div>
@@ -65,7 +65,7 @@ export function ChatRichPresentation({
 
   if (viewMode === "text") {
     return showToggle ? (
-      <div className="mdc-rich-presentation">
+      <div className="mdc-rich-presentation mdc-rich-presentation--enter">
         <div className="mdc-rich-presentation__actions">
           {hasChart && (
             <button
@@ -89,7 +89,7 @@ export function ChatRichPresentation({
   }
 
   return (
-    <div className="mdc-rich-presentation">
+    <div className="mdc-rich-presentation mdc-rich-presentation--enter">
       <div className="mdc-rich-presentation__actions">
         {showToggle && (
           <>

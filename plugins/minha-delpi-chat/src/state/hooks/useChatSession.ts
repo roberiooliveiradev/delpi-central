@@ -21,6 +21,11 @@ import type {
   ChatSource,
   ChatToolCall,
 } from "../../data/api/chatTypes";
+import {
+  isAssistantGenerating,
+  sessionAwaitingAssistantResponse,
+} from "../chatMessageDelivery";
+import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
 import { useChatStreaming } from "./useChatStreaming";
 
 type UseChatSessionOptions = {
@@ -61,6 +66,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [streamingSources, setStreamingSources] = useState<ChatSource[]>([]);
   const [streamingToolCalls, setStreamingToolCalls] = useState<ChatToolCall[]>([]);
   const [streamingStatus, setStreamingStatus] = useState<string | null>(null);
+  const [streamingShowPresentation, setStreamingShowPresentation] = useState(true);
+  const [playbackPayload, setPlaybackPayload] = useState<ChatPlaybackPayload | null>(
+    null,
+  );
+  const awaitingPlaybackRef = useRef(false);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingArchivedSessions, setIsLoadingArchivedSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -83,6 +93,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingSources([]);
     setStreamingToolCalls([]);
     setStreamingStatus(null);
+    setStreamingShowPresentation(true);
+    setPlaybackPayload(null);
+    awaitingPlaybackRef.current = false;
   }, []);
 
   const markSessionPending = useCallback((sessionId: string) => {
@@ -261,6 +274,40 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     },
     [options.getAccessToken],
   );
+
+  const finishPlayback = useCallback(() => {
+    const sessionId = activeSessionIdRef.current;
+
+    setPlaybackPayload(null);
+    awaitingPlaybackRef.current = false;
+
+    if (!sessionId) {
+      resetStreamingUi();
+      return;
+    }
+
+    void loadMessages(sessionId).then(() => {
+      if (activeSessionIdRef.current !== sessionId) {
+        return;
+      }
+
+      setDraft("");
+      setPendingUserMessage(null);
+      resetStreamingUi();
+    });
+  }, [loadMessages, resetStreamingUi]);
+
+  const { displayedAnswer: playbackAnswer, showPresentation: playbackShowPresentation } =
+    useChatMessagePlayback(playbackPayload, finishPlayback);
+
+  useEffect(() => {
+    if (!playbackPayload) {
+      return;
+    }
+
+    setStreamingAnswer(playbackAnswer);
+    setStreamingShowPresentation(playbackShowPresentation);
+  }, [playbackAnswer, playbackPayload, playbackShowPresentation]);
 
   const deleteSession = useCallback(
     async (sessionId: string) => {
@@ -574,11 +621,32 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           setStreamingToolCalls(toolCalls);
+          setStreamingShowPresentation(false);
           setStreamingStatus(
             toolCalls.length > 0
               ? "Consultando sistemas autorizados..."
               : "Gerando resposta...",
           );
+        },
+        onAssistantPending: () => {
+          if (!isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          setStreamingStatus("Gerando resposta...");
+          setStreamingShowPresentation(false);
+        },
+        onPlayback: (payload) => {
+          if (!isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          awaitingPlaybackRef.current = true;
+          setStreamingStatus(null);
+          setStreamingSources(payload.sources);
+          setStreamingToolCalls(payload.toolCalls);
+          setStreamingShowPresentation(false);
+          setPlaybackPayload(payload);
         },
         onToken: (token: string) => {
           if (!isStreamForActiveSession(sessionId)) {
@@ -586,9 +654,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           setStreamingStatus(null);
+          setStreamingShowPresentation(true);
           setStreamingAnswer((current) => current + token);
         },
-        onDone: async () => {
+        onDone: async (response) => {
           finishSending(sessionId);
 
           try {
@@ -598,6 +667,21 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           if (!isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          if (response.playback || awaitingPlaybackRef.current) {
+            setPlaybackPayload((current) =>
+              current ??
+              (response.answer
+                ? {
+                    messageId: response.messageId,
+                    answer: response.answer,
+                    sources: response.sources ?? [],
+                    toolCalls: response.toolCalls ?? [],
+                  }
+                : null),
+            );
             return;
           }
 
@@ -624,6 +708,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       isStreamForActiveSession,
       loadMessages,
       loadSessions,
+      playbackPayload,
       resetStreamingUi,
     ],
   );
@@ -742,6 +827,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
+    setStreamingShowPresentation(false);
     setStreamingStatus(
       activeSession
         ? "Preparando sua pergunta..."
@@ -917,11 +1003,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   useEffect(() => {
     const sessionId = activeSession?.id;
 
-    if (!sessionId || !isSessionPending(sessionId) || isSessionStreaming(sessionId)) {
+    if (!sessionId || isSessionStreaming(sessionId) || playbackPayload) {
       return;
     }
 
-    if (pendingUserMessage) {
+    const awaitingBackground =
+      (isSessionPending(sessionId) && !pendingUserMessage) ||
+      sessionAwaitingAssistantResponse(messages);
+
+    if (!awaitingBackground) {
       return;
     }
 
@@ -939,20 +1029,36 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isSessionPending,
     isSessionStreaming,
     loadMessages,
+    messages,
     pendingUserMessage,
+    playbackPayload,
   ]);
 
   const visibleMessages = useMemo(() => {
+    let list = messages;
+
+    const hideGeneratingPlaceholder =
+      Boolean(activeSession) &&
+      (isSessionStreaming(activeSession.id) ||
+        isSessionPending(activeSession.id) ||
+        playbackPayload) &&
+      list.length > 0 &&
+      isAssistantGenerating(list[list.length - 1]);
+
+    if (hideGeneratingPlaceholder) {
+      list = list.slice(0, -1);
+    }
+
     if (!pendingUserMessage) {
-      return messages;
+      return list;
     }
 
-    if (messages.some((message) => message.id === pendingUserMessage.id)) {
-      return messages;
+    if (list.some((message) => message.id === pendingUserMessage.id)) {
+      return list;
     }
 
-    return [...messages, pendingUserMessage];
-  }, [messages, pendingUserMessage]);
+    return [...list, pendingUserMessage];
+  }, [activeSession, isSessionPending, isSessionStreaming, messages, pendingUserMessage, playbackPayload]);
 
   const isComposerBusy = isActiveSessionBusy();
   const isStreamingActiveSession =
@@ -969,6 +1075,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     streamingSources,
     streamingToolCalls,
     streamingStatus,
+    streamingShowPresentation,
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,

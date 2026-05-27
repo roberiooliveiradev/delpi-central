@@ -151,6 +151,14 @@ export type SendChatMessageResponse = {
   answer: string;
   sources: ChatSource[];
   toolCalls: ChatToolCall[];
+  playback?: boolean;
+};
+
+export type ChatPlaybackEvent = {
+  messageId: string;
+  answer: string;
+  sources: ChatSource[];
+  toolCalls: ChatToolCall[];
 };
 
 export type ChatArtifact = {

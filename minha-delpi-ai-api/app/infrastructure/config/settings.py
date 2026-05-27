@@ -142,6 +142,9 @@ class Settings:
     CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS = float(
         os.getenv("CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", "20")
     )
+    CHAT_PERSIST_BEFORE_PLAYBACK = (
+        os.getenv("CHAT_PERSIST_BEFORE_PLAYBACK", "true").lower() == "true"
+    )
     CHAT_OPERATIONAL_FAST_PATH_ENABLED = (
         os.getenv("CHAT_OPERATIONAL_FAST_PATH_ENABLED", "true").lower() == "true"
     )

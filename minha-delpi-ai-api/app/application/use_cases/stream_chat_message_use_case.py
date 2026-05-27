@@ -39,6 +39,7 @@ from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
+from app.domain.services.chat_message_delivery_service import ChatMessageDeliveryService
 from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
@@ -345,6 +346,8 @@ class StreamChatMessageUseCase:
 
         answer_parts: list[str] = []
         started_at = time.perf_counter()
+        persist_before_playback = Settings.CHAT_PERSIST_BEFORE_PLAYBACK
+        assistant_placeholder = None
 
         yield {
             "type": "sources",
@@ -362,22 +365,41 @@ class StreamChatMessageUseCase:
             "adminGuidelines": self._guideline_metadata(active_guidelines),
         }
 
+        if persist_before_playback:
+            assistant_placeholder = self.chat_repository.create_message(
+                session_id=session_id,
+                role="assistant",
+                content="",
+                metadata=ChatMessageDeliveryService.generating_metadata(
+                    {
+                        "agentKey": workspace_context.get("agentKey"),
+                        "stream": True,
+                    }
+                ),
+            )
+            yield {
+                "type": "assistant_pending",
+                "messageId": str(assistant_placeholder.id),
+            }
+
         if direct_answer:
-            for chunk in ChatExternalActionDirectResponseService.iter_stream_chunks(
-                direct_answer
-            ):
-                answer_parts.append(chunk)
-                yield {
-                    "type": "token",
-                    "content": chunk,
-                }
+            answer_parts.append(direct_answer)
+            if not persist_before_playback:
+                for chunk in ChatExternalActionDirectResponseService.iter_stream_chunks(
+                    direct_answer
+                ):
+                    yield {
+                        "type": "token",
+                        "content": chunk,
+                    }
         else:
             for token in self.llm_gateway.stream(llm_messages):
                 answer_parts.append(token)
-                yield {
-                    "type": "token",
-                    "content": token,
-                }
+                if not persist_before_playback:
+                    yield {
+                        "type": "token",
+                        "content": token,
+                    }
 
         answer = "".join(answer_parts).strip()
         pipeline_timings.mark("llm_done")
@@ -403,36 +425,54 @@ class StreamChatMessageUseCase:
             completion_tokens=completion_tokens_estimated,
         )
 
-        assistant_message = self.chat_repository.create_message(
-            session_id=session_id,
-            role="assistant",
-            content=answer,
-            metadata={
-                "provider": Settings.LLM_PROVIDER,
-                "model": Settings.OLLAMA_MODEL,
-                "agentKey": workspace_context.get("agentKey"),
-                "agent": workspace_context.get("agent"),
-                "project": workspace_context.get("project"),
-                "attachments": attachments,
-                "sources": sources,
-                "toolCalls": tool_calls,
-                "stream": True,
-                "rag": {
-                    "enabled": True,
-                    "sourceCount": len(sources),
-                },
-                "intelligence": intelligence_metadata,
-                "adminGuidelines": self._guideline_metadata(active_guidelines),
-                "metrics": {
-                    "latencyMs": latency_ms,
-                    "promptTokensEstimated": prompt_tokens_estimated,
-                    "completionTokensEstimated": completion_tokens_estimated,
-                    "totalTokensEstimated": total_tokens_estimated,
-                    "estimatedCost": estimated_cost,
-                },
-                "directResponse": bool(direct_answer),
+        assistant_metadata = {
+            "provider": Settings.LLM_PROVIDER,
+            "model": Settings.OLLAMA_MODEL,
+            "agentKey": workspace_context.get("agentKey"),
+            "agent": workspace_context.get("agent"),
+            "project": workspace_context.get("project"),
+            "attachments": attachments,
+            "sources": sources,
+            "toolCalls": tool_calls,
+            "stream": True,
+            "rag": {
+                "enabled": True,
+                "sourceCount": len(sources),
             },
-        )
+            "intelligence": intelligence_metadata,
+            "adminGuidelines": self._guideline_metadata(active_guidelines),
+            "metrics": {
+                "latencyMs": latency_ms,
+                "promptTokensEstimated": prompt_tokens_estimated,
+                "completionTokensEstimated": completion_tokens_estimated,
+                "totalTokensEstimated": total_tokens_estimated,
+                "estimatedCost": estimated_cost,
+            },
+            "directResponse": bool(direct_answer),
+        }
+
+        if persist_before_playback:
+            assistant_metadata = ChatMessageDeliveryService.ready_metadata(
+                assistant_metadata,
+                playback_pending=True,
+            )
+
+        if assistant_placeholder:
+            assistant_message = self.chat_repository.update_assistant_message(
+                assistant_placeholder.id,
+                answer,
+                assistant_metadata,
+            )
+        else:
+            assistant_message = self.chat_repository.create_message(
+                session_id=session_id,
+                role="assistant",
+                content=answer,
+                metadata=assistant_metadata,
+            )
+
+        if not assistant_message:
+            raise RuntimeError("Falha ao persistir mensagem do assistente.")
 
         self.audit_repository.log(
             user_id=user_id,
@@ -463,12 +503,22 @@ class StreamChatMessageUseCase:
             },
         )
 
+        if persist_before_playback:
+            yield {
+                "type": "playback",
+                "messageId": str(assistant_message.id),
+                "answer": answer,
+                "sources": sources,
+                "toolCalls": tool_calls,
+            }
+
         yield {
             "type": "done",
             "messageId": str(assistant_message.id),
             "answer": answer,
             "sources": sources,
             "toolCalls": tool_calls,
+            "playback": persist_before_playback,
         }
 
         if should_generate_session_title and Settings.CHAT_SESSION_TITLE_LLM_ENABLED:

@@ -22,6 +22,7 @@ import {
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatActionResults } from "./ChatActionResults";
+import { isAssistantGenerating } from "../../state/chatMessageDelivery";
 import { ChatRichPresentation } from "./ChatRichPresentation";
 import { getPresentationPairFromToolCalls } from "./chatPresentation";
 import { ChatSources } from "./ChatSources";
@@ -41,6 +42,7 @@ type ChatMessageListProps = {
   streamingSources?: ChatSource[];
   streamingToolCalls?: ChatToolCall[];
   streamingStatus?: string | null;
+  streamingShowPresentation?: boolean;
   isStreaming?: boolean;
   isLoading?: boolean;
   onEditAndResendMessage?: (
@@ -226,6 +228,7 @@ export function ChatMessageList({
   streamingSources,
   streamingToolCalls,
   streamingStatus,
+  streamingShowPresentation = true,
   isStreaming,
   isLoading,
   onEditAndResendMessage,
@@ -665,6 +668,13 @@ export function ChatMessageList({
                 </button>
               </div>
             </div>
+          ) : isAssistantGenerating(message) ? (
+            <div className="mdc-chat-thinking" role="status" aria-live="polite">
+              <span className="mdc-chat-thinking__dot" />
+              <span className="mdc-chat-thinking__dot" />
+              <span className="mdc-chat-thinking__dot" />
+              <p>Gerando resposta...</p>
+            </div>
           ) : (
             <>
               <ChatMessageAttachments attachments={getMessageAttachments(message)} />
@@ -672,7 +682,7 @@ export function ChatMessageList({
             </>
           )}
 
-          {!isUser ? (
+          {!isUser && !isAssistantGenerating(message) ? (
             <>
               {renderPresentation(messageToolCalls, onReuseMessage)}
               {!messagePresentation.primary ? (
@@ -771,8 +781,11 @@ export function ChatMessageList({
                 </div>
               )}
 
-              {renderPresentation(streamingToolCalls, onReuseMessage)}
-              {!getPresentationPairFromToolCalls(streamingToolCalls).primary ? (
+              {streamingShowPresentation
+                ? renderPresentation(streamingToolCalls, onReuseMessage)
+                : null}
+              {streamingShowPresentation &&
+              !getPresentationPairFromToolCalls(streamingToolCalls).primary ? (
                 <ChatActionResults toolCalls={streamingToolCalls} />
               ) : null}
               <ChatSources sources={filterVisibleChatSources(streamingSources)} />

@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { resendChatMessage, streamChatMessage } from "../../data/api/chatApi";
 import type {
+  ChatPlaybackEvent,
   ChatSource,
   ChatToolCall,
   SendChatMessageResponse,
@@ -21,6 +22,8 @@ type StreamMessageParams = {
   onSources?: (sources: ChatSource[]) => void;
   onToolCalls?: (toolCalls: ChatToolCall[]) => void;
   onToken?: (token: string) => void;
+  onAssistantPending?: (messageId: string) => void;
+  onPlayback?: (payload: ChatPlaybackEvent) => void;
   onDone?: (response: SendChatMessageResponse) => void;
   onError?: (message: string) => void;
 };
@@ -70,13 +73,27 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       runner: (
         callbacks: Pick<
           StreamMessageParams,
-          "onStatus" | "onSources" | "onToolCalls" | "onToken" | "onDone" | "onError"
+          | "onStatus"
+          | "onSources"
+          | "onToolCalls"
+          | "onToken"
+          | "onAssistantPending"
+          | "onPlayback"
+          | "onDone"
+          | "onError"
         >,
         signal: AbortSignal,
       ) => Promise<void>,
       callbacks: Pick<
         StreamMessageParams,
-        "onStatus" | "onSources" | "onToolCalls" | "onToken" | "onDone" | "onError"
+        | "onStatus"
+        | "onSources"
+        | "onToolCalls"
+        | "onToken"
+        | "onAssistantPending"
+        | "onPlayback"
+        | "onDone"
+        | "onError"
       >,
     ) => {
       const abortController = new AbortController();
@@ -104,6 +121,8 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       onSources,
       onToolCalls,
       onToken,
+      onAssistantPending,
+      onPlayback,
       onDone,
       onError,
     }: StreamMessageParams) => {
@@ -129,6 +148,8 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
           onSources,
           onToolCalls,
           onToken,
+          onAssistantPending,
+          onPlayback,
           onDone,
           onError,
         },
@@ -147,6 +168,8 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       onSources,
       onToolCalls,
       onToken,
+      onAssistantPending,
+      onPlayback,
       onDone,
       onError,
     }: {
@@ -158,6 +181,8 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       onSources?: (sources: ChatSource[]) => void;
       onToolCalls?: (toolCalls: ChatToolCall[]) => void;
       onToken?: (token: string) => void;
+      onAssistantPending?: (messageId: string) => void;
+      onPlayback?: (payload: ChatPlaybackEvent) => void;
       onDone?: (response: SendChatMessageResponse) => void;
       onError?: (message: string) => void;
     }) => {
@@ -174,6 +199,8 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
           onSources,
           onToolCalls,
           onToken,
+          onAssistantPending,
+          onPlayback,
           onDone,
           onError,
         },
