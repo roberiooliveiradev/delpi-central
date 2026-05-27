@@ -251,6 +251,20 @@ export type RecursoCompartilhado = {
   observacoes?: string | null;
 };
 
+export type RecursoCusto = {
+  recurso_custo_id: string;
+  recurso_compartilhado_id: string;
+  valor_mensal: number;
+  data_inicio_vigencia: string;
+  data_fim_vigencia?: string | null;
+  observacoes?: string | null;
+};
+
+type RecursoCustoMutationResponse = {
+  custo?: RecursoCusto;
+  recurso?: RecursoCompartilhado | null;
+};
+
 export type VinculoRecurso = {
   vinculo_id: string;
   revisao_id: string;
@@ -376,6 +390,53 @@ export function deleteRecurso(
   getAccessToken?: () => string | undefined
 ) {
   return request<null>(`/recursos-compartilhados/${recursoId}`, getAccessToken, {
+    method: "DELETE",
+  });
+}
+
+export function fetchRecursoCustos(
+  recursoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<{ total: number; items: RecursoCusto[] }>(
+    `/recursos-compartilhados/${recursoId}/custos`,
+    getAccessToken
+  );
+}
+
+export function reajusteRecursoCusto(
+  recursoId: string,
+  payload: { valor_mensal: number; vigente_desde: string; observacoes?: string },
+  getAccessToken?: () => string | undefined
+) {
+  return request<RecursoCustoMutationResponse>(
+    `/recursos-compartilhados/${recursoId}/custos/reajuste`,
+    getAccessToken,
+    { method: "POST", body: JSON.stringify(payload) }
+  );
+}
+
+export function updateRecursoCusto(
+  recursoCustoId: string,
+  payload: {
+    valor_mensal: number;
+    data_inicio_vigencia: string;
+    data_fim_vigencia?: string | null;
+    observacoes?: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<RecursoCustoMutationResponse>(`/recurso-custos/${recursoCustoId}`, getAccessToken, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteRecursoCusto(
+  recursoCustoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<RecursoCustoMutationResponse>(`/recurso-custos/${recursoCustoId}`, getAccessToken, {
     method: "DELETE",
   });
 }

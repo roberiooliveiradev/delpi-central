@@ -18,6 +18,7 @@ import {
   deleteRecurso,
   fetchOptions,
   fetchRecursos,
+  reajusteRecursoCusto,
   updateRecurso,
   type OptionsData,
   type RecursoCompartilhado,
@@ -31,6 +32,8 @@ import {
   payloadFromRecursoForm,
   recursoFormFromEntity,
 } from "../recursos/recursoCatalogForm";
+import { RecursoCustosSection } from "../recursos/RecursoCustosSection";
+import { todayDateInput } from "../../utils/dateInputs";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -45,6 +48,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingOriginal, setEditingOriginal] = useState<RecursoCompartilhado | null>(null);
   const [form, setForm] = useState(emptyRecursoForm);
 
   const load = useCallback(async () => {
@@ -71,12 +75,14 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
 
   function startCreate() {
     setEditingId(null);
+    setEditingOriginal(null);
     setForm(emptyRecursoForm());
     setShowForm(true);
   }
 
   function startEdit(r: RecursoCompartilhado) {
     setEditingId(r.recurso_compartilhado_id);
+    setEditingOriginal(r);
     setForm(recursoFormFromEntity(r));
     setShowForm(true);
   }
@@ -84,6 +90,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
   function cancelForm() {
     setShowForm(false);
     setEditingId(null);
+    setEditingOriginal(null);
     setForm(emptyRecursoForm());
   }
 
@@ -93,6 +100,19 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     const payload = payloadFromRecursoForm(form);
     try {
       if (editingId) {
+        const valorMudou =
+          editingOriginal != null &&
+          payload.valor_total_recorrente !== editingOriginal.valor_total_recorrente;
+        if (valorMudou) {
+          await reajusteRecursoCusto(
+            editingId,
+            {
+              valor_mensal: payload.valor_total_recorrente,
+              vigente_desde: todayDateInput(),
+            },
+            getAccessToken
+          );
+        }
         await updateRecurso(editingId, payload, getAccessToken);
       } else {
         await createRecurso(payload, getAccessToken);
@@ -131,7 +151,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     },
     {
       key: "custo",
-      header: "Custo/mês",
+      header: "Custo/mês (atual)",
       className: "ds-table__col--numeric",
       render: (r) => formatCurrency(r.valor_total_recorrente),
     },
@@ -269,6 +289,14 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
               Cancelar
             </button>
           </form>
+          {editingId ? (
+            <RecursoCustosSection
+              recursoId={editingId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              onRecursoSynced={() => void load()}
+            />
+          ) : null}
         </section>
       ) : null}
     </TransformometroShell>

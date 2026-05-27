@@ -6,6 +6,7 @@ from datetime import date, datetime
 from typing import Dict, List, Optional, Tuple
 
 from tm_app.domain.raw_data import TransformometroRawData
+from tm_app.domain.services.recurso_custo_resolver import resolve_recurso_valor_mensal
 
 
 @dataclass(frozen=True)
@@ -16,6 +17,7 @@ class CalculationContext:
     investimentos_by_revisao: Dict[str, List[dict]]
     recursos_by_id: Dict[str, dict]
     vinculos_by_revisao: Dict[str, List[dict]]
+    custos_by_recurso: Dict[str, List[dict]]
 
 
 class DashboardCalculatorService:
@@ -207,6 +209,7 @@ class DashboardCalculatorService:
             investimentos_by_revisao=self._group_by(raw.investimentos, "revisao_id"),
             recursos_by_id=self._index_by(raw.recursos_compartilhados, "recurso_compartilhado_id"),
             vinculos_by_revisao=self._group_by(raw.revisao_recursos_compartilhados, "revisao_id"),
+            custos_by_recurso=self._group_by(raw.recurso_custos, "recurso_compartilhado_id"),
         )
 
     def _calculate_monthly_series(
@@ -699,7 +702,8 @@ class DashboardCalculatorService:
             if not resource or not self._is_resource_eligible(resource, competencia_date):
                 continue
 
-            total_value = self._to_float(resource.get("valor_total_recorrente")) or 0.0
+            custos = context.custos_by_recurso.get(resource_id or "", [])
+            total_value = resolve_recurso_valor_mensal(resource, custos, competencia_date)
             allocation_criteria = (self._empty_to_none(resource.get("criterio_rateio")) or "igualitario").lower()
 
             eligible_links = self._get_eligible_links_for_resource(

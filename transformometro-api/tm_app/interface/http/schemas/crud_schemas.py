@@ -78,6 +78,19 @@ class InvestimentoUpdateBody(BaseModel):
     observacoes: Optional[str] = None
 
 
+class RecursoCustoBody(BaseModel):
+    valor_mensal: float = Field(ge=0)
+    data_inicio_vigencia: str
+    data_fim_vigencia: Optional[str] = None
+    observacoes: Optional[str] = None
+
+
+class RecursoCustoReajusteBody(BaseModel):
+    valor_mensal: float = Field(ge=0)
+    vigente_desde: str
+    observacoes: Optional[str] = None
+
+
 class RecursoBody(BaseModel):
     nome_recurso: str
     tipo_custo: str

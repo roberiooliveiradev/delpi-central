@@ -13,6 +13,7 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V004 | `V004__processo_familia_agrupador.sql` | `familia_processo`, `agrupador_ferramenta` em `processos` |
 | V005 | `V005__revisao_status_aprovacao.sql` | Colunas legado: `status_aprovacao`, `aprovado_em`, `aprovado_por_email`, `motivo_rejeicao` |
 | V006 | `V006__drop_workflow_gate.sql` | Normaliza revisões para `aprovada`; default de novas revisões = `aprovada` (sem workflow) |
+| V007 | `V007__recurso_custos_vigencia.sql` | Histórico de `valor_mensal` por vigência (`recurso_custos`) + backfill do catálogo |
 
 ## Comandos
 

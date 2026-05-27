@@ -28,6 +28,9 @@ from tm_app.infrastructure.persistence.repositories.investimento_repository impo
 )
 from tm_app.infrastructure.persistence.repositories.medicao_repository import MedicaoRepository
 from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
+from tm_app.infrastructure.persistence.repositories.recurso_custo_repository import (
+    RecursoCustoRepository,
+)
 from tm_app.infrastructure.persistence.repositories.recurso_repository import (
     RecursoRepository,
     VinculoRepository,
@@ -46,6 +49,8 @@ from tm_app.interface.http.schemas.crud_schemas import (
     ProcessoCreateBody,
     ProcessoUpdateBody,
     RecursoBody,
+    RecursoCustoBody,
+    RecursoCustoReajusteBody,
     RevisaoBody,
     VinculoBody,
     VinculoUpdateBody,
@@ -330,6 +335,12 @@ def create_recurso(body: RecursoBody, request: Request):
         return fail(str(exc), 400)
 
     rid = str(row["recurso_compartilhado_id"])
+    RecursoCustoRepository().create_initial(
+        rid,
+        float(body.valor_total_recorrente),
+        body.data_inicio_vigencia,
+    )
+    row = RecursoRepository().get(rid) or row
     _audit(request, "recurso", rid, "create", body.model_dump())
     return ok(row_to_json(row), "Recurso criado.", 201)
 
@@ -358,6 +369,98 @@ def delete_recurso(recurso_id: str, request: Request):
         return fail("Recurso não encontrado.", 404)
     _audit(request, "recurso", recurso_id, "delete", {})
     return ok(message="Recurso excluído.")
+
+
+@router.get("/recursos-compartilhados/{recurso_id}/custos")
+def list_recurso_custos(recurso_id: str):
+    if not RecursoRepository().get(recurso_id):
+        return fail("Recurso não encontrado.", 404)
+    rows = RecursoCustoRepository().list_by_recurso(recurso_id)
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.post("/recursos-compartilhados/{recurso_id}/custos")
+def create_recurso_custo(recurso_id: str, body: RecursoCustoBody, request: Request):
+    if not RecursoRepository().get(recurso_id):
+        return fail("Recurso não encontrado.", 404)
+    try:
+        row = RecursoCustoRepository().create(
+            {
+                "recurso_compartilhado_id": recurso_id,
+                **body.model_dump(),
+            }
+        )
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    cid = str(row["recurso_custo_id"])
+    _audit(request, "recurso_custo", cid, "create", body.model_dump())
+    recurso = RecursoRepository().get(recurso_id)
+    return ok(
+        {"custo": row_to_json(row), "recurso": row_to_json(recurso) if recurso else None},
+        "Vigência de custo registrada.",
+        201,
+    )
+
+
+@router.post("/recursos-compartilhados/{recurso_id}/custos/reajuste")
+def reajuste_recurso_custo(recurso_id: str, body: RecursoCustoReajusteBody, request: Request):
+    if not RecursoRepository().get(recurso_id):
+        return fail("Recurso não encontrado.", 404)
+    try:
+        row = RecursoCustoRepository().registrar_reajuste(
+            recurso_id,
+            float(body.valor_mensal),
+            body.vigente_desde,
+            body.observacoes,
+        )
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    cid = str(row["recurso_custo_id"])
+    _audit(request, "recurso_custo", cid, "reajuste", body.model_dump())
+    recurso = RecursoRepository().get(recurso_id)
+    return ok(
+        {"custo": row_to_json(row), "recurso": row_to_json(recurso) if recurso else None},
+        "Reajuste de custo registrado.",
+        201,
+    )
+
+
+@router.put("/recurso-custos/{recurso_custo_id}")
+def update_recurso_custo(recurso_custo_id: str, body: RecursoCustoBody, request: Request):
+    existing = RecursoCustoRepository().get(recurso_custo_id)
+    if not existing:
+        return fail("Vigência de custo não encontrada.", 404)
+    try:
+        row = RecursoCustoRepository().update(recurso_custo_id, body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    if not row:
+        return fail("Vigência de custo não encontrada.", 404)
+
+    _audit(request, "recurso_custo", recurso_custo_id, "update", body.model_dump())
+    recurso = RecursoRepository().get(str(existing["recurso_compartilhado_id"]))
+    return ok(
+        {"custo": row_to_json(row), "recurso": row_to_json(recurso) if recurso else None},
+        "Vigência de custo atualizada.",
+    )
+
+
+@router.delete("/recurso-custos/{recurso_custo_id}")
+def delete_recurso_custo(recurso_custo_id: str, request: Request):
+    existing = RecursoCustoRepository().get(recurso_custo_id)
+    if not existing:
+        return fail("Vigência de custo não encontrada.", 404)
+    if not RecursoCustoRepository().soft_delete(recurso_custo_id):
+        return fail("Vigência de custo não encontrada.", 404)
+    _audit(request, "recurso_custo", recurso_custo_id, "delete", {})
+    recurso = RecursoRepository().get(str(existing["recurso_compartilhado_id"]))
+    return ok(
+        {"recurso": row_to_json(recurso) if recurso else None},
+        message="Vigência de custo excluída.",
+    )
 
 
 # --- Vínculos ---
