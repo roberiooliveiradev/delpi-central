@@ -1222,6 +1222,10 @@ def get_strategic_indicators(
                         key: float(value) if value is not None else None
                         for key, value in (item.gaps or {}).items()
                     },
+                    "goals": {
+                        key: float(value) if value is not None else None
+                        for key, value in (getattr(item, "goals", None) or {}).items()
+                    },
                     "trend": item.trend,
                     "classification": item.classification,
                     "source": item.source,

@@ -201,6 +201,19 @@ function listBranchScopeKeys(values: Record<string, number | null>): string[] {
     .sort();
 }
 
+/** Com filtro de filial ativo, exibe só a unidade selecionada (sem `01 | 02`). */
+function filterScopedValuesByActiveBranch(
+  values: Record<string, number | null>,
+  activeBranch?: string,
+): Record<string, number | null> {
+  const branch = (activeBranch ?? "").trim();
+  if (!branch || !(branch in values)) {
+    return values;
+  }
+
+  return { [branch]: values[branch] };
+}
+
 /** Deptos consolidados (Engenharia, etc.): mesmo valor em filial e consolidado → só rótulo Consolidado. */
 function consolidatedOnlyDisplayValues(
   values: Record<string, number | null> | undefined,
@@ -274,6 +287,8 @@ export function formatScopeAwareMetric(
   if (!values || !Object.keys(values).length) {
     return options.fallback ?? MISSING_VALUE_LABEL;
   }
+
+  values = filterScopedValuesByActiveBranch(values, options.activeBranch);
 
   const consolidatedOnly = consolidatedOnlyDisplayValues(values);
   if (consolidatedOnly) {
@@ -433,7 +448,10 @@ export function formatIndicatorGoalValue(
     valueDecimals: indicator.valueDecimals,
   };
   const scopedOptions = mergeDisplayContext({}, displayContext);
-  const goals = indicator.goals ?? {};
+  const goals = filterScopedValuesByActiveBranch(
+    indicator.goals ?? {},
+    scopedOptions.activeBranch,
+  );
 
   if (hasScopedMetricMap(goals)) {
     return formatScopeAwareMetric(goals, valueFormat, scopedOptions);
