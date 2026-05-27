@@ -8,12 +8,6 @@ const TREND_ICONS: Record<string, string> = {
   stable: "→",
 };
 
-const TREND_COLORS: Record<string, string> = {
-  up: "#10b981",
-  down: "#ef4444",
-  stable: "#64748b",
-};
-
 export function ChatRichKpi({
   presentation,
 }: {
@@ -43,8 +37,10 @@ export function ChatRichKpi({
             </div>
             {(card.trend || card.delta) && (
               <div
-                className="mdc-rich-kpi__trend"
-                style={{ color: TREND_COLORS[card.trend || "stable"] }}
+                className={[
+                  "mdc-rich-kpi__trend",
+                  `mdc-rich-kpi__trend--${card.trend || "stable"}`,
+                ].join(" ")}
               >
                 {card.trend && TREND_ICONS[card.trend]}
                 {card.delta && (

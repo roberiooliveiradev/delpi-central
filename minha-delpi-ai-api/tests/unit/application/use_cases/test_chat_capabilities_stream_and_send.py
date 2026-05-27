@@ -12,7 +12,6 @@ from app.application.use_cases.stream_chat_message_use_case import StreamChatMes
 from app.domain.entities.chat_session import ChatSession
 
 _CAPABILITY_PHRASES = (
-    "o que vc faz?",
     "o que vc é capaz de fazer?",
     "ajuda",
     "o que você pode fazer?",

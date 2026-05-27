@@ -447,6 +447,7 @@ class StrategicIndicatorsCalculator:
         if normalized_goal_mode == "monthly_curve":
             return self._calculate_monthly_curve_goal(
                 monthly_targets=monthly_targets or [],
+                goal_periodicity=goal_periodicity,
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
@@ -1173,6 +1174,7 @@ class StrategicIndicatorsCalculator:
         self,
         *,
         monthly_targets: list[dict],
+        goal_periodicity: str,
         start_date: str | None,
         end_date: str | None,
         competence: str | None,
@@ -1180,22 +1182,39 @@ class StrategicIndicatorsCalculator:
         if not monthly_targets:
             return 0.0
 
-        targets_by_month: dict[int, float] = {}
-        for item in monthly_targets:
-            month_number = int(item.get("month_number") or 0)
-            if month_number < 1 or month_number > 12:
-                continue
-            targets_by_month[month_number] = float(item.get("target_value") or 0)
+        from si_app.application.services.strategic_indicators.goal_value_policy import (
+            curve_point_indices_for_calendar_months,
+            expected_monthly_curve_points,
+            parse_year_from_competence,
+        )
 
-        month_numbers = self._resolve_period_month_numbers(
+        max_points = expected_monthly_curve_points(goal_periodicity)
+        targets_by_point: dict[int, float] = {}
+        for item in monthly_targets:
+            point_number = int(item.get("month_number") or 0)
+            if point_number < 1 or point_number > max_points:
+                continue
+            targets_by_point[point_number] = float(item.get("target_value") or 0)
+
+        calendar_months = self._resolve_period_month_numbers(
             start_date=start_date,
             end_date=end_date,
             competence=competence,
         )
+        year = parse_year_from_competence(competence)
+        if year is None and start_date:
+            parsed_start = self._parse_date(start_date)
+            if parsed_start is not None:
+                year = parsed_start.year
+
+        point_indices = curve_point_indices_for_calendar_months(
+            goal_periodicity,
+            calendar_months,
+            year=year or 2026,
+        )
 
         comparable_goal = sum(
-            targets_by_month.get(month_number, 0.0)
-            for month_number in month_numbers
+            targets_by_point.get(point_number, 0.0) for point_number in point_indices
         )
         return round(comparable_goal, 2)
 

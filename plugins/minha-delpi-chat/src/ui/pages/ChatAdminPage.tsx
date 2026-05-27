@@ -18,6 +18,7 @@ import { getAdminRbacSummary } from "../../data/api/adminApi";
 import type { AdminRbacSummary } from "../../data/api/adminTypes";
 import { testAdminRag } from "../../data/api/adminApi";
 import { useChatAdmin } from "../../state/hooks/useChatAdmin";
+import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 
 import "./ChatAdminPage.css";
 
@@ -81,6 +82,11 @@ export function ChatAdminPage({
           successMessage={admin.successMessage}
         />
 
+        <ChatAnimatedPanel
+          panelKey={activeTab}
+          variant="tab"
+          className="mdc-admin-shell__panel"
+        >
         {activeTab === "knowledge" ? (
           <AdminKnowledgeTab
             documents={admin.documents}
@@ -183,6 +189,7 @@ export function ChatAdminPage({
         {activeTab === "audit" ? (
           <AdminAuditTab rbac={adminRbac} getAccessToken={getAccessToken} />
         ) : null}
+        </ChatAnimatedPanel>
       </section>
     </main>
   );

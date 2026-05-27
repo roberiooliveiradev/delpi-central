@@ -4,7 +4,7 @@
   z-index: 80;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.58);
+  background: var(--mdc-overlay-backdrop);
   backdrop-filter: blur(6px);
   padding: clamp(1rem, 3vw, 2rem);
 }
@@ -18,7 +18,7 @@
   border-radius: var(--mdc-radius-xl);
   background: color-mix(in srgb, var(--mdc-card-bg) 96%, black);
   overflow: hidden;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--mdc-shadow-lg);
 }
 
 .mdc-chat-canvas--expanded {
@@ -284,9 +284,12 @@
 .mdc-chat-canvas__preview pre {
   position: relative;
   border-color: color-mix(in srgb, var(--mdc-primary) 22%, var(--mdc-card-border));
-  background:
-    linear-gradient(180deg, color-mix(in srgb, #0f172a 92%, var(--mdc-primary) 8%), #020617);
-  color: #dbeafe;
+  background: linear-gradient(
+    180deg,
+    var(--mdc-code-surface) 0%,
+    var(--mdc-code-surface-end) 100%
+  );
+  color: var(--mdc-code-text);
 }
 
 .mdc-chat-canvas__preview pre code {

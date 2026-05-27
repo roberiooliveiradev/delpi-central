@@ -1,7 +1,16 @@
-import { ArrowLeft, ChevronRight, Folder, Plus, Search } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  Folder,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
+import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectCreateModal } from "../components/ChatProjectCreateModal";
 import "./ChatProjectsPage.css";
 
@@ -23,6 +32,23 @@ type ChatProjectsPageProps = {
 
 function getSessionCount(projectId: string, sessions: ChatSession[]): number {
   return sessions.filter((session) => session.project_id === projectId).length;
+}
+
+function formatAccessRole(role: string | null | undefined): string {
+  switch (role) {
+    case "owner":
+      return "Proprietário";
+    case "editor":
+      return "Editor";
+    case "viewer":
+      return "Visualizador";
+    default:
+      return role?.trim() || "Membro";
+  }
+}
+
+function canEditProject(role: string | null | undefined): boolean {
+  return role === "owner" || role === "editor";
 }
 
 export function ChatProjectsPage({
@@ -65,7 +91,15 @@ export function ChatProjectsPage({
   }, [filteredProjects]);
 
   return (
-    <section className="mdc-chat-ws-directory" aria-label="Projetos">
+    <ChatAnimatedPanel
+      panelKey="projects-directory"
+      variant="page"
+      className="mdc-chat-page-panel--fill"
+    >
+    <section
+      className="mdc-chat-ws-directory mdc-chat-projects-page"
+      aria-label="Projetos"
+    >
       <header className="mdc-chat-ws-topbar mdc-chat-ws-directory__topbar">
         <div className="mdc-chat-ws-topbar__start">
           <button type="button" className="mdc-chat-ws-topbar__back" onClick={onBack}>
@@ -114,10 +148,24 @@ export function ChatProjectsPage({
         {isLoading ? (
           <p className="mdc-chat-ws-empty">Carregando projetos...</p>
         ) : orderedProjects.length === 0 ? (
-          <div className="mdc-chat-ws-directory__empty">
+          <div className="mdc-chat-ws-directory__empty mdc-chat-projects-page__empty">
             <Folder size={22} aria-hidden="true" />
             <strong>Nenhum projeto encontrado</strong>
-            <p>Crie um projeto para agrupar chats e fontes.</p>
+            <p>
+              {searchTerm.trim()
+                ? "Ajuste a busca ou crie um novo projeto."
+                : "Crie um projeto para agrupar chats, fontes e agentes."}
+            </p>
+            {!searchTerm.trim() ? (
+              <button
+                type="button"
+                className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+                onClick={() => setIsCreateModalOpen(true)}
+              >
+                <Plus size={16} aria-hidden="true" />
+                <span>Criar projeto</span>
+              </button>
+            ) : null}
           </div>
         ) : (
           <ul className="mdc-chat-ws-directory__list">
@@ -155,7 +203,9 @@ export function ChatProjectsPage({
 
                     <div className="mdc-chat-ws-directory__card-meta">
                       <span>{chatCount} chat(s)</span>
-                      <span>{project.access_role}</span>
+                      <span className="mdc-chat-projects-page__role">
+                        {formatAccessRole(project.access_role)}
+                      </span>
                       {project.default_agent_key ? (
                         <span>Agente: {project.default_agent_key}</span>
                       ) : null}
@@ -170,7 +220,7 @@ export function ChatProjectsPage({
                         Abrir
                       </button>
 
-                      {project.access_role === "owner" || project.access_role === "editor" ? (
+                      {canEditProject(project.access_role) ? (
                         <button
                           type="button"
                           className="mdc-chat-ws-toolbar-btn"
@@ -185,7 +235,8 @@ export function ChatProjectsPage({
                             }
                           }}
                         >
-                          Renomear
+                          <Pencil size={16} aria-hidden="true" />
+                          <span>Renomear</span>
                         </button>
                       ) : null}
 
@@ -203,7 +254,8 @@ export function ChatProjectsPage({
                             }
                           }}
                         >
-                          Excluir
+                          <Trash2 size={16} aria-hidden="true" />
+                          <span>Excluir</span>
                         </button>
                       ) : null}
                     </div>
@@ -228,5 +280,6 @@ export function ChatProjectsPage({
         }}
       />
     </section>
+    </ChatAnimatedPanel>
   );
 }

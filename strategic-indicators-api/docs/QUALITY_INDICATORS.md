@@ -12,7 +12,7 @@ Indicadores permanecem `scope_type = consolidated` (medição consolidada no pai
 | PPM Externo | 1.100 PPM | 290 PPM |
 | Ideias Kaizen | 8 ideias/mês | 8 ideias/mês |
 | Nota 5S | 80% | 80% |
-| Ganhos financeiros Kaizen | Curva mensal: R$ 4.500 (jan–jun), R$ 9.000 (jul–dez) | R$ 4.500/mês (padrão) |
+| Ganhos financeiros Kaizen | Modo **Curva** (12 pontos): R$ 4.500 (jan–jun), R$ 9.000 (jul–dez) | Modo **Padrão**: R$ 4.500/mês |
 
 **Ganhos financeiros (cálculo):** para cada kaizen com status *implantado*, soma `ganho_diario × dias ativos` no mês da competência. A data de implantação define o início da contagem; kaizens implantados em meses anteriores continuam gerando ganho nos dias do mês filtrado (não exige nova implantação no mês). O indicador *Ideias Kaizen* continua contando apenas implantações cuja data cai no período.
 

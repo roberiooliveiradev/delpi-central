@@ -176,8 +176,8 @@
   margin: 0;
   padding: 0.65rem 0.85rem;
   border-radius: 0.65rem;
-  background: color-mix(in srgb, var(--mdc-danger, #c0392b) 12%, transparent);
-  color: var(--mdc-danger, #c0392b);
+  background: var(--mdc-danger-surface);
+  color: var(--mdc-danger);
   font-size: 0.88rem;
   font-weight: 650;
 }
@@ -329,7 +329,7 @@
   height: 1.15rem;
   border-radius: 999px;
   background: var(--mdc-on-primary);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--mdc-card-shadow-soft);
   transition: transform 0.2s ease;
 }
 

@@ -180,9 +180,9 @@ export function AgentKnowledgeSourcesPanel({
           <strong>Arraste arquivos aqui</strong>
           <span>ou clique para selecionar · PDF, TXT, MD e outros formatos suportados</span>
         </div>
-        <span className="mdc-agent-knowledge__dropzone-action">
-          <Plus size={15} aria-hidden="true" />
-          Adicionar
+        <span className="mdc-chat-ws-outline-btn mdc-agent-knowledge__dropzone-action">
+          <Plus size={16} aria-hidden="true" />
+          <span>Adicionar</span>
         </span>
         <input
           ref={inputRef}

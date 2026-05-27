@@ -61,7 +61,7 @@ Metas por filial: ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
 
 | Script | Descrição |
 |--------|-----------|
-| `scripts/run_migrations.py` | Migrations V001–V020 |
+| `scripts/run_migrations.py` | Migrations V001–V025+ |
 | `scripts/refresh_period_scores.py` | Materializa `period_scores` (consolidado + filiais) |
 | `scripts/warmup_si_snapshots.py` | Warm-up manual |
 | `scripts/bench_si_routes.py` | Benchmark rotas de leitura |
@@ -73,8 +73,12 @@ Metas por filial: ver [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
 | `tests/test_branch_scoped_goals.py` | Metas/realizado por filial, valor consolidado sem meta na filial |
 | `tests/test_goal_scope_helpers.py` | `indicator_uses_branch_unit_measurement`, resolução estrita |
 | `tests/test_commercial_production_scoring.py` | Curva mensal, Comercial/Produção sem nota 0 indevida |
+| `tests/test_goal_value_policy.py` | `goal_value` zerado em metas Curva |
+| `tests/test_goal_curve_validation.py` | Pontos da curva por periodicidade |
 | `tests/test_indicator_goals_sql_param_order.py` | Ordem dos parâmetros SQL em metas por filial |
 | `tests/test_goal_scope_validation.py` | Validação de escopo no admin |
+
+Serviços de metas: `goal_value_policy.py`, `goal_curve_validation.py`. Bundle admin: `postgres_admin_config_bundle_repository.py`. Ver [ADMIN_GOALS_AND_CONFIG.md](./ADMIN_GOALS_AND_CONFIG.md).
 
 ## Dependência `shared/`
 

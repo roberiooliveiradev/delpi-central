@@ -14,6 +14,9 @@ from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
+from app.application.services.chat_assistant_identity_service import (
+    ChatAssistantIdentityService,
+)
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.application.services.chat_user_context_service import ChatUserContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
@@ -216,6 +219,17 @@ class StreamChatMessageUseCase:
             user_direct = self._resolve_user_identity_answer(request.access_token, message)
             if user_direct:
                 direct_answer = user_direct
+                skip_rag = True
+
+        if not direct_answer and ChatAssistantIdentityService.is_assistant_identity_question(
+            message
+        ):
+            identity_direct = ChatAssistantIdentityService.build_direct_answer(
+                message=message,
+                workspace_context=workspace_context,
+            )
+            if identity_direct:
+                direct_answer = identity_direct
                 skip_rag = True
 
         if not direct_answer and ChatCapabilitiesService.is_capabilities_question(message):

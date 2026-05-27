@@ -2,6 +2,7 @@ import { ArrowLeft, Bot, ChevronRight, Pencil, Plus, Search, Trash2 } from "luci
 import { useEffect, useMemo, useState } from "react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
+import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
 import { ChatAgentActionsPage } from "./ChatAgentActionsPage";
 import { ChatAgentBuilderPage } from "./ChatAgentBuilderPage";
@@ -189,6 +190,7 @@ export function ChatAgentsPage({
 
   if (skillsEditor) {
     return (
+      <ChatAnimatedPanel panelKey="agent-skills" variant="page" className="mdc-chat-page-panel--fill">
       <ChatAgentSkillsPage
         agent={skillsEditor.agent}
         backLabel={
@@ -213,11 +215,13 @@ export function ChatAgentsPage({
         }}
         getAccessToken={getAccessToken}
       />
+      </ChatAnimatedPanel>
     );
   }
 
   if (actionEditor) {
     return (
+      <ChatAnimatedPanel panelKey="agent-actions" variant="page" className="mdc-chat-page-panel--fill">
       <ChatAgentActionsPage
         agent={actionEditor.agent}
         providerKey={actionEditor.providerKey}
@@ -234,11 +238,13 @@ export function ChatAgentsPage({
         }}
         getAccessToken={getAccessToken}
       />
+      </ChatAnimatedPanel>
     );
   }
 
   if (editingAgent !== undefined && (editingAgent !== null || canManageAgents)) {
     return (
+      <ChatAnimatedPanel panelKey="agent-builder" variant="page" className="mdc-chat-page-panel--fill">
       <ChatAgentBuilderPage
         agent={editingAgent}
         onBack={() => setEditingAgent(undefined)}
@@ -289,10 +295,12 @@ export function ChatAgentsPage({
         onOpenRagAdmin={onOpenRagAdmin}
         getAccessToken={getAccessToken}
       />
+      </ChatAnimatedPanel>
     );
   }
 
   return (
+    <ChatAnimatedPanel panelKey="agents-directory" variant="page" className="mdc-chat-page-panel--fill">
     <section className="mdc-chat-ws-directory" aria-label="Agentes">
       <header className="mdc-chat-ws-topbar mdc-chat-ws-directory__topbar">
         <div className="mdc-chat-ws-topbar__start">
@@ -429,7 +437,7 @@ export function ChatAgentsPage({
                           className="mdc-chat-ws-toolbar-btn"
                           onClick={() => setEditingAgent(agent)}
                         >
-                          <Pencil size={15} aria-hidden="true" />
+                          <Pencil size={16} aria-hidden="true" />
                           <span>Configurar</span>
                         </button>
                       ) : null}
@@ -448,7 +456,7 @@ export function ChatAgentsPage({
                             }
                           }}
                         >
-                          <Trash2 size={15} aria-hidden="true" />
+                          <Trash2 size={16} aria-hidden="true" />
                           <span>Excluir</span>
                         </button>
                       ) : null}
@@ -461,5 +469,6 @@ export function ChatAgentsPage({
         )}
       </main>
     </section>
+    </ChatAnimatedPanel>
   );
 }

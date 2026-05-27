@@ -1,17 +1,17 @@
 .mdc-admin-audit-error {
   margin: 0;
   padding: 0.75rem 1rem;
-  border-radius: 10px;
-  background: rgba(220, 38, 38, 0.08);
-  color: #b91c1c;
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-danger-surface);
+  color: var(--mdc-danger);
 }
 
 .mdc-admin-audit-detail {
   margin-top: 1rem;
   padding: 1rem;
-  border-radius: 12px;
-  border: 1px solid var(--mdc-border, #e5e7eb);
-  background: var(--mdc-card-bg, var(--mdc-bg));
+  border-radius: var(--mdc-radius-md);
+  border: 1px solid var(--mdc-card-border);
+  background: var(--mdc-card-bg);
 }
 
 .mdc-admin-audit-detail__meta {
@@ -24,7 +24,7 @@
 .mdc-admin-audit-detail__meta dt {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--mdc-text-muted);
 }
 
 .mdc-admin-audit-detail__meta dd {
@@ -36,7 +36,7 @@
   max-height: 280px;
   overflow: auto;
   padding: 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--mdc-radius-sm);
   background: color-mix(in srgb, var(--mdc-card-bg) 88%, var(--mdc-bg-muted));
   font-size: 0.8rem;
 }
@@ -56,7 +56,7 @@
   gap: 1rem;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--mdc-card-border);
-  border-radius: 8px;
+  border-radius: var(--mdc-radius-sm);
   background: var(--mdc-card-bg);
   cursor: pointer;
   text-align: left;
@@ -71,10 +71,10 @@
 .mdc-admin-audit-hero,
 .mdc-admin-audit-empty,
 .mdc-admin-audit-card {
-  border: 1px solid var(--mdc-border, #d8dee6);
-  border-radius: 22px;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
   background: var(--mdc-card-bg);
-  box-shadow: 0 18px 42px rgb(15 23 42 / 8%);
+  box-shadow: var(--mdc-card-shadow-soft);
 }
 
 .mdc-admin-audit-hero {
@@ -90,26 +90,26 @@
 .mdc-admin-audit-empty h3,
 .mdc-admin-audit-card h3 {
   margin: 0;
-  color: var(--mdc-title, #003b69);
+  color: var(--mdc-title);
 }
 
 .mdc-admin-audit-hero h2 {
-  color: var(--mdc-primary, #009bd8);
+  color: var(--mdc-primary);
   font-size: 1.35rem;
 }
 
 .mdc-admin-audit-hero p,
 .mdc-admin-audit-empty p {
   margin: 8px 0 0;
-  color: var(--mdc-text-muted, #5f6f82);
+  color: var(--mdc-text-muted);
   line-height: 1.45;
 }
 
 .mdc-admin-audit-hero strong {
   flex: 0 0 auto;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-primary, #009bd8) 12%, transparent);
-  color: var(--mdc-primary, #009bd8);
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  color: var(--mdc-primary);
   padding: 8px 12px;
   font-size: 0.85rem;
   white-space: nowrap;
@@ -140,13 +140,13 @@
 }
 
 .mdc-admin-audit-card__header h3 {
-  color: var(--mdc-primary, #009bd8);
+  color: var(--mdc-primary);
   overflow-wrap: anywhere;
 }
 
 .mdc-admin-audit-card__header time {
   flex: 0 0 auto;
-  color: var(--mdc-text-muted, #5f6f82);
+  color: var(--mdc-text-muted);
   font-size: 0.82rem;
   white-space: nowrap;
 }
@@ -160,15 +160,15 @@
 
 .mdc-admin-audit-card__meta div {
   min-width: 0;
-  border: 1px solid var(--mdc-border, #d8dee6);
-  border-radius: 16px;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
   padding: 12px;
-  background: var(--mdc-bg-soft, #f8fafc);
+  background: var(--mdc-bg-soft);
 }
 
 .mdc-admin-audit-card__meta dt {
   margin: 0 0 4px;
-  color: var(--mdc-text-muted, #5f6f82);
+  color: var(--mdc-text-muted);
   font-size: 0.76rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -177,22 +177,22 @@
 
 .mdc-admin-audit-card__meta dd {
   margin: 0;
-  color: var(--mdc-text, #003b69);
+  color: var(--mdc-text);
   font-size: 0.9rem;
   overflow-wrap: anywhere;
 }
 
 .mdc-admin-audit-card__details {
-  border: 1px solid var(--mdc-border, #d8dee6);
-  border-radius: 16px;
-  background: var(--mdc-bg-soft, #f8fafc);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg-soft);
   overflow: hidden;
 }
 
 .mdc-admin-audit-card__details summary {
   cursor: pointer;
   padding: 12px;
-  color: var(--mdc-primary, #009bd8);
+  color: var(--mdc-primary);
   font-weight: 900;
 }
 
@@ -200,9 +200,9 @@
   max-height: 260px;
   overflow: auto;
   margin: 0;
-  border-top: 1px solid var(--mdc-border, #d8dee6);
+  border-top: 1px solid var(--mdc-card-border);
   padding: 12px;
-  color: var(--mdc-text, #003b69);
+  color: var(--mdc-text);
   font-size: 0.78rem;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -219,7 +219,7 @@
     grid-template-columns: 1fr;
   }
 
-  .mdc-admin-audit-card__header time {
+  .mdc-admin-audit-hero strong {
     white-space: normal;
   }
 }

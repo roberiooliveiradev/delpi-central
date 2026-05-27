@@ -1,4 +1,5 @@
 import type { ChatPresentation } from "../../data/api/chatTypes";
+import { readMdcCssVar } from "../theme/mdcCssVars";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 
@@ -71,7 +72,7 @@ export function exportChartToPng(chartRef: HTMLDivElement | null, title: string)
     canvas.width = img.width * 2;
     canvas.height = img.height * 2;
     ctx.scale(2, 2);
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = readMdcCssVar("--mdc-chart-export-bg", readMdcCssVar("--mdc-card-bg"));
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0);
     const link = document.createElement("a");

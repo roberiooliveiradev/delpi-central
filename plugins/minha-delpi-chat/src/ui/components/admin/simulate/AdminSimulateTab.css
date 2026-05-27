@@ -48,14 +48,14 @@
   border: 0;
   border-radius: var(--mdc-radius-md);
   background: var(--mdc-primary);
-  color: #fff;
+  color: var(--mdc-on-primary);
   padding: 0.7rem 1rem;
   cursor: pointer;
 }
 
 .mdc-admin-simulate__error {
   margin: 0;
-  color: #b91c1c;
+  color: var(--mdc-danger);
 }
 
 .mdc-admin-simulate__results {
@@ -82,7 +82,7 @@
   margin: 0;
   padding: 0.75rem;
   border-radius: var(--mdc-radius-md);
-  background: #f8fafc;
+  background: var(--mdc-bg-soft);
   font-size: 0.85rem;
 }
 

@@ -1,3 +1,5 @@
+/* Shell visual do MFE — layout estrutural em chat-layout.css */
+
 .minha-delpi-chat {
   width: 100%;
   height: 100%;
@@ -10,48 +12,6 @@
     var(--mdc-bg);
 }
 
-.mdc-chat-shell {
-  display: grid;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.mdc-chat-main {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
-  background: var(--mdc-bg);
-}
-
-.mdc-chat-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--mdc-space-4);
-  width: 100%;
-  margin: 0 auto;
-  padding: var(--mdc-space-5) var(--mdc-space-5) var(--mdc-space-3);
-}
-
-.mdc-chat-header h1 {
-  margin: 0;
-  color: var(--mdc-primary);
-  font-size: clamp(1.45rem, 2.1vw, 2.05rem);
-  line-height: 1.08;
-  letter-spacing: -0.04em;
-}
-
-.mdc-chat-header p {
-  margin: var(--mdc-space-2) 0 0;
-  color: var(--mdc-text-muted);
-  line-height: 1.55;
-}
-
 .mdc-chat-eyebrow {
   margin: 0 0 var(--mdc-space-1);
   color: var(--mdc-badge-text);
@@ -59,24 +19,6 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.mdc-chat-header-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--mdc-space-2);
-}
-
-.mdc-chat-status {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--mdc-badge-border);
-  border-radius: 999px;
-  padding: 6px 10px;
-  color: var(--mdc-badge-text);
-  background: var(--mdc-badge-bg);
-  font-size: 0.75rem;
-  font-weight: 800;
 }
 
 .mdc-chat-alert {
@@ -93,139 +35,4 @@
   border-color: var(--mdc-success);
   color: var(--mdc-success);
   background: color-mix(in srgb, var(--mdc-success) 9%, transparent);
-}
-
-.mdc-admin-form {
-  display: grid;
-  gap: var(--mdc-space-3);
-  margin-top: var(--mdc-space-4);
-}
-
-.mdc-admin-form label {
-  display: grid;
-  gap: var(--mdc-space-2);
-}
-
-.mdc-admin-form label span {
-  color: var(--mdc-title-soft);
-  font-size: 0.84rem;
-  font-weight: 800;
-}
-
-.mdc-admin-form input,
-.mdc-admin-form textarea {
-  width: 100%;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
-  padding: 12px;
-  color: var(--mdc-text);
-  background: var(--mdc-input-bg);
-  outline: none;
-}
-
-.mdc-admin-form textarea {
-  min-height: 180px;
-  resize: vertical;
-}
-
-.mdc-admin-form input:focus,
-.mdc-admin-form textarea:focus {
-  box-shadow: var(--mdc-focus-ring);
-  border-color: var(--mdc-primary);
-}
-
-.mdc-admin-form button {
-  justify-self: start;
-}
-
-.mdc-admin-row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mdc-space-2);
-}
-
-.mdc-admin-row-actions button {
-  padding: 8px 10px;
-}
-
-.mdc-admin-card-header {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mdc-space-3);
-  align-items: center;
-  justify-content: space-between;
-}
-
-.mdc-admin-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mdc-space-2);
-  align-items: center;
-}
-
-.mdc-admin-filters input,
-.mdc-admin-filters select {
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
-  padding: 10px 12px;
-  color: var(--mdc-text);
-  background: var(--mdc-input-bg);
-}
-
-.mdc-admin-filters input {
-  min-width: min(320px, 100%);
-}
-
-.mdc-admin-pagination {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mdc-space-3);
-  align-items: center;
-  justify-content: space-between;
-  margin-top: var(--mdc-space-4);
-  color: var(--mdc-text-muted);
-}
-
-.mdc-admin-pagination div {
-  display: flex;
-  gap: var(--mdc-space-2);
-}
-
-.mdc-admin-pagination button {
-  padding: 8px 12px;
-}
-
-.mdc-admin-metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--mdc-space-3);
-  margin: var(--mdc-space-4) 0;
-}
-
-.mdc-admin-metric-card {
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-lg);
-  padding: var(--mdc-space-4);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--mdc-primary) 7%, transparent),
-      transparent
-    ),
-    var(--mdc-card-bg);
-  box-shadow: var(--mdc-card-shadow);
-}
-
-.mdc-admin-metric-card span {
-  display: block;
-  color: var(--mdc-text-muted);
-  font-size: 0.82rem;
-  margin-bottom: var(--mdc-space-2);
-}
-
-.mdc-admin-metric-card strong {
-  display: block;
-  color: var(--mdc-title);
-  font-size: clamp(1.35rem, 2vw, 2rem);
-  line-height: 1;
 }

@@ -1,10 +1,12 @@
+@import "../layout/chat-workspace-shared.css";
+
 .mdc-chat-project-create-backdrop {
   position: fixed;
   inset: 0;
   z-index: 120;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.62);
+  background: var(--mdc-overlay-backdrop);
   backdrop-filter: blur(6px);
   padding: var(--mdc-space-4);
 }
@@ -17,9 +19,9 @@
   overflow-y: auto;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
   border-radius: 1.25rem;
-  background: color-mix(in srgb, var(--mdc-card-bg) 94%, #111);
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, var(--mdc-bg));
   color: var(--mdc-text);
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--mdc-shadow-lg);
   padding: 1.35rem;
 }
 
@@ -46,13 +48,18 @@
 .mdc-chat-project-create-modal header button {
   display: inline-grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.3rem;
+  height: 2.3rem;
   border: 0;
   border-radius: 999px;
   background: transparent;
+  box-shadow: none;
   color: var(--mdc-text-muted);
   cursor: pointer;
+}
+
+.mdc-chat-project-create-modal header button svg {
+  display: block;
 }
 
 .mdc-chat-project-create-modal header button:hover {
@@ -82,7 +89,8 @@
 }
 
 .mdc-chat-project-create-modal__input-wrap svg {
-  flex: 0 0 auto;
+  flex-shrink: 0;
+  display: block;
   color: var(--mdc-text-muted);
 }
 
@@ -141,6 +149,9 @@
 }
 
 .mdc-chat-project-create-modal__hint svg {
+  flex-shrink: 0;
+  display: block;
+  align-self: start;
   color: var(--mdc-text-muted);
   margin-top: 0.1rem;
 }
@@ -154,39 +165,10 @@
 
 .mdc-chat-project-create-modal footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.55rem;
-}
-
-.mdc-chat-project-create-modal__cancel,
-.mdc-chat-project-create-modal__submit {
-  border: 0;
-  border-radius: 999px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 780;
-  padding: 0.62rem 1rem;
-}
-
-.mdc-chat-project-create-modal__cancel {
-  background: transparent;
-  color: var(--mdc-text-muted);
-}
-
-.mdc-chat-project-create-modal__cancel:hover {
-  background: color-mix(in srgb, var(--mdc-text) 8%, transparent);
-  color: var(--mdc-text);
-}
-
-.mdc-chat-project-create-modal__submit {
-  background: color-mix(in srgb, var(--mdc-text) 92%, white);
-  color: #111;
-}
-
-.mdc-chat-project-create-modal__submit:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 @media (max-width: 767px) {
@@ -205,9 +187,8 @@
     flex-direction: column-reverse;
   }
 
-  .mdc-chat-project-create-modal__cancel,
-  .mdc-chat-project-create-modal__submit {
+  .mdc-chat-project-create-modal footer .mdc-chat-ws-toolbar-btn {
     width: 100%;
-    text-align: center;
+    justify-content: center;
   }
 }

@@ -17,27 +17,9 @@ import {
   Cell,
 } from "recharts";
 import type { ChatPresentation } from "../../data/api/chatTypes";
+import { readMdcChartTheme, useMdcDarkMode } from "../theme/mdcCssVars";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
-
-const DEFAULT_COLORS = [
-  "#0ea5e9", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444",
-  "#06b6d4", "#ec4899", "#84cc16", "#f97316", "#6366f1",
-];
-
-function useIsDarkMode(): boolean {
-  return useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const root = document.documentElement;
-    if (root.getAttribute("data-theme") === "dark") return true;
-    if (root.getAttribute("data-theme") === "light") return false;
-    return (
-      root.classList.contains("dark") ||
-      document.body.classList.contains("dark") ||
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    );
-  }, []);
-}
 
 export function ChatRichChart({
   presentation,
@@ -46,17 +28,15 @@ export function ChatRichChart({
 }) {
   const { title, chartType, data, config } = presentation;
   const [downloadReady, setDownloadReady] = useState(false);
-  const isDark = useIsDarkMode();
+  const isDark = useMdcDarkMode();
 
   const xAxis = config?.xAxis || guessXAxis(data);
   const yAxes = normalizeYAxes(config?.yAxis, data, xAxis);
-  const colors = config?.colors || DEFAULT_COLORS;
+  const chartTheme = useMemo(() => readMdcChartTheme(isDark), [isDark]);
+  const colors = config?.colors || chartTheme.seriesColors;
   const showLegend = config?.legend !== false && yAxes.length > 1;
-  const gridColor = isDark ? "#334155" : "#e2e8f0";
-  const tickStyle = { fontSize: 11, fill: isDark ? "#94a3b8" : "#64748b" };
-  const tooltipStyle = isDark
-    ? { backgroundColor: "#1e293b", border: "1px solid #334155", color: "#e2e8f0" }
-    : undefined;
+  const { gridColor, tickFill, tooltipStyle, exportBackground } = chartTheme;
+  const tickStyle = { fontSize: 11, fill: tickFill };
 
   const exportPng = useCallback(() => {
     const svg = document.querySelector(".mdc-rich-chart__container svg");
@@ -71,7 +51,7 @@ export function ChatRichChart({
       canvas.width = img.width * 2;
       canvas.height = img.height * 2;
       ctx!.scale(2, 2);
-      ctx!.fillStyle = "#ffffff";
+      ctx!.fillStyle = exportBackground;
       ctx!.fillRect(0, 0, canvas.width, canvas.height);
       ctx!.drawImage(img, 0, 0);
 
@@ -84,7 +64,7 @@ export function ChatRichChart({
     };
 
     img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
-  }, [title]);
+  }, [exportBackground, title]);
 
   return (
     <div className="mdc-rich-chart">

@@ -28,8 +28,6 @@ import "./ChatSidebarAgentsSection.css";
 import "./ChatSidebarProjectsSection.css";
 import "./ChatSidebarSessionList.css";
 import "./ChatSidebarArchivedDialog.css";
-import "./ChatProjectCreateModal.css";
-import "./ChatProjectCard.css";
 
 export type ChatSidebarView = "chat" | "agents" | "projects";
 

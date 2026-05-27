@@ -174,9 +174,35 @@ Verificar manifesto e roles do usuário (`strategic-indicators.view`, etc.).
 
 Resposta deve passar por `to_json_safe` em `si_read_route_support`. Se reaparecer, verificar rota que não usa `json_read_response`.
 
+## Metas em modo Curva e migration V025
+
+Após deploy com metas `monthly_curve` que ainda tinham `goal_value` preenchido (legado):
+
+```bash
+docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py up   # aplica V025 se pendente
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py
+```
+
+V025 define `goal_value = 0` onde `goal_mode = monthly_curve`. O calculador ignora `goal_value` nesse modo — só `monthly_targets`.
+
+Documentação de cadastro: [ADMIN_GOALS_AND_CONFIG.md](./ADMIN_GOALS_AND_CONFIG.md).
+
+## Backup e restauração administrativa
+
+Export/import via API ou painel **Visão geral** do settings:
+
+```bash
+# Export (com JWT de usuário com strategic-indicators.settings.manage)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "http://localhost/apps/strategic-indicators-api/strategic-indicators/admin/config/export" \
+  | jq '.schema_version, (.departments|length), (.indicator_goals|length)'
+```
+
+Import não sobrescreve metas ativas existentes (`goals_skipped` na resposta). Para clonar metas em outro ambiente, use ambiente vazio ou remova metas conflitantes antes.
+
 ## Invalidação de cache
 
-Após alterar metas, settings ou estrutura admin, o cache in-process é invalidado nas rotas de escrita. Se dados parecerem “presos”, reiniciar o container ou aguardar TTL (`SI_SNAPSHOT_CACHE_TTL_SECONDS`).
+Após alterar metas, settings, import de config ou estrutura admin, o cache in-process é invalidado nas rotas de escrita. Se dados parecerem “presos”, reiniciar o container ou aguardar TTL (`SI_SNAPSHOT_CACHE_TTL_SECONDS`).
 
 ## Monitoramento sugerido
 

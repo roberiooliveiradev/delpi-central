@@ -10,6 +10,22 @@ class ChatPromptBuilderService:
     def __init__(self, prompt_policy_service):
         self.prompt_policy_service = prompt_policy_service
 
+    def _assistant_identity_policy_addon(self, current_message: str) -> str:
+        from app.application.services.chat_assistant_identity_service import (
+            ChatAssistantIdentityService,
+        )
+
+        if not ChatAssistantIdentityService.is_assistant_identity_question(current_message):
+            return ""
+
+        return (
+            "\n\n"
+            + self.prompt_policy_service._load_policy(
+                "chat-assistant-identity.md",
+                "Apresente-se de forma humana; não peça e-mail só por quem você é.",
+            )
+        )
+
     def _capabilities_policy_addon(self, current_message: str) -> str:
         from app.application.services.chat_capabilities_service import (
             ChatCapabilitiesService,
@@ -64,6 +80,7 @@ class ChatPromptBuilderService:
             operational_mode=operational_mode,
             skills=skills,
         )
+        base_prompt += self._assistant_identity_policy_addon(current_message)
         base_prompt += self._capabilities_policy_addon(current_message)
 
         if user_context:

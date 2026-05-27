@@ -46,7 +46,7 @@ export function formatAdminGoalValueOnly(item: {
   goal_mode: GoalMode | string;
 }): string {
   if (isMonthlyCurveMode(item.goal_mode)) {
-    return "Curva mensal";
+    return "Curva";
   }
   return String(item.goal_value);
 }

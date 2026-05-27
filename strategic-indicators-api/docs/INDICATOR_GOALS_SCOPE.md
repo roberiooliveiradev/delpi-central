@@ -1,6 +1,6 @@
 # Metas por escopo (consolidado / filial)
 
-**Última atualização:** 2026-05-21
+**Última atualização:** 2026-05-27
 
 **Migrations:** `V016` (coluna e índice), `V017` (supports_branch_goals), `V018`/`V019` (seeds RH/Qualidade), `V020` (agregação consolidada), `V021` (metas por filial em `per_unit`)
 
@@ -54,7 +54,14 @@ Regras de implementação (`goal_scope.py`, `StrategicIndicatorsCalculator`):
 
 ## Cadastro (admin)
 
-No formulário de metas, escolher **Escopo da meta**: Consolidado, Filial 01 ou Filial 02.
+No formulário de metas (`/apps/strategic-indicators/settings` → **Metas**):
+
+| Campo | Descrição |
+|-------|-----------|
+| **Modo** | **Padrão** (`standard`) ou **Curva** (`monthly_curve`) — ver [ADMIN_GOALS_AND_CONFIG.md](./ADMIN_GOALS_AND_CONFIG.md) |
+| **Periodicidade** | Mensal, trimestral, semanal ou anual; em **Curva**, define quantos pontos na grade |
+| **Escopo da meta** | Consolidado, Filial 01 ou Filial 02 |
+| **Valor** | Apenas no modo **Padrão**; curvas usam os pontos da grade (`goal_value` = 0 no banco) |
 
 `supports_branch_goals` em `department_indicators` é sincronizado automaticamente: `TRUE` quando `scope_type` é `consolidated` ou `per_unit`.
 
@@ -91,11 +98,14 @@ Se o catálogo/metas mudarem (ex.: V021 desativa meta consolidada e cria metas `
 
 Detalhes: [MFE.md](./MFE.md) — seção *Rótulos da visão*.
 
-## Metas `monthly_curve` (Comercial)
+## Metas em modo **Curva** (`monthly_curve`)
 
-- A meta vive em `indicator_goal_monthly_targets` (12 pontos com periodicidade mensal).
-- `goal_value` permanece **0** no banco — não há consolidado; evita confundir soma anual com meta percentual.
-- Meta comparável do período = soma dos alvos mensais **do intervalo consultado** (um mês na competência mensal).
-- Sem pontos na curva, a meta comparável é **0** (nota sem meta válida).
-- Medições da Produção com valor `null` na fonte permanecem **sem dado** (não viram `0.0` artificial).
-- Depois de deploy com correção no calculador, execute `scripts/refresh_period_scores.py` para atualizar `period_scores` que ainda guardam IDD zerado.
+Detalhes completos (periodicidade, export/import, duplicar ano): [ADMIN_GOALS_AND_CONFIG.md](./ADMIN_GOALS_AND_CONFIG.md).
+
+- Pontos em `indicator_goal_monthly_targets`; quantidade conforme `goal_periodicity` (12 / 4 / 52 / 1).
+- `goal_value` permanece **0** no banco — não há consolidado (evita confundir soma anual com meta %).
+- Meta comparável do período = soma dos `target_value` dos pontos do intervalo (competência mensal → um ponto; YTD → soma dos pontos do período).
+- Sem pontos na curva → meta comparável **0**.
+- Casos comerciais (ROL em R$, % novos negócios) e qualidade (Kaizen) usam o mesmo modo **Curva** com unidades distintas por indicador.
+- Medições com `null` na fonte permanecem **sem dado** (não viram `0.0` artificial).
+- Após mudanças no catálogo ou metas, execute `scripts/refresh_period_scores.py` se `period_scores` estiver desatualizado.

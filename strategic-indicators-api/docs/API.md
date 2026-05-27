@@ -1,6 +1,6 @@
 # API HTTP — Strategic Indicators
 
-**Última atualização:** 2026-05-21
+**Última atualização:** 2026-05-27
 
 **Base URL (gateway):**
 
@@ -252,7 +252,36 @@ O MFE costuma chamar primeiro com subset (overview) e depois trends em request s
 | POST | `/admin/indicator-goals/duplicate-year` | Duplica entre anos |
 | POST | `/admin/indicator-goals/fill-missing` | Preenche faltantes |
 
-Campos principais: `goal_year`, `goal_value`, `goal_periodicity`, `goal_mode`, `monthly_targets`, `version`, `is_active`.
+Campos principais:
+
+| Campo | Notas |
+|-------|--------|
+| `goal_year` | 2020–2100 |
+| `goal_mode` | `standard` (Padrão) ou `monthly_curve` (Curva) |
+| `goal_periodicity` | `monthly` \| `quarterly` \| `weekly` \| `annual` — em Curva, define N pontos |
+| `goal_value` | Obrigatório no schema; em **Curva** a API persiste **0** (meta nos pontos) |
+| `monthly_targets` | Lista `{ month_number, target_value }` com N pontos conforme periodicidade |
+| `goal_scope_branch` | `''`, `01`, `02` |
+| `version`, `is_active` | Versionamento |
+
+Duplicar ano (`duplicate-year`): `source_year`, `target_year`, `overwrite_existing` (boolean).
+
+Documentação: [ADMIN_GOALS_AND_CONFIG.md](./ADMIN_GOALS_AND_CONFIG.md).
+
+---
+
+## Admin — exportar / importar configuração
+
+**Permissão:** `strategic-indicators.settings.manage`
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/admin/config/export` | Bundle JSON (`schema_version: 1`) |
+| POST | `/admin/config/import` | Upsert de departamentos/indicadores; metas só se não existirem |
+
+Body do import (além do bundle): `include_goals` (bool, default `true`).
+
+Resposta do import inclui `stats`: `departments_upserted`, `indicators_upserted`, `goals_created`, `goals_skipped`, `module_settings_updated`.
 
 ---
 
@@ -320,6 +349,8 @@ Prefixo: `/apps/strategic-indicators-api/strategic-indicators`
 | POST | `/admin/indicator-goals/bulk-create` | `strategic-indicators.settings.manage` |
 | POST | `/admin/indicator-goals/duplicate-year` | `strategic-indicators.settings.manage` |
 | POST | `/admin/indicator-goals/fill-missing` | `strategic-indicators.settings.manage` |
+| GET | `/admin/config/export` | `strategic-indicators.settings.manage` |
+| POST | `/admin/config/import` | `strategic-indicators.settings.manage` |
 
 ---
 

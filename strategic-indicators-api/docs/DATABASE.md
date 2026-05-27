@@ -36,10 +36,14 @@ Detalhes dos arquivos: [../migrations/README.md](../migrations/README.md).
 
 ### Metas
 
-- **`indicator_goals`** — metas versionadas por `indicator_id` + `goal_year`
-- **`indicator_goal_monthly_targets`** — metas mensais quando `goal_mode` exige
+- **`indicator_goals`** — metas versionadas por `indicator_id` + `goal_year` + `goal_scope_branch` (V016+)
+  - `goal_mode`: `standard` (valor único em `goal_value`) ou `monthly_curve` (`goal_value` = 0; alvos nos pontos)
+  - `goal_periodicity`: define N pontos da curva (12 / 4 / 52 / 1)
+- **`indicator_goal_monthly_targets`** — pontos da curva (`month_number` = índice do ponto, `target_value`)
 
 Resolução em runtime: `list_resolved_goals_map` (ano da competência) com fallback `list_latest_active_goals_map` para séries históricas.
+
+Cadastro e export: [ADMIN_GOALS_AND_CONFIG.md](./ADMIN_GOALS_AND_CONFIG.md). Migration **V025** zera `goal_value` legado em curvas.
 
 ### Performance (V010–V011)
 

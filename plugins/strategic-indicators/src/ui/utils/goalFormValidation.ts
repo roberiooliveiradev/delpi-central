@@ -1,6 +1,8 @@
 import type { GoalScopeBranch } from "../../data/types/indicatorGoals";
 import type { ScopeType } from "../../data/types/settings";
 import { clampGoalYear, MIN_GOAL_YEAR, MAX_GOAL_YEAR } from "./goalYearHelpers";
+import { expectedMonthlyCurvePointCount } from "./goalValuePolicy";
+import type { GoalPeriodicity } from "../../data/types/indicatorGoals";
 
 const VALID_SCOPE_BRANCHES = new Set<GoalScopeBranch | "">(["", "01", "02"]);
 
@@ -15,8 +17,9 @@ export function validateIndicatorGoalForm(input: {
   goalLabel: string;
   goalScopeBranch: string;
   goalMode: "standard" | "monthly_curve";
+  goalPeriodicity: GoalPeriodicity | string;
   goalValue: number;
-  monthlyTargets: Array<{ target_value: number }>;
+  monthlyTargets: Array<{ month_number: number; target_value: number }>;
   indicatorOptions?: Array<{ value: string }>;
   indicatorCatalog?: IndicatorGoalCatalogEntry[];
   isEditing: boolean;
@@ -52,11 +55,15 @@ export function validateIndicatorGoalForm(input: {
   }
 
   if (input.goalMode === "monthly_curve") {
+    const expectedPoints = expectedMonthlyCurvePointCount(input.goalPeriodicity);
+    if (input.monthlyTargets.length !== expectedPoints) {
+      return `A curva deve ter ${expectedPoints} ponto(s) para a periodicidade selecionada.`;
+    }
     const hasInvalidMonthlyValue = input.monthlyTargets.some(
       (item) => Number(item.target_value) < 0,
     );
     if (hasInvalidMonthlyValue) {
-      return "Os valores mensais não podem ser negativos.";
+      return "Os valores da curva não podem ser negativos.";
     }
   }
 
