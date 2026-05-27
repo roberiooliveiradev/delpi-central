@@ -116,11 +116,18 @@ Formato legado ainda lido: `skills.sqlAuthoring`.
 
 ## Chat comum (sem agente)
 
-Quando não há agente selecionado, a skill SQL de elaboração segue a variável de ambiente:
+Quando não há agente selecionado, os padrões globais seguem variáveis de ambiente:
 
-- `CHAT_DEFAULT_SQL_AUTHORING_SKILL` (default `true`)
+- `CHAT_DEFAULT_SQL_AUTHORING_SKILL` (default `true`) — skill `sql`
+- `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` (default `true`) — skill `company-knowledge` (base documental global / RAG)
 
 Execução SQL no chat comum **não** é permitida via external actions.
+
+### Skill `company-knowledge`
+
+- **Comportamento:** prioriza a base documental global da empresa (políticas, diretrizes, glossário, manuais), injeta policy no prompt e controla `include_global` no escopo RAG.
+- **Ferramenta relacionada:** `search_knowledge_base` (quando autorizada ao usuário).
+- **Agente:** ative explicitamente em `PUT /chat/agents/{id}/skills` com `skillKey: "company-knowledge"`.
 
 ## Skill SQL — elaborar vs executar
 

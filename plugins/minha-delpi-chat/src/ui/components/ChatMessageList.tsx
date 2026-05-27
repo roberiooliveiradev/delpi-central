@@ -12,6 +12,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 
 import type {
   ChatMessage,
+  ChatSkillCatalogItem,
   ChatSource,
   ChatToolCall,
 } from "../../data/api/chatTypes";
@@ -43,6 +44,7 @@ type ChatMessageListProps = {
   streamingStatus?: string | null;
   isStreaming?: boolean;
   isLoading?: boolean;
+  skillCatalog?: ChatSkillCatalogItem[];
   onUseSuggestion?: (value: string) => void;
   onEditAndResendMessage?: (
     messageId: string,
@@ -229,6 +231,7 @@ export function ChatMessageList({
   streamingStatus,
   isStreaming,
   isLoading,
+  skillCatalog,
   onUseSuggestion,
   onEditAndResendMessage,
   onReuseMessage,
@@ -714,7 +717,12 @@ export function ChatMessageList({
   }
 
   if (messages.length === 0 && !streamingAnswer && !isStreaming) {
-    return <ChatEmptyState onUseSuggestion={onUseSuggestion ?? (() => undefined)} />;
+    return (
+      <ChatEmptyState
+        skillCatalog={skillCatalog}
+        onUseSuggestion={onUseSuggestion ?? (() => undefined)}
+      />
+    );
   }
 
   return (

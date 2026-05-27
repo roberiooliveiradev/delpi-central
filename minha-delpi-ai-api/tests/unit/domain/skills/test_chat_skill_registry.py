@@ -5,6 +5,7 @@ def test_catalog_lists_sql_skill():
     catalog = ChatSkillRegistry.list_catalog()
 
     assert any(item["skillKey"] == "sql" for item in catalog)
+    assert any(item["skillKey"] == "company-knowledge" for item in catalog)
 
 
 def test_set_and_read_sql_skill_enabled():
@@ -40,3 +41,26 @@ def test_common_chat_uses_default_sql_authoring():
     sql = next(item for item in bindings if item["skillKey"] == "sql")
 
     assert sql["enabled"] is True
+
+
+def test_common_chat_uses_default_company_knowledge():
+    bindings = ChatSkillRegistry.list_agent_bindings(
+        agent_metadata={},
+        allowed_action_ids=[],
+        has_agent=False,
+        default_company_knowledge=True,
+    )
+
+    company = next(item for item in bindings if item["skillKey"] == "company-knowledge")
+
+    assert company["enabled"] is True
+
+
+def test_resolve_runtime_flags_includes_company_knowledge():
+    resolved = ChatSkillRegistry.resolve_runtime_flags(
+        agent_metadata={"skills": {"company-knowledge": {"enabled": True}}},
+        allowed_action_ids=[],
+        has_agent=True,
+    )
+
+    assert resolved["companyKnowledge"] is True

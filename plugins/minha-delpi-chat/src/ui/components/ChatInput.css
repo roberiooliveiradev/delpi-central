@@ -31,6 +31,7 @@
 
 .mdc-chat-input__plus-wrap {
   position: relative;
+  z-index: 41;
   display: flex;
   align-items: center;
   align-self: center;
@@ -72,31 +73,32 @@
   height: 2.35rem;
   flex-shrink: 0;
   border-radius: 999px;
-  background: var(--mdc-primary);
-  color: var(--mdc-on-primary);
+  background: transparent;
+  color: var(--mdc-primary);
   cursor: pointer;
   padding: 0;
   transition:
     opacity 0.18s ease,
     transform 0.18s ease,
-    background 0.18s ease;
+    background 0.18s ease,
+    color 0.18s ease;
 }
 
 .mdc-chat-input__box .mdc-chat-input__send:hover:not(:disabled) {
   border: 0;
   box-shadow: none;
   transform: translateY(-1px);
-  background: color-mix(in srgb, var(--mdc-primary) 82%, var(--mdc-on-primary));
-  color: var(--mdc-on-primary);
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  color: var(--mdc-primary);
 }
 
 .mdc-chat-input__box .mdc-chat-input__send:disabled {
   cursor: not-allowed;
-  opacity: 0.42;
+  opacity: 0.38;
   border: 0;
   box-shadow: none;
-  background: color-mix(in srgb, var(--mdc-primary) 35%, transparent);
-  color: color-mix(in srgb, var(--mdc-on-primary) 70%, var(--mdc-text-muted));
+  background: transparent;
+  color: var(--mdc-text-muted);
 }
 
 .mdc-chat-input__send--cancel {
@@ -218,11 +220,17 @@
   border: 0;
   border-radius: 0.65rem;
   background: transparent;
+  box-shadow: none;
   color: var(--mdc-text);
   cursor: pointer;
   font: inherit;
   padding: 0.58rem 0.55rem;
   text-align: left;
+}
+
+.mdc-chat-input__menu .mdc-chat-input__menu-section button:hover:not(:disabled),
+.mdc-chat-input__menu .mdc-chat-input__open-agent:hover {
+  box-shadow: none;
 }
 
 .mdc-chat-input__menu-section button:hover:not(:disabled),
@@ -355,6 +363,10 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.15rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  padding: 0;
 }
 
 .mdc-chat-input__agent-menu-row > button:first-child {
@@ -368,7 +380,10 @@
   width: 2.1rem !important;
   height: 2.1rem !important;
   min-height: 0 !important;
+  border: 0 !important;
   border-radius: 999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--mdc-text-muted) !important;
   padding: 0 !important;
 }
