@@ -1,3 +1,4 @@
+from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -63,6 +64,9 @@ class ChatOperationalPipelineService:
             return False
 
         if attachment_ids:
+            return False
+
+        if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
             return False
 
         if not allowed_action_ids:

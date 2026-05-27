@@ -29,10 +29,13 @@ Aumentar a qualidade das respostas do chat com **baixo risco** e **sem mudança 
 
 ```
 Mensagem → Segurança → Workspace (projeto/agente/capabilities)
+         → ChatIntelligencePipelineService (decisões base: operacional, análise, contexto)
          → RAG (embedding + pgvector, até 6 chunks)
-         → Tools heurísticas + execute_external_action (pré-LLM)
+         → ChatToolContextService (tools + finalize inteligência base)
          → ChatPromptBuilderService → LLM stream
 ```
+
+**Regra de arquitetura:** melhorias de inteligência (comparação, insights, contexto de ferramentas no histórico, supressão de resposta direta) ficam em serviços **base do chat** (`ChatIntelligencePipelineService`, `ChatToolContextService`, policies em `prompt_policies/`). Use cases (`Send`/`Stream`), **agentes** e **simulação admin** apenas consomem esse pipeline — não duplicar lógica por agente.
 
 Pontos fracos que a Onda 1 corrige:
 

@@ -1,5 +1,6 @@
 import re
 
+from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -22,6 +23,10 @@ class ExternalActionSelectionService:
         conversation_context: str | None = None,
     ) -> dict | None:
         allowed_action_ids = allowed_action_ids or []
+
+        if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
+            return None
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         product_code = ChatProductQueryIntentService.resolve_product_code(
             message,

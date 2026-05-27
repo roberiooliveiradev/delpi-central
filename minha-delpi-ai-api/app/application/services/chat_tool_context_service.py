@@ -41,6 +41,7 @@ class ChatToolContextService:
         allowed_tool_names: list[str] | None = None,
         fast_path: bool = False,
         conversation_context: str | None = None,
+        previous_messages: list | None = None,
     ) -> dict:
         if fast_path:
             return {
@@ -49,9 +50,18 @@ class ChatToolContextService:
                 "nativeToolCalling": {"used": False, "providerSupports": False},
             }
 
-        message = ChatMessageNormalizationService.normalize_for_matching(message) or str(
-            message or ""
-        ).strip()
+        from app.application.services.chat_intelligence_pipeline_service import (
+            ChatIntelligencePipelineService,
+        )
+
+        raw_message = str(message or "").strip()
+
+        if conversation_context is None and previous_messages:
+            conversation_context = ChatIntelligencePipelineService.build_conversation_context(
+                previous_messages,
+            )
+
+        message = ChatMessageNormalizationService.normalize_for_matching(raw_message) or raw_message
 
         native_meta = {"used": False, "providerSupports": False}
         native_selections: list[dict] = []
@@ -146,11 +156,16 @@ class ChatToolContextService:
             )
 
         if not selected_tools:
-            return {
-                "context": "",
-                "toolCalls": [],
-                "nativeToolCalling": native_meta,
-            }
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": native_meta,
+                    "currentMessage": raw_message,
+                },
+            )
 
         context_blocks: list[str] = []
         safe_tool_calls: list[dict] = []
@@ -250,15 +265,43 @@ class ChatToolContextService:
         if requested_format:
             self._apply_format_override(safe_tool_calls, requested_format, last_external_action_data)
 
-        return {
-            "context": context,
-            "toolCalls": safe_tool_calls,
-            "nativeToolCalling": native_meta,
-            "directAnswer": direct_answer,
-            "skipRag": skip_rag,
-            "selectedExternalAction": selected_external_action_meta,
-        }
+        return self._finalize_tool_context_result(
+            message=raw_message,
+            previous_messages=previous_messages,
+            result={
+                "context": context,
+                "toolCalls": safe_tool_calls,
+                "nativeToolCalling": native_meta,
+                "directAnswer": direct_answer,
+                "skipRag": skip_rag,
+                "selectedExternalAction": selected_external_action_meta,
+                "currentMessage": raw_message,
+            },
+        )
 
+
+    def _finalize_tool_context_result(
+        self,
+        *,
+        message: str,
+        previous_messages: list | None,
+        result: dict,
+    ) -> dict:
+        from app.application.services.chat_intelligence_pipeline_service import (
+            ChatIntelligencePipelineService,
+        )
+
+        post_tool = ChatIntelligencePipelineService.finalize_after_tools(
+            message,
+            previous_messages,
+            result,
+        )
+        finalized = post_tool.tool_context
+
+        if post_tool.analysis_mode:
+            finalized["directAnswer"] = None
+
+        return finalized
 
     _FORMAT_TABLE_HINTS = (
         "em tabela", "formato tabela", "em formato de tabela",
