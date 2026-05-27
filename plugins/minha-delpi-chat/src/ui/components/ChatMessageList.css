@@ -17,7 +17,13 @@
   padding: var(--mdc-space-5);
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   scroll-behavior: smooth;
+}
+
+/* Durante streaming, evita smooth que “puxa” o scroll contra o usuário */
+.mdc-chat-message-list--streaming {
+  scroll-behavior: auto;
 }
 
 .mdc-chat-timeline-day {

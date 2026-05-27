@@ -241,6 +241,8 @@ export function ChatMessageList({
   const followStreamRef = useRef(true);
   const wasStreamingRef = useRef(false);
   const pinUserMessageIdRef = useRef<string | null>(null);
+  const pinAlignmentAppliedForRef = useRef<string | null>(null);
+  const userScrollIntentRef = useRef(false);
 
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -270,6 +272,7 @@ export function ChatMessageList({
 
     scrollElementToBottom(list, behavior);
     followStreamRef.current = true;
+    userScrollIntentRef.current = false;
     setShowScrollToBottom(false);
   }, []);
 
@@ -316,6 +319,8 @@ export function ChatMessageList({
         followStreamRef.current = true;
       }
 
+      userScrollIntentRef.current = false;
+      pinAlignmentAppliedForRef.current = null;
       setShowScrollToBottom(false);
     }
   }, [conversationKey, isActiveStream, messages]);
@@ -347,13 +352,19 @@ export function ChatMessageList({
 
     if (userJustSent && lastMessage?.id) {
       pinUserMessageIdRef.current = lastMessage.id;
+      pinAlignmentAppliedForRef.current = null;
       followStreamRef.current = false;
+      userScrollIntentRef.current = false;
       return;
     }
 
     if (isActiveStream && followStreamRef.current && !pinUserMessageIdRef.current) {
       requestAnimationFrame(() => {
-        scrollToBottom("smooth");
+        if (!followStreamRef.current || userScrollIntentRef.current) {
+          return;
+        }
+
+        scrollToBottom("auto");
       });
     }
   }, [
@@ -368,16 +379,44 @@ export function ChatMessageList({
       return;
     }
 
+    const pinnedId = pinUserMessageIdRef.current;
+
+    if (pinAlignmentAppliedForRef.current === pinnedId || userScrollIntentRef.current) {
+      return;
+    }
+
     alignPinnedUserMessage("auto");
+    pinAlignmentAppliedForRef.current = pinnedId;
   }, [
     alignPinnedUserMessage,
-    isActiveStream,
     isLoading,
     messages,
-    streamingAnswer,
-    streamingStatus,
     timelineItems.length,
   ]);
+
+  useEffect(() => {
+    if (!isActiveStream || pinUserMessageIdRef.current) {
+      return;
+    }
+
+    if (!followStreamRef.current || userScrollIntentRef.current) {
+      return;
+    }
+
+    const list = listRef.current;
+
+    if (!list) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      if (!followStreamRef.current || userScrollIntentRef.current) {
+        return;
+      }
+
+      scrollElementToBottom(list, "auto");
+    });
+  }, [isActiveStream, streamingAnswer, streamingStatus]);
 
   useEffect(() => {
     const list = listRef.current;
@@ -397,17 +436,32 @@ export function ChatMessageList({
           list.scrollTop > pinnedTop + PIN_USER_MESSAGE_TOP_PADDING_PX + 48
         ) {
           pinUserMessageIdRef.current = null;
+          pinAlignmentAppliedForRef.current = null;
         }
       }
 
       updateScrollAffordances();
     };
 
+    const handleWheel = () => {
+      userScrollIntentRef.current = true;
+      followStreamRef.current = false;
+    };
+
+    const handleTouchMove = () => {
+      userScrollIntentRef.current = true;
+      followStreamRef.current = false;
+    };
+
     list.addEventListener("scroll", handleScroll, { passive: true });
+    list.addEventListener("wheel", handleWheel, { passive: true });
+    list.addEventListener("touchmove", handleTouchMove, { passive: true });
     updateScrollAffordances();
 
     return () => {
       list.removeEventListener("scroll", handleScroll);
+      list.removeEventListener("wheel", handleWheel);
+      list.removeEventListener("touchmove", handleTouchMove);
     };
   }, [updateScrollAffordances, timelineItems.length, isActiveStream]);
 
@@ -416,6 +470,8 @@ export function ChatMessageList({
 
     if (wasStreaming && !isActiveStream) {
       pinUserMessageIdRef.current = null;
+      pinAlignmentAppliedForRef.current = null;
+      userScrollIntentRef.current = false;
 
       if (followStreamRef.current) {
         requestAnimationFrame(() => {
@@ -658,7 +714,16 @@ export function ChatMessageList({
 
   return (
     <div className="mdc-chat-message-list-wrap">
-      <div ref={listRef} className="mdc-chat-message-list" aria-live="polite">
+      <div
+        ref={listRef}
+        className={[
+          "mdc-chat-message-list",
+          isActiveStream ? "mdc-chat-message-list--streaming" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-live="polite"
+      >
         {timelineItems.map((item) =>
           item.type === "day" ? (
             <div
