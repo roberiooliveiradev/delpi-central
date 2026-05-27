@@ -14,6 +14,11 @@ from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port im
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_department_indicators_repository import (
     PostgresStrategicIndicatorsDepartmentIndicatorsRepository,
 )
+from si_app.application.services.strategic_indicators.commercial_dashboard_source_keys import (
+    COMMERCIAL_ROL_SOURCE_KEY,
+    expand_dashboard_source_keys,
+    legacy_rol_branch_override,
+)
 from si_app.shared.goal_scope import (
     BRANCH_UNIT_CODES,
     format_goal_scope_label,
@@ -57,6 +62,8 @@ class GetDashboardGoalsBySourceKeysUseCase:
         if not normalized_keys:
             return []
 
+        lookup_keys = expand_dashboard_source_keys(normalized_keys)
+
         if self._goals_repository is None:
             from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_indicator_goals_repository import (
                 PostgresStrategicIndicatorsIndicatorGoalsRepository,
@@ -65,7 +72,7 @@ class GetDashboardGoalsBySourceKeysUseCase:
             self._goals_repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
 
         indicators = self._indicators_repository.list_active_indicators_by_source_keys(
-            normalized_keys,
+            lookup_keys,
             department_id=department_id,
         )
         if not indicators:
@@ -77,6 +84,10 @@ class GetDashboardGoalsBySourceKeysUseCase:
             end_date=end_date,
         )
         view_branch = normalize_goal_scope_branch(branch)
+        if not view_branch and len(normalized_keys) == 1:
+            view_branch = normalize_goal_scope_branch(
+                legacy_rol_branch_override(normalized_keys[0], None)
+            )
 
         goals_by_indicator = self._goals_repository.list_resolved_goals_map(
             competence=period.competence,
@@ -120,29 +131,79 @@ class GetDashboardGoalsBySourceKeysUseCase:
             end_date=period.end_date,
         )
 
+        indicators_by_source_key = {
+            str(item.get("source_key") or "").strip(): item
+            for item in indicators
+            if item.get("source_key")
+        }
+        if COMMERCIAL_ROL_SOURCE_KEY in indicators_by_source_key:
+            rol_indicator = indicators_by_source_key[COMMERCIAL_ROL_SOURCE_KEY]
+            for legacy_key in normalized_keys:
+                if legacy_key not in indicators_by_source_key:
+                    indicators_by_source_key[legacy_key] = rol_indicator
+
         items: list[dict] = []
-        for indicator in indicators:
+        for requested_key in normalized_keys:
+            indicator = indicators_by_source_key.get(requested_key)
+            if not indicator:
+                continue
+
             indicator_id = indicator["indicator_id"]
-            goal = goals_by_indicator.get(indicator_id)
+            item_view_branch = normalize_goal_scope_branch(
+                legacy_rol_branch_override(requested_key, branch) or branch
+            )
+            goal = self._resolve_goal_for_view(
+                indicator_id=indicator_id,
+                item_view_branch=item_view_branch,
+                goals_by_indicator=goals_by_indicator,
+                branch_goals_by_indicator=branch_goals_by_indicator,
+            )
             goal_scope_hint = None
             if goal is None:
                 goal_scope_hint = resolve_goal_scope_hint_for_view(
-                    view_branch=view_branch,
+                    view_branch=item_view_branch,
                     consolidated_goal=consolidated_by_indicator.get(indicator_id),
                     branch_goals=branch_goals_by_indicator.get(indicator_id),
                 )
 
-            items.append(
-                self._serialize_item(
-                    indicator=indicator,
-                    goal=goal,
-                    period=period,
-                    view_branch=view_branch,
-                    goal_scope_hint=goal_scope_hint,
-                )
+            serialized = self._serialize_item(
+                indicator=indicator,
+                goal=goal,
+                period=period,
+                view_branch=item_view_branch,
+                goal_scope_hint=goal_scope_hint,
             )
+            serialized["source_key"] = requested_key
+            items.append(serialized)
 
         return items
+
+    @staticmethod
+    def _resolve_goal_for_view(
+        *,
+        indicator_id: str,
+        item_view_branch: str,
+        goals_by_indicator: dict[str, dict],
+        branch_goals_by_indicator: dict[str, dict[str, dict]],
+    ) -> dict | None:
+        if item_view_branch:
+            branch_goal = (branch_goals_by_indicator.get(indicator_id) or {}).get(
+                item_view_branch
+            )
+            if branch_goal:
+                return branch_goal
+
+        resolved = goals_by_indicator.get(indicator_id)
+        if resolved is None:
+            return None
+
+        resolved_scope = normalize_goal_scope_branch(
+            resolved.get("goal_scope_branch")
+        )
+        if item_view_branch and resolved_scope != item_view_branch:
+            return None
+
+        return resolved
 
     def _serialize_item(
         self,

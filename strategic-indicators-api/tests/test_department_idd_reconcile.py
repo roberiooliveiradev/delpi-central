@@ -121,9 +121,9 @@ def test_commercial_branch_view_matches_consolidated_scoring() -> None:
             goal_label="10%",
             goal_value=10.0,
             goal_periodicity="monthly",
-            scope_type="consolidated",
+            scope_type="per_unit",
             has_resolved_goal=True,
-            resolved_goal_scope_branch="",
+            resolved_goal_scope_branch="01",
         ),
     ]
     measurements = [
@@ -142,7 +142,7 @@ def test_commercial_branch_view_matches_consolidated_scoring() -> None:
             short_name="COM",
             weight_pct=17,
             strategic_summary="",
-            aggregation_mode="consolidated",
+            aggregation_mode="average_of_units",
         )
     ]
 
@@ -173,4 +173,6 @@ def test_commercial_branch_view_matches_consolidated_scoring() -> None:
     )
 
     assert consolidated[0].score > 0
-    assert branch_01[0].score == consolidated[0].score
+    assert branch_01[0].score > 0
+    # Comercial por unidade: consolidado = média 01/02; filial 01 ≠ consolidado quando 02 difere.
+    assert branch_01[0].score != consolidated[0].score

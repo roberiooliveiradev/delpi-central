@@ -9,7 +9,11 @@ from si_app.application.use_cases.strategic_indicators.period_resolution import 
 from si_app.domain.ports.strategic_indicators.commercial_indicators_snapshot_port import (
     StrategicIndicatorsCommercialIndicatorsSnapshotPort,
 )
-from si_app.shared.branch_filter import build_unit_values_for_consolidated_department
+from si_app.shared.branch_filter import effective_query_branch
+from si_app.shared.goal_scope import BRANCH_UNIT_CODES
+
+MATRIX_BRANCH_CODE = "01"
+BRANCH_BRANCH_CODE = "02"
 
 
 class CommercialIndicatorsSnapshotProvider(
@@ -30,10 +34,10 @@ class CommercialIndicatorsSnapshotProvider(
         branch: str | None = None,
     ) -> dict:
         try:
-            snapshot = self._commercial_metrics_snapshot_service.get_snapshot(
+            return self._map_snapshot_to_result(
                 start_date=start_date,
                 end_date=end_date,
-                branch=None,
+                view_branch=branch,
             )
         except Exception as exc:
             scope = branch or "consolidated"
@@ -48,23 +52,24 @@ class CommercialIndicatorsSnapshotProvider(
                 ],
             }
 
-        return self._map_snapshot_to_result(snapshot=snapshot, view_branch=branch)
-
     def get_commercial_indicators_snapshot_series(
         self,
         *,
         periods: list[ResolvedPeriod],
         branch: str | None = None,
     ) -> dict[str, dict]:
-        try:
-            snapshots = self._commercial_metrics_snapshot_service.get_snapshot_series(
-                periods=periods,
-                branch=None,
-            )
-        except Exception as exc:
-            scope = branch or "consolidated"
-            return {
-                period.competence: {
+        result: dict[str, dict] = {}
+
+        for period in periods:
+            try:
+                result[period.competence] = self._map_snapshot_to_result(
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                    view_branch=branch,
+                )
+            except Exception as exc:
+                scope = branch or "consolidated"
+                result[period.competence] = {
                     "items": [],
                     "errors": [
                         {
@@ -74,83 +79,191 @@ class CommercialIndicatorsSnapshotProvider(
                         }
                     ],
                 }
-                for period in periods
-            }
-
-        result: dict[str, dict] = {}
-
-        for period in periods:
-            snapshot = snapshots.get(period.competence)
-            if snapshot is None:
-                result[period.competence] = {"items": [], "errors": []}
-                continue
-
-            result[period.competence] = self._map_snapshot_to_result(
-                snapshot=snapshot,
-                view_branch=branch,
-            )
 
         return result
 
     def _map_snapshot_to_result(
         self,
         *,
-        snapshot,
-        view_branch: str | None = None,
+        start_date: str | None,
+        end_date: str | None,
+        view_branch: str | None,
     ) -> dict:
+        items: list[dict] = []
+        errors: list[dict] = []
+
+        base_snapshot = self._commercial_metrics_snapshot_service.get_snapshot(
+            start_date=start_date,
+            end_date=end_date,
+            branch=None,
+        )
+
+        self._collect_measurement(
+            builder=lambda: self._build_rol_measurement(
+                snapshot=base_snapshot,
+                view_branch=view_branch,
+            ),
+            department_id="commercial",
+            source="commercial_rol",
+            items=items,
+            errors=errors,
+        )
+
+        per_unit_specs = (
+            (
+                "commercial-closing-rate",
+                "commercial_sales_conversion_rate",
+                lambda snap: snap.sales_conversion_rate_pct,
+            ),
+            (
+                "commercial-sales-order-otd",
+                "commercial_sales_order_otd",
+                lambda snap: snap.sales_order_otd_pct,
+            ),
+            (
+                "commercial-new-business-rol",
+                "commercial_new_business_rol_pct",
+                lambda snap: snap.new_business_rol_pct,
+            ),
+        )
+        for indicator_id, source, branch_getter in per_unit_specs:
+            self._collect_measurement(
+                builder=self._per_unit_builder(
+                    indicator_id=indicator_id,
+                    source=source,
+                    branch_getter=branch_getter,
+                    base_snapshot=base_snapshot,
+                    start_date=start_date,
+                    end_date=end_date,
+                    view_branch=view_branch,
+                ),
+                department_id="commercial",
+                source=source,
+                items=items,
+                errors=errors,
+            )
+
         return {
-            "items": [
-                self._build_measurement(
-                    indicator_id="commercial-rol-matrix",
-                    source="commercial_head_office_rol_target",
-                    value=snapshot.matrix_rol_value,
-                    unit_values={"matrix": snapshot.matrix_rol_value},
-                ),
-                self._build_measurement(
-                    indicator_id="commercial-rol-branch",
-                    source="commercial_branch_rol_target",
-                    value=snapshot.branch_rol_value,
-                    unit_values={"branch": snapshot.branch_rol_value},
-                ),
-                self._build_consolidated_measurement(
-                    indicator_id="commercial-closing-rate",
-                    source="commercial_sales_conversion_rate",
-                    value=snapshot.sales_conversion_rate_pct,
-                    view_branch=view_branch,
-                ),
-                self._build_consolidated_measurement(
-                    indicator_id="commercial-sales-order-otd",
-                    source="commercial_sales_order_otd",
-                    value=snapshot.sales_order_otd_pct,
-                    view_branch=view_branch,
-                ),
-                self._build_consolidated_measurement(
-                    indicator_id="commercial-new-business-rol",
-                    source="commercial_new_business_rol_pct",
-                    value=snapshot.new_business_rol_pct,
-                    view_branch=view_branch,
-                ),
-            ],
-            "errors": [],
+            "items": items,
+            "errors": errors,
         }
 
-    def _build_consolidated_measurement(
+    def _per_unit_builder(
         self,
         *,
         indicator_id: str,
         source: str,
-        value: float | None,
+        branch_getter,
+        base_snapshot,
+        start_date: str | None,
+        end_date: str | None,
+        view_branch: str | None,
+    ):
+        def builder() -> dict:
+            return self._build_per_unit_measurement(
+                indicator_id=indicator_id,
+                source=source,
+                base_snapshot=base_snapshot,
+                value_getter=branch_getter,
+                start_date=start_date,
+                end_date=end_date,
+                view_branch=view_branch,
+            )
+
+        return builder
+
+    def _build_rol_measurement(
+        self,
+        *,
+        snapshot,
         view_branch: str | None,
     ) -> dict:
+        unit_values = {
+            MATRIX_BRANCH_CODE: snapshot.matrix_rol_value,
+            BRANCH_BRANCH_CODE: snapshot.branch_rol_value,
+        }
+        active_branch = effective_query_branch(view_branch)
+        consolidated_value = (
+            unit_values.get(active_branch)
+            if active_branch
+            else None
+        )
+
+        return self._build_measurement(
+            indicator_id="commercial-rol",
+            source="commercial_rol",
+            value=consolidated_value,
+            unit_values=unit_values,
+        )
+
+    def _build_per_unit_measurement(
+        self,
+        *,
+        indicator_id: str,
+        source: str,
+        base_snapshot,
+        value_getter,
+        start_date: str | None,
+        end_date: str | None,
+        view_branch: str | None,
+    ) -> dict:
+        active_branch = effective_query_branch(view_branch)
+        unit_values: dict[str, float | None] = {}
+
+        if active_branch:
+            branch_snapshot = self._commercial_metrics_snapshot_service.get_snapshot(
+                start_date=start_date,
+                end_date=end_date,
+                branch=active_branch,
+            )
+            raw = value_getter(branch_snapshot)
+            normalized = float(raw) if raw is not None else None
+            unit_values[active_branch] = normalized
+            return self._build_measurement(
+                indicator_id=indicator_id,
+                source=source,
+                value=normalized,
+                unit_values=unit_values,
+            )
+
+        for branch_code in BRANCH_UNIT_CODES:
+            try:
+                branch_snapshot = self._commercial_metrics_snapshot_service.get_snapshot(
+                    start_date=start_date,
+                    end_date=end_date,
+                    branch=branch_code,
+                )
+                raw = value_getter(branch_snapshot)
+                unit_values[branch_code] = float(raw) if raw is not None else None
+            except Exception:
+                unit_values[branch_code] = None
+
         return self._build_measurement(
             indicator_id=indicator_id,
             source=source,
-            value=value,
-            unit_values=build_unit_values_for_consolidated_department(
-                consolidated_value=value,
-                view_branch=view_branch,
-            ),
+            value=None,
+            unit_values=unit_values,
         )
+
+    def _collect_measurement(
+        self,
+        *,
+        builder,
+        department_id: str,
+        source: str,
+        items: list[dict],
+        errors: list[dict],
+    ) -> None:
+        try:
+            items.append(builder())
+        except Exception as exc:
+            errors.append(
+                {
+                    "department_id": department_id,
+                    "source": source,
+                    "message": str(exc),
+                }
+            )
 
     def _build_measurement(
         self,
