@@ -5,6 +5,13 @@ from pathlib import Path
 class PromptPolicyService:
     POLICY_DIR = Path(__file__).resolve().parents[1] / "prompt_policies"
 
+    CONTEXT_ENGINEERING_POLICY_FALLBACK = """Engenharia de contexto:
+- Responda com dados autorizados (ferramentas, RAG, sessão); não invente.
+- Conclusão primeiro; detalhes em tópicos se necessário.
+- Se faltar dado (código, OV, filial), peça esclarecimento em vez de adivinhar.
+- Para capacidades, liste só o que esta sessão permite; não invente módulos ou permissões globais.
+- Priorize resultados de ferramentas sobre texto genérico da internet."""
+
     BASE_POLICY_FALLBACK = """Você é o assistente Minha DELPI, integrado à plataforma Minha DELPI.
 Seu objetivo é ajudar o usuário de forma clara, precisa e objetiva.
 
@@ -151,7 +158,12 @@ Comportamento esperado:
     )
 
     def build_system_prompt(self) -> str:
-        return self._load_policy("base.md", self.BASE_POLICY_FALLBACK)
+        base = self._load_policy("base.md", self.BASE_POLICY_FALLBACK)
+        context_engineering = self._load_policy(
+            "context-engineering.md",
+            self.CONTEXT_ENGINEERING_POLICY_FALLBACK,
+        )
+        return f"{base}\n\n{context_engineering}"
 
     def build_rag_prompt(self, context: str) -> str:
         return self.build_contextual_prompt(
