@@ -31,6 +31,7 @@
 
 .mdc-chat-input__plus-wrap {
   position: relative;
+  z-index: 41;
   display: flex;
   align-items: center;
   align-self: center;
@@ -219,11 +220,17 @@
   border: 0;
   border-radius: 0.65rem;
   background: transparent;
+  box-shadow: none;
   color: var(--mdc-text);
   cursor: pointer;
   font: inherit;
   padding: 0.58rem 0.55rem;
   text-align: left;
+}
+
+.mdc-chat-input__menu .mdc-chat-input__menu-section button:hover:not(:disabled),
+.mdc-chat-input__menu .mdc-chat-input__open-agent:hover {
+  box-shadow: none;
 }
 
 .mdc-chat-input__menu-section button:hover:not(:disabled),
@@ -356,6 +363,10 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.15rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  padding: 0;
 }
 
 .mdc-chat-input__agent-menu-row > button:first-child {
@@ -369,7 +380,10 @@
   width: 2.1rem !important;
   height: 2.1rem !important;
   min-height: 0 !important;
+  border: 0 !important;
   border-radius: 999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--mdc-text-muted) !important;
   padding: 0 !important;
 }
