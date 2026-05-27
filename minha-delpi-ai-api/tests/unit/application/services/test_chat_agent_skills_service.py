@@ -101,3 +101,32 @@ def test_company_knowledge_default_for_common_chat(monkeypatch):
     )
 
     assert skills["companyKnowledge"] is True
+
+
+def test_company_knowledge_default_for_agent_without_explicit_skill(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_agent_skills_service.Settings.CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL",
+        True,
+    )
+
+    skills = ChatAgentSkillsService.resolve(
+        agent_metadata={},
+        allowed_action_ids=[],
+        has_agent=True,
+    )
+
+    assert skills["companyKnowledge"] is True
+
+
+def test_company_knowledge_respects_agent_explicit_disable():
+    skills = ChatAgentSkillsService.resolve(
+        agent_metadata={
+            "skills": {
+                "company-knowledge": {"enabled": False},
+            },
+        },
+        allowed_action_ids=[],
+        has_agent=True,
+    )
+
+    assert skills["companyKnowledge"] is False

@@ -19,3 +19,7 @@ def test_fast_path_disabled_with_attachments():
 
 def test_fast_path_not_used_for_knowledge_question():
     assert ChatFastPathService.should_use("qual o estoque do produto 10080014?") is False
+
+
+def test_fast_path_not_used_for_who_question():
+    assert ChatFastPathService.should_use("quem é o arquiteto?") is False

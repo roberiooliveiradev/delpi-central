@@ -15,7 +15,7 @@ _SMALL_TALK_RE = re.compile(_SMALL_TALK_PATTERN, re.IGNORECASE)
 
 _KNOWLEDGE_HINT_PATTERN = (
     r"\?|"
-    r"\b(como|quando|onde|qual|quais|quanto|quantos|por que|porque|"
+    r"\b(como|quando|onde|qual|quais|quanto|quantos|quem|por que|porque|"
     r"explique|detalhe|liste|mostre|busque|consulte|informa|produto|"
     r"estoque|pedido|pedidos|nota|sql|api|relat[oó]rio|documento|"
     r"fornecedor|fornecedores|cliente|clientes|pre[cç]o|venda|vendas|compra|compras|fatura|"
