@@ -129,7 +129,7 @@ Execução SQL no chat comum **não** é permitida via external actions.
 
 - **Comportamento:** prioriza a base documental global da empresa (políticas, diretrizes, glossário, manuais), injeta policy no prompt e controla `include_global` no escopo RAG.
 - **Ferramenta relacionada:** `search_knowledge_base` (quando autorizada ao usuário).
-- **Agente:** ative explicitamente em `PUT /chat/agents/{id}/skills` com `skillKey: "company-knowledge"`.
+- **Agente:** segue `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` (default `true`) quando a skill não foi configurada no builder. Para desativar, use `PUT /chat/agents/{id}/skills` com `skillKey: "company-knowledge"` e `enabled: false`.
 
 ## Skill SQL — elaborar vs executar
 

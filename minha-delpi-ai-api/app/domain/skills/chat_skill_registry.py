@@ -196,7 +196,7 @@ class ChatSkillRegistry:
                 agent_metadata,
                 definition,
             ):
-                enabled = False
+                enabled = default_company_knowledge
 
             derived: dict[str, bool] = {}
 
