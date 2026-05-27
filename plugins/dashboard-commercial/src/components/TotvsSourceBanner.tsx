@@ -7,8 +7,8 @@ export function TotvsSourceBanner() {
       <div>
         <strong>Origem: TOTVS Protheus</strong>
         <p>
-          ROL em reais (matriz 01 e filial 02), taxa de conversão de vendas e
-          indicadores de clientes novos.
+          ROL por unidade (filiais 01 e 02), taxa de conversão, OTD e novos
+          negócios — metas do Indicadores Estratégicos.
         </p>
       </div>
     </div>

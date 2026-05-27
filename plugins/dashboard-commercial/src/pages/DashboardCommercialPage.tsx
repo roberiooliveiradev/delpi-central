@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Banknote,
-  Building2,
   PackageCheck,
   Percent,
   Target,
@@ -36,6 +35,7 @@ import { formatPeriodLabel } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { COMMERCIAL_KPI_TITLES } from "../constants/commercialIndicators";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import { buildRolPerUnitKpiView } from "../utils/rolPerUnitPresentation";
 import {
   formatInteger,
   formatCurrency,
@@ -101,6 +101,22 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
   const branchLabel = branch
     ? `Filial ${branch}`
     : "Consolidado (média das filiais)";
+
+  const rolContextLabel = branch
+    ? `Filial ${branch} · ${periodLabel}`
+    : `Por unidade · ${periodLabel}`;
+
+  const rolKpi = useMemo(
+    () =>
+      buildRolPerUnitKpiView(
+        headOfficeRol,
+        branchRol,
+        rolContextLabel,
+        formatCurrency,
+        branch,
+      ),
+    [branch, branchRol, headOfficeRol, rolContextLabel],
+  );
 
   const isBusy = loading || refreshing;
   const hasData = headOfficeRol !== null || branchRol !== null;
@@ -194,28 +210,18 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
 
       <section className="dc-kpi-grid" aria-busy={isBusy}>
         <KpiCard
-          title={COMMERCIAL_KPI_TITLES.rolFilial01}
-          value={formatCurrency(headOfficeRol?.rol)}
-          {...buildKpiGoalPresentation(
-            `Filial 01 · ${periodLabel}`,
-            headOfficeRol,
-            formatCurrency,
-            { realizedValue: headOfficeRol?.rol },
-          )}
+          title={COMMERCIAL_KPI_TITLES.rol}
+          value={rolKpi.value}
+          valueVariant="per-unit"
+          goalVariant="per-unit"
+          contextLabel={rolKpi.contextLabel}
+          goalLabel={rolKpi.goalLabel}
+          goalScopeBadge={rolKpi.goalScopeBadge}
+          goalScopeHint={rolKpi.goalScopeHint}
+          goalPerformanceBadge={rolKpi.goalPerformanceBadge}
+          goalPerformanceBadges={rolKpi.goalPerformanceBadges}
           icon={<Banknote size={22} />}
-          loading={isBusy && !headOfficeRol}
-        />
-        <KpiCard
-          title={COMMERCIAL_KPI_TITLES.rolFilial02}
-          value={formatCurrency(branchRol?.rol)}
-          {...buildKpiGoalPresentation(
-            `Filial 02 · ${periodLabel}`,
-            branchRol,
-            formatCurrency,
-            { realizedValue: branchRol?.rol },
-          )}
-          icon={<Building2 size={22} />}
-          loading={isBusy && !branchRol}
+          loading={isBusy && !headOfficeRol && !branchRol}
         />
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.salesOrderOtd}
@@ -328,11 +334,11 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
             <h2 className="dc-summary-card__title">Como ler os indicadores</h2>
           </div>
           <p className="dc-summary-card__description">
-            <strong>ROL</strong> (R$ com IPI) segue o indicador único{" "}
-            <code>commercial-rol</code> no SI, com metas por filial 01 e 02. O
-            gráfico de evolução mostra as duas séries; conversão, OTD e novos
-            negócios usam metas <em>per unit</em> do catálogo SI e respeitam o
-            filtro de filial quando informado (senão, média consolidada).
+            <strong>ROL</strong> (R$ com IPI) é um indicador{" "}
+            <em>por unidade</em> no SI (<code>commercial-rol</code>): realizado
+            e meta no formato <strong>01: … | 02: …</strong>. O gráfico mantém
+            as duas séries; conversão, OTD e novos negócios respeitam o filtro
+            de filial (senão, média consolidada).
           </p>
         </article>
       </section>

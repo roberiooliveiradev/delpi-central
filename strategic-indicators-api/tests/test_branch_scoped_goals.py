@@ -189,6 +189,66 @@ def test_department_consolidated_score_is_average_of_branch_idds() -> None:
     assert calculated[0].unit_gaps == {"01": 0.0, "02": 5.0}
 
 
+def test_unit_goals_for_per_unit_monthly_curve() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    indicator = StrategicIndicatorCatalogItem(
+        indicator_id="commercial-rol",
+        department_id="commercial",
+        indicator_name="ROL",
+        weight_pct=40,
+        goal_label="01: Curva R$ | 02: Curva R$",
+        goal_value=3_466_000,
+        goal_periodicity="monthly",
+        goal_mode="monthly_curve",
+        scope_type="per_unit",
+        performance_direction="higher_is_better",
+        value_unit="currency",
+        value_decimals=2,
+        branch_goals={
+            "01": {
+                "goal_label": "Curva R$",
+                "goal_value": 0,
+                "goal_periodicity": "monthly",
+                "goal_mode": "monthly_curve",
+                "monthly_targets": [{"month_number": 5, "target_value": 3_466_000}],
+            },
+            "02": {
+                "goal_label": "Curva R$",
+                "goal_value": 0,
+                "goal_periodicity": "monthly",
+                "goal_mode": "monthly_curve",
+                "monthly_targets": [{"month_number": 5, "target_value": 1_006_000}],
+            },
+        },
+    )
+
+    calculated = calculator.calculate_indicators(
+        indicators_catalog=[indicator],
+        measurements=[
+            StrategicIndicatorMeasuredValue(
+                indicator_id="commercial-rol",
+                department_id="commercial",
+                value=1_908_690.84,
+                source="commercial_rol",
+                unit_values={"01": 614_974.68, "02": 3_202_406.99},
+            )
+        ],
+        competence="2026-05",
+        start_date="01-05-2026",
+        end_date="27-05-2026",
+    )
+
+    assert len(calculated) == 1
+    assert calculated[0].unit_goals == {"01": 3_466_000.0, "02": 1_006_000.0}
+
+    goals_payload = calculator.build_goals_payload(
+        unit_goals=calculated[0].unit_goals,
+        goal_value=calculated[0].goal_value,
+        department_id="commercial",
+    )
+    assert goals_payload == {"01": 3_466_000.0, "02": 1_006_000.0}
+
+
 def test_scope_branch_02_uses_filial_unit_value_and_goal() -> None:
     calculator = StrategicIndicatorsCalculator()
     indicator = StrategicIndicatorCatalogItem(

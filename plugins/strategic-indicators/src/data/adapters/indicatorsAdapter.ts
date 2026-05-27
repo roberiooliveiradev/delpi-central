@@ -28,6 +28,7 @@ export function adaptIndicatorsToView(
     realized: item.realized ?? {},
     score: item.score,
     gap: item.gap,
+    goals: item.goals ?? {},
     gaps: item.gaps ?? {},
     hasValue: item.has_value ?? item.value !== null,
     trend: normalizeTrend(item.trend),

@@ -89,13 +89,32 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
 
         branch_goals_by_indicator: dict[str, dict[str, dict]] = {}
         if not normalize_goal_scope_branch(branch):
+            per_unit_indicator_ids = [
+                item.indicator_id
+                for item in structural_items
+                if (item.scope_type or "").strip() == "per_unit"
+            ]
+            if per_unit_indicator_ids:
+                branch_goals_by_indicator = (
+                    self._indicator_goals_repository.list_branch_scoped_goals_map(
+                        indicator_ids=per_unit_indicator_ids,
+                        department_id=department_id,
+                        competence=competence,
+                        start_date=start_date,
+                        end_date=end_date,
+                    )
+                )
+
             still_missing = [
                 item.indicator_id
                 for item in structural_items
-                if item.indicator_id not in goals_by_indicator
+                if (
+                    item.indicator_id not in goals_by_indicator
+                    and item.indicator_id not in branch_goals_by_indicator
+                )
             ]
             if still_missing:
-                branch_goals_by_indicator = (
+                extra_branch_goals = (
                     self._indicator_goals_repository.list_branch_scoped_goals_map(
                         indicator_ids=still_missing,
                         department_id=department_id,
@@ -104,6 +123,9 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                         end_date=end_date,
                     )
                 )
+                for indicator_id, branch_map in extra_branch_goals.items():
+                    if branch_map:
+                        branch_goals_by_indicator[indicator_id] = branch_map
 
         if not normalize_goal_scope_branch(branch):
             still_missing_for_branch = [
@@ -166,9 +188,20 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
         for item in structural_items:
             goal = goals_by_indicator.get(item.indicator_id)
             branch_goals = branch_goals_by_indicator.get(item.indicator_id, {})
+            scope_type = (item.scope_type or "").strip()
+
+            if branch_goals and scope_type == "per_unit":
+                resolved.append(self._catalog_item_from_branch_goals(item, branch_goals))
+                continue
 
             if goal:
-                resolved.append(self._catalog_item_from_goal(item, goal, branch_goals={}))
+                resolved.append(
+                    self._catalog_item_from_goal(
+                        item,
+                        goal,
+                        branch_goals=branch_goals,
+                    )
+                )
                 continue
 
             if branch_goals:

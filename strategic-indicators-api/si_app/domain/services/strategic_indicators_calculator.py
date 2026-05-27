@@ -304,6 +304,13 @@ class StrategicIndicatorsCalculator:
                 end_date=end_date,
                 competence=competence,
             )
+            unit_goals = self._build_unit_goals(
+                indicator=indicator,
+                measurement=measurement,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
 
             calculated.append(
                 StrategicIndicatorCalculatedValue(
@@ -330,6 +337,7 @@ class StrategicIndicatorsCalculator:
                     trend="stable",
                     classification=self.classify_score(score),
                     unit_values=measurement.unit_values,
+                    unit_goals=unit_goals,
                     unit_gaps=unit_gaps,
                     value_unit=indicator.value_unit,
                     value_prefix=indicator.value_prefix,
@@ -1003,6 +1011,47 @@ class StrategicIndicatorsCalculator:
 
         return gaps
 
+    def _build_unit_goals(
+        self,
+        *,
+        indicator: StrategicIndicatorCatalogItem,
+        measurement: StrategicIndicatorMeasuredValue,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> dict[str, float | None] | None:
+        unit_values = measurement.unit_values
+        branch_keys = [
+            branch_code
+            for branch_code in BRANCH_UNIT_CODES
+            if branch_code in (indicator.branch_goals or {})
+        ]
+        if not branch_keys and unit_values:
+            branch_keys = [
+                branch_code
+                for branch_code in BRANCH_UNIT_CODES
+                if branch_code in unit_values
+            ]
+
+        if len(branch_keys) < 2:
+            return None
+
+        goals: dict[str, float | None] = {}
+        for branch_code in branch_keys:
+            comparable_goal = self._comparable_goal_for_branch_view(
+                indicator=indicator,
+                branch_code=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+            if comparable_goal is None or comparable_goal <= 0:
+                goals[branch_code] = None
+                continue
+            goals[branch_code] = round(float(comparable_goal), 2)
+
+        return goals if goals else None
+
     def build_realized_payload(
         self,
         *,
@@ -1042,6 +1091,26 @@ class StrategicIndicatorsCalculator:
             return {}
 
         return {"consolidated": gap}
+
+    def build_goals_payload(
+        self,
+        *,
+        unit_goals: dict[str, float | None] | None,
+        goal_value: float | None,
+        department_id: str | None = None,
+    ) -> dict[str, float | None]:
+        if is_consolidated_aggregation_department(department_id):
+            if goal_value is None:
+                return {}
+            return {"consolidated": goal_value}
+
+        if unit_goals:
+            return dict(unit_goals)
+
+        if goal_value is None:
+            return {}
+
+        return {"consolidated": goal_value}
 
     def indicator_has_value(self, value: float | None) -> bool:
         return value is not None

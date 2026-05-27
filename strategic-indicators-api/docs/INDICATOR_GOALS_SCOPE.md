@@ -11,7 +11,19 @@
 | `consolidated` | Consolidado (`''`) + filial `01` + filial `02` |
 | `per_unit` | Consolidado (`''`) + filial `01` + filial `02` (realizado por unidade; meta por filial na mesma estrutura) |
 
-Indicadores separados por unidade (ex.: ROL Matriz / ROL Filial no Comercial) continuam válidos quando cada unidade precisa de **fonte de dado** distinta, não apenas meta distinta.
+**Comercial (V026):** um indicador `commercial-rol` (`per_unit`) com metas por filial `01`/`02`; `commercial-rol-matrix` e `commercial-rol-branch` ficam inativos.
+
+## Exibição no painel (Meta / Realizado / Gap)
+
+Para indicadores com metas por filial, a API expõe:
+
+| Campo | Formato na UI |
+|-------|----------------|
+| `goals` | `01: … \| 02: …` (meta comparável do período, inclusive curva mensal) |
+| `realized` | `01: … \| 02: …` |
+| `gaps` | `01: … \| 02: …` |
+
+`goal_label` permanece como rótulo cadastral (ex.: `01: Curva R$ \| 02: Curva R$`); o valor numérico da meta vem de `goals`.
 
 **Migration V021 (Produção):** metas consolidadas ativas de indicadores `per_unit` do departamento Produção são desativadas e recriadas em duplicata para `goal_scope_branch` `01` e `02` (mesmo `goal_label`, valor e curva mensal). Ajuste valores por filial depois no admin, se necessário.
 

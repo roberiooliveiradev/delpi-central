@@ -50,6 +50,7 @@ export function adaptDepartmentDetailsToView(
       hasValue: indicator.has_value,
       score: indicator.score,
       gap: indicator.gap,
+      goals: indicator.goals ?? {},
       gaps: indicator.gaps ?? {},
       classification: indicator.classification,
       trend: normalizeTrend(indicator.trend),

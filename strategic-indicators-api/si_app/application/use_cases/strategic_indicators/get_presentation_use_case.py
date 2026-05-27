@@ -451,6 +451,11 @@ class GetStrategicIndicatorsPresentationUseCase:
                 gap=current.gap,
                 department_id=current.department_id,
             ),
+            "goals": self._calculator.build_goals_payload(
+                unit_goals=getattr(current, "unit_goals", None),
+                goal_value=current.goal_value,
+                department_id=current.department_id,
+            ),
             "trend": trend,
             "value_unit": getattr(current, "value_unit", None),
             "value_prefix": getattr(current, "value_prefix", None),
@@ -577,6 +582,11 @@ class GetStrategicIndicatorsPresentationUseCase:
                     "gaps": self._calculator.build_gaps_payload(
                         unit_gaps=item.unit_gaps,
                         gap=item.gap,
+                        department_id=item.department_id,
+                    ),
+                    "goals": self._calculator.build_goals_payload(
+                        unit_goals=getattr(item, "unit_goals", None),
+                        goal_value=item.goal_value,
                         department_id=item.department_id,
                     ),
                     "has_value": self._calculator.indicator_has_value(item.value),

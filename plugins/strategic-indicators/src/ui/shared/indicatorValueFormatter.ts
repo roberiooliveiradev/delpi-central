@@ -127,15 +127,13 @@ type MonthlyTargetLike = {
   targetValue?: number;
 };
 
-export type IndicatorGoalDisplayInput = {
+export type IndicatorGoalDisplayInput = IndicatorValueFormat & {
   goalLabel: string;
   goalValue?: number | null;
   goalMode?: string | null;
   monthlyTargets?: MonthlyTargetLike[] | null;
-  valueUnit?: string | null;
-  valuePrefix?: string | null;
-  valueSuffix?: string | null;
-  valueDecimals?: number | null;
+  /** Metas comparáveis por filial (01/02) ou consolidado — espelha `gaps` / `realized`. */
+  goals?: Record<string, number | null> | null;
 };
 
 function resolveCompetenceMonth(competence?: string | null): number | null {
@@ -426,7 +424,21 @@ export function formatIndicatorRealizedDisplay(
 export function formatIndicatorGoalValue(
   indicator: IndicatorGoalDisplayInput,
   competence?: string | null,
+  displayContext?: IndicatorDisplayContext,
 ): string {
+  const valueFormat: IndicatorValueFormat = {
+    valueUnit: indicator.valueUnit,
+    valuePrefix: indicator.valuePrefix,
+    valueSuffix: indicator.valueSuffix,
+    valueDecimals: indicator.valueDecimals,
+  };
+  const scopedOptions = mergeDisplayContext({}, displayContext);
+  const goals = indicator.goals ?? {};
+
+  if (hasScopedMetricMap(goals)) {
+    return formatScopeAwareMetric(goals, valueFormat, scopedOptions);
+  }
+
   if (indicator.goalMode !== "monthly_curve") {
     return indicator.goalLabel;
   }
@@ -441,10 +453,5 @@ export function formatIndicatorGoalValue(
     return indicator.goalLabel;
   }
 
-  return formatIndicatorValue(monthlyTarget, {
-    valueUnit: indicator.valueUnit,
-    valuePrefix: indicator.valuePrefix,
-    valueSuffix: indicator.valueSuffix,
-    valueDecimals: indicator.valueDecimals,
-  });
+  return formatIndicatorValue(monthlyTarget, valueFormat);
 }

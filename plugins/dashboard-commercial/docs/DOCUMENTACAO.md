@@ -15,8 +15,7 @@ Plugin **microfrontend** (Module Federation) para indicadores do departamento **
 
 | KPI | Endpoint | Meta SI (`source_key`) |
 |-----|----------|------------------------|
-| ROL — Filial 01 | `GET /commercial/head_office_rol_target_pct` | `commercial_rol`, filial `01` |
-| ROL — Filial 02 | `GET /commercial/branch_rol_target_pct` | `commercial_rol`, filial `02` |
+| ROL (por unidade: 01 \| 02) | `head_office_rol_target_pct` + `branch_rol_target_pct` (agregado na UI) | `commercial_rol` |
 | OTD — pedidos de venda | `GET /commercial/sales-order-otd` | `commercial_sales_order_otd` |
 | Taxa de conversão | `GET /commercial/closing-rate` | `commercial_closing_rate` |
 | % ROL — novos negócios | `GET /commercial/new-business-rol-pct` | `commercial_new_business_rol` |

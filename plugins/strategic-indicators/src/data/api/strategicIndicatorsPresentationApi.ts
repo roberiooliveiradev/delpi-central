@@ -124,6 +124,7 @@ export type StrategicIndicatorsPresentationApiResponse = {
           has_value: boolean;
           score: number | null;
           gap: number | null;
+          goals?: Record<string, number | null>;
           gaps?: Record<string, number | null>;
           trend: TrendDirection;
           classification: string;
@@ -161,6 +162,7 @@ export type StrategicIndicatorsPresentationApiResponse = {
         realized?: Record<string, number | null>;
         score: number | null;
         gap: number | null;
+        goals?: Record<string, number | null>;
         gaps?: Record<string, number | null>;
         has_value: boolean;
         trend: TrendDirection;

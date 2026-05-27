@@ -95,6 +95,11 @@ class GetStrategicIndicatorsUseCase:
                         gap=item.gap,
                         department_id=item.department_id,
                     ),
+                    goals=self._calculator.build_goals_payload(
+                        unit_goals=getattr(item, "unit_goals", None),
+                        goal_value=item.goal_value,
+                        department_id=item.department_id,
+                    ),
                     has_value=item.value is not None,
                     trend=self._resolve_indicator_trend(
                         current=item,
