@@ -14,6 +14,7 @@ from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
+from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.application.services.chat_user_context_service import ChatUserContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
@@ -211,6 +212,12 @@ class StreamChatMessageUseCase:
             user_direct = self._resolve_user_identity_answer(request.access_token, message)
             if user_direct:
                 direct_answer = user_direct
+                skip_rag = True
+
+        if not direct_answer and ChatCapabilitiesService.is_capabilities_question(message):
+            caps_direct = self._resolve_capabilities_answer(workspace_context)
+            if caps_direct:
+                direct_answer = caps_direct
                 skip_rag = True
 
         if skip_rag:
@@ -782,3 +789,12 @@ class StreamChatMessageUseCase:
 
         service = ChatUserContextService(core_api_gateway=CoreApiHttpGateway())
         return service.build_direct_answer(access_token, message)
+
+    def _resolve_capabilities_answer(self, workspace_context: dict) -> str | None:
+        allowed = workspace_context.get("allowedActionIds") or []
+        catalog = ChatCapabilitiesService.load_action_catalog_for_agent(allowed)
+        return ChatCapabilitiesService.build_direct_answer(
+            workspace_context=workspace_context,
+            allowed_action_ids=allowed,
+            action_catalog=catalog,
+        )

@@ -159,6 +159,9 @@ Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadma
 | Streaming em direct responses: 4 chars/chunk, 20ms delay (efeito de escrita) | Concluído |
 | `OLLAMA_NUM_CTX=2048` — coexistência qwen2.5:3b + bge-m3 em 8GB RAM | Concluído |
 | Perguntas ambíguas pedem esclarecimento (não encerram) | Concluído |
+| Normalização de mensagens (typos/acentos) para seleção de actions | Concluído |
+| Resposta direta "o que você pode fazer" (capacidades, APIs, actions) | Concluído |
+| Capacidades no chat comum e em agentes (catálogo por agente) | Concluído |
 
 **Produção recomendada (CPU com 8GB RAM):**
 ```env

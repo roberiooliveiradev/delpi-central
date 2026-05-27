@@ -1,5 +1,9 @@
 import re
 
+from app.domain.services.chat_message_normalization_service import (
+    ChatMessageNormalizationService,
+)
+
 
 class ChatProductQueryIntent:
     DESCRIPTION = "description"
@@ -17,7 +21,7 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def detect(cls, message: str) -> str:
-        normalized = str(message or "").lower()
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if cls._looks_like_mixed_documental_operational(normalized):
             return ChatProductQueryIntent.FULL
@@ -62,7 +66,7 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def references_previous_product(cls, message: str) -> bool:
-        normalized = str(message or "").lower()
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         terms = [
             "desse produto",
@@ -171,7 +175,7 @@ class ChatProductQueryIntentService:
         if code:
             return code
 
-        normalized = str(message or "").lower()
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not (
             cls.references_previous_product(message)

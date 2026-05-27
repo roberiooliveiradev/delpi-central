@@ -9,6 +9,22 @@ class ChatPromptBuilderService:
     def __init__(self, prompt_policy_service):
         self.prompt_policy_service = prompt_policy_service
 
+    def _capabilities_policy_addon(self, current_message: str) -> str:
+        from app.application.services.chat_capabilities_service import (
+            ChatCapabilitiesService,
+        )
+
+        if not ChatCapabilitiesService.is_capabilities_question(current_message):
+            return ""
+
+        return (
+            "\n\n"
+            + self.prompt_policy_service._load_policy(
+                "chat-capabilities.md",
+                "Quando perguntarem suas capacidades, liste ferramentas e actions autorizadas.",
+            )
+        )
+
     def build_fast_path_messages(
         self,
         *,
@@ -45,6 +61,7 @@ class ChatPromptBuilderService:
             tool_context=tool_context,
             operational_mode=operational_mode,
         )
+        base_prompt += self._capabilities_policy_addon(current_message)
 
         if user_context:
             base_prompt = f"{base_prompt}\n\n{user_context}"

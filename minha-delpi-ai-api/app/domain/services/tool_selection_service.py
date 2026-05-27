@@ -1,6 +1,11 @@
+from app.domain.services.chat_message_normalization_service import (
+    ChatMessageNormalizationService,
+)
+
+
 class ToolSelectionService:
     def select_tools(self, message: str) -> list[dict]:
-        normalized = self._normalize(message)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         selected: list[dict] = []
 
@@ -33,9 +38,6 @@ class ToolSelectionService:
 
         return selected
 
-    def _normalize(self, value: str) -> str:
-        return str(value or "").lower().strip()
-
     def _matches_current_user(self, value: str) -> bool:
         terms = [
             "quem sou eu",
@@ -61,6 +63,8 @@ class ToolSelectionService:
             "módulos que tenho acesso",
             "modulos que tenho acesso",
             "apps que tenho acesso",
+            "o que posso acessar",
+            "modulos disponiveis",
         ]
 
         return any(term in value for term in terms)

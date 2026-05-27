@@ -21,6 +21,7 @@ _KNOWLEDGE_HINT_PATTERN = (
     r"fornecedor|fornecedores|cliente|clientes|pre[cç]o|venda|vendas|compra|compras|fatura|"
     r"estrutura|roteiro|inspe[cç][aã]o|movimenta|"
     r"agente|projeto|ajud[ae]|configur|permiss|acesso|"
+    r"capacidad|funcionalidad|comando|ferramenta|api|action|"
     r"ver|listar|exib[ai]r|abrir)\b"
 )
 _KNOWLEDGE_HINT_RE = re.compile(_KNOWLEDGE_HINT_PATTERN, re.IGNORECASE)
@@ -67,6 +68,9 @@ class ChatFastPathService:
             return False
 
         if _OPERATIONAL_HINT_RE.search(text):
+            return False
+
+        if normalized in {"ajuda", "help", "comandos", "capacidades", "funcionalidades"}:
             return False
 
         word_count = len(normalized.split())
