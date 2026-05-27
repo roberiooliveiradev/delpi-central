@@ -141,7 +141,7 @@
 
 .mdc-admin-skills__error {
   margin: 0.75rem 0 0;
-  color: var(--mdc-danger, #c0392b);
+  color: var(--mdc-danger);
   font-size: 0.86rem;
 }
 

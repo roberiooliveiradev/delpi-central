@@ -4,6 +4,8 @@
    Regra: não sobrescrever tokens globais do Portal.
 ========================================= */
 
+@import "./ui/layout/chat-transitions.css";
+
 :root {
   --mdc-font-family:
     Inter,
@@ -55,6 +57,7 @@
   --mdc-rich-hover: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
   --mdc-rich-hover-strong: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
   --mdc-rich-control-hover: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  --mdc-row-hover: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
 
   --mdc-chart-grid: color-mix(in srgb, var(--mdc-card-border) 88%, transparent);
   --mdc-chart-tick: var(--mdc-text-muted);
@@ -185,8 +188,6 @@
     --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
   }
 }
-
-@import "./ui/layout/chat-transitions.css";
 
 /* =========================================
    ESCOPO DO PLUGIN

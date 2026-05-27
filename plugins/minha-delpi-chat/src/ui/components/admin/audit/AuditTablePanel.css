@@ -36,7 +36,7 @@
 }
 
 .mdc-audit-table__row--clickable:hover td {
-  background: rgba(59, 130, 246, 0.06);
+  background: var(--mdc-row-hover);
 }
 
 .mdc-audit-table td {

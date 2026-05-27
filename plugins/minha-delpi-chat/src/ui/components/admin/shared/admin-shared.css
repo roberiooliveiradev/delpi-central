@@ -141,16 +141,16 @@
 .mdc-admin-btn--primary {
   border-color: transparent;
   background: var(--mdc-primary);
-  color: var(--mdc-bg, #fff);
+  color: var(--mdc-on-primary);
 }
 
 .mdc-admin-btn--primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--mdc-primary) 85%, white);
-  color: var(--mdc-bg, #fff);
+  background: color-mix(in srgb, var(--mdc-primary) 85%, var(--mdc-text));
+  color: var(--mdc-on-primary);
 }
 
 .mdc-admin-btn--danger {
-  color: var(--mdc-danger, #c0392b);
+  color: var(--mdc-danger);
 }
 
 .mdc-admin-shell label.mdc-admin-form-row {

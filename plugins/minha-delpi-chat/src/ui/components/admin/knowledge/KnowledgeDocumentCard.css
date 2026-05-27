@@ -57,13 +57,13 @@
 }
 
 .mdc-knowledge-badge--glossary {
-  background: color-mix(in srgb, #7c3aed 14%, transparent);
-  color: #7c3aed;
+  background: color-mix(in srgb, var(--mdc-secondary) 18%, transparent);
+  color: color-mix(in srgb, var(--mdc-secondary) 55%, var(--mdc-primary));
 }
 
 .mdc-knowledge-badge--manual {
-  background: color-mix(in srgb, #0f766e 14%, transparent);
-  color: #0f766e;
+  background: color-mix(in srgb, var(--mdc-success) 14%, transparent);
+  color: color-mix(in srgb, var(--mdc-success) 70%, var(--mdc-primary));
 }
 
 .mdc-knowledge-badge--default {
@@ -80,8 +80,8 @@
 }
 
 .mdc-knowledge-badge--tag {
-  background: color-mix(in srgb, var(--mdc-warning, #d97706) 14%, transparent);
-  color: var(--mdc-warning, #d97706);
+  background: color-mix(in srgb, var(--mdc-warning) 14%, transparent);
+  color: var(--mdc-warning);
 }
 
 .mdc-knowledge-badge--priority,

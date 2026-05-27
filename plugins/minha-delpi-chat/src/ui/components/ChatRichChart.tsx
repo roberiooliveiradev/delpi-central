@@ -17,23 +17,9 @@ import {
   Cell,
 } from "recharts";
 import type { ChatPresentation } from "../../data/api/chatTypes";
-import { readMdcChartTheme } from "../theme/mdcCssVars";
+import { readMdcChartTheme, useMdcDarkMode } from "../theme/mdcCssVars";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
-
-function useIsDarkMode(): boolean {
-  return useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const root = document.documentElement;
-    if (root.getAttribute("data-theme") === "dark") return true;
-    if (root.getAttribute("data-theme") === "light") return false;
-    return (
-      root.classList.contains("dark") ||
-      document.body.classList.contains("dark") ||
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    );
-  }, []);
-}
 
 export function ChatRichChart({
   presentation,
@@ -42,7 +28,7 @@ export function ChatRichChart({
 }) {
   const { title, chartType, data, config } = presentation;
   const [downloadReady, setDownloadReady] = useState(false);
-  const isDark = useIsDarkMode();
+  const isDark = useMdcDarkMode();
 
   const xAxis = config?.xAxis || guessXAxis(data);
   const yAxes = normalizeYAxes(config?.yAxis, data, xAxis);
