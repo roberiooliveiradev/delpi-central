@@ -143,6 +143,17 @@
   list-style: none;
 }
 
+.mdc-chat-ws-details summary::after {
+  content: "▸";
+  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+.mdc-chat-ws-details[open] summary::after {
+  content: "▾";
+}
+
 .mdc-chat-ws-details summary::-webkit-details-marker {
   display: none;
 }
