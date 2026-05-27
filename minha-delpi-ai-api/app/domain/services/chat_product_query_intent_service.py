@@ -212,6 +212,22 @@ class ChatProductQueryIntentService:
             parts.append(lines[0])
             return "\n\n".join(parts)
 
+        if intent == ChatProductQueryIntent.STRUCTURE:
+            from app.domain.services.chat_product_structure_presentation_service import (
+                ChatProductStructurePresentationService,
+            )
+
+            dados = humanized.get("dados")
+
+            if isinstance(dados, dict):
+                formatted = ChatProductStructurePresentationService.format_markdown(
+                    dados,
+                    source_path=humanized.get("sourcePath"),
+                )
+
+                if formatted:
+                    return formatted
+
         if intent == ChatProductQueryIntent.STOCK:
             stock_lines = cls._filter_stock_lines(lines)
             filtered = [

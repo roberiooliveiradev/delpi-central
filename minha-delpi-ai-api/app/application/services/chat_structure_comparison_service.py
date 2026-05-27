@@ -4,9 +4,16 @@ import json
 import re
 from dataclasses import dataclass, field
 
+from app.application.services.chat_product_structure_comparison_service import (
+    ChatProductStructureComparisonService,
+)
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
+)
+from app.domain.services.chat_product_structure_presentation_service import (
+    ChatProductStructurePresentationService,
+    ProductStructureModel,
 )
 
 
@@ -22,6 +29,7 @@ class BomComponentLine:
 @dataclass
 class ProductStructureSnapshot:
     product_code: str
+    model: ProductStructureModel | None = None
     lines: list[BomComponentLine] = field(default_factory=list)
 
 
@@ -64,7 +72,15 @@ class ChatStructureComparisonService:
         if len(selected_keys) < 2:
             selected_keys = list(snapshots.keys())[:2]
 
-        return cls._render_comparison([snapshots[key] for key in selected_keys])
+        selected = [snapshots[key] for key in selected_keys]
+
+        if len(selected) >= 2 and selected[0].model and selected[1].model:
+            return ChatProductStructureComparisonService.render(
+                selected[0].model,
+                selected[1].model,
+            )
+
+        return cls._render_comparison(selected)
 
     @classmethod
     def _insufficient_data_answer(cls, codes: list[str], *, found: int) -> str:
@@ -96,16 +112,29 @@ class ChatStructureComparisonService:
             if role != "assistant":
                 continue
 
-            for product_code, lines in cls._extract_from_assistant_message(
+            for product_code, model, lines in cls._extract_from_assistant_message(
                 message,
                 pending_product_code,
             ):
                 key = ChatProductQueryIntentService.normalize_product_code(product_code)
 
-                if not key or not lines:
+                if not key or (not model and not lines):
                     continue
 
-                snapshots[key] = ProductStructureSnapshot(product_code=key, lines=lines)
+                previous = snapshots.get(key)
+
+                if previous:
+                    if not model and previous.model:
+                        model = previous.model
+
+                    if not lines and previous.lines:
+                        lines = previous.lines
+
+                snapshots[key] = ProductStructureSnapshot(
+                    product_code=key,
+                    model=model,
+                    lines=lines,
+                )
 
                 if key not in snapshot_order:
                     snapshot_order.append(key)
@@ -119,8 +148,8 @@ class ChatStructureComparisonService:
         cls,
         message,
         pending_product_code: str | None = None,
-    ) -> list[tuple[str, list[BomComponentLine]]]:
-        results: list[tuple[str, list[BomComponentLine]]] = []
+    ) -> list[tuple[str, ProductStructureModel | None, list[BomComponentLine]]]:
+        results: list[tuple[str, ProductStructureModel | None, list[BomComponentLine]]] = []
         metadata = cls._message_metadata(message)
         tool_calls = metadata.get("toolCalls") or []
 
@@ -143,10 +172,11 @@ class ChatStructureComparisonService:
                 if not product_code or "/structure" not in path.lower():
                     continue
 
+                model = cls._model_from_tool_metadata(tool_meta)
                 lines = cls._lines_from_tool_metadata(tool_meta)
 
-                if lines:
-                    results.append((product_code, lines))
+                if model or lines:
+                    results.append((product_code, model, lines))
 
         content = cls._message_field(message, "content")
 
@@ -161,9 +191,32 @@ class ChatStructureComparisonService:
                     product_code = user_codes[0] if len(user_codes) == 1 else None
 
                 if product_code:
-                    results.append((product_code, lines))
+                    results.append((product_code, None, lines))
 
         return results
+
+    @classmethod
+    def _model_from_tool_metadata(cls, metadata: dict) -> ProductStructureModel | None:
+        preview = str(metadata.get("responsePreview") or "").strip()
+
+        if preview:
+            try:
+                payload = json.loads(preview)
+            except json.JSONDecodeError:
+                payload = None
+
+            if model := ChatProductStructurePresentationService.parse_payload(payload):
+                return model
+
+        presentation = metadata.get("presentation")
+
+        if isinstance(presentation, dict):
+            raw = presentation.get("rawData") or presentation.get("data")
+
+            if model := ChatProductStructurePresentationService.parse_payload(raw):
+                return model
+
+        return None
 
     @classmethod
     def _lines_from_tool_metadata(cls, metadata: dict) -> list[BomComponentLine]:
