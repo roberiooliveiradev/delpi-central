@@ -214,8 +214,12 @@ Comportamento esperado:
         )
 
         if resolved_skills.get("sqlAuthoring"):
+            from app.domain.skills.chat_skill_registry import ChatSkillRegistry, SQL_SKILL_KEY
+
+            sql_policy = ChatSkillRegistry.get_policy_content(SQL_SKILL_KEY)
             sections.append(
-                self._load_policy(
+                sql_policy
+                or self._load_policy(
                     "sql-assistant-skill.md",
                     self.SQL_ASSISTANT_SKILL_FALLBACK,
                 )

@@ -5,6 +5,7 @@ from app.infrastructure.db.models.chat_agent_action_model import AiChatAgentActi
 from app.infrastructure.db.models.chat_agent_action_provider_model import AiChatAgentActionProviderModel
 from app.infrastructure.db.models.chat_agent_model import AiChatAgentModel
 from app.infrastructure.db.models.chat_agent_share_model import AiChatAgentShareModel
+from app.infrastructure.db.models.chat_skill_catalog_model import AiChatSkillCatalogModel
 from app.infrastructure.db.models.chat_artifact_model import AiChatArtifactModel
 from app.infrastructure.db.models.chat_attachment_model import AiChatAttachmentModel
 from app.infrastructure.db.models.chat_project_model import AiChatProjectModel
@@ -26,6 +27,7 @@ __all__ = [
     "AiChatAgentActionModel",
     "AiChatAgentActionProviderModel",
     "AiChatAgentModel",
+    "AiChatSkillCatalogModel",
     "AiChatProjectModel",
     "AiChatArtifactModel",
     "AiChatAttachmentModel",

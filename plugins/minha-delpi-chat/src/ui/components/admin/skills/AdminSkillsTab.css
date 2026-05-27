@@ -1,0 +1,177 @@
+.mdc-admin-skills {
+  display: grid;
+  gap: var(--mdc-space-4);
+  min-width: 0;
+}
+
+.mdc-admin-skills__layout {
+  display: grid;
+  grid-template-columns: minmax(14rem, 22rem) minmax(0, 1fr);
+  gap: var(--mdc-space-4);
+  align-items: start;
+}
+
+.mdc-admin-skills__list-panel {
+  display: grid;
+  gap: 0.75rem;
+  min-height: 18rem;
+  max-height: calc(100vh - 12rem);
+  overflow: auto;
+}
+
+.mdc-admin-skills__list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mdc-admin-skills__list-toolbar strong {
+  color: var(--mdc-title);
+  font-size: 0.92rem;
+}
+
+.mdc-admin-skills__list-actions {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.mdc-admin-skills__list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mdc-admin-skills__list-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  border: 0;
+  border-radius: var(--mdc-radius-md);
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.55rem 0.6rem;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.mdc-admin-skills__list-item:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+}
+
+.mdc-admin-skills__list-item.is-selected {
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-admin-skills__list-item.is-inactive {
+  opacity: 0.65;
+}
+
+.mdc-admin-skills__list-item strong,
+.mdc-admin-skills__list-item small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-admin-skills__list-item strong {
+  font-size: 0.88rem;
+  font-weight: 850;
+}
+
+.mdc-admin-skills__list-item small {
+  color: var(--mdc-text-muted);
+  font-size: 0.72rem;
+}
+
+.mdc-admin-skills__list-item em {
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 800;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-skills__editor {
+  min-height: 18rem;
+}
+
+.mdc-admin-skills__form {
+  display: grid;
+  gap: 1rem;
+}
+
+.mdc-admin-skills__form h3 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.mdc-admin-skills__form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.mdc-admin-skills__field-span {
+  grid-column: 1 / -1;
+}
+
+.mdc-admin-skills__form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.mdc-admin-skills__muted {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.mdc-admin-skills__error {
+  margin: 0.75rem 0 0;
+  color: var(--mdc-danger, #c0392b);
+  font-size: 0.86rem;
+}
+
+.mdc-admin-skills__success {
+  margin: 0.75rem 0 0;
+  color: var(--mdc-primary);
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.mdc-admin-skills .is-spinning {
+  animation: mdc-admin-skills-spin 0.85s linear infinite;
+}
+
+@keyframes mdc-admin-skills-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 960px) {
+  .mdc-admin-skills__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-admin-skills__list-panel {
+    max-height: none;
+  }
+
+  .mdc-admin-skills__form-grid {
+    grid-template-columns: 1fr;
+  }
+}

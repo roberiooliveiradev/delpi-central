@@ -1492,28 +1492,53 @@ export function ChatAgentBuilderPage({
             </div>
 
             {agent ? (
-              <div className="mdc-chat-agent-builder__actions-summary">
+              <div className="mdc-chat-agent-builder__skills-panel">
                 {agentSkillBindings.length > 0 ? (
-                  agentSkillBindings.map((binding) => (
-                    <article key={binding.skillKey}>
-                      <span className="mdc-chat-agent-builder__actions-icon">
-                        <Sparkles size={16} aria-hidden="true" />
-                      </span>
+                  <ul className="mdc-chat-agent-builder__skills-list">
+                    {agentSkillBindings.map((binding) => (
+                      <li key={binding.skillKey}>
+                        <span className="mdc-chat-agent-builder__skills-icon">
+                          <Sparkles size={16} aria-hidden="true" />
+                        </span>
 
-                      <span>
-                        <strong>{binding.label}</strong>
-                        <small>
-                          {binding.skillKey}
-                          {binding.enabled ? " · ativa" : " · inativa"}
-                          {binding.derived?.sqlExecutionAvailable
-                            ? " · execução SQL disponível"
-                            : binding.skillKey === "sql"
-                              ? " · sem action SQL"
-                              : ""}
-                        </small>
-                      </span>
-                    </article>
-                  ))
+                        <span className="mdc-chat-agent-builder__skills-copy">
+                          <strong>{binding.label}</strong>
+                          <small>{binding.skillKey}</small>
+                        </span>
+
+                        <span
+                          className={[
+                            "mdc-chat-agent-builder__skills-badge",
+                            binding.enabled
+                              ? "mdc-chat-agent-builder__skills-badge--on"
+                              : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                        >
+                          {binding.enabled ? "Ativa" : "Inativa"}
+                        </span>
+
+                        {binding.skillKey === "sql" ? (
+                          <span
+                            className={[
+                              "mdc-chat-agent-builder__skills-badge",
+                              "mdc-chat-agent-builder__skills-badge--subtle",
+                              binding.derived?.sqlExecutionAvailable
+                                ? "mdc-chat-agent-builder__skills-badge--on"
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                          >
+                            {binding.derived?.sqlExecutionAvailable
+                              ? "SQL no banco"
+                              : "Sem action SQL"}
+                          </span>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
                   <div className="mdc-chat-agent-builder__actions-empty">
                     <strong>Nenhuma skill configurada</strong>

@@ -359,3 +359,27 @@ def make_scan_admin_security_input_use_case() -> ScanAdminSecurityInputUseCase:
         message_security_service=ChatMessageSecurityService(),
         audit_repository=PostgresAuditRepository(),
     )
+
+
+def make_list_admin_chat_skills_use_case():
+    from app.application.use_cases.admin_chat_skill_use_cases import ListAdminChatSkillsUseCase
+
+    return ListAdminChatSkillsUseCase()
+
+
+def make_create_admin_chat_skill_use_case():
+    from app.application.use_cases.admin_chat_skill_use_cases import CreateAdminChatSkillUseCase
+
+    return CreateAdminChatSkillUseCase()
+
+
+def make_update_admin_chat_skill_use_case():
+    from app.application.use_cases.admin_chat_skill_use_cases import UpdateAdminChatSkillUseCase
+
+    return UpdateAdminChatSkillUseCase()
+
+
+def make_deactivate_admin_chat_skill_use_case():
+    from app.application.use_cases.admin_chat_skill_use_cases import DeactivateAdminChatSkillUseCase
+
+    return DeactivateAdminChatSkillUseCase()

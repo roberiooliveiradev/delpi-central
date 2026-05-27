@@ -97,14 +97,22 @@
   max-height: 11rem;
   resize: none;
   overflow-y: auto;
-  border: 0;
-  background: transparent;
+  border: 0 !important;
+  background: transparent !important;
   color: var(--mdc-text);
   font: inherit;
   line-height: 1.5;
   padding: 0.62rem 0.55rem 0.62rem 0.75rem;
   outline: none;
+  box-shadow: none !important;
   field-sizing: content;
+}
+
+.mdc-chat-input textarea:focus,
+.mdc-chat-input textarea:focus-visible {
+  outline: none;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 
