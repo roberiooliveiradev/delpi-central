@@ -19,7 +19,6 @@ import {
   createProjectTextSource,
   deleteChatSource,
   getChatCapabilities,
-  listChatSkillCatalog,
   listProjectSources,
   updateChatArtifact,
   uploadProjectSource,
@@ -81,10 +80,6 @@ export function ChatPage({
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const [skillCatalog, setSkillCatalog] = useState<
-    import("../../data/api/chatTypes").ChatSkillCatalogItem[]
-  >([]);
-
   const requestedAgentKey = activeAgentPageKey ?? contextAgentKey ?? null;
 
   const {
@@ -446,30 +441,6 @@ export function ChatPage({
     }
 
     void loadToolManagementPermission();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [getAccessToken]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadSkillCatalog() {
-      try {
-        const catalog = await listChatSkillCatalog({ getAccessToken });
-
-        if (isMounted) {
-          setSkillCatalog(catalog);
-        }
-      } catch {
-        if (isMounted) {
-          setSkillCatalog([]);
-        }
-      }
-    }
-
-    void loadSkillCatalog();
 
     return () => {
       isMounted = false;
@@ -1121,11 +1092,7 @@ export function ChatPage({
                       }}
                     />
                   ) : (
-                    <ChatEmptyState
-                      displayName={userDisplayName}
-                      skillCatalog={skillCatalog}
-                      onUseSuggestion={setDraft}
-                    />
+                    <ChatEmptyState displayName={userDisplayName} />
                   )}
 
                   <ChatInput
@@ -1146,7 +1113,6 @@ export function ChatPage({
           ) : (
             <section className="mdc-chat-conversation" aria-label="Conversa">
               <ChatMessageList
-                skillCatalog={skillCatalog}
                 messages={messages}
                 conversationKey={activeSession?.id ?? null}
                 streamingAnswer={streamingAnswer}
@@ -1155,7 +1121,6 @@ export function ChatPage({
                 streamingStatus={streamingStatus}
                 isStreaming={isStreamingActiveSession}
                 isLoading={isLoadingMessages && messages.length === 0}
-                onUseSuggestion={setDraft}
                 onEditAndResendMessage={editAndResendMessage}
                 onReuseMessage={reuseMessage}
                 onMessageFeedback={setMessageFeedback}

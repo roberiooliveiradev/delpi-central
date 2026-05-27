@@ -8,6 +8,11 @@ class ChatAgentSkillsService:
     """Skills = comportamentos do LLM (prompt). Actions = execução via OpenAPI."""
 
     @classmethod
+    def preserves_rag_on_fast_path(cls, skills: dict | None) -> bool:
+        """Skill de conhecimento da empresa exige RAG mesmo em mensagens curtas (fast path)."""
+        return bool((skills or {}).get("companyKnowledge"))
+
+    @classmethod
     def resolve(
         cls,
         *,

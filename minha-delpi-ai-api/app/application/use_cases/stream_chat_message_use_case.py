@@ -208,8 +208,14 @@ class StreamChatMessageUseCase:
         tool_calls = tool_context["toolCalls"]
         pipeline_timings.mark("tools_done")
 
+        from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
+
+        resolved_skills = workspace_context.get("skills") or {}
         skip_rag = (
-            fast_path
+            (
+                fast_path
+                and not ChatAgentSkillsService.preserves_rag_on_fast_path(resolved_skills)
+            )
             or operational_optimize
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
         )

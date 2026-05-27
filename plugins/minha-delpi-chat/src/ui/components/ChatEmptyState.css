@@ -15,36 +15,3 @@
   letter-spacing: -0.035em;
   line-height: 1.12;
 }
-
-.mdc-chat-empty-state__skills {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.55rem;
-  max-width: 36rem;
-}
-
-.mdc-chat-empty-state__skill-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 760;
-  padding: 0.7rem 1rem;
-}
-
-.mdc-chat-empty-state__skill-pill:hover {
-  border-color: color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
-  background: color-mix(in srgb, var(--mdc-primary) 5%, transparent);
-  color: var(--mdc-primary);
-}
-
-.mdc-chat-empty-state__skill-pill svg {
-  flex-shrink: 0;
-  color: var(--mdc-primary);
-}
