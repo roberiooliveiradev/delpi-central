@@ -89,7 +89,7 @@ class Settings:
         os.getenv("KNOWLEDGE_SOURCE_REF_MAX_CHARS", "500")
     )
     KNOWLEDGE_DOCUMENT_MAX_CHARS = int(
-        os.getenv("KNOWLEDGE_DOCUMENT_MAX_CHARS", "50000")
+        os.getenv("KNOWLEDGE_DOCUMENT_MAX_CHARS", "2000000")
     )
     KNOWLEDGE_CHUNK_SIZE = int(os.getenv("KNOWLEDGE_CHUNK_SIZE", "1400"))
     KNOWLEDGE_CHUNK_MIN_SIZE = int(os.getenv("KNOWLEDGE_CHUNK_MIN_SIZE", "800"))
