@@ -133,7 +133,8 @@ Troubleshooting backend: [OPERATIONS.md](./OPERATIONS.md).
 | `ui/pages/SettingsPage.tsx` | Abas; export/import na visão geral |
 | `ui/components/admin/AdminConfigImportExportPanel.tsx` | Download/upload do bundle |
 | `ui/components/admin/IndicatorGoalForm.tsx` | Cadastro Padrão/Curva |
-| `ui/components/admin/AdminGoalsWorkspace.tsx` | Ciclos anuais, duplicar ano, preencher faltantes |
+| `ui/components/admin/AdminGoalsWorkspace.tsx` | Ciclos anuais, duplicar ano, duplicar meta por linha, preencher faltantes |
+| `ui/utils/goalDuplicateHelpers.ts` | Rótulo e seed ao duplicar meta |
 | `ui/utils/goalYearHelpers.ts` | Sugestão de ano destino e origem na duplicação |
 | `ui/utils/goalValuePolicy.ts` | Espelha regra de `goal_value` na UI |
 

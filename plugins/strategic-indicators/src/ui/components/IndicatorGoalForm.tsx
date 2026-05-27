@@ -39,6 +39,8 @@ type IndicatorOption = {
 type IndicatorGoalFormProps = {
   saving: boolean;
   initialValue?: StrategicIndicatorGoalItem | null;
+  /** Pré-preenche o formulário para criar uma cópia (não edita o registro de origem). */
+  duplicateFrom?: StrategicIndicatorGoalItem | null;
   indicatorOptions?: Array<string | IndicatorOption>;
   indicatorCatalog?: IndicatorGoalCatalogEntry[];
   defaultGoalYear?: number;
@@ -64,6 +66,7 @@ function normalizeIndicatorOptions(
 export function IndicatorGoalForm({
   saving,
   initialValue,
+  duplicateFrom = null,
   indicatorOptions = [],
   indicatorCatalog = [],
   defaultGoalYear,
@@ -88,7 +91,11 @@ export function IndicatorGoalForm({
   const [notes, setNotes] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const isEditing = useMemo(() => !!initialValue, [initialValue]);
+  const formSeed = duplicateFrom ?? initialValue;
+  const isEditing = useMemo(
+    () => !!initialValue && !duplicateFrom,
+    [initialValue, duplicateFrom],
+  );
   const normalizedIndicatorOptions = useMemo(
     () => normalizeIndicatorOptions(indicatorOptions),
     [indicatorOptions],
@@ -99,7 +106,7 @@ export function IndicatorGoalForm({
   );
 
   useEffect(() => {
-    if (!initialValue) {
+    if (!formSeed) {
       setIndicatorId("");
       setGoalYear(
         clampGoalYear(defaultGoalYear ?? new Date().getFullYear()),
@@ -117,24 +124,24 @@ export function IndicatorGoalForm({
       return;
     }
 
-    setIndicatorId(initialValue.indicator_id);
-    setGoalYear(initialValue.goal_year);
-    setGoalLabel(initialValue.goal_label);
-    setGoalValue(initialValue.goal_value);
-    setGoalPeriodicity(initialValue.goal_periodicity);
-    setGoalMode(initialValue.goal_mode);
-    setGoalScopeBranch(initialValue.goal_scope_branch ?? "");
+    setIndicatorId(formSeed.indicator_id);
+    setGoalYear(formSeed.goal_year);
+    setGoalLabel(formSeed.goal_label);
+    setGoalValue(formSeed.goal_value);
+    setGoalPeriodicity(formSeed.goal_periodicity);
+    setGoalMode(formSeed.goal_mode);
+    setGoalScopeBranch(formSeed.goal_scope_branch ?? "");
     setMonthlyTargets(
       normalizeCurveTargets(
-        initialValue.monthly_targets,
-        initialValue.goal_periodicity,
+        formSeed.monthly_targets,
+        formSeed.goal_periodicity,
       ),
     );
-    setValidFrom(initialValue.valid_from ?? "");
-    setValidTo(initialValue.valid_to ?? "");
-    setNotes(initialValue.notes ?? "");
+    setValidFrom(formSeed.valid_from ?? "");
+    setValidTo(formSeed.valid_to ?? "");
+    setNotes(formSeed.notes ?? "");
     setLocalError(null);
-  }, [initialValue, defaultGoalYear]);
+  }, [formSeed, defaultGoalYear]);
 
   function updateMonthlyTarget(monthNumber: number, targetValue: number) {
     setMonthlyTargets((current) =>
@@ -433,7 +440,9 @@ export function IndicatorGoalForm({
             ? "Salvando..."
             : isEditing
               ? "Salvar alterações"
-              : "Criar meta"}
+              : duplicateFrom
+                ? "Salvar cópia"
+                : "Criar meta"}
         </button>
       </div>
     </div>
