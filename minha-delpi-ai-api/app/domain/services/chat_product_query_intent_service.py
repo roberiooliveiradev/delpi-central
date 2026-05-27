@@ -144,12 +144,40 @@ class ChatProductQueryIntentService:
         if cls._looks_like_lmp_context(text):
             return None
 
-        match = cls._PRODUCT_CODE_RE.search(str(text or ""))
+        raw = str(text or "")
 
-        if not match:
-            return None
+        for match in cls._PRODUCT_CODE_RE.finditer(raw):
+            if cls._is_group_code_numeric_token(raw, match):
+                continue
 
-        return cls.normalize_product_code(match.group(0))
+            return cls.normalize_product_code(match.group(0))
+
+        return None
+
+    @classmethod
+    def _is_group_code_numeric_token(cls, text: str, match: re.Match[str]) -> bool:
+        """Evita confundir «grupo 1008» com código de produto 1008."""
+        prefix = text[max(0, match.start() - 48) : match.start()].lower()
+
+        if re.search(
+            r"(?:\bgrupo|\bgroup_code|\bdo\s+grupo|\bpelo\s+grupo|\bde\s+grupo)\s*$",
+            prefix,
+            flags=re.IGNORECASE,
+        ):
+            return True
+
+        if re.search(r"\bgrupo\s+de\s+produtos?\s*$", prefix, flags=re.IGNORECASE):
+            return True
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(text)
+
+        if "grupo" in normalized and re.search(
+            rf"\bgrupo\s+{re.escape(match.group(0).lower())}\b",
+            normalized,
+        ):
+            return True
+
+        return False
 
     @classmethod
     def _looks_like_lmp_context(cls, text: str | None) -> bool:

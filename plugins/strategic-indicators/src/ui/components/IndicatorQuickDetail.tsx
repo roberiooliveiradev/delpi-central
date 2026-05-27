@@ -84,7 +84,9 @@ export function IndicatorQuickDetail({
 
         <div className="si-indicator-quick-detail__meta-item">
           <span>Meta</span>
-          <strong>{formatIndicatorGoalValue(indicator, competence)}</strong>
+          <strong>
+            {formatIndicatorGoalValue(indicator, competence, displayContext)}
+          </strong>
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">

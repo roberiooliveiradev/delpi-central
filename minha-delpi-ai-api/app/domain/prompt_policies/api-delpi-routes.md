@@ -6,7 +6,7 @@ Escolha mentalmente a rota antes de responder (o backend já executa a action ad
 - Cadastro / descrição: `GET /products/{code}` ou resumo `GET /products/{code}/summary`
 - Ficha completa: `GET /products/{code}/analyser`
 - Estoque do item: `GET /products/{code}/stock`
-- Busca sem código: `GET /products/search`
+- Busca sem código ou por grupo: `GET /products/search` (`description` e/ou `group_code`; ex.: grupo 1008 ≠ produto 1008)
 - Estrutura BOM: `GET /products/{code}/structure`
 - Onde é usado: `GET /products/{code}/parents`
 - Preço: `GET /products/{code}/pricing`

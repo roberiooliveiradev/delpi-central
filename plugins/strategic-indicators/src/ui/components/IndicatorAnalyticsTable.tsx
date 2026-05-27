@@ -3,13 +3,21 @@ import { StatusBadge } from "./StatusBadge";
 import {
   formatIndicatorGoalValue,
   formatIndicatorScore,
+  type IndicatorDisplayContext,
 } from "../shared/indicatorValueFormatter";
+import {
+  getFilterViewScopeLabel,
+  resolveStrategicIndicatorsBranch,
+  type StrategicIndicatorsViewMode,
+} from "../shared/strategicIndicatorsFilters";
 import "./IndicatorAnalyticsTable.css";
 
 type IndicatorAnalyticsTableProps = {
   indicators: IndicatorAnalyticsViewItem[];
   selectedIndicatorId?: string;
   competence?: string | null;
+  viewMode?: StrategicIndicatorsViewMode;
+  branch?: string;
   onSelectIndicator: (indicator: IndicatorAnalyticsViewItem) => void;
 };
 
@@ -24,8 +32,14 @@ export function IndicatorAnalyticsTable({
   indicators,
   selectedIndicatorId,
   competence,
+  viewMode = "consolidated",
+  branch = "01",
   onSelectIndicator,
 }: IndicatorAnalyticsTableProps) {
+  const displayContext: IndicatorDisplayContext = {
+    filterViewScopeLabel: getFilterViewScopeLabel(viewMode, branch),
+    activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
+  };
   if (!indicators.length) {
     return (
       <div className="si-indicator-table__empty">
@@ -66,7 +80,9 @@ export function IndicatorAnalyticsTable({
             <span>{indicator.departmentName}</span>
             <span>{indicator.viewScopeLabel}</span>
             <span>{indicator.weightPct}%</span>
-            <span>{formatIndicatorGoalValue(indicator, competence)}</span>
+            <span>
+              {formatIndicatorGoalValue(indicator, competence, displayContext)}
+            </span>
             <strong
               className={`si-indicator-table__score${
                 !indicator.hasValue ? " si-indicator-table__score--missing" : ""

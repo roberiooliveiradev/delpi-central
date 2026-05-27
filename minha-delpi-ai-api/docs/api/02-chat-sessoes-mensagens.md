@@ -394,3 +394,24 @@ Ao remover:
 | `403` | Sessão de outro usuário |
 
 Persistência: tabela `ai_chat_message_feedback` (único por `message_id` + `user_id`).
+
+---
+
+## Inteligência transversal (comportamento do assistente)
+
+O envio de mensagens (`POST .../messages` e `.../stream`) passa pelo **mesmo pipeline** para chat livre, sessão com agente ou simulação admin. Regras de roteamento, comparação de estruturas, capacidades e typos estão na **camada base** — não duplicadas no JSON do agente.
+
+| Tema | Comportamento |
+|------|----------------|
+| Agente com actions **api-delpi** | `ExternalActionSelectionService` escolhe a rota antes do LLM (fast path operacional). |
+| Busca por **grupo** | `GET /products/search` com `group_code`; o número após «grupo» não é tratado como código de produto. |
+| Pergunta **«consegue…?»** | Resposta de capacidades sem executar API (`ChatCapabilitiesService`). |
+| **Comparação** de estruturas | Múltiplas consultas + síntese; não reutiliza só o histórico. |
+| Documentos na base | Limite configurável `KNOWLEDGE_DOCUMENT_MAX_CHARS` (default 2.000.000 caracteres). |
+| Typos leves | Normalização (ex.: ebita→ebitda, coonsegue→consegue) na seleção de rotas. |
+
+Documentação detalhada:
+
+- [Arquitetura — inteligência no chat base](../architecture/chat-intelligence-base.md)
+- [Mapa de rotas api-delpi para agentes](../knowledge/api-delpi-rotas-agente.md)
+- [Auditoria e testes de regressão](../roadmap/api-delpi-chat-intelligence-audit.md)

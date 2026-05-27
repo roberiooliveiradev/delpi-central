@@ -349,6 +349,8 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
                 indicators={filteredIndicators}
                 selectedIndicatorId={resolvedSelectedIndicator?.id}
                 competence={referenceMonth}
+                viewMode={viewMode}
+                branch={branch}
                 onSelectIndicator={(indicator) =>
                   setSelectedIndicatorId(indicator.id)
                 }

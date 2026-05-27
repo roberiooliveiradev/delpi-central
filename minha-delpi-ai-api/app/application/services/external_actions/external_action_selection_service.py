@@ -6,6 +6,9 @@ from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
 from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+from app.domain.services.chat_department_kpi_intent_service import (
+    ChatDepartmentKpiIntentService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -54,6 +57,18 @@ class ExternalActionSelectionService:
             return None
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        group_search_code = self._extract_search_group_code(message, normalized)
+
+        if group_search_code and self._looks_like_product_search(normalized):
+            selected = self._select_product_search_action(
+                message,
+                normalized,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if selected:
+                return selected
+
         product_code = ChatProductQueryIntentService.resolve_product_code(
             message,
             conversation_context,
@@ -68,11 +83,29 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+        if self._looks_like_transforma_question(normalized):
+            selected = self._select_transforma_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if selected:
+                return selected
+
         if self._looks_like_lmp_question(normalized):
             selected = self._select_lmp_action(
                 message,
                 allowed_action_ids=allowed_action_ids,
                 conversation_context=conversation_context,
+            )
+
+            if selected:
+                return selected
+
+        if self._looks_like_system_metadata_question(normalized) and not product_code:
+            selected = self._select_system_metadata_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
             )
 
             if selected:
@@ -192,6 +225,18 @@ class ExternalActionSelectionService:
                     allowed_action_ids=allowed_action_ids,
                 )
 
+        department_kpi = ChatDepartmentKpiIntentService.resolve(message)
+
+        if department_kpi and not product_code:
+            selected = self._select_department_kpi_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                match=department_kpi,
+            )
+
+            if selected:
+                return selected
+
         return self._select_generic_allowed_action(
             message,
             allowed_action_ids=allowed_action_ids,
@@ -307,6 +352,71 @@ class ExternalActionSelectionService:
         ]
 
         return any(term in value for term in terms)
+
+    def _select_department_kpi_action(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        match,
+    ) -> dict | None:
+        candidates = self._list_allowed_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            limit=80,
+        )
+
+        path_token = str(match.path_token or "").lower()
+        domain_prefix = str(match.domain_prefix or "").lower()
+
+        for action in candidates:
+            if action.get("method") != "GET":
+                continue
+
+            path = str(action.get("path") or "").lower()
+
+            if domain_prefix and domain_prefix not in path:
+                continue
+
+            if path_token and path_token not in path:
+                continue
+
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": action["actionId"],
+                    "parameters": self._build_date_branch_parameters(action, message),
+                },
+                "reason": match.reason,
+            }
+
+        return None
+
+    def _build_date_branch_parameters(self, action: dict, message: str) -> dict:
+        parameters: dict = {}
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        branch_match = re.search(r"\bfilial\s+(\d{2})\b", normalized)
+        branch = branch_match.group(1) if branch_match else None
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if lowered in {"branch", "filial", "branch_code"} and branch:
+                parameters[name] = branch
+            elif lowered in {"page"}:
+                parameters[name] = 1
+            elif lowered in {"page_size", "pagesize", "limit"}:
+                parameters[name] = 50
+            elif lowered == "granularity" and "serie" in normalized:
+                parameters[name] = "month"
+
+        return parameters
 
     def _select_supplies_metric_action(
         self,
@@ -499,7 +609,13 @@ class ExternalActionSelectionService:
 
         return parameters
 
+    def _looks_like_transforma_question(self, value: str) -> bool:
+        return "transforma" in value
+
     def _looks_like_lmp_question(self, value: str) -> bool:
+        if self._looks_like_transforma_question(value):
+            return False
+
         terms = [
             "lmp",
             "lmps",
@@ -520,6 +636,199 @@ class ExternalActionSelectionService:
             ) or bool(self._extract_sale_number(value))
 
         return False
+
+    def _looks_like_system_metadata_question(self, value: str) -> bool:
+        return any(
+            term in value
+            for term in (
+                "tabela",
+                "tabelas",
+                "coluna",
+                "colunas",
+                "protheus",
+                "sx2",
+                "sx3",
+                "metadado",
+                "schema da tabela",
+                "indices da tabela",
+                "índices da tabela",
+                "relacionamento da tabela",
+            )
+        )
+
+    def _select_transforma_action(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        candidates = [
+            action
+            for action in self._list_allowed_candidates(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                limit=80,
+            )
+            if action.get("method") == "GET"
+            and "transforma-mais" in str(action.get("path") or "").lower()
+        ]
+
+        if not candidates:
+            return None
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        wants_summary = any(
+            term in normalized
+            for term in ("resumo", "summary", "indicadores", "kpis")
+        )
+
+        def score(action: dict) -> int:
+            path = str(action.get("path") or "").lower()
+            value = 0
+
+            if wants_summary and "/summary" in path:
+                value += 100
+
+            if not wants_summary and "/processes" in path and "/summary" not in path:
+                value += 80
+
+            if "/summary" in path and not wants_summary:
+                value -= 20
+
+            return value
+
+        action = sorted(candidates, key=score, reverse=True)[0]
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": action["actionId"],
+                "parameters": self._build_date_branch_parameters(action, message),
+            },
+            "reason": "A pergunta solicita dados do programa Transforma Mais.",
+        }
+
+    def _select_system_metadata_action(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        candidates = [
+            action
+            for action in self._list_allowed_candidates(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                limit=80,
+            )
+            if action.get("method") == "GET"
+            and str(action.get("path") or "").lower().startswith("/system/")
+        ]
+
+        if not candidates:
+            return None
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        table_name = self._extract_protheus_table_name(message)
+        wants_columns = "coluna" in normalized
+        wants_table_search = any(
+            term in normalized
+            for term in ("buscar tabela", "pesquisar tabela", "qual tabela", "tabelas do")
+        )
+
+        def score(action: dict) -> int:
+            path = str(action.get("path") or "").lower()
+            value = 0
+
+            if wants_columns and table_name and "/tables/" in path and "/columns" in path:
+                value += 120
+
+            if wants_columns and not table_name and "/columns/search" in path:
+                value += 110
+
+            if wants_table_search and "/tables/search" in path:
+                value += 110
+
+            if table_name and path.endswith(f"/tables/{table_name.lower()}"):
+                value += 90
+
+            if wants_columns and "/columns/search" in path and table_name:
+                value -= 30
+
+            return value
+
+        ranked = sorted(candidates, key=score, reverse=True)
+
+        if ranked[0] and score(ranked[0]) <= 0:
+            return None
+
+        action = ranked[0]
+        parameters = self._build_system_parameters(message, action)
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": action["actionId"],
+                "parameters": parameters,
+            },
+            "reason": "A pergunta solicita metadados de tabelas/colunas do Protheus.",
+        }
+
+    def _extract_protheus_table_name(self, text: str | None) -> str | None:
+        raw = str(text or "")
+        normalized = ChatMessageNormalizationService.normalize_for_matching(raw)
+
+        table_match = re.search(
+            r"\btabela\s+([a-z]{2,4}\d{0,4})\b",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+
+        if table_match:
+            return table_match.group(1).upper()
+
+        inline_match = re.search(
+            r"\bcolunas?\s+(?:da|de)\s+([a-z]{2,4}\d{0,4})\b",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+
+        if inline_match:
+            return inline_match.group(1).upper()
+
+        return None
+
+    def _build_system_parameters(self, message: str, action: dict) -> dict:
+        parameters: dict = {}
+        path = str(action.get("path") or "")
+        table_name = self._extract_protheus_table_name(message)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if lowered in {"tablename", "table_name", "table"} and table_name:
+                parameters[name] = table_name
+            elif lowered in {"page"}:
+                parameters[name] = 1
+            elif lowered in {"page_size", "pagesize", "limit"}:
+                parameters[name] = 50
+            elif lowered == "description":
+                query_match = re.search(
+                    r"(?:buscar|pesquisar|procurar)\s+(?:tabela|coluna)s?\s+(.+)$",
+                    normalized,
+                )
+
+                if query_match:
+                    parameters[name] = query_match.group(1).strip()[:120]
+
+        if table_name and "{tableName}" in path and not parameters:
+            parameters["tableName"] = table_name
+
+        return parameters
 
     def _looks_like_product_search(self, value: str) -> bool:
         search_triggers = (
@@ -618,7 +927,9 @@ class ExternalActionSelectionService:
             if "search" not in path and "search" not in operation_id:
                 continue
 
+            group_code = self._extract_search_group_code(message, normalized)
             description_query = self._extract_search_description(message)
+            product_code_query = ChatProductQueryIntentService.extract_product_code(message)
             page_size = self._extract_search_limit(normalized)
 
             parameters = {}
@@ -627,15 +938,32 @@ class ExternalActionSelectionService:
                 if not name:
                     continue
                 lowered = name.lower()
-                if lowered in {"description", "descricao", "query", "q", "search", "term"}:
-                    parameters[name] = description_query
+                if lowered in {"group_code", "groupcode", "grupo"} and group_code:
+                    parameters[name] = group_code
+                elif lowered == "code" and product_code_query and not group_code:
+                    parameters[name] = product_code_query
+                elif lowered in {"description", "descricao", "query", "q", "search", "term"}:
+                    if description_query and not group_code:
+                        parameters[name] = description_query
                 elif lowered == "page":
                     parameters[name] = 1
                 elif lowered in {"page_size", "pagesize", "limit"}:
                     parameters[name] = page_size
 
+            if group_code and "group_code" not in parameters and "groupCode" not in parameters:
+                parameters["group_code"] = group_code
+
             if not parameters:
-                parameters = {"description": description_query, "page_size": page_size}
+                if group_code:
+                    parameters = {"group_code": group_code, "page": 1, "page_size": page_size}
+                else:
+                    parameters = {"description": description_query, "page_size": page_size}
+
+            reason = (
+                f"Busca de produtos pelo grupo '{group_code}'."
+                if group_code
+                else f"Busca de produtos por descrição: '{description_query}'."
+            )
 
             return {
                 "name": "execute_external_action",
@@ -643,8 +971,30 @@ class ExternalActionSelectionService:
                     "actionId": action["actionId"],
                     "parameters": parameters,
                 },
-                "reason": f"Busca de produtos por descrição: '{description_query}'.",
+                "reason": reason,
             }
+
+        return None
+
+    def _extract_search_group_code(self, message: str, normalized: str) -> str | None:
+        patterns = (
+            r"\bgrupo\s+de\s+produtos?\s+([A-Za-z0-9]{1,12})\b",
+            r"\bgrupo\s+([A-Za-z0-9]{1,12})\b",
+            r"\bgroup_code\s+([A-Za-z0-9]{1,12})\b",
+            r"\bdo\s+grupo\s+([A-Za-z0-9]{1,12})\b",
+            r"\bpelo\s+grupo\s+([A-Za-z0-9]{1,12})\b",
+        )
+
+        for pattern in patterns:
+            match = re.search(pattern, message, flags=re.IGNORECASE)
+
+            if match:
+                code = str(match.group(1)).strip().upper()
+
+                if code.lower() in {"de", "do", "da", "produto", "produtos"}:
+                    continue
+
+                return code
 
         return None
 
@@ -909,6 +1259,24 @@ class ExternalActionSelectionService:
             term in normalized
             for term in ("dashboard", "painel", "resumo gerencial", "visão gerencial")
         )
+        wants_dashboard_summary = any(
+            term in normalized
+            for term in (
+                "kpis do painel",
+                "resumo do painel",
+                "resumo do dashboard",
+                "indicadores do painel",
+                "dashboard/summary",
+            )
+        )
+        wants_dashboard_items = any(
+            term in normalized
+            for term in ("itens do dashboard", "itens do painel", "lista do painel")
+        )
+        wants_dashboard_charts = any(
+            term in normalized
+            for term in ("grafico", "gráfico", "graficos", "gráficos", "charts")
+        )
         wants_list = any(
             term in normalized
             for term in ("listar", "liste", "lista de", "quais lmps", "todas as lmp")
@@ -925,7 +1293,18 @@ class ExternalActionSelectionService:
             if sale_number and "{sale_number}" in path:
                 value += 120
 
-            if wants_dashboard and "dashboard" in path:
+            if wants_dashboard_summary and "/dashboard/summary" in path:
+                value += 115
+
+            if wants_dashboard_items and "/dashboard/items" in path:
+                value += 115
+
+            if wants_dashboard_charts and "/dashboard/charts" in path:
+                value += 115
+
+            if wants_dashboard and "dashboard" in path and not any(
+                segment in path for segment in ("/summary", "/items", "/charts")
+            ):
                 value += 100
 
             if wants_list and path.endswith("/lmps") and "dashboard" not in path and "{" not in path:
@@ -1001,15 +1380,48 @@ class ExternalActionSelectionService:
             term in normalized
             for term in ("compra", "compras", "fornecedor comprou", "histórico de compra", "historico de compra")
         )
+        wants_billing = any(
+            term in normalized for term in ("faturamento", "billing", "faturado")
+        )
         wants_sales = any(
             term in normalized
             for term in (
                 "venda",
                 "vendas",
-                "faturamento",
                 "carteira",
                 "pedidos em aberto",
                 "pedido em aberto",
+            )
+        ) or (
+            "faturamento" in normalized
+            and not wants_billing
+        )
+        wants_product_summary = any(
+            term in normalized
+            for term in (
+                "resumo do produto",
+                "resumo sintetico",
+                "resumo sintético",
+                "visao resumida",
+                "visão resumida",
+            )
+        ) or (
+            "resumo" in normalized
+            and "completo" not in normalized
+            and "ficha" not in normalized
+            and "kaizen" not in normalized
+        )
+        wants_full_analyser = any(
+            term in normalized
+            for term in (
+                "ficha completa",
+                "analisador",
+                "analyzer",
+                "analise completa",
+                "análise completa",
+                "informacoes completas",
+                "informações completas",
+                "tudo sobre o produto",
             )
         )
         wants_open_orders = any(
@@ -1072,6 +1484,7 @@ class ExternalActionSelectionService:
             wants_purchases or wants_sales or wants_open_orders or wants_structure
             or wants_guide or wants_suppliers or wants_pricing or wants_customers
             or wants_parents or wants_movements or wants_invoices or wants_inspection
+            or wants_billing or wants_product_summary or wants_full_analyser
         )
 
         def score(action: dict) -> int:
@@ -1086,11 +1499,26 @@ class ExternalActionSelectionService:
             if wants_purchases and "/purchases" in path:
                 value += 110
 
+            if wants_billing and "/sales/billing" in path:
+                value += 125
+
             if wants_open_orders and "open-orders" in path:
                 value += 115
 
-            elif wants_sales and "/sales" in path and "open-orders" not in path:
+            elif wants_sales and "/sales" in path and "open-orders" not in path and "billing" not in path:
                 value += 100
+
+            if wants_product_summary and "/summary" in path:
+                value += 125
+
+            if wants_full_analyser and "analyser" in path:
+                value += 125
+
+            if wants_product_summary and "analyser" in haystack:
+                value -= 55
+
+            if wants_full_analyser and "/summary" in path:
+                value -= 45
 
             if wants_structure and "/structure" in path:
                 value += 120

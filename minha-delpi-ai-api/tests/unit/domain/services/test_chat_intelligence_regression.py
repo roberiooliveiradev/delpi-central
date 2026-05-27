@@ -75,6 +75,14 @@ def test_action_selection_regression(case):
     assert selected is not None
     assert selected["arguments"]["actionId"] == case["expected_action_id"]
 
+    expected_parameters = case.get("expected_parameters")
+
+    if expected_parameters:
+        params = selected["arguments"].get("parameters") or {}
+
+        for key, value in expected_parameters.items():
+            assert params.get(key) == value
+
 
 @pytest.mark.parametrize("case", DIRECT_ANSWER_CASES)
 def test_direct_answer_regression(case):

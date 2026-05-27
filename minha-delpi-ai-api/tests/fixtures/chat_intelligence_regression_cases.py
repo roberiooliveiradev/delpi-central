@@ -295,6 +295,263 @@ SELECTION_CASES = [
         ],
         "expected_action_id": "sale-orders",
     },
+    {
+        "message": "busque 3 produtos do grupo 1008",
+        "actions": [
+            {
+                "actionId": "search",
+                "method": "GET",
+                "path": "/products/search",
+                "operationId": "search_products",
+                "summary": "Busca de produtos",
+                "parametersSchema": [
+                    {"name": "group_code"},
+                    {"name": "page_size"},
+                ],
+            },
+            {
+                "actionId": "analyser",
+                "method": "GET",
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "summary": "Analisador",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "search",
+        "expected_parameters": {"group_code": "1008"},
+    },
+    {
+        "message": "liste produtos do grupo MP",
+        "actions": [
+            {
+                "actionId": "search",
+                "method": "GET",
+                "path": "/products/search",
+                "operationId": "search_products",
+                "summary": "Busca de produtos",
+                "parametersSchema": [
+                    {"name": "description"},
+                    {"name": "group_code"},
+                    {"name": "page_size"},
+                ],
+            },
+        ],
+        "expected_action_id": "search",
+        "expected_parameters": {"group_code": "MP"},
+    },
+    {
+        "message": "qual o ebitda do último trimestre",
+        "actions": [
+            {
+                "actionId": "ebitda",
+                "method": "GET",
+                "path": "/financial/ebitda_pct",
+                "operationId": "get_ebitda_pct",
+                "summary": "EBITDA",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "rol-fin",
+                "method": "GET",
+                "path": "/financial/rol",
+                "operationId": "get_rol",
+                "summary": "ROL",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "ebitda",
+    },
+    {
+        "message": "taxa de conversão de vendas",
+        "actions": [
+            {
+                "actionId": "closing",
+                "method": "GET",
+                "path": "/commercial/closing-rate",
+                "operationId": "get_sales_conversion_rate",
+                "summary": "Taxa de conversão",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "closing",
+    },
+    {
+        "message": "resumo de kaizens do mês",
+        "actions": [
+            {
+                "actionId": "kaizen",
+                "method": "GET",
+                "path": "/quality/kaizens/summary",
+                "operationId": "get_kaizen_summary",
+                "summary": "Kaizens",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "kaizen",
+    },
+    {
+        "message": "oee da produção",
+        "actions": [
+            {
+                "actionId": "oee",
+                "method": "GET",
+                "path": "/production/overall_equipment_effectiveness_pct",
+                "operationId": "get_overall_equipment_effectiveness_pct",
+                "summary": "OEE",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "oee",
+    },
+    {
+        "message": "resumo do produto 10080047",
+        "actions": [
+            {
+                "actionId": "summary",
+                "method": "GET",
+                "path": "/products/{code}/summary",
+                "operationId": "get_product_summary",
+                "summary": "Resumo do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "analyser",
+                "method": "GET",
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "summary": "Analisador",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "summary",
+    },
+    {
+        "message": "ficha completa do produto 10080047",
+        "actions": [
+            {
+                "actionId": "summary",
+                "method": "GET",
+                "path": "/products/{code}/summary",
+                "operationId": "get_product_summary",
+                "summary": "Resumo",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "analyser",
+                "method": "GET",
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "summary": "Analisador completo",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "analyser",
+    },
+    {
+        "message": "faturamento do produto 10080047",
+        "actions": [
+            {
+                "actionId": "billing",
+                "method": "GET",
+                "path": "/products/{code}/sales/billing",
+                "operationId": "get_product_sales_billing",
+                "summary": "Faturamento",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "sales-summary",
+                "method": "GET",
+                "path": "/products/{code}/sales",
+                "operationId": "get_product_sales_summary",
+                "summary": "Vendas",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "billing",
+    },
+    {
+        "message": "kpis do painel de LMPs",
+        "actions": [
+            {
+                "actionId": "dash-summary",
+                "method": "GET",
+                "path": "/engineering/lmps/dashboard/summary",
+                "operationId": "get_lmps_dashboard_summary",
+                "summary": "KPIs painel LMP",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "lmp-dash",
+                "method": "GET",
+                "path": "/engineering/lmps/dashboard",
+                "operationId": "list_lmps_dashboard",
+                "summary": "Dashboard LMPs",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "dash-summary",
+    },
+    {
+        "message": "processos do transforma mais",
+        "actions": [
+            {
+                "actionId": "tm-processes",
+                "method": "GET",
+                "path": "/engineering/transforma-mais/processes",
+                "operationId": "list_transforma_mais_processes",
+                "summary": "Processos Transforma Mais",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "tm-summary",
+                "method": "GET",
+                "path": "/engineering/transforma-mais/processes/summary",
+                "operationId": "get_transforma_mais_summary",
+                "summary": "Resumo Transforma Mais",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "tm-processes",
+    },
+    {
+        "message": "colunas da tabela SB1",
+        "actions": [
+            {
+                "actionId": "table-columns",
+                "method": "GET",
+                "path": "/system/tables/{tableName}/columns",
+                "operationId": "list_table_columns",
+                "summary": "Colunas da tabela",
+                "parametersSchema": [{"name": "tableName"}],
+            },
+            {
+                "actionId": "tables-search",
+                "method": "GET",
+                "path": "/system/tables/search",
+                "operationId": "search_tables",
+                "summary": "Buscar tabelas",
+                "parametersSchema": [{"name": "description"}],
+            },
+        ],
+        "expected_action_id": "table-columns",
+        "expected_parameters": {"tableName": "SB1"},
+    },
+    {
+        "message": "pmr da filial 02",
+        "actions": [
+            {
+                "actionId": "pmr",
+                "method": "GET",
+                "path": "/financial/pmr",
+                "operationId": "get_pmr",
+                "summary": "PMR",
+                "parametersSchema": [{"name": "branch"}],
+            },
+        ],
+        "expected_action_id": "pmr",
+        "expected_parameters": {"branch": "02"},
+    },
 ]
 
 DIRECT_ANSWER_CASES = [

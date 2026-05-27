@@ -14,6 +14,7 @@ Backend Flask do **Minha DELPI Chat**: conversas, RAG, agentes, tools, conhecime
 | Gestão de agentes (ondas 1–7) | [docs/roadmap/agentes-gestao-melhorias.md](docs/roadmap/agentes-gestao-melhorias.md) |
 | Inteligência do chat (ondas 1–10) | [docs/roadmap/README.md](docs/roadmap/README.md) |
 | Arquitetura inteligência base | [docs/architecture/chat-intelligence-base.md](docs/architecture/chat-intelligence-base.md) |
+| Auditoria rotas api-delpi (chat) | [docs/roadmap/api-delpi-chat-intelligence-audit.md](docs/roadmap/api-delpi-chat-intelligence-audit.md) |
 | Melhorias futuras (fechadas) | [docs/roadmap/melhorias-futuras.md](docs/roadmap/melhorias-futuras.md) |
 | Plugin (UI) | [../plugins/minha-delpi-chat/README.md](../plugins/minha-delpi-chat/README.md) |
 

@@ -18,6 +18,8 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 4. Em follow-up ("estoque **desse** produto", "mesma OV"), use o código ou número mencionado antes na conversa.
 5. **Não confunda** estoque de um item com indicador agregado de estoque da empresa.
 6. Rotas de **dashboard** (LMP, comercial, RH, produção, qualidade) exigem permissões de dashboard ou `api-delpi.access` conforme a rota — o token do usuário precisa estar autorizado.
+7. **Código de grupo ≠ código de produto.** «Grupo 1008» usa `GET /products/search` com `group_code=1008`. **Nunca** chame `/products/1008/analyser` só porque o número tem 4 dígitos.
+8. Perguntas do tipo «consegue buscar por grupo?» são **capacidade** — responda com a rota e parâmetros; só execute a API quando o usuário pedir a busca de fato.
 
 ---
 
@@ -44,6 +46,7 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 | O usuário quer | Rota | operationId (referência) |
 |----------------|------|--------------------------|
 | Achar produto sem código exato | `GET /products/search` | `search_products` |
+| Listar produtos de um **grupo** (cadastro ERP) | `GET /products/search` | `search_products` + `group_code` |
 | Dados cadastrais (descrição, tipo, unidade) | `GET /products/{code}` | `get_product_detail` |
 | Resumo completo (cadastro + estoque + preços) | `GET /products/{code}/summary` | `get_product_summary` |
 | Análise completa / ficha detalhada | `GET /products/{code}/analyser` | `get_product_analyser` |
@@ -76,7 +79,8 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 - "Qual a descrição do produto 10.080.055?" → `GET /products/{code}`
 - "Resumo do produto 10080001" → `GET /products/{code}/summary`
 - "Tem estoque do 10080047 na filial 01?" → `GET /products/{code}/stock`
-- "Busca parafuso M8 na descrição" → `GET /products/search`
+- "Busca parafuso M8 na descrição" → `GET /products/search` (`description`)
+- "Liste produtos do grupo MP" / "busque 3 produtos do grupo 1008" → `GET /products/search` (`group_code`, `page_size`)
 - "Onde é usado o 10080001?" → `GET /products/{code}/parents`
 - "Quanto custa o 10080001?" → `GET /products/{code}/pricing`
 
