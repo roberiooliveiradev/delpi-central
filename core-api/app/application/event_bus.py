@@ -35,9 +35,26 @@ class EventBus:
             # 4️⃣ Infra side effects (socket)
             self.socket_dispatcher.dispatch(event)
 
+        self._flush_pending_side_effects()
+
+    def _flush_pending_side_effects(self) -> None:
+        """
+        Handlers podem criar registros e coletar eventos após o commit da request
+        (ex.: notificação automática de acesso RBAC). Persiste e emite socket.
+        """
+        pending = list(getattr(self.uow, "_events", []))
+        if not pending:
+            return
+
+        self.uow._events.clear()
+
         try:
             if self.uow.session.new or self.uow.session.dirty:
                 self.uow.session.commit()
         except Exception as e:
-            print("Erro ao persistir auditoria pós-commit:", e)
+            print("Erro ao persistir efeitos pós-evento:", e)
             self.uow.session.rollback()
+            return
+
+        for event in pending:
+            self.socket_dispatcher.dispatch(event)
