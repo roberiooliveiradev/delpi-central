@@ -2226,6 +2226,9 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
     @stream_with_context
     def generate():
         try:
+            # Comentário SSE para abrir o stream cedo (evita buffering em proxy/nginx).
+            yield ": connected\n\n"
+
             for event in stream_chat_events_with_background_completion(
                 app,
                 lambda: use_case.stream(request_dto),

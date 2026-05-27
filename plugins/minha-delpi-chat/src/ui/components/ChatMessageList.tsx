@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
+import { useStreamingTextReveal } from "../../state/hooks/useStreamingTextReveal";
+
 import type {
   ChatMessage,
   ChatSource,
@@ -289,6 +291,10 @@ export function ChatMessageList({
   }, []);
 
   const isActiveStream = Boolean(isStreaming || streamingAnswer || streamingStatus);
+  const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
+    enabled: isActiveStream,
+    charsPerFrame: 4,
+  });
 
   useEffect(() => {
     if (conversationKey !== previousConversationKeyRef.current) {
@@ -689,7 +695,7 @@ export function ChatMessageList({
   if (isLoading) {
     return (
       <div className="mdc-chat-message-list-wrap">
-        <div className="mdc-chat-message-list" aria-live="polite">
+        <div className="mdc-chat-message-list mdc-chat-message-list__inner" aria-live="polite">
           <article className="mdc-chat-message mdc-chat-message--assistant">
             <div className="mdc-chat-message-avatar">D</div>
 
@@ -718,15 +724,17 @@ export function ChatMessageList({
   }
 
   return (
-    <div className="mdc-chat-message-list-wrap">
+    <div
+      ref={listRef}
+      className={[
+        "mdc-chat-message-list-wrap",
+        isActiveStream ? "mdc-chat-message-list-wrap--streaming" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <div
-        ref={listRef}
-        className={[
-          "mdc-chat-message-list",
-          isActiveStream ? "mdc-chat-message-list--streaming" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className="mdc-chat-message-list mdc-chat-message-list__inner"
         aria-live="polite"
       >
         {timelineItems.map((item) =>
@@ -761,7 +769,7 @@ export function ChatMessageList({
               </div>
 
               {streamingAnswer ? (
-                <ChatMarkdown content={streamingAnswer} />
+                <ChatMarkdown content={revealedStreamingAnswer} />
               ) : (
                 <div className="mdc-chat-thinking" role="status" aria-live="polite">
                   <span className="mdc-chat-thinking__dot" />

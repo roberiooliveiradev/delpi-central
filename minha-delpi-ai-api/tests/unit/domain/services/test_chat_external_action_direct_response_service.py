@@ -32,3 +32,21 @@ def test_iter_stream_chunks_streams_small_pieces(monkeypatch):
     )
 
     assert chunks == ["Olá", " mu", "ndo"]
+
+
+def test_iter_stream_chunks_uses_words_for_long_text(monkeypatch):
+    monkeypatch.setattr(
+        "app.domain.services.chat_external_action_direct_response_service.Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS",
+        12,
+    )
+    monkeypatch.setattr(
+        "app.domain.services.chat_external_action_direct_response_service.Settings.CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS",
+        0,
+    )
+
+    text = " ".join(f"palavra{i}" for i in range(30))
+    chunks = list(ChatExternalActionDirectResponseService.iter_stream_chunks(text))
+
+    assert len(chunks) > 3
+    assert "".join(chunks) == text
+    assert all(" " not in chunk.strip() or chunk.endswith(" ") for chunk in chunks[:-1])

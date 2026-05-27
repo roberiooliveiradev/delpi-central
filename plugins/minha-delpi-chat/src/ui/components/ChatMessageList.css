@@ -1,30 +1,30 @@
 .mdc-chat-message-list-wrap {
   position: relative;
-  display: flex;
-  flex-direction: column;
   min-height: 0;
   height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
-.mdc-chat-message-list {
+/* Durante streaming, evita smooth que “puxa” o scroll contra o usuário */
+.mdc-chat-message-list-wrap--streaming {
+  scroll-behavior: auto;
+}
+
+.mdc-chat-message-list,
+.mdc-chat-message-list__inner {
   display: flex;
   flex-direction: column;
   gap: var(--mdc-space-5);
   width: 100%;
   max-width: var(--mdc-chat-column-max);
-  height: 100%;
-  min-height: 0;
+  min-height: min-content;
   margin: 0 auto;
   padding: var(--mdc-space-5);
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  scroll-behavior: smooth;
-}
-
-/* Durante streaming, evita smooth que “puxa” o scroll contra o usuário */
-.mdc-chat-message-list--streaming {
-  scroll-behavior: auto;
 }
 
 .mdc-chat-timeline-day {
@@ -57,10 +57,10 @@
 }
 
 .mdc-chat-scroll-to-bottom {
-  position: absolute;
-  right: clamp(0.75rem, 3vw, 1.5rem);
-  bottom: 1rem;
-  z-index: 3;
+  position: fixed;
+  right: max(0.85rem, env(safe-area-inset-right, 0px));
+  bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+  z-index: 25;
   display: inline-grid;
   place-items: center;
   width: 2.5rem;

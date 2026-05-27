@@ -82,10 +82,14 @@
   }
 
   .mdc-chat-input,
-  .mdc-chat-message-list,
   .mdc-chat-header,
   .mdc-chat-alert {
     width: min(100%, var(--mdc-content-max));
+  }
+
+  .mdc-chat-message-list-wrap {
+    width: 100%;
+    max-width: none;
   }
 
   .mdc-chat-context-topbar__menu-trigger--sidebar {
@@ -132,7 +136,8 @@
     padding-block: 0.25rem;
   }
 
-  .mdc-chat-message-list {
+  .mdc-chat-message-list,
+  .mdc-chat-message-list__inner {
     padding-block: var(--mdc-space-3);
     gap: var(--mdc-space-4);
   }
@@ -174,7 +179,8 @@
     height: 2rem;
   }
 
-  .mdc-chat-message-list {
+  .mdc-chat-message-list,
+  .mdc-chat-message-list__inner {
     padding: var(--mdc-space-2);
   }
 }
