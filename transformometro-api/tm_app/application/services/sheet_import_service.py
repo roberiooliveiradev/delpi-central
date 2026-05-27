@@ -115,7 +115,7 @@ class SheetImportService:
         *,
         csv_dir: Path | None = None,
         replace_existing: bool = False,
-        recalc_dashboard: bool = True,
+        recalc_dashboard: bool = False,
     ) -> dict[str, Any]:
         raw = self.load(csv_dir=csv_dir)
         validation = self.validate(raw)

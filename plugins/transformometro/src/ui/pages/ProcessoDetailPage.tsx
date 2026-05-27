@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
@@ -21,7 +21,6 @@ import {
   fetchProcesso,
   fetchProcessoComparativo,
   fetchRevisoes,
-  recalcularDashboard,
   updateProcesso,
   type OptionsData,
   type Processo,
@@ -65,7 +64,6 @@ export function ProcessoDetailPage({
   const [editingProcesso, setEditingProcesso] = useState(false);
   const [processoForm, setProcessoForm] = useState<ProcessoFormState | null>(null);
   const [savingProcesso, setSavingProcesso] = useState(false);
-  const [recalculando, setRecalculando] = useState(false);
   const [comparativo, setComparativo] = useState<RevisionCompareItem[]>([]);
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
@@ -150,19 +148,6 @@ export function ProcessoDetailPage({
       onBack();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir processo");
-    }
-  }
-
-  async function handleRecalcProcesso() {
-    setRecalculando(true);
-    setError(null);
-    try {
-      await recalcularDashboard(getAccessToken, { processo_id: processoId });
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao recalcular processo");
-    } finally {
-      setRecalculando(false);
     }
   }
 
@@ -380,15 +365,6 @@ export function ProcessoDetailPage({
             >
               <Trash2 size={16} />
               Excluir
-            </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              disabled={recalculando || refreshing}
-              onClick={() => void handleRecalcProcesso()}
-            >
-              <RefreshCw size={16} />
-              {recalculando ? "Recalculando…" : "Recalcular processo"}
             </button>
             <button
               type="button"

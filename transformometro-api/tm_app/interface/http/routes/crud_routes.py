@@ -35,6 +35,7 @@ from tm_app.infrastructure.persistence.repositories.recurso_repository import (
     RecursoRepository,
     VinculoRepository,
 )
+from tm_app.application.services.dashboard_live_service import DashboardLiveService
 from tm_app.application.services.process_revision_compare_service import (
     ProcessRevisionCompareService,
 )
@@ -124,6 +125,23 @@ def list_processos(
         q=q,
     )
     return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.get("/processos/calculados")
+def list_processos_calculados(
+    filial_id: str | None = None,
+    setor_id: str | None = None,
+    familia_processo: str | None = None,
+):
+    items = DashboardLiveService().list_processos_calculados(
+        filial_id=filial_id,
+        setor_id=setor_id,
+        familia_processo=familia_processo,
+    )
+    return ok(
+        {"total": len(items), "items": rows_to_json(items)},
+        "Processos com indicadores calculados em tempo real.",
+    )
 
 
 @router.get("/processos/{processo_id}")

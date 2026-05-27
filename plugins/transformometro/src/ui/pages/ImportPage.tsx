@@ -109,7 +109,7 @@ export function ImportPage({ getAccessToken, pathname, onNavigate }: Props) {
             onClick={() => void handleApply()}
           >
             <Upload size={16} />
-            Importar e recalcular
+            Importar planilha
           </button>
         </div>
       </section>

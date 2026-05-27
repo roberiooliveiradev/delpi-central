@@ -8,8 +8,8 @@ export function DataSourceBanner() {
         <div>
           <strong>PostgreSQL — Transformômetro</strong>
           <p>
-            Cadastro e cálculos materializados em <code>dashboard_calculos</code>.
-            Use <strong>Recalcular</strong> após alterar medições, investimentos ou vínculos.
+            KPIs e gráficos são calculados em tempo real a partir do cadastro (revisões, medições,
+            investimentos e recursos), respeitando vigências e competências de cada mês.
           </p>
         </div>
       </article>

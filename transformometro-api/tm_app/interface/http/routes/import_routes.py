@@ -13,7 +13,7 @@ router = APIRouter(prefix="/transformometro", tags=["Transformômetro Import"])
 
 class ImportApplyBody(BaseModel):
     replace_existing: bool = False
-    recalc_dashboard: bool = True
+    recalc_dashboard: bool = False
     csv_dir: str | None = Field(
         default=None,
         description="Caminho absoluto no servidor com CSVs exportados (opcional).",

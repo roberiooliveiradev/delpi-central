@@ -19,9 +19,9 @@ def _load_fixture(name: str) -> TransformometroRawData:
     return TransformometroRawData(**payload)
 
 
-@patch("tm_app.application.services.dashboard_alerts_service.DashboardCalculoRepository")
-def test_alerts_detects_consecutive_negative_months(mock_repo):
-    mock_repo.return_value.query_process_monthly_liquida.return_value = [
+@patch("tm_app.application.services.dashboard_alerts_service.DashboardLiveService")
+def test_alerts_detects_consecutive_negative_months(mock_live):
+    mock_live.return_value.query_process_monthly_liquida.return_value = [
         {
             "processo_id": "p1",
             "codigo_processo": "PROC-0001",
