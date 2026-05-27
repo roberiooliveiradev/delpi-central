@@ -15,6 +15,9 @@ from app.infrastructure.persistence.sqlalchemy.unit_of_work import (
 from app.interfaces.http.security.authorization import require_auth
 from app.interfaces.http.utils.errors import api_error
 
+from app.application.use_cases.get_my_access_profile_use_case import (
+    GetMyAccessProfileUseCase,
+)
 from app.application.use_cases.list_user_apps_use_case import (
     ListUserAppsUseCase,
 )
@@ -109,6 +112,25 @@ def get_me():
         payload["consent_pending"] = True
 
     return jsonify(payload), 200
+
+
+# ==========================================================
+# GET /me/access-profile
+# ==========================================================
+
+
+@me_bp.route("/me/access-profile", methods=["GET"])
+@require_auth()
+def get_my_access_profile():
+    user = g.current_user
+
+    with SqlAlchemyUnitOfWork() as uow:
+        profile = GetMyAccessProfileUseCase(uow).execute(
+            UUID(str(user.id)),
+            is_superadmin=bool(getattr(user, "is_superadmin", False)),
+        )
+
+    return jsonify(profile), 200
 
 
 # ==========================================================

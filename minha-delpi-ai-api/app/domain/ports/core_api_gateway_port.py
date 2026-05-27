@@ -11,6 +11,10 @@ class CoreApiGatewayPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_access_profile(self, access_token: str) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_routes(self, access_token: str) -> list[dict]:
         raise NotImplementedError
 
