@@ -160,7 +160,7 @@ export function ChatPage({
     return projects.find((project) => project.id === projectId)?.default_agent_key ?? null;
   }
 
-  const { isDesktop, isLandscape } = useChatLayout();
+  const { isDesktop, isLandscape, isNarrow } = useChatLayout();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -653,6 +653,22 @@ export function ChatPage({
   const isConversationEmpty = !hasActiveConversation;
 
   function getComposerPlaceholder() {
+    if (isNarrow) {
+      if (selectedProject && contextAgent) {
+        return `Chat em ${selectedProject.name}`;
+      }
+
+      if (selectedProject) {
+        return `Chat no projeto`;
+      }
+
+      if (contextAgent || conversationAgent) {
+        return "Pergunte ao agente";
+      }
+
+      return "Pergunte algo";
+    }
+
     if (selectedProject && contextAgent) {
       return `Novo chat em ${selectedProject.name} usando ${contextAgent.name}`;
     }
@@ -729,6 +745,7 @@ export function ChatPage({
     "minha-delpi-chat",
     isDraggingFile ? "minha-delpi-chat--dragging" : "",
     isMobileSidebarOpen ? "minha-delpi-chat--mobile-nav-open" : "",
+    isNarrow ? "minha-delpi-chat--narrow" : "",
   ]
     .filter(Boolean)
     .join(" ");

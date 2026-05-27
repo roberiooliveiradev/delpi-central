@@ -86,6 +86,45 @@
   }
 }
 
+@media (max-width: 480px) {
+  .mdc-chat-agent-home {
+    width: 100%;
+    padding-inline: 0.15rem;
+  }
+
+  .mdc-chat-agent-home h2 {
+    font-size: clamp(1.35rem, 6.5vw, 1.75rem);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .mdc-chat-agent-home p:not(.mdc-chat-eyebrow) {
+    font-size: 0.9rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .mdc-chat-agent-home__avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .mdc-chat-agent-home__actions {
+    width: 100%;
+  }
+
+  .mdc-chat-agent-home__actions button {
+    width: 100%;
+    justify-content: center;
+    min-height: 2.75rem;
+  }
+
+  .mdc-chat-agent-home__icebreakers {
+    width: 100%;
+    margin-top: 0.75rem;
+  }
+}
+
 .mdc-chat-agent-home__actions {
   display: flex;
   flex-wrap: wrap;

@@ -195,6 +195,11 @@
   .mdc-chat-context-topbar {
     gap: 0.35rem;
     padding-inline: 0.65rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .mdc-chat-context-topbar__center {
+    max-width: 100%;
   }
 
   .mdc-chat-context-topbar__titles strong {
@@ -210,5 +215,10 @@
     min-width: 1.85rem;
     padding: 0 0.5rem;
     font-size: 0.75rem;
+  }
+
+  .mdc-chat-context-topbar__menu-trigger--sidebar {
+    width: 2rem;
+    height: 2rem;
   }
 }

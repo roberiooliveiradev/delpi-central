@@ -53,14 +53,27 @@
   }
 
   .sidebar-expand-btn {
-    top: 50%;
+    top: max(0.75rem, env(safe-area-inset-top, 0px));
     bottom: auto;
-    left: 10px;
-    height: 92px;
+    left: max(0.65rem, env(safe-area-inset-left, 0px));
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.75rem;
+    transform: none;
+  }
+
+  .sidebar-expand-btn.is-visible {
+    transform: none;
+  }
+
+  .sidebar-expand-btn.is-visible:hover {
+    transform: scale(1.05);
   }
 
   .sidebar-edge-hotspot {
-    width: 34px;
+    top: 0;
+    width: 20px;
+    height: min(6rem, 30dvh);
   }
 }
 
@@ -81,12 +94,38 @@
   }
 
   .sidebar-expand-btn {
-    left: 8px;
-    height: 84px;
+    top: max(0.65rem, env(safe-area-inset-top, 0px));
+    bottom: auto;
+    left: max(0.5rem, env(safe-area-inset-left, 0px));
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 0.72rem;
+    transform: none;
+  }
+
+  .sidebar-expand-btn.is-visible {
+    transform: none;
+  }
+
+  .sidebar-expand-btn.is-visible:hover {
+    transform: scale(1.05);
   }
 
   .sidebar-edge-hotspot {
-    width: 38px;
+    top: 0;
+    width: 18px;
+    height: min(5.5rem, 28dvh);
+  }
+}
+
+@media (max-width: 400px) {
+  .sidebar-expand-btn {
+    width: 2.15rem;
+    height: 2.15rem;
+  }
+
+  .sidebar-edge-hotspot {
+    width: 14px;
   }
 }
 
