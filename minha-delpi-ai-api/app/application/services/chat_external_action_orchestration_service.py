@@ -32,6 +32,7 @@ class ChatExternalActionOrchestrationService:
         message: str,
         allowed_action_ids: list[str] | None,
         conversation_context: str | None = None,
+        previous_messages: list | None = None,
         max_calls: int | None = None,
     ) -> list[dict]:
         if not selection_service or not allowed_action_ids:
@@ -46,7 +47,21 @@ class ChatExternalActionOrchestrationService:
             return [selected] if selected else []
 
         if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
-            return []
+            from app.application.services.chat_structure_comparison_orchestration_service import (
+                ChatStructureComparisonOrchestrationService,
+            )
+
+            planned = ChatStructureComparisonOrchestrationService.plan_structure_fetches(
+                selection_service,
+                message=message,
+                allowed_action_ids=allowed_action_ids,
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+                max_calls=max_calls,
+            )
+
+            if planned:
+                return planned
 
         if ChatCanvasIntentService.is_canvas_placement_request(message):
             return []

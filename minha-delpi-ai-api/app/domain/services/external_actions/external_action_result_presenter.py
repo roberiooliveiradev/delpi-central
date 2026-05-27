@@ -686,6 +686,23 @@ class ExternalActionResultPresenter:
                 return self._build_product_detail_table(product, detail_list, root)
             return self._build_product_table(product, root)
 
+        if isinstance(root.get("root"), dict) and isinstance(root.get("items"), list):
+            from app.domain.services.chat_product_structure_presentation_service import (
+                ChatProductStructurePresentationService,
+            )
+
+            markdown = ChatProductStructurePresentationService.format_markdown(
+                root,
+                source_path=path,
+            )
+
+            if markdown:
+                return {
+                    "type": "markdown",
+                    "title": f"Estrutura do produto {root['root'].get('code', '')}",
+                    "markdown": markdown,
+                }
+
         items = root.get("items")
         if isinstance(items, list) and items and isinstance(items[0], dict):
             if "sale_number" in items[0] or "saleNumber" in items[0]:
@@ -723,23 +740,6 @@ class ExternalActionResultPresenter:
                 structure["items"],
                 title="Estrutura do produto",
             )
-
-        if isinstance(root.get("root"), dict) and isinstance(root.get("items"), list):
-            from app.domain.services.chat_product_structure_presentation_service import (
-                ChatProductStructurePresentationService,
-            )
-
-            markdown = ChatProductStructurePresentationService.format_markdown(
-                root,
-                source_path=path,
-            )
-
-            if markdown:
-                return {
-                    "type": "markdown",
-                    "title": f"Estrutura do produto {root['root'].get('code', '')}",
-                    "markdown": markdown,
-                }
 
         return None
 

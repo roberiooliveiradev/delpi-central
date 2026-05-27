@@ -206,7 +206,7 @@ class StreamChatMessageUseCase:
             attachment_ids=attachment_ids,
         )
 
-        if canvas_action or analysis_mode:
+        if canvas_action:
             fast_path = True
             tool_context = {
                 "context": "",
@@ -262,19 +262,24 @@ class StreamChatMessageUseCase:
             or operational_optimize
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
         )
-        direct_answer = (
-            canvas_action.answer
-            if canvas_action
-            else ChatIntelligencePipelineService.resolve_analysis_direct_answer(
+        if canvas_action:
+            direct_answer = canvas_action.answer
+        elif analysis_mode:
+            direct_answer = ChatIntelligencePipelineService.resolve_analysis_direct_answer(
                 message,
                 history_source,
+                current_tool_calls=tool_calls,
             )
-            if analysis_mode
-            else ChatIntelligencePipelineService.resolve_direct_answer(
+            if not direct_answer:
+                direct_answer = ChatIntelligencePipelineService.resolve_direct_answer(
+                    tool_context,
+                    analysis_mode=analysis_mode,
+                )
+        else:
+            direct_answer = ChatIntelligencePipelineService.resolve_direct_answer(
                 tool_context,
                 analysis_mode=analysis_mode,
             )
-        )
 
         if canvas_action or (analysis_mode and direct_answer):
             skip_rag = True

@@ -162,6 +162,65 @@ def test_build_comparison_from_text_only():
     assert "50230005" in answer
 
 
+def test_build_comparison_merges_current_tool_calls():
+    payload_left = _structure_payload(
+        "90260077",
+        [
+            {
+                "code": "50230002",
+                "description": "A",
+                "type": "PI",
+                "unit": "MI",
+                "quantity": 1,
+                "components": [],
+            }
+        ],
+        description="LEFT",
+    )
+    payload_right = _structure_payload(
+        "90260088",
+        [
+            {
+                "code": "50210053",
+                "description": "B",
+                "type": "PI",
+                "unit": "MI",
+                "quantity": 1,
+                "components": [],
+            }
+        ],
+        description="RIGHT",
+    )
+
+    answer = ChatStructureComparisonService.build_comparison_answer(
+        "compare as estruturas",
+        [],
+        current_tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/90260077/structure",
+                    "responsePreview": __import__("json").dumps(payload_left),
+                },
+            },
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/90260088/structure",
+                    "responsePreview": __import__("json").dumps(payload_right),
+                },
+            },
+        ],
+    )
+
+    assert answer is not None
+    assert "90260077" in answer
+    assert "90260088" in answer
+    assert "Comparativo das estruturas" in answer
+
+
 def test_normalize_comprare_does_not_become_compra():
     normalized = ChatMessageNormalizationService.normalize_for_matching(
         "comprare as duas estruturas"

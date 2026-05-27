@@ -52,6 +52,43 @@ def test_plan_actions_for_multiple_product_codes():
     assert service.product_calls[0][1] == ChatProductQueryIntent.STRUCTURE
 
 
+def test_plan_actions_comparison_fetches_missing_structure(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
+        True,
+    )
+    service = FakeSelectionService()
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90260077/structure",
+                            "responsePreview": '{"root":{"code":"90260077","description":"A","type":"PA","unit":"MI","quantity":1},"items":[]}',
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        service,
+        message="compare as estruturas",
+        allowed_action_ids=["product-structure"],
+        conversation_context="90260077 e 90260088",
+        previous_messages=history,
+        max_calls=3,
+    )
+
+    assert len(planned) == 1
+    assert service.product_calls[0][0] == "90260088"
+
+
 def test_plan_actions_single_code_uses_select_action():
     service = FakeSelectionService()
 

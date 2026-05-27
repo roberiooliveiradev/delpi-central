@@ -34,7 +34,7 @@ class ProductStructureSnapshot:
 
 
 class ChatStructureComparisonService:
-    """Compara estruturas (BOM) já presentes no histórico — sem nova consulta operacional."""
+    """Compara estruturas (BOM) do histórico e das consultas da rodada atual."""
 
     _STRUCTURE_USER_RE = re.compile(
         r"\bestrutur[a]?\b.*?\b(\d{5,8})\b",
@@ -48,11 +48,20 @@ class ChatStructureComparisonService:
     _TYPE_UNIT_RE = re.compile(r"\((?P<tipo>[^)]+)\)\s*(?:\[(?P<unit>[^\]]+)\])?")
 
     @classmethod
-    def build_comparison_answer(cls, message: str, previous_messages: list | None) -> str | None:
+    def build_comparison_answer(
+        cls,
+        message: str,
+        previous_messages: list | None,
+        *,
+        current_tool_calls: list | None = None,
+    ) -> str | None:
         if not ChatAnalysisIntentService.is_comparison_or_insight_request(message):
             return None
 
-        snapshots, snapshot_order = cls._collect_structure_snapshots(previous_messages or [])
+        snapshots, snapshot_order = cls.collect_structure_snapshots(
+            previous_messages or [],
+            current_tool_calls=current_tool_calls,
+        )
 
         if len(snapshots) < 2:
             codes = ChatAnalysisIntentService.extract_all_product_codes(
@@ -92,13 +101,22 @@ class ChatStructureComparisonService:
         )
 
     @classmethod
-    def _collect_structure_snapshots(
+    def collect_structure_snapshots(
         cls,
         previous_messages: list,
+        *,
+        current_tool_calls: list | None = None,
     ) -> tuple[dict[str, ProductStructureSnapshot], list[str]]:
         snapshots: dict[str, ProductStructureSnapshot] = {}
         snapshot_order: list[str] = []
         pending_product_code: str | None = None
+
+        if current_tool_calls:
+            cls._merge_tool_calls_into_snapshots(
+                snapshots,
+                snapshot_order,
+                current_tool_calls,
+            )
 
         for message in previous_messages:
             role = cls._message_field(message, "role", "user")
@@ -142,6 +160,60 @@ class ChatStructureComparisonService:
             pending_product_code = None
 
         return snapshots, snapshot_order
+
+    @classmethod
+    def _merge_tool_calls_into_snapshots(
+        cls,
+        snapshots: dict[str, ProductStructureSnapshot],
+        snapshot_order: list[str],
+        tool_calls: list,
+    ) -> None:
+        for tool_call in tool_calls:
+            if not isinstance(tool_call, dict):
+                continue
+
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            tool_meta = tool_call.get("metadata")
+
+            if not isinstance(tool_meta, dict) or not tool_meta.get("ok"):
+                continue
+
+            path = str(tool_meta.get("path") or "")
+
+            if "/structure" not in path.lower():
+                continue
+
+            product_code = ChatAnalysisIntentService.extract_product_code_from_tool_path(path)
+
+            if not product_code:
+                continue
+
+            model = cls._model_from_tool_metadata(tool_meta)
+            lines = cls._lines_from_tool_metadata(tool_meta)
+
+            if not model and not lines:
+                continue
+
+            key = ChatProductQueryIntentService.normalize_product_code(product_code)
+            previous = snapshots.get(key)
+
+            if previous:
+                if not model and previous.model:
+                    model = previous.model
+
+                if not lines and previous.lines:
+                    lines = previous.lines
+
+            snapshots[key] = ProductStructureSnapshot(
+                product_code=key,
+                model=model,
+                lines=lines,
+            )
+
+            if key not in snapshot_order:
+                snapshot_order.append(key)
 
     @classmethod
     def _extract_from_assistant_message(
